@@ -189,6 +189,9 @@ cdef class _Element(_NodeBase):
                 c = c + 1
             c_node = c_node.next
         return c
+
+    def __iter__(self):
+        return _elementIteratorFactory(self._doc, self._c_node.children)
     
     def get(self, key, default=None):
         return self.attrib.get(key, default)
@@ -291,6 +294,27 @@ cdef _AttribIterator _attribIteratorFactory(_ElementTree tree,
                                             xmlNode* c_node):
     cdef _AttribIterator result
     result = _AttribIterator()
+    result._doc = tree
+    result._c_node = c_node
+    return result
+
+cdef class _ElementIterator(_NodeBase):
+    def __next__(self):
+        cdef xmlNode* c_node
+        c_node = self._c_node
+        while c_node is not NULL:
+            if c_node.type == XML_ELEMENT_NODE:
+                break
+            c_node = c_node.next
+        else:
+            raise StopIteration
+        self._c_node = c_node.next
+        return _elementFactory(self._doc, c_node)
+
+cdef _ElementIterator _elementIteratorFactory(_ElementTree tree,
+                                              xmlNode* c_node):
+    cdef _ElementIterator result
+    result = _ElementIterator()
     result._doc = tree
     result._c_node = c_node
     return result
