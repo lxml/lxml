@@ -3,6 +3,8 @@ from tree cimport xmlDoc, xmlNode
 cimport xmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
+import sys
+
 import nodereg
 cimport nodereg
 
@@ -40,7 +42,21 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
+        #print "freeing document:", <int>self._c_doc
+        #print "freeing document:"
+        #displayNode(<xmlNode*>self._c_doc, 0)
+        #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
+        #print "dune"
+
+# to help with debugging
+cdef void displayNode(xmlNode* c_node, indent):
+    cdef xmlNode* c_child
+    print indent * ' ', <int>c_node
+    c_child = c_node.children
+    while c_child is not NULL:
+        displayNode(c_child, indent + 1)
+        c_child = c_child.next
         
 cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     """Base class to reference a document object and a libxml node.
@@ -48,7 +64,11 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     By pointing to an ElementTree instance, a reference is kept to
     _ElementTree as long as there is some pointer to a node in it.
     """
-    
+    def __dealloc__(self):
+        # print "trying to free node:"
+        # displayNode(self._c_node, 0)
+        node_registry.attemptDeallocation(self._c_node)
+        
 cdef class _ElementTreeBase(_DocumentBase):
     def getroot(self):
         cdef xmlNode* c_node
@@ -359,13 +379,14 @@ def ElementTree(_ElementBase element=None, file=None):
         c_doc = theParser.parseDoc(data)
     else:
         c_doc = theParser.newDoc()
-    
+
     etree = _elementTreeFactory(c_doc)
 
     # XXX what if element and file are both not None?
     if element is not None:
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         element._doc = etree
+    
     return etree
 
 cdef class Parser:
@@ -376,7 +397,9 @@ cdef class Parser:
         self._c_dict = NULL
 
     def __del__(self):
+        #print "cleanup parser"
         if self._c_dict is not NULL:
+            #print "freeing dictionary (cleanup parser)"
             xmlparser.xmlDictFree(self._c_dict)
         
     cdef xmlDoc* parseDoc(self, text):
@@ -384,11 +407,13 @@ cdef class Parser:
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-
+        #print "parseDoc"
+        
         xmlparser.xmlInitParser()
         pctxt = xmlparser.xmlCreateDocParserCtxt(text)
-        
+
         if self._c_dict is not NULL and pctxt.dict is not NULL:
+            #print "sharing dictionary (parseDoc)"
             xmlparser.xmlDictFree(pctxt.dict)
             pctxt.dict = self._c_dict
             xmlparser.xmlDictReference(pctxt.dict)
@@ -410,6 +435,7 @@ cdef class Parser:
 
             # store dict of last object parsed if no shared dict yet
             if self._c_dict is NULL:
+                #print "storing shared dict"
                 self._c_dict = result.dict
                 xmlparser.xmlDictReference(self._c_dict)
         else:
@@ -423,14 +449,22 @@ cdef class Parser:
 
     cdef xmlDoc* newDoc(self):
         cdef xmlDoc* result
-        
+        #print "newDoc"
+        #if result.dict is NULL:
+        #    print "result.dict is NULL (!)"
+
         result = tree.xmlNewDoc("1.0")
-        if self._c_dict is not NULL and result.dict is not NULL:
+        if result.dict is not NULL:
+            #print "freeing dictionary (newDoc)"
             xmlparser.xmlDictFree(result.dict)
+            
+        if self._c_dict is not NULL:
+            #print "sharing dictionary (newDoc)"
             result.dict = self._c_dict
             xmlparser.xmlDictReference(self._c_dict)
             
         if self._c_dict is NULL:
+            #print "add dictionary reference (newDoc)"
             self._c_dict = result.dict
             xmlparser.xmlDictReference(self._c_dict)
         return result
