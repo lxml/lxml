@@ -248,6 +248,26 @@ class ETreeTestCaseBase(unittest.TestCase):
         root = fromstring('<doc>This is a text.</doc>')
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
+
+    def test_iselement(self):
+        iselement = self.etree.iselement
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+        XML = self.etree.XML
+        Comment = self.etree.Comment
+        
+        el = Element('hoi')
+        self.assert_(iselement(el))
+
+        el2 = XML('<foo/>')
+        self.assert_(iselement(el2))
+
+        tree = ElementTree(element=Element('dag'))
+        self.assert_(not iselement(tree))
+        self.assert_(iselement(tree.getroot()))
+
+        c = Comment('test')
+        self.assert_(iselement(c))
         
     def test_iteration(self):
         XML = self.etree.XML

@@ -587,6 +587,9 @@ def XML(text):
 
 fromstring = XML
 
+def iselement(element):
+    return isinstance(element, _ElementBase)
+
 def dump(nodereg.SimpleNodeProxyBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
