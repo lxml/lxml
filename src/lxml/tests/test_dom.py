@@ -417,6 +417,15 @@ class DomTestCase(unittest.TestCase):
         # Text
         doc = makeDocument('<foo>Text</foo>')
         self.assert_(not doc.documentElement.childNodes[0].hasChildNodes())
+
+    def test_nodeList(self):
+        doc = makeDocument('<foo><a/><b/><c/><d/></foo>')
+        got = []
+        for node in doc.documentElement.childNodes:
+            got.append(node.nodeName)
+        self.assertEquals(
+            ['a', 'b', 'c', 'd'],
+            got)
         
 def test_suite():
     suite = unittest.TestSuite()

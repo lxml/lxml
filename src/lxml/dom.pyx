@@ -139,6 +139,7 @@ cdef class Node:
             return XML_DOCUMENT_NODE
 
     def __cmp__(Node self, Node other):
+        # XXX this is fishy, should return negative, 0, larger
         if self._o is other._o:
             return 0
         else:
@@ -398,6 +399,9 @@ cdef class NodeList(_RefBase):
         else:
             raise IndexError
 
+    def __iter__(self):
+        return _nodeListIteratorFactory(self._doc, self._o.children)
+    
     def item(self, index):
         try:
             return self.__getitem__(index)
@@ -417,6 +421,23 @@ cdef class NodeList(_RefBase):
 cdef _nodeListFactory(Document doc, xmlNode* c_node):
     cdef NodeList result
     result = NodeList()
+    result._doc = doc
+    result._o = c_node
+    return result
+
+cdef class _NodeListIterator(_RefBase):
+    def __next__(self):
+        cdef xmlNode* c_node
+        c_node = self._o
+        if c_node is not NULL:
+            self._o = c_node.next
+            return _nodeFactory(self._getDoc(), c_node)
+        else:
+            raise StopIteration
+    
+cdef _NodeListIterator _nodeListIteratorFactory(Document doc, xmlNode* c_node):
+    cdef _NodeListIterator result
+    result = _NodeListIterator()
     result._doc = doc
     result._o = c_node
     return result
