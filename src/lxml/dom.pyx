@@ -96,6 +96,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
     cdef xmlAttr* xmlHasProp(xmlNode* node, char* name)
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
+    cdef char* xmlNodeGetContent(xmlNode* cur)
     
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
@@ -284,13 +285,23 @@ cdef class Attr(ElementAttrNode):
         def __get__(self):
             return self.nodeName
         
-    property nodeValue:
-        def __get__(self):
-            pass
-
     property ownerElement:
         def __get__(self):
             return _nodeFactory(self._getDoc(), self._o.parent)
+
+    property value:
+        def __get__(self):
+            cdef char* content
+            content = xmlNodeGetContent(self._o)
+            if content is NULL:
+                return ''
+            result = unicode(content, 'UTF-8')
+            xmlFree(content)
+            return result
+
+    property nodeValue:
+        def __get__(self):
+            return self.value
         
 cdef _attrFactory(Document doc, xmlNode* c_node):
     cdef Attr result

@@ -188,7 +188,17 @@ class DomTestCase(unittest.TestCase):
             doc.firstChild,
             attr.ownerElement)
 
-            
+    def test_attr_value(self):
+        doc = makeDocument(
+            '<foo a="A" b="B"/>')
+        attributes = doc.firstChild.attributes
+        self.assertEquals(
+            'A',
+            attributes.getNamedItemNS(None, 'a').value)
+        self.assertEquals(
+            'B',
+            attributes.getNamedItemNS(None, 'b').value)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
