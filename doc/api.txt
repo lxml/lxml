@@ -94,3 +94,18 @@ false if not::
 >>> doc2 = lxml.etree.parse('invalid_doc.xml')
 >>> relaxng.validate(doc2)
 0
+
+write_c14n on ElementTree
+-------------------------
+
+The lxml.etree.ElementTree class has a method write_c14n, which takes
+one argument: a file object. This file object will receive an UTF-8
+representation of the canonicalized form of the XML, following the W3C
+C14N recommendation. For example::
+
+>>> f = StringIO('<a><b/></a>')
+>>> tree = lxml.etree.parse(f)
+>>> f2 = StringIO()
+>>> tree.write_c14n(f2)
+>>> f2.getvalue()
+'<a><b></b></a>'

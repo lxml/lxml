@@ -23,14 +23,14 @@ Exposing libxml2 functionalities
 
 * More tests for error handling.
 
-* better c18n support
-
 In general
 ----------
 
 * test namespaces more in-depth
 
 * will namespaces nodes of unknown namespaces be added (and never freed?)
+
+* Various (c)ElementTree builders and parser APIs. Are they needed?
 
 Top level
 ---------
@@ -54,29 +54,10 @@ ElementTree
 * parse() - this seems hard to implement sanely so this may be an
   incompatibility.
 
-* improve write() support
+* improve write() and write_c14n() support to use file pointers
+  directly where possible, instead of going through memory.
 
 QName
 -----
 
 Not yet implemented.
-
-TreeBuilder
------------
-
-Not yet implemented.
-
-XMLTreeBuilder
---------------
-
-Not yet implemented.
-
-XMLBuilder
-----------
-
-cElementTree interface. Need to figure out API.
-
-XMLParser
----------
-
-cElementTree interface. Need to figure out API.
