@@ -1,18 +1,21 @@
 lxml
 ====
 
-* sharing the same libxml2 tree between DOM and etree. This will
-  require a revision of the nodecache system, so that nodecaches can
-  be more globally shared, and multiple types of nodes can be
-  registered in it.
+* XPath namespaces support.
 
-* XPath query support
+* XSLT support for parameters, Python extension functions, threading
+  issues.
 
-* XSLT support
+* XInclude support.
 
 * Relax NG validation support
 
 * better c18n support
+
+* sharing the same libxml2 tree between DOM and etree. This will
+  require a revision of the nodecache system, so that nodecaches can
+  be more globally shared, and multiple types of nodes can be
+  registered in it.
 
 etree
 =====
@@ -36,16 +39,17 @@ Top level
 ElementInterface
 -----------------
 
-* use optimized find*() methods from cElementTree
+* optimize so that .find* functions run at reasonable speed.
 
 * improve getiterator() implementation to use Python-level iterators
 
 ElementTree
 -----------
 
-* _setroot()
+* _setroot(), even though this is not strictly a public method.
 
-* parse() - this is hard to implement sanely.
+* parse() - this seems hard to implement sanely so this may be an
+  incompatibility.
 
 * improve write() support
 
