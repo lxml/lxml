@@ -723,6 +723,15 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [],
             d.getchildren())
+
+    def test_makeelement(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        b = a.makeelement('c', {'hoi':'dag'})
+        self.assertEquals(
+            '<c hoi="dag"></c>',
+            self._writeElement(b))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

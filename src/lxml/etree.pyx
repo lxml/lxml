@@ -266,6 +266,9 @@ cdef class _ElementBase(_NodeBase):
                 result.append(_elementFactory(self._doc, c_node))
             c_node = c_node.next
         return result
+
+    def makeelement(self, tag, attrib):
+        return Element(tag, attrib)
     
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']
