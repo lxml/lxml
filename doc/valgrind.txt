@@ -1,0 +1,3 @@
+The command used to run the tests with valgrind:
+
+valgrind --tool=memcheck --suppressions=valgrind-python.supp python2.3 test.py

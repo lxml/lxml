@@ -1,0 +1,15 @@
+lxml is copyright Infrae and distributed under the BSD license (see
+doc/licenses/BSD.txt), with the following exceptions:
+
+src/lxml/tests/test_elementtree_doctests, the elementtree test script
+is derived from ElementTree's version. See
+doc/licenses/elementtree.txt for the license text.
+
+test.py, the test-runner script, is GPL and copyright Shuttleworth
+Foundation. See doc/licenses/GPL.txt. It is believed the unchanged
+inclusion of test.py to run the unit test suite falls under the
+"aggregation" clause of the GPL and thus does not affect the license
+of the rest of the package.
+
+zope/testing is a Zope 3 package released under the ZPL version 2.0. See
+doc/licenses/ZopePublicLicense.txt for the license text.

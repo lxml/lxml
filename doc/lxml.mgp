@@ -1,0 +1,122 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%deffont "standard" xfont "helvetica-medium-r"
+%deffont "thick" xfont "helvetica-bold-r"
+%deffont "typewriter" xfont "courier-medium-r"
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Default settings per each line numbers.
+%%
+%default 1 area 90 90, leftfill, size 2, fore "gray20", back "white", font "standard", hgap 0
+%default 2 size 7, vgap 10, prefix " ", ccolor "blue"
+%default 3 size 2, bar "gray70", vgap 10
+%default 4 size 5, fore "gray20", vgap 30, prefix " ", font "standard"
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Default settings that are applied to TAB-indented lines.
+%%
+%tab 1 size 5, vgap 40, prefix "  ", icon box "red" 50
+%tab 2 size 4, vgap 40, prefix "      ", icon arc "yellow" 50
+%tab 3 size 3, vgap 40, prefix "            ", icon delta3 "white" 40
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%page
+
+lxml - a sane Python wrapper for libxml
+
+
+
+%center
+Martijn Faassen, Infrae
+faassen@infrae.com
+
+%page
+
+The C library libxml has huge benefits
+
+
+	Standards-compliant XML support
+
+	full-featured
+
+	actively maintained by XML exports
+
+	fast. fast! FAST!
+
+%page
+
+Features of libxml
+
+
+	Parsing
+
+	Tree based (DOM-ish) XML structure
+
+	XPath support
+
+	XSLT support (libxslt)
+
+	Relax NG (schema) support
+
+	And more
+
+%page
+
+But libxml already has Python bindings!
+
+
+	very low level and C-ish (not Pythonic)
+
+	underdocumented. huge, you get lost in them
+
+	works with UTF-8, not native Python unicode
+
+	can cause segfaults from Python
+
+	have to do manual memory management!
+
+%page
+
+lxml is a new Python binding for libxml
+
+Aims (read: TODOS)
+
+	Pythonic API
+
+	Documented
+
+	Use Python unicode strings in API
+
+	Safe (no segfaults)
+
+	No manual memory management!
+
+%page
+
+Tradeoffs
+
+
+	Slower because of better wrapping.
+
+	But libxml is so fast this likely doesn't matter much.
+
+	Not all features of libxml exposed (unless you help)
+
+%page
+
+What is there now - Proof of concept
+
+
+	Automatic destruction of documents (refcounted)
+
+	Start of ElementTree style API for tree
+
+%page
+
+Future
+
+
+	Fix bugs, add features
+
+	Moving into svn repository on codespeak.net
+
+	Help!
+
