@@ -272,8 +272,8 @@ cdef class Document(Node):
     def createExpression(self, expression, resolver):
         pass
 
-    def createNSResolver(self, nodeResolver):
-        pass
+    def createNSResolver(self, Node nodeResolver):
+        return _xpathNSResolverFactory(self, nodeResolver._o)
 
     def evaluate(self, expression, contextNode,
                  resolver, type, result):
@@ -285,7 +285,23 @@ cdef Document _documentFactory(xmlDoc* c_doc):
     doc._o = <xmlNode*>c_doc
     return doc
 
-
+cdef class XPathNSResolver(_RefBase):
+    def lookupNamespaceURI(self, prefix):
+        cdef xmlNs* ns
+        cdef Document doc
+        doc = self._getDoc()
+        ns = xmlSearchNs(<xmlDoc*>(doc._o), self._o, prefix)
+        if ns is NULL:
+            return None
+        return unicode(ns.href, 'UTF-8')
+        
+cdef XPathNSResolver _xpathNSResolverFactory(Document doc, xmlNode* c_node):
+    cdef XPathNSResolver result
+    result = XPathNSResolver()
+    result._doc = doc
+    result._o = c_node
+    return result
+    
 cdef class ElementAttrNode(NonDocNode):
     property nodeName:
         def __get__(self):
