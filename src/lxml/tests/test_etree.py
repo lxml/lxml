@@ -961,7 +961,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<a><b></b><new></new><c></c></a>',
             self._writeElement(a))
-            
+        
 ##     def test_setslice(self):
 ##         Element = self.etree.Element
 ##         SubElement = self.etree.SubElement
@@ -1003,6 +1003,18 @@ class ETreeTestCaseBase(unittest.TestCase):
 ##         self.assertEquals(
 ##             '<a><!----></a>',
 ##             self._writeElement(a))
+
+# ignores Comment in ElementTree
+##     def test_comment_no_proxy_yet(self):
+##         ElementTree = self.etree.ElementTree
+        
+##         f = StringIO('<a><b></b><!-- hoi --><c></c></a>')
+##         doc = ElementTree(file=f)
+##         a = doc.getroot()
+##         self.assertEquals(
+##             ' hoi ',
+##             a[1].text)
+
 
     def _writeElement(self, element):
         """Write out element for comparison.

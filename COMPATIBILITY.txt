@@ -29,3 +29,6 @@ Differences:
 * When trying to set a subelement using __setitem__ that is in fact
   not an Element but some other object, etree raises a TypeError, and
   ElementTree raises an AssertionError.
+
+* ElementTree ignores comments upon parsing, while etree treats them in
+  as Comment elements.
