@@ -35,7 +35,7 @@ class Error(Exception):
 class XPathError(Error):
     pass
 
-class XPathContext(XPathError):
+class XPathContextError(XPathError):
     pass
 
 class XPathNamespaceError(XPathError):
