@@ -102,9 +102,21 @@ cdef class _ElementBase(_NodeBase):
         self.attrib[key] = value
         
     def append(self, _ElementBase element):
+        cdef xmlNode* c_next
+        # look for any text node trailing this node
+        # XXX multiple text nodes..
+        c_next = element._c_node.next
+        if not (c_next is not NULL and c_next.type == tree.XML_TEXT_NODE):
+            c_next = NULL
         # XXX what if element is coming from a different document?
         tree.xmlUnlinkNode(element._c_node)
+        if c_next is not NULL:
+            tree.xmlUnlinkNode(c_next)
+        # move node itself
         tree.xmlAddChild(self._c_node, element._c_node)
+        # also move the text that may be tailing it
+        if c_next is not NULL:
+            tree.xmlAddChild(self._c_node, c_next)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
         node_registry.changeDocumentBelow(element, self._doc)
@@ -157,7 +169,15 @@ cdef class _ElementBase(_NodeBase):
             if c_node.type != tree.XML_TEXT_NODE:
                 return None
             return unicode(c_node.content, 'UTF-8')
-
+        
+        def __set__(self, value):
+            cdef xmlNode* c_node
+            cdef xmlNode* c_text_node
+            text = value.encode('UTF-8')
+            c_text_node = tree.xmlNewDocText(self._doc._c_doc, text)
+            # XXX what if we're the top element?
+            tree.xmlAddNextSibling(self._c_node, c_text_node)
+                
     # ACCESSORS
     def __getitem__(self, n):
         cdef xmlNode* c_node
@@ -502,12 +522,19 @@ def dump(nodereg.SimpleNodeProxyBase elem):
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o
     cdef tree.xmlOutputBuffer* c_buffer
+    cdef xmlNode* c_next
     
     if not tree.PyFile_Check(f):
         raise ValueError, "Not a file"
     o = <tree.PyFileObject*>f
     c_buffer = tree.xmlOutputBufferCreateFile(tree.PyFile_AsFile(o), NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, NULL)
+    # dump next node if it's a text node
+    c_next = c_node.next
+    if not (c_next is not NULL and c_next.type == tree.XML_TEXT_NODE):
+        c_next = NULL
+    if c_next is not NULL:
+        tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, NULL)
     tree.xmlOutputBufferWriteString(c_buffer, '\n')
     tree.xmlOutputBufferFlush(c_buffer)
     

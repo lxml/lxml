@@ -307,6 +307,24 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(
             'b',
             a[0].tag)
+
+    def test_tail1(self):
+        a = Element('a')
+        a.tail = 'dag'
+        self.assertEquals('dag',
+                          a.tail)
+        b = SubElement(a, 'b')
+        b.tail = 'hoi'
+        self.assertEquals('hoi',
+                          b.tail)
+
+    def test_tail_append(self):
+        a = Element('a')
+        b = Element('b')
+        b.tail = 'b_tail'
+        a.append(b)
+        self.assertEquals('b_tail',
+                          b.tail)
         
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
