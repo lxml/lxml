@@ -79,3 +79,47 @@ extension function::
 
   >>> e.evaluate("test:different-name('there')")
   'Hello there'
+
+Besides strings is possible to return a number of different objects
+from extension functions, such as numbers (floats) and booleans::
+
+  >>> def returnsFloat(evaluator):
+  ...    return 1.7
+  >>> def returnsBool(evaluator):
+  ...    return True
+  >>> extension3 = { (None, 'returnsFloat') : returnsFloat,
+  ...                (None, 'returnsBool') : returnsBool }
+  >>> e = etree.XPathEvaluator(doc, None, extensions=[extension3])
+  >>> e.evaluate("returnsFloat()")
+  1.7
+  >>> e.evaluate("returnsBool()")
+  True
+
+It is also possible to return lists of nodes, and this way it is possible
+to return XML structures::
+
+  >>> def returnsNodeSet(evaluator):
+  ...    results = etree.Element('results')
+  ...    result = etree.SubElement(results, 'result')
+  ...    result.text = "Alpha"
+  ...    result2 = etree.SubElement(results, 'result')
+  ...    result2.text = "Beta"
+  ...    result3 = etree.SubElement(results, 'result')
+  ...    result3.text = "Gamma"
+  ...    return [results]
+  >>> extension4 = { (None, 'returnsNodeSet') : returnsNodeSet }
+  >>> e = etree.XPathEvaluator(doc, None, extensions=[extension4])
+  >>> r = e.evaluate("returnsNodeSet()")
+  >>> len(r)
+  1
+  >>> t = r[0]
+  >>> t.tag
+  'results'
+  >>> len(t)
+  3
+  >>> t[0].tag
+  'result'
+  >>> t[0].text
+  'Alpha'
+  >>> t[1].text
+  'Beta'
