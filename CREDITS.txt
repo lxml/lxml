@@ -1,9 +1,14 @@
 Credits
 -------
 
-Martijn Faassen - initial developer
+Martijn Faassen - initial and main developer
+
+Marc-Antoine Parent - XPath extension function help and patches
+
 Paul Everitt - feedback on API design
+
 Philipp von Weitershausen and Holger Krekel - hosting it on codespeak.net
+
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:
