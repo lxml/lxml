@@ -147,6 +147,14 @@ ext_modules = [
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
+    Extension('lxml.c14n',
+              sources=['src/lxml/c14n.pyx'],
+              include_dirs=[libxml2_include_dir],
+              runtime_library_dirs=runtime_library_dirs,
+              library_dirs=library_dirs,
+              libraries=['xml2'],
+              extra_compile_args = ['-w']
+              ),
     ]
 
 setup(name="lxml",

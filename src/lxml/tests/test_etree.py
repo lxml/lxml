@@ -1,13 +1,15 @@
 import unittest
 
-from lxml.etree import Element, ElementTree, SubElement, XML
 from StringIO import StringIO
 import os, shutil, tempfile
+from lxml import c14n
 
-class ETreeTestCase(unittest.TestCase):
+class ETreeTestCaseBase(unittest.TestCase):
+    etree = None
+    
     def setUp(self):
         self._temp_dir = tempfile.mkdtemp()
-
+        
     def tearDown(self):
         shutil.rmtree(self._temp_dir)
 
@@ -16,9 +18,12 @@ class ETreeTestCase(unittest.TestCase):
     
     def test_element(self):
         for i in range(10):
-            e = Element('foo')
+            e = self.etree.Element('foo')
 
     def test_tree(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+    
         element = Element('top')
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
@@ -40,6 +45,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(data1, data2)
         
     def buildNodes(self, element, children, depth):
+        Element = self.etree.Element
+        
         if depth == 0:
             return
         for i in range(children):
@@ -48,6 +55,8 @@ class ETreeTestCase(unittest.TestCase):
             element.append(new_element)
 
     def test_simple(self):
+        Element = self.etree.Element
+        
         root = Element('root')
         root.append(Element('one'))
         root.append(Element('two'))
@@ -59,6 +68,9 @@ class ETreeTestCase(unittest.TestCase):
         self.assertRaises(IndexError, root.__getitem__, 3)
 
     def test_subelement(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
         root = Element('root')
         SubElement(root, 'one')
         SubElement(root, 'two')
@@ -69,6 +81,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('three', root[2].tag)
         
     def test_element_indexing_with_text(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc>Test<one>One</one></doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -77,6 +91,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertRaises(IndexError, root.__getitem__, 1)
         
     def test_element_indexing_with_text2(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc><one>One</one><two>Two</two>hm<three>Three</three></doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -86,12 +102,16 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('three', root[2].tag)
 
     def test_element_indexing_only_text(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc>Test</doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
         self.assertEquals(0, len(root))
 
     def test_elementtree(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc><one>One</one><two>Two</two></doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -100,18 +120,24 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('two', root[1].tag)
 
     def test_text(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc>This is a text</doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
         self.assertEquals('This is a text', root.text)
 
     def test_text_empty(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc></doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
         self.assertEquals(None, root.text)
 
     def test_text_other(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc><one>One</one></doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -119,6 +145,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('One', root[0].text)
 
     def test_tail(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc>This is <i>mixed</i> content.</doc>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -129,6 +157,9 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(' content.', root[0].tail)
 
     def test_ElementTree(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+        
         el = Element('hoi')
         doc = ElementTree(el)
         root = doc.getroot()
@@ -136,6 +167,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('hoi', root.tag)
 
     def test_attributes(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc one="One" two="Two"/>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -144,6 +177,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertRaises(KeyError, root.attrib.__getitem__, 'three')  
 
     def test_attributes2(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc one="One" two="Two"/>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -153,6 +188,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('foo', root.attrib.get('three', 'foo'))
 
     def test_attributes3(self):
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO('<doc one="One" two="Two"/>')
         doc = ElementTree(file=f)
         root = doc.getroot()
@@ -162,24 +199,32 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('foo', root.get('three', 'foo'))
 
     def test_attribute_keys(self):
+        XML = self.etree.XML
+        
         root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
         keys = root.attrib.keys()
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
     def test_attribute_keys2(self):
+        XML = self.etree.XML
+        
         root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
         keys = root.keys()
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
     def test_attribute_values(self):
+        XML = self.etree.XML
+        
         root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
         values = root.attrib.values()
         values.sort()
         self.assertEquals(['Alpha', 'Beta', 'Gamma'], values)
 
     def test_attribute_items(self):
+        XML = self.etree.XML
+        
         root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
         items = root.attrib.items()
         items.sort()
@@ -191,11 +236,15 @@ class ETreeTestCase(unittest.TestCase):
             items)
 
     def test_XML(self):
+        XML = self.etree.XML
+        
         root = XML('<doc>This is a text.</doc>')
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
     def test_iteration(self):
+        XML = self.etree.XML
+        
         root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
         result = []
         for el in root:
@@ -203,6 +252,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(['one', 'two', 'three'], result)
 
     def test_iteration2(self):
+        XML = self.etree.XML
+        
         root = XML('<doc></doc>')
         result = []
         for el in root:
@@ -210,6 +261,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals([], result)
 
     def test_iteration3(self):
+        XML = self.etree.XML
+        
         root = XML('<doc>Text</doc>')
         result = []
         for el in root:
@@ -217,6 +270,8 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals([], result)
         
     def test_attribute_iterator(self):
+        XML = self.etree.XML
+        
         root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma" />')
         result = []
         for key in root.attrib:
@@ -224,19 +279,26 @@ class ETreeTestCase(unittest.TestCase):
         result.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], result)
 
-
     def test_element_with_attributes(self):
+        Element = self.etree.Element
+        
         el = Element('tag', {'foo':'Foo', 'bar':'Bar'})
         self.assertEquals('Foo', el.attrib['foo'])
         self.assertEquals('Bar', el.attrib['bar'])
 
     def test_subelement_with_attributes(self):
+        Element =  self.etree.Element
+        SubElement = self.etree.SubElement
+        
         el = Element('tag')
         SubElement(el, 'foo', baz="Baz")
         self.assertEquals("Baz", el[0].attrib['baz'])
         
     # could trigger a crash in the past
     def test_write(self):
+        ElementTree = self.etree.ElementTree
+        XML = self.etree.XML
+        
         for i in range(10):
             f = StringIO() 
             root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
@@ -244,12 +306,14 @@ class ETreeTestCase(unittest.TestCase):
             tree.write(f)
             data = f.getvalue()
             self.assertEquals(
-                '<?xml version="1.0"?>\n<doc%s>This is a test.</doc%s>\n' % (i, i),
-                data)
+                '<doc%s>This is a test.</doc%s>' % (i, i),
+                c14n.canonicalize(data))
 
     # this could trigger a crash, apparently because the document
     # reference was prematurely garbage collected
     def test_crash(self):
+        Element = self.etree.Element
+        
         element = Element('tag')
         for i in range(10):
             element.attrib['key'] = 'value'
@@ -258,6 +322,9 @@ class ETreeTestCase(unittest.TestCase):
             
     # from doctest; for some reason this caused crashes too
     def test_write_ElementTreeDoctest(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+        
         f = StringIO()
         for i in range(10):
             element = Element('tag%s' % i)
@@ -267,6 +334,9 @@ class ETreeTestCase(unittest.TestCase):
             self._check_element_tree(tree)
 
     def test_subelement_reference(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
         el = Element('foo')
         el2 = SubElement(el, 'bar')
         el3 = SubElement(el2, 'baz')
@@ -287,6 +357,9 @@ class ETreeTestCase(unittest.TestCase):
             el[1][0].text)
 
     def test_set_text(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
         a = Element('a')
         b = SubElement(a, 'b')
         a.text = 'hoi'
@@ -298,6 +371,9 @@ class ETreeTestCase(unittest.TestCase):
             a[0].tag)
 
     def test_set_text2(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
         a = Element('a')
         a.text = 'hoi'
         b = SubElement(a ,'b')
@@ -309,6 +385,9 @@ class ETreeTestCase(unittest.TestCase):
             a[0].tag)
 
     def test_tail1(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
         a = Element('a')
         a.tail = 'dag'
         self.assertEquals('dag',
@@ -319,6 +398,8 @@ class ETreeTestCase(unittest.TestCase):
                           b.tail)
 
     def test_tail_append(self):
+        Element = self.etree.Element
+        
         a = Element('a')
         b = Element('b')
         b.tail = 'b_tail'
@@ -358,9 +439,26 @@ class ETreeTestCase(unittest.TestCase):
         mapping["key"] = "value"
         self.assertEquals("value", mapping["key"])
 
+from lxml import etree
+
+class ETreeTestCase(ETreeTestCaseBase):
+    etree = etree
+
+try:
+    from elementtree import ElementTree
+    HAVE_ELEMENTTREE = 1
+except ImportError:
+    HAVE_ELEMENTTREE = 0
+
+if HAVE_ELEMENTTREE:
+    class ElementTreeTestCase(ETreeTestCaseBase):
+        etree = ElementTree
+    
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
+    if HAVE_ELEMENTTREE:
+       suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
     return suite
 
 if __name__ == '__main__':

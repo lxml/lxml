@@ -463,7 +463,6 @@ cdef class Parser:
         xmlparser.xmlCtxtUseOptions(
             pctxt,
             xmlparser.XML_PARSE_NOENT |
-            xmlparser.XML_PARSE_NOENT |
             xmlparser.XML_PARSE_NOCDATA)
 
         xmlparser.xmlParseDocument(pctxt)
