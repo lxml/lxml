@@ -1,0 +1,6 @@
+<grammar ns="http://www.w3.org/1999/xhtml"
+         xmlns="http://relaxng.org/ns/structure/1.0">
+
+<include href="test2.rng"/>
+
+</grammar>

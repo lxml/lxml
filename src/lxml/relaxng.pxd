@@ -4,6 +4,7 @@ from tree cimport xmlDoc
 cdef extern from "libxml/relaxng.h":
     ctypedef struct xmlRelaxNG
     ctypedef struct xmlRelaxNGParserCtxt
+    
     ctypedef struct xmlRelaxNGValidCtxt
     
     ctypedef enum xmlRelaxNGValidErr:
@@ -51,6 +52,7 @@ cdef extern from "libxml/relaxng.h":
     cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema)
     cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc)
     cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt)
+    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewParserCtxt(char* URL)
     cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewDocParserCtxt(xmlDoc* doc)
     cdef void xmlRelaxNGFree(xmlRelaxNG* schema)
     cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt)

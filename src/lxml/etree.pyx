@@ -853,15 +853,9 @@ def parse(source, parser=None):
     if isinstance(source, StringIO):
         c_doc = theParser.parseDoc(source.getvalue())
         return _elementTreeFactory(c_doc)
-    
-    if tree.PyFile_Check(source):
-        # this is a file object, so retrieve file name
-        filename = tree.PyFile_Name(source)
-        # XXX this is a hack that makes to seem a crash go away;
-        # filename is a borrowed reference which may be what's tripping
-        # things up
-        tree.Py_INCREF(filename)
-    else:
+
+    filename = _getFilenameForFile(source)
+    if filename is None:
         filename = source
         
     # open filename
@@ -869,6 +863,22 @@ def parse(source, parser=None):
     result = _elementTreeFactory(c_doc)
     return result
 
+def _getFilenameForFile(source):
+    """Given a Python File object, give filename back.
+
+    Returns None if not a file object.
+    """
+    if tree.PyFile_Check(source):
+        # this is a file object, so retrieve file name
+        filename = tree.PyFile_Name(source)
+        # XXX this is a hack that makes to seem a crash go away;
+        # filename is a borrowed reference which may be what's tripping
+        # things up
+        tree.Py_INCREF(filename)
+        return filename
+    else:
+        return None
+    
 # Globally shared XML parser to enable dictionary sharing
 cdef class Parser:
 
@@ -1027,12 +1037,23 @@ cdef class XSLT:
 
 cdef class RelaxNG:
     """Turn a document into an Relax NG validator.
+    Can also load from filesystem directly given file object or filename.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
     
-    def __init__(self, _ElementTree doc):
+    def __init__(self, _ElementTree tree=None, file=None):
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
-        parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
+                    
+        if tree is not None:
+            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(tree._c_doc)
+        elif file is not None:
+            filename = _getFilenameForFile(file)
+            if filename is None:
+                # XXX assume a string object
+                filename = file
+            parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
+        else:
+            raise relaxng.xmlRelaxNGError, "No tree or file given"
         if parser_ctxt is NULL:
             raise RelaxNGParseError, "Document is not valid Relax NG"
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)

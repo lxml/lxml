@@ -1541,6 +1541,12 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertRaises(etree.RelaxNGParseError,
                           etree.RelaxNG, schema)
 
+    def test_relaxng_include(self):
+        # this will only work if we access the file through path or
+        # file object..
+        f = open(fileInTestDir('test1.rng'), 'r')
+        schema = etree.RelaxNG(file=f)
+    
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):
         tree = self.parse('<a><b/></a>')
