@@ -19,7 +19,7 @@ class build_ext(distutils.command.build_ext.build_ext):
   def finalize_options(self):
       distutils.command.build_ext.build_ext.finalize_options(self)
 
-  def swig_sources(self, sources):
+  def swig_sources(self, sources, dummy):
       if not self.extensions:
           return
       
