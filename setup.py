@@ -3,7 +3,7 @@ import sys
 
 # change these to your local installation of libxml2
 libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
-libxslt_include_dir = '/home/faassen/tmp/local/include/libxslt'
+libxslt_include_dir = '/home/faassen/tmp/local/include/'
 include_dirs = [libxml2_include_dir, libxslt_include_dir]
 library_dirs = ['/home/faassen/tmp/local/lib']
 libraries = ['xml2', 'xslt']
