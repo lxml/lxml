@@ -22,6 +22,10 @@ In general
 
 * namespaces
 
+* make various functions work correctly in the presence of
+  non-XML_ELEMENT_NODE elements like Comments and Processing
+  Instructions.
+
 Top level
 ---------
 
