@@ -193,6 +193,9 @@ cdef class Node:
 
     def hasAttributes(self):
         return False
+
+    def hasChildNodes(self):
+        return self._o.children is not NULL
     
 cdef class NonDocNode(Node):
     cdef Document _doc
@@ -326,6 +329,9 @@ cdef class Attr(ElementAttrNode):
     property nodeValue:
         def __get__(self):
             return self.value
+
+    def hasChildNodes(self):
+        return self.value != ''
         
 cdef _attrFactory(Document doc, xmlNode* c_node):
     cdef Attr result

@@ -382,6 +382,41 @@ class DomTestCase(unittest.TestCase):
         self.assert_(doc.documentElement.hasAttributes())
         doc = makeDocument('<foo xmlns:baz="http://www.baz.com"/>')
         self.assert_(not doc.documentElement.hasAttributes())
+
+    def test_hasChildNodes(self):
+        # Attr
+        doc = makeDocument('<foo href="bar"/>')
+        self.assert_(
+            doc.childNodes[0].attributes.getNamedItemNS(
+            None, 'href').hasChildNodes())
+        doc = makeDocument('<foo href=""/>')
+        self.assert_(
+            not doc.childNodes[0].attributes.getNamedItemNS(
+            None, 'href').hasChildNodes())
+        # XXX CDATASection
+        # Comment
+        doc = makeDocument('<foo><!--hey--></foo>')
+        self.assert_(
+            not doc.documentElement.childNodes[0].hasChildNodes())
+        # Document
+        doc = makeDocument('<foo/>')
+        self.assert_(doc.hasChildNodes())
+        # XXX DocumentFragment
+        # XXX DocumentType
+        # Element
+        doc = makeDocument('<foo/>')
+        self.assert_(not doc.documentElement.hasChildNodes())
+        doc = makeDocument('<foo>Foo</foo>')
+        self.assert_(doc.documentElement.hasChildNodes())
+        doc = makeDocument('<foo><bar/></foo>')
+        self.assert_(doc.documentElement.hasChildNodes())
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        # Text
+        doc = makeDocument('<foo>Text</foo>')
+        self.assert_(not doc.documentElement.childNodes[0].hasChildNodes())
         
 def test_suite():
     suite = unittest.TestSuite()
