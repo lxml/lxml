@@ -2,7 +2,8 @@ cimport tree
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
-
+import _elementpath
+from StringIO import StringIO
 import sys
 
 import nodereg
@@ -92,6 +93,14 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
         return c_ns
 
 cdef class _ElementTreeBase(_DocumentBase):
+
+##     def parse(self, source, parser=None):
+##         # XXX ignore parser for now
+##         cdef xmlDoc* c_doc
+##         c_doc = theParser.parseDoc(source)
+##         result._c_doc = c_doc
+        
+##         return self.getroot()
     
     def getroot(self):
         cdef xmlNode* c_node
@@ -105,10 +114,20 @@ cdef class _ElementTreeBase(_DocumentBase):
         cdef char* mem
         cdef int size
         tree.xmlDocDumpMemory(self._c_doc, &mem, &size)
+        if not encoding:
+            encoding = 'us-ascii'
+        # XXX complete hack to remove these, but for compatibility with
+        # ElementTree selftest.py
+        s = '<?xml version="1.0"?>\n'
+        m = mem
+        if m.startswith(s):
+            m = m[len(s):]
+        if m[-1] == '\n':
+            m = m[:-1]
         if encoding in ('UTF-8', 'utf8', 'UTF8', 'utf-8'):
-            file.write(mem)
+            file.write(m)
         else:
-            file.write(unicode(mem, 'UTF-8').encode(encoding))
+            file.write(unicode(m, 'UTF-8').encode(encoding))
         tree.xmlFree(mem)
 
     def getiterator(self, tag=None):
@@ -116,7 +135,28 @@ cdef class _ElementTreeBase(_DocumentBase):
         if root is None:
             return []
         return root.getiterator(tag)
-    
+
+    def find(self, path):
+        root = self.getroot()
+        assert root is not None
+        if path[:1] == "/":
+            path = "." + path
+        return root.find(path)
+
+    def findtext(self, path, default=None):
+        root = self.getroot()
+        assert root is not None
+        if path[:1] == "/":
+            path = "." + path
+        return root.findtext(path, default)
+
+    def findall(self, path):
+        root = self.getroot()
+        assert root is not None
+        if path[:1] == "/":
+            path = "." + path
+        return root.findall(path)
+
 class _ElementTree(_ElementTreeBase):
     __slots__ = ['__weakref__']
     
@@ -380,10 +420,19 @@ cdef class _ElementBase(_NodeBase):
 
         # XXX this doesn't work yet
         # return _docOrderIteratorFactory(self._doc, self._c_node, tag)
-    
+
     def makeelement(self, tag, attrib):
         return Element(tag, attrib)
-    
+
+    def find(self, path):
+        return _elementpath.find(self, path)
+
+    def findtext(self, path, default=None):
+        return _elementpath.findtext(self, path, default)
+
+    def findall(self, path):
+        return _elementpath.findall(self, path)
+
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']
     
@@ -780,7 +829,7 @@ def ElementTree(_ElementBase element=None, file=None):
         node_registry.changeDocumentBelow(element, etree)
 
     return etree
-
+    
 cdef class Parser:
 
     cdef xmlDict* _c_dict
@@ -876,6 +925,17 @@ def iselement(element):
 
 def dump(nodereg.SimpleNodeProxyBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
+
+def tostring(element, encoding=None):
+    f = StringIO()
+    ElementTree(element).write(f, encoding)
+    return f.getvalue()
+
+## def parse(source, parser=None):
+##     # XXX ignore parser for now
+##     cdef xmlDoc* c_doc
+##     c_doc = theParser.parseDoc(source)
+##     return _elementTreeFactory(c_doc)
 
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o

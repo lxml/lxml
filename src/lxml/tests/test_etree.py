@@ -1218,6 +1218,18 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<a xmlns:ns0="%s" xmlns:ns1="%s" ns0:foo="Foo" ns1:bar="Bar"></a>' % (ns, ns2),
             self._writeElement(a))
+
+    def test_tostring(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        
+        self.assertEquals('<a><b></b><c></c></a>',
+                          c14n.canonicalize(tostring(a)))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
@@ -1252,7 +1264,6 @@ class ETreeTestCaseBase(unittest.TestCase):
 ##         self.assertEquals(
 ##             ' hoi ',
 ##             a[1].text)
-
 
     def _writeElement(self, element):
         """Write out element for comparison.
