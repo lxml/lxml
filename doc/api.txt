@@ -3,7 +3,7 @@ APIs specific to lxml
 =====================
 
 lxml tries to follow established APIs wherever possible. Sometimes
-however the needs to expose a feature in an easy way lead to the
+however the need to expose a feature in an easy way led to the
 invention of a new API.
 
 lxml.etree
@@ -61,9 +61,8 @@ results in another ElementTree object::
 >>> doc = lxml.etree.parse('doc.xml')
 >>> result = style.apply(doc)
 
-The result object can accessed like it is a normal ElementTree
-document, but it can also be turned into an (XML or text) string using
-the style's ``tostring`` method::
+The result object can accessed like a normal ElementTree document, but
+can also be turned into an (XML or text) string using the style's
+``tostring`` method::
 
 >>> result_string = style.tostring(doc)
-
