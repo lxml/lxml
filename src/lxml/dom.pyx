@@ -117,19 +117,19 @@ cdef class Node:
 
     property ELEMENT_NODE:
         def __get__(self):
-            return 1
+            return XML_ELEMENT_NODE
 
     property ATTRIBUTE_NODE:
         def __get__(self):
-            return 2
+            return XML_ATTRIBUTE_NODE
 
     property TEXT_NODE:
         def __get__(self):
-            return 3
+            return XML_TEXT_NODE
 
     property DOCUMENT_NODE:
         def __get__(self):
-            return 9
+            return XML_DOCUMENT_NODE
 
     def __cmp__(Node self, Node other):
         if self._o is other._o:
@@ -138,7 +138,7 @@ cdef class Node:
             return 1
 
     def isSameNode(Node self, Node other):
-        return self.__cmp__(self, other)
+        return self.__cmp__(other) == 0
 
     property childNodes:
         def __get__(self):
@@ -233,8 +233,7 @@ cdef class Element(NonDocNode):
             if self._o.ns is NULL or self._o.ns.href is NULL:
                 return None
             return unicode(self._o.ns.href, 'UTF-8')
-        
-    
+
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
@@ -255,6 +254,22 @@ cdef class NodeList(_RefBase):
         else:
             raise IndexError
 
+    def item(self, index):
+        try:
+            return self.__getitem__(index)
+        except IndexError:
+            return None
+
+    property length:
+        def __get__(self):
+            cdef xmlNode* c_node
+            c_node = self._o.children
+            c = 0
+            while c_node is not NULL:
+                c = c + 1
+                c_node = c_node.next
+            return c
+        
 cdef _nodeListFactory(Document doc, xmlNode* c_node):
     cdef NodeList result
     result = NodeList()
@@ -262,12 +277,32 @@ cdef _nodeListFactory(Document doc, xmlNode* c_node):
     result._o = c_node
     return result
 
+cdef class CharacterData(NonDocNode):
+    property nodeType:
+        def __get__(self):
+            return XML_TEXT_NODE 
+    property data:
+        def __get__(self):
+            return unicode(self._o.content, "UTF-8")
+
+cdef class Text(CharacterData):
+    pass
+
+cdef _textFactory(Document doc, xmlNode* c_node):
+    cdef Text result
+    result = Text()
+    result._doc = doc
+    result._o = c_node
+    return result
+
 cdef _nodeFactory(Document doc, xmlNode* c_node):
     if c_node is NULL:
         return None
-    if c_node.type == 1: # ELEMENT_NODE
+    elif c_node.type == XML_ELEMENT_NODE:
         return _elementFactory(doc, c_node)
-    if c_node.type == 9: # DOCUMENT_NODE
+    elif c_node.type == XML_TEXT_NODE:
+        return _textFactory(doc, c_node)
+    elif c_node.type == XML_DOCUMENT_NODE:
         return doc
     
 def makeDocument(text):

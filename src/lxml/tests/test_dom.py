@@ -126,7 +126,17 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'http://codespeak.net/ns',
             doc.firstChild.firstChild.namespaceURI)
+
+    def test_isSameNode(self):
+        doc = makeDocument('<doc><a/><b/></doc>')
+        self.assert_(
+            doc.firstChild.firstChild.isSameNode(doc.firstChild.childNodes[0]))
         
+    def test_textNodes(self):
+        doc = makeDocument('<doc>Foo</doc>')
+        self.assertEquals('Foo', doc.firstChild.firstChild.data)
+        
+            
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
