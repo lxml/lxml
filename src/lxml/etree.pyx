@@ -200,6 +200,15 @@ def Element(tag, attrib=None, **extra):
     xmlDocSetRootElement(tree._c_doc, c_node)
     return _elementFactory(tree, c_node)
 
+def SubElement(_Element parent, tag, attrib=None, **extra):
+    cdef xmlNode* c_node
+    cdef _Element element
+    
+    c_node = xmlNewDocNode(parent._doc._c_doc, NULL, tag, NULL)
+    element = _elementFactory(parent._doc, c_node)
+    parent.append(element)
+    return element
+
 def ElementTree(_Element element=None, file=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_node

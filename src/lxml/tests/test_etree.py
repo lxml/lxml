@@ -1,6 +1,6 @@
 import unittest
 
-from lxml.etree import Element, ElementTree
+from lxml.etree import Element, ElementTree, SubElement
 from StringIO import StringIO
 import os, shutil, tempfile
 
@@ -58,6 +58,16 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('two', root[1].tag)
         self.assertEquals('three', root[2].tag)
         self.assertRaises(IndexError, root.__getitem__, 3)
+
+    def test_subelement(self):
+        root = Element('root')
+        SubElement(root, 'one')
+        SubElement(root, 'two')
+        SubElement(root, 'three')
+        self.assertEquals(3, len(root))
+        self.assertEquals('one', root[0].tag)
+        self.assertEquals('two', root[1].tag)
+        self.assertEquals('three', root[2].tag)
         
     
 def test_suite():
