@@ -3,33 +3,29 @@ from tree cimport xmlDoc, xmlNode
 cimport xmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
+import nodereg
+cimport nodereg
+
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
     
-cdef class _DocumentBase:
+cdef class _DocumentBase(nodereg.DocumentProxyBase):
     """Base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
     """
     
-    cdef xmlDoc* _c_doc
-
-    def __dealloc__(self):
-        tree.xmlFreeDoc(self._c_doc)
-    
-cdef class _NodeBase:
+cdef class _NodeBase(nodereg.NodeProxyBase):
     """Base class to reference a document object and a libxml node.
 
     By pointing to an ElementTree instance, a reference is kept to
     _ElementTree as long as there is some pointer to a node in it.
     """
-    cdef _DocumentBase _doc
-    cdef xmlNode* _c_node
-
-cdef class _ElementTree(_DocumentBase):
+    
+cdef class _ElementTreeBase(_DocumentBase):
     def getroot(self):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
@@ -47,19 +43,22 @@ cdef class _ElementTree(_DocumentBase):
         else:
             file.write(unicode(mem, 'UTF-8').encode(encoding))
         tree.xmlFree(mem)
-        
-cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
-    cdef _ElementTree result
+
+class _ElementTree(_ElementTreeBase):
+    __slots__ = ['__weakref__']
+    
+cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
+    cdef _ElementTreeBase result
     result = _ElementTree()
     result._c_doc = c_doc
     return result
     
-cdef class _Element(_NodeBase):
+cdef class _ElementBase(_NodeBase):
     # MANIPULATORS
     def set(self, key, value):
         self.attrib[key] = value
-
-    def append(self, _Element element):
+        
+    def append(self, _ElementBase element):
         # XXX what if element is coming from a different document?
         tree.xmlUnlinkNode(element._c_node)
         tree.xmlAddChild(self._c_node, element._c_node)
@@ -133,9 +132,12 @@ cdef class _Element(_NodeBase):
 
     def items(self):
         return self.attrib.items()
+
+class _Element(_ElementBase):
+    __slots__ = ['__weakref__']
     
-cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
-    cdef _Element result
+cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
+    cdef _ElementBase result
     if c_node is NULL:
         return None
     result = _Element()
@@ -143,7 +145,7 @@ cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
     result._c_node = c_node
     return result
 
-cdef class _Attrib(_NodeBase):
+cdef class _AttribBase(_NodeBase):
     # MANIPULATORS
     def __setitem__(self, key, value):
         key = key.encode('UTF-8')
@@ -214,15 +216,18 @@ cdef class _Attrib(_NodeBase):
                     ))
             c_node = c_node.next
         return result
+
+class _Attrib(_AttribBase):
+    __slots__ = ['__weakref__']
     
-cdef _Attrib _attribFactory(_ElementTree etree, xmlNode* c_node):
-    cdef _Attrib result
+cdef _AttribBase _attribFactory(_ElementTreeBase etree, xmlNode* c_node):
+    cdef _AttribBase result
     result = _Attrib()
     result._doc = etree
     result._c_node = c_node
     return result
 
-cdef class _AttribIterator(_NodeBase):
+cdef class _AttribIteratorBase(_NodeBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -235,15 +240,18 @@ cdef class _AttribIterator(_NodeBase):
         self._c_node = c_node.next
         return unicode(c_node.name, 'UTF-8')
 
-cdef _AttribIterator _attribIteratorFactory(_ElementTree etree,
-                                            xmlNode* c_node):
-    cdef _AttribIterator result
+class _AttribIterator(_AttribIteratorBase):
+    __slots__ = ['__weakref__']
+    
+cdef _AttribIteratorBase _attribIteratorFactory(_ElementTreeBase etree,
+                                                xmlNode* c_node):
+    cdef _AttribIteratorBase result
     result = _AttribIterator()
     result._doc = etree
     result._c_node = c_node
     return result
 
-cdef class _ElementIterator(_NodeBase):
+cdef class _ElementIteratorBase(_NodeBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -256,9 +264,12 @@ cdef class _ElementIterator(_NodeBase):
         self._c_node = c_node.next
         return _elementFactory(self._doc, c_node)
 
-cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
-                                              xmlNode* c_node):
-    cdef _ElementIterator result
+class _ElementIterator(_ElementIteratorBase):
+    __slots__ = ['__weakref__']
+    
+cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
+                                                  xmlNode* c_node):
+    cdef _ElementIteratorBase result
     result = _ElementIterator()
     result._doc = etree
     result._c_node = c_node
@@ -277,26 +288,26 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
     
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
-    cdef _ElementTree etree
+    cdef _ElementTreeBase etree
 
     etree = ElementTree()
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
     tree.xmlDocSetRootElement(etree._c_doc, c_node)
     return _elementFactory(etree, c_node)
 
-def SubElement(_Element parent, tag, attrib=None, **extra):
+def SubElement(_ElementBase parent, tag, attrib=None, **extra):
     cdef xmlNode* c_node
-    cdef _Element element
+    cdef _ElementBase element
     c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
     return element
 
-def ElementTree(_Element element=None, file=None):
+def ElementTree(_ElementBase element=None, file=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
-    cdef _ElementTree etree
+    cdef _ElementTreeBase etree
     
     if file is not None:
         # XXX read XML into memory not the fastest way to do this
