@@ -1480,7 +1480,8 @@ class ETreeXPathTestCase(HelperTestCase):
     def test_xpath_error(self):
         tree = self.parse('<a/>')
         self.assertRaises(SyntaxError, tree.xpath, '\\fad')
-        
+
+
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""
         
@@ -1502,8 +1503,16 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           st.tostring(res))
-
-    
+    def test_xslt_broken(self):
+        tree = self.parse('<a/>')
+        style = self.parse('''\
+<xslt:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:foo />
+</xslt:stylesheet>''')
+        self.assertRaises(etree.XSLTParseError,
+                          etree.XSLT, style)
+        
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):
         tree_valid = self.parse('<a><b></b></a>')

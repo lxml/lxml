@@ -4,6 +4,9 @@ cdef extern from "libxslt/xsltInternals.h":
     ctypedef struct xsltStylesheet:
         pass
 
+    ctypedef struct xsltTransformContext:
+        pass
+    
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc)
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet)
     
@@ -19,4 +22,10 @@ cdef extern from "libxslt/xsltutils.h":
                                     int* doc_txt_len,
                                     xmlDoc* result,
                                     xsltStylesheet* style)
+    
+    cdef void xsltSetGenericErrorFunc(void* ctxt,
+                                      void (*handler)(void* ctxt, char* msg, ...))
+    cdef void xsltSetTransformErrorFunc(xsltTransformContext*,
+                                        void* ctxt,
+                                        void (*handler)(void* ctxt, char* msg, ...))
     

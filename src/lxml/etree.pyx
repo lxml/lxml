@@ -1233,6 +1233,7 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
 
     xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
     if xpathCtxt is NULL:
+        # XXX what triggers this exception?
         raise XPathContextError, "Unable to create new XPath context"
     
     if namespaces is not None:
@@ -1242,6 +1243,7 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
             ns_register_status = xpath.xmlXPathRegisterNs(
                 xpathCtxt, s_prefix, s_uri)
             if ns_register_status != 0:
+                # XXX doesn't seem to be possible to trigger this from Python
                 raise XPathNamespaceError, "Unable to register namespaces with prefix %s and uri %s" % (prefix, uri)
             
     # element context is requested
@@ -1311,10 +1313,15 @@ cdef void _shutUpLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
     xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
 
+cdef void _shutUpLibxsltErrors():
+    xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    # xslt.xsltSetTransformErrorFunc
+
 # ugly global shutting up of all errors, but seems to work..
 if not DEBUG:
     _shutUpLibxmlErrors()
-
+    _shutUpLibxsltErrors()
+    
 # backpointer functionality
 
 cdef struct _ProxyRef
