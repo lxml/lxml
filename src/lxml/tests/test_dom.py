@@ -211,7 +211,13 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'foo',
             doc.documentElement.nodeName)
-        
+
+    def test_comment(self):
+        doc = makeDocument('<foo><!-- comment --></foo>')
+        self.assertEquals(
+            ' comment ',
+            doc.documentElement.firstChild.data)
+            
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])

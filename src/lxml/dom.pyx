@@ -348,7 +348,19 @@ cdef _textFactory(Document doc, xmlNode* c_node):
     result._doc = doc
     result._o = c_node
     return result
-        
+
+cdef class Comment(CharacterData):
+    property nodeName:
+        def __get__(self):
+            return '#comment'
+
+cdef _commentFactory(Document doc, xmlNode* c_node):
+    cdef Comment result
+    result = Comment()
+    result._doc = doc
+    result._o = c_node
+    return result
+
 cdef class NodeList(_RefBase):
     def __getitem__(self, index):
         cdef xmlNode* c_node
@@ -437,6 +449,8 @@ cdef _nodeFactory(Document doc, xmlNode* c_node):
         return _textFactory(doc, c_node)
     elif c_node.type == XML_ATTRIBUTE_NODE:
         return _attrFactory(doc, c_node)
+    elif c_node.type == XML_COMMENT_NODE:
+        return _commentFactory(doc, c_node)
     elif c_node.type == XML_DOCUMENT_NODE:
         return doc
     
