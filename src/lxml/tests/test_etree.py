@@ -1333,7 +1333,12 @@ if HAVE_ELEMENTTREE:
     class ElementTreeTestCase(ETreeTestCaseBase):
         etree = ElementTree
 
-class ETreeOnlyTestCase(unittest.TestCase):
+class HelperTestCase(unittest.TestCase):
+    def parse(self, text):
+        f = StringIO(text)
+        return etree.parse(f)
+    
+class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
     etree = etree
     
@@ -1394,7 +1399,7 @@ class ETreeOnlyTestCase(unittest.TestCase):
         data = f.getvalue()
         return c14n.canonicalize(data)
 
-class ETreeXPathTestCase(unittest.TestCase):
+class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
 
     def test_xpath_boolean(self):
@@ -1471,6 +1476,13 @@ class ETreeXPathTestCase(unittest.TestCase):
         self.assertEquals(
             [root[0]],
             root.xpath('//baz:b', {'baz': 'uri:a'}))
+
+    def test_xpath_error(self):
+        tree = self.parse('<a/>')
+        self.assertRaises(SyntaxError, tree.xpath, '\\fad')
+        
+class ETreeXSLTTestCase(HelperTestCase):
+    """XPath tests etree"""
         
     def test_xslt(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -1490,11 +1502,36 @@ class ETreeXPathTestCase(unittest.TestCase):
 <foo>B</foo>
 ''',
                           st.tostring(res))
-        
-    def parse(self, text):
-        f = StringIO(text)
-        return etree.parse(f)
 
+    
+class ETreeRelaxNGTestCase(HelperTestCase):
+    def test_relaxng(self):
+        tree_valid = self.parse('<a><b></b></a>')
+        tree_invalid = self.parse('<a><c></c></a>')
+        schema = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+     <element name="b">
+       <text />
+     </element>
+  </zeroOrMore>
+</element>
+''')
+        schema = etree.RelaxNG(schema)
+        self.assert_(schema.validate(tree_valid))
+        self.assert_(not schema.validate(tree_invalid))
+
+    def test_relaxng_invalid_schema(self):
+        schema = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+     <element name="b" />
+  </zeroOrMore>
+</element>
+''')
+        self.assertRaises(etree.RelaxNGParseError,
+                          etree.RelaxNG, schema)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
@@ -1502,6 +1539,8 @@ def test_suite():
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
     return suite
 
 import os.path

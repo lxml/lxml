@@ -3,6 +3,7 @@ from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
 cimport xpath
 cimport xslt
+cimport relaxng
 cimport xmlerror
 cimport cstd
 
@@ -10,6 +11,8 @@ from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
 from StringIO import StringIO
 import sys
+
+DEBUG = False
 
 cdef int PROXY_ELEMENT
 cdef int PROXY_ATTRIB
@@ -26,8 +29,40 @@ PROXY_ELEMENT_ITER = 3
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
 
-
 class Error(Exception):
+    pass
+
+class XPathError(Error):
+    pass
+
+class XPathContext(XPathError):
+    pass
+
+class XPathNamespaceError(XPathError):
+    pass
+
+class XPathResultError(XPathError):
+    pass
+
+class XSLTError(Error):
+    pass
+
+class XSLTParseError(XSLTError):
+    pass
+
+class XLSTApplyError(XSLTError):
+    pass
+
+class XSLTSaveError(XSLTError):
+    pass
+
+class RelaxNGError(Error):
+    pass
+
+class RelaxNGParseError(RelaxNGError):
+    pass
+
+class RelaxNGValidateError(RelaxNGError):
     pass
 
 cdef class _DocumentBase:
@@ -943,7 +978,7 @@ cdef class XSLT:
         
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
         if c_style is NULL:
-            raise Error, "Cannot parse style sheet"
+            raise XSLTParseError, "Cannot parse style sheet"
         self._c_style = c_style
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
         
@@ -955,7 +990,7 @@ cdef class XSLT:
         cdef xmlDoc* c_result 
         c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
         if c_result is NULL:
-            raise Error, "Error applying stylesheet"
+            raise XSLTApplyError, "Error applying stylesheet"
         # XXX should set special flag to indicate this is XSLT result
         # so that xsltSaveResultTo* functional can be used during
         # serialize?
@@ -969,11 +1004,42 @@ cdef class XSLT:
         cdef int r
         r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
         if r == -1:
-            raise Error, "Error saving stylesheet result to string"
+            raise XSLTSaveError, "Error saving stylesheet result to string"
         result = funicode(s)
         tree.xmlFree(s)
         return result
 
+cdef class RelaxNG:
+    """Turn a document into an Relax NG validator.
+    """
+    cdef relaxng.xmlRelaxNG* _c_schema
+    
+    def __init__(self, _ElementTree doc):
+        cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
+        parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
+        if parser_ctxt is NULL:
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
+        if self._c_schema is NULL:
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+        
+    def __dealloc__(self):
+        relaxng.xmlRelaxNGFree(self._c_schema)
+        
+    def validate(self, _ElementTree doc):
+        """Validate doc using Relax NG.
+
+        Returns true if document is valid, false if not."""
+        cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
+        cdef int ret
+        valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
+        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, doc._c_doc)
+        relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
+        if ret == -1:
+            raise RelaxNGValidateError, "Internal error in Relax NG validation"
+        return ret == 0
+    
 # Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o
@@ -1155,7 +1221,7 @@ cdef object _createNodeSetResult(_ElementTree doc,
             print "Not yet implemented result node type:", c_node.type
             raise NotImplementedError
     return result
-
+    
 cdef object _xpathEval(_ElementTree doc, _Element element,
                        object path, object namespaces):    
     cdef xpath.xmlXPathContext* xpathCtxt
@@ -1167,8 +1233,8 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
 
     xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
     if xpathCtxt is NULL:
-        raise Error, "Unable to create new XPath context"
-
+        raise XPathContextError, "Unable to create new XPath context"
+    
     if namespaces is not None:
         for prefix, uri in namespaces.items():
             s_prefix = prefix.encode('UTF8')
@@ -1176,7 +1242,7 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
             ns_register_status = xpath.xmlXPathRegisterNs(
                 xpathCtxt, s_prefix, s_uri)
             if ns_register_status != 0:
-                raise Error, "Unable to register namespaces with prefix %s and uri %s" % (prefix, uri)
+                raise XPathNamespaceError, "Unable to register namespaces with prefix %s and uri %s" % (prefix, uri)
             
     # element context is requested
     if element is not None:
@@ -1192,7 +1258,7 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         xpath.xmlXPathFreeObject(xpathObj)
         xpath.xmlXPathFreeContext(xpathCtxt)
-        raise Error, "Undefined xpath result"
+        raise XPathResultError, "Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
         result = _createNodeSetResult(doc, xpathObj)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
@@ -1212,7 +1278,7 @@ cdef object _xpathEval(_ElementTree doc, _Element element,
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
         raise NotImplementedError
     else:
-        raise Error, "Unknown xpath result %s" % str(xpathObj.type)
+        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
 
     xpath.xmlXPathFreeObject(xpathObj)
     xpath.xmlXPathFreeContext(xpathCtxt)
@@ -1233,6 +1299,21 @@ cdef object funicode(char* s):
     if isutf8(s):
         return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
     return tree.PyString_FromStringAndSize(s, tree.strlen(s))
+
+cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
+    pass
+
+cdef void nullStructuredErrorFunc(void* userData,
+                                  xmlerror.xmlError* error):
+    pass
+
+cdef void _shutUpLibxmlErrors():
+    xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
+
+# ugly global shutting up of all errors, but seems to work..
+if not DEBUG:
+    _shutUpLibxmlErrors()
 
 # backpointer functionality
 

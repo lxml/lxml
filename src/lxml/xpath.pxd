@@ -28,6 +28,8 @@ cdef extern from "libxml/xpath.h":
     ctypedef struct xmlXPathContext:
         tree.xmlDoc* doc
         tree.xmlNode* node
+        # actually signature is void (*error)(void*, xmlError*)
+        void* error
         
     cdef xmlXPathContext* xmlXPathNewContext(tree.xmlDoc* doc)
     cdef xmlXPathObject* xmlXPathEvalExpression(char* str,

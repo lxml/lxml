@@ -6,7 +6,12 @@ cdef extern from "libxml/xmlerror.h":
         char* message
         char* file
         int line
-        
+
+    cdef void xmlSetGenericErrorFunc(void* ctxt,
+                                     void (*handler)(void* ctxt, char* msg, ...))
+    cdef void xmlSetStructuredErrorFunc(void* ctxt,
+                                        void (*handler)(void* userData, xmlError* error))
+    
     ctypedef enum xmlErrorDomain:
         XML_FROM_NONE = 0
         XML_FROM_PARSER = 1 # The XML parser
