@@ -54,6 +54,7 @@ cdef extern from "libxml/tree.h":
         char* prefix
 
     ctypedef struct xmlNode:
+        void* _private
         xmlElementType   type
         char* name
         xmlNode* children
