@@ -210,6 +210,40 @@ class ETreeTestCase(unittest.TestCase):
                 data)
             #print "done"
 
+    def test_XML(self):
+        root = XML('<doc>This is a text.</doc>')
+        self.assertEquals(0, len(root))
+        self.assertEquals('This is a text.', root.text)
+
+    def test_iteration(self):
+        root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
+        result = []
+        for el in root:
+            result.append(el.tag)
+        self.assertEquals(['one', 'two', 'three'], result)
+
+    def test_iteration2(self):
+        root = XML('<doc></doc>')
+        result = []
+        for el in root:
+            result.append(el.tag)
+        self.assertEquals([], result)
+
+    def test_iteration3(self):
+        root = XML('<doc>Text</doc>')
+        result = []
+        for el in root:
+            result.append(el.tag)
+        self.assertEquals([], result)
+        
+    def test_attribute_iterator(self):
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma" />')
+        result = []
+        for key in root.attrib:
+            result.append(key)
+        result.sort()
+        self.assertEquals(['alpha', 'beta', 'gamma'], result)
+        
 #    def test_move_element(self):
 #    
 #        el = Element('foo')

@@ -228,6 +228,10 @@ cdef class _Attrib(_NodeBase):
         except KeyError:
             return default
 
+    def __iter__(self):
+        return _attribIteratorFactory(self._doc,
+                                      <xmlNode*>self._c_node.properties)
+    
     def keys(self):
         result = []
         cdef xmlNode* c_node
@@ -269,7 +273,28 @@ cdef _Attrib _attribFactory(_ElementTree tree, xmlNode* c_node):
     result._doc = tree
     result._c_node = c_node
     return result
-    
+
+cdef class _AttribIterator(_NodeBase):
+    def __next__(self):
+        cdef xmlNode* c_node
+        c_node = self._c_node
+        while c_node is not NULL:
+            if c_node.type == XML_ATTRIBUTE_NODE:
+                break
+            c_node = c_node.next
+        else:
+            raise StopIteration
+        self._c_node = c_node.next
+        return unicode(c_node.name, 'UTF-8')
+
+cdef _AttribIterator _attribIteratorFactory(_ElementTree tree,
+                                            xmlNode* c_node):
+    cdef _AttribIterator result
+    result = _AttribIterator()
+    result._doc = tree
+    result._c_node = c_node
+    return result
+
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTree tree
