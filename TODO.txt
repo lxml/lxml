@@ -1,7 +1,10 @@
 lxml
 ====
 
-* sharing the same libxml2 tree between DOM and etree.
+* sharing the same libxml2 tree between DOM and etree. This will
+  require a revision of the nodecache system, so that nodecaches can
+  be more globally shared, and multiple types of nodes can be
+  registered in it.
 
 * XPath query support
 
