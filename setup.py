@@ -5,6 +5,7 @@ import sys
 libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
 library_dirs = ['/home/faassen/tmp/local/lib']
 runtime_library_dirs = ['/home/faassen/tmp/local/lib']
+extra_compile_args = ['-w']
 
 # Provide a bunch of custom components that make it possible to build and
 # install non-.py files into the package destinations.
@@ -122,7 +123,7 @@ ext_modules = [
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
               libraries=['xml2'],
-              extra_compile_args = ['-w']
+              extra_compile_args = extra_compile_args
               ),
     Extension('lxml.dom',
               sources=['src/lxml/dom.pyx'],
@@ -130,7 +131,7 @@ ext_modules = [
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
               libraries=['xml2'],
-              extra_compile_args = ['-w']
+              extra_compile_args = extra_compile_args
               ),
     Extension('lxml.nodereg',
               sources=['src/lxml/nodereg.pyx'],
@@ -138,7 +139,7 @@ ext_modules = [
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
               libraries=['xml2'],
-              extra_compile_args = ['-w']
+              extra_compile_args = extra_compile_args
               ),
     Extension('lxml.noderegtest',
               sources=['src/lxml/noderegtest.pyx'],
@@ -146,7 +147,7 @@ ext_modules = [
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
               libraries=['xml2'],
-              extra_compile_args = ['-w']
+              extra_compile_args = extra_compile_args
               ),
     Extension('lxml.c14n',
               sources=['src/lxml/c14n.pyx'],
@@ -154,7 +155,7 @@ ext_modules = [
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
               libraries=['xml2'],
-              extra_compile_args = ['-w']
+              extra_compile_args = extra_compile_args
               ),
     ]
 
