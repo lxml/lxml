@@ -523,6 +523,23 @@ class ETreeTestCaseBase(unittest.TestCase):
         b = SubElement(a, 'b')
 
         self.assertRaises(IndexError, a.__setitem__, 1, Element('c'))
+
+    def test_tag_write(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+
+        a.tag = 'c'
+
+        self.assertEquals(
+            'c',
+            a.tag)
+
+        self.assertEquals(
+            '<c><b></b></c>',
+            self._writeElement(a))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
@@ -546,7 +563,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 ##         self.assertEquals(
 ##             '<a><!----></a>',
 ##             self._writeElement(a))
-        
+
     def _writeElement(self, element):
         """Write out element for comparison.
         """

@@ -125,6 +125,10 @@ cdef class _ElementBase(_NodeBase):
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
 
+        def __set__(self, value):
+            text = value.encode('UTF-8')
+            tree.xmlNodeSetName(self._c_node, text)
+            
     property attrib:
         def __get__(self):
             return _attribFactory(self._doc, self._c_node)

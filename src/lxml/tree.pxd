@@ -130,7 +130,7 @@ cdef extern from "libxml/tree.h":
     cdef void xmlNodeDumpOutput(xmlOutputBuffer* buf,
                                 xmlDoc* doc, xmlNode* cur, int level,
                                 int format, char* encoding)
-    
+    cdef void xmlNodeSetName(xmlNode* cur, char* name)
 
 cdef extern from "libxml/xmlIO.h":
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
