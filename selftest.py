@@ -235,27 +235,27 @@ def bad_find():
     SyntaxError: expected path separator ([)
     """
 
-## def parsefile():
-##     """
-##     Test parsing from file.
+def parsefile():
+    """
+    Test parsing from file.
 
-##     >>> tree = ElementTree.parse("samples/simple.xml")
-##     >>> normalize_crlf(tree)
-##     >>> tree.write(sys.stdout)
-##     <root>
-##        <element key="value">text</element>
-##        <element>text</element>tail
-##        <empty-element />
-##     </root>
-##     >>> tree = ElementTree.parse("samples/simple-ns.xml")
-##     >>> normalize_crlf(tree)
-##     >>> tree.write(sys.stdout)
-##     <ns0:root xmlns:ns0="namespace">
-##        <ns0:element key="value">text</ns0:element>
-##        <ns0:element>text</ns0:element>tail
-##        <ns0:empty-element />
-##     </ns0:root>
-##     """
+    >>> tree = ElementTree.parse("samples/simple.xml")
+    >>> normalize_crlf(tree)
+    >>> tree.write(sys.stdout)
+    <root>
+       <element key="value">text</element>
+       <element>text</element>tail
+       <empty-element/>
+    </root>
+    >>> tree = ElementTree.parse("samples/simple-ns.xml")
+    >>> normalize_crlf(tree)
+    >>> tree.write(sys.stdout)
+    <root xmlns="namespace">
+       <element key="value">text</element>
+       <element>text</element>tail
+       <empty-element/>
+    </root>
+    """
 
 ## def parsehtml():
 ##     """
