@@ -237,15 +237,7 @@ cdef class _ElementBase(_NodeBase):
 
         def __set__(self, value):
             cdef xmlNs* c_ns
-            if value[0] == '{':
-                i = value.find('}')
-                assert i != -1
-                ns = value[1:i].encode('UTF-8')
-                text = value[i + 1:].encode('UTF-8')
-            else:
-                ns = None
-                text = value.encode('UTF-8')
-
+            ns, text = _getNsTag(value)
             tree.xmlNodeSetName(self._c_node, text)
             if ns is None:
                 return
@@ -995,3 +987,14 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
             c = c + 1
         c_node = c_next
 
+def _getNsTag(tag):
+    """Given a tag, find namespace URI and tag name.
+    Return None for NS uri if no namespace URI available.
+    """
+    tag = tag.encode('UTF-8')
+    if tag[0] == '{':
+        i = tag.find('}')
+        assert i != -1
+        return tag[1:i], tag[i + 1:]
+    return None, tag
+        
