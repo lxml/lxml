@@ -325,7 +325,55 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             doc.TEXT_NODE,
             doc.documentElement.childNodes[0].nodeType)
-    
+
+    def test_prefix(self):
+        # Attr
+        doc = makeDocument('<foo href="bar"/>')
+        self.assertEquals(
+            None,
+            doc.childNodes[0].attributes.getNamedItemNS(None, 'href').prefix)
+        doc = makeDocument(
+            '<foo xmlns:bar="http://www.baz.com" bar:hey="hoi"/>')
+        self.assertEquals(
+            'bar',
+            doc.childNodes[0].attributes.getNamedItemNS(
+            'http://www.baz.com', 'hey').prefix)
+        # XXX CDATASection
+        # Comment
+        doc = makeDocument('<foo><!--hey--></foo>')
+        self.assertEquals(
+            None,
+            doc.documentElement.childNodes[0].prefix)
+        # Document
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            None,
+            doc.prefix)
+        # XXX DocumentFragment
+        # XXX DocumentType
+        # Element
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            None,
+            doc.documentElement.prefix)
+        doc = makeDocument('<foo xmlns="http://www.foo.com"/>')
+        self.assertEquals(
+            None,
+            doc.documentElement.prefix)
+        doc = makeDocument('<bar:foo xmlns:bar="http://www.foo.com"/>')
+        self.assertEquals(
+            'bar',
+            doc.documentElement.prefix)
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        # Text
+        doc = makeDocument('<foo>Text</foo>')
+        self.assertEquals(
+            None,
+            doc.documentElement.childNodes[0].prefix)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
