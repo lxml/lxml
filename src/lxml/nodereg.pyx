@@ -17,7 +17,7 @@ cdef class DocumentProxyBase(SimpleDocumentProxyBase):
     def registerProxy(self, SimpleNodeProxyBase proxy, proxy_type=0):
         self._registry.registerProxy(proxy, proxy_type)
 
-    def unregisterProxy(self, SimpleNodeProxyBase proxy, proxy_type):
+    def unregisterProxy(self, SimpleNodeProxyBase proxy, proxy_type=0):
         """Unregister a proxy again for a particular node.
         """
         self._registry.unregisterProxy(proxy, proxy_type)

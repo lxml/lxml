@@ -30,7 +30,7 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
     def registerProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type=0):
         node_registry.registerProxy(proxy, proxy_type)
 
-    def unregisterProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type):
+    def unregisterProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type=0):
         node_registry.unregisterProxy(proxy, proxy_type)
 
     def getProxies(self):
@@ -364,11 +364,7 @@ def ElementTree(_ElementBase element=None, file=None):
 
     # XXX what if element and file are both not None?
     if element is not None:
-        # XXX we'd prefer not having to make a copy
-        # XXX but moving it causes a segfault when doing xmlFreeDoc
-        c_node_copy = tree.xmlDocCopyNode(element._c_node, etree._c_doc, 1)
-        tree.xmlDocSetRootElement(etree._c_doc, c_node_copy)
-        element._c_node = c_node_copy
+        tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         element._doc = etree
     return etree
 
