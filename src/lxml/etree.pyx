@@ -954,7 +954,7 @@ def Extension(module, function_mapping, ns_uri=None):
     for function_name, xpath_name in function_mapping.items():
         result[(ns_uri, xpath_name)] = getattr(module, function_name)
     return result
-    
+
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
     cdef _NodeBase node
@@ -1012,13 +1012,17 @@ cdef object _createNodeSetResult(_ElementTree doc,
                                  xpath.xmlXPathObject* xpathObj):
     cdef xmlNode* c_node
     cdef char* s
+    cdef _NodeBase element
     result = []
     if xpathObj.nodesetval is NULL:
         return result
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
         if c_node.type == tree.XML_ELEMENT_NODE:
-            result.append(_elementFactory(doc, c_node))
+            element = _elementFactory(doc, c_node)
+            # since element could be coming from a foreign document
+            changeDocumentBelow(c_node, doc)
+            result.append(element)
         elif c_node.type == tree.XML_TEXT_NODE:
             result.append(funicode(c_node.content))
         elif c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -1635,16 +1639,11 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
             return NULL
         c_top = c_current
         c_current = c_current.parent
-    # if the top is not c_node, check whether it has node;
-    # if the top is the node we're checking, then we *can*
-    # still deallocate safely
-    if c_top is not c_node:
-        if c_top._private is not NULL:
-            # print "Not freeing: proxies still exist"
-            return NULL
-    # XXX what if top has *other* proxies pointing to it?
-
-    # otherwise, see whether we have children to deallocate
+    # cannot free a top which has proxies pointing to it
+    if c_top._private is not NULL:
+        # print "Not freeing: proxies still exist"
+        return NULL
+    # see whether we have children to deallocate
     if canDeallocateChildren(c_top):
         return c_top
     else:
