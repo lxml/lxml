@@ -1,3 +1,16 @@
+lxml
+====
+
+* sharing the same libxml2 tree between DOM and etree.
+
+* XPath query support
+
+* XSLT support
+
+* Relax NG validation support
+
+* better c18n support
+
 etree
 =====
 
