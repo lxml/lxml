@@ -95,6 +95,8 @@ cdef class ElementBase(Node):
     def appendChild(self, Node newChild):
         if newChild._c_node.parent is not NULL:
             self.removeChild(newChild)
+        if self is newChild:
+            raise DOMError # HIERARCHY_REQUEST_ERR
         tree.xmlAddChild(self._c_node, newChild._c_node)
         return newChild
 
