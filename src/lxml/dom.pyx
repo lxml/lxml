@@ -190,7 +190,10 @@ cdef class Node:
     property prefix:
         def __get__(self):
             return None
-        
+
+    def hasAttributes(self):
+        return False
+    
 cdef class NonDocNode(Node):
     cdef Document _doc
     
@@ -276,6 +279,9 @@ cdef class Element(ElementAttrNode):
     property attributes:
         def __get__(self):
             return _namedNodeMapFactory(self._getDoc(), self._o)
+
+    def hasAttributes(self):
+        return self._o.properties is not NULL
         
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result

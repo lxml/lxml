@@ -373,6 +373,15 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             None,
             doc.documentElement.childNodes[0].prefix)
+
+    def test_hasAttributes(self):
+        doc = makeDocument('<foo/>')
+        self.assert_(not doc.hasAttributes())
+        self.assert_(not doc.documentElement.hasAttributes())
+        doc = makeDocument('<foo bar="Baz"/>')
+        self.assert_(doc.documentElement.hasAttributes())
+        doc = makeDocument('<foo xmlns:baz="http://www.baz.com"/>')
+        self.assert_(not doc.documentElement.hasAttributes())
         
 def test_suite():
     suite = unittest.TestSuite()
