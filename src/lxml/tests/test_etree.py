@@ -1126,6 +1126,41 @@ class ETreeTestCaseBase(unittest.TestCase):
         t = ElementTree(element=a)
         self.assertEquals('A2',
                           a.tail)
+
+    def test_elementtree_getiterator(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ElementTree = self.etree.ElementTree
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+        t = ElementTree(element=a)
+        
+        self.assertEquals(
+            [a, b, d, c, e],
+            list(t.getiterator()))
+
+    def test_elementtree_getiterator_filter(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ElementTree = self.etree.ElementTree
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+        t = ElementTree(element=a)
+        
+        self.assertEquals(
+            [a],
+            list(t.getiterator('a')))
+        a2 = SubElement(e, 'a')
+        self.assertEquals(
+            [a, a2],
+            list(t.getiterator('a')))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

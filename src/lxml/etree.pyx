@@ -75,7 +75,7 @@ cdef class _ElementTreeBase(_DocumentBase):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
         if c_node is NULL:
-            return # return None
+            return None
         return _elementFactory(self, c_node)
     
     def write(self, file, encoding='us-ascii'):
@@ -89,6 +89,12 @@ cdef class _ElementTreeBase(_DocumentBase):
             file.write(unicode(mem, 'UTF-8').encode(encoding))
         tree.xmlFree(mem)
 
+    def getiterator(self, tag=None):
+        root = self.getroot()
+        if root is None:
+            return []
+        return root.getiterator(tag)
+    
 class _ElementTree(_ElementTreeBase):
     __slots__ = ['__weakref__']
     
@@ -699,8 +705,13 @@ def ElementTree(_ElementBase element=None, file=None):
     cdef _ElementTreeBase etree
     
     if file is not None:
-        # XXX read XML into memory not the fastest way to do this
-        data = file.read()
+        if isinstance(file, str) or isinstance(file, unicode):
+            f = open(file, 'r')
+            data = f.read()
+            f.close()
+        else:
+            # XXX read XML into memory not the fastest way to do this
+            data = file.read()
         c_doc = theParser.parseDoc(data)
     else:
         c_doc = theParser.newDoc()
