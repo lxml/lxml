@@ -82,7 +82,7 @@ cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseDoc(char* cur)
 
 # the rules
-# any libxml C argument/variable is prefixed with _c_
+# any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
 
@@ -119,10 +119,10 @@ cdef class _ElementTree(_DocumentBase):
             file.write(unicode(mem, 'UTF-8').encode(encoding))
         xmlFree(mem)
         
-cdef _ElementTree _elementTreeFactory(xmlDoc* _c_doc):
+cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     cdef _ElementTree result
     result = _ElementTree()
-    result._c_doc = _c_doc
+    result._c_doc = c_doc
     return result
     
 cdef class _Element(_NodeBase):
@@ -130,6 +130,53 @@ cdef class _Element(_NodeBase):
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
 
+    property text:
+        def __get__(self):
+            cdef xmlNode* c_node
+            c_node = self._c_node.children
+            if c_node is NULL:
+                return None
+            if c_node.type != XML_TEXT_NODE:
+                return None
+            return unicode(c_node.content, 'UTF-8')
+
+        def __set__(self, value):
+            pass
+
+    property tail:
+        def __get__(self):
+            cdef xmlNode* c_node
+            c_node = self._c_node.next
+            if c_node is NULL:
+                return None
+            if c_node.type != XML_TEXT_NODE:
+                return None
+            return unicode(c_node.content, 'UTF-8')
+
+    def __getitem__(self, n):
+        cdef xmlNode* c_node
+        c_node = self._c_node.children
+        c = 0
+        while c_node is not NULL:
+            if c_node.type == XML_ELEMENT_NODE:
+                if c == n:
+                    return _elementFactory(self._doc, c_node)
+                c = c + 1
+            c_node = c_node.next
+        else:
+            raise IndexError
+
+    def __len__(self):
+        cdef int c
+        cdef xmlNode* c_node
+        c = 0
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            if c_node.type == XML_ELEMENT_NODE:
+                c = c + 1
+            c_node = c_node.next
+        return c
+    
     def append(self, _Element element):
         xmlUnlinkNode(element._c_node)
         xmlAddChild(self._c_node, element._c_node)
@@ -145,26 +192,26 @@ cdef _Element _elementFactory(_ElementTree tree, xmlNode* _c_node):
     return result
 
 def Element(tag, attrib=None, **extra):
-    cdef xmlNode* _c_node
+    cdef xmlNode* c_node
     cdef _ElementTree tree
 
     tree = ElementTree()
-    _c_node = xmlNewDocNode(tree._c_doc, NULL, tag, NULL)
-    xmlDocSetRootElement(tree._c_doc, _c_node)
-    return _elementFactory(tree, _c_node)
+    c_node = xmlNewDocNode(tree._c_doc, NULL, tag, NULL)
+    xmlDocSetRootElement(tree._c_doc, c_node)
+    return _elementFactory(tree, c_node)
 
 def ElementTree(_Element element=None, file=None):
-    cdef xmlDoc* _c_doc
+    cdef xmlDoc* c_doc
+    cdef xmlNode* c_node
     cdef _ElementTree tree
-    cdef xmlNode* _c_node
     
     if file is not None:
         # XXX read XML into memory not the fastest way to do this
         data = file.read()
-        _c_doc = xmlParseDoc(data)
+        c_doc = xmlParseDoc(data)
     else:
-        _c_doc = xmlNewDoc("1.0")
-    tree = _elementTreeFactory(_c_doc)
+        c_doc = xmlNewDoc("1.0")
+    tree = _elementTreeFactory(c_doc)
 
     # XXX what if element and file are both not None?
     if element is not None:
