@@ -110,28 +110,40 @@ class MyDistribution(Distribution):
         self.cmdclass['build_ext'] = MyExtBuilder
         self.cmdclass['install_lib'] = MyLibInstaller
 
+libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
+library_dirs = ['/home/faassen/tmp/local/lib']
+runtime_library_dirs = ['/home/faassen/tmp/local/lib']
+
 ext_modules = [
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
-              include_dirs=['/usr/include/libxml2'],
+              include_dirs=[libxml2_include_dir],
+              runtime_library_dirs=runtime_library_dirs,
+              library_dirs=library_dirs,
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
     Extension('lxml.dom',
               sources=['src/lxml/dom.pyx'],
-              include_dirs=['/usr/include/libxml2'],
+              include_dirs=[libxml2_include_dir],
+              runtime_library_dirs=runtime_library_dirs,
+              library_dirs=library_dirs,
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
     Extension('lxml.nodereg',
               sources=['src/lxml/nodereg.pyx'],
-              include_dirs=['/usr/include/libxml2'],
+              include_dirs=[libxml2_include_dir],
+              runtime_library_dirs=runtime_library_dirs,
+              library_dirs=library_dirs,
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
     Extension('lxml.noderegtest',
               sources=['src/lxml/noderegtest.pyx'],
-              include_dirs=['/usr/include/libxml2'],
+              include_dirs=[libxml2_include_dir],
+              runtime_library_dirs=runtime_library_dirs,
+              library_dirs=library_dirs,
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
