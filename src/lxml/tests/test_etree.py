@@ -567,6 +567,21 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         self.assertRaises(IndexError, a.__setitem__, 1, Element('c'))
 
+    def test_setitem_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        b.tail = 'B2'
+        c = Element('c')
+        c.tail = 'C2'
+
+        a[0] = c
+        self.assertEquals(
+            '<a><c></c>C2</a>',
+            self._writeElement(a))
+        
     def test_tag_write(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

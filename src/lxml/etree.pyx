@@ -103,10 +103,14 @@ cdef class _ElementBase(_NodeBase):
 
     def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
         cdef xmlNode* c_node
+        cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError
+        c_next = element._c_node.next
+        _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
+        _moveTail(c_next, element._c_node)
         node_registry.changeDocumentBelow(element, self._doc)
         
     def __delitem__(self, index):
