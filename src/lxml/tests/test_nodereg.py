@@ -8,7 +8,24 @@ class NodeRegTestCase(unittest.TestCase):
         doc = noderegtest.makeDocument('<foo><bar/></foo>')
         self.assertEquals('foo', doc.documentElement.nodeName)
         self.assertEquals('bar', doc.documentElement.firstChild.nodeName)
-        node = doc.createElementNS(None, 'baz')
+
+    def test_bar(self):
+        doc = noderegtest.makeDocument('<foo/>')
+        new = doc.createElementNS(None, 'bar')
+        doc.documentElement.appendChild(new)
+        self.assertEquals('bar', doc.documentElement.firstChild.nodeName)
+
+    def test_baz(self):
+        doc = noderegtest.makeDocument('<foo/>')
+        bar = doc.createElementNS(None, 'bar')
+        baz = doc.createElementNS(None, 'baz')
+        bar.appendChild(baz)
+        #self.assertEquals('baz', bar.firstChild.nodeName)
+        flux = doc.createElementNS(None, 'flux')
+        baz.appendChild(flux)
+        del baz
+        del bar
+        del flux
         
 def test_suite():
     suite = unittest.TestSuite()

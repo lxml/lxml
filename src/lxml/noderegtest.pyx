@@ -11,6 +11,9 @@ cdef extern from "libxml/parser.h":
 import nodereg
 cimport nodereg
 
+class DOMError(Exception):
+    pass
+
 cdef class DocumentBase(nodereg.DocumentProxyBase):
 
     property documentElement:
@@ -86,6 +89,18 @@ cdef class ElementBase(Node):
                 return None
             return unicode(self._c_node.ns.prefix, 'UTF-8')
 
+    def appendChild(self, Node newChild):
+        if newChild._c_node.parent is not NULL:
+            self.removeChild(newChild)
+        tree.xmlAddChild(self._c_node, newChild._c_node)
+        return newChild
+
+    def removeChild(self, Node oldChild):
+        if oldChild._c_node.parent is not self._c_node:
+            raise DOMError # NOT_FOUND_ERR
+        tree.xmlUnlinkNode(oldChild._c_node)
+        return oldChild
+    
 class Element(ElementBase):
     __slots__ = ['__weakref__']
     
