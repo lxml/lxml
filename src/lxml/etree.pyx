@@ -792,6 +792,8 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
+# module-level API for ElementTree
+
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTreeBase etree
@@ -854,7 +856,50 @@ def ElementTree(_ElementBase element=None, file=None):
         node_registry.changeDocumentBelow(element, etree)
 
     return etree
+
+def XML(text):
+    cdef xmlDoc* c_doc
+    c_doc = theParser.parseDoc(text)
+    return _elementTreeFactory(c_doc).getroot()
+
+fromstring = XML
+
+def iselement(element):
+    return isinstance(element, _ElementBase)
+
+def dump(nodereg.SimpleNodeProxyBase elem):
+    _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
+
+def tostring(element, encoding=None):
+    f = StringIO()
+    ElementTree(element).write(f, encoding)
+    return f.getvalue()
+
+def parse(source, parser=None):
+    # XXX ignore parser for now
+    cdef xmlDoc* c_doc
+
+    # XXX simplistic StringIO support
+    if isinstance(source, StringIO):
+        c_doc = theParser.parseDoc(source.getvalue())
+        return _elementTreeFactory(c_doc)
     
+    if tree.PyFile_Check(source):
+        # this is a file object, so retrieve file name
+        filename = tree.PyFile_Name(source)
+        # XXX this is a hack that makes to seem a crash go away;
+        # filename is a borrowed reference which may be what's tripping
+        # things up
+        tree.Py_INCREF(filename)
+    else:
+        filename = source
+        
+    # open filename
+    c_doc = theParser.parseDocFromFile(filename)
+    result = _elementTreeFactory(c_doc)
+    return result
+
+# Globally shared XML parser to enable dictionary sharing
 cdef class Parser:
 
     cdef xmlDict* _c_dict
@@ -956,53 +1001,11 @@ cdef class Parser:
             self._c_dict = result.dict
             xmlparser.xmlDictReference(self._c_dict)
         return result
-    
-# globally shared parser
+
 cdef Parser theParser
 theParser = Parser()
-    
-def XML(text):
-    cdef xmlDoc* c_doc
-    c_doc = theParser.parseDoc(text)
-    return _elementTreeFactory(c_doc).getroot()
 
-fromstring = XML
-
-def iselement(element):
-    return isinstance(element, _ElementBase)
-
-def dump(nodereg.SimpleNodeProxyBase elem):
-    _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
-
-def tostring(element, encoding=None):
-    f = StringIO()
-    ElementTree(element).write(f, encoding)
-    return f.getvalue()
-
-def parse(source, parser=None):
-    # XXX ignore parser for now
-    cdef xmlDoc* c_doc
-
-    # XXX simplistic StringIO support
-    if isinstance(source, StringIO):
-        c_doc = theParser.parseDoc(source.getvalue())
-        return _elementTreeFactory(c_doc)
-    
-    if tree.PyFile_Check(source):
-        # this is a file object, so retrieve file name
-        filename = tree.PyFile_Name(source)
-        # XXX this is a hack that makes to seem a crash go away;
-        # filename is a borrowed reference which may be what's tripping
-        # things up
-        tree.Py_INCREF(filename)
-    else:
-        filename = source
-        
-    # open filename
-    c_doc = theParser.parseDocFromFile(filename)
-    result = _elementTreeFactory(c_doc)
-    return result
-
+# Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o
     cdef tree.xmlOutputBuffer* c_buffer
