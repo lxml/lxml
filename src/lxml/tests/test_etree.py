@@ -294,11 +294,10 @@ class ETreeTestCaseBase(unittest.TestCase):
         SubElement(el, 'foo', baz="Baz")
         self.assertEquals("Baz", el[0].attrib['baz'])
         
-    # could trigger a crash in the past
     def test_write(self):
         ElementTree = self.etree.ElementTree
         XML = self.etree.XML
-        
+
         for i in range(10):
             f = StringIO() 
             root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
@@ -406,7 +405,63 @@ class ETreeTestCaseBase(unittest.TestCase):
         a.append(b)
         self.assertEquals('b_tail',
                           b.tail)
+
+    def test_comment(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        Comment = self.etree.Comment
+
+        a = Element('a')
+        a.append(Comment('foo'))
+        self.assertEquals(
+            '<a><!-- foo --></a>',
+            self._writeElement(a))
+
+    def test_comment_whitespace(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        Comment = self.etree.Comment
+
+        a = Element('a')
+        a.append(Comment(' foo  '))
+        self.assertEquals(
+            '<a><!--  foo   --></a>',
+            self._writeElement(a))  
+
+    def test_comment_nonsense(self):
+        Comment = self.etree.Comment
+        c = Comment('foo')
+        self.assertEquals({}, c.attrib)
+        self.assertEquals([], c.keys())
+        self.assertEquals([], c.items())
+        self.assertEquals(None, c.get('hoi'))
+        self.assertEquals(0, len(c))
+        # should not iterate
+        for i in c:
+            pass
+            
+# gives error in ElementTree
+##     def test_comment_empty(self):
+##         Element = self.etree.Element
+##         Comment = self.etree.Comment
+
+##         a = Element('a')
+##         a.append(Comment())
+##         print self._writeElement(a)
+##         self.assertEquals(
+##             '<a><!----></a>',
+##             self._writeElement(a))
         
+    def _writeElement(self, element):
+        """Write out element for comparison.
+        """
+        ElementTree = self.etree.ElementTree
+        f = StringIO()
+        tree = ElementTree(element=element)
+        tree.write(f)
+        data = f.getvalue()
+        return c14n.canonicalize(data)
+                           
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
         

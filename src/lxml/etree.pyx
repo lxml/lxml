@@ -95,7 +95,7 @@ cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
     result = _ElementTree()
     result._c_doc = c_doc
     return result
-    
+
 cdef class _ElementBase(_NodeBase):
     # MANIPULATORS
     def set(self, key, value):
@@ -226,6 +226,60 @@ cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
     if c_node is NULL:
         return None
     result = _Element()
+    result._doc = etree
+    result._c_node = c_node
+    etree.registerProxy(result)
+    return result
+
+cdef class _CommentBase(_ElementBase):
+    def set(self, key, value):
+        pass
+    
+    def append(self, _ElementBase element):
+        pass
+
+    property tag:
+        def __get__(self):
+            return None
+        
+    property attrib:
+        def __get__(self):
+            return {}
+        
+    property text:
+        def __get__(self):
+            return unicode(self._c_node.content, 'UTF-8')
+
+        def __set__(self, value):
+            pass
+                        
+    # ACCESSORS
+    def __getitem__(self, n):
+        raise IndexError
+
+    def __len__(self):
+        return 0
+
+    def get(self, key, default=None):
+        return None
+
+    def keys(self):
+        return []
+    
+    def items(self):
+        return []
+    
+class _Comment(_CommentBase):
+    __slots__ = ['__weakref__']
+
+cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
+    cdef _CommentBase result
+    result = etree.getProxy(<int>c_node)
+    if result is not None:
+        return result
+    if c_node is NULL:
+        return None
+    result = _Comment()
     result._doc = etree
     result._c_node = c_node
     etree.registerProxy(result)
@@ -387,7 +441,12 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
     for name, value in attrib.items():
         tree.xmlNewProp(c_node, name, value)
     return c_node
-    
+
+cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
+    cdef xmlNode* c_node
+    c_node = tree.xmlNewDocComment(c_doc, text)
+    return c_node
+
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTreeBase etree
@@ -396,6 +455,17 @@ def Element(tag, attrib=None, **extra):
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
     tree.xmlDocSetRootElement(etree._c_doc, c_node)
     return _elementFactory(etree, c_node)
+
+def Comment(text=None):
+    cdef xmlNode* c_node
+    cdef _ElementTreeBase etree
+    if text is None:
+        text = ''
+    text = ' %s ' % text
+    etree = ElementTree()
+    c_node = _createComment(etree._c_doc, text)
+    tree.xmlAddChild(<xmlNode*>etree._c_doc, c_node)
+    return _commentFactory(etree, c_node)
 
 def SubElement(_ElementBase parent, tag, attrib=None, **extra):
     cdef xmlNode* c_node
