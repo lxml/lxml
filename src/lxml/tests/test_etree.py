@@ -1048,6 +1048,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<a><b></b>B2<e></e>E2</a>',
             self._writeElement(a))
+
+    def test_delslice_memory(self):
+        # this could trigger a crash
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(b, 'c')
+        del b # no more reference to b
+        del a[:]
+        self.assertEquals('c', c.tag)
         
     def test_setslice(self):
         Element = self.etree.Element

@@ -1414,11 +1414,10 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
     return NULL
 
 cdef void _removeNode(xmlNode* c_node):
-    """Unlink and free a node if possible (nothing else refers to it).
+    """Unlink and free a node and subnodes if possible.
     """
     tree.xmlUnlinkNode(c_node)
-    if not hasProxy(c_node):
-        tree.xmlFreeNode(c_node)
+    attemptDeallocation(c_node)
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
