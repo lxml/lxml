@@ -6,6 +6,9 @@ cdef class NodeProxyBase(SimpleNodeProxyBase)
 cdef class NodeRegistry
 
 cdef class SimpleDocumentProxyBase:
+    # XXX complete hack, only used by etree so far..
+    cdef int _ns_counter
+
     cdef xmlDoc* _c_doc
     # XXX ugh, this has to be here to make the type checker pleased,
     # though will only be *used* by DocumentProxyBase subclasses, not

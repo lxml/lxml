@@ -1202,6 +1202,23 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<ns0:a xmlns:ns0="%s"><ns1:b xmlns:ns1="%s"></ns1:b></ns0:a>' % (ns, ns2),
             self._writeElement(a))
 
+    def test_ns_attr(self):
+        Element = self.etree.Element
+        ns = 'http://xml.infrae.com/1'
+        ns2 = 'http://xml.infrae.com/2'
+        a = Element('a')
+        a.set('{%s}foo' % ns, 'Foo')
+        a.set('{%s}bar' % ns2, 'Bar')
+        self.assertEquals(
+            'Foo',
+            a.get('{%s}foo' % ns))
+        self.assertEquals(
+            'Bar',
+            a.get('{%s}bar' % ns2))
+        self.assertEquals(
+            '<a xmlns:ns0="%s" xmlns:ns1="%s" ns0:foo="Foo" ns1:bar="Bar"></a>' % (ns, ns2),
+            self._writeElement(a))
+        
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
 ##         Element = self.etree.Element

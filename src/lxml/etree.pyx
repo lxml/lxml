@@ -29,7 +29,7 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
-    """
+    """    
     def getProxy(self, id, proxy_type=0):
         return node_registry.getProxy(id, proxy_type)
 
@@ -70,9 +70,29 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
         node_registry.attemptDeallocation(self._c_node)
-        
-cdef class _ElementTreeBase(_DocumentBase):
 
+    cdef xmlNs* _getNs(self, char* href):
+        """Get or create namespace structure.
+        """
+        cdef xmlDoc* c_doc
+        cdef xmlNode* c_node
+
+        c_doc = self._doc._c_doc
+        c_node = self._c_node
+        cdef xmlNs* c_ns
+        # look for existing ns
+        c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
+        if c_ns is not NULL:
+            return c_ns
+        # create ns if existing ns cannot be found
+        # try to simulate ElementTree's namespace prefix creation
+        prefix = 'ns%s' % self._doc._ns_counter
+        c_ns = tree.xmlNewNs(c_node, href, prefix)
+        self._doc._ns_counter = self._doc._ns_counter + 1
+        return c_ns
+
+cdef class _ElementTreeBase(_DocumentBase):
+    
     def getroot(self):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
@@ -103,6 +123,7 @@ class _ElementTree(_ElementTreeBase):
 cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
     cdef _ElementTreeBase result
     result = _ElementTree()
+    result._ns_counter = 0
     result._c_doc = c_doc
     return result
 
@@ -241,18 +262,7 @@ cdef class _ElementBase(_NodeBase):
             tree.xmlNodeSetName(self._c_node, text)
             if ns is None:
                 return
-            # look for existing ns
-            c_ns = tree.xmlSearchNsByHref(self._doc._c_doc,
-                                          self._c_node,
-                                          ns)
-            # create ns if existing ns cannot be found
-            # XXX prefix name creation
-            if c_ns is NULL:
-                # try to simulate ElementTree's namespace prefix creation
-                global NS_COUNTER
-                prefix = 'ns%s' % NS_COUNTER
-                c_ns = tree.xmlNewNs(self._c_node, ns, prefix)
-                NS_COUNTER = NS_COUNTER + 1
+            c_ns = self._getNs(ns)
             tree.xmlSetNs(self._c_node, c_ns)
             
     property attrib:
@@ -455,24 +465,39 @@ cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
 cdef class _AttribBase(_NodeBase):
     # MANIPULATORS
     def __setitem__(self, key, value):
-        key = key.encode('UTF-8')
+        cdef xmlNs* c_ns
+        ns, tag = _getNsTag(key)
         value = value.encode('UTF-8')
-        tree.xmlSetProp(self._c_node, key, value)
+        if ns is None:
+            tree.xmlSetProp(self._c_node, tag, value)
+        else:
+            c_ns = self._getNs(ns)
+            tree.xmlSetNsProp(self._c_node, c_ns, tag, value)
 
     def __delitem__(self, key):
+        cdef xmlNs* c_ns
         cdef xmlAttr* c_attr
-        key = key.encode('UTF-8')
-        c_attr = tree.xmlHasProp(self._c_node, key)
+        ns, tag = _getNsTag(key)
+        if ns is None:
+            c_attr = tree.xmlHasProp(self._c_node, tag)
+        else:
+            c_attr = tree.xmlHasNsProp(self._c_node, tag, ns)
         if c_attr is NULL:
+            # XXX free namespace that is not in use..?
             raise KeyError, key
         tree.xmlRemoveProp(c_attr)
         
     # ACCESSORS
     def __getitem__(self, key):
+        cdef xmlNs* c_ns
         cdef char* result
-        key = key.encode('UTF-8')
-        result = tree.xmlGetNoNsProp(self._c_node, key)
+        ns, tag = _getNsTag(key)
+        if ns is None:
+            result = tree.xmlGetNoNsProp(self._c_node, tag)
+        else:
+            result = tree.xmlGetNsProp(self._c_node, tag, ns)
         if result is NULL:
+            # XXX free namespace that is not in use..?
             raise KeyError, key
         return unicode(result, 'UTF-8')
 
@@ -503,6 +528,7 @@ cdef class _AttribBase(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
+                # XXX namespaces {}
                 result.append(unicode(c_node.name, 'UTF-8'))
             c_node = c_node.next
         return result
@@ -525,6 +551,7 @@ cdef class _AttribBase(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
+                # XXX namespaces {}
                 result.append((
                     unicode(c_node.name, 'UTF-8'),
                     unicode(tree.xmlGetNoNsProp(self._c_node, c_node.name), 'UTF-8')
@@ -997,4 +1024,5 @@ def _getNsTag(tag):
         assert i != -1
         return tag[1:i], tag[i + 1:]
     return None, tag
-        
+
+
