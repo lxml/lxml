@@ -176,7 +176,17 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'two',
             attributes.getNamedItemNS('http://www.infrae.com', 'two').localName)
-        
+
+    def test_attr_parentNode_ownerElement(self):
+        doc = makeDocument(
+            '<foo a="A"/>')
+        attr = doc.firstChild.attributes.getNamedItemNS(None, 'a')
+        self.assertEquals(
+            None,
+            attr.parentNode)
+        self.assertEquals(
+            doc.firstChild,
+            attr.ownerElement)
 
             
 def test_suite():

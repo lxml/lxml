@@ -283,11 +283,15 @@ cdef class Attr(ElementAttrNode):
     property name:
         def __get__(self):
             return self.nodeName
-    
+        
     property nodeValue:
         def __get__(self):
             pass
 
+    property ownerElement:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.parent)
+        
 cdef _attrFactory(Document doc, xmlNode* c_node):
     cdef Attr result
     result = Attr()
