@@ -418,13 +418,23 @@ class DomTestCase(unittest.TestCase):
         doc = makeDocument('<foo>Text</foo>')
         self.assert_(not doc.documentElement.childNodes[0].hasChildNodes())
 
-    def test_nodeList(self):
+    def test_nodeList_loop(self):
         doc = makeDocument('<foo><a/><b/><c/><d/></foo>')
         got = []
         for node in doc.documentElement.childNodes:
             got.append(node.nodeName)
         self.assertEquals(
             ['a', 'b', 'c', 'd'],
+            got)
+
+    def test_namedNodeMap_loop(self):
+        doc = makeDocument('<foo a="A" b="B" c="C"/>')
+        got = []
+        for node in doc.documentElement.attributes:
+            got.append(node.nodeName)
+        got.sort()
+        self.assertEquals(
+            ['a', 'b', 'c'],
             got)
         
 def test_suite():

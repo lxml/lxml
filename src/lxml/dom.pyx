@@ -393,7 +393,7 @@ cdef class NodeList(_RefBase):
         c = 0
         while c_node is not NULL:
             if c == index:
-                return _nodeFactory(self._getDoc(), c_node)
+                return _nodeFactory(self._doc, c_node)
             c = c + 1
             c_node = c_node.next
         else:
@@ -431,7 +431,7 @@ cdef class _NodeListIterator(_RefBase):
         c_node = self._o
         if c_node is not NULL:
             self._o = c_node.next
-            return _nodeFactory(self._getDoc(), c_node)
+            return _nodeFactory(self._doc, c_node)
         else:
             raise StopIteration
     
@@ -443,12 +443,16 @@ cdef _NodeListIterator _nodeListIteratorFactory(Document doc, xmlNode* c_node):
     return result
 
 cdef class NamedNodeMap(_RefBase):
+    def __iter__(self):
+        return _namedNodeMapIteratorFactory(
+            self._doc, <xmlNode*>self._o.properties)
+    
     def getNamedItem(self, name):
         cdef xmlAttr* c_node
         c_node = xmlHasProp(self._o, name)
         if c_node is NULL:
             return None
-        return _attrFactory(self._getDoc(), <xmlNode*>c_node)
+        return _attrFactory(self._doc, <xmlNode*>c_node)
         
     def getNamedItemNS(self, namespaceURI, localName):
         cdef xmlAttr* c_node
@@ -460,7 +464,7 @@ cdef class NamedNodeMap(_RefBase):
         c_node = xmlHasNsProp(self._o, localName, nsuri)
         if c_node is NULL:
             return None
-        return _attrFactory(self._getDoc(), <xmlNode*>c_node)
+        return _attrFactory(self._doc, <xmlNode*>c_node)
     
     def item(self, index):
         cdef xmlNode* c_node
@@ -468,7 +472,7 @@ cdef class NamedNodeMap(_RefBase):
         c = 0
         while c_node is not NULL:
             if c == index:
-                return _nodeFactory(self._getDoc(), c_node)
+                return _nodeFactory(self._doc, c_node)
             c = c + 1
             c_node = c_node.next
         else:
@@ -481,6 +485,24 @@ cdef class NamedNodeMap(_RefBase):
 cdef _namedNodeMapFactory(Document doc, xmlNode* c_node):
     cdef NamedNodeMap result
     result = NamedNodeMap()
+    result._doc = doc
+    result._o = c_node
+    return result
+
+cdef class _NamedNodeMapIterator(_RefBase):
+    def __next__(self):
+        cdef xmlNode* c_node
+        c_node = self._o
+        if c_node is not NULL:
+            self._o = c_node.next
+            return _nodeFactory(self._doc, c_node)
+        else:
+            raise StopIteration
+    
+cdef _NamedNodeMapIterator _namedNodeMapIteratorFactory(Document doc,
+                                                        xmlNode* c_node):
+    cdef _NamedNodeMapIterator result
+    result = _NamedNodeMapIterator()
     result._doc = doc
     result._o = c_node
     return result
