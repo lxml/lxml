@@ -54,11 +54,11 @@ Example of using namespace prefixes::
 >>> doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
                                'b': 'http://codespeak.net/ns2/test2'})
 
-XSLT class
-----------
+XSLT
+----
 
 lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
-given an ElementTree object to construct it::
+given an ElementTree object to construct an XSLT transformer::
 
 >>> xslt_doc = lxml.etree.parse('somefile.xslt')
 >>> style = lxml.XSLT(xslt_doc)
@@ -74,3 +74,23 @@ can also be turned into an (XML or text) string using the style's
 ``tostring`` method::
 
 >>> result_string = style.tostring(doc)
+
+RelaxNG
+-------
+
+lxml.etree introduces a new class, lxml.etree.RelaxNG. The class can
+be given an ElementTree object to construct a Relax NG validator::
+
+>>> relaxng_doc = lxml.etree.parse('somefile.rng')
+>>> relaxng = lxml.RelaxNG(relaxng_doc)
+
+You can then validate some ElementTree document with this. You'll get
+back true if the document is valid against the Relax NG schema, and
+false if not::
+
+>>> doc = lxml.etree.parse('valid_doc.xml')
+>>> relaxng.validate(doc)
+1
+>>> doc2 = lxml.etree.parse('invalid_doc.xml')
+>>> relaxng.validate(doc2)
+0
