@@ -2,7 +2,8 @@ lxml.etree versus ElementTree
 =============================
 
 A lot of care has been taken to ensure compatibility between etree and
-ElementTree. Nonetheless, some differences and incompatibilities exist:
+ElementTree. Nonetheless, besides missing features in lxml.etree, some
+differences and incompatibilities exist:
 
 * Importing etree is obviously different; etree uses a lower case
   package name, while ElementTree a combination of upper-case and
@@ -37,3 +38,6 @@ ElementTree. Nonetheless, some differences and incompatibilities exist:
   ElementTree tends to come up with its own prefixes (ns0, ns1,
   etc). When no namespace prefix is given however, etree creates
   ElementTree style prefixes as well.
+
+* etree delivers unicode strings whereas ElementTree often returns
+  ascii strings where this is enough.
