@@ -21,8 +21,6 @@ PROXY_ATTRIB = 1
 PROXY_ATTRIB_ITER = 2
 PROXY_ELEMENT_ITER = 3
 
-NS_COUNTER = 0
-
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
