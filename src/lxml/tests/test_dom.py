@@ -127,6 +127,15 @@ class DomTestCase(unittest.TestCase):
             'http://codespeak.net/ns',
             doc.firstChild.firstChild.namespaceURI)
 
+    def test_nodeList_length(self):
+        doc = makeDocument('<doc><a/><b/><c/></doc>')
+        self.assertEquals(
+            3,
+            doc.firstChild.childNodes.length)
+        self.assertEquals(
+            0,
+            doc.firstChild.firstChild.childNodes.length)
+        
     def test_isSameNode(self):
         doc = makeDocument('<doc><a/><b/></doc>')
         self.assert_(
