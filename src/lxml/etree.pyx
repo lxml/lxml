@@ -117,7 +117,23 @@ cdef class _ElementBase(_NodeBase):
         _removeNode(c_node)
 
 ##     def __setslice__(self, start, stop, value):
-##         pass
+##         cdef xmlNode* c_node
+##         cdef xmlNode* c_start_node
+##         cdef int c
+##         c_node = _findChild(self._c_node, start)
+##         if c_node is NULL:
+##             # append nodes at end
+##             for node in value:
+##                 self.append(node)
+##             return
+##         c_start_node = c_node    
+##         c = start
+##         while c_node is not NULL and c < stop:
+##             tree.xmlAddPrevSibling(c_node, add_node)
+##             _removeNode(c_node)
+##             c = c + 1
+##             c_node = c_node.next
+##         return result     
     
     def set(self, key, value):
         self.attrib[key] = value
@@ -253,8 +269,9 @@ cdef class _ElementBase(_NodeBase):
         c = start
         result = []
         while c_node is not NULL and c < stop:
-            result.append(_elementFactory(self._doc, c_node))
-            c = c + 1
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                result.append(_elementFactory(self._doc, c_node))
+                c = c + 1
             c_node = c_node.next
         return result        
             

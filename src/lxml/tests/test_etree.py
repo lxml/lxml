@@ -920,6 +920,24 @@ class ETreeTestCaseBase(unittest.TestCase):
             [b, c],
             a[-3:2])
 
+    def test_getslice_text(self):
+        ElementTree = self.etree.ElementTree
+        
+        f = StringIO('<a><b>B</b>B1<c>C</c>C1</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        b = a[0]
+        c = a[1]
+        self.assertEquals(
+            [b, c],
+            a[:])
+        self.assertEquals(
+            [b],
+            a[0:1])
+        self.assertEquals(
+            [c],
+            a[1:])
+        
 ##     def test_setslice(self):
 ##         Element = self.etree.Element
 ##         SubElement = self.etree.SubElement
