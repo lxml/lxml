@@ -65,7 +65,8 @@ cdef extern from "libxml/tree.h":
         xmlNode* next
         xmlNode* prev
         xmlDoc* doc
-
+        xmlNs* ns
+        
     ctypedef struct xmlElement:
         xmlElementType type
         char* name
@@ -84,6 +85,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlDoc* xmlNewDoc(char* version)
     cdef xmlAttr* xmlNewProp(xmlNode* node, char* name, char* value)
     cdef char* xmlGetNoNsProp(xmlNode* node, char* name)
+    cdef char* xmlGetNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef void xmlSetProp(xmlNode* node, char* name, char* value)
     cdef void xmlDocDumpMemory(xmlDoc* cur,
                                char** mem,
@@ -288,14 +290,39 @@ cdef class Element(ElementAttrNode):
         return self._o.properties is not NULL
 
     def getAttributeNS(self, namespaceURI, localName):
-        attr = self.attributes.getNamedItemNS(namespaceURI, localName)
-        if attr is not None:
-            return attr.value
+        cdef char* value
+        cdef char* nsuri
+        if namespaceURI is None:
+            nsuri = NULL
         else:
+            nsuri = namespaceURI
+        # this doesn't have the ns bug, unlike xmlHasNsProp
+        value = xmlGetNsProp(self._o, localName, nsuri)
+        if value is NULL:
             return ''
+        result = unicode(value, 'UTF-8')
+        xmlFree(value)
+        return result
         
     def getAttributeNodeNS(self, namespaceURI, localName):
+
+        if not self.hasAttributeNS(namespaceURI, localName):
+            return None
         return self.attributes.getNamedItemNS(namespaceURI, localName)
+
+    def hasAttributeNS(self, namespaceURI, localName):
+        cdef char* value
+        cdef char* nsuri
+        if namespaceURI is None:
+            nsuri = NULL
+        else:
+            nsuri = namespaceURI
+        # XXX cannot use xmlHasNsProp due to bug
+        value = xmlGetNsProp(self._o, localName, nsuri)
+        result = value is not NULL
+        if result:
+            xmlFree(value)
+        return result
     
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
@@ -467,10 +494,18 @@ cdef class NamedNodeMap(_RefBase):
     def getNamedItemNS(self, namespaceURI, localName):
         cdef xmlAttr* c_node
         cdef char* nsuri
+        cdef char* value
         if namespaceURI is None:
             nsuri = NULL
         else:
             nsuri = namespaceURI
+        # XXX big hack relying on xmlGetNsProp to check whether we
+        # can get attribute safely, avoiding bug in xmlHasNsProp
+        value = xmlGetNsProp(self._o, localName, nsuri)
+        if value is NULL:
+            return None
+        xmlFree(value)
+        
         c_node = xmlHasNsProp(self._o, localName, nsuri)
         if c_node is NULL:
             return None

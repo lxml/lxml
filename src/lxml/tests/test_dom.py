@@ -177,6 +177,10 @@ class DomTestCase(unittest.TestCase):
             'two',
             attributes.getNamedItemNS('http://www.infrae.com', 'two').localName)
 
+        self.assertEquals(
+            None,
+            attributes.getNamedItemNS(None, 'two'))
+        
     def test_attr_parentNode_ownerElement(self):
         doc = makeDocument(
             '<foo a="A"/>')
@@ -452,7 +456,10 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             '',
             doc.documentElement.getAttributeNS(None, 'foo'))
-
+        self.assertEquals(
+            '',
+            doc.documentElement.getAttributeNS(None, 'a'))
+        
     def test_getAttributeNodeNS(self):
         doc = makeDocument('<foo a="A" b="B"/>')
         self.assertEquals(
@@ -467,9 +474,26 @@ class DomTestCase(unittest.TestCase):
         doc = makeDocument('<foo xmlns:bar="http://www.bar.com" bar:a="A"/>')
         self.assertEquals(
             'A',
-            doc.documentElement.getAttributeNodeNS('http://www.bar.com', 'a').value)
+            doc.documentElement.getAttributeNodeNS('http://www.bar.com', 'a').value)        
+        self.assertEquals(
+            None,
+            doc.documentElement.getAttributeNodeNS(None, 'a'))
         
-            
+    def test_hasAttributeNS(self):
+        doc = makeDocument('<foo a="A" b="B"/>')
+        self.assert_(doc.documentElement.hasAttributeNS(None, 'a'))
+        self.assert_(doc.documentElement.hasAttributeNS(None, 'b'))
+        self.assert_(not doc.documentElement.hasAttributeNS(None, 'foo'))
+        doc = makeDocument('<foo xmlns:bar="http://www.bar.com" bar:a="A"/>')
+        self.assert_(doc.documentElement.hasAttributeNS(
+            'http://www.bar.com', 'a'))
+        self.assert_(not doc.documentElement.hasAttributeNS(
+            'http://www.bar.com', 'b'))
+        self.assert_(not doc.documentElement.hasAttributeNS(
+            None, 'a'))
+        self.assert_(not doc.documentElement.hasAttributeNS(
+            'http://www.foo.com', 'a'))
+             
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
