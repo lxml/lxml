@@ -27,22 +27,16 @@ In general
 Top level
 ---------
 
-* parse()
+* parse() support for custom parsers.
 
 * ProcessingInstruction
-
-* tostring()
 
 * XMLID
 
 ElementInterface
 -----------------
 
-* find()
-
-* findall()
-
-* findtext()
+* use optimized find*() methods from cElementTree
 
 * improve getiterator() implementation to use Python-level iterators
 
@@ -51,13 +45,7 @@ ElementTree
 
 * _setroot()
 
-* find()
-
-* findall()
-
-* findtext()
-
-* parse()
+* parse() - this is hard to implement sanely.
 
 * improve write() support
 
@@ -75,3 +63,13 @@ XMLTreeBuilder
 --------------
 
 Not yet implemented.
+
+XMLBuilder
+----------
+
+cElementTree interface. Need to figure out API.
+
+XMLParser
+---------
+
+cElementTree interface. Need to figure out API.
