@@ -104,12 +104,13 @@ cdef class NodeRegistry:
         cdef xmlNode* c_top
         # could be we actually aren't referring to the tree at all
         if c_node is NULL:
+            #print "not freeing, node is NULL"
             return
         c_top = self.getDeallocationTop(c_node)
         if c_top is not NULL:
-            # print "freeing:", c_top.name
+            #print "freeing:", c_top.name
             tree.xmlFreeNode(c_top)
-        
+            
     cdef xmlNode* getDeallocationTop(self, xmlNode* c_node):
         """Return the top of the tree that can be deallocated, or NULL.
         """
@@ -122,7 +123,7 @@ cdef class NodeRegistry:
             # print "checking:", c_current.type
             # if we're still attached to the document, don't deallocate
             if c_current.type == tree.XML_DOCUMENT_NODE:
-                # print "still in doc"
+                #print "not freeing: still in doc"
                 return NULL
             c_top = c_current
             c_current = c_current.parent
@@ -134,7 +135,10 @@ cdef class NodeRegistry:
             proxies = self._proxies
             for proxy_type in self._proxy_types:
                 if proxies.has_key((id, proxy_type)):
+                    #print "not freeing: other proxy"
                     return NULL
+        # XXX what if top has *other* proxies pointing to it?
+        
         # otherwise, see whether we have children to deallocate
         if self.canDeallocateChildren(c_top):
             return c_top
@@ -191,3 +195,11 @@ cdef class NodeRegistry:
         # apparently we can deallocate all subnodes
         return 1
 
+# to help with debugging
+cdef void displayNode(xmlNode* c_node, indent):
+    cdef xmlNode* c_child
+    print indent * ' ', <int>c_node
+    c_child = c_node.children
+    while c_child is not NULL:
+        displayNode(c_child, indent + 1)
+        c_child = c_child.next        
