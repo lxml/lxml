@@ -7,7 +7,9 @@ cdef class NodeProxyBase
 cdef class DocumentProxyBase:
     cdef xmlDoc* _c_doc
     cdef NodeRegistry _registry
-        
+
+    cdef object getProxy(self, xmlNode* c_node)
+
 cdef class NodeProxyBase:
     cdef DocumentProxyBase _doc
     cdef xmlNode* _c_node

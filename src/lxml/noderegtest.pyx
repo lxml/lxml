@@ -12,6 +12,7 @@ import nodereg
 cimport nodereg
 
 cdef class DocumentBase(nodereg.DocumentProxyBase):
+
     property documentElement:
         def __get__(self):
             cdef xmlNode* c_node
@@ -24,13 +25,13 @@ cdef class DocumentBase(nodereg.DocumentProxyBase):
 
 class Document(DocumentBase):
     __slots__ = ['__weakref__']
-    
-cdef DocumentBase _documentFactory(xmlDoc* c_doc):
-    cdef DocumentBase doc
-    doc = Document()
-    doc._c_doc = c_doc
-    return doc
 
+cdef _documentFactory(xmlDoc* c_doc):
+    cdef DocumentBase result
+    result = Document()
+    result._c_doc = c_doc
+    return result
+    
 cdef object _nodeFactory(DocumentBase doc, xmlNode* c_node):
     if c_node is NULL:
         return None
@@ -62,6 +63,7 @@ cdef class Node(nodereg.NodeProxyBase):
             return _nodeFactory(self._doc, self._c_node.next)
         
 cdef class ElementBase(Node):
+        
     property nodeName:
         def __get__(self):
             if self.prefix is None:
@@ -82,7 +84,7 @@ cdef class ElementBase(Node):
 class Element(ElementBase):
     __slots__ = ['__weakref__']
     
-cdef ElementBase _elementFactory(DocumentBase doc, xmlNode* c_node):
+cdef _elementFactory(DocumentBase doc, xmlNode* c_node):
     cdef ElementBase result
     result = doc._registry.getProxy(c_node)
     if result is not None:

@@ -6,6 +6,7 @@ from lxml import noderegtest
 class NodeRegTestCase(unittest.TestCase):
     def test_foo(self):
         doc = noderegtest.makeDocument('<foo><bar/></foo>')
+        print doc.documentElement.nodeName
         
 
 def test_suite():

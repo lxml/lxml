@@ -1,16 +1,12 @@
 from tree cimport xmlNode, xmlDoc
-#cimport tree
 
 import weakref
-
-#cdef class NodeRegistry
-#cdef class NodeProxyBase
 
 cdef class DocumentProxyBase:
     def __init__(self):
         self._registry = NodeRegistry()
         
-    def getProxy(self, xmlNode* c_node):
+    cdef object getProxy(self, xmlNode* c_node):
         return self._registry.getProxy(c_node)
 
     def registerProxy(self, NodeProxyBase proxy):
@@ -65,7 +61,7 @@ cdef class NodeRegistry:
         """
         cdef xmlNode* c_node
         c_node = proxy._c_node
-        assert not self._proxies.has_key[<int>c_node]
+        assert not self._proxies.has_key(<int>c_node)
         self._proxies[<int>c_node] = proxy
 
     cdef attemptDeallocation(self, xmlNode* c_node):
