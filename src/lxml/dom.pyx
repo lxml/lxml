@@ -98,64 +98,23 @@ cdef extern from "libxml/tree.h":
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
     cdef xmlDoc* xmlParseDoc(char* cur)
+
+cdef class Node
+cdef class Document(Node)
+
+cdef class _RefBase:
+    cdef xmlNode* _o
+    cdef Document _doc
     
-cdef class _DocumentBase:
-    """Base class to reference a libxml document.
+    def _getDoc(self):
+        return self._doc
 
-    When instances of this class are garbage collected, the libxml
-    document is cleaned up.
-    """
+cdef class Node:
+    cdef xmlNode* _o
     
-    cdef xmlDoc* _c_doc
+    def _getDoc(self):
+        return self._doc
 
-    def __dealloc__(self):
-        xmlFreeDoc(self._c_doc)
-    
-cdef class _NodeBase:
-    """Base class to reference a document object and a libxml node.
-
-    By pointing to an ElementTree instance, a reference is kept to
-    _ElementTree as long as there is some pointer to a node in it.
-    """
-    cdef _DocumentBase _doc
-    cdef xmlNode* _c_node
-
-cdef class Document(_DocumentBase):
-    property nodeType:
-        def __get__(self):
-            return 9 # DOCUMENT_NODE
-        
-    property childNodes:
-        def __get__(self):
-            return _nodeListFactory(self, <xmlNode*>self._c_doc)
-
-    property firstChild:
-        def __get__(self):
-            return _nodeFactory(self, self._c_doc.children)
-
-    property lastChild:
-        def __get__(self):
-            return _nodeFactory(self, self._c_doc.last)
-
-    property previousSibling:
-        def __get__(self):
-            return _nodeFactory(self, self._c_doc.prev)
-
-    property nextSibling:
-        def __get__(self):
-            return _nodeFactory(self, self._c_doc.next)
-
-    property ownerDocument:
-        def __get__(self):
-            return None
-        
-cdef Document _documentFactory(xmlDoc* c_doc):
-    cdef Document doc
-    doc = Document()
-    doc._c_doc = c_doc
-    return doc
-    
-cdef class Node(_NodeBase):
     property ELEMENT_NODE:
         def __get__(self):
             return 1
@@ -173,16 +132,72 @@ cdef class Node(_NodeBase):
             return 9
 
     def __cmp__(Node self, Node other):
-        if self._c_node is other._c_node:
+        if self._o is other._o:
             return 0
         else:
             return 1
-    
-cdef class Element(Node):
+
+    def isSameNode(Node self, Node other):
+        return self.__cmp__(self, other)
 
     property childNodes:
         def __get__(self):
-            return _nodeListFactory(self._doc, self._c_node)
+            return _nodeListFactory(self._getDoc(), self._o)
+
+    property parentNode:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.parent)
+
+    property firstChild:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.children)
+        
+    property lastChild:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.last)
+
+    property previousSibling:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.prev)
+
+    property nextSibling:
+        def __get__(self):
+            return _nodeFactory(self._getDoc(), self._o.next)
+
+cdef class NonDocNode(Node):
+    cdef Document _doc
+    
+    def _getDoc(self):
+        return self._doc
+
+    property ownerDocument:
+        def __get__(self):
+            # XXX if this node has just be created this isn't valid
+            # XXX but we're a read-only DOM for now
+            return self._getDoc()
+
+cdef class Document(Node):
+    def _getDoc(self):
+        return self
+    
+    def __dealloc__(self):
+        xmlFreeDoc(<xmlDoc*>self._o)
+
+    property nodeType:
+        def __get__(self):
+            return 9 # DOCUMENT_NODE
+        
+    property ownerDocument:
+        def __get__(self):
+            return None
+        
+cdef Document _documentFactory(xmlDoc* c_doc):
+    cdef Document doc
+    doc = Document()
+    doc._o = <xmlNode*>c_doc
+    return doc
+        
+cdef class Element(NonDocNode):
                 
     property nodeName:
         def __get__(self):
@@ -198,7 +213,7 @@ cdef class Element(Node):
         
     property localName:
         def __get__(self):
-            return unicode(self._c_node.name, 'UTF-8')
+            return unicode(self._o.name, 'UTF-8')
         
     property tagName:
         def __get__(self):
@@ -209,57 +224,32 @@ cdef class Element(Node):
 
     property prefix:
         def __get__(self):
-            if self._c_node.ns is NULL or self._c_node.ns.prefix is NULL:
+            if self._o.ns is NULL or self._o.ns.prefix is NULL:
                 return None
-            return unicode(self._c_node.ns.prefix, 'UTF-8')
+            return unicode(self._o.ns.prefix, 'UTF-8')
 
     property namespaceURI:
         def __get__(self):
-            if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
+            if self._o.ns is NULL or self._o.ns.href is NULL:
                 return None
-            return unicode(self._c_node.ns.href, 'UTF-8')
+            return unicode(self._o.ns.href, 'UTF-8')
         
-    property parentNode:
-        def __get__(self):
-            return _nodeFactory(self._doc, self._c_node.parent)
-
-    property firstChild:
-        def __get__(self):
-            return _nodeFactory(self._doc, self._c_node.children)
-        
-    property lastChild:
-        def __get__(self):
-            return _nodeFactory(self._doc, self._c_node.last)
-
-    property previousSibling:
-        def __get__(self):
-            return _nodeFactory(self._doc, self._c_node.prev)
-
-    property nextSibling:
-        def __get__(self):
-            return _nodeFactory(self._doc, self._c_node.next)
-
-    property ownerDocument:
-        def __get__(self):
-            # XXX if this node has just be created this isn't valid
-            # XXX but we're a read-only DOM for now
-            return self._doc
     
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
     result._doc = doc
-    result._c_node = c_node
+    result._o = c_node
     return result
     
-cdef class NodeList(_NodeBase):
+cdef class NodeList(_RefBase):
     def __getitem__(self, index):
         cdef xmlNode* c_node
-        c_node = self._c_node.children
+        c_node = self._o.children
         c = 0
         while c_node is not NULL:
             if c == index:
-                return _nodeFactory(self._doc, c_node)
+                return _nodeFactory(self._getDoc(), c_node)
             c = c + 1
             c_node = c_node.next
         else:
@@ -269,7 +259,7 @@ cdef _nodeListFactory(Document doc, xmlNode* c_node):
     cdef NodeList result
     result = NodeList()
     result._doc = doc
-    result._c_node = c_node
+    result._o = c_node
     return result
 
 cdef _nodeFactory(Document doc, xmlNode* c_node):
@@ -277,6 +267,8 @@ cdef _nodeFactory(Document doc, xmlNode* c_node):
         return None
     if c_node.type == 1: # ELEMENT_NODE
         return _elementFactory(doc, c_node)
+    if c_node.type == 9: # DOCUMENT_NODE
+        return doc
     
 def makeDocument(text):
     cdef xmlDoc* c_doc
