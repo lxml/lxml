@@ -1260,41 +1260,6 @@ class ETreeTestCaseBase(unittest.TestCase):
             self._writeElement(tree.getroot())
            )
 
-        
-# TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
-##     def test_setitem_assert(self):
-##         Element = self.etree.Element
-##         SubElement = self.etree.SubElement
-
-##         a = Element('a')
-##         b = SubElement(a, 'b')
-        
-##         self.assertRaises(AssertionError,
-##                           a.__setitem__, 0, 'foo')
-        
-# gives error in ElementTree
-##     def test_comment_empty(self):
-##         Element = self.etree.Element
-##         Comment = self.etree.Comment
-
-##         a = Element('a')
-##         a.append(Comment())
-##         print self._writeElement(a)
-##         self.assertEquals(
-##             '<a><!----></a>',
-##             self._writeElement(a))
-
-# ignores Comment in ElementTree
-##     def test_comment_no_proxy_yet(self):
-##         ElementTree = self.etree.ElementTree
-        
-##         f = StringIO('<a><b></b><!-- hoi --><c></c></a>')
-##         doc = ElementTree(file=f)
-##         a = doc.getroot()
-##         self.assertEquals(
-##             ' hoi ',
-##             a[1].text)
-
     def _writeElement(self, element):
         """Write out element for comparison.
         """
@@ -1363,12 +1328,74 @@ except ImportError:
 if HAVE_ELEMENTTREE:
     class ElementTreeTestCase(ETreeTestCaseBase):
         etree = ElementTree
+
+class ETreeOnlyTestCase(unittest.TestCase):
+    """Tests only for etree, not ElementTree"""
+    etree = etree
+    
+    def test_parse_error(self):
+        parse = self.etree.parse
+        # from StringIO
+        f = StringIO('<a><b></c></b></a>')
+        self.assertRaises(SyntaxError, parse, f)
+        f.close()
+
+    def test_parse_error_from_file(self):
+        parse = self.etree.parse
+        # from file
+        f = open(fileInTestDir('test_broken.xml'), 'r')
+        self.assertRaises(SyntaxError, parse, f)
+        f.close()
+        
+    # TypeError in etree, AssertionError in ElementTree;
+    def test_setitem_assert(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        
+        self.assertRaises(TypeError,
+                          a.__setitem__, 0, 'foo')
+        
+    # gives error in ElementTree
+    def test_comment_empty(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+
+        a = Element('a')
+        a.append(Comment())
+        self.assertEquals(
+            '<a><!--  --></a>',
+            self._writeElement(a))
+
+    # ignores Comment in ElementTree
+    def test_comment_no_proxy_yet(self):
+        ElementTree = self.etree.ElementTree
+        
+        f = StringIO('<a><b></b><!-- hoi --><c></c></a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        self.assertEquals(
+            ' hoi ',
+            a[1].text)
+
+    def _writeElement(self, element):
+        """Write out element for comparison.
+        """
+        ElementTree = self.etree.ElementTree
+        f = StringIO()
+        tree = ElementTree(element=element)
+        tree.write(f)
+        data = f.getvalue()
+        return c14n.canonicalize(data)
     
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
     if HAVE_ELEMENTTREE:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     return suite
 
 import os.path

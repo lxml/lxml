@@ -851,25 +851,32 @@ cdef class Parser:
             #print "freeing dictionary (cleanup parser)"
             xmlparser.xmlDictFree(self._c_dict)
         
-    cdef xmlDoc* parseDoc(self, text):
+    cdef xmlDoc* parseDoc(self, text) except NULL:
         """Parse document, share dictionary if possible.
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        
+        cdef int parse_error
         self._initParse()
         pctxt = xmlparser.xmlCreateDocParserCtxt(text)
         self._prepareParse(pctxt)
         xmlparser.xmlCtxtUseOptions(
             pctxt,
             _getParseOptions())
-        xmlparser.xmlParseDocument(pctxt)
-        result = _getParsedDoc(pctxt)
+        parse_error = xmlparser.xmlParseDocument(pctxt)
+        # in case of errors, clean up context plus any document
+        if parse_error != 0 or not pctxt.wellFormed:
+            if pctxt.myDoc is not NULL:
+                tree.xmlFreeDoc(pctxt.myDoc)
+                pctxt.myDoc = NULL
+            xmlparser.xmlFreeParserCtxt(pctxt)
+            raise SyntaxError
+        result = pctxt.myDoc
         self._finalizeParse(result)
         xmlparser.xmlFreeParserCtxt(pctxt)
         return result
 
-    cdef xmlDoc* parseDocFromFile(self, char* filename):
+    cdef xmlDoc* parseDocFromFile(self, char* filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
 
@@ -878,6 +885,14 @@ cdef class Parser:
         self._prepareParse(pctxt)
         result = xmlparser.xmlCtxtReadFile(pctxt, filename,
                                            NULL, _getParseOptions())
+        # in case of errors, clean up context plus any document
+        # XXX other errors?
+        if not pctxt.wellFormed:
+            if pctxt.myDoc is not NULL:
+                tree.xmlFreeDoc(pctxt.myDoc)
+                pctxt.myDoc = NULL
+            xmlparser.xmlFreeParserCtxt(pctxt)
+            raise SyntaxError
         self._finalizeParse(result)
         xmlparser.xmlFreeParserCtxt(pctxt)
         return result
@@ -1107,16 +1122,8 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
         c_node = c_next
 
 cdef int _getParseOptions():
-    return xmlparser.XML_PARSE_NOENT | xmlparser.XML_PARSE_NOCDATA
-
-cdef xmlDoc* _getParsedDoc(xmlParserCtxt* pctxt):
-    if not pctxt.wellFormed:
-        if pctxt.myDoc is not NULL:
-            tree.xmlFreeDoc(pctxt.myDoc)
-            pctxt.myDoc = NULL    
-        return NULL
-
-    return pctxt.myDoc
+    return (xmlparser.XML_PARSE_NOENT | xmlparser.XML_PARSE_NOCDATA |
+            xmlparser.XML_PARSE_NOWARNING | xmlparser.XML_PARSE_NOERROR)
 
 def _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
