@@ -22,8 +22,10 @@ xpath query against the document. When xpath is used on an element,
 the xpath expression is performed taking the element as the xpath
 context node.
 
-You call the xpath() method with one argument, the XPath expression to
-use.
+You call the xpath() method with the XPath expression to use, and
+optionally a second namespaces argument, which should be a dictionary
+mapping namespace prefixes to be used in the XPath expression to
+namespace URIs.
 
 The return values of xpath vary, depending on the XPath expression
 used:
@@ -45,6 +47,12 @@ Example::
 
 >>> doc = lxml.etree.parse('doc.xml')
 >>> doc.xpath('/foo/bar')
+
+Example of using namespace prefixes::
+
+>>> doc = lxml.etree.parse('doc2.xml')
+>>> doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
+                               'b': 'http://codespeak.net/ns2/test2'})
 
 XSLT class
 ----------
