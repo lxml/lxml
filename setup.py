@@ -106,19 +106,6 @@ class MyDistribution(Distribution):
         self.cmdclass['install_lib'] = MyLibInstaller
 
 ext_modules = [
-    Extension("lxml.demo",
-              sources=["src/lxml/demo.pyx"],
-              include_dirs= ['/usr/include/libxml2'],
-              libraries=['xml2'],
-              # XXX portability problem, but shut up gcc warnings
-              extra_compile_args = ['-w']
-              ),
-    Extension('lxml.elementtree',
-              sources=['src/lxml/elementtree.pyx'],
-              include_dirs=['/usr/include/libxml2'],
-              libraries=['xml2'],
-              extra_compile_args = ['-w']
-              ),
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
               include_dirs=['/usr/include/libxml2'],
