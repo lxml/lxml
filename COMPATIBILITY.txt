@@ -31,3 +31,9 @@ ElementTree. Nonetheless, some differences and incompatibilities exist:
 
 * ElementTree ignores comments when parsing XML, while etree will read
   them in and treat them as Comment elements.
+
+* Because etree is built on top of libxml2, which is namespace prefix
+  aware, etree preserves namespaces declarations and prefixes while
+  ElementTree tends to come up with its own prefixes (ns0, ns1,
+  etc). When no namespace prefix is given however, etree creates
+  ElementTree style prefixes as well.
