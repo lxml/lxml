@@ -1214,7 +1214,7 @@ cdef class Parser:
         self._c_dict = NULL
         self._parser_initialized = 0
         
-    def __del__(self):
+    def __dealloc__(self):
         #print "cleanup parser"
         if self._c_dict is not NULL:
             #print "freeing dictionary (cleanup parser)"
