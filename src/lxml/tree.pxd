@@ -6,6 +6,7 @@ cdef extern from "stdio.h":
     
 cdef extern from "Python.h":
     ctypedef struct PyFileObject
+    ctypedef struct PyObject
     
     cdef FILE* PyFile_AsFile(PyFileObject* p)
     cdef int PyFile_Check(object p)
@@ -79,6 +80,7 @@ cdef extern from "libxml/tree.h":
         xmlDict* dict
         
     ctypedef struct xmlAttr:
+        void* _private
         xmlElementType type
         char* name
         xmlNode* children

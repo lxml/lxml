@@ -4,20 +4,24 @@ cimport xmlparser
 cimport xpath
 cimport xslt
 cimport xmlerror
+cimport cstd
+cimport nodereg
+from nodereg cimport SimpleNodeProxyBase, SimpleDocumentProxyBase
 
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
 from StringIO import StringIO
 import sys
 
-import nodereg
-cimport nodereg
+cdef int PROXY_ELEMENT
+cdef int PROXY_ATTRIB
+cdef int PROXY_ATTRIB_ITER
+cdef int PROXY_ELEMENT_ITER
 
+PROXY_ELEMENT = 0
 PROXY_ATTRIB = 1
 PROXY_ATTRIB_ITER = 2
 PROXY_ELEMENT_ITER = 3
-PROXY_DOCORDER_ITER = 4
-PROXY_DOCORDER_TOP_ITER = 5
 
 NS_COUNTER = 0
 
@@ -26,8 +30,6 @@ NS_COUNTER = 0
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
 
-cdef nodereg.NodeRegistry node_registry
-node_registry = nodereg.NodeRegistry()
 
 class Error(Exception):
     pass
@@ -37,19 +39,7 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
-    """    
-    def getProxy(self, id, proxy_type=0):
-        return node_registry.getProxy(id, proxy_type)
-
-    def registerProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type=0):
-        node_registry.registerProxy(proxy, proxy_type)
-
-    def unregisterProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type=0):
-        node_registry.unregisterProxy(proxy, proxy_type)
-
-    def getProxies(self):
-        return node_registry._proxies
-        
+    """        
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
@@ -74,10 +64,14 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     By pointing to an ElementTree instance, a reference is kept to
     _ElementTree as long as there is some pointer to a node in it.
     """
+    cdef int _proxy_type
+    
     def __dealloc__(self):
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
-        node_registry.attemptDeallocation(self._c_node)
+        if self._c_node is not NULL:
+            unregisterProxy(self, self._proxy_type)
+        attemptDeallocation(self._c_node)
 
     cdef xmlNs* _getNs(self, char* href):
         """Get or create namespace structure.
@@ -198,7 +192,7 @@ cdef class _ElementBase(_NodeBase):
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        node_registry.changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element._c_node, self._doc)
         
     def __delitem__(self, index):
         cdef xmlNode* c_node
@@ -239,7 +233,7 @@ cdef class _ElementBase(_NodeBase):
             # and move tail just behind his node
             _moveTail(c_next, mynode._c_node)
             # move it into a new document
-            node_registry.changeDocumentBelow(mynode, self._doc)
+            changeDocumentBelow(mynode._c_node, self._doc)
             
     def set(self, key, value):
         self.attrib[key] = value
@@ -256,7 +250,7 @@ cdef class _ElementBase(_NodeBase):
         _moveTail(c_next, element._c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
-        node_registry.changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element._c_node, self._doc)
 
     def clear(self):
         cdef xmlAttr* c_attr
@@ -291,7 +285,7 @@ cdef class _ElementBase(_NodeBase):
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        node_registry.changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element._c_node, self._doc)
 
     def remove(self, _ElementBase element):
         cdef xmlNode* c_node
@@ -460,7 +454,7 @@ class _Element(_ElementBase):
     
 cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
     cdef _ElementBase result
-    result = etree.getProxy(<int>c_node)
+    result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
         return result
     if c_node is NULL:
@@ -473,7 +467,8 @@ cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
         assert 0, "Unknown node type"
     result._doc = etree
     result._c_node = c_node
-    etree.registerProxy(result)
+    result._proxy_type = PROXY_ELEMENT
+    registerProxy(result, PROXY_ELEMENT)
     return result
 
 cdef class _CommentBase(_ElementBase):
@@ -522,7 +517,7 @@ class _Comment(_CommentBase):
 
 cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
     cdef _CommentBase result
-    result = etree.getProxy(<int>c_node)
+    result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
         return result
     if c_node is NULL:
@@ -530,7 +525,8 @@ cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
     result = _Comment()
     result._doc = etree
     result._c_node = c_node
-    etree.registerProxy(result)
+    result._proxy_type = PROXY_ELEMENT
+    registerProxy(result, PROXY_ELEMENT)
     return result
 
 cdef class _AttribBase(_NodeBase):
@@ -641,13 +637,14 @@ class _Attrib(_AttribBase):
     
 cdef _AttribBase _attribFactory(_ElementTreeBase etree, xmlNode* c_node):
     cdef _AttribBase result
-    result = etree.getProxy(<int>c_node, PROXY_ATTRIB)
+    result = getProxy(c_node, PROXY_ATTRIB)
     if result is not None:
         return result
     result = _Attrib()
     result._doc = etree
     result._c_node = c_node
-    etree.registerProxy(result, PROXY_ATTRIB)
+    result._proxy_type = PROXY_ATTRIB
+    registerProxy(result, PROXY_ATTRIB)
     return result
 
 cdef class _AttribIteratorBase(_NodeBase):
@@ -655,14 +652,14 @@ cdef class _AttribIteratorBase(_NodeBase):
         cdef xmlNode* c_node
         c_node = self._c_node
         while c_node is not NULL:
-            if c_node.type ==tree.XML_ATTRIBUTE_NODE:
+            if c_node.type == tree.XML_ATTRIBUTE_NODE:
                 break
             c_node = c_node.next
         else:
             raise StopIteration
-        self._doc.unregisterProxy(self, PROXY_ATTRIB_ITER)
+        unregisterProxy(self, PROXY_ATTRIB_ITER)
         self._c_node = c_node.next
-        self._doc.registerProxy(self, PROXY_ATTRIB_ITER)
+        registerProxy(self, PROXY_ATTRIB_ITER)
         return funicode(c_node.name)
 
 class _AttribIterator(_AttribIteratorBase):
@@ -671,13 +668,14 @@ class _AttribIterator(_AttribIteratorBase):
 cdef _AttribIteratorBase _attribIteratorFactory(_ElementTreeBase etree,
                                                 xmlNode* c_node):
     cdef _AttribIteratorBase result
-    result = etree.getProxy(<int>c_node, PROXY_ATTRIB_ITER)
+    result = getProxy(c_node, PROXY_ATTRIB_ITER)
     if result is not None:
         return result
     result = _AttribIterator()
     result._doc = etree
     result._c_node = c_node
-    etree.registerProxy(result, PROXY_ATTRIB_ITER)
+    result._proxy_type = PROXY_ATTRIB_ITER
+    registerProxy(result, PROXY_ATTRIB_ITER)
     return result
 
 cdef class _ElementIteratorBase(_NodeBase):
@@ -690,10 +688,9 @@ cdef class _ElementIteratorBase(_NodeBase):
             c_node = c_node.next
         else:
             raise StopIteration
-        self._doc.unregisterProxy(self, PROXY_ELEMENT_ITER)
+        unregisterProxy(self, PROXY_ELEMENT_ITER)
         self._c_node = c_node.next
-        if self._c_node is not NULL:
-            self._doc.registerProxy(self, PROXY_ELEMENT_ITER)
+        registerProxy(self, PROXY_ELEMENT_ITER)
         return _elementFactory(self._doc, c_node)
 
 class _ElementIterator(_ElementIteratorBase):
@@ -702,82 +699,15 @@ class _ElementIterator(_ElementIteratorBase):
 cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
                                                   xmlNode* c_node):
     cdef _ElementIteratorBase result
-    result = etree.getProxy(<int>c_node, PROXY_ELEMENT_ITER)
+    result = getProxy(c_node, PROXY_ELEMENT_ITER)
     if result is not None:
         return result
     result = _ElementIterator()
     result._doc = etree
     result._c_node = c_node
-    etree.registerProxy(result, PROXY_ELEMENT_ITER)
+    result._proxy_type = PROXY_ELEMENT_ITER
+    registerProxy(result, PROXY_ELEMENT_ITER)
     return result
-
-## # XXX all rather too complicated, rethink
-## cdef class _DocOrderIteratorBase(_NodeBase):
-##     cdef xmlNode* _c_top
-##     cdef object tag
-    
-##     def __iter__(self):
-##         return self
-    
-##     def __next__(self):
-##         cdef xmlNode* c_node
-##         cdef xmlNode* c_next
-##         c_node = self._c_node
-##         if c_node is NULL:
-##             raise StopIteration
-##         self._doc.unregisterProxy(self, PROXY_DOCORDER_ITER)
-##         c_next = self._nextHelper(c_node)
-##         self._c_node = c_next
-##         if c_next is not NULL:
-##             self._doc.registerProxy(self, PROXY_DOCORDER_ITER)
-##         return _elementFactory(self._doc, c_node)
-
-##     cdef xmlNode* _nextHelper(self, xmlNode* c_node):
-##         """Get next element in document order.
-##         """
-##         cdef xmlNode* c_next
-##         # try to go down
-##         c_next = c_node.children
-##         if c_next is not NULL:
-##             if _isElement(c_next):
-##                 return c_next
-##             else:
-##                 c_next = _nextElement(c_next)
-##                 if c_next is not NULL:
-##                     return c_next
-##         # cannot go down
-##         while 1:
-##             # try to go next
-##             c_next = _nextElement(c_node) 
-##             if c_next is not NULL:
-##                 return c_next
-##             else:
-##                 # cannot go next, go up, then next
-##                 c_node = c_node.parent
-##                 if c_node is self._c_top:
-##                     break
-##         # cannot go up, return NULL
-##         return NULL
-    
-## class _DocOrderIterator(_DocOrderIteratorBase):
-##     __slots__ = ['__weakref__']
-    
-## cdef _DocOrderIteratorBase _docOrderIteratorFactory(_ElementTreeBase etree,
-##                                                     xmlNode* c_node,
-##                                                     tag):
-##     cdef _DocOrderIteratorBase result
-##     # XXX this is wrong..
-##     result = etree.getProxy(<int>c_node, PROXY_DOCORDER_TOP_ITER)
-##     if result is not None:
-##         return result
-##     result = _DocOrderIterator()
-##     result._doc = etree
-##     result._c_node = c_node
-##     result._c_top = c_node
-##     result._tag = tag
-##     etree.registerProxy(result, PROXY_DOCORDER_TOP_ITER)
-##     etree.registerProxy(result, PROXY_DOCORDER_ITER)
-##     return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
                              object attrib, object extra):
@@ -856,7 +786,7 @@ def ElementTree(_ElementBase element=None, file=None):
         c_next = element._c_node.next
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         _moveTail(c_next, element._c_node)
-        node_registry.changeDocumentBelow(element, etree)
+        changeDocumentBelow(element._c_node, etree)
 
     return etree
 
@@ -1160,7 +1090,7 @@ cdef void _removeNode(xmlNode* c_node):
     """Unlink and free a node if possible (nothing else refers to it).
     """
     tree.xmlUnlinkNode(c_node)
-    if not node_registry.hasProxy(<int>c_node):
+    if not hasProxy(c_node):
         tree.xmlFreeNode(c_node)
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
@@ -1307,3 +1237,212 @@ cdef object funicode(char* s):
     if isutf8(s):
         return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
     return tree.PyString_FromStringAndSize(s, tree.strlen(s))
+
+# backpointer functionality
+
+cdef struct _ProxyRef
+
+cdef struct _ProxyRef:
+    tree.PyObject* proxy
+    int type
+    _ProxyRef* next
+        
+ctypedef _ProxyRef ProxyRef
+    
+# XXX not portable
+cdef int PROXYREF_SIZEOF
+PROXYREF_SIZEOF = 12
+
+cdef SimpleNodeProxyBase getProxy(xmlNode* c_node, int proxy_type):
+    """Get a proxy for a given node and node type.
+    """
+    cdef ProxyRef* ref
+    #print "getProxy for:", <int>c_node
+    if c_node is NULL:
+        return None
+    ref = <ProxyRef*>c_node._private
+    while ref is not NULL:
+        if ref.type == proxy_type:
+            return <SimpleNodeProxyBase>ref.proxy
+        ref = ref.next
+    return None
+
+cdef int hasProxy(xmlNode* c_node):
+    return c_node._private is not NULL
+    
+cdef ProxyRef* createProxyRef(SimpleNodeProxyBase proxy, int proxy_type):
+    """Create a backpointer proxy refeference for a proxy and type.
+    """
+    cdef ProxyRef* result
+    result = <ProxyRef*>cstd.malloc(PROXYREF_SIZEOF)
+    result.proxy = <tree.PyObject*>proxy
+    result.type = proxy_type
+    result.next = NULL
+    return result
+
+cdef void registerProxy(SimpleNodeProxyBase proxy, int proxy_type):
+    """Register a proxy and type for the node it's proxying for.
+    """
+    cdef ProxyRef* ref
+    cdef ProxyRef* prev_ref
+    # cannot register for NULL
+    if proxy._c_node is NULL:
+        return
+    # XXX should we check whether we ran into proxy_type before?
+    #print "registering for:", <int>proxy._c_node
+    ref = <ProxyRef*>proxy._c_node._private
+    if ref is NULL:
+        proxy._c_node._private = <void*>createProxyRef(proxy, proxy_type)
+        return
+    while ref is not NULL:
+        prev_ref = ref
+        ref = ref.next
+    prev_ref.next = createProxyRef(proxy, proxy_type)
+
+cdef void unregisterProxy(SimpleNodeProxyBase proxy, int proxy_type):
+    """Unregister a proxy for the node it's proxying for.
+    """
+    cdef ProxyRef* ref
+    cdef ProxyRef* prev_ref
+    cdef xmlNode* c_node
+    c_node = proxy._c_node
+    ref = <ProxyRef*>c_node._private
+    if ref.type == proxy_type:
+        c_node._private = <void*>ref.next
+        cstd.free(ref)
+        return
+    prev_ref = ref
+    #print "First registered is:", ref.type
+    ref = ref.next
+    while ref is not NULL:
+        #print "Registered is:", ref.type
+        if ref.type == proxy_type:
+            prev_ref.next = ref.next
+            cstd.free(ref)
+            return
+        prev_ref = ref
+        ref = ref.next
+    #print "Proxy:", proxy, "Proxy type:", proxy_type
+    assert 0, "Tried to unregister unknown proxy"
+
+
+cdef void changeDocumentBelow(xmlNode* c_node,
+                              SimpleDocumentProxyBase doc):
+    """For a node and all nodes below, change document.
+
+    A node can change document in certain operations as an XML
+    subtree can move. This updates all possible proxies in the
+    tree below (including the current node).
+    """
+    cdef ProxyRef* ref
+    cdef xmlNode* c_current
+    cdef xmlAttr* c_attr_current
+    cdef SimpleNodeProxyBase proxy
+
+    if c_node is NULL:
+        return
+    
+    if c_node._private is not NULL:
+        ref = <ProxyRef*>c_node._private
+        while ref is not NULL:
+            proxy = <SimpleNodeProxyBase>ref.proxy
+            proxy._doc = doc
+            ref = ref.next
+
+    # adjust all children
+    c_current = c_node.children
+    while c_current is not NULL:
+        changeDocumentBelow(c_current, doc)
+        c_current = c_current.next
+        
+    # adjust all attributes
+    c_attr_current = c_node.properties
+    while c_attr_current is not NULL:
+        changeDocumentBelow(c_current, doc)
+        c_attr_current = c_attr_current.next
+        
+cdef void attemptDeallocation(xmlNode* c_node):
+    """Attempt deallocation of c_node (or higher up in tree).
+    """
+    cdef xmlNode* c_top
+    # could be we actually aren't referring to the tree at all
+    if c_node is NULL:
+        #print "not freeing, node is NULL"
+        return
+    c_top = getDeallocationTop(c_node)
+    if c_top is not NULL:
+        #print "freeing:", c_top.name
+        tree.xmlFreeNode(c_top)
+
+cdef xmlNode* getDeallocationTop(xmlNode* c_node):
+    """Return the top of the tree that can be deallocated, or NULL.
+    """
+    cdef xmlNode* c_current
+    cdef xmlNode* c_top
+    #print "deallocating:", c_node.type
+    c_current = c_node.parent
+    c_top = c_node
+    while c_current is not NULL:
+        #print "checking:", c_current.type
+        # if we're still attached to the document, don't deallocate
+        if c_current.type == tree.XML_DOCUMENT_NODE:
+            #print "not freeing: still in doc"
+            return NULL
+        c_top = c_current
+        c_current = c_current.parent
+    # if the top is not c_node, check whether it has node;
+    # if the top is the node we're checking, then we *can*
+    # still deallocate safely
+    if c_top is not c_node:
+        if c_top._private is not NULL:
+            # print "Not freeing: proxies still exist"
+            return NULL
+    # XXX what if top has *other* proxies pointing to it?
+
+    # otherwise, see whether we have children to deallocate
+    if canDeallocateChildren(c_top):
+        return c_top
+    else:
+        return NULL
+
+cdef int canDeallocateChildNodes(xmlNode* c_node):
+    cdef xmlNode* c_current
+    #print "checking childNodes"
+    c_current = c_node.children
+    while c_current is not NULL:
+        if c_current._private is not NULL:
+            return 0
+        if not canDeallocateChildren(c_current):
+            return 0 
+        c_current = c_current.next
+    return 1
+
+cdef int canDeallocateAttributes(xmlNode* c_node):
+    cdef xmlAttr* c_current
+    #print "checking attributes"
+    c_current = c_node.properties
+    while c_current is not NULL:
+        if c_current._private is not NULL:
+            return 0
+        # only check child nodes, don't try checking properties as
+        # attribute has none
+        if not canDeallocateChildNodes(<xmlNode*>c_current):
+            return 0
+        c_current = c_current.next
+    # apparently we can deallocate all subnodes
+    return 1
+
+cdef int canDeallocateChildren(xmlNode* c_node):
+    # the current implementation is inefficient as it does a
+    # tree traversal to find out whether there are any node proxies
+    # we could improve this by a smarter datastructure
+    #print "checking children"
+    # check children
+    if not canDeallocateChildNodes(c_node):
+        return 0        
+    # check any attributes
+    if (c_node.type == tree.XML_ELEMENT_NODE and
+        not canDeallocateAttributes(c_node)):
+        return 0
+    # apparently we can deallocate all subnodes
+    return 1
