@@ -1505,6 +1505,14 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, None, [extension])
         self.assertRaises(TypeError, e.evaluate, "foo('you')")
+
+    def test_xpath_extensions_error(self):
+        def foo(evaluator, a):
+            return 1/0
+        extension = {(None, 'foo'): foo}
+        tree = self.parse('<a/>')
+        e = etree.XPathEvaluator(tree, None, [extension])
+        self.assertRaises(ZeroDivisionError, e.evaluate, "foo('test')")
         
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -1592,6 +1600,8 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/api.txt')])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/xpath.txt')])
     
     return suite
 

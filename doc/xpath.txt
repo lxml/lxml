@@ -1,0 +1,81 @@
+XPath extension functions
+=========================
+
+This document describes how to deal with XPath extension
+functions. This documentation is preliminary as the API is still in
+flux.
+
+An extension function is defined in Python. In order to use it in
+XPath, it needs to have a name by which it can be called in XPath, and
+an optional namespace URI.
+
+As the first argument a function will always receive the
+XPathEvaluator object that is currently in the process of evaluating
+the XPath expression.
+
+First, let's create a simple XPath function::
+
+  >>> def foo(evaluator, a):
+  ...    return "Hello %s" % a
+
+Now we need to register it as part of an extension. An extension is a
+simple dictionary with tuple keys and function values. The tuple keys
+are composed of a namespace URI (or `None`), and the name of the
+function in XPath. We'll use the namespace URI `None` for now, to
+indicate the function isn't in any particular namespace::
+
+  >>> extension = { (None, 'foo') : foo }
+
+Now we're going to create an XPath evaluator. To do that, we first need a
+document that the evaluator is evaluating against::
+
+  >>> from lxml import etree
+  >>> from StringIO import StringIO
+  >>> f = StringIO('<a/>')
+  >>> doc = etree.parse(f)
+
+The XPathEvaluator takes the document, an optional dictionary of
+namespace prefix to namespace URI mappings, and an optional list of
+extensions. We'll just pass in extensions for now::
+
+  >>> e = etree.XPathEvaluator(doc, extensions=[extension])
+
+Now we can use the evaluator to make XPath queries against the document::
+
+  >>> r = e.evaluate('/a')
+  >>> r[0].tag
+  'a'
+
+This is not using the extension function. We'll try a very simple
+XPath query that does now. It doesn't really use the document at all::
+
+  >>> e.evaluate("foo('world')")
+  'Hello world'
+
+Let's create a slightly more complicated extension now, one that uses
+a namespaced function. We'll just reuse the function foo, but register
+it under a different name, and a namespace::
+
+  >>> extension2 = { ('http://codespeak.net/ns/test', 'different-name') : foo }
+ 
+Now let's set up an evaluator to use it. We'll also register our
+original extension. As we want to use a namespace function, we first
+need to register a namespace prefix we can use in the XPath
+expression, so that we can access the namespace. This just like when
+you'd want to access a namespaced XML element or attribute::
+
+  >>> e = etree.XPathEvaluator(doc, 
+  ...    namespaces={'test': 'http://codespeak.net/ns/test'},
+  ...    extensions=[extension, extension2])
+
+Since we registered the original extension too for this evaluator, our
+`foo` extension function still works::
+
+  >>> e.evaluate("foo('world')")
+  'Hello world'
+
+But now, we also have access to our namespaced `different-name`
+extension function::
+
+  >>> e.evaluate("test:different-name('there')")
+  'Hello there'
