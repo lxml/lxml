@@ -1,6 +1,6 @@
 from tree cimport xmlNode, xmlDoc, xmlAttr
 import weakref
-
+    
 cdef class DocumentProxyBase:
     def __init__(self):
         self._registry = NodeRegistry()
@@ -11,7 +11,7 @@ cdef class DocumentProxyBase:
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._registry.getProxy(id, proxy_type)
 
-    def registerProxy(self, NodeProxyBase proxy, proxy_type=0):
+    def registerProxy(self, ProxyBase proxy, proxy_type=0):
         self._registry.registerProxy(proxy, proxy_type)
 
     def getProxies(self):
@@ -23,8 +23,16 @@ cdef class DocumentProxyBase:
         # the document
         # print "free doc"
         tree.xmlFreeDoc(self._c_doc)
-        
-cdef class NodeProxyBase:           
+
+
+cdef class ProxyBase:
+    """Policy-less base class, which can be used by extensions.
+
+    For instance if a global node registry is needed instead of a
+    document-local one.
+    """
+
+cdef class NodeProxyBase(ProxyBase):           
     def __dealloc__(self):
         # print "Trying to wipe out:", self, self._c_node.name
         self._doc._registry.attemptDeallocation(self._c_node)
@@ -68,7 +76,7 @@ cdef class NodeRegistry:
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._proxies.get((id, proxy_type), None)
  
-    cdef void registerProxy(self, NodeProxyBase proxy, int proxy_type):
+    cdef void registerProxy(self, ProxyBase proxy, int proxy_type):
         """Register a proxy with the registry.
         """
         cdef xmlNode* c_node
