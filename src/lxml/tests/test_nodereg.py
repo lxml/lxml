@@ -1,6 +1,5 @@
 import unittest
 
-#from lxml.nodereg import Element, ElementTree, SubElement, XML
 from lxml import noderegtest
 
 class NodeRegTestCase(unittest.TestCase):
