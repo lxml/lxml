@@ -266,7 +266,27 @@ class ETreeTestCase(unittest.TestCase):
             tree = ElementTree(element)
             tree.write(f)
             self._check_element_tree(tree)
-            
+
+##     def test_subelement_reference(self):
+##         el = Element('foo')
+##         el2 = SubElement(el, 'bar')
+##         el3 = SubElement(el2, 'baz')
+
+##         al = Element('foo2')
+##         al2 = SubElement(al, 'bar2')
+##         al3 = SubElement(al2, 'baz2')
+
+##         # now move al2 into el
+##         el.append(al2)
+
+##         # now change al3 directly
+##         al3.text = 'baz2-modified'
+
+##         # it should have changed through this route too
+##         self.assertEquals(
+##             'baz2-modified',
+##             el[1][0].text)
+        
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
         
