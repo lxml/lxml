@@ -602,7 +602,22 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'HoiThisisgreat',
             doc.documentElement.textContent)
-        
+
+    def test_manipulation(self):
+        doc = makeDocument('<a/>')
+        doc.documentElement.appendChild(doc.createElementNS(None, 'b'))
+        self.assertEquals(
+            'b',
+            doc.documentElement.firstChild.nodeName)
+
+    def test_leaks(self):
+        # should introduce no leaks; can check with valgrind
+        doc = makeDocument('<a/>')
+        c = doc.createElementNS(None, 'c')
+        for i in range(100):
+            node = doc.createElementNS(None, 'd')
+            c.appendChild(node)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])

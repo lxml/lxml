@@ -15,6 +15,9 @@ PROXY_NODELIST_ITER = 2
 PROXY_NAMEDNODEMAP = 3
 PROXY_NAMEDNODEMAP_ITER = 4
 
+class DomError(Exception):
+    pass
+
 cdef class DocumentBase(nodereg.DocumentProxyBase)
 
 cdef class _RefBase(nodereg.NodeProxyBase):
@@ -175,6 +178,12 @@ cdef class DocumentBase(nodereg.DocumentProxyBase):
                  resolver, type, result):
         pass
 
+    def createElementNS(self, namespaceURI, qualifiedName):
+        cdef xmlNode* c_node
+        # XXX namespaces
+        c_node = tree.xmlNewDocNode(self._c_doc, NULL, qualifiedName, NULL)
+        return _elementFactory(self, c_node)
+        
     # unfortunate duplication XXX
     
     property ELEMENT_NODE:
@@ -368,6 +377,19 @@ cdef class ElementBase(ElementAttrNode):
         if result:
             tree.xmlFree(value)
         return result
+
+    def appendChild(self, nodereg.NodeProxyBase newChild):
+        # XXX check for hierarchy request error
+        if newChild._c_node.parent is not NULL:
+            self.removeChild(newChild)
+        tree.xmlAddChild(self._c_node, newChild._c_node)
+        return newChild
+
+    def removeChild(self, nodereg.NodeProxyBase oldChild):
+        if oldChild._c_node.parent is not self._c_node:
+            return DomError # XXX NOT_FOUND_ERR
+        tree.xmlUnlinkNode(oldChild._c_node)
+        return oldChild
     
 class Element(ElementBase):
     __slots__ = ['__weakref__']
