@@ -49,11 +49,7 @@ ElementInterface
 
 * getiterator()
 
-* insert()
-
 * makeelement()
-
-* remove()
 
 * deleting attributes (is this possible with ElementTree?)
 

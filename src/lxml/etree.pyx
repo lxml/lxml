@@ -149,6 +149,17 @@ cdef class _ElementBase(_NodeBase):
             return
         tree.xmlAddPrevSibling(c_node, element._c_node)
         node_registry.changeDocumentBelow(element, self._doc)
+
+    def remove(self, _ElementBase element):
+        cdef xmlNode* c_node
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            if c_node is element._c_node:
+                tree.xmlUnlinkNode(element._c_node)
+                return
+            c_node = c_node.next
+        else:
+            raise ValueError, "Matching element could not be found"
         
     # PROPERTIES
     property tag:
