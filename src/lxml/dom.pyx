@@ -217,6 +217,16 @@ cdef class Document(Node):
     property nodeName:
         def __get__(self):
             return '#document'
+
+    property documentElement:
+        def __get__(self):
+            cdef xmlNode* c_node
+            c_node = self._o.children
+            while c_node is not NULL:
+                if c_node.type == XML_ELEMENT_NODE:
+                    return _elementFactory(self, c_node)
+                c_node = c_node.next
+            return None
         
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc

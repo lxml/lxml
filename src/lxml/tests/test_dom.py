@@ -198,6 +198,19 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'B',
             attributes.getNamedItemNS(None, 'b').value)
+
+    def test_documentElement(self):
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            doc.firstChild,
+            doc.documentElement)
+        doc = makeDocument('<!-- comment --><foo />')
+        self.assertEquals(
+            doc.childNodes[1],
+            doc.documentElement)
+        self.assertEquals(
+            'foo',
+            doc.documentElement.nodeName)
         
 def test_suite():
     suite = unittest.TestSuite()
