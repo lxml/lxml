@@ -515,6 +515,15 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('<c></c>',
                           self._writeElement(c))
 
+    def test_setitem_indexerror(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+
+        self.assertRaises(IndexError, a.__setitem__, 1, Element('c'))
+        
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
 ##         Element = self.etree.Element
