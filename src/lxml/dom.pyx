@@ -3,108 +3,10 @@ DOM implementation on top of libxml.
 
 Read-only for starters.
 """
-cdef extern from "libxml/tree.h":
-    ctypedef enum xmlElementType:
-        XML_ELEMENT_NODE=           1
-        XML_ATTRIBUTE_NODE=         2
-        XML_TEXT_NODE=              3
-        XML_CDATA_SECTION_NODE=     4
-        XML_ENTITY_REF_NODE=        5
-        XML_ENTITY_NODE=            6
-        XML_PI_NODE=                7
-        XML_COMMENT_NODE=           8
-        XML_DOCUMENT_NODE=          9
-        XML_DOCUMENT_TYPE_NODE=     10
-        XML_DOCUMENT_FRAG_NODE=     11
-        XML_NOTATION_NODE=          12
-        XML_HTML_DOCUMENT_NODE=     13
-        XML_DTD_NODE=               14
-        XML_ELEMENT_DECL=           15
-        XML_ATTRIBUTE_DECL=         16
-        XML_ENTITY_DECL=            17
-        XML_NAMESPACE_DECL=         18
-        XML_XINCLUDE_START=         19
-        XML_XINCLUDE_END=           20
 
-    ctypedef struct xmlDoc
-    ctypedef struct xmlAttr
-
-    ctypedef struct xmlNs:
-        char* href
-        char* prefix
-
-    ctypedef struct xmlNode:
-        xmlElementType   type
-        char   *name
-        xmlNode *children
-        xmlNode *last
-        xmlNode *parent
-        xmlNode *next
-        xmlNode *prev
-        xmlDoc *doc
-        char *content
-        xmlAttr* properties
-        xmlNs* ns
-        
-    ctypedef struct xmlDoc:
-        xmlElementType type
-        char *name
-        xmlNode *children
-        xmlNode *last
-        xmlNode *parent
-        xmlNode *next
-        xmlNode *prev
-        xmlDoc *doc
-                
-    ctypedef struct xmlAttr:
-        xmlElementType type
-        char* name
-        xmlNode* children
-        xmlNode* last
-        xmlNode* parent
-        xmlNode* next
-        xmlNode* prev
-        xmlDoc* doc
-        xmlNs* ns
-        
-    ctypedef struct xmlElement:
-        xmlElementType type
-        char* name
-        xmlNode* children
-        xmlNode* last
-        xmlNode* parent
-        xmlNode* next
-        xmlNode* prev
-        xmlDoc* doc
- 
-    cdef void xmlFreeDoc(xmlDoc *cur)
-    cdef xmlNode* xmlNewNode(xmlNs* ns, char* name)
-    cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur)
-    cdef xmlNode* xmlNewDocNode(xmlDoc* doc, xmlNs* ns,
-                                char* name, char* content)
-    cdef xmlDoc* xmlNewDoc(char* version)
-    cdef xmlAttr* xmlNewProp(xmlNode* node, char* name, char* value)
-    cdef char* xmlGetNoNsProp(xmlNode* node, char* name)
-    cdef char* xmlGetNsProp(xmlNode* node, char* name, char* nameSpace)
-    cdef void xmlSetProp(xmlNode* node, char* name, char* value)
-    cdef void xmlDocDumpMemory(xmlDoc* cur,
-                               char** mem,
-                               int* size)
-    cdef void xmlFree(char* buf)
-    cdef void xmlUnlinkNode(xmlNode* cur)
-    cdef xmlNode* xmlDocSetRootElement(xmlDoc* doc, xmlNode* root)
-    cdef xmlNode* xmlDocGetRootElement(xmlDoc* doc)
-    cdef void xmlSetTreeDoc(xmlNode* tree, xmlDoc* doc)
-    cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
-    cdef xmlAttr* xmlHasProp(xmlNode* node, char* name)
-    cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
-    cdef char* xmlNodeGetContent(xmlNode* cur)
-    cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* nameSpace)
-    cdef int xmlIsBlankNode(xmlNode* node)
-    
-cdef extern from "libxml/parser.h":
-    cdef xmlDoc* xmlParseFile(char* filename)
-    cdef xmlDoc* xmlParseDoc(char* cur)
+from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
+cimport tree
+from parser cimport xmlParseDoc
 
 cdef class Node
 cdef class Document(Node)
@@ -124,23 +26,23 @@ cdef class Node:
 
     property ELEMENT_NODE:
         def __get__(self):
-            return XML_ELEMENT_NODE
+            return tree.XML_ELEMENT_NODE
 
     property ATTRIBUTE_NODE:
         def __get__(self):
-            return XML_ATTRIBUTE_NODE
+            return tree.XML_ATTRIBUTE_NODE
 
     property COMMENT_NODE:
         def __get__(self):
-            return XML_COMMENT_NODE
+            return tree.XML_COMMENT_NODE
         
     property TEXT_NODE:
         def __get__(self):
-            return XML_TEXT_NODE
+            return tree.XML_TEXT_NODE
 
     property DOCUMENT_NODE:
         def __get__(self):
-            return XML_DOCUMENT_NODE
+            return tree.XML_DOCUMENT_NODE
 
     def __cmp__(Node self, Node other):
         # XXX this is fishy, should return negative, 0, larger
@@ -215,7 +117,7 @@ cdef class Node:
         else:
             p = prefix
         doc = self._getDoc()
-        ns = xmlSearchNs(<xmlDoc*>(doc._o), self._o, p)
+        ns = tree.xmlSearchNs(<xmlDoc*>(doc._o), self._o, p)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
@@ -237,11 +139,11 @@ cdef class Document(Node):
         return self
     
     def __dealloc__(self):
-        xmlFreeDoc(<xmlDoc*>self._o)
+        tree.xmlFreeDoc(<xmlDoc*>self._o)
 
     property nodeType:
         def __get__(self):
-            return XML_DOCUMENT_NODE
+            return tree.XML_DOCUMENT_NODE
         
     property ownerDocument:
         def __get__(self):
@@ -256,7 +158,7 @@ cdef class Document(Node):
             cdef xmlNode* c_node
             c_node = self._o.children
             while c_node is not NULL:
-                if c_node.type == XML_ELEMENT_NODE:
+                if c_node.type == tree.XML_ELEMENT_NODE:
                     return _elementFactory(self, c_node)
                 c_node = c_node.next
             return None
@@ -290,7 +192,7 @@ cdef class XPathNSResolver(_RefBase):
         cdef xmlNs* ns
         cdef Document doc
         doc = self._getDoc()
-        ns = xmlSearchNs(<xmlDoc*>(doc._o), self._o, prefix)
+        ns = tree.xmlSearchNs(<xmlDoc*>(doc._o), self._o, prefix)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
@@ -331,8 +233,8 @@ cdef class ElementAttrNode(NonDocNode):
             result = []
             for node in self.childNodes:
                 nt = node.nodeType
-                if (nt == XML_COMMENT_NODE or
-                    nt == XML_PI_NODE):
+                if (nt == tree.XML_COMMENT_NODE or
+                    nt == tree.XML_PI_NODE):
                     continue
                 result.append(node.textContent)
             return ''.join(result)
@@ -341,7 +243,7 @@ cdef class Element(ElementAttrNode):
 
     property nodeType:
         def __get__(self):
-            return XML_ELEMENT_NODE
+            return tree.XML_ELEMENT_NODE
                 
     property tagName:
         def __get__(self):
@@ -362,11 +264,11 @@ cdef class Element(ElementAttrNode):
         else:
             nsuri = namespaceURI
         # this doesn't have the ns bug, unlike xmlHasNsProp
-        value = xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._o, localName, nsuri)
         if value is NULL:
             return ''
         result = unicode(value, 'UTF-8')
-        xmlFree(value)
+        tree.xmlFree(value)
         return result
         
     def getAttributeNodeNS(self, namespaceURI, localName):
@@ -383,10 +285,10 @@ cdef class Element(ElementAttrNode):
         else:
             nsuri = namespaceURI
         # XXX cannot use xmlHasNsProp due to bug
-        value = xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._o, localName, nsuri)
         result = value is not NULL
         if result:
-            xmlFree(value)
+            tree.xmlFree(value)
         return result
     
 cdef _elementFactory(Document doc, xmlNode* c_node):
@@ -409,7 +311,7 @@ cdef class Attr(ElementAttrNode):
 
     property nodeType:
         def __get__(self):
-            return XML_ATTRIBUTE_NODE
+            return tree.XML_ATTRIBUTE_NODE
         
     property name:
         def __get__(self):
@@ -422,11 +324,11 @@ cdef class Attr(ElementAttrNode):
     property value:
         def __get__(self):
             cdef char* content
-            content = xmlNodeGetContent(self._o)
+            content = tree.xmlNodeGetContent(self._o)
             if content is NULL:
                 return ''
             result = unicode(content, 'UTF-8')
-            xmlFree(content)
+            tree.xmlFree(content)
             return result
 
     property nodeValue:
@@ -446,7 +348,7 @@ cdef _attrFactory(Document doc, xmlNode* c_node):
 cdef class CharacterData(NonDocNode):
     property nodeType:
         def __get__(self):
-            return XML_TEXT_NODE 
+            return tree.XML_TEXT_NODE 
 
     property data:
         def __get__(self):
@@ -483,7 +385,7 @@ cdef class Comment(CharacterData):
 
     property nodeType:
         def __get__(self):
-            return XML_COMMENT_NODE
+            return tree.XML_COMMENT_NODE
         
 cdef _commentFactory(Document doc, xmlNode* c_node):
     cdef Comment result
@@ -570,12 +472,12 @@ cdef class NamedNodeMap(_RefBase):
             nsuri = namespaceURI
         # XXX big hack relying on xmlGetNsProp to check whether we
         # can get attribute safely, avoiding bug in xmlHasNsProp
-        value = xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._o, localName, nsuri)
         if value is NULL:
             return None
-        xmlFree(value)
+        tree.xmlFree(value)
         
-        c_node = xmlHasNsProp(self._o, localName, nsuri)
+        c_node = tree.xmlHasNsProp(self._o, localName, nsuri)
         if c_node is NULL:
             return None
         return _attrFactory(self._doc, <xmlNode*>c_node)
@@ -624,15 +526,15 @@ cdef _NamedNodeMapIterator _namedNodeMapIteratorFactory(Document doc,
 cdef _nodeFactory(Document doc, xmlNode* c_node):
     if c_node is NULL:
         return None
-    elif c_node.type == XML_ELEMENT_NODE:
+    elif c_node.type == tree.XML_ELEMENT_NODE:
         return _elementFactory(doc, c_node)
-    elif c_node.type == XML_TEXT_NODE:
+    elif c_node.type == tree.XML_TEXT_NODE:
         return _textFactory(doc, c_node)
-    elif c_node.type == XML_ATTRIBUTE_NODE:
+    elif c_node.type == tree.XML_ATTRIBUTE_NODE:
         return _attrFactory(doc, c_node)
-    elif c_node.type == XML_COMMENT_NODE:
+    elif c_node.type == tree.XML_COMMENT_NODE:
         return _commentFactory(doc, c_node)
-    elif c_node.type == XML_DOCUMENT_NODE:
+    elif c_node.type == tree.XML_DOCUMENT_NODE:
         return doc
     
 def makeDocument(text):
