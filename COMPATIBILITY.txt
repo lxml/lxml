@@ -1,0 +1,31 @@
+lxml.etree versus ElementTree
+=============================
+
+A lot of care has been taken to ensure compatibility between etree and
+ElementTree.
+
+Differences:
+
+* import is different; etree uses a lower case package name, while
+  ElementTree a combination of upper-case and lower case::
+
+  # etree
+  from lxml.etree import Element
+
+  # ElementTree
+  from elementtree.ElementTree import Element
+
+  When switching over code from ElementTree to etree, and you're using
+  the package name prefix 'ElementTree', you can do the following::
+
+  # instead of
+  from elementtree import ElementTree
+  # use
+  from lxml import etree as ElementTree
+
+* ElementTree has a bug when serializing an empty Comment (no text
+  argument given).
+
+* When trying to set a subelement using __setitem__ that is in fact
+  not an Element but some other object, etree raises a TypeError, and
+  ElementTree raises an AssertionError.
