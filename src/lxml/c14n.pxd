@@ -1,7 +1,5 @@
 from tree cimport xmlDoc
-
-cdef extern from "libxml/xpath.h":
-    ctypedef struct xmlNodeSet
+from xpath cimport xmlNodeSet
     
 cdef extern from "libxml/c14n.h":
     cdef int xmlC14NDocDumpMemory(xmlDoc* doc,

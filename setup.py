@@ -128,14 +128,6 @@ ext_modules = [
               libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
-    Extension('lxml.c14n',
-              sources=['src/lxml/c14n.pyx'],
-              include_dirs=include_dirs,
-              runtime_library_dirs=runtime_library_dirs,
-              library_dirs=library_dirs,
-              libraries=libraries,
-              extra_compile_args = extra_compile_args
-              ),
     ]
 
 setup(name="lxml",

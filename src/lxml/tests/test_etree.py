@@ -2,7 +2,7 @@ import unittest
 
 from StringIO import StringIO
 import os, shutil, tempfile
-from lxml import c14n
+#from lxml import c14n
 
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
@@ -349,7 +349,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             data = f.getvalue()
             self.assertEquals(
                 '<doc%s>This is a test.</doc%s>' % (i, i),
-                c14n.canonicalize(data))
+                canonicalize(data))
 
     # this could trigger a crash, apparently because the document
     # reference was prematurely garbage collected
@@ -1229,7 +1229,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         c = SubElement(a, 'c')
         
         self.assertEquals('<a><b></b><c></c></a>',
-                          c14n.canonicalize(tostring(a)))
+                          canonicalize(tostring(a)))
 
     def test_parse_file(self):
         parse = self.etree.parse
@@ -1272,7 +1272,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree = ElementTree(element=element)
         tree.write(f)
         data = f.getvalue()
-        return c14n.canonicalize(data)
+        return canonicalize(data)
 
 ##     def _writeElementNs(self, element):
 ##         # use ElementTree (not etree) always to 'canonicalize' namespace
@@ -1397,7 +1397,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tree = ElementTree(element=element)
         tree.write(f)
         data = f.getvalue()
-        return c14n.canonicalize(data)
+        return canonicalize(data)
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -1540,7 +1540,16 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 ''')
         self.assertRaises(etree.RelaxNGParseError,
                           etree.RelaxNG, schema)
-        
+
+class ETreeC14NTestCase(HelperTestCase):
+    def test_c14n(self):
+        tree = self.parse('<a><b/></a>')
+        f = StringIO()
+        tree.write_c14n(f)
+        s = f.getvalue()
+        self.assertEquals('<a><b></b></a>',
+                          s)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
@@ -1550,6 +1559,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     return suite
 
 import os.path
@@ -1557,6 +1567,13 @@ import os.path
 def fileInTestDir(name):
     _testdir = os.path.split(__file__)[0]
     return os.path.join(_testdir, name)
+
+def canonicalize(xml):
+    f = StringIO(xml)
+    tree = etree.parse(f)
+    f = StringIO()
+    tree.write_c14n(f)
+    return f.getvalue()
 
 if __name__ == '__main__':
     unittest.main()

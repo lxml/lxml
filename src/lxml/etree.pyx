@@ -5,6 +5,7 @@ cimport xpath
 cimport xslt
 cimport relaxng
 cimport xmlerror
+cimport c14n
 cimport cstd
 
 from xmlparser cimport xmlParserCtxt, xmlDict
@@ -63,6 +64,9 @@ class RelaxNGParseError(RelaxNGError):
     pass
 
 class RelaxNGValidateError(RelaxNGError):
+    pass
+
+class C14NError(Error):
     pass
 
 cdef class _DocumentBase:
@@ -194,7 +198,7 @@ cdef class _ElementTree(_DocumentBase):
             path = "." + path
         return root.findall(path)
 
-    # extension to ElementTree API
+    # extensions to ElementTree API
     def xpath(self, path, namespaces=None):
         """XPath evaluate in context of document.
 
@@ -207,6 +211,18 @@ cdef class _ElementTree(_DocumentBase):
         string for text and attribute values.
         """            
         return _xpathEval(self, None, path, namespaces)
+    
+    def write_c14n(self, file):
+        """C14N write of document. Always writes UTF-8.
+        """
+        cdef char* data
+        cdef int bytes
+        bytes = c14n.xmlC14NDocDumpMemory(self._c_doc,
+                                          NULL, 0, NULL, 1, &data)
+        if bytes < 0:
+            raise C14NError, "C18N failed"
+        file.write(data)
+        tree.xmlFree(data)
     
 cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     cdef _ElementTree result
