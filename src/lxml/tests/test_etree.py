@@ -1,6 +1,6 @@
 import unittest
 
-from lxml.etree import Element, ElementTree, SubElement
+from lxml.etree import Element, ElementTree, SubElement, XML
 from StringIO import StringIO
 import os, shutil, tempfile
 
@@ -161,6 +161,35 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('Two', root.get('two'))
         self.assertEquals(None, root.get('three'))
         self.assertEquals('foo', root.get('three', 'foo'))
+
+    def test_attribute_keys(self):
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
+        keys = root.attrib.keys()
+        keys.sort()
+        self.assertEquals(['alpha', 'beta', 'gamma'], keys)
+
+    def test_attribute_keys2(self):
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
+        keys = root.keys()
+        keys.sort()
+        self.assertEquals(['alpha', 'beta', 'gamma'], keys)
+
+    def test_attribute_values(self):
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
+        values = root.attrib.values()
+        values.sort()
+        self.assertEquals(['Alpha', 'Beta', 'Gamma'], values)
+
+    def test_attribute_items(self):
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
+        items = root.attrib.items()
+        items.sort()
+        self.assertEquals([
+            ('alpha', 'Alpha'),
+            ('beta', 'Beta'),
+            ('gamma', 'Gamma'),
+            ], 
+            items)
         
 def test_suite():
     suite = unittest.TestSuite()

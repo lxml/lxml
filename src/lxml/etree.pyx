@@ -191,6 +191,12 @@ cdef class _Element(_NodeBase):
     def get(self, key, default=None):
         return self.attrib.get(key, default)
 
+    def keys(self):
+        return self.attrib.keys()
+
+    def items(self):
+        return self.attrib.items()
+    
     def append(self, _Element element):
         xmlUnlinkNode(element._c_node)
         xmlAddChild(self._c_node, element._c_node)
@@ -219,6 +225,41 @@ cdef class _Attrib(_NodeBase):
             return self.__getitem__(key)
         except KeyError:
             return default
+
+    def keys(self):
+        result = []
+        cdef xmlNode* c_node
+        c_node = <xmlNode*>(self._c_node.properties)
+        while c_node is not NULL:
+            if c_node.type == XML_ATTRIBUTE_NODE:
+                result.append(unicode(c_node.name, 'UTF-8'))
+            c_node = c_node.next
+        return result
+
+    def values(self):
+        result = []
+        cdef xmlNode* c_node
+        c_node = <xmlNode*>(self._c_node.properties)
+        while c_node is not NULL:
+            if c_node.type == XML_ATTRIBUTE_NODE:
+                result.append(
+                    unicode(xmlGetNoNsProp(self._c_node, c_node.name), 'UTF-8')
+                    )
+            c_node = c_node.next
+        return result
+        
+    def items(self):
+        result = []
+        cdef xmlNode* c_node
+        c_node = <xmlNode*>(self._c_node.properties)
+        while c_node is not NULL:
+            if c_node.type == XML_ATTRIBUTE_NODE:
+                result.append((
+                    unicode(c_node.name, 'UTF-8'),
+                    unicode(xmlGetNoNsProp(self._c_node, c_node.name), 'UTF-8')
+                    ))
+            c_node = c_node.next
+        return result
     
 cdef _Attrib _attribFactory(_ElementTree tree, xmlNode* c_node):
     cdef _Attrib result
@@ -264,3 +305,8 @@ def ElementTree(_Element element=None, file=None):
         element._doc = tree
 
     return tree
+
+def XML(text):
+    cdef xmlDoc* c_doc
+    c_doc = xmlParseDoc(text)
+    return _elementTreeFactory(c_doc).getroot()
