@@ -123,3 +123,16 @@ to return XML structures::
   'Alpha'
   >>> t[1].text
   'Beta'
+
+It's even possible to filter that result set with another XPath
+expression::
+
+  >>> r = e.evaluate("returnsNodeSet()/result")
+  >>> len(r)
+  3
+  >>> r[0].tag
+  'result'
+  >>> r[1].tag
+  'result'
+  >>> r[0].text
+  'Alpha'
