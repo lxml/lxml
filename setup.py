@@ -1,6 +1,11 @@
 import os
 import sys
 
+# change these to your local installation of libxml2
+libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
+library_dirs = ['/home/faassen/tmp/local/lib']
+runtime_library_dirs = ['/home/faassen/tmp/local/lib']
+
 # Provide a bunch of custom components that make it possible to build and
 # install non-.py files into the package destinations.
 from distutils import dir_util
@@ -109,10 +114,6 @@ class MyDistribution(Distribution):
         self.cmdclass['build'] = MyBuilder
         self.cmdclass['build_ext'] = MyExtBuilder
         self.cmdclass['install_lib'] = MyLibInstaller
-
-libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
-library_dirs = ['/home/faassen/tmp/local/lib']
-runtime_library_dirs = ['/home/faassen/tmp/local/lib']
 
 ext_modules = [
     Extension('lxml.etree',
