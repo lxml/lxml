@@ -7,19 +7,21 @@ Read-only for starters.
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport tree
 from parser cimport xmlParseDoc
+import nodereg
+cimport nodereg
 
 cdef class Node
 cdef class Document(Node)
 
 cdef class _RefBase:
-    cdef xmlNode* _o
+    cdef xmlNode* _c_node
     cdef Document _doc
     
     def _getDoc(self):
         return self._doc
 
 cdef class Node:
-    cdef xmlNode* _o
+    cdef xmlNode* _c_node
     
     def _getDoc(self):
         return self._doc
@@ -46,7 +48,7 @@ cdef class Node:
 
     def __cmp__(Node self, Node other):
         # XXX this is fishy, should return negative, 0, larger
-        if self._o is other._o:
+        if self._c_node is other._c_node:
             return 0
         else:
             return 1
@@ -56,27 +58,27 @@ cdef class Node:
 
     property childNodes:
         def __get__(self):
-            return _nodeListFactory(self._getDoc(), self._o)
+            return _nodeListFactory(self._getDoc(), self._c_node)
 
     property parentNode:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.parent)
+            return _nodeFactory(self._getDoc(), self._c_node.parent)
 
     property firstChild:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.children)
+            return _nodeFactory(self._getDoc(), self._c_node.children)
         
     property lastChild:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.last)
+            return _nodeFactory(self._getDoc(), self._c_node.last)
 
     property previousSibling:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.prev)
+            return _nodeFactory(self._getDoc(), self._c_node.prev)
 
     property nextSibling:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.next)
+            return _nodeFactory(self._getDoc(), self._c_node.next)
 
     property attributes:
         def __get__(self):
@@ -106,7 +108,7 @@ cdef class Node:
         return False
 
     def hasChildNodes(self):
-        return self._o.children is not NULL
+        return self._c_node.children is not NULL
 
     def lookupNamespaceURI(self, prefix):
         cdef xmlNs* ns
@@ -117,7 +119,7 @@ cdef class Node:
         else:
             p = prefix
         doc = self._getDoc()
-        ns = tree.xmlSearchNs(<xmlDoc*>(doc._o), self._o, p)
+        ns = tree.xmlSearchNs(<xmlDoc*>(doc._c_node), self._c_node, p)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
@@ -139,7 +141,7 @@ cdef class Document(Node):
         return self
     
     def __dealloc__(self):
-        tree.xmlFreeDoc(<xmlDoc*>self._o)
+        tree.xmlFreeDoc(<xmlDoc*>self._c_node)
 
     property nodeType:
         def __get__(self):
@@ -156,7 +158,7 @@ cdef class Document(Node):
     property documentElement:
         def __get__(self):
             cdef xmlNode* c_node
-            c_node = self._o.children
+            c_node = self._c_node.children
             while c_node is not NULL:
                 if c_node.type == tree.XML_ELEMENT_NODE:
                     return _elementFactory(self, c_node)
@@ -175,7 +177,7 @@ cdef class Document(Node):
         pass
 
     def createNSResolver(self, Node nodeResolver):
-        return _xpathNSResolverFactory(self, nodeResolver._o)
+        return _xpathNSResolverFactory(self, nodeResolver._c_node)
 
     def evaluate(self, expression, contextNode,
                  resolver, type, result):
@@ -184,7 +186,7 @@ cdef class Document(Node):
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc
     doc = Document()
-    doc._o = <xmlNode*>c_doc
+    doc._c_node = <xmlNode*>c_doc
     return doc
 
 cdef class XPathNSResolver(_RefBase):
@@ -192,7 +194,7 @@ cdef class XPathNSResolver(_RefBase):
         cdef xmlNs* ns
         cdef Document doc
         doc = self._getDoc()
-        ns = tree.xmlSearchNs(<xmlDoc*>(doc._o), self._o, prefix)
+        ns = tree.xmlSearchNs(<xmlDoc*>(doc._c_node), self._c_node, prefix)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
@@ -201,7 +203,7 @@ cdef XPathNSResolver _xpathNSResolverFactory(Document doc, xmlNode* c_node):
     cdef XPathNSResolver result
     result = XPathNSResolver()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
     
 cdef class ElementAttrNode(NonDocNode):
@@ -214,19 +216,19 @@ cdef class ElementAttrNode(NonDocNode):
 
     property localName:
         def __get__(self):
-            return unicode(self._o.name, 'UTF-8')
+            return unicode(self._c_node.name, 'UTF-8')
 
     property prefix:
         def __get__(self):
-            if self._o.ns is NULL or self._o.ns.prefix is NULL:
+            if self._c_node.ns is NULL or self._c_node.ns.prefix is NULL:
                 return None
-            return unicode(self._o.ns.prefix, 'UTF-8')
+            return unicode(self._c_node.ns.prefix, 'UTF-8')
 
     property namespaceURI:
         def __get__(self):
-            if self._o.ns is NULL or self._o.ns.href is NULL:
+            if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
                 return None
-            return unicode(self._o.ns.href, 'UTF-8')
+            return unicode(self._c_node.ns.href, 'UTF-8')
 
     property textContent:
         def __get__(self):
@@ -251,10 +253,10 @@ cdef class Element(ElementAttrNode):
 
     property attributes:
         def __get__(self):
-            return _namedNodeMapFactory(self._getDoc(), self._o)
+            return _namedNodeMapFactory(self._getDoc(), self._c_node)
 
     def hasAttributes(self):
-        return self._o.properties is not NULL
+        return self._c_node.properties is not NULL
 
     def getAttributeNS(self, namespaceURI, localName):
         cdef char* value
@@ -264,7 +266,7 @@ cdef class Element(ElementAttrNode):
         else:
             nsuri = namespaceURI
         # this doesn't have the ns bug, unlike xmlHasNsProp
-        value = tree.xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._c_node, localName, nsuri)
         if value is NULL:
             return ''
         result = unicode(value, 'UTF-8')
@@ -285,7 +287,7 @@ cdef class Element(ElementAttrNode):
         else:
             nsuri = namespaceURI
         # XXX cannot use xmlHasNsProp due to bug
-        value = tree.xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._c_node, localName, nsuri)
         result = value is not NULL
         if result:
             tree.xmlFree(value)
@@ -295,7 +297,7 @@ cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class Attr(ElementAttrNode):
@@ -319,12 +321,12 @@ cdef class Attr(ElementAttrNode):
         
     property ownerElement:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._o.parent)
+            return _nodeFactory(self._getDoc(), self._c_node.parent)
 
     property value:
         def __get__(self):
             cdef char* content
-            content = tree.xmlNodeGetContent(self._o)
+            content = tree.xmlNodeGetContent(self._c_node)
             if content is NULL:
                 return ''
             result = unicode(content, 'UTF-8')
@@ -342,7 +344,7 @@ cdef _attrFactory(Document doc, xmlNode* c_node):
     cdef Attr result
     result = Attr()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class CharacterData(NonDocNode):
@@ -352,7 +354,7 @@ cdef class CharacterData(NonDocNode):
 
     property data:
         def __get__(self):
-            return unicode(self._o.content, "UTF-8")
+            return unicode(self._c_node.content, "UTF-8")
 
     property length:
         def __get__(self):
@@ -375,7 +377,7 @@ cdef _textFactory(Document doc, xmlNode* c_node):
     cdef Text result
     result = Text()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class Comment(CharacterData):
@@ -391,13 +393,13 @@ cdef _commentFactory(Document doc, xmlNode* c_node):
     cdef Comment result
     result = Comment()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class NodeList(_RefBase):
     def __getitem__(self, index):
         cdef xmlNode* c_node
-        c_node = self._o.children
+        c_node = self._c_node.children
         c = 0
         while c_node is not NULL:
             if c == index:
@@ -408,7 +410,7 @@ cdef class NodeList(_RefBase):
             raise IndexError
 
     def __iter__(self):
-        return _nodeListIteratorFactory(self._doc, self._o.children)
+        return _nodeListIteratorFactory(self._doc, self._c_node.children)
     
     def item(self, index):
         try:
@@ -419,7 +421,7 @@ cdef class NodeList(_RefBase):
     property length:
         def __get__(self):
             cdef xmlNode* c_node
-            c_node = self._o.children
+            c_node = self._c_node.children
             c = 0
             while c_node is not NULL:
                 c = c + 1
@@ -430,15 +432,15 @@ cdef _nodeListFactory(Document doc, xmlNode* c_node):
     cdef NodeList result
     result = NodeList()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class _NodeListIterator(_RefBase):
     def __next__(self):
         cdef xmlNode* c_node
-        c_node = self._o
+        c_node = self._c_node
         if c_node is not NULL:
-            self._o = c_node.next
+            self._c_node = c_node.next
             return _nodeFactory(self._doc, c_node)
         else:
             raise StopIteration
@@ -447,17 +449,17 @@ cdef _NodeListIterator _nodeListIteratorFactory(Document doc, xmlNode* c_node):
     cdef _NodeListIterator result
     result = _NodeListIterator()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class NamedNodeMap(_RefBase):
     def __iter__(self):
         return _namedNodeMapIteratorFactory(
-            self._doc, <xmlNode*>self._o.properties)
+            self._doc, <xmlNode*>self._c_node.properties)
     
 ##     def getNamedItem(self, name):
 ##         cdef xmlAttr* c_node
-##         c_node = xmlHasProp(self._o, name)
+##         c_node = xmlHasProp(self._c_node, name)
 ##         if c_node is NULL:
 ##             return None
 ##         return _attrFactory(self._doc, <xmlNode*>c_node)
@@ -472,19 +474,19 @@ cdef class NamedNodeMap(_RefBase):
             nsuri = namespaceURI
         # XXX big hack relying on xmlGetNsProp to check whether we
         # can get attribute safely, avoiding bug in xmlHasNsProp
-        value = tree.xmlGetNsProp(self._o, localName, nsuri)
+        value = tree.xmlGetNsProp(self._c_node, localName, nsuri)
         if value is NULL:
             return None
         tree.xmlFree(value)
         
-        c_node = tree.xmlHasNsProp(self._o, localName, nsuri)
+        c_node = tree.xmlHasNsProp(self._c_node, localName, nsuri)
         if c_node is NULL:
             return None
         return _attrFactory(self._doc, <xmlNode*>c_node)
     
     def item(self, index):
         cdef xmlNode* c_node
-        c_node = <xmlNode*>self._o.properties
+        c_node = <xmlNode*>self._c_node.properties
         c = 0
         while c_node is not NULL:
             if c == index:
@@ -502,15 +504,15 @@ cdef _namedNodeMapFactory(Document doc, xmlNode* c_node):
     cdef NamedNodeMap result
     result = NamedNodeMap()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef class _NamedNodeMapIterator(_RefBase):
     def __next__(self):
         cdef xmlNode* c_node
-        c_node = self._o
+        c_node = self._c_node
         if c_node is not NULL:
-            self._o = c_node.next
+            self._c_node = c_node.next
             return _nodeFactory(self._doc, c_node)
         else:
             raise StopIteration
@@ -520,7 +522,7 @@ cdef _NamedNodeMapIterator _namedNodeMapIteratorFactory(Document doc,
     cdef _NamedNodeMapIterator result
     result = _NamedNodeMapIterator()
     result._doc = doc
-    result._o = c_node
+    result._c_node = c_node
     return result
 
 cdef _nodeFactory(Document doc, xmlNode* c_node):
