@@ -188,6 +188,9 @@ cdef class _Element(_NodeBase):
             c_node = c_node.next
         return c
     
+    def get(self, key, default=None):
+        return self.attrib.get(key, default)
+
     def append(self, _Element element):
         xmlUnlinkNode(element._c_node)
         xmlAddChild(self._c_node, element._c_node)
@@ -211,6 +214,12 @@ cdef class _Attrib(_NodeBase):
             raise KeyError, key
         return unicode(result, 'UTF-8')
 
+    def get(self, key, default=None):
+        try:
+            return self.__getitem__(key)
+        except KeyError:
+            return default
+    
 cdef _Attrib _attribFactory(_ElementTree tree, xmlNode* c_node):
     cdef _Attrib result
     result = _Attrib()

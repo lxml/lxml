@@ -144,6 +144,24 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('Two', root.attrib['two'])
         self.assertRaises(KeyError, root.attrib.__getitem__, 'three')  
 
+    def test_attributes2(self):
+        f = StringIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('One', root.attrib.get('one'))
+        self.assertEquals('Two', root.attrib.get('two'))
+        self.assertEquals(None, root.attrib.get('three'))
+        self.assertEquals('foo', root.attrib.get('three', 'foo'))
+
+    def test_attributes3(self):
+        f = StringIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('One', root.get('one'))
+        self.assertEquals('Two', root.get('two'))
+        self.assertEquals(None, root.get('three'))
+        self.assertEquals('foo', root.get('three', 'foo'))
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
