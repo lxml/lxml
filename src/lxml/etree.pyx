@@ -38,7 +38,7 @@ cdef class _DocumentBase:
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
     """
-    cdef int ns_counter
+    cdef int _ns_counter
     cdef xmlDoc* _c_doc
     
     def __dealloc__(self):
@@ -96,7 +96,7 @@ cdef class _NodeBase:
         self._doc._ns_counter = self._doc._ns_counter + 1
         return c_ns
 
-cdef class _ElementTreeBase(_DocumentBase):
+cdef class _ElementTree(_DocumentBase):
 
 ##     def parse(self, source, parser=None):
 ##         # XXX ignore parser for now
@@ -172,17 +172,14 @@ cdef class _ElementTreeBase(_DocumentBase):
         """
         return _xpathEval(self, None, path)
     
-class _ElementTree(_ElementTreeBase):
-    __slots__ = ['__weakref__']
-    
-cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
-    cdef _ElementTreeBase result
+cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
+    cdef _ElementTree result
     result = _ElementTree()
     result._ns_counter = 0
     result._c_doc = c_doc
     return result
 
-cdef class _ElementBase(_NodeBase):
+cdef class _Element(_NodeBase):
     # MANIPULATORS
 
     def __setitem__(self, index, _NodeBase element):
@@ -213,7 +210,7 @@ cdef class _ElementBase(_NodeBase):
     def __setslice__(self, start, stop, value):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
-        cdef _ElementBase mynode
+        cdef _Element mynode
         # first, find start of slice
         c_node = _findChild(self._c_node, start)
         # now delete the slice
@@ -241,7 +238,7 @@ cdef class _ElementBase(_NodeBase):
     def set(self, key, value):
         self.attrib[key] = value
         
-    def append(self, _ElementBase element):
+    def append(self, _Element element):
         cdef xmlNode* c_next
         cdef xmlNode* c_next2
         # store possible text node
@@ -278,7 +275,7 @@ cdef class _ElementBase(_NodeBase):
                 _removeNode(c_node)
             c_node = c_node_next
 
-    def insert(self, index, _ElementBase element):
+    def insert(self, index, _Element element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
@@ -290,7 +287,7 @@ cdef class _ElementBase(_NodeBase):
         _moveTail(c_next, element._c_node)
         changeDocumentBelow(element._c_node, self._doc)
 
-    def remove(self, _ElementBase element):
+    def remove(self, _Element element):
         cdef xmlNode* c_node
         c_node = self._c_node.children
         while c_node is not NULL:
@@ -452,11 +449,8 @@ cdef class _ElementBase(_NodeBase):
     def xpath(self, path):
         return _xpathEval(self._doc, self, path)
         
-class _Element(_ElementBase):
-    __slots__ = ['__weakref__']
-    
-cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
-    cdef _ElementBase result
+cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
+    cdef _Element result
     result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
         return result
@@ -474,11 +468,11 @@ cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
     registerProxy(result, PROXY_ELEMENT)
     return result
 
-cdef class _CommentBase(_ElementBase):
+cdef class _Comment(_Element):
     def set(self, key, value):
         pass
     
-    def append(self, _ElementBase element):
+    def append(self, _Element element):
         pass
 
     property tag:
@@ -515,11 +509,8 @@ cdef class _CommentBase(_ElementBase):
     def items(self):
         return []
     
-class _Comment(_CommentBase):
-    __slots__ = ['__weakref__']
-
-cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
-    cdef _CommentBase result
+cdef _Comment _commentFactory(_ElementTree etree, xmlNode* c_node):
+    cdef _Comment result
     result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
         return result
@@ -532,7 +523,7 @@ cdef _CommentBase _commentFactory(_ElementTreeBase etree, xmlNode* c_node):
     registerProxy(result, PROXY_ELEMENT)
     return result
 
-cdef class _AttribBase(_NodeBase):
+cdef class _Attrib(_NodeBase):
     # MANIPULATORS
     def __setitem__(self, key, value):
         cdef xmlNs* c_ns
@@ -635,11 +626,8 @@ cdef class _AttribBase(_NodeBase):
             c_node = c_node.next
         return result
     
-class _Attrib(_AttribBase):
-    __slots__ = ['__weakref__']
-    
-cdef _AttribBase _attribFactory(_ElementTreeBase etree, xmlNode* c_node):
-    cdef _AttribBase result
+cdef _Attrib _attribFactory(_ElementTree etree, xmlNode* c_node):
+    cdef _Attrib result
     result = getProxy(c_node, PROXY_ATTRIB)
     if result is not None:
         return result
@@ -650,7 +638,7 @@ cdef _AttribBase _attribFactory(_ElementTreeBase etree, xmlNode* c_node):
     registerProxy(result, PROXY_ATTRIB)
     return result
 
-cdef class _AttribIteratorBase(_NodeBase):
+cdef class _AttribIterator(_NodeBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -664,13 +652,10 @@ cdef class _AttribIteratorBase(_NodeBase):
         self._c_node = c_node.next
         registerProxy(self, PROXY_ATTRIB_ITER)
         return funicode(c_node.name)
-
-class _AttribIterator(_AttribIteratorBase):
-    __slots__ = ['__weakref__']
     
-cdef _AttribIteratorBase _attribIteratorFactory(_ElementTreeBase etree,
-                                                xmlNode* c_node):
-    cdef _AttribIteratorBase result
+cdef _AttribIterator _attribIteratorFactory(_ElementTree etree,
+                                            xmlNode* c_node):
+    cdef _AttribIterator result
     result = getProxy(c_node, PROXY_ATTRIB_ITER)
     if result is not None:
         return result
@@ -681,7 +666,7 @@ cdef _AttribIteratorBase _attribIteratorFactory(_ElementTreeBase etree,
     registerProxy(result, PROXY_ATTRIB_ITER)
     return result
 
-cdef class _ElementIteratorBase(_NodeBase):
+cdef class _ElementIterator(_NodeBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -696,12 +681,9 @@ cdef class _ElementIteratorBase(_NodeBase):
         registerProxy(self, PROXY_ELEMENT_ITER)
         return _elementFactory(self._doc, c_node)
 
-class _ElementIterator(_ElementIteratorBase):
-    __slots__ = ['__weakref__']
-    
-cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
-                                                  xmlNode* c_node):
-    cdef _ElementIteratorBase result
+cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
+                                              xmlNode* c_node):
+    cdef _ElementIterator result
     result = getProxy(c_node, PROXY_ELEMENT_ITER)
     if result is not None:
         return result
@@ -732,7 +714,7 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
-    cdef _ElementTreeBase etree
+    cdef _ElementTree etree
 
     etree = ElementTree()
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
@@ -744,7 +726,7 @@ def Element(tag, attrib=None, **extra):
 
 def Comment(text=None):
     cdef xmlNode* c_node
-    cdef _ElementTreeBase etree
+    cdef _ElementTree etree
     if text is None:
         text = ''
     text = ' %s ' % text
@@ -753,9 +735,9 @@ def Comment(text=None):
     tree.xmlAddChild(<xmlNode*>etree._c_doc, c_node)
     return _commentFactory(etree, c_node)
 
-def SubElement(_ElementBase parent, tag, attrib=None, **extra):
+def SubElement(_Element parent, tag, attrib=None, **extra):
     cdef xmlNode* c_node
-    cdef _ElementBase element
+    cdef _Element element
     c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
@@ -763,12 +745,12 @@ def SubElement(_ElementBase parent, tag, attrib=None, **extra):
     element.tag = tag
     return element
 
-def ElementTree(_ElementBase element=None, file=None):
+def ElementTree(_Element element=None, file=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
-    cdef _ElementTreeBase etree
+    cdef _ElementTree etree
     
     if file is not None:
         if isinstance(file, str) or isinstance(file, unicode):
@@ -801,7 +783,7 @@ def XML(text):
 fromstring = XML
 
 def iselement(element):
-    return isinstance(element, _ElementBase)
+    return isinstance(element, _Element)
 
 def dump(_NodeBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
@@ -951,7 +933,7 @@ cdef class XSLT:
     """
     cdef xslt.xsltStylesheet* _c_style
     
-    def __init__(self, _ElementTreeBase doc):
+    def __init__(self, _ElementTree doc):
         # make a copy of the document as stylesheet needs to assume it
         # doesn't change
         cdef xslt.xsltStylesheet* c_style
@@ -968,7 +950,7 @@ cdef class XSLT:
         # this cleans up copy of doc as well
         xslt.xsltFreeStylesheet(self._c_style)
         
-    def apply(self, _ElementTreeBase doc):
+    def apply(self, _ElementTree doc):
         cdef xmlDoc* c_result 
         c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
         if c_result is NULL:
@@ -978,7 +960,7 @@ cdef class XSLT:
         # serialize?
         return _elementTreeFactory(c_result)
 
-    def tostring(self, _ElementTreeBase doc):
+    def tostring(self, _ElementTree doc):
         """Save result doc to string using stylesheet as guidance.
         """
         cdef char* s
@@ -1144,7 +1126,7 @@ def _getNsTag(tag):
         return tag[1:i], tag[i + 1:]
     return None, tag
 
-cdef object _createNodeSetResult(_ElementTreeBase doc,
+cdef object _createNodeSetResult(_ElementTree doc,
                                  xpath.xmlXPathObject* xpathObj):
     cdef xmlNode* c_node
     cdef char* s
@@ -1173,7 +1155,7 @@ cdef object _createNodeSetResult(_ElementTreeBase doc,
             raise NotImplementedError
     return result
 
-cdef object _xpathEval(_ElementTreeBase doc, _ElementBase element,
+cdef object _xpathEval(_ElementTree doc, _Element element,
                        object path):    
     cdef xpath.xmlXPathContext* xpathCtxt
     cdef xpath.xmlXPathObject* xpathObj
