@@ -1085,7 +1085,11 @@ cdef class XSLT:
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
-        
+        # XXX work around bug in xmlCopyDoc (fix is upcoming in new release
+        # of libxml2)
+        if doc._c_doc.URL is not NULL:
+            c_doc.URL = tree.xmlStrdup(doc._c_doc.URL)
+            
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
         if c_style is NULL:
             raise XSLTParseError, "Cannot parse style sheet"

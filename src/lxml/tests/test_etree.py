@@ -1544,6 +1544,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xslt:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
+
+    def test_xslt_multiple_files(self):
+        tree = etree.parse(fileInTestDir('test1.xslt'))
+        st = etree.XSLT(tree)
         
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):

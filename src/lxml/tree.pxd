@@ -78,6 +78,7 @@ cdef extern from "libxml/tree.h":
         xmlNode* prev
         xmlDoc* doc
         xmlDict* dict
+        char* URL
         
     ctypedef struct xmlAttr:
         void* _private
@@ -152,4 +153,7 @@ cdef extern from "libxml/xmlIO.h":
         xmlCharEncodingHandler* encoder)
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
+    
+cdef extern from "libxml/xmlstring.h":
+    cdef char* xmlStrdup(char* cur)
     
