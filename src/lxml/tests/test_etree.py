@@ -69,7 +69,37 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('two', root[1].tag)
         self.assertEquals('three', root[2].tag)
         
-    
+    def test_element_indexing_with_text(self):
+        f = StringIO('<doc>Test<one>One</one></doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(1, len(root))
+        self.assertEquals('one', root[0].tag)
+        self.assertRaises(IndexError, root.__getitem__, 1)
+        
+    def test_element_indexing_with_text2(self):
+        f = StringIO('<doc><one>One</one><two>Two</two>hm<three>Three</three></doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(3, len(root))
+        self.assertEquals('one', root[0].tag)
+        self.assertEquals('two', root[1].tag)
+        self.assertEquals('three', root[2].tag)
+
+    def test_element_indexing_only_text(self):
+        f = StringIO('<doc>Test</doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(0, len(root))
+
+    def test_elementtree(self):
+        f = StringIO('<doc><one>One</one><two>Two</two></doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(2, len(root))
+        self.assertEquals('one', root[0].tag)
+        self.assertEquals('two', root[1].tag)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])

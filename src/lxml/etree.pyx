@@ -108,6 +108,13 @@ cdef class _NodeBase:
     cdef xmlNode* _c_node
 
 cdef class _ElementTree(_DocumentBase):
+    def getroot(self):
+        cdef xmlNode* c_node
+        c_node = xmlDocGetRootElement(self._c_doc)
+        if c_node is NULL:
+            return # return None
+        return _elementFactory(self, c_node)
+    
     def write(self, file, encoding='us-ascii'):
         # XXX dumping to memory first is definitely not the most efficient
         cdef char* mem
@@ -182,13 +189,13 @@ cdef class _Element(_NodeBase):
         xmlAddChild(self._c_node, element._c_node)
         element._doc = self._doc
         
-cdef _Element _elementFactory(_ElementTree tree, xmlNode* _c_node):
+cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     cdef _Element result
-    if _c_node is NULL:
+    if c_node is NULL:
         return None
     result = _Element()
     result._doc = tree
-    result._c_node = _c_node
+    result._c_node = c_node
     return result
 
 def Element(tag, attrib=None, **extra):
