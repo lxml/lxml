@@ -284,7 +284,10 @@ cdef class CharacterData(NonDocNode):
     property data:
         def __get__(self):
             return unicode(self._o.content, "UTF-8")
-
+    property length:
+        def __get__(self):
+            return len(self.data)
+        
 cdef class Text(CharacterData):
     pass
 

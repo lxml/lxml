@@ -144,6 +144,11 @@ class DomTestCase(unittest.TestCase):
     def test_textNodes(self):
         doc = makeDocument('<doc>Foo</doc>')
         self.assertEquals('Foo', doc.firstChild.firstChild.data)
+
+    def test_textNode_length(self):
+        doc = makeDocument('<doc>Foo</doc>')
+        self.assertEquals(3, doc.firstChild.firstChild.length)
+        
         
             
 def test_suite():
