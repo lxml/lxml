@@ -126,6 +126,10 @@ cdef class Node:
         def __get__(self):
             return XML_ATTRIBUTE_NODE
 
+    property COMMENT_NODE:
+        def __get__(self):
+            return XML_COMMENT_NODE
+        
     property TEXT_NODE:
         def __get__(self):
             return XML_TEXT_NODE
@@ -291,6 +295,10 @@ cdef class Attr(ElementAttrNode):
         def __get__(self):
             return None
 
+    property nodeType:
+        def __get__(self):
+            return XML_ATTRIBUTE_NODE
+        
     property name:
         def __get__(self):
             return self.nodeName
@@ -354,6 +362,10 @@ cdef class Comment(CharacterData):
         def __get__(self):
             return '#comment'
 
+    property nodeType:
+        def __get__(self):
+            return XML_COMMENT_NODE
+        
 cdef _commentFactory(Document doc, xmlNode* c_node):
     cdef Comment result
     result = Comment()

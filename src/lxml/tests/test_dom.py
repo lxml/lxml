@@ -219,6 +219,7 @@ class DomTestCase(unittest.TestCase):
             doc.documentElement.firstChild.data)
 
     def test_nodeName_all(self):
+        # Attr
         doc = makeDocument('<a href="foo"/>')
         self.assertEquals(
             'href',
@@ -226,15 +227,18 @@ class DomTestCase(unittest.TestCase):
             None, 'href').nodeName)
         # XXX CDATASection
         doc = makeDocument('<foo><!--foo--></foo>')
+        # Comment
         self.assertEquals(
             '#comment',
             doc.documentElement.childNodes[0].nodeName)
+        # Document
         doc = makeDocument('<foo/>')
         self.assertEquals(
             '#document',
             doc.nodeName)
         # XXX DocumentFragment
         # XXX DocumentType
+        # Element
         doc = makeDocument('<foo/>')
         self.assertEquals(
             'foo',
@@ -247,28 +251,33 @@ class DomTestCase(unittest.TestCase):
         # XXX EntityReference
         # XXX Notation
         # XXX ProcessingInstruction
+        # Text
         doc = makeDocument('<foo>Text</foo>')
         self.assertEquals(
             '#text',
             doc.documentElement.childNodes[0].nodeName)
 
     def test_nodeValue_all(self):
+        # Attr
         doc = makeDocument('<a href="foo"/>')
         self.assertEquals(
             'foo',
             doc.documentElement.attributes.getNamedItemNS(
             None, 'href').nodeValue)
         # XXX CDATASection
+        # Comment
         doc = makeDocument('<!--hey--><foo/>')
         self.assertEquals(
             'hey',
             doc.childNodes[0].nodeValue)
+        # Document
         doc = makeDocument('<foo/>')
         self.assertEquals(
             None,
             doc.nodeValue)
         # XXX DocumentFragment
         # XXX DocumentType
+        # Element
         doc = makeDocument('<foo/>')
         self.assertEquals(
             None,
@@ -277,11 +286,46 @@ class DomTestCase(unittest.TestCase):
         # XXX EntityReference
         # XXX Notation
         # XXX ProcessingInstruction
+        # Text
         doc = makeDocument('<foo>Hey</foo>')
         self.assertEquals(
             'Hey',
             doc.documentElement.childNodes[0].nodeValue)
-        
+
+    def test_nodeType_all(self):
+        # Attr
+        doc = makeDocument('<foo href="bar"/>')
+        self.assertEquals(
+            doc.ATTRIBUTE_NODE,
+            doc.childNodes[0].attributes.getNamedItemNS(None, 'href').nodeType)
+        # XXX CDATASection
+        # Comment
+        doc = makeDocument('<foo><!--hey--></foo>')
+        self.assertEquals(
+            doc.COMMENT_NODE,
+            doc.documentElement.childNodes[0].nodeType)
+        # Document
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            doc.DOCUMENT_NODE,
+            doc.nodeType)
+        # XXX DocumentFragment
+        # XXX DocumentType
+        # Element
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            doc.ELEMENT_NODE,
+            doc.documentElement.nodeType)        
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        # Text
+        doc = makeDocument('<foo>Text</foo>')
+        self.assertEquals(
+            doc.TEXT_NODE,
+            doc.documentElement.childNodes[0].nodeType)
+    
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
