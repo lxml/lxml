@@ -149,7 +149,35 @@ class DomTestCase(unittest.TestCase):
         doc = makeDocument('<doc>Foo</doc>')
         self.assertEquals(3, doc.firstChild.firstChild.length)
         
+    def test_attrnames(self):
+        doc = makeDocument('<foo one="One"/>')
+        self.assertEquals(
+            'one',
+            doc.firstChild.attributes.getNamedItemNS(None, 'one').name)
+        self.assertEquals(
+            'one',
+            doc.firstChild.attributes.getNamedItemNS(None, 'one').localName)
+
+    def test_attrnames_ns(self):
+        doc = makeDocument(
+            '<foo xmlns="http://www.foo.com" xmlns:hoi="http://www.infrae.com" one="One" hoi:two="Two" />')
+        attributes = doc.firstChild.attributes
         
+        self.assertEquals(
+            'one',
+            attributes.getNamedItemNS(None, 'one').name)
+        self.assertEquals(
+            'one',
+            attributes.getNamedItemNS(None, 'one').localName)
+
+        self.assertEquals(
+            'hoi:two',
+            attributes.getNamedItemNS('http://www.infrae.com', 'two').name)
+        self.assertEquals(
+            'two',
+            attributes.getNamedItemNS('http://www.infrae.com', 'two').localName)
+        
+
             
 def test_suite():
     suite = unittest.TestSuite()

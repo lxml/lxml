@@ -94,6 +94,8 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlDocGetRootElement(xmlDoc* doc)
     cdef void xmlSetTreeDoc(xmlNode* tree, xmlDoc* doc)
     cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
+    cdef xmlAttr* xmlHasProp(xmlNode* node, char* name)
+    cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
     
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
@@ -164,6 +166,26 @@ cdef class Node:
         def __get__(self):
             return _nodeFactory(self._getDoc(), self._o.next)
 
+    property attributes:
+        def __get__(self):
+            return None
+
+    property nodeValue:
+        def __get__(self):
+            return None
+
+    property localName:
+        def __get__(self):
+            return None
+
+    property namespaceURI:
+        def __get__(self):
+            return None
+
+    property prefix:
+        def __get__(self):
+            return None
+        
 cdef class NonDocNode(Node):
     cdef Document _doc
     
@@ -185,42 +207,34 @@ cdef class Document(Node):
 
     property nodeType:
         def __get__(self):
-            return 9 # DOCUMENT_NODE
+            return XML_DOCUMENT_NODE
         
     property ownerDocument:
         def __get__(self):
             return None
+
+    property nodeName:
+        def __get__(self):
+            return '#document'
         
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc
     doc = Document()
     doc._o = <xmlNode*>c_doc
     return doc
-        
-cdef class Element(NonDocNode):
-                
+
+
+cdef class ElementAttrNode(NonDocNode):
     property nodeName:
-        def __get__(self):
-            return self.tagName
-
-    property nodeValue:
-        def __get__(self):
-            return None
-
-    property nodeType:
-        def __get__(self):
-            return 1 # ELEMENT_NODE
-        
-    property localName:
-        def __get__(self):
-            return unicode(self._o.name, 'UTF-8')
-        
-    property tagName:
         def __get__(self):
             if self.prefix is None:
                 return self.localName
             else:
                 return self.prefix + ':' + self.localName
+
+    property localName:
+        def __get__(self):
+            return unicode(self._o.name, 'UTF-8')
 
     property prefix:
         def __get__(self):
@@ -234,13 +248,82 @@ cdef class Element(NonDocNode):
                 return None
             return unicode(self._o.ns.href, 'UTF-8')
 
+cdef class Element(ElementAttrNode):
+
+    property nodeType:
+        def __get__(self):
+            return XML_ELEMENT_NODE
+                
+    property tagName:
+        def __get__(self):
+            return self.nodeName
+
+    property attributes:
+        def __get__(self):
+            return _namedNodeMapFactory(self._getDoc(), self._o)
+        
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
     result._doc = doc
     result._o = c_node
     return result
+
+cdef class Attr(ElementAttrNode):
+    property parentNode:
+        def __get__(self):
+            return None
+    property previousSibling:
+        def __get__(self):
+            return None
+    property nextSibling:
+        def __get__(self):
+            return None
+
+    property name:
+        def __get__(self):
+            return self.nodeName
     
+    property nodeValue:
+        def __get__(self):
+            pass
+
+cdef _attrFactory(Document doc, xmlNode* c_node):
+    cdef Attr result
+    result = Attr()
+    result._doc = doc
+    result._o = c_node
+    return result
+
+cdef class CharacterData(NonDocNode):
+    property nodeType:
+        def __get__(self):
+            return XML_TEXT_NODE 
+
+    property data:
+        def __get__(self):
+            return unicode(self._o.content, "UTF-8")
+
+    property length:
+        def __get__(self):
+            return len(self.data)
+
+    property nodeValue:
+        def __get__(self):
+            return self.data
+        
+cdef class Text(CharacterData):
+    property nodeName:
+        def __get__(self):
+            return '#text'
+
+cdef _textFactory(Document doc, xmlNode* c_node):
+    cdef Text result
+    result = Text()
+    result._doc = doc
+    result._o = c_node
+    return result
+        
 cdef class NodeList(_RefBase):
     def __getitem__(self, index):
         cdef xmlNode* c_node
@@ -277,23 +360,45 @@ cdef _nodeListFactory(Document doc, xmlNode* c_node):
     result._o = c_node
     return result
 
-cdef class CharacterData(NonDocNode):
-    property nodeType:
-        def __get__(self):
-            return XML_TEXT_NODE 
-    property data:
-        def __get__(self):
-            return unicode(self._o.content, "UTF-8")
+cdef class NamedNodeMap(_RefBase):
+    def getNamedItem(self, name):
+        cdef xmlAttr* c_node
+        c_node = xmlHasProp(self._o, name)
+        if c_node is NULL:
+            return None
+        return _attrFactory(self._getDoc(), <xmlNode*>c_node)
+        
+    def getNamedItemNS(self, namespaceURI, localName):
+        cdef xmlAttr* c_node
+        cdef char* nsuri
+        if namespaceURI is None:
+            nsuri = NULL
+        else:
+            nsuri = namespaceURI
+        c_node = xmlHasNsProp(self._o, localName, nsuri)
+        if c_node is NULL:
+            return None
+        return _attrFactory(self._getDoc(), <xmlNode*>c_node)
+    
+    def item(self, index):
+        cdef xmlNode* c_node
+        c_node = <xmlNode*>self._o.properties
+        c = 0
+        while c_node is not NULL:
+            if c == index:
+                return _nodeFactory(self._getDoc(), c_node)
+            c = c + 1
+            c_node = c_node.next
+        else:
+            return None
+
     property length:
         def __get__(self):
-            return len(self.data)
-        
-cdef class Text(CharacterData):
-    pass
+            return 0 # XXX fix
 
-cdef _textFactory(Document doc, xmlNode* c_node):
-    cdef Text result
-    result = Text()
+cdef _namedNodeMapFactory(Document doc, xmlNode* c_node):
+    cdef NamedNodeMap result
+    result = NamedNodeMap()
     result._doc = doc
     result._o = c_node
     return result
@@ -305,6 +410,8 @@ cdef _nodeFactory(Document doc, xmlNode* c_node):
         return _elementFactory(doc, c_node)
     elif c_node.type == XML_TEXT_NODE:
         return _textFactory(doc, c_node)
+    elif c_node.type == XML_ATTRIBUTE_NODE:
+        return _attrFactory(doc, c_node)
     elif c_node.type == XML_DOCUMENT_NODE:
         return doc
     
