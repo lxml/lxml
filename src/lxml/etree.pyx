@@ -126,32 +126,34 @@ cdef class _ElementBase(_NodeBase):
         c_node = _findChild(self._c_node, start)
         _deleteSlice(c_node, start, stop)
         
-##    def __setslice__(self, start, stop, value):
-        
- ##    def __setslice__(self, start, stop, value):
-##         cdef xmlNode* c_node
-##         cdef xmlNode* c_next
-##         cdef xmlNode* c_start_node
-##         cdef int c
-
-##         c_node = _findChild(self._c_node, start)
-##         if c_node is NULL:
-##             # append nodes at end if we cannot find start
-##             for node in value:
-##                 self.append(node)
-##             return
-##         # now start inserting nodes instead of nodes already there
-##         c_start_node = c_node    
-##         c = start
-##         while c_node is not NULL and c < stop:
-##             c_next = c_node.next
-##             if _isElement(c_node):
-##                 tree.xmlAddPrevSibling(c_node, add_node)
-##                 _removeNode(c_node)
-##                 c = c + 1
-##             c_node = c_next
-##         return result     
-    
+    def __setslice__(self, start, stop, value):
+        cdef xmlNode* c_node
+        cdef xmlNode* c_next
+        cdef _ElementBase mynode
+        # first, find start of slice
+        c_node = _findChild(self._c_node, start)
+        # now delete the slice
+        _deleteSlice(c_node, start, stop)
+        # now find start of slice again, for insertion (just before it)
+        c_node = _findChild(self._c_node, start)
+        # if the insertion point is at the end, append there
+        if c_node is NULL:
+            for node in value:
+                self.append(node)
+            return
+        # if the next element is in the list, insert before it
+        for node in value:
+            mynode = node
+            # store possible text tail
+            c_next = mynode._c_node.next
+            # now move node previous to insertion point
+            tree.xmlUnlinkNode(mynode._c_node)
+            tree.xmlAddPrevSibling(c_node, mynode._c_node)
+            # and move tail just behind his node
+            _moveTail(c_next, mynode._c_node)
+            # move it into a new document
+            node_registry.changeDocumentBelow(mynode, self._doc)
+            
     def set(self, key, value):
         self.attrib[key] = value
         
@@ -267,6 +269,9 @@ cdef class _ElementBase(_NodeBase):
             tree.xmlAddNextSibling(self._c_node, c_text_node)
 
     # ACCESSORS
+    def __repr__(self):
+        return "<Element %s at %x>" % (self.tag, id(self))
+    
     def __getitem__(self, index):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
@@ -385,6 +390,9 @@ cdef class _CommentBase(_ElementBase):
             pass
                         
     # ACCESSORS
+    def __repr__(self):
+        return "<Comment at %x>" % id(self)
+    
     def __getitem__(self, n):
         raise IndexError
 
@@ -571,73 +579,73 @@ cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
     etree.registerProxy(result, PROXY_ELEMENT_ITER)
     return result
 
-# XXX all rather too complicated, rethink
-cdef class _DocOrderIteratorBase(_NodeBase):
-    cdef xmlNode* _c_top
-    cdef object tag
+## # XXX all rather too complicated, rethink
+## cdef class _DocOrderIteratorBase(_NodeBase):
+##     cdef xmlNode* _c_top
+##     cdef object tag
     
-    def __iter__(self):
-        return self
+##     def __iter__(self):
+##         return self
     
-    def __next__(self):
-        cdef xmlNode* c_node
-        cdef xmlNode* c_next
-        c_node = self._c_node
-        if c_node is NULL:
-            raise StopIteration
-        self._doc.unregisterProxy(self, PROXY_DOCORDER_ITER)
-        c_next = self._nextHelper(c_node)
-        self._c_node = c_next
-        if c_next is not NULL:
-            self._doc.registerProxy(self, PROXY_DOCORDER_ITER)
-        return _elementFactory(self._doc, c_node)
+##     def __next__(self):
+##         cdef xmlNode* c_node
+##         cdef xmlNode* c_next
+##         c_node = self._c_node
+##         if c_node is NULL:
+##             raise StopIteration
+##         self._doc.unregisterProxy(self, PROXY_DOCORDER_ITER)
+##         c_next = self._nextHelper(c_node)
+##         self._c_node = c_next
+##         if c_next is not NULL:
+##             self._doc.registerProxy(self, PROXY_DOCORDER_ITER)
+##         return _elementFactory(self._doc, c_node)
 
-    cdef xmlNode* _nextHelper(self, xmlNode* c_node):
-        """Get next element in document order.
-        """
-        cdef xmlNode* c_next
-        # try to go down
-        c_next = c_node.children
-        if c_next is not NULL:
-            if _isElement(c_next):
-                return c_next
-            else:
-                c_next = _nextElement(c_next)
-                if c_next is not NULL:
-                    return c_next
-        # cannot go down
-        while 1:
-            # try to go next
-            c_next = _nextElement(c_node) 
-            if c_next is not NULL:
-                return c_next
-            else:
-                # cannot go next, go up, then next
-                c_node = c_node.parent
-                if c_node is self._c_top:
-                    break
-        # cannot go up, return NULL
-        return NULL
+##     cdef xmlNode* _nextHelper(self, xmlNode* c_node):
+##         """Get next element in document order.
+##         """
+##         cdef xmlNode* c_next
+##         # try to go down
+##         c_next = c_node.children
+##         if c_next is not NULL:
+##             if _isElement(c_next):
+##                 return c_next
+##             else:
+##                 c_next = _nextElement(c_next)
+##                 if c_next is not NULL:
+##                     return c_next
+##         # cannot go down
+##         while 1:
+##             # try to go next
+##             c_next = _nextElement(c_node) 
+##             if c_next is not NULL:
+##                 return c_next
+##             else:
+##                 # cannot go next, go up, then next
+##                 c_node = c_node.parent
+##                 if c_node is self._c_top:
+##                     break
+##         # cannot go up, return NULL
+##         return NULL
     
-class _DocOrderIterator(_DocOrderIteratorBase):
-    __slots__ = ['__weakref__']
+## class _DocOrderIterator(_DocOrderIteratorBase):
+##     __slots__ = ['__weakref__']
     
-cdef _DocOrderIteratorBase _docOrderIteratorFactory(_ElementTreeBase etree,
-                                                    xmlNode* c_node,
-                                                    tag):
-    cdef _DocOrderIteratorBase result
-    # XXX this is wrong..
-    result = etree.getProxy(<int>c_node, PROXY_DOCORDER_TOP_ITER)
-    if result is not None:
-        return result
-    result = _DocOrderIterator()
-    result._doc = etree
-    result._c_node = c_node
-    result._c_top = c_node
-    result._tag = tag
-    etree.registerProxy(result, PROXY_DOCORDER_TOP_ITER)
-    etree.registerProxy(result, PROXY_DOCORDER_ITER)
-    return result
+## cdef _DocOrderIteratorBase _docOrderIteratorFactory(_ElementTreeBase etree,
+##                                                     xmlNode* c_node,
+##                                                     tag):
+##     cdef _DocOrderIteratorBase result
+##     # XXX this is wrong..
+##     result = etree.getProxy(<int>c_node, PROXY_DOCORDER_TOP_ITER)
+##     if result is not None:
+##         return result
+##     result = _DocOrderIterator()
+##     result._doc = etree
+##     result._c_node = c_node
+##     result._c_top = c_node
+##     result._tag = tag
+##     etree.registerProxy(result, PROXY_DOCORDER_TOP_ITER)
+##     etree.registerProxy(result, PROXY_DOCORDER_ITER)
+##     return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
                              object attrib, object extra):

@@ -1049,24 +1049,73 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b>B2<e></e>E2</a>',
             self._writeElement(a))
         
-##     def test_setslice(self):
-##         Element = self.etree.Element
-##         SubElement = self.etree.SubElement
+    def test_setslice(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
 
-##         a = Element('a')
-##         b = SubElement(a, 'b')
-##         c = SubElement(a, 'c')
-##         d = SubElement(a, 'd')
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
 
-##         e = Element('e')
-##         f = Element('f')
-##         g = Element('g')
+        e = Element('e')
+        f = Element('f')
+        g = Element('g')
 
-##         s = [e, f, g]
-##         a[1:2] = s
-##         self.assertEquals(
-##             [b, e, f, g, d],
-##             list(a))
+        s = [e, f, g]
+        a[1:2] = s
+        self.assertEquals(
+            [b, e, f, g, d],
+            list(a))
+
+    def test_setslice_tail(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+        f = StringIO('<a><b></b>B2<c></c>C2<d></d>D2<e></e>E2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        x = Element('x')
+        y = Element('y')
+        z = Element('z')
+        x.tail = 'X2'
+        y.tail = 'Y2'
+        z.tail = 'Z2'
+        a[1:3] = [x, y, z]
+        self.assertEquals(
+            '<a><b></b>B2<x></x>X2<y></y>Y2<z></z>Z2<e></e>E2</a>',
+            self._writeElement(a))
+
+    def test_setslice_end(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+
+        e = Element('e')
+        f = Element('f')
+        g = Element('g')
+
+        s = [e, f, g]
+        a[3:] = s
+        self.assertEquals(
+            [b, c, d, e, f, g],
+            list(a))
+        
+    def test_setslice_empty(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+
+        b = Element('b')
+        c = Element('c')
+
+        a[:] = [b, c]
+        self.assertEquals(
+            [b, c],
+            list(a))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
