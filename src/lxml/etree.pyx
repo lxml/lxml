@@ -120,6 +120,36 @@ cdef class _ElementBase(_NodeBase):
         # parent element has moved; change them too..
         node_registry.changeDocumentBelow(element, self._doc)
 
+    def clear(self):
+        cdef xmlAttr* c_attr
+        cdef xmlAttr* c_attr_next
+        cdef xmlNode* c_node
+        cdef xmlNode* c_node_next
+        self.text = None
+        self.tail = None
+        # remove all attributes
+        c_attr = self._c_node.properties
+        while c_attr is not NULL:
+            c_attr_next = c_attr.next
+            tree.xmlRemoveProp(c_attr)
+            c_attr = c_attr_next
+        # remove all subelements
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            c_node_next = c_node.next
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                tree.xmlUnlinkNode(c_node)
+            c_node = c_node_next
+
+    def insert(self, index, _ElementBase element):
+        cdef xmlNode* c_node
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
+            self.append(element)
+            return
+        tree.xmlAddPrevSibling(c_node, element._c_node)
+        node_registry.changeDocumentBelow(element, self._doc)
+        
     # PROPERTIES
     property tag:
         def __get__(self):
@@ -215,27 +245,6 @@ cdef class _ElementBase(_NodeBase):
 
     def items(self):
         return self.attrib.items()
-
-    def clear(self):
-        cdef xmlAttr* c_attr
-        cdef xmlAttr* c_attr_next
-        cdef xmlNode* c_node
-        cdef xmlNode* c_node_next
-        self.text = None
-        self.tail = None
-        # remove all attributes
-        c_attr = self._c_node.properties
-        while c_attr is not NULL:
-            c_attr_next = c_attr.next
-            tree.xmlRemoveProp(c_attr)
-            c_attr = c_attr_next
-        # remove all subelements
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            c_node_next = c_node.next
-            if c_node.type == tree.XML_ELEMENT_NODE:
-                tree.xmlUnlinkNode(c_node)
-            c_node = c_node_next
             
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']

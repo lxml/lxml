@@ -631,6 +631,49 @@ class ETreeTestCaseBase(unittest.TestCase):
                           self._writeElement(a))
         self.assertEquals('<b><c></c></b>',
                           self._writeElement(b))
+
+    def test_insert(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = Element('d')
+        a.insert(0, d)
+
+        self.assertEquals(
+            d,
+            a[0])
+
+        self.assertEquals(
+            '<a><d></d><b></b><c></c></a>',
+            self._writeElement(a))
+
+        e = Element('e')
+        a.insert(2, e)
+        self.assertEquals(
+            e,
+            a[2])
+        self.assertEquals(
+            '<a><d></d><b></b><e></e><c></c></a>',
+            self._writeElement(a))
+
+    def test_insert_beyond_index(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = Element('c')
+
+        a.insert(2, c)
+        self.assertEquals(
+            c,
+            a[1])
+        self.assertEquals(
+            '<a><b></b><c></c></a>',
+            self._writeElement(a))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
