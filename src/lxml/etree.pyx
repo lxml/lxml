@@ -1,5 +1,5 @@
 cimport tree
-from tree cimport xmlDoc, xmlNode, xmlAttr
+from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
@@ -13,6 +13,8 @@ PROXY_ATTRIB_ITER = 2
 PROXY_ELEMENT_ITER = 3
 PROXY_DOCORDER_ITER = 4
 PROXY_DOCORDER_TOP_ITER = 5
+
+NS_COUNTER = 0
 
 # the rules
 # any libxml C argument/variable is prefixed with c_
@@ -227,11 +229,39 @@ cdef class _ElementBase(_NodeBase):
     # PROPERTIES
     property tag:
         def __get__(self):
-            return unicode(self._c_node.name, 'UTF-8')
+            if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
+                return unicode(self._c_node.name, 'UTF-8')
+            else:
+                return unicode("{%s}%s" % (self._c_node.ns.href,
+                                           self._c_node.name), 'UTF-8')
 
         def __set__(self, value):
-            text = value.encode('UTF-8')
+            cdef xmlNs* c_ns
+            if value[0] == '{':
+                i = value.find('}')
+                assert i != -1
+                ns = value[1:i].encode('UTF-8')
+                text = value[i + 1:].encode('UTF-8')
+            else:
+                ns = None
+                text = value.encode('UTF-8')
+
             tree.xmlNodeSetName(self._c_node, text)
+            if ns is None:
+                return
+            # look for existing ns
+            c_ns = tree.xmlSearchNsByHref(self._doc._c_doc,
+                                          self._c_node,
+                                          ns)
+            # create ns if existing ns cannot be found
+            # XXX prefix name creation
+            if c_ns is NULL:
+                # try to simulate ElementTree's namespace prefix creation
+                global NS_COUNTER
+                prefix = 'ns%s' % NS_COUNTER
+                c_ns = tree.xmlNewNs(self._c_node, ns, prefix)
+                NS_COUNTER = NS_COUNTER + 1
+            tree.xmlSetNs(self._c_node, c_ns)
             
     property attrib:
         def __get__(self):
@@ -658,7 +688,7 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
     cdef xmlNode* c_node
     if attrib is None:
         attrib = {}
-    attrib.update(extra)
+    attrib.update(extra)    
     c_node = tree.xmlNewDocNode(c_doc, NULL, tag, NULL)
     for name, value in attrib.items():
         tree.xmlNewProp(c_node, name, value)
@@ -676,7 +706,10 @@ def Element(tag, attrib=None, **extra):
     etree = ElementTree()
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
     tree.xmlDocSetRootElement(etree._c_doc, c_node)
-    return _elementFactory(etree, c_node)
+    # XXX hack for namespaces
+    result = _elementFactory(etree, c_node)
+    result.tag = tag
+    return result
 
 def Comment(text=None):
     cdef xmlNode* c_node
@@ -695,6 +728,8 @@ def SubElement(_ElementBase parent, tag, attrib=None, **extra):
     c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
+    # XXX hack for namespaces
+    element.tag = tag
     return element
 
 def ElementTree(_ElementBase element=None, file=None):
@@ -959,3 +994,4 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
             _removeNode(c_node)
             c = c + 1
         c_node = c_next
+

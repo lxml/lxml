@@ -1161,7 +1161,47 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [a, a2],
             list(t.getiterator('a')))
-        
+
+    def test_ns_access(self):
+        ElementTree = self.etree.ElementTree
+        ns = 'http://xml.infrae.com/1'
+        f = StringIO('<x:a xmlns:x="%s"><x:b></x:b></x:a>' % ns)
+        t = ElementTree(file=f)
+        a = t.getroot()
+        self.assertEquals('{%s}a' % ns,
+                          a.tag)
+        self.assertEquals('{%s}b' % ns,
+                          a[0].tag)
+
+    def test_ns_access2(self):
+        ElementTree = self.etree.ElementTree
+        ns = 'http://xml.infrae.com/1'
+        ns2 = 'http://xml.infrae.com/2'
+        f = StringIO('<x:a xmlns:x="%s" xmlns:y="%s"><x:b></x:b><y:b></y:b></x:a>' % (ns, ns2))
+        t = ElementTree(file=f)
+        a = t.getroot()
+        self.assertEquals('{%s}a' % ns,
+                          a.tag)
+        self.assertEquals('{%s}b' % ns,
+                          a[0].tag)
+        self.assertEquals('{%s}b' % ns2,
+                          a[1].tag)
+
+    def test_ns_setting(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ns = 'http://xml.infrae.com/1'
+        ns2 = 'http://xml.infrae.com/2'
+        a = Element('{%s}a' % ns)
+        b = SubElement(a, '{%s}b' % ns2)
+        self.assertEquals('{%s}a' % ns,
+                          a.tag)
+        self.assertEquals('{%s}b' % ns2,
+                          b.tag)
+        self.assertEquals(
+            '<ns0:a xmlns:ns0="%s"><ns1:b xmlns:ns1="%s"></ns1:b></ns0:a>' % (ns, ns2),
+            self._writeElement(a))
+
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
 ##         Element = self.etree.Element
@@ -1206,7 +1246,19 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree.write(f)
         data = f.getvalue()
         return c14n.canonicalize(data)
-                           
+
+##     def _writeElementNs(self, element):
+##         # use ElementTree (not etree) always to 'canonicalize' namespace
+##         # prefixes..
+##         # XXX this introduces a hard dependency on ElementTree for
+##         # installation..
+##         f = StringIO(self._writeElement(element))
+##         tree = ElementTree.ElementTree(file=f)
+##         g = StringIO()
+##         tree.write(g)
+##         data = f.getvalue()
+##         return c14n.canonicalize(data)
+        
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
         
