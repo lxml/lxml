@@ -209,8 +209,8 @@ cdef class _ElementTree(_DocumentBase):
 
         In case of a list result, return Element for element nodes,
         string for text and attribute values.
-        """            
-        return _xpathEval(self, None, path, namespaces)
+        """
+        return XPathEvaluator(self, namespaces).evaluate(path)
     
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
@@ -499,8 +499,8 @@ cdef class _Element(_NodeBase):
         return _elementpath.findall(self, path)
 
     def xpath(self, path, namespaces=None):
-        return _xpathEval(self._doc, self, path, namespaces)
-        
+        return XPathEvaluator(self._doc, namespaces).evaluate(path, self)
+
 cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
     cdef _Element result
     result = getProxy(c_node, PROXY_ELEMENT)
@@ -862,23 +862,235 @@ def parse(source, parser=None):
     c_doc = theParser.parseDocFromFile(filename)
     result = _elementTreeFactory(c_doc)
     return result
-
-def _getFilenameForFile(source):
-    """Given a Python File object, give filename back.
-
-    Returns None if not a file object.
-    """
-    if tree.PyFile_Check(source):
-        # this is a file object, so retrieve file name
-        filename = tree.PyFile_Name(source)
-        # XXX this is a hack that makes to seem a crash go away;
-        # filename is a borrowed reference which may be what's tripping
-        # things up
-        tree.Py_INCREF(filename)
-        return filename
-    else:
-        return None
     
+cdef class XPathEvaluator:
+    """Create an XPath evaluator for a document.
+    """
+    cdef xpath.xmlXPathContext* _c_ctxt
+    cdef _ElementTree _doc
+    
+    def __init__(self, _ElementTree doc,
+                 namespaces=None, extension_module=None):
+        cdef xpath.xmlXPathContext* xpathCtxt
+        cdef int ns_register_status
+        
+        xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
+        if xpathCtxt is NULL:
+            # XXX what triggers this exception?
+            raise XPathContextError, "Unable to create new XPath context"
+
+        self._doc = doc
+        self._c_ctxt = xpathCtxt
+
+        if namespaces is not None:
+            for prefix, uri in namespaces.items():
+                s_prefix = prefix.encode('UTF8')
+                s_uri = uri.encode('UTF8')
+                ns_register_status = xpath.xmlXPathRegisterNs(
+                    xpathCtxt, s_prefix, s_uri)
+                if ns_register_status != 0:
+                    # XXX doesn't seem to be possible to trigger this
+                    # from Python
+                    raise XPathNamespaceError, (
+                        "Unable to register namespaces with prefix "
+                        "%s and uri %s" % (prefix, uri))
+                
+
+    def __dealloc__(self):
+        xpath.xmlXPathFreeContext(self._c_ctxt)
+    
+    def evaluate(self, path, _NodeBase element=None):
+        cdef xpath.xmlXPathObject* xpathObj
+        cdef xmlNode* c_node
+
+        # element context is requested; unfortunately need to modify ctxt
+        if element is not None:
+            self._c_ctxt.node = element._c_node
+        else:
+            self._c_ctxt.node = NULL
+             
+        path = path.encode('UTF-8')
+        xpathObj = xpath.xmlXPathEvalExpression(path, self._c_ctxt)
+        if xpathObj is NULL:
+            raise SyntaxError, "Error in xpath expression."
+        try:
+            result = _unwrapXPathObject(xpathObj, self._doc)
+        except XPathResultError:
+            xpath.xmlXPathFreeObject(xpathObj)
+            raise
+        xpath.xmlXPathFreeObject(xpathObj)
+        return result
+
+cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
+    cdef xpath.xmlNodeSet* resultSet
+    cdef _NodeBase node
+    if isinstance(obj, str):
+        # XXX use the Wrap variant? Or leak...
+        return xpath.xmlXPathNewCString(obj)
+    if isinstance(obj, unicode):
+        obj = obj.encode("utf-8")
+        return xpath.xmlXPathNewCString(obj)
+    if isinstance(obj, types.BooleanType):
+        return xpath.xmlXPathNewBoolean(obj)
+    if isinstance(obj, (int, float)):
+        return xpath.xmlXPathNewFloat(obj)
+    if isinstance(obj, _NodeBase):
+        obj = [obj]
+    if isinstance(obj, (types.ListType, types.TupleType)):
+        resultSet = xpath.xmlXPathNodeSetCreate(NULL)
+        for element in obj:
+            if isinstance(element, _NodeBase):
+                node = <_NodeBase>element
+                xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
+            else:
+                raise XPathResultError, "This is not a node: %s" % element
+        return xpath.xmlXPathWrapNodeSet(resultSet)
+    else:
+        raise XPathResultError, "Unknown return type: %s" % obj
+    return NULL
+
+cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
+                               _ElementTree doc):
+    if xpathObj.type == xpath.XPATH_UNDEFINED:
+        raise XPathResultError, "Undefined xpath result"
+    elif xpathObj.type == xpath.XPATH_NODESET:
+        return _createNodeSetResult(doc, xpathObj)
+    elif xpathObj.type == xpath.XPATH_BOOLEAN:
+        return bool(xpathObj.boolval)
+    elif xpathObj.type == xpath.XPATH_NUMBER:
+        return xpathObj.floatval
+    elif xpathObj.type == xpath.XPATH_STRING:
+        return funicode(xpathObj.stringval)
+    elif xpathObj.type == xpath.XPATH_POINT:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_RANGE:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_LOCATIONSET:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_USERS:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_XSLT_TREE:
+        raise NotImplementedError
+    else:
+        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
+
+cdef object _createNodeSetResult(_ElementTree doc,
+                                 xpath.xmlXPathObject* xpathObj):
+    cdef xmlNode* c_node
+    cdef char* s
+    result = []
+    if xpathObj.nodesetval is NULL:
+        return result
+    for i from 0 <= i < xpathObj.nodesetval.nodeNr:
+        c_node = xpathObj.nodesetval.nodeTab[i]
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            result.append(_elementFactory(doc, c_node))
+        elif c_node.type == tree.XML_TEXT_NODE:
+            result.append(funicode(c_node.content))
+        elif c_node.type == tree.XML_ATTRIBUTE_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            attr_value = funicode(s)
+            tree.xmlFree(s)
+            result.append(attr_value)
+        elif c_node.type == tree.XML_COMMENT_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            s2 = '<!--%s-->' % s
+            comment_value = funicode(s2)
+            tree.xmlFree(s)
+            result.append(comment_value)
+        else:
+            print "Not yet implemented result node type:", c_node.type
+            raise NotImplementedError
+    return result
+
+cdef class XSLT:
+    """Turn a document into an XSLT object.
+    """
+    cdef xslt.xsltStylesheet* _c_style
+    
+    def __init__(self, _ElementTree doc):
+        # make a copy of the document as stylesheet needs to assume it
+        # doesn't change
+        cdef xslt.xsltStylesheet* c_style
+        cdef xmlDoc* c_doc
+        c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
+        
+        c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        if c_style is NULL:
+            raise XSLTParseError, "Cannot parse style sheet"
+        self._c_style = c_style
+        # XXX is it worthwile to use xsltPrecomputeStylesheet here?
+        
+    def __dealloc__(self):
+        # this cleans up copy of doc as well
+        xslt.xsltFreeStylesheet(self._c_style)
+        
+    def apply(self, _ElementTree doc):
+        cdef xmlDoc* c_result 
+        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
+        if c_result is NULL:
+            raise XSLTApplyError, "Error applying stylesheet"
+        # XXX should set special flag to indicate this is XSLT result
+        # so that xsltSaveResultTo* functional can be used during
+        # serialize?
+        return _elementTreeFactory(c_result)
+
+    def tostring(self, _ElementTree doc):
+        """Save result doc to string using stylesheet as guidance.
+        """
+        cdef char* s
+        cdef int l
+        cdef int r
+        r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
+        if r == -1:
+            raise XSLTSaveError, "Error saving stylesheet result to string"
+        result = funicode(s)
+        tree.xmlFree(s)
+        return result
+
+cdef class RelaxNG:
+    """Turn a document into an Relax NG validator.
+    Can also load from filesystem directly given file object or filename.
+    """
+    cdef relaxng.xmlRelaxNG* _c_schema
+    
+    def __init__(self, _ElementTree tree=None, file=None):
+        cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
+                    
+        if tree is not None:
+            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(tree._c_doc)
+        elif file is not None:
+            filename = _getFilenameForFile(file)
+            if filename is None:
+                # XXX assume a string object
+                filename = file
+            parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
+        else:
+            raise relaxng.xmlRelaxNGError, "No tree or file given"
+        if parser_ctxt is NULL:
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
+        if self._c_schema is NULL:
+            relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+        
+    def __dealloc__(self):
+        relaxng.xmlRelaxNGFree(self._c_schema)
+        
+    def validate(self, _ElementTree doc):
+        """Validate doc using Relax NG.
+
+        Returns true if document is valid, false if not."""
+        cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
+        cdef int ret
+        valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
+        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, doc._c_doc)
+        relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
+        if ret == -1:
+            raise RelaxNGValidateError, "Internal error in Relax NG validation"
+        return ret == 0
+
 # Globally shared XML parser to enable dictionary sharing
 cdef class Parser:
 
@@ -990,94 +1202,6 @@ cdef class Parser:
 cdef Parser theParser
 theParser = Parser()
 
-cdef class XSLT:
-    """Turn a document into an XSLT object.
-    """
-    cdef xslt.xsltStylesheet* _c_style
-    
-    def __init__(self, _ElementTree doc):
-        # make a copy of the document as stylesheet needs to assume it
-        # doesn't change
-        cdef xslt.xsltStylesheet* c_style
-        cdef xmlDoc* c_doc
-        c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
-        
-        c_style = xslt.xsltParseStylesheetDoc(c_doc)
-        if c_style is NULL:
-            raise XSLTParseError, "Cannot parse style sheet"
-        self._c_style = c_style
-        # XXX is it worthwile to use xsltPrecomputeStylesheet here?
-        
-    def __dealloc__(self):
-        # this cleans up copy of doc as well
-        xslt.xsltFreeStylesheet(self._c_style)
-        
-    def apply(self, _ElementTree doc):
-        cdef xmlDoc* c_result 
-        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
-        if c_result is NULL:
-            raise XSLTApplyError, "Error applying stylesheet"
-        # XXX should set special flag to indicate this is XSLT result
-        # so that xsltSaveResultTo* functional can be used during
-        # serialize?
-        return _elementTreeFactory(c_result)
-
-    def tostring(self, _ElementTree doc):
-        """Save result doc to string using stylesheet as guidance.
-        """
-        cdef char* s
-        cdef int l
-        cdef int r
-        r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
-        if r == -1:
-            raise XSLTSaveError, "Error saving stylesheet result to string"
-        result = funicode(s)
-        tree.xmlFree(s)
-        return result
-
-cdef class RelaxNG:
-    """Turn a document into an Relax NG validator.
-    Can also load from filesystem directly given file object or filename.
-    """
-    cdef relaxng.xmlRelaxNG* _c_schema
-    
-    def __init__(self, _ElementTree tree=None, file=None):
-        cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
-                    
-        if tree is not None:
-            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(tree._c_doc)
-        elif file is not None:
-            filename = _getFilenameForFile(file)
-            if filename is None:
-                # XXX assume a string object
-                filename = file
-            parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
-        else:
-            raise relaxng.xmlRelaxNGError, "No tree or file given"
-        if parser_ctxt is NULL:
-            raise RelaxNGParseError, "Document is not valid Relax NG"
-        self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
-        if self._c_schema is NULL:
-            relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
-            raise RelaxNGParseError, "Document is not valid Relax NG"
-        relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
-        
-    def __dealloc__(self):
-        relaxng.xmlRelaxNGFree(self._c_schema)
-        
-    def validate(self, _ElementTree doc):
-        """Validate doc using Relax NG.
-
-        Returns true if document is valid, false if not."""
-        cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
-        cdef int ret
-        valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
-        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, doc._c_doc)
-        relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
-        if ret == -1:
-            raise RelaxNGValidateError, "Internal error in Relax NG validation"
-        return ret == 0
-    
 # Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o
@@ -1230,101 +1354,7 @@ def _getNsTag(tag):
         assert i != -1
         return tag[1:i], tag[i + 1:]
     return None, tag
-
-cdef object _createNodeSetResult(_ElementTree doc,
-                                 xpath.xmlXPathObject* xpathObj):
-    cdef xmlNode* c_node
-    cdef char* s
-    result = []
-    if xpathObj.nodesetval is NULL:
-        return result
-    for i from 0 <= i < xpathObj.nodesetval.nodeNr:
-        c_node = xpathObj.nodesetval.nodeTab[i]
-        if c_node.type == tree.XML_ELEMENT_NODE:
-            result.append(_elementFactory(doc, c_node))
-        elif c_node.type == tree.XML_TEXT_NODE:
-            result.append(funicode(c_node.content))
-        elif c_node.type == tree.XML_ATTRIBUTE_NODE:
-            s = tree.xmlNodeGetContent(c_node)
-            attr_value = funicode(s)
-            tree.xmlFree(s)
-            result.append(attr_value)
-        elif c_node.type == tree.XML_COMMENT_NODE:
-            s = tree.xmlNodeGetContent(c_node)
-            s2 = '<!--%s-->' % s
-            comment_value = funicode(s2)
-            tree.xmlFree(s)
-            result.append(comment_value)
-        else:
-            print "Not yet implemented result node type:", c_node.type
-            raise NotImplementedError
-    return result
     
-cdef object _xpathEval(_ElementTree doc, _Element element,
-                       object path, object namespaces):    
-    cdef xpath.xmlXPathContext* xpathCtxt
-    cdef xpath.xmlXPathObject* xpathObj
-    cdef xmlNode* c_node
-    cdef int ns_register_status
-    
-    path = path.encode('UTF-8')
-
-    xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
-    if xpathCtxt is NULL:
-        # XXX what triggers this exception?
-        raise XPathContextError, "Unable to create new XPath context"
-    
-    if namespaces is not None:
-        for prefix, uri in namespaces.items():
-            s_prefix = prefix.encode('UTF8')
-            s_uri = uri.encode('UTF8')
-            ns_register_status = xpath.xmlXPathRegisterNs(
-                xpathCtxt, s_prefix, s_uri)
-            if ns_register_status != 0:
-                # XXX doesn't seem to be possible to trigger this from Python
-                raise XPathNamespaceError, "Unable to register namespaces with prefix %s and uri %s" % (prefix, uri)
-            
-    # element context is requested
-    if element is not None:
-        xpathCtxt.node = element._c_node
-
-    # XXX register namespaces?
-
-    xpathObj = xpath.xmlXPathEvalExpression(path, xpathCtxt)
-    if xpathObj is NULL:
-        xpath.xmlXPathFreeContext(xpathCtxt)
-        raise SyntaxError, "Error in xpath expression."
-
-    if xpathObj.type == xpath.XPATH_UNDEFINED:
-        xpath.xmlXPathFreeObject(xpathObj)
-        xpath.xmlXPathFreeContext(xpathCtxt)
-        raise XPathResultError, "Undefined xpath result"
-    elif xpathObj.type == xpath.XPATH_NODESET:
-        result = _createNodeSetResult(doc, xpathObj)
-    elif xpathObj.type == xpath.XPATH_BOOLEAN:
-        result = xpathObj.boolval
-    elif xpathObj.type == xpath.XPATH_NUMBER:
-        result = xpathObj.floatval
-    elif xpathObj.type == xpath.XPATH_STRING:
-        result = funicode(xpathObj.stringval)
-    elif xpathObj.type == xpath.XPATH_POINT:
-        raise NotImplementedError
-    elif xpathObj.type == xpath.XPATH_RANGE:
-        raise NotImplementedError
-    elif xpathObj.type == xpath.XPATH_LOCATIONSET:
-        raise NotImplementedError
-    elif xpathObj.type == xpath.XPATH_USERS:
-        raise NotImplementedError
-    elif xpathObj.type == xpath.XPATH_XSLT_TREE:
-        raise NotImplementedError
-    else:
-        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
-
-    xpath.xmlXPathFreeObject(xpathObj)
-    xpath.xmlXPathFreeContext(xpathCtxt)
-
-    return result
-
 cdef int isutf8(char* string):
     cdef int i
     i = 0
@@ -1339,6 +1369,23 @@ cdef object funicode(char* s):
     if isutf8(s):
         return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
     return tree.PyString_FromStringAndSize(s, tree.strlen(s))
+
+
+def _getFilenameForFile(source):
+    """Given a Python File object, give filename back.
+
+    Returns None if not a file object.
+    """
+    if tree.PyFile_Check(source):
+        # this is a file object, so retrieve file name
+        filename = tree.PyFile_Name(source)
+        # XXX this is a hack that makes to seem a crash go away;
+        # filename is a borrowed reference which may be what's tripping
+        # things up
+        tree.Py_INCREF(filename)
+        return filename
+    else:
+        return None
 
 cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
     pass

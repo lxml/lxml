@@ -1,9 +1,16 @@
 
 cdef extern from "libxml/xmlerror.h":
+    ctypedef enum xmlErrorLevel:
+        XML_ERR_NONE = 0
+        XML_ERR_WARNING = 1 # A simple warning
+        XML_ERR_ERROR = 2 # A recoverable error
+        XML_ERR_FATAL = 3 # A fatal error
+
     ctypedef struct xmlError:
         int domain
         int code
         char* message
+        xmlErrorLevel level
         char* file
         int line
 
@@ -41,11 +48,6 @@ cdef extern from "libxml/xmlerror.h":
         XML_FROM_WRITER = 25 # The xmlwriter module
         XML_FROM_MODULE = 26 # The dynamically loaded module modu
 
-    ctypedef enum xmlErrorLevel:
-        XML_ERR_NONE = 0
-        XML_ERR_WARNING = 1 # A simple warning
-        XML_ERR_ERROR = 2 # A recoverable error
-        XML_ERR_FATAL = 3 # A fatal error
 
     ctypedef enum xmlParserErrors:
         XML_ERR_OK = 0

@@ -1,4 +1,5 @@
 cimport tree
+cimport xmlerror
 
 cdef extern from "libxml/xpath.h":
     ctypedef enum xmlXPathObjectType:
@@ -28,9 +29,24 @@ cdef extern from "libxml/xpath.h":
     ctypedef struct xmlXPathContext:
         tree.xmlDoc* doc
         tree.xmlNode* node
+        char* function
+        char* functionURI
         # actually signature is void (*error)(void*, xmlError*)
         void* error
-        
+
+        xmlerror.xmlError lastError
+
+    ctypedef struct xmlXPathParserContext:
+        xmlXPathContext* context
+        xmlXPathObject* value
+        tree.xmlNode* ancestor
+        int error
+
+    ctypedef void (*xmlXPathFunction)(xmlXPathParserContext* ctxt, int nargs)
+    ctypedef xmlXPathFunction (*xmlXPathFuncLookupFunc)(void* ctxt,
+                                                        char* name,
+                                                        char* ns_uri)
+    
     cdef xmlXPathContext* xmlXPathNewContext(tree.xmlDoc* doc)
     cdef xmlXPathObject* xmlXPathEvalExpression(char* str,
                                                 xmlXPathContext* ctxt)
@@ -39,3 +55,34 @@ cdef extern from "libxml/xpath.h":
     cdef int xmlXPathRegisterNs(xmlXPathContext* ctxt,
                                 char* prefix, char* ns_uri)
     
+    cdef xmlNodeSet* xmlXPathNodeSetCreate(tree.xmlNode* val)
+
+
+cdef extern from "libxml/xpathInternals.h":
+    cdef int xmlXPathRegisterFunc(xmlXPathContext* ctxt,
+                                  char* name,
+                                  xmlXPathFunction f)
+    cdef int xmlXPathRegisterFuncNS(xmlXPathContext* ctxt,
+                                    char* name,
+                                    char* ns_uri,
+                                    xmlXPathFunction f)
+    cdef void xmlXPathRegisterFuncLookup(xmlXPathContext *ctxt,
+					 xmlXPathFuncLookupFunc f,
+					 void *funcCtxt)
+    cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt)
+    cdef int valuePush(xmlXPathParserContext* ctxt, xmlXPathObject *value)
+    
+    cdef xmlXPathObject* xmlXPathNewCString(char *val)
+    cdef xmlXPathObject* xmlXPathWrapCString(char * val)
+    cdef xmlXPathObject* xmlXPathNewString(char *val)
+    cdef xmlXPathObject* xmlXPathWrapString(char * val)
+    cdef xmlXPathObject* xmlXPathNewFloat(double val)
+    cdef xmlXPathObject* xmlXPathNewBoolean(int val)
+    cdef xmlXPathObject* xmlXPathNewNodeSet(tree.xmlNode* val)
+    cdef xmlXPathObject* xmlXPathNewValueTree(tree.xmlNode* val)
+    cdef void xmlXPathNodeSetAdd(xmlNodeSet* cur,
+                                  tree.xmlNode* val)
+    cdef void xmlXPathNodeSetAddUnique(xmlNodeSet* cur,
+                                        tree.xmlNode* val)
+    cdef xmlXPathObject* xmlXPathWrapNodeSet(xmlNodeSet* val)
+    cdef void xmlXPathErr(xmlXPathParserContext* ctxt, int error)

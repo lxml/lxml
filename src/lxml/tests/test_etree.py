@@ -1481,7 +1481,14 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a/>')
         self.assertRaises(SyntaxError, tree.xpath, '\\fad')
 
-
+    def test_xpath_evaluator(self):
+        tree = self.parse('<a><b><c></c></b></a>')
+        e = etree.XPathEvaluator(tree)
+        root = tree.getroot()
+        self.assertEquals(
+            [root],
+            e.evaluate('//a'))
+        
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""
         
