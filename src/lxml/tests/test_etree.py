@@ -226,6 +226,16 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(['alpha', 'beta', 'gamma'], result)
 
 
+    def test_element_with_attributes(self):
+        el = Element('tag', {'foo':'Foo', 'bar':'Bar'})
+        self.assertEquals('Foo', el.attrib['foo'])
+        self.assertEquals('Bar', el.attrib['bar'])
+
+    def test_subelement_with_attributes(self):
+        el = Element('tag')
+        SubElement(el, 'foo', baz="Baz")
+        self.assertEquals("Baz", el[0].attrib['baz'])
+        
     # could trigger a crash in the past
     def test_write(self):
         for i in range(100):

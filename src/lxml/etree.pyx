@@ -135,9 +135,17 @@ cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     return result
     
 cdef class _Element(_NodeBase):
+    # MANIPULATORS
     def set(self, key, value):
         self.attrib[key] = value
-        
+
+    def append(self, _Element element):
+        # XXX what if element is coming from a different document?
+        xmlUnlinkNode(element._c_node)
+        xmlAddChild(self._c_node, element._c_node)
+        element._doc = self._doc
+
+    # PROPERTIES
     property tag:
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
@@ -169,6 +177,7 @@ cdef class _Element(_NodeBase):
                 return None
             return unicode(c_node.content, 'UTF-8')
 
+    # ACCESSORS
     def __getitem__(self, n):
         cdef xmlNode* c_node
         c_node = self._c_node.children
@@ -205,11 +214,6 @@ cdef class _Element(_NodeBase):
     def items(self):
         return self.attrib.items()
     
-    def append(self, _Element element):
-        xmlUnlinkNode(element._c_node)
-        xmlAddChild(self._c_node, element._c_node)
-        element._doc = self._doc
-
 cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     cdef _Element result
     if c_node is NULL:
@@ -220,11 +224,13 @@ cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     return result
 
 cdef class _Attrib(_NodeBase):
+    # MANIPULATORS
     def __setitem__(self, key, value):
         key = key.encode('UTF-8')
         value = value.encode('UTF-8')
         xmlSetProp(self._c_node, key, value)
-        
+
+    # ACCESSORS
     def __getitem__(self, key):
         cdef char* result
         key = key.encode('UTF-8')
@@ -338,20 +344,30 @@ cdef _ElementIterator _elementIteratorFactory(_ElementTree tree,
     result._c_node = c_node
     return result
 
+cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
+                             object attrib, object extra):
+    cdef xmlNode* c_node
+    if attrib is None:
+        attrib = {}
+    attrib.update(extra)
+    c_node = xmlNewDocNode(c_doc, NULL, tag, NULL)
+    for name, value in attrib.items():
+        xmlNewProp(c_node, name, value)
+    return c_node
+    
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTree tree
 
     tree = ElementTree()
-    c_node = xmlNewDocNode(tree._c_doc, NULL, tag, NULL)
+    c_node = _createElement(tree._c_doc, tag, attrib, extra)
     xmlDocSetRootElement(tree._c_doc, c_node)
     return _elementFactory(tree, c_node)
 
 def SubElement(_Element parent, tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _Element element
-    
-    c_node = xmlNewDocNode(parent._doc._c_doc, NULL, tag, NULL)
+    c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
     return element
