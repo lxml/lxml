@@ -214,3 +214,11 @@
 }
 
 
+# some extra lxml specific (?) suppressions..
+
+{
+   Test
+   Memcheck:Param
+   sigaction(act)
+   fun:__libc_sigaction
+}
