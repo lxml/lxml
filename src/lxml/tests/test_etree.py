@@ -109,6 +109,22 @@ class ETreeTestCaseBase(unittest.TestCase):
         root = doc.getroot()
         self.assertEquals(0, len(root))
 
+    def test_element_indexing_negative(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        self.assertEquals(d, a[-1])
+        self.assertEquals(c, a[-2])
+        self.assertEquals(b, a[-3])
+        self.assertRaises(IndexError, a.__getitem__, -4)
+        a[-1] = e = Element('e')
+        self.assertEquals(e, a[-1])
+        del a[-1]
+        self.assertEquals(2, len(a))
+        
     def test_elementtree(self):
         ElementTree = self.etree.ElementTree
         
@@ -675,6 +691,23 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b><c></c></a>',
             self._writeElement(a))
 
+    def test_insert_negative(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        d = Element('d')
+        a.insert(-1, d)
+        self.assertEquals(
+            d,
+            a[-2])
+        self.assertEquals(
+            '<a><b></b><d></d><c></c></a>',
+            self._writeElement(a))
+        
     def test_remove(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -836,6 +869,31 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('Foo', a.attrib['foo'])
         del a.attrib['foo']
         self.assertRaises(KeyError, a.attrib.__getitem__, 'foo')
+
+##     def test_getslice(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+
+##         a = Element('a')
+##         b = SubElement(a, 'b')
+##         c = SubElement(a, 'c')
+##         d = SubElement(a, 'd')
+
+##         self.assertEquals(
+##             [b, c],
+##             a[0:2])
+##         self.assertEquals(
+##             [b, c, d],
+##             a[:])
+##         self.assertEquals(
+##             [b, c, d],
+##             a[:10])
+##         self.assertEquals(
+##             [b],
+##             a[0:1])
+##         self.assertEquals(
+##             [],
+##             a[10:12])
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

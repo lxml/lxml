@@ -70,6 +70,7 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
         node_registry.attemptDeallocation(self._c_node)
         
 cdef class _ElementTreeBase(_DocumentBase):
+
     def getroot(self):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
@@ -99,6 +100,22 @@ cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
 
 cdef class _ElementBase(_NodeBase):
     # MANIPULATORS
+
+    def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
+        cdef xmlNode* c_node
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
+            raise IndexError
+        tree.xmlReplaceNode(c_node, element._c_node)
+        node_registry.changeDocumentBelow(element, self._doc)
+        
+    def __delitem__(self, index):
+        cdef xmlNode* c_node
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
+            raise IndexError
+        tree.xmlUnlinkNode(c_node)
+
     def set(self, key, value):
         self.attrib[key] = value
         
@@ -218,24 +235,15 @@ cdef class _ElementBase(_NodeBase):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError
+            raise IndexError, "list index out of range"
         return _elementFactory(self._doc, c_node)
-        
-    def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
-        cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError
-        tree.xmlReplaceNode(c_node, element._c_node)
-        node_registry.changeDocumentBelow(element, self._doc)
-        
-    def __delitem__(self, index):
-        cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError
-        tree.xmlUnlinkNode(c_node)
-    
+
+##     def __getslice__(self, start, stop):
+##         cdef xmlNode* c_node
+##         c_node = _findChild(self._c_node, start)
+##         if c_node is NULL:
+##             pass
+            
     def __len__(self):
         cdef int c
         cdef xmlNode* c_node
@@ -789,9 +797,16 @@ cdef _removeText(xmlNode* c_node):
         c_node = c_next
 
 cdef xmlNode* _findChild(xmlNode* c_node, int index):
+    if index < 0:
+        return _findChildBackwards(c_node, -index - 1)
+    else:
+        return _findChildForwards(c_node, index)
+    
+cdef xmlNode* _findChildForwards(xmlNode* c_node, int index):
     """Return child element of c_node with index, or return NULL if not found.
     """
     cdef xmlNode* c_child
+    cdef int c
     c_child = c_node.children
     c = 0
     while c_child is not NULL:
@@ -800,6 +815,23 @@ cdef xmlNode* _findChild(xmlNode* c_node, int index):
                 return c_child
             c = c + 1
         c_child = c_child.next
+    else:
+        return NULL
+
+cdef xmlNode* _findChildBackwards(xmlNode* c_node, int index):
+    """Return child element of c_node with index, or return NULL if not found.
+    Search from the end.
+    """
+    cdef xmlNode* c_child
+    cdef int c
+    c_child = c_node.last
+    c = 0
+    while c_child is not NULL:
+        if c_child.type == tree.XML_ELEMENT_NODE:
+            if c == index:
+                return c_child
+            c = c + 1
+        c_child = c_child.prev
     else:
         return NULL
     
