@@ -30,9 +30,12 @@ cdef extern from "libxml/parser.h":
        
     cdef void xmlInitParser()
     cdef xmlParserCtxt* xmlCreateDocParserCtxt(char* cur)
+    cdef xmlParserCtxt* xmlNewParserCtxt()
+    cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
+ 
     cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
     cdef int xmlParseDocument(xmlParserCtxt* ctxt)
-    cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
-    
     cdef xmlDoc* xmlParseDoc(char* cur)
-
+    cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
+                                 char* filename, char* encoding, int options)
+    

@@ -1230,6 +1230,36 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         self.assertEquals('<a><b></b><c></c></a>',
                           c14n.canonicalize(tostring(a)))
+
+    def test_parse_file(self):
+        parse = self.etree.parse
+        # from file
+        tree = parse(fileInTestDir('test.xml'))
+        self.assertEquals(
+            '<a><b></b></a>',
+            self._writeElement(tree.getroot()))
+
+    def test_parse_file_object(self):
+        parse = self.etree.parse
+        # from file object
+        f = open(fileInTestDir('test.xml'), 'r')
+        tree = parse(f)
+        f.close()
+        self.assertEquals(
+            '<a><b></b></a>',
+            self._writeElement(tree.getroot()))
+
+    def test_parse_stringio(self):
+        parse = self.etree.parse
+        # from StringIO
+        f = StringIO('<a><b></b></a>')
+        tree = parse(f)
+        f.close()
+        self.assertEquals(
+            '<a><b></b></a>',
+            self._writeElement(tree.getroot())
+           )
+
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
@@ -1340,6 +1370,12 @@ def test_suite():
     if HAVE_ELEMENTTREE:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
     return suite
+
+import os.path
+
+def fileInTestDir(name):
+    _testdir = os.path.split(__file__)[0]
+    return os.path.join(_testdir, name)
 
 if __name__ == '__main__':
     unittest.main()

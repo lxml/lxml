@@ -537,6 +537,12 @@ cdef class _AttribBase(_NodeBase):
         tree.xmlRemoveProp(c_attr)
         
     # ACCESSORS
+    def __repr__(self):
+        result = {}
+        for key, value in self.items():
+            result[key] = value
+        return repr(result)
+    
     def __getitem__(self, key):
         cdef xmlNs* c_ns
         cdef char* result
@@ -833,10 +839,12 @@ def ElementTree(_ElementBase element=None, file=None):
 cdef class Parser:
 
     cdef xmlDict* _c_dict
-
+    cdef int _parser_initialized
+    
     def __init__(self):
         self._c_dict = NULL
-
+        self._parser_initialized = 0
+        
     def __del__(self):
         #print "cleanup parser"
         if self._c_dict is not NULL:
@@ -848,45 +856,51 @@ cdef class Parser:
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        #print "parseDoc"
         
-        xmlparser.xmlInitParser()
+        self._initParse()
         pctxt = xmlparser.xmlCreateDocParserCtxt(text)
+        self._prepareParse(pctxt)
+        xmlparser.xmlCtxtUseOptions(
+            pctxt,
+            _getParseOptions())
+        xmlparser.xmlParseDocument(pctxt)
+        result = _getParsedDoc(pctxt)
+        self._finalizeParse(result)
+        xmlparser.xmlFreeParserCtxt(pctxt)
+        return result
 
+    cdef xmlDoc* parseDocFromFile(self, char* filename):
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+
+        self._initParse()
+        pctxt = xmlparser.xmlNewParserCtxt()
+        self._prepareParse(pctxt)
+        result = xmlparser.xmlCtxtReadFile(pctxt, filename,
+                                           NULL, _getParseOptions())
+        self._finalizeParse(result)
+        xmlparser.xmlFreeParserCtxt(pctxt)
+        return result
+    
+    cdef void _initParse(self):
+        if not self._parser_initialized:
+            xmlparser.xmlInitParser()
+            self._parser_initialized = 1
+            
+    cdef void _prepareParse(self, xmlParserCtxt* pctxt):
         if self._c_dict is not NULL and pctxt.dict is not NULL:
             #print "sharing dictionary (parseDoc)"
             xmlparser.xmlDictFree(pctxt.dict)
             pctxt.dict = self._c_dict
             xmlparser.xmlDictReference(pctxt.dict)
 
-        # parse with the following options
-        # * substitute entities
-        # * no network access
-        # * no cdata nodes
-        xmlparser.xmlCtxtUseOptions(
-            pctxt,
-            xmlparser.XML_PARSE_NOENT |
-            xmlparser.XML_PARSE_NOCDATA)
-
-        xmlparser.xmlParseDocument(pctxt)
-
-        if pctxt.wellFormed:
-            result = pctxt.myDoc
-
-            # store dict of last object parsed if no shared dict yet
-            if self._c_dict is NULL:
-                #print "storing shared dict"
-                self._c_dict = result.dict
-                xmlparser.xmlDictReference(self._c_dict)
-        else:
-            result = NULL
-            if pctxt.myDoc is not NULL:
-                tree.xmlFreeDoc(pctxt.myDoc)
-            pctxt.myDoc = NULL
-        xmlparser.xmlFreeParserCtxt(pctxt)
-
-        return result
-
+    cdef void _finalizeParse(self, xmlDoc* result):
+        # store dict of last object parsed if no shared dict yet
+        if self._c_dict is NULL:
+            #print "storing shared dict"
+            self._c_dict = result.dict
+            xmlparser.xmlDictReference(self._c_dict)
+    
     cdef xmlDoc* newDoc(self):
         cdef xmlDoc* result
         #print "newDoc"
@@ -931,11 +945,29 @@ def tostring(element, encoding=None):
     ElementTree(element).write(f, encoding)
     return f.getvalue()
 
-## def parse(source, parser=None):
-##     # XXX ignore parser for now
-##     cdef xmlDoc* c_doc
-##     c_doc = theParser.parseDoc(source)
-##     return _elementTreeFactory(c_doc)
+def parse(source, parser=None):
+    # XXX ignore parser for now
+    cdef xmlDoc* c_doc
+
+    # XXX simplistic StringIO support
+    if isinstance(source, StringIO):
+        c_doc = theParser.parseDoc(source.getvalue())
+        return _elementTreeFactory(c_doc)
+    
+    if tree.PyFile_Check(source):
+        # this is a file object, so retrieve file name
+        filename = tree.PyFile_Name(source)
+        # XXX this is a hack that makes to seem a crash go away;
+        # filename is a borrowed reference which may be what's tripping
+        # things up
+        tree.Py_INCREF(filename)
+    else:
+        filename = source
+        
+    # open filename
+    c_doc = theParser.parseDocFromFile(filename)
+    result = _elementTreeFactory(c_doc)
+    return result
 
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyFileObject* o
@@ -1073,6 +1105,18 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
             _removeNode(c_node)
             c = c + 1
         c_node = c_next
+
+cdef int _getParseOptions():
+    return xmlparser.XML_PARSE_NOENT | xmlparser.XML_PARSE_NOCDATA
+
+cdef xmlDoc* _getParsedDoc(xmlParserCtxt* pctxt):
+    if not pctxt.wellFormed:
+        if pctxt.myDoc is not NULL:
+            tree.xmlFreeDoc(pctxt.myDoc)
+            pctxt.myDoc = NULL    
+        return NULL
+
+    return pctxt.myDoc
 
 def _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.

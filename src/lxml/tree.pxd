@@ -8,7 +8,9 @@ cdef extern from "Python.h":
     
     cdef FILE* PyFile_AsFile(PyFileObject* p)
     cdef int PyFile_Check(object p)
-
+    cdef object PyFile_Name(object p)
+    cdef void Py_INCREF(object o)
+    
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
     
