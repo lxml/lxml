@@ -8,9 +8,11 @@ Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:
 
- * the libxml project for a great XML library.
+* the libxml2 project for a great XML library.
 
- * pyrex for the binding technology.
+* Fredrik Lundh for the ElementTree API.
 
- * Infrae for initiating the project.
+* pyrex for the binding technology.
+
+* Infrae for initiating the project.
 
