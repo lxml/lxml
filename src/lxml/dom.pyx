@@ -199,7 +199,7 @@ cdef class NonDocNode(Node):
 
     property ownerDocument:
         def __get__(self):
-            # XXX if this node has just be created this isn't valid
+            # XXX if this node has just been created this isn't valid
             # XXX but we're a read-only DOM for now
             return self._getDoc()
 
