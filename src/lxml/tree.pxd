@@ -1,11 +1,23 @@
 #from xmlparser cimport xmlDict
 
+cdef extern from "stdio.h":
+    ctypedef struct FILE
+    
+cdef extern from "Python.h":
+    ctypedef struct PyFileObject
+    
+    cdef FILE* PyFile_AsFile(PyFileObject* p)
+    cdef int PyFile_Check(object p)
+
+cdef extern from "libxml/encoding.h":
+    ctypedef struct xmlCharEncodingHandler
+    
 cdef extern from "libxml/tree.h":
 
     # for some reason need to define this in this section;
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
-
+    
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
     
@@ -81,6 +93,8 @@ cdef extern from "libxml/tree.h":
         xmlNode* prev
         xmlDoc* doc
 
+    ctypedef struct xmlOutputBuffer
+    
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef void xmlFreeNode(xmlNode* cur)
     cdef void xmlFree(char* buf)
@@ -109,3 +123,16 @@ cdef extern from "libxml/tree.h":
     cdef char* xmlNodeGetContent(xmlNode* cur)
     cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* nameSpace)
     cdef int xmlIsBlankNode(xmlNode* node)
+    cdef void xmlElemDump(FILE* f, xmlDoc* doc, xmlNode* cur)
+    cdef void xmlNodeDumpOutput(xmlOutputBuffer* buf,
+                                xmlDoc* doc, xmlNode* cur, int level,
+                                int format, char* encoding)
+    
+
+cdef extern from "libxml/xmlIO.h":
+    cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
+        FILE* file,
+        xmlCharEncodingHandler* encoder)
+    cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
+    cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
+    

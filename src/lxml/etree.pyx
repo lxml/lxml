@@ -134,7 +134,7 @@ cdef class _ElementBase(_NodeBase):
             while 1:
                 c_text_node = self._c_node.children
                 if (c_text_node is NULL or
-                    c_text_node.type == tree.XML_TEXT_NODE):
+                    c_text_node.type != tree.XML_TEXT_NODE):
                     break
                 tree.xmlUnlinkNode(c_text_node)
                 tree.xmlFreeNode(c_text_node)
@@ -495,3 +495,19 @@ def XML(text):
     cdef xmlDoc* c_doc
     c_doc = theParser.parseDoc(text)
     return _elementTreeFactory(c_doc).getroot()
+
+def dump(nodereg.SimpleNodeProxyBase elem):
+    _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
+
+cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
+    cdef tree.PyFileObject* o
+    cdef tree.xmlOutputBuffer* c_buffer
+    
+    if not tree.PyFile_Check(f):
+        raise ValueError, "Not a file"
+    o = <tree.PyFileObject*>f
+    c_buffer = tree.xmlOutputBufferCreateFile(tree.PyFile_AsFile(o), NULL)
+    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, NULL)
+    tree.xmlOutputBufferWriteString(c_buffer, '\n')
+    tree.xmlOutputBufferFlush(c_buffer)
+    

@@ -285,6 +285,17 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(
             'baz2-modified',
             el[1][0].text)
+
+    def test_set_text(self):
+        a = Element('a')
+        b = SubElement(a, 'b')
+        a.text = 'hoi'
+        self.assertEquals(
+            'hoi',
+            a.text)
+        self.assertEquals(
+            'b',
+            a[0].tag)
         
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
