@@ -9,7 +9,7 @@ from distutils.command.install_lib import install_lib as installcmd
 from distutils.core import setup
 from distutils.dist import Distribution
 from distutils.extension import Extension
-from Pyrex.Distutils import build_ext
+from lxmldistutils import build_ext
 
 # We have to snoop for file types that distutils doesn't copy correctly when
 # doing a non-build-in-place.
@@ -90,6 +90,11 @@ class MyExtBuilder(build_ext):
         os.path.walk(os.curdir, remove_stale_bytecode, None)
         build_ext.run(self)
 
+    def get_pxd_include_paths(self):
+        """lxml specific pxd paths.
+        """
+        return ['src/lxml']
+    
 class MyLibInstaller(installcmd):
     def run(self):
         installcmd.run(self)
@@ -114,6 +119,18 @@ ext_modules = [
               ),
     Extension('lxml.dom',
               sources=['src/lxml/dom.pyx'],
+              include_dirs=['/usr/include/libxml2'],
+              libraries=['xml2'],
+              extra_compile_args = ['-w']
+              ),
+    Extension('lxml.nodereg',
+              sources=['src/lxml/nodereg.pyx'],
+              include_dirs=['/usr/include/libxml2'],
+              libraries=['xml2'],
+              extra_compile_args = ['-w']
+              ),
+    Extension('lxml.noderegtest',
+              sources=['src/lxml/noderegtest.pyx'],
               include_dirs=['/usr/include/libxml2'],
               libraries=['xml2'],
               extra_compile_args = ['-w']
