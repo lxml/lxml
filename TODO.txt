@@ -33,15 +33,11 @@ Top level
 ElementInterface
 -----------------
 
-* __delitem__
-
 * __delslice__
 
 * __getslice__
 
 * __setslice__
-
-* clear()
 
 * find()
 
@@ -58,6 +54,8 @@ ElementInterface
 * makeelement()
 
 * remove()
+
+* deleting attributes (is this possible with ElementTree?)
 
 ElementTree
 -----------
