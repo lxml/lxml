@@ -34,4 +34,6 @@ cdef extern from "libxml/xpath.h":
                                                 xmlXPathContext* ctxt)
     cdef void xmlXPathFreeContext(xmlXPathContext* ctxt)
     cdef void xmlXPathFreeObject(xmlXPathObject* obj)
+    cdef int xmlXPathRegisterNs(xmlXPathContext* ctxt,
+                                char* prefix, char* ns_uri)
     

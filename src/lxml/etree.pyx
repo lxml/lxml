@@ -160,15 +160,18 @@ cdef class _ElementTree(_DocumentBase):
         return root.findall(path)
 
     # extension to ElementTree API
-    def xpath(self, path):
+    def xpath(self, path, namespaces=None):
         """XPath evaluate in context of document.
 
+        namespaces is an optional dictionary with prefix to namespace URI
+        mappings, used by XPath.
+        
         Returns a list (nodeset), or bool, float or string.
 
         In case of a list result, return Element for element nodes,
         string for text and attribute values.
-        """
-        return _xpathEval(self, None, path)
+        """            
+        return _xpathEval(self, None, path, namespaces)
     
 cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     cdef _ElementTree result
@@ -444,8 +447,8 @@ cdef class _Element(_NodeBase):
     def findall(self, path):
         return _elementpath.findall(self, path)
 
-    def xpath(self, path):
-        return _xpathEval(self._doc, self, path)
+    def xpath(self, path, namespaces=None):
+        return _xpathEval(self._doc, self, path, namespaces)
         
 cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
     cdef _Element result
@@ -1154,17 +1157,27 @@ cdef object _createNodeSetResult(_ElementTree doc,
     return result
 
 cdef object _xpathEval(_ElementTree doc, _Element element,
-                       object path):    
+                       object path, object namespaces):    
     cdef xpath.xmlXPathContext* xpathCtxt
     cdef xpath.xmlXPathObject* xpathObj
     cdef xmlNode* c_node
-
+    cdef int ns_register_status
+    
     path = path.encode('UTF-8')
 
     xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
     if xpathCtxt is NULL:
         raise Error, "Unable to create new XPath context"
 
+    if namespaces is not None:
+        for prefix, uri in namespaces.items():
+            s_prefix = prefix.encode('UTF8')
+            s_uri = uri.encode('UTF8')
+            ns_register_status = xpath.xmlXPathRegisterNs(
+                xpathCtxt, s_prefix, s_uri)
+            if ns_register_status != 0:
+                raise Error, "Unable to register namespaces with prefix %s and uri %s" % (prefix, uri)
+            
     # element context is requested
     if element is not None:
         xpathCtxt.node = element._c_node

@@ -1459,6 +1459,19 @@ class ETreeXPathTestCase(unittest.TestCase):
         self.assertEquals([c[0], c[1], root[1][0]],
                           c.xpath('//b'))
 
+    def test_xpath_ns(self):
+        tree = self.parse('<a xmlns="uri:a"><b></b></a>')
+        root = tree.getroot()
+        self.assertEquals(
+            [root[0]],
+            tree.xpath('//foo:b', {'foo': 'uri:a'}))
+        self.assertEquals(
+            [],
+            tree.xpath('//foo:b', {'foo': 'uri:c'}))
+        self.assertEquals(
+            [root[0]],
+            root.xpath('//baz:b', {'baz': 'uri:a'}))
+        
     def test_xslt(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
