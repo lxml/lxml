@@ -191,6 +191,30 @@ class ETreeTestCase(unittest.TestCase):
             ], 
             items)
         
+    def test_write(self):
+
+        for i in range(1):
+            #print "start of test write", i
+            f = StringIO() # '<doc%s>This is a test.</doc%s>' % (i, i))
+            #print "create new element"
+            #root = ElementTree(file=f)
+            root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
+            #print "stuff into tree"
+            tree = ElementTree(element=root)
+            #print "write tree"
+            tree.write(f)
+            #print "getting value of tree"
+            data = f.getvalue()
+            self.assertEquals(
+                '<?xml version="1.0"?>\n<doc%s>This is a test.</doc%s>\n' % (i, i),
+                data)
+            #print "done"
+
+#    def test_move_element(self):
+#    
+#        el = Element('foo')
+#        tree = ElementTree(element=el)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])

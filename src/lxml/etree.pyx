@@ -45,7 +45,7 @@ cdef extern from "libxml/tree.h":
         xmlNode *next
         xmlNode *prev
         xmlDoc *doc
-
+        
     ctypedef struct xmlNs:
         char* href
         char* prefix
@@ -76,6 +76,8 @@ cdef extern from "libxml/tree.h":
     cdef void xmlUnlinkNode(xmlNode* cur)
     cdef xmlNode* xmlDocSetRootElement(xmlDoc* doc, xmlNode* root)
     cdef xmlNode* xmlDocGetRootElement(xmlDoc* doc)
+    cdef void xmlSetTreeDoc(xmlNode* tree, xmlDoc* doc)
+    cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
     
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
@@ -289,6 +291,7 @@ def SubElement(_Element parent, tag, attrib=None, **extra):
 def ElementTree(_Element element=None, file=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_node
+    cdef xmlNode* c_node_copy
     cdef _ElementTree tree
     
     if file is not None:
@@ -301,9 +304,11 @@ def ElementTree(_Element element=None, file=None):
 
     # XXX what if element and file are both not None?
     if element is not None:
-        xmlDocSetRootElement(tree._c_doc, element._c_node)
+        # XXX we'd prefer not having to make a copy
+        c_node_copy = xmlDocCopyNode(element._c_node, tree._c_doc, 1)
+        xmlDocSetRootElement(tree._c_doc, c_node_copy)
+        element._c_node = c_node_copy
         element._doc = tree
-
     return tree
 
 def XML(text):
