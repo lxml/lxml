@@ -190,25 +190,6 @@ class ETreeTestCase(unittest.TestCase):
             ('gamma', 'Gamma'),
             ], 
             items)
-        
-    def test_write(self):
-
-        for i in range(1):
-            #print "start of test write", i
-            f = StringIO() # '<doc%s>This is a test.</doc%s>' % (i, i))
-            #print "create new element"
-            #root = ElementTree(file=f)
-            root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
-            #print "stuff into tree"
-            tree = ElementTree(element=root)
-            #print "write tree"
-            tree.write(f)
-            #print "getting value of tree"
-            data = f.getvalue()
-            self.assertEquals(
-                '<?xml version="1.0"?>\n<doc%s>This is a test.</doc%s>\n' % (i, i),
-                data)
-            #print "done"
 
     def test_XML(self):
         root = XML('<doc>This is a text.</doc>')
@@ -243,12 +224,71 @@ class ETreeTestCase(unittest.TestCase):
             result.append(key)
         result.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], result)
+
+
+    # could trigger a crash in the past
+    def test_write(self):
+        for i in range(100):
+            f = StringIO() 
+            root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
+            tree = ElementTree(element=root)
+            tree.write(f)
+            data = f.getvalue()
+            self.assertEquals(
+                '<?xml version="1.0"?>\n<doc%s>This is a test.</doc%s>\n' % (i, i),
+                data)
+
+    # this could trigger a crash, apparently because the document
+    # reference was prematurely garbage collected
+    def test_crash(self):
+        element = Element('tag')
+        for i in range(100):
+            element.attrib['key'] = 'value'
+            value = element.attrib['key']
+            self.assertEquals(value, 'value')
+            
+    # from doctest; for some reason this caused crashes too
+    def test_write_ElementTreeDoctest(self):
+        f = StringIO()
+        for i in range(100):
+            element = Element('tag%s' % i)
+            self._check_element(element)
+            tree = ElementTree(element)
+            tree.write(f)
+            self._check_element_tree(tree)
+            
+    def _check_element_tree(self, tree):
+        self._check_element(tree.getroot())
         
-#    def test_move_element(self):
-#    
-#        el = Element('foo')
-#        tree = ElementTree(element=el)
+    def _check_element(self, element):
+        self.assert_(hasattr(element, 'tag'))
+        self.assert_(hasattr(element, 'attrib'))
+        self.assert_(hasattr(element, 'text'))
+        self.assert_(hasattr(element, 'tail'))
+        self._check_string(element.tag)
+        self._check_mapping(element.attrib)
+        if element.text != None:
+            self._check_string(element.text)
+        if element.tail != None:
+            self._check_string(element.tail)
         
+    def _check_string(self, string):
+        len(string)
+        for char in string:
+            self.assertEquals(1, len(char))
+        new_string = string + ""
+        new_string = string + " "
+        string[:0]
+
+    def _check_mapping(self, mapping):
+        len(mapping)
+        keys = mapping.keys()
+        items = mapping.items()
+        for key in keys:
+            item = mapping[key]
+        mapping["key"] = "value"
+        self.assertEquals("value", mapping["key"])
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])

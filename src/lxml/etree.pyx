@@ -135,6 +135,9 @@ cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     return result
     
 cdef class _Element(_NodeBase):
+    def set(self, key, value):
+        self.attrib[key] = value
+        
     property tag:
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
@@ -217,6 +220,11 @@ cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     return result
 
 cdef class _Attrib(_NodeBase):
+    def __setitem__(self, key, value):
+        key = key.encode('UTF-8')
+        value = value.encode('UTF-8')
+        xmlSetProp(self._c_node, key, value)
+        
     def __getitem__(self, key):
         cdef char* result
         key = key.encode('UTF-8')
@@ -225,6 +233,17 @@ cdef class _Attrib(_NodeBase):
             raise KeyError, key
         return unicode(result, 'UTF-8')
 
+    def __len__(self):
+        cdef int c
+        cdef xmlNode* c_node
+        c = 0
+        c_node = <xmlNode*>(self._c_node.properties)
+        while c_node is not NULL:
+            if c_node.type == XML_ATTRIBUTE_NODE:
+                c = c + 1
+            c_node = c_node.next
+        return c
+    
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
