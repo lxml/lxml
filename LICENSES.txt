@@ -1,9 +1,9 @@
 lxml is copyright Infrae and distributed under the BSD license (see
 doc/licenses/BSD.txt), with the following exceptions:
 
-src/lxml/tests/test_elementtree_doctests, the elementtree test script
-is derived from ElementTree's version. See
-doc/licenses/elementtree.txt for the license text.
+Some code, such a selftest.py, src/lxml/_elementpath.py and
+src/lxml/tests/test_elementtree_doctests are derived from
+ElementTree. See doc/licenses/elementtree.txt for the license text.
 
 test.py, the test-runner script, is GPL and copyright Shuttleworth
 Foundation. See doc/licenses/GPL.txt. It is believed the unchanged
