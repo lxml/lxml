@@ -2,6 +2,10 @@ import unittest
 
 from lxml.etree import Element, ElementTree
 from StringIO import StringIO
+import os
+
+def getTestDir():
+    return os.path.dirname(__file__)
 
 class ETreeTestCase(unittest.TestCase):
     def test_element(self):
@@ -12,7 +16,13 @@ class ETreeTestCase(unittest.TestCase):
         element = Element('top')
         tree = ElementTree(element)
         self.buildNodes(element, 10, 5)
-        f = open('testdump.xml', 'w')
+        f = open(os.path.join(getTestDir(), 'testdump.xml'), 'w')
+        tree.write(f, 'UTF-8')
+        f.close()
+        f = open(os.path.join(getTestDir(), 'testdump.xml'), 'r')
+        tree = ElementTree(file=f)
+        f.close()
+        f = open(os.path.join(getTestDir(), 'testdump2.xml'), 'w')
         tree.write(f, 'UTF-8')
         f.close()
         

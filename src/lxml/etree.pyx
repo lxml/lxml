@@ -153,17 +153,22 @@ def Element(tag, attrib=None, **extra):
     xmlDocSetRootElement(tree._c_doc, _c_node)
     return _elementFactory(tree, _c_node)
 
-def ElementTree(_Element element=None):
+def ElementTree(_Element element=None, file=None):
     cdef xmlDoc* _c_doc
     cdef _ElementTree tree
     cdef xmlNode* _c_node
     
-    _c_doc = xmlNewDoc("1.0")
+    if file is not None:
+        # XXX read XML into memory not the fastest way to do this
+        data = file.read()
+        _c_doc = xmlParseDoc(data)
+    else:
+        _c_doc = xmlNewDoc("1.0")
     tree = _elementTreeFactory(_c_doc)
-    
+
+    # XXX what if element and file are both not None?
     if element is not None:
         xmlDocSetRootElement(tree._c_doc, element._c_node)
         element._doc = tree
 
     return tree
-
