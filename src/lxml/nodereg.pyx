@@ -6,14 +6,14 @@ cdef class DocumentProxyBase:
     def __init__(self):
         self._registry = NodeRegistry()
         
-    def getProxy(self, id):
+    def getProxy(self, id, proxy_type=0):
         # XXX This cannot be a cdef, as this apparently strips off the
         # weakref functionality from the returned object, possibly
         # by the cast to NodeProxyBase, which is not yet weakreffable
-        return self._registry.getProxy(id)
+        return self._registry.getProxy(id, proxy_type)
 
-    def registerProxy(self, NodeProxyBase proxy):
-        self._registry.registerProxy(proxy)
+    def registerProxy(self, NodeProxyBase proxy, proxy_type=0):
+        self._registry.registerProxy(proxy, proxy_type)
 
     def getProxies(self):
         return self._registry._proxies
@@ -55,25 +55,29 @@ cdef class NodeRegistry:
     mapping in the registry will have to consist of weak references.
     This way, a node being registered in the registry does not count
     as something that stops the node from being deallocated.
-    """    
+    """
+    
     def __init__(self):
         self._proxies = weakref.WeakValueDictionary()
+        self._proxy_types = []
         
-    def getProxy(self, id):
+    def getProxy(self, id, proxy_type):
         """Given an xmlNode, return node proxy, or None if no proxy yet.
         """
         # XXX This cannot be a cdef, as this apparently strips off the
         # weakref functionality from the returned object, possibly
         # by the cast to NodeProxyBase, which is not yet weakreffable
-        return self._proxies.get(id, None)
+        return self._proxies.get((id, proxy_type), None)
  
-    cdef void registerProxy(self, NodeProxyBase proxy):
+    cdef void registerProxy(self, NodeProxyBase proxy, int proxy_type):
         """Register a proxy with the registry.
         """
         cdef xmlNode* c_node
         c_node = proxy._c_node
-        assert not self._proxies.has_key(<int>c_node)
-        self._proxies[<int>c_node] = proxy
+        assert not self._proxies.has_key((<int>c_node, proxy_type))
+        if proxy_type not in self._proxy_types:
+            self._proxy_types.append(proxy_type)
+        self._proxies[(<int>c_node, proxy_type)] = proxy
 
     cdef attemptDeallocation(self, xmlNode* c_node):
         """Attempt deallocation of c_node (or higher up in tree).
@@ -111,10 +115,12 @@ cdef class NodeRegistry:
         cdef xmlNode* c_current
         c_current = c_node.children
         proxies = self._proxies
+        proxy_types = self._proxy_types
         while c_current is not NULL:
             id = <int>c_current
-            if proxies.has_key(id):
-                return 0
+            for proxy_type in proxy_types:
+                if proxies.has_key((id, proxy_type)):
+                    return 0
             if not self.canDeallocateChildren(c_current):
                 return 0 
             c_current = c_current.next
