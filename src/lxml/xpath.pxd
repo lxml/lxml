@@ -33,8 +33,8 @@ cdef extern from "libxml/xpath.h":
         char* functionURI
         # actually signature is void (*error)(void*, xmlError*)
         void* error
-
         xmlerror.xmlError lastError
+        void* userData
 
     ctypedef struct xmlXPathParserContext:
         xmlXPathContext* context

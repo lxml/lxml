@@ -862,15 +862,19 @@ def parse(source, parser=None):
     c_doc = theParser.parseDocFromFile(filename)
     result = _elementTreeFactory(c_doc)
     return result
-    
+
 cdef class XPathEvaluator:
     """Create an XPath evaluator for a document.
     """
     cdef xpath.xmlXPathContext* _c_ctxt
     cdef _ElementTree _doc
+    cdef object _extension_functions
+    cdef object _exc_info
+    cdef object _namespaces
+    cdef object _extensions
     
     def __init__(self, _ElementTree doc,
-                 namespaces=None, extension_module=None):
+                 namespaces=None, extensions=None):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         
@@ -881,7 +885,10 @@ cdef class XPathEvaluator:
 
         self._doc = doc
         self._c_ctxt = xpathCtxt
-
+        self._c_ctxt.userData = <void*>self
+        self._namespaces = namespaces
+        self._extensions = extensions
+        
         if namespaces is not None:
             for prefix, uri in namespaces.items():
                 s_prefix = prefix.encode('UTF8')
@@ -894,8 +901,18 @@ cdef class XPathEvaluator:
                     raise XPathNamespaceError, (
                         "Unable to register namespaces with prefix "
                         "%s and uri %s" % (prefix, uri))
-                
-
+        self._extension_functions = {}
+        if extensions is not None:
+            for extension in extensions:
+                self._extension_functions.update(extension)
+                for (ns_uri, name), function in extension.items():
+                    if ns_uri is not None:
+                        xpath.xmlXPathRegisterFuncNS(
+                            xpathCtxt, name, ns_uri, _xpathCallback)
+                    else:
+                        xpath.xmlXPathRegisterFunc(
+                            xpathCtxt, name, _xpathCallback)
+                        
     def __dealloc__(self):
         xpath.xmlXPathFreeContext(self._c_ctxt)
     
@@ -910,7 +927,12 @@ cdef class XPathEvaluator:
             self._c_ctxt.node = NULL
              
         path = path.encode('UTF-8')
+        self._exc_info = None
         xpathObj = xpath.xmlXPathEvalExpression(path, self._c_ctxt)
+        if self._exc_info is not None:
+            type, value, traceback = self._exc_info
+            self._exc_info = None
+            raise type, value, traceback
         if xpathObj is NULL:
             raise SyntaxError, "Error in xpath expression."
         try:
@@ -921,6 +943,17 @@ cdef class XPathEvaluator:
         xpath.xmlXPathFreeObject(xpathObj)
         return result
 
+    def clone(self):
+        # XXX pretty expensive so calling this from callback is probably
+        # not desirable
+        return XPathEvaluator(self._doc, self._namespaces, self._extensions)
+    
+def Extension(module, function_mapping, ns_uri=None):
+    result = {}
+    for function_name, xpath_name in function_mapping.items():
+        result[(ns_uri, xpath_name)] = getattr(module, function_name)
+    return result
+    
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
     cdef _NodeBase node
@@ -1002,6 +1035,44 @@ cdef object _createNodeSetResult(_ElementTree doc,
             print "Not yet implemented result node type:", c_node.type
             raise NotImplementedError
     return result
+
+cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef xpath.xmlXPathContext* rctxt
+    cdef _ElementTree doc
+    cdef xpath.xmlXPathObject* obj
+    cdef XPathEvaluator evaluator
+    
+    rctxt = ctxt.context
+    
+    # get information on what function is called
+    name = rctxt.function
+    if rctxt.functionURI is not NULL:
+        uri = rctxt.functionURI
+    else:
+        uri = None
+
+    # get our evaluator
+    evaluator = <XPathEvaluator>(rctxt.userData)
+
+    # lookup up the extension function in the evaluator
+    f = evaluator._extension_functions[(uri, name)]
+    
+    args = []
+    doc = evaluator._doc
+    for i from 0 <= i < nargs:
+        args.append(_unwrapXPathObject(xpath.valuePop(ctxt), doc))
+    args.reverse()
+
+    try:
+        obj = _wrapXPathObject(f(evaluator, *args))
+    except:
+        xpath.xmlXPathErr(
+            ctxt,
+            xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
+        evaluator._exc_info = sys.exc_info()
+        return
+    
+    xpath.valuePush(ctxt, obj)
 
 cdef class XSLT:
     """Turn a document into an XSLT object.

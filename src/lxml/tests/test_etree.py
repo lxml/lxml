@@ -1488,6 +1488,23 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(
             [root],
             e.evaluate('//a'))
+
+    def test_xpath_extensions(self):
+        def foo(evaluator, a):
+            return 'hello %s' % a
+        extension = {(None, 'foo'): foo}
+        tree = self.parse('<a><b></b></a>')
+        e = etree.XPathEvaluator(tree, None, [extension])
+        self.assertEquals(
+            "hello you", e.evaluate("foo('you')"))
+
+    def test_xpath_extensions_wrong_args(self):
+        def foo(evaluator, a, b):
+            return "hello %s and %s" % (a, b)
+        extension = {(None, 'foo'): foo}
+        tree = self.parse('<a><b></b></a>')
+        e = etree.XPathEvaluator(tree, None, [extension])
+        self.assertRaises(TypeError, e.evaluate, "foo('you')")
         
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""
