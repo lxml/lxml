@@ -493,7 +493,89 @@ class DomTestCase(unittest.TestCase):
             None, 'a'))
         self.assert_(not doc.documentElement.hasAttributeNS(
             'http://www.foo.com', 'a'))
-             
+
+    def test_lookupNamespaceURI(self):
+        doc = makeDocument(
+            '<a xmlns="urn:default" xmlns:u="urn:u" xmlns:v="urn:v" attr="foo"><b xmlns="urn:default1" xmlns:v="urn:v1" xmlns:w="urn:w">t<!--c--></b></a>')
+        # Attr
+        attr = doc.documentElement.attributes.getNamedItemNS(None, 'attr')
+        self.assertEquals(
+            'urn:u',
+            attr.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:v',
+            attr.lookupNamespaceURI('v'))
+        self.assertEquals(
+            None,
+            attr.lookupNamespaceURI('x'))
+        # XXX CDATASection
+        # Comment
+        comment = doc.documentElement.childNodes[0].childNodes[1]
+        self.assertEquals(
+            'urn:u',
+            comment.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:v1',
+            comment.lookupNamespaceURI('v'))
+        self.assertEquals(
+            'urn:w',
+            comment.lookupNamespaceURI('w'))
+        # Document
+        self.assertEquals(
+            'urn:u',
+            doc.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:v',
+            doc.lookupNamespaceURI('v'))
+        self.assertEquals(
+            None,
+            doc.lookupNamespaceURI('x'))
+        # defined lower
+        self.assertEquals(
+            None,
+            doc.lookupNamespaceURI('w'))
+        # XXX DocumentFragment
+        # XXX DocumentType
+        # Element
+        el = doc.documentElement.childNodes[0]
+        self.assertEquals(
+            'urn:u',
+            el.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:v1',
+            el.lookupNamespaceURI('v'))
+        self.assertEquals(
+            'urn:w',
+            el.lookupNamespaceURI('w'))
+        self.assertEquals(
+            'urn:default1',
+            el.lookupNamespaceURI(None))
+        el2 = doc.documentElement
+        self.assertEquals(
+            'urn:u',
+            el2.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:default',
+            el2.lookupNamespaceURI(None))
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        # Text
+        text = doc.documentElement.childNodes[0].childNodes[0]
+        self.assertEquals(
+            'urn:u',
+            text.lookupNamespaceURI('u'))
+        self.assertEquals(
+            'urn:v1',
+            text.lookupNamespaceURI('v'))
+        self.assertEquals(
+            'urn:w',
+            text.lookupNamespaceURI('w'))
+        self.assertEquals(
+            'urn:default1',
+            text.lookupNamespaceURI(None))
+    
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])

@@ -99,6 +99,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlHasProp(xmlNode* node, char* name)
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef char* xmlNodeGetContent(xmlNode* cur)
+    cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* nameSpace)
     
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
@@ -199,6 +200,20 @@ cdef class Node:
 
     def hasChildNodes(self):
         return self._o.children is not NULL
+
+    def lookupNamespaceURI(self, prefix):
+        cdef xmlNs* ns
+        cdef char* p
+        cdef Document doc
+        if prefix is None:
+            p = NULL
+        else:
+            p = prefix
+        doc = self._getDoc()
+        ns = xmlSearchNs(<xmlDoc*>(doc._o), self._o, p)
+        if ns is NULL:
+            return None
+        return unicode(ns.href, 'UTF-8')
     
 cdef class NonDocNode(Node):
     cdef Document _doc
@@ -240,7 +255,21 @@ cdef class Document(Node):
                     return _elementFactory(self, c_node)
                 c_node = c_node.next
             return None
-        
+
+    def lookupNamespaceURI(self, prefix):
+        return self.documentElement.lookupNamespaceURI(prefix)
+    
+    # XXX tbd
+    def createExpression(self, expression, resolver):
+        pass
+
+    def createNSResolver(self, nodeResolver):
+        pass
+
+    def evaluate(self, expression, contextNode,
+                 resolver, type, result):
+        pass
+    
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc
     doc = Document()
@@ -570,3 +599,4 @@ def makeDocument(text):
     cdef xmlDoc* c_doc
     c_doc = xmlParseDoc(text)
     return _documentFactory(c_doc)
+   
