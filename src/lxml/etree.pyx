@@ -5,8 +5,6 @@ cimport xpath
 cimport xslt
 cimport xmlerror
 cimport cstd
-cimport nodereg
-from nodereg cimport SimpleNodeProxyBase, SimpleDocumentProxyBase
 
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
@@ -34,12 +32,15 @@ NS_COUNTER = 0
 class Error(Exception):
     pass
 
-cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
+cdef class _DocumentBase:
     """Base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
-    """        
+    """
+    cdef int ns_counter
+    cdef xmlDoc* _c_doc
+    
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
@@ -58,12 +59,14 @@ cdef void displayNode(xmlNode* c_node, indent):
         displayNode(c_child, indent + 1)
         c_child = c_child.next
         
-cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
+cdef class _NodeBase:
     """Base class to reference a document object and a libxml node.
 
     By pointing to an ElementTree instance, a reference is kept to
     _ElementTree as long as there is some pointer to a node in it.
     """
+    cdef _DocumentBase _doc
+    cdef xmlNode* _c_node
     cdef int _proxy_type
     
     def __dealloc__(self):
@@ -182,7 +185,7 @@ cdef _ElementTreeBase _elementTreeFactory(xmlDoc* c_doc):
 cdef class _ElementBase(_NodeBase):
     # MANIPULATORS
 
-    def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
+    def __setitem__(self, index, _NodeBase element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
@@ -800,7 +803,7 @@ fromstring = XML
 def iselement(element):
     return isinstance(element, _ElementBase)
 
-def dump(nodereg.SimpleNodeProxyBase elem):
+def dump(_NodeBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
 def tostring(element, encoding=None):
@@ -1253,7 +1256,7 @@ ctypedef _ProxyRef ProxyRef
 cdef int PROXYREF_SIZEOF
 PROXYREF_SIZEOF = 12
 
-cdef SimpleNodeProxyBase getProxy(xmlNode* c_node, int proxy_type):
+cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
     """Get a proxy for a given node and node type.
     """
     cdef ProxyRef* ref
@@ -1263,14 +1266,14 @@ cdef SimpleNodeProxyBase getProxy(xmlNode* c_node, int proxy_type):
     ref = <ProxyRef*>c_node._private
     while ref is not NULL:
         if ref.type == proxy_type:
-            return <SimpleNodeProxyBase>ref.proxy
+            return <_NodeBase>ref.proxy
         ref = ref.next
     return None
 
 cdef int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef ProxyRef* createProxyRef(SimpleNodeProxyBase proxy, int proxy_type):
+cdef ProxyRef* createProxyRef(_NodeBase proxy, int proxy_type):
     """Create a backpointer proxy refeference for a proxy and type.
     """
     cdef ProxyRef* result
@@ -1280,7 +1283,7 @@ cdef ProxyRef* createProxyRef(SimpleNodeProxyBase proxy, int proxy_type):
     result.next = NULL
     return result
 
-cdef void registerProxy(SimpleNodeProxyBase proxy, int proxy_type):
+cdef void registerProxy(_NodeBase proxy, int proxy_type):
     """Register a proxy and type for the node it's proxying for.
     """
     cdef ProxyRef* ref
@@ -1299,7 +1302,7 @@ cdef void registerProxy(SimpleNodeProxyBase proxy, int proxy_type):
         ref = ref.next
     prev_ref.next = createProxyRef(proxy, proxy_type)
 
-cdef void unregisterProxy(SimpleNodeProxyBase proxy, int proxy_type):
+cdef void unregisterProxy(_NodeBase proxy, int proxy_type):
     """Unregister a proxy for the node it's proxying for.
     """
     cdef ProxyRef* ref
@@ -1327,7 +1330,7 @@ cdef void unregisterProxy(SimpleNodeProxyBase proxy, int proxy_type):
 
 
 cdef void changeDocumentBelow(xmlNode* c_node,
-                              SimpleDocumentProxyBase doc):
+                              _DocumentBase doc):
     """For a node and all nodes below, change document.
 
     A node can change document in certain operations as an XML
@@ -1337,7 +1340,7 @@ cdef void changeDocumentBelow(xmlNode* c_node,
     cdef ProxyRef* ref
     cdef xmlNode* c_current
     cdef xmlAttr* c_attr_current
-    cdef SimpleNodeProxyBase proxy
+    cdef _NodeBase proxy
 
     if c_node is NULL:
         return
@@ -1345,7 +1348,7 @@ cdef void changeDocumentBelow(xmlNode* c_node,
     if c_node._private is not NULL:
         ref = <ProxyRef*>c_node._private
         while ref is not NULL:
-            proxy = <SimpleNodeProxyBase>ref.proxy
+            proxy = <_NodeBase>ref.proxy
             proxy._doc = doc
             ref = ref.next
 
