@@ -7,6 +7,7 @@ cimport relaxng
 cimport xmlerror
 cimport c14n
 cimport cstd
+import types
 
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
