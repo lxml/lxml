@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rss [<!ENTITY % HTMLlat1 PUBLIC "-//W3C//ENTITIES Latin 1 for XHTML//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml-lat1.ent">]>
+<rss version="0.92" xml:base="http://phplens.com/phpeverywhere">
+<channel>
+ <title>PHP Everywhere - By John Lim</title>
+ <link>http://phplens.com/phpeverywhere</link>
+ <description></description>
+ <language>en</language>
+<item>
+ <title>It never hurts to be repetitious: Enterprise PHP again</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/120</link>
+ <description>&lt;p&gt;
+OK, repetition might not hurt, but it could be boring. To prevent boredom, I'll be brief:
+&lt;p&gt;
+Jeff Moore talks about his struggles trying to &lt;a href=http://www.procata.com/blog/archives/2004/10/12/enterprise-php/&gt;define enterprise computing&lt;/a&gt;. Like Jeff, I don't have a precise answer. But I have a couple of litmus tests that you can apply:
+&lt;ol&gt;
+&lt;li&gt; Is there an MIS department involved?
+&lt;li&gt; There are a large number of users - it needs to be several hundred or more.
+&lt;li&gt; Are users in several geographical locations?
+&lt;li&gt; Is it mission-critical - does operational failure of 1 day mean that someone very important will be screaming at MIS?
+&lt;li&gt; Cost of project - did someone spend hundreds of thousands of US dollars or more?
+&lt;li&gt; Is there a central server (or multiple servers) and data processing in the background?
+&lt;li&gt; Is the value derived from the project (return on investment) by the stakeholders a large amount (eg. a couple of million dollars a year)?
+&lt;/ol&gt;
+&lt;p&gt;
+If it fits all the above criteria, I would say it is enterprise computing.
+&lt;p&gt;
+PS: I will be going on holiday till the 25th of Oct. Have fun!
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/bujo.gif&gt;</description>
+<pubDate>Wed, 13 Oct 2004 05:50:31 -0400</pubDate></item>
+<item>
+ <title>Ignorance is bliss, defaults are worse</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/119</link>
+ <description>&lt;p&gt;
+Here's a recent posting to the php-internals newsgroup that made me gasp with shock and horror, then switch over to HomeSite and perform a global search for all declarations of default in switch statements. This is certainly an unpleasant, Titanic-sized iceberg to me.
+&lt;p&gt;
+ In my opinion, this should be changed. If you agree, then go to &lt;a href=http://bugs.php.net/bug.php?id=30285&gt;this PHP bug report page&lt;/a&gt; and  vote, setting &lt;i&gt;"Rate the importance of this bug to you"&lt;/i&gt; to &lt;b&gt;high&lt;/b&gt;.
+&lt;p&gt;
+&lt;b&gt;Latest (11 Oct 2004)&lt;/b&gt;: Andi Gutmans agrees that it should be fixed!
+&lt;p&gt;
+&lt;pre&gt;
+From: Andi Gutmans     To: Frank Kromann
+Subject: Re: [PHP-DEV] switch() and default:
+
+It's always been like that and has been documented for ages in the manual.
+
+Andi
+
+At 08:24 PM 10/7/2004 -0700, Frank M. Kromann wrote:
+&gt;Hello Everyone,
+&gt;
+&gt;I just discovered a small thing in the switch() statement. The position of
+&gt;the default: clause has to be at the end of the code:
+&gt;
+&gt;$a = 1;
+&gt;switch ($a) {
+&gt;    default :
+&gt;    case 0 :
+&gt;       $b = 1;
+&gt;       break;
+&gt;    case 1 :
+&gt;       $b = 2;
+&gt;       break;
+&gt;}
+&gt;echo $b; // should print 2 but it prints 1
+
+&gt;
+&gt;$a = 1;
+&gt;switch ($a) {
+&gt;    case 1 :
+&gt;       $b = 2;
+&gt;       break;
+&gt;    default :
+&gt;    case 0 :
+&gt;       $b = 1;
+&gt;       break;
+&gt;}
+&gt;echo $b; // prints 2 as expected.
+&gt;
+&gt;This is tested on Linux with PHP5 CVS-HEAD
+&gt;
+&gt;What changed ?
+&gt;
+&gt;- Frank
+&gt;
+&gt;
+&lt;/pre&gt;
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/crimson.gif&gt;</description>
+<pubDate>Sun, 10 Oct 2004 21:43:51 -0400</pubDate></item>
+<item>
+ <title>Wintermute is silent no more (a response to PHP enterprise silliness)</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/118</link>
+ <description>&lt;p&gt;
+There are some interesting responses to my recent piece on &lt;a href=http://phplens.com/phpeverywhere/?q=node/view/115#comment&gt;PHP enterprise silliness&lt;/a&gt;. Wintermute (where do they get these crazy handles !?) says:
+&lt;blockquote&gt;
+&lt;P&gt;&lt;i&gt;
+[in response to the question on the lack of thread support in PHP]&lt;/i&gt;
+&lt;p&gt;
+(i) Threads matter in two ways. First, a web server can use processes or threads to manage concurrency (or it can use poll/select to do the work in a single process, but it's difficult to do general-purpose programming with that method.) In principle, threads give you better performance and use memory more efficiently, but practically I've seen simple PHP scripts give better than 100 hits/sec performance in multiprocess mode in Apache without any tweaking. The multiprocess mode also scales wonderfully on SMP machines and across clusters.
+&lt;p&gt;
+A threaded web server can save memory in the short term, but runs a high risk of memory leaks over the long term. Early Java implementations used "conservative" garbage collectors which inevitably leaked memory in long running processes that use a good fraction of the address space (say 100 MB on a 32 bit machine.) Today it's better. Although garbage collection eliminates the need to call free(), java programs can still leak references, and the complicated java runtime can also leak memory on it's on.
+&lt;p&gt;
+A thread that goes bonkers can bring down a whole threaded web server, whereas a hand grenade can go off inside a PHP process and it just dies and gets replaced by another one, only causing a transient error and a message in the error_log. Microsoft spent a long time figuring out how to isolate the threads in IIS to make it a tolerably stable web server; that kind of isolation just doesn't exist in Java.
+&lt;p&gt;
+Threaded web servers don't scale as well as process-based web servers on SMP machines, because threaded web servers require more locking. Also, applications that depend on shared memory (which comes with threads) don't scale at all on clusters, and require complicated measures to fake it.
+&lt;p&gt;
+Java does have the advantage that you can have a long-running thread that survives between hits, but is keyed to a session id so it's available to a whole session. That's great if you need to hold a socket open to, say, an IMAP server or some legacy mainframe system. The trouble is that this invites people to bring their legacy programming skills in, and pass up the scalability and maintainability advantages of stateless web programming. Also, programming with threads is hard and something you'll screw up at if you're not a genius and probably will screw up anyway even if you are. The need to use threads are one of the reasons why it's so hard to write reliable GUI applications in Java.
+&lt;p&gt;
+The right way to do 'stateful' things in "Enterprise PHP" is to not write the stateful stuff in PHP, but to write it in some language like C, ocaml or Java, and have it listening on a tcp or unix domain socket. This way you can write a simple daemon that does a simple, specific task, that's simple to write correctly and to debug, and let PHP do the stuff that's easy to do in PHP. For instance, if you need to keep a connection open to an old mainframe, just write a proxy server that holds the connection and lets you reconnect to that connection by providing a session key. A few hundred lines of C, if that.
+&lt;p&gt;
+&lt;i&gt;
+[In response to the problems with poorly tested/designed/integrated PHP frameworks]
+&lt;/i&gt;&lt;p&gt;
+(ii) Frameworks as much a part of the problem as they are a part of the solution. I knew a guy who worked with a bunch of old IBM dudes to write a pretty straightforward business application that sucked some data out of an IBM DB2 database running on an AS/400 and displayed it for customers. Well, these guys weren't programmers, they were "software engineers" and spent six months developing a framework before writing the app, and when they did write the app it was unacceptably slow. I went and looked at the framework code and it was completely incomprehensible and had to be junked.
+&lt;p&gt;
+If you brought some PHP programmers in, they'd have gotten the job done in a week, and the code would have been a lot more maintainable.
+&lt;p&gt;
+I've seen a lot of Java frameworks that are written by people who want to build castles in the air, not applications. For instance, one framework lets you build applications that run on both the web and as desktop swing apps... Well, the web and desktop are such different places (I was about to say that latency varies by an order of magnitude, but with Swing you sometmes have to lay a book on top of the mouse button, go get in your car and drive to Starbucks, drink your coffee, check your mail on your laptop and drive back to wait for a pull-down window to open.) that that's just delusional... Not a way to write apps that work.
+&lt;p&gt;
+We NEED frameworks to write apps faster, we NEED frameworks to make web apps have more uniform and usable user interfaces. Trouble is, the Java culture is more interested in writing frameworks than it is in writing apps, and if you do that you're going to get both bad frameworks and bad apps.
+&lt;p&gt;
+And, BTW, the open source world has no monopoly on bad frameworks. Commercial frameworks vary from good to bad, just as do open source, and I don't think you can say that Commercial (is better than) Open Source or the opposite.
+&lt;/blockquote&gt;
+&lt;p&gt;
+A general theme of this blog is the belief that apparently "large", "strong", "powerful" software designs that say that they can do anything are often fictions. The real world is littered with software implementations that have failed because of these lofty ambitions. Here are some reasons why:
+ &lt;p&gt;Firstly no team is equally talented, so the software is as strong as the weakest link. This means that any design which is overly complex will blow itself up not because your smartest coder cannot understand, but because your weakest programmer will litter your code with land-mines. 
+&lt;p&gt;
+Secondly, a large software with many layers tends to be very hard to debug and tune. For example, people say that n-tier is more scalable because you can spread the load better. The truth is that n-tier means n-tier complexity.  3-tier is the most that I would want to use (user interface - business logic - data).
+&lt;p&gt;
+It is true that there are many good techniques to manage complexity (break up the code into modules, reduce interdependancies, flatten hierarchies, work closely with domain experts, etc), but KISS (keep it simple, stupid) remains the best one. Promoting additional complexity (for the sake of enterprise completeness) is over-enthusiastic, to say the least.
+&lt;p&gt;
+PS: Another case study in "overdesigned enterprise featuritis": &lt;a href=http://www.perl.com/pub/a/2004/09/30/drop_the_soap.html&gt;Don't Be Afraid to Drop the SOAP&lt;/a&gt;
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/bog.gif&gt;</description>
+<pubDate>Thu,  7 Oct 2004 04:01:26 -0400</pubDate></item>
+<item>
+ <title>PHP enterprise silliness</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/115</link>
+ <description>&lt;p&gt;Sandro Zic recently gave a presentation on Java and PHP, and posted &lt;a href=http://www.zzoss.com/downloads/oscom4_p5ee.pdf&gt;his slides here&lt;/a&gt;. I didn't attend his talk, so I don't have all the facts, but I would like to comment on one of his slides:
+&lt;pre&gt;
+&lt;h3&gt;Is PHP 5 Enterprise Ready?&lt;/h3&gt;
+● Limited OO features
+● Virtually no multi-threading
+● Lack of maintenance tools
+● Available frameworks/libraries not
+mature/tested/interoperable enough
+● Phase of transition from PHP 4 to PHP 5
+● Growing acceptance by big companies
+● PHP is for SME
+&lt;/pre&gt;
+&lt;p&gt;
+First, a minor point. Limited or no OOP has rarely stopped any software from being &lt;i&gt;enterprise-ready&lt;/i&gt;. Most modern operating systems continue to be written in C, and the large Cobol programs running on mainframes that manage your bank accounts and insurance do not use OOP.
+&lt;p&gt;
+ Sandro seems to think that PHP is not enterprise ready. I was not at his presentation, but I do think it there is some confusion here between concept of a domain specific language with a general purpose language. Domain specific languages can be really lousy for everything, but so long as it has the right characteristics in its particular domain, then it becomes a good choice. 
+&lt;p&gt;
+So if your application runs client/server, or does a lot of number crunching, or computer-telephony integration, PHP is a foolish choice - Java or C (which would fail Sandro's enterprise criteria) are better choices. But if your business runs on the web, is considered mission-critical and requires infinite scalability, PHP will continue to be one of the better answers.
+&lt;p&gt;
+Let's address some of his other criticisms:
+&lt;p&gt;
+&lt;b&gt;Virtually no multi-threading&lt;/b&gt;. I do admit I would like more multi-threading features in PHP, but this is irrelevant for web development; Apache in pre-fork mode gives excellent performance and stability, and ditto for IIS in fastcgi mode.
+&lt;p&gt;
+&lt;b&gt;Lack of maintenance tools&lt;/b&gt;. I'm not sure what Sandro means. PHP is designed to be a thin presentation layer/language around back-end objects such as databases. We use PHP to build maintenance tools for these back-end objects, eg. phpMyAdmin.  We also have tools to manage Apache and the like. And we have source code tools such as CVS, editors and debuggers. Perhaps someone who attended the talk can clarify?
+&lt;p&gt;
+&lt;b&gt;Immature frameworks&lt;/b&gt;. I think there are many stable and powerful frameworks out there. However Sandro is correct -- that there are also too many frameworks which are immature, untested and work poorly. In an open source bazaar, you have to be discerning to separate the jewels from the fakes.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/54.gif&gt;</description>
+<pubDate>Mon,  4 Oct 2004 06:08:22 -0400</pubDate></item>
+<item>
+ <title>Python and PHP for the next 100 years.</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/114</link>
+ <description>&lt;p&gt;
+The most important characteristic of a programming language designer (apart from the normal nerdy technical brilliance) is to have taste. Any popular language will have thousands of competing feature requests at any given time, and the designer has to pick and choose the ones that fit into the overall scheme of things. 
+&lt;p&gt;
+Python has achieved a fine balance between the needs of different communities. It is not the perfect AI language. It is not the perfect web language. It is not the perfect systems language. It is not the perfect beginner language. But it has a nice balance that makes it suitable for all of the above. However since Python 2.0 I have felt that many of the recent additions to the language make Python more obscure and satisfy the needs of very small parts of the community such as &lt;a href=http://www.python.org/dev/doc/devel/whatsnew/node6.html&gt;Decorators&lt;/a&gt; and &lt;a href=http://www.amk.ca/python/2.0/index.html#SECTION000600000000000000000&gt;List Incomprehensibles&lt;/a&gt;. Dare I say that Python is over-the-hill when it comes to language design?
+&lt;p&gt;
+Andrew Kuchling, noted Python developer, suggests that &lt;a href=http://www.amk.ca/diary/archives/cat_python.html#003382&gt;more focus should be put into developing the Python stdlib&lt;/a&gt;, and less on hacking the interpreter. I couldn't agree more. If Python fragments even more (Jython, CPython, IronPython, Parrot, etc), then language stability (in terms of features and syntax) becomes more important in order to ensure interoperatability.
+&lt;p&gt;
+IMHO, PHP is also maturing rapidly, though the PHP community is probably 4 years younger than Python in terms of level of sophistication. But I think that the PHP-internals have baked a good design in PHP 5, good enough to last for the next 100 years. Though I am not particularly keen on being forced to switch to using "public", "private" and "protected", I'm happy enough and wouldn't want PHP5 to transmogify into something more complex than this. 
+&lt;p&gt;
+Of course PHP5 is still not perfect. Here are my gripes and prejudices:
+&lt;ol&gt;
+&lt;li&gt; Inadequate date and timestamp type support. Being unable to support dates prior to 1970 in the core engine is just laughable.
+&lt;p&gt;
+&lt;li&gt;Lack of good threading support. By this I mean PHP should be able to create and execute in multiple threads within a standalone PHP program, without the mediation of a web server. Support for sewing might not be a bad idea either :-)
+&lt;p&gt;
+&lt;li&gt;PHP is not a an equal opportunity language, but skewed to web development. Developers should go on strike and protest this form of racism ;-)
+&lt;p&gt;
+&lt;li&gt;Extensions are still too hard to write. Of course, commissioning one from a talented but poor open source developer is a good thing. Bless you.
+&lt;p&gt;
+&lt;li&gt;&lt;b&gt;Update (2 Oct 2004)&lt;/b&gt;: As Sam Ruby points out, &lt;a href=http://www.intertwingly.net/blog/2004/10/01/PHP-and-Unicode&gt;native UTF-8 and Unicode support&lt;/a&gt; would be great.
+&lt;/ol&gt;
+&lt;p&gt;I also hope that PHP6, 7, 8, 9 and so forth continue to develop, but in the direction of being ported to run on advanced virtual machines such as Parrot, JVM and CLR, supported by more powerful frameworks, and not language featuritis.
+&lt;p&gt;
+&lt;b&gt;Update (5 Oct 2004)&lt;/b&gt;: Ian Bicking has a &lt;a href=http://blog.colorstudy.com/ianb/weblog/2004/10/02.html#P160&gt;well considered response&lt;/a&gt; to the proposed focus on Python's stdlib.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/lod.gif&gt;</description>
+<pubDate>Tue,  5 Oct 2004 06:34:04 -0400</pubDate></item>
+<item>
+ <title>ADOdb and the curse of new hardware</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/113</link>
+ <description>&lt;p&gt;
+Recently I got a new Dell Inspiron 8600 notebook. A wonderful machine compared to my previous zombie notebook; it has twice as much screen area, twice as much RAM, twice as much Hard Disk, and twice as fast graphics; but thanks to the death of Moore's law for CPU's, the benchmarks show only a 15% improvement.
+&lt;p&gt;
+The problem with this shiny new monster is not in the hardware, but in migrating nearly 2 years worth of software, documents, profile settings and other detritus over to the new machine. Even worse, since Mozilla and IE take the trouble (on my old machine)  to remember most of my passwords, logging on to rarely used web-sites has been really difficult for my tired old memory cells.  Another painful part is related to the work I do with &lt;a href=http://adodb.sourceforge.net&gt;ADOdb&lt;/a&gt;, a PHP db abstraction library I maintain. In order to test ADOdb, I had installed MSSQL, Oracle 9, Firebird, DB2, Jet (the access engine), SQLite, MySQL 4, FoxPro, PostgreSQL, etc on my previous notebook... 
+&lt;p&gt;
+I've wanted to release a new version of ADOdb for some time, but I didn't feel comfortable until I ran my standard ADOdb QA tests on my new machine.
+Last week, I finally took the plunge and installed every one of the above databeasties again, except for DB2. DB2 was too little time for too much trouble for me. I've run my tests and am satisified. &lt;a href=http://sourceforge.net/project/showfiles.php?group_id=42718&gt;ADOdb 4.53 is now available&lt;/a&gt; at sourceforge.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/57.gif&gt;</description>
+<pubDate>Tue, 28 Sep 2004 11:15:21 -0400</pubDate></item>
+<item>
+ <title>Is PHP5 good to go?</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/110</link>
+ <description>&lt;p&gt;One of the key milestones in the health and stability of PHP5 is when &lt;a href=http://zend.com/&gt;Zend&lt;/a&gt;, a company with more PHP expertise than money and wishes it were the other way around, releases products that support this new version of PHP. Yesterday they released the Zend Encoder and Optimizer for PHP5. Things are moving along...
+&lt;P&gt; 
+And moving along to me, I must admit one of the clear signs of a misspent youth is too much blogging. As my youth trickles away, I seem to have too many things on my plate at the moment, and will not be blogging much for the next 1-2 months. 
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/alfred.gif&gt;</description>
+<pubDate>Mon, 20 Sep 2004 08:29:10 -0400</pubDate></item>
+<item>
+ <title>Upgrading to PHP 5 by Adam Trachtenberg</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/109</link>
+ <description>&lt;p&gt;I received this book in the post a few weeks ago. Here's a review:
+&lt;p&gt;
+One of the hardest types of books to write well are ones that describe technology upgrades, such as this book, 
+&lt;A HREF="http://www.amazon.com/exec/obidos/redirect?tag=mydevotioncom&amp;path=tg/detail/-/0596006365/qid%3D1094821077/sr%3D8-1"&gt;Upgrading to PHP 5&lt;/A&gt; by Adam Trachtenberg.
+The first problem is how much detail do you put in. Do you make it a complete introduction to PHP5, or stick only to the new bits? How do you convince people to buy your book, given the short shelf-life of such a book, and the large amount of free material on PHP5 the Internet? And given that no one has much experience with PHP5, what do you focus on?
+&lt;p&gt;
+ The aim of the book is to educate PHP4 developers on the new PHP5 technologies. There is very little coverage of PHP4 here. I think Adam has done a good job on this book, with some reservations that I will cover later.
+&lt;p&gt;
+Adam clearly thinks that the main migration issues for PHP4 developers are learning Object-oriented Programming, and the two new database extensions for SQLite and MySQL 4.1. These are the first few chapters in the book, and take up the 1/3rd of the book. In other chapters he covers XML, SimpleXML, Iterators, Streams, and Error-handling (exceptions). More obscure stuff such as SOAP, Tidy and Reflection is covered in one chapter.
+&lt;p&gt;
+Even though I have read widely about PHP5, I still found this book a useful reference, because it delves deeper into the new features than most articles I have seen. I found the XML, Streams and Reflection coverage particularly useful; please remember that this is a reflection of my own ignorance, so you might find other chapters more useful.
+&lt;p&gt;
+Now about my reservations. Although the book covers the new technologies found in PHP5, in my opinion, there isn't enough coverage on managing and migrating existing PHP4 code to PHP5. In many situations, you need your code to work on both PHP4 and PHP5, with graceful degradation of functionality. This requires describing useful features such as PHP_VERSION, phpversion(), extension_loaded(), function_exists(); I could find no such references in the index, or the table-of-contents. 
+&lt;p&gt;
+Given the above caveats, I feel that Adam has put a lot of work into this book and it deserves a reading if you are familiar with PHP4 and want to jumpstart learning about PHP5. It's available on &lt;a href=http://safari.oreilly.com/&gt;Safari&lt;/a&gt; too.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/bardot2.gif&gt;</description>
+<pubDate>Fri, 10 Sep 2004 09:46:16 -0400</pubDate></item>
+<item>
+ <title>The banality of Google</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/107</link>
+ <description>&lt;p&gt;
+I still remember the first time I heard &lt;a href=http://www.musicweb.uk.net/film/2002/Jul02/Eartha_Kitt.html&gt;Eartha Kitt&lt;/a&gt;, the famous jazz chanteuse, sing the song  "I want to be evil."  You can never forget her sexy purr, singing "I want to be wicked, I want to tell lies". Risque, tongue-in-cheek, tantalising.
+&lt;p&gt; In contrast, Google's motto "don't be evil" seems
+&lt;a href=http://www.ftrain.com/GoogleIP.html&gt;boring, banal and a lie&lt;/a&gt;. Well, maybe not so boring. Paul Ford's parody is quite funny.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/linder2.gif&gt;</description>
+<pubDate>Fri,  3 Sep 2004 13:19:14 -0400</pubDate></item>
+<item>
+ <title>The economics of software</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/106</link>
+ <description>&lt;p&gt;
+Bryan Cantrill gives a very nice &lt;a href=http://blogs.sun.com/roller/page/bmc/20040828#the_economics_of_software&gt;overview of the economics of software&lt;/a&gt;.
+&lt;blockquote&gt;
+Software's role as an industrial good, coupled with its high fixed costs and zero variable costs -- you get all sorts of strange economic phenomena. For example, doesn't it strike you as odd that your operating system is essentially free, but your database is still costing you forty grand per CPU? Is a database infinitely more difficult to write than an operating system? If not, why the enormous pricing discrepancy?
+&lt;/blockquote&gt;
+&lt;p&gt;
+This gives you an good framework for looking at the 
+&lt;a href=http://www.microsoft-watch.com/article2/0,1995,1640686,00.asp&gt;flawed economics of Longhorn&lt;/a&gt;. Microsoft assumed that the value of Longhorn was in Indigo, Avalon, WinFS. As you can see, they were dead-wrong. Demand is flat. 
+&lt;p&gt;
+Microsoft kept on saying that the future was so cool, but while they were proselytizing, the world moved on. For example, &lt;a href=http://www.microsoft.com/indonesia/msdn/indigofaq1.asp&gt;Indigo&lt;/a&gt; is Microsoft's messaging technology. Well Indigo is a little too nice, and a little too late. Amazon, eBay, Google and other companies are rolling their messaging APIs using REST, SOAP, and XML-RPC already.  
+&lt;p&gt;
+The main problem with Longhorn is that a desktop operating system is a substitutable commodity today. Yes there is a cost to substitution, but the cost is lowering at an amazing pace. Here are some examples:  Avalon is supposed to be a cool graphics system. But if you want superior graphics, you get a Mac. You want enterprise computing? Hey, I already have J2EE, and it comes without the vendor lock-in. And I'm typing this on Mozilla. The later Longhorn is, the more market share it loses. Microsoft finally realised that shipping sooner is more important than features.
+&lt;p&gt;
+Here are more points of view on Longhorn: Linux Insider on the &lt;a href=http://www.linuxinsider.com/story/36216.html&gt;Longhorn delays&lt;/a&gt;. And eWeek is &lt;a href=http://www.eweek.com/article2/0,1759,1640879,00.asp&gt;even more scathing&lt;/a&gt;.
+&lt;p&gt;
+&lt;hr&gt;
+&lt;p&gt;
+&lt;b&gt;&lt;font color=red&gt;Update 2 Sept 2004:&lt;/font&gt;&lt;/b&gt; People who have followed this blog for a long time will know that I have always been a strong supporter for Microsoft. This has changed a bit;  I have friends who are happy with Open Office; I started using Mozilla as my default browser in June, and it works fine; recently I saw for myself the amazing self-configuring abilities of Knoppix (thx Clemens!). Lastly, I'm not impressed with Longhorn (though .NET itself is fantastic).
+&lt;p&gt;
+ Yes there is a bit of pain in migrating operating systems, but I believe that it is doable today. I am using Windows XP currently - would I switch to Linux now? No, because we have invested many man-years in developing Windows software, and all our Malaysian clients are running Windows. But if my clients want to run Linux on their desktops and pay for the privilege, I would be happy to oblige.
+&lt;p&gt;
+We are now getting some better analysis of the Longhorn changes: Miguel Icaza, Mono lead, talks about the &lt;a href=http://primates.ximian.com/~miguel/archive/2004/Sep-01.html&gt;Longhorn changes&lt;/a&gt;. Dave Winer &lt;a href=http://archive.scripting.com/2004/08/30#When:8:05:01AM&gt;nails Longhorn&lt;/a&gt;. Microsofties respond: &lt;a href=http://blogs.msdn.com/jmazner/archive/2004/08/29.aspx&gt;Jeremy Mazner&lt;/a&gt;, Longhorn evangelist, and &lt;a href=http://news.com.com/Gates%3A+Longhorn+changed+to+make+deadlines/2008-1016_3-5327377.html?tag=nl&gt;Bill Gates&lt;/a&gt;, chairman of the board.
+&lt;hr&gt;
+&lt;p&gt;
+PS: Happy Merdeka to all Malaysians.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/boss.gif&gt;</description>
+<pubDate>Thu,  2 Sep 2004 09:11:45 -0400</pubDate></item>
+<item>
+ <title>Bitch-slapping PHP</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/105</link>
+ <description>&lt;p&gt;Open source is wonderful. Everything is so open, warts and all. &lt;a href=http://marc.theaimsgroup.com/?l=php-dev&amp;m=109348036806100&amp;w=2 &gt;Roshan Naik complains&lt;/a&gt; about the state of PHP:
+&lt;pre&gt;
+Every once in a while somebody has to speak out about the state 
+of the union and bear the brunt of some anger... with a hope
+that things will change for the better.
+
+2 years back I started out asking a question being
+concerned by the frustration caused to many users (and vendors 
+alike). Frustration due to many of the useful extensions forever 
+being in experimental mode for the longest time. I asked ...
+
+  " And exactly how long is it expected to continue to stay  EXPERIMENTAL ?"
+
+The response was a predictable one, expressing indifference...
+&lt;/pre&gt;
+&lt;p&gt;
+Rasmus, inventor of PHP, responds:
+&lt;pre&gt;
+&lt;p&gt;
+On Wed, 25 Aug 2004, Naik, Roshan wrote:
+&gt; Hopefully belts will be tightened up around the extensions and the
+&gt; responsibility taken up by their authors.
+
+Wow, that was quite a rant from someone who hasn't contributed a damn
+thing.
+
+People volunteer their time and effort to this project.  There are no
+guarantees that any of this code won't make your cpu melt or cause your
+curtains to catch fire.  Ranting at a bunch of volunteers is utterly
+useless and counterproductive.  If you have a genuine interest in seeing
+things improve, get involved.  Pick your favourite extension that is
+troubling you, talk to the authors and other users and figure out what
+needs to be done to solve its remaining issues.  If you do that, your
+words might mean something.
+
+-Rasmus
+&lt;/pre&gt;
+&lt;p&gt;And Andi, one of the key designers of PHP3, PHP4 and PHP5 says:
+&lt;pre&gt;
+Thanks for this quite useless and unproductive email.
+I suggest to inform yourself slightly better on the tons of improvements 
+the PHP development team have made and where we are today vs. 4 years ago.
+I suggest next time, if you want to be productive, you can contact us with 
+a concrete problem and proposed solution.
+
+Andi
+&lt;/pre&gt;
+&lt;p&gt;
+PS: &lt;a href=http://groups.google.com/groups?hl=en&amp;lr=&amp;ie=UTF-8&amp;threadm=cgjb3i%242528%241%40FreeBSD.csie.NCTU.edu.tw&amp;rnum=2&amp;prev=/groups%3Fq%3Droshan%2Bnaik%2Bphp%2Binternals%26hl%3Den%26lr%3D%26ie%3DUTF-8%26selm%3Dcgjb3i%25242528%25241%2540FreeBSD.csie.NCTU.edu.tw%26rnum%3D2&gt;Google's threaded view&lt;/a&gt; seems a bit buggy, and misses some posts. The lists at &lt;a href=http://marc.theaimsgroup.com/?t=109348050400002&amp;r=1&amp;w=2&gt;marc.theaimsgroup.com&lt;/a&gt; provide a more complete listing.
+&lt;p&gt;
+&lt;b&gt;Update&lt;/b&gt;: Personally, I believe Roshan has some valid points. PHP has grown so much, but some of the processes used to keep track of changes are too simplistic nowadays. I also think that the first reaction of many PHP internals developers to criticism was far too sensitive. Some people, in a wiser move, thought about it for a while before responding; Zeev gave an &lt;a href=http://marc.theaimsgroup.com/?l=php-dev&amp;m=109356384132021&amp;w=2&gt;excellent response&lt;/a&gt;. And if you browse through the PHP internals newsgroup, you will find a &lt;a href=http://marc.theaimsgroup.com/?t=109354201700003&amp;r=1&amp;w=2&gt;growing awareness&lt;/a&gt; of the limitations of the current PHP development process.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/mtrs99.gif&gt;</description>
+<pubDate>Sat, 28 Aug 2004 02:17:22 -0400</pubDate></item>
+<item>
+ <title>Open source on the shores of Malaysia</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/103</link>
+ <description>&lt;p&gt;There has been a lot of resistance to Open Source technologies in large Malaysian corporations, with the most conservative companies being financial institutions. Today I saw a paradigm shift in action.  This morning, at a presentation we were giving, the Vice President of Information Technology of a bank asked me whether our products supported MySQL - I was so surprised that I thought I misheard the "M-y" and asked him whether he said MS SQL.
+&lt;p&gt;
+That's the good news. The bad news is that I had to disappoint him. &lt;a href=http://mysql.com/&gt;MySQL&lt;/a&gt; is not sophisticated enough for our products. The lack of views, stored procedures and triggers makes data management too difficult. I told him our company could support &lt;a href=http://postgresql.org&gt;PostgreSQL&lt;/a&gt;. He did not appear interested. 
+&lt;p&gt;I didn't manage to ask him whether he had ever evaluated PostgreSQL, but I would not be surprised if his disinterest was because there is no well-known international company willing to support and indemnify PostgreSQL.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/blpxt.gif&gt;</description>
+<pubDate>Thu, 26 Aug 2004 11:51:41 -0400</pubDate></item>
+<item>
+ <title>Cryptanalysis of MD5 and SHA: Time for a new standard</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/102</link>
+ <description>&lt;p&gt;Bruce Schneier talks about the &lt;a href=http://www.computerworld.com/securitytopics/security/story/0,10801,95343,00.html&gt;recent reported weaknesses in common hash functions&lt;/a&gt; such as MD5. He writes:
+&lt;blockquote&gt;
+&lt;p&gt;As a user of cryptographic systems -- as I assume most readers are -- this news is important, but not particularly worrisome. MD5 and SHA aren't suddenly insecure. No one is going to be breaking digital signatures or reading encrypted messages anytime soon with these techniques. The electronic world is no less secure after these announcements than it was before.
+&lt;/blockquote&gt;
+&lt;p&gt;
+However he says the writing is on the wall. The world has to move on to newer standards before the real breakthroughs in decryption occur.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/acg.gif&gt;</description>
+<pubDate>Tue, 24 Aug 2004 06:47:15 -0400</pubDate></item>
+<item>
+ <title>HP, we hardly knew ye, but we still love you anyway...</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/101</link>
+ <description>&lt;p&gt;The first Hewlett-Packard hardware I ever used was a &lt;a href=http://images.google.com/images?q=HP%204952A%20PROTOCOL%20ANALYZER&amp;num=20&amp;hl=en&amp;lr=&amp;ie=UTF-8&amp;sa=N&amp;tab=wi&gt;4952a protocol analyzer&lt;/a&gt;. It allowed you to tap communication lines and monitor data going through the cables. It was built like a brick, weighed a ton (hey, we are talking about 80's technology) but it felt beautifully constructed and was obviously designed by engineers who cared about their product.
+&lt;p&gt;HP, the first Silicon Valley company, continues to have great products today; but the picture is not so rosy for HP since its merger with Compaq.
+The history of computing is littered with many failed mergers of large technology companies. Strangely enough, though the Economist (and Merrill Lynch) appears to agree with the soundness of the merger, the magazine paints a sorry picture of HP in &lt;a href=http://economist.com/business/displayStory.cfm?story_id=3109368&gt;Losing the HP Way&lt;/a&gt;.
+&lt;p&gt;
+Jonathon Schwartz, Sun's CEO, has &lt;a href=http://blogs.sun.com/roller/page/jonathan/20040816#hp_s_problems&gt;another point-of-view about HP&lt;/a&gt;.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/yoik.gif&gt;</description>
+<pubDate>Tue, 24 Aug 2004 05:39:15 -0400</pubDate></item>
+<item>
+ <title>The Once and Future Parrot</title>
+ <link>http://phplens.com/phpeverywhere/?q=node/view/91</link>
+ <description>&lt;p&gt;An interesting presentation on &lt;a href=http://www.sidhe.org/~dan/presentations/Parrot_Implementation.pdf&gt;Parrot's Internal Implementation&lt;/a&gt; (pdf) by Dan Sugalski. Don't be fooled by the sub-title:&lt;i&gt; Implementing an
+Interpreter&lt;/i&gt;. Parrot can be run in Just-In-Time compiler mode - basically compiled into fast machine language, just like C or C++. 
+&lt;p&gt;
+That's why the prospect of &lt;a href=http://phplens.com/phpeverywhere/?q=node/view/84&gt;PHP6 running on Parrot&lt;/a&gt; is so attractive. A x10 improvement in performance for CPU intensive algorithms (such as MD5 or crc32 implemented in PHP instead of C) would not be surprising.
+&lt;p&gt;
+PS: Does anyone know the current status of the experimental project to run PHP on Parrot?
+&lt;p&gt;
+&lt;b&gt;Update&lt;/b&gt;: Sterling Hughes gives &lt;a href=http://phplens.com/phpeverywhere/?q=node/view/91#comment&gt;feedback&lt;/a&gt; on the state of PHP on Parrot.
+&lt;p&gt;
+&lt;img src=http://phplens.com/phpeverywhere/icons/darla.gif&gt;</description>
+<pubDate>Tue, 24 Aug 2004 03:11:52 -0400</pubDate></item>
+</channel>
+</rss>
