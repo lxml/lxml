@@ -4,12 +4,13 @@ Credits
 Martijn Faassen - initial developer
 Paul Everitt - feedback on API design
 Philipp von Weitershausen and Holger Krekel - hosting it on codespeak.net
+Victor Ng - vlibxml2
 
 Thanks also to:
 
  * the libxml project for a great XML library.
 
- * pyrex for the binding technology.  
+ * pyrex for the binding technology.
 
  * Infrae for initiating the project.
 
