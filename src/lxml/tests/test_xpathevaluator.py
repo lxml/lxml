@@ -1,6 +1,8 @@
 from lxml.tests.test_etree import HelperTestCase
 import unittest
 from lxml import etree
+from StringIO import StringIO
+import unittest, doctest
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -117,9 +119,101 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(tree, None, [extension])
         self.assertRaises(ZeroDivisionError, e.evaluate, "foo('test')")
 
+SAMPLE_XML = etree.parse(StringIO("""
+<body>
+  <tag>text</tag>
+  <section>
+    <tag>subtext</tag>
+  </section>
+  <tag />
+  <tag />
+</body>
+"""))
+
+def tag(elem):
+    return elem.tag
+
+def stringTest(ctxt, s1):
+    return "Hello "+s1
+    
+def floatTest(ctxt, f1):
+    return f1+4
+
+def booleanTest(ctxt, b1):
+    return not b1
+    
+def setTest(ctxt, st1):
+    return st1[0]
+    
+def setTest2(ctxt, st1):
+    return st1[0:2]
+
+def argsTest1(ctxt, s, f, b, st):
+    return ", ".join(map(str, (s, f, b, map(tag, st))))
+
+def argsTest2(ctxt, st1, st2):
+    st1.extend(st2)
+    return st1
+
+def resultTypesTest(ctxt):
+    return ["x","y"]
+
+def resultTypesTest2(ctxt):
+    return resultTypesTest
+    
+uri = "http://www.example.com/"
+
+extension = {(None, 'stringTest'): stringTest,
+             (None, 'floatTest'): floatTest,
+             (None, 'booleanTest'): booleanTest,
+             (None, 'setTest'): setTest,
+             (None, 'setTest2'): setTest2,
+             (None, 'argsTest1'): argsTest1,
+             (None, 'argsTest2'): argsTest2,
+             (None, 'resultTypesTest'): resultTypesTest,
+             (None, 'resultTypesTest2'): resultTypesTest2,}
+
+def xpath():
+    """
+    Test xpath extension functions.
+    
+    >>> root = SAMPLE_XML
+    >>> e = etree.XPathEvaluator(root, None, [extension])
+    >>> e.evaluate("stringTest('you')")
+    'Hello you'
+    >>> e.evaluate(u"stringTest('\xe9lan')")
+    u'Hello \\xe9lan'
+    >>> e.evaluate("stringTest('you','there')")
+    Traceback (most recent call last):
+    ...
+    TypeError: stringTest() takes exactly 2 arguments (3 given)
+    >>> e.evaluate("floatTest(2)")
+    6.0
+    >>> e.evaluate("booleanTest(true())")
+    False
+    >>> map(tag, e.evaluate("setTest(/body/tag)"))
+    ['tag']
+    >>> map(tag, e.evaluate("setTest2(/body/*)"))
+    ['tag', 'section']
+    >>> e.evaluate("argsTest1('a',1.5,true(),/body/tag)")
+    "a, 1.5, True, ['tag', 'tag', 'tag']"
+    >>> map(tag, e.evaluate("argsTest2(/body/tag, /body/section)"))
+    ['tag', 'section', 'tag', 'tag']
+    >>> e.evaluate("resultTypesTest()")
+    Traceback (most recent call last):
+    ...
+    XPathResultError: This is not a node: x
+    >>> try:
+    ...     e.evaluate("resultTypesTest2()")
+    ... except etree.XPathResultError:
+    ...     print "Got error"
+    Got error
+    """
+   
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])    
+    suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
+    suite.addTests([doctest.DocTestSuite()])
     return suite
 
 if __name__ == '__main__':
