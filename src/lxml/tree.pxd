@@ -1,4 +1,13 @@
+#from xmlparser cimport xmlDict
+
 cdef extern from "libxml/tree.h":
+
+    # for some reason need to define this in this section;
+    # libxml/dict.h appears to be broken to include in C
+    ctypedef struct xmlDict
+
+    ctypedef struct xmlDoc
+    ctypedef struct xmlAttr
     
     ctypedef enum xmlElementType:
         XML_ELEMENT_NODE=           1
@@ -22,36 +31,35 @@ cdef extern from "libxml/tree.h":
         XML_XINCLUDE_START=         19
         XML_XINCLUDE_END=           20
 
-    ctypedef struct xmlDoc
-    ctypedef struct xmlAttr
-
+    
     ctypedef struct xmlNs:
         char* href
         char* prefix
 
     ctypedef struct xmlNode:
         xmlElementType   type
-        char   *name
-        xmlNode *children
-        xmlNode *last
-        xmlNode *parent
-        xmlNode *next
-        xmlNode *prev
-        xmlDoc *doc
-        char *content
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlNode* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        char* content
         xmlAttr* properties
         xmlNs* ns
         
     ctypedef struct xmlDoc:
         xmlElementType type
-        char *name
-        xmlNode *children
-        xmlNode *last
-        xmlNode *parent
-        xmlNode *next
-        xmlNode *prev
-        xmlDoc *doc
-                
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlNode* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        xmlDict* dict
+        
     ctypedef struct xmlAttr:
         xmlElementType type
         char* name
@@ -72,7 +80,7 @@ cdef extern from "libxml/tree.h":
         xmlNode* next
         xmlNode* prev
         xmlDoc* doc
- 
+
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef void xmlFreeNode(xmlNode* cur)
     cdef void xmlFree(char* buf)

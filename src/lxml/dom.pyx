@@ -6,7 +6,7 @@ Read-only for starters.
 
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport tree
-from parser cimport xmlParseDoc
+from xmlparser cimport xmlParseDoc
 import nodereg
 cimport nodereg
 
