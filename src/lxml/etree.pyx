@@ -1,5 +1,5 @@
 cimport tree
-from tree cimport xmlDoc, xmlNode
+from tree cimport xmlDoc, xmlNode, xmlAttr
 cimport xmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
@@ -142,6 +142,8 @@ cdef class _ElementBase(_NodeBase):
             cdef xmlNode* c_text_node
             # remove all text nodes at the start first
             _removeText(self._c_node.children)
+            if value is None:
+                return
             # now add new text node with value at start
             text = value.encode('UTF-8')
             c_text_node = tree.xmlNewDocText(self._doc._c_doc,
@@ -161,6 +163,8 @@ cdef class _ElementBase(_NodeBase):
             cdef xmlNode* c_text_node
             # remove all text nodes at the start first
             _removeText(self._c_node.next)
+            if value is None:
+                return
             text = value.encode('UTF-8')
             c_text_node = tree.xmlNewDocText(self._doc._c_doc, text)
             # XXX what if we're the top element?
@@ -188,7 +192,7 @@ cdef class _ElementBase(_NodeBase):
         if c_node is NULL:
             raise IndexError
         tree.xmlUnlinkNode(c_node)
-        
+    
     def __len__(self):
         cdef int c
         cdef xmlNode* c_node
@@ -212,6 +216,27 @@ cdef class _ElementBase(_NodeBase):
     def items(self):
         return self.attrib.items()
 
+    def clear(self):
+        cdef xmlAttr* c_attr
+        cdef xmlAttr* c_attr_next
+        cdef xmlNode* c_node
+        cdef xmlNode* c_node_next
+        self.text = None
+        self.tail = None
+        # remove all attributes
+        c_attr = self._c_node.properties
+        while c_attr is not NULL:
+            c_attr_next = c_attr.next
+            tree.xmlRemoveProp(c_attr)
+            c_attr = c_attr_next
+        # remove all subelements
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            c_node_next = c_node.next
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                tree.xmlUnlinkNode(c_node)
+            c_node = c_node_next
+            
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']
     

@@ -410,6 +410,21 @@ class ETreeTestCaseBase(unittest.TestCase):
             'b',
             a[0].tag)
 
+    def test_set_text_none(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+
+        a.text = 'foo'
+        a.text = None
+
+        self.assertEquals(
+            None,
+            a.text)
+        self.assertEquals(
+            '<a></a>',
+            self._writeElement(a))
+        
     def test_tail1(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -445,6 +460,18 @@ class ETreeTestCaseBase(unittest.TestCase):
                           b.tail)
         self.assertEquals(
             '<a><b></b>bar</a>',
+            self._writeElement(a))
+
+    def test_tail_set_none(self):
+        Element = self.etree.Element
+        a = Element('a')
+        a.tail = 'foo'
+        a.tail = None
+        self.assertEquals(
+            None,
+            a.tail)
+        self.assertEquals(
+            '<a></a>',
             self._writeElement(a))
         
     def test_comment(self):
@@ -570,6 +597,40 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<other><c></c></other>',
             self._writeElement(other))
+
+    def test_clear(self):
+        Element = self.etree.Element
+     
+        a = Element('a')
+        a.text = 'foo'
+        a.tail = 'bar'
+        a.set('hoi', 'dag')
+        a.clear()
+        self.assertEquals(None, a.text)
+        self.assertEquals(None, a.tail)
+        self.assertEquals(None, a.get('hoi'))
+        self.assertEquals('a', a.tag)
+
+    def test_clear_sub(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.text = 'foo'
+        a.tail = 'bar'
+        a.set('hoi', 'dag')
+        b = SubElement(a, 'b')
+        c = SubElement(b, 'c')
+        a.clear()
+        self.assertEquals(None, a.text)
+        self.assertEquals(None, a.tail)
+        self.assertEquals(None, a.get('hoi'))
+        self.assertEquals('a', a.tag)
+        self.assertEquals(0, len(a))
+        self.assertEquals('<a></a>',
+                          self._writeElement(a))
+        self.assertEquals('<b><c></c></b>',
+                          self._writeElement(b))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):
