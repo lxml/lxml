@@ -870,30 +870,55 @@ class ETreeTestCaseBase(unittest.TestCase):
         del a.attrib['foo']
         self.assertRaises(KeyError, a.attrib.__getitem__, 'foo')
 
-##     def test_getslice(self):
-##         Element = self.etree.Element
-##         SubElement = self.etree.SubElement
+    def test_getslice(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
 
-##         a = Element('a')
-##         b = SubElement(a, 'b')
-##         c = SubElement(a, 'c')
-##         d = SubElement(a, 'd')
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
 
-##         self.assertEquals(
-##             [b, c],
-##             a[0:2])
-##         self.assertEquals(
-##             [b, c, d],
-##             a[:])
-##         self.assertEquals(
-##             [b, c, d],
-##             a[:10])
-##         self.assertEquals(
-##             [b],
-##             a[0:1])
-##         self.assertEquals(
-##             [],
-##             a[10:12])
+        self.assertEquals(
+            [b, c],
+            a[0:2])
+        self.assertEquals(
+            [b, c, d],
+            a[:])
+        self.assertEquals(
+            [b, c, d],
+            a[:10])
+        self.assertEquals(
+            [b],
+            a[0:1])
+        self.assertEquals(
+            [],
+            a[10:12])
+
+    def test_getslice_negative(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+
+        self.assertEquals(
+            [d],
+            a[-1:])
+        self.assertEquals(
+            [c, d],
+            a[-2:])
+        self.assertEquals(
+            [c],
+            a[-2:-1])
+        self.assertEquals(
+            [b, c],
+            a[-3:-1])
+        self.assertEquals(
+            [b, c],
+            a[-3:2])
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

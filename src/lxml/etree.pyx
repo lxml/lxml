@@ -238,11 +238,22 @@ cdef class _ElementBase(_NodeBase):
             raise IndexError, "list index out of range"
         return _elementFactory(self._doc, c_node)
 
-##     def __getslice__(self, start, stop):
-##         cdef xmlNode* c_node
-##         c_node = _findChild(self._c_node, start)
-##         if c_node is NULL:
-##             pass
+    def __getslice__(self, start, stop):
+        cdef xmlNode* c_node
+        cdef int c
+        # this does not work for negative start, stop, however,
+        # python seems to convert these to positive start, stop before
+        # calling, so this all works perfectly (at the cost of a len() call)
+        c_node = _findChild(self._c_node, start)
+        if c_node is NULL:
+            return []
+        c = start
+        result = []
+        while c_node is not NULL and c < stop:
+            result.append(_elementFactory(self._doc, c_node))
+            c = c + 1
+            c_node = c_node.next
+        return result        
             
     def __len__(self):
         cdef int c

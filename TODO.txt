@@ -38,8 +38,6 @@ ElementInterface
 
 * __delslice__
 
-* __getslice__
-
 * __setslice__
 
 * find()
