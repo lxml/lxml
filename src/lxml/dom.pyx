@@ -121,6 +121,10 @@ cdef class _NodeBase:
     cdef xmlNode* _c_node
 
 cdef class Document(_DocumentBase):
+    property nodeType:
+        def __get__(self):
+            return 9 # DOCUMENT_NODE
+        
     property childNodes:
         def __get__(self):
             return _nodeListFactory(self, <xmlNode*>self._c_doc)
@@ -187,6 +191,10 @@ cdef class Element(Node):
     property nodeValue:
         def __get__(self):
             return None
+
+    property nodeType:
+        def __get__(self):
+            return 1 # ELEMENT_NODE
         
     property localName:
         def __get__(self):
