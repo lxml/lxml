@@ -1,8 +1,6 @@
 lxml
 ====
 
-* XPath namespaces support.
-
 * XSLT support for parameters, Python extension functions, threading
   issues.
 
