@@ -99,7 +99,36 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(2, len(root))
         self.assertEquals('one', root[0].tag)
         self.assertEquals('two', root[1].tag)
-        
+
+    def test_text(self):
+        f = StringIO('<doc>This is a text</doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('This is a text', root.text)
+
+    def test_text_empty(self):
+        f = StringIO('<doc></doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(None, root.text)
+
+    def test_text_other(self):
+        f = StringIO('<doc><one>One</one></doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(None, root.text)
+        self.assertEquals('One', root[0].text)
+
+    def test_tail(self):
+        f = StringIO('<doc>This is <i>mixed</i> content.</doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals(1, len(root))
+        self.assertEquals('This is ', root.text)
+        self.assertEquals(None, root.tail)
+        self.assertEquals('mixed', root[0].text)
+        self.assertEquals(' content.', root[0].tail)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
