@@ -937,7 +937,31 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [c],
             a[1:])
-        
+
+    def test_comment_getitem_getslice(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        foo = Comment('foo')
+        a.append(foo)
+        c = SubElement(a, 'c')
+        self.assertEquals(
+            [b, foo, c],
+            a[:])
+        self.assertEquals(
+            foo,
+            a[1])
+        a[1] = new = Element('new')
+        self.assertEquals(
+            new,
+            a[1])
+        self.assertEquals(
+            '<a><b></b><new></new><c></c></a>',
+            self._writeElement(a))
+            
 ##     def test_setslice(self):
 ##         Element = self.etree.Element
 ##         SubElement = self.etree.SubElement

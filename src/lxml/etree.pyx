@@ -175,7 +175,7 @@ cdef class _ElementBase(_NodeBase):
         c_node = self._c_node.children
         while c_node is not NULL:
             c_node_next = c_node.next
-            if c_node.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_node):
                 _removeNode(c_node)
             c_node = c_node_next
 
@@ -269,7 +269,7 @@ cdef class _ElementBase(_NodeBase):
         c = start
         result = []
         while c_node is not NULL and c < stop:
-            if c_node.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_node):
                 result.append(_elementFactory(self._doc, c_node))
                 c = c + 1
             c_node = c_node.next
@@ -281,7 +281,7 @@ cdef class _ElementBase(_NodeBase):
         c = 0
         c_node = self._c_node.children
         while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_node):
                 c = c + 1
             c_node = c_node.next
         return c
@@ -303,7 +303,7 @@ cdef class _ElementBase(_NodeBase):
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_node):
                 result.append(_elementFactory(self._doc, c_node))
             c_node = c_node.next
         return result
@@ -334,7 +334,12 @@ cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
         return result
     if c_node is NULL:
         return None
-    result = _Element()
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        result = _Element()
+    elif c_node.type == tree.XML_COMMENT_NODE:
+        result = _Comment()
+    else:
+        assert 0, "Unknown node type"
     result._doc = etree
     result._c_node = c_node
     etree.registerProxy(result)
@@ -523,7 +528,7 @@ cdef class _ElementIteratorBase(_NodeBase):
         cdef xmlNode* c_node
         c_node = self._c_node
         while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_node):
                 break
             c_node = c_node.next
         else:
@@ -577,7 +582,7 @@ cdef class _DocOrderIteratorBase(_NodeBase):
         # try to go down
         c_next = c_node.children
         if c_next is not NULL:
-            if c_next.type == tree.XML_ELEMENT_NODE:
+            if _isElement(c_next):
                 return c_next
             else:
                 c_next = _nextElement(c_next)
@@ -841,7 +846,7 @@ cdef xmlNode* _findChildForwards(xmlNode* c_node, int index):
     c_child = c_node.children
     c = 0
     while c_child is not NULL:
-        if c_child.type == tree.XML_ELEMENT_NODE:
+        if _isElement(c_child):
             if c == index:
                 return c_child
             c = c + 1
@@ -858,7 +863,7 @@ cdef xmlNode* _findChildBackwards(xmlNode* c_node, int index):
     c_child = c_node.last
     c = 0
     while c_child is not NULL:
-        if c_child.type == tree.XML_ELEMENT_NODE:
+        if _isElement(c_child):
             if c == index:
                 return c_child
             c = c + 1
@@ -871,7 +876,7 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
     """
     c_node = c_node.next
     while c_node is not NULL:
-        if c_node.type == tree.XML_ELEMENT_NODE:
+        if _isElement(c_node):
             return c_node
         c_node = c_node.next
     return NULL
@@ -882,4 +887,8 @@ cdef void _removeNode(xmlNode* c_node):
     tree.xmlUnlinkNode(c_node)
     if not node_registry.hasProxy(<int>c_node):
         tree.xmlFreeNode(c_node)
-        
+
+cdef int _isElement(xmlNode* c_node):
+    return (c_node.type == tree.XML_ELEMENT_NODE or
+            c_node.type == tree.XML_COMMENT_NODE)
+
