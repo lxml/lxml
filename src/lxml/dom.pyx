@@ -10,21 +10,31 @@ from parser cimport xmlParseDoc
 import nodereg
 cimport nodereg
 
-cdef class Node
-cdef class Document(Node)
+PROXY_NODELIST = 1
+PROXY_NODELIST_ITER = 2
+PROXY_NAMEDNODEMAP = 3
+PROXY_NAMEDNODEMAP_ITER = 4
 
-cdef class _RefBase:
-    cdef xmlNode* _c_node
-    cdef Document _doc
+cdef class DocumentBase(nodereg.DocumentProxyBase)
+
+cdef class _RefBase(nodereg.NodeProxyBase):
     
     def _getDoc(self):
         return self._doc
 
-cdef class Node:
-    cdef xmlNode* _c_node
+cdef class NonDocNode(nodereg.NodeProxyBase):
+
     
     def _getDoc(self):
         return self._doc
+
+    property ownerDocument:
+        def __get__(self):
+            # XXX if this node has just been created this isn't valid
+            # XXX but we're a read-only DOM for now
+            return self._getDoc()
+
+    # unfortunate duplication XXX
 
     property ELEMENT_NODE:
         def __get__(self):
@@ -46,39 +56,38 @@ cdef class Node:
         def __get__(self):
             return tree.XML_DOCUMENT_NODE
 
-    def __cmp__(Node self, Node other):
-        # XXX this is fishy, should return negative, 0, larger
-        if self._c_node is other._c_node:
-            return 0
-        else:
-            return 1
+    def __cmp__(self, other):
+        return cmp(id(self), id(other))
 
-    def isSameNode(Node self, Node other):
+    def __hash__(self):
+        return id(self)
+    
+    def isSameNode(self, other):
         return self.__cmp__(other) == 0
 
     property childNodes:
         def __get__(self):
-            return _nodeListFactory(self._getDoc(), self._c_node)
+            return _nodeListFactory(self._doc, self._c_node)
 
     property parentNode:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._c_node.parent)
+            return _nodeFactory(self._doc, self._c_node.parent)
 
     property firstChild:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._c_node.children)
+            return _nodeFactory(self._doc, self._c_node.children)
         
     property lastChild:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._c_node.last)
+            return _nodeFactory(self._doc, self._c_node.last)
 
     property previousSibling:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._c_node.prev)
+            return _nodeFactory(self._doc, self._c_node.prev)
 
     property nextSibling:
         def __get__(self):
-            return _nodeFactory(self._getDoc(), self._c_node.next)
+            return _nodeFactory(self._doc, self._c_node.next)
 
     property attributes:
         def __get__(self):
@@ -113,35 +122,18 @@ cdef class Node:
     def lookupNamespaceURI(self, prefix):
         cdef xmlNs* ns
         cdef char* p
-        cdef Document doc
         if prefix is None:
             p = NULL
         else:
             p = prefix
-        doc = self._getDoc()
-        ns = tree.xmlSearchNs(<xmlDoc*>(doc._c_node), self._c_node, p)
+        ns = tree.xmlSearchNs(self._doc._c_doc, self._c_node, p)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
-
-cdef class NonDocNode(Node):
-    cdef Document _doc
     
-    def _getDoc(self):
-        return self._doc
-
-    property ownerDocument:
-        def __get__(self):
-            # XXX if this node has just been created this isn't valid
-            # XXX but we're a read-only DOM for now
-            return self._getDoc()
-
-cdef class Document(Node):
+cdef class DocumentBase(nodereg.DocumentProxyBase):
     def _getDoc(self):
         return self
-    
-    def __dealloc__(self):
-        tree.xmlFreeDoc(<xmlDoc*>self._c_node)
 
     property nodeType:
         def __get__(self):
@@ -158,7 +150,7 @@ cdef class Document(Node):
     property documentElement:
         def __get__(self):
             cdef xmlNode* c_node
-            c_node = self._c_node.children
+            c_node = self._c_doc.children
             while c_node is not NULL:
                 if c_node.type == tree.XML_ELEMENT_NODE:
                     return _elementFactory(self, c_node)
@@ -176,30 +168,114 @@ cdef class Document(Node):
     def createExpression(self, expression, resolver):
         pass
 
-    def createNSResolver(self, Node nodeResolver):
+    def createNSResolver(self, NonDocNode nodeResolver):
         return _xpathNSResolverFactory(self, nodeResolver._c_node)
 
     def evaluate(self, expression, contextNode,
                  resolver, type, result):
         pass
+
+    # unfortunate duplication XXX
     
-cdef Document _documentFactory(xmlDoc* c_doc):
-    cdef Document doc
+    property ELEMENT_NODE:
+        def __get__(self):
+            return tree.XML_ELEMENT_NODE
+
+    property ATTRIBUTE_NODE:
+        def __get__(self):
+            return tree.XML_ATTRIBUTE_NODE
+
+    property COMMENT_NODE:
+        def __get__(self):
+            return tree.XML_COMMENT_NODE
+        
+    property TEXT_NODE:
+        def __get__(self):
+            return tree.XML_TEXT_NODE
+
+    property DOCUMENT_NODE:
+        def __get__(self):
+            return tree.XML_DOCUMENT_NODE
+
+    def __cmp__(self, other):
+        return cmp(id(self), id(other))
+
+    def __hash__(self):
+        return id(self)
+    
+    def isSameNode(self, other):
+        return self.__cmp__(other) == 0
+
+    property childNodes:
+        def __get__(self):
+            return _nodeListFactory(self, <xmlNode*>self._c_doc)
+
+    property parentNode:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.parent)
+
+    property firstChild:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.children)
+        
+    property lastChild:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.last)
+
+    property previousSibling:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.prev)
+
+    property nextSibling:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.next)
+
+    property attributes:
+        def __get__(self):
+            return None
+
+    property nodeValue:
+        def __get__(self):
+            return None
+
+    property localName:
+        def __get__(self):
+            return None
+
+    property namespaceURI:
+        def __get__(self):
+            return None
+
+    property prefix:
+        def __get__(self):
+            return None
+
+    def hasAttributes(self):
+        return False
+
+    def hasChildNodes(self):
+        return self._c_doc.children is not NULL
+
+class Document(DocumentBase):
+    __slots__ = ['__weakref__']
+        
+cdef DocumentBase _documentFactory(xmlDoc* c_doc):
+    cdef DocumentBase doc
     doc = Document()
-    doc._c_node = <xmlNode*>c_doc
+    doc._c_doc = c_doc
     return doc
 
 cdef class XPathNSResolver(_RefBase):
     def lookupNamespaceURI(self, prefix):
         cdef xmlNs* ns
-        cdef Document doc
+        cdef DocumentBase doc
         doc = self._getDoc()
-        ns = tree.xmlSearchNs(<xmlDoc*>(doc._c_node), self._c_node, prefix)
+        ns = tree.xmlSearchNs(doc._c_doc, self._c_node, prefix)
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
         
-cdef XPathNSResolver _xpathNSResolverFactory(Document doc, xmlNode* c_node):
+cdef XPathNSResolver _xpathNSResolverFactory(DocumentBase doc, xmlNode* c_node):
     cdef XPathNSResolver result
     result = XPathNSResolver()
     result._doc = doc
@@ -241,7 +317,7 @@ cdef class ElementAttrNode(NonDocNode):
                 result.append(node.textContent)
             return ''.join(result)
             
-cdef class Element(ElementAttrNode):
+cdef class ElementBase(ElementAttrNode):
 
     property nodeType:
         def __get__(self):
@@ -293,14 +369,21 @@ cdef class Element(ElementAttrNode):
             tree.xmlFree(value)
         return result
     
-cdef _elementFactory(Document doc, xmlNode* c_node):
-    cdef Element result
+class Element(ElementBase):
+    __slots__ = ['__weakref__']
+    
+cdef _elementFactory(DocumentBase doc, xmlNode* c_node):
+    cdef ElementBase result
+    result = doc.getProxy(<int>c_node)
+    if result is not None:
+        return result
     result = Element()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result)
     return result
 
-cdef class Attr(ElementAttrNode):
+cdef class AttrBase(ElementAttrNode):
     property parentNode:
         def __get__(self):
             return None
@@ -339,12 +422,19 @@ cdef class Attr(ElementAttrNode):
 
     def hasChildNodes(self):
         return self.value != ''
-        
-cdef _attrFactory(Document doc, xmlNode* c_node):
-    cdef Attr result
+
+class Attr(AttrBase):
+    __slots__ = ['__weakref__']
+    
+cdef _attrFactory(DocumentBase doc, xmlNode* c_node):
+    cdef AttrBase result
+    result = doc.getProxy(<int>c_node)
+    if result is not None:
+        return result
     result = Attr()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result)
     return result
 
 cdef class CharacterData(NonDocNode):
@@ -368,19 +458,26 @@ cdef class CharacterData(NonDocNode):
         def __get__(self):
             return self.data
         
-cdef class Text(CharacterData):
+cdef class TextBase(CharacterData):
     property nodeName:
         def __get__(self):
             return '#text'
+
+class Text(TextBase):
+    __slots__ = ['__weakref__']
     
-cdef _textFactory(Document doc, xmlNode* c_node):
-    cdef Text result
+cdef _textFactory(DocumentBase doc, xmlNode* c_node):
+    cdef TextBase result
+    result = doc.getProxy(<int>c_node)
+    if result is not None:
+        return result
     result = Text()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result)
     return result
 
-cdef class Comment(CharacterData):
+cdef class CommentBase(CharacterData):
     property nodeName:
         def __get__(self):
             return '#comment'
@@ -388,15 +485,22 @@ cdef class Comment(CharacterData):
     property nodeType:
         def __get__(self):
             return tree.XML_COMMENT_NODE
-        
-cdef _commentFactory(Document doc, xmlNode* c_node):
-    cdef Comment result
+
+class Comment(CommentBase):
+    __slots__ = ['__weakref__']
+    
+cdef _commentFactory(DocumentBase doc, xmlNode* c_node):
+    cdef CommentBase result
+    result = doc.getProxy(<int>c_node)
+    if result is not None:
+        return result
     result = Comment()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result)
     return result
 
-cdef class NodeList(_RefBase):
+cdef class NodeListBase(_RefBase):
     def __getitem__(self, index):
         cdef xmlNode* c_node
         c_node = self._c_node.children
@@ -427,15 +531,22 @@ cdef class NodeList(_RefBase):
                 c = c + 1
                 c_node = c_node.next
             return c
-        
-cdef _nodeListFactory(Document doc, xmlNode* c_node):
-    cdef NodeList result
+
+class NodeList(NodeListBase):
+    __slots__ = ['__weakref__']
+    
+cdef NodeListBase _nodeListFactory(DocumentBase doc, xmlNode* c_node):
+    cdef NodeListBase result
+    result = doc.getProxy(<int>c_node, PROXY_NODELIST)
+    if result is not None:
+        return result
     result = NodeList()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result, PROXY_NODELIST)
     return result
 
-cdef class _NodeListIterator(_RefBase):
+cdef class _NodeListIteratorBase(_RefBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -444,15 +555,22 @@ cdef class _NodeListIterator(_RefBase):
             return _nodeFactory(self._doc, c_node)
         else:
             raise StopIteration
+
+class _NodeListIterator(_NodeListIteratorBase):
+    __slots__ = ['__weakref__']
     
-cdef _NodeListIterator _nodeListIteratorFactory(Document doc, xmlNode* c_node):
-    cdef _NodeListIterator result
+cdef _NodeListIteratorBase _nodeListIteratorFactory(DocumentBase doc, xmlNode* c_node):
+    cdef _NodeListIteratorBase result
+    result = doc.getProxy(<int>c_node, PROXY_NODELIST_ITER)
+    if result is not None:
+        return result
     result = _NodeListIterator()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result, PROXY_NODELIST_ITER)
     return result
 
-cdef class NamedNodeMap(_RefBase):
+cdef class NamedNodeMapBase(_RefBase):
     def __iter__(self):
         return _namedNodeMapIteratorFactory(
             self._doc, <xmlNode*>self._c_node.properties)
@@ -500,14 +618,21 @@ cdef class NamedNodeMap(_RefBase):
         def __get__(self):
             return 0 # XXX fix
 
-cdef _namedNodeMapFactory(Document doc, xmlNode* c_node):
-    cdef NamedNodeMap result
+class NamedNodeMap(NamedNodeMapBase):
+    __slots__ = ['__weakref__']
+    
+cdef _namedNodeMapFactory(DocumentBase doc, xmlNode* c_node):
+    cdef NamedNodeMapBase result
+    result = doc.getProxy(<int>c_node, PROXY_NAMEDNODEMAP)
+    if result is not None:
+        return result
     result = NamedNodeMap()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result, PROXY_NAMEDNODEMAP)
     return result
 
-cdef class _NamedNodeMapIterator(_RefBase):
+cdef class _NamedNodeMapIteratorBase(_RefBase):
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
@@ -516,16 +641,23 @@ cdef class _NamedNodeMapIterator(_RefBase):
             return _nodeFactory(self._doc, c_node)
         else:
             raise StopIteration
+
+class _NamedNodeMapIterator(_NamedNodeMapIteratorBase):
+    __slots__ = ['__weakref__']
     
-cdef _NamedNodeMapIterator _namedNodeMapIteratorFactory(Document doc,
+cdef _NamedNodeMapIteratorBase _namedNodeMapIteratorFactory(DocumentBase doc,
                                                         xmlNode* c_node):
-    cdef _NamedNodeMapIterator result
+    cdef _NamedNodeMapIteratorBase result
+    result = doc.getProxy(<int>c_node, PROXY_NAMEDNODEMAP_ITER)
+    if result is not None:
+        return result
     result = _NamedNodeMapIterator()
     result._doc = doc
     result._c_node = c_node
+    doc.registerProxy(result, PROXY_NAMEDNODEMAP_ITER)
     return result
 
-cdef _nodeFactory(Document doc, xmlNode* c_node):
+cdef _nodeFactory(DocumentBase doc, xmlNode* c_node):
     if c_node is NULL:
         return None
     elif c_node.type == tree.XML_ELEMENT_NODE:

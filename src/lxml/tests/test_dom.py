@@ -202,7 +202,7 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'B',
             attributes.getNamedItemNS(None, 'b').value)
-
+        
     def test_documentElement(self):
         doc = makeDocument('<foo/>')
         self.assertEquals(

@@ -1,5 +1,4 @@
-from tree cimport xmlNode, xmlDoc
-
+from tree cimport xmlNode, xmlDoc, xmlAttr
 import weakref
 
 cdef class DocumentProxyBase:
@@ -27,7 +26,7 @@ cdef class DocumentProxyBase:
         
 cdef class NodeProxyBase:           
     def __dealloc__(self):
-        # print "Trying to wipe out:", self._c_node.name
+        # print "Trying to wipe out:", self
         self._doc._registry.attemptDeallocation(self._c_node)
 
 cdef class NodeRegistry:
@@ -83,6 +82,9 @@ cdef class NodeRegistry:
         """Attempt deallocation of c_node (or higher up in tree).
         """
         cdef xmlNode* c_top
+        # could be we actually aren't referring to the tree at all
+        if c_node is NULL:
+            return
         c_top = self.getDeallocationTop(c_node)
         if c_top is not NULL:
             # print "freeing:", c_top.name
@@ -93,11 +95,14 @@ cdef class NodeRegistry:
         """
         cdef xmlNode* c_current
         cdef xmlNode* c_top
+        # print "deallocating:", c_node.type
         c_current = c_node.parent
         c_top = c_node
         while c_current is not NULL:
+            # print "checking:", c_current.type
             # if we're still attached to the document, don't deallocate
             if c_current.type == tree.XML_DOCUMENT_NODE:
+                # print "still in doc"
                 return NULL
             c_top = c_current
             c_current = c_current.parent
@@ -106,16 +111,13 @@ cdef class NodeRegistry:
             return c_top
         else:
             return NULL
-        
-    cdef int canDeallocateChildren(self, xmlNode* c_node):
-        # the current implementation is inefficient as it does a
-        # tree traversal to find out whether there are any node proxies
-        # we could improve this by a smarter datastructure
-        # XXX should handle attribute nodes and other things we don't reach
+
+    cdef int canDeallocateChildNodes(self, xmlNode* c_node):
         cdef xmlNode* c_current
-        c_current = c_node.children
         proxies = self._proxies
         proxy_types = self._proxy_types
+
+        c_current = c_node.children
         while c_current is not NULL:
             id = <int>c_current
             for proxy_type in proxy_types:
@@ -124,6 +126,39 @@ cdef class NodeRegistry:
             if not self.canDeallocateChildren(c_current):
                 return 0 
             c_current = c_current.next
+        return 1
+
+    cdef int canDeallocateAttributes(self, xmlNode* c_node):
+        cdef xmlAttr* c_current
+        proxies = self._proxies
+        proxy_types = self._proxy_types
+        
+        c_current = c_node.properties
+        while c_current is not NULL:
+            id = <int>c_current
+            for proxy_type in proxy_types:
+                if proxies.has_key((id, proxy_type)):
+                    return 0
+            # only check child nodes, don't try checking properties as
+            # attribute has none
+            if not self.canDeallocateChildNodes(<xmlNode*>c_current):
+                return 0
+            c_current = c_current.next
+        # apparently we can deallocate all subnodes
+        return 1
+    
+    cdef int canDeallocateChildren(self, xmlNode* c_node):
+        # the current implementation is inefficient as it does a
+        # tree traversal to find out whether there are any node proxies
+        # we could improve this by a smarter datastructure
+        
+        # check children
+        if not self.canDeallocateChildNodes(c_node):
+            return 0        
+        # check any attributes
+        if (c_node.type == tree.XML_ELEMENT_NODE and
+            not self.canDeallocateAttributes(c_node)):
+            return 0
         # apparently we can deallocate all subnodes
         return 1
 

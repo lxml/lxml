@@ -58,8 +58,8 @@ cdef extern from "libxml/tree.h":
         xmlNode* children
         xmlNode* last
         xmlNode* parent
-        xmlNode* next
-        xmlNode* prev
+        xmlAttr* next
+        xmlAttr* prev
         xmlDoc* doc
         xmlNs* ns
         
