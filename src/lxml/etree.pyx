@@ -305,6 +305,7 @@ def ElementTree(_Element element=None, file=None):
     # XXX what if element and file are both not None?
     if element is not None:
         # XXX we'd prefer not having to make a copy
+        # XXX but moving it causes a segfault when doing xmlFreeDoc
         c_node_copy = xmlDocCopyNode(element._c_node, tree._c_doc, 1)
         xmlDocSetRootElement(tree._c_doc, c_node_copy)
         element._c_node = c_node_copy
