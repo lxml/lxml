@@ -1,0 +1,5 @@
+<root>
+   <element key='value'>text</element>
+   <element>text</element>tail
+   <empty-element/>
+</root>
