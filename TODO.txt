@@ -32,6 +32,9 @@ In general
 
 * Various (c)ElementTree builders and parser APIs. Are they needed?
 
+* memory errors and memory leaks when returning nodes from XPath
+  extension functions.
+
 Top level
 ---------
 
