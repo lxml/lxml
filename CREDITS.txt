@@ -4,7 +4,7 @@ Credits
 Martijn Faassen - initial developer
 Paul Everitt - feedback on API design
 Philipp von Weitershausen and Holger Krekel - hosting it on codespeak.net
-Victor Ng - vlibxml2
+Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:
 
