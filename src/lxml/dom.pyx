@@ -286,7 +286,17 @@ cdef class Element(ElementAttrNode):
 
     def hasAttributes(self):
         return self._o.properties is not NULL
+
+    def getAttributeNS(self, namespaceURI, localName):
+        attr = self.attributes.getNamedItemNS(namespaceURI, localName)
+        if attr is not None:
+            return attr.value
+        else:
+            return ''
         
+    def getAttributeNodeNS(self, namespaceURI, localName):
+        return self.attributes.getNamedItemNS(namespaceURI, localName)
+    
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
@@ -447,12 +457,12 @@ cdef class NamedNodeMap(_RefBase):
         return _namedNodeMapIteratorFactory(
             self._doc, <xmlNode*>self._o.properties)
     
-    def getNamedItem(self, name):
-        cdef xmlAttr* c_node
-        c_node = xmlHasProp(self._o, name)
-        if c_node is NULL:
-            return None
-        return _attrFactory(self._doc, <xmlNode*>c_node)
+##     def getNamedItem(self, name):
+##         cdef xmlAttr* c_node
+##         c_node = xmlHasProp(self._o, name)
+##         if c_node is NULL:
+##             return None
+##         return _attrFactory(self._doc, <xmlNode*>c_node)
         
     def getNamedItemNS(self, namespaceURI, localName):
         cdef xmlAttr* c_node

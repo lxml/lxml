@@ -436,7 +436,40 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             ['a', 'b', 'c'],
             got)
+
+    def test_getAttributeNS(self):
+        doc = makeDocument('<foo a="A" b="B"/>')
+        self.assertEquals(
+            'A',
+            doc.documentElement.getAttributeNS(None, 'a'))
+        self.assertEquals(
+            'B',
+            doc.documentElement.getAttributeNS(None, 'b'))
+        doc = makeDocument('<foo xmlns:bar="http://www.bar.com" bar:a="A"/>')
+        self.assertEquals(
+            'A',
+            doc.documentElement.getAttributeNS('http://www.bar.com', 'a'))
+        self.assertEquals(
+            '',
+            doc.documentElement.getAttributeNS(None, 'foo'))
+
+    def test_getAttributeNodeNS(self):
+        doc = makeDocument('<foo a="A" b="B"/>')
+        self.assertEquals(
+            'A',
+            doc.documentElement.getAttributeNodeNS(None, 'a').value)
+        self.assertEquals(
+            'B',
+            doc.documentElement.getAttributeNodeNS(None, 'b').value)
+        self.assertEquals(
+            None,
+            doc.documentElement.getAttributeNodeNS(None, 'foo'))
+        doc = makeDocument('<foo xmlns:bar="http://www.bar.com" bar:a="A"/>')
+        self.assertEquals(
+            'A',
+            doc.documentElement.getAttributeNodeNS('http://www.bar.com', 'a').value)
         
+            
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
