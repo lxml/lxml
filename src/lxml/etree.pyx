@@ -83,8 +83,8 @@ cdef class _DocumentBase:
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        # print "freeing document:", <int>self._c_doc
-        # displayNode(<xmlNode*>self._c_doc, 0)
+        #print "freeing document:", <int>self._c_doc
+        #displayNode(<xmlNode*>self._c_doc, 0)
         #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
 
@@ -873,6 +873,8 @@ cdef class XPathEvaluator:
     cdef object _exc_info
     cdef object _namespaces
     cdef object _extensions
+    cdef object _temp_elements
+    cdef object _temp_docs
     
     def __init__(self, _ElementTree doc,
                  namespaces=None, extensions=None):
@@ -929,6 +931,7 @@ cdef class XPathEvaluator:
              
         path = path.encode('UTF-8')
         self._exc_info = None
+        self._release()
         xpathObj = xpath.xmlXPathEvalExpression(path, self._c_ctxt)
         if self._exc_info is not None:
             type, value, traceback = self._exc_info
@@ -939,16 +942,43 @@ cdef class XPathEvaluator:
         try:
             result = _unwrapXPathObject(xpathObj, self._doc)
         except XPathResultError:
+            #self._release()
             xpath.xmlXPathFreeObject(xpathObj)
             raise
         xpath.xmlXPathFreeObject(xpathObj)
+        # release temporarily held python stuff
+        #self._release()
         return result
 
     def clone(self):
         # XXX pretty expensive so calling this from callback is probably
         # not desirable
         return XPathEvaluator(self._doc, self._namespaces, self._extensions)
-    
+
+    def _release(self):
+        self._temp_elements = {}
+        self._temp_docs = {}
+        
+    def _hold(self, obj):
+        """A way to temporarily hold references to nodes in the evaluator.
+
+        This is needed because otherwise nodes created in XPath extension
+        functions would be reference counted too soon, during the
+        XPath evaluation.
+        """
+        cdef _NodeBase element
+        if isinstance(obj, _NodeBase):
+            obj = [obj]
+        if not type(obj) in (type([]), type(())):
+            return
+        for o in obj:
+            if isinstance(o, _NodeBase):
+                element = <_NodeBase>o
+                #print "Holding element:", <int>element._c_node
+                self._temp_elements[id(element)] = element
+                #print "Holding document:", <int>element._doc._c_doc
+                self._temp_docs[id(element._doc)] = element._doc
+                
 def Extension(module, function_mapping, ns_uri=None):
     result = {}
     for function_name, xpath_name in function_mapping.items():
@@ -1020,8 +1050,6 @@ cdef object _createNodeSetResult(_ElementTree doc,
         c_node = xpathObj.nodesetval.nodeTab[i]
         if c_node.type == tree.XML_ELEMENT_NODE:
             element = _elementFactory(doc, c_node)
-            # since element could be coming from a foreign document
-            changeDocumentBelow(c_node, doc)
             result.append(element)
         elif c_node.type == tree.XML_TEXT_NODE:
             result.append(funicode(c_node.content))
@@ -1069,14 +1097,19 @@ cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
     args.reverse()
 
     try:
-        obj = _wrapXPathObject(f(evaluator, *args))
+        # call the function
+        res = f(evaluator, *args)
+        # hold python objects temporarily so that they won't get deallocated
+        # during processing
+        evaluator._hold(res)
+        # now wrap for XPath consumption
+        obj = _wrapXPathObject(res)
     except:
         xpath.xmlXPathErr(
             ctxt,
             xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
         evaluator._exc_info = sys.exc_info()
         return
-    
     xpath.valuePush(ctxt, obj)
 
 cdef class XSLT:
@@ -1628,7 +1661,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     """
     cdef xmlNode* c_current
     cdef xmlNode* c_top
-    #print "deallocating:", c_node.type
+    #print "trying to do deallocating:", c_node.type
     c_current = c_node.parent
     c_top = c_node
     while c_current is not NULL:
@@ -1641,7 +1674,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
         c_current = c_current.parent
     # cannot free a top which has proxies pointing to it
     if c_top._private is not NULL:
-        # print "Not freeing: proxies still exist"
+        #print "Not freeing: proxies still exist"
         return NULL
     # see whether we have children to deallocate
     if canDeallocateChildren(c_top):
