@@ -1116,6 +1116,16 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [b, c],
             list(a))
+
+    def test_tail_elementtree_root(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+
+        a = Element('a')
+        a.tail = 'A2'
+        t = ElementTree(element=a)
+        self.assertEquals('A2',
+                          a.tail)
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

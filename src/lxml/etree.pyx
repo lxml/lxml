@@ -693,6 +693,7 @@ def SubElement(_ElementBase parent, tag, attrib=None, **extra):
 
 def ElementTree(_ElementBase element=None, file=None):
     cdef xmlDoc* c_doc
+    cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
     cdef _ElementTreeBase etree
@@ -708,7 +709,9 @@ def ElementTree(_ElementBase element=None, file=None):
 
     # XXX what if element and file are both not None?
     if element is not None:
+        c_next = element._c_node.next
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
+        _moveTail(c_next, element._c_node)
         node_registry.changeDocumentBelow(element, etree)
 
     return etree
