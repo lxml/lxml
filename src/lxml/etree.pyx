@@ -121,7 +121,26 @@ cdef class _ElementBase(_NodeBase):
         _removeText(c_node.next)
         _removeNode(c_node)
 
-##     def __setslice__(self, start, stop, value):
+    def __delslice__(self, start, stop):
+        cdef xmlNode* c_node
+        cdef xmlNode* c_next
+        cdef int c
+
+        c_node = _findChild(self._c_node, start)
+        if c_node is NULL:
+            return    
+        # now start deleting nodes
+        c = start
+        while c_node is not NULL and c < stop:
+            c_next = c_node.next
+            if _isElement(c_node):
+                _removeText(c_node.next)
+                c_next = c_node.next
+                _removeNode(c_node)
+                c = c + 1
+            c_node = c_next
+    
+ ##    def __setslice__(self, start, stop, value):
 ##         cdef xmlNode* c_node
 ##         cdef xmlNode* c_next
 ##         cdef xmlNode* c_start_node

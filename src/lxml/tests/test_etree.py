@@ -1023,6 +1023,31 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<a><b></b><new></new><c></c></a>',
             self._writeElement(a))
+
+    def test_delslice(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        del a[1:3]
+        self.assertEquals(
+            [b, e],
+            list(a))
+
+    def test_delslice_tail(self):
+        ElementTree = self.etree.ElementTree
+        f = StringIO('<a><b></b>B2<c></c>C2<d></d>D2<e></e>E2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        del a[1:3]
+        self.assertEquals(
+            '<a><b></b>B2<e></e>E2</a>',
+            self._writeElement(a))
         
 ##     def test_setslice(self):
 ##         Element = self.etree.Element
