@@ -514,6 +514,17 @@ class ETreeTestCaseBase(unittest.TestCase):
             self._writeElement(a))
         self.assertEquals('<c></c>',
                           self._writeElement(c))
+
+# TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
+##     def test_setitem_assert(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+
+##         a = Element('a')
+##         b = SubElement(a, 'b')
+        
+##         self.assertRaises(AssertionError,
+##                           a.__setitem__, 0, 'foo')
         
 # gives error in ElementTree
 ##     def test_comment_empty(self):
