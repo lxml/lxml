@@ -1468,7 +1468,6 @@ class ETreeXPathTestCase(unittest.TestCase):
 
         st = etree.XSLT(style)
         res = st.apply(tree)
-        #print res.getroot()
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
