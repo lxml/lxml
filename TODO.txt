@@ -45,8 +45,6 @@ ElementInterface
 
 * findtext()
 
-* getchildren()
-
 * getiterator()
 
 * makeelement()

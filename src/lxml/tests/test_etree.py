@@ -701,6 +701,28 @@ class ETreeTestCaseBase(unittest.TestCase):
         d = Element('d')
         self.assertRaises(
             ValueError, a.remove, d)
+
+    def test_getchildren(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+        self.assertEquals(
+            '<a><b><d></d></b><c><e></e></c></a>',
+            self._writeElement(a))
+        self.assertEquals(
+            [b, c],
+            a.getchildren())
+        self.assertEquals(
+            [d],
+            b.getchildren())
+        self.assertEquals(
+            [],
+            d.getchildren())
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

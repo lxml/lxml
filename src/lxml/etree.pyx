@@ -256,7 +256,17 @@ cdef class _ElementBase(_NodeBase):
 
     def items(self):
         return self.attrib.items()
-            
+
+    def getchildren(self):
+        cdef xmlNode* c_node
+        result = []
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                result.append(_elementFactory(self._doc, c_node))
+            c_node = c_node.next
+        return result
+    
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']
     
