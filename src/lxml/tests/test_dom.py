@@ -117,6 +117,15 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             doc.firstChild.DOCUMENT_NODE,
             doc.nodeType)
+
+    def test_namespaceURI(self):
+        doc = makeDocument('<doc xmlns="http://codespeak.net/ns"><a/><b/><c/></doc>')
+        self.assertEquals(
+            'http://codespeak.net/ns',
+            doc.firstChild.namespaceURI)
+        self.assertEquals(
+            'http://codespeak.net/ns',
+            doc.firstChild.firstChild.namespaceURI)
         
 def test_suite():
     suite = unittest.TestSuite()

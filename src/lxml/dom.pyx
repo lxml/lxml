@@ -213,6 +213,12 @@ cdef class Element(Node):
                 return None
             return unicode(self._c_node.ns.prefix, 'UTF-8')
 
+    property namespaceURI:
+        def __get__(self):
+            if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
+                return None
+            return unicode(self._c_node.ns.href, 'UTF-8')
+        
     property parentNode:
         def __get__(self):
             return _nodeFactory(self._doc, self._c_node.parent)
