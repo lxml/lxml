@@ -103,6 +103,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlNewDocText(xmlDoc* doc, char* content)
     cdef xmlNode* xmlNewDocComment(xmlDoc* doc, char* content)
     cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur)
+    cdef xmlNode* xmlReplaceNode(xmlNode* old, xmlNode* cur)
     cdef xmlNode* xmlAddPrevSibling(xmlNode* cur, xmlNode* elem)
     cdef xmlNode* xmlAddNextSibling(xmlNode* cur, xmlNode* elem)
     cdef xmlNode* xmlNewDocNode(xmlDoc* doc, xmlNs* ns,

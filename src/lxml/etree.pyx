@@ -103,20 +103,20 @@ cdef class _ElementBase(_NodeBase):
         
     def append(self, _ElementBase element):
         cdef xmlNode* c_next
-        # look for any text node trailing this node
-        # XXX multiple text nodes..
+        cdef xmlNode* c_next2
+        # store possible text node
         c_next = element._c_node.next
-        if not (c_next is not NULL and c_next.type == tree.XML_TEXT_NODE):
-            c_next = NULL
         # XXX what if element is coming from a different document?
         tree.xmlUnlinkNode(element._c_node)
-        if c_next is not NULL:
-            tree.xmlUnlinkNode(c_next)
         # move node itself
         tree.xmlAddChild(self._c_node, element._c_node)
-        # also move the text that may be tailing it
-        if c_next is not NULL:
+        # tail support: look for any text nodes trailing this node and
+        # move them too
+        while c_next is not NULL and c_next.type == tree.XML_TEXT_NODE:
+            c_next2 = c_next.next
+            tree.xmlUnlinkNode(c_next)
             tree.xmlAddChild(self._c_node, c_next)
+            c_next = c_next2
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
         node_registry.changeDocumentBelow(element, self._doc)
@@ -133,13 +133,8 @@ cdef class _ElementBase(_NodeBase):
     property text:
         def __get__(self):
             cdef xmlNode* c_node
-            c_node = self._c_node.children
-            if c_node is NULL:
-                return None
-            if c_node.type != tree.XML_TEXT_NODE:
-                return None
-            return unicode(c_node.content, 'UTF-8')
-
+            return _collectText(self._c_node.children)
+        
         def __set__(self, value):
             cdef xmlNode* c_text_node
             # remove all text nodes at the start first
@@ -163,13 +158,8 @@ cdef class _ElementBase(_NodeBase):
     property tail:
         def __get__(self):
             cdef xmlNode* c_node
-            c_node = self._c_node.next
-            if c_node is NULL:
-                return None
-            if c_node.type != tree.XML_TEXT_NODE:
-                return None
-            return unicode(c_node.content, 'UTF-8')
-        
+            return _collectText(self._c_node.next)
+           
         def __set__(self, value):
             cdef xmlNode* c_node
             cdef xmlNode* c_text_node
@@ -192,6 +182,21 @@ cdef class _ElementBase(_NodeBase):
         else:
             raise IndexError
 
+    def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
+        cdef xmlNode* c_node
+        assert iselement(element)
+        c_node = self._c_node.children
+        c = 0
+        while c_node is not NULL:
+            if c_node.type == tree.XML_ELEMENT_NODE:
+                if c == index:
+                    tree.xmlReplaceNode(c_node, element._c_node)
+                    node_registry.changeDocumentBelow(element, self._doc)
+                c = c + 1
+            c_node = c_node.next
+        else:
+            raise IndexError
+    
     def __len__(self):
         cdef int c
         cdef xmlNode* c_node
@@ -612,3 +617,16 @@ cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     tree.xmlOutputBufferWriteString(c_buffer, '\n')
     tree.xmlOutputBufferFlush(c_buffer)
     
+cdef _collectText(xmlNode* c_node):
+    """Collect all text nodes and return them as a unicode string.
+    If there was no text to collect, return None
+    """
+    result = ''
+    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
+        result = result + c_node.content
+        c_node = c_node.next
+    if result:
+        return unicode(result, 'UTF-8')
+    else:
+        return None
+            

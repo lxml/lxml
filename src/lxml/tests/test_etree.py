@@ -433,6 +433,20 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('b_tail',
                           b.tail)
 
+##     def test_tail_set_twice(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+        
+##         a = Element('a')
+##         b = SubElement(a, 'b')
+##         b.tail = 'foo'
+##         b.tail = 'bar'
+##         self.assertEquals('bar',
+##                           b.tail)
+##         self.assertEquals(
+##             '<a><b></b>bar</a>',
+##             self._writeElement(a))
+        
     def test_comment(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
