@@ -99,6 +99,15 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             None,
             doc.nextSibling)
+
+    def test_ownerDocument(self):
+        doc = makeDocument('<doc><one/></doc>')
+        self.assertEquals(
+            doc,
+            doc.firstChild.ownerDocument)
+        self.assertEquals(
+            None,
+            doc.ownerDocument)
         
 def test_suite():
     suite = unittest.TestSuite()

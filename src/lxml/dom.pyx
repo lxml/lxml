@@ -140,6 +140,10 @@ cdef class Document(_DocumentBase):
     property nextSibling:
         def __get__(self):
             return _nodeFactory(self, self._c_doc.next)
+
+    property ownerDocument:
+        def __get__(self):
+            return None
         
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc
@@ -220,7 +224,13 @@ cdef class Element(Node):
     property nextSibling:
         def __get__(self):
             return _nodeFactory(self._doc, self._c_node.next)
-        
+
+    property ownerDocument:
+        def __get__(self):
+            # XXX if this node has just be created this isn't valid
+            # XXX but we're a read-only DOM for now
+            return self._doc
+    
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
