@@ -76,15 +76,18 @@ cdef class NodeRegistry:
         """Return the top of the tree that can be deallocated, or NULL.
         """
         cdef xmlNode* c_current
+        cdef xmlNode* c_top
         c_current = c_node.parent
+        c_top = c_node
         while c_current is not NULL:
+            # if we're still attached to the document, don't deallocate
+            if c_current.type == tree.XML_DOCUMENT_NODE:
+                return NULL
+            c_top = c_current
             c_current = c_current.parent
-        # if we're still attached to the document, don't deallocate
-        if c_current.type == tree.XML_DOCUMENT_NODE:
-            return NULL
         # otherwise, see whether we have children to deallocate
-        if self.canDeallocateChildren(c_current):
-            return c_current
+        if self.canDeallocateChildren(c_top):
+            return c_top
         else:
             return NULL
         
