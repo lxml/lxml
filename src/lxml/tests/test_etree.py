@@ -496,6 +496,24 @@ class ETreeTestCaseBase(unittest.TestCase):
                           self._writeElement(a))
         self.assertEquals('<b></b>',
                           self._writeElement(b))
+
+    def test_setitem2(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        for i in range(5):
+            b = SubElement(a, 'b%s' % i)
+            c = SubElement(b, 'c')
+        for i in range(5):
+            d = Element('d')
+            e = SubElement(d, 'e')
+            a[i] = d
+        self.assertEquals(
+            '<a><d><e></e></d><d><e></e></d><d><e></e></d><d><e></e></d><d><e></e></d></a>',
+            self._writeElement(a))
+        self.assertEquals('<c></c>',
+                          self._writeElement(c))
         
 # gives error in ElementTree
 ##     def test_comment_empty(self):
