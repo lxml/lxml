@@ -128,14 +128,6 @@ ext_modules = [
               libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
-    Extension('lxml.dom',
-              sources=['src/lxml/dom.pyx'],
-              include_dirs=include_dirs,
-              runtime_library_dirs=runtime_library_dirs,
-              library_dirs=library_dirs,
-              libraries=libraries,
-              extra_compile_args = extra_compile_args
-              ),
     Extension('lxml.nodereg',
               sources=['src/lxml/nodereg.pyx'],
               include_dirs=include_dirs,
