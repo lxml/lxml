@@ -138,7 +138,8 @@ cdef extern from "libxml/tree.h":
                                 xmlDoc* doc, xmlNode* cur, int level,
                                 int format, char* encoding)
     cdef void xmlNodeSetName(xmlNode* cur, char* name)
-
+    cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
+    
 cdef extern from "libxml/xmlIO.h":
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
         FILE* file,

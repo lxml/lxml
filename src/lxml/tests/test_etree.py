@@ -1454,6 +1454,26 @@ class ETreeXPathTestCase(unittest.TestCase):
                           c.xpath('b'))
         self.assertEquals([c[0], c[1], root[1][0]],
                           c.xpath('//b'))
+
+    def test_xslt(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree)
+        #print res.getroot()
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          st.tostring(res))
         
     def parse(self, text):
         f = StringIO(text)

@@ -2,6 +2,7 @@ cimport tree
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
 cimport xpath
+cimport xslt
 
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
@@ -1004,6 +1005,51 @@ cdef class Parser:
 
 cdef Parser theParser
 theParser = Parser()
+
+cdef class XSLT:
+    """Turn a document into an XSLT object.
+    """
+    cdef xslt.xsltStylesheet* _c_style
+    
+    def __init__(self, _ElementTreeBase doc):
+        # make a copy of the document as stylesheet needs to assume it
+        # doesn't change
+        cdef xslt.xsltStylesheet* c_style
+        cdef xmlDoc* c_doc
+        c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
+        
+        c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        if c_style is NULL:
+            raise Error, "Cannot parse style sheet"
+        self._c_style = c_style
+        # XXX is it worthwile to use xsltPrecomputeStylesheet here?
+        
+    def __dealloc__(self):
+        # this cleans up copy of doc as well
+        xslt.xsltFreeStylesheet(self._c_style)
+        
+    def apply(self, _ElementTreeBase doc):
+        cdef xmlDoc* c_result 
+        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
+        if c_result is NULL:
+            raise Error, "Error applying stylesheet"
+        # XXX should set special flag to indicate this is XSLT result
+        # so that xsltSaveResultTo* functional can be used during
+        # serialize?
+        return _elementTreeFactory(c_result)
+
+    def tostring(self, _ElementTreeBase doc):
+        """Save result doc to string using stylesheet as guidance.
+        """
+        cdef char* s
+        cdef int l
+        cdef int r
+        r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
+        if r == -1:
+            raise Error, "Error saving stylesheet result to string"
+        result = unicode(s, 'UTF-8')
+        tree.xmlFree(s)
+        return result
 
 # Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):

@@ -3,7 +3,10 @@ import sys
 
 # change these to your local installation of libxml2
 libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
+libxslt_include_dir = '/home/faassen/tmp/local/include/libxslt'
+include_dirs = [libxml2_include_dir, libxslt_include_dir]
 library_dirs = ['/home/faassen/tmp/local/lib']
+libraries = ['xml2', 'xslt']
 runtime_library_dirs = ['/home/faassen/tmp/local/lib']
 extra_compile_args = ['-w']
 
@@ -119,42 +122,42 @@ class MyDistribution(Distribution):
 ext_modules = [
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
-              include_dirs=[libxml2_include_dir],
+              include_dirs=include_dirs,
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
-              libraries=['xml2'],
+              libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
     Extension('lxml.dom',
               sources=['src/lxml/dom.pyx'],
-              include_dirs=[libxml2_include_dir],
+              include_dirs=include_dirs,
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
-              libraries=['xml2'],
+              libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
     Extension('lxml.nodereg',
               sources=['src/lxml/nodereg.pyx'],
-              include_dirs=[libxml2_include_dir],
+              include_dirs=include_dirs,
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
-              libraries=['xml2'],
+              libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
     Extension('lxml.noderegtest',
               sources=['src/lxml/noderegtest.pyx'],
-              include_dirs=[libxml2_include_dir],
+              include_dirs=include_dirs,
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
-              libraries=['xml2'],
+              libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
     Extension('lxml.c14n',
               sources=['src/lxml/c14n.pyx'],
-              include_dirs=[libxml2_include_dir],
+              include_dirs=include_dirs,
               runtime_library_dirs=runtime_library_dirs,
               library_dirs=library_dirs,
-              libraries=['xml2'],
+              libraries=libraries,
               extra_compile_args = extra_compile_args
               ),
     ]
