@@ -43,7 +43,6 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
         # to clean the whole thing up, as all nodes have a reference to
         # the document
         #print "freeing document:", <int>self._c_doc
-        #print "freeing document:"
         #displayNode(<xmlNode*>self._c_doc, 0)
         #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
@@ -65,7 +64,7 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     _ElementTree as long as there is some pointer to a node in it.
     """
     def __dealloc__(self):
-        # print "trying to free node:"
+        #print "trying to free node:", <int>self._c_node
         # displayNode(self._c_node, 0)
         node_registry.attemptDeallocation(self._c_node)
         
@@ -106,7 +105,9 @@ cdef class _ElementBase(_NodeBase):
         # XXX what if element is coming from a different document?
         tree.xmlUnlinkNode(element._c_node)
         tree.xmlAddChild(self._c_node, element._c_node)
-        element._doc = self._doc
+        # uh oh, elements may be pointing to different doc when
+        # parent element has moved; change them too..
+        node_registry.changeDocumentBelow(element, self._doc)
 
     # PROPERTIES
     property tag:

@@ -31,6 +31,7 @@ cdef class NodeRegistry:
     
     #cdef NodeProxyBase getProxy(self, xmlNode* c_node)
     cdef void registerProxy(self, SimpleNodeProxyBase proxy, int proxy_type)
+    cdef void changeDocumentBelow(self, SimpleNodeProxyBase proxy, SimpleDocumentProxyBase doc)
     cdef void attemptDeallocation(self, xmlNode* c_node)
     cdef xmlNode* getDeallocationTop(self, xmlNode* c_node)
     cdef int canDeallocateChildNodes(self, xmlNode* c_node)

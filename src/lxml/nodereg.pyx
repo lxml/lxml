@@ -29,7 +29,7 @@ cdef class DocumentProxyBase(SimpleDocumentProxyBase):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        # print "free doc"
+        #print "free doc"
         tree.xmlFreeDoc(self._c_doc)
 
 cdef class SimpleNodeProxyBase:
@@ -41,7 +41,7 @@ cdef class SimpleNodeProxyBase:
 
 cdef class NodeProxyBase(SimpleNodeProxyBase):
     def __dealloc__(self):
-        # print "Trying to wipe out:", self, self._c_node.name
+        #print "Trying to wipe out:", self, self._c_node.name
         cdef NodeRegistry reg
         reg = self._doc._registry
         reg.attemptDeallocation(self._c_node)
@@ -84,7 +84,18 @@ cdef class NodeRegistry:
         # weakref functionality from the returned object, possibly
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._proxies.get((id, proxy_type), None)
- 
+
+    cdef void changeDocumentBelow(self, SimpleNodeProxyBase proxy,
+                                  SimpleDocumentProxyBase doc):
+        """Alter doc pointer in all known nodes below node indicated by proxy.
+        (including proxy itself)
+        """
+        cdef SimpleNodeProxyBase p
+        for registered_proxy in self._proxies.values():
+            p = <SimpleNodeProxyBase>registered_proxy
+            if is_self_or_child(p._c_node, proxy._c_node):
+                p._doc = doc
+            
     cdef void registerProxy(self, SimpleNodeProxyBase proxy, int proxy_type):
         """Register a proxy with the registry.
         """
@@ -116,11 +127,11 @@ cdef class NodeRegistry:
         """
         cdef xmlNode* c_current
         cdef xmlNode* c_top
-        # print "deallocating:", c_node.type
+        #print "deallocating:", c_node.type
         c_current = c_node.parent
         c_top = c_node
         while c_current is not NULL:
-            # print "checking:", c_current.type
+            #print "checking:", c_current.type
             # if we're still attached to the document, don't deallocate
             if c_current.type == tree.XML_DOCUMENT_NODE:
                 #print "not freeing: still in doc"
@@ -149,7 +160,7 @@ cdef class NodeRegistry:
         cdef xmlNode* c_current
         proxies = self._proxies
         proxy_types = self._proxy_types
-        # print "checking childNodes"
+        #print "checking childNodes"
         c_current = c_node.children
         while c_current is not NULL:
             id = <int>c_current
@@ -165,7 +176,7 @@ cdef class NodeRegistry:
         cdef xmlAttr* c_current
         proxies = self._proxies
         proxy_types = self._proxy_types
-        # print "checking attributes"
+        #print "checking attributes"
         c_current = c_node.properties
         while c_current is not NULL:
             id = <int>c_current
@@ -184,7 +195,7 @@ cdef class NodeRegistry:
         # the current implementation is inefficient as it does a
         # tree traversal to find out whether there are any node proxies
         # we could improve this by a smarter datastructure
-        # print "checking children"
+        #print "checking children"
         # check children
         if not self.canDeallocateChildNodes(c_node):
             return 0        
@@ -195,6 +206,15 @@ cdef class NodeRegistry:
         # apparently we can deallocate all subnodes
         return 1
 
+cdef int is_self_or_child(xmlNode* child, xmlNode* parent):
+    cdef xmlNode* c_node
+    c_node = child
+    while c_node is not NULL and c_node.type != tree.XML_DOCUMENT_NODE :
+        if parent is c_node:
+            return 1
+        c_node = c_node.parent
+    return 0
+
 # to help with debugging
 cdef void displayNode(xmlNode* c_node, indent):
     cdef xmlNode* c_child
@@ -203,3 +223,4 @@ cdef void displayNode(xmlNode* c_node, indent):
     while c_child is not NULL:
         displayNode(c_child, indent + 1)
         c_child = c_child.next        
+
