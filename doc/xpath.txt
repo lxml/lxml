@@ -95,6 +95,8 @@ from extension functions, such as numbers (floats) and booleans::
   >>> e.evaluate("returnsBool()")
   True
 
+Note: the following is rather shaky and like won't work yet in the real world.
+
 It is also possible to return lists of nodes, and this way it is possible
 to return XML structures::
 
