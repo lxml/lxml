@@ -29,7 +29,7 @@ cdef class DocumentProxyBase(SimpleDocumentProxyBase):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        #print "free doc"
+        # print "free doc"
         tree.xmlFreeDoc(self._c_doc)
 
 cdef class SimpleNodeProxyBase:

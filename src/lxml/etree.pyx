@@ -42,11 +42,10 @@ cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        #print "freeing document:", <int>self._c_doc
-        #displayNode(<xmlNode*>self._c_doc, 0)
+        # print "freeing document:", <int>self._c_doc
+        # displayNode(<xmlNode*>self._c_doc, 0)
         #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
-        #print "dune"
 
 # to help with debugging
 cdef void displayNode(xmlNode* c_node, indent):
@@ -65,7 +64,7 @@ cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     """
     def __dealloc__(self):
         #print "trying to free node:", <int>self._c_node
-        # displayNode(self._c_node, 0)
+        #displayNode(self._c_node, 0)
         node_registry.attemptDeallocation(self._c_node)
         
 cdef class _ElementTreeBase(_DocumentBase):
@@ -138,15 +137,9 @@ cdef class _ElementBase(_NodeBase):
         def __set__(self, value):
             cdef xmlNode* c_text_node
             # remove all text nodes at the start first
-            while 1:
-                c_text_node = self._c_node.children
-                if (c_text_node is NULL or
-                    c_text_node.type != tree.XML_TEXT_NODE):
-                    break
-                tree.xmlUnlinkNode(c_text_node)
-                tree.xmlFreeNode(c_text_node)
-            text = value.encode('UTF-8')
+            _removeText(self._c_node.children)
             # now add new text node with value at start
+            text = value.encode('UTF-8')
             c_text_node = tree.xmlNewDocText(self._doc._c_doc,
                                              text)
             if self._c_node.children is NULL:
@@ -161,13 +154,14 @@ cdef class _ElementBase(_NodeBase):
             return _collectText(self._c_node.next)
            
         def __set__(self, value):
-            cdef xmlNode* c_node
             cdef xmlNode* c_text_node
+            # remove all text nodes at the start first
+            _removeText(self._c_node.next)
             text = value.encode('UTF-8')
             c_text_node = tree.xmlNewDocText(self._doc._c_doc, text)
             # XXX what if we're the top element?
             tree.xmlAddNextSibling(self._c_node, c_text_node)
-                
+
     # ACCESSORS
     def __getitem__(self, n):
         cdef xmlNode* c_node
@@ -498,8 +492,8 @@ def ElementTree(_ElementBase element=None, file=None):
     # XXX what if element and file are both not None?
     if element is not None:
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
-        element._doc = etree
-    
+        node_registry.changeDocumentBelow(element, etree)
+
     return etree
 
 cdef class Parser:
@@ -619,6 +613,9 @@ cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     
 cdef _collectText(xmlNode* c_node):
     """Collect all text nodes and return them as a unicode string.
+
+    Start collecting at c_node.
+    
     If there was no text to collect, return None
     """
     result = ''
@@ -629,4 +626,16 @@ cdef _collectText(xmlNode* c_node):
         return unicode(result, 'UTF-8')
     else:
         return None
-            
+
+cdef _removeText(xmlNode* c_node):
+    """Remove all text nodes.
+
+    Start removing at c_node.
+    """
+    cdef xmlNode* c_next
+    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
+        c_next = c_node.next
+        tree.xmlUnlinkNode(c_node)
+        # XXX cannot safely free in case of direct text node proxies..
+        tree.xmlFreeNode(c_node)
+        c_node = c_next
