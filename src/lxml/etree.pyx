@@ -1,6 +1,8 @@
 cimport tree
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
+cimport xpath
+
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
 from StringIO import StringIO
@@ -24,6 +26,9 @@ NS_COUNTER = 0
 
 cdef nodereg.NodeRegistry node_registry
 node_registry = nodereg.NodeRegistry()
+
+class Error(Exception):
+    pass
 
 cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
     """Base class to reference a libxml document.
@@ -157,6 +162,62 @@ cdef class _ElementTreeBase(_DocumentBase):
             path = "." + path
         return root.findall(path)
 
+    # extension to ElementTree API
+    def xpath(self, path):
+        """XPath evaluate in context of document.
+
+        Returns a list (nodeset), or bool, float or string.
+
+        In case of a list result, return Element for element nodes,
+        string for text and attribute values.
+        """
+        cdef xpath.xmlXPathContext* xpathCtxt
+        cdef xpath.xmlXPathObject* xpathObj
+        cdef xmlNode* c_node
+        
+        path = path.encode('UTF-8')
+        
+        xpathCtxt = xpath.xmlXPathNewContext(self._c_doc)
+        if xpathCtxt is NULL:
+            raise Error, "Unable to create new XPath context"
+
+        # register namespaces?
+
+        xpathObj = xpath.xmlXPathEvalExpression(path, xpathCtxt)
+        if xpathObj is NULL:
+            xpath.xmlXPathFreeContext(xpathCtxt)
+            raise SyntaxError, "Error in xpath expression."
+
+        if xpathObj.type == xpath.XPATH_UNDEFINED:
+            xpath.xmlXPathFreeObject(xpathObj)
+            xpath.xmlXPathFreeContext(xpathCtxt)
+            raise Error, "Undefined xpath result"
+        elif xpathObj.type == xpath.XPATH_NODESET:
+            result = _createNodeSetResult(self, xpathObj)
+        elif xpathObj.type == xpath.XPATH_BOOLEAN:
+            result = xpathObj.boolval
+        elif xpathObj.type == xpath.XPATH_NUMBER:
+            result = xpathObj.floatval
+        elif xpathObj.type == xpath.XPATH_STRING:
+            result = unicode(xpathObj.stringval, 'UTF-8')
+        elif xpathObj.type == xpath.XPATH_POINT:
+            raise NotImplementedError
+        elif xpathObj.type == xpath.XPATH_RANGE:
+            raise NotImplementedError
+        elif xpathObj.type == xpath.XPATH_LOCATIONSET:
+            raise NotImplementedError
+        elif xpathObj.type == xpath.XPATH_USERS:
+            raise NotImplementedError
+        elif xpathObj.type == xpath.XPATH_XSLT_TREE:
+            raise NotImplementedError
+        else:
+            raise Error, "Unknown xpath result %s" % str(xpathObj.type)
+        
+        xpath.xmlXPathFreeObject(xpathObj)
+        xpath.xmlXPathFreeContext(xpathCtxt)
+
+        return result
+    
 class _ElementTree(_ElementTreeBase):
     __slots__ = ['__weakref__']
     
@@ -1136,4 +1197,30 @@ def _getNsTag(tag):
         return tag[1:i], tag[i + 1:]
     return None, tag
 
-
+cdef object _createNodeSetResult(_ElementTreeBase doc,
+                                 xpath.xmlXPathObject* xpathObj):
+    cdef xmlNode* c_node
+    cdef char* s
+    result = []
+    if xpathObj.nodesetval is NULL:
+        return result
+    for i from 0 <= i < xpathObj.nodesetval.nodeNr:
+        c_node = xpathObj.nodesetval.nodeTab[i]
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            result.append(_elementFactory(doc, c_node))
+        elif c_node.type == tree.XML_TEXT_NODE:
+            result.append(unicode(c_node.content, 'UTF-8'))
+        elif c_node.type == tree.XML_ATTRIBUTE_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            attr_value = unicode(s, 'UTF-8')
+            tree.xmlFree(s)
+            result.append(attr_value)
+        elif c_node.type == tree.XML_COMMENT_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            comment_value = unicode('<!--%s-->' % s, 'UTF-8')
+            tree.xmlFree(s)
+            result.append(comment_value)
+        else:
+            print "Not yet implemented result node type:", c_node.type
+            raise NotImplementedError
+    return result

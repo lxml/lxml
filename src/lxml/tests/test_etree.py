@@ -1389,13 +1389,68 @@ class ETreeOnlyTestCase(unittest.TestCase):
         tree.write(f)
         data = f.getvalue()
         return c14n.canonicalize(data)
+
+class ETreeXPathTestCase(unittest.TestCase):
+    """XPath tests etree"""
+
+    def test_xpath_boolean(self):
+        tree = self.parse('<a><b></b><b></b></a>')
+        self.assert_(tree.xpath('boolean(/a/b)'))
+        self.assert_(not tree.xpath('boolean(/a/c)'))
+
+    def test_xpath_number(self):
+        tree = self.parse('<a>1</a>')
+        self.assertEquals(1.,
+                          tree.xpath('number(/a)'))
+        tree = self.parse('<a>A</a>')
+        self.assertEquals('nan', str(tree.xpath('number(/a)')))
+        
+    def test_xpath_string(self):
+        tree = self.parse('<a>Foo</a>')
+        self.assertEquals('Foo',
+                          tree.xpath('string(/a/text())'))
+
+    def test_xpath_list_elements(self):
+        tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
+        root = tree.getroot()
+        self.assertEquals([root[0], root[1]],
+                          tree.xpath('/a/b'))
+
+    def test_xpath_list_nothing(self):
+        tree = self.parse('<a><b/></a>')
+        self.assertEquals([],
+                          tree.xpath('/a/c'))
+        # this seems to pass a different code path, also should return nothing
+        self.assertEquals([],
+                          tree.xpath('/a/c/text()'))
     
+    def test_xpath_list_text(self):
+        tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
+        root = tree.getroot()
+        self.assertEquals(['Foo', 'Bar'],
+                          tree.xpath('/a/b/text()'))
+
+    def test_xpath_list_attribute(self):
+        tree = self.parse('<a b="B" c="C"/>')
+        self.assertEquals(['B'],
+                          tree.xpath('/a/@b'))
+
+    def test_xpath_list_comment(self):
+        tree = self.parse('<a><!-- Foo --></a>')
+        self.assertEquals(['<!-- Foo -->'],
+                          tree.xpath('/a/node()'))
+        
+    def parse(self, text):
+        f = StringIO(text)
+        return etree.parse(f)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
     if HAVE_ELEMENTTREE:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
     return suite
 
 import os.path
