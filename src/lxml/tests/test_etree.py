@@ -1,4 +1,4 @@
-import unittest
+import unittest, doctest
 
 from StringIO import StringIO
 import os, shutil, tempfile
@@ -1560,6 +1560,9 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/api.txt')])
+    
     return suite
 
 import os.path

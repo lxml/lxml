@@ -45,14 +45,31 @@ used:
 
 Example::
 
->>> doc = lxml.etree.parse('doc.xml')
->>> doc.xpath('/foo/bar')
+  >>> import lxml
+  >>> from StringIO import StringIO
+
+  >>> f = StringIO('<foo><bar></bar></foo>')
+  >>> doc = lxml.etree.parse(f)
+  >>> r = doc.xpath('/foo/bar')
+  >>> len(r)
+  1
+  >>> r[0].tag
+  'bar'
 
 Example of using namespace prefixes::
 
->>> doc = lxml.etree.parse('doc2.xml')
->>> doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
-                               'b': 'http://codespeak.net/ns2/test2'})
+  >>> f = StringIO(
+  ...   '<a:foo xmlns:a="http://codespeak.net/ns/test1" xmlns:b="http://codespeak.net/ns/test2"><b:bar>Text</b:bar></a:foo>')
+
+  >>> doc = lxml.etree.parse(f)
+  >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
+  ...                                'b': 'http://codespeak.net/ns/test2'})
+  >>> len(r)
+  1
+  >>> r[0].tag
+  '{http://codespeak.net/ns/test2}bar'
+  >>> r[0].text
+  'Text'
 
 XSLT
 ----
@@ -60,20 +77,34 @@ XSLT
 lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
 given an ElementTree object to construct an XSLT transformer::
 
->>> xslt_doc = lxml.etree.parse('somefile.xslt')
->>> style = lxml.XSLT(xslt_doc)
+  >>> f = StringIO('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:template match="*" />
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> xslt_doc = lxml.etree.parse(f)
+  >>> style = lxml.etree.XSLT(xslt_doc)
 
 You can then apply the style against some ElementTree document, and this
 results in another ElementTree object::
 
->>> doc = lxml.etree.parse('doc.xml')
->>> result = style.apply(doc)
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = lxml.etree.parse(f)
+  >>> result = style.apply(doc)
 
-The result object can accessed like a normal ElementTree document, but
-can also be turned into an (XML or text) string using the style's
+The result object can accessed like a normal ElementTree document::
+
+  >>> result.getroot().text
+  'Text'
+
+but can also be turned into an (XML or text) string using the style's
 ``tostring`` method::
 
->>> result_string = style.tostring(doc)
+  >>> style.tostring(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 RelaxNG
 -------
@@ -81,19 +112,31 @@ RelaxNG
 lxml.etree introduces a new class, lxml.etree.RelaxNG. The class can
 be given an ElementTree object to construct a Relax NG validator::
 
->>> relaxng_doc = lxml.etree.parse('somefile.rng')
->>> relaxng = lxml.RelaxNG(relaxng_doc)
+  >>> f = StringIO('''\
+  ... <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  ...  <zeroOrMore>
+  ...     <element name="b">
+  ...       <text />
+  ...     </element>
+  ...  </zeroOrMore>
+  ... </element>
+  ... ''')
+  >>> relaxng_doc = lxml.etree.parse(f)
+  >>> relaxng = lxml.etree.RelaxNG(relaxng_doc)
 
 You can then validate some ElementTree document with this. You'll get
 back true if the document is valid against the Relax NG schema, and
 false if not::
 
->>> doc = lxml.etree.parse('valid_doc.xml')
->>> relaxng.validate(doc)
-1
->>> doc2 = lxml.etree.parse('invalid_doc.xml')
->>> relaxng.validate(doc2)
-0
+  >>> valid = StringIO('<a><b></b></a>')
+  >>> doc = lxml.etree.parse(valid)
+  >>> relaxng.validate(doc)
+  1
+
+  >>> invalid = StringIO('<a><c></c></a>')
+  >>> doc2 = lxml.etree.parse(invalid)
+  >>> relaxng.validate(doc2)
+  0
 
 write_c14n on ElementTree
 -------------------------
@@ -103,9 +146,9 @@ one argument: a file object. This file object will receive an UTF-8
 representation of the canonicalized form of the XML, following the W3C
 C14N recommendation. For example::
 
->>> f = StringIO('<a><b/></a>')
->>> tree = lxml.etree.parse(f)
->>> f2 = StringIO()
->>> tree.write_c14n(f2)
->>> f2.getvalue()
-'<a><b></b></a>'
+  >>> f = StringIO('<a><b/></a>')
+  >>> tree = lxml.etree.parse(f)
+  >>> f2 = StringIO()
+  >>> tree.write_c14n(f2)
+  >>> f2.getvalue()
+  '<a><b></b></a>'
