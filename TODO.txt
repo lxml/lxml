@@ -48,8 +48,6 @@ ElementInterface
 
 * findtext()
 
-* deleting attributes
-
 * improve getiterator() implementation to use Python-level iterators
 
 ElementTree
