@@ -25,6 +25,13 @@ class NodeRegTestCase(unittest.TestCase):
         del baz
         del bar
         del flux
+
+    def test_four(self):
+        doc = noderegtest.makeDocument('<foo/>')
+        bar = doc.createElementNS(None, 'bar')
+        baz = doc.createElementNS(None, 'baz')
+        bar.appendChild(baz)
+
         
 def test_suite():
     suite = unittest.TestSuite()
