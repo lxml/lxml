@@ -33,15 +33,11 @@ Top level
 ElementInterface
 -----------------
 
-* writing to tag
-
 * __delitem__
 
 * __delslice__
 
 * __getslice__
-
-* __setitem__
 
 * __setslice__
 
