@@ -1239,6 +1239,10 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b></a>',
             self._writeElement(tree.getroot()))
 
+    def test_parse_file_nonexistent(self):
+        parse = self.etree.parse
+        self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))  
+        
     def test_parse_file_object(self):
         parse = self.etree.parse
         # from file object

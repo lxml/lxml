@@ -3,6 +3,7 @@ from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xmlparser
 cimport xpath
 cimport xslt
+cimport xmlerror
 
 from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
@@ -948,8 +949,13 @@ cdef class Parser:
         self._initParse()
         pctxt = xmlparser.xmlNewParserCtxt()
         self._prepareParse(pctxt)
+        # XXX set options twice? needed to shut up libxml2
+        xmlparser.xmlCtxtUseOptions(pctxt, _getParseOptions())
         result = xmlparser.xmlCtxtReadFile(pctxt, filename,
                                            NULL, _getParseOptions())
+        if result is NULL:
+            if pctxt.lastError.domain == xmlerror.XML_FROM_IO:
+                raise IOError, "Could not open file %s" % filename
         # in case of errors, clean up context plus any document
         # XXX other errors?
         if not pctxt.wellFormed:

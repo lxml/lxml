@@ -1,4 +1,5 @@
 from tree cimport xmlDoc, xmlDict
+from xmlerror cimport xmlError
 
 cdef extern from "libxml/parser.h":
     
@@ -9,6 +10,7 @@ cdef extern from "libxml/parser.h":
         xmlDoc* myDoc
         xmlDict* dict
         int wellFormed
+        xmlError lastError
         
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
