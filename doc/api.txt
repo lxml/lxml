@@ -58,9 +58,12 @@ Example::
 
 Example of using namespace prefixes::
 
-  >>> f = StringIO(
-  ...   '<a:foo xmlns:a="http://codespeak.net/ns/test1" xmlns:b="http://codespeak.net/ns/test2"><b:bar>Text</b:bar></a:foo>')
-
+  >>> f = StringIO('''\
+  ... <a:foo xmlns:a="http://codespeak.net/ns/test1" 
+  ...       xmlns:b="http://codespeak.net/ns/test2">
+  ...    <b:bar>Text</b:bar>
+  ... </a:foo>
+  ... ''')
   >>> doc = lxml.etree.parse(f)
   >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
   ...                                'b': 'http://codespeak.net/ns/test2'})
