@@ -119,6 +119,22 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(tree, None, [extension])
         self.assertRaises(ZeroDivisionError, e.evaluate, "foo('test')")
 
+    def test_xpath_extensions_nodes(self):
+        def f(evaluator, arg):
+            r = etree.Element('results')
+            b = etree.SubElement(r, 'result')
+            b.text = 'Hoi'
+            b = etree.SubElement(r, 'result')
+            b.text = 'Dag'
+            return r
+
+        x = self.parse('<a/>')
+        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        r = e.evaluate("foo('World')/result")
+        self.assertEquals(2, len(r))
+        self.assertEquals('Hoi', r[0].text)
+        self.assertEquals('Dag', r[1].text)
+
 SAMPLE_XML = etree.parse(StringIO("""
 <body>
   <tag>text</tag>
