@@ -217,7 +217,71 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             ' comment ',
             doc.documentElement.firstChild.data)
-            
+
+    def test_nodeName_all(self):
+        doc = makeDocument('<a href="foo"/>')
+        self.assertEquals(
+            'href',
+            doc.documentElement.attributes.getNamedItemNS(
+            None, 'href').nodeName)
+        # XXX CDATASection
+        doc = makeDocument('<foo><!--foo--></foo>')
+        self.assertEquals(
+            '#comment',
+            doc.documentElement.childNodes[0].nodeName)
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            '#document',
+            doc.nodeName)
+        # XXX DocumentFragment
+        # XXX DocumentType
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            'foo',
+            doc.documentElement.nodeName)
+        doc = makeDocument('<bar:foo xmlns:bar="http://www.bar.com"/>')
+        self.assertEquals(
+            'bar:foo',
+            doc.documentElement.nodeName)
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        doc = makeDocument('<foo>Text</foo>')
+        self.assertEquals(
+            '#text',
+            doc.documentElement.childNodes[0].nodeName)
+
+    def test_nodeValue_all(self):
+        doc = makeDocument('<a href="foo"/>')
+        self.assertEquals(
+            'foo',
+            doc.documentElement.attributes.getNamedItemNS(
+            None, 'href').nodeValue)
+        # XXX CDATASection
+        doc = makeDocument('<!--hey--><foo/>')
+        self.assertEquals(
+            'hey',
+            doc.childNodes[0].nodeValue)
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            None,
+            doc.nodeValue)
+        # XXX DocumentFragment
+        # XXX DocumentType
+        doc = makeDocument('<foo/>')
+        self.assertEquals(
+            None,
+            doc.documentElement.nodeValue)
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        doc = makeDocument('<foo>Hey</foo>')
+        self.assertEquals(
+            'Hey',
+            doc.documentElement.childNodes[0].nodeValue)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
