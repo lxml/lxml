@@ -100,6 +100,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef char* xmlNodeGetContent(xmlNode* cur)
     cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* nameSpace)
+    cdef int xmlIsBlankNode(xmlNode* node)
     
 cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
@@ -195,6 +196,10 @@ cdef class Node:
         def __get__(self):
             return None
 
+    property textContent:
+        def __get__(self):
+            None
+
     def hasAttributes(self):
         return False
 
@@ -214,7 +219,7 @@ cdef class Node:
         if ns is NULL:
             return None
         return unicode(ns.href, 'UTF-8')
-    
+
 cdef class NonDocNode(Node):
     cdef Document _doc
     
@@ -256,6 +261,10 @@ cdef class Document(Node):
                 c_node = c_node.next
             return None
 
+    property textContent:
+        def __get__(self):
+            return None
+        
     def lookupNamespaceURI(self, prefix):
         return self.documentElement.lookupNamespaceURI(prefix)
     
@@ -301,6 +310,17 @@ cdef class ElementAttrNode(NonDocNode):
                 return None
             return unicode(self._o.ns.href, 'UTF-8')
 
+    property textContent:
+        def __get__(self):
+            result = []
+            for node in self.childNodes:
+                nt = node.nodeType
+                if (nt == XML_COMMENT_NODE or
+                    nt == XML_PI_NODE):
+                    continue
+                result.append(node.textContent)
+            return ''.join(result)
+            
 cdef class Element(ElementAttrNode):
 
     property nodeType:
@@ -423,12 +443,16 @@ cdef class CharacterData(NonDocNode):
     property nodeValue:
         def __get__(self):
             return self.data
+
+    property textContent:
+        def __get__(self):
+            return self.data
         
 cdef class Text(CharacterData):
     property nodeName:
         def __get__(self):
             return '#text'
-
+    
 cdef _textFactory(Document doc, xmlNode* c_node):
     cdef Text result
     result = Text()

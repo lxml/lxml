@@ -575,7 +575,34 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'urn:default1',
             text.lookupNamespaceURI(None))
-    
+
+    def test_textContent(self):
+        # Attr
+        doc = makeDocument('<a foo="hoi dag"/>')
+        self.assertEquals(
+            'hoi dag',
+            doc.documentElement.attributes.getNamedItemNS(None, 'foo').textContent)
+        # XXX CDATASection
+        # Comment
+        doc = makeDocument('<a><!--foo--></a>')
+        self.assertEquals(
+            'foo',
+            doc.documentElement.childNodes[0].textContent)
+        # Document
+        doc = makeDocument('<a/>')
+        self.assertEquals(
+            None,
+            doc.textContent)
+        # XXX Entity
+        # XXX EntityReference
+        # XXX Notation
+        # XXX ProcessingInstruction
+        # Text
+        doc = makeDocument('<a>Hoi<b>This<c>is</c></b><d>great</d></a>')
+        self.assertEquals(
+            'HoiThisisgreat',
+            doc.documentElement.textContent)
+        
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(DomTestCase)])
