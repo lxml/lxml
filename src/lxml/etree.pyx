@@ -167,35 +167,28 @@ cdef class _ElementBase(_NodeBase):
             tree.xmlAddNextSibling(self._c_node, c_text_node)
 
     # ACCESSORS
-    def __getitem__(self, n):
+    def __getitem__(self, index):
         cdef xmlNode* c_node
-        c_node = self._c_node.children
-        c = 0
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE:
-                if c == n:
-                    return _elementFactory(self._doc, c_node)
-                c = c + 1
-            c_node = c_node.next
-        else:
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
             raise IndexError
-
+        return _elementFactory(self._doc, c_node)
+        
     def __setitem__(self, index, nodereg.SimpleNodeProxyBase element):
         cdef xmlNode* c_node
-        assert iselement(element)
-        c_node = self._c_node.children
-        c = 0
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE:
-                if c == index:
-                    tree.xmlReplaceNode(c_node, element._c_node)
-                    node_registry.changeDocumentBelow(element, self._doc)
-                    break
-                c = c + 1
-            c_node = c_node.next
-        else:
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
             raise IndexError
-    
+        tree.xmlReplaceNode(c_node, element._c_node)
+        node_registry.changeDocumentBelow(element, self._doc)
+        
+    def __delitem__(self, index):
+        cdef xmlNode* c_node
+        c_node = _findChild(self._c_node, index)
+        if c_node is NULL:
+            raise IndexError
+        tree.xmlUnlinkNode(c_node)
+        
     def __len__(self):
         cdef int c
         cdef xmlNode* c_node
@@ -644,3 +637,18 @@ cdef _removeText(xmlNode* c_node):
         # XXX cannot safely free in case of direct text node proxies..
         tree.xmlFreeNode(c_node)
         c_node = c_next
+
+cdef xmlNode* _findChild(xmlNode* c_node, int index):
+    """Return child element of c_node with index, or return NULL if not found.
+    """
+    cdef xmlNode* c_child
+    c_child = c_node.children
+    c = 0
+    while c_child is not NULL:
+        if c_child.type == tree.XML_ELEMENT_NODE:
+            if c == index:
+                return c_child
+            c = c + 1
+        c_child = c_child.next
+    else:
+        return NULL
