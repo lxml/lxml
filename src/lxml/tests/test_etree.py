@@ -135,7 +135,14 @@ class ETreeTestCase(unittest.TestCase):
         root = doc.getroot()
         self.assertEquals(None, root.text)
         self.assertEquals('hoi', root.tag)
-       
+
+    def test_attributes(self):
+        f = StringIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('One', root.attrib['one'])
+        self.assertEquals('Two', root.attrib['two'])
+        self.assertRaises(KeyError, root.attrib.__getitem__, 'three')  
 
 def test_suite():
     suite = unittest.TestSuite()

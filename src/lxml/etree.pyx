@@ -137,6 +137,10 @@ cdef class _Element(_NodeBase):
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
 
+    property attrib:
+        def __get__(self):
+            return _attribFactory(self._doc, self._c_node)
+        
     property text:
         def __get__(self):
             cdef xmlNode* c_node
@@ -188,7 +192,7 @@ cdef class _Element(_NodeBase):
         xmlUnlinkNode(element._c_node)
         xmlAddChild(self._c_node, element._c_node)
         element._doc = self._doc
-        
+
 cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     cdef _Element result
     if c_node is NULL:
@@ -198,6 +202,22 @@ cdef _Element _elementFactory(_ElementTree tree, xmlNode* c_node):
     result._c_node = c_node
     return result
 
+cdef class _Attrib(_NodeBase):
+    def __getitem__(self, key):
+        cdef char* result
+        key = key.encode('UTF-8')
+        result = xmlGetNoNsProp(self._c_node, key)
+        if result is NULL:
+            raise KeyError, key
+        return unicode(result, 'UTF-8')
+
+cdef _Attrib _attribFactory(_ElementTree tree, xmlNode* c_node):
+    cdef _Attrib result
+    result = _Attrib()
+    result._doc = tree
+    result._c_node = c_node
+    return result
+    
 def Element(tag, attrib=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTree tree
