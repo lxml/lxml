@@ -1,0 +1,64 @@
+=====================
+APIs specific to lxml
+=====================
+
+lxml tries to follow established APIs wherever possible. Sometimes
+however the needs to expose a feature in an easy way lead to the
+invention of a new API.
+
+lxml.etree
+==========
+
+lxml.etree tries to follow the etree API wherever it can. There are
+however some incompatibilities (see compatibility.txt). There are also
+some extensions.
+
+xpath method on ElementTree, Element
+------------------------------------
+
+lxml.etree extends the ElementTree and Element interfaces with an
+xpath method. For ElementTree, the xpath method performs a global
+xpath query against the document. When xpath is used on an element,
+the xpath expression is performed taking the element as the xpath
+context node.
+
+You call the xpath() method with one argument, the XPath expression to
+use.
+
+The return values of xpath vary, depending on the XPath expression
+used:
+
+* 1 or 0, when the XPath expression has a boolean result
+
+* a float, when the XPath expression has a floating point result
+
+* a (unicode) string, when the XPath expression has a string result.
+
+* a list of items, when the XPath expression has a list as result. The
+  items may include element nodes, strings. When the nodeset would
+  contain text nodes or attributes, the node result is also a string
+  (the text node content or attribute value). When the nodeset would
+  contain a comment, the result contains a string as well, inside
+  ``<!--`` and ``-->`` markers.
+
+XSLT class
+----------
+
+lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
+given an ElementTree object to construct it::
+
+>>> xslt_doc = lxml.etree.parse('somefile.xslt')
+>>> style = lxml.XSLT(xslt_doc)
+
+You can then apply the style against some ElementTree document, and this
+results in another ElementTree object::
+
+>>> doc = lxml.etree.parse('doc.xml')
+>>> result = style.apply(doc)
+
+The result object can accessed like it is a normal ElementTree
+document, but it can also be turned into an (XML or text) string using
+the style's ``tostring`` method::
+
+>>> result_string = style.tostring(doc)
+
