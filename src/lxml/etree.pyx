@@ -171,52 +171,7 @@ cdef class _ElementTreeBase(_DocumentBase):
         In case of a list result, return Element for element nodes,
         string for text and attribute values.
         """
-        cdef xpath.xmlXPathContext* xpathCtxt
-        cdef xpath.xmlXPathObject* xpathObj
-        cdef xmlNode* c_node
-        
-        path = path.encode('UTF-8')
-        
-        xpathCtxt = xpath.xmlXPathNewContext(self._c_doc)
-        if xpathCtxt is NULL:
-            raise Error, "Unable to create new XPath context"
-
-        # register namespaces?
-
-        xpathObj = xpath.xmlXPathEvalExpression(path, xpathCtxt)
-        if xpathObj is NULL:
-            xpath.xmlXPathFreeContext(xpathCtxt)
-            raise SyntaxError, "Error in xpath expression."
-
-        if xpathObj.type == xpath.XPATH_UNDEFINED:
-            xpath.xmlXPathFreeObject(xpathObj)
-            xpath.xmlXPathFreeContext(xpathCtxt)
-            raise Error, "Undefined xpath result"
-        elif xpathObj.type == xpath.XPATH_NODESET:
-            result = _createNodeSetResult(self, xpathObj)
-        elif xpathObj.type == xpath.XPATH_BOOLEAN:
-            result = xpathObj.boolval
-        elif xpathObj.type == xpath.XPATH_NUMBER:
-            result = xpathObj.floatval
-        elif xpathObj.type == xpath.XPATH_STRING:
-            result = unicode(xpathObj.stringval, 'UTF-8')
-        elif xpathObj.type == xpath.XPATH_POINT:
-            raise NotImplementedError
-        elif xpathObj.type == xpath.XPATH_RANGE:
-            raise NotImplementedError
-        elif xpathObj.type == xpath.XPATH_LOCATIONSET:
-            raise NotImplementedError
-        elif xpathObj.type == xpath.XPATH_USERS:
-            raise NotImplementedError
-        elif xpathObj.type == xpath.XPATH_XSLT_TREE:
-            raise NotImplementedError
-        else:
-            raise Error, "Unknown xpath result %s" % str(xpathObj.type)
-        
-        xpath.xmlXPathFreeObject(xpathObj)
-        xpath.xmlXPathFreeContext(xpathCtxt)
-
-        return result
+        return _xpathEval(self, None, path)
     
 class _ElementTree(_ElementTreeBase):
     __slots__ = ['__weakref__']
@@ -494,6 +449,9 @@ cdef class _ElementBase(_NodeBase):
     def findall(self, path):
         return _elementpath.findall(self, path)
 
+    def xpath(self, path):
+        return _xpathEval(self._doc, self, path)
+        
 class _Element(_ElementBase):
     __slots__ = ['__weakref__']
     
@@ -1223,4 +1181,57 @@ cdef object _createNodeSetResult(_ElementTreeBase doc,
         else:
             print "Not yet implemented result node type:", c_node.type
             raise NotImplementedError
+    return result
+
+cdef object _xpathEval(_ElementTreeBase doc, _ElementBase element,
+                       object path):    
+    cdef xpath.xmlXPathContext* xpathCtxt
+    cdef xpath.xmlXPathObject* xpathObj
+    cdef xmlNode* c_node
+
+    path = path.encode('UTF-8')
+
+    xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
+    if xpathCtxt is NULL:
+        raise Error, "Unable to create new XPath context"
+
+    # element context is requested
+    if element is not None:
+        xpathCtxt.node = element._c_node
+
+    # XXX register namespaces?
+
+    xpathObj = xpath.xmlXPathEvalExpression(path, xpathCtxt)
+    if xpathObj is NULL:
+        xpath.xmlXPathFreeContext(xpathCtxt)
+        raise SyntaxError, "Error in xpath expression."
+
+    if xpathObj.type == xpath.XPATH_UNDEFINED:
+        xpath.xmlXPathFreeObject(xpathObj)
+        xpath.xmlXPathFreeContext(xpathCtxt)
+        raise Error, "Undefined xpath result"
+    elif xpathObj.type == xpath.XPATH_NODESET:
+        result = _createNodeSetResult(doc, xpathObj)
+    elif xpathObj.type == xpath.XPATH_BOOLEAN:
+        result = xpathObj.boolval
+    elif xpathObj.type == xpath.XPATH_NUMBER:
+        result = xpathObj.floatval
+    elif xpathObj.type == xpath.XPATH_STRING:
+        result = unicode(xpathObj.stringval, 'UTF-8')
+    elif xpathObj.type == xpath.XPATH_POINT:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_RANGE:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_LOCATIONSET:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_USERS:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_XSLT_TREE:
+        raise NotImplementedError
+    else:
+        raise Error, "Unknown xpath result %s" % str(xpathObj.type)
+
+    xpath.xmlXPathFreeObject(xpathObj)
+    xpath.xmlXPathFreeContext(xpathCtxt)
+
     return result

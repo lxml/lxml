@@ -1439,6 +1439,21 @@ class ETreeXPathTestCase(unittest.TestCase):
         tree = self.parse('<a><!-- Foo --></a>')
         self.assertEquals(['<!-- Foo -->'],
                           tree.xpath('/a/node()'))
+
+    def test_rel_xpath_boolean(self):
+        root = etree.XML('<a><b><c/></b></a>')
+        el = root[0]
+        self.assert_(el.xpath('boolean(c)'))
+        self.assert_(not el.xpath('boolean(d)'))
+
+    def test_rel_xpath_list_elements(self):
+        tree = self.parse('<a><c><b>Foo</b><b>Bar</b></c><c><b>Hey</b></c></a>')
+        root = tree.getroot()
+        c = root[0]
+        self.assertEquals([c[0], c[1]],
+                          c.xpath('b'))
+        self.assertEquals([c[0], c[1], root[1][0]],
+                          c.xpath('//b'))
         
     def parse(self, text):
         f = StringIO(text)
