@@ -125,6 +125,22 @@ cdef class Document(_DocumentBase):
         def __get__(self):
             return _nodeListFactory(self, <xmlNode*>self._c_doc)
 
+    property firstChild:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.children)
+
+    property lastChild:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.last)
+
+    property previousSibling:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.prev)
+
+    property nextSibling:
+        def __get__(self):
+            return _nodeFactory(self, self._c_doc.next)
+        
 cdef Document _documentFactory(xmlDoc* c_doc):
     cdef Document doc
     doc = Document()
@@ -164,6 +180,10 @@ cdef class Element(Node):
         def __get__(self):
             return self.tagName
 
+    property nodeValue:
+        def __get__(self):
+            return None
+        
     property localName:
         def __get__(self):
             return unicode(self._c_node.name, 'UTF-8')
@@ -183,10 +203,24 @@ cdef class Element(Node):
 
     property parentNode:
         def __get__(self):
-            if self._c_node.parent is NULL:
-                return None
             return _nodeFactory(self._doc, self._c_node.parent)
-    
+
+    property firstChild:
+        def __get__(self):
+            return _nodeFactory(self._doc, self._c_node.children)
+        
+    property lastChild:
+        def __get__(self):
+            return _nodeFactory(self._doc, self._c_node.last)
+
+    property previousSibling:
+        def __get__(self):
+            return _nodeFactory(self._doc, self._c_node.prev)
+
+    property nextSibling:
+        def __get__(self):
+            return _nodeFactory(self._doc, self._c_node.next)
+        
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
@@ -215,6 +249,8 @@ cdef _nodeListFactory(Document doc, xmlNode* c_node):
     return result
 
 cdef _nodeFactory(Document doc, xmlNode* c_node):
+    if c_node is NULL:
+        return None
     if c_node.type == 1: # ELEMENT_NODE
         return _elementFactory(doc, c_node)
     
