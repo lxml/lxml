@@ -112,6 +112,12 @@ ext_modules = [
               libraries=['xml2'],
               extra_compile_args = ['-w']
               ),
+    Extension('lxml.dom',
+              sources=['src/lxml/dom.pyx'],
+              include_dirs=['/usr/include/libxml2'],
+              libraries=['xml2'],
+              extra_compile_args = ['-w']
+              ),
     ]
 
 setup(name="lxml",
