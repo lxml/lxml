@@ -16,10 +16,12 @@ cdef class DocumentProxyBase:
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
+        #print "free doc"
         tree.xmlFreeDoc(self._c_doc)
         
 cdef class NodeProxyBase:           
     def __dealloc__(self):
+        #print "Trying to wipe out:", self._c_node.name
         self._doc._registry.attemptDeallocation(self._c_node)
 
 cdef class NodeRegistry:
@@ -70,6 +72,7 @@ cdef class NodeRegistry:
         cdef xmlNode* c_top
         c_top = self.getDeallocationTop(c_node)
         if c_top is not NULL:
+            # print "freeing:", c_top.name
             tree.xmlFreeNode(c_top)
         
     cdef xmlNode* getDeallocationTop(self, xmlNode* c_node):
@@ -100,7 +103,7 @@ cdef class NodeRegistry:
         c_current = c_node.children
         proxies = self._proxies
         while c_current is not NULL:
-            id = <int>c_node
+            id = <int>c_current
             if proxies.has_key(id):
                 return 0
             if not self.canDeallocateChildren(c_current):
