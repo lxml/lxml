@@ -129,8 +129,25 @@ cdef class _ElementBase(_NodeBase):
             return unicode(c_node.content, 'UTF-8')
 
         def __set__(self, value):
-            pass
-
+            cdef xmlNode* c_text_node
+            # remove all text nodes at the start first
+            while 1:
+                c_text_node = self._c_node.children
+                if (c_text_node is NULL or
+                    c_text_node.type == tree.XML_TEXT_NODE):
+                    break
+                tree.xmlUnlinkNode(c_text_node)
+                tree.xmlFreeNode(c_text_node)
+            text = value.encode('UTF-8')
+            # now add new text node with value at start
+            c_text_node = tree.xmlNewDocText(self._doc._c_doc,
+                                             text)
+            if self._c_node.children is NULL:
+                tree.xmlAddChild(self._c_node, c_text_node)
+            else:
+                tree.xmlAddPrevSibling(self._c_node.children,
+                                       c_text_node)
+        
     property tail:
         def __get__(self):
             cdef xmlNode* c_node
