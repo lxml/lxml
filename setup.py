@@ -118,7 +118,13 @@ ext_modules = [
               include_dirs=['/usr/include/libxml2'],
               libraries=['xml2'],
               extra_compile_args = ['-w']
-              )
+              ),
+    Extension('lxml.etree',
+              sources=['src/lxml/etree.pyx'],
+              include_dirs=['/usr/include/libxml2'],
+              libraries=['xml2'],
+              extra_compile_args = ['-w']
+              ),
     ]
 
 setup(name="lxml",
