@@ -162,58 +162,58 @@ def find():
 
     >>> elem = SAMPLE_XML
     >>> elem.find("tag").tag
-    u'tag'
+    'tag'
     >>> ElementTree.ElementTree(elem).find("tag").tag
-    u'tag'
+    'tag'
     >>> elem.find("section/tag").tag
-    u'tag'
+    'tag'
     >>> ElementTree.ElementTree(elem).find("section/tag").tag
-    u'tag'
+    'tag'
     >>> elem.findtext("tag")
-    u'text'
+    'text'
     >>> elem.findtext("tog")
     >>> elem.findtext("tog", "default")
     'default'
     >>> ElementTree.ElementTree(elem).findtext("tag")
-    u'text'
+    'text'
     >>> elem.findtext("section/tag")
-    u'subtext'
+    'subtext'
     >>> ElementTree.ElementTree(elem).findtext("section/tag")
-    u'subtext'
+    'subtext'
     >>> summarize_list(elem.findall("tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(elem.findall("*"))
-    [u'tag', u'tag', u'section']
+    ['tag', 'tag', 'section']
     >>> summarize_list(elem.findall(".//tag"))
-    [u'tag', u'tag', u'tag']
+    ['tag', 'tag', 'tag']
     >>> summarize_list(elem.findall("section/tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section//tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section/*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section/.//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/./tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("./tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(elem.findall(".//tag"))
-    [u'tag', u'tag', u'tag']
+    ['tag', 'tag', 'tag']
     >>> summarize_list(elem.findall("././tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(ElementTree.ElementTree(elem).findall("/tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(ElementTree.ElementTree(elem).findall("./tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     """
 
 def bad_find():
@@ -803,9 +803,9 @@ def bug_xmltoolkit25():
 
     >>> tree = ElementTree.ElementTree(SAMPLE_XML)
     >>> tree.findtext("tag")
-    u'text'
+    'text'
     >>> tree.findtext("section/tag")
-    u'subtext'
+    'subtext'
     """
 
 def bug_xmltoolkit28():
@@ -816,7 +816,7 @@ def bug_xmltoolkit28():
     >>> summarize_list(tree.findall(".//thead"))
     []
     >>> summarize_list(tree.findall(".//tbody"))
-    [u'tbody']
+    ['tbody']
     """
 
 ## def bug_xmltoolkitX1():

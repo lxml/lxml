@@ -230,64 +230,64 @@ def find():
 
     >>> elem = SAMPLE_XML
     >>> elem.find("tag").tag
-    u'tag'
+    'tag'
     >>> ElementTree.ElementTree(elem).find("tag").tag
-    u'tag'
+    'tag'
     >>> elem.find("section/tag").tag
-    u'tag'
+    'tag'
     >>> ElementTree.ElementTree(elem).find("section/tag").tag
-    u'tag'
+    'tag'
     >>> elem.findtext("tag")
-    u'text'
+    'text'
     >>> elem.findtext("tog", "default")
     'default'
     >>> ElementTree.ElementTree(elem).findtext("tag")
-    u'text'
+    'text'
     >>> elem.findtext("section/tag")
-    u'subtext'
+    'subtext'
     >>> ElementTree.ElementTree(elem).findtext("section/tag")
-    u'subtext'
+    'subtext'
     >>> summarize_list(elem.findall("tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(elem.findall("*"))
-    [u'tag', u'tag', u'section']
+    ['tag', 'tag', 'section']
     >>> summarize_list(elem.findall(".//tag"))
-    [u'tag', u'tag', u'tag']
+    ['tag', 'tag', 'tag']
     >>> summarize_list(elem.findall("section/tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section//tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section/*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("section/.//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*//*"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("*/./tag"))
-    [u'tag']
+    ['tag']
     >>> summarize_list(elem.findall("./tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(elem.findall(".//tag"))
-    [u'tag', u'tag', u'tag']
+    ['tag', 'tag', 'tag']
     >>> summarize_list(elem.findall("././tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(ElementTree.ElementTree(elem).findall("/tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> summarize_list(ElementTree.ElementTree(elem).findall("./tag"))
-    [u'tag', u'tag']
+    ['tag', 'tag']
     >>> elem = SAMPLE_XML_NS
     >>> summarize_list(elem.findall("tag"))
     []
     >>> summarize_list(elem.findall("{http://effbot.org/ns}tag"))
-    [u'{http://effbot.org/ns}tag', u'{http://effbot.org/ns}tag']
+    ['{http://effbot.org/ns}tag', '{http://effbot.org/ns}tag']
     >>> summarize_list(elem.findall(".//{http://effbot.org/ns}tag"))
-    [u'{http://effbot.org/ns}tag', u'{http://effbot.org/ns}tag', u'{http://effbot.org/ns}tag']
+    ['{http://effbot.org/ns}tag', '{http://effbot.org/ns}tag', '{http://effbot.org/ns}tag']
     """
 
 # XXX gives a segfault
@@ -320,25 +320,25 @@ def attrib():
     'default'
     >>> elem.set("key", "value")
     >>> elem.get("key") # 1.3
-    u'value'
+    'value'
 
     >>> elem = ElementTree.Element("tag", key="value")
     >>> elem.get("key") # 2.1
-    u'value'
+    'value'
     >>> elem.attrib # 2.2
-    {u'key': u'value'}
+    {'key': 'value'}
 
     >>> elem = ElementTree.Element("tag", {"key": "value"})
     >>> elem.get("key") # 3.1
-    u'value'
+    'value'
     >>> elem.attrib # 3.2
-    {u'key': u'value'}
+    {'key': 'value'}
 
     >>> elem = ElementTree.Element("tag", {"key": "other"}, key="value")
     >>> elem.get("key") # 4.1
-    u'value'
+    'value'
     >>> elem.attrib # 4.2
-    {u'key': u'value'}
+    {'key': 'value'}
 
     """
 

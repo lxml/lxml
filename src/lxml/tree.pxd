@@ -2,6 +2,7 @@
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
+    cdef int strlen(char* s)
     
 cdef extern from "Python.h":
     ctypedef struct PyFileObject
@@ -10,6 +11,8 @@ cdef extern from "Python.h":
     cdef int PyFile_Check(object p)
     cdef object PyFile_Name(object p)
     cdef void Py_INCREF(object o)
+    cdef object PyUnicode_DecodeUTF8(char* s, int size, char* errors)
+    cdef object PyString_FromStringAndSize(char* s, int size)
     
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler

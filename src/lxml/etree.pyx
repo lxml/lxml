@@ -134,7 +134,7 @@ cdef class _ElementTreeBase(_DocumentBase):
         if encoding in ('UTF-8', 'utf8', 'UTF8', 'utf-8'):
             file.write(m)
         else:
-            file.write(unicode(m, 'UTF-8').encode(encoding))
+            file.write(funicode(m).encode(encoding))
         tree.xmlFree(mem)
 
     def getiterator(self, tag=None):
@@ -309,10 +309,11 @@ cdef class _ElementBase(_NodeBase):
     property tag:
         def __get__(self):
             if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
-                return unicode(self._c_node.name, 'UTF-8')
+                return funicode(self._c_node.name)
             else:
-                return unicode("{%s}%s" % (self._c_node.ns.href,
-                                           self._c_node.name), 'UTF-8')
+                # XXX optimize
+                s = "{%s}%s" % (self._c_node.ns.href, self._c_node.name)
+                return funicode(s)
 
         def __set__(self, value):
             cdef xmlNs* c_ns
@@ -492,7 +493,7 @@ cdef class _CommentBase(_ElementBase):
         
     property text:
         def __get__(self):
-            return unicode(self._c_node.content, 'UTF-8')
+            return funicode(self._c_node.content)
 
         def __set__(self, value):
             pass
@@ -575,7 +576,7 @@ cdef class _AttribBase(_NodeBase):
         if result is NULL:
             # XXX free namespace that is not in use..?
             raise KeyError, key
-        return unicode(result, 'UTF-8')
+        return funicode(result)
 
     def __len__(self):
         cdef int c
@@ -605,7 +606,7 @@ cdef class _AttribBase(_NodeBase):
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
                 # XXX namespaces {}
-                result.append(unicode(c_node.name, 'UTF-8'))
+                result.append(funicode(c_node.name))
             c_node = c_node.next
         return result
 
@@ -616,7 +617,7 @@ cdef class _AttribBase(_NodeBase):
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
                 result.append(
-                    unicode(tree.xmlGetNoNsProp(self._c_node, c_node.name), 'UTF-8')
+                    funicode(tree.xmlGetNoNsProp(self._c_node, c_node.name))
                     )
             c_node = c_node.next
         return result
@@ -629,8 +630,8 @@ cdef class _AttribBase(_NodeBase):
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
                 # XXX namespaces {}
                 result.append((
-                    unicode(c_node.name, 'UTF-8'),
-                    unicode(tree.xmlGetNoNsProp(self._c_node, c_node.name), 'UTF-8')
+                    funicode(c_node.name),
+                    funicode(tree.xmlGetNoNsProp(self._c_node, c_node.name))
                     ))
             c_node = c_node.next
         return result
@@ -662,7 +663,7 @@ cdef class _AttribIteratorBase(_NodeBase):
         self._doc.unregisterProxy(self, PROXY_ATTRIB_ITER)
         self._c_node = c_node.next
         self._doc.registerProxy(self, PROXY_ATTRIB_ITER)
-        return unicode(c_node.name, 'UTF-8')
+        return funicode(c_node.name)
 
 class _AttribIterator(_AttribIteratorBase):
     __slots__ = ['__weakref__']
@@ -1053,7 +1054,7 @@ cdef class XSLT:
         r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
         if r == -1:
             raise Error, "Error saving stylesheet result to string"
-        result = unicode(s, 'UTF-8')
+        result = funicode(s)
         tree.xmlFree(s)
         return result
 
@@ -1089,7 +1090,7 @@ cdef _collectText(xmlNode* c_node):
         result = result + c_node.content
         c_node = c_node.next
     if result:
-        return unicode(result, 'UTF-8')
+        return funicode(result)
     else:
         return None
 
@@ -1222,15 +1223,16 @@ cdef object _createNodeSetResult(_ElementTreeBase doc,
         if c_node.type == tree.XML_ELEMENT_NODE:
             result.append(_elementFactory(doc, c_node))
         elif c_node.type == tree.XML_TEXT_NODE:
-            result.append(unicode(c_node.content, 'UTF-8'))
+            result.append(funicode(c_node.content))
         elif c_node.type == tree.XML_ATTRIBUTE_NODE:
             s = tree.xmlNodeGetContent(c_node)
-            attr_value = unicode(s, 'UTF-8')
+            attr_value = funicode(s)
             tree.xmlFree(s)
             result.append(attr_value)
         elif c_node.type == tree.XML_COMMENT_NODE:
             s = tree.xmlNodeGetContent(c_node)
-            comment_value = unicode('<!--%s-->' % s, 'UTF-8')
+            s2 = '<!--%s-->' % s
+            comment_value = funicode(s2)
             tree.xmlFree(s)
             result.append(comment_value)
         else:
@@ -1272,7 +1274,7 @@ cdef object _xpathEval(_ElementTreeBase doc, _ElementBase element,
     elif xpathObj.type == xpath.XPATH_NUMBER:
         result = xpathObj.floatval
     elif xpathObj.type == xpath.XPATH_STRING:
-        result = unicode(xpathObj.stringval, 'UTF-8')
+        result = funicode(xpathObj.stringval)
     elif xpathObj.type == xpath.XPATH_POINT:
         raise NotImplementedError
     elif xpathObj.type == xpath.XPATH_RANGE:
@@ -1290,3 +1292,18 @@ cdef object _xpathEval(_ElementTreeBase doc, _ElementBase element,
     xpath.xmlXPathFreeContext(xpathCtxt)
 
     return result
+
+cdef int isutf8(char* string):
+    cdef int i
+    i = 0
+    while 1:
+        if string[i] == c'\0':
+            return 0
+        if string[i] & 0x80:
+            return 1
+        i = i + 1
+
+cdef object funicode(char* s):
+    if isutf8(s):
+        return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
+    return tree.PyString_FromStringAndSize(s, tree.strlen(s))
