@@ -6,6 +6,10 @@ from xmlparser cimport xmlParserCtxt, xmlDict
 import nodereg
 cimport nodereg
 
+PROXY_ATTRIB = 1
+PROXY_ATTRIB_ITER = 2
+PROXY_ELEMENT_ITER = 3
+
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
@@ -138,11 +142,15 @@ class _Element(_ElementBase):
     
 cdef _ElementBase _elementFactory(_ElementTreeBase etree, xmlNode* c_node):
     cdef _ElementBase result
+    result = etree.getProxy(<int>c_node)
+    if result is not None:
+        return result
     if c_node is NULL:
         return None
     result = _Element()
     result._doc = etree
     result._c_node = c_node
+    etree.registerProxy(result)
     return result
 
 cdef class _AttribBase(_NodeBase):
@@ -222,9 +230,13 @@ class _Attrib(_AttribBase):
     
 cdef _AttribBase _attribFactory(_ElementTreeBase etree, xmlNode* c_node):
     cdef _AttribBase result
+    result = etree.getProxy(<int>c_node, PROXY_ATTRIB)
+    if result is not None:
+        return result
     result = _Attrib()
     result._doc = etree
     result._c_node = c_node
+    etree.registerProxy(result, PROXY_ATTRIB)
     return result
 
 cdef class _AttribIteratorBase(_NodeBase):
@@ -246,9 +258,13 @@ class _AttribIterator(_AttribIteratorBase):
 cdef _AttribIteratorBase _attribIteratorFactory(_ElementTreeBase etree,
                                                 xmlNode* c_node):
     cdef _AttribIteratorBase result
+    result = etree.getProxy(<int>c_node, PROXY_ATTRIB_ITER)
+    if result is not None:
+        return result
     result = _AttribIterator()
     result._doc = etree
     result._c_node = c_node
+    etree.registerProxy(result, PROXY_ATTRIB_ITER)
     return result
 
 cdef class _ElementIteratorBase(_NodeBase):
@@ -270,9 +286,13 @@ class _ElementIterator(_ElementIteratorBase):
 cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
                                                   xmlNode* c_node):
     cdef _ElementIteratorBase result
+    result = etree.getProxy(<int>c_node, PROXY_ELEMENT_ITER)
+    if result is not None:
+        return result
     result = _ElementIterator()
     result._doc = etree
     result._c_node = c_node
+    etree.registerProxy(result, PROXY_ELEMENT_ITER)
     return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
