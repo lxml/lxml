@@ -1,3 +1,4 @@
+
 cdef extern from "libxml/tree.h":
     ctypedef enum xmlElementType:
         XML_ELEMENT_NODE=           1
@@ -23,6 +24,7 @@ cdef extern from "libxml/tree.h":
 
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
+    ctypedef struct xmlDict
     
     ctypedef struct xmlNode:
         xmlElementType   type
@@ -45,6 +47,7 @@ cdef extern from "libxml/tree.h":
         xmlNode *next
         xmlNode *prev
         xmlDoc *doc
+        xmlDict* dict
         
     ctypedef struct xmlNs:
         char* href
@@ -59,7 +62,12 @@ cdef extern from "libxml/tree.h":
         xmlNode* next
         xmlNode* prev
         xmlDoc* doc
-        
+
+    ctypedef struct xmlParserCtxt:
+        xmlDoc* myDoc
+        xmlDict* dict
+        int wellFormed
+ 
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef xmlNode* xmlNewNode(xmlNs* ns, char* name)
     cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur)
@@ -78,9 +86,37 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlDocGetRootElement(xmlDoc* doc)
     cdef void xmlSetTreeDoc(xmlNode* tree, xmlDoc* doc)
     cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
-    
+
+cdef extern from "libxml/dict.h":
+    cdef xmlDict* xmlDictFree(xmlDict* sub)
+    cdef int xmlDictReference(xmlDict* dict)
+
 cdef extern from "libxml/parser.h":
-    cdef xmlDoc* xmlParseFile(char* filename)
+    
+    ctypedef enum xmlParserOption:
+        XML_PARSE_RECOVER = 1 # recover on errors
+        XML_PARSE_NOENT = 2 # substitute entities
+        XML_PARSE_DTDLOAD = 4 # load the external subset
+        XML_PARSE_DTDATTR = 8 # default DTD attributes
+        XML_PARSE_DTDVALID = 16 # validate with the DTD
+        XML_PARSE_NOERROR = 32 # suppress error reports
+        XML_PARSE_NOWARNING = 64 # suppress warning reports
+        XML_PARSE_PEDANTIC = 128 # pedantic error reporting
+        XML_PARSE_NOBLANKS = 256 # remove blank nodes
+        XML_PARSE_SAX1 = 512 # use the SAX1 interface internally
+        XML_PARSE_XINCLUDE = 1024 # Implement XInclude substitition
+        XML_PARSE_NONET = 2048 # Forbid network access
+        XML_PARSE_NODICT = 4096 # Do not reuse the context dictionnary
+        XML_PARSE_NSCLEAN = 8192 # remove redundant namespaces declarations
+        XML_PARSE_NOCDATA = 16384 # merge CDATA as text nodes
+        XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
+       
+    cdef void xmlInitParser()
+    cdef xmlParserCtxt* xmlCreateDocParserCtxt(char* cur)
+    cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
+    cdef int xmlParseDocument(xmlParserCtxt* ctxt)
+    cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    
     cdef xmlDoc* xmlParseDoc(char* cur)
 
 # the rules
@@ -381,9 +417,10 @@ def ElementTree(_Element element=None, file=None):
     if file is not None:
         # XXX read XML into memory not the fastest way to do this
         data = file.read()
-        c_doc = xmlParseDoc(data)
+        c_doc = theParser.parseDoc(data)
     else:
-        c_doc = xmlNewDoc("1.0")
+        c_doc = theParser.newDoc()
+    
     tree = _elementTreeFactory(c_doc)
 
     # XXX what if element and file are both not None?
@@ -396,7 +433,76 @@ def ElementTree(_Element element=None, file=None):
         element._doc = tree
     return tree
 
+cdef class Parser:
+
+    cdef xmlDict* _c_dict
+
+    def __init__(self):
+        self._c_dict = NULL
+
+    def __del__(self):
+        if self._c_dict is not NULL:
+            xmlDictFree(self._c_dict)
+        
+    cdef xmlDoc* parseDoc(self, text):
+        """Parse document, share dictionary if possible.
+        """
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+
+        xmlInitParser()
+        pctxt = xmlCreateDocParserCtxt(text)
+        
+        if self._c_dict is not NULL and pctxt.dict is not NULL:
+            xmlDictFree(pctxt.dict)
+            pctxt.dict = self._c_dict
+            xmlDictReference(pctxt.dict)
+
+        # parse with the following options
+        # * substitute entities
+        # * no network access
+        # * no cdata nodes
+        xmlCtxtUseOptions(
+            pctxt,
+            XML_PARSE_NOENT | XML_PARSE_NOENT | XML_PARSE_NOCDATA)
+
+        xmlParseDocument(pctxt)
+
+        if pctxt.wellFormed:
+            result = pctxt.myDoc
+
+            # store dict of last object parsed if no shared dict yet
+            if self._c_dict is NULL:
+                self._c_dict = result.dict
+                xmlDictReference(self._c_dict)
+        else:
+            result = NULL
+            if pctxt.myDoc is not NULL:
+                xmlFreeDoc(pctxt.myDoc)
+            pctxt.myDoc = NULL
+        xmlFreeParserCtxt(pctxt)
+
+        return result
+
+    cdef xmlDoc* newDoc(self):
+        cdef xmlDoc* result
+        
+        result = xmlNewDoc("1.0")
+        if self._c_dict is not NULL and result.dict is not NULL:
+            xmlDictFree(result.dict)
+            result.dict = self._c_dict
+            xmlDictReference(self._c_dict)
+            
+        if self._c_dict is NULL:
+            self._c_dict = result.dict
+            xmlDictReference(self._c_dict)
+        return result
+    
+# globally shared parser
+cdef Parser theParser
+theParser = Parser()
+    
 def XML(text):
     cdef xmlDoc* c_doc
-    c_doc = xmlParseDoc(text)
+    c_doc = theParser.parseDoc(text)
     return _elementTreeFactory(c_doc).getroot()
