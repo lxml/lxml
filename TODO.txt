@@ -22,10 +22,6 @@ In general
 
 * namespaces
 
-* make various functions work correctly in the presence of
-  non-XML_ELEMENT_NODE elements like Comments and Processing
-  Instructions.
-
 Top level
 ---------
 
@@ -39,10 +35,6 @@ Top level
 
 ElementInterface
 -----------------
-
-* __delslice__
-
-* __setslice__
 
 * find()
 
@@ -63,8 +55,6 @@ ElementTree
 
 * findtext()
 
-* getiterator()
-
 * parse()
 
 * improve write() support
@@ -83,4 +73,3 @@ XMLTreeBuilder
 --------------
 
 Not yet implemented.
-
