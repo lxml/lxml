@@ -1,0 +1,4 @@
+* What if you append/set an element from another tree, but are holding
+  a reference to a subelement that is not in this tree? Currently this
+  reference would still be pointing to the old tree, which is not the
+  expected semantics. 
