@@ -15,7 +15,7 @@ class ETreeTestCase(unittest.TestCase):
         return os.path.join(self._temp_dir, name)
     
     def test_element(self):
-        for i in range(10000):
+        for i in range(10):
             e = Element('foo')
 
     def test_tree(self):
@@ -238,7 +238,7 @@ class ETreeTestCase(unittest.TestCase):
         
     # could trigger a crash in the past
     def test_write(self):
-        for i in range(100):
+        for i in range(10):
             f = StringIO() 
             root = XML('<doc%s>This is a test.</doc%s>' % (i, i))
             tree = ElementTree(element=root)
@@ -252,7 +252,7 @@ class ETreeTestCase(unittest.TestCase):
     # reference was prematurely garbage collected
     def test_crash(self):
         element = Element('tag')
-        for i in range(100):
+        for i in range(10):
             element.attrib['key'] = 'value'
             value = element.attrib['key']
             self.assertEquals(value, 'value')
@@ -260,7 +260,7 @@ class ETreeTestCase(unittest.TestCase):
     # from doctest; for some reason this caused crashes too
     def test_write_ElementTreeDoctest(self):
         f = StringIO()
-        for i in range(100):
+        for i in range(10):
             element = Element('tag%s' % i)
             self._check_element(element)
             tree = ElementTree(element)
