@@ -1,15 +1,6 @@
 import os
 import sys
 
-# change these to your local installation of libxml2
-libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
-libxslt_include_dir = '/home/faassen/tmp/local/include/'
-include_dirs = [libxml2_include_dir, libxslt_include_dir]
-library_dirs = ['/home/faassen/tmp/local/lib']
-libraries = ['xml2', 'xslt']
-runtime_library_dirs = ['/home/faassen/tmp/local/lib']
-extra_compile_args = ['-w']
-
 # Provide a bunch of custom components that make it possible to build and
 # install non-.py files into the package destinations.
 from distutils import dir_util
@@ -119,16 +110,60 @@ class MyDistribution(Distribution):
         self.cmdclass['build_ext'] = MyExtBuilder
         self.cmdclass['install_lib'] = MyLibInstaller
 
+class Error(Exception):
+    pass
+
+def guess_include_dirs():
+    """Try guessing include dirs.
+    """
+    import os
+    wf, rf, ef = os.popen3('xml2-config --cflags')
+    flags = rf.read()
+    error = ef.read()
+    if error:
+        # cannot find it, just refuse to guess
+        raise Error, "Cannot guess libxml2 include dirs. Try configuring it manually."
+    # get all -I flags and return them
+    parts = flags.split()
+    result = []
+    for part in parts:
+        if part.startswith('-I'):
+            result.append(part[2:])
+    return result
+
+# if you want to configure include dir manually, you can do so here,
+# for instance:
+# include_dirs = ['/usr/include/libxml2']
+include_dirs = guess_include_dirs()
+
 ext_modules = [
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
               include_dirs=include_dirs,
-              runtime_library_dirs=runtime_library_dirs,
-              library_dirs=library_dirs,
-              libraries=libraries,
-              extra_compile_args = extra_compile_args
-              ),
+              libraries=['xml2', 'xslt'],
+              extra_compile_args=['-w'])
     ]
+
+# if compilation does not work for some reason, try the following:
+
+# change these to your local installation of libxml2
+# libxml2_include_dir = '/home/faassen/tmp/local/include/libxml2'
+# libxslt_include_dir = '/home/faassen/tmp/local/include/'
+# include_dirs = [libxml2_include_dir, libxslt_include_dir]
+# library_dirs = ['/home/faassen/tmp/local/lib']
+# libraries = ['xml2', 'xslt']
+# runtime_library_dirs = ['/home/faassen/tmp/local/lib']
+# extra_compile_args = ['-w']
+
+#    Extension('lxml.etree',
+#              sources=['src/lxml/etree.pyx'],
+#              include_dirs=include_dirs,
+#              runtime_library_dirs=runtime_library_dirs,
+#              library_dirs=library_dirs,
+#              libraries=libraries,
+#              extra_compile_args = extra_compile_args
+#              ),
+#    ]
 
 setup(name="lxml",
       version="0.1",
