@@ -296,6 +296,17 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals(
             'b',
             a[0].tag)
+
+    def test_set_text2(self):
+        a = Element('a')
+        a.text = 'hoi'
+        b = SubElement(a ,'b')
+        self.assertEquals(
+            'hoi',
+            a.text)
+        self.assertEquals(
+            'b',
+            a[0].tag)
         
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
