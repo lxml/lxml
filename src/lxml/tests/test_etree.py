@@ -458,7 +458,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
     if HAVE_ELEMENTTREE:
-       suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+        suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
     return suite
 
 if __name__ == '__main__':
