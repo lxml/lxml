@@ -26,7 +26,7 @@ cdef class DocumentProxyBase:
         
 cdef class NodeProxyBase:           
     def __dealloc__(self):
-        # print "Trying to wipe out:", self
+        # print "Trying to wipe out:", self, self._c_node.name
         self._doc._registry.attemptDeallocation(self._c_node)
 
 cdef class NodeRegistry:
@@ -106,6 +106,15 @@ cdef class NodeRegistry:
                 return NULL
             c_top = c_current
             c_current = c_current.parent
+        # if the top is not c_node, check whether it has node;
+        # if the top is the node we're checking, then we *can*
+        # still deallocate safely
+        if c_top is not c_node:
+            id = <int>c_top
+            proxies = self._proxies
+            for proxy_type in self._proxy_types:
+                if proxies.has_key((id, proxy_type)):
+                    return NULL
         # otherwise, see whether we have children to deallocate
         if self.canDeallocateChildren(c_top):
             return c_top
@@ -116,7 +125,7 @@ cdef class NodeRegistry:
         cdef xmlNode* c_current
         proxies = self._proxies
         proxy_types = self._proxy_types
-
+        # print "checking childNodes"
         c_current = c_node.children
         while c_current is not NULL:
             id = <int>c_current
@@ -132,7 +141,7 @@ cdef class NodeRegistry:
         cdef xmlAttr* c_current
         proxies = self._proxies
         proxy_types = self._proxy_types
-        
+        # print "checking attributes"
         c_current = c_node.properties
         while c_current is not NULL:
             id = <int>c_current
@@ -151,7 +160,7 @@ cdef class NodeRegistry:
         # the current implementation is inefficient as it does a
         # tree traversal to find out whether there are any node proxies
         # we could improve this by a smarter datastructure
-        
+        # print "checking children"
         # check children
         if not self.canDeallocateChildNodes(c_node):
             return 0        
