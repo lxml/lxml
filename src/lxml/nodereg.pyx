@@ -6,22 +6,28 @@ cdef class DocumentProxyBase:
     def __init__(self):
         self._registry = NodeRegistry()
         
-    cdef object getProxy(self, xmlNode* c_node):
-        return self._registry.getProxy(c_node)
+    def getProxy(self, id):
+        # XXX This cannot be a cdef, as this apparently strips off the
+        # weakref functionality from the returned object, possibly
+        # by the cast to NodeProxyBase, which is not yet weakreffable
+        return self._registry.getProxy(id)
 
     def registerProxy(self, NodeProxyBase proxy):
         self._registry.registerProxy(proxy)
+
+    def getProxies(self):
+        return self._registry._proxies
         
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        #print "free doc"
+        # print "free doc"
         tree.xmlFreeDoc(self._c_doc)
         
 cdef class NodeProxyBase:           
     def __dealloc__(self):
-        #print "Trying to wipe out:", self._c_node.name
+        # print "Trying to wipe out:", self._c_node.name
         self._doc._registry.attemptDeallocation(self._c_node)
 
 cdef class NodeRegistry:
@@ -53,10 +59,13 @@ cdef class NodeRegistry:
     def __init__(self):
         self._proxies = weakref.WeakValueDictionary()
         
-    cdef NodeProxyBase getProxy(self, xmlNode* c_node):
+    def getProxy(self, id):
         """Given an xmlNode, return node proxy, or None if no proxy yet.
         """
-        return self._proxies.get(<int>c_node, None)
+        # XXX This cannot be a cdef, as this apparently strips off the
+        # weakref functionality from the returned object, possibly
+        # by the cast to NodeProxyBase, which is not yet weakreffable
+        return self._proxies.get(id, None)
  
     cdef void registerProxy(self, NodeProxyBase proxy):
         """Register a proxy with the registry.
