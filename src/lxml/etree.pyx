@@ -14,15 +14,35 @@ PROXY_ELEMENT_ITER = 3
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
-    
-cdef class _DocumentBase(nodereg.DocumentProxyBase):
+
+cdef nodereg.NodeRegistry node_registry
+node_registry = nodereg.NodeRegistry()
+
+cdef class _DocumentBase(nodereg.SimpleDocumentProxyBase):
     """Base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
     """
-    
-cdef class _NodeBase(nodereg.NodeProxyBase):
+    def getProxy(self, id, proxy_type=0):
+        return node_registry.getProxy(id, proxy_type)
+
+    def registerProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type=0):
+        node_registry.registerProxy(proxy, proxy_type)
+
+    def unregisterProxy(self, nodereg.SimpleNodeProxyBase proxy, proxy_type):
+        node_registry.unregisterProxy(proxy, proxy_type)
+
+    def getProxies(self):
+        return node_registry._proxies
+        
+    def __dealloc__(self):
+        # if there are no more references to the document, it is safe
+        # to clean the whole thing up, as all nodes have a reference to
+        # the document
+        tree.xmlFreeDoc(self._c_doc)
+        
+cdef class _NodeBase(nodereg.SimpleNodeProxyBase):
     """Base class to reference a document object and a libxml node.
 
     By pointing to an ElementTree instance, a reference is kept to
@@ -249,7 +269,9 @@ cdef class _AttribIteratorBase(_NodeBase):
             c_node = c_node.next
         else:
             raise StopIteration
+        self._doc.unregisterProxy(self, PROXY_ATTRIB_ITER)
         self._c_node = c_node.next
+        self._doc.registerProxy(self, PROXY_ATTRIB_ITER)
         return unicode(c_node.name, 'UTF-8')
 
 class _AttribIterator(_AttribIteratorBase):
@@ -277,7 +299,9 @@ cdef class _ElementIteratorBase(_NodeBase):
             c_node = c_node.next
         else:
             raise StopIteration
+        self._doc.unregisterProxy(self, PROXY_ELEMENT_ITER)
         self._c_node = c_node.next
+        self._doc.registerProxy(self, PROXY_ELEMENT_ITER)
         return _elementFactory(self._doc, c_node)
 
 class _ElementIterator(_ElementIteratorBase):

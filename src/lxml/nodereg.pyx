@@ -1,7 +1,10 @@
 from tree cimport xmlNode, xmlDoc, xmlAttr
 import weakref
-    
-cdef class DocumentProxyBase:
+
+cdef class SimpleDocumentProxyBase:
+    pass
+
+cdef class DocumentProxyBase(SimpleDocumentProxyBase):
     def __init__(self):
         self._registry = NodeRegistry()
         
@@ -11,9 +14,14 @@ cdef class DocumentProxyBase:
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._registry.getProxy(id, proxy_type)
 
-    def registerProxy(self, ProxyBase proxy, proxy_type=0):
+    def registerProxy(self, SimpleNodeProxyBase proxy, proxy_type=0):
         self._registry.registerProxy(proxy, proxy_type)
 
+    def unregisterProxy(self, SimpleNodeProxyBase proxy, proxy_type):
+        """Unregister a proxy again for a particular node.
+        """
+        self._registry.unregisterProxy(proxy, proxy_type)
+        
     def getProxies(self):
         return self._registry._proxies
         
@@ -24,19 +32,20 @@ cdef class DocumentProxyBase:
         # print "free doc"
         tree.xmlFreeDoc(self._c_doc)
 
-
-cdef class ProxyBase:
+cdef class SimpleNodeProxyBase:
     """Policy-less base class, which can be used by extensions.
 
     For instance if a global node registry is needed instead of a
     document-local one.
     """
 
-cdef class NodeProxyBase(ProxyBase):           
+cdef class NodeProxyBase(SimpleNodeProxyBase):
     def __dealloc__(self):
         # print "Trying to wipe out:", self, self._c_node.name
-        self._doc._registry.attemptDeallocation(self._c_node)
-
+        cdef NodeRegistry reg
+        reg = self._doc._registry
+        reg.attemptDeallocation(self._c_node)
+        
 cdef class NodeRegistry:
     """A registry of Python-level proxies for libxml2 nodes.
 
@@ -76,7 +85,7 @@ cdef class NodeRegistry:
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._proxies.get((id, proxy_type), None)
  
-    cdef void registerProxy(self, ProxyBase proxy, int proxy_type):
+    cdef void registerProxy(self, SimpleNodeProxyBase proxy, int proxy_type):
         """Register a proxy with the registry.
         """
         cdef xmlNode* c_node
@@ -86,7 +95,10 @@ cdef class NodeRegistry:
             self._proxy_types.append(proxy_type)
         self._proxies[(<int>c_node, proxy_type)] = proxy
 
-    cdef attemptDeallocation(self, xmlNode* c_node):
+    def unregisterProxy(self, SimpleNodeProxyBase proxy, proxy_type):
+        del self._proxies[(<int>proxy._c_node, proxy_type)]
+        
+    cdef void attemptDeallocation(self, xmlNode* c_node):
         """Attempt deallocation of c_node (or higher up in tree).
         """
         cdef xmlNode* c_top
