@@ -49,6 +49,9 @@ cdef object _nodeFactory(DocumentBase doc, xmlNode* c_node):
         return doc
     
 cdef class Node(nodereg.NodeProxyBase):
+
+    def getFirstChild(self):
+        return _nodeFactory(self._doc, self._c_node.children)
     
     property parentNode:
         def __get__(self):
@@ -106,12 +109,14 @@ class Element(ElementBase):
     
 cdef _elementFactory(DocumentBase doc, xmlNode* c_node):
     cdef ElementBase result
-    result = doc._registry.getProxy(c_node)
+    result = doc._registry.getProxy(<int>c_node)
     if result is not None:
+        # print "returning proxy:", result.nodeName
         return result
     result = Element()
     result._doc = doc
     result._c_node = c_node
+    # print "regi proxy:", result.nodeName
     doc._registry.registerProxy(result)
     return result   
 

@@ -8,7 +8,7 @@ cdef class DocumentProxyBase:
     cdef xmlDoc* _c_doc
     cdef NodeRegistry _registry
 
-    cdef object getProxy(self, xmlNode* c_node)
+    #cdef object getProxy(self, xmlNode* c_node)
 
 cdef class NodeProxyBase:
     cdef DocumentProxyBase _doc
@@ -17,7 +17,7 @@ cdef class NodeProxyBase:
 cdef class NodeRegistry:
     cdef object _proxies
 
-    cdef NodeProxyBase getProxy(self, xmlNode* c_node)
+    #cdef NodeProxyBase getProxy(self, xmlNode* c_node)
     cdef void registerProxy(self, NodeProxyBase proxy)
     cdef attemptDeallocation(self, xmlNode* c_node)
     cdef xmlNode* getDeallocationTop(self, xmlNode* c_node)
