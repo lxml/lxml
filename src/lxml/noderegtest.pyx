@@ -23,6 +23,11 @@ cdef class DocumentBase(nodereg.DocumentProxyBase):
                 c_node = c_node.next
             return None
 
+    def createElementNS(self, namespaceURI, qualifiedName):
+        cdef xmlNode* c_node
+        c_node = tree.xmlNewDocNode(self._c_doc, NULL, qualifiedName, NULL)
+        return _elementFactory(self, c_node)
+        
 class Document(DocumentBase):
     __slots__ = ['__weakref__']
 
