@@ -41,6 +41,11 @@ used:
   contain a comment, the result contains a string as well, inside
   ``<!--`` and ``-->`` markers.
 
+Example::
+
+>>> doc = lxml.etree.parse('doc.xml')
+>>> doc.xpath('/foo/bar')
+
 XSLT class
 ----------
 
