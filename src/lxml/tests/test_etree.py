@@ -22,7 +22,7 @@ class ETreeTestCase(unittest.TestCase):
 
         element = Element('top')
         tree = ElementTree(element)
-        self.buildNodes(element, 10, 4)
+        self.buildNodes(element, 10, 3)
         f = open(self.getTestFilePath('testdump.xml'), 'w')
         tree.write(f, 'UTF-8')
         f.close()
