@@ -1,4 +1,0 @@
-global-include *.py *.pxi *.pyx
-recursive-include data *.xml
-include Makefile LICENSE.TXT README.TXT
-prune */.svn
