@@ -186,6 +186,7 @@ cdef class _ElementBase(_NodeBase):
                 if c == index:
                     tree.xmlReplaceNode(c_node, element._c_node)
                     node_registry.changeDocumentBelow(element, self._doc)
+                    break
                 c = c + 1
             c_node = c_node.next
         else:

@@ -480,7 +480,23 @@ class ETreeTestCaseBase(unittest.TestCase):
         # should not iterate
         for i in c:
             pass
-            
+
+    def test_setitem(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = Element('c')
+        a[0] = c
+        self.assertEquals(
+            c,
+            a[0])
+        self.assertEquals('<a><c></c></a>',
+                          self._writeElement(a))
+        self.assertEquals('<b></b>',
+                          self._writeElement(b))
+        
 # gives error in ElementTree
 ##     def test_comment_empty(self):
 ##         Element = self.etree.Element
