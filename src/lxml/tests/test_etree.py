@@ -242,6 +242,13 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    def test_fromstring(self):
+        fromstring = self.etree.fromstring
+
+        root = fromstring('<doc>This is a text.</doc>')
+        self.assertEquals(0, len(root))
+        self.assertEquals('This is a text.', root.text)
+        
     def test_iteration(self):
         XML = self.etree.XML
         

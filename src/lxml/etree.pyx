@@ -585,6 +585,8 @@ def XML(text):
     c_doc = theParser.parseDoc(text)
     return _elementTreeFactory(c_doc).getroot()
 
+fromstring = XML
+
 def dump(nodereg.SimpleNodeProxyBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
