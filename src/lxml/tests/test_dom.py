@@ -24,7 +24,16 @@ class DomTestCase(unittest.TestCase):
         self.assertEquals(
             'foo',
             node.prefix)
-        
+
+    def test_parentNode(self):
+        doc = makeDocument('<doc><entry/></doc>')
+        node = doc.childNodes[0]
+        node2 = node.childNodes[0]
+        self.assertEquals(
+            node,
+            node2.parentNode)
+        self.assert_(node2.parentNode != node2)
+            
                               
 def test_suite():
     suite = unittest.TestSuite()

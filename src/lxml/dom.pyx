@@ -99,7 +99,6 @@ cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlParseFile(char* filename)
     cdef xmlDoc* xmlParseDoc(char* cur)
     
-
 cdef class _DocumentBase:
     """Base class to reference a libxml document.
 
@@ -149,6 +148,12 @@ cdef class Node(_NodeBase):
         def __get__(self):
             return 9
 
+    def __cmp__(Node self, Node other):
+        if self._c_node is other._c_node:
+            return 0
+        else:
+            return 1
+    
 cdef class Element(Node):
 
     property childNodes:
@@ -175,7 +180,13 @@ cdef class Element(Node):
             if self._c_node.ns is NULL or self._c_node.ns.prefix is NULL:
                 return None
             return unicode(self._c_node.ns.prefix, 'UTF-8')
-        
+
+    property parentNode:
+        def __get__(self):
+            if self._c_node.parent is NULL:
+                return None
+            return _nodeFactory(self._doc, self._c_node.parent)
+    
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
