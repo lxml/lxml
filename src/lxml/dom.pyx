@@ -28,7 +28,11 @@ cdef extern from "libxml/tree.h":
 
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
-    
+
+    ctypedef struct xmlNs:
+        char* href
+        char* prefix
+
     ctypedef struct xmlNode:
         xmlElementType   type
         char   *name
@@ -40,6 +44,7 @@ cdef extern from "libxml/tree.h":
         xmlDoc *doc
         char *content
         xmlAttr* properties
+        xmlNs* ns
         
     ctypedef struct xmlDoc:
         xmlElementType type
@@ -50,11 +55,7 @@ cdef extern from "libxml/tree.h":
         xmlNode *next
         xmlNode *prev
         xmlDoc *doc
-        
-    ctypedef struct xmlNs:
-        char* href
-        char* prefix
-        
+                
     ctypedef struct xmlAttr:
         xmlElementType type
         char* name
@@ -74,8 +75,7 @@ cdef extern from "libxml/tree.h":
         xmlNode* next
         xmlNode* prev
         xmlDoc* doc
-        char* prefix
-        
+ 
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef xmlNode* xmlNewNode(xmlNs* ns, char* name)
     cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur)
@@ -172,15 +172,10 @@ cdef class Element(Node):
 
     property prefix:
         def __get__(self):
-            cdef char* prefix
-            cdef xmlElement* c_el
-            c_el = <xmlElement*>self._c_node
-            prefix = c_el.prefix
-            if prefix is NULL:
+            if self._c_node.ns is NULL or self._c_node.ns.prefix is NULL:
                 return None
-            else:
-                return unicode(prefix, 'UTF-8')
-
+            return unicode(self._c_node.ns.prefix, 'UTF-8')
+        
 cdef _elementFactory(Document doc, xmlNode* c_node):
     cdef Element result
     result = Element()
