@@ -118,6 +118,7 @@ cdef class _ElementBase(_NodeBase):
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError
+        _removeText(c_node.next)
         _removeNode(c_node)
 
 ##     def __setslice__(self, start, stop, value):

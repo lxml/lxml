@@ -629,6 +629,16 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<other><c></c></other>',
             self._writeElement(other))
 
+    def test_delitem_tail(self):
+        ElementTree = self.etree.ElementTree
+        f = StringIO('<a><b></b>B2<c></c>C2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        del a[0]
+        self.assertEquals(
+            '<a><c></c>C2</a>',
+            self._writeElement(a))
+        
     def test_clear(self):
         Element = self.etree.Element
      
@@ -663,6 +673,16 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('<b><c></c></b>',
                           self._writeElement(b))
 
+    def test_clear_tail(self):
+        ElementTree = self.etree.ElementTree
+        f = StringIO('<a><b></b>B2<c></c>C2</a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        a.clear()
+        self.assertEquals(
+            '<a></a>',
+            self._writeElement(a))
+        
     def test_insert(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
