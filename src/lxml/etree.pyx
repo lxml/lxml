@@ -118,21 +118,26 @@ cdef class _ElementBase(_NodeBase):
 
 ##     def __setslice__(self, start, stop, value):
 ##         cdef xmlNode* c_node
+##         cdef xmlNode* c_next
 ##         cdef xmlNode* c_start_node
 ##         cdef int c
+
 ##         c_node = _findChild(self._c_node, start)
 ##         if c_node is NULL:
-##             # append nodes at end
+##             # append nodes at end if we cannot find start
 ##             for node in value:
 ##                 self.append(node)
 ##             return
+##         # now start inserting nodes instead of nodes already there
 ##         c_start_node = c_node    
 ##         c = start
 ##         while c_node is not NULL and c < stop:
-##             tree.xmlAddPrevSibling(c_node, add_node)
-##             _removeNode(c_node)
-##             c = c + 1
-##             c_node = c_node.next
+##             c_next = c_node.next
+##             if _isElement(c_node):
+##                 tree.xmlAddPrevSibling(c_node, add_node)
+##                 _removeNode(c_node)
+##                 c = c + 1
+##             c_node = c_next
 ##         return result     
     
     def set(self, key, value):
@@ -147,13 +152,7 @@ cdef class _ElementBase(_NodeBase):
         tree.xmlUnlinkNode(element._c_node)
         # move node itself
         tree.xmlAddChild(self._c_node, element._c_node)
-        # tail support: look for any text nodes trailing this node and
-        # move them too
-        while c_next is not NULL and c_next.type == tree.XML_TEXT_NODE:
-            c_next2 = c_next.next
-            tree.xmlUnlinkNode(c_next)
-            tree.xmlAddChild(self._c_node, c_next)
-            c_next = c_next2
+        _moveTail(c_next, element._c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
         node_registry.changeDocumentBelow(element, self._doc)
@@ -176,16 +175,21 @@ cdef class _ElementBase(_NodeBase):
         while c_node is not NULL:
             c_node_next = c_node.next
             if _isElement(c_node):
+                _removeText(c_node_next)
+                c_node_next = c_node.next
                 _removeNode(c_node)
             c_node = c_node_next
 
     def insert(self, index, _ElementBase element):
         cdef xmlNode* c_node
+        cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             self.append(element)
             return
+        c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
+        _moveTail(c_next, element._c_node)
         node_registry.changeDocumentBelow(element, self._doc)
 
     def remove(self, _ElementBase element):
@@ -193,6 +197,7 @@ cdef class _ElementBase(_NodeBase):
         c_node = self._c_node.children
         while c_node is not NULL:
             if c_node is element._c_node:
+                _removeText(element._c_node.next)
                 tree.xmlUnlinkNode(element._c_node)
                 return
             c_node = c_node.next
@@ -887,6 +892,17 @@ cdef void _removeNode(xmlNode* c_node):
     tree.xmlUnlinkNode(c_node)
     if not node_registry.hasProxy(<int>c_node):
         tree.xmlFreeNode(c_node)
+
+cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
+    cdef xmlNode* c_next
+    # tail support: look for any text nodes trailing this node and
+    # move them too
+    while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
+        c_next = c_tail.next
+        tree.xmlUnlinkNode(c_tail)
+        tree.xmlAddNextSibling(c_target, c_tail)
+        c_target = c_tail
+        c_tail = c_next
 
 cdef int _isElement(xmlNode* c_node):
     return (c_node.type == tree.XML_ELEMENT_NODE or

@@ -707,6 +707,21 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<a><b></b><d></d><c></c></a>',
             self._writeElement(a))
+
+    def test_insert_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+
+        c = Element('c')
+        c.tail = 'C2'
+
+        a.insert(0, c)
+        self.assertEquals(
+            '<a><c></c>C2<b></b></a>',
+            self._writeElement(a))
         
     def test_remove(self):
         Element = self.etree.Element
@@ -735,6 +750,18 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertRaises(
             ValueError, a.remove, d)
 
+    def test_remove_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        b.tail = 'b2'
+        a.remove(b)
+        self.assertEquals(
+            '<a></a>',
+            self._writeElement(a))
+        
     def test_getchildren(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
