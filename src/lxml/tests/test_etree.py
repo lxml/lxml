@@ -129,6 +129,14 @@ class ETreeTestCase(unittest.TestCase):
         self.assertEquals('mixed', root[0].text)
         self.assertEquals(' content.', root[0].tail)
 
+    def test_ElementTree(self):
+        el = Element('hoi')
+        doc = ElementTree(el)
+        root = doc.getroot()
+        self.assertEquals(None, root.text)
+        self.assertEquals('hoi', root.tag)
+       
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
