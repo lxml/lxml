@@ -826,6 +826,16 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [a2],
             list(e.getiterator('a')))
+
+    def test_attribute_manipulation(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.attrib['foo'] = 'Foo'
+        a.attrib['bar'] = 'Bar'
+        self.assertEquals('Foo', a.attrib['foo'])
+        del a.attrib['foo']
+        self.assertRaises(KeyError, a.attrib.__getitem__, 'foo')
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

@@ -362,6 +362,14 @@ cdef class _AttribBase(_NodeBase):
         value = value.encode('UTF-8')
         tree.xmlSetProp(self._c_node, key, value)
 
+    def __delitem__(self, key):
+        cdef xmlAttr* c_attr
+        key = key.encode('UTF-8')
+        c_attr = tree.xmlHasProp(self._c_node, key)
+        if c_attr is NULL:
+            raise KeyError, key
+        tree.xmlRemoveProp(c_attr)
+        
     # ACCESSORS
     def __getitem__(self, key):
         cdef char* result
@@ -426,7 +434,7 @@ cdef class _AttribBase(_NodeBase):
                     ))
             c_node = c_node.next
         return result
-
+    
 class _Attrib(_AttribBase):
     __slots__ = ['__weakref__']
     
