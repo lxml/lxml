@@ -20,7 +20,9 @@ etree
 In general
 ----------
 
-* namespaces
+* test namespaces more in-depth
+
+* will namespaces nodes of unknown namespaces be added (and never freed?)
 
 Top level
 ---------
