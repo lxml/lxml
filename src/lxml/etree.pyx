@@ -114,8 +114,11 @@ cdef class _ElementBase(_NodeBase):
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError
-        tree.xmlUnlinkNode(c_node)
+        _removeNode(c_node)
 
+##     def __setslice__(self, start, stop, value):
+##         pass
+    
     def set(self, key, value):
         self.attrib[key] = value
         
@@ -157,7 +160,7 @@ cdef class _ElementBase(_NodeBase):
         while c_node is not NULL:
             c_node_next = c_node.next
             if c_node.type == tree.XML_ELEMENT_NODE:
-                tree.xmlUnlinkNode(c_node)
+                _removeNode(c_node)
             c_node = c_node_next
 
     def insert(self, index, _ElementBase element):
@@ -855,3 +858,11 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
             return c_node
         c_node = c_node.next
     return NULL
+
+cdef void _removeNode(xmlNode* c_node):
+    """Unlink and free a node if possible (nothing else refers to it).
+    """
+    tree.xmlUnlinkNode(c_node)
+    if not node_registry.hasProxy(<int>c_node):
+        tree.xmlFreeNode(c_node)
+        

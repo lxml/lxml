@@ -919,6 +919,25 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [b, c],
             a[-3:2])
+
+##     def test_setslice(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+
+##         a = Element('a')
+##         b = SubElement(a, 'b')
+##         c = SubElement(a, 'c')
+##         d = SubElement(a, 'd')
+
+##         e = Element('e')
+##         f = Element('f')
+##         g = Element('g')
+
+##         s = [e, f, g]
+##         a[1:2] = s
+##         self.assertEquals(
+##             [b, e, f, g, d],
+##             list(a))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

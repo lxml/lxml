@@ -85,6 +85,14 @@ cdef class NodeRegistry:
         # by the cast to NodeProxyBase, which is not yet weakreffable
         return self._proxies.get((id, proxy_type), None)
 
+    def hasProxy(self, id):
+        """Check whether there is any proxy for an xmlNode.
+        """
+        for proxy_type in self._proxy_types:
+            if self._proxies.has_key((id, proxy_type)):
+                return 1
+        return 0
+    
     cdef void changeDocumentBelow(self, SimpleNodeProxyBase proxy,
                                   SimpleDocumentProxyBase doc):
         """Alter doc pointer in all known nodes below node indicated by proxy.
