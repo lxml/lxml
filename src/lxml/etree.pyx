@@ -123,23 +123,11 @@ cdef class _ElementBase(_NodeBase):
 
     def __delslice__(self, start, stop):
         cdef xmlNode* c_node
-        cdef xmlNode* c_next
-        cdef int c
-
         c_node = _findChild(self._c_node, start)
-        if c_node is NULL:
-            return    
-        # now start deleting nodes
-        c = start
-        while c_node is not NULL and c < stop:
-            c_next = c_node.next
-            if _isElement(c_node):
-                _removeText(c_node.next)
-                c_next = c_node.next
-                _removeNode(c_node)
-                c = c + 1
-            c_node = c_next
-    
+        _deleteSlice(c_node, start, stop)
+        
+##    def __setslice__(self, start, stop, value):
+        
  ##    def __setslice__(self, start, stop, value):
 ##         cdef xmlNode* c_node
 ##         cdef xmlNode* c_next
@@ -932,3 +920,20 @@ cdef int _isElement(xmlNode* c_node):
     return (c_node.type == tree.XML_ELEMENT_NODE or
             c_node.type == tree.XML_COMMENT_NODE)
 
+cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
+    """Delete slice, starting with c_node, start counting at start, end at stop.
+    """
+    cdef xmlNode* c_next
+    cdef int c
+    if c_node is NULL:
+        return
+    # now start deleting nodes
+    c = start
+    while c_node is not NULL and c < stop:
+        c_next = c_node.next
+        if _isElement(c_node):
+            _removeText(c_node.next)
+            c_next = c_node.next
+            _removeNode(c_node)
+            c = c + 1
+        c_node = c_next
