@@ -11,6 +11,8 @@ cimport nodereg
 PROXY_ATTRIB = 1
 PROXY_ATTRIB_ITER = 2
 PROXY_ELEMENT_ITER = 3
+PROXY_DOCORDER_ITER = 4
+PROXY_DOCORDER_TOP_ITER = 5
 
 # the rules
 # any libxml C argument/variable is prefixed with c_
@@ -267,6 +269,19 @@ cdef class _ElementBase(_NodeBase):
             c_node = c_node.next
         return result
 
+    def getiterator(self, tag=None):
+        result = []
+        if tag == "*":
+            tag = None
+        if tag is None or self.tag == tag:
+            result.append(self)
+        for node in self:
+            result.extend(node.getiterator(tag))
+        return result
+
+        # XXX this doesn't work yet
+        # return _docOrderIteratorFactory(self._doc, self._c_node, tag)
+    
     def makeelement(self, tag, attrib):
         return Element(tag, attrib)
     
@@ -468,7 +483,8 @@ cdef class _ElementIteratorBase(_NodeBase):
             raise StopIteration
         self._doc.unregisterProxy(self, PROXY_ELEMENT_ITER)
         self._c_node = c_node.next
-        self._doc.registerProxy(self, PROXY_ELEMENT_ITER)
+        if self._c_node is not NULL:
+            self._doc.registerProxy(self, PROXY_ELEMENT_ITER)
         return _elementFactory(self._doc, c_node)
 
 class _ElementIterator(_ElementIteratorBase):
@@ -484,6 +500,74 @@ cdef _ElementIteratorBase _elementIteratorFactory(_ElementTreeBase etree,
     result._doc = etree
     result._c_node = c_node
     etree.registerProxy(result, PROXY_ELEMENT_ITER)
+    return result
+
+# XXX all rather too complicated, rethink
+cdef class _DocOrderIteratorBase(_NodeBase):
+    cdef xmlNode* _c_top
+    cdef object tag
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        cdef xmlNode* c_node
+        cdef xmlNode* c_next
+        c_node = self._c_node
+        if c_node is NULL:
+            raise StopIteration
+        self._doc.unregisterProxy(self, PROXY_DOCORDER_ITER)
+        c_next = self._nextHelper(c_node)
+        self._c_node = c_next
+        if c_next is not NULL:
+            self._doc.registerProxy(self, PROXY_DOCORDER_ITER)
+        return _elementFactory(self._doc, c_node)
+
+    cdef xmlNode* _nextHelper(self, xmlNode* c_node):
+        """Get next element in document order.
+        """
+        cdef xmlNode* c_next
+        # try to go down
+        c_next = c_node.children
+        if c_next is not NULL:
+            if c_next.type == tree.XML_ELEMENT_NODE:
+                return c_next
+            else:
+                c_next = _nextElement(c_next)
+                if c_next is not NULL:
+                    return c_next
+        # cannot go down
+        while 1:
+            # try to go next
+            c_next = _nextElement(c_node) 
+            if c_next is not NULL:
+                return c_next
+            else:
+                # cannot go next, go up, then next
+                c_node = c_node.parent
+                if c_node is self._c_top:
+                    break
+        # cannot go up, return NULL
+        return NULL
+    
+class _DocOrderIterator(_DocOrderIteratorBase):
+    __slots__ = ['__weakref__']
+    
+cdef _DocOrderIteratorBase _docOrderIteratorFactory(_ElementTreeBase etree,
+                                                    xmlNode* c_node,
+                                                    tag):
+    cdef _DocOrderIteratorBase result
+    # XXX this is wrong..
+    result = etree.getProxy(<int>c_node, PROXY_DOCORDER_TOP_ITER)
+    if result is not None:
+        return result
+    result = _DocOrderIterator()
+    result._doc = etree
+    result._c_node = c_node
+    result._c_top = c_node
+    result._tag = tag
+    etree.registerProxy(result, PROXY_DOCORDER_TOP_ITER)
+    etree.registerProxy(result, PROXY_DOCORDER_ITER)
     return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
@@ -710,3 +794,13 @@ cdef xmlNode* _findChild(xmlNode* c_node, int index):
         c_child = c_child.next
     else:
         return NULL
+    
+cdef xmlNode* _nextElement(xmlNode* c_node):
+    """Given a node, find the next sibling that is an element.
+    """
+    c_node = c_node.next
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            return c_node
+        c_node = c_node.next
+    return NULL

@@ -732,6 +732,100 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '<c hoi="dag"></c>',
             self._writeElement(b))
+
+    def test_getiterator(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [a, b, d, c, e],
+            list(a.getiterator()))
+        self.assertEquals(
+            [d],
+            list(d.getiterator()))
+
+##     def test_getiterator_filter(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+
+##         a = Element('a')
+##         b = SubElement(a, 'b')
+##         c = SubElement(a, 'c')
+##         d = SubElement(b, 'd')
+##         e = SubElement(c, 'e')
+
+##         self.assertEquals(
+##             [a],
+##             list(a.getiterator('a')))
+##         a2 = SubElement(e, 'a')
+##         self.assertEquals(
+##             [a, a2],
+##             list(a.getiterator('a')))
+##         self.assertEquals(
+##             [a2],
+##             list(e.getiterator('a'))) 
+
+    def test_getiterator_with_text(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.text = 'a'
+        b = SubElement(a, 'b')
+        b.text = 'b'
+        b.tail = 'b1'
+        c = SubElement(a, 'c')
+        c.text = 'c'
+        c.tail = 'c1'
+        d = SubElement(b, 'd')
+        c.text = 'd'
+        c.tail = 'd1'
+        e = SubElement(c, 'e')
+        e.text = 'e'
+        e.tail = 'e1'
+
+        self.assertEquals(
+            [a, b, d, c, e],
+            list(a.getiterator()))
+        #self.assertEquals(
+        #    [d],
+        #    list(d.getiterator()))
+
+##     def test_getiterator_filter_with_text(self):
+##         Element = self.etree.Element
+##         SubElement = self.etree.SubElement
+
+##         a = Element('a')
+##         a.text = 'a'
+##         b = SubElement(a, 'b')
+##         b.text = 'b'
+##         b.tail = 'b1'
+##         c = SubElement(a, 'c')
+##         c.text = 'c'
+##         c.tail = 'c1'
+##         d = SubElement(b, 'd')
+##         c.text = 'd'
+##         c.tail = 'd1'
+##         e = SubElement(c, 'e')
+##         e.text = 'e'
+##         e.tail = 'e1'
+
+##         self.assertEquals(
+##             [a],
+##             list(a.getiterator('a')))
+##         a2 = SubElement(e, 'a')
+##         self.assertEquals(
+##             [a, a2],
+##             list(a.getiterator('a')))   
+##         self.assertEquals(
+##             [a2],
+##             list(e.getiterator('a')))
         
 # TypeError in etree, AssertionError in ElementTree; difference deemed to be acceptable for now
 ##     def test_setitem_assert(self):

@@ -45,11 +45,9 @@ ElementInterface
 
 * findtext()
 
-* getiterator()
+* deleting attributes
 
-* makeelement()
-
-* deleting attributes (is this possible with ElementTree?)
+* improve getiterator() implementation to use Python-level iterators
 
 ElementTree
 -----------
