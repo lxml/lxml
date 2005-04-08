@@ -9,19 +9,19 @@ differences and incompatibilities exist:
   package name, while ElementTree a combination of upper-case and
   lower case in imports::
 
-  # etree
-  from lxml.etree import Element
+    # etree
+    from lxml.etree import Element
 
-  # ElementTree
-  from elementtree.ElementTree import Element
+    # ElementTree
+    from elementtree.ElementTree import Element
 
   When switching over code from ElementTree to etree, and you're using
   the package name prefix 'ElementTree', you can do the following::
 
-  # instead of
-  from elementtree import ElementTree
-  # use
-  from lxml import etree as ElementTree
+    # instead of
+    from elementtree import ElementTree
+    # use
+    from lxml import etree as ElementTree
 
 * ElementTree has a bug when serializing an empty Comment (no text
   argument given) to XML, etree serializes this successfully.
