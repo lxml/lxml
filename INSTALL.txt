@@ -1,7 +1,8 @@
 Installing lxml
 ===============
 
-Requirements:
+Requirements
+------------
 
 * libxml 2.2.16 (newer versions should work). It can be found here:
   http://xmlsoft.org/downloads.html
@@ -15,6 +16,9 @@ here:
 * http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
 You also need Python 2.3 (Python 2.4 also ought to work).
+
+Installation
+------------
 
 Type::
 
@@ -32,3 +36,26 @@ or just::
 
 This will not install lxml, but if you place lxml's "src" on your
 PYTHONPATH somehow, you can import it and play with it.
+
+Troubleshooting
+---------------
+
+lxml's setup.py tries to be smart and uses libxml2's xml2-config to
+find the installation path of libxml2. If this cannot be found or
+doesn't work for some reason or another, try editing the setup.py,
+by changing this::
+
+  # if you want to configure include dir manually, you can do so here,
+  # for instance:
+  # include_dirs = ['/usr/include/libxml2']
+  include_dirs = guess_include_dirs()
+
+Into something like this::
+  
+  include_dirs = ['/usr/include/libxml2']
+
+If that still doesn't work, try registering the extension in a
+different way entirely; there's a commented block of code at the
+bottom of setup.py with an example.
+
+
