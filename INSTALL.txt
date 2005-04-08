@@ -4,6 +4,8 @@ Installing lxml
 Requirements
 ------------
 
+You need libxml2 and libxslt, in particular:
+
 * libxml 2.2.16 (newer versions should work). It can be found here:
   http://xmlsoft.org/downloads.html
 
