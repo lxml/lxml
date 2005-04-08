@@ -55,7 +55,20 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
+Download
+--------
+
+* `lxml 0.5`_ (2005-04-08)
+
+.. _`lxml 0.5`: lxml-0.5.tgz
+
+See also the `installation instructions`_.
+
+.. _`installation instructions`: installation.html
+
 License
 -------
 
-The lxml bindings are shipped under a BSD license.
+The lxml library is shipped under a BSD license. libxml2 and libxslt2
+itself are shipped under the MIT license. There should therefore be no
+obstacle to using lxml in your codebase.
