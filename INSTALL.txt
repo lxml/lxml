@@ -1,0 +1,34 @@
+Installing lxml
+===============
+
+Requirements:
+
+* libxml 2.2.16 (newer versions should work). It can be found here:
+  http://xmlsoft.org/downloads.html
+
+* libxslt 1.1.12 (newer versions should work). It can be found here:
+  http://xmlsoft.org/XSLT/downloads.html
+
+You also need Pyrex (0.9.3) to compile the software. It can be found
+here:
+
+* http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+
+You also need Python 2.3 (Python 2.4 also ought to work).
+
+Type::
+
+  python setup.py install
+
+to compile and install the library.
+
+It's also possible to do this::
+
+  python2.3 setup.py  build_ext -i
+
+or just::
+
+  make
+
+This will not install lxml, but if you place lxml's "src" on your
+PYTHONPATH somehow, you can import it and play with it.
