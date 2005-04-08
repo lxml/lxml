@@ -1,0 +1,61 @@
+lxml
+====
+
+Introduction
+------------
+
+lxml is a Pythonic binding for the libxml2_ and libxslt_ libraries. See
+the introduction_ for more information about background and goals.
+
+.. _libxml2: http://xmlsoft.org
+
+.. _libxslt: http://xmlsoft.org/XSLT
+
+.. _introduction: intro.html
+
+News
+----
+
+* 2005-04-08: `lxml 0.5`_ released!
+
+.. _`lxml 0.5`: lxml-0.5.tgz
+
+Documentation
+-------------
+
+lxml follows the `ElementTree API`_ as much as possible, building it
+on top of the native libxml2 tree. See also the `ElementTree
+compatibility overview`_.
+
+lxml also `extends this API`_ to expose libxml2 and libxslt specific
+functionality, such as XPath_, `Relax NG`_, `XSLT`_, and
+`c14n`_. There is also more `detailed information`_ about what's
+possible with XPath.
+
+.. _`ElementTree API`: http://effbot.org/zone/element-index.htm
+
+.. _`ElementTree compatibility overview`: compatibility.html
+
+.. _`extends this API`: api.html
+
+.. _`detailed information`: xpath.html
+
+.. _XPath: http://www.w3.org/TR/xpath
+
+.. _`Relax NG`: http://www.relaxng.org/
+
+.. _`XSLT`: http://www.w3.org/TR/xslt
+
+.. _`c14n`: http://www.w3.org/TR/2001/REC-xml-c14n-20010315
+
+Mailing list
+------------
+
+Questions? Suggestions? Code to contribute? We have a `mailing list`_.
+
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+License
+-------
+
+The lxml bindings are shipped under a BSD license.
