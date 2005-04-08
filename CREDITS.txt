@@ -7,8 +7,6 @@ Marc-Antoine Parent - XPath extension function help and patches
 
 Paul Everitt - feedback on API design
 
-Philipp von Weitershausen and Holger Krekel - hosting it on codespeak.net
-
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:
@@ -18,6 +16,9 @@ Thanks also to:
 * Fredrik Lundh for the ElementTree API.
 
 * pyrex for the binding technology.
+
+* the codespeak crew, in particular Philipp von Weitershausen and
+  Holger Krekel for hosting it on codespeak.net
 
 * Infrae for initiating the project.
 
