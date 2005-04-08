@@ -60,4 +60,33 @@ If that still doesn't work, try registering the extension in a
 different way entirely; there's a commented block of code at the
 bottom of setup.py with an example.
 
+If you still have trouble, contact us on the `mailing list`_.
 
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+Running the tests
+-----------------
+
+You can run the main tests by using::
+
+  python test.py
+
+Alternatively, you can use::
+
+  make test
+
+To run the ElementTree and cElementTree compatibility tests, make sure
+you have lxml on your PYTHONPATH first, then run::
+
+  python2.3 selftest.py
+
+and::
+
+  python2.3 selftest2.py
+
+If the tests give failures, errors, or worse, segmentation faults,
+we'd really like to know. Please contact us on the `mailing list`_,
+and please specify the version of libxml2, libxslt and Python you were
+using.
+
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
