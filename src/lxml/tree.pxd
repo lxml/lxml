@@ -5,10 +5,9 @@ cdef extern from "stdio.h":
     cdef int strlen(char* s)
     
 cdef extern from "Python.h":
-    ctypedef struct PyFileObject
     ctypedef struct PyObject
     
-    cdef FILE* PyFile_AsFile(PyFileObject* p)
+    cdef FILE* PyFile_AsFile(PyObject* p)
     cdef int PyFile_Check(object p)
     cdef object PyFile_Name(object p)
     cdef void Py_INCREF(object o)

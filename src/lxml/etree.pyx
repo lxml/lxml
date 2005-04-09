@@ -1317,13 +1317,13 @@ theParser = Parser()
 
 # Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
-    cdef tree.PyFileObject* o
+    cdef tree.PyObject* o
     cdef tree.xmlOutputBuffer* c_buffer
     cdef xmlNode* c_next
     
     if not tree.PyFile_Check(f):
         raise ValueError, "Not a file"
-    o = <tree.PyFileObject*>f
+    o = <tree.PyObject*>f
     c_buffer = tree.xmlOutputBufferCreateFile(tree.PyFile_AsFile(o), NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, NULL)
     # dump next node if it's a text node
