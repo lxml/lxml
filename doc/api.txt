@@ -45,7 +45,7 @@ used:
 
 Example::
 
-  >>> import lxml
+  >>> import lxml.etree
   >>> from StringIO import StringIO
 
   >>> f = StringIO('<foo><bar></bar></foo>')
