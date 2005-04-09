@@ -1,11 +1,15 @@
-under development
------------------
+lxml changelog
+==============
+
+0.5.1 (2005-04-09)
+------------------
 
 * Python 2.2 compatibility fixes.
 
-* unicode fixes.
+* unicode fixes in Element() and Comment() as well as XML(); unicode
+  input wasn't properly being UTF-8 encoded.
 
-0.5
----
+0.5 (2005-04-08)
+----------------
 
 Initial public release.

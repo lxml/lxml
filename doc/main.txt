@@ -16,9 +16,15 @@ the introduction_ for more information about background and goals.
 News
 ----
 
+* 2005-04-09: `lxml 0.5.1`_ released (`changes for 0.5.1`_)
+
 * 2005-04-08: `lxml 0.5`_ released!
 
+.. _`lxml 0.5.11`: lxml-0.5.1.tgz
+
 .. _`lxml 0.5`: lxml-0.5.tgz
+
+.. _`CHANGES for 0.5.1`: changes-0.5.1.html
 
 Documentation
 -------------
@@ -58,7 +64,11 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 Download
 --------
 
+* `lxml 0.5.1`_ (2005-04-09)
+
 * `lxml 0.5`_ (2005-04-08)
+
+.. _`lxml 0.5.1`: lxml-0.5.1.tgz
 
 .. _`lxml 0.5`: lxml-0.5.tgz
 
