@@ -3,6 +3,8 @@ under development
 
 * Python 2.2 compatibility fixes.
 
+* unicode fixes.
+
 0.5
 ---
 

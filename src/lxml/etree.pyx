@@ -747,15 +747,18 @@ cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
     registerProxy(result, PROXY_ELEMENT_ITER)
     return result
 
-cdef xmlNode* _createElement(xmlDoc* c_doc, char* tag,
+cdef xmlNode* _createElement(xmlDoc* c_doc, object tag,
                              object attrib, object extra):
     cdef xmlNode* c_node
+    tag_utf = tag.encode('UTF-8')
     if attrib is None:
         attrib = {}
-    attrib.update(extra)    
-    c_node = tree.xmlNewDocNode(c_doc, NULL, tag, NULL)
+    attrib.update(extra)
+    c_node = tree.xmlNewDocNode(c_doc, NULL, tag_utf, NULL)
     for name, value in attrib.items():
-        tree.xmlNewProp(c_node, name, value)
+        name_utf = name.encode('UTF-8')
+        value_utf = value.encode('UTF-8')
+        tree.xmlNewProp(c_node, name_utf, value_utf)
     return c_node
 
 cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
@@ -782,7 +785,7 @@ def Comment(text=None):
     cdef _ElementTree etree
     if text is None:
         text = ''
-    text = ' %s ' % text
+    text = ' %s ' % text.encode('UTF-8')
     etree = ElementTree()
     c_node = _createComment(etree._c_doc, text)
     tree.xmlAddChild(<xmlNode*>etree._c_doc, c_node)
@@ -830,7 +833,7 @@ def ElementTree(_Element element=None, file=None):
 
 def XML(text):
     cdef xmlDoc* c_doc
-    c_doc = theParser.parseDoc(text)
+    c_doc = theParser.parseDoc(text.encode('UTF-8'))
     return _elementTreeFactory(c_doc).getroot()
 
 fromstring = XML

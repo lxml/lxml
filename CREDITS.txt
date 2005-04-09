@@ -7,6 +7,8 @@ Marc-Antoine Parent - XPath extension function help and patches
 
 Paul Clifford - Python 2.2 compatibility fixes
 
+Wade Leftwich - unicode bug reporting
+
 Paul Everitt - feedback on API design
 
 Victor Ng - Discussions on memory management strategies, vlibxml2
