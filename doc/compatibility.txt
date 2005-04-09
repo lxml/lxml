@@ -38,6 +38,3 @@ differences and incompatibilities exist:
   ElementTree tends to come up with its own prefixes (ns0, ns1,
   etc). When no namespace prefix is given however, etree creates
   ElementTree style prefixes as well.
-
-* etree delivers unicode strings whereas ElementTree often returns
-  ascii strings where this is enough.
