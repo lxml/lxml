@@ -113,33 +113,33 @@ class MyDistribution(Distribution):
 class Error(Exception):
     pass
 
-def guess_include_dirs():
-    """Try guessing include dirs.
-    """
-    import os
-    wf, rf, ef = os.popen3('xml2-config --cflags')
+def guess_dirs(xml2config_flags, flag):
+    wf, rf, ef = os.popen3('xml2-config %s' % xml2config_flags)
     flags = rf.read()
     error = ef.read()
     if error:
         # cannot find it, just refuse to guess
-        raise Error, "Cannot guess libxml2 include dirs. Try configuring it manually."
-    # get all -I flags and return them
+        raise Error, "Cannot guess libxml2 dirs. Try configuring it manually."
+    # get all returned flags and return them
     parts = flags.split()
     result = []
     for part in parts:
-        if part.startswith('-I'):
+        if part.startswith(flag):
             result.append(part[2:])
     return result
 
-# if you want to configure include dir manually, you can do so here,
-# for instance:
+# if you want to configure include and library dir manually, you can do
+# so here, for instance:
 # include_dirs = ['/usr/include/libxml2']
-include_dirs = guess_include_dirs()
+# library_dirs = ['/usr/lib']
+include_dirs = guess_dirs('--cflags', '-I')
+library_dirs = guess_dirs('--libs', '-L')
 
 ext_modules = [
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
               include_dirs=include_dirs,
+              library_dirs=library_dirs,
               libraries=['xml2', 'xslt'],
               extra_compile_args=['-w'])
     ]
