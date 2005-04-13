@@ -1,6 +1,13 @@
 lxml changelog
 ==============
 
+under development
+-----------------
+
+* Changed setup.py so that library_dirs is also guessed. This should
+  help with compilation on the Mac OS X platform, where otherwise the
+  wrong library (shipping with the OS) could be picked up.
+
 0.5.1 (2005-04-09)
 ------------------
 
