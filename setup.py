@@ -164,7 +164,9 @@ ext_modules = [
 #              extra_compile_args = extra_compile_args
 #              ),
 #    ]
-
+f = open('version.txt', 'r')
+version = f.read().strip()
+f.close()
 setup(name="lxml",
       version="0.1",
       maintainer="Infrae",
