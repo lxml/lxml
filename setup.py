@@ -168,7 +168,7 @@ f = open('version.txt', 'r')
 version = f.read().strip()
 f.close()
 setup(name="lxml",
-      version="0.1",
+      version=version,
       maintainer="Infrae",
       maintainer_email="faassen@infrae.com",
       ext_modules = ext_modules,
