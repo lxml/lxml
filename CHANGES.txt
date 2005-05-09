@@ -2,16 +2,24 @@ lxml changelog
 ==============
 
 under development
------------------
+=================
 
-* Tweaked setup.py so that it picks up the version from version.txt.
+Features
+--------
 
 * Changed setup.py so that library_dirs is also guessed. This should
   help with compilation on the Mac OS X platform, where otherwise the
   wrong library (shipping with the OS) could be picked up.
 
+* Tweaked setup.py so that it picks up the version from version.txt.
+
+Bugs
+----
+
+* Do the right thing when handling namespaced attributes.
+
 0.5.1 (2005-04-09)
-------------------
+==================
 
 * Python 2.2 compatibility fixes.
 
@@ -19,6 +27,6 @@ under development
   input wasn't properly being UTF-8 encoded.
 
 0.5 (2005-04-08)
-----------------
+================
 
 Initial public release.

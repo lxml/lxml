@@ -355,13 +355,8 @@ cdef class _Element(_NodeBase):
     # PROPERTIES
     property tag:
         def __get__(self):
-            if self._c_node.ns is NULL or self._c_node.ns.href is NULL:
-                return funicode(self._c_node.name)
-            else:
-                # XXX optimize
-                s = "{%s}%s" % (self._c_node.ns.href, self._c_node.name)
-                return funicode(s)
-
+            return _namespacedName(self._c_node)
+    
         def __set__(self, value):
             cdef xmlNs* c_ns
             ns, text = _getNsTag(value)
@@ -648,8 +643,7 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                # XXX namespaces {}
-                result.append(funicode(c_node.name))
+                result.append(_namespacedName(c_node))
             c_node = c_node.next
         return result
 
@@ -659,22 +653,27 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                result.append(
-                    funicode(tree.xmlGetNoNsProp(self._c_node, c_node.name))
-                    )
+                result.append(self._getValue(c_node))
             c_node = c_node.next
         return result
-        
+
+    cdef object _getValue(self, xmlNode* c_node):
+        if c_node.ns is NULL or c_node.ns.href is NULL:
+            value = tree.xmlGetNoNsProp(self._c_node, c_node.name)
+        else:
+            value = tree.xmlGetNsProp(
+                self._c_node, c_node.name, c_node.ns.href)
+        return funicode(value)
+    
     def items(self):
         result = []
         cdef xmlNode* c_node
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                # XXX namespaces {}
                 result.append((
-                    funicode(c_node.name),
-                    funicode(tree.xmlGetNoNsProp(self._c_node, c_node.name))
+                    _namespacedName(c_node),
+                    self._getValue(c_node)
                     ))
             c_node = c_node.next
         return result
@@ -1485,6 +1484,13 @@ cdef object funicode(char* s):
         return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
     return tree.PyString_FromStringAndSize(s, tree.strlen(s))
 
+cdef object _namespacedName(xmlNode* c_node):
+    if c_node.ns is NULL or c_node.ns.href is NULL:
+        return funicode(c_node.name)
+    else:
+        # XXX optimize
+        s = "{%s}%s" % (c_node.ns.href, c_node.name)
+        return funicode(s)
 
 def _getFilenameForFile(source):
     """Given a Python File object, give filename back.

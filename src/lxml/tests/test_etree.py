@@ -230,6 +230,15 @@ class ETreeTestCaseBase(unittest.TestCase):
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
+    def test_attribute_keys_ns(self):
+        XML = self.etree.XML
+
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        keys = root.keys()
+        keys.sort()
+        self.assertEquals(['bar', '{http://ns.codespeak.net/test}baz'],
+                          keys)
+        
     def test_attribute_values(self):
         XML = self.etree.XML
         
@@ -238,6 +247,15 @@ class ETreeTestCaseBase(unittest.TestCase):
         values.sort()
         self.assertEquals(['Alpha', 'Beta', 'Gamma'], values)
 
+    def test_attribute_values_ns(self):
+        XML = self.etree.XML
+        
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        values = root.attrib.values()
+        values.sort()
+        self.assertEquals(
+            ['Bar', 'Baz'], values)
+        
     def test_attribute_items(self):
         XML = self.etree.XML
         
@@ -251,6 +269,25 @@ class ETreeTestCaseBase(unittest.TestCase):
             ], 
             items)
 
+    def test_attribute_items_ns(self):
+        XML = self.etree.XML
+        
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        items = root.attrib.items()
+        items.sort()
+        self.assertEquals(
+            [('bar', 'Bar'), ('{http://ns.codespeak.net/test}baz', 'Baz')],
+            items)
+
+    def test_attribute_str(self):
+        XML = self.etree.XML
+        
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        # XXX hope this is not dependent on unpredictable attribute order
+        self.assertEquals(
+            "{'{http://ns.codespeak.net/test}baz': 'Baz', 'bar': 'Bar'}",
+            str(root.attrib))
+        
     def test_XML(self):
         XML = self.etree.XML
         
