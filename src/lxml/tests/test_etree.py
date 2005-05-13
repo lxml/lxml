@@ -1482,6 +1482,29 @@ class ETreeXSLTTestCase(HelperTestCase):
     def test_xslt_multiple_files(self):
         tree = etree.parse(fileInTestDir('test1.xslt'))
         st = etree.XSLT(tree)
+
+    def test_xslt_multiple_transforms(self):
+        xml = '<a/>'
+        xslt = '''\
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+    <xsl:template match="/">
+        <response>Some text</response>
+    </xsl:template>
+</xsl:stylesheet>
+'''
+        source = self.parse(xml)
+        styledoc = self.parse(xslt)
+        style = etree.XSLT(styledoc)
+        result = style.apply(source)
+
+        etree.tostring(result.getroot())
+        
+        source = self.parse(xml)
+        styledoc = self.parse(xslt)
+        style = etree.XSLT(styledoc)
+        result = style.apply(source)
+        
+        etree.tostring(result.getroot())
         
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):

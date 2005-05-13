@@ -13,6 +13,8 @@ Paul Everitt - bug reporting, feedback on API design
 
 Julien Anguenot - bug reporting
 
+Henrik Thostrup Jensen - bug reporting
+
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:

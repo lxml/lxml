@@ -18,6 +18,9 @@ Bugs
 
 * Do the right thing when handling namespaced attributes.
 
+* fix bug where tostring() moved nodes into new documents. tostring()
+  had very nasty side-effects before this fix, sorry!
+
 0.5.1 (2005-04-09)
 ==================
 

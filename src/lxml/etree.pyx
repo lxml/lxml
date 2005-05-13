@@ -843,9 +843,9 @@ def iselement(element):
 def dump(_NodeBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
-def tostring(element, encoding=None):
+def tostring(_Element element, encoding=None):
     f = StringIO()
-    ElementTree(element).write(f, encoding)
+    element._doc.write(f, encoding)
     return f.getvalue()
 
 def parse(source, parser=None):
