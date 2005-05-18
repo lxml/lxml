@@ -109,6 +109,35 @@ but can also be turned into an (XML or text) string using the style's
   >>> style.tostring(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
+It is also possible to pass parameters, in the form of XPath expressions,
+to the XSLT template::
+
+  >>> f = StringIO('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:template match="*" />
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="$a" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> xslt_doc = lxml.etree.parse(f)
+  >>> style = lxml.etree.XSLT(xslt_doc)
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = lxml.etree.parse(f)
+
+The parameters are passed as keyword parameters to ``apply``. First
+let's try passing in a simple string expression::
+
+  >>> result = style.apply(doc, a="'A'")
+  >>> style.tostring(result)
+  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+
+Let's try a non-string XPath expression now::
+
+  >>> result = style.apply(doc, a="/a/b/text()")
+  >>> style.tostring(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
 RelaxNG
 -------
 

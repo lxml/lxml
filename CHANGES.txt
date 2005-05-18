@@ -1,6 +1,15 @@
 lxml changelog
 ==============
 
+under development
+=================
+
+Features
+--------
+
+* parameters (XPath expressions) can now be passed to XSLT using
+  keyword parameters.
+
 0.6 (2005-05-14)
 ================
 

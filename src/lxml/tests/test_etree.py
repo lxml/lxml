@@ -1479,6 +1479,94 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
 
+    def test_xslt_parameters(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree, bar="'Bar'")
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>Bar</foo>
+''',
+                          st.tostring(res))
+        # apply without needed parameter will lead to XSLTApplyError
+        self.assertRaises(etree.XSLTApplyError,
+                          st.apply, tree)
+
+    def test_xslt_multiple_parameters(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+    <foo><xsl:value-of select="$baz" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree, bar="'Bar'", baz="'Baz'")
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>Bar</foo><foo>Baz</foo>
+''',
+                          st.tostring(res))
+        
+    def test_xslt_parameter_xpath(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree, bar="/a/b/text()")
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          st.tostring(res))
+
+        
+    def test_xslt_default_parameters(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:param name="bar" select="'Default'" />
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree, bar="'Bar'")
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>Bar</foo>
+''',
+                          st.tostring(res))
+        res = st.apply(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>Default</foo>
+''',
+                          st.tostring(res))
+        
     def test_xslt_multiple_files(self):
         tree = etree.parse(fileInTestDir('test1.xslt'))
         st = etree.XSLT(tree)

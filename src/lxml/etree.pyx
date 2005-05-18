@@ -52,7 +52,7 @@ class XSLTError(Error):
 class XSLTParseError(XSLTError):
     pass
 
-class XLSTApplyError(XSLTError):
+class XSLTApplyError(XSLTError):
     pass
 
 class XSLTSaveError(XSLTError):
@@ -1140,9 +1140,29 @@ cdef class XSLT:
         # this cleans up copy of doc as well
         xslt.xsltFreeStylesheet(self._c_style)
         
-    def apply(self, _ElementTree doc):
-        cdef xmlDoc* c_result 
-        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, NULL)
+    def apply(self, _ElementTree doc, **kw):
+        cdef xmlDoc* c_result
+        cdef char** params
+        cdef int i
+        cdef int j
+        if kw:
+            # allocate space for parameters
+            # * 2 as we want an entry for both key and value,
+            # and + 1 as array is NULL terminated
+            params = <char**>cstd.malloc(sizeof(char*) * (len(kw) * 2 + 1))
+            i = 0
+            for key, value in kw.items():
+                params[i] = key
+                i = i + 1
+                params[i] = value
+                i = i + 1
+            params[i] = NULL
+        else:
+            params = NULL
+        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, params)
+        if kw:
+            # deallocate space for parameters again
+            cstd.free(params)
         if c_result is NULL:
             raise XSLTApplyError, "Error applying stylesheet"
         # XXX should set special flag to indicate this is XSLT result
@@ -1540,8 +1560,8 @@ cdef struct _ProxyRef:
 ctypedef _ProxyRef ProxyRef
     
 # XXX not portable
-cdef int PROXYREF_SIZEOF
-PROXYREF_SIZEOF = 12
+#cdef int PROXYREF_SIZEOF
+#PROXYREF_SIZEOF = 12
 
 cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
     """Get a proxy for a given node and node type.
@@ -1564,7 +1584,7 @@ cdef ProxyRef* createProxyRef(_NodeBase proxy, int proxy_type):
     """Create a backpointer proxy refeference for a proxy and type.
     """
     cdef ProxyRef* result
-    result = <ProxyRef*>cstd.malloc(PROXYREF_SIZEOF)
+    result = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
     result.proxy = <tree.PyObject*>proxy
     result.type = proxy_type
     result.next = NULL
