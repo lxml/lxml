@@ -1146,12 +1146,19 @@ cdef class XSLT:
         cdef int i
         cdef int j
         if kw:
+            # encode as UTF-8; somehow can't put this in main params
+            # array construction loop..
+            new_kw = {}
+            for key, value in kw.items():
+                k = key.encode('UTF-8')
+                v = value.encode('UTF-8')
+                new_kw[k] = v
             # allocate space for parameters
             # * 2 as we want an entry for both key and value,
             # and + 1 as array is NULL terminated
             params = <char**>cstd.malloc(sizeof(char*) * (len(kw) * 2 + 1))
             i = 0
-            for key, value in kw.items():
+            for key, value in new_kw.items():
                 params[i] = key
                 i = i + 1
                 params[i] = value
@@ -1160,7 +1167,7 @@ cdef class XSLT:
         else:
             params = NULL
         c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, params)
-        if kw:
+        if params is not NULL:
             # deallocate space for parameters again
             cstd.free(params)
         if c_result is NULL:
@@ -1558,10 +1565,6 @@ cdef struct _ProxyRef:
     _ProxyRef* next
         
 ctypedef _ProxyRef ProxyRef
-    
-# XXX not portable
-#cdef int PROXYREF_SIZEOF
-#PROXYREF_SIZEOF = 12
 
 cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
     """Get a proxy for a given node and node type.
