@@ -10,6 +10,9 @@ Features
 * parameters (XPath expressions) can now be passed to XSLT using
   keyword parameters.
 
+* Added convenience xslt() function on tree. This is less efficient
+  than the XSLT object, but easier to write quick code.
+
 0.6 (2005-05-14)
 ================
 

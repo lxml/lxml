@@ -1593,6 +1593,23 @@ class ETreeXSLTTestCase(HelperTestCase):
         result = style.apply(source)
         
         etree.tostring(result.getroot())
+
+    def test_xslt_shortcut(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+    <foo><xsl:value-of select="$baz" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        result = tree.xslt(style, bar="'Bar'", baz="'Baz'")
+        self.assertEquals(
+            '<foo>Bar</foo>\n<foo>Baz</foo>',
+            etree.tostring(result.getroot()))
         
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):

@@ -138,6 +138,19 @@ Let's try a non-string XPath expression now::
   >>> style.tostring(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
+There's also a convenience method on the tree object for doing XSLT
+transformations. This is less efficient if you want to apply the same
+XSLT transformation to multiple documents, but is shorter to write::
+
+  >>> result = doc.xslt(xslt_doc, a="'A'")
+  >>> lxml.etree.tostring(result.getroot())
+  '<foo>A</foo>'
+
+A limitation is that the style object cannot be used to serialize to
+XML. The etree.tostring function can be used, but it does not take
+style rules into account, which matters in case of non-XML output
+among other things.
+
 RelaxNG
 -------
 

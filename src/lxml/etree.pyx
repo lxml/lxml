@@ -210,8 +210,27 @@ cdef class _ElementTree(_DocumentBase):
 
         In case of a list result, return Element for element nodes,
         string for text and attribute values.
+
+        Note: if you are going to apply multiple XPath expressions
+        against the same document, it is more efficient to use
+        XPathEvaluator directly.
         """
         return XPathEvaluator(self, namespaces).evaluate(path)
+
+    def xslt(self, xslt, **kw):
+        """Transform this document using other document.
+
+        xslt is a tree that should be XSLT
+        keyword parameters are XSLT transformation parameters.
+
+        Returns the transformed tree.
+
+        Note: if you are going to apply the same XSLT stylesheet against
+        multiple documents, it is more efficient to use the XSLT
+        class directly.
+        """
+        style = XSLT(xslt)
+        return style.apply(self, **kw)
     
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
