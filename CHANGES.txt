@@ -24,6 +24,10 @@ Bugs fixed
   problems when deallocating these documents later if they contained a
   node that came from a document with a dictionary.
 
+* Moving namespaced elements between documents was problematic as 
+  references to the original document would remain. This has been fixed
+  by applying xmlReconciliateNs() after each move operation.
+
 0.6 (2005-05-14)
 ================
 

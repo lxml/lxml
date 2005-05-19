@@ -1247,8 +1247,9 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('{%s}b' % ns2,
                           b.tag)
         self.assertEquals(
-            '<ns0:a xmlns:ns0="%s"><ns1:b xmlns:ns1="%s"></ns1:b></ns0:a>' % (ns, ns2),
-            self._writeElement(a))
+            '{%s}a' % ns, a.tag)
+        self.assertEquals(
+            '{%s}b' % ns2, b.tag)
 
     def test_ns_attr(self):
         Element = self.etree.Element
@@ -1267,6 +1268,21 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a xmlns:ns0="%s" xmlns:ns1="%s" ns0:foo="Foo" ns1:bar="Bar"></a>' % (ns, ns2),
             self._writeElement(a))
 
+    def test_ns_move(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+        
+        one = self.etree.parse(
+            StringIO('<foo><bar xmlns:ns="http://a.b.c"><ns:baz/></bar></foo>'))
+        baz = one.getroot()[0][0]
+
+        two = ElementTree(Element('root'))
+        two.getroot().append(baz)
+        # removing the originating document could cause a crash/error before
+        # as namespace is not moved along with it
+        del one
+        self.assertEquals('{http://a.b.c}baz', baz.tag)
+        
     def test_tostring(self):
         tostring = self.etree.tostring
         Element = self.etree.Element

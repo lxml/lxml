@@ -145,7 +145,8 @@ cdef extern from "libxml/tree.h":
                                 int format, char* encoding)
     cdef void xmlNodeSetName(xmlNode* cur, char* name)
     cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
-    
+    cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree)
+
 cdef extern from "libxml/xmlIO.h":
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
         FILE* file,

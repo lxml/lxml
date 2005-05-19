@@ -1681,8 +1681,14 @@ cdef void changeDocumentBelow(xmlNode* c_node,
 
     A node can change document in certain operations as an XML
     subtree can move. This updates all possible proxies in the
-    tree below (including the current node).
+    tree below (including the current node). It also reconciliates
+    namespaces so they're correct inside the new environment.
     """
+    changeDocumentBelowHelper(c_node, doc)
+    tree.xmlReconciliateNs(doc._c_doc, c_node)
+    
+cdef void changeDocumentBelowHelper(xmlNode* c_node,
+                                    _DocumentBase doc):
     cdef ProxyRef* ref
     cdef xmlNode* c_current
     cdef xmlAttr* c_attr_current
@@ -1703,13 +1709,13 @@ cdef void changeDocumentBelow(xmlNode* c_node,
     # adjust all children
     c_current = c_node.children
     while c_current is not NULL:
-        changeDocumentBelow(c_current, doc)
+        changeDocumentBelowHelper(c_current, doc)
         c_current = c_current.next
         
     # adjust all attributes
     c_attr_current = c_node.properties
     while c_attr_current is not NULL:
-        changeDocumentBelow(c_current, doc)
+        changeDocumentBelowHelper(c_current, doc)
         c_attr_current = c_attr_current.next
         
 cdef void attemptDeallocation(xmlNode* c_node):
