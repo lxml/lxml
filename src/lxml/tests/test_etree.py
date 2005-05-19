@@ -1437,6 +1437,12 @@ class ETreeOnlyTestCase(HelperTestCase):
             ' hoi ',
             a[1].text)
 
+    # test weird dictionary interaction leading to segfault previously
+    def test_weird_dict_interaction(self):
+        root = self.etree.Element('root')
+        add = self.etree.ElementTree(file=StringIO('<foo>Foo</foo>'))
+        root.append(self.etree.Element('baz'))
+        
     def _writeElement(self, element):
         """Write out element for comparison.
         """

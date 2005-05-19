@@ -4,8 +4,8 @@ lxml changelog
 under development
 =================
 
-Features
---------
+Features added
+--------------
 
 * parameters (XPath expressions) can now be passed to XSLT using
   keyword parameters.
@@ -13,11 +13,19 @@ Features
 * Added convenience xslt() function on tree. This is less efficient
   than the XSLT object, but easier to write quick code.
 
+Bugs fixed
+----------
+
+* Killed yet another memory management related bug: trees created
+  using newDoc would not get a libxml2-level dictionary, which caused
+  problems when deallocating these documents later if they contained a
+  node that came from a document with a dictionary.
+
 0.6 (2005-05-14)
 ================
 
-Features
---------
+Features added
+--------------
 
 * Changed setup.py so that library_dirs is also guessed. This should
   help with compilation on the Mac OS X platform, where otherwise the
@@ -25,8 +33,8 @@ Features
 
 * Tweaked setup.py so that it picks up the version from version.txt.
 
-Bugs
-----
+Bugs fixed
+----------
 
 * Do the right thing when handling namespaced attributes.
 

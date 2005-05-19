@@ -15,6 +15,8 @@ Julien Anguenot - bug reporting
 
 Henrik Thostrup Jensen - bug reporting
 
+Florian Wagner - bug reporting
+
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:

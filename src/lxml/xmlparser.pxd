@@ -2,8 +2,9 @@ from tree cimport xmlDoc, xmlDict
 from xmlerror cimport xmlError
 
 cdef extern from "libxml/parser.h":
-    
-    cdef xmlDict xmlDictFree(xmlDict* sub)
+
+    cdef xmlDict* xmlDictCreate()
+    cdef void xmlDictFree(xmlDict* sub)
     cdef int xmlDictReference(xmlDict* dict)
     
     ctypedef struct xmlParserCtxt:

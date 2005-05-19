@@ -1336,28 +1336,30 @@ cdef class Parser:
         if self._c_dict is NULL:
             #print "storing shared dict"
             self._c_dict = result.dict
-            xmlparser.xmlDictReference(self._c_dict)
+        xmlparser.xmlDictReference(self._c_dict)
     
     cdef xmlDoc* newDoc(self):
         cdef xmlDoc* result
-        #print "newDoc"
-        #if result.dict is NULL:
-        #    print "result.dict is NULL (!)"
+        cdef xmlDict* d
 
         result = tree.xmlNewDoc("1.0")
-        if result.dict is not NULL:
-            #print "freeing dictionary (newDoc)"
-            xmlparser.xmlDictFree(result.dict)
-            
-        if self._c_dict is not NULL:
-            #print "sharing dictionary (newDoc)"
-            result.dict = self._c_dict
-            xmlparser.xmlDictReference(self._c_dict)
-            
+
         if self._c_dict is NULL:
-            #print "add dictionary reference (newDoc)"
-            self._c_dict = result.dict
+            # we need to get dict from the new document if it's there,
+            # otherwise make one
+            if result.dict is not NULL:
+                d = result.dict
+            else:
+                d = xmlparser.xmlDictCreate()
+                result.dict = d
+            self._c_dict = d
             xmlparser.xmlDictReference(self._c_dict)
+        else:
+            # we need to reuse the central dict and get rid of the new one
+            if result.dict is not NULL:
+                xmlparser.xmlDictFree(result.dict)
+            result.dict = self._c_dict
+            xmlparser.xmlDictReference(result.dict)
         return result
 
 cdef Parser theParser
@@ -1673,6 +1675,8 @@ cdef void changeDocumentBelow(xmlNode* c_node,
 
     if c_node is NULL:
         return
+    # different _c_doc
+    c_node.doc = doc._c_doc
     
     if c_node._private is not NULL:
         ref = <ProxyRef*>c_node._private
