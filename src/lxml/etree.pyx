@@ -231,7 +231,22 @@ cdef class _ElementTree(_DocumentBase):
         """
         style = XSLT(xslt)
         return style.apply(self, **kw)
-    
+
+    def relaxng(self, relaxng):
+        """Validate this document using other document.
+
+        relaxng is a tree that should contain Relax NG XML
+
+        Returns True or False, depending on whether validation
+        succeeded.
+
+        Note: if you are going to apply the same Relax NG schema against
+        multiple documents, it is more efficient to use the RelaxNG
+        class directly.
+        """
+        schema = RelaxNG(relaxng)
+        return schema.validate(self)
+        
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
         """

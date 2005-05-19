@@ -183,6 +183,14 @@ false if not::
   >>> relaxng.validate(doc2)
   0
 
+Similar to XSLT, there's also a less efficient but easier shortcut
+method to do RelaxNG validation::
+
+  >>> doc.relaxng(relaxng_doc)
+  1
+  >>> doc2.relaxng(relaxng_doc)
+  0
+
 write_c14n on ElementTree
 -------------------------
 

@@ -10,8 +10,11 @@ Features added
 * parameters (XPath expressions) can now be passed to XSLT using
   keyword parameters.
 
-* Added convenience xslt() function on tree. This is less efficient
-  than the XSLT object, but easier to write quick code.
+* Added convenience xslt() method on tree. This is less efficient
+  than the XSLT object, but makes it easier to write quick code.
+
+* Added convenience relaxng() method on tree. This is less efficient
+  than the RelaxNG object, but makes it easier to write quick code.
 
 Bugs fixed
 ----------

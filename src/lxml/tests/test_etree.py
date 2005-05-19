@@ -1650,7 +1650,22 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         # file object..
         f = open(fileInTestDir('test1.rng'), 'r')
         schema = etree.RelaxNG(file=f)
-    
+
+    def test_relaxng_shortcut(self):
+        tree_valid = self.parse('<a><b></b></a>')
+        tree_invalid = self.parse('<a><c></c></a>')
+        schema = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+     <element name="b">
+       <text />
+     </element>
+  </zeroOrMore>
+</element>
+''')
+        self.assert_(tree_valid.relaxng(schema))
+        self.assert_(not tree_invalid.relaxng(schema))
+        
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):
         tree = self.parse('<a><b/></a>')
