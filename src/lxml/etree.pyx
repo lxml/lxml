@@ -5,6 +5,7 @@ cimport xpath
 cimport xslt
 cimport relaxng
 cimport xmlerror
+cimport xinclude
 cimport c14n
 cimport cstd
 import types
@@ -65,6 +66,9 @@ class RelaxNGParseError(RelaxNGError):
     pass
 
 class RelaxNGValidateError(RelaxNGError):
+    pass
+
+class XIncludeError(Error):
     pass
 
 class C14NError(Error):
@@ -246,6 +250,20 @@ cdef class _ElementTree(_DocumentBase):
         """
         schema = RelaxNG(relaxng)
         return schema.validate(self)
+
+    def xinclude(self):
+        """Process this document, including using XInclude.
+        """
+        cdef int result
+        # XXX what happens memory-wise with the original XInclude nodes?
+        # they seem to be still accessible if a reference to them has
+        # been made previously, but I have no idea whether they get freed
+        # at all. The XInclude nodes appear to be still being in the same
+        # parent and same document, but they must not be connected to the
+        # tree..
+        result = xinclude.xmlXIncludeProcess(self._c_doc)
+        if result == -1:
+            raise XIncludeError, "XInclude processing failed"
         
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.

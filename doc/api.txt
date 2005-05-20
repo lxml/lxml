@@ -191,6 +191,23 @@ method to do RelaxNG validation::
   >>> doc2.relaxng(relaxng_doc)
   0
 
+xinclude
+--------
+
+Simple XInclude support exists. You can make xinclude statements in a
+document be processed by calling the xinclude() method on a tree::
+
+  >>> data = StringIO('''\
+  ... <doc xmlns:xi="http://www.w3.org/2001/XInclude">
+  ... <foo/>
+  ... <xi:include href="doc/test.xml" />
+  ... </doc>''')
+
+  >>> tree = lxml.etree.parse(data)
+  >>> tree.xinclude()
+  >>> lxml.etree.tostring(tree.getroot())
+  '<doc xmlns:xi="http://www.w3.org/2001/XInclude">\n<foo/>\n<a xml:base="doc/test.xml"/>\n</doc>'
+
 write_c14n on ElementTree
 -------------------------
 

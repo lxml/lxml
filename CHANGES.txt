@@ -10,6 +10,9 @@ Features added
 * parameters (XPath expressions) can now be passed to XSLT using
   keyword parameters.
 
+* Simple XInclude support. Calling the xinclude() method on a tree
+  will process any XInclude statements in the document.
+
 * Added convenience xslt() method on tree. This is less efficient
   than the XSLT object, but makes it easier to write quick code.
 

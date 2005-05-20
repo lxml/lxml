@@ -1681,6 +1681,16 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 ''')
         self.assert_(tree_valid.relaxng(schema))
         self.assert_(not tree_invalid.relaxng(schema))
+
+class ETreeXIncludeTestCase(HelperTestCase):
+    def test_xinclude(self):
+        tree = etree.parse(fileInTestDir('test_xinclude.xml'))
+        # process xincludes
+        tree.xinclude()
+        # check whether we find it replaced with included data
+        self.assertEquals(
+            'a',
+            tree.getroot()[1].tag)
         
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):
@@ -1699,6 +1709,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/api.txt')])
