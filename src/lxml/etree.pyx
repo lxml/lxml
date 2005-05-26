@@ -948,16 +948,7 @@ cdef class XPathDocumentEvaluator:
         
         if namespaces is not None:
             for prefix, uri in namespaces.items():
-                s_prefix = prefix.encode('UTF8')
-                s_uri = uri.encode('UTF8')
-                ns_register_status = xpath.xmlXPathRegisterNs(
-                    xpathCtxt, s_prefix, s_uri)
-                if ns_register_status != 0:
-                    # XXX doesn't seem to be possible to trigger this
-                    # from Python
-                    raise XPathNamespaceError, (
-                        "Unable to register namespaces with prefix "
-                        "%s and uri %s" % (prefix, uri))
+                self.registerNamespace(prefix, uri)
         self._extension_functions = {}
         if extensions is not None:
             for extension in extensions:
@@ -973,6 +964,21 @@ cdef class XPathDocumentEvaluator:
     def __dealloc__(self):
         xpath.xmlXPathFreeContext(self._c_ctxt)
     
+    def registerNamespace(self, prefix, uri):
+        """Register a namespace with the XPath context.
+        """
+        s_prefix = prefix.encode('UTF8')
+        s_uri = uri.encode('UTF8')
+        # XXX should check be done to verify namespace doesn't already exist?
+        ns_register_status = xpath.xmlXPathRegisterNs(
+            self._c_ctxt, s_prefix, s_uri)
+        if ns_register_status != 0:
+            # XXX doesn't seem to be possible to trigger this
+            # from Python
+            raise XPathNamespaceError, (
+                "Unable to register namespaces with prefix "
+                "%s and uri %s" % (prefix, uri))
+        
     def evaluate(self, path):
         return self._evaluate(path, NULL)
 

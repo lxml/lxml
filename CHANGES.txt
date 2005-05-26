@@ -25,6 +25,9 @@ Features added
   replaces the second argument to the .evaluate() method that existed
   previously.
 
+* Allow registerNamespace() to be called on an XPathEvaluator, after
+  creation, to add additional namespaces.
+
 Bugs fixed
 ----------
 

@@ -95,6 +95,15 @@ from extension functions, such as numbers (floats) and booleans::
   >>> e.evaluate("returnsBool()")
   True
 
+It's also possible to register namespaces with a evaluator later on::
+  
+  >>> f = StringIO('<hey:a xmlns:hey="http://codespeak.net/ns/test" />')
+  >>> ns_doc = etree.parse(f)
+  >>> e = etree.XPathEvaluator(ns_doc)
+  >>> e.registerNamespace('foo', 'http://codespeak.net/ns/test')
+  >>> e.evaluate('/foo:a')[0].tag
+  '{http://codespeak.net/ns/test}a'
+
 Note: the following is rather shaky and like won't work yet in the real world.
 
 It is also possible to return lists of nodes, and this way it is possible
