@@ -947,8 +947,7 @@ cdef class XPathDocumentEvaluator:
         self._extensions = extensions
         
         if namespaces is not None:
-            for prefix, uri in namespaces.items():
-                self.registerNamespace(prefix, uri)
+            self.registerNamespaces(namespaces)
         self._extension_functions = {}
         if extensions is not None:
             for extension in extensions:
@@ -978,7 +977,13 @@ cdef class XPathDocumentEvaluator:
             raise XPathNamespaceError, (
                 "Unable to register namespaces with prefix "
                 "%s and uri %s" % (prefix, uri))
-        
+
+    def registerNamespaces(self, namespaces):
+        """Register a prefix -> uri dict.
+        """
+        for prefix, uri in namespaces.items():
+            self.registerNamespace(prefix, uri)
+    
     def evaluate(self, path):
         return self._evaluate(path, NULL)
 

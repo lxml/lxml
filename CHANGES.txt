@@ -26,7 +26,8 @@ Features added
   previously.
 
 * Allow registerNamespace() to be called on an XPathEvaluator, after
-  creation, to add additional namespaces.
+  creation, to add additional namespaces. Also allow registerNamespaces(),
+  which does the same for a namespace dictionary.
 
 Bugs fixed
 ----------
