@@ -219,7 +219,7 @@ cdef class _ElementTree(_DocumentBase):
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
-        return XPathEvaluator(self, namespaces).evaluate(path)
+        return XPathDocumentEvaluator(self, namespaces).evaluate(path)
 
     def xslt(self, xslt, **kw):
         """Transform this document using other document.
@@ -547,7 +547,7 @@ cdef class _Element(_NodeBase):
         return _elementpath.findall(self, path)
 
     def xpath(self, path, namespaces=None):
-        return XPathEvaluator(self._doc, namespaces).evaluate(path, self)
+        return XPathElementEvaluator(self, namespaces).evaluate(path)
 
 cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
     cdef _Element result
@@ -918,7 +918,7 @@ def parse(source, parser=None):
     result = _elementTreeFactory(c_doc)
     return result
 
-cdef class XPathEvaluator:
+cdef class XPathDocumentEvaluator:
     """Create an XPath evaluator for a document.
     """
     cdef xpath.xmlXPathContext* _c_ctxt
@@ -973,16 +973,16 @@ cdef class XPathEvaluator:
     def __dealloc__(self):
         xpath.xmlXPathFreeContext(self._c_ctxt)
     
-    def evaluate(self, path, _NodeBase element=None):
+    def evaluate(self, path):
+        return self._evaluate(path, NULL)
+
+    cdef object _evaluate(self, path, xmlNode* c_ctxt_node):
         cdef xpath.xmlXPathObject* xpathObj
         cdef xmlNode* c_node
+        
+        # if element context is requested; unfortunately need to modify ctxt
+        self._c_ctxt.node = c_ctxt_node
 
-        # element context is requested; unfortunately need to modify ctxt
-        if element is not None:
-            self._c_ctxt.node = element._c_node
-        else:
-            self._c_ctxt.node = NULL
-             
         path = path.encode('UTF-8')
         self._exc_info = None
         self._release()
@@ -1003,11 +1003,11 @@ cdef class XPathEvaluator:
         # release temporarily held python stuff
         #self._release()
         return result
-
-    def clone(self):
-        # XXX pretty expensive so calling this from callback is probably
-        # not desirable
-        return XPathEvaluator(self._doc, self._namespaces, self._extensions)
+        
+    #def clone(self):
+    #    # XXX pretty expensive so calling this from callback is probably
+    #    # not desirable
+    #    return XPathEvaluator(self._doc, self._namespaces, self._extensions)
 
     def _release(self):
         self._temp_elements = {}
@@ -1032,7 +1032,26 @@ cdef class XPathEvaluator:
                 self._temp_elements[id(element)] = element
                 #print "Holding document:", <int>element._doc._c_doc
                 self._temp_docs[id(element._doc)] = element._doc
-                
+
+cdef class XPathElementEvaluator(XPathDocumentEvaluator):
+    """Create an XPath evaluator for an element.
+    """
+    cdef _Element _element
+    
+    def __init__(self, _Element element, namespaces=None, extensions=None):
+        XPathDocumentEvaluator.__init__(
+            self, element._doc, namespaces, extensions)
+        self._element = element
+        
+    def evaluate(self, path):
+        return self._evaluate(path, self._element._c_node)
+
+def XPathEvaluator(doc_or_element, namespaces=None, extensions=None):
+    if isinstance(doc_or_element, _DocumentBase):
+        return XPathDocumentEvaluator(doc_or_element, namespaces, extensions)
+    else:
+        return XPathElementEvaluator(doc_or_element, namespaces, extensions)
+    
 def Extension(module, function_mapping, ns_uri=None):
     result = {}
     for function_name, xpath_name in function_mapping.items():
@@ -1127,7 +1146,7 @@ cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
     cdef _ElementTree doc
     cdef xpath.xmlXPathObject* obj
-    cdef XPathEvaluator evaluator
+    cdef XPathDocumentEvaluator evaluator
     
     rctxt = ctxt.context
     
@@ -1139,7 +1158,7 @@ cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
         uri = None
 
     # get our evaluator
-    evaluator = <XPathEvaluator>(rctxt.userData)
+    evaluator = <XPathDocumentEvaluator>(rctxt.userData)
 
     # lookup up the extension function in the evaluator
     f = evaluator._extension_functions[(uri, name)]

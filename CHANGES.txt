@@ -19,6 +19,12 @@ Features added
 * Added convenience relaxng() method on tree. This is less efficient
   than the RelaxNG object, but makes it easier to write quick code.
 
+* Make it possible to use XPathEvaluator with elements as well. The
+  XPathEvaluator in this case will retain the element so multiple
+  XPath queries can be made against one element efficiently. This
+  replaces the second argument to the .evaluate() method that existed
+  previously.
+
 Bugs fixed
 ----------
 
