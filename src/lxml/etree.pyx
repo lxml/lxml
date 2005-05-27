@@ -156,26 +156,39 @@ cdef class _ElementTree(_DocumentBase):
         return _elementFactory(self, c_node)
     
     def write(self, file, encoding='us-ascii'):
-        # XXX dumping to memory first is definitely not the most efficient
+        cdef tree.xmlSaveCtxt* save_ctxt
         cdef char* mem
         cdef int size
-        tree.xmlDocDumpMemory(self._c_doc, &mem, &size)
-        if not encoding:
-            encoding = 'us-ascii'
-        # XXX complete hack to remove these, but for compatibility with
-        # ElementTree selftest.py
-        s = '<?xml version="1.0"?>\n'
-        m = mem
-        if m.startswith(s):
-            m = m[len(s):]
-        if m[-1] == '\n':
-            m = m[:-1]
+        
+        # recognize a diversity of ways to spell this in Python
         if encoding in ('UTF-8', 'utf8', 'UTF8', 'utf-8'):
-            file.write(m)
-        else:
-            file.write(funicode(m).encode(encoding))
-        tree.xmlFree(mem)
+            encoding = 'UTF-8'
 
+        filename = _getFilenameForFile(file)
+        if filename is not None:
+            # it's a file object, so write to file
+            # XXX options? error handling?
+            save_ctxt = tree.xmlSaveToFilename(filename, encoding, 0)
+            tree.xmlSaveDoc(save_ctxt, self._c_doc)
+            tree.xmlSaveClose(save_ctxt)
+        else:
+            # it's a string object
+            tree.xmlDocDumpMemoryEnc(self._c_doc, &mem, &size, encoding)
+            m = mem
+            # XXX this is purely for ElementTree compatibility..
+            if encoding == 'UTF-8' or encoding == 'us-ascii':
+                # strip off XML prologue..
+                i = m.find('\n')
+                if i != -1:
+                    m = m[i + 1:]
+                # strip off ending \n..
+                m = m[:-1]
+            if encoding == 'UTF-8':
+                file.write(m)
+            else:
+                file.write(funicode(m).encode(encoding))
+            tree.xmlFree(mem)
+            
     def getiterator(self, tag=None):
         root = self.getroot()
         if root is None:
@@ -895,11 +908,17 @@ def iselement(element):
 def dump(_NodeBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
-def tostring(_Element element, encoding=None):
-    f = StringIO()
-    element._doc.write(f, encoding)
-    return f.getvalue()
-
+def tostring(_NodeBase element, encoding=None):
+    if encoding is None:
+        encoding = 'UTF-8'
+    if element is element._doc.getroot():
+        f = StringIO()
+        element._doc.write(f, encoding)
+        return f.getvalue()
+    else:
+    
+        raise NotImplementedError
+    
 def parse(source, parser=None):
     # XXX ignore parser for now
     cdef xmlDoc* c_doc

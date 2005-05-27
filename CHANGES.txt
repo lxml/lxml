@@ -29,9 +29,15 @@ Features added
   creation, to add additional namespaces. Also allow registerNamespaces(),
   which does the same for a namespace dictionary.
 
+* Cleaned out the ElementTree.write() method (and tostring() for root 
+  elements) so it should handle encoding correctly. Writing directly to
+  a file should also be faster now, as there is no need to go through a
+  Python string in that case. Made sure the test cases test both
+  serializing to StringIO as well as serializing to a real file.
+
 Bugs fixed
 ----------
-
+ 
 * Killed yet another memory management related bug: trees created
   using newDoc would not get a libxml2-level dictionary, which caused
   problems when deallocating these documents later if they contained a

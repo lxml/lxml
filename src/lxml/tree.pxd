@@ -16,6 +16,7 @@ cdef extern from "Python.h":
     
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
+    cdef xmlCharEncodingHandler* xmlFindCharEncodingHandler(char* name)
     
 cdef extern from "libxml/tree.h":
 
@@ -125,9 +126,11 @@ cdef extern from "libxml/tree.h":
     cdef void xmlSetProp(xmlNode* node, char* name, char* value)
     cdef void xmlSetNsProp(xmlNode* node, xmlNs* ns, char* name, char* value)
     cdef void xmlRemoveProp(xmlAttr* cur)
-    cdef void xmlDocDumpMemory(xmlDoc* cur,
-                               char** mem,
-                               int* size)
+    cdef void xmlDocDumpMemory(xmlDoc* cur, char** mem, int* size)
+    cdef void xmlDocDumpMemoryEnc(xmlDoc* cur, char** mem, int* size,
+                                  char* encoding)
+    cdef int xmlSaveFileTo(xmlOutputBuffer* out, xmlDoc* cur, char* encoding)
+
     cdef void xmlUnlinkNode(xmlNode* cur)
     cdef xmlNode* xmlDocSetRootElement(xmlDoc* doc, xmlNode* root)
     cdef xmlNode* xmlDocGetRootElement(xmlDoc* doc)
@@ -153,6 +156,15 @@ cdef extern from "libxml/xmlIO.h":
         xmlCharEncodingHandler* encoder)
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
+
+cdef extern from "libxml/xmlsave.h":
+    ctypedef struct xmlSaveCtxt:
+        pass
+    
+    cdef xmlSaveCtxt* xmlSaveToFilename(char* filename, char* encoding,
+                                        int options)
+    cdef long xmlSaveDoc(xmlSaveCtxt* ctxt, xmlDoc* doc)
+    cdef int xmlSaveClose(xmlSaveCtxt* ctxt)
     
 cdef extern from "libxml/xmlstring.h":
     cdef char* xmlStrdup(char* cur)
