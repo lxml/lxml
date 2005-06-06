@@ -82,6 +82,7 @@ cdef class _DocumentBase:
     """
     cdef int _ns_counter
     cdef xmlDoc* _c_doc
+    cdef object _ns_resolver
     
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
@@ -132,10 +133,21 @@ cdef class _NodeBase:
         if c_ns is not NULL:
             return c_ns
         # create ns if existing ns cannot be found
-        # try to simulate ElementTree's namespace prefix creation
-        prefix = 'ns%s' % self._doc._ns_counter
-        c_ns = tree.xmlNewNs(c_node, href, prefix)
-        self._doc._ns_counter = self._doc._ns_counter + 1
+        # first try resolver (XXX UTF 8 issues for href, prefix?)
+        try:
+            if self._doc._ns_resolver is None:
+                raise KeyError
+            prefix = self._doc._ns_resolver.getPrefixByUri(href) 
+        except KeyError:
+            # try to simulate ElementTree's namespace prefix creation
+            prefix = 'ns%s' % self._doc._ns_counter
+            self._doc._ns_counter = self._doc._ns_counter + 1
+        # check for default NS
+        if prefix is None:
+            c_ns = tree.xmlNewNs(c_node, href, NULL)
+            return c_ns
+        else:
+            c_ns = tree.xmlNewNs(c_node, href, prefix)
         return c_ns
 
 cdef class _ElementTree(_DocumentBase):
@@ -295,6 +307,7 @@ cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     result = _ElementTree()
     result._ns_counter = 0
     result._c_doc = c_doc
+    result._ns_resolver = None
     return result
 
 cdef class _Element(_NodeBase):
@@ -310,7 +323,7 @@ cdef class _Element(_NodeBase):
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element._c_node, self._doc)
+        changeDocumentBelow(element, self._doc)
         
     def __delitem__(self, index):
         cdef xmlNode* c_node
@@ -351,7 +364,7 @@ cdef class _Element(_NodeBase):
             # and move tail just behind his node
             _moveTail(c_next, mynode._c_node)
             # move it into a new document
-            changeDocumentBelow(mynode._c_node, self._doc)
+            changeDocumentBelow(mynode, self._doc)
             
     def set(self, key, value):
         self.attrib[key] = value
@@ -368,7 +381,7 @@ cdef class _Element(_NodeBase):
         _moveTail(c_next, element._c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
-        changeDocumentBelow(element._c_node, self._doc)
+        changeDocumentBelow(element, self._doc)
 
     def clear(self):
         cdef xmlAttr* c_attr
@@ -403,7 +416,7 @@ cdef class _Element(_NodeBase):
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element._c_node, self._doc)
+        changeDocumentBelow(element, self._doc)
 
     def remove(self, _Element element):
         cdef xmlNode* c_node
@@ -840,11 +853,11 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 
 # module-level API for ElementTree
 
-def Element(tag, attrib=None, **extra):
+def Element(tag, attrib=None, ns_resolver=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTree etree
 
-    etree = ElementTree()
+    etree = ElementTree(ns_resolver=ns_resolver)
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
     tree.xmlDocSetRootElement(etree._c_doc, c_node)
     # XXX hack for namespaces
@@ -873,7 +886,7 @@ def SubElement(_Element parent, tag, attrib=None, **extra):
     element.tag = tag
     return element
 
-def ElementTree(_Element element=None, file=None):
+def ElementTree(_Element element=None, file=None, ns_resolver=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_next
     cdef xmlNode* c_node
@@ -899,8 +912,10 @@ def ElementTree(_Element element=None, file=None):
         c_next = element._c_node.next
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element._c_node, etree)
+        changeDocumentBelow(element, etree)
 
+    etree._ns_resolver = ns_resolver
+    
     return etree
 
 def XML(text):
@@ -946,6 +961,46 @@ def parse(source, parser=None):
     result = _elementTreeFactory(c_doc)
     return result
 
+class NsResolver:
+    """
+    Namespace resolver. Knows about well-known namespaces and is used
+    to determine prefixes for NS uris.
+    
+    This interface can also be implemented by other applications; this
+    is a simple dictionary based implemention which should be enough
+    for most applications.
+
+    'None' for a prefix stands for the default namespace.
+    """
+    def __init__(self, prefix_uri):
+        """
+        prefix_uri - prefix -> uri mapping. None prefix is default NS.
+
+        uri and prefix should be unique in the map.
+        """
+        self._prefix_uri = prefix_uri
+        uri_prefix = {}
+        for prefix, uri in self._prefix_uri.items():
+            uri_prefix[uri] = prefix
+        self._uri_prefix = uri_prefix
+        
+    def getUriByPrefix(self, prefix):
+        """Given prefix (or None for default ns) give NS URI.
+
+        Raises KeyError if prefix is unknown.
+        """
+        return self._prefix_uri[prefix]
+        
+    def getPrefixByUri(self, uri):
+        """Given NS URI return prefix.
+
+        Returns None if namespace is default.
+
+        Raises KeyError if URI is unknown.
+        """
+        return self._uri_prefix[uri]
+    
+    
 cdef class XPathDocumentEvaluator:
     """Create an XPath evaluator for a document.
     """
@@ -1751,7 +1806,7 @@ cdef void unregisterProxy(_NodeBase proxy, int proxy_type):
     assert 0, "Tried to unregister unknown proxy"
 
 
-cdef void changeDocumentBelow(xmlNode* c_node,
+cdef void changeDocumentBelow(_NodeBase node,
                               _DocumentBase doc):
     """For a node and all nodes below, change document.
 
@@ -1760,8 +1815,8 @@ cdef void changeDocumentBelow(xmlNode* c_node,
     tree below (including the current node). It also reconciliates
     namespaces so they're correct inside the new environment.
     """
-    changeDocumentBelowHelper(c_node, doc)
-    tree.xmlReconciliateNs(doc._c_doc, c_node)
+    changeDocumentBelowHelper(node._c_node, doc)
+    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
     
 cdef void changeDocumentBelowHelper(xmlNode* c_node,
                                     _DocumentBase doc):

@@ -1504,6 +1504,33 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             None,
             a[0].prefix)
+
+    def test_namespaces(self):
+        etree = self.etree
+
+        r = etree.NsResolver({'foo': 'http://ns.infrae.com/foo'})
+        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        self.assertEquals(
+            'foo',
+            e.prefix)
+        self.assertEquals(
+            '<foo:bar xmlns:foo="http://ns.infrae.com/foo"></foo:bar>',
+            self._writeElement(e))
+        
+    def test_namespaces_default(self):
+        etree = self.etree
+
+        r = etree.NsResolver({None: 'http://ns.infrae.com/foo'})
+        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        self.assertEquals(
+            None,
+            e.prefix)
+        self.assertEquals(
+            '{http://ns.infrae.com/foo}bar',
+            e.tag)
+        self.assertEquals(
+            '<bar xmlns="http://ns.infrae.com/foo"></bar>',
+            self._writeElement(e))
         
     def _writeElement(self, element):
         """Write out element for comparison.
