@@ -47,6 +47,8 @@ Bugs fixed
   references to the original document would remain. This has been fixed
   by applying xmlReconciliateNs() after each move operation.
 
+* Can pass None to 'dump()' without segfaults.
+
 0.6 (2005-05-14)
 ================
 

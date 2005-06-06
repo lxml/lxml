@@ -906,6 +906,7 @@ def iselement(element):
     return isinstance(element, _Element)
 
 def dump(_NodeBase elem):
+    assert elem is not None, "Must supply element."
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
 def tostring(_NodeBase element, encoding=None):

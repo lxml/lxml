@@ -1474,6 +1474,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = self.etree.Element('root')
         add = self.etree.ElementTree(file=StringIO('<foo>Foo</foo>'))
         root.append(self.etree.Element('baz'))
+
+    # test passing 'None' to dump
+    def test_dump_none(self):
+        self.assertRaises(AssertionError, etree.dump, None)
         
     def _writeElement(self, element):
         """Write out element for comparison.
