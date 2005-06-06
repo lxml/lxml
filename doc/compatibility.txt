@@ -38,3 +38,7 @@ differences and incompatibilities exist:
   ElementTree tends to come up with its own prefixes (ns0, ns1,
   etc). When no namespace prefix is given however, etree creates
   ElementTree style prefixes as well.
+
+* etree has a 'prefix' attribute (read-only) on elements giving the
+  Element's prefix, if this is known, and None otherwise (in case of
+  no namespace at all, or default namespace).

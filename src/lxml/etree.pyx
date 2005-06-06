@@ -430,7 +430,15 @@ cdef class _Element(_NodeBase):
                 return
             c_ns = self._getNs(ns)
             tree.xmlSetNs(self._c_node, c_ns)
-            
+
+    # not in ElementTree, read-only
+    property prefix:
+        def __get__(self):
+            if self._c_node.ns is not NULL:
+                if self._c_node.ns.prefix is not NULL:
+                    return funicode(self._c_node.ns.prefix)
+            return None
+        
     property attrib:
         def __get__(self):
             return _attribFactory(self._doc, self._c_node)

@@ -1478,6 +1478,32 @@ class ETreeOnlyTestCase(HelperTestCase):
     # test passing 'None' to dump
     def test_dump_none(self):
         self.assertRaises(AssertionError, etree.dump, None)
+
+    def test_prefix(self):
+        ElementTree = self.etree.ElementTree
+        
+        f = StringIO('<a xmlns:foo="http://www.infrae.com/ns/1"><foo:b/></a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        self.assertEquals(
+            None,
+            a.prefix)
+        self.assertEquals(
+            'foo',
+            a[0].prefix)
+
+    def test_prefix_default_ns(self):
+        ElementTree = self.etree.ElementTree
+        
+        f = StringIO('<a xmlns="http://www.infrae.com/ns/1"><b/></a>')
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        self.assertEquals(
+            None,
+            a.prefix)
+        self.assertEquals(
+            None,
+            a[0].prefix)
         
     def _writeElement(self, element):
         """Write out element for comparison.

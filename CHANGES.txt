@@ -35,6 +35,9 @@ Features added
   Python string in that case. Made sure the test cases test both
   serializing to StringIO as well as serializing to a real file.
 
+* Add 'prefix' attribute to element to be able to read prefix information.
+  This is entirely read-only.
+
 Bugs fixed
 ----------
  
