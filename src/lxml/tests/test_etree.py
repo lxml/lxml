@@ -1541,7 +1541,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>',
             self._writeElement(e))
-        
+
+    def test_namespaces_elementtree(self):
+        etree = self.etree
+        r = etree.NsResolver({None: 'http://ns.infrae.com/foo',
+                              'hoi': 'http://ns.infrae.com/hoi'}) 
+        e = etree.Element('{http://ns.infrae.com/foo}z', ns_resolver=r)
+        tree = etree.ElementTree(element=e)
+        etree.SubElement(e, '{http://ns.infrae.com/hoi}x')
+        self.assertEquals(
+            '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
+            self._writeElement(e))
+            
     def _writeElement(self, element):
         """Write out element for comparison.
         """

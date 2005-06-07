@@ -934,11 +934,14 @@ def ElementTree(_Element element=None, file=None, ns_resolver=None):
 
     # XXX what if element and file are both not None?
     if element is not None:
+        # carry along resolver if not overridden
+        if ns_resolver is None:
+            ns_resolver = element._doc._ns_resolver
         c_next = element._c_node.next
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         _moveTail(c_next, element._c_node)
         changeDocumentBelow(element, etree)
-
+            
     etree._ns_resolver = ns_resolver
     
     return etree
