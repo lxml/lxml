@@ -191,6 +191,49 @@ method to do RelaxNG validation::
   >>> doc2.relaxng(relaxng_doc)
   0
 
+XMLSchema
+---------
+
+lxml.etree also has a XML Schema (XSD) support, using the class
+lxml.etree.XMLSchema. This support is very similar to the Relax NG
+support. The class can be given an ElementTree object to construct a
+XMLSchema validator::
+
+  >>> f = StringIO('''\
+  ... <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  ... <xsd:element name="a" type="AType"/>
+  ... <xsd:complexType name="AType">
+  ...   <xsd:sequence>
+  ...     <xsd:element name="b" type="xsd:string" />
+  ...   </xsd:sequence>
+  ... </xsd:complexType>
+  ... </xsd:schema>
+  ... ''')
+  >>> xmlschema_doc = lxml.etree.parse(f)
+  >>> xmlschema = lxml.etree.XMLSchema(xmlschema_doc)
+
+You can then validate some ElementTree document with this. Like with
+RelaxNG, you'll get back true if the document is valid against the XML
+schema, and false if not::
+
+  >>> valid = StringIO('<a><b></b></a>')
+  >>> doc = lxml.etree.parse(valid)
+  >>> xmlschema.validate(doc)
+  1
+
+  >>> invalid = StringIO('<a><c></c></a>')
+  >>> doc2 = lxml.etree.parse(invalid)
+  >>> xmlschema.validate(doc2)
+  0
+
+Similar to XSLT and RelaxNG, there's also a less efficient but easier
+shortcut method to do XML Schema validation::
+
+  >>> doc.xmlschema(xmlschema_doc)
+  1
+  >>> doc2.xmlschema(xmlschema_doc)
+  0
+
 xinclude
 --------
 

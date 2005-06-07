@@ -13,6 +13,9 @@ Features added
 * Simple XInclude support. Calling the xinclude() method on a tree
   will process any XInclude statements in the document.
 
+* XMLSchema support. Use the XMLSchema class or the convenience
+  xmlschema() method on a tree to do XML Schema (XSD) validation.
+
 * Added convenience xslt() method on tree. This is less efficient
   than the XSLT object, but makes it easier to write quick code.
 

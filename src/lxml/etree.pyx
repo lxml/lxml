@@ -4,6 +4,7 @@ cimport xmlparser
 cimport xpath
 cimport xslt
 cimport relaxng
+cimport xmlschema
 cimport xmlerror
 cimport xinclude
 cimport c14n
@@ -66,6 +67,15 @@ class RelaxNGParseError(RelaxNGError):
     pass
 
 class RelaxNGValidateError(RelaxNGError):
+    pass
+
+class XMLSchemaError(Error):
+    pass
+
+class XMLSchemaParseError(XMLSchemaError):
+    pass
+
+class XMLSchemaValidateError(XMLSchemaError):
     pass
 
 class XIncludeError(Error):
@@ -276,6 +286,21 @@ cdef class _ElementTree(_DocumentBase):
         schema = RelaxNG(relaxng)
         return schema.validate(self)
 
+    def xmlschema(self, xmlschema):
+        """Validate this document using other doucment.
+
+        xmlschema is a tree that should contain XML Schema XML.
+
+        Returns True or False, depending on whether validation
+        succeeded.
+
+        Note: If you are going to applyt he same XML Schema against
+        multiple documents, it is more efficient to use the XMLSchema
+        class directly.
+        """
+        schema = XMLSchema(xmlschema)
+        return schema.validate(self)
+        
     def xinclude(self):
         """Process this document, including using XInclude.
         """
@@ -1373,7 +1398,7 @@ cdef class RelaxNG:
                 filename = file
             parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
         else:
-            raise relaxng.xmlRelaxNGError, "No tree or file given"
+            raise RelaxNGParseError, "No tree or file given"
         if parser_ctxt is NULL:
             raise RelaxNGParseError, "Document is not valid Relax NG"
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
@@ -1398,6 +1423,39 @@ cdef class RelaxNG:
             raise RelaxNGValidateError, "Internal error in Relax NG validation"
         return ret == 0
 
+cdef class XMLSchema:
+    """Turn a document into an XML Schema validator.
+    """
+    cdef xmlschema.xmlSchema* _c_schema
+    
+    def __init__(self, _ElementTree tree):
+        cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
+        parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(tree._c_doc)
+        if parser_ctxt is NULL:
+            raise XMLSchemaParseError, "Document is not valid XML Schema"
+        self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+        if self._c_schema is NULL:
+            xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+            raise XMLSchemaParseError, "Document is not valid XML Schema"
+        xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+        
+    def __dealloc__(self):
+        xmlschema.xmlSchemaFree(self._c_schema)
+
+    def validate(self, _ElementTree doc):
+        """Validate doc using XML Schema.
+
+        Returns true if document is valid, false if not.
+        """
+        cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
+        cdef int ret
+        valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)
+        ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, doc._c_doc)
+        xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
+        if ret == -1:
+            raise XMLSchemaValidateError, "Internal error in XML Schema validation."
+        return ret == 0
+        
 # Globally shared XML parser to enable dictionary sharing
 cdef class Parser:
 

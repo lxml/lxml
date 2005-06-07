@@ -4,17 +4,18 @@ lxml
 Exposing libxml2 functionalities
 --------------------------------
 
-* XPath extension functions, potential threading issues.
+* potential threading issues in XPath extension functions?
 
-* XSLT support for parameters, Python extension functions, threading
-  issues.
+* Python extension functions, threading issues.
 
 * Improved Relax NG error reporting. Right now we only get valid or invalid.
+
+* Improved XML Schema error reporting. Right now we only get valid or invalid.
 
 * Improved error handling in general; test structured exceptions in more
   detail.
 
-* XInclude support.
+* See whether XInclude support can mimic ElementTree's API.
 
 * Test XML entities, also in an ElementTree context.
 
