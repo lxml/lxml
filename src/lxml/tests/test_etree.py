@@ -1530,6 +1530,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<bar xmlns="http://ns.infrae.com/foo"></bar>',
             self._writeElement(e))
+
+    def test_namespaces_default_and_attr(self):
+        etree = self.etree
+
+        r = etree.NsResolver({None: 'http://ns.infrae.com/foo',
+                             'hoi': 'http://ns.infrae.com/hoi'})
+        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        e.set('{http://ns.infrae.com/hoi}test', 'value')
+        self.assertEquals(
+            '<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>',
+            self._writeElement(e))
         
     def _writeElement(self, element):
         """Write out element for comparison.
