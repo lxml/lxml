@@ -92,7 +92,6 @@ cdef class _DocumentBase:
     """
     cdef int _ns_counter
     cdef xmlDoc* _c_doc
-    cdef object _ns_resolver
     
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
@@ -143,21 +142,10 @@ cdef class _NodeBase:
         if c_ns is not NULL:
             return c_ns
         # create ns if existing ns cannot be found
-        # first try resolver (XXX UTF 8 issues for href, prefix?)
-        try:
-            if self._doc._ns_resolver is None:
-                raise KeyError
-            prefix = self._doc._ns_resolver.getPrefixByUri(href) 
-        except KeyError:
-            # try to simulate ElementTree's namespace prefix creation
-            prefix = 'ns%s' % self._doc._ns_counter
-            self._doc._ns_counter = self._doc._ns_counter + 1
-        # check for default NS
-        if prefix is None:
-            c_ns = tree.xmlNewNs(c_node, href, NULL)
-            return c_ns
-        else:
-            c_ns = tree.xmlNewNs(c_node, href, prefix)
+        # try to simulate ElementTree's namespace prefix creation
+        prefix = 'ns%s' % self._doc._ns_counter
+        self._doc._ns_counter = self._doc._ns_counter + 1
+        c_ns = tree.xmlNewNs(c_node, href, prefix)
         return c_ns
 
 cdef class _ElementTree(_DocumentBase):
@@ -332,7 +320,6 @@ cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
     result = _ElementTree()
     result._ns_counter = 0
     result._c_doc = c_doc
-    result._ns_resolver = None
     return result
 
 cdef class _Element(_NodeBase):
@@ -878,13 +865,14 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 
 # module-level API for ElementTree
 
-def Element(tag, attrib=None, ns_resolver=None, **extra):
+def Element(tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode* c_node
     cdef _ElementTree etree
-
-    etree = ElementTree(ns_resolver=ns_resolver)
+    etree = ElementTree()
     c_node = _createElement(etree._c_doc, tag, attrib, extra)
     tree.xmlDocSetRootElement(etree._c_doc, c_node)
+    # add namespaces to node if necessary
+    _addNamespaces(etree._c_doc, c_node, nsmap)
     # XXX hack for namespaces
     result = _elementFactory(etree, c_node)
     result.tag = tag
@@ -901,17 +889,19 @@ def Comment(text=None):
     tree.xmlAddChild(<xmlNode*>etree._c_doc, c_node)
     return _commentFactory(etree, c_node)
 
-def SubElement(_Element parent, tag, attrib=None, **extra):
+def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode* c_node
     cdef _Element element
     c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
+    # add namespaces to node if necessary
+    _addNamespaces(parent._doc._c_doc, c_node, nsmap)
     # XXX hack for namespaces
     element.tag = tag
     return element
 
-def ElementTree(_Element element=None, file=None, ns_resolver=None):
+def ElementTree(_Element element=None, file=None):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_next
     cdef xmlNode* c_node
@@ -934,15 +924,10 @@ def ElementTree(_Element element=None, file=None, ns_resolver=None):
 
     # XXX what if element and file are both not None?
     if element is not None:
-        # carry along resolver if not overridden
-        if ns_resolver is None:
-            ns_resolver = element._doc._ns_resolver
         c_next = element._c_node.next
         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
         _moveTail(c_next, element._c_node)
         changeDocumentBelow(element, etree)
-            
-    etree._ns_resolver = ns_resolver
     
     return etree
 
@@ -989,46 +974,19 @@ def parse(source, parser=None):
     result = _elementTreeFactory(c_doc)
     return result
 
-class NsResolver:
-    """
-    Namespace resolver. Knows about well-known namespaces and is used
-    to determine prefixes for NS uris.
-    
-    This interface can also be implemented by other applications; this
-    is a simple dictionary based implemention which should be enough
-    for most applications.
-
-    'None' for a prefix stands for the default namespace.
-    """
-    def __init__(self, prefix_uri):
-        """
-        prefix_uri - prefix -> uri mapping. None prefix is default NS.
-
-        uri and prefix should be unique in the map.
-        """
-        self._prefix_uri = prefix_uri
-        uri_prefix = {}
-        for prefix, uri in self._prefix_uri.items():
-            uri_prefix[uri] = prefix
-        self._uri_prefix = uri_prefix
+cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
+    cdef xmlNs* c_ns
+    if nsmap is None:
+        return
+    for prefix, href in nsmap.items():
+        # add namespace with prefix if ns is not already known
+        c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
+        if c_ns is NULL:
+            if prefix is not None:
+                tree.xmlNewNs(c_node, href, prefix)
+            else:
+                tree.xmlNewNs(c_node, href, NULL)
         
-    def getUriByPrefix(self, prefix):
-        """Given prefix (or None for default ns) give NS URI.
-
-        Raises KeyError if prefix is unknown.
-        """
-        return self._prefix_uri[prefix]
-        
-    def getPrefixByUri(self, uri):
-        """Given NS URI return prefix.
-
-        Returns None if namespace is default.
-
-        Raises KeyError if URI is unknown.
-        """
-        return self._uri_prefix[uri]
-    
-    
 cdef class XPathDocumentEvaluator:
     """Create an XPath evaluator for a document.
     """

@@ -1507,8 +1507,8 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_namespaces(self):
         etree = self.etree
 
-        r = etree.NsResolver({'foo': 'http://ns.infrae.com/foo'})
-        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        r = {'foo': 'http://ns.infrae.com/foo'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
         self.assertEquals(
             'foo',
             e.prefix)
@@ -1519,8 +1519,8 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_namespaces_default(self):
         etree = self.etree
 
-        r = etree.NsResolver({None: 'http://ns.infrae.com/foo'})
-        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        r = {None: 'http://ns.infrae.com/foo'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
         self.assertEquals(
             None,
             e.prefix)
@@ -1534,9 +1534,9 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_namespaces_default_and_attr(self):
         etree = self.etree
 
-        r = etree.NsResolver({None: 'http://ns.infrae.com/foo',
-                             'hoi': 'http://ns.infrae.com/hoi'})
-        e = etree.Element('{http://ns.infrae.com/foo}bar', ns_resolver=r)
+        r = {None: 'http://ns.infrae.com/foo',
+             'hoi': 'http://ns.infrae.com/hoi'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
         e.set('{http://ns.infrae.com/hoi}test', 'value')
         self.assertEquals(
             '<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>',
@@ -1544,9 +1544,9 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_namespaces_elementtree(self):
         etree = self.etree
-        r = etree.NsResolver({None: 'http://ns.infrae.com/foo',
-                              'hoi': 'http://ns.infrae.com/hoi'}) 
-        e = etree.Element('{http://ns.infrae.com/foo}z', ns_resolver=r)
+        r = {None: 'http://ns.infrae.com/foo',
+             'hoi': 'http://ns.infrae.com/hoi'} 
+        e = etree.Element('{http://ns.infrae.com/foo}z', nsmap=r)
         tree = etree.ElementTree(element=e)
         etree.SubElement(e, '{http://ns.infrae.com/hoi}x')
         self.assertEquals(

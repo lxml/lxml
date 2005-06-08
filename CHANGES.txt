@@ -41,12 +41,11 @@ Features added
 * Add 'prefix' attribute to element to be able to read prefix information.
   This is entirely read-only.
 
-* It is possible to supply an extra ns_resolver keyword parameter to
-  the Element() and ElementTree() constructors, which supplies a
-  prefix to namespace URI mapping. See etree.NsResolver for a basic
-  (but usable) implementation, which expects a dictionary with a
-  prefix->uri mapping. The namespace prefixes will then be used where
-  possible and show up in XML serialization.
+* It is possible to supply an extra nsmap keyword parameter to
+  the Element() and SubElement() constructors, which supplies a
+  prefix to namespace URI mapping. This will create namespace
+  prefix declarations on these elements and these prefixes will show up
+  in XML serialization.
   
 Bugs fixed
 ----------
