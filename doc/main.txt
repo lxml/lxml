@@ -40,7 +40,7 @@ on top of the native libxml2 tree. See also the `ElementTree
 compatibility overview`_.
 
 lxml also `extends this API`_ to expose libxml2 and libxslt specific
-functionality, such as XPath_, `Relax NG`_, `XSLT`_, and
+functionality, such as XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and
 `c14n`_. There is also more `detailed information`_ about what's
 possible with XPath.
 
@@ -55,6 +55,8 @@ possible with XPath.
 .. _XPath: http://www.w3.org/TR/xpath
 
 .. _`Relax NG`: http://www.relaxng.org/
+
+.. _`XML Schema`: http://www.w3.org/XML/Schema
 
 .. _`XSLT`: http://www.w3.org/TR/xslt
 
