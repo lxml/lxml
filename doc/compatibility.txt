@@ -2,8 +2,7 @@ lxml.etree versus ElementTree
 =============================
 
 A lot of care has been taken to ensure compatibility between etree and
-ElementTree. Nonetheless, besides missing features in lxml.etree, some
-differences and incompatibilities exist:
+ElementTree. Nonetheless some differences and incompatibilities exist:
 
 * Importing etree is obviously different; etree uses a lower case
   package name, while ElementTree a combination of upper-case and
@@ -23,6 +22,48 @@ differences and incompatibilities exist:
     # use
     from lxml import etree as ElementTree
 
+* Some of the API of ElementTree has not yet been implemented and is
+  thus missing in lxml.etree. Feel free to help out!
+
+* Then again, lxml.etree offers a lot more functionality, such as
+  XPath, XSLT, Relax NG, and XML Schema support, which (c)ElementTree
+  does not offer.
+
+* ElementTree allows you to place an Element in two different trees as the
+  same time. Thus, this::
+
+    a = Element('a')
+    b = SubElement(a, 'b')
+    c = Element('c')
+    c.append(b)
+
+  Will result in the following tree a::
+
+    <a><b /></a>
+
+  and the following tree c::
+
+    <c><b /></c>
+
+  In lxml, this behavior is different, because of lxml is built on top
+  of a tree that maintains parent relationships for elements (like W3C
+  DOM). This means an element can only exist in a single tree at the
+  same time. Adding an element in some tree to another tree will cause
+  this element to be moved. 
+
+  So, for tree a we will get::
+
+    <a></a>
+
+  and for tree c we will get::
+
+    <c><b/></c>
+
+  Unfortunately this is a rather fundamental difference in behavior,
+  which will be hard to solve. It won't affect some applications, but
+  if you want to port code you do unfortunately have to make sure that
+  it doesn't.
+
 * ElementTree has a bug when serializing an empty Comment (no text
   argument given) to XML, etree serializes this successfully.
 
@@ -41,4 +82,14 @@ differences and incompatibilities exist:
 
 * etree has a 'prefix' attribute (read-only) on elements giving the
   Element's prefix, if this is known, and None otherwise (in case of
-  no namespace at all, or default namespace).
+  no namespace at all, or default namespace). etree also allows a
+  'nsmap' dictionary which maps namespace prefix to namespace URI to
+  be passed to the Element and SubElement element factories. 
+
+  These will be translated into namespace declarations on that
+  element. This means that in the probably rare case that you need to
+  construct an attribute called 'nsmap', you need to be aware that
+  unlike in ElementTree, you cannot pass it as a keyword argument to
+  the Element and SubElement factories directly.
+
+
