@@ -88,6 +88,11 @@ See also the `installation instructions`_.
 
 .. _`installation instructions`: installation.html
 
+It's also possible to check out the latest development version of lxml
+from svn directly, using a command like this::
+
+  svn co http://codespeak.net/svn/lxml/trunk lxml
+
 License
 -------
 
