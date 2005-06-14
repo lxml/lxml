@@ -102,7 +102,10 @@ cdef extern from "libxml/tree.h":
         xmlNode* prev
         xmlDoc* doc
 
-    ctypedef struct xmlOutputBuffer
+    ctypedef struct xmlBuffer
+    
+    ctypedef struct xmlOutputBuffer:
+        xmlBuffer* buffer
     
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef void xmlFreeNode(xmlNode* cur)
@@ -149,13 +152,18 @@ cdef extern from "libxml/tree.h":
     cdef void xmlNodeSetName(xmlNode* cur, char* name)
     cdef xmlDoc* xmlCopyDoc(xmlDoc* doc, int recursive)
     cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree)
-
+    cdef xmlBuffer* xmlBufferCreate()
+    cdef char* xmlBufferContent(xmlBuffer* buf)
+    
 cdef extern from "libxml/xmlIO.h":
+
+    cdef xmlOutputBuffer* xmlAllocOutputBuffer(xmlCharEncodingHandler* encoder)
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
         FILE* file,
         xmlCharEncodingHandler* encoder)
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
+    cdef int xmlOutputBufferClose(xmlOutputBuffer* out)
 
 cdef extern from "libxml/xmlsave.h":
     ctypedef struct xmlSaveCtxt:

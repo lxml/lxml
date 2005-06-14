@@ -1289,6 +1289,34 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('<a><b></b><c></c></a>',
                           canonicalize(tostring(a)))
 
+    def test_tostring_element(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(c, 'd')
+        self.assertEquals('<b></b>',
+                          canonicalize(tostring(b)))
+        self.assertEquals('<c><d></d></c>',
+                          canonicalize(tostring(c)))
+
+    def test_tostring_element_tail(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(c, 'd')
+        b.tail = 'Foo'
+
+        self.assert_(tostring(b) == '<b/>Foo' or
+                     tostring(b) == '<b />Foo')
+        
     def test_parse_file(self):
         parse = self.etree.parse
         # from file
@@ -1321,7 +1349,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b></a>',
             tree.getroot()
            )
-
+        
     def test_encoding(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
@@ -1331,6 +1359,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
             a)
+
+    # doesn't work yet
+##     def test_encoding_tostring(self):
+##         Element = self.etree.Element
+##         tostring = self.etree.tostring
+
+##         a = Element('a')
+##         a.text = u'Søk på nettet'
+##         self.assertEquals(
+##             u'<a>Søk på nettet</a>'.encode('UTF-8'),
+##             tostring(a))
         
     def _writeElement(self, element):
         """Write out element for comparison.
