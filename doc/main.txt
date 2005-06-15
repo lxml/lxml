@@ -16,11 +16,15 @@ the introduction_ for more information about background and goals.
 News
 ----
 
+* 2005-06-15: `lxml 0.7`_ released (`changes for 0.7`_)
+
 * 2005-05-14: `lxml 0.6`_ released (`changes for 0.6`_)
 
 * 2005-04-09: `lxml 0.5.1`_ released (`changes for 0.5.1`_)
 
 * 2005-04-08: `lxml 0.5`_ released!
+
+.. _`lxml 0.7`: lxml-0.7.tgz
 
 .. _`lxml 0.6`: lxml-0.6.tgz
 
@@ -28,9 +32,11 @@ News
 
 .. _`lxml 0.5`: lxml-0.5.tgz
 
-.. _`CHANGES for 0.5.1`: changes-0.5.1.html
+.. _`CHANGES for 0.7`: changes-0.7.html
 
 .. _`CHANGES for 0.6`: changes-0.6.html
+
+.. _`CHANGES for 0.5.1`: changes-0.5.1.html
 
 Documentation
 -------------
@@ -72,6 +78,8 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 Download
 --------
 
+* `lxml 0.7`_ (2005-06-15)
+
 * `lxml 0.6`_ (2005-05-14)
 
 * `lxml 0.5.1`_ (2005-04-09)
@@ -92,6 +100,10 @@ It's also possible to check out the latest development version of lxml
 from svn directly, using a command like this::
 
   svn co http://codespeak.net/svn/lxml/trunk lxml
+
+You can also `browse it through the web`_.
+
+.. _`browse it through the web`: http://codespeak.net/svn/lxml
 
 License
 -------
