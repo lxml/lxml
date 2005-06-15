@@ -1360,35 +1360,132 @@ class ETreeTestCaseBase(unittest.TestCase):
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
             a)
 
-    # doesn't work yet
-##     def test_encoding_tostring(self):
-##         Element = self.etree.Element
-##         tostring = self.etree.tostring
+    def test_encoding2(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
 
-##         a = Element('a')
-##         a.text = u'Søk på nettet'
-##         self.assertEquals(
-##             u'<a>Søk på nettet</a>'.encode('UTF-8'),
-##             tostring(a))
+        a = Element('a')
+        a.text = u'Søk på nettet'
+        self.assertXML(
+            u'<a>Søk på nettet</a>'.encode('UTF-8'),
+            a, 'UTF-8')
         
-    def _writeElement(self, element):
+    def test_encoding3(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.text = u'Søk på nettet'
+        
+        f = StringIO()
+        tree = ElementTree(element=a)
+        tree.write(f, 'UTF-8')
+        data = f.getvalue()
+
+        # XXX prologue generation seems to be inconsistent between libraries..
+        xml = u'<a>Søk på nettet</a>'.encode('UTF-8')
+        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
+        self.assert_(data in [xml, prologue + xml])
+
+    def test_encoding_default_encoding(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.text = u'Søk på nettet'
+        
+        f = StringIO()
+        tree = ElementTree(element=a)
+        tree.write(f)
+        data = f.getvalue()
+        self.assertEquals(
+            '<a>S&#248;k p&#229; nettet</a>',
+            data)
+
+    def test_encoding_tostring(self):
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+
+        # XXX prologue generation seems to be inconsistent between libraries..
+        xml = u'<a>Søk på nettet</a>'.encode('UTF-8')
+        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
+        
+        a = Element('a')
+        a.text = u'Søk på nettet'
+        self.assert_(tostring(a, 'UTF-8') in [xml, prologue + xml])
+        
+    def test_encoding_tostring_sub(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        b.text = u'Søk på nettet'
+
+        # XXX prologue generation seems to be inconsistent between libraries..
+        xml = u'<b>Søk på nettet</b>'.encode('UTF-8')
+        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
+        self.assert_(tostring(b, 'UTF-8') in [xml, prologue + xml])
+
+    def test_encoding_tostring_sub_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        b.text = u'Søk på nettet'
+        b.tail = u'Søk'
+        xml = u'<b>Søk på nettet</b>Søk'.encode('UTF-8')
+        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
+        self.assert_(tostring(b, 'UTF-8') in [xml, prologue + xml])
+        
+    def test_encoding_tostring_default_encoding(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        a.text = u'Søk på nettet'
+
+        expected = '<a>S&#248;k p&#229; nettet</a>'
+        self.assertEquals(
+            expected,
+            tostring(a))
+
+    def test_encoding_sub_tostring_default_encoding(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        b.text = u'Søk på nettet'
+
+        # the same, just hex versus decimal
+        expected = '<b>S&#248;k p&#229; nettet</b>'
+        expected2 = '<b>S&#xF8;k p&#xE5; nettet</b>'
+        self.assert_(tostring(b) in [expected, expected2])
+         
+    def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
         ElementTree = self.etree.ElementTree
         f = StringIO()
         tree = ElementTree(element=element)
-        tree.write(f)
+        tree.write(f, encoding)
         data = f.getvalue()
         return canonicalize(data)
 
-    def _writeElementFile(self, element):
+    def _writeElementFile(self, element, encoding='us-ascii'):
         """Write out element for comparison, using real file.
         """
         ElementTree = self.etree.ElementTree
         handle, filename = tempfile.mkstemp()
         f = open(filename, 'wb')
         tree = ElementTree(element=element)
-        tree.write(f)
+        tree.write(f, encoding)
         f.close()
         f = open(filename, 'rb')
         data = f.read()
@@ -1396,13 +1493,13 @@ class ETreeTestCaseBase(unittest.TestCase):
         os.remove(filename)
         return canonicalize(data)
 
-    def assertXML(self, expected, element):
+    def assertXML(self, expected, element, encoding='us-ascii'):
         """Writes element out and checks whether it is expected.
 
         Does this two ways; once using StringIO, once using a real file.
         """
-        self.assertEquals(expected, self._writeElement(element))
-        self.assertEquals(expected, self._writeElementFile(element))
+        self.assertEquals(expected, self._writeElement(element, encoding))
+        self.assertEquals(expected, self._writeElementFile(element, encoding))
         
     def _check_element_tree(self, tree):
         self._check_element(tree.getroot())
@@ -1592,13 +1689,13 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
             
-    def _writeElement(self, element):
+    def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
         ElementTree = self.etree.ElementTree
         f = StringIO()
         tree = ElementTree(element=element)
-        tree.write(f)
+        tree.write(f, encoding)
         data = f.getvalue()
         return canonicalize(data)
 

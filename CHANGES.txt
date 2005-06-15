@@ -32,12 +32,6 @@ Features added
   creation, to add additional namespaces. Also allow registerNamespaces(),
   which does the same for a namespace dictionary.
 
-* Cleaned out the ElementTree.write() method (and tostring() for root 
-  elements) so it should handle encoding correctly. Writing directly to
-  a file should also be faster now, as there is no need to go through a
-  Python string in that case. Made sure the test cases test both
-  serializing to StringIO as well as serializing to a real file.
-
 * Add 'prefix' attribute to element to be able to read prefix information.
   This is entirely read-only.
 
@@ -60,6 +54,17 @@ Bugs fixed
   by applying xmlReconciliateNs() after each move operation.
 
 * Can pass None to 'dump()' without segfaults.
+
+* tostring() now works properly for non-root elements as well.
+
+* Cleaned out the tostring() method so it should handle encoding
+  correctly.
+
+* Cleaned out the ElementTree.write() method so it should handle
+  encoding correctly. Writing directly to a file should also be faster
+  now, as there is no need to go through a Python string in that
+  case. Made sure the test cases test both serializing to StringIO as
+  well as serializing to a real file.
 
 0.6 (2005-05-14)
 ================

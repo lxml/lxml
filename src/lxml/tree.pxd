@@ -106,7 +106,8 @@ cdef extern from "libxml/tree.h":
     
     ctypedef struct xmlOutputBuffer:
         xmlBuffer* buffer
-    
+        xmlBuffer* conv
+        
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef void xmlFreeNode(xmlNode* cur)
     cdef void xmlFree(char* buf)
