@@ -950,6 +950,8 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* enc
+
+    assert element is not None
     
     #if encoding is None:
     #    encoding = 'UTF-8'

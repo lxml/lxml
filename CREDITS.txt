@@ -19,6 +19,8 @@ Florian Wagner - bug reporting
 
 Emil Kroymann - bug reporting, help with encoding support
 
+dharana - bug reporting
+
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:

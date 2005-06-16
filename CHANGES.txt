@@ -1,6 +1,15 @@
 lxml changelog
 ==============
 
+under development
+=================
+
+Bugs fixed
+----------
+
+* Passing 'None' to tostring() does not result in a segfault anymore,
+  but an AssertionError.
+
 0.7 (2005-06-15)
 ================
 
