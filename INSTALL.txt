@@ -39,6 +39,25 @@ or just::
 This will not install lxml, but if you place lxml's "src" on your
 PYTHONPATH somehow, you can import it and play with it.
 
+Building lxml with gcc 4.0
+--------------------------
+
+Pyrex 0.9.3 generates C code that gcc 4.0 does not accept. Pending an
+official release of a version of Pyrex that does work with gcc 4.0,
+here's a patch to Pyrex that makes lxml compile and appear to work
+with gcc 4.0:
+
+http://codespeak.net/lxml/Pyrex-0.9.3-gcc4.patch
+
+Some Linux distributions such as Fedora Core 4 and Ubuntu Linux may
+already have most of this applied. In that case, this smaller patch
+may be applicable to make lxml compile properly:
+
+http://codespeak.net/lxml/Pyrex-0.9.3-gcc4-small.patch
+
+It may however actually be that at the time you read this, this extra
+patch has been applied by the distributions as well.
+
 Troubleshooting
 ---------------
 
