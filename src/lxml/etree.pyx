@@ -549,7 +549,17 @@ cdef class _Element(_NodeBase):
         return _elementIteratorFactory(self._doc, self._c_node.children)
     
     def get(self, key, default=None):
-        return self.attrib.get(key, default)
+        # XXX more redundancy, but might be slightly faster
+        cdef char* result
+        ns, tag = _getNsTag(key)
+        if ns is None:
+            result = tree.xmlGetNoNsProp(self._c_node, tag)
+        else:
+            result = tree.xmlGetNsProp(self._c_node, tag, ns)
+        if result is NULL:
+            return default
+        return funicode(result)
+        #return self.attrib.get(key, default)
 
     def keys(self):
         return self.attrib.keys()
