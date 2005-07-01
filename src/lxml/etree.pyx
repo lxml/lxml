@@ -36,6 +36,9 @@ PROXY_ELEMENT_ITER = 3
 class Error(Exception):
     pass
 
+class XMLSyntaxError(SyntaxError):
+    pass
+
 class XPathError(Error):
     pass
 
@@ -46,6 +49,9 @@ class XPathNamespaceError(XPathError):
     pass
 
 class XPathResultError(XPathError):
+    pass
+
+class XPathSyntaxError(SyntaxError):
     pass
 
 class XSLTError(Error):
@@ -1113,7 +1119,7 @@ cdef class XPathDocumentEvaluator:
             self._exc_info = None
             raise type, value, traceback
         if xpathObj is NULL:
-            raise SyntaxError, "Error in xpath expression."
+            raise XPathSyntaxError, "Error in xpath expression."
         try:
             result = _unwrapXPathObject(xpathObj, self._doc)
         except XPathResultError:
@@ -1493,7 +1499,7 @@ cdef class Parser:
                 tree.xmlFreeDoc(pctxt.myDoc)
                 pctxt.myDoc = NULL
             xmlparser.xmlFreeParserCtxt(pctxt)
-            raise SyntaxError
+            raise XMLSyntaxError
         result = pctxt.myDoc
         self._finalizeParse(result)
         xmlparser.xmlFreeParserCtxt(pctxt)
@@ -1520,7 +1526,7 @@ cdef class Parser:
                 tree.xmlFreeDoc(pctxt.myDoc)
                 pctxt.myDoc = NULL
             xmlparser.xmlFreeParserCtxt(pctxt)
-            raise SyntaxError
+            raise XMLSyntaxError
         self._finalizeParse(result)
         xmlparser.xmlFreeParserCtxt(pctxt)
         return result

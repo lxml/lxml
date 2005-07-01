@@ -4,15 +4,21 @@ lxml changelog
 under development
 =================
 
-Bugs fixed
-----------
+Features added
+--------------
+
+* Support for copy.deepcopy() on elements.
+
+Bug fixed
+---------
 
 * Passing 'None' to tostring() does not result in a segfault anymore,
   but an AssertionError.
 
-* Support for copy.deepcopy() on elements.
-
 * Some test fixes for Windows.
+
+* Raise XMLSyntaxError and XPathSyntaxError instead of plain python
+  syntax errors. This should be less confusing.
 
 0.7 (2005-06-15)
 ================
