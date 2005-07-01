@@ -1494,6 +1494,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         f = open(filename, 'rb')
         data = f.read()
         f.close()
+        os.close(handle)
         os.remove(filename)
         return canonicalize(data)
 

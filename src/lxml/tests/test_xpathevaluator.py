@@ -17,7 +17,10 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(1.,
                           tree.xpath('number(/a)'))
         tree = self.parse('<a>A</a>')
-        self.assertEquals('nan', str(tree.xpath('number(/a)')))
+        actual = str(tree.xpath('number(/a)'))
+        expected = ['nan', '1.#QNAN']
+        if not actual in expected:
+            self.fail('Expected a NAN value, got %s' % actual)
         
     def test_xpath_string(self):
         tree = self.parse('<a>Foo</a>')
