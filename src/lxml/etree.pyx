@@ -225,7 +225,7 @@ cdef class _ElementTree(_DocumentBase):
         if path[:1] == "/":
             path = "." + path
         return root.findall(path)
-
+    
     # extensions to ElementTree API
     def xpath(self, path, namespaces=None):
         """XPath evaluate in context of document.
@@ -377,6 +377,15 @@ cdef class _Element(_NodeBase):
             _moveTail(c_next, mynode._c_node)
             # move it into a new document
             changeDocumentBelow(mynode, self._doc)
+
+    def __deepcopy__(self, memo):
+        cdef xmlNode* c_node
+        cdef xmlDoc* c_doc
+        c_doc = theParser.newDoc()
+        etree = _elementTreeFactory(c_doc)
+        c_node = tree.xmlDocCopyNode(self._c_node, c_doc, 1)
+        tree.xmlDocSetRootElement(c_doc, c_node)
+        return _elementFactory(etree, c_node)
             
     def set(self, key, value):
         self.attrib[key] = value

@@ -15,7 +15,7 @@ Julien Anguenot - bug reporting
 
 Henrik Thostrup Jensen - bug reporting
 
-Florian Wagner - bug reporting
+Florian Wagner - bug reporting, copy support
 
 Emil Kroymann - bug reporting, help with encoding support
 

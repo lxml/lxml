@@ -2,7 +2,7 @@
 import unittest, doctest
 
 from StringIO import StringIO
-import os, shutil, tempfile
+import os, shutil, tempfile, copy
 
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
@@ -1471,7 +1471,20 @@ class ETreeTestCaseBase(unittest.TestCase):
         expected = '<b>S&#248;k p&#229; nettet</b>'
         expected2 = '<b>S&#xF8;k p&#xE5; nettet</b>'
         self.assert_(tostring(b) in [expected, expected2])
-         
+
+    def test_deepcopy(self):
+        Element = self.etree.Element
+        
+        a = Element('a')
+        a.text = 'Foo'
+
+        b = copy.deepcopy(a)
+        self.assertEquals('Foo', b.text)
+        
+        b.text = 'Bar'
+        self.assertEquals('Bar', b.text)
+        self.assertEquals('Foo', a.text)
+        
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

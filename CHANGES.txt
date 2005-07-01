@@ -10,6 +10,8 @@ Bugs fixed
 * Passing 'None' to tostring() does not result in a segfault anymore,
   but an AssertionError.
 
+* Support for copy.deepcopy() on elements.
+
 0.7 (2005-06-15)
 ================
 
