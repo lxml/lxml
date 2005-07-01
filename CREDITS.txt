@@ -19,6 +19,8 @@ Florian Wagner - bug reporting, copy support
 
 Emil Kroymann - bug reporting, help with encoding support
 
+Duncan Booth - fix Windows test failures
+
 dharana - bug reporting
 
 Victor Ng - Discussions on memory management strategies, vlibxml2
