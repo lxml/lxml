@@ -12,6 +12,8 @@ Bugs fixed
 
 * Support for copy.deepcopy() on elements.
 
+* Some test fixes for Windows.
+
 0.7 (2005-06-15)
 ================
 
