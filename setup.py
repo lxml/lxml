@@ -132,18 +132,21 @@ def guess_dirs(xml2config_flags, flag):
             result.append(part[2:])
     return result
 
-# if you want to configure include and library dir manually, you can do
-# so here, for instance:
-# include_dirs = ['/usr/include/libxml2']
-# library_dirs = ['/usr/lib']
 include_dirs = guess_dirs('--cflags', '-I')
 library_dirs = guess_dirs('--libs', '-L')
+# if you want to configure include and library dir manually, you can do
+# so here, for instance:
+# include_dirs = ['/home/faassen/tmp/local_new/include/libxml2',
+#                '/home/faassen/tmp/local_new/include']
+# library_dirs = ['/home/faassen/tmp/local_new/lib/']
+
 
 ext_modules = [
     Extension('lxml.etree',
               sources=['src/lxml/etree.pyx'],
               include_dirs=include_dirs,
               library_dirs=library_dirs,
+              runtime_library_dirs=library_dirs,
               libraries=['xml2', 'xslt'],
               extra_compile_args=['-w'])
     ]
