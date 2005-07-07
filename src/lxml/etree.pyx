@@ -870,7 +870,7 @@ cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
     return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object tag,
-                             object attrib, object extra):
+                             object attrib, object extra) except NULL:
     cdef xmlNode* c_node
     tag_utf = tag.encode('UTF-8')
     if attrib is None:
@@ -1687,7 +1687,7 @@ cdef void _removeNode(xmlNode* c_node):
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
-    # tail support: look for any text nodes trailing this node and
+    # tail support: look for any text nodes trailing this node andwe 
     # move them too
     while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
         c_next = c_tail.next
@@ -1821,7 +1821,7 @@ cdef int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
 cdef ProxyRef* createProxyRef(_NodeBase proxy, int proxy_type):
-    """Create a backpointer proxy refeference for a proxy and type.
+    """Create a backpointer proxy reference for a proxy and type.
     """
     cdef ProxyRef* result
     result = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
@@ -1999,3 +1999,4 @@ cdef int canDeallocateChildren(xmlNode* c_node):
         return 0
     # apparently we can deallocate all subnodes
     return 1
+
