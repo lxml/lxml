@@ -5,21 +5,23 @@ Martijn Faassen - initial and main developer
 
 Marc-Antoine Parent - XPath extension function help and patches
 
-Paul Clifford - Python 2.2 compatibility fixes
+Olivier Grisel - improved (c)ElementTree compatibility patches
 
-Wade Leftwich - unicode bug reporting
+Florian Wagner - help with copy support, bug reporting
+ 
+Emil Kroymann - help with encoding support, bug reporting
+ 
+Duncan Booth - bugfixing
 
 Paul Everitt - bug reporting, feedback on API design
 
 Julien Anguenot - bug reporting
 
+Paul Clifford - Python 2.2 compatibility fixes
+
+Wade Leftwich - unicode bug reporting
+
 Henrik Thostrup Jensen - bug reporting
-
-Florian Wagner - bug reporting, copy support
-
-Emil Kroymann - bug reporting, help with encoding support
-
-Duncan Booth - fix Windows test failures
 
 dharana - bug reporting
 
