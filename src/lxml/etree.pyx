@@ -1687,7 +1687,7 @@ cdef void _removeNode(xmlNode* c_node):
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
-    # tail support: look for any text nodes trailing this node andwe 
+    # tail support: look for any text nodes trailing this node and 
     # move them too
     while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
         c_next = c_tail.next
