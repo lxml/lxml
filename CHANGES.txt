@@ -20,6 +20,8 @@ Bug fixed
 * Raise XMLSyntaxError and XPathSyntaxError instead of plain python
   syntax errors. This should be less confusing.
 
+* Fixed error with uncaught exception in Pyrex code.
+
 0.7 (2005-06-15)
 ================
 
