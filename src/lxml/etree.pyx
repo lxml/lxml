@@ -156,13 +156,35 @@ cdef class _NodeBase:
 
 cdef class _ElementTree(_DocumentBase):
 
-##     def parse(self, source, parser=None):
-##         # XXX ignore parser for now
-##         cdef xmlDoc* c_doc
-##         c_doc = theParser.parseDoc(source)
-##         result._c_doc = c_doc
+    def parse(self, source, parser=None):
+        """Updates self with the content of source and returns its root
+        """
+        # XXX ignore parser for now
+        cdef xmlDoc* c_doc
+        cdef xmlNode* c_node
         
-##         return self.getroot()
+        # XXX simplistic (c)StringIO support
+        if hasattr(source, 'getvalue'):
+            c_doc = theParser.parseDoc(source.getvalue())
+        else:
+            filename = _getFilenameForFile(source)
+            # Support for unamed file-like object (eg urlgrabber.urlopen)
+            if not filename and hasattr(source, 'read'):
+                c_doc = theParser.parseDoc(source.read())
+            # Otherwise parse the file directly from the filesystem
+            else:
+                if filename is None:
+                    filename = source
+                # open filename
+                c_doc = theParser.parseDocFromFile(filename)
+        if self._c_doc is not NULL:
+            c_node = tree.xmlDocGetRootElement(self._c_doc)
+            if (c_node is not NULL and
+                not hasProxy(c_node) and
+                canDeallocateChildren(c_node)):
+                tree.xmlFreeDoc(self._c_doc)
+        self._c_doc = c_doc
+        return self.getroot()
     
     def getroot(self):
         cdef xmlNode* c_node
@@ -180,30 +202,25 @@ cdef class _ElementTree(_DocumentBase):
         if encoding in ('UTF-8', 'utf8', 'UTF8', 'utf-8'):
             encoding = 'UTF-8'
 
-        filename = _getFilenameForFile(file)
-        if filename is not None:
-            # it's a file object, so write to file
-            # XXX options? error handling?
-            save_ctxt = tree.xmlSaveToFilename(filename, encoding, 0)
-            tree.xmlSaveDoc(save_ctxt, self._c_doc)
-            tree.xmlSaveClose(save_ctxt)
+        if not hasattr(file, 'write'):
+            # file is a filename, we want a file object
+            file = open(file, 'wb')
+
+        tree.xmlDocDumpMemoryEnc(self._c_doc, &mem, &size, encoding)
+        m = mem
+        # XXX this is purely for ElementTree compatibility..
+        if encoding == 'UTF-8' or encoding == 'us-ascii':
+            # strip off XML prologue..
+            i = m.find('\n')
+            if i != -1:
+                m = m[i + 1:]
+            # strip off ending \n..
+            m = m[:-1]
+        if encoding == 'UTF-8':
+            file.write(m)
         else:
-            # it's a string object
-            tree.xmlDocDumpMemoryEnc(self._c_doc, &mem, &size, encoding)
-            m = mem
-            # XXX this is purely for ElementTree compatibility..
-            if encoding == 'UTF-8' or encoding == 'us-ascii':
-                # strip off XML prologue..
-                i = m.find('\n')
-                if i != -1:
-                    m = m[i + 1:]
-                # strip off ending \n..
-                m = m[:-1]
-            if encoding == 'UTF-8':
-                file.write(m)
-            else:
-                file.write(funicode(m).encode(encoding))
-            tree.xmlFree(mem)
+            file.write(funicode(m).encode(encoding))
+        tree.xmlFree(mem)
             
     def getiterator(self, tag=None):
         root = self.getroot()
@@ -318,6 +335,8 @@ cdef class _ElementTree(_DocumentBase):
                                           NULL, 0, NULL, 1, &data)
         if bytes < 0:
             raise C14NError, "C18N failed"
+        if not hasattr(file, 'write'):
+            file = open(file, 'wb')
         file.write(data)
         tree.xmlFree(data)
     
@@ -1004,22 +1023,12 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     return result
 
 def parse(source, parser=None):
-    # XXX ignore parser for now
-    cdef xmlDoc* c_doc
-
-    # XXX simplistic StringIO support
-    if isinstance(source, StringIO):
-        c_doc = theParser.parseDoc(source.getvalue())
-        return _elementTreeFactory(c_doc)
-
-    filename = _getFilenameForFile(source)
-    if filename is None:
-        filename = source
-        
-    # open filename
-    c_doc = theParser.parseDocFromFile(filename)
-    result = _elementTreeFactory(c_doc)
-    return result
+    """Return an ElementTree object loaded with source elements
+    """
+    cdef _ElementTree tree
+    tree = _elementTreeFactory(NULL)
+    tree.parse(source, parser=parser)
+    return tree
 
 cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
     cdef xmlNs* c_ns
@@ -1757,20 +1766,17 @@ cdef object _namespacedName(xmlNode* c_node):
         return funicode(s)
 
 def _getFilenameForFile(source):
-    """Given a Python File object, give filename back.
+    """Given a Python File or Gzip object, give filename back.
 
     Returns None if not a file object.
     """
-    if tree.PyFile_Check(source):
-        # this is a file object, so retrieve file name
-        filename = tree.PyFile_Name(source)
-        # XXX this is a hack that makes to seem a crash go away;
-        # filename is a borrowed reference which may be what's tripping
-        # things up
-        tree.Py_INCREF(filename)
-        return filename
-    else:
-        return None
+    # file instances have a name attribute
+    if hasattr(source, 'name'):
+        return source.name
+    # gzip file instances have a filename attribute
+    if hasattr(source, 'filename'):
+        return source.filename
+    return None
 
 cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
     pass
@@ -1960,7 +1966,6 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
 
 cdef int canDeallocateChildNodes(xmlNode* c_node):
     cdef xmlNode* c_current
-    #print "checking childNodes"
     c_current = c_node.children
     while c_current is not NULL:
         if c_current._private is not NULL:
@@ -1972,7 +1977,6 @@ cdef int canDeallocateChildNodes(xmlNode* c_node):
 
 cdef int canDeallocateAttributes(xmlNode* c_node):
     cdef xmlAttr* c_current
-    #print "checking attributes"
     c_current = c_node.properties
     while c_current is not NULL:
         if c_current._private is not NULL:
@@ -1989,10 +1993,9 @@ cdef int canDeallocateChildren(xmlNode* c_node):
     # the current implementation is inefficient as it does a
     # tree traversal to find out whether there are any node proxies
     # we could improve this by a smarter datastructure
-    #print "checking children"
     # check children
     if not canDeallocateChildNodes(c_node):
-        return 0        
+        return 0
     # check any attributes
     if (c_node.type == tree.XML_ELEMENT_NODE and
         not canDeallocateAttributes(c_node)):

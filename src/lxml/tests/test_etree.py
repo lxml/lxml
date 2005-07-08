@@ -3,6 +3,8 @@ import unittest, doctest
 
 from StringIO import StringIO
 import os, shutil, tempfile, copy
+import gzip
+import urllib2
 
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
@@ -1551,11 +1553,99 @@ class ETreeTestCaseBase(unittest.TestCase):
         mapping["key"] = "value"
         self.assertEquals("value", mapping["key"])
 
+class IOTestCaseBase(unittest.TestCase):
+    """(c)ElementTree compatibility for IO functions/methods
+    """
+    etree = None
+    
+    def setUp(self):
+        """Setting up a minimal tree
+        """
+        self.root = self.etree.Element('a')
+        self.root_str = self.etree.tostring(self.root)
+        self.tree = self.etree.ElementTree(self.root)
+
+    def test_write_filename(self):
+        # (c)ElementTree  supports filename strings as write argument
+        
+        filename = tempfile.mktemp(suffix=".xml")
+        self.tree.write(filename)
+        self.assertEqual(open(filename).read(), self.root_str)
+
+    def test_module_parse_gzipobject(self):
+        # (c)ElementTree supports gzip instance as parse argument
+        filename = tempfile.mktemp(suffix=".xml.gz")
+        gzip.open(filename, 'wb').write(self.root_str)
+        f_gz = gzip.open(filename, 'r')
+        tree = self.etree.parse(f_gz)
+        self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
+
+    def test_class_parse_filename(self):
+        # (c)ElementTree class ElementTree has a 'parse' method that returns
+        # the root of the tree
+
+        # parse from filename
+        
+        filename = tempfile.mktemp(suffix=".xml")
+        open(filename, 'wb').write(self.root_str)
+        tree = self.etree.ElementTree()
+        root = tree.parse(filename)
+        self.assertEqual(self.etree.tostring(root), self.root_str)
+
+    def test_class_parse_filename_remove_previous(self):
+        filename = tempfile.mktemp(suffix=".xml")
+        open(filename, "wb").write(self.root_str)
+        tree = self.etree.ElementTree()
+        root = tree.parse(filename)
+        # and now do it again; previous content should still be there
+        root2 = tree.parse(filename)
+        self.assertEquals('a', root.tag)
+        # now remove all references to root2, and parse again
+        del root2
+        root3 = tree.parse(filename)
+        # root2's memory should've been freed here
+        # XXX how to check?
+        
+    def test_class_parse_fileobject(self):
+        # (c)ElementTree class ElementTree has a 'parse' method that returns
+        # the root of the tree
+
+        # parse from file object
+        
+        filename = tempfile.mktemp(suffix=".xml")
+        open(filename, 'wb').write(self.root_str)
+        f = open(filename, 'r')
+        tree = self.etree.ElementTree()
+        root = tree.parse(f)
+        self.assertEqual(self.etree.tostring(root), self.root_str)
+
+    def test_class_parse_unamed_fileobject(self):
+        # (c)ElementTree class ElementTree has a 'parse' method that returns
+        # the root of the tree
+
+        # parse from unamed file object    
+        f = SillyFileLike()
+        root = self.etree.ElementTree().parse(f)
+        self.assert_(root.tag.endswith('foo'))
+
+class SillyFileLike:
+    def __init__(self):
+        self.done = False
+        
+    def read(self, amount=None):
+        if not self.done:
+            self.done = True
+            return '<foo><bar/></foo>'
+        return ''
+    
 from lxml import etree
 
 class ETreeTestCase(ETreeTestCaseBase):
     etree = etree
 
+class ETreeIOTestCase(IOTestCaseBase):
+    etree = etree
+    
 try:
     from elementtree import ElementTree
     HAVE_ELEMENTTREE = 1
@@ -1565,7 +1655,9 @@ except ImportError:
 if HAVE_ELEMENTTREE:
     class ElementTreeTestCase(ETreeTestCaseBase):
         etree = ElementTree
-
+    class ElementTreeIOTestCase(IOTestCaseBase):
+        etree = ElementTree
+        
 class HelperTestCase(unittest.TestCase):
     def parse(self, text):
         f = StringIO(text)
@@ -2009,8 +2101,10 @@ class ETreeC14NTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeIOTestCase)])
     if HAVE_ELEMENTTREE:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+        suite.addTests([unittest.makeSuite(ElementTreeIOTestCase)])
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])

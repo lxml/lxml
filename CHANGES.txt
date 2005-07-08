@@ -9,6 +9,9 @@ Features added
 
 * Support for copy.deepcopy() on elements.
 
+* Increased compatibility with (c)ElementTree; .parse() on ElementTree is
+  now supported and parsing of gzipped XML files works.
+
 Bug fixed
 ---------
 
