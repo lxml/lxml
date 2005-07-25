@@ -25,6 +25,9 @@ Bug fixed
 
 * Fixed error with uncaught exception in Pyrex code.
 
+* Calling lxml.etree.fromstring('') now throws XMLSyntaxError instead
+  of a segfault.
+
 0.7 (2005-06-15)
 ================
 
