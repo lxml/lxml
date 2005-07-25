@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+﻿# -*- coding: UTF-8 -*-
 import unittest, doctest
 
 # These tests check that error handling in the Pyrex code is
@@ -15,6 +15,9 @@ class ErrorTestCase(unittest.TestCase):
         # attrib argument of Element() should be a dictionary, so if
         # we pass a string we should get an error.
         self.assertRaises(AttributeError, self.etree.Element, 'a', 'b')
+
+    def test_empty_parse(self):
+        self.assertRaises(etree.XMLSyntaxError, etree.fromstring, '')
 
 def test_suite():
     suite = unittest.TestSuite()

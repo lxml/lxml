@@ -1497,6 +1497,9 @@ cdef class Parser:
         cdef int parse_error
         self._initParse()
         pctxt = xmlparser.xmlCreateDocParserCtxt(text)
+        if pctxt is NULL:
+            raise XMLSyntaxError
+
         self._prepareParse(pctxt)
         xmlparser.xmlCtxtUseOptions(
             pctxt,
