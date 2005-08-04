@@ -1514,6 +1514,22 @@ class ETreeTestCaseBase(unittest.TestCase):
         b.text = 'Bar'
         self.assertEquals('Bar', b.text)
         self.assertEquals('Foo', a.text)
+
+    def test_element_boolean(self):
+        etree = self.etree
+        e = etree.Element('foo')
+        self.assertEquals(False, bool(e))
+        etree.SubElement(e, 'bar')
+        self.assertEquals(True, bool(e))
+        e = etree.Element('foo')
+        e.text = 'hey'
+        self.assertEquals(False, bool(e))
+        e = etree.Element('foo')
+        e.tail = 'bar'
+        self.assertEquals(False, bool(e))
+        e = etree.Element('foo')
+        e.set('bar', 'Bar')
+        self.assertEquals(False, bool(e))
         
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
@@ -1826,7 +1842,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
-            
+    
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
