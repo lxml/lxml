@@ -819,7 +819,27 @@ cdef class _Attrib(_NodeBase):
                     ))
             c_node = c_node.next
         return result
-    
+
+    def has_key(self, key):
+        cdef xmlNs* c_ns
+        cdef char* result
+        ns, tag = _getNsTag(key)
+        if ns is None:
+            result = tree.xmlGetNoNsProp(self._c_node, tag)
+        else:
+            result = tree.xmlGetNsProp(self._c_node, tag, ns)
+        return result is not NULL
+
+    def __contains__(self, key):
+        cdef xmlNs* c_ns
+        cdef char* result
+        ns, tag = _getNsTag(key)
+        if ns is None:
+            result = tree.xmlGetNoNsProp(self._c_node, tag)
+        else:
+            result = tree.xmlGetNsProp(self._c_node, tag, ns)
+        return result is not NULL
+  
 cdef _Attrib _attribFactory(_ElementTree etree, xmlNode* c_node):
     cdef _Attrib result
     result = getProxy(c_node, PROXY_ATTRIB)

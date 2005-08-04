@@ -289,7 +289,35 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             "{'{http://ns.codespeak.net/test}baz': 'Baz', 'bar': 'Bar'}",
             str(root.attrib))
-        
+
+    def test_attribute_has_key(self):
+        XML = self.etree.XML
+
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        self.assertEquals(
+            True, root.attrib.has_key('bar'))
+        self.assertEquals(
+            False, root.attrib.has_key('baz'))
+        self.assertEquals(
+            False, root.attrib.has_key('hah'))
+        self.assertEquals(
+            True,
+            root.attrib.has_key('{http://ns.codespeak.net/test}baz'))
+
+    def test_attribute_contains(self):
+        XML = self.etree.XML
+
+        root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
+        self.assertEquals(
+            True, 'bar' in root.attrib)
+        self.assertEquals(
+            False, 'baz' in root.attrib)
+        self.assertEquals(
+            False, 'hah' in root.attrib)
+        self.assertEquals(
+            True,
+            '{http://ns.codespeak.net/test}baz' in root.attrib)
+
     def test_XML(self):
         XML = self.etree.XML
         

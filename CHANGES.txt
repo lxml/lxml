@@ -12,7 +12,7 @@ Features added
 * Increased compatibility with (c)ElementTree; .parse() on ElementTree is
   now supported and parsing of gzipped XML files works.
 
-Bug fixed
+Bugs fixed
 ---------
 
 * Passing 'None' to tostring() does not result in a segfault anymore,
@@ -27,6 +27,9 @@ Bug fixed
 
 * Calling lxml.etree.fromstring('') now throws XMLSyntaxError instead
   of a segfault.
+
+* has_key() now works on attrib. 'in' tests also work correctly now on
+  attrib.
 
 0.7 (2005-06-15)
 ================
