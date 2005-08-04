@@ -31,6 +31,9 @@ Bugs fixed
 * has_key() now works on attrib. 'in' tests also work correctly now on
   attrib.
 
+* INSTALL.txt was saying 2.2.16 instead of 2.6.16 as a supported
+  libxml2 version, as it should.
+
 0.7 (2005-06-15)
 ================
 
