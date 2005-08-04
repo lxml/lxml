@@ -25,6 +25,10 @@ Henrik Thostrup Jensen - bug reporting
 
 dharana - bug reporting
 
+Hamish Lawson - bug reporting
+
+Gavrie Philipson - bug reporting
+
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Thanks also to:
