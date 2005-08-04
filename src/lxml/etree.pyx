@@ -451,7 +451,7 @@ cdef class _Element(_NodeBase):
                 c_node_next = c_node.next
                 _removeNode(c_node)
             c_node = c_node_next
-
+    
     def insert(self, index, _Element element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
@@ -581,7 +581,36 @@ cdef class _Element(_NodeBase):
 
     def __iter__(self):
         return _elementIteratorFactory(self._doc, self._c_node.children)
-    
+
+    def index(self, _Element x, start=None, stop=None):
+        cdef int k 
+        cdef xmlNode* c_child
+        k = 0
+        c_child = self._c_node.children
+
+        # account for negative start and stop by turning them into positive
+        if start is not None and start < 0:
+            start = len(self) + start
+        if stop is not None and stop < 0:
+            stop = len(self) + stop
+        
+        while c_child is not NULL:
+            if _isElement(c_child):
+                if c_child is x._c_node:
+                    if ((start is None or k >= start) and
+                        (stop is None or k < stop)): 
+                        return k
+                    else:
+                        # since there is only a single element to be found
+                        # if we found it out of range, we will not find
+                        # it anymore in the range, so we bail out
+                        raise ValueError, "list.index(x): x not in list"
+                else:
+                    k = k + 1
+            c_child = c_child.next
+        
+        raise ValueError, "list index(x): x not in list"
+
     def get(self, key, default=None):
         # XXX more redundancy, but might be slightly faster
         cdef char* result

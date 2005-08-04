@@ -12,6 +12,9 @@ Features added
 * Increased compatibility with (c)ElementTree; .parse() on ElementTree is
   now supported and parsing of gzipped XML files works.
 
+* implemented index() on elements, allowing one to find the index of a
+  SubElement.
+
 Bugs fixed
 ---------
 

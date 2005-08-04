@@ -7,9 +7,11 @@ Marc-Antoine Parent - XPath extension function help and patches
 
 Olivier Grisel - improved (c)ElementTree compatibility patches
 
-Florian Wagner - help with copy support, bug reporting
+Florian Wagner - help with copy.deepcopy support, bug reporting
  
 Emil Kroymann - help with encoding support, bug reporting
+
+Slou - help with index() support, bug reporting
  
 Duncan Booth - bugfixing
 

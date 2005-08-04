@@ -1842,7 +1842,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
-    
+
+    def test_index(self):
+        etree = self.etree
+        e = etree.Element('foo')
+        for i in range(10):
+            etree.SubElement(e, 'a%s' % i)
+        for i in range(10):
+            self.assertEquals(
+                i,
+                e.index(e[i]))
+        self.assertEquals(
+            3, e.index(e[3], 3))
+        self.assertRaises(
+            ValueError, e.index, e[3], 4)
+        self.assertRaises(
+            ValueError, e.index, e[3], 0, 2)
+        self.assertRaises(
+            ValueError, e.index, e[8], 0, -3)
+        self.assertEquals(
+            8, e.index(e[8], 0, -1))
+        self.assertEquals(
+            8, e.index(e[8], -12, -1))
+        self.assertEquals(
+            0, e.index(e[0], -12, -1))
+        
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
