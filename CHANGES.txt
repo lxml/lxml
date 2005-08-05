@@ -7,7 +7,11 @@ under development
 Features added
 --------------
 
-* Support for copy.deepcopy() on elements.
+* Support for copy.deepcopy() on elements. copy.copy() works also, but
+  does the same thing, and does *not* create a shallow copy, as that
+  makes no sense in the content of libxml2 trees. This means a
+  potential incompatibility with ElementTree, but there's more chance
+  that it works than if copy.copy() isn't supported at all.
 
 * Increased compatibility with (c)ElementTree; .parse() on ElementTree is
   now supported and parsing of gzipped XML files works.

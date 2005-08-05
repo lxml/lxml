@@ -33,6 +33,8 @@ Gavrie Philipson - bug reporting
 
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
+Robert Kern - feedback on API design
+
 Thanks also to:
 
 * the libxml2 project for a great XML library.

@@ -404,6 +404,9 @@ cdef class _Element(_NodeBase):
             changeDocumentBelow(mynode, self._doc)
 
     def __deepcopy__(self, memo):
+        return self.__copy__()
+        
+    def __copy__(self):
         cdef xmlNode* c_node
         cdef xmlDoc* c_doc
         c_doc = theParser.newDoc()
@@ -411,7 +414,7 @@ cdef class _Element(_NodeBase):
         c_node = tree.xmlDocCopyNode(self._c_node, c_doc, 1)
         tree.xmlDocSetRootElement(c_doc, c_node)
         return _elementFactory(etree, c_node)
-            
+        
     def set(self, key, value):
         self.attrib[key] = value
         

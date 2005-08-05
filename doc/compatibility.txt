@@ -92,4 +92,7 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
   unlike in ElementTree, you cannot pass it as a keyword argument to
   the Element and SubElement factories directly.
 
-
+* etree elements can be copied using copy.deepcopy() and copy.copy(),
+  just like ElementTree's. copy.copy() however does *not* create a
+  shallow copy where elements are shared between trees, as this makes
+  no sense in the context of libxml2 trees.
