@@ -33,6 +33,8 @@ In general
 
 * Various (c)ElementTree builders and parser APIs. Are they needed?
 
+* iterparse support would be nice.
+
 * memory errors and memory leaks when returning nodes from XPath
   extension functions.
 
@@ -65,3 +67,11 @@ QName
 -----
 
 Not yet implemented.
+
+Features
+--------
+
+* Relaxed NG compact notation (rnc versus rng) support. May consider
+  integrating this:
+
+  http://www.gnosis.cx/download/relax/
