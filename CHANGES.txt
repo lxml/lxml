@@ -41,6 +41,9 @@ Bugs fixed
 * INSTALL.txt was saying 2.2.16 instead of 2.6.16 as a supported
   libxml2 version, as it should.
 
+* Passing a UTF-8 encoded string to the XML() function would fail;
+  fixed.
+
 0.7 (2005-06-15)
 ================
 

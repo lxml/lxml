@@ -1029,7 +1029,9 @@ def ElementTree(_Element element=None, file=None):
 
 def XML(text):
     cdef xmlDoc* c_doc
-    c_doc = theParser.parseDoc(text.encode('UTF-8'))
+    if isinstance(text, unicode):
+        text = text.encode('UTF-8')
+    c_doc = theParser.parseDoc(text)
     return _elementTreeFactory(c_doc).getroot()
 
 fromstring = XML
