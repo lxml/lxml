@@ -9,6 +9,9 @@ Features added
 
 * Added MANIFEST.in for easier creation of RPM files.
 
+* 'parent' property on elements allows navigation to an element's
+  parent element.
+
 0.8 (2005-11-03)
 ================
 

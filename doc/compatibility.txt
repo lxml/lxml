@@ -96,3 +96,7 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
   just like ElementTree's. copy.copy() however does *not* create a
   shallow copy where elements are shared between trees, as this makes
   no sense in the context of libxml2 trees.
+
+* etree allows navigation to the parent of a node by the ``parent``
+  property. This is not possible in ElementTree as the underlying tree
+  model does not have this information.
