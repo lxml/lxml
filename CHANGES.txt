@@ -1,8 +1,8 @@
 lxml changelog
 ==============
 
-under development
-=================
+0.8 (2005-11-03)
+================
 
 Features added
 --------------
