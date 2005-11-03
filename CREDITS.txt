@@ -5,6 +5,8 @@ Martijn Faassen - initial and main developer
 
 Marc-Antoine Parent - XPath extension function help and patches
 
+Stefan Behnel - core development work
+
 Olivier Grisel - improved (c)ElementTree compatibility patches
 
 Florian Wagner - help with copy.deepcopy support, bug reporting
