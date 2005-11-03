@@ -22,6 +22,8 @@ Features added
 Bugs fixed
 ---------
 
+* Eliminate crash condition in iteration when text nodes are changed.
+
 * Passing 'None' to tostring() does not result in a segfault anymore,
   but an AssertionError.
 

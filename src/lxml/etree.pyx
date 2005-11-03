@@ -683,7 +683,7 @@ cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
     elif c_node.type == tree.XML_COMMENT_NODE:
         result = _Comment()
     else:
-        assert 0, "Unknown node type"
+        assert 0, "Unknown node type: %s" % c_node.type
     result._doc = etree
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
@@ -913,9 +913,26 @@ cdef _AttribIterator _attribIteratorFactory(_ElementTree etree,
     return result
 
 cdef class _ElementIterator(_NodeBase):
+    cdef int _started
+    
     def __next__(self):
         cdef xmlNode* c_node
         c_node = self._c_node
+        # if we just started iteration, yield first element node
+        if self._started:
+            while c_node is not NULL:
+                if _isElement(c_node):
+                    break
+                c_node = c_node.next
+            else:
+                raise StopIteration
+            self._started = 0
+            unregisterProxy(self, PROXY_ELEMENT_ITER)
+            self._c_node = c_node
+            registerProxy(self, PROXY_ELEMENT_ITER)
+            return _elementFactory(self._doc, c_node)
+        # if we didn't just start iteration, find next node to yield
+        c_node = c_node.next
         while c_node is not NULL:
             if _isElement(c_node):
                 break
@@ -923,7 +940,7 @@ cdef class _ElementIterator(_NodeBase):
         else:
             raise StopIteration
         unregisterProxy(self, PROXY_ELEMENT_ITER)
-        self._c_node = c_node.next
+        self._c_node = c_node
         registerProxy(self, PROXY_ELEMENT_ITER)
         return _elementFactory(self._doc, c_node)
 
@@ -936,6 +953,7 @@ cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
     result = _ElementIterator()
     result._doc = etree
     result._c_node = c_node
+    result._started = 1
     result._proxy_type = PROXY_ELEMENT_ITER
     registerProxy(result, PROXY_ELEMENT_ITER)
     return result

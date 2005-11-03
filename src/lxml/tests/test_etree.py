@@ -378,7 +378,14 @@ class ETreeTestCaseBase(unittest.TestCase):
         for el in root:
             result.append(el.tag)
         self.assertEquals([], result)
-        
+
+    def test_iteration_crash(self):
+        # this would cause a crash in the past
+        fromstring = self.etree.fromstring
+        root = etree.fromstring('<html><p></p>x</html>')
+        for elem in root:
+            elem.tail = ''
+
     def test_attribute_iterator(self):
         XML = self.etree.XML
         
