@@ -35,6 +35,10 @@ Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Robert Kern - feedback on API design
 
+Kieran Holland - iteration crash bug report
+
+Trent Mick - setup.py patch
+
 Thanks also to:
 
 * the libxml2 project for a great XML library.

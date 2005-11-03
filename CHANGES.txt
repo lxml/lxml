@@ -22,6 +22,10 @@ Features added
 Bugs fixed
 ---------
 
+* Use xslt-config instead of xml2-config to find out libxml2
+  directories to take into account a case where libxslt is installed
+  in a different directory than libxslt.
+
 * Eliminate crash condition in iteration when text nodes are changed.
 
 * Passing 'None' to tostring() does not result in a segfault anymore,

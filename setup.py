@@ -117,8 +117,8 @@ class MyDistribution(Distribution):
 class Error(Exception):
     pass
 
-def guess_dirs(xml2config_flags, flag):
-    wf, rf, ef = os.popen3('xml2-config %s' % xml2config_flags)
+def guess_dirs(xsltconfig_flags, flag):
+    wf, rf, ef = os.popen3('xslt-config %s' % xsltconfig_flags)
     flags = rf.read()
     error = ef.read()
     if error:
