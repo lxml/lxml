@@ -1,6 +1,14 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* Added MANIFEST.in for easier creation of RPM files.
+
 0.8 (2005-11-03)
 ================
 
