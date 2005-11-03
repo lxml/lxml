@@ -1,0 +1,3 @@
+include setup.py *.txt lxmldistutils.py
+recursive-include src *.pyx *.pxd
+recursive-include doc *.txt
