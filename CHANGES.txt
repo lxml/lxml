@@ -20,7 +20,7 @@ Features added
   SubElement.
 
 Bugs fixed
----------
+----------
 
 * Use xslt-config instead of xml2-config to find out libxml2
   directories to take into account a case where libxslt is installed
