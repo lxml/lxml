@@ -16,7 +16,7 @@ the introduction_ for more information about background and goals.
 News
 ----
 
-* 2005-10-03: `lxml 0.8`_ released (`changes for 0.8`_)
+* 2005-11-03: `lxml 0.8`_ released (`changes for 0.8`_)
 
 * 2005-06-15: `lxml 0.7`_ released (`changes for 0.7`_)
 
