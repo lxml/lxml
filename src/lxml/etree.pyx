@@ -210,18 +210,11 @@ cdef class _ElementTree(_DocumentBase):
         m = mem
         # XXX this is purely for ElementTree compatibility..
         if encoding == 'UTF-8' or encoding == 'us-ascii':
-            # strip off XML prologue..
-            i = m.find('\n')
-            if i != -1:
-                m = m[i + 1:]
-            # strip off ending \n..
-            m = m[:-1]
-        if encoding == 'UTF-8':
-            file.write(m)
-        else:
-            file.write(funicode(m).encode(encoding))
-        tree.xmlFree(mem)
-            
+            m = _stripDeclaration(m)
+            if m[-1:] == '\n':
+                m = m[:-1]
+        file.write(m)
+
     def getiterator(self, tag=None):
         root = self.getroot()
         if root is None:
@@ -1056,7 +1049,7 @@ def ElementTree(_Element element=None, file=None):
 def XML(text):
     cdef xmlDoc* c_doc
     if isinstance(text, unicode):
-        text = text.encode('UTF-8')
+        text = _stripDeclaration(text.encode('UTF-8'))
     c_doc = theParser.parseDoc(text)
     return _elementTreeFactory(c_doc).getroot()
 
@@ -1691,8 +1684,18 @@ cdef _dumpNextNode(tree.xmlOutputBuffer* c_buffer, xmlDoc* c_doc,
     if not (c_next is not NULL and c_next.type == tree.XML_TEXT_NODE):
         c_next = NULL
     if c_next is not NULL:
-        tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)   
-    
+        tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)
+        
+cdef object _stripDeclaration(object xml_string):
+    xml_string = xml_string.strip()
+    if xml_string[:5] == '<?xml':
+        i = xml_string.find('?>')
+        if i != -1:
+            if xml_string[i+2:i+3] == '\n':
+                i = i+1
+            xml_string = xml_string[i + 2:]
+    return xml_string
+
 cdef _collectText(xmlNode* c_node):
     """Collect all text nodes and return them as a unicode string.
 
