@@ -2066,6 +2066,21 @@ class ETreeXSLTTestCase(HelperTestCase):
         
         etree.tostring(result.getroot())
 
+    def test_xslt_empty(self):
+        # could segfault if result contains "empty document"
+        xml = '<blah/>'
+        xslt = '''
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+          <xsl:template match="/" />
+        </xsl:stylesheet>
+        '''
+
+        source = self.parse(xml)
+        styledoc = self.parse(xslt)
+        style = etree.XSLT(styledoc)
+        result = style.apply(source)
+        style.tostring(result)
+
     def test_xslt_shortcut(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
