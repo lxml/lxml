@@ -1466,6 +1466,8 @@ cdef class XSLT:
         r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
         if r == -1:
             raise XSLTSaveError, "Error saving stylesheet result to string"
+        if s is NULL:
+            return ''
         result = funicode(s)
         tree.xmlFree(s)
         return result
