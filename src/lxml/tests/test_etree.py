@@ -2079,7 +2079,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
         result = style.apply(source)
-        style.tostring(result)
+        self.assertEqual('', style.tostring(result))
 
     def test_xslt_shortcut(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
