@@ -576,7 +576,7 @@ cdef class _Element(_NodeBase):
         return c
 
     def __iter__(self):
-        return _elementIteratorFactory(self._doc, self._c_node.children)
+        return ElementChildIterator(self)
 
     def index(self, _Element x, start=None, stop=None):
         cdef int k 
@@ -912,51 +912,33 @@ cdef _AttribIterator _attribIteratorFactory(_ElementTree etree,
     registerProxy(result, PROXY_ATTRIB_ITER)
     return result
 
-cdef class _ElementIterator(_NodeBase):
-    cdef int _started
-    
+cdef class ElementChildIterator:
+    # we keep Python references here to control GC
+    cdef object _node
+    def __init__(self, node): # Python ref!
+        cdef xmlNode* c_node
+        cdef _NodeBase base_node
+        base_node = <_NodeBase>node
+        c_node = _findChildForwards(base_node._c_node, 0)
+        if c_node is NULL:
+            self._node = None
+        else:
+            self._node = _elementFactory(base_node._doc, c_node)
+    def __iter__(self):
+        return self
     def __next__(self):
         cdef xmlNode* c_node
-        c_node = self._c_node
-        # if we just started iteration, yield first element node
-        if self._started:
-            while c_node is not NULL:
-                if _isElement(c_node):
-                    break
-                c_node = c_node.next
-            else:
-                raise StopIteration
-            self._started = 0
-            unregisterProxy(self, PROXY_ELEMENT_ITER)
-            self._c_node = c_node
-            registerProxy(self, PROXY_ELEMENT_ITER)
-            return _elementFactory(self._doc, c_node)
-        # if we didn't just start iteration, find next node to yield
-        c_node = c_node.next
-        while c_node is not NULL:
-            if _isElement(c_node):
-                break
-            c_node = c_node.next
-        else:
+        cdef _NodeBase base_node
+        current_node = self._node # Python ref!
+        if current_node is None:
             raise StopIteration
-        unregisterProxy(self, PROXY_ELEMENT_ITER)
-        self._c_node = c_node
-        registerProxy(self, PROXY_ELEMENT_ITER)
-        return _elementFactory(self._doc, c_node)
-
-cdef _ElementIterator _elementIteratorFactory(_ElementTree etree,
-                                              xmlNode* c_node):
-    cdef _ElementIterator result
-    result = getProxy(c_node, PROXY_ELEMENT_ITER)
-    if result is not None:
-        return result
-    result = _ElementIterator()
-    result._doc = etree
-    result._c_node = c_node
-    result._started = 1
-    result._proxy_type = PROXY_ELEMENT_ITER
-    registerProxy(result, PROXY_ELEMENT_ITER)
-    return result
+        base_node = <_NodeBase>current_node
+        c_node = _nextElement(base_node._c_node)
+        if c_node is NULL:
+            self._node = None
+        else:
+            self._node = _elementFactory(base_node._doc, c_node)
+        return current_node
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object tag,
                              object attrib, object extra) except NULL:
