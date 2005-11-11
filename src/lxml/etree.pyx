@@ -535,14 +535,6 @@ cdef class _Element(_NodeBase):
             # XXX what if we're the top element?
             tree.xmlAddNextSibling(self._c_node, c_text_node)
 
-    property parent:
-        def __get__(self):
-            cdef xmlNode* c_node
-            c_node = self._c_node.parent
-            if c_node is not NULL and _isElement(c_node):
-                return _elementFactory(self._doc, c_node)
-            return None
-        
     # ACCESSORS
     def __repr__(self):
         return "<Element %s at %x>" % (self.tag, id(self))
@@ -643,6 +635,13 @@ cdef class _Element(_NodeBase):
                 result.append(_elementFactory(self._doc, c_node))
             c_node = c_node.next
         return result
+
+    def getparent(self):
+        cdef xmlNode* c_node
+        c_node = self._c_node.parent
+        if c_node is not NULL and _isElement(c_node):
+            return _elementFactory(self._doc, c_node)
+        return None
 
     def getiterator(self, tag=None):
         result = []

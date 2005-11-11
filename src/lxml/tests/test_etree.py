@@ -1815,6 +1815,27 @@ class ETreeOnlyTestCase(HelperTestCase):
             None,
             a[0].prefix)
 
+    def test_getparent(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            None,
+            a.getparent())
+        self.assertEquals(
+            a,
+            b.getparent())
+        self.assertEquals(
+            b.getparent(),
+            c.getparent())
+        self.assertEquals(
+            b,
+            d.getparent())
+
     def test_namespaces(self):
         etree = self.etree
 
@@ -1887,27 +1908,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             8, e.index(e[8], -12, -1))
         self.assertEquals(
             0, e.index(e[0], -12, -1))
-
-    def test_parent(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(b, 'd')
-        self.assertEquals(
-            None,
-            a.parent)
-        self.assertEquals(
-            a,
-            b.parent)
-        self.assertEquals(
-            b.parent,
-            c.parent)
-        self.assertEquals(
-            b,
-            d.parent)
         
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.

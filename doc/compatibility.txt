@@ -97,6 +97,6 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
   shallow copy where elements are shared between trees, as this makes
   no sense in the context of libxml2 trees.
 
-* etree allows navigation to the parent of a node by the ``parent``
-  property. This is not possible in ElementTree as the underlying tree
+* etree allows navigation to the parent of a node by the ``getparent()``
+  method. This is not possible in ElementTree as the underlying tree
   model does not have this information.
