@@ -808,8 +808,7 @@ cdef class _Attrib(_NodeBase):
             return default
 
     def __iter__(self):
-        return _attribIteratorFactory(self._doc,
-                                      <xmlNode*>self._c_node.properties)
+        return iter(self.keys())
     
     def keys(self):
         result = []
@@ -882,34 +881,6 @@ cdef _Attrib _attribFactory(_ElementTree etree, xmlNode* c_node):
     result._c_node = c_node
     result._proxy_type = PROXY_ATTRIB
     registerProxy(result, PROXY_ATTRIB)
-    return result
-
-cdef class _AttribIterator(_NodeBase):
-    def __next__(self):
-        cdef xmlNode* c_node
-        c_node = self._c_node
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                break
-            c_node = c_node.next
-        else:
-            raise StopIteration
-        unregisterProxy(self, PROXY_ATTRIB_ITER)
-        self._c_node = c_node.next
-        registerProxy(self, PROXY_ATTRIB_ITER)
-        return funicode(c_node.name)
-    
-cdef _AttribIterator _attribIteratorFactory(_ElementTree etree,
-                                            xmlNode* c_node):
-    cdef _AttribIterator result
-    result = getProxy(c_node, PROXY_ATTRIB_ITER)
-    if result is not None:
-        return result
-    result = _AttribIterator()
-    result._doc = etree
-    result._c_node = c_node
-    result._proxy_type = PROXY_ATTRIB_ITER
-    registerProxy(result, PROXY_ATTRIB_ITER)
     return result
 
 cdef class ElementChildIterator:
