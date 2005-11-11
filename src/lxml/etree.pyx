@@ -131,7 +131,7 @@ cdef class _NodeBase:
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
         if self._c_node is not NULL:
-            unregisterProxy(self, self._proxy_type)
+            unregisterProxy(self)
         attemptDeallocation(self._c_node)
 
     cdef xmlNs* _getNs(self, char* href):
@@ -1895,15 +1895,17 @@ cdef void registerProxy(_NodeBase proxy, int proxy_type):
         ref = ref.next
     prev_ref.next = createProxyRef(proxy, proxy_type)
 
-cdef void unregisterProxy(_NodeBase proxy, int proxy_type):
+cdef void unregisterProxy(_NodeBase proxy):
     """Unregister a proxy for the node it's proxying for.
     """
+    cdef tree.PyObject* proxy_ref
     cdef ProxyRef* ref
     cdef ProxyRef* prev_ref
     cdef xmlNode* c_node
+    proxy_ref = <tree.PyObject*>proxy
     c_node = proxy._c_node
     ref = <ProxyRef*>c_node._private
-    if ref.type == proxy_type:
+    if ref.proxy == proxy_ref:
         c_node._private = <void*>ref.next
         cstd.free(ref)
         return
@@ -1912,7 +1914,7 @@ cdef void unregisterProxy(_NodeBase proxy, int proxy_type):
     ref = ref.next
     while ref is not NULL:
         #print "Registered is:", ref.type
-        if ref.type == proxy_type:
+        if ref.proxy == proxy_ref:
             prev_ref.next = ref.next
             cstd.free(ref)
             return
