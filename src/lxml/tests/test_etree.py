@@ -2128,6 +2128,32 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assertRaises(etree.RelaxNGParseError,
                           etree.RelaxNG, schema)
 
+    def test_relaxng_invalid_schema2(self):
+        schema = self.parse('''\
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" />
+''')
+        self.assertRaises(etree.RelaxNGParseError,
+                          etree.RelaxNG, schema)
+
+    def test_relaxng_invalid_schema3(self):
+        schema = self.parse('''\
+<grammar xmlns="http://relaxng.org/ns/structure/1.0">
+  <define name="test">
+    <element name="test"/>
+  </define>
+</grammar>
+''')
+        self.assertRaises(etree.RelaxNGParseError,
+                          etree.RelaxNG, schema)
+
+    def test_relaxng_invalid_schema4(self):
+        # segfault
+        schema = self.parse('''\
+<element name="a" xmlns="mynamespace" />
+''')
+        self.assertRaises(etree.RelaxNGParseError,
+                          etree.RelaxNG, schema)
+
     def test_relaxng_include(self):
         # this will only work if we access the file through path or
         # file object..

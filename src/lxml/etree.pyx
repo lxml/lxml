@@ -1447,7 +1447,6 @@ cdef class RelaxNG:
             raise RelaxNGParseError, "Document is not valid Relax NG"
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
         if self._c_schema is NULL:
-            relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
             raise RelaxNGParseError, "Document is not valid Relax NG"
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         
