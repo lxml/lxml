@@ -1,18 +1,21 @@
 cimport tree
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
+cimport xmlparser
 cimport xpath
 cimport xslt
+cimport relaxng
+cimport xmlschema
 cimport xmlerror
 cimport xinclude
 cimport c14n
 cimport cstd
 import types
 
+from xmlparser cimport xmlParserCtxt, xmlDict
 import _elementpath
 from StringIO import StringIO
 import sys
 
-# should libxml2/libxslt be allowed to shout?
 DEBUG = False
 
 cdef int PROXY_ELEMENT
@@ -25,23 +28,60 @@ PROXY_ATTRIB = 1
 PROXY_ATTRIB_ITER = 2
 PROXY_ELEMENT_ITER = 3
 
-
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
 
-
-# Error superclass for ElementTree compatibility
 class Error(Exception):
     pass
 
-# module level superclass for all exceptions
-class LxmlError(Error):
+class XMLSyntaxError(SyntaxError):
     pass
 
-# superclass for all syntax errors
-class LxmlSyntaxError(SyntaxError, LxmlError):
+class XPathError(Error):
+    pass
+
+class XPathContextError(XPathError):
+    pass
+
+class XPathNamespaceError(XPathError):
+    pass
+
+class XPathResultError(XPathError):
+    pass
+
+class XPathSyntaxError(SyntaxError):
+    pass
+
+class XSLTError(Error):
+    pass
+
+class XSLTParseError(XSLTError):
+    pass
+
+class XSLTApplyError(XSLTError):
+    pass
+
+class XSLTSaveError(XSLTError):
+    pass
+
+class RelaxNGError(Error):
+    pass
+
+class RelaxNGParseError(RelaxNGError):
+    pass
+
+class RelaxNGValidateError(RelaxNGError):
+    pass
+
+class XMLSchemaError(Error):
+    pass
+
+class XMLSchemaParseError(XMLSchemaError):
+    pass
+
+class XMLSchemaValidateError(XMLSchemaError):
     pass
 
 class XIncludeError(Error):
@@ -1027,20 +1067,553 @@ cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
                 tree.xmlNewNs(c_node, href, prefix)
             else:
                 tree.xmlNewNs(c_node, href, NULL)
+        
+cdef class XPathDocumentEvaluator:
+    """Create an XPath evaluator for a document.
+    """
+    cdef xpath.xmlXPathContext* _c_ctxt
+    cdef _ElementTree _doc
+    cdef object _extension_functions
+    cdef object _exc_info
+    cdef object _namespaces
+    cdef object _extensions
+    cdef object _temp_elements
+    cdef object _temp_docs
+    
+    def __init__(self, _ElementTree doc,
+                 namespaces=None, extensions=None):
+        cdef xpath.xmlXPathContext* xpathCtxt
+        cdef int ns_register_status
+        
+        xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
+        if xpathCtxt is NULL:
+            # XXX what triggers this exception?
+            raise XPathContextError, "Unable to create new XPath context"
 
+        self._doc = doc
+        self._c_ctxt = xpathCtxt
+        self._c_ctxt.userData = <void*>self
+        self._namespaces = namespaces
+        self._extensions = extensions
+        
+        if namespaces is not None:
+            self.registerNamespaces(namespaces)
+        self._extension_functions = {}
+        if extensions is not None:
+            for extension in extensions:
+                self._extension_functions.update(extension)
+                for (ns_uri, name), function in extension.items():
+                    if ns_uri is not None:
+                        xpath.xmlXPathRegisterFuncNS(
+                            xpathCtxt, name, ns_uri, _xpathCallback)
+                    else:
+                        xpath.xmlXPathRegisterFunc(
+                            xpathCtxt, name, _xpathCallback)
+                        
+    def __dealloc__(self):
+        xpath.xmlXPathFreeContext(self._c_ctxt)
+    
+    def registerNamespace(self, prefix, uri):
+        """Register a namespace with the XPath context.
+        """
+        s_prefix = prefix.encode('UTF8')
+        s_uri = uri.encode('UTF8')
+        # XXX should check be done to verify namespace doesn't already exist?
+        ns_register_status = xpath.xmlXPathRegisterNs(
+            self._c_ctxt, s_prefix, s_uri)
+        if ns_register_status != 0:
+            # XXX doesn't seem to be possible to trigger this
+            # from Python
+            raise XPathNamespaceError, (
+                "Unable to register namespaces with prefix "
+                "%s and uri %s" % (prefix, uri))
 
-# include submodules
-include "xslt.pxi"      # XPath and XSLT
-include "relaxng.pxi"   # RelaxNG
-include "xmlschema.pxi" # XMLSchema
-include "parser.pxi"    # XML Parser
-include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
+    def registerNamespaces(self, namespaces):
+        """Register a prefix -> uri dict.
+        """
+        for prefix, uri in namespaces.items():
+            self.registerNamespace(prefix, uri)
+    
+    def evaluate(self, path):
+        return self._evaluate(path, NULL)
 
+    cdef object _evaluate(self, path, xmlNode* c_ctxt_node):
+        cdef xpath.xmlXPathObject* xpathObj
+        cdef xmlNode* c_node
+        
+        # if element context is requested; unfortunately need to modify ctxt
+        self._c_ctxt.node = c_ctxt_node
 
-# Instantiate globally shared XML parser to enable dictionary sharing
+        path = path.encode('UTF-8')
+        self._exc_info = None
+        self._release()
+        xpathObj = xpath.xmlXPathEvalExpression(path, self._c_ctxt)
+        if self._exc_info is not None:
+            type, value, traceback = self._exc_info
+            self._exc_info = None
+            raise type, value, traceback
+        if xpathObj is NULL:
+            raise XPathSyntaxError, "Error in xpath expression."
+        try:
+            result = _unwrapXPathObject(xpathObj, self._doc)
+        except XPathResultError:
+            #self._release()
+            xpath.xmlXPathFreeObject(xpathObj)
+            raise
+        xpath.xmlXPathFreeObject(xpathObj)
+        # release temporarily held python stuff
+        #self._release()
+        return result
+        
+    #def clone(self):
+    #    # XXX pretty expensive so calling this from callback is probably
+    #    # not desirable
+    #    return XPathEvaluator(self._doc, self._namespaces, self._extensions)
+
+    def _release(self):
+        self._temp_elements = {}
+        self._temp_docs = {}
+        
+    def _hold(self, obj):
+        """A way to temporarily hold references to nodes in the evaluator.
+
+        This is needed because otherwise nodes created in XPath extension
+        functions would be reference counted too soon, during the
+        XPath evaluation.
+        """
+        cdef _NodeBase element
+        if isinstance(obj, _NodeBase):
+            obj = [obj]
+        if not type(obj) in (type([]), type(())):
+            return
+        for o in obj:
+            if isinstance(o, _NodeBase):
+                element = <_NodeBase>o
+                #print "Holding element:", <int>element._c_node
+                self._temp_elements[id(element)] = element
+                #print "Holding document:", <int>element._doc._c_doc
+                self._temp_docs[id(element._doc)] = element._doc
+
+cdef class XPathElementEvaluator(XPathDocumentEvaluator):
+    """Create an XPath evaluator for an element.
+    """
+    cdef _Element _element
+    
+    def __init__(self, _Element element, namespaces=None, extensions=None):
+        XPathDocumentEvaluator.__init__(
+            self, element._doc, namespaces, extensions)
+        self._element = element
+        
+    def evaluate(self, path):
+        return self._evaluate(path, self._element._c_node)
+
+def XPathEvaluator(doc_or_element, namespaces=None, extensions=None):
+    if isinstance(doc_or_element, _DocumentBase):
+        return XPathDocumentEvaluator(doc_or_element, namespaces, extensions)
+    else:
+        return XPathElementEvaluator(doc_or_element, namespaces, extensions)
+    
+def Extension(module, function_mapping, ns_uri=None):
+    result = {}
+    for function_name, xpath_name in function_mapping.items():
+        result[(ns_uri, xpath_name)] = getattr(module, function_name)
+    return result
+
+cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
+    cdef xpath.xmlNodeSet* resultSet
+    cdef _NodeBase node
+    if isinstance(obj, str):
+        # XXX use the Wrap variant? Or leak...
+        return xpath.xmlXPathNewCString(obj)
+    if isinstance(obj, unicode):
+        obj = obj.encode("utf-8")
+        return xpath.xmlXPathNewCString(obj)
+    if isinstance(obj, types.BooleanType):
+        return xpath.xmlXPathNewBoolean(obj)
+    if isinstance(obj, (int, float)):
+        return xpath.xmlXPathNewFloat(obj)
+    if isinstance(obj, _NodeBase):
+        obj = [obj]
+    if isinstance(obj, (types.ListType, types.TupleType)):
+        resultSet = xpath.xmlXPathNodeSetCreate(NULL)
+        for element in obj:
+            if isinstance(element, _NodeBase):
+                node = <_NodeBase>element
+                xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
+            else:
+                raise XPathResultError, "This is not a node: %s" % element
+        return xpath.xmlXPathWrapNodeSet(resultSet)
+    else:
+        raise XPathResultError, "Unknown return type: %s" % obj
+    return NULL
+
+cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
+                               _ElementTree doc):
+    if xpathObj.type == xpath.XPATH_UNDEFINED:
+        raise XPathResultError, "Undefined xpath result"
+    elif xpathObj.type == xpath.XPATH_NODESET:
+        return _createNodeSetResult(doc, xpathObj)
+    elif xpathObj.type == xpath.XPATH_BOOLEAN:
+        return bool(xpathObj.boolval)
+    elif xpathObj.type == xpath.XPATH_NUMBER:
+        return xpathObj.floatval
+    elif xpathObj.type == xpath.XPATH_STRING:
+        return funicode(xpathObj.stringval)
+    elif xpathObj.type == xpath.XPATH_POINT:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_RANGE:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_LOCATIONSET:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_USERS:
+        raise NotImplementedError
+    elif xpathObj.type == xpath.XPATH_XSLT_TREE:
+        raise NotImplementedError
+    else:
+        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
+
+cdef object _createNodeSetResult(_ElementTree doc,
+                                 xpath.xmlXPathObject* xpathObj):
+    cdef xmlNode* c_node
+    cdef char* s
+    cdef _NodeBase element
+    result = []
+    if xpathObj.nodesetval is NULL:
+        return result
+    for i from 0 <= i < xpathObj.nodesetval.nodeNr:
+        c_node = xpathObj.nodesetval.nodeTab[i]
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            element = _elementFactory(doc, c_node)
+            result.append(element)
+        elif c_node.type == tree.XML_TEXT_NODE:
+            result.append(funicode(c_node.content))
+        elif c_node.type == tree.XML_ATTRIBUTE_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            attr_value = funicode(s)
+            tree.xmlFree(s)
+            result.append(attr_value)
+        elif c_node.type == tree.XML_COMMENT_NODE:
+            s = tree.xmlNodeGetContent(c_node)
+            s2 = '<!--%s-->' % s
+            comment_value = funicode(s2)
+            tree.xmlFree(s)
+            result.append(comment_value)
+        else:
+            print "Not yet implemented result node type:", c_node.type
+            raise NotImplementedError
+    return result
+
+cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef xpath.xmlXPathContext* rctxt
+    cdef _ElementTree doc
+    cdef xpath.xmlXPathObject* obj
+    cdef XPathDocumentEvaluator evaluator
+    
+    rctxt = ctxt.context
+    
+    # get information on what function is called
+    name = rctxt.function
+    if rctxt.functionURI is not NULL:
+        uri = rctxt.functionURI
+    else:
+        uri = None
+
+    # get our evaluator
+    evaluator = <XPathDocumentEvaluator>(rctxt.userData)
+
+    # lookup up the extension function in the evaluator
+    f = evaluator._extension_functions[(uri, name)]
+    
+    args = []
+    doc = evaluator._doc
+    for i from 0 <= i < nargs:
+        args.append(_unwrapXPathObject(xpath.valuePop(ctxt), doc))
+    args.reverse()
+
+    try:
+        # call the function
+        res = f(evaluator, *args)
+        # hold python objects temporarily so that they won't get deallocated
+        # during processing
+        evaluator._hold(res)
+        # now wrap for XPath consumption
+        obj = _wrapXPathObject(res)
+    except:
+        xpath.xmlXPathErr(
+            ctxt,
+            xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
+        evaluator._exc_info = sys.exc_info()
+        return
+    xpath.valuePush(ctxt, obj)
+
+cdef class XSLT:
+    """Turn a document into an XSLT object.
+    """
+    cdef xslt.xsltStylesheet* _c_style
+    
+    def __init__(self, _ElementTree doc):
+        # make a copy of the document as stylesheet needs to assume it
+        # doesn't change
+        cdef xslt.xsltStylesheet* c_style
+        cdef xmlDoc* c_doc
+        c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
+        # XXX work around bug in xmlCopyDoc (fix is upcoming in new release
+        # of libxml2)
+        if doc._c_doc.URL is not NULL:
+            c_doc.URL = tree.xmlStrdup(doc._c_doc.URL)
+            
+        c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        if c_style is NULL:
+            raise XSLTParseError, "Cannot parse style sheet"
+        self._c_style = c_style
+        # XXX is it worthwile to use xsltPrecomputeStylesheet here?
+        
+    def __dealloc__(self):
+        # this cleans up copy of doc as well
+        xslt.xsltFreeStylesheet(self._c_style)
+        
+    def apply(self, _ElementTree doc, **kw):
+        cdef xmlDoc* c_result
+        cdef char** params
+        cdef int i
+        cdef int j
+        if kw:
+            # encode as UTF-8; somehow can't put this in main params
+            # array construction loop..
+            new_kw = {}
+            for key, value in kw.items():
+                k = key.encode('UTF-8')
+                v = value.encode('UTF-8')
+                new_kw[k] = v
+            # allocate space for parameters
+            # * 2 as we want an entry for both key and value,
+            # and + 1 as array is NULL terminated
+            params = <char**>cstd.malloc(sizeof(char*) * (len(kw) * 2 + 1))
+            i = 0
+            for key, value in new_kw.items():
+                params[i] = key
+                i = i + 1
+                params[i] = value
+                i = i + 1
+            params[i] = NULL
+        else:
+            params = NULL
+        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, params)
+        if params is not NULL:
+            # deallocate space for parameters again
+            cstd.free(params)
+        if c_result is NULL:
+            raise XSLTApplyError, "Error applying stylesheet"
+        # XXX should set special flag to indicate this is XSLT result
+        # so that xsltSaveResultTo* functional can be used during
+        # serialize?
+        return _elementTreeFactory(c_result)
+
+    def tostring(self, _ElementTree doc):
+        """Save result doc to string using stylesheet as guidance.
+        """
+        cdef char* s
+        cdef int l
+        cdef int r
+        r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
+        if r == -1:
+            raise XSLTSaveError, "Error saving stylesheet result to string"
+        if s is NULL:
+            return ''
+        result = funicode(s)
+        tree.xmlFree(s)
+        return result
+
+cdef class RelaxNG:
+    """Turn a document into an Relax NG validator.
+    Can also load from filesystem directly given file object or filename.
+    """
+    cdef relaxng.xmlRelaxNG* _c_schema
+    
+    def __init__(self, _ElementTree tree=None, file=None):
+        cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
+                    
+        if tree is not None:
+            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(tree._c_doc)
+        elif file is not None:
+            filename = _getFilenameForFile(file)
+            if filename is None:
+                # XXX assume a string object
+                filename = file
+            parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
+        else:
+            raise RelaxNGParseError, "No tree or file given"
+        if parser_ctxt is NULL:
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
+        if self._c_schema is NULL:
+            raise RelaxNGParseError, "Document is not valid Relax NG"
+        relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+        
+    def __dealloc__(self):
+        relaxng.xmlRelaxNGFree(self._c_schema)
+        
+    def validate(self, _ElementTree doc):
+        """Validate doc using Relax NG.
+
+        Returns true if document is valid, false if not."""
+        cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
+        cdef int ret
+        valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
+        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, doc._c_doc)
+        relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
+        if ret == -1:
+            raise RelaxNGValidateError, "Internal error in Relax NG validation"
+        return ret == 0
+
+cdef class XMLSchema:
+    """Turn a document into an XML Schema validator.
+    """
+    cdef xmlschema.xmlSchema* _c_schema
+    
+    def __init__(self, _ElementTree tree):
+        cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
+        parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(tree._c_doc)
+        if parser_ctxt is NULL:
+            raise XMLSchemaParseError, "Document is not valid XML Schema"
+        self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+        if self._c_schema is NULL:
+            xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+            raise XMLSchemaParseError, "Document is not valid XML Schema"
+        xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+        
+    def __dealloc__(self):
+        xmlschema.xmlSchemaFree(self._c_schema)
+
+    def validate(self, _ElementTree doc):
+        """Validate doc using XML Schema.
+
+        Returns true if document is valid, false if not.
+        """
+        cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
+        cdef int ret
+        valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)
+        ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, doc._c_doc)
+        xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
+        if ret == -1:
+            raise XMLSchemaValidateError, "Internal error in XML Schema validation."
+        return ret == 0
+        
+# Globally shared XML parser to enable dictionary sharing
+cdef class Parser:
+
+    cdef xmlDict* _c_dict
+    cdef int _parser_initialized
+    
+    def __init__(self):
+        self._c_dict = NULL
+        self._parser_initialized = 0
+        
+    def __dealloc__(self):
+        #print "cleanup parser"
+        if self._c_dict is not NULL:
+            #print "freeing dictionary (cleanup parser)"
+            xmlparser.xmlDictFree(self._c_dict)
+        
+    cdef xmlDoc* parseDoc(self, text) except NULL:
+        """Parse document, share dictionary if possible.
+        """
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+        cdef int parse_error
+        self._initParse()
+        pctxt = xmlparser.xmlCreateDocParserCtxt(text)
+        if pctxt is NULL:
+            raise XMLSyntaxError
+
+        self._prepareParse(pctxt)
+        xmlparser.xmlCtxtUseOptions(
+            pctxt,
+            _getParseOptions())
+        parse_error = xmlparser.xmlParseDocument(pctxt)
+        # in case of errors, clean up context plus any document
+        if parse_error != 0 or not pctxt.wellFormed:
+            if pctxt.myDoc is not NULL:
+                tree.xmlFreeDoc(pctxt.myDoc)
+                pctxt.myDoc = NULL
+            xmlparser.xmlFreeParserCtxt(pctxt)
+            raise XMLSyntaxError
+        result = pctxt.myDoc
+        self._finalizeParse(result)
+        xmlparser.xmlFreeParserCtxt(pctxt)
+        return result
+
+    cdef xmlDoc* parseDocFromFile(self, char* filename) except NULL:
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+
+        self._initParse()
+        pctxt = xmlparser.xmlNewParserCtxt()
+        self._prepareParse(pctxt)
+        # XXX set options twice? needed to shut up libxml2
+        xmlparser.xmlCtxtUseOptions(pctxt, _getParseOptions())
+        result = xmlparser.xmlCtxtReadFile(pctxt, filename,
+                                           NULL, _getParseOptions())
+        if result is NULL:
+            if pctxt.lastError.domain == xmlerror.XML_FROM_IO:
+                raise IOError, "Could not open file %s" % filename
+        # in case of errors, clean up context plus any document
+        # XXX other errors?
+        if not pctxt.wellFormed:
+            if pctxt.myDoc is not NULL:
+                tree.xmlFreeDoc(pctxt.myDoc)
+                pctxt.myDoc = NULL
+            xmlparser.xmlFreeParserCtxt(pctxt)
+            raise XMLSyntaxError
+        self._finalizeParse(result)
+        xmlparser.xmlFreeParserCtxt(pctxt)
+        return result
+    
+    cdef void _initParse(self):
+        if not self._parser_initialized:
+            xmlparser.xmlInitParser()
+            self._parser_initialized = 1
+            
+    cdef void _prepareParse(self, xmlParserCtxt* pctxt):
+        if self._c_dict is not NULL and pctxt.dict is not NULL:
+            #print "sharing dictionary (parseDoc)"
+            xmlparser.xmlDictFree(pctxt.dict)
+            pctxt.dict = self._c_dict
+            xmlparser.xmlDictReference(pctxt.dict)
+
+    cdef void _finalizeParse(self, xmlDoc* result):
+        # store dict of last object parsed if no shared dict yet
+        if self._c_dict is NULL:
+            #print "storing shared dict"
+            self._c_dict = result.dict
+        xmlparser.xmlDictReference(self._c_dict)
+    
+    cdef xmlDoc* newDoc(self):
+        cdef xmlDoc* result
+        cdef xmlDict* d
+
+        result = tree.xmlNewDoc("1.0")
+
+        if self._c_dict is NULL:
+            # we need to get dict from the new document if it's there,
+            # otherwise make one
+            if result.dict is not NULL:
+                d = result.dict
+            else:
+                d = xmlparser.xmlDictCreate()
+                result.dict = d
+            self._c_dict = d
+            xmlparser.xmlDictReference(self._c_dict)
+        else:
+            # we need to reuse the central dict and get rid of the new one
+            if result.dict is not NULL:
+                xmlparser.xmlDictFree(result.dict)
+            result.dict = self._c_dict
+            xmlparser.xmlDictReference(result.dict)
+        return result
+
 cdef Parser theParser
 theParser = Parser()
-
 
 # Private helper functions
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
@@ -1193,6 +1766,10 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
             c = c + 1
         c_node = c_next
 
+cdef int _getParseOptions():
+    return (xmlparser.XML_PARSE_NOENT | xmlparser.XML_PARSE_NOCDATA |
+            xmlparser.XML_PARSE_NOWARNING | xmlparser.XML_PARSE_NOERROR)
+
 def _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI available.
@@ -1240,6 +1817,112 @@ def _getFilenameForFile(source):
         return source.filename
     return None
 
+cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
+    pass
+
+cdef void nullStructuredErrorFunc(void* userData,
+                                  xmlerror.xmlError* error):
+    pass
+
+cdef void _shutUpLibxmlErrors():
+    xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
+
+cdef void _shutUpLibxsltErrors():
+    xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    # xslt.xsltSetTransformErrorFunc
+
+# ugly global shutting up of all errors, but seems to work..
+if not DEBUG:
+    _shutUpLibxmlErrors()
+    _shutUpLibxsltErrors()
+    
+# backpointer functionality
+
+cdef struct _ProxyRef
+
+cdef struct _ProxyRef:
+    tree.PyObject* proxy
+    int type
+    _ProxyRef* next
+        
+ctypedef _ProxyRef ProxyRef
+
+cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
+    """Get a proxy for a given node and node type.
+    """
+    cdef ProxyRef* ref
+    #print "getProxy for:", <int>c_node
+    if c_node is NULL:
+        return None
+    ref = <ProxyRef*>c_node._private
+    while ref is not NULL:
+        if ref.type == proxy_type:
+            return <_NodeBase>ref.proxy
+        ref = ref.next
+    return None
+
+cdef int hasProxy(xmlNode* c_node):
+    return c_node._private is not NULL
+    
+cdef ProxyRef* createProxyRef(_NodeBase proxy, int proxy_type):
+    """Create a backpointer proxy reference for a proxy and type.
+    """
+    cdef ProxyRef* result
+    result = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
+    result.proxy = <tree.PyObject*>proxy
+    result.type = proxy_type
+    result.next = NULL
+    return result
+
+cdef void registerProxy(_NodeBase proxy, int proxy_type):
+    """Register a proxy and type for the node it's proxying for.
+    """
+    cdef ProxyRef* ref
+    cdef ProxyRef* prev_ref
+    # cannot register for NULL
+    if proxy._c_node is NULL:
+        return
+    # XXX should we check whether we ran into proxy_type before?
+    #print "registering for:", <int>proxy._c_node
+    ref = <ProxyRef*>proxy._c_node._private
+    if ref is NULL:
+        proxy._c_node._private = <void*>createProxyRef(proxy, proxy_type)
+        return
+    while ref is not NULL:
+        prev_ref = ref
+        ref = ref.next
+    prev_ref.next = createProxyRef(proxy, proxy_type)
+
+cdef void unregisterProxy(_NodeBase proxy):
+    """Unregister a proxy for the node it's proxying for.
+    """
+    cdef tree.PyObject* proxy_ref
+    cdef ProxyRef* ref
+    cdef ProxyRef* prev_ref
+    cdef xmlNode* c_node
+    proxy_ref = <tree.PyObject*>proxy
+    c_node = proxy._c_node
+    ref = <ProxyRef*>c_node._private
+    if ref.proxy == proxy_ref:
+        c_node._private = <void*>ref.next
+        cstd.free(ref)
+        return
+    prev_ref = ref
+    #print "First registered is:", ref.type
+    ref = ref.next
+    while ref is not NULL:
+        #print "Registered is:", ref.type
+        if ref.proxy == proxy_ref:
+            prev_ref.next = ref.next
+            cstd.free(ref)
+            return
+        prev_ref = ref
+        ref = ref.next
+    #print "Proxy:", proxy, "Proxy type:", proxy_type
+    assert 0, "Tried to unregister unknown proxy"
+
+
 cdef void changeDocumentBelow(_NodeBase node,
                               _DocumentBase doc):
     """For a node and all nodes below, change document.
@@ -1282,28 +1965,82 @@ cdef void changeDocumentBelowHelper(xmlNode* c_node,
     while c_attr_current is not NULL:
         changeDocumentBelowHelper(c_current, doc)
         c_attr_current = c_attr_current.next
+        
+cdef void attemptDeallocation(xmlNode* c_node):
+    """Attempt deallocation of c_node (or higher up in tree).
+    """
+    cdef xmlNode* c_top
+    # could be we actually aren't referring to the tree at all
+    if c_node is NULL:
+        #print "not freeing, node is NULL"
+        return
+    c_top = getDeallocationTop(c_node)
+    if c_top is not NULL:
+        #print "freeing:", c_top.name
+        tree.xmlFreeNode(c_top)
 
+cdef xmlNode* getDeallocationTop(xmlNode* c_node):
+    """Return the top of the tree that can be deallocated, or NULL.
+    """
+    cdef xmlNode* c_current
+    cdef xmlNode* c_top
+    #print "trying to do deallocating:", c_node.type
+    c_current = c_node.parent
+    c_top = c_node
+    while c_current is not NULL:
+        #print "checking:", c_current.type
+        # if we're still attached to the document, don't deallocate
+        if c_current.type == tree.XML_DOCUMENT_NODE:
+            #print "not freeing: still in doc"
+            return NULL
+        c_top = c_current
+        c_current = c_current.parent
+    # cannot free a top which has proxies pointing to it
+    if c_top._private is not NULL:
+        #print "Not freeing: proxies still exist"
+        return NULL
+    # see whether we have children to deallocate
+    if canDeallocateChildren(c_top):
+        return c_top
+    else:
+        return NULL
 
-################################################################################
-# DEBUG setup
+cdef int canDeallocateChildNodes(xmlNode* c_node):
+    cdef xmlNode* c_current
+    c_current = c_node.children
+    while c_current is not NULL:
+        if c_current._private is not NULL:
+            return 0
+        if not canDeallocateChildren(c_current):
+            return 0 
+        c_current = c_current.next
+    return 1
 
-cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
-    pass
+cdef int canDeallocateAttributes(xmlNode* c_node):
+    cdef xmlAttr* c_current
+    c_current = c_node.properties
+    while c_current is not NULL:
+        if c_current._private is not NULL:
+            return 0
+        # only check child nodes, don't try checking properties as
+        # attribute has none
+        if not canDeallocateChildNodes(<xmlNode*>c_current):
+            return 0
+        c_current = c_current.next
+    # apparently we can deallocate all subnodes
+    return 1
 
-cdef void nullStructuredErrorFunc(void* userData,
-                                  xmlerror.xmlError* error):
-    pass
+cdef int canDeallocateChildren(xmlNode* c_node):
+    # the current implementation is inefficient as it does a
+    # tree traversal to find out whether there are any node proxies
+    # we could improve this by a smarter datastructure
+    # check children
+    if not canDeallocateChildNodes(c_node):
+        return 0
+    # check any attributes
+    if (c_node.type == tree.XML_ELEMENT_NODE and
+        not canDeallocateAttributes(c_node)):
+        return 0
+    # apparently we can deallocate all subnodes
+    return 1
 
-cdef void _shutUpLibxmlErrors():
-    xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
-    xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
-
-cdef void _shutUpLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
-    # xslt.xsltSetTransformErrorFunc
-
-# ugly global shutting up of all errors, but seems to work..
-if not DEBUG:
-    _shutUpLibxmlErrors()
-    _shutUpLibxsltErrors()
-    
