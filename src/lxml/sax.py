@@ -8,13 +8,14 @@ class ElementTreeContentHandler(object, ContentHandler):
         self._root = None
         self._element_stack = []
         self._default_ns = None
-        self._ns_mapping = {}
+        self._ns_mapping = { None : [None] }
+        self._new_mappings = {}
 
     def _get_etree(self):
         "Contains the generated ElementTree after parsing is finished."
         return ElementTree(self._root)
 
-    etree = property(_get_etree)
+    etree = property(_get_etree, doc=_get_etree.__doc__)
     
     def setDocumentLocator(self, locator):
         pass
@@ -26,16 +27,19 @@ class ElementTreeContentHandler(object, ContentHandler):
         pass
 
     def startPrefixMapping(self, prefix, uri):
+        self._new_mappings[prefix] = uri
+        try:
+            self._ns_mapping[prefix].append(uri)
+        except KeyError:
+            self._ns_mapping[prefix] = [uri]
         if prefix is None:
             self._default_ns = uri
-        else:
-            self._ns_mapping[prefix] = uri
 
     def endPrefixMapping(self, prefix):
+        ns_uri_list = self._ns_mapping[prefix]
+        ns_uri_list.pop()
         if prefix is None:
-            self._default_ns = None
-        else:
-            del self._ns_mapping[prefix]
+            self._default_ns = ns_uri_list[-1]
 
     def startElementNS(self, name, qname, attributes):
         ns_uri, local_name = name
@@ -61,11 +65,13 @@ class ElementTreeContentHandler(object, ContentHandler):
 
         element_stack = self._element_stack
         if self._root is None:
-            element = self._root = Element(el_name, attrs, self._ns_mapping)
+            element = self._root = Element(el_name, attrs, self._new_mappings)
         else:
             element = SubElement(element_stack[-1], el_name,
-                                 attrs, self._ns_mapping)
+                                 attrs, self._new_mappings)
         element_stack.append(element)
+
+        self._new_mappings.clear()
 
     def endElementNS(self, name, qname):
         self._element_stack.pop()
@@ -75,10 +81,10 @@ class ElementTreeContentHandler(object, ContentHandler):
         try:
             # if there already is a child element, we must append to its tail
             last_element = last_element[-1]
-            last_element.tail = (last_element.tail or unicode()) + data
+            last_element.tail = (last_element.tail or u'') + data
         except IndexError:
             # otherwise: append to the text
-            last_element.text = (last_element.text or unicode()) + data
+            last_element.text = (last_element.text or u'') + data
 
 class ElementTreeProducer(object):
     """Produces SAX events for an element and children.
@@ -138,6 +144,6 @@ def _build_qname(ns_uri, local_name, prefixes, new_prefixes):
     try:
         prefix = prefixes[ns_uri]
     except KeyError:
-        prefix = prefixes[ns_uri] = unicode('ns%02d') % len(prefixes)
+        prefix = prefixes[ns_uri] = u'ns%02d' % len(prefixes)
         new_prefixes.append( (prefix, ns_uri) )
     return prefix + ':' + local_name
