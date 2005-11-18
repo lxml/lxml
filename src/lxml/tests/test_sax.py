@@ -74,6 +74,54 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual(len(root),
                          0)
 
+    def test_etree_sax_handler_default_ns(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startPrefixMapping(None, 'blaA')
+        handler.startElementNS(('blaA', 'a'), 'a', {})
+        handler.startPrefixMapping(None, 'blaB')
+        handler.startElementNS(('blaB', 'b'), 'b', {})
+        handler.endElementNS(  ('blaB', 'b'), 'b')
+        handler.endPrefixMapping(None)
+        handler.startElementNS(('blaA', 'c'), 'c', {})
+        handler.endElementNS(  ('blaA', 'c'), 'c')
+        handler.endElementNS(  ('blaA', 'a'), 'a')
+        handler.endPrefixMapping(None)
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual(root.tag,
+                         '{blaA}a')
+        self.assertEqual(root[0].tag,
+                         '{blaB}b')
+        self.assertEqual(root[1].tag,
+                         '{blaA}c')
+
+    def test_etree_sax_redefine_ns(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startPrefixMapping('ns', 'blaA')
+        handler.startElementNS(('blaA', 'a'), 'ns:a', {})
+        handler.startPrefixMapping('ns', 'blaB')
+        handler.startElementNS(('blaB', 'b'), 'ns:b', {})
+        handler.endElementNS(  ('blaB', 'b'), 'ns:b')
+        handler.endPrefixMapping('ns')
+        handler.startElementNS(('blaA', 'c'), 'ns:c', {})
+        handler.endElementNS(  ('blaA', 'c'), 'ns:c')
+        handler.endElementNS(  ('blaA', 'a'), 'ns:a')
+        handler.endPrefixMapping('ns')
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual(root.tag,
+                         '{blaA}a')
+        self.assertEqual(root[0].tag,
+                         '{blaB}b')
+        self.assertEqual(root[1].tag,
+                         '{blaA}c')
+
     def _saxify_unsaxify(self, saxifiable):
         handler = sax.ElementTreeContentHandler()
         sax.ElementTreeProducer(saxifiable, handler).saxify()
