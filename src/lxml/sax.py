@@ -1,0 +1,143 @@
+from xml.sax.handler import ContentHandler
+from lxml.etree import ElementTree, Element, SubElement, _getNsTag
+
+class ElementTreeContentHandler(object, ContentHandler):
+    """Build an lxml ElementTree from SAX events.
+    """
+    def __init__(self):
+        self._root = None
+        self._element_stack = []
+        self._default_ns = None
+        self._ns_mapping = {}
+
+    def _get_etree(self):
+        "Contains the generated ElementTree after parsing is finished."
+        return ElementTree(self._root)
+
+    etree = property(_get_etree)
+    
+    def setDocumentLocator(self, locator):
+        pass
+
+    def startDocument(self):
+        pass
+
+    def endDocument(self):
+        pass
+
+    def startPrefixMapping(self, prefix, uri):
+        if prefix is None:
+            self._default_ns = uri
+        else:
+            self._ns_mapping[prefix] = uri
+
+    def endPrefixMapping(self, prefix):
+        if prefix is None:
+            self._default_ns = None
+        else:
+            del self._ns_mapping[prefix]
+
+    def startElementNS(self, name, qname, attributes):
+        ns_uri, local_name = name
+        if ns_uri:
+            el_name = "{%s}%s" % name
+        elif self._default_ns:
+            el_name = "{%s}%s" % (self._default_ns, local_name)
+        else:
+            el_name = local_name
+
+        try:
+            iter_attributes = attributes.iteritems()
+        except AttributeError:
+            iter_attributes = attributes.items()
+
+        attrs = {}
+        for name_tuple, value in iter_attributes:
+            if name_tuple[0]:
+                attr_name = "{%s}%s" % name_tuple
+            else:
+                attr_name = name_tuple[1]
+            attrs[attr_name] = value
+
+        element_stack = self._element_stack
+        if self._root is None:
+            element = self._root = Element(el_name, attrs, self._ns_mapping)
+        else:
+            element = SubElement(element_stack[-1], el_name,
+                                 attrs, self._ns_mapping)
+        element_stack.append(element)
+
+    def endElementNS(self, name, qname):
+        self._element_stack.pop()
+
+    def characters(self, data):
+        last_element = self._element_stack[-1]
+        try:
+            # if there already is a child element, we must append to its tail
+            last_element = last_element[-1]
+            last_element.tail = (last_element.tail or unicode()) + data
+        except IndexError:
+            # otherwise: append to the text
+            last_element.text = (last_element.text or unicode()) + data
+
+class ElementTreeProducer(object):
+    """Produces SAX events for an element and children.
+    """
+    def __init__(self, element_or_tree, content_handler):
+        try:
+            element = element_or_tree.getroot()
+        except AttributeError:
+            element = element_or_tree
+        self._element = element
+        self._content_handler = content_handler
+        from xml.sax.xmlreader import AttributesNSImpl as attr_class
+        self._attr_class = attr_class
+        self._empty_attributes = attr_class({}, {})
+        
+    def saxify(self):
+        self._recursive_saxify(self._element, {})
+
+    def _recursive_saxify(self, element, prefixes):
+        new_prefixes = []
+        if element.attrib:
+            attr_values = {}
+            attr_qnames = {}
+            for attr_ns_name, value in element.attrib.items():
+                attr_ns_tuple = _getNsTag(attr_ns_name)
+                attr_values[attr_ns_tuple] = value
+                attr_qnames[attr_ns_tuple] = _build_qname(
+                    attr_ns_tuple[0], attr_ns_tuple[1], prefixes, new_prefixes)
+            sax_attributes = self._attr_class(attr_values, attr_qnames)
+        else:
+            sax_attributes = self._empty_attributes
+
+        ns_uri, local_name = _getNsTag(element.tag)
+        qname = _build_qname(ns_uri, local_name, prefixes, new_prefixes)
+
+        content_handler = self._content_handler
+        for prefix, uri in new_prefixes:
+            content_handler.startPrefixMapping(prefix, uri)
+        content_handler.startElementNS((ns_uri, local_name),
+                                       qname, sax_attributes)
+        if element.text:
+            content_handler.characters(element.text)
+        for child in element:
+            self._recursive_saxify(child, prefixes)
+        content_handler.endElementNS((ns_uri, local_name), qname)
+        for prefix, uri in new_prefixes:
+            content_handler.endPrefixMapping(prefix)
+        if element.tail:
+            content_handler.characters(element.tail)
+
+def saxify(element_or_tree, content_handler):
+    return ElementTreeProducer(element_or_tree, content_handler).saxify()
+    
+def _build_qname(ns_uri, local_name, prefixes, new_prefixes):
+    if ns_uri is None:
+        return local_name
+    try:
+        prefix = prefixes[ns_uri]
+    except KeyError:
+        prefix = prefixes[ns_uri] = unicode('ns%02d') % len(prefixes)
+        new_prefixes.append( (prefix, ns_uri) )
+    return prefix + ':' + local_name

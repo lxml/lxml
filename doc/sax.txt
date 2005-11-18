@@ -1,0 +1,83 @@
+Sax support
+===========
+
+In this document we'll describe lxml's SAX support. lxml has support
+for producing SAX events for an ElementTree or Element. lxml can also
+turn SAX events into an ElementTree. The SAX API used by lxml is
+compatible with that in the Python core (xml.sax), so is useful for
+interfacing lxml with code that uses the Python core SAX facilities.
+
+Producing SAX events for an ElementTree or Element
+--------------------------------------------------
+
+Let's make a tree we can generate SAX events for::
+
+  >>> from StringIO import StringIO
+  >>> import lxml
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = lxml.etree.parse(f)
+
+To see whether the correct SAX events are produced, we'll write a
+custom content handler::
+
+  >>> from xml.sax.handler import ContentHandler
+  >>> class MyContentHandler(ContentHandler):
+  ...     def __init__(self):
+  ...         self.a_amount = 0
+  ...         self.b_amount = 0
+  ...         self.text = None
+  ...
+  ...     def startElementNS(self, name, qname, attributes):
+  ...         uri, localname = name
+  ...         if localname == 'a':
+  ...             self.a_amount += 1
+  ...         if localname == 'b':
+  ...             self.b_amount += 1
+  ...
+  ...     def characters(self, data):
+  ...         self.text = data
+
+Now let's produce some SAX events and handle them with this content
+handler::
+
+  >>> handler = MyContentHandler()
+  >>> lxml.sax.saxify(doc, handler)
+
+This is what we expect::
+
+  >>> handler.a_amount
+  1
+  >>> handler.b_amount
+  1
+  >>> handler.text
+  'Text'
+
+Building a tree from SAX events
+-------------------------------
+
+lxml also has support for building a new tree given SAX events. To do
+this, we use the special SAX content handler defined by lxml named
+`ElementTreeContentHandler`.
+
+Let's make this content handler::
+
+  >>> handler = lxml.sax.ElementTreeContentHandler()
+
+Now let's fire some SAX events at it::
+
+  >>> handler.startElementNS((None, 'a'), 'a', {})
+  >>> handler.startElementNS((None, 'b'), 'b', {(None, 'foo'): 'bar'})
+  >>> handler.characters('Hello world')
+  >>> handler.endElementNS((None, 'b'), 'b')
+  >>> handler.endElementNS((None, 'a'), 'a')
+
+We can now get the tree by accessing the `etree` property on the 
+handler::
+
+  >>> tree = handler.etree
+  >>> lxml.etree.tostring(tree.getroot())
+  '<a><b foo="bar">Hello world</b></a>'
+
+
+
+
