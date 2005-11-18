@@ -5,7 +5,7 @@ Martijn Faassen - initial and main developer
 
 Marc-Antoine Parent - XPath extension function help and patches
 
-Stefan Behnel - core development work
+Stefan Behnel - core development work (SAX support, misc patches)
 
 Olivier Grisel - improved (c)ElementTree compatibility patches
 

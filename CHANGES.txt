@@ -12,6 +12,9 @@ Features added
 * 'getparent' method on elements allows navigation to an element's
   parent element.
 
+* Python core compatible SAX tree builder and SAX event generator. See
+  doc/sax.txt for more information.
+
 0.8 (2005-11-03)
 ================
 
