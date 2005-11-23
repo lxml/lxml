@@ -522,7 +522,7 @@ cdef class _Element(_NodeBase):
                 result.append(_elementFactory(self._doc, c_node))
                 c = c + 1
             c_node = c_node.next
-        return result        
+        return result
             
     def __len__(self):
         cdef int c
