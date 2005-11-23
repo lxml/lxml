@@ -44,10 +44,10 @@ class LxmlError(Error):
 class LxmlSyntaxError(SyntaxError, LxmlError):
     pass
 
-class XIncludeError(Error):
+class XIncludeError(LxmlError):
     pass
 
-class C14NError(Error):
+class C14NError(LxmlError):
     pass
 
 cdef class _DocumentBase:
