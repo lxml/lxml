@@ -42,6 +42,9 @@ cdef extern from "libxml/xpath.h":
         tree.xmlNode* ancestor
         int error
 
+    ctypedef struct xmlXPathCompExpr:
+        pass
+
     ctypedef void (*xmlXPathFunction)(xmlXPathParserContext* ctxt, int nargs)
     ctypedef xmlXPathFunction (*xmlXPathFuncLookupFunc)(void* ctxt,
                                                         char* name,
@@ -50,12 +53,17 @@ cdef extern from "libxml/xpath.h":
     cdef xmlXPathContext* xmlXPathNewContext(tree.xmlDoc* doc)
     cdef xmlXPathObject* xmlXPathEvalExpression(char* str,
                                                 xmlXPathContext* ctxt)
+    cdef xmlXPathObject* xmlXPathCompiledEval(xmlXPathCompExpr* comp,
+                                              xmlXPathContext* ctxt)
+    cdef xmlXPathCompExpr* xmlXPathCompile(char* str)
     cdef void xmlXPathFreeContext(xmlXPathContext* ctxt)
+    cdef void xmlXPathFreeCompExpr(xmlXPathCompExpr* comp)
     cdef void xmlXPathFreeObject(xmlXPathObject* obj)
     cdef int xmlXPathRegisterNs(xmlXPathContext* ctxt,
                                 char* prefix, char* ns_uri)
     
     cdef xmlNodeSet* xmlXPathNodeSetCreate(tree.xmlNode* val)
+    cdef void xmlXPathFreeNodeSet(xmlNodeSet* val)
 
 
 cdef extern from "libxml/xpathInternals.h":
@@ -69,6 +77,15 @@ cdef extern from "libxml/xpathInternals.h":
     cdef void xmlXPathRegisterFuncLookup(xmlXPathContext *ctxt,
 					 xmlXPathFuncLookupFunc f,
 					 void *funcCtxt)
+    cdef int xmlXPathRegisterVariable(xmlXPathContext *ctxt, 
+					 char* name,
+					 xmlXPathObject* value)
+    cdef int xmlXPathRegisterVariableNS(xmlXPathContext *ctxt, 
+					 char* name, 
+					 char* ns_uri, 
+					 xmlXPathObject* value)
+    cdef xmlXPathObject* xmlXPathVariableLookup(xmlXPathContext* ctxt,
+						char* name)
     cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt)
     cdef int valuePush(xmlXPathParserContext* ctxt, xmlXPathObject *value)
     
