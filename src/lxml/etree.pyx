@@ -6,7 +6,7 @@ cimport xmlerror
 cimport xinclude
 cimport c14n
 cimport cstd
-import types
+import re, types
 
 import _elementpath
 from StringIO import StringIO
@@ -50,8 +50,8 @@ class XIncludeError(LxmlError):
 class C14NError(LxmlError):
     pass
 
-cdef class _DocumentBase:
-    """Base class to reference a libxml document.
+cdef class _Document:
+    """Internal base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
@@ -68,6 +68,49 @@ cdef class _DocumentBase:
         #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
 
+    def buildNewPrefix(self):
+        ns = "ns%d" % self._ns_counter
+        self._ns_counter = self._ns_counter + 1
+        return ns
+
+    def getroot(self):
+        cdef xmlNode* c_node
+        c_node = tree.xmlDocGetRootElement(self._c_doc)
+        if c_node is NULL:
+            return None
+        return _elementFactory(self, c_node)
+
+cdef _Document _parseDocument(source, parser):
+    cdef xmlDoc* c_doc
+
+    # XXX ignore parser !!
+
+    # XXX simplistic (c)StringIO support
+    if hasattr(source, 'getvalue'):
+        c_doc = theParser.parseDoc(source.getvalue())
+    else:
+        filename = _getFilenameForFile(source)
+        # Support for unamed file-like object (eg urlgrabber.urlopen)
+        if not filename and hasattr(source, 'read'):
+            c_doc = theParser.parseDoc(source.read())
+        # Otherwise parse the file directly from the filesystem
+        else:
+            if filename is None:
+                filename = source
+            # open filename
+            c_doc = theParser.parseDocFromFile(filename)
+    if c_doc is NULL:
+        return None
+    else:
+        return _documentFactory(c_doc)
+
+cdef _Document _documentFactory(xmlDoc* c_doc):
+    cdef _Document result
+    result = _Document()
+    result._c_doc = c_doc
+    result._ns_counter = 0
+    return result
+
 # to help with debugging
 cdef void displayNode(xmlNode* c_node, indent):
     cdef xmlNode* c_child
@@ -80,10 +123,10 @@ cdef void displayNode(xmlNode* c_node, indent):
 cdef class _NodeBase:
     """Base class to reference a document object and a libxml node.
 
-    By pointing to an ElementTree instance, a reference is kept to
-    _ElementTree as long as there is some pointer to a node in it.
+    By pointing to a Document instance, a reference is kept to
+    _Document as long as there is some pointer to a node in it.
     """
-    cdef _DocumentBase _doc
+    cdef _Document _doc
     cdef xmlNode* _c_node
     cdef int _proxy_type
     
@@ -109,65 +152,31 @@ cdef class _NodeBase:
             return c_ns
         # create ns if existing ns cannot be found
         # try to simulate ElementTree's namespace prefix creation
-        prefix = 'ns%s' % self._doc._ns_counter
-        self._doc._ns_counter = self._doc._ns_counter + 1
+        prefix = self._doc.buildNewPrefix()
         c_ns = tree.xmlNewNs(c_node, href, prefix)
         return c_ns
 
-cdef class _ElementTree(_DocumentBase):
+cdef class _ElementTree:
+    cdef _Document _doc
+    cdef _NodeBase _context_node
+    cdef object    _namespace_classes
 
     def parse(self, source, parser=None):
         """Updates self with the content of source and returns its root
         """
-        # XXX ignore parser for now
-        cdef xmlDoc* c_doc
-        cdef xmlNode* c_node
-        
-        # XXX simplistic (c)StringIO support
-        if hasattr(source, 'getvalue'):
-            c_doc = theParser.parseDoc(source.getvalue())
-        else:
-            filename = _getFilenameForFile(source)
-            # Support for unamed file-like object (eg urlgrabber.urlopen)
-            if not filename and hasattr(source, 'read'):
-                c_doc = theParser.parseDoc(source.read())
-            # Otherwise parse the file directly from the filesystem
-            else:
-                if filename is None:
-                    filename = source
-                # open filename
-                c_doc = theParser.parseDocFromFile(filename)
-        if self._c_doc is not NULL:
-            c_node = tree.xmlDocGetRootElement(self._c_doc)
-            if (c_node is not NULL and
-                not hasProxy(c_node) and
-                canDeallocateChildren(c_node)):
-                tree.xmlFreeDoc(self._c_doc)
-        self._c_doc = c_doc
-        return self.getroot()
+        self._doc          = _parseDocument(source, parser)
+        self._context_node = self._doc.getroot()
+        return self._context_node
     
     def getroot(self):
-        cdef xmlNode* c_node
-        c_node = tree.xmlDocGetRootElement(self._c_doc)
-        if c_node is NULL:
-            return None
-        return _elementFactory(self, c_node)
+        return self._context_node
     
     def write(self, file, encoding='us-ascii'):
-        cdef tree.xmlSaveCtxt* save_ctxt
-        cdef char* mem
-        cdef int size
-        
-        # recognize a diversity of ways to spell this in Python
-        if encoding in ('UTF-8', 'utf8', 'UTF8', 'utf-8'):
-            encoding = 'UTF-8'
-
         if not hasattr(file, 'write'):
             # file is a filename, we want a file object
             file = open(file, 'wb')
 
-        tree.xmlDocDumpMemoryEnc(self._c_doc, &mem, &size, encoding)
-        m = mem
+        m = tostring(self._context_node, encoding)
         # XXX this is purely for ElementTree compatibility..
         if encoding == 'UTF-8' or encoding == 'us-ascii':
             m = _stripDeclaration(m)
@@ -203,7 +212,7 @@ cdef class _ElementTree(_DocumentBase):
         return root.findall(path)
     
     # extensions to ElementTree API
-    def xpath(self, path, namespaces=None):
+    def xpath(self, _path, _namespaces=None):
         """XPath evaluate in context of document.
 
         namespaces is an optional dictionary with prefix to namespace URI
@@ -218,7 +227,7 @@ cdef class _ElementTree(_DocumentBase):
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
-        return XPathDocumentEvaluator(self, namespaces).evaluate(path)
+        return XPathDocumentEvaluator(self, _namespaces).evaluate(_path)
 
     def xslt(self, xslt, **kw):
         """Transform this document using other document.
@@ -275,17 +284,23 @@ cdef class _ElementTree(_DocumentBase):
         # at all. The XInclude nodes appear to be still being in the same
         # parent and same document, but they must not be connected to the
         # tree..
-        result = xinclude.xmlXIncludeProcess(self._c_doc)
+        result = xinclude.xmlXIncludeProcessTree(self._context_node._c_node)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
         
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
         """
+        cdef xmlDoc* c_base_doc
+        cdef xmlDoc* c_doc
         cdef char* data
         cdef int bytes
-        bytes = c14n.xmlC14NDocDumpMemory(self._c_doc,
-                                          NULL, 0, NULL, 1, &data)
+        c_base_doc = self._doc._c_doc
+
+        c_doc = _fakeRootDoc(c_base_doc, self._context_node._c_node)
+        bytes = c14n.xmlC14NDocDumpMemory(c_doc, NULL, 0, NULL, 1, &data)
+        _destroyFakeDoc(c_base_doc, c_doc)
+
         if bytes < 0:
             raise C14NError, "C18N failed"
         if not hasattr(file, 'write'):
@@ -293,11 +308,18 @@ cdef class _ElementTree(_DocumentBase):
         file.write(data)
         tree.xmlFree(data)
     
-cdef _ElementTree _elementTreeFactory(xmlDoc* c_doc):
+cdef _ElementTree _elementTreeFactory(_Document doc,
+                                      _NodeBase context_node):
+    return _newElementTree(doc, context_node, _ElementTree)
+
+cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
+                                  object baseclass):
     cdef _ElementTree result
-    result = _ElementTree()
-    result._ns_counter = 0
-    result._c_doc = c_doc
+    result = baseclass()
+    result._doc = doc
+    if context_node is None and doc is not None:
+        context_node = doc.getroot()
+    result._context_node = context_node
     return result
 
 cdef class _Element(_NodeBase):
@@ -363,10 +385,10 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_node
         cdef xmlDoc* c_doc
         c_doc = theParser.newDoc()
-        etree = _elementTreeFactory(c_doc)
+        doc = _documentFactory(c_doc)
         c_node = tree.xmlDocCopyNode(self._c_node, c_doc, 1)
         tree.xmlDocSetRootElement(c_doc, c_node)
-        return _elementFactory(etree, c_node)
+        return _elementFactory(doc, c_node)
         
     def set(self, key, value):
         self.attrib[key] = value
@@ -631,7 +653,7 @@ cdef class _Element(_NodeBase):
     def xpath(self, path, namespaces=None):
         return XPathElementEvaluator(self, namespaces).evaluate(path)
 
-cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
+cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
     result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
@@ -644,7 +666,7 @@ cdef _Element _elementFactory(_ElementTree etree, xmlNode* c_node):
         result = _Comment()
     else:
         assert 0, "Unknown node type: %s" % c_node.type
-    result._doc = etree
+    result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
     registerProxy(result, PROXY_ELEMENT)
@@ -691,7 +713,7 @@ cdef class _Comment(_Element):
     def items(self):
         return []
     
-cdef _Comment _commentFactory(_ElementTree etree, xmlNode* c_node):
+cdef _Comment _commentFactory(_Document doc, xmlNode* c_node):
     cdef _Comment result
     result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
@@ -699,7 +721,7 @@ cdef _Comment _commentFactory(_ElementTree etree, xmlNode* c_node):
     if c_node is NULL:
         return None
     result = _Comment()
-    result._doc = etree
+    result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
     registerProxy(result, PROXY_ELEMENT)
@@ -831,13 +853,13 @@ cdef class _Attrib(_NodeBase):
             result = tree.xmlGetNsProp(self._c_node, tag, ns)
         return result is not NULL
   
-cdef _Attrib _attribFactory(_ElementTree etree, xmlNode* c_node):
+cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     cdef _Attrib result
     result = getProxy(c_node, PROXY_ATTRIB)
     if result is not None:
         return result
     result = _Attrib()
-    result._doc = etree
+    result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ATTRIB
     registerProxy(result, PROXY_ATTRIB)
@@ -890,31 +912,35 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
+
 # module-level API for ElementTree
 
 def Element(tag, attrib=None, nsmap=None, **extra):
-    cdef xmlNode* c_node
-    cdef _ElementTree etree
-    etree = ElementTree()
-    c_node = _createElement(etree._c_doc, tag, attrib, extra)
-    tree.xmlDocSetRootElement(etree._c_doc, c_node)
+    cdef _Document doc
+    cdef _Element  result
+    cdef xmlNode*  c_node
+    cdef xmlDoc*   c_doc
+    c_doc = theParser.newDoc()
+    c_node = _createElement(c_doc, tag, attrib, extra)
+    tree.xmlDocSetRootElement(c_doc, c_node)
     # add namespaces to node if necessary
-    _addNamespaces(etree._c_doc, c_node, nsmap)
+    _addNamespaces(c_doc, c_node, nsmap)
     # XXX hack for namespaces
-    result = _elementFactory(etree, c_node)
+    doc = _documentFactory(c_doc)
+    result = _elementFactory(doc, c_node)
     result.tag = tag
     return result
 
 def Comment(text=None):
-    cdef xmlNode* c_node
-    cdef _ElementTree etree
+    cdef _Document doc
+    cdef xmlNode*  c_node
     if text is None:
         text = ''
     text = ' %s ' % text.encode('UTF-8')
-    etree = ElementTree()
-    c_node = _createComment(etree._c_doc, text)
-    tree.xmlAddChild(<xmlNode*>etree._c_doc, c_node)
-    return _commentFactory(etree, c_node)
+    doc = _documentFactory( theParser.newDoc() )
+    c_node = _createComment(doc._c_doc, text)
+    tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
+    return _commentFactory(doc, c_node)
 
 def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode* c_node
@@ -929,13 +955,17 @@ def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     return element
 
 def ElementTree(_Element element=None, file=None):
-    cdef xmlDoc* c_doc
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
     cdef _ElementTree etree
-    
-    if file is not None:
+    cdef _Document doc
+    cdef _NodeBase node
+
+    if element is not None:
+        doc  = element._doc
+        node = element
+    elif file is not None:
         if isinstance(file, str) or isinstance(file, unicode):
             f = open(file, 'r')
             data = f.read()
@@ -943,18 +973,20 @@ def ElementTree(_Element element=None, file=None):
         else:
             # XXX read XML into memory not the fastest way to do this
             data = file.read()
-        c_doc = theParser.parseDoc(data)
+        doc = _documentFactory( theParser.parseDoc(data) )
+        node = doc.getroot()
     else:
-        c_doc = theParser.newDoc()
+        doc = _documentFactory( theParser.newDoc() )
+        node = None
 
-    etree = _elementTreeFactory(c_doc)
+    etree = _elementTreeFactory(doc, node)
 
-    # XXX what if element and file are both not None?
-    if element is not None:
-        c_next = element._c_node.next
-        tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
-        _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element, etree)
+##     # XXX what if element and file are both not None?
+##     if element is not None:
+##         c_next = element._c_node.next
+##         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
+##         _moveTail(c_next, element._c_node)
+##         changeDocumentBelow(element, etree)
     
     return etree
 
@@ -963,7 +995,7 @@ def XML(text):
     if isinstance(text, unicode):
         text = _stripDeclaration(text.encode('UTF-8'))
     c_doc = theParser.parseDoc(text)
-    return _elementTreeFactory(c_doc).getroot()
+    return _documentFactory(c_doc).getroot()
 
 fromstring = XML
 
@@ -975,7 +1007,7 @@ def dump(_NodeBase elem):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
 def tostring(_NodeBase element, encoding='us-ascii'):
-    cdef _DocumentBase doc
+    cdef _Document doc
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* enc
@@ -987,10 +1019,6 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     if encoding in ('utf8', 'UTF8', 'utf-8'):
         encoding = 'UTF-8'
     doc = element._doc
-    if element is element._doc.getroot():
-        f = StringIO()
-        doc.write(f, encoding)
-        return f.getvalue()
     enc = encoding
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
@@ -1010,10 +1038,9 @@ def tostring(_NodeBase element, encoding='us-ascii'):
 def parse(source, parser=None):
     """Return an ElementTree object loaded with source elements
     """
-    cdef _ElementTree tree
-    tree = _elementTreeFactory(NULL)
-    tree.parse(source, parser=parser)
-    return tree
+    cdef _Document doc
+    doc = _parseDocument(source, parser)
+    return ElementTree(doc.getroot())
 
 cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
     cdef xmlNs* c_ns
@@ -1043,6 +1070,87 @@ theParser = Parser()
 
 
 # Private helper functions
+cdef _Document _documentOrRaise(object input):
+    cdef _Document doc
+    doc = _documentOf(input)
+    if doc is None:
+        raise TypeError, "Invalid input object: %s" % type(input)
+    else:
+        return doc
+
+cdef _Document _documentOf(object input):
+    # call this to get the document of a
+    # _Document, _ElementTree or _NodeBase object
+    if isinstance(input, _ElementTree):
+        return (<_ElementTree>input)._doc
+    elif isinstance(input, _NodeBase):
+        return (<_NodeBase>input)._doc
+    elif isinstance(input, _Document):
+        return <_Document>input
+    else:
+        return None
+
+cdef _NodeBase _rootNodeOf(object input):
+    # call this to get the root node of a
+    # _Document, _ElementTree or _NodeBase object
+    if hasattr(input, 'getroot'): # Document/ElementTree
+        return <_NodeBase>(input.getroot())
+    elif isinstance(input, _NodeBase):
+        return <_NodeBase>input
+    else:
+        return None
+
+cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
+    # build a temporary document that has the given node as root node
+    # note that copy and original must not be modified during its lifetime!!
+    # always call _destroyFakeDoc() after use!
+    cdef xmlNode* c_child
+    cdef xmlNode* c_root
+    cdef xmlDoc*  c_doc
+    c_root = tree.xmlDocGetRootElement(c_base_doc)
+    if c_root == c_node:
+        # already the root node
+        return c_base_doc
+
+    c_doc  = tree.xmlCopyDoc(c_base_doc, 0)        # non recursive!
+    c_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
+
+    c_root.children = c_node.children
+    c_root.last = c_node.last
+    c_root.next = c_root.prev = c_root.parent = NULL
+
+    # store original node
+    c_root._private = c_node
+
+    # divert parent pointers of children
+    c_child = c_root.children
+    while c_child is not NULL:
+        c_child.parent = c_root
+        c_child = c_child.next
+
+    c_doc.children = c_root
+    return c_doc
+
+cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
+    # delete a temporary document
+    cdef xmlNode* c_child
+    cdef xmlNode* c_parent
+    cdef xmlNode* c_root
+    if c_doc != c_base_doc:
+        c_root = tree.xmlDocGetRootElement(c_doc)
+
+        # restore parent pointers of children
+        c_parent = <xmlNode*>c_root._private
+        c_child = c_root.children
+        while c_child is not NULL:
+            c_child.parent = c_parent
+            c_child = c_child.next
+
+        # prevent recursive removal of children
+        c_root.children = c_root.last = c_root._private = NULL
+        tree.xmlFreeDoc(c_doc)
+
+
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef tree.PyObject* o
     cdef tree.xmlOutputBuffer* c_buffer
@@ -1240,8 +1348,7 @@ def _getFilenameForFile(source):
         return source.filename
     return None
 
-cdef void changeDocumentBelow(_NodeBase node,
-                              _DocumentBase doc):
+cdef void changeDocumentBelow(_NodeBase node, _Document doc):
     """For a node and all nodes below, change document.
 
     A node can change document in certain operations as an XML
@@ -1252,8 +1359,7 @@ cdef void changeDocumentBelow(_NodeBase node,
     changeDocumentBelowHelper(node._c_node, doc)
     tree.xmlReconciliateNs(doc._c_doc, node._c_node)
     
-cdef void changeDocumentBelowHelper(xmlNode* c_node,
-                                    _DocumentBase doc):
+cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
     cdef ProxyRef* ref
     cdef xmlNode* c_current
     cdef xmlAttr* c_attr_current

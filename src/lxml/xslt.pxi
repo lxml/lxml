@@ -27,6 +27,11 @@ class XPathResultError(XPathError):
 class XPathSyntaxError(LxmlSyntaxError):
     pass
 
+cdef object _RE_STRINGS
+cdef object _RE_NAMESPACES
+_RE_STRINGS    = re.compile('("[^"]*")|(\'[^\']*\')')
+_RE_NAMESPACES = re.compile('{([^}]+)}')
+
 ################################################################################
 # XSLT
 
@@ -35,11 +40,13 @@ cdef class XSLT:
     """
     cdef xslt.xsltStylesheet* _c_style
     
-    def __init__(self, _ElementTree doc):
+    def __init__(self, xslt_input):
         # make a copy of the document as stylesheet needs to assume it
         # doesn't change
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
+        cdef _Document doc
+        doc = _documentOrRaise(xslt_input)
         c_doc = tree.xmlCopyDoc(doc._c_doc, 1)
         # XXX work around bug in xmlCopyDoc (fix is upcoming in new release
         # of libxml2)
@@ -56,57 +63,83 @@ cdef class XSLT:
         # this cleans up copy of doc as well
         xslt.xsltFreeStylesheet(self._c_style)
         
-    def apply(self, _ElementTree doc, **kw):
+    def __call__(self, _input, **_kw):
+        cdef _Document input_doc
+        cdef _NodeBase root_node
+        cdef _Document result_doc
         cdef xmlDoc* c_result
+        cdef xmlDoc* c_doc
         cdef char** params
         cdef int i
         cdef int j
-        if kw:
-            # encode as UTF-8; somehow can't put this in main params
-            # array construction loop..
-            new_kw = {}
-            for key, value in kw.items():
-                k = key.encode('UTF-8')
-                v = value.encode('UTF-8')
-                new_kw[k] = v
+
+        input_doc = _documentOrRaise(_input)
+        root_node = _rootNodeOf(_input)
+
+        if _kw:
             # allocate space for parameters
             # * 2 as we want an entry for both key and value,
             # and + 1 as array is NULL terminated
-            params = <char**>cstd.malloc(sizeof(char*) * (len(kw) * 2 + 1))
+            params = <char**>cstd.malloc(sizeof(char*) * (len(_kw) * 2 + 1))
             i = 0
-            for key, value in new_kw.items():
-                params[i] = key
+            keep_ref = []
+            for key, value in _kw.items():
+                k = key.encode('UTF-8')
+                keep_ref.append(k)
+                v = value.encode('UTF-8')
+                keep_ref.append(v)
+                params[i] = k
                 i = i + 1
-                params[i] = value
+                params[i] = v
                 i = i + 1
             params[i] = NULL
         else:
             params = NULL
-        c_result = xslt.xsltApplyStylesheet(self._c_style, doc._c_doc, params)
+
+        c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
+        c_result = xslt.xsltApplyStylesheet(self._c_style, c_doc, params)
+        _destroyFakeDoc(input_doc._c_doc, c_doc)
+
         if params is not NULL:
             # deallocate space for parameters again
             cstd.free(params)
+
         if c_result is NULL:
             raise XSLTApplyError, "Error applying stylesheet"
-        # XXX should set special flag to indicate this is XSLT result
-        # so that xsltSaveResultTo* functional can be used during
-        # serialize?
-        return _elementTreeFactory(c_result)
 
-    def tostring(self, _ElementTree doc):
+        result_doc = _documentFactory(c_result)
+        return _xsltResultTreeFactory(result_doc, self)
+
+    def apply(self, _input, **_kw):
+        return self(_input, **_kw)
+
+    def tostring(self, _ElementTree result_tree):
         """Save result doc to string using stylesheet as guidance.
         """
+        return str(result_tree)
+
+cdef class _XSLTResultTree(_ElementTree):
+    cdef XSLT _xslt
+    def __str__(self):
         cdef char* s
         cdef int l
         cdef int r
-        r = xslt.xsltSaveResultToString(&s, &l, doc._c_doc, self._c_style)
+        r = xslt.xsltSaveResultToString(&s, &l, self._doc._c_doc,
+                                        self._xslt._c_style)
         if r == -1:
-            raise XSLTSaveError, "Error saving stylesheet result to string"
+            raise XSLTSaveError, "Error saving XSLT result to string"
         if s is NULL:
             return ''
         result = funicode(s)
         tree.xmlFree(s)
         return result
+
+cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
+    cdef _XSLTResultTree result
+    result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
+    result._xslt = xslt
+    return result
+
 
 ################################################################################
 # XPath
@@ -115,7 +148,8 @@ cdef class XPathDocumentEvaluator:
     """Create an XPath evaluator for a document.
     """
     cdef xpath.xmlXPathContext* _c_ctxt
-    cdef _ElementTree _doc
+    cdef _NodeBase _root_node
+    cdef _Document _doc
     cdef object _extension_functions
     cdef object _exc_info
     cdef object _namespaces
@@ -123,17 +157,22 @@ cdef class XPathDocumentEvaluator:
     cdef object _temp_elements
     cdef object _temp_docs
     
-    def __init__(self, _ElementTree doc,
-                 namespaces=None, extensions=None):
+    def __init__(self, input, namespaces=None, extensions=None):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
-        
-        xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
+        cdef _Document input_doc
+        cdef _NodeBase root_node
+
+        input_doc = _documentOrRaise(input)
+        root_node = _rootNodeOf(input)
+
+        xpathCtxt = xpath.xmlXPathNewContext(input_doc._c_doc)
         if xpathCtxt is NULL:
             # XXX what triggers this exception?
             raise XPathContextError, "Unable to create new XPath context"
 
-        self._doc = doc
+        self._doc = input_doc
+        self._root_node = root_node
         self._c_ctxt = xpathCtxt
         self._c_ctxt.userData = <void*>self
         self._namespaces = namespaces
@@ -178,7 +217,7 @@ cdef class XPathDocumentEvaluator:
             self.registerNamespace(prefix, uri)
     
     def evaluate(self, path):
-        return self._evaluate(path, NULL)
+        return self._evaluate(path, self._root_node._c_node)
 
     cdef object _evaluate(self, path, xmlNode* c_ctxt_node):
         cdef xpath.xmlXPathObject* xpathObj
@@ -251,7 +290,7 @@ cdef class XPathElementEvaluator(XPathDocumentEvaluator):
         return self._evaluate(path, self._element._c_node)
 
 def XPathEvaluator(doc_or_element, namespaces=None, extensions=None):
-    if isinstance(doc_or_element, _DocumentBase):
+    if isinstance(doc_or_element, _ElementTree) or isinstance(doc_or_element, _Document):
         return XPathDocumentEvaluator(doc_or_element, namespaces, extensions)
     else:
         return XPathElementEvaluator(doc_or_element, namespaces, extensions)
@@ -295,7 +334,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     return NULL
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
-                               _ElementTree doc):
+                               _Document doc):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         raise XPathResultError, "Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
@@ -319,7 +358,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     else:
         raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
 
-cdef object _createNodeSetResult(_ElementTree doc,
+cdef object _createNodeSetResult(_Document doc,
                                  xpath.xmlXPathObject* xpathObj):
     cdef xmlNode* c_node
     cdef char* s
@@ -352,7 +391,7 @@ cdef object _createNodeSetResult(_ElementTree doc,
 
 cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
-    cdef _ElementTree doc
+    cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef XPathDocumentEvaluator evaluator
     

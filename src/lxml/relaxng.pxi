@@ -19,11 +19,11 @@ cdef class RelaxNG:
     """
     cdef relaxng.xmlRelaxNG* _c_schema
     
-    def __init__(self, _ElementTree tree=None, file=None):
+    def __init__(self, _ElementTree etree=None, file=None):
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
-                    
-        if tree is not None:
-            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(tree._c_doc)
+
+        if etree is not None:
+            parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(etree._doc._c_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
             if filename is None:
@@ -33,7 +33,7 @@ cdef class RelaxNG:
         else:
             raise RelaxNGParseError, "No tree or file given"
         if parser_ctxt is NULL:
-            raise RelaxNGParseError, "Document is not valid Relax NG"
+            raise RelaxNGParseError, "Document is not parsable as Relax NG"
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
         if self._c_schema is NULL:
             raise RelaxNGParseError, "Document is not valid Relax NG"
@@ -42,14 +42,19 @@ cdef class RelaxNG:
     def __dealloc__(self):
         relaxng.xmlRelaxNGFree(self._c_schema)
         
-    def validate(self, _ElementTree doc):
+    def validate(self, _ElementTree etree):
         """Validate doc using Relax NG.
 
         Returns true if document is valid, false if not."""
+        cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
         cdef int ret
         valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
-        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, doc._c_doc)
+
+        c_doc = _fakeRootDoc(etree._doc._c_doc, etree._context_node._c_node)
+        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
+        _destroyFakeDoc(etree._doc._c_doc, c_doc)
+
         relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
         if ret == -1:
             raise RelaxNGValidateError, "Internal error in Relax NG validation"

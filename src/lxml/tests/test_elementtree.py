@@ -1607,6 +1607,24 @@ class ETreeTestCaseBase(unittest.TestCase):
         e.set('bar', 'Bar')
         self.assertEquals(False, bool(e))
 
+    def test_multiple_elementrees(self):
+        etree = self.etree
+
+        a = etree.Element('a')
+        b = etree.SubElement(a, 'b')
+
+        t = etree.ElementTree(a)
+        self.assertEquals(self._rootstring(t), '<a><b/></a>')
+
+        t1 = etree.ElementTree(a)
+        self.assertEquals(self._rootstring(t1), '<a><b/></a>')
+        self.assertEquals(self._rootstring(t),  '<a><b/></a>')
+
+        t2 = etree.ElementTree(b)
+        self.assertEquals(self._rootstring(t2), '<b/>')
+        self.assertEquals(self._rootstring(t1), '<a><b/></a>')
+        self.assertEquals(self._rootstring(t),  '<a><b/></a>')
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

@@ -187,7 +187,42 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(
             '<doc><foo>Bar</foo><foo>Baz</foo></doc>',
             etree.tostring(result.getroot()))
+        
+    def test_multiple_elementrees(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="a"><A><xsl:apply-templates/></A></xsl:template>
+  <xsl:template match="b"><B><xsl:apply-templates/></B></xsl:template>
+  <xsl:template match="c"><C><xsl:apply-templates/></C></xsl:template>
+</xsl:stylesheet>''')
 
+        self.assertEquals(self._rootstring(tree),
+                          '<a><b>B</b><c>C</c></a>')
+        result = tree.xslt(style)
+        self.assertEquals(self._rootstring(tree),
+                          '<a><b>B</b><c>C</c></a>')
+        self.assertEquals(self._rootstring(result),
+                          '<A><B>B</B><C>C</C></A>')
+
+        b_tree = etree.ElementTree(tree.getroot()[0])
+        self.assertEquals(self._rootstring(b_tree),
+                          '<b>B</b>')
+        result = b_tree.xslt(style)
+        self.assertEquals(self._rootstring(tree),
+                          '<a><b>B</b><c>C</c></a>')
+        self.assertEquals(self._rootstring(result),
+                          '<B>B</B>')
+
+        c_tree = etree.ElementTree(tree.getroot()[1])
+        self.assertEquals(self._rootstring(c_tree),
+                          '<c>C</c>')
+        result = c_tree.xslt(style)
+        self.assertEquals(self._rootstring(tree),
+                          '<a><b>B</b><c>C</c></a>')
+        self.assertEquals(self._rootstring(result),
+                          '<C>C</C>')
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -1,8 +1,13 @@
-from lxml.tests.test_etree import HelperTestCase
-import unittest
-from lxml import etree
-from StringIO import StringIO
+# -*- coding: UTF-8 -*-
+
+"""
+Test cases related to XPath evaluation and the XPath class
+"""
+
 import unittest, doctest
+from StringIO import StringIO
+
+from common_imports import etree, HelperTestCase
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
