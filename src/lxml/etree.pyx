@@ -212,7 +212,7 @@ cdef class _ElementTree:
         return root.findall(path)
     
     # extensions to ElementTree API
-    def xpath(self, _path, _namespaces=None):
+    def xpath(self, path, namespaces=None):
         """XPath evaluate in context of document.
 
         namespaces is an optional dictionary with prefix to namespace URI
@@ -227,7 +227,7 @@ cdef class _ElementTree:
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
-        return XPathDocumentEvaluator(self, _namespaces).evaluate(_path)
+        return XPathDocumentEvaluator(self, namespaces).evaluate(path)
 
     def xslt(self, xslt, **kw):
         """Transform this document using other document.
