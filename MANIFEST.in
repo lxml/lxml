@@ -1,3 +1,3 @@
 include setup.py MANIFEST.in *.txt lxmldistutils.py
-recursive-include src *.pyx *.pxd *.pxi *.py
+recursive-include src *.pyx *.pxd *.pxi *.py etree.c
 recursive-include doc *.txt
