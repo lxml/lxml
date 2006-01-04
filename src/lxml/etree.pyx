@@ -137,6 +137,11 @@ cdef class _NodeBase:
             unregisterProxy(self)
         attemptDeallocation(self._c_node)
 
+    def _init(self):
+        """Called after object initialisation. Subclasses may override
+        this if they recursively call _init() in the superclasses.
+        """
+
     cdef xmlNs* _getNs(self, char* href):
         """Get or create namespace structure.
         """
@@ -159,7 +164,6 @@ cdef class _NodeBase:
 cdef class _ElementTree:
     cdef _Document _doc
     cdef _NodeBase _context_node
-    cdef object    _namespace_classes
 
     def parse(self, source, parser=None):
         """Updates self with the content of source and returns its root
@@ -655,13 +659,19 @@ cdef class _Element(_NodeBase):
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
+    cdef char* c_ns_href
     result = getProxy(c_node, PROXY_ELEMENT)
     if result is not None:
         return result
     if c_node is NULL:
         return None
     if c_node.type == tree.XML_ELEMENT_NODE:
-        result = _Element()
+        if c_node.ns == NULL:
+            c_ns_href = NULL
+        else:
+            c_ns_href = c_node.ns.href
+        element_class = _find_element_class(c_ns_href, c_node.name)
+        result = element_class()
     elif c_node.type == tree.XML_COMMENT_NODE:
         result = _Comment()
     else:
@@ -670,6 +680,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
     registerProxy(result, PROXY_ELEMENT)
+    result._init()
     return result
 
 cdef class _Comment(_Element):
@@ -1057,6 +1068,7 @@ cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
 
 
 # include submodules
+include "nsclasses.pxi" # Namespace implementation and registry
 include "xslt.pxi"      # XPath and XSLT
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
