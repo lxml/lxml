@@ -971,11 +971,9 @@ def ElementTree(_Element element=None, file=None):
     cdef xmlNode* c_node_copy
     cdef _ElementTree etree
     cdef _Document doc
-    cdef _NodeBase node
 
     if element is not None:
         doc  = element._doc
-        node = element
     elif file is not None:
         if isinstance(file, str) or isinstance(file, unicode):
             f = open(file, 'r')
@@ -985,12 +983,10 @@ def ElementTree(_Element element=None, file=None):
             # XXX read XML into memory not the fastest way to do this
             data = file.read()
         doc = _documentFactory( theParser.parseDoc(data) )
-        node = doc.getroot()
     else:
         doc = _documentFactory( theParser.newDoc() )
-        node = None
 
-    etree = _elementTreeFactory(doc, node)
+    etree = _elementTreeFactory(doc, element)
 
 ##     # XXX what if element and file are both not None?
 ##     if element is not None:
