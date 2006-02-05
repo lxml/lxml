@@ -594,17 +594,20 @@ cdef class _Element(_NodeBase):
         raise ValueError, "list index(x): x not in list"
 
     def get(self, key, default=None):
-        # XXX more redundancy, but might be slightly faster
-        cdef char* result
+        # XXX more redundancy, but might be slightly faster than
+        #     return self.attrib.get(key, default)
+        cdef char* cresult
         ns, tag = _getNsTag(key)
         if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, tag)
+            cresult = tree.xmlGetNoNsProp(self._c_node, tag)
         else:
-            result = tree.xmlGetNsProp(self._c_node, tag, ns)
-        if result is NULL:
-            return default
-        return funicode(result)
-        #return self.attrib.get(key, default)
+            cresult = tree.xmlGetNsProp(self._c_node, tag, ns)
+        if cresult is NULL:
+            result = default
+        else:
+            result = funicode(cresult)
+            tree.xmlFree(cresult)
+        return result
 
     def keys(self):
         return self.attrib.keys()
