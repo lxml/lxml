@@ -855,7 +855,11 @@ cdef class _Attrib(_NodeBase):
             result = tree.xmlGetNoNsProp(self._c_node, tag)
         else:
             result = tree.xmlGetNsProp(self._c_node, tag, ns)
-        return result is not NULL
+        if result is not NULL:
+            tree.xmlFree(result)
+            return True
+        else:
+            return False
 
     def __contains__(self, key):
         cdef xmlNs* c_ns
@@ -865,7 +869,11 @@ cdef class _Attrib(_NodeBase):
             result = tree.xmlGetNoNsProp(self._c_node, tag)
         else:
             result = tree.xmlGetNsProp(self._c_node, tag, ns)
-        return result is not NULL
+        if result is not NULL:
+            tree.xmlFree(result)
+            return True
+        else:
+            return False
   
 cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     cdef _Attrib result
