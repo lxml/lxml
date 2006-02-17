@@ -775,16 +775,18 @@ cdef class _Attrib(_NodeBase):
     
     def __getitem__(self, key):
         cdef xmlNs* c_ns
-        cdef char* result
+        cdef char* cresult
         ns, tag = _getNsTag(key)
         if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, tag)
+            cresult = tree.xmlGetNoNsProp(self._c_node, tag)
         else:
-            result = tree.xmlGetNsProp(self._c_node, tag, ns)
-        if result is NULL:
+            cresult = tree.xmlGetNsProp(self._c_node, tag, ns)
+        if cresult is NULL:
             # XXX free namespace that is not in use..?
             raise KeyError, key
-        return funicode(result)
+        result = funicode(cresult)
+        tree.xmlFree(cresult)
+        return result
 
     def __len__(self):
         cdef int c
