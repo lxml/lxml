@@ -46,8 +46,6 @@ cdef class XMLParser:
         if load_dtd:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
                             xmlparser.XML_PARSE_DTDATTR
-        if no_blanks:
-            parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
         if no_network:
             parse_options = parse_options | xmlparser.XML_PARSE_NONET
         if ns_clean:
