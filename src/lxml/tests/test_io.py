@@ -7,7 +7,7 @@ IO test cases that apply to both etree and ElementTree
 import unittest
 import tempfile, gzip
 
-from common_imports import etree, ElementTree, fileInTestDir
+from common_imports import etree, ElementTree, fileInTestDir, SillyFileLike
 
 class IOTestCaseBase(unittest.TestCase):
     """(c)ElementTree compatibility for IO functions/methods
@@ -84,15 +84,6 @@ class IOTestCaseBase(unittest.TestCase):
         root = self.etree.ElementTree().parse(f)
         self.assert_(root.tag.endswith('foo'))
 
-class SillyFileLike:
-    def __init__(self):
-        self.done = False
-        
-    def read(self, amount=None):
-        if not self.done:
-            self.done = True
-            return '<foo><bar/></foo>'
-        return ''
     
 class ETreeIOTestCase(IOTestCaseBase):
     etree = etree

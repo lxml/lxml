@@ -17,6 +17,17 @@ class HelperTestCase(unittest.TestCase):
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(' ', '').replace('\n', '')
 
+class SillyFileLike:
+    def __init__(self, xml_data='<foo><bar/></foo>'):
+        self.xml_data = xml_data
+        self.done = False
+        
+    def read(self, amount=None):
+        if not self.done:
+            self.done = True
+            return self.xml_data
+        return ''
+
 def fileInTestDir(name):
     _testdir = os.path.split(__file__)[0]
     return os.path.join(_testdir, name)

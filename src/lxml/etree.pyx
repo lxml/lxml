@@ -82,23 +82,20 @@ cdef class _Document:
 
 cdef _Document _parseDocument(source, parser):
     cdef xmlDoc* c_doc
-
-    # XXX ignore parser !!
-
     # XXX simplistic (c)StringIO support
     if hasattr(source, 'getvalue'):
-        c_doc = theParser.parseDoc(source.getvalue())
+        c_doc = theParser.parseDoc(source.getvalue(), parser)
     else:
         filename = _getFilenameForFile(source)
         # Support for unamed file-like object (eg urlgrabber.urlopen)
         if not filename and hasattr(source, 'read'):
-            c_doc = theParser.parseDoc(source.read())
+            c_doc = theParser.parseDoc(source.read(), parser)
         # Otherwise parse the file directly from the filesystem
         else:
             if filename is None:
                 filename = source
             # open filename
-            c_doc = theParser.parseDocFromFile(filename)
+            c_doc = theParser.parseDocFromFile(filename, parser)
     if c_doc is NULL:
         return None
     else:
@@ -995,7 +992,7 @@ def ElementTree(_Element element=None, file=None):
         else:
             # XXX read XML into memory not the fastest way to do this
             data = file.read()
-        doc = _documentFactory( theParser.parseDoc(data) )
+        doc = _documentFactory( theParser.parseDoc(data, None) )
     else:
         doc = _documentFactory( theParser.newDoc() )
 
@@ -1014,7 +1011,7 @@ def XML(text):
     cdef xmlDoc* c_doc
     if isinstance(text, unicode):
         text = _stripDeclaration(text.encode('UTF-8'))
-    c_doc = theParser.parseDoc(text)
+    c_doc = theParser.parseDoc(text, None)
     return _documentFactory(c_doc).getroot()
 
 fromstring = XML
