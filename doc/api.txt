@@ -13,6 +13,32 @@ lxml.etree tries to follow the etree API wherever it can. There are
 however some incompatibilities (see compatibility.txt). There are also
 some extensions.
 
+The following examples usually assume this to be executed first::
+
+  >>> import lxml.etree
+  >>> from StringIO import StringIO
+
+
+XMLParser
+---------
+
+One of the differences is the parser.  It is based on libxml2 and therefore
+only supports options that are backed by the library.  Parsers take a number
+of keyword arguments.  The following is an example for namespace cleanup
+during parsing, first with the default parser, then with a parametrized one::
+
+  >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
+
+  >>> et     = lxml.etree.parse(StringIO(xml))
+  >>> print lxml.etree.tostring(et.getroot())
+  <a xmlns="test"><b xmlns="test"/></a>
+
+  >>> parser = lxml.etree.XMLParser(ns_clean=True)
+  >>> et     = lxml.etree.parse(StringIO(xml), parser)
+  >>> print lxml.etree.tostring(et.getroot())
+  <a xmlns="test"><b/></a>
+
+
 xpath method on ElementTree, Element
 ------------------------------------
 
@@ -44,9 +70,6 @@ used:
   ``<!--`` and ``-->`` markers.
 
 Example::
-
-  >>> import lxml.etree
-  >>> from StringIO import StringIO
 
   >>> f = StringIO('<foo><bar></bar></foo>')
   >>> doc = lxml.etree.parse(f)
@@ -91,26 +114,26 @@ given an ElementTree object to construct an XSLT transformer::
   >>> xslt_doc = lxml.etree.parse(f)
   >>> style = lxml.etree.XSLT(xslt_doc)
 
-You can then apply the style against some ElementTree document, and this
-results in another ElementTree object::
+You can then apply the style against some ElementTree document by simply
+calling it, and this results in another ElementTree object::
 
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = lxml.etree.parse(f)
-  >>> result = style.apply(doc)
+  >>> result = style(doc)
 
 The result object can accessed like a normal ElementTree document::
 
   >>> result.getroot().text
   'Text'
 
-but can also be turned into an (XML or text) string using the style's
-``tostring`` method::
+but, as opposed to normal ElementTree objects, can also be turned into an (XML
+or text) string by applying the str() function::
 
-  >>> style.tostring(result)
+  >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-It is also possible to pass parameters, in the form of XPath expressions,
-to the XSLT template::
+It is possible to pass parameters, in the form of XPath expressions, to the
+XSLT template::
 
   >>> f = StringIO('''\
   ... <xsl:stylesheet version="1.0"
