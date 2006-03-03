@@ -985,13 +985,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
     if element is not None:
         doc  = element._doc
     elif file is not None:
-        if isinstance(file, (str, unicode)):
-            filename = file.encode('UTF-8')
-            doc = _documentFactory( theParser.parseDocFromFile(filename, parser) )
-        else:
-            # XXX read XML into memory not the fastest way to do this
-            data = file.read()
-            doc = _documentFactory( theParser.parseDoc(data, parser) )
+        doc = _parseDocument(file, parser)
     else:
         doc = _documentFactory( theParser.newDoc() )
 
