@@ -224,6 +224,26 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           '<C>C</C>')
 
+    def test_xslt_document_parse(self):
+        # make sure document('') works from loaded files
+        xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(root[0].tag,
+                          '{http://www.w3.org/1999/XSL/Transform}stylesheet')
+
+    def test_xslt_document_elementtree(self):
+        # make sure document('') works from loaded files
+        xslt = etree.XSLT(etree.ElementTree(file=fileInTestDir("test-document.xslt")))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(root[0].tag,
+                          '{http://www.w3.org/1999/XSL/Transform}stylesheet')
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
