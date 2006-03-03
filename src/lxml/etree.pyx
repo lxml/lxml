@@ -975,7 +975,7 @@ def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     element.tag = tag
     return element
 
-def ElementTree(_Element element=None, file=None):
+def ElementTree(_Element element=None, file=None, parser=None):
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
@@ -985,14 +985,13 @@ def ElementTree(_Element element=None, file=None):
     if element is not None:
         doc  = element._doc
     elif file is not None:
-        if isinstance(file, str) or isinstance(file, unicode):
-            f = open(file, 'r')
-            data = f.read()
-            f.close()
+        if isinstance(file, (str, unicode)):
+            filename = file.encode('UTF-8')
+            doc = _documentFactory( theParser.parseDocFromFile(filename, parser) )
         else:
             # XXX read XML into memory not the fastest way to do this
             data = file.read()
-        doc = _documentFactory( theParser.parseDoc(data, None) )
+            doc = _documentFactory( theParser.parseDoc(data, parser) )
     else:
         doc = _documentFactory( theParser.newDoc() )
 
