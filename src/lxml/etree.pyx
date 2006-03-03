@@ -243,7 +243,7 @@ cdef class _ElementTree:
         class directly.
         """
         style = XSLT(xslt)
-        return style.apply(self, **kw)
+        return style(self, **kw)
 
     def relaxng(self, relaxng):
         """Validate this document using other document.

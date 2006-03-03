@@ -148,31 +148,26 @@ XSLT template::
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = lxml.etree.parse(f)
 
-The parameters are passed as keyword parameters to ``apply``. First
+The parameters are passed as keyword parameters to the transform call. First
 let's try passing in a simple string expression::
 
-  >>> result = style.apply(doc, a="'A'")
-  >>> style.tostring(result)
+  >>> result = style(doc, a="'A'")
+  >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 Let's try a non-string XPath expression now::
 
-  >>> result = style.apply(doc, a="/a/b/text()")
-  >>> style.tostring(result)
+  >>> result = style(doc, a="/a/b/text()")
+  >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-There's also a convenience method on the tree object for doing XSLT
+There's also a convenience method on the tree object for doing XSL
 transformations. This is less efficient if you want to apply the same
-XSLT transformation to multiple documents, but is shorter to write::
+XSL transformation to multiple documents, but is shorter to write::
 
   >>> result = doc.xslt(xslt_doc, a="'A'")
-  >>> lxml.etree.tostring(result.getroot())
-  '<foo>A</foo>'
-
-A limitation is that the style object cannot be used to serialize to
-XML. The etree.tostring function can be used, but it does not take
-style rules into account, which matters in case of non-XML output
-among other things.
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 RelaxNG
 -------
