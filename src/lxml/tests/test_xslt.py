@@ -154,6 +154,24 @@ class ETreeXSLTTestCase(HelperTestCase):
         
         etree.tostring(result.getroot())
 
+    def test_xslt_repeat_transform(self):
+        xml = '<a/>'
+        xslt = '''\
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+    <xsl:template match="/">
+        <response>Some text</response>
+    </xsl:template>
+</xsl:stylesheet>
+'''
+        source = self.parse(xml)
+        styledoc = self.parse(xslt)
+        transform = etree.XSLT(styledoc)
+        result = transform(source)
+        result = transform(source)
+        etree.tostring(result.getroot())
+        result = transform(source)
+        etree.tostring(result.getroot())
+
     def test_xslt_empty(self):
         # could segfault if result contains "empty document"
         xml = '<blah/>'
