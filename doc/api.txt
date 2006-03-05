@@ -112,14 +112,14 @@ given an ElementTree object to construct an XSLT transformer::
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
   >>> xslt_doc = lxml.etree.parse(f)
-  >>> style = lxml.etree.XSLT(xslt_doc)
+  >>> transform = lxml.etree.XSLT(xslt_doc)
 
-You can then apply the style against some ElementTree document by simply
+You can then run the transformation on an ElementTree document by simply
 calling it, and this results in another ElementTree object::
 
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = lxml.etree.parse(f)
-  >>> result = style(doc)
+  >>> result = transform(doc)
 
 The result object can accessed like a normal ElementTree document::
 
@@ -144,26 +144,27 @@ XSLT template::
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
   >>> xslt_doc = lxml.etree.parse(f)
-  >>> style = lxml.etree.XSLT(xslt_doc)
+  >>> transform = lxml.etree.XSLT(xslt_doc)
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = lxml.etree.parse(f)
 
 The parameters are passed as keyword parameters to the transform call. First
 let's try passing in a simple string expression::
 
-  >>> result = style(doc, a="'A'")
+  >>> result = transform(doc, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
 Let's try a non-string XPath expression now::
 
-  >>> result = style(doc, a="/a/b/text()")
+  >>> result = transform(doc, a="/a/b/text()")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 There's also a convenience method on the tree object for doing XSL
-transformations. This is less efficient if you want to apply the same
-XSL transformation to multiple documents, but is shorter to write::
+transformations. This is less efficient if you want to apply the same XSL
+transformation to multiple documents, but is shorter to write, as you do not
+have to instantiate a stylesheet yourself::
 
   >>> result = doc.xslt(xslt_doc, a="'A'")
   >>> str(result)
