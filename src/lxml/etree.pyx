@@ -303,7 +303,7 @@ cdef class _ElementTree:
         _destroyFakeDoc(c_base_doc, c_doc)
 
         if bytes < 0:
-            raise C14NError, "C18N failed"
+            raise C14NError, "C14N failed"
         if not hasattr(file, 'write'):
             file = open(file, 'wb')
         file.write(data)
