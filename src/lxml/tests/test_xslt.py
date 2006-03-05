@@ -166,11 +166,17 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         transform = etree.XSLT(styledoc)
-        result = transform(source)
-        result = transform(source)
+        result = transform.apply(source)
+        result = transform.apply(source)
         etree.tostring(result.getroot())
-        result = transform(source)
+        result = transform.apply(source)
         etree.tostring(result.getroot())
+
+        result = transform(source)
+        result = transform(source)
+        str(result)
+        result = transform(source)
+        str(result)
 
     def test_xslt_empty(self):
         # could segfault if result contains "empty document"
