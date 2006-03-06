@@ -84,6 +84,8 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 Download
 --------
 
+* `lxml 0.8`_ (2005-11-03)
+
 * `lxml 0.7`_ (2005-06-15)
 
 * `lxml 0.6`_ (2005-05-14)
@@ -91,12 +93,6 @@ Download
 * `lxml 0.5.1`_ (2005-04-09)
 
 * `lxml 0.5`_ (2005-04-08)
-
-.. _`lxml 0.6`: lxml-0.6.tgz
-
-.. _`lxml 0.5.1`: lxml-0.5.1.tgz
-
-.. _`lxml 0.5`: lxml-0.5.tgz
 
 See also the `installation instructions`_.
 
