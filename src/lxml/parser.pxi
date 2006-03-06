@@ -26,24 +26,19 @@ cdef class XMLParser:
     major run-time overhead.
 
     The keyword arguments in the constructor are mainly based on the libxml2
-    parser configuration.  The 'from_parser' keyword additionally allows to
-    provide a parser whose configurations is copied before applying the
-    additional arguments.  Note that DTD validation obviously implies loading
-    the DTD.
+    parser configuration.  A DTD will only be loaded if validation or
+    attribute default values are requested.
     """
     cdef int _parse_options
-    def __init__(self, load_dtd=False, validate_dtd=False, no_network=False,
-                 ns_clean=False, from_parser=None):
+    def __init__(self, attribute_defaults=False, dtd_validation=False,
+                 no_network=False, ns_clean=False):
         cdef int parse_options
-        if from_parser is not None:
-            parse_options = <XMLParser>from_parser._parse_options
-        else:
-            parse_options = _ORIG_DEFAULT_PARSE_OPTIONS
+        parse_options = _ORIG_DEFAULT_PARSE_OPTIONS
 
-        if validate_dtd:
+        if dtd_validation:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
                             xmlparser.XML_PARSE_DTDVALID
-        if load_dtd:
+        if attribute_defaults:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
                             xmlparser.XML_PARSE_DTDATTR
         if no_network:
@@ -52,6 +47,23 @@ cdef class XMLParser:
             parse_options = parse_options | xmlparser.XML_PARSE_NSCLEAN
 
         self._parse_options = parse_options
+
+##     def copy(self, attribute_defaults=None, dtd_validation=None,
+##              no_network=None, ns_clean=None):
+##         cdef int parse_options
+##         parse_options = self._parse_options
+##         if attribute_defaults is None:
+##             attribute_defaults = parse_options & xmlparser.XML_PARSE_DTDATTR
+##         if dtd_validation is None:
+##             dtd_validation = parse_options & xmlparser.XML_PARSE_DTDVALID
+##         if no_network is None:
+##             no_network = parse_options & xmlparser.XML_PARSE_NONET
+##         if ns_clean is None:
+##             ns_clean = parse_options & xmlparser.XML_PARSE_NSCLEAN
+
+##         return self.__class__(attribute_defaults=attribute_defaults,
+##                               dtd_validation=dtd_validation,
+##                               no_network=no_network, ns_clean=ns_clean)
 
 
 def set_default_parser(parser=None):
