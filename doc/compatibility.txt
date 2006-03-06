@@ -14,7 +14,10 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
     # ElementTree
     from elementtree.ElementTree import Element
 
-  When switching over code from ElementTree to etree, and you're using
+    # ElementTree in the Python 2.5 standard library
+    from xml.etree.ElementTree import Element
+
+  When switching over code from ElementTree to lxml.etree, and you're using
   the package name prefix 'ElementTree', you can do the following::
 
     # instead of
