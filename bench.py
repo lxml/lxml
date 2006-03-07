@@ -4,7 +4,7 @@ from itertools import *
 from lxml import etree
 
 class BenchMark(object):
-    ALL_TREES = (1,2)
+    ALL_TREES = (1,2,3)
     def setup(self, trees=ALL_TREES):
         atoz = string.ascii_lowercase
         def tag(ns='y'):
@@ -20,8 +20,8 @@ class BenchMark(object):
                     for i in range(100):
                         etree.SubElement(el, "{c}%s%03d" % (ch2, i))
 
-            self.root1 = root
-            self.tree1 = etree.ElementTree(root)
+            self._root1 = root
+            self._tree1 = etree.ElementTree(root)
 
         if 2 in trees:
             # tree with loads of 2nd level and fewer 3rd level children
@@ -32,8 +32,8 @@ class BenchMark(object):
                     for ch2 in atoz:
                         etree.SubElement(el, "{z}"+ch2)
 
-            self.root2 = root
-            self.tree2 = etree.ElementTree(root)
+            self._root2 = root
+            self._tree2 = etree.ElementTree(root)
 
         if 3 in trees:
             # deep tree with constant number of children
@@ -42,8 +42,13 @@ class BenchMark(object):
             for i in range(10):
                 children = list(imap(etree.SubElement, children*3, tag()))
 
-            self.root3 = root
-            self.tree3 = etree.ElementTree(root)
+            self._root3 = root
+            self._tree3 = etree.ElementTree(root)
+
+    def cleanup(self):
+        for name in dir(self):
+            if name.startswith('_root') or name.startswith('_tree'):
+                delattr(self, name)
 
     def benchmarks(self):
         """Returns a list of all benchmarks.
@@ -96,7 +101,7 @@ if __name__ == '__main__':
     benchmarks.sort() # by name
 
     for bench_name, tree_set in benchmarks:
-        bench_args  = ', '.join("bench.tree%d, bench.root%d" % (tree, tree)
+        bench_args  = ', '.join("bench._tree%d, bench._root%d" % (tree, tree)
                                 for tree in tree_set)
 
         timer = timeit.Timer(
@@ -108,6 +113,8 @@ if __name__ == '__main__':
         sys.stdout.flush()
 
         result = timer.repeat(3, 100)
+
+        bench.cleanup()
 
         for t in result:
             print "%8.4f" % t,
