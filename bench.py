@@ -56,7 +56,10 @@ class BenchMark(object):
             if not name.startswith('bench_'):
                 continue
             method = getattr(self, name)
-            tree_sets = method.__doc__.split()
+            if method.__doc__:
+                tree_sets = method.__doc__.split()
+            else:
+                tree_sets = ()
             if tree_sets:
                 for tree_set in tree_sets:
                     benchmarks.append((name, sorted(imap(int, tree_set.split(',')))))
