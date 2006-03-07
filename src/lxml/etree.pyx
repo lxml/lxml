@@ -361,9 +361,10 @@ cdef class _Element(_NodeBase):
         # first, find start of slice
         c_node = _findChild(self._c_node, start)
         # now delete the slice
-        _deleteSlice(c_node, start, stop)
-        # now find start of slice again, for insertion (just before it)
-        c_node = _findChild(self._c_node, start)
+        if start != stop:
+            _deleteSlice(c_node, start, stop)
+            # now find start of slice again, for insertion (just before it)
+            c_node = _findChild(self._c_node, start)
         # if the insertion point is at the end, append there
         if c_node is NULL:
             for node in value:
@@ -371,6 +372,7 @@ cdef class _Element(_NodeBase):
             return
         # if the next element is in the list, insert before it
         for node in value:
+            _raiseIfNone(node)
             mynode = node
             foreign = self._doc is not mynode._doc
             # store possible text tail
