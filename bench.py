@@ -67,7 +67,7 @@ class BenchMark(object):
                 tree_sets = ()
             if tree_sets:
                 for tree_set in tree_sets:
-                    benchmarks.append((name, sorted(imap(int, tree_set.split(',')))))
+                    benchmarks.append((name, map(int, tree_set.split(','))))
             else:
                 for tree in bench.ALL_TREES:
                     benchmarks.append((name, [tree]))
@@ -76,7 +76,7 @@ class BenchMark(object):
 
 class LxmlBenchMark(BenchMark):
     def bench_append_from_document(self, tree1, root1, tree2, root2):
-        "1,2 2,3" # needs trees 1 and 2 or trees 2 and 3
+        "1,2 2,3 1,3" # needs trees 1 and 2, or 2 and 3, or 1 and 3
         for el in root2:
             root1.append(root2[0])
 
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         selected = [ "bench_%s" % name for name in sys.argv[1:] ]
         benchmarks = [ b for b in benchmarks if b[0] in selected ]
 
-    benchmarks.sort() # by name
+    benchmarks.sort() # by name and tree tuple
 
     for bench_name, tree_set in benchmarks:
         bench_args  = ', '.join("bench._tree%d, bench._root%d" % (tree, tree)
