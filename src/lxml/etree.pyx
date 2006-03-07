@@ -402,6 +402,7 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_next
         cdef xmlNode* c_next2
         cdef int foreign
+        _raiseIfNone(element)
         foreign = self._doc is not element._doc
         # store possible text node
         c_next = element._c_node.next
@@ -441,6 +442,7 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef int foreign
+        _raiseIfNone(element)
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             self.append(element)
@@ -453,6 +455,7 @@ cdef class _Element(_NodeBase):
 
     def remove(self, _Element element):
         cdef xmlNode* c_node
+        _raiseIfNone(element)
         c_node = self._c_node.children
         while c_node is not NULL:
             if c_node is element._c_node:
@@ -572,6 +575,7 @@ cdef class _Element(_NodeBase):
     def index(self, _Element x, start=None, stop=None):
         cdef int k 
         cdef xmlNode* c_child
+        _raiseIfNone(x)
         k = 0
         c_child = self._c_node.children
 
@@ -974,6 +978,7 @@ def Comment(text=None):
 def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode* c_node
     cdef _Element element
+    _raiseIfNone(parent)
     c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
     parent.append(element)
@@ -1031,6 +1036,7 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     cdef char* enc
 
     assert element is not None
+    # better, but not ET compatible : _raiseIfNone(element)
     
     #if encoding is None:
     #    encoding = 'UTF-8'
@@ -1089,6 +1095,10 @@ theParser = Parser()
 
 
 # Private helper functions
+cdef void _raiseIfNone(el):
+    if el is None:
+        raise TypeError, "Argument must not be None."
+
 cdef _Document _documentOrRaise(object input):
     cdef _Document doc
     doc = _documentOf(input)
