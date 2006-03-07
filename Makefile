@@ -18,6 +18,9 @@ test_build: build
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
 
+bench_inplace: inplace
+	PYTHONPATH="src:$$PYTHONPATH" $(PYTHON) bench.py
+
 ftest_build: build
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
@@ -26,6 +29,8 @@ ftest_inplace: inplace
 
 # XXX What should the default be?
 test: test_inplace
+
+bench: bench_inplace
 
 ftest: ftest_inplace
 
