@@ -329,14 +329,16 @@ cdef class _Element(_NodeBase):
     def __setitem__(self, index, _NodeBase element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
+        cdef int foreign
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError
+        foreign = self._doc is not element._doc
         c_next = element._c_node.next
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element, self._doc, foreign)
         
     def __delitem__(self, index):
         cdef xmlNode* c_node
@@ -355,6 +357,7 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef _Element mynode
+        cdef int foreign
         # first, find start of slice
         c_node = _findChild(self._c_node, start)
         # now delete the slice
@@ -369,6 +372,7 @@ cdef class _Element(_NodeBase):
         # if the next element is in the list, insert before it
         for node in value:
             mynode = node
+            foreign = self._doc is not mynode._doc
             # store possible text tail
             c_next = mynode._c_node.next
             # now move node previous to insertion point
@@ -377,7 +381,7 @@ cdef class _Element(_NodeBase):
             # and move tail just behind his node
             _moveTail(c_next, mynode._c_node)
             # move it into a new document
-            changeDocumentBelow(mynode, self._doc)
+            changeDocumentBelow(mynode, self._doc, foreign)
 
     def __deepcopy__(self, memo):
         return self.__copy__()
@@ -397,6 +401,8 @@ cdef class _Element(_NodeBase):
     def append(self, _Element element):
         cdef xmlNode* c_next
         cdef xmlNode* c_next2
+        cdef int foreign
+        foreign = self._doc is not element._doc
         # store possible text node
         c_next = element._c_node.next
         # XXX what if element is coming from a different document?
@@ -406,7 +412,7 @@ cdef class _Element(_NodeBase):
         _moveTail(c_next, element._c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
-        changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element, self._doc, foreign)
 
     def clear(self):
         cdef xmlAttr* c_attr
@@ -434,14 +440,16 @@ cdef class _Element(_NodeBase):
     def insert(self, index, _Element element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
+        cdef int foreign
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             self.append(element)
             return
+        foreign = self._doc is not element._doc
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element, self._doc)
+        changeDocumentBelow(element, self._doc, foreign)
 
     def remove(self, _Element element):
         cdef xmlNode* c_node
@@ -1359,7 +1367,7 @@ def _getFilenameForFile(source):
         return source.filename
     return None
 
-cdef void changeDocumentBelow(_NodeBase node, _Document doc):
+cdef void changeDocumentBelow(_NodeBase node, _Document doc, int recursive):
     """For a node and all nodes below, change document.
 
     A node can change document in certain operations as an XML
@@ -1367,7 +1375,8 @@ cdef void changeDocumentBelow(_NodeBase node, _Document doc):
     tree below (including the current node). It also reconciliates
     namespaces so they're correct inside the new environment.
     """
-    changeDocumentBelowHelper(node._c_node, doc)
+    if recursive:
+        changeDocumentBelowHelper(node._c_node, doc)
     tree.xmlReconciliateNs(doc._c_doc, node._c_node)
     
 cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
