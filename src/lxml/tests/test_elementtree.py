@@ -742,6 +742,75 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<other><c></c></other>',
             other)
     
+    def test_del_insert(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        bs = SubElement(b, 'bs')
+        c = SubElement(a, 'c')
+        cs = SubElement(c, 'cs')
+
+        el = a[0]
+        self.assertXML(
+            '<a><b><bs></bs></b><c><cs></cs></c></a>',
+            a)
+        self.assertXML('<b><bs></bs></b>', b)
+        self.assertXML('<c><cs></cs></c>', c)
+
+        del a[0]
+        self.assertXML(
+            '<a><c><cs></cs></c></a>',
+            a)
+        self.assertXML('<b><bs></bs></b>', b)
+        self.assertXML('<c><cs></cs></c>', c)
+
+        a.insert(0, el)
+        self.assertXML(
+            '<a><b><bs></bs></b><c><cs></cs></c></a>',
+            a)
+        self.assertXML('<b><bs></bs></b>', b)
+        self.assertXML('<c><cs></cs></c>', c)
+
+    def test_del_setitem(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        bs = SubElement(b, 'bs')
+        c = SubElement(a, 'c')
+        cs = SubElement(c, 'cs')
+
+        el = a[0]
+        del a[0]
+        a[0] = el
+        self.assertXML(
+            '<a><b><bs></bs></b></a>',
+            a)
+        self.assertXML('<b><bs></bs></b>', b)
+        self.assertXML('<c><cs></cs></c>', c)
+
+    def test_del_setslice(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        bs = SubElement(b, 'bs')
+        c = SubElement(a, 'c')
+        cs = SubElement(c, 'cs')
+
+        el = a[0]
+        del a[0]
+        a[0:0] = [el]
+        self.assertXML(
+            '<a><b><bs></bs></b><c><cs></cs></c></a>',
+            a)
+        self.assertXML('<b><bs></bs></b>', b)
+        self.assertXML('<c><cs></cs></c>', c)
+
     def test_delitem_tail(self):
         ElementTree = self.etree.ElementTree
         f = StringIO('<a><b></b>B2<c></c>C2</a>')
@@ -795,7 +864,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             '<a></a>',
             a)
-        
+
     def test_insert(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
