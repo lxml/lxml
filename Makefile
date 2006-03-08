@@ -19,7 +19,7 @@ test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
 
 bench_inplace: inplace
-	PYTHONPATH="src:$$PYTHONPATH" $(PYTHON) bench.py
+	$(PYTHON) bench.py -i
 
 ftest_build: build
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
