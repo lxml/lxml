@@ -190,6 +190,24 @@ class BenchMark(BenchMarkBase):
             el = Element('{test}test')
             child[:] = [el]
 
+    def bench_remove_children(self, root):
+        for child in root:
+            root.remove(child)
+
+    def bench_remove_children_reversed(self, root):
+        for child in reversed(root[:]):
+            root.remove(child)
+
+    def bench_set_attributes(self, root):
+        for child in root:
+            child.set('a', 'bla')
+
+    def bench_setget_attributes(self, root):
+        for child in root:
+            child.set('a', 'bla')
+        for child in root:
+            child.get('a')
+
 ############################################################
 # Main program
 ############################################################
