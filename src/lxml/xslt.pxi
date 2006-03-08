@@ -84,9 +84,9 @@ cdef class XSLT:
             i = 0
             keep_ref = []
             for key, value in _kw.items():
-                k = key.encode('UTF-8')
+                k = _utf8(key)
                 keep_ref.append(k)
-                v = value.encode('UTF-8')
+                v = _utf8(value)
                 keep_ref.append(v)
                 params[i] = k
                 i = i + 1
@@ -198,8 +198,8 @@ cdef class XPathDocumentEvaluator:
     def registerNamespace(self, prefix, uri):
         """Register a namespace with the XPath context.
         """
-        s_prefix = prefix.encode('UTF8')
-        s_uri = uri.encode('UTF8')
+        s_prefix = _utf8(prefix)
+        s_uri = _utf8(uri)
         # XXX should check be done to verify namespace doesn't already exist?
         ns_register_status = xpath.xmlXPathRegisterNs(
             self._c_ctxt, s_prefix, s_uri)
@@ -226,7 +226,7 @@ cdef class XPathDocumentEvaluator:
         # if element context is requested; unfortunately need to modify ctxt
         self._c_ctxt.node = c_ctxt_node
 
-        path = path.encode('UTF-8')
+        path = _utf8(path)
         self._exc_info = None
         self._release()
         xpathObj = xpath.xmlXPathEvalExpression(path, self._c_ctxt)
@@ -308,11 +308,11 @@ def Extension(module, function_mapping, ns_uri=None):
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
     cdef _NodeBase node
-    if isinstance(obj, str):
+    if tree.PyString_Check(obj):
         # XXX use the Wrap variant? Or leak...
         return xpath.xmlXPathNewCString(obj)
-    if isinstance(obj, unicode):
-        obj = obj.encode("utf-8")
+    if tree.PyUnicode_Check(obj):
+        obj = _utf8(obj)
         return xpath.xmlXPathNewCString(obj)
     if isinstance(obj, types.BooleanType):
         return xpath.xmlXPathNewBoolean(obj)

@@ -13,6 +13,11 @@ cdef extern from "Python.h":
     cdef void Py_INCREF(object o)
     cdef object PyUnicode_DecodeUTF8(char* s, int size, char* errors)
     cdef object PyString_FromStringAndSize(char* s, int size)
+    cdef object PyString_FromString(char* s)
+
+    cdef int PyUnicode_Check(object obj)
+    cdef int PyString_Check(object obj)
+    cdef object PyUnicode_AsUTF8String(object ustring)
     
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler

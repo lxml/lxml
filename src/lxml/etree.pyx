@@ -511,7 +511,7 @@ cdef class _Element(_NodeBase):
             if value is None:
                 return
             # now add new text node with value at start
-            text = value.encode('UTF-8')
+            text = _utf8(value)
             c_text_node = tree.xmlNewDocText(self._doc._c_doc,
                                              text)
             if self._c_node.children is NULL:
@@ -531,7 +531,7 @@ cdef class _Element(_NodeBase):
             _removeText(self._c_node.next)
             if value is None:
                 return
-            text = value.encode('UTF-8')
+            text = _utf8(value)
             c_text_node = tree.xmlNewDocText(self._doc._c_doc, text)
             # XXX what if we're the top element?
             tree.xmlAddNextSibling(self._c_node, c_text_node)
@@ -767,7 +767,7 @@ cdef class _Attrib(_NodeBase):
     def __setitem__(self, key, value):
         cdef xmlNs* c_ns
         ns, tag = _getNsTag(key)
-        value = value.encode('UTF-8')
+        value = _utf8(value)
         if ns is None:
             tree.xmlSetProp(self._c_node, tag, value)
         else:
@@ -946,8 +946,8 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
     attrib.update(extra)
     c_node = tree.xmlNewDocNode(c_doc, NULL, name_utf, NULL)
     for name, value in attrib.items():
-        attr_name_utf = name.encode('UTF-8')
-        value_utf = value.encode('UTF-8')
+        attr_name_utf = _utf8(name)
+        value_utf = _utf8(value)
         tree.xmlNewProp(c_node, attr_name_utf, value_utf)
     return c_node
 
@@ -978,8 +978,9 @@ def Comment(text=None):
     cdef _Document doc
     cdef xmlNode*  c_node
     if text is None:
-        text = ''
-    text = ' %s ' % text.encode('UTF-8')
+        text = '  '
+    else:
+        text = ' %s ' % _utf8(text)
     doc = _documentFactory( theParser.newDoc() )
     c_node = _createComment(doc._c_doc, text)
     tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
@@ -1025,7 +1026,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
 def XML(text):
     cdef xmlDoc* c_doc
     if isinstance(text, unicode):
-        text = _stripDeclaration(text.encode('UTF-8'))
+        text = _stripDeclaration(_utf8(text))
     c_doc = theParser.parseDoc(text, None)
     return _documentFactory(c_doc).getroot()
 
@@ -1091,10 +1092,10 @@ cdef void _setNamespaces(_NodeBase element, object node_ns_utf, object nsmap):
     c_node = element._c_node
     c_doc  = element._doc._c_doc
     for prefix, href in nsmap.items():
-        href_utf = href.encode('UTF-8')
+        href_utf = _utf8(href)
         c_href = href_utf
         if prefix is not None:
-            prefix_utf = prefix.encode('UTF-8')
+            prefix_utf = _utf8(prefix)
             c_prefix = prefix_utf
         else:
             c_prefix = NULL
@@ -1365,7 +1366,7 @@ def _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI available.
     """
-    tag = tag.encode('UTF-8')
+    tag = _utf8(tag)
     if tag[0] == '{':
         i = tag.find('}')
         assert i != -1
@@ -1386,6 +1387,14 @@ cdef object funicode(char* s):
     if isutf8(s):
         return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
     return tree.PyString_FromStringAndSize(s, tree.strlen(s))
+
+cdef object _utf8(object s):
+    if tree.PyString_Check(s):
+        return s
+    elif tree.PyUnicode_Check(s):
+        return tree.PyUnicode_AsUTF8String(s)
+    else:
+        raise TypeError, "Argument must be string or unicode."
 
 cdef object _namespacedName(xmlNode* c_node):
     if c_node.ns is NULL or c_node.ns.href is NULL:

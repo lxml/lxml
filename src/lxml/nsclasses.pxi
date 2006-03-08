@@ -20,7 +20,7 @@ __NAMESPACE_CLASSES = {}
 
 def Namespace(ns_uri):
     if ns_uri:
-        ns_utf = ns_uri.encode('UTF-8')
+        ns_utf = _utf8(ns_uri)
     else:
         ns_utf = None
     try:
@@ -70,7 +70,7 @@ cdef class _NamespaceRegistry:
         if name is None:
             name_utf = None
         else:
-            name_utf = name.encode('UTF-8')
+            name_utf = _utf8(name)
         d[name_utf] = item
 
     def __getitem__(self, name):
@@ -92,7 +92,7 @@ cdef object _find_all_namespaces():
 
 cdef _NamespaceRegistry _find_namespace_registry(object ns_uri):
     if ns_uri:
-        ns_utf = ns_uri.encode('UTF-8')
+        ns_utf = _utf8(ns_uri)
     else:
         ns_utf = None
     return __NAMESPACE_CLASSES[ns_utf]
