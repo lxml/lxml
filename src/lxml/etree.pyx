@@ -366,8 +366,6 @@ cdef class _Element(_NodeBase):
         # now delete the slice
         if start != stop:
             c_node = _deleteSlice(c_node, start, stop)
-            # now find start of slice again, for insertion (just before it)
-            #c_node = _findChild(self._c_node, start)
         # if the insertion point is at the end, append there
         if c_node is NULL:
             for node in value:
