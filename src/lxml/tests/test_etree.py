@@ -191,6 +191,8 @@ class ETreeOnlyTestCase(HelperTestCase):
             ValueError, e.index, e[3], 0, 2)
         self.assertRaises(
             ValueError, e.index, e[8], 0, -3)
+        self.assertRaises(
+            ValueError, e.index, e[8], -5, -3)
         self.assertEquals(
             8, e.index(e[8], 0, -1))
         self.assertEquals(
