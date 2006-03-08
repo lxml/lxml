@@ -144,10 +144,10 @@ cdef class _NodeBase:
         """
         cdef xmlDoc* c_doc
         cdef xmlNode* c_node
+        cdef xmlNs* c_ns
 
         c_doc = self._doc._c_doc
         c_node = self._c_node
-        cdef xmlNs* c_ns
         # look for existing ns
         c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
         if c_ns is not NULL:
@@ -157,6 +157,9 @@ cdef class _NodeBase:
         prefix = self._doc.buildNewPrefix()
         c_ns = tree.xmlNewNs(c_node, href, prefix)
         return c_ns
+
+    cdef void _setNs(self, char* href):
+        tree.xmlSetNs(self._c_node, self._getNs(href))
 
 cdef class _ElementTree:
     cdef _Document _doc
@@ -935,18 +938,17 @@ cdef class ElementChildIterator:
             self._node = _elementFactory(base_node._doc, c_node)
         return current_node
 
-cdef xmlNode* _createElement(xmlDoc* c_doc, object tag,
+cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:
     cdef xmlNode* c_node
-    tag_utf = tag.encode('UTF-8')
     if attrib is None:
         attrib = {}
     attrib.update(extra)
-    c_node = tree.xmlNewDocNode(c_doc, NULL, tag_utf, NULL)
+    c_node = tree.xmlNewDocNode(c_doc, NULL, name_utf, NULL)
     for name, value in attrib.items():
-        name_utf = name.encode('UTF-8')
+        attr_name_utf = name.encode('UTF-8')
         value_utf = value.encode('UTF-8')
-        tree.xmlNewProp(c_node, name_utf, value_utf)
+        tree.xmlNewProp(c_node, attr_name_utf, value_utf)
     return c_node
 
 cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
@@ -962,15 +964,14 @@ def Element(tag, attrib=None, nsmap=None, **extra):
     cdef _Element  result
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
+    ns_utf, name_utf = _getNsTag(tag)
     c_doc = theParser.newDoc()
-    c_node = _createElement(c_doc, tag, attrib, extra)
+    c_node = _createElement(c_doc, name_utf, attrib, extra)
     tree.xmlDocSetRootElement(c_doc, c_node)
-    # add namespaces to node if necessary
-    _addNamespaces(c_doc, c_node, nsmap)
-    # XXX hack for namespaces
     doc = _documentFactory(c_doc)
     result = _elementFactory(doc, c_node)
-    result.tag = tag
+    # add namespaces to node if necessary
+    _setNamespaces(result, ns_utf, nsmap)
     return result
 
 def Comment(text=None):
@@ -988,13 +989,12 @@ def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode* c_node
     cdef _Element element
     _raiseIfNone(parent)
-    c_node = _createElement(parent._doc._c_doc, tag, attrib, extra)
+    ns_utf, name_utf = _getNsTag(tag)
+    c_node = _createElement(parent._doc._c_doc, name_utf, attrib, extra)
     element = _elementFactory(parent._doc, c_node)
-    parent.append(element)
+    tree.xmlAddChild(parent._c_node, c_node)
     # add namespaces to node if necessary
-    _addNamespaces(parent._doc._c_doc, c_node, nsmap)
-    # XXX hack for namespaces
-    element.tag = tag
+    _setNamespaces(element, ns_utf, nsmap)
     return element
 
 def ElementTree(_Element element=None, file=None, parser=None):
@@ -1075,18 +1075,39 @@ def parse(source, parser=None):
     doc = _parseDocument(source, parser)
     return ElementTree(doc.getroot())
 
-cdef _addNamespaces(xmlDoc* c_doc, xmlNode* c_node, object nsmap):
-    cdef xmlNs* c_ns
-    if nsmap is None:
+cdef void _setNamespaces(_NodeBase element, object node_ns_utf, object nsmap):
+    "Set namespace of node and register ns-prefix mappings."
+    cdef xmlNs*   c_ns
+    cdef xmlNode* c_node
+    cdef xmlDoc*  c_doc
+    cdef char*    c_prefix
+    cdef char*    c_href
+
+    if not nsmap:
+        if node_ns_utf is not None:
+            element._setNs(node_ns_utf)
         return
+
+    c_node = element._c_node
+    c_doc  = element._doc._c_doc
     for prefix, href in nsmap.items():
+        href_utf = href.encode('UTF-8')
+        c_href = href_utf
+        if prefix is not None:
+            prefix_utf = prefix.encode('UTF-8')
+            c_prefix = prefix_utf
+        else:
+            c_prefix = NULL
         # add namespace with prefix if ns is not already known
-        c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
+        c_ns = tree.xmlSearchNsByHref(c_doc, c_node, c_href)
         if c_ns is NULL:
-            if prefix is not None:
-                tree.xmlNewNs(c_node, href, prefix)
-            else:
-                tree.xmlNewNs(c_node, href, NULL)
+            c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+        if href_utf == node_ns_utf:
+            tree.xmlSetNs(c_node, c_ns)
+            node_ns_utf = None
+
+    if node_ns_utf is not None:
+        element._setNs(node_ns_utf)
 
 
 # include submodules
