@@ -1,25 +1,6 @@
 import sys, string, timeit
 from itertools import *
 
-from lxml import etree
-
-_etrees = [etree]
-
-### cannot test these in all cases anyway (different semantics)
-##
-## try:
-##     from elementtree import ElementTree as ET
-##     _etrees.append(ET)
-## except:
-##     ET = None
-
-## try:
-##     import cElementTree as cET
-##     _etrees.append(cET)
-## except:
-##     cET = None
-
-
 class BenchMarkBase(object):
     atoz = string.ascii_lowercase
 
@@ -155,11 +136,43 @@ class BenchMark(BenchMarkBase):
         for i in range(1,len(root)/2):
             root[-i:-i] = [ root[0] ]
 
+    def bench_reorder_slice(self, tree, root):
+        for i in range(1,len(root)/2):
+            root[-i:-i] = root[0:1]
+
     def bench_clear(self, tree, root):
         root.clear()
 
 
 if __name__ == '__main__':
+    if len(sys.argv) > 1:
+        try:
+            sys.argv.remove('-i')
+            sys.path.insert(0, 'src')
+        except ValueError:
+            pass
+
+    from lxml import etree
+    _etrees = [etree]
+
+    if len(sys.argv) > 1:
+        try:
+            sys.argv.remove('-a')
+        except ValueError:
+            pass
+        else:
+            try:
+                from elementtree import ElementTree as ET
+                _etrees.append(ET)
+            except ImportError:
+                pass
+
+            try:
+                import cElementTree as cET
+                _etrees.append(cET)
+            except ImportError:
+                pass
+
     benchmark_suites = map(BenchMark, _etrees)
 
     # sorted by name and tree tuple
@@ -173,6 +186,11 @@ if __name__ == '__main__':
             selected.append(name)
         benchmarks = [ [ b for b in bs if b[0] in selected ]
                        for bs in benchmarks ]
+
+
+    print "Running benchmark on", ', '.join(b.lib_name
+                                            for b in benchmark_suites)
+    print
 
     for bench_calls in izip(*benchmarks):
         for lib, config in enumerate(izip(bench_calls, benchmark_suites)):
