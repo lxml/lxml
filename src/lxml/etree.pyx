@@ -422,16 +422,18 @@ cdef class _Element(_NodeBase):
         cdef xmlAttr* c_attr_next
         cdef xmlNode* c_node
         cdef xmlNode* c_node_next
-        self.text = None
-        self.tail = None
+        c_node = self._c_node
+        # remove self.text and self.tail
+        _removeText(c_node.children)
+        _removeText(c_node.next)
         # remove all attributes
-        c_attr = self._c_node.properties
+        c_attr = c_node.properties
         while c_attr is not NULL:
             c_attr_next = c_attr.next
             tree.xmlRemoveProp(c_attr)
             c_attr = c_attr_next
         # remove all subelements
-        c_node = self._c_node.children
+        c_node = c_node.children
         while c_node is not NULL:
             c_node_next = c_node.next
             if _isElement(c_node):
