@@ -362,9 +362,9 @@ cdef class _Element(_NodeBase):
         c_node = _findChild(self._c_node, start)
         # now delete the slice
         if start != stop:
-            _deleteSlice(c_node, start, stop)
+            c_node = _deleteSlice(c_node, start, stop)
             # now find start of slice again, for insertion (just before it)
-            c_node = _findChild(self._c_node, start)
+            #c_node = _findChild(self._c_node, start)
         # if the insertion point is at the end, append there
         if c_node is NULL:
             for node in value:
@@ -575,17 +575,22 @@ cdef class _Element(_NodeBase):
         return ElementChildIterator(self)
 
     def index(self, _Element x, start=None, stop=None):
-        cdef int k 
+        cdef int k
+        cdef int l
         cdef xmlNode* c_child
         _raiseIfNone(x)
         k = 0
         c_child = self._c_node.children
 
         # account for negative start and stop by turning them into positive
+        l = -1
         if start is not None and start < 0:
-            start = len(self) + start
+            l = self.__len__()
+            start = l + start
         if stop is not None and stop < 0:
-            stop = len(self) + stop
+            if l < 0:
+                l = self.__len__()
+            stop = l + stop
         
         while c_child is not NULL:
             if _isElement(c_child):
@@ -1314,13 +1319,13 @@ cdef int _isElement(xmlNode* c_node):
     return (c_node.type == tree.XML_ELEMENT_NODE or
             c_node.type == tree.XML_COMMENT_NODE)
 
-cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
+cdef xmlNode* _deleteSlice(xmlNode* c_node, int start, int stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.
     """
     cdef xmlNode* c_next
     cdef int c
     if c_node is NULL:
-        return
+        return NULL
     # now start deleting nodes
     c = start
     while c_node is not NULL and c < stop:
@@ -1331,6 +1336,7 @@ cdef void _deleteSlice(xmlNode* c_node, int start, int stop):
             _removeNode(c_node)
             c = c + 1
         c_node = c_next
+    return c_node
 
 def _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
