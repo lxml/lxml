@@ -153,7 +153,7 @@ class BenchMark(BenchMarkBase):
 
     def bench_reorder(self, tree, root):
         for i in range(1,len(root)/2):
-            root[-i:-i] = root[0]
+            root[-i:-i] = [ root[0] ]
 
     def bench_clear(self, tree, root):
         root.clear()
