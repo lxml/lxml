@@ -405,17 +405,18 @@ cdef class _Element(_NodeBase):
         
     def append(self, _Element element):
         cdef xmlNode* c_next
-        cdef xmlNode* c_next2
+        cdef xmlNode* c_node
         cdef int foreign
         _raiseIfNone(element)
         foreign = self._doc is not element._doc
+        c_node = element._c_node
         # store possible text node
-        c_next = element._c_node.next
+        c_next = c_node.next
         # XXX what if element is coming from a different document?
-        tree.xmlUnlinkNode(element._c_node)
+        tree.xmlUnlinkNode(c_node)
         # move node itself
-        tree.xmlAddChild(self._c_node, element._c_node)
-        _moveTail(c_next, element._c_node)
+        tree.xmlAddChild(self._c_node, c_node)
+        _moveTail(c_next, c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
         changeDocumentBelow(element, self._doc, foreign)
@@ -462,11 +463,15 @@ cdef class _Element(_NodeBase):
 
     def remove(self, _Element element):
         cdef xmlNode* c_node
+        cdef xmlNode* c_search_node
         _raiseIfNone(element)
+        c_search_node = element._c_node
+        if c_search_node.parent is not self._c_node:
+            raise ValueError, "Element is not a child of this node."
         c_node = self._c_node.children
         while c_node is not NULL:
-            if c_node is element._c_node:
-                _removeText(element._c_node.next)
+            if c_node is c_search_node:
+                _removeText(c_search_node.next)
                 tree.xmlUnlinkNode(element._c_node)
                 return
             c_node = c_node.next
