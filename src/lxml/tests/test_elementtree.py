@@ -1221,6 +1221,36 @@ class ETreeTestCaseBase(unittest.TestCase):
             [b, e],
             list(a))
 
+    def test_delslice_negative1(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        del a[1:-1]
+        self.assertEquals(
+            [b, e],
+            list(a))
+
+    def test_delslice_negative2(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        del a[-3:-1]
+        self.assertEquals(
+            [b, e],
+            list(a))
+
     def test_delslice_tail(self):
         ElementTree = self.etree.ElementTree
         f = StringIO('<a><b></b>B2<c></c>C2<d></d>D2<e></e>E2</a>')
@@ -1278,6 +1308,23 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b>B2<x></x>X2<y></y>Y2<z></z>Z2<e></e>E2</a>',
             a)
         
+    def test_setslice_negative(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+
+        x = Element('x')
+        y = Element('y')
+
+        a[1:-1] = [x, y]
+        self.assertEquals(
+            [b, x, y, d],
+            list(a))
+
     def test_setslice_end(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
