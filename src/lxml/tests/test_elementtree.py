@@ -568,6 +568,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         b.tail = 'hoi'
         self.assertEquals('hoi',
                           b.tail)
+        self.assertEquals('dag',
+                          a.tail)
 
     def test_tail_append(self):
         Element = self.etree.Element
