@@ -11,9 +11,6 @@ test_elementtree
 import unittest, doctest
 
 from StringIO import StringIO
-import os, shutil, tempfile, copy
-import gzip
-import urllib2
 
 from common_imports import etree, HelperTestCase, fileInTestDir, canonicalize
 
