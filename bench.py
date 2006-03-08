@@ -14,15 +14,17 @@ class BenchMarkBase(object):
             root, t = setup()
             times.append(t)
             setattr(self, '__root%d' % tree, root)
+            def set_property(root):
+                setattr(self, '_root%d' % tree,
+                        lambda : copy.deepcopy(root))
+            set_property(root)
 
     def setup(self, trees=()):
         if not trees:
             trees = self._all_trees()
 
         for tree in trees:
-            root = copy.deepcopy( getattr(self, '__root%d' % tree) )
-            setattr(self, '_root%d' % tree, root)
-            setattr(self, '_tree%d' % tree, self.etree.ElementTree(root))
+            set_property( getattr(self, '__root%d' % tree) )
 
     def _all_trees(self):
         all_trees = []
@@ -90,11 +92,6 @@ class BenchMarkBase(object):
         t = current_time() - t
         return (root, t)
 
-    def cleanup(self):
-        for name in dir(self):
-            if name.startswith('_root') or name.startswith('_tree'):
-                delattr(self, name)
-
     def benchmarks(self):
         """Returns a list of all benchmarks.
 
@@ -117,7 +114,7 @@ class BenchMarkBase(object):
             else:
                 try:
                     function = getattr(method, 'im_func', method)
-                    arg_count = method.func_code.co_argcount / 2
+                    arg_count = method.func_code.co_argcount - 1
                 except AttributeError:
                     arg_count = 1
                 for trees in self._permutations(all_trees, arg_count):
@@ -145,49 +142,49 @@ class BenchMarkBase(object):
 ############################################################
 
 class BenchMark(BenchMarkBase):
-    def bench_append_from_document(self, tree1, root1, tree2, root2):
+    def bench_append_from_document(self, root1, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
         for el in root2:
             root1.append(el)
 
-    def bench_insert_from_document(self, tree1, root1, tree2, root2):
+    def bench_insert_from_document(self, root1, root2):
         for el in root2:
             root1.insert(len(root1)/2, el)
 
-    def bench_rotate_children(self, tree, root):
+    def bench_rotate_children(self, root):
         # == "1 2 3" # runs on any single tree independently
         for i in range(100):
             el = root[0]
             del root[0]
             root.append(el)
 
-    def bench_reorder(self, tree, root):
+    def bench_reorder(self, root):
         for i in range(1,len(root)/2):
             el = root[0]
             del root[0]
             root[-i:-i] = [ el ]
 
-    def bench_reorder_slice(self, tree, root):
+    def bench_reorder_slice(self, root):
         for i in range(1,len(root)/2):
             els = root[0:1]
             del root[0]
             root[-i:-i] = els
 
-    def bench_clear(self, tree, root):
+    def bench_clear(self, root):
         root.clear()
 
-    def bench_create_subelements(self, tree, root):
+    def bench_create_subelements(self, root):
         SubElement = self.etree.SubElement
         for child in root:
             SubElement(child, '{test}test')
 
-    def bench_append_elements(self, tree, root):
+    def bench_append_elements(self, root):
         Element = self.etree.Element
         for child in root:
             el = Element('{test}test')
             child.append(el)
 
-    def bench_replace_children(self, tree, root):
+    def bench_replace_children(self, root):
         Element = self.etree.Element
         for child in root:
             el = Element('{test}test')
@@ -245,34 +242,25 @@ if __name__ == '__main__':
     import time
     def run_bench(suite, method_name, tree_set):
         current_time = time.time
-        call_repeat = range(50)
-
-        suite.setup(tree_set)
+        call_repeat = range(10)
 
         call = getattr(suite, method_name)
-        args = list(chain(*[ (getattr(suite, '_tree%d' % tree),
-                              getattr(suite, '_root%d' % tree))
-                             for tree in tree_set ]))
-        def calibrate(*void):
-            pass
-        t = current_time()
-        for i in call_repeat:
-            calibrate(*args)
-        call_overhead = current_time() - t
+        tree_builders = [ getattr(suite, '_root%d' % tree)
+                          for tree in tree_set ]
 
         times = []
         for i in range(3):
             gc.collect()
             gc.disable()
-            t = current_time()
+            t = 0
             for i in call_repeat:
+                args = [ build() for build in tree_builders ]
+                t_one_call = current_time()
                 call(*args)
-            t = max(0, current_time() - t - call_overhead)
+                t += current_time() - t_one_call
             t = 1000.0 * t / len(call_repeat)
             times.append(t)
             gc.enable()
-
-        suite.cleanup()
         return times
 
 
