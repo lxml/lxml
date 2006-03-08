@@ -1,4 +1,4 @@
-import sys, string, timeit
+import sys, string, time, copy, gc
 from itertools import *
 
 class BenchMarkBase(object):
@@ -8,13 +8,19 @@ class BenchMarkBase(object):
         self.etree = etree
         self.lib_name = etree.__name__.split('.')[-1]
 
+        self.setup_times = times = []
+        for tree in self._all_trees():
+            setup = getattr(self, '_setup_tree%d' % tree)
+            root, t = setup()
+            times.append(t)
+            setattr(self, '__root%d' % tree, root)
+
     def setup(self, trees=()):
         if not trees:
             trees = self._all_trees()
 
         for tree in trees:
-            setup = getattr(self, '_setup_tree%d' % tree)
-            root = setup()
+            root = copy.deepcopy( getattr(self, '__root%d' % tree) )
             setattr(self, '_root%d' % tree, root)
             setattr(self, '_tree%d' % tree, self.etree.ElementTree(root))
 
@@ -26,42 +32,63 @@ class BenchMarkBase(object):
         return all_trees
 
     def _setup_tree1(self):
-        "tree with some 2nd level and loads of 3rd level children"
-        root = self.etree.Element('{a}root')
+        "tree with 26 2nd level and 520 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
+        current_time = time.time
+        t = current_time()
+        root = self.etree.Element('{a}root')
         for ch1 in atoz:
             el = SubElement(root, "{b}"+ch1)
             for ch2 in atoz:
-                for i in range(100):
+                for i in range(20):
                     SubElement(el, "{c}%s%03d" % (ch2, i))
-        return root
+        t = current_time() - t
+        return (root, t)
 
     def _setup_tree2(self):
-        "tree with loads of 2nd level and fewer 3rd level children"
-        root = self.etree.Element('{x}root')
+        "tree with 520 2nd level and 26 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
+        current_time = time.time
+        t = current_time()
+        root = self.etree.Element('{x}root')
         for ch1 in atoz:
-            for i in range(100):
+            for i in range(20):
                 el = SubElement(root, "{y}%s%03d" % (ch1, i))
                 for ch2 in atoz:
                     SubElement(el, "{z}"+ch2)
-        return root
+        t = current_time() - t
+        return (root, t)
 
     def _setup_tree3(self):
-        "deep tree with constant number of children per node"
-        root = self.etree.Element('{x}root')
+        "tree of depth 8 with 3 children per node"
         SubElement = self.etree.SubElement
-        tags = self._tags
+        current_time = time.time
+        t = current_time()
+        root = self.etree.Element('{x}root')
         children = [root]
-        for i in range(10):
-            children = list(imap(SubElement, children*3, tags()))
-        return root
+        for i in range(7):
+            tag_no = count().next
+            children = [ SubElement(c, "{y}z%d" % i)
+                         for i,c in enumerate(chain(children, children, children)) ]
+        t = current_time() - t
+        return (root, t)
 
-    def _tags(ns='y'):
-        for i in count():
-            yield "{%s}z%d" % (ns,i)
+    def _setup_tree4(self):
+        "small tree with 26 2nd level and 2 3rd level children"
+        atoz = self.atoz
+        SubElement = self.etree.SubElement
+        current_time = time.time
+        t = current_time()
+        root = self.etree.Element('{x}root')
+        children = [root]
+        for ch1 in atoz:
+            el = SubElement(root, "{b}"+ch1)
+            SubElement(el, "{c}a")
+            SubElement(el, "{c}b")
+        t = current_time() - t
+        return (root, t)
 
     def cleanup(self):
         for name in dir(self):
@@ -114,35 +141,61 @@ class BenchMarkBase(object):
 
 
 ############################################################
-# Benchmarks:
+# Benchmarks
 ############################################################
 
 class BenchMark(BenchMarkBase):
     def bench_append_from_document(self, tree1, root1, tree2, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
         for el in root2:
-            root1.append(root2[0])
+            root1.append(el)
 
     def bench_insert_from_document(self, tree1, root1, tree2, root2):
         for el in root2:
-            root1.insert(len(root1)/2, root2[0])
+            root1.insert(len(root1)/2, el)
 
     def bench_rotate_children(self, tree, root):
         # == "1 2 3" # runs on any single tree independently
         for i in range(100):
-            root.append(root[0])
+            el = root[0]
+            del root[0]
+            root.append(el)
 
     def bench_reorder(self, tree, root):
         for i in range(1,len(root)/2):
-            root[-i:-i] = [ root[0] ]
+            el = root[0]
+            del root[0]
+            root[-i:-i] = [ el ]
 
     def bench_reorder_slice(self, tree, root):
         for i in range(1,len(root)/2):
-            root[-i:-i] = root[0:1]
+            els = root[0:1]
+            del root[0]
+            root[-i:-i] = els
 
     def bench_clear(self, tree, root):
         root.clear()
 
+    def bench_create_subelements(self, tree, root):
+        SubElement = self.etree.SubElement
+        for child in root:
+            SubElement(child, '{test}test')
+
+    def bench_append_elements(self, tree, root):
+        Element = self.etree.Element
+        for child in root:
+            el = Element('{test}test')
+            child.append(el)
+
+    def bench_replace_children(self, tree, root):
+        Element = self.etree.Element
+        for child in root:
+            el = Element('{test}test')
+            child[:] = [el]
+
+############################################################
+# Main program
+############################################################
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
@@ -173,6 +226,8 @@ if __name__ == '__main__':
             except ImportError:
                 pass
 
+    print "Preparing test suites and trees ..."
+
     benchmark_suites = map(BenchMark, _etrees)
 
     # sorted by name and tree tuple
@@ -187,35 +242,63 @@ if __name__ == '__main__':
         benchmarks = [ [ b for b in bs if b[0] in selected ]
                        for bs in benchmarks ]
 
+    import time
+    def run_bench(suite, method_name, tree_set):
+        current_time = time.time
+        call_repeat = range(50)
+
+        suite.setup(tree_set)
+
+        call = getattr(suite, method_name)
+        args = list(chain(*[ (getattr(suite, '_tree%d' % tree),
+                              getattr(suite, '_root%d' % tree))
+                             for tree in tree_set ]))
+        def calibrate(*void):
+            pass
+        t = current_time()
+        for i in call_repeat:
+            calibrate(*args)
+        call_overhead = current_time() - t
+
+        times = []
+        for i in range(3):
+            gc.collect()
+            gc.disable()
+            t = current_time()
+            for i in call_repeat:
+                call(*args)
+            t = max(0, current_time() - t - call_overhead)
+            t = 1000.0 * t / len(call_repeat)
+            times.append(t)
+            gc.enable()
+
+        suite.cleanup()
+        return times
+
 
     print "Running benchmark on", ', '.join(b.lib_name
                                             for b in benchmark_suites)
     print
 
+    print "Setup times for trees in seconds:"
+    for b in benchmark_suites:
+        print "%-12s : " % b.lib_name, ', '.join("%9.4f" % t
+                                                 for t in b.setup_times)
+    print
+
     for bench_calls in izip(*benchmarks):
-        for lib, config in enumerate(izip(bench_calls, benchmark_suites)):
-            (bench_name, tree_set), bench = config
-
-            bench_args  = ', '.join("bench._tree%d, bench._root%d" % (tree, tree)
-                                    for tree in tree_set)
-
-            timer = timeit.Timer(
-                "bench.%s(%s)" % (bench_name, bench_args),
-                "from __main__ import bench ; bench.setup(%s) ; gc.enable()" % \
-                    str(tuple(tree_set))
-                )
+        for lib, config in enumerate(izip(benchmark_suites, bench_calls)):
+            bench, (bench_name, tree_set) = config
 
             print "%-12s %-25s (T%-6s)" % (bench.lib_name, bench_name[6:],
                                            ',T'.join(imap(str, tree_set))[:6]),
             sys.stdout.flush()
 
-            result = timer.repeat(3, 50)
-
-            bench.cleanup()
+            result = run_bench(bench, bench_name, tree_set)
 
             for t in result:
-                print "%8.4f" % t,
-            print "msec/pass, best: %8.4f" % min(result)
+                print "%9.4f" % t,
+            print "msec/pass, best: %9.4f" % min(result)
 
         if len(benchmark_suites) > 1:
             print # empty line between different benchmarks
