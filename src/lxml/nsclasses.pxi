@@ -91,18 +91,6 @@ cdef class _NamespaceRegistry:
         self._extensions.clear()
         #self.self._xslt_elements.clear()
 
-cdef _NamespaceRegistry _find_namespace_registry(object ns_uri):
-    cdef tree.PyObject* dict_result
-    if ns_uri:
-        ns_utf = _utf8(ns_uri)
-        dict_result = tree.PyDict_GetItemString(__NAMESPACE_CLASSES, ns_utf)
-    else:
-        dict_result = tree.PyDict_GetItem(__NAMESPACE_CLASSES, None)
-    if dict_result is NULL:
-        raise
-    else:
-        return <_NamespaceRegistry>dict_result
-
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
     cdef tree.PyObject* dict_result
