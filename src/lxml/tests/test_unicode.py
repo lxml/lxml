@@ -6,7 +6,7 @@ from lxml import etree
 
 ascii_uni = u'a'
 
-uni = u'á'
+uni = u'á\uF8D2' # klingon etc.
 
 class UnicodeTestCase(unittest.TestCase):
     def test_unicode_xml(self):
@@ -16,6 +16,11 @@ class UnicodeTestCase(unittest.TestCase):
     def test_unicode_tag(self):
         el = etree.Element(uni)
         self.assertEquals(uni, el.tag)
+
+    def test_unicode_nstag(self):
+        tag = u"{%s}%s" % (uni, uni)
+        el = etree.Element(tag)
+        self.assertEquals(tag, el.tag)
 
     def test_unicode_attr(self):
         el = etree.Element('foo', {'bar': uni})
