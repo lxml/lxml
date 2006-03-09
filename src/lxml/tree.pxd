@@ -18,8 +18,9 @@ cdef extern from "Python.h":
     cdef object PyString_FromStringAndSize(char* s, int size)
     cdef object PyString_FromString(char* s)
     cdef int PyList_Append(object l, object obj)
-    cdef PyObject* PyDict_GetItem(object d, object key)
+    cdef int PyDict_SetItemString(object d, char* key, object value)
     cdef PyObject* PyDict_GetItemString(object d, char* key)
+    cdef PyObject* PyDict_GetItem(object d, object key)
 
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler

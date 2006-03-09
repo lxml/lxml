@@ -97,9 +97,11 @@ cdef object _find_element_class(char* c_namespace_utf,
     cdef _NamespaceRegistry registry
     cdef object result
     if c_namespace_utf is not NULL:
-        dict_result = tree.PyDict_GetItemString(__NAMESPACE_CLASSES, c_namespace_utf)
+        dict_result = tree.PyDict_GetItemString(
+            __NAMESPACE_CLASSES, c_namespace_utf)
     else:
-        dict_result = tree.PyDict_GetItem(__NAMESPACE_CLASSES, None)
+        dict_result = tree.PyDict_GetItem(
+            __NAMESPACE_CLASSES, None)
     if dict_result is NULL:
         return _Element
 
@@ -107,7 +109,8 @@ cdef object _find_element_class(char* c_namespace_utf,
     classes = registry._classes
 
     if c_element_name_utf is not NULL:
-        dict_result = tree.PyDict_GetItemString(classes, c_element_name_utf)
+        dict_result = tree.PyDict_GetItemString(
+            classes, c_element_name_utf)
     else:
         dict_result = NULL
 
