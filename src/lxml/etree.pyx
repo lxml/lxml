@@ -1415,12 +1415,19 @@ cdef object _utf8(object s):
         raise TypeError, "Argument must be string or unicode."
 
 cdef object _namespacedName(xmlNode* c_node):
+    cdef char* href
+    cdef char* name
+    cdef object s
+    name = c_node.name
     if c_node.ns is NULL or c_node.ns.href is NULL:
-        return funicode(c_node.name)
+        return funicode(name)
     else:
-        # XXX optimize
-        s = "{%s}%s" % (c_node.ns.href, c_node.name)
-        return funicode(s)
+        href = c_node.ns.href
+        s = tree.PyString_FromFormat("{%s}%s", href, name)
+        if isutf8(href) or isutf8(name):
+            return unicode(s, 'UTF-8')
+        else:
+            return s
 
 def _getFilenameForFile(source):
     """Given a Python File or Gzip object, give filename back.
