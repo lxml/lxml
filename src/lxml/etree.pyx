@@ -1408,6 +1408,7 @@ cdef object funicode(char* s):
 
 cdef object _utf8(object s):
     if tree.PyString_Check(s):
+        assert not isutf8(s), "All strings must be Unicode or ASCII"
         return s
     elif tree.PyUnicode_Check(s):
         return tree.PyUnicode_AsUTF8String(s)
