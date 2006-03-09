@@ -225,6 +225,10 @@ class BenchMark(BenchMarkBase):
         for child in root:
             copy.deepcopy(child)
 
+    def bench_tag(self, root):
+        for child in root:
+            child.tag
+
 ############################################################
 # Main program
 ############################################################
