@@ -73,13 +73,15 @@ cdef class _NamespaceRegistry:
             name_utf = _utf8(name)
         d[name_utf] = item
 
-    cdef __getitem__(self, name):
+    def __getitem__(self, name):
+        name_utf = _utf8(name)
+        return self._get(name_utf)
+
+    cdef object _get(self, char* c_name):
         cdef tree.PyObject* dict_result
-        cdef char* c_name
-        c_name = name
-        dict_result = tree.PyDict_GetItem(self._classes, c_name)
+        dict_result = tree.PyDict_GetItemString(self._classes, c_name)
         if dict_result is NULL:
-            dict_result = tree.PyDict_GetItem(self._extensions, c_name)
+            dict_result = tree.PyDict_GetItemString(self._extensions, c_name)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
@@ -88,13 +90,6 @@ cdef class _NamespaceRegistry:
         self._classes.clear()
         self._extensions.clear()
         #self.self._xslt_elements.clear()
-
-cdef object _find_all_namespaces():
-    "Hack to register all extension functions in XSLT"
-    ns_uris = []
-    for s in __NAMESPACE_CLASSES.keys():
-        ns_uris.append(funicode(s))
-    return ns_uris
 
 cdef _NamespaceRegistry _find_namespace_registry(object ns_uri):
     cdef tree.PyObject* dict_result
@@ -107,17 +102,6 @@ cdef _NamespaceRegistry _find_namespace_registry(object ns_uri):
         raise
     else:
         return <_NamespaceRegistry>dict_result
-
-cdef _find_extensions(namespaces):
-    extension_dict = {}
-    for ns_uri in namespaces:
-        try:
-            extensions = _find_namespace_registry(ns_uri)._extensions
-        except KeyError:
-            continue
-        if extensions:
-            extension_dict[ns_uri] = extensions
-    return extension_dict
 
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
