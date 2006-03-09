@@ -212,6 +212,19 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.getchildren()
 
+    def bench_get_children_slice(self, root):
+        for child in root:
+            child[:]
+
+    def bench_get_children_slice_2x(self, root):
+        for child in root:
+            children = child[:]
+            child[:]
+
+    def bench_deepcopy(self, root):
+        for child in root:
+            copy.deepcopy(child)
+
 ############################################################
 # Main program
 ############################################################
