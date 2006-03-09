@@ -552,6 +552,7 @@ cdef class _Element(_NodeBase):
 
     def __getslice__(self, start, stop):
         cdef xmlNode* c_node
+        cdef _Document doc
         cdef int c
         # this does not work for negative start, stop, however,
         # python seems to convert these to positive start, stop before
@@ -561,9 +562,12 @@ cdef class _Element(_NodeBase):
             return []
         c = start
         result = []
+        doc = self._doc
         while c_node is not NULL and c < stop:
             if _isElement(c_node):
-                result.append(_elementFactory(self._doc, c_node))
+                ret = tree.PyList_Append(result, _elementFactory(doc, c_node))
+                if ret:
+                    raise
                 c = c + 1
             c_node = c_node.next
         return result
@@ -586,7 +590,13 @@ cdef class _Element(_NodeBase):
         cdef int k
         cdef int l
         cdef xmlNode* c_child
+        cdef xmlNode* c_search_node
         _raiseIfNone(x)
+
+        c_search_node = x._c_node
+        if c_search_node.parent is not self._c_node:
+            raise ValueError, "Element is not a child of this node."
+
         k = 0
         c_child = self._c_node.children
 
@@ -602,7 +612,7 @@ cdef class _Element(_NodeBase):
         
         while c_child is not NULL:
             if _isElement(c_child):
-                if c_child is x._c_node:
+                if c_child is c_search_node:
                     if ((start is None or k >= start) and
                         (stop is None or k < stop)): 
                         return k
@@ -641,11 +651,16 @@ cdef class _Element(_NodeBase):
 
     def getchildren(self):
         cdef xmlNode* c_node
+        cdef _Document doc
+        cdef int ret
         result = []
+        doc = self._doc
         c_node = self._c_node.children
         while c_node is not NULL:
             if _isElement(c_node):
-                result.append(_elementFactory(self._doc, c_node))
+                ret = tree.PyList_Append(result, _elementFactory(doc, c_node))
+                if ret:
+                    raise
             c_node = c_node.next
         return result
 
