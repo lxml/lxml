@@ -1380,17 +1380,6 @@ cdef xmlNode* _deleteSlice(xmlNode* c_node, int start, int stop):
         c_node = c_next
     return c_node
 
-def _getNsTag(tag):
-    """Given a tag, find namespace URI and tag name.
-    Return None for NS uri if no namespace URI available.
-    """
-    tag = _utf8(tag)
-    if tag[0] == '{':
-        i = tag.find('}')
-        assert i != -1
-        return tag[1:i], tag[i + 1:]
-    return None, tag
-    
 cdef int isutf8(char* string):
     cdef int i
     i = 0
@@ -1415,6 +1404,27 @@ cdef object _utf8(object s):
     else:
         raise TypeError, "Argument must be string or unicode."
 
+def _getNsTag(tag):
+    """Given a tag, find namespace URI and tag name.
+    Return None for NS uri if no namespace URI available.
+    """
+    cdef char* c_tag
+    cdef char* c_pos
+    cdef int nslen
+    tag = _utf8(tag)
+    c_tag = tag
+    if c_tag[0] == c'{':
+        c_pos = tree.xmlStrchr(c_tag+1, c'}')
+        if c_pos is NULL:
+            raise ValueError, "Invalid tag name"
+        nslen = c_pos - c_tag - 1
+        ns  = tree.PyString_FromStringAndSize(c_tag+1, nslen)
+        c_tag = c_pos + 1
+    else:
+        ns = None
+    tag = tree.PyString_FromString(c_tag)
+    return ns, tag
+    
 cdef object _namespacedName(xmlNode* c_node):
     cdef char* href
     cdef char* name

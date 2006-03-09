@@ -187,3 +187,4 @@ cdef extern from "libxml/xmlsave.h":
     
 cdef extern from "libxml/xmlstring.h":
     cdef char* xmlStrdup(char* cur)
+    cdef char* xmlStrchr(char* cur, char value)
