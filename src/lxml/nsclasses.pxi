@@ -73,29 +73,40 @@ cdef class _NamespaceRegistry:
             name_utf = _utf8(name)
         d[name_utf] = item
 
-    def __getitem__(self, name):
-        try:
-            return self._classes[name]
-        except KeyError:
-            return self._extensions[name]
+    cdef __getitem__(self, name):
+        cdef tree.PyObject* dict_result
+        cdef char* c_name
+        c_name = name
+        dict_result = tree.PyDict_GetItem(self._classes, c_name)
+        if dict_result is NULL:
+            dict_result = tree.PyDict_GetItem(self._extensions, c_name)
+        if dict_result is NULL:
+            raise KeyError, "Name not registered."
+        return <object>dict_result
 
     def clear(self):
         self._classes.clear()
         self._extensions.clear()
+        #self.self._xslt_elements.clear()
 
 cdef object _find_all_namespaces():
     "Hack to register all extension functions in XSLT"
     ns_uris = []
     for s in __NAMESPACE_CLASSES.keys():
-        ns_uris.append(unicode(s, 'UTF-8'))
+        ns_uris.append(funicode(s))
     return ns_uris
 
 cdef _NamespaceRegistry _find_namespace_registry(object ns_uri):
+    cdef tree.PyObject* dict_result
     if ns_uri:
         ns_utf = _utf8(ns_uri)
+        dict_result = tree.PyDict_GetItemString(__NAMESPACE_CLASSES, ns_utf)
     else:
-        ns_utf = None
-    return __NAMESPACE_CLASSES[ns_utf]
+        dict_result = tree.PyDict_GetItem(__NAMESPACE_CLASSES, None)
+    if dict_result is NULL:
+        raise
+    else:
+        return <_NamespaceRegistry>dict_result
 
 cdef _find_extensions(namespaces):
     extension_dict = {}
@@ -110,28 +121,29 @@ cdef _find_extensions(namespaces):
 
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
+    cdef tree.PyObject* dict_result
     cdef _NamespaceRegistry registry
-    element_name_utf = c_element_name_utf
-    if c_namespace_utf == NULL:
-        if element_name_utf[:1] == '{':
-            namespace_utf, element_name_utf = element_name_utf[1:].split('}', 1)
-        else:
-            namespace_utf = None
+    cdef object result
+    if c_namespace_utf is not NULL:
+        dict_result = tree.PyDict_GetItemString(__NAMESPACE_CLASSES, c_namespace_utf)
     else:
-        namespace_utf = c_namespace_utf
-
-    try:
-        registry = __NAMESPACE_CLASSES[namespace_utf]
-    except KeyError:
+        dict_result = tree.PyDict_GetItem(__NAMESPACE_CLASSES, None)
+    if dict_result is NULL:
         return _Element
+
+    registry = <object>dict_result
     classes = registry._classes
-    try:
-        return classes[element_name_utf]
-    except KeyError:
-        pass
-    try:
-        return classes[None]
-    except KeyError:
+
+    if c_element_name_utf is not NULL:
+        dict_result = tree.PyDict_GetItemString(classes, c_element_name_utf)
+    else:
+        dict_result = NULL
+
+    if dict_result is NULL:
+        dict_result = tree.PyDict_GetItem(classes, None)
+
+    if dict_result is not NULL:
+        result = <object>dict_result
+        return result
+    else:
         return _Element
-
-
