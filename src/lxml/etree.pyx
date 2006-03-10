@@ -504,7 +504,6 @@ cdef class _Element(_NodeBase):
         
     property text:
         def __get__(self):
-            cdef xmlNode* c_node
             return _collectText(self._c_node.children)
         
         def __set__(self, value):
@@ -525,7 +524,6 @@ cdef class _Element(_NodeBase):
         
     property tail:
         def __get__(self):
-            cdef xmlNode* c_node
             return _collectText(self._c_node.next)
            
         def __set__(self, value):
@@ -1269,14 +1267,31 @@ cdef _collectText(xmlNode* c_node):
     
     If there was no text to collect, return None
     """
+    cdef int scount
+    cdef char* text
+    cdef xmlNode* c_node_cur
+    # check for multiple text nodes and count accumulated string length
+    scount = 0
+    text = NULL
+    c_node_cur = c_node
+    while c_node_cur is not NULL and c_node_cur.type == tree.XML_TEXT_NODE:
+        if c_node_cur.content[0] != c'\0':
+            text = c_node_cur.content
+            scount = scount + 1
+        c_node_cur = c_node_cur.next
+
+    # handle two most common cases first
+    if text is NULL:
+        return None
+    if scount == 1:
+        return funicode(text)
+
+    # the rest is not performance critical anymore
     result = ''
     while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
         result = result + c_node.content
         c_node = c_node.next
-    if result:
-        return funicode(result)
-    else:
-        return None
+    return funicode(result)
 
 cdef _removeText(xmlNode* c_node):
     """Remove all text nodes.
