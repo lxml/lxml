@@ -329,6 +329,13 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.text
 
+    @with_text(utext=True, text=True, no_text=True)
+    def bench_text_repeat(self, root):
+        repeat = range(500)
+        for child in root:
+            for i in repeat:
+                child.text
+
 ############################################################
 # Main program
 ############################################################
