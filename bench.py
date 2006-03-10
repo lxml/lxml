@@ -1,30 +1,113 @@
 import sys, string, time, copy, gc
 from itertools import *
 
+_TEXT  = "some ASCII text"
+_UTEXT = u"some klingon: \F8D2"
+_ATTRIBUTES = {
+    '{attr}test' : _UTEXT,
+    'bla'        : _TEXT
+    }
+
+def with_attributes(use_attributes):
+    "Decorator for benchmarks that use attributes"
+    value = {False : 0, True : 1}[ bool(use_attributes) ]
+    def set_value(function):
+        try:
+            function.ATTRIBUTES.add(value)
+        except AttributeError:
+            function.ATTRIBUTES = set([value])
+        return function
+    return set_value
+
+def with_text(no_text=False, text=False, utext=False):
+    "Decorator for benchmarks that use text"
+    values = []
+    if no_text:
+        values.append(0)
+    if text:
+        values.append(1)
+    if utext:
+        values.append(2)
+    def set_value(function):
+        try:
+            function.TEXT.add(values)
+        except AttributeError:
+            function.TEXT = set(values)
+        return function
+    return set_value
+
+
 class BenchMarkBase(object):
     atoz = string.ascii_lowercase
 
+    _LIB_NAME_MAP = {
+        'etree'        : 'lxe',
+        'ElementTree'  : 'ET',
+        'cElementTree' : 'cET'
+        }
+
     def __init__(self, etree):
         self.etree = etree
-        self.lib_name = etree.__name__.split('.')[-1]
+        libname = etree.__name__.split('.')[-1]
+        self.lib_name = self._LIB_NAME_MAP.get(libname, libname)
 
-        self.setup_times = times = []
+        if libname == 'etree':
+            deepcopy = copy.deepcopy
+            def set_property(root, fname):
+                setattr(self, fname, lambda : deepcopy(root))
+        else:
+            def set_property(root, fname):
+                setattr(self, fname, self.et_make_factory(root))
+
+        attribute_list = list(izip(count(), ({}, _ATTRIBUTES)))
+        text_list = list(izip(count(), (None, _TEXT, _UTEXT)))
+        build_name = self._tree_builder_name
+
+        self.setup_times = []
         for tree in self._all_trees():
+            times = []
+            self.setup_times.append(times)
             setup = getattr(self, '_setup_tree%d' % tree)
-            root, t = setup()
-            times.append(t)
-            setattr(self, '__root%d' % tree, root)
-            def set_property(root):
-                setattr(self, '_root%d' % tree,
-                        lambda : copy.deepcopy(root))
-            set_property(root)
+            for an, attributes in attribute_list:
+                for tn, text in text_list:
+                    root, t = setup(text, attributes)
+                    times.append(t)
+                    set_property(root, build_name(tree, tn, an))
 
-    def setup(self, trees=()):
-        if not trees:
-            trees = self._all_trees()
+    def _tree_builder_name(self, tree, tn, an):
+        return '_root%d_T%d_A%d' % (tree, tn, an)
 
-        for tree in trees:
-            set_property( getattr(self, '__root%d' % tree) )
+    def tree_builder(self, tree, tn, an):
+        return getattr(self, self._tree_builder_name(tree, tn, an))
+
+    def et_make_factory(self, elem):
+        def generate_elem(append, elem, level):
+            var = "e" + str(level)
+            arg = repr(elem.tag)
+            if elem.attrib:
+                arg += ", **%r" % elem.attrib
+            if level == 1:
+                append(" e1 = Element(%s)" % arg)
+            else:
+                append(" %s = SubElement(e%d, %s)" % (var, level-1, arg))
+            if elem.text:
+                append(" %s.text = %r" % (var, elem.text))
+            if elem.tail:
+                append(" %s.tail = %r" % (var, elem.tail))
+            for e in elem:
+                generate_elem(append, e, level+1)
+        # generate code for a function that creates a tree
+        output = ["def element_factory():"]
+        generate_elem(output.append, elem, 1)
+        output.append(" return e1")
+        # setup global function namespace
+        namespace = {
+            "Element"    : self.etree.Element,
+            "SubElement" : self.etree.SubElement
+            }
+        # create function object
+        exec "\n".join(output) in namespace
+        return namespace["element_factory"]
 
     def _all_trees(self):
         all_trees = []
@@ -33,7 +116,7 @@ class BenchMarkBase(object):
                 all_trees.append(int(name[11:]))
         return all_trees
 
-    def _setup_tree1(self):
+    def _setup_tree1(self, text, attributes):
         "tree with 26 2nd level and 520 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
@@ -41,14 +124,14 @@ class BenchMarkBase(object):
         t = current_time()
         root = self.etree.Element('{a}root')
         for ch1 in atoz:
-            el = SubElement(root, "{b}"+ch1)
+            el = SubElement(root, "{b}"+ch1, attributes)
             for ch2 in atoz:
                 for i in range(20):
                     SubElement(el, "{c}%s%03d" % (ch2, i))
         t = current_time() - t
         return (root, t)
 
-    def _setup_tree2(self):
+    def _setup_tree2(self, text, attributes):
         "tree with 520 2nd level and 26 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
@@ -57,13 +140,13 @@ class BenchMarkBase(object):
         root = self.etree.Element('{x}root')
         for ch1 in atoz:
             for i in range(20):
-                el = SubElement(root, "{y}%s%03d" % (ch1, i))
+                el = SubElement(root, "{y}%s%03d" % (ch1, i), attributes)
                 for ch2 in atoz:
                     SubElement(el, "{z}"+ch2)
         t = current_time() - t
         return (root, t)
 
-    def _setup_tree3(self):
+    def _setup_tree3(self, text, attributes):
         "tree of depth 8 with 3 children per node"
         SubElement = self.etree.SubElement
         current_time = time.time
@@ -72,12 +155,12 @@ class BenchMarkBase(object):
         children = [root]
         for i in range(7):
             tag_no = count().next
-            children = [ SubElement(c, "{y}z%d" % i)
+            children = [ SubElement(c, "{y}z%d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         t = current_time() - t
         return (root, t)
 
-    def _setup_tree4(self):
+    def _setup_tree4(self, text, attributes):
         "small tree with 26 2nd level and 2 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
@@ -86,9 +169,9 @@ class BenchMarkBase(object):
         root = self.etree.Element('{x}root')
         children = [root]
         for ch1 in atoz:
-            el = SubElement(root, "{b}"+ch1)
-            SubElement(el, "{c}a")
-            SubElement(el, "{c}b")
+            el = SubElement(root, "{b}"+ch1, attributes)
+            SubElement(el, "{c}a", attributes)
+            SubElement(el, "{c}b", attributes)
         t = current_time() - t
         return (root, t)
 
@@ -109,16 +192,21 @@ class BenchMarkBase(object):
             else:
                 tree_sets = ()
             if tree_sets:
-                for tree_set in tree_sets:
-                    benchmarks.append((name, map(int, tree_set.split(','))))
+                tree_tuples = [ map(int, tree_set.split(','))
+                                for tree_set in tree_sets ]
             else:
                 try:
                     function = getattr(method, 'im_func', method)
                     arg_count = method.func_code.co_argcount - 1
                 except AttributeError:
                     arg_count = 1
-                for trees in self._permutations(all_trees, arg_count):
-                    benchmarks.append((name, trees))
+                tree_tuples = self._permutations(all_trees, arg_count)
+
+            for tree_tuple in tree_tuples:
+                for tn in sorted(getattr(method, 'TEXT', (0,))):
+                    for an in sorted(getattr(method, 'ATTRIBUTES', (0,))):
+                        benchmarks.append((name, method, tree_tuple, tn, an))
+
         return benchmarks
 
     def _permutations(self, seq, count):
@@ -202,6 +290,13 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.set('a', 'bla')
 
+    @with_attributes(True)
+    def bench_get_attributes(self, root):
+        for child in root:
+            child.set('a', 'bla')
+        for child in root:
+            child.get('a')
+
     def bench_setget_attributes(self, root):
         for child in root:
             child.set('a', 'bla')
@@ -228,6 +323,11 @@ class BenchMark(BenchMarkBase):
     def bench_tag(self, root):
         for child in root:
             child.tag
+
+    @with_text(utext=True, text=True, no_text=True)
+    def bench_text(self, root):
+        for child in root:
+            child.text
 
 ############################################################
 # Main program
@@ -279,12 +379,11 @@ if __name__ == '__main__':
                        for bs in benchmarks ]
 
     import time
-    def run_bench(suite, method_name, tree_set):
+    def run_bench(suite, method_name, method_call, tree_set, tn, an):
         current_time = time.time
         call_repeat = range(10)
 
-        call = getattr(suite, method_name)
-        tree_builders = [ getattr(suite, '_root%d' % tree)
+        tree_builders = [ suite.tree_builder(tree, tn, an)
                           for tree in tree_set ]
 
         times = []
@@ -295,12 +394,17 @@ if __name__ == '__main__':
             for i in call_repeat:
                 args = [ build() for build in tree_builders ]
                 t_one_call = current_time()
-                call(*args)
+                method_call(*args)
                 t += current_time() - t_one_call
             t = 1000.0 * t / len(call_repeat)
             times.append(t)
             gc.enable()
         return times
+
+    def build_treeset_name(trees, tn, an):
+        text = {0:'-', 1:'S', 2:'U'}[tn]
+        attr = {0:'-', 1:'A'}[an]
+        return "%s%s T%s" % (text, attr, ',T'.join(imap(str, trees))[:6])
 
 
     print "Running benchmark on", ', '.join(b.lib_name
@@ -309,19 +413,23 @@ if __name__ == '__main__':
 
     print "Setup times for trees in seconds:"
     for b in benchmark_suites:
-        print "%-12s : " % b.lib_name, ', '.join("%9.4f" % t
-                                                 for t in b.setup_times)
+        print "%-3s:    " % b.lib_name,
+        for an in (0,1):
+            for tn in (0,1,2):
+                print '  %s  ' % build_treeset_name((), tn, an)[:2],
+        print
+        for i, tree_times in enumerate(b.setup_times):
+            print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
     print
 
     for bench_calls in izip(*benchmarks):
-        for lib, config in enumerate(izip(benchmark_suites, bench_calls)):
-            bench, (bench_name, tree_set) = config
-
-            print "%-12s %-25s (T%-6s)" % (bench.lib_name, bench_name[6:],
-                                           ',T'.join(imap(str, tree_set))[:6]),
+        for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
+            bench_name = benchmark_setup[0]
+            tree_set_name = build_treeset_name(*benchmark_setup[-3:])
+            print "%-3s: %-22s (%-10s)" % (bench.lib_name, bench_name[6:29], tree_set_name),
             sys.stdout.flush()
 
-            result = run_bench(bench, bench_name, tree_set)
+            result = run_bench(bench, *benchmark_setup)
 
             for t in result:
                 print "%9.4f" % t,
