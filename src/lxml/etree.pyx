@@ -1270,7 +1270,7 @@ cdef _collectText(xmlNode* c_node):
     cdef int scount
     cdef char* text
     cdef xmlNode* c_node_cur
-    # check for multiple text nodes and count accumulated string length
+    # check for multiple text nodes
     scount = 0
     text = NULL
     c_node_cur = c_node
