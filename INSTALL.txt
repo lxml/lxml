@@ -50,6 +50,7 @@ release of a version of Pyrex that does work with gcc 4.0, the lxml project
 currently provides an updated version of Pyrex:
 
 http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1.tar.gz
+
 http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1-1.src.rpm
 
 It is based on Pyrex 0.9.3.1 and contains a number of patches that make lxml
