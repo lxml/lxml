@@ -17,11 +17,12 @@ cdef extern from "Python.h":
     cdef object PyUnicode_AsUTF8String(object ustring)
     cdef object PyString_FromStringAndSize(char* s, int size)
     cdef object PyString_FromString(char* s)
+    cdef object PyString_FromFormat(char* format, ...)
+
     cdef int PyList_Append(object l, object obj)
     cdef int PyDict_SetItemString(object d, char* key, object value)
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
-    cdef object PyString_FromFormat(char* format, ...)
 
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
