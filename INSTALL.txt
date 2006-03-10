@@ -12,10 +12,13 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.12 (newer versions should work). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-You also need Pyrex (0.9.3) to compile the software. It can be found
-here:
+You also need Pyrex (0.9.3) to compile the software. The official
+homepage can be found here:
 
 * http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+
+However, see below for an updated version if you have any trouble
+using it, especially with GCC 4.x.
 
 You also need Python 2.3 (Python 2.4 also ought to work).
 
@@ -42,10 +45,17 @@ PYTHONPATH somehow, you can import it and play with it.
 Building lxml with gcc 4.0
 --------------------------
 
-Pyrex 0.9.3 generates C code that gcc 4.0 does not accept. Pending an
-official release of a version of Pyrex that does work with gcc 4.0,
-here's a patch to Pyrex that makes lxml compile and appear to work
-with gcc 4.0:
+Pyrex 0.9.3 generates C code that gcc 4.0 does not accept. Pending an official
+release of a version of Pyrex that does work with gcc 4.0, the lxml project
+currently provides an updated version of Pyrex:
+
+http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1.tar.gz
+http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1-1.src.rpm
+
+It is based on Pyrex 0.9.3.1 and contains a number of patches that make lxml
+compile and appear to work with gcc 4.0. If you use this version, you can
+simply skip the rest of the section. In case you want to apply them yourself,
+the first one is:
 
 http://codespeak.net/lxml/Pyrex-0.9.3-gcc4.patch
 
@@ -56,7 +66,21 @@ may be applicable to make lxml compile properly:
 http://codespeak.net/lxml/Pyrex-0.9.3-gcc4-small.patch
 
 It may however actually be that at the time you read this, this extra
-patch has been applied by the distributions as well.
+patch has been applied by the distributions as well. You may still
+encounter the following problem when building the extension::
+
+  TypeError: swig_sources() takes exactly 2 arguments (3 given)
+
+To fix this, look for the following line in Pyrex/Distutils/build_ext.py
+(around line 35)::
+
+  def swig_sources (self, sources):
+
+and change it to::
+
+  def swig_sources (self, sources, *otherargs):
+
+The above install files have these three changes applied.
 
 Troubleshooting
 ---------------
