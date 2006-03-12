@@ -308,10 +308,10 @@ def Extension(module, function_mapping, ns_uri=None):
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
     cdef _NodeBase node
-    if tree.PyString_Check(obj):
+    if python.PyString_Check(obj):
         # XXX use the Wrap variant? Or leak...
         return xpath.xmlXPathNewCString(obj)
-    if tree.PyUnicode_Check(obj):
+    if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
         return xpath.xmlXPathNewCString(obj)
     if isinstance(obj, types.BooleanType):

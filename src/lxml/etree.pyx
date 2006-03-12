@@ -1,4 +1,4 @@
-cimport tree
+cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
 cimport xpath
 cimport xslt
@@ -563,7 +563,7 @@ cdef class _Element(_NodeBase):
         doc = self._doc
         while c_node is not NULL and c < stop:
             if _isElement(c_node):
-                ret = tree.PyList_Append(result, _elementFactory(doc, c_node))
+                ret = python.PyList_Append(result, _elementFactory(doc, c_node))
                 if ret:
                     raise
                 c = c + 1
@@ -656,7 +656,7 @@ cdef class _Element(_NodeBase):
         c_node = self._c_node.children
         while c_node is not NULL:
             if _isElement(c_node):
-                ret = tree.PyList_Append(result, _elementFactory(doc, c_node))
+                ret = python.PyList_Append(result, _elementFactory(doc, c_node))
                 if ret:
                     raise
             c_node = c_node.next
@@ -711,11 +711,11 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         else:
             c_ns_href = c_node.ns.href
         element_class = _find_element_class(c_ns_href, c_node.name)
-        result = element_class()
     elif c_node.type == tree.XML_COMMENT_NODE:
-        result = _Comment()
+        element_class = _Comment
     else:
         assert 0, "Unknown node type: %s" % c_node.type
+    result = element_class()
     result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
@@ -1228,13 +1228,13 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
 
 
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
-    cdef tree.PyObject* o
+    cdef python.PyObject* o
     cdef tree.xmlOutputBuffer* c_buffer
     
-    if not tree.PyFile_Check(f):
+    if not python.PyFile_Check(f):
         raise ValueError, "Not a file"
-    o = <tree.PyObject*>f
-    c_buffer = tree.xmlOutputBufferCreateFile(tree.PyFile_AsFile(o), NULL)
+    o = <python.PyObject*>f
+    c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(o), NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, NULL)
     # dump next node if it's a text node
     _dumpNextNode(c_buffer, c_doc, c_node, NULL)
@@ -1407,15 +1407,15 @@ cdef int isutf8(char* string):
 
 cdef object funicode(char* s):
     if isutf8(s):
-        return tree.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
-    return tree.PyString_FromStringAndSize(s, tree.strlen(s))
+        return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
+    return python.PyString_FromStringAndSize(s, tree.strlen(s))
 
 cdef object _utf8(object s):
-    if tree.PyString_Check(s):
+    if python.PyString_Check(s):
         assert not isutf8(s), "All strings must be Unicode or ASCII"
         return s
-    elif tree.PyUnicode_Check(s):
-        return tree.PyUnicode_AsUTF8String(s)
+    elif python.PyUnicode_Check(s):
+        return python.PyUnicode_AsUTF8String(s)
     else:
         raise TypeError, "Argument must be string or unicode."
 
@@ -1433,11 +1433,10 @@ def _getNsTag(tag):
         if c_pos is NULL:
             raise ValueError, "Invalid tag name"
         nslen = c_pos - c_tag - 1
-        ns  = tree.PyString_FromStringAndSize(c_tag+1, nslen)
-        c_tag = c_pos + 1
+        ns  = python.PyString_FromStringAndSize(c_tag+1, nslen)
+        tag = python.PyString_FromString(c_pos+1)
     else:
         ns = None
-    tag = tree.PyString_FromString(c_tag)
     return ns, tag
     
 cdef object _namespacedName(xmlNode* c_node):
@@ -1449,7 +1448,7 @@ cdef object _namespacedName(xmlNode* c_node):
         return funicode(name)
     else:
         href = c_node.ns.href
-        s = tree.PyString_FromFormat("{%s}%s", href, name)
+        s = python.PyString_FromFormat("{%s}%s", href, name)
         if isutf8(href) or isutf8(name):
             return unicode(s, 'UTF-8')
         else:

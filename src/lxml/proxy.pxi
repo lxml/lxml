@@ -7,7 +7,7 @@
 cdef struct _ProxyRef
 
 cdef struct _ProxyRef:
-    tree.PyObject* proxy
+    python.PyObject* proxy
     int type
     _ProxyRef* next
         
@@ -42,7 +42,7 @@ cdef void registerProxy(_NodeBase proxy, int proxy_type):
     # XXX should we check whether we ran into proxy_type before?
     #print "registering for:", <int>proxy._c_node
     ref = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
-    ref.proxy = <tree.PyObject*>proxy
+    ref.proxy = <python.PyObject*>proxy
     ref.type = proxy_type
     ref.next = <ProxyRef*>c_node._private
     c_node._private = ref # prepend
@@ -50,11 +50,11 @@ cdef void registerProxy(_NodeBase proxy, int proxy_type):
 cdef void unregisterProxy(_NodeBase proxy):
     """Unregister a proxy for the node it's proxying for.
     """
-    cdef tree.PyObject* proxy_ref
+    cdef python.PyObject* proxy_ref
     cdef ProxyRef* ref
     cdef ProxyRef* prev_ref
     cdef xmlNode* c_node
-    proxy_ref = <tree.PyObject*>proxy
+    proxy_ref = <python.PyObject*>proxy
     c_node = proxy._c_node
     ref = <ProxyRef*>c_node._private
     if ref.proxy == proxy_ref:

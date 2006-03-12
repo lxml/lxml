@@ -78,10 +78,10 @@ cdef class _NamespaceRegistry:
         return self._get(name_utf)
 
     cdef object _get(self, char* c_name):
-        cdef tree.PyObject* dict_result
-        dict_result = tree.PyDict_GetItemString(self._classes, c_name)
+        cdef python.PyObject* dict_result
+        dict_result = python.PyDict_GetItemString(self._classes, c_name)
         if dict_result is NULL:
-            dict_result = tree.PyDict_GetItemString(self._extensions, c_name)
+            dict_result = python.PyDict_GetItemString(self._extensions, c_name)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
@@ -93,14 +93,14 @@ cdef class _NamespaceRegistry:
 
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
-    cdef tree.PyObject* dict_result
+    cdef python.PyObject* dict_result
     cdef _NamespaceRegistry registry
     cdef object result
     if c_namespace_utf is not NULL:
-        dict_result = tree.PyDict_GetItemString(
+        dict_result = python.PyDict_GetItemString(
             __NAMESPACE_CLASSES, c_namespace_utf)
     else:
-        dict_result = tree.PyDict_GetItem(
+        dict_result = python.PyDict_GetItem(
             __NAMESPACE_CLASSES, None)
     if dict_result is NULL:
         return _Element
@@ -109,13 +109,13 @@ cdef object _find_element_class(char* c_namespace_utf,
     classes = registry._classes
 
     if c_element_name_utf is not NULL:
-        dict_result = tree.PyDict_GetItemString(
+        dict_result = python.PyDict_GetItemString(
             classes, c_element_name_utf)
     else:
         dict_result = NULL
 
     if dict_result is NULL:
-        dict_result = tree.PyDict_GetItem(classes, None)
+        dict_result = python.PyDict_GetItem(classes, None)
 
     if dict_result is not NULL:
         result = <object>dict_result
