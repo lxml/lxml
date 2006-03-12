@@ -341,6 +341,7 @@ class BenchMark(BenchMarkBase):
 ############################################################
 
 if __name__ == '__main__':
+    import_lxml = True
     if len(sys.argv) > 1:
         try:
             sys.argv.remove('-i')
@@ -348,8 +349,16 @@ if __name__ == '__main__':
         except ValueError:
             pass
 
-    from lxml import etree
-    _etrees = [etree]
+        try:
+            sys.argv.remove('-nolxml')
+            import_lxml = False
+        except ValueError:
+            pass
+
+    _etrees = []
+    if import_lxml:
+        from lxml import etree
+        _etrees.append(etree)
 
     if len(sys.argv) > 1:
         try:
@@ -368,6 +377,10 @@ if __name__ == '__main__':
                 _etrees.append(cET)
             except ImportError:
                 pass
+
+    if not _etrees:
+        print "No library to test. Exiting."
+        sys.exit(1)
 
     print "Preparing test suites and trees ..."
 
