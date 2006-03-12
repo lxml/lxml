@@ -1,4 +1,4 @@
 include setup.py MANIFEST.in *.txt
 recursive-include src *.pyx *.pxd *.pxi *.py etree.c
 recursive-include src/lxml/tests *.rng *.xslt *.xml
-recursive-include doc *.txt
+recursive-include doc *.txt *.xml *.mgp
