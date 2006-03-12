@@ -172,6 +172,3 @@ cdef extern from "libxml/xmlstring.h":
 
 cdef extern from "etree.h":
     cdef int _isElement(xmlNode* node)
-    ctypedef enum LXML_PROXY_TYPE:
-        PROXY_ELEMENT
-        PROXY_ATTRIB
