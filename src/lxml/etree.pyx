@@ -1406,6 +1406,24 @@ cdef object funicode(char* s):
         return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), NULL)
     return python.PyString_FromString(s)
 
+cdef object funicode_alt(char* string):
+    cdef char* s
+    cdef int slen
+    cdef int is_ascii
+    is_ascii = 1
+    s = string
+    while s[0] != c'\0':
+        if s[0] & 0x80:
+            is_ascii = 0
+            break
+        s = s + 1
+    slen = (s - string)
+    if is_ascii:
+        return python.PyString_FromStringAndSize(string, slen)
+
+    slen = slen + tree.strlen(s)
+    return python.PyUnicode_DecodeUTF8(string, slen, NULL)
+
 cdef object _utf8(object s):
     if python.PyString_Check(s):
         assert not isutf8(s), "All strings must be Unicode or ASCII"
