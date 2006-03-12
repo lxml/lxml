@@ -446,7 +446,7 @@ if __name__ == '__main__':
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
             tree_set_name = build_treeset_name(*benchmark_setup[-3:])
-            print "%-3s: %-22s (%-10s)" % (bench.lib_name, bench_name[6:29], tree_set_name),
+            print "%-3s: %-23s (%-10s)" % (bench.lib_name, bench_name[6:29], tree_set_name),
             sys.stdout.flush()
 
             result = run_bench(bench, *benchmark_setup)
