@@ -456,20 +456,12 @@ cdef class _Element(_NodeBase):
 
     def remove(self, _Element element):
         cdef xmlNode* c_node
-        cdef xmlNode* c_search_node
         _raiseIfNone(element)
-        c_search_node = element._c_node
-        if c_search_node.parent is not self._c_node:
+        c_node = element._c_node
+        if c_node.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            if c_node is c_search_node:
-                _removeText(c_search_node.next)
-                tree.xmlUnlinkNode(element._c_node)
-                return
-            c_node = c_node.next
-        else:
-            raise ValueError, "Matching element could not be found"
+        _removeText(c_node.next)
+        tree.xmlUnlinkNode(c_node)
         
     # PROPERTIES
     property tag:
