@@ -23,6 +23,10 @@ cdef extern from "Python.h":
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
 
+    cdef int PyNumber_Check(object instance)
+    cdef int PyBool_Check(object instance)
+    cdef int PySequence_Check(object instance)
+    cdef int PyType_Check(object instance)
     cdef int PyObject_IsInstance(object instance, object classes)
     cdef int PyObject_HasAttrString(object obj, char* attr)
 

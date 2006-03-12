@@ -56,11 +56,11 @@ cdef class _NamespaceRegistry:
                 self[name] = item
 
     def __setitem__(self, name, item):
-        if isinstance(item, (type, types.ClassType)) and issubclass(item, ElementBase):
+        if python.PyType_Check(item) and issubclass(item, ElementBase):
             d = self._classes
         elif name is None:
             raise NamespaceRegistryError, "Registered name can only be None for elements."
-        elif isinstance(item, (type, types.ClassType)) and issubclass(item, XSLTElement):
+        elif python.PyType_Check(item) and issubclass(item, XSLTElement):
             d = self._xslt_elements
         elif callable(item):
             d = self._extensions

@@ -314,13 +314,13 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
         return xpath.xmlXPathNewCString(obj)
-    if isinstance(obj, types.BooleanType):
+    if python.PyBool_Check(obj):
         return xpath.xmlXPathNewBoolean(obj)
-    if isinstance(obj, (int, float)):
+    if python.PyNumber_Check(obj):
         return xpath.xmlXPathNewFloat(obj)
     if isinstance(obj, _NodeBase):
         obj = [obj]
-    if isinstance(obj, (types.ListType, types.TupleType)):
+    if python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
         for element in obj:
             if isinstance(element, _NodeBase):
