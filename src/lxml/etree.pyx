@@ -7,7 +7,7 @@ cimport xmlerror
 cimport xinclude
 cimport c14n
 cimport cstd
-import re, types
+import re
 
 import _elementpath
 from StringIO import StringIO
