@@ -1,5 +1,5 @@
 cimport tree, python
-from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
+from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
 from python cimport isinstance, hasattr
 cimport xpath
 cimport xslt
@@ -18,13 +18,9 @@ DEBUG = False
 
 cdef int PROXY_ELEMENT
 cdef int PROXY_ATTRIB
-cdef int PROXY_ATTRIB_ITER
-cdef int PROXY_ELEMENT_ITER
 
 PROXY_ELEMENT = 0
 PROXY_ATTRIB = 1
-PROXY_ATTRIB_ITER = 2
-PROXY_ELEMENT_ITER = 3
 
 
 # the rules
@@ -1373,9 +1369,10 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_tail
         c_tail = c_next
 
-cdef int _isElement(xmlNode* c_node):
-    return (c_node.type == tree.XML_ELEMENT_NODE or
-            c_node.type == tree.XML_COMMENT_NODE)
+### see etree.h:
+## cdef int _isElement(xmlNode* c_node):
+##     return (c_node.type == tree.XML_ELEMENT_NODE or
+##             c_node.type == tree.XML_COMMENT_NODE)
 
 cdef xmlNode* _deleteSlice(xmlNode* c_node, int start, int stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.
@@ -1409,7 +1406,7 @@ cdef int isutf8(char* string):
 cdef object funicode(char* s):
     if isutf8(s):
         return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), NULL)
-    return python.PyString_FromStringAndSize(s, tree.strlen(s))
+    return python.PyString_FromString(s)
 
 cdef object _utf8(object s):
     if python.PyString_Check(s):
