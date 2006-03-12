@@ -30,34 +30,22 @@ cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
 cdef int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef ProxyRef* createProxyRef(_NodeBase proxy, int proxy_type):
-    """Create a backpointer proxy reference for a proxy and type.
-    """
-    cdef ProxyRef* result
-    result = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
-    result.proxy = <tree.PyObject*>proxy
-    result.type = proxy_type
-    result.next = NULL
-    return result
-
 cdef void registerProxy(_NodeBase proxy, int proxy_type):
     """Register a proxy and type for the node it's proxying for.
     """
+    cdef xmlNode* c_node
     cdef ProxyRef* ref
-    cdef ProxyRef* prev_ref
     # cannot register for NULL
-    if proxy._c_node is NULL:
+    c_node = proxy._c_node
+    if c_node is NULL:
         return
     # XXX should we check whether we ran into proxy_type before?
     #print "registering for:", <int>proxy._c_node
-    ref = <ProxyRef*>proxy._c_node._private
-    if ref is NULL:
-        proxy._c_node._private = <void*>createProxyRef(proxy, proxy_type)
-        return
-    while ref is not NULL:
-        prev_ref = ref
-        ref = ref.next
-    prev_ref.next = createProxyRef(proxy, proxy_type)
+    ref = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
+    ref.proxy = <tree.PyObject*>proxy
+    ref.type = proxy_type
+    ref.next = <ProxyRef*>c_node._private
+    c_node._private = ref # prepend
 
 cdef void unregisterProxy(_NodeBase proxy):
     """Unregister a proxy for the node it's proxying for.
