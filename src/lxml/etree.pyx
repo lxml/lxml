@@ -1,5 +1,6 @@
 cimport tree, python
-from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
+from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
+from tree cimport _isElement, LXML_PROXY_TYPE, PROXY_ATTRIB, PROXY_ELEMENT
 from python cimport isinstance, hasattr
 cimport xpath
 cimport xslt
@@ -15,12 +16,6 @@ import sys
 
 # should libxml2/libxslt be allowed to shout?
 DEBUG = False
-
-cdef int PROXY_ELEMENT
-cdef int PROXY_ATTRIB
-
-PROXY_ELEMENT = 0
-PROXY_ATTRIB = 1
 
 
 # the rules

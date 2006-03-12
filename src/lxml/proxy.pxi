@@ -8,7 +8,7 @@ cdef struct _ProxyRef
 
 cdef struct _ProxyRef:
     python.PyObject* proxy
-    int type
+    LXML_PROXY_TYPE type
     _ProxyRef* next
         
 ctypedef _ProxyRef ProxyRef
