@@ -10,6 +10,8 @@ cdef extern from "Python.h":
     cdef int PyUnicode_Check(object obj)
     cdef int PyString_Check(object obj)
 
+    cdef object PyUnicode_FromEncodedObject(object s, char* encoding,
+                                            char* errors)
     cdef object PyUnicode_DecodeUTF8(char* s, int size, char* errors)
     cdef object PyUnicode_AsUTF8String(object ustring)
     cdef object PyString_FromStringAndSize(char* s, int size)
@@ -23,3 +25,7 @@ cdef extern from "Python.h":
 
     cdef int PyObject_IsInstance(object instance, object classes)
     cdef int PyObject_HasAttrString(object obj, char* attr)
+
+cdef extern from "etree.h": # redefines some functions as macros
+    cdef int isinstance(object instance, object classes)
+    cdef int hasattr(object obj, char* attr)

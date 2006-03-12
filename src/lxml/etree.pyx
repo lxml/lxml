@@ -1,5 +1,6 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs
+from python cimport isinstance, hasattr
 cimport xpath
 cimport xslt
 cimport xmlerror
@@ -1041,7 +1042,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
 
 def XML(text):
     cdef xmlDoc* c_doc
-    if isinstance(text, unicode):
+    if python.PyUnicode_Check(text):
         text = _stripDeclaration(_utf8(text))
     c_doc = theParser.parseDoc(text, None)
     return _documentFactory(c_doc).getroot()
@@ -1407,7 +1408,7 @@ cdef int isutf8(char* string):
 
 cdef object funicode(char* s):
     if isutf8(s):
-        return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), "strict")
+        return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), NULL)
     return python.PyString_FromStringAndSize(s, tree.strlen(s))
 
 cdef object _utf8(object s):
@@ -1442,7 +1443,6 @@ def _getNsTag(tag):
 cdef object _namespacedName(xmlNode* c_node):
     cdef char* href
     cdef char* name
-    cdef object s
     name = c_node.name
     if c_node.ns is NULL or c_node.ns.href is NULL:
         return funicode(name)
@@ -1450,7 +1450,7 @@ cdef object _namespacedName(xmlNode* c_node):
         href = c_node.ns.href
         s = python.PyString_FromFormat("{%s}%s", href, name)
         if isutf8(href) or isutf8(name):
-            return unicode(s, 'UTF-8')
+            return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
             return s
 
