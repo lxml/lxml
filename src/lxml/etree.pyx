@@ -1024,10 +1024,9 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 # module-level API for ElementTree
 
 def Element(tag, attrib=None, nsmap=None, **extra):
-    cdef _Document doc
-    cdef _Element  result
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
+    cdef _Document doc
     ns_utf, name_utf = _getNsTag(tag)
     c_doc = theParser.newDoc()
     c_node = _createElement(c_doc, name_utf, attrib, extra)
@@ -1051,7 +1050,6 @@ def Comment(text=None):
 
 def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
     cdef xmlNode*  c_node
-    cdef _Element  element
     cdef _Document doc
     _raiseIfNone(parent)
     ns_utf, name_utf = _getNsTag(tag)
