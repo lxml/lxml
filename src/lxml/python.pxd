@@ -28,8 +28,8 @@ cdef extern from "Python.h":
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
     cdef int PyObject_IsInstance(object instance, object classes)
-    cdef int PyObject_HasAttrString(object obj, char* attr)
+    cdef int PyObject_HasAttr(object obj, object attr)
 
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int isinstance(object instance, object classes)
-    cdef int hasattr(object obj, char* attr)
+    cdef int hasattr(object obj, object attr)

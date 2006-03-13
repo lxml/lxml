@@ -77,11 +77,11 @@ cdef class _NamespaceRegistry:
         name_utf = _utf8(name)
         return self._get(name_utf)
 
-    cdef object _get(self, char* c_name):
+    cdef object _get(self, object name):
         cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItemString(self._classes, c_name)
+        dict_result = python.PyDict_GetItem(self._classes, name)
         if dict_result is NULL:
-            dict_result = python.PyDict_GetItemString(self._extensions, c_name)
+            dict_result = python.PyDict_GetItem(self._extensions, name)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
