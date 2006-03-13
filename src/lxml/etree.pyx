@@ -574,43 +574,73 @@ cdef class _Element(_NodeBase):
     def index(self, _Element x, start=None, stop=None):
         cdef int k
         cdef int l
+        cdef int c_stop
+        cdef int c_start
         cdef xmlNode* c_child
-        cdef xmlNode* c_search_node
+        cdef xmlNode* c_start_node
         _raiseIfNone(x)
-
-        c_search_node = x._c_node
-        if c_search_node.parent is not self._c_node:
+        c_child = x._c_node
+        if c_child.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
 
-        k = 0
-        c_child = self._c_node.children
+        if start is None:
+            c_start = 0
+        else:
+            c_start = start
+        if stop is None:
+            c_stop = 0
+        else:
+            c_stop = stop
+            if c_stop == 0 or \
+                   c_start >= c_stop and (c_stop > 0 or c_start < 0):
+                raise ValueError, "list.index(x): x not in slice"
 
-        # account for negative start and stop by turning them into positive
-        l = -1
-        if start is not None and start < 0:
-            l = self.__len__()
-            start = l + start
-        if stop is not None and stop < 0:
-            if l < 0:
-                l = self.__len__()
-            stop = l + stop
-        
-        while c_child is not NULL:
-            if _isElement(c_child):
-                if c_child is c_search_node:
-                    if ((start is None or k >= start) and
-                        (stop is None or k < stop)): 
-                        return k
-                    else:
-                        # since there is only a single element to be found
-                        # if we found it out of range, we will not find
-                        # it anymore in the range, so we bail out
-                        raise ValueError, "list.index(x): x not in list"
-                else:
+        # for negative slice indices, check slice before searching index
+        if c_start < 0 or c_stop < 0:
+            # start from right, at most up to leftmost(c_start, c_stop)
+            if c_start < c_stop:
+                k = -c_start
+            else:
+                k = -c_stop
+            c_start_node = self._c_node.last
+            l = 1
+            while c_start_node != c_child and l < k:
+                if _isElement(c_start_node):
+                    l = l + 1
+                c_start_node = c_start_node.prev
+            if c_start_node == c_child:
+                # found! before slice end?
+                if c_stop < 0 and l <= -c_stop:
+                    raise ValueError, "list.index(x): x not in slice"
+            elif c_start < 0:
+                raise ValueError, "list.index(x): x not in slice"
+
+        # now determine the index backwards from child
+        c_child = c_child.prev
+        k = 0
+        if c_stop > 0:
+            # we can optimize: stop after c_stop elements if not found
+            while c_child != NULL and k < c_stop:
+                if _isElement(c_child):
                     k = k + 1
-            c_child = c_child.next
-        
-        raise ValueError, "list index(x): x not in list"
+                c_child = c_child.prev
+            if k < c_stop:
+                return k
+        else:
+            # traverse all
+            while c_child != NULL:
+                if _isElement(c_child):
+                    k = k + 1
+                c_child = c_child.prev
+            if c_start > 0:
+                if k >= c_start:
+                    return k
+            else:
+                return k
+        if c_start or c_stop:
+            raise ValueError, "list.index(x): x not in slice"
+        else:
+            raise ValueError, "list.index(x): x not in list"
 
     def get(self, key, default=None):
         # XXX more redundancy, but might be slightly faster than
