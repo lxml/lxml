@@ -137,24 +137,10 @@ cdef class _NodeBase:
     cdef xmlNs* _getNs(self, char* href):
         """Get or create namespace structure.
         """
-        cdef xmlDoc* c_doc
-        cdef xmlNode* c_node
-        cdef xmlNs* c_ns
-
-        c_doc = self._doc._c_doc
-        c_node = self._c_node
-        # look for existing ns
-        c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
-        if c_ns is not NULL:
-            return c_ns
-        # create ns if existing ns cannot be found
-        # try to simulate ElementTree's namespace prefix creation
-        prefix = self._doc.buildNewPrefix()
-        c_ns = tree.xmlNewNs(c_node, href, prefix)
-        return c_ns
+        return _getNodeNs(self._doc, self._c_node, href)
 
     cdef void _setNs(self, char* href):
-        tree.xmlSetNs(self._c_node, self._getNs(href))
+        _setNodeNs(self._doc, self._c_node, href)
 
 cdef class _ElementTree:
     cdef _Document _doc
@@ -1002,10 +988,9 @@ def Element(tag, attrib=None, nsmap=None, **extra):
     c_node = _createElement(c_doc, name_utf, attrib, extra)
     tree.xmlDocSetRootElement(c_doc, c_node)
     doc = _documentFactory(c_doc)
-    result = _elementFactory(doc, c_node)
     # add namespaces to node if necessary
-    _setNamespaces(result, ns_utf, nsmap)
-    return result
+    _setNamespaces(doc, c_node, ns_utf, nsmap)
+    return _elementFactory(doc, c_node)
 
 def Comment(text=None):
     cdef _Document doc
@@ -1020,16 +1005,17 @@ def Comment(text=None):
     return _commentFactory(doc, c_node)
 
 def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
-    cdef xmlNode* c_node
-    cdef _Element element
+    cdef xmlNode*  c_node
+    cdef _Element  element
+    cdef _Document doc
     _raiseIfNone(parent)
     ns_utf, name_utf = _getNsTag(tag)
-    c_node = _createElement(parent._doc._c_doc, name_utf, attrib, extra)
-    element = _elementFactory(parent._doc, c_node)
+    doc = parent._doc
+    c_node = _createElement(doc._c_doc, name_utf, attrib, extra)
     tree.xmlAddChild(parent._c_node, c_node)
     # add namespaces to node if necessary
-    _setNamespaces(element, ns_utf, nsmap)
-    return element
+    _setNamespaces(doc, c_node, ns_utf, nsmap)
+    return _elementFactory(doc, c_node)
 
 def ElementTree(_Element element=None, file=None, parser=None):
     cdef xmlNode* c_next
@@ -1110,21 +1096,20 @@ def parse(source, parser=None):
     doc = _parseDocument(source, parser)
     return ElementTree(doc.getroot())
 
-cdef void _setNamespaces(_NodeBase element, object node_ns_utf, object nsmap):
+cdef void _setNamespaces(_Document doc, xmlNode* c_node,
+                         object node_ns_utf, object nsmap):
     "Set namespace of node and register ns-prefix mappings."
-    cdef xmlNs*   c_ns
-    cdef xmlNode* c_node
-    cdef xmlDoc*  c_doc
-    cdef char*    c_prefix
-    cdef char*    c_href
+    cdef xmlNs*  c_ns
+    cdef xmlDoc* c_doc
+    cdef char*   c_prefix
+    cdef char*   c_href
 
     if not nsmap:
         if node_ns_utf is not None:
-            element._setNs(node_ns_utf)
+            _setNodeNs(doc, c_node, node_ns_utf)
         return
 
-    c_node = element._c_node
-    c_doc  = element._doc._c_doc
+    c_doc  = doc._c_doc
     for prefix, href in nsmap.items():
         href_utf = _utf8(href)
         c_href = href_utf
@@ -1142,7 +1127,29 @@ cdef void _setNamespaces(_NodeBase element, object node_ns_utf, object nsmap):
             node_ns_utf = None
 
     if node_ns_utf is not None:
-        element._setNs(node_ns_utf)
+        _setNodeNs(doc, c_node, node_ns_utf)
+
+cdef xmlNs* _getNodeNs(_Document doc, xmlNode* c_node, char* href):
+    """Get or create namespace structure.
+    """
+    cdef xmlDoc* c_doc
+    cdef xmlNs* c_ns
+
+    c_doc = doc._c_doc
+    # look for existing ns
+    c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
+    if c_ns is not NULL:
+        return c_ns
+    # create ns if existing ns cannot be found
+    # try to simulate ElementTree's namespace prefix creation
+    prefix = doc.buildNewPrefix()
+    c_ns = tree.xmlNewNs(c_node, href, prefix)
+    return c_ns
+
+cdef void _setNodeNs(_Document doc, xmlNode* c_node, char* href):
+    cdef xmlNs* c_ns
+    c_ns = _getNodeNs(doc, c_node, href)
+    tree.xmlSetNs(c_node, c_ns)
 
 
 # include submodules
