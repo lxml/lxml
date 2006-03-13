@@ -68,6 +68,25 @@ cdef class _Document:
         self._ns_counter = self._ns_counter + 1
         return ns
 
+    cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node, char* href):
+        """Get or create namespace structure.
+        """
+        cdef xmlNs* c_ns
+        # look for existing ns
+        c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, href)
+        if c_ns is not NULL:
+            return c_ns
+        # create ns if existing ns cannot be found
+        # try to simulate ElementTree's namespace prefix creation
+        prefix = self.buildNewPrefix()
+        c_ns = tree.xmlNewNs(c_node, href, prefix)
+        return c_ns
+
+    cdef void _setNodeNs(self, xmlNode* c_node, char* href):
+        cdef xmlNs* c_ns
+        c_ns = self._findOrBuildNodeNs(c_node, href)
+        tree.xmlSetNs(c_node, c_ns)
+
     def getroot(self):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
@@ -133,14 +152,6 @@ cdef class _NodeBase:
         """Called after object initialisation. Subclasses may override
         this if they recursively call _init() in the superclasses.
         """
-
-    cdef xmlNs* _getNs(self, char* href):
-        """Get or create namespace structure.
-        """
-        return _getNodeNs(self._doc, self._c_node, href)
-
-    cdef void _setNs(self, char* href):
-        _setNodeNs(self._doc, self._c_node, href)
 
 cdef class _ElementTree:
     cdef _Document _doc
@@ -460,8 +471,7 @@ cdef class _Element(_NodeBase):
             tree.xmlNodeSetName(self._c_node, text)
             if ns is None:
                 return
-            c_ns = self._getNs(ns)
-            tree.xmlSetNs(self._c_node, c_ns)
+            self._doc._setNodeNs(self._c_node, ns)
 
     # not in ElementTree, read-only
     property prefix:
@@ -790,7 +800,7 @@ cdef class _Attrib(_NodeBase):
         if ns is None:
             tree.xmlSetProp(self._c_node, tag, value)
         else:
-            c_ns = self._getNs(ns)
+            c_ns = self._doc._findOrBuildNodeNs(self._c_node, ns)
             tree.xmlSetNsProp(self._c_node, c_ns, tag, value)
 
     def __delitem__(self, key):
@@ -1106,7 +1116,7 @@ cdef void _setNamespaces(_Document doc, xmlNode* c_node,
 
     if not nsmap:
         if node_ns_utf is not None:
-            _setNodeNs(doc, c_node, node_ns_utf)
+            doc._setNodeNs(c_node, node_ns_utf)
         return
 
     c_doc  = doc._c_doc
@@ -1127,29 +1137,7 @@ cdef void _setNamespaces(_Document doc, xmlNode* c_node,
             node_ns_utf = None
 
     if node_ns_utf is not None:
-        _setNodeNs(doc, c_node, node_ns_utf)
-
-cdef xmlNs* _getNodeNs(_Document doc, xmlNode* c_node, char* href):
-    """Get or create namespace structure.
-    """
-    cdef xmlDoc* c_doc
-    cdef xmlNs* c_ns
-
-    c_doc = doc._c_doc
-    # look for existing ns
-    c_ns = tree.xmlSearchNsByHref(c_doc, c_node, href)
-    if c_ns is not NULL:
-        return c_ns
-    # create ns if existing ns cannot be found
-    # try to simulate ElementTree's namespace prefix creation
-    prefix = doc.buildNewPrefix()
-    c_ns = tree.xmlNewNs(c_node, href, prefix)
-    return c_ns
-
-cdef void _setNodeNs(_Document doc, xmlNode* c_node, char* href):
-    cdef xmlNs* c_ns
-    c_ns = _getNodeNs(doc, c_node, href)
-    tree.xmlSetNs(c_node, c_ns)
+        doc._setNodeNs(c_node, node_ns_utf)
 
 
 # include submodules
