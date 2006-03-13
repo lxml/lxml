@@ -89,6 +89,9 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(
             [root[0]],
             root.xpath('//baz:b', {'baz': 'uri:a'}))
+        self.assertRaises(
+            TypeError,
+            root.xpath, '//b', {None: 'uri:a'})
 
     def test_xpath_error(self):
         tree = self.parse('<a/>')
