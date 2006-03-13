@@ -336,6 +336,18 @@ class BenchMark(BenchMarkBase):
             for i in repeat:
                 child.text
 
+    def bench_index(self, root):
+        for child in root:
+            root.index(child)
+
+    def bench_index_slice(self, root):
+        for child in root[5:100]:
+            root.index(child, 5, 100)
+
+    def bench_index_slice_neg(self, root):
+        for child in root[-100:-5]:
+            root.index(child, start=-100, stop=-5)
+
 ############################################################
 # Main program
 ############################################################
