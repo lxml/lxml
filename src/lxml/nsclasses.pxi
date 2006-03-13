@@ -95,7 +95,6 @@ cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
     cdef python.PyObject* dict_result
     cdef _NamespaceRegistry registry
-    cdef object result
     if c_namespace_utf is not NULL:
         dict_result = python.PyDict_GetItemString(
             __NAMESPACE_CLASSES, c_namespace_utf)
@@ -105,7 +104,7 @@ cdef object _find_element_class(char* c_namespace_utf,
     if dict_result is NULL:
         return _Element
 
-    registry = <object>dict_result
+    registry = <_NamespaceRegistry>dict_result
     classes = registry._classes
 
     if c_element_name_utf is not NULL:
@@ -118,7 +117,6 @@ cdef object _find_element_class(char* c_namespace_utf,
         dict_result = python.PyDict_GetItem(classes, None)
 
     if dict_result is not NULL:
-        result = <object>dict_result
-        return result
+        return <object>dict_result
     else:
         return _Element
