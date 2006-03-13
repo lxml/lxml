@@ -5,7 +5,7 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-import unittest
+import unittest, doctest
 
 from common_imports import etree, HelperTestCase
 
@@ -68,6 +68,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/namespace_extensions.txt')])
     return suite
 
 if __name__ == '__main__':
