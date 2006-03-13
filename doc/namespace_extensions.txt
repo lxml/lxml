@@ -43,7 +43,7 @@ Now you can build the new namespace by calling the Namespace class::
 
 >>> namespace = Namespace('http://hui.de/honk')
 
-and then register the new element with that namespace::
+and then register the new element type with that namespace::
 
 >>> namespace['honk'] = HonkElement
 
@@ -178,5 +178,5 @@ XPath evaluations.
 You can then use your new function in XPath expressions:
 
 >>> element = XML('<test><honk honking="true"/></test>')
->>> element.xpath('f:tagname(//honk)', {'f' : 'myfunctions'})
-'honk'
+>>> [el.tag for el in element.xpath('f:tagname(//honk)', {'f' : 'myfunctions'})]
+['honk']
