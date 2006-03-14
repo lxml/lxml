@@ -67,9 +67,9 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
     def test_create_element(self):
         bluff_dict = {u'bluff' : self.bluff_class}
-        maeh_dict  = {u'maeh'  : self.maeh_class}
-
         etree.Namespace(u'ns20').update(bluff_dict)
+
+        maeh_dict  = {u'maeh'  : self.maeh_class}
         etree.Namespace(u'ns21').update(maeh_dict)
 
         el = etree.Element("{ns20}bluff")
@@ -78,6 +78,26 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assert_(hasattr(el[0], 'maeh'))
         self.assertEquals(el.bluff(), u'bluff')
         self.assertEquals(el[0].maeh(), u'maeh')
+
+        etree.Namespace(u'ns20').clear()
+        etree.Namespace(u'ns21').clear()
+
+    def test_create_element_default(self):
+        bluff_dict = {None : self.bluff_class}
+        etree.Namespace(u'ns30').update(bluff_dict)
+
+        maeh_dict  = {u'maeh'  : self.maeh_class}
+        etree.Namespace(None).update(maeh_dict)
+
+        el = etree.Element("{ns30}bluff")
+        etree.SubElement(el, "maeh")
+        self.assert_(hasattr(el, 'bluff'))
+        self.assert_(hasattr(el[0], 'maeh'))
+        self.assertEquals(el.bluff(), u'bluff')
+        self.assertEquals(el[0].maeh(), u'maeh')
+
+        etree.Namespace(None).clear()
+        etree.Namespace(u'ns30').clear()
 
 def test_suite():
     suite = unittest.TestSuite()
