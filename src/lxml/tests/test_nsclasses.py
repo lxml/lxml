@@ -103,11 +103,16 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         etree.Namespace(u'ns21').update(maeh_dict)
 
         el = etree.Element("{ns20}bluff")
-        etree.SubElement(el, "{ns21}maeh")
-        etree.SubElement(el, "{ns20}bluff")
-        etree.SubElement(el, "{ns21}bluff")
-
         self.assert_(hasattr(el, 'bluff'))
+
+        child = etree.SubElement(el, "{ns21}maeh")
+        self.assert_(hasattr(child, 'maeh'))
+        child = etree.SubElement(el, "{ns20}bluff")
+        self.assert_(hasattr(child, 'bluff'))
+        child = etree.SubElement(el, "{ns21}bluff")
+        self.assertFalse(hasattr(child, 'bluff'))
+        self.assertFalse(hasattr(child, 'maeh'))
+
         self.assert_(hasattr(el[0], 'maeh'))
         self.assert_(hasattr(el[1], 'bluff'))
         self.assertFalse(hasattr(el[2], 'bluff'))
