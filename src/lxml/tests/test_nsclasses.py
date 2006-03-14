@@ -104,10 +104,18 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         el = etree.Element("{ns20}bluff")
         etree.SubElement(el, "{ns21}maeh")
+        etree.SubElement(el, "{ns20}bluff")
+        etree.SubElement(el, "{ns21}bluff")
+
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
+        self.assert_(hasattr(el[1], 'bluff'))
+        self.assertFalse(hasattr(el[2], 'bluff'))
+        self.assertFalse(hasattr(el[2], 'maeh'))
+
         self.assertEquals(el.bluff(), u'bluff')
         self.assertEquals(el[0].maeh(), u'maeh')
+        self.assertEquals(el[1].bluff(), u'bluff')
 
         etree.Namespace(u'ns20').clear()
         etree.Namespace(u'ns21').clear()
