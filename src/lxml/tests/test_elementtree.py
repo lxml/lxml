@@ -1443,6 +1443,24 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             '{%s}b' % ns2, b.tag)
 
+    def test_ns_tag_parse(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ElementTree = self.etree.ElementTree
+
+        ns = 'http://xml.infrae.com/1'
+        ns2 = 'http://xml.infrae.com/2'
+        f = StringIO('<a xmlns="%s" xmlns:x="%s"><x:b></x:b><b></b></a>' % (ns, ns2))
+        t = ElementTree(file=f)
+
+        a = t.getroot()
+        self.assertEquals('{%s}a' % ns,
+                          a.tag)
+        self.assertEquals('{%s}b' % ns2,
+                          a[0].tag)
+        self.assertEquals('{%s}b' % ns,
+                          a[1].tag)
+
     def test_ns_attr(self):
         Element = self.etree.Element
         ns = 'http://xml.infrae.com/1'
