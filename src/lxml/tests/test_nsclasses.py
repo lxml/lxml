@@ -65,6 +65,36 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         etree.Namespace(u'ns11').clear()
 
+    def test_default_class(self):
+        bluff_dict = {
+            None   : self.bluff_class,
+            'maeh' : self.maeh_class
+            }
+
+        ns = etree.Namespace("uri:nsDefClass")
+        ns.update(bluff_dict)
+
+        tree = self.parse(u'''
+            <test xmlns="bla" xmlns:ns1="uri:nsDefClass" xmlns:ns2="uri:nsDefClass">
+              <ns2:el1/><ns1:el2/><ns1:maeh/><ns2:maeh/><maeh/>
+            </test>
+            ''')
+
+        el = tree.getroot()
+        self.assertFalse(isinstance(el, etree.ElementBase))
+        for child in el[:-1]:
+            self.assert_(isinstance(child, etree.ElementBase), child.tag)
+        self.assertFalse(isinstance(el[-1], etree.ElementBase))
+
+        self.assert_(hasattr(el[0], 'bluff'))
+        self.assert_(hasattr(el[1], 'bluff'))
+        self.assert_(hasattr(el[2], 'maeh'))
+        self.assert_(hasattr(el[3], 'maeh'))
+        self.assertFalse(hasattr(el[4], 'maeh'))
+        del el
+
+        ns.clear()
+
     def test_create_element(self):
         bluff_dict = {u'bluff' : self.bluff_class}
         etree.Namespace(u'ns20').update(bluff_dict)
