@@ -91,6 +91,9 @@ cdef class _NamespaceRegistry:
         self._extensions.clear()
         #self.self._xslt_elements.clear()
 
+    def __repr__(self):
+        return "Namespace(%r)" % self._ns_uri
+
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):
     cdef python.PyObject* dict_result
