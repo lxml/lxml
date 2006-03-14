@@ -1434,14 +1434,19 @@ class ETreeTestCaseBase(unittest.TestCase):
         ns2 = 'http://xml.infrae.com/2'
         a = Element('{%s}a' % ns)
         b = SubElement(a, '{%s}b' % ns2)
+        c = SubElement(a, '{%s}c' % ns)
         self.assertEquals('{%s}a' % ns,
                           a.tag)
         self.assertEquals('{%s}b' % ns2,
                           b.tag)
-        self.assertEquals(
-            '{%s}a' % ns, a.tag)
-        self.assertEquals(
-            '{%s}b' % ns2, b.tag)
+        self.assertEquals('{%s}c' % ns,
+                          c.tag)
+        self.assertEquals('{%s}a' % ns,
+                          a.tag)
+        self.assertEquals('{%s}b' % ns2,
+                          b.tag)
+        self.assertEquals('{%s}c' % ns,
+                          c.tag)
 
     def test_ns_tag_parse(self):
         Element = self.etree.Element
