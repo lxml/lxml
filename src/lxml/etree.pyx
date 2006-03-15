@@ -1163,6 +1163,13 @@ def XML(text):
 
 fromstring = XML
 
+def XMLID(text):
+    root = XML(text)
+    dic = {}
+    for elem in root.xpath('//*[string(@id)]'):
+        python.PyDict_SetItem(dic, elem.get('id'), elem)
+    return (root, dic)
+
 def iselement(element):
     return isinstance(element, _Element)
 

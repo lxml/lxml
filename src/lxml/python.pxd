@@ -21,6 +21,7 @@ cdef extern from "Python.h":
     cdef int PyList_GET_SIZE(object l)
     cdef int PyList_Append(object l, object obj)
     cdef int PyDict_SetItemString(object d, char* key, object value)
+    cdef int PyDict_SetItem(object d, object key, object value)
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
 

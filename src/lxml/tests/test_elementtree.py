@@ -334,6 +334,29 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    def test_XMLID(self):
+        XMLID = self.etree.XMLID
+        XML   = self.etree.XML
+        xml_text = '''
+        <document>
+          <h1 id="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p id="warn1" class="warning">...</p>
+        </document>
+        '''
+
+        root, dic = XMLID(xml_text)
+        root2 = XML(xml_text)
+        self.assertEquals(self._writeElement(root),
+                          self._writeElement(root2))
+        expected = {
+            "chapter1" : root[0],
+            "note1"    : root[1],
+            "warn1"    : root[3]
+            }
+        self.assertEquals(dic, expected)
+
     def test_fromstring(self):
         fromstring = self.etree.fromstring
 
