@@ -137,12 +137,12 @@ class BenchMarkBase(object):
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{x}root')
+        root = self.etree.Element('{a}root')
         for ch1 in atoz:
             for i in range(20):
-                el = SubElement(root, "{y}%s%03d" % (ch1, i), attributes)
+                el = SubElement(root, "{b}"+ch1, attributes)
                 for ch2 in atoz:
-                    SubElement(el, "{z}"+ch2)
+                    SubElement(el, "{c}%s%03d" % (ch2, i))
         t = current_time() - t
         return (root, t)
 
@@ -151,11 +151,11 @@ class BenchMarkBase(object):
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{x}root')
+        root = self.etree.Element('{a}root')
         children = [root]
         for i in range(7):
             tag_no = count().next
-            children = [ SubElement(c, "{y}z%d" % i, attributes)
+            children = [ SubElement(c, "{b}a%d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         t = current_time() - t
         return (root, t)
@@ -166,7 +166,7 @@ class BenchMarkBase(object):
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{x}root')
+        root = self.etree.Element('{a}root')
         children = [root]
         for ch1 in atoz:
             el = SubElement(root, "{b}"+ch1, attributes)
@@ -347,6 +347,15 @@ class BenchMark(BenchMarkBase):
     def bench_index_slice_neg(self, root):
         for child in root[-100:-5]:
             root.index(child, start=-100, stop=-5)
+
+    def bench_getiterator(self, root):
+        list(islice(root.getiterator(), 10, 110))
+
+    def bench_getiterator_tag(self, root):
+        list(islice(root.getiterator("{b}a"), 3, 10))
+
+    def bench_getiterator_tag_all(self, root):
+        list(islice(root.getiterator("{b}a"), 10, 150))
 
 ############################################################
 # Main program
