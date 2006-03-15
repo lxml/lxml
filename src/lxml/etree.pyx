@@ -996,6 +996,8 @@ cdef class ElementChildIterator:
         return current_node
 
 cdef class ElementDepthFirstIterator:
+    """Iterates over an element and its sub-elements in document order (depth
+    first)."""
     # we keep Python references here to control GC
     # keep next node to return and a stack of position state in the tree
     cdef object _stack
@@ -1047,7 +1049,7 @@ cdef class ElementTagFilter:
     cdef char* _href
     cdef char* _name
     def __init__(self, element_iterator, tag):
-        self._iterator = element_iterator
+        self._iterator = iter(element_iterator)
         ns_href, name = _getNsTag(tag)
         self._pystrings = (ns_href, name) # keep Python references
         self._name = name
@@ -1062,14 +1064,8 @@ cdef class ElementTagFilter:
         cdef xmlNode* c_node
         while 1:
             node = self._iterator.next()
-            c_node = node._c_node
-            if tree.strcmp(c_node.name, self._name) == 0:
-                if c_node.ns == NULL or c_node.ns.href == NULL:
-                    if self._href == NULL:
-                        break
-                elif tree.strcmp(c_node.ns.href, self._href) == 0:
-                    break
-        return node
+            if _hasTag(node._c_node, self._name, self._href):
+                return node
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:
@@ -1535,6 +1531,14 @@ cdef object _namespacedName(xmlNode* c_node):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
             return s
+
+cdef int _hasTag(xmlNode* c_node, char* name, char* ns_href):
+    if tree.strcmp(c_node.name, name) == 0:
+        if c_node.ns == NULL or c_node.ns.href == NULL:
+            return ns_href == NULL
+        elif tree.strcmp(c_node.ns.href, ns_href) == 0:
+            return 1
+    return 0
 
 def _getFilenameForFile(source):
     """Given a Python File or Gzip object, give filename back.
