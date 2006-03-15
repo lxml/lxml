@@ -218,7 +218,7 @@ cdef class _ElementTree:
     def getiterator(self, tag=None):
         root = self.getroot()
         if root is None:
-            return []
+            return ()
         return root.getiterator(tag)
 
     def find(self, path):
@@ -718,17 +718,11 @@ cdef class _Element(_NodeBase):
         return None
 
     def getiterator(self, tag=None):
-        result = []
-        if tag == "*":
-            tag = None
-        if tag is None or self.tag == tag:
-            result.append(self)
-        for node in self:
-            result.extend(node.getiterator(tag))
-        return result
-
-        # XXX this doesn't work yet
-        # return _docOrderIteratorFactory(self._doc, self._c_node, tag)
+        iterator = ElementDepthFirstIterator(self)
+        if tag is None or tag == '*':
+            return iterator
+        else:
+            return ElementTagFilter(iterator, tag)
 
     def makeelement(self, tag, attrib):
         return Element(tag, attrib)
@@ -976,31 +970,106 @@ cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
 
 cdef class ElementChildIterator:
     # we keep Python references here to control GC
-    cdef object _node
-    def __init__(self, node): # Python ref!
+    cdef _NodeBase _node
+    def __init__(self, _NodeBase node): # Python ref!
         cdef xmlNode* c_node
-        cdef _NodeBase base_node
-        base_node = <_NodeBase>node
-        c_node = _findChildForwards(base_node._c_node, 0)
+        c_node = _findChildForwards(node._c_node, 0)
         if c_node is NULL:
             self._node = None
         else:
-            self._node = _elementFactory(base_node._doc, c_node)
+            self._node = _elementFactory(node._doc, c_node)
     def __iter__(self):
         return self
     def __next__(self):
         cdef xmlNode* c_node
-        cdef _NodeBase base_node
-        current_node = self._node # Python ref!
+        cdef _NodeBase current_node
+        # Python ref:
+        current_node = self._node
         if current_node is None:
             raise StopIteration
-        base_node = <_NodeBase>current_node
-        c_node = _nextElement(base_node._c_node)
+        c_node = _nextElement(current_node._c_node)
         if c_node is NULL:
             self._node = None
         else:
-            self._node = _elementFactory(base_node._doc, c_node)
+            # Python ref:
+            self._node = _elementFactory(current_node._doc, c_node)
         return current_node
+
+cdef class ElementDepthFirstIterator:
+    # we keep Python references here to control GC
+    # keep next node to return and a stack of position state in the tree
+    cdef object _stack
+    cdef _NodeBase _next_node
+    def __init__(self, _NodeBase node):
+        cdef xmlNode* c_node
+        _raiseIfNone(node)
+        self._next_node = node
+        self._stack = []
+        c_node = _findChildForwards(node._c_node, 0)
+        if c_node is not NULL:
+            python.PyList_Append(
+                self._stack, _elementFactory(node._doc, c_node))
+    def __iter__(self):
+        return self
+    def __next__(self):
+        cdef xmlNode* c_node
+        cdef _NodeBase current_node
+        cdef _NodeBase next_node
+        current_node = self._next_node
+        if current_node is None:
+            raise StopIteration
+
+        stack = self._stack
+        if not stack:
+            self._next_node = None
+            return current_node
+
+        next_node = stack[-1]
+        self._next_node = next_node
+
+        # take next child until we reach a leaf
+        c_node = _findChildForwards(next_node._c_node, 0)
+        if c_node is NULL:
+            pop = stack.pop
+            while c_node is NULL and stack:
+                # go up the stack until we find a sibling
+                next_node = pop()
+                c_node = _nextElement(next_node._c_node)
+
+        if c_node is not NULL:
+            python.PyList_Append(
+                stack, _elementFactory(next_node._doc, c_node))
+        return current_node
+
+cdef class ElementTagFilter:
+    cdef object _iterator
+    cdef object _pystrings
+    cdef char* _href
+    cdef char* _name
+    def __init__(self, element_iterator, tag):
+        self._iterator = element_iterator
+        ns_href, name = _getNsTag(tag)
+        self._pystrings = (ns_href, name) # keep Python references
+        self._name = name
+        if ns_href is None:
+            self._href = NULL
+        else:
+            self._href = ns_href
+    def __iter__(self):
+        return self
+    def __next__(self):
+        cdef _NodeBase node
+        cdef xmlNode* c_node
+        while 1:
+            node = self._iterator.next()
+            c_node = node._c_node
+            if tree.strcmp(c_node.name, self._name) == 0:
+                if c_node.ns == NULL or c_node.ns.href == NULL:
+                    if self._href == NULL:
+                        break
+                elif tree.strcmp(c_node.ns.href, self._href) == 0:
+                    break
+        return node
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:

@@ -3,6 +3,7 @@
 cdef extern from "stdio.h":
     ctypedef struct FILE
     cdef int strlen(char* s)
+    cdef int strcmp(char* s1, char* s2)
     
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
