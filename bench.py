@@ -355,7 +355,7 @@ class BenchMark(BenchMarkBase):
         list(islice(root.getiterator("{b}a"), 3, 10))
 
     def bench_getiterator_tag_all(self, root):
-        list(islice(root.getiterator("{b}a"), 10, 150))
+        list(root.getiterator("{b}a"))
 
 ############################################################
 # Main program

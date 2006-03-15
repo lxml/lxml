@@ -997,7 +997,7 @@ cdef class ElementChildIterator:
 
 cdef class ElementDepthFirstIterator:
     """Iterates over an element and its sub-elements in document order (depth
-    first)."""
+    first pre-order)."""
     # we keep Python references here to control GC
     # keep next node to return and a stack of position state in the tree
     cdef object _stack
@@ -1007,41 +1007,38 @@ cdef class ElementDepthFirstIterator:
         _raiseIfNone(node)
         self._next_node = node
         self._stack = []
-        c_node = _findChildForwards(node._c_node, 0)
-        if c_node is not NULL:
-            python.PyList_Append(
-                self._stack, _elementFactory(node._doc, c_node))
+        self._findAndPushNextNode(node)
     def __iter__(self):
         return self
     def __next__(self):
         cdef xmlNode* c_node
-        cdef _NodeBase current_node
         cdef _NodeBase next_node
         current_node = self._next_node
         if current_node is None:
             raise StopIteration
-
         stack = self._stack
-        if not stack:
+        if python.PyList_GET_SIZE(stack) == 0:
             self._next_node = None
             return current_node
-
         next_node = stack[-1]
         self._next_node = next_node
+        self._findAndPushNextNode(next_node)
+        return current_node
 
-        # take next child until we reach a leaf
-        c_node = _findChildForwards(next_node._c_node, 0)
+    cdef void _findAndPushNextNode(self, _NodeBase node):
+        cdef xmlNode* c_node
+        stack = self._stack
+        # try next child level until we hit a leaf
+        c_node = _findChildForwards(node._c_node, 0)
         if c_node is NULL:
             pop = stack.pop
-            while c_node is NULL and stack:
-                # go up the stack until we find a sibling
-                next_node = pop()
-                c_node = _nextElement(next_node._c_node)
-
+            while c_node is NULL and python.PyList_GET_SIZE(stack):
+                # walk up the stack until we find a sibling
+                node = pop()
+                c_node = _nextElement(node._c_node)
         if c_node is not NULL:
             python.PyList_Append(
-                stack, _elementFactory(next_node._doc, c_node))
-        return current_node
+                stack, _elementFactory(node._doc, c_node))
 
 cdef class ElementTagFilter:
     cdef object _iterator
@@ -1061,11 +1058,18 @@ cdef class ElementTagFilter:
         return self
     def __next__(self):
         cdef _NodeBase node
-        cdef xmlNode* c_node
         while 1:
             node = self._iterator.next()
-            if _hasTag(node._c_node, self._name, self._href):
+            if self._tagMatches(node._c_node):
                 return node
+
+    cdef int _tagMatches(self, xmlNode* c_node):
+        if tree.strcmp(c_node.name, self._name) == 0:
+            if c_node.ns == NULL or c_node.ns.href == NULL:
+                return self._href == NULL
+            else:
+                return tree.strcmp(c_node.ns.href, self._href) == 0
+        return 0
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:
@@ -1531,14 +1535,6 @@ cdef object _namespacedName(xmlNode* c_node):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
             return s
-
-cdef int _hasTag(xmlNode* c_node, char* name, char* ns_href):
-    if tree.strcmp(c_node.name, name) == 0:
-        if c_node.ns == NULL or c_node.ns.href == NULL:
-            return ns_href == NULL
-        elif tree.strcmp(c_node.ns.href, ns_href) == 0:
-            return 1
-    return 0
 
 def _getFilenameForFile(source):
     """Given a Python File or Gzip object, give filename back.
