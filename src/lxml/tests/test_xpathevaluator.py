@@ -59,8 +59,8 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')
-        self.assertEquals(['<!-- Foo -->'],
-                          tree.xpath('/a/node()'))
+        self.assertEquals(['<Comment[ Foo ]>'],
+                          map(repr, tree.xpath('/a/node()')))
 
     def test_rel_xpath_boolean(self):
         root = etree.XML('<a><b><c/></b></a>')

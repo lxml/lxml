@@ -807,7 +807,7 @@ cdef class _Comment(_Element):
                         
     # ACCESSORS
     def __repr__(self):
-        return "<Comment at %x>" % id(self)
+        return "<Comment[%s]>" % self.text
     
     def __getitem__(self, n):
         raise IndexError
