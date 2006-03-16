@@ -3,7 +3,7 @@
 class NamespaceRegistryError(LxmlError):
     pass
 
-class ElementBase(_Element):
+cdef class ElementBase(_Element):
     """All classes in namespace implementations must inherit from this
     one.  Note that subclasses *must not* override __init__ or __new__
     as there is absolutely undefined when these objects will be
