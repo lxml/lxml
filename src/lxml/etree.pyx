@@ -44,7 +44,7 @@ elif __DEBUG == 1:
 DEBUG = __DEBUG
 
 # Error superclass for ElementTree compatibility
-class Error(Exception):
+class Error(object, Exception):
     pass
 
 # module level superclass for all exceptions
