@@ -24,7 +24,7 @@ DEBUG = __DEBUG
 
 # maximum number of lines in the libxml2/xslt log if __DEBUG == 1
 cdef int __MAX_LOG_SIZE
-__MAX_LOG_SIZE = 100
+__MAX_LOG_SIZE = 20
 
 
 ctypedef enum LXML_PROXY_TYPE:
