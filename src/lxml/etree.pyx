@@ -17,12 +17,19 @@ import sys
 # 0 : off
 # 1 : append to exceptions
 # 2 : to stderr
-DEBUG = 1
+cdef int __DEBUG
+__DEBUG = 0
+
+DEBUG = __DEBUG
+
+# maximum number of lines in the libxml2/xslt log if __DEBUG == 1
+cdef int __MAX_LOG_SIZE
+__MAX_LOG_SIZE = 100
+
 
 ctypedef enum LXML_PROXY_TYPE:
     PROXY_ELEMENT
     PROXY_ATTRIB
-
 
 # the rules
 # any libxml C argument/variable is prefixed with c_
@@ -36,20 +43,16 @@ class Error(Exception):
 
 # module level superclass for all exceptions
 class LxmlError(Error):
-    def __init__(self, message):
-        Error.__init__(self, message)
-        self.error_log = __ERROR_LOG
-        _clear_error_log()
-
-# list to collect error output message from libxml2/libxslt
-cdef object __ERROR_LOG
-__ERROR_LOG = []
-
-cdef void _clear_error_log():
-    __ERROR_LOG = []
+    def __init__(self, *args):
+        Error.__init__(self, *args)
+        if __DEBUG == 1 and python.PyList_GET_SIZE(__ERROR_LOG):
+            self.error_log = __ERROR_LOG
+            _clear_error_log()
+        else:
+            self.error_log = ()
 
 # superclass for all syntax errors
-class LxmlSyntaxError(SyntaxError, LxmlError):
+class LxmlSyntaxError(LxmlError, SyntaxError):
     pass
 
 class XIncludeError(LxmlError):
@@ -1620,27 +1623,37 @@ cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
 ################################################################################
 # DEBUG setup
 
-cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
-    pass
+# list to collect error output message from libxml2/libxslt
+cdef object __ERROR_LOG
+__ERROR_LOG = []
 
-cdef void nullStructuredErrorFunc(void* userData,
-                                  xmlerror.xmlError* error):
-    pass
+cdef void _clear_error_log():
+    __ERROR_LOG = []
+
+cdef void _logLines(char* s):
+    cdef char* pos
+    cdef int l
+    while s is not NULL and s[0] != c'\0':
+        pos = tree.xmlStrchr(s, c'\n')
+        if pos is NULL:
+            py_string = python.PyString_FromString(s)
+            s = NULL
+        else:
+            l = pos - s
+            py_string = python.PyString_FromStringAndSize(s, l)
+            s = pos + 1
+        python.PyList_Append(__ERROR_LOG, py_string)
+
+    l = python.PyList_GET_SIZE(__ERROR_LOG) - __MAX_LOG_SIZE
+    if l > 0:
+        del __ERROR_LOG[:l]
 
 cdef void logGenericErrorFunc(void* ctxt, char* msg, ...):
-    python.PyList_Append(__ERROR_LOG, msg)
+    _logLines(msg)
 
 cdef void logStructuredErrorFunc(void* userData,
                                   xmlerror.xmlError* error):
-    python.PyList_Append(__ERROR_LOG, error.message)
-
-cdef void _shutUpLibxmlErrors():
-    xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
-    xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
-
-cdef void _shutUpLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
-    # xslt.xsltSetTransformErrorFunc
+    _logLines(error.message)
 
 cdef void _logLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, logGenericErrorFunc)
@@ -1650,10 +1663,27 @@ cdef void _logLibxsltErrors():
     xslt.xsltSetGenericErrorFunc(NULL, logGenericErrorFunc)
     # xslt.xsltSetTransformErrorFunc
 
+
 # ugly global shutting up of all errors, but seems to work..
-if DEBUG == 0:
+cdef void nullGenericErrorFunc(void* ctxt, char* msg, ...):
+    pass
+
+cdef void nullStructuredErrorFunc(void* userData,
+                                  xmlerror.xmlError* error):
+    pass
+
+cdef void _shutUpLibxmlErrors():
+    xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
+
+cdef void _shutUpLibxsltErrors():
+    xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
+    # xslt.xsltSetTransformErrorFunc
+
+
+if __DEBUG == 0:
     _shutUpLibxmlErrors()
     _shutUpLibxsltErrors()
-elif DEBUG == 1:
+elif __DEBUG == 1:
     _logLibxmlErrors()
     _logLibxsltErrors()
