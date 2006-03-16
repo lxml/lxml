@@ -318,7 +318,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     if python.PyNumber_Check(obj):
         return xpath.xmlXPathNewFloat(obj)
     if isinstance(obj, _NodeBase):
-        obj = [obj]
+        obj = (obj,)
     if python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
         for element in obj:
@@ -367,7 +367,7 @@ cdef object _createNodeSetResult(_Document doc,
         return result
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
-        if c_node.type == tree.XML_ELEMENT_NODE:
+        if _isElement(c_node):
             element = _elementFactory(doc, c_node)
             result.append(element)
         elif c_node.type == tree.XML_TEXT_NODE:
@@ -377,12 +377,6 @@ cdef object _createNodeSetResult(_Document doc,
             attr_value = funicode(s)
             tree.xmlFree(s)
             result.append(attr_value)
-        elif c_node.type == tree.XML_COMMENT_NODE:
-            s = tree.xmlNodeGetContent(c_node)
-            s2 = '<!--%s-->' % s
-            comment_value = funicode(s2)
-            tree.xmlFree(s)
-            result.append(comment_value)
         else:
             print "Not yet implemented result node type:", c_node.type
             raise NotImplementedError
