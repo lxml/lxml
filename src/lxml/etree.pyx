@@ -14,7 +14,10 @@ from StringIO import StringIO
 import sys
 
 # should libxml2/libxslt be allowed to shout?
-DEBUG = False
+# 0 : off
+# 1 : append to exceptions
+# 2 : to stderr
+DEBUG = 1
 
 ctypedef enum LXML_PROXY_TYPE:
     PROXY_ELEMENT
@@ -33,7 +36,17 @@ class Error(Exception):
 
 # module level superclass for all exceptions
 class LxmlError(Error):
-    pass
+    def __init__(self, message):
+        Error.__init__(self, message)
+        self.error_log = __ERROR_LOG
+        _clear_error_log()
+
+# list to collect error output message from libxml2/libxslt
+cdef object __ERROR_LOG
+__ERROR_LOG = []
+
+cdef void _clear_error_log():
+    __ERROR_LOG = []
 
 # superclass for all syntax errors
 class LxmlSyntaxError(SyntaxError, LxmlError):
@@ -1614,6 +1627,13 @@ cdef void nullStructuredErrorFunc(void* userData,
                                   xmlerror.xmlError* error):
     pass
 
+cdef void logGenericErrorFunc(void* ctxt, char* msg, ...):
+    python.PyList_Append(__ERROR_LOG, msg)
+
+cdef void logStructuredErrorFunc(void* userData,
+                                  xmlerror.xmlError* error):
+    python.PyList_Append(__ERROR_LOG, error.message)
+
 cdef void _shutUpLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, nullGenericErrorFunc)
     xmlerror.xmlSetStructuredErrorFunc(NULL, nullStructuredErrorFunc)
@@ -1622,8 +1642,18 @@ cdef void _shutUpLibxsltErrors():
     xslt.xsltSetGenericErrorFunc(NULL, nullGenericErrorFunc)
     # xslt.xsltSetTransformErrorFunc
 
+cdef void _logLibxmlErrors():
+    xmlerror.xmlSetGenericErrorFunc(NULL, logGenericErrorFunc)
+    xmlerror.xmlSetStructuredErrorFunc(NULL, logStructuredErrorFunc)
+
+cdef void _logLibxsltErrors():
+    xslt.xsltSetGenericErrorFunc(NULL, logGenericErrorFunc)
+    # xslt.xsltSetTransformErrorFunc
+
 # ugly global shutting up of all errors, but seems to work..
-if not DEBUG:
+if DEBUG == 0:
     _shutUpLibxmlErrors()
     _shutUpLibxsltErrors()
-    
+elif DEBUG == 1:
+    _logLibxmlErrors()
+    _logLibxsltErrors()
