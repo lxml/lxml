@@ -261,6 +261,11 @@ class BenchMark(BenchMarkBase):
     def bench_clear(self, root):
         root.clear()
 
+    def bench_has_children(self, root):
+        for child in root:
+            if child and child and child and child and child:
+                pass
+
     def bench_create_subelements(self, root):
         SubElement = self.etree.SubElement
         for child in root:

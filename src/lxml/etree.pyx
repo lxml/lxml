@@ -599,6 +599,11 @@ cdef class _Element(_NodeBase):
             c_node = c_node.next
         return c
 
+    def __nonzero__(self):
+        cdef xmlNode* c_node
+        c_node = _findChildBackwards(self._c_node, 0)
+        return c_node != NULL
+
     def __iter__(self):
         return ElementChildIterator(self)
 
