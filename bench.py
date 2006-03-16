@@ -266,6 +266,10 @@ class BenchMark(BenchMarkBase):
             if child and child and child and child and child:
                 pass
 
+    def bench_len(self, root):
+        for child in root:
+            map(len, repeat(child, 20))
+
     def bench_create_subelements(self, root):
         SubElement = self.etree.SubElement
         for child in root:
