@@ -29,6 +29,10 @@ ctypedef enum LXML_PROXY_TYPE:
 cdef int __DEBUG
 __DEBUG = 1
 
+# maximum number of lines in the libxml2/xslt log if __DEBUG == 1
+cdef int __MAX_LOG_SIZE
+__MAX_LOG_SIZE = 20
+
 if __DEBUG == 0:
     _shutUpLibxmlErrors()
     _shutUpLibxsltErrors()
@@ -38,10 +42,6 @@ elif __DEBUG == 1:
 
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
-
-# maximum number of lines in the libxml2/xslt log if __DEBUG == 1
-cdef int __MAX_LOG_SIZE
-__MAX_LOG_SIZE = 20
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
