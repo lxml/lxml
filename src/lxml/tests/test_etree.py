@@ -25,6 +25,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, parse, f)
         f.close()
 
+    def test_parse_error_logging(self):
+        parse = self.etree.parse
+        # from StringIO
+        f = StringIO('<a><b></c></b></a>')
+        self.etree.clear_error_log()
+        try:
+            parse(f)
+            log = ""
+        except SyntaxError, e:
+            log = '\n'.join(e.error_log)
+        f.close()
+        self.assert_('mismatch' in log)
+
     def test_parse_error_from_file(self):
         parse = self.etree.parse
         # from file

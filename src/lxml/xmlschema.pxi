@@ -52,3 +52,7 @@ cdef class XMLSchema:
         if ret == -1:
             raise XMLSchemaValidateError, "Internal error in XML Schema validation."
         return ret == 0
+
+    property error_log:
+        def __get__(self):
+            return __build_error_log_tuple(self)

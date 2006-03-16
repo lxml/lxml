@@ -13,29 +13,33 @@ import _elementpath
 from StringIO import StringIO
 import sys
 
+# the rules
+# any libxml C argument/variable is prefixed with c_
+# any non-public function/class is prefixed with an underscore
+# instance creation is always through factories
+
+ctypedef enum LXML_PROXY_TYPE:
+    PROXY_ELEMENT
+    PROXY_ATTRIB
+
 # should libxml2/libxslt be allowed to shout?
 # 0 : off
-# 1 : append to exceptions
+# 1 : provide log via exception property
 # 2 : to stderr
 cdef int __DEBUG
-__DEBUG = 0
+__DEBUG = 1
 
+# make the compiled-in debug state publicly available
 DEBUG = __DEBUG
 
 # maximum number of lines in the libxml2/xslt log if __DEBUG == 1
 cdef int __MAX_LOG_SIZE
 __MAX_LOG_SIZE = 20
 
+cdef object __ERROR_LOG
 
-ctypedef enum LXML_PROXY_TYPE:
-    PROXY_ELEMENT
-    PROXY_ATTRIB
-
-# the rules
-# any libxml C argument/variable is prefixed with c_
-# any non-public function/class is prefixed with an underscore
-# instance creation is always through factories
-
+def __build_error_log_tuple(_):
+    return python.PyList_AsTuple(__ERROR_LOG)
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
@@ -43,16 +47,10 @@ class Error(Exception):
 
 # module level superclass for all exceptions
 class LxmlError(Error):
-    def __init__(self, *args):
-        Error.__init__(self, *args)
-        if __DEBUG == 1 and python.PyList_GET_SIZE(__ERROR_LOG):
-            self.error_log = __ERROR_LOG
-            _clear_error_log()
-        else:
-            self.error_log = ()
+    error_log = property(__build_error_log_tuple)
 
 # superclass for all syntax errors
-class LxmlSyntaxError(LxmlError, SyntaxError):
+class LxmlSyntaxError(SyntaxError, LxmlError):
     pass
 
 class XIncludeError(LxmlError):
@@ -1623,12 +1621,11 @@ cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
 ################################################################################
 # DEBUG setup
 
-# list to collect error output message from libxml2/libxslt
-cdef object __ERROR_LOG
+# list to collect error output messages from libxml2/libxslt
 __ERROR_LOG = []
 
-cdef void _clear_error_log():
-    __ERROR_LOG = []
+def clear_error_log():
+    del __ERROR_LOG[:]
 
 cdef void _logLines(char* s):
     cdef char* pos

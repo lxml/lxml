@@ -48,6 +48,10 @@ cdef class XMLParser:
 
         self._parse_options = parse_options
 
+    property error_log:
+        def __get__(self):
+            return __build_error_log_tuple(self)
+
 ##     def copy(self, attribute_defaults=None, dtd_validation=None,
 ##              no_network=None, ns_clean=None):
 ##         cdef int parse_options

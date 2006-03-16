@@ -60,3 +60,6 @@ cdef class RelaxNG:
             raise RelaxNGValidateError, "Internal error in Relax NG validation"
         return ret == 0
 
+    property error_log:
+        def __get__(self):
+            return __build_error_log_tuple(self)
