@@ -45,9 +45,14 @@ PYTHONPATH somehow, you can import it and play with it.
 Building lxml with gcc 4.0
 --------------------------
 
-Pyrex 0.9.3 generates C code that gcc 4.0 does not accept. Pending an official
-release of a version of Pyrex that does work with gcc 4.0, the lxml project
-currently provides an updated version of Pyrex:
+Pyrex 0.9.3.1 generates C code that gcc 4.0 does not accept. Pending an
+official release of a version of Pyrex that does work with gcc 4.0, the lxml
+project currently provides an updated version of Pyrex in its Subversion
+repository:
+
+http://codespeak.net/svn/lxml/pyrex/
+
+To install it, you can just download one of the following files:
 
 http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1.tar.gz
 
