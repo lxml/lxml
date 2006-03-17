@@ -37,3 +37,4 @@ cdef extern from "Python.h":
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int isinstance(object instance, object classes)
     cdef int hasattr(object obj, object attr)
+    cdef int callable(object obj)
