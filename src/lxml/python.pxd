@@ -30,6 +30,7 @@ cdef extern from "Python.h":
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
+    cdef int PyCallable_Check(object instance)
     cdef int PyObject_IsInstance(object instance, object classes)
     cdef int PyObject_HasAttr(object obj, object attr)
 
