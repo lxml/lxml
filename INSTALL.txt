@@ -20,7 +20,7 @@ homepage can be found here:
 However, see below for an updated version if you have any trouble
 using it, especially with GCC 4.x.
 
-You also need Python 2.3 (Python 2.4 also ought to work).
+You also need Python 2.3 or later.
 
 Installation
 ------------
@@ -33,7 +33,7 @@ to compile and install the library.
 
 It's also possible to do this::
 
-  python2.3 setup.py  build_ext -i
+  python setup.py  build_ext -i
 
 or just::
 
@@ -127,11 +127,11 @@ Alternatively, you can use::
 To run the ElementTree and cElementTree compatibility tests, make sure
 you have lxml on your PYTHONPATH first, then run::
 
-  python2.3 selftest.py
+  python selftest.py
 
 and::
 
-  python2.3 selftest2.py
+  python selftest2.py
 
 If the tests give failures, errors, or worse, segmentation faults,
 we'd really like to know. Please contact us on the `mailing list`_,
