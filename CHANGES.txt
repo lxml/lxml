@@ -48,7 +48,7 @@ Bugs fixed
 
 * Segfault in XSLT.tostring()
 
-* ElementTree object no longer interfere, Elements can be root of different
+* ElementTree objects no longer interfere, Elements can be root of different
   ElementTrees at the same time
 
 * document('') now works in XSLT documents read from files (in-memory
