@@ -28,33 +28,34 @@ cdef class _LogEntry:
         self.type     = error.code
         self.level    = <int>error.level
         self.line     = error.line
-        self.message  = python.PyString_FromString(error.message)
+        self.message  = python.PyString_FromStringAndSize(
+            error.message, tree.strlen(error.message) - 1) # strip EOL
         if error.file is NULL:
-            self.filename = None
+            self.filename = '<string>'
         else:
             self.filename = python.PyString_FromString(error.file)
 
     def __repr__(self):
-        if self._filename:
-            return "%s/%d[%s]%s/%s: %s" % (
+        if self.filename:
+            return "%s:%d:%s:%s:%s: %s" % (
                 self.filename, self.line, self.level_name,
                 self.domain_name, self.type_name, self.message)
         else:
-            return "[%s]%s/%s: %s" % (
+            return "[]:%s:%s:%s: %s" % (
                 self.level_name, self.domain_name,
                 self.type_name, self.message)
 
     property domain_name:
         def __get__(self):
-            return LxmlErrorDomains._names[self.domain]
+            return ErrorDomains._names[self.domain]
 
     property type_name:
         def __get__(self):
-            return LxmlErrorTypes._names[self.type]
+            return ErrorTypes._names[self.type]
 
     property level_name:
         def __get__(self):
-            return LxmlErrorLevels._names[self.level]
+            return ErrorLevels._names[self.level]
 
 cdef class _BaseErrorLog:
     "Immutable base version of an error log."
@@ -71,6 +72,12 @@ cdef class _BaseErrorLog:
     def __repr__(self):
         return '\n'.join(map(repr, self._entries))
 
+    def __getitem__(self, index):
+        return self._entries[index]
+
+    def __len__(self):
+        return len(self._entries)
+
     def filter_domains(self, domains):
         cdef _LogEntry entry
         filtered = []
@@ -85,26 +92,40 @@ cdef class _BaseErrorLog:
         cdef _LogEntry entry
         if not python.PySequence_Check(types):
             types = (types,)
+        filtered = []
         for entry in self._entries:
             if entry.type in types:
                 python.PyList_Append(filtered, entry)
         return _BaseErrorLog(filtered)
 
     def filter_levels(self, levels):
+        """Return a log with all messages of the requested level(s). Takes a
+        single log level or a sequence."""
         cdef _LogEntry entry
         if not python.PySequence_Check(levels):
             levels = (levels,)
+        filtered = []
         for entry in self._entries:
             if entry.level in levels:
                 python.PyList_Append(filtered, entry)
         return _BaseErrorLog(filtered)
 
     def filter_from_level(self, level):
+        "Return a log with all messages of the requested level of worse."
         cdef _LogEntry entry
+        filtered = []
         for entry in self._entries:
             if entry.level >= level:
                 python.PyList_Append(filtered, entry)
         return _BaseErrorLog(filtered)
+
+    def filter_from_errors(self):
+        "Convenience method to get all error messages."
+        return self.filter_from_level(ErrorLevels.ERROR)
+    
+    def filter_from_warnings(self):
+        "Convenience method to get all warnings or worse."
+        return self.filter_from_level(ErrorLevels.WARNING)
 
 cdef class _ErrorLog(_BaseErrorLog):
     def __init__(self):
@@ -164,9 +185,9 @@ cdef class PyErrorLog(_ErrorLog):
         _ErrorLog.__init__(self)
         import logging
         self._level_map = {
-            LxmlErrorLevels.WARNING : logging.WARNING,
-            LxmlErrorLevels.ERROR   : logging.ERROR,
-            LxmlErrorLevels.FATAL   : logging.CRITICAL
+            ErrorLevels.WARNING : logging.WARNING,
+            ErrorLevels.ERROR   : logging.ERROR,
+            ErrorLevels.FATAL   : logging.CRITICAL
             }
         self._varsOf = vars
         if logger_name:
@@ -226,14 +247,14 @@ initThreadLogging()
 ## CONSTANTS FROM "xmlerror.pxd"
 ################################################################################
 
-class LxmlErrorLevels:
+class ErrorLevels:
     _names = {}
     NONE = 0
     WARNING = 1 # A simple warning
     ERROR = 2 # A recoverable error
     FATAL = 3 # A fatal error
 
-class LxmlErrorDomains:
+class ErrorDomains:
     _names = {}
     NONE = 0
     PARSER = 1 # The XML parser
@@ -263,7 +284,7 @@ class LxmlErrorDomains:
     WRITER = 25 # The xmlwriter module
     MODULE = 26 # The dynamically loaded module modu
 
-class LxmlErrorTypes:
+class ErrorTypes:
     _names = {}
     ERR_OK = 0
     ERR_INTERNAL_ERROR = 1
@@ -963,14 +984,14 @@ class LxmlErrorTypes:
     CHECK_X = 5039 # 503
 
 cdef object __names
-__names = LxmlErrorLevels._names
-for name, value in vars(LxmlErrorLevels).iteritems():
+__names = ErrorLevels._names
+for name, value in vars(ErrorLevels).iteritems():
     python.PyDict_SetItem(__names, value, name)
 
-__names = LxmlErrorDomains._names
-for name, value in vars(LxmlErrorDomains).iteritems():
+__names = ErrorDomains._names
+for name, value in vars(ErrorDomains).iteritems():
     python.PyDict_SetItem(__names, value, name)
 
-__names = LxmlErrorTypes._names
-for name, value in vars(LxmlErrorTypes).iteritems():
+__names = ErrorTypes._names
+for name, value in vars(ErrorTypes).iteritems():
     python.PyDict_SetItem(__names, value, name)
