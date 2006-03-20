@@ -66,6 +66,9 @@ In addition to the ElementTree API, lxml also features an API for
 `implementing namespaces`_ using tag specific element classes.  This is a
 simple way to write arbitrary XML driven APIs on top of lxml.
 
+lxml also offers a `SAX compliant API`_, that works with the SAX support
+in the standar dlibrary.
+
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 
 .. _`ElementTree compatibility overview`: compatibility.html
@@ -85,6 +88,8 @@ simple way to write arbitrary XML driven APIs on top of lxml.
 .. _`c14n`: http://www.w3.org/TR/2001/REC-xml-c14n-20010315
 
 .. _`implementing namespaces`: namespace_extensions.html
+
+.. _`SAX compliant API`: sax.html
 
 Mailing list
 ------------
