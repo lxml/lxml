@@ -17,6 +17,7 @@ cdef class XMLSchema:
     """Turn a document into an XML Schema validator.
     """
     cdef xmlschema.xmlSchema* _c_schema
+    cdef _ErrorLog _error_log
     
     def __init__(self, _ElementTree etree):
         cdef _Document doc
@@ -30,6 +31,7 @@ cdef class XMLSchema:
             xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
             raise XMLSchemaParseError, "Document is not valid XML Schema"
         xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+        self._error_log = _ErrorLog()
         
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)
@@ -42,6 +44,7 @@ cdef class XMLSchema:
         cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
         cdef xmlDoc* c_doc
         cdef int ret
+        self._error_log.connect()
         valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)
 
         c_doc = _fakeRootDoc(etree._doc._c_doc, etree._context_node._c_node)
@@ -49,10 +52,11 @@ cdef class XMLSchema:
         _destroyFakeDoc(etree._doc._c_doc, c_doc)
 
         xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
+        self._error_log.disconnect()
         if ret == -1:
             raise XMLSchemaValidateError, "Internal error in XML Schema validation."
         return ret == 0
 
     property error_log:
         def __get__(self):
-            return __build_error_log_tuple(self)
+            return self._error_log.copy()

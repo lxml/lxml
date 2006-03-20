@@ -18,6 +18,7 @@ cdef class RelaxNG:
     Can also load from filesystem directly given file object or filename.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
+    cdef _ErrorLog _error_log
     
     def __init__(self, _ElementTree etree=None, file=None):
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
@@ -38,6 +39,8 @@ cdef class RelaxNG:
         if self._c_schema is NULL:
             raise RelaxNGParseError, "Document is not valid Relax NG"
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+
+        self._error_log = _ErrorLog()
         
     def __dealloc__(self):
         relaxng.xmlRelaxNGFree(self._c_schema)
@@ -49,6 +52,7 @@ cdef class RelaxNG:
         cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
         cdef int ret
+        self._error_log.connect()
         valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
 
         c_doc = _fakeRootDoc(etree._doc._c_doc, etree._context_node._c_node)
@@ -56,10 +60,11 @@ cdef class RelaxNG:
         _destroyFakeDoc(etree._doc._c_doc, c_doc)
 
         relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
+        self._error_log.disconnect()
         if ret == -1:
             raise RelaxNGValidateError, "Internal error in Relax NG validation"
         return ret == 0
 
     property error_log:
         def __get__(self):
-            return __build_error_log_tuple(self)
+            return self._error_log.copy()

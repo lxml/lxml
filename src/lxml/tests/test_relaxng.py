@@ -25,6 +25,25 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 
+    def test_relaxng_error(self):
+        tree_invalid = self.parse('<a><c></c></a>')
+        schema = self.parse('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+     <element name="b">
+       <text />
+     </element>
+  </zeroOrMore>
+</element>
+''')
+        schema = etree.RelaxNG(schema)
+        self.assert_(not schema.validate(tree_invalid))
+        errors = schema.error_log
+        self.assert_([ log for log in errors
+                       if log.level_name == "ERROR" ])
+        self.assert_([ log for log in errors
+                       if "not expect" in log.message ])
+
     def test_relaxng_invalid_schema(self):
         schema = self.parse('''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">

@@ -29,14 +29,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         # from StringIO
         f = StringIO('<a><b></c></b></a>')
-        self.etree.clear_error_log()
+        self.etree.clearErrorLog()
         try:
             parse(f)
-            log = ""
+            logs = None
         except SyntaxError, e:
-            log = '\n'.join(e.error_log)
+            logs = e.error_log
         f.close()
-        self.assert_('mismatch' in log)
+        self.assert_([ log for log in logs
+                       if 'mismatch' in log.message ])
+        self.assert_([ log for log in logs
+                       if 'PARSER'   in log.domain_name])
+        self.assert_([ log for log in logs
+                       if 'TAG_NAME_MISMATCH' in log.type_name ])
 
     def test_parse_error_from_file(self):
         parse = self.etree.parse

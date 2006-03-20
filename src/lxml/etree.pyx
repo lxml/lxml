@@ -24,21 +24,13 @@ ctypedef enum LXML_PROXY_TYPE:
 
 # what to do with libxml2/libxslt error messages?
 # 0 : drop
-# 1 : provide log via exception property
-# 2 : write to stderr
+# 1 : use log
 cdef int __DEBUG
 __DEBUG = 1
 
 # maximum number of lines in the libxml2/xslt log if __DEBUG == 1
 cdef int __MAX_LOG_SIZE
-__MAX_LOG_SIZE = 20
-
-if __DEBUG == 0:
-    _shutUpLibxmlErrors()
-    _shutUpLibxsltErrors()
-elif __DEBUG == 1:
-    _logLibxmlErrors()
-    _logLibxsltErrors()
+__MAX_LOG_SIZE = 100
 
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
@@ -49,10 +41,12 @@ class Error(Exception):
 
 # module level superclass for all exceptions
 class LxmlError(Error):
-    error_log = property(__build_error_log_tuple)
+    def __init__(self, *args):
+        Error.__init__(self, *args)
+        self.error_log = __copyGlobalErrorLog()
 
 # superclass for all syntax errors
-class LxmlSyntaxError(SyntaxError, LxmlError):
+class LxmlSyntaxError(LxmlError, SyntaxError):
     pass
 
 class XIncludeError(LxmlError):
