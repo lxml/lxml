@@ -259,7 +259,7 @@ cdef class _ElementTree:
         return root.findall(path)
     
     # extensions to ElementTree API
-    def xpath(self, path, namespaces=None):
+    def xpath(self, _path, namespaces=None, **_variables):
         """XPath evaluate in context of document.
 
         namespaces is an optional dictionary with prefix to namespace URI
@@ -274,9 +274,9 @@ cdef class _ElementTree:
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
-        return XPathDocumentEvaluator(self, namespaces).evaluate(path)
+        return XPathDocumentEvaluator(self._doc, namespaces).evaluate(_path, **_variables)
 
-    def xslt(self, xslt, **kw):
+    def xslt(self, _xslt, extensions=None, **_kw):
         """Transform this document using other document.
 
         xslt is a tree that should be XSLT
@@ -288,8 +288,8 @@ cdef class _ElementTree:
         multiple documents, it is more efficient to use the XSLT
         class directly.
         """
-        style = XSLT(xslt)
-        return style(self, **kw)
+        style = XSLT(_xslt, extensions)
+        return style(self, **_kw)
 
     def relaxng(self, relaxng):
         """Validate this document using other document.
@@ -757,8 +757,8 @@ cdef class _Element(_NodeBase):
     def findall(self, path):
         return _elementpath.findall(self, path)
 
-    def xpath(self, path, namespaces=None):
-        return XPathElementEvaluator(self, namespaces).evaluate(path)
+    def xpath(self, _path, namespaces=None, **_variables):
+        return XPathElementEvaluator(self, namespaces).evaluate(_path, **_variables)
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
@@ -1113,13 +1113,13 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 
 # module-level API for ElementTree
 
-def Element(tag, attrib=None, nsmap=None, **extra):
+def Element(_tag, attrib=None, nsmap=None, **_extra):
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
     cdef _Document doc
-    ns_utf, name_utf = _getNsTag(tag)
+    ns_utf, name_utf = _getNsTag(_tag)
     c_doc = theParser.newDoc()
-    c_node = _createElement(c_doc, name_utf, attrib, extra)
+    c_node = _createElement(c_doc, name_utf, attrib, _extra)
     tree.xmlDocSetRootElement(c_doc, c_node)
     doc = _documentFactory(c_doc)
     # add namespaces to node if necessary
@@ -1138,14 +1138,14 @@ def Comment(text=None):
     tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
     return _commentFactory(doc, c_node)
 
-def SubElement(_Element parent, tag, attrib=None, nsmap=None, **extra):
+def SubElement(_Element _parent, _tag, attrib=None, nsmap=None, **_extra):
     cdef xmlNode*  c_node
     cdef _Document doc
-    _raiseIfNone(parent)
-    ns_utf, name_utf = _getNsTag(tag)
-    doc = parent._doc
-    c_node = _createElement(doc._c_doc, name_utf, attrib, extra)
-    tree.xmlAddChild(parent._c_node, c_node)
+    _raiseIfNone(_parent)
+    ns_utf, name_utf = _getNsTag(_tag)
+    doc = _parent._doc
+    c_node = _createElement(doc._c_doc, name_utf, attrib, _extra)
+    tree.xmlAddChild(_parent._c_node, c_node)
     # add namespaces to node if necessary
     doc._setNodeNamespaces(c_node, ns_utf, nsmap)
     return _elementFactory(doc, c_node)

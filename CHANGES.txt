@@ -7,6 +7,30 @@ lxml changelog
 Features added
 --------------
 
+* Various performance improvements
+
+* Benchmark script for lxml, ElementTree and cElementTree
+
+* Support for registering extension functions through new FunctionNamespace
+  class (see doc/extensions.txt)
+
+* Support for variables in XPath expressions (also in XPath class)
+
+* XPath class for compiled XPath expressions
+
+* XMLID module level function
+
+* XMLParser API for customized libxml2 parser configuration
+
+* Support for custom Element classes through new Namespace API (see
+  doc/namespace_extensions.txt)
+
+* Common exception base class LxmlError for module exceptions
+
+* real iterator support in iter(Element), Element.getiterator()
+
+* XSLT objects are callable, result trees support str()
+
 * Added MANIFEST.in for easier creation of RPM files.
 
 * 'getparent' method on elements allows navigation to an element's
@@ -14,6 +38,19 @@ Features added
 
 * Python core compatible SAX tree builder and SAX event generator. See
   doc/sax.txt for more information.
+
+Bugs fixed
+----------
+
+* Segfaults and memory leaks in various API functions of Element
+
+* Segfault in XSLT.tostring()
+
+* ElementTree object no longer interfere, Elements can be root of different
+  ElementTrees at the same time
+
+* document('') now works in XSLT documents read from files (in-memory
+  documents cannot support this due to libxslt deficiencies)
 
 0.8 (2005-11-03)
 ================

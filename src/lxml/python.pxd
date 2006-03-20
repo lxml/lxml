@@ -24,6 +24,8 @@ cdef extern from "Python.h":
     cdef int PyDict_SetItem(object d, object key, object value)
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
+    cdef int PyDict_DelItem(object d, object key)
+    cdef int PyDict_Clear(object d)
     cdef object PyList_AsTuple(object o)
 
     cdef int PyNumber_Check(object instance)

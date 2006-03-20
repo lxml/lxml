@@ -53,8 +53,12 @@ compatibility overview`_.
 
 lxml also `extends this API`_ to expose libxml2 and libxslt specific
 functionality, such as XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and
-`c14n`_. There is also more `detailed information`_ about what's
-possible with XPath.
+`c14n`_. Python code can be called from XPath expressions and XSLT stylesheets
+through the use of `extension functions`_.
+
+In addition to the ElementTree API, lxml also features an API for
+`implementing namespaces`_ using tag specific element classes.  This is a
+simple way to write arbitrary XML driven APIs on top of lxml.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 
@@ -62,7 +66,7 @@ possible with XPath.
 
 .. _`extends this API`: api.html
 
-.. _`detailed information`: xpath.html
+.. _`extension functions`_: extensions.html
 
 .. _XPath: http://www.w3.org/TR/xpath
 
@@ -73,6 +77,8 @@ possible with XPath.
 .. _`XSLT`: http://www.w3.org/TR/xslt
 
 .. _`c14n`: http://www.w3.org/TR/2001/REC-xml-c14n-20010315
+
+.. _`implementing namespaces`: namespace_extensions.html
 
 Mailing list
 ------------

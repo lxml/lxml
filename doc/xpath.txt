@@ -1,13 +1,13 @@
 XPath extension functions
 =========================
 
-This document describes how to deal with XPath extension
-functions. This documentation is preliminary as the API is still in
-flux.
+This document describes the OLD DEPRICATED way of dealing with XPath extension
+functions. For updated documentation, please see the new Namespace API
+described in nsclasses.txt and extensions.txt.
 
-An extension function is defined in Python. In order to use it in
-XPath, it needs to have a name by which it can be called in XPath, and
-an optional namespace URI.
+Extension functions are defined in Python. In order to use such a function, it
+must have a name by which it can be called in XPath, and an optional namespace
+URI.
 
 As the first argument a function will always receive the
 XPathEvaluator object that is currently in the process of evaluating
