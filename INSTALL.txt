@@ -21,6 +21,8 @@ homepage can be found here:
 
 * http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
+.. Pyrex_: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+
 However, see below for an updated version if you have any trouble
 using it, especially with GCC 4.x.
 
