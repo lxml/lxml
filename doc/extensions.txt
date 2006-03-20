@@ -10,7 +10,7 @@ Here is how such a function looks like.  As the first argument, it always
 receives a dummy object.  It is currently None, but do not rely on this as it
 may become meaningful in later versions of lxml.  The other arguments are
 provided by the respective call in the XPath expression.  Any number of
-arguments is allowed.
+arguments is allowed::
 
   >>> def hello(dummy, a):
   ...    return "Hello %s" % a
@@ -89,7 +89,7 @@ What to return from a function
 
 Extension functions can return any data type for which there is an XPath
 equivalent.  This includes numbers, boolean values, elements and lists of
-elements.
+elements::
 
   >>> def returnsFloat(_):
   ...    return 1.7

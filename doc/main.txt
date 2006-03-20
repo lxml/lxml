@@ -72,7 +72,7 @@ simple way to write arbitrary XML driven APIs on top of lxml.
 
 .. _`extends this API`: api.html
 
-.. _`extension functions`_: extensions.html
+.. _`extension functions`: extensions.html
 
 .. _XPath: http://www.w3.org/TR/xpath
 

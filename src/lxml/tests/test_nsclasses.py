@@ -147,8 +147,11 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
+    optionflags = doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/namespace_extensions.txt')])
+        [doctest.DocFileSuite('../../../doc/namespace_extensions.txt',
+                              optionflags=optionflags)],
+        )
     return suite
 
 if __name__ == '__main__':
