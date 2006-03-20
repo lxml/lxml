@@ -10,6 +10,8 @@ import unittest, doctest
 from common_imports import etree, HelperTestCase
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
+    assertFalse = HelperTestCase.failIf
+    
     class default_class(etree.ElementBase):
         pass
     class maeh_class(etree.ElementBase):
