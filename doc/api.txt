@@ -42,8 +42,8 @@ during parsing, first with the default parser, then with a parametrized one::
 Error handling on exceptions
 ----------------------------
 
-Libxml2 provides error messages for failures, be it during parsing, schema
-validation or XSL transformation.  Whenever an exception is raised, you can
+Libxml2 provides error messages for failures, be it during parsing, XPath
+evaluation or schema validation.  Whenever an exception is raised, you can
 retrieve the errors that occured and "might have" lead to the problem::
 
   >>> lxml.etree.clearErrorLog()
@@ -66,6 +66,8 @@ that.  You can get it from a log entry like this::
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NOT_FINISHED <string>
+
+XSLT error messages are not currently available through the lxml API.
 
 
 xpath method on ElementTree, Element
