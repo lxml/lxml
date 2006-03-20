@@ -1,5 +1,9 @@
 import os
 
+def flags(cmd):
+    wf, rf, ef = os.popen3(cmd)
+    return rf.read().strip().split(' ')
+
 try:
     from setuptools import setup
     from setuptools.extension import Extension
@@ -7,11 +11,27 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-from Pyrex.Distutils import build_ext as build_pyx
-
-def flags(cmd):
-    wf, rf, ef = os.popen3(cmd)
-    return rf.read().strip().split(' ')
+try:
+    from Pyrex.Distutils import build_ext as build_pyx
+    etree_extension = {
+        'cmdclass' : {'build_ext': build_pyx},
+        'ext_modules' : [ Extension(
+        "lxml.etree", 
+        sources = ["src/lxml/etree.pyx"], 
+        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
+        extra_link_args = flags('xslt-config --libs')
+        )]
+        }
+except ImportError:
+    print "NOTE: Trying to build without Pyrex, needs generated etree.c"
+    etree_extension = {
+        'ext_modules' : [ Extension(
+        "lxml.etree", 
+        sources = ["src/lxml/etree.c"], 
+        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
+        extra_link_args = flags('xslt-config --libs')
+        )]
+        }
 
 setup(
     name = "lxml",
@@ -31,11 +51,5 @@ XPath, Relax NG, XML Schema, XSLT, c14n and much more.
 
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.tests'],
-    ext_modules = [
-        Extension(
-            "lxml.etree", 
-            sources = ["src/lxml/etree.pyx"], 
-            extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-            extra_link_args = flags('xslt-config --libs'))],
-    cmdclass = {'build_ext': build_pyx}
+    **etree_extension
 )
