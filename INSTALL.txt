@@ -26,7 +26,13 @@ with Pyrex.
 Installation
 ------------
 
-Type::
+If you have easy_install_, you can use::
+
+  sudo easy_install lxml
+
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+Otherwise type::
 
   python setup.py install
 
@@ -103,7 +109,7 @@ by changing this::
   include_dirs = guess_include_dirs()
 
 Into something like this::
-  
+
   include_dirs = ['/usr/include/libxml2']
 
 If that still doesn't work, try registering the extension in a
