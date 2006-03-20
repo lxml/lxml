@@ -59,9 +59,9 @@ retrieve the errors that occured and "might have" lead to the problem::
 This might look a little cryptic at first, but it is the information that
 libxml2 gives you.  At least the message at the end should give you a hint
 what went wrong and you can see that the fatal error (FATAL) happened during
-parsing (PARSER) line 1 of a string (<string>).  Here, PARSER is the so-called
-error domain, see lxml.etree.ErrorDomains for that.  You can get it from a log
-entry like this::
+parsing (PARSER) line 1 of a string (<string>, or filename if available).
+Here, PARSER is the so-called error domain, see lxml.etree.ErrorDomains for
+that.  You can get it from a log entry like this::
 
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename

@@ -248,6 +248,7 @@ initThreadLogging()
 ################################################################################
 
 class ErrorLevels:
+    "Libxml2 error levels"
     _names = {}
     NONE = 0
     WARNING = 1 # A simple warning
@@ -255,6 +256,7 @@ class ErrorLevels:
     FATAL = 3 # A fatal error
 
 class ErrorDomains:
+    "Libxml2 error domains"
     _names = {}
     NONE = 0
     PARSER = 1 # The XML parser
@@ -285,6 +287,7 @@ class ErrorDomains:
     MODULE = 26 # The dynamically loaded module modu
 
 class ErrorTypes:
+    "Libxml2 error types"
     _names = {}
     ERR_OK = 0
     ERR_INTERNAL_ERROR = 1
