@@ -7,6 +7,8 @@ lxml changelog
 Features added
 --------------
 
+* Error logging API for libxml2 error messages
+
 * Various performance improvements
 
 * Benchmark script for lxml, ElementTree and cElementTree
