@@ -12,21 +12,17 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.12 (newer versions should work). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-The lxml wrapper around libxml2 and libxslt is written in Pyrex_.  If you are
-using a released version of lxml, it should come with the generated C file in
-the source distribution.  There is no need to regenerate it using Pyrex.
-However, if you want to use more recent SVN versions of lxml or want to work
-on the code, you will need Pyrex to regenerate the C-code.  The official
-homepage can be found here:
+You also need Python 2.3 or later.
 
-* http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+If you are not using a released version of lxml and want to build lxml
+from SVN, you also need Pyrex_. If you are using a released version of
+lxml, it should come with the generated C file in the source
+distribution, so no Pyrex is needed then.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
-However, see below for an updated version if you have any trouble
-using it, especially with GCC 4.x.
-
-You also need Python 2.3 or later.
+See also the notes on building gcc 4.0 below if you are having trouble
+with Pyrex.
 
 Installation
 ------------
