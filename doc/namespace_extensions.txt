@@ -2,6 +2,8 @@
 Implementing namespaces with the Namespace class
 ================================================
 
+(Also see extensions.txt)
+
 Imagine, you have a namespace called 'http://hui.de/honk' and have to
 treat all of its elements in a specific way, say, to find out if they
 are really honking.  You could provide a function called 'is_honking'
@@ -114,7 +116,7 @@ Example::
 True
 >>> print honk_element[0].honking
 Traceback (most recent call last):
-  File "/var/tmp/python-2.4.2-root/usr/lib/python2.4/doctest.py", line 1243, in __run
+  File "/usr/lib/python2.4/doctest.py", line 1243, in __run
     compileflags, 1) in test.globs
   File "<doctest namespace_extensions.txt[21]>", line 1, in ?
     print honk_element[0].honking
@@ -154,29 +156,8 @@ HONK
 HONK
 >>> print honk_element[0].honking
 Traceback (most recent call last):
-  File "/var/tmp/python-2.4.2-root/usr/lib/python2.4/doctest.py", line 1243, in __run
+  File "/usr/lib/python2.4/doctest.py", line 1243, in __run
     compileflags, 1) in test.globs
   File "<doctest namespace_extensions.txt[21]>", line 1, in ?
     print honk_element[0].honking
 AttributeError: 'HonkNSElement' object has no attribute 'honking'
-
-
-XPath extension functions
-=========================
-
-The same API is used for extension functions in XPath.  If you
-associate a name in the Namespace with a callable object (that is not
-a subclass of ElementBase), it will be used as extension function in
-XPath evaluations.
-
->>> from lxml.etree import Namespace
->>> def tag_of(context, elem):
-...    return elem[0].tag
->>> namespace = Namespace('myfunctions')
->>> namespace['tagname'] = tag_of
-
-You can then use your new function in XPath expressions:
-
->>> element = XML('<test><honk honking="true"/></test>')
->>> [el.tag for el in element.xpath('f:tagname(//honk)', {'f' : 'myfunctions'})]
-['honk']
