@@ -16,8 +16,19 @@ def flags(cmd):
 setup(
     name = "lxml",
     version = open('version.txt').read().strip(),
-    maintainer = 'Infrae',
-    maintainer_email="faassen@infrae.com",
+    author="lxml dev team",
+    author_email="lxml-dev@codespeak.net",
+    maintainer="lxml dev team",
+    maintainer_email="lxml-dev@codespeak.net",
+    url="http://codespeak.net/lxml",
+    description="Powerful and Pythonic XML processing library based on libxml2/libxslt with an ElementTree API",
+    long_description="""\
+lxml is a Pythonic binding for the libxml2 and libxslt libraries. It provides
+safe and convenient access to these libraries using the ElementTree API.
+It extends the ElementTree API significantly to offer support for
+XPath, Relax NG, XML Schema, XSLT, c14n and much more.
+""",
+
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.tests'],
     ext_modules = [
