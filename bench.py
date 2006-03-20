@@ -36,6 +36,13 @@ def with_text(no_text=False, text=False, utext=False):
         return function
     return set_value
 
+def onlylib(*libs):
+    def set_libs(function):
+        if libs:
+            function.LIBS = libs
+        return function
+    return set_libs
+
 
 class BenchMarkBase(object):
     atoz = string.ascii_lowercase
@@ -187,6 +194,9 @@ class BenchMarkBase(object):
             if not name.startswith('bench_'):
                 continue
             method = getattr(self, name)
+            if hasattr(method, 'LIBS') and self.lib_name not in method.LIBS:
+                benchmarks.append((name, None, (), 0, 0))
+                continue
             if method.__doc__:
                 tree_sets = method.__doc__.split()
             else:
@@ -366,6 +376,18 @@ class BenchMark(BenchMarkBase):
     def bench_getiterator_tag_all(self, root):
         list(root.getiterator("{b}a"))
 
+    @onlylib('lxe')
+    def bench_xpath_class(self, root):
+        xpath = self.etree.XPath("./*[0]")
+        for child in root:
+            xpath(child)
+
+    @onlylib('lxe')
+    def bench_xpath_element(self, root):
+        for child in root:
+            xpath = self.etree.XPathElementEvaluator(child)
+            xpath.evaluate("./*[0]")
+
 ############################################################
 # Main program
 ############################################################
@@ -474,9 +496,14 @@ if __name__ == '__main__':
 
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
-            bench_name = benchmark_setup[0]
+            bench_name, method_call = benchmark_setup[:2]
             tree_set_name = build_treeset_name(*benchmark_setup[-3:])
-            print "%-3s: %-23s (%-10s)" % (bench.lib_name, bench_name[6:29], tree_set_name),
+            print "%-3s: %-23s" % (bench.lib_name, bench_name[6:29]),
+            if method_call is None:
+                print "skipped"
+                continue
+
+            print "(%-10s)" % tree_set_name,
             sys.stdout.flush()
 
             result = run_bench(bench, *benchmark_setup)
