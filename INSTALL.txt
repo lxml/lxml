@@ -14,10 +14,9 @@ You need libxml2 and libxslt, in particular:
 
 You also need Python 2.3 or later.
 
-If you are not using a released version of lxml and want to build lxml
-from SVN, you also need Pyrex_. If you are using a released version of
-lxml, it should come with the generated C file in the source
-distribution, so no Pyrex is needed then.
+If want to build lxml from SVN, you also need Pyrex_. If you are using
+a released version of lxml, it should come with the generated C file
+in the source distribution, so no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
