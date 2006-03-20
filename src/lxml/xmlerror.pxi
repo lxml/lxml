@@ -119,8 +119,12 @@ cdef class _BaseErrorLog:
                 python.PyList_Append(filtered, entry)
         return _BaseErrorLog(filtered)
 
+    def filter_from_fatals(self):
+        "Convenience method to get all fatal error messages."
+        return self.filter_from_level(ErrorLevels.FATAL)
+    
     def filter_from_errors(self):
-        "Convenience method to get all error messages."
+        "Convenience method to get all error messages or worse."
         return self.filter_from_level(ErrorLevels.ERROR)
     
     def filter_from_warnings(self):
