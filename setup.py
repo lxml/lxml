@@ -11,27 +11,14 @@ except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
+setup_args = {}
 try:
     from Pyrex.Distutils import build_ext as build_pyx
-    etree_extension = {
-        'cmdclass' : {'build_ext': build_pyx},
-        'ext_modules' : [ Extension(
-        "lxml.etree", 
-        sources = ["src/lxml/etree.pyx"], 
-        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-        extra_link_args = flags('xslt-config --libs')
-        )]
-        }
+    sources = ["src/lxml/etree.pyx"]
+    setup_args['cmdclass'] = {'build_ext' : build_pyx}
 except ImportError:
-    print "NOTE: Trying to build without Pyrex, needs generated etree.c"
-    etree_extension = {
-        'ext_modules' : [ Extension(
-        "lxml.etree", 
-        sources = ["src/lxml/etree.c"], 
-        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-        extra_link_args = flags('xslt-config --libs')
-        )]
-        }
+    print "*NOTE*: Trying to build without Pyrex, needs pre-generated 'src/lxml/etree.c' !"
+    sources = ["src/lxml/etree.c"]
 
 setup(
     name = "lxml",
@@ -41,15 +28,24 @@ setup(
     maintainer="lxml dev team",
     maintainer_email="lxml-dev@codespeak.net",
     url="http://codespeak.net/lxml",
-    description="Powerful and Pythonic XML processing library based on libxml2/libxslt with an ElementTree API",
+
+    description="Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.",
+
     long_description="""\
-lxml is a Pythonic binding for the libxml2 and libxslt libraries. It provides
+lxml is a Pythonic binding for the libxml2 and libxslt libraries.  It provides
 safe and convenient access to these libraries using the ElementTree API.
-It extends the ElementTree API significantly to offer support for
-XPath, Relax NG, XML Schema, XSLT, c14n and much more.
+
+It extends the ElementTree API significantly to offer support for XPath,
+RelaxNG, XML Schema, XSLT, C14N and much more.
 """,
 
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.tests'],
-    **etree_extension
+    ext_modules = [ Extension(
+        "lxml.etree", 
+        sources = sources,
+        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
+        extra_link_args = flags('xslt-config --libs')
+    )],
+    **setup_args
 )
