@@ -154,6 +154,81 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals('Hoi', r[0].text)
         self.assertEquals('Dag', r[1].text)
 
+    def test_xpath_variables(self):
+        x = self.parse('<a attr="true"/>')
+        e = etree.XPathEvaluator(x)
+
+        expr = "/a[@attr=$aval]"
+        r = e.evaluate(expr, aval=1)
+        self.assertEquals(0, len(r))
+
+        r = e.evaluate(expr, aval="true")
+        self.assertEquals(1, len(r))
+        self.assertEquals("true", r[0].get('attr'))
+
+        r = e.evaluate(expr, aval=True)
+        self.assertEquals(1, len(r))
+        self.assertEquals("true", r[0].get('attr'))
+
+
+class ETreeXPathClassTestCase(HelperTestCase):
+    "Tests for the XPath class"
+    def test_xpath_compile_doc(self):
+        x = self.parse('<a attr="true"/>')
+
+        expr = etree.XPath("/a[@attr != 'true']")
+        r = expr.evaluate(x)
+        self.assertEquals(0, len(r))
+
+        expr = etree.XPath("/a[@attr = 'true']")
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+
+        expr = etree.XPath( expr.path )
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+
+    def test_xpath_compile_element(self):
+        x = self.parse('<a><b/><c/></a>')
+        root = x.getroot()
+
+        expr = etree.XPath("./b")
+        r = expr.evaluate(root)
+        self.assertEquals(1, len(r))
+        self.assertEquals('b', r[0].tag)
+
+        expr = etree.XPath("./*")
+        r = expr.evaluate(root)
+        self.assertEquals(2, len(r))
+
+    def test_xpath_compile_vars(self):
+        x = self.parse('<a attr="true"/>')
+
+        expr = etree.XPath("/a[@attr=$aval]")
+        r = expr.evaluate(x, aval=False)
+        self.assertEquals(0, len(r))
+
+        r = expr.evaluate(x, aval=True)
+        self.assertEquals(1, len(r))
+
+    def test_xpath_compile_error(self):
+        self.assertRaises(SyntaxError, etree.XPath, '\\fad')
+
+class ETreeETXPathClassTestCase(HelperTestCase):
+    "Tests for the ETXPath class"
+    def test_xpath_compile_ns(self):
+        x = self.parse('<a><b xmlns="nsa"/><b xmlns="nsb"/></a>')
+
+        expr = etree.ETXPath("/a/{nsa}b")
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+        self.assertEquals('{nsa}b', r[0].tag)
+
+        expr = etree.ETXPath("/a/{nsb}b")
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+        self.assertEquals('{nsb}b', r[0].tag)
+
 SAMPLE_XML = etree.parse(StringIO("""
 <body>
   <tag>text</tag>
@@ -248,6 +323,8 @@ def xpath():
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXPathClassTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     return suite
 
