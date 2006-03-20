@@ -96,6 +96,8 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 Download
 --------
 
+* `lxml 0.9`_ (2006-03-20)
+
 * `lxml 0.8`_ (2005-11-03)
 
 * `lxml 0.7`_ (2005-06-15)
