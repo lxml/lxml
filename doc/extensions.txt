@@ -1,0 +1,205 @@
+Extension functions for XPath and XSLT
+======================================
+
+This document describes how to use Python extension functions in XPath and
+XSLT.  They allow you to do things like this::
+
+  <xsl:value-of select="f:myPythonFunction(.//sometag)" />
+
+Here is how such a function looks like.  As the first argument, it always
+receives a dummy object.  It is currently None, but do not rely on this as it
+may become meaningful in later versions of lxml.  The other arguments are
+provided by the respective call in the XPath expression.  Any number of
+arguments is allowed.
+
+  >>> def hello(dummy, a):
+  ...    return "Hello %s" % a
+  >>> def ola(dummy, a):
+  ...    return "Ola %s" % a
+
+
+The FunctionNamespace
+---------------------
+
+In order to use a function in XPath/XSLT, it needs to have a (namespaced) name
+by which it can be called during evaluation.  This is done using the
+FunctionNamespace class.  For simplicity, we choose the empty namespace
+(None)::
+
+  >>> from lxml import etree
+  >>> ns = etree.FunctionNamespace(None)
+  >>> ns['hello'] = hello
+
+This registers the function 'foo' with the name 'myfunction' in the default
+namespace.  Now we're going to create a document that we can run XPath
+expressions against::
+
+  >>> from lxml import etree
+  >>> from StringIO import StringIO
+  >>> f = StringIO('<a><b>Haegar</b></a>')
+  >>> doc = etree.parse(f)
+  >>> root = doc.getroot()
+
+Done. Now we can have XPath expressions call our new function::
+
+  >>> print root.xpath("hello('world')")
+  Hello world
+  >>> print root.xpath('hello(local-name(*))')
+  Hello b
+  >>> print root.xpath('hello(string(b))')
+  Hello Haegar
+
+Note how we call both a Python function (hello) and an XPath built-in function
+(local-name) in exactly the same way.  Normally, however, you would want to
+separate the two in different namespaces.  The FunctionNamespace class allows
+you to do this::
+
+  >>> ns = etree.FunctionNamespace('http://mydomain.org/myfunctions')
+  >>> ns['hello'] = hello
+  >>> print root.xpath('f:hello(local-name(*))', {'f' : 'http://mydomain.org/myfunctions'})
+  Hello b
+
+
+Global prefix assignment
+------------------------
+
+In the last example, you had to specify a prefix for the function namespace.
+If you always use the same prefix for a function namespace, you can also
+register it with the namespace::
+
+  >>> ns = etree.FunctionNamespace('http://mydomain.org/myother/functions')
+  >>> ns.prefix = 'es'
+  >>> ns['hello'] = ola
+  >>> print root.xpath('es:hello(local-name(*))')
+  Ola b
+
+This is a global assignment, so take care not to assign the same prefix to
+more than one namespace.  The resulting behaviour in that case is completely
+undefined.  It is always a good idea to consistently use the same meaningful
+prefix for each namespace throughout your application.
+
+The prefix assignment only works with functions and FunctionNamespace objects,
+not with the general Namespace object that registers element classes.  The
+reasoning is that elements in lxml do not care about prefixes anyway, so it
+would rather complicate things than be of any help.
+
+
+What to return from a function
+------------------------------
+
+Extension functions can return any data type for which there is an XPath
+equivalent.  This includes numbers, boolean values, elements and lists of
+elements.
+
+  >>> def returnsFloat(_):
+  ...    return 1.7
+  >>> def returnsBool(_):
+  ...    return True
+  >>> def returnFirstNode(_, nodes):
+  ...    return nodes[0]
+
+  >>> ns = etree.FunctionNamespace(None)
+  >>> ns['float'] = returnsFloat
+  >>> ns['bool']  = returnsBool
+  >>> ns['first'] = returnFirstNode
+
+  >>> e = etree.XPathEvaluator(doc)
+  >>> e.evaluate("float()")
+  1.7
+  >>> e.evaluate("bool()")
+  True
+  >>> e.evaluate("count(first(//b))")
+  1.0
+
+
+Evaluators and XSLT
+-------------------
+
+Extension functions work for all ways of evaluating XPath expressions and for
+XSLT execution::
+
+  >>> e = etree.XPathEvaluator(doc)
+  >>> print e.evaluate('es:hello(local-name(/a))')
+  Ola a
+
+  >>> e = etree.XPathEvaluator(doc, namespaces={'f' : 'http://mydomain.org/myfunctions'})
+  >>> print e.evaluate('f:hello(local-name(/a))')
+  Hello a
+
+  >>> xslt = etree.XSLT(etree.ElementTree(etree.XML('''
+  ...   <stylesheet version="1.0"
+  ...          xmlns="http://www.w3.org/1999/XSL/Transform"
+  ...          xmlns:es="http://mydomain.org/myother/functions">
+  ...     <output method="text" encoding="ASCII"/>
+  ...     <template match="/">
+  ...       <value-of select="es:hello(string(//b))"/>
+  ...     </template>
+  ...   </stylesheet>
+  ... ''')))
+  >>> print xslt(doc)
+  Ola Haegar
+
+It is also possible to register namespaces with a single evaluator.  While the
+following example involves no functions, the idea should still be clear::
+  
+  >>> f = StringIO('<hey:a xmlns:hey="http://mydomain.org/myfunctions" />')
+  >>> ns_doc = etree.parse(f)
+  >>> e = etree.XPathEvaluator(ns_doc)
+  >>> e.evaluate('/a')
+  []
+
+This obviously returns nothing, but when we register the namespace with the
+evaluator, we can access it via a prefix.  Note that this prefix mapping is
+only known to this evaluator, as opposed to the global mapping of the
+FunctionNamespace objects::
+
+  >>> e.registerNamespace('foo', 'http://mydomain.org/myfunctions')
+  >>> e.evaluate('/foo:a')[0].tag
+  '{http://mydomain.org/myfunctions}a'
+
+
+BETA Features
+-------------
+
+Note: the following features are still in beta state.  They may not work as
+expected.
+
+It is possible to return lists of newly created nodes as XML structures::
+
+  >>> def returnsNodeSet(evaluator):
+  ...    results = etree.Element('results')
+  ...    result = etree.SubElement(results, 'result')
+  ...    result.text = "Alpha"
+  ...    result2 = etree.SubElement(results, 'result')
+  ...    result2.text = "Beta"
+  ...    result3 = etree.SubElement(results, 'result')
+  ...    result3.text = "Gamma"
+  ...    return [results]
+  >>> extension4 = { (None, 'returnsNodeSet') : returnsNodeSet }
+  >>> e = etree.XPathEvaluator(doc, None, extensions=[extension4])
+  >>> r = e.evaluate("returnsNodeSet()")
+  >>> len(r)
+  1
+  >>> t = r[0]
+  >>> t.tag
+  'results'
+  >>> len(t)
+  3
+  >>> t[0].tag
+  'result'
+  >>> t[0].text
+  'Alpha'
+  >>> t[1].text
+  'Beta'
+
+It's even possible to filter that result set with another XPath expression::
+
+  >>> r = e.evaluate("returnsNodeSet()/result")
+  >>> len(r)
+  3
+  >>> r[0].tag
+  'result'
+  >>> r[1].tag
+  'result'
+  >>> r[0].text
+  'Alpha'
