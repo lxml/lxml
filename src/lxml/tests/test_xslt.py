@@ -342,8 +342,6 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/xpath.txt')])
-    suite.addTests(
         [doctest.DocFileSuite('../../../doc/extensions.txt')])
     return suite
 
