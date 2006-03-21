@@ -12,6 +12,8 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.12 (newer versions should work). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
+See below for instructions how to get those for Windows.
+
 You also need Python 2.3 or later.
 
 If want to build lxml from SVN, you also need Pyrex_. If you are using
@@ -22,6 +24,7 @@ in the source distribution, so no Pyrex is needed in that case.
 
 See also the notes on building gcc 4.0 below if you are having trouble
 with Pyrex.
+
 
 Installation
 ------------
@@ -49,8 +52,28 @@ or just::
 This will not install lxml, but if you place lxml's "src" on your
 PYTHONPATH somehow, you can import it and play with it.
 
-Building lxml with gcc 4.0
---------------------------
+
+Installation on Windows
+-----------------------
+
+As always, installation on Windows is different. If you do not want to go
+through the hassle of compiling everything by hand, you can use the binary
+distribution of libxml2 and libxslt. It is available here:
+
+http://www.zlatkovic.com/libxml.en.html
+
+Note that you need both libxml2 and libxslt, as well as iconv and zlib. You
+can then download a binary version of lxml 0.9 for Python 2.4 from the
+following address:
+
+http://carcass.dhs.org/lxml-0.9.win32-py2.4.exe
+
+It was kindly contributed by Steve Howe. If this doesn't work for you, feel
+free to report to the mailing list.
+
+
+Building lxml with gcc 4.0 or Python 2.4
+----------------------------------------
 
 Pyrex 0.9.3.1 generates C code that gcc 4.0 does not accept. Pending an
 official release of a version of Pyrex that does work with gcc 4.0, the lxml
@@ -78,9 +101,9 @@ may be applicable to make lxml compile properly:
 
 http://codespeak.net/lxml/Pyrex-0.9.3-gcc4-small.patch
 
-It may however actually be that at the time you read this, this extra
-patch has been applied by the distributions as well. You may still
-encounter the following problem when building the extension::
+It may however actually be that at the time you read this, this extra patch
+has been applied by the distributions as well. You may still encounter the
+following problem when building the extension on Python 2.4::
 
   TypeError: swig_sources() takes exactly 2 arguments (3 given)
 
@@ -93,7 +116,9 @@ and change it to::
 
   def swig_sources (self, sources, *otherargs):
 
-The above install files have these three changes applied.
+The above install files have these changes applied. It should do no harm if
+you install them instead of the official Pyrex version.
+
 
 Troubleshooting
 ---------------
@@ -119,6 +144,7 @@ bottom of setup.py with an example.
 If you still have trouble, contact us on the `mailing list`_.
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
 
 Running the tests
 -----------------
