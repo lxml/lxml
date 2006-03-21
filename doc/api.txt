@@ -296,8 +296,15 @@ schema, and false if not::
 Error reporting works like for the RelaxNG class::
 
   >>> log = xmlschema.error_log
-  >>> print log.filter_from_errors()
-  <string>:1:ERROR:SCHEMASV:SCHEMAV_ELEMENT_CONTENT: Element 'c': This element is not expected. Expected is ( b ).
+  >>> errors = log.filter_from_errors()
+  >>> print errors[0].domain_name
+  SCHEMASV
+  >>> print errors[0].type_name
+  SCHEMAV_ELEMENT_CONTENT
+
+If you were to print this log entry, you would get something like the following::
+
+  <string>:1:ERROR::SCHEMAV_ELEMENT_CONTENT: Element 'c': This element is not expected. Expected is ( b ).
 
 Similar to XSLT and RelaxNG, there's also a less efficient but easier shortcut
 method to do XML Schema validation::
