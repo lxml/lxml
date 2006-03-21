@@ -22,8 +22,8 @@ in the source distribution, so no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
-See also the notes on building gcc 4.0 below if you are having trouble
-with Pyrex.
+See also the notes on building with gcc 4.0 below if you are having
+trouble with Pyrex.
 
 
 Installation
