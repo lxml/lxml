@@ -4,6 +4,8 @@ Installing lxml
 Requirements
 ------------
 
+You need Python 2.3 or later.
+
 You need libxml2 and libxslt, in particular:
 
 * libxml 2.6.16 (newer versions should work). It can be found here:
@@ -12,13 +14,13 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.12 (newer versions should work). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-See below for instructions how to get those for Windows.
+See below for instructions how to get these for Windows.  On MacOS-X 10.4, you
+can use the installed system libraries and the binary egg distribution of
+lxml.
 
-You also need Python 2.3 or later.
-
-If want to build lxml from SVN, you also need Pyrex_. If you are using
-a released version of lxml, it should come with the generated C file
-in the source distribution, so no Pyrex is needed in that case.
+If you want to build lxml from SVN, you also need Pyrex_. If you are using a
+released version of lxml, it should come with the generated C file in the
+source distribution, so no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
@@ -29,19 +31,21 @@ trouble with Pyrex.
 Installation
 ------------
 
-If you have easy_install_, you can use::
+If you have easy_install_, you can run the following as super-user::
 
-  sudo easy_install lxml
+  easy_install lxml
 
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-Otherwise type::
+This has been reported to work on both Linux and MacOS-X 10.4. Otherwise
+type::
 
   python setup.py install
 
 to compile and install the library.
 
-It's also possible to do this::
+If you do not want to install lxml right away, but first test it from the
+source directory, you can do this::
 
   python setup.py  build_ext -i
 
@@ -49,8 +53,8 @@ or just::
 
   make
 
-This will not install lxml, but if you place lxml's "src" on your
-PYTHONPATH somehow, you can import it and play with it.
+If you then place lxml's "src" directory on your PYTHONPATH somehow, you can
+import lxml.etree and play with it.
 
 
 Installation on Windows
@@ -68,8 +72,13 @@ following address:
 
 http://carcass.dhs.org/lxml-0.9.win32-py2.4.exe
 
-It was kindly contributed by Steve Howe. If this doesn't work for you, feel
-free to report to the mailing list.
+or the egg distribution from
+
+http://cheeseshop.python.org/pypi/lxml
+
+The egg can directly be installed using easy_install_. Both builds were kindly
+contributed by Steve Howe. If they do not work for you, feel free to report to
+the mailing list.
 
 
 Building lxml with gcc 4.0 or Python 2.4
