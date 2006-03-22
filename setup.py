@@ -39,6 +39,18 @@ It extends the ElementTree API significantly to offer support for XPath,
 RelaxNG, XML Schema, XSLT, C14N and much more.
 """,
 
+    classifiers = [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Information Technology',
+    'License :: OSI Approved :: BSD License',
+    'Programming Language :: Python',
+    'Programming Language :: C',
+    'Operating System :: OS Independent',
+    'Topic :: Text Processing :: Markup :: XML',
+    'Topic :: Software Development :: Libraries :: Python Modules'
+    ],
+
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.tests'],
     ext_modules = [ Extension(
