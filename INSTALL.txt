@@ -37,12 +37,11 @@ If you have easy_install_, you can run the following as super-user::
 
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-This has been reported to work on both Linux and MacOS-X 10.4. Otherwise
-type::
+This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
+libxml2 and libxslt are installed.  To compile and install lxml without
+easy_install, type::
 
   python setup.py install
-
-to compile and install the library.
 
 If you do not want to install lxml right away, but first test it from the
 source directory, you can do this::
