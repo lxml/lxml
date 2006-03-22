@@ -53,6 +53,7 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
 
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.tests'],
+    package_data = {'lxml.tests': ['*.xml', '*.rng', '*.xslt']},
     ext_modules = [ Extension(
         "lxml.etree", 
         sources = sources,
