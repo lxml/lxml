@@ -1089,14 +1089,17 @@ cdef class ElementTagFilter:
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:
     cdef xmlNode* c_node
-    if attrib is None:
-        attrib = {}
-    attrib.update(extra)
+    if python.PyObject_IsTrue(extra):
+        if attrib is None:
+            attrib = extra
+        else:
+            attrib.update(extra)
     c_node = tree.xmlNewDocNode(c_doc, NULL, name_utf, NULL)
-    for name, value in attrib.items():
-        attr_name_utf = _utf8(name)
-        value_utf = _utf8(value)
-        tree.xmlNewProp(c_node, attr_name_utf, value_utf)
+    if python.PyObject_IsTrue(attrib):
+        for name, value in attrib.items():
+            attr_name_utf = _utf8(name)
+            value_utf = _utf8(value)
+            tree.xmlNewProp(c_node, attr_name_utf, value_utf)
     return c_node
 
 cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
