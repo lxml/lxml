@@ -394,6 +394,7 @@ class BenchMark(BenchMarkBase):
 
 if __name__ == '__main__':
     import_lxml = True
+    callgrind_zero = False
     if len(sys.argv) > 1:
         try:
             sys.argv.remove('-i')
@@ -404,6 +405,12 @@ if __name__ == '__main__':
         try:
             sys.argv.remove('-nolxml')
             import_lxml = False
+        except ValueError:
+            pass
+
+        try:
+            sys.argv.remove('-c')
+            callgrind_zero = True
         except ValueError:
             pass
 
@@ -493,6 +500,11 @@ if __name__ == '__main__':
         for i, tree_times in enumerate(b.setup_times):
             print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
     print
+
+    if callgrind_zero:
+        cmd = open("callgrind.cmd", 'w')
+        cmd.write('Zero\n')
+        cmd.close()
 
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
