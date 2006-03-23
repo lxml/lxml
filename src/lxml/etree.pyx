@@ -364,6 +364,8 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
     return result
 
 cdef class _Element(_NodeBase):
+    cdef object _tag
+
     # MANIPULATORS
 
     def __setitem__(self, index, _NodeBase element):
@@ -508,11 +510,15 @@ cdef class _Element(_NodeBase):
     # PROPERTIES
     property tag:
         def __get__(self):
-            return _namespacedName(self._c_node)
+            if self._tag is not None:
+                return self._tag
+            self._tag = _namespacedName(self._c_node)
+            return self._tag
     
         def __set__(self, value):
             cdef xmlNs* c_ns
             ns, text = _getNsTag(value)
+            self._tag = value
             tree.xmlNodeSetName(self._c_node, _cstr(text))
             if ns is None:
                 return
@@ -776,6 +782,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     else:
         assert 0, "Unknown node type: %s" % c_node.type
     result = element_class()
+    result._tag = None
     result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
