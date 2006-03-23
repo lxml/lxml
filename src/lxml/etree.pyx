@@ -81,7 +81,7 @@ cdef class _Document:
         return _elementFactory(self, c_node)
 
     def buildNewPrefix(self):
-        ns = "ns%d" % self._ns_counter
+        ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         self._ns_counter = self._ns_counter + 1
         return ns
 
