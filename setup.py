@@ -4,14 +4,16 @@ def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().strip().split(' ')
 
+setup_args = {}
+
 try:
     from setuptools import setup
     from setuptools.extension import Extension
+    setup_args['zip_safe'] = True
 except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
 
-setup_args = {}
 try:
     from Pyrex.Distutils import build_ext as build_pyx
     sources = ["src/lxml/etree.pyx"]
