@@ -5,6 +5,8 @@ def flags(cmd):
     return rf.read().strip().split(' ')
 
 setup_args = {}
+changelog_text = ""
+version = open('version.txt').read().strip()
 
 try:
     from setuptools import setup
@@ -22,9 +24,32 @@ except ImportError:
     print "*NOTE*: Trying to build without Pyrex, needs pre-generated 'src/lxml/etree.c' !"
     sources = ["src/lxml/etree.c"]
 
+try:
+    changelog = open("CHANGES.txt", 'r')
+except:
+    print "*NOTE*: couldn't open CHANGES.txt !"
+else:
+    inside = 0
+    changelog_lines = []
+    for line in changelog:
+        if line.startswith('====='):
+            inside += 1
+            if inside > 3:
+                break
+        if inside > 1:
+            changelog_lines.append(line)
+        elif version in line:
+            changelog_lines.append(line)
+            inside += 1
+
+    if changelog_lines:
+        changelog_text = ''.join(changelog_lines[:-1])
+
+    changelog.close()
+
 setup(
     name = "lxml",
-    version = open('version.txt').read().strip(),
+    version = version,
     author="lxml dev team",
     author_email="lxml-dev@codespeak.net",
     maintainer="lxml dev team",
@@ -39,7 +64,8 @@ safe and convenient access to these libraries using the ElementTree API.
 
 It extends the ElementTree API significantly to offer support for XPath,
 RelaxNG, XML Schema, XSLT, C14N and much more.
-""",
+
+""" + changelog_text,
 
     classifiers = [
     'Development Status :: 5 - Production/Stable',
