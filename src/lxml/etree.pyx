@@ -1,6 +1,6 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, hasattr
+from python cimport isinstance, hasattr, callable, _cstr
 cimport xpath
 cimport xslt
 cimport xmlerror
@@ -96,7 +96,7 @@ cdef class _Document:
         # create ns if existing ns cannot be found
         # try to simulate ElementTree's namespace prefix creation
         prefix = self.buildNewPrefix()
-        c_ns = tree.xmlNewNs(c_node, href, prefix)
+        c_ns = tree.xmlNewNs(c_node, href, _cstr(prefix))
         return c_ns
 
     cdef void _setNodeNs(self, xmlNode* c_node, char* href):
@@ -122,10 +122,10 @@ cdef class _Document:
         c_doc  = self._c_doc
         for prefix, href in nsmap.items():
             href_utf = _utf8(href)
-            c_href = href_utf
+            c_href = _cstr(href_utf)
             if prefix is not None:
                 prefix_utf = _utf8(prefix)
-                c_prefix = prefix_utf
+                c_prefix = _cstr(prefix_utf)
             else:
                 c_prefix = NULL
             # add namespace with prefix if ns is not already known
@@ -513,10 +513,10 @@ cdef class _Element(_NodeBase):
         def __set__(self, value):
             cdef xmlNs* c_ns
             ns, text = _getNsTag(value)
-            tree.xmlNodeSetName(self._c_node, text)
+            tree.xmlNodeSetName(self._c_node, _cstr(text))
             if ns is None:
                 return
-            self._doc._setNodeNs(self._c_node, ns)
+            self._doc._setNodeNs(self._c_node, _cstr(ns))
 
     # not in ElementTree, read-only
     property prefix:
@@ -543,7 +543,7 @@ cdef class _Element(_NodeBase):
             # now add new text node with value at start
             text = _utf8(value)
             c_text_node = tree.xmlNewDocText(self._doc._c_doc,
-                                             text)
+                                             _cstr(text))
             if self._c_node.children is NULL:
                 tree.xmlAddChild(self._c_node, c_text_node)
             else:
@@ -561,7 +561,7 @@ cdef class _Element(_NodeBase):
             if value is None:
                 return
             text = _utf8(value)
-            c_text_node = tree.xmlNewDocText(self._doc._c_doc, text)
+            c_text_node = tree.xmlNewDocText(self._doc._c_doc, _cstr(text))
             # XXX what if we're the top element?
             tree.xmlAddNextSibling(self._c_node, c_text_node)
 
@@ -579,7 +579,7 @@ cdef class _Element(_NodeBase):
     def __getslice__(self, start, stop):
         cdef xmlNode* c_node
         cdef _Document doc
-        cdef int c
+        cdef int c, c_stop
         # this does not work for negative start, stop, however,
         # python seems to convert these to positive start, stop before
         # calling, so this all works perfectly (at the cost of a len() call)
@@ -587,9 +587,10 @@ cdef class _Element(_NodeBase):
         if c_node is NULL:
             return []
         c = start
+        c_stop = stop
         result = []
         doc = self._doc
-        while c_node is not NULL and c < stop:
+        while c_node is not NULL and c < c_stop:
             if _isElement(c_node):
                 ret = python.PyList_Append(result, _elementFactory(doc, c_node))
                 if ret:
@@ -692,11 +693,13 @@ cdef class _Element(_NodeBase):
         # XXX more redundancy, but might be slightly faster than
         #     return self.attrib.get(key, default)
         cdef char* cresult
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         if ns is None:
-            cresult = tree.xmlGetNoNsProp(self._c_node, tag)
+            cresult = tree.xmlGetNoNsProp(self._c_node, c_tag)
         else:
-            cresult = tree.xmlGetNsProp(self._c_node, tag, ns)
+            cresult = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
         if cresult is NULL:
             result = default
         else:
@@ -839,22 +842,28 @@ cdef class _Attrib(_NodeBase):
     # MANIPULATORS
     def __setitem__(self, key, value):
         cdef xmlNs* c_ns
+        cdef char* c_value
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         value = _utf8(value)
+        c_value = _cstr(value)
         if ns is None:
-            tree.xmlSetProp(self._c_node, tag, value)
+            tree.xmlSetProp(self._c_node, c_tag, c_value)
         else:
-            c_ns = self._doc._findOrBuildNodeNs(self._c_node, ns)
-            tree.xmlSetNsProp(self._c_node, c_ns, tag, value)
+            c_ns = self._doc._findOrBuildNodeNs(self._c_node, _cstr(ns))
+            tree.xmlSetNsProp(self._c_node, c_ns, c_tag, c_value)
 
     def __delitem__(self, key):
         cdef xmlNs* c_ns
         cdef xmlAttr* c_attr
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         if ns is None:
-            c_attr = tree.xmlHasProp(self._c_node, tag)
+            c_attr = tree.xmlHasProp(self._c_node, c_tag)
         else:
-            c_attr = tree.xmlHasNsProp(self._c_node, tag, ns)
+            c_attr = tree.xmlHasNsProp(self._c_node, c_tag, _cstr(ns))
         if c_attr is NULL:
             # XXX free namespace that is not in use..?
             raise KeyError, key
@@ -870,11 +879,13 @@ cdef class _Attrib(_NodeBase):
     def __getitem__(self, key):
         cdef xmlNs* c_ns
         cdef char* cresult
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         if ns is None:
-            cresult = tree.xmlGetNoNsProp(self._c_node, tag)
+            cresult = tree.xmlGetNoNsProp(self._c_node, c_tag)
         else:
-            cresult = tree.xmlGetNsProp(self._c_node, tag, ns)
+            cresult = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
         if cresult is NULL:
             # XXX free namespace that is not in use..?
             raise KeyError, key
@@ -908,7 +919,7 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                result.append(_namespacedName(c_node))
+                python.PyList_Append(result, _namespacedName(c_node))
             c_node = c_node.next
         return result
 
@@ -918,7 +929,7 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                result.append(self._getValue(c_node))
+                python.PyList_Append(result, self._getValue(c_node))
             c_node = c_node.next
         return result
 
@@ -936,7 +947,7 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                result.append((
+                python.PyList_Append(result, (
                     _namespacedName(c_node),
                     self._getValue(c_node)
                     ))
@@ -946,11 +957,13 @@ cdef class _Attrib(_NodeBase):
     def has_key(self, key):
         cdef xmlNs* c_ns
         cdef char* result
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, tag)
+            result = tree.xmlGetNoNsProp(self._c_node, c_tag)
         else:
-            result = tree.xmlGetNsProp(self._c_node, tag, ns)
+            result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
         if result is not NULL:
             tree.xmlFree(result)
             return True
@@ -960,11 +973,13 @@ cdef class _Attrib(_NodeBase):
     def __contains__(self, key):
         cdef xmlNs* c_ns
         cdef char* result
+        cdef char* c_tag
         ns, tag = _getNsTag(key)
+        c_tag = _cstr(tag)
         if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, tag)
+            result = tree.xmlGetNoNsProp(self._c_node, c_tag)
         else:
-            result = tree.xmlGetNsProp(self._c_node, tag, ns)
+            result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
         if result is not NULL:
             tree.xmlFree(result)
             return True
@@ -1064,11 +1079,11 @@ cdef class ElementTagFilter:
         self._iterator = iter(element_iterator)
         ns_href, name = _getNsTag(tag)
         self._pystrings = (ns_href, name) # keep Python references
-        self._name = name
+        self._name = _cstr(name)
         if ns_href is None:
             self._href = NULL
         else:
-            self._href = ns_href
+            self._href = _cstr(ns_href)
     def __iter__(self):
         return self
     def __next__(self):
@@ -1094,12 +1109,12 @@ cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
             attrib = extra
         else:
             attrib.update(extra)
-    c_node = tree.xmlNewDocNode(c_doc, NULL, name_utf, NULL)
+    c_node = tree.xmlNewDocNode(c_doc, NULL, _cstr(name_utf), NULL)
     if attrib:
         for name, value in attrib.items():
             attr_name_utf = _utf8(name)
             value_utf = _utf8(value)
-            tree.xmlNewProp(c_node, attr_name_utf, value_utf)
+            tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
     return c_node
 
 cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
@@ -1210,7 +1225,7 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     if encoding in ('utf8', 'UTF8', 'utf-8'):
         encoding = 'UTF-8'
     doc = element._doc
-    enc = encoding
+    enc = _cstr(encoding)
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(enc)
@@ -1521,7 +1536,7 @@ cdef object funicode(char* s):
 
 cdef object _utf8(object s):
     if python.PyString_Check(s):
-        assert not isutf8(s), "All strings must be Unicode or ASCII"
+        assert not isutf8(_cstr(s)), "All strings must be Unicode or ASCII"
         return s
     elif python.PyUnicode_Check(s):
         return python.PyUnicode_AsUTF8String(s)
@@ -1536,7 +1551,7 @@ cdef _getNsTag(tag):
     cdef char* c_pos
     cdef int nslen
     tag = _utf8(tag)
-    c_tag = tag
+    c_tag = _cstr(tag)
     if c_tag[0] == c'{':
         c_pos = tree.xmlStrchr(c_tag+1, c'}')
         if c_pos is NULL:
