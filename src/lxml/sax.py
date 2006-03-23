@@ -5,7 +5,7 @@ def _getNsTag(tag):
     if tag[0] == '{':
         return tag[1:].split('}', 1)
     else:
-        return tag
+        return None, tag
 
 class ElementTreeContentHandler(object, ContentHandler):
     """Build an lxml ElementTree from SAX events.
