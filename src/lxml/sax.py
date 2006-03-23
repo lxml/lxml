@@ -1,5 +1,11 @@
 from xml.sax.handler import ContentHandler
-from lxml.etree import ElementTree, Element, SubElement, _getNsTag
+from lxml.etree import ElementTree, Element, SubElement
+
+def _getNsTag(tag):
+    if tag[0] == '{':
+        return tag[1:].split('}', 1)
+    else:
+        return tag
 
 class ElementTreeContentHandler(object, ContentHandler):
     """Build an lxml ElementTree from SAX events.
