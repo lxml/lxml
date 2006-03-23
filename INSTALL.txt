@@ -50,7 +50,7 @@ easy_install, download the source tar-ball, unpack it and type::
   python setup.py install
 
 If you do not want to install lxml right away, but first test it from the
-source directory, you can do this::
+source directory, you can build it in-place like this::
 
   python setup.py  build_ext -i
 
@@ -134,16 +134,17 @@ The above install files have these changes applied. It should do no harm if
 you install them instead of the official Pyrex version.
 
 
+Running the tests and reporting errors
+--------------------------------------
 
-
-Running the tests
------------------
-
-You can run the main tests by using::
+The source distribution (tgz) contains a test suite for lxml.  You can run it
+from the top-level directory::
 
   python test.py
 
-Alternatively, you can use::
+Note that the test script only tests the in-place build (see "Installation"
+above), as it searches the "src" directory.  You can use the following
+one-step command to trigger an in-place build and test it::
 
   make test
 
@@ -156,9 +157,9 @@ and::
 
   python selftest2.py
 
-If the tests give failures, errors, or worse, segmentation faults,
-we'd really like to know. Please contact us on the `mailing list`_,
-and please specify the version of libxml2, libxslt and Python you were
-using.
+If the tests give failures, errors, or worse, segmentation faults, we'd really
+like to know. Please contact us on the `mailing list`_, and please specify the
+version of lxml, libxml2, libxslt and Python you were using, as well as your
+operating system type (Linux, Windows, MacOs, ...).
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
