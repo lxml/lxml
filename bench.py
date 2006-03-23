@@ -343,6 +343,11 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.tag
 
+    def bench_tag_repeat(self, root):
+        for child in root:
+            for i in repeat(0, 100):
+                child.tag
+
     @with_text(utext=True, text=True, no_text=True)
     def bench_text(self, root):
         for child in root:
@@ -466,6 +471,7 @@ if __name__ == '__main__':
                           for tree in tree_set ]
 
         times = []
+        args = ()
         for i in range(3):
             gc.collect()
             gc.disable()
@@ -478,6 +484,7 @@ if __name__ == '__main__':
             t = 1000.0 * t / len(call_repeat)
             times.append(t)
             gc.enable()
+            del args
         return times
 
     def build_treeset_name(trees, tn, an):
