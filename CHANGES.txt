@@ -4,8 +4,17 @@ lxml changelog
 0.9.1
 =====
 
+Features added
+--------------
+
+* Speedup for repeatedly accessing element tag names
+
+* Minor API performance improvements
+
 Bugs fixed
 ----------
+
+* sax.py was handling UTF-8 encoded tag names where it shouldn't
 
 * lxml.tests package will no longer be installed (is still in source tar)
 
