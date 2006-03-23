@@ -1089,13 +1089,13 @@ cdef class ElementTagFilter:
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,
                              object attrib, object extra) except NULL:
     cdef xmlNode* c_node
-    if python.PyObject_IsTrue(extra):
+    if extra:
         if attrib is None:
             attrib = extra
         else:
             attrib.update(extra)
     c_node = tree.xmlNewDocNode(c_doc, NULL, name_utf, NULL)
-    if python.PyObject_IsTrue(attrib):
+    if attrib:
         for name, value in attrib.items():
             attr_name_utf = _utf8(name)
             value_utf = _utf8(value)
@@ -1528,7 +1528,7 @@ cdef object _utf8(object s):
     else:
         raise TypeError, "Argument must be string or unicode."
 
-def _getNsTag(tag):
+cdef _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI available.
     """
@@ -1562,7 +1562,7 @@ cdef object _namespacedName(xmlNode* c_node):
         else:
             return s
 
-def _getFilenameForFile(source):
+cdef _getFilenameForFile(source):
     """Given a Python File or Gzip object, give filename back.
 
     Returns None if not a file object.
