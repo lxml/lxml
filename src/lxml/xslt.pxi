@@ -233,13 +233,15 @@ cdef class XSLTContext(BaseContext):
     def _contextRegisterExtensionFunction(self, ns_uri_utf, name_utf):
         if ns_uri_utf is None:
             raise XSLTExtensionError, "extensions must have non-empty namespaces"
-        xslt.xsltRegisterExtFunction(self._xsltCtxt,
-                                     name_utf, ns_uri_utf, _xpathCallback)
+        xslt.xsltRegisterExtFunction(
+            self._xsltCtxt, _cstr(name_utf), _cstr(ns_uri_utf),
+            _xpathCallback)
 
     def _contextUnregisterExtensionFunction(self, ns_uri_utf, name_utf):
         if ns_uri_utf is not None:
-            xslt.xsltRegisterExtFunction(self._xsltCtxt,
-                                         name_utf, ns_uri_utf, _xpathCallback)
+            xslt.xsltRegisterExtFunction(
+                self._xsltCtxt, _cstr(name_utf), _cstr(ns_uri_utf),
+                _xpathCallback)
 
 
 cdef class XSLT:
@@ -311,12 +313,12 @@ cdef class XSLT:
             keep_ref = []
             for key, value in _kw.items():
                 k = _utf8(key)
-                keep_ref.append(k)
+                python.PyList_Append(keep_ref, k)
                 v = _utf8(value)
-                keep_ref.append(v)
-                params[i] = k
+                python.PyList_Append(keep_ref, v)
+                params[i] = _cstr(k)
                 i = i + 1
-                params[i] = v
+                params[i] = _cstr(v)
                 i = i + 1
             params[i] = NULL
         else:
@@ -426,31 +428,34 @@ cdef class XPathContext(BaseContext):
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, name_utf, _wrapXPathObject(value))
+            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
 
     cdef void _unregisterVariable(self, name_utf):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject* xpathVarValue
         xpathCtxt = self._xpathCtxt
-        xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, name_utf)
+        xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, _cstr(name_utf))
         if xpathVarValue is not NULL:
-            xpath.xmlXPathRegisterVariable(xpathCtxt, name_utf, NULL)
+            xpath.xmlXPathRegisterVariable(xpathCtxt, _cstr(name_utf), NULL)
             xpath.xmlXPathFreeObject(xpathVarValue)
 
     def _contextRegisterExtensionFunction(self, ns_uri_utf, name_utf):
         if ns_uri_utf is not None:
-            xpath.xmlXPathRegisterFuncNS(self._xpathCtxt,
-                                         name_utf, ns_uri_utf, _xpathCallback)
+            xpath.xmlXPathRegisterFuncNS(
+                self._xpathCtxt, _cstr(name_utf), _cstr(ns_uri_utf),
+                _xpathCallback)
         else:
-            xpath.xmlXPathRegisterFunc(self._xpathCtxt, name_utf,
-                                       _xpathCallback)
+            xpath.xmlXPathRegisterFunc(
+                self._xpathCtxt, _cstr(name_utf),
+                _xpathCallback)
 
     def _contextUnregisterExtensionFunction(self, ns_uri_utf, name_utf):
         if ns_uri_utf is not None:
-            xpath.xmlXPathRegisterFuncNS(self._xpathCtxt,
-                                         name_utf, ns_uri_utf, NULL)
+            xpath.xmlXPathRegisterFuncNS(
+                self._xpathCtxt, _cstr(name_utf), _cstr(ns_uri_utf), NULL)
         else:
-            xpath.xmlXPathRegisterFunc(self._xpathCtxt, name_utf, NULL)
+            xpath.xmlXPathRegisterFunc(
+                self._xpathCtxt, _cstr(name_utf), NULL)
 
 
 cdef class XPathEvaluatorBase:
@@ -535,7 +540,7 @@ cdef class XPathDocumentEvaluator(XPathEvaluatorBase):
         self._context.registerVariables(variable_dict)
 
         path = _utf8(path)
-        xpathObj = xpath.xmlXPathEvalExpression(path, xpathCtxt)
+        xpathObj = xpath.xmlXPathEvalExpression(_cstr(path), xpathCtxt)
         self._context.unregister_context()
 
         return self._handle_result(xpathObj, self._doc)
@@ -582,7 +587,7 @@ cdef class XPath(XPathEvaluatorBase):
         XPathEvaluatorBase.__init__(self, namespaces, extensions, None)
         self.path = path
         path = _utf8(path)
-        self._xpath = xpath.xmlXPathCompile(path)
+        self._xpath = xpath.xmlXPathCompile(_cstr(path))
         if self._xpath is NULL:
             raise XPathSyntaxError, "Error in xpath expression."
 
@@ -660,7 +665,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
         obj = _utf8(obj)
     if python.PyString_Check(obj):
         # XXX use the Wrap variant? Or leak...
-        return xpath.xmlXPathNewCString(obj)
+        return xpath.xmlXPathNewCString(_cstr(obj))
     if python.PyBool_Check(obj):
         return xpath.xmlXPathNewBoolean(obj)
     if python.PyNumber_Check(obj):
