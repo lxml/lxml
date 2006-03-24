@@ -24,6 +24,12 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEquals('<a>ab<b>bb</b>ba</a>',
                           xml_out)
 
+    def test_etree_sax_attributes(self):
+        tree = self.parse('<a aa="5">ab<b b="5"/>ba</a>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEquals('<a aa="5">ab<b b="5"/>ba</a>',
+                          xml_out)
+
     def test_etree_sax_ns1(self):
         tree = self.parse('<a xmlns="bla">ab<b>bb</b>ba</a>')
         new_tree = self._saxify_unsaxify(tree)
@@ -121,6 +127,36 @@ class ETreeSaxTestCase(HelperTestCase):
                          '{blaB}b')
         self.assertEqual(root[1].tag,
                          '{blaA}c')
+
+    def test_etree_sax_no_ns(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startElement('a', {})
+        handler.startElement('b', {})
+        handler.endElement('b')
+        handler.startElement('c') # with empty attributes
+        handler.endElement('c')
+        handler.endElement('a')
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual(root.tag,    'a')
+        self.assertEqual(root[0].tag, 'b')
+        self.assertEqual(root[1].tag, 'c')
+
+    def test_etree_sax_error(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startElement('a')
+        self.assertRaises(sax.SaxError, handler.endElement, 'b')
+
+    def test_etree_sax_error2(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startElement('a')
+        handler.startElement('b')
+        self.assertRaises(sax.SaxError, handler.endElement, 'a')
 
     def _saxify_unsaxify(self, saxifiable):
         handler = sax.ElementTreeContentHandler()

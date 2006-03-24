@@ -1,11 +1,14 @@
 from xml.sax.handler import ContentHandler
-from lxml.etree import ElementTree, Element, SubElement
+from lxml.etree import ElementTree, Element, SubElement, LxmlError
+
+class SaxError(LxmlError):
+    pass
 
 def _getNsTag(tag):
     if tag[0] == '{':
-        return tag[1:].split('}', 1)
+        return tuple(tag[1:].split('}', 1))
     else:
-        return None, tag
+        return (None, tag)
 
 class ElementTreeContentHandler(object, ContentHandler):
     """Build an lxml ElementTree from SAX events.
@@ -47,27 +50,30 @@ class ElementTreeContentHandler(object, ContentHandler):
         if prefix is None:
             self._default_ns = ns_uri_list[-1]
 
-    def startElementNS(self, name, qname, attributes):
-        ns_uri, local_name = name
+    def startElementNS(self, ns_name, qname, attributes=None):
+        ns_uri, local_name = ns_name
         if ns_uri:
-            el_name = "{%s}%s" % name
+            el_name = "{%s}%s" % ns_name
         elif self._default_ns:
             el_name = "{%s}%s" % (self._default_ns, local_name)
         else:
             el_name = local_name
 
-        try:
-            iter_attributes = attributes.iteritems()
-        except AttributeError:
-            iter_attributes = attributes.items()
+        if attributes:
+            attrs = {}
+            try:
+                iter_attributes = attributes.iteritems()
+            except AttributeError:
+                iter_attributes = attributes.items()
 
-        attrs = {}
-        for name_tuple, value in iter_attributes:
-            if name_tuple[0]:
-                attr_name = "{%s}%s" % name_tuple
-            else:
-                attr_name = name_tuple[1]
-            attrs[attr_name] = value
+            for name_tuple, value in iter_attributes:
+                if name_tuple[0]:
+                    attr_name = "{%s}%s" % name_tuple
+                else:
+                    attr_name = name_tuple[1]
+                attrs[attr_name] = value
+        else:
+            attrs = None
 
         element_stack = self._element_stack
         if self._root is None:
@@ -79,8 +85,17 @@ class ElementTreeContentHandler(object, ContentHandler):
 
         self._new_mappings.clear()
 
-    def endElementNS(self, name, qname):
-        self._element_stack.pop()
+    def endElementNS(self, ns_name, qname):
+        element = self._element_stack.pop()
+        tag = element.tag
+        if ns_name != _getNsTag(tag):
+            raise SaxError, "Unexpected element closed: {%s}%s" % ns_name
+
+    def startElement(self, name, attributes=None):
+        self.startElementNS((None, name), name, attributes)
+
+    def endElement(self, name):
+        self.endElementNS((None, name), name)
 
     def characters(self, data):
         last_element = self._element_stack[-1]
@@ -111,20 +126,22 @@ class ElementTreeProducer(object):
 
     def _recursive_saxify(self, element, prefixes):
         new_prefixes = []
-        if element.attrib:
+        build_qname = self._build_qname
+        attribs = element.items()
+        if attribs:
             attr_values = {}
             attr_qnames = {}
-            for attr_ns_name, value in element.attrib.items():
+            for attr_ns_name, value in attribs:
                 attr_ns_tuple = _getNsTag(attr_ns_name)
                 attr_values[attr_ns_tuple] = value
-                attr_qnames[attr_ns_tuple] = _build_qname(
+                attr_qnames[attr_ns_tuple] = build_qname(
                     attr_ns_tuple[0], attr_ns_tuple[1], prefixes, new_prefixes)
             sax_attributes = self._attr_class(attr_values, attr_qnames)
         else:
             sax_attributes = self._empty_attributes
 
         ns_uri, local_name = _getNsTag(element.tag)
-        qname = _build_qname(ns_uri, local_name, prefixes, new_prefixes)
+        qname = build_qname(ns_uri, local_name, prefixes, new_prefixes)
 
         content_handler = self._content_handler
         for prefix, uri in new_prefixes:
@@ -141,15 +158,15 @@ class ElementTreeProducer(object):
         if element.tail:
             content_handler.characters(element.tail)
 
+    def _build_qname(self, ns_uri, local_name, prefixes, new_prefixes):
+        if ns_uri is None:
+            return local_name
+        try:
+            prefix = prefixes[ns_uri]
+        except KeyError:
+            prefix = prefixes[ns_uri] = u'ns%02d' % len(prefixes)
+            new_prefixes.append( (prefix, ns_uri) )
+        return prefix + ':' + local_name
+
 def saxify(element_or_tree, content_handler):
     return ElementTreeProducer(element_or_tree, content_handler).saxify()
-    
-def _build_qname(ns_uri, local_name, prefixes, new_prefixes):
-    if ns_uri is None:
-        return local_name
-    try:
-        prefix = prefixes[ns_uri]
-    except KeyError:
-        prefix = prefixes[ns_uri] = u'ns%02d' % len(prefixes)
-        new_prefixes.append( (prefix, ns_uri) )
-    return prefix + ':' + local_name
