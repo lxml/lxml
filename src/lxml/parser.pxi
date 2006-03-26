@@ -110,7 +110,7 @@ cdef class Parser:
             parse_options = _DEFAULT_PARSE_OPTIONS
 
         self._initParse()
-        pctxt = xmlparser.xmlCreateDocParserCtxt(text)
+        pctxt = xmlparser.xmlCreateDocParserCtxt(_cstr(text))
         if pctxt is NULL:
             raise XMLSyntaxError
 

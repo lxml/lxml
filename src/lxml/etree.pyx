@@ -143,22 +143,26 @@ cdef _Document _parseDocument(source, parser):
     cdef xmlDoc* c_doc
     # XXX simplistic (c)StringIO support
     if hasattr(source, 'getvalue'):
-        c_doc = theParser.parseDoc(source.getvalue(), parser)
-    else:
-        filename = _getFilenameForFile(source)
-        # Support for unamed file-like object (eg urlgrabber.urlopen)
-        if not filename and hasattr(source, 'read'):
-            c_doc = theParser.parseDoc(source.read(), parser)
-        # Otherwise parse the file directly from the filesystem
-        else:
-            if filename is None:
-                filename = source
-            # open filename
-            c_doc = theParser.parseDocFromFile(filename, parser)
-    if c_doc is NULL:
-        return None
-    else:
-        return _documentFactory(c_doc)
+        return _parseMemoryDocument(source.getvalue(), parser)
+
+    filename = _getFilenameForFile(source)
+    # Support for unamed file-like object (eg urlgrabber.urlopen)
+    if not filename and hasattr(source, 'read'):
+        return _parseMemoryDocument(source.read(), parser)
+
+    # Otherwise parse the file directly from the filesystem
+    if filename is None:
+        filename = source
+    # open filename
+    c_doc = theParser.parseDocFromFile(filename, parser)
+    return _documentFactory(c_doc)
+
+cdef _Document _parseMemoryDocument(text, parser):
+    cdef xmlDoc* c_doc
+    if python.PyUnicode_Check(text):
+        text = _stripDeclaration(_utf8(text))
+    c_doc = theParser.parseDoc(text, parser)
+    return _documentFactory(c_doc)
 
 cdef _Document _documentFactory(xmlDoc* c_doc):
     cdef _Document result
@@ -1195,11 +1199,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
     return etree
 
 def XML(text):
-    cdef xmlDoc* c_doc
-    if python.PyUnicode_Check(text):
-        text = _stripDeclaration(_utf8(text))
-    c_doc = theParser.parseDoc(text, None)
-    return _documentFactory(c_doc).getroot()
+    return _parseMemoryDocument(text, None).getroot()
 
 fromstring = XML
 
