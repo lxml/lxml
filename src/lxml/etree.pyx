@@ -73,14 +73,14 @@ cdef class _Document:
         #print self._c_doc.dict is theParser._c_dict
         tree.xmlFreeDoc(self._c_doc)
 
-    def getroot(self):
+    cdef getroot(self):
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
         if c_node is NULL:
             return None
         return _elementFactory(self, c_node)
 
-    def buildNewPrefix(self):
+    cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         self._ns_counter = self._ns_counter + 1
         return ns
@@ -195,7 +195,7 @@ cdef class _NodeBase:
         #displayNode(self._c_node, 0)
         if self._c_node is not NULL:
             unregisterProxy(self)
-        attemptDeallocation(self._c_node)
+            attemptDeallocation(self._c_node)
 
     def _init(self):
         """Called after object initialisation. Subclasses may override
@@ -1299,10 +1299,12 @@ cdef _Document _documentOf(object input):
 cdef _NodeBase _rootNodeOf(object input):
     # call this to get the root node of a
     # _Document, _ElementTree or _NodeBase object
-    if hasattr(input, 'getroot'): # Document/ElementTree
+    if hasattr(input, 'getroot'): # ElementTree
         return <_NodeBase>(input.getroot())
     elif isinstance(input, _NodeBase):
         return <_NodeBase>input
+    elif isinstance(input, _Document):
+        return (<_Document>input).getroot()
     else:
         return None
 
