@@ -1377,11 +1377,9 @@ cdef _dumpNextNode(tree.xmlOutputBuffer* c_buffer, xmlDoc* c_doc,
                    xmlNode* c_node, char* encoding):
     cdef xmlNode* c_next
     c_next = c_node.next
-    if not (c_next is not NULL and c_next.type == tree.XML_TEXT_NODE):
-        c_next = NULL
-    if c_next is not NULL:
+    if c_next is not NULL and c_next.type == tree.XML_TEXT_NODE:
         tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)
-        
+
 cdef object _stripDeclaration(object xml_string):
     xml_string = xml_string.strip()
     if xml_string[:5] == '<?xml':
