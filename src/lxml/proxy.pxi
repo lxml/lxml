@@ -103,7 +103,8 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     while c_current is not NULL:
         #print "checking:", c_current.type
         # if we're still attached to the document, don't deallocate
-        if c_current.type == tree.XML_DOCUMENT_NODE:
+        if c_current.type == tree.XML_DOCUMENT_NODE or \
+               c_current.type == tree.XML_HTML_DOCUMENT_NODE:
             #print "not freeing: still in doc"
             return NULL
         c_top = c_current
