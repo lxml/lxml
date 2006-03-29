@@ -160,6 +160,23 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           st.tostring(res))
         
+    def test_xslt_html_output(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output method="html"/>
+  <xsl:strip-space elements="*"/>
+  <xsl:template match="/">
+    <html><body><xsl:value-of select="/a/b/text()" /></body></html>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''<html><body>B</body></html>''',
+                          str(res).strip())
+
     def test_xslt_multiple_files(self):
         tree = etree.parse(fileInTestDir('test1.xslt'))
         st = etree.XSLT(tree)

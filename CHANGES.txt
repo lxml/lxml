@@ -23,6 +23,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory deallocation bug when using XSLT output method "html"
+
 * sax.py was handling UTF-8 encoded tag names where it shouldn't
 
 * lxml.tests package will no longer be installed (is still in source tar)
