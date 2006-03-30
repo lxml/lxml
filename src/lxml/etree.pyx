@@ -935,8 +935,8 @@ cdef class _Attrib(_NodeBase):
         return result
 
     def values(self):
-        result = []
         cdef xmlNode* c_node
+        result = []
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -945,6 +945,7 @@ cdef class _Attrib(_NodeBase):
         return result
 
     cdef object _getValue(self, xmlNode* c_node):
+        cdef char* value
         if c_node.ns is NULL or c_node.ns.href is NULL:
             value = tree.xmlGetNoNsProp(self._c_node, c_node.name)
         else:
