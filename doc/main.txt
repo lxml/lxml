@@ -16,6 +16,8 @@ the introduction_ for more information about background and goals.
 News
 ----
 
+* 2006-03-30: `lxml 0.9.1`_ released (`changes for 0.9.1`_)
+
 * 2006-03-20: `lxml 0.9`_ released (`changes for 0.9`_)
 
 * 2005-11-03: `lxml 0.8`_ released (`changes for 0.8`_)
@@ -28,6 +30,8 @@ News
 
 * 2005-04-08: `lxml 0.5`_ released!
 
+.. _`lxml 0.9.1`: lxml-0.9.1.tgz
+
 .. _`lxml 0.9`: lxml-0.9.tgz
 
 .. _`lxml 0.8`: lxml-0.8.tgz
@@ -39,6 +43,8 @@ News
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 
 .. _`lxml 0.5`: lxml-0.5.tgz
+
+.. _`CHANGES for 0.9.1`: changes-0.9.1.html
 
 .. _`CHANGES for 0.9`: changes-0.9.html
 
@@ -100,6 +106,8 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
 Download
 --------
+
+* `lxml 0.9.1`_ (2006-03-30)
 
 * `lxml 0.9`_ (2006-03-20)
 
