@@ -14,8 +14,6 @@ Features added
   (startElement, endElement) and defaults to empty attributes (keyword
   argument)
 
-* zip_safe flag allows setuptools to install lxml as zipped egg
-
 * Speedup for repeatedly accessing element tag names
 
 * Minor API performance improvements
