@@ -11,7 +11,6 @@ version = open('version.txt').read().strip()
 try:
     from setuptools import setup
     from setuptools.extension import Extension
-    setup_args['zip_safe'] = True
 except ImportError:
     from distutils.core import setup
     from distutils.extension import Extension
