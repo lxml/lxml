@@ -8,7 +8,7 @@ compatible with that in the Python core (xml.sax), so is useful for
 interfacing lxml with code that uses the Python core SAX facilities.
 
 Producing SAX events from an ElementTree or Element
---------------------------------------------------
+---------------------------------------------------
 
 Let's make a tree we can generate SAX events for::
 
