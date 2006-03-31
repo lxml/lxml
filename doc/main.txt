@@ -121,6 +121,12 @@ Download
 
 * `lxml 0.5`_ (2005-04-08)
 
+Instead of downloading the source here, you can also find `lxml at the
+Python cheeseshop`_ in source, egg and installer form for various
+platforms.
+
+.. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
+
 See also the `installation instructions`_.
 
 .. _`installation instructions`: installation.html
