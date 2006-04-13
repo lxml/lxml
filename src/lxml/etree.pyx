@@ -1292,8 +1292,8 @@ cdef _Document _documentOf(object input):
 cdef _NodeBase _rootNodeOf(object input):
     # call this to get the root node of a
     # _Document, _ElementTree or _NodeBase object
-    if hasattr(input, 'getroot'): # ElementTree
-        return <_NodeBase>(input.getroot())
+    if isinstance(input, _ElementTree):
+        return (<_ElementTree>input)._context_node
     elif isinstance(input, _NodeBase):
         return <_NodeBase>input
     elif isinstance(input, _Document):
