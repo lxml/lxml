@@ -1,6 +1,23 @@
 lxml changelog
 ==============
 
+current
+=======
+
+Features added
+--------------
+
+* ElementTree compatible QName class
+
+* RelaxNG and XMLSchema now accept any Element, not only ElementTrees
+
+Bugs fixed
+----------
+
+* Crash in XMLSchema and RelaxNG when passing non-schema documents
+
+* Memory leak in RelaxNG() when RelaxNGParseError is raised
+
 0.9.1 (2006-03-30)
 ==================
 
