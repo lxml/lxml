@@ -26,7 +26,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 
-    def test_xmlschema_invalid_schema(self):
+    def test_xmlschema_invalid_schema1(self):
         schema = self.parse('''\
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <element name="a" type="AType"/>
@@ -37,6 +37,11 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
   </xsd:complexType>
 </xsd:schema>
 ''')
+        self.assertRaises(etree.XMLSchemaParseError,
+                          etree.XMLSchema, schema)
+
+    def test_xmlschema_invalid_schema2(self):
+        schema = self.parse('<test/>')
         self.assertRaises(etree.XMLSchemaParseError,
                           etree.XMLSchema, schema)
 
