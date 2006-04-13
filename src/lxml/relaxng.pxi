@@ -14,7 +14,7 @@ class RelaxNGValidateError(RelaxNGError):
 # RelaxNG
 
 cdef class RelaxNG:
-    """Turn a document into an Relax NG validator.
+    """Turn a document into a Relax NG validator.
     Can also load from filesystem directly given file object or filename.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
