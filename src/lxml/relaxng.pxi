@@ -23,6 +23,7 @@ cdef class RelaxNG:
     def __init__(self, etree=None, file=None):
         cdef _Document doc
         cdef _NodeBase root_node
+        cdef xmlNode* c_node
         cdef xmlDoc* fake_c_doc
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
 
@@ -30,6 +31,12 @@ cdef class RelaxNG:
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOf(etree)
+            c_node = root_node._c_node
+            # work around for libxml2 bug if document is not RNG at all
+            if c_node.ns is NULL or c_node.ns.href is NULL or \
+                   tree.strcmp(c_node.ns.href,
+                               'http://relaxng.org/ns/structure/1.0') != 0:
+                raise RelaxNGParseError, "Document is not Relax NG"
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
@@ -47,8 +54,11 @@ cdef class RelaxNG:
             raise RelaxNGParseError, "Document is not parsable as Relax NG"
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
 
+        # XXX: freeing parser context will crash if document was not RNG!!
+        #relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
             if fake_c_doc is not NULL:
+                relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError, "Document is not valid Relax NG"
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
