@@ -1787,6 +1787,14 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(self._rootstring(t1), '<a><b/></a>')
         self.assertEquals(self._rootstring(t),  '<a><b/></a>')
 
+    def test_qname(self):
+        etree = self.etree
+        qname = etree.QName('myns', 'a')
+        a1 = etree.Element(qname)
+        a2 = etree.SubElement(a1, qname)
+        self.assertEquals(a1.tag, "{myns}a")
+        self.assertEquals(a2.tag, "{myns}a")
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

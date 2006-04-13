@@ -1,6 +1,6 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, hasattr, callable, _cstr
+from python cimport isinstance, hasattr, callable, str, _cstr
 cimport xpath
 cimport xslt
 cimport xmlerror
@@ -1203,6 +1203,20 @@ def XMLID(text):
         python.PyDict_SetItem(dic, elem.get('id'), elem)
     return (root, dic)
 
+cdef class QName:
+    cdef readonly object text
+    def __init__(self, text_or_uri, tag=None):
+        if tag is not None:
+            text_or_uri = "{%s}%s" % (text_or_uri, tag)
+        elif not python.PyString_Check(text_or_uri) and \
+             not python.PyUnicode_Check(text_or_uri):
+            text_or_uri = str(text_or_uri)
+        self.text = text_or_uri
+    def __str__(self):
+        return self.text
+    def __hash__(self):
+        return self.text.__hash__()
+
 def iselement(element):
     return isinstance(element, _Element)
 
@@ -1559,6 +1573,8 @@ cdef _getNsTag(tag):
     cdef char* c_tag
     cdef char* c_pos
     cdef int nslen
+    if isinstance(tag, QName):
+        tag = (<QName>tag).text
     tag = _utf8(tag)
     c_tag = _cstr(tag)
     if c_tag[0] == c'{':

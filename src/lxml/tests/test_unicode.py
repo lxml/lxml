@@ -22,6 +22,13 @@ class UnicodeTestCase(unittest.TestCase):
         el = etree.Element(tag)
         self.assertEquals(tag, el.tag)
 
+    def test_unicode_qname(self):
+        qname = etree.QName(uni, uni)
+        tag = u"{%s}%s" % (uni, uni)
+        self.assertEquals(qname.text, tag)
+        self.assertEquals(qname.__str__(), tag)
+        self.assertEquals(unicode(qname), tag)
+
     def test_unicode_attr(self):
         el = etree.Element('foo', {'bar': uni})
         self.assertEquals(uni, el.attrib['bar'])
