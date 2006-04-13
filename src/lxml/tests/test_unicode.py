@@ -26,7 +26,6 @@ class UnicodeTestCase(unittest.TestCase):
         qname = etree.QName(uni, uni)
         tag = u"{%s}%s" % (uni, uni)
         self.assertEquals(qname.text, tag)
-        self.assertEquals(qname.__str__(), tag)
         self.assertEquals(unicode(qname), tag)
 
     def test_unicode_attr(self):
