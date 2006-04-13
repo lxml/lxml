@@ -10,7 +10,7 @@ cdef class ElementBase(_Element):
     persistent state of elements must be stored in the underlying XML."""
     pass
 
-class XSLTElement(object):
+cdef class XSLTElement:
     "NOT IMPLEMENTED YET!"
     pass
 

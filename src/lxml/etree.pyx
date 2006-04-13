@@ -1,6 +1,6 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, hasattr, callable, str, _cstr
+from python cimport isinstance, issubclass, hasattr, callable, str, _cstr
 cimport xpath
 cimport xslt
 cimport xmlerror

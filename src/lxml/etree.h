@@ -2,6 +2,7 @@
 #define HAS_ETREE_H
 
 #define isinstance(o,c) PyObject_IsInstance(o,c)
+#define issubclass(c,csuper) PyObject_IsSubclass(c,csuper)
 #define hasattr(o,a)    PyObject_HasAttr(o,a)
 #define callable(o)     PyCallable_Check(o)
 #define str(o)          PyObject_Str(o)
