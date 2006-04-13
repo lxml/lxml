@@ -33,12 +33,10 @@ cdef extern from "Python.h":
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
-    cdef int PyCallable_Check(object instance)
-    cdef int PyObject_IsInstance(object instance, object classes)
-    cdef int PyObject_HasAttr(object obj, object attr)
 
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int isinstance(object instance, object classes)
     cdef int hasattr(object obj, object attr)
     cdef int callable(object obj)
+    cdef object str(object obj)
     cdef char* _cstr(object s)

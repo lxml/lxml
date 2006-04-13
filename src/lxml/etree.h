@@ -1,9 +1,10 @@
 #ifndef HAS_ETREE_H
 #define HAS_ETREE_H
 
-#define isinstance(a,b) PyObject_IsInstance(a,b)
-#define hasattr(a,b)    PyObject_HasAttr(a,b)
-#define callable(a)     PyCallable_Check(a)
+#define isinstance(o,c) PyObject_IsInstance(o,c)
+#define hasattr(o,a)    PyObject_HasAttr(o,a)
+#define callable(o)     PyCallable_Check(o)
+#define str(o)          PyObject_Str(o)
 #define _cstr(s)        PyString_AS_STRING(s)
 #define _isElement(c_node) \
         ((c_node)->type == XML_ELEMENT_NODE || \
