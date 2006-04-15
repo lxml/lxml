@@ -628,6 +628,9 @@ cdef class _Element(_NodeBase):
     def __iter__(self):
         return ElementChildIterator(self)
 
+    def __reversed__(self):
+        return ElementChildIterator(self, reversed=True)
+
     def index(self, _Element x, start=None, stop=None):
         cdef int k
         cdef int l
@@ -1002,12 +1005,20 @@ cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     registerProxy(result, PROXY_ATTRIB)
     return result
 
+ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
+
 cdef class ElementChildIterator:
     # we keep Python references here to control GC
     cdef _NodeBase _node
-    def __init__(self, _NodeBase node): # Python ref!
+    cdef _node_to_node_function _next_element
+    def __init__(self, _NodeBase node, reversed=False): # Python ref!
         cdef xmlNode* c_node
-        c_node = _findChildForwards(node._c_node, 0)
+        if reversed:
+            c_node = _findChildBackwards(node._c_node, 0)
+            self._next_element = _previousElement
+        else:
+            c_node = _findChildForwards(node._c_node, 0)
+            self._next_element = _nextElement
         if c_node is NULL:
             self._node = None
         else:
@@ -1021,7 +1032,7 @@ cdef class ElementChildIterator:
         current_node = self._node
         if current_node is None:
             raise StopIteration
-        c_node = _nextElement(current_node._c_node)
+        c_node = self._next_element(current_node._c_node)
         if c_node is NULL:
             self._node = None
         else:
@@ -1499,6 +1510,16 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
         if _isElement(c_node):
             return c_node
         c_node = c_node.next
+    return NULL
+
+cdef xmlNode* _previousElement(xmlNode* c_node):
+    """Given a node, find the next sibling that is an element.
+    """
+    c_node = c_node.prev
+    while c_node is not NULL:
+        if _isElement(c_node):
+            return c_node
+        c_node = c_node.prev
     return NULL
 
 cdef void _removeNode(xmlNode* c_node):
