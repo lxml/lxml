@@ -393,7 +393,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             result.append(el.tag)
         self.assertEquals(['one', 'two', 'three'], result)
 
-    def test_iteration2(self):
+    def test_iteration_empty(self):
         XML = self.etree.XML
         
         root = XML('<doc></doc>')
@@ -402,7 +402,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             result.append(el.tag)
         self.assertEquals([], result)
 
-    def test_iteration3(self):
+    def test_iteration_text_only(self):
         XML = self.etree.XML
         
         root = XML('<doc>Text</doc>')
@@ -418,7 +418,22 @@ class ETreeTestCaseBase(unittest.TestCase):
         for elem in root:
             elem.tail = ''
 
-    def test_iteration4(self):
+    def test_iteration_reversed(self):
+        XML = self.etree.XML
+
+        try:
+            reversed(())
+        except NameError:
+            # before Python 2.4
+            return
+
+        root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
+        result = []
+        for el in reversed(root):
+            result.append(el.tag)
+        self.assertEquals(['three', 'two', 'one'], result)
+
+    def test_iteration_subelement(self):
         XML = self.etree.XML
 
         root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
@@ -431,7 +446,7 @@ class ETreeTestCaseBase(unittest.TestCase):
                 add = False
         self.assertEquals(['one', 'two', 'three', 'four'], result)
 
-    def test_iteration5(self):
+    def test_iteration_del_child(self):
         XML = self.etree.XML
 
         root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
@@ -441,7 +456,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             del root[-1]
         self.assertEquals(['one', 'two'], result)
 
-    def test_iteration6(self):
+    def test_iteration_double(self):
         XML = self.etree.XML
 
         root = XML('<doc><one/><two/></doc>')
