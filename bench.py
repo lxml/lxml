@@ -240,6 +240,14 @@ class BenchMarkBase(object):
 ############################################################
 
 class BenchMark(BenchMarkBase):
+    def bench_iter_children(self, root):
+        for child in root:
+            pass
+
+    def bench_iter_children_reversed(self, root):
+        for child in reversed(root):
+            pass
+
     def bench_append_from_document(self, root1, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
         for el in root2:
