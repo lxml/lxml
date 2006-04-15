@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Speedup for reversed() iteration over element children (Py2.4+ only)
+
 * ElementTree compatible QName class
 
 * RelaxNG and XMLSchema now accept any Element, not only ElementTrees
