@@ -9,11 +9,9 @@ for IO related test cases.
 """
 
 import unittest, doctest
-
-from StringIO import StringIO
 import os, shutil, tempfile, copy
 
-from common_imports import etree, ElementTree, HelperTestCase, fileInTestDir, canonicalize
+from common_imports import StringIO, etree, ElementTree, HelperTestCase, fileInTestDir, canonicalize
 
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
