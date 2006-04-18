@@ -14,9 +14,17 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.12 (newer versions should work). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-See below for instructions how to get these for Windows.  On MacOS-X 10.4, you
-can use the installed system libraries and the binary egg distribution of
-lxml.
+For Windows, there is a `binary distribution`_ of libxml2 and libxslt.  Note
+that you need both libxml2 and libxslt, as well as iconv and zlib.  You can
+then install the `binary egg distribution`_ of lxml (see below).
+
+.. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
+.. _`binary egg distribution`: http://cheeseshop.python.org/pypi/lxml
+
+On MacOS-X 10.4, you can use the installed system libraries and the binary egg
+distribution of lxml.  Note that the libxslt version on this system is older
+than the required version above.  While there were not any bug reports so far,
+you may still encounter certain differences in behaviour in rare cases.
 
 If you want to build lxml from SVN, you also need Pyrex_. If you are using a
 released version of lxml, it should come with the generated C file in the
@@ -24,8 +32,9 @@ source distribution, so no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
-See also the notes on building with gcc 4.0 below if you are having
-trouble with Pyrex.
+Note that Pyrex up to version 0.9.4 has known problems when compiling lxml
+with gcc 4.0 or Python 2.4.  Do not use it.  If you want to build lxml from
+non-release sources, please install Pyrex version 0.9.4.1 or later.
 
 If you have read these instructions and still cannot manage to install lxml,
 you can check the archives of the `mailing list`_ to see if your problem is
@@ -44,8 +53,8 @@ If you have easy_install_, you can run the following as super-user::
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
 This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
-libxml2 and libxslt are installed.  To compile and install lxml without
-easy_install, download the source tar-ball, unpack it and type::
+libxml2 and libxslt are properly installed.  To compile and install lxml
+without easy_install, download the source tar-ball, unpack it and type::
 
   python setup.py install
 
@@ -62,78 +71,6 @@ If you then place lxml's "src" directory on your PYTHONPATH somehow, you can
 import lxml.etree and play with it.
 
 
-Installation on Windows
------------------------
-
-As always, installation on Windows is different. If you do not want to go
-through the hassle of compiling everything by hand, you can use the binary
-distribution of libxml2 and libxslt. It is available here:
-
-http://www.zlatkovic.com/libxml.en.html
-
-Note that you need both libxml2 and libxslt, as well as iconv and zlib. You
-can then download a binary version of lxml 0.9 for Python 2.4 from the
-following address:
-
-http://carcass.dhs.org/lxml-0.9.win32-py2.4.exe
-
-or the egg distribution from
-
-http://cheeseshop.python.org/pypi/lxml
-
-The egg can directly be installed using easy_install_. Both builds were kindly
-contributed by Steve Howe. If they do not work for you, feel free to report to
-the mailing list.
-
-
-Building lxml with gcc 4.0 or Python 2.4
-----------------------------------------
-
-Pyrex 0.9.3.1 generates C code that gcc 4.0 does not accept. Pending an
-official release of a version of Pyrex that does work with gcc 4.0, the lxml
-project currently provides an updated version of Pyrex in its Subversion
-repository:
-
-http://codespeak.net/svn/lxml/pyrex/
-
-To install it, you can just download one of the following files:
-
-http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1.tar.gz
-
-http://codespeak.net/svn/lxml/pyrex/dist/Pyrex-0.9.3.1-1.src.rpm
-
-It is based on Pyrex 0.9.3.1 and contains a number of patches that make lxml
-compile and appear to work with gcc 4.0. If you use this version, you can
-simply skip the rest of the section. In case you want to apply them yourself,
-the first one is:
-
-http://codespeak.net/lxml/Pyrex-0.9.3-gcc4.patch
-
-Some Linux distributions such as Fedora Core 4 and Ubuntu Linux may
-already have most of this applied. In that case, this smaller patch
-may be applicable to make lxml compile properly:
-
-http://codespeak.net/lxml/Pyrex-0.9.3-gcc4-small.patch
-
-It may however actually be that at the time you read this, this extra patch
-has been applied by the distributions as well. You may still encounter the
-following problem when building the extension on Python 2.4::
-
-  TypeError: swig_sources() takes exactly 2 arguments (3 given)
-
-To fix this, look for the following line in Pyrex/Distutils/build_ext.py
-(around line 35)::
-
-  def swig_sources (self, sources):
-
-and change it to::
-
-  def swig_sources (self, sources, *otherargs):
-
-The above install files have these changes applied. It should do no harm if
-you install them instead of the official Pyrex version.
-
-
 Running the tests and reporting errors
 --------------------------------------
 
@@ -146,7 +83,7 @@ Note that the test script only tests the in-place build (see "Installation"
 above), as it searches the "src" directory.  You can use the following
 one-step command to trigger an in-place build and test it::
 
-  make test
+  make clean test
 
 To run the ElementTree and cElementTree compatibility tests, make sure
 you have lxml on your PYTHONPATH first, then run::
