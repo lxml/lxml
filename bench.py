@@ -299,6 +299,12 @@ class BenchMark(BenchMarkBase):
             el = Element('{test}test')
             child.append(el)
 
+    def bench_makeelement(self, root):
+        Element = self.etree.Element
+        empty_attrib = {}
+        for child in root:
+            child.makeelement('{test}test', empty_attrib)
+
     def bench_replace_children(self, root):
         Element = self.etree.Element
         for child in root:

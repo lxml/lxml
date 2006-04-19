@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Speedup for Element.makeelement(): the new element now reuses the original
+  libxml2 document instead of creating a new empty one
+
 * Speedup for reversed() iteration over element children (Py2.4+ only)
 
 * ElementTree compatible QName class
