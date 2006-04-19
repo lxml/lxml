@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* XMLDTDID function parses XML into tuple (root node, ID dict) based on xml:id
+  implementation of libxml2 (as opposed to ET compatible XMLID)
+
 * Speedup for Element.makeelement(): the new element now reuses the original
   libxml2 document instead of creating a new empty one
 
@@ -68,7 +71,7 @@ Features added
 
 * XPath class for compiled XPath expressions
 
-* XMLID module level function
+* XMLID module level function (ElementTree compatible)
 
 * XMLParser API for customized libxml2 parser configuration
 

@@ -67,7 +67,7 @@ cdef class _BaseErrorLog:
         return _BaseErrorLog(self._entries)
 
     def __iter__(self):
-        return python.PyObject_GetIter(self._entries)
+        return iter(self._entries)
 
     def __repr__(self):
         return '\n'.join(map(repr, self._entries))
@@ -142,7 +142,7 @@ cdef class _ErrorLog(_BaseErrorLog):
         return _BaseErrorLog(self._entries[:])
 
     def __iter__(self):
-        return python.PyObject_GetIter(self._entries[:])
+        return iter(self._entries[:])
 
     cdef void connect(self):
         del self._entries[:]

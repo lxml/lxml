@@ -140,6 +140,70 @@ class ETreeOnlyTestCase(HelperTestCase):
             b,
             d.getparent())
 
+    def test_XMLDTDID(self):
+        XMLDTDID = etree.XMLDTDID
+        XML      = etree.XML
+        xml_text = '''
+        <!DOCTYPE document [
+        <!ELEMENT document (h1,p)*>
+        <!ELEMENT h1 (#PCDATA)>
+        <!ATTLIST h1 myid ID #REQUIRED>
+        <!ELEMENT p  (#PCDATA)>
+        <!ATTLIST p  someid ID #REQUIRED>
+        ]>
+        <document>
+          <h1 myid="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p someid="warn1" class="warning">...</p>
+        </document>
+        '''
+
+        root, dic = XMLDTDID(xml_text)
+        root2 = XML(xml_text)
+        self.assertEquals(self._writeElement(root),
+                          self._writeElement(root2))
+        expected = {
+            "chapter1" : root[0],
+            "warn1"    : root[3]
+            }
+
+        self.assertEquals(dic, expected)
+        self.assertEquals(sorted(dic.items()),
+                          sorted(expected.items()))
+        self.assertEquals(sorted(dic.iteritems()),
+                          sorted(expected.iteritems()))
+        self.assertEquals(sorted(dic.keys()),
+                          sorted(expected.keys()))
+        self.assert_("chapter1" in dic)
+        self.assert_("warn1" in dic)
+
+    def test_XMLDTDID_empty(self):
+        XMLDTDID = etree.XMLDTDID
+        XML      = etree.XML
+        xml_text = '''
+        <document>
+          <h1 myid="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p someid="warn1" class="warning">...</p>
+        </document>
+        '''
+
+        root, dic = XMLDTDID(xml_text)
+        root2 = XML(xml_text)
+        self.assertEquals(self._writeElement(root),
+                          self._writeElement(root2))
+        expected = {}
+
+        self.assertEquals(dic, expected)
+        self.assertEquals(sorted(dic.items()),
+                          sorted(expected.items()))
+        self.assertEquals(sorted(dic.iteritems()),
+                          sorted(expected.iteritems()))
+        self.assertEquals(sorted(dic.keys()),
+                          sorted(expected.keys()))
+
     def test_namespaces(self):
         etree = self.etree
 
@@ -225,7 +289,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         data = f.getvalue()
         return canonicalize(data)
 
-
+        
 class ETreeXIncludeTestCase(HelperTestCase):
     def test_xinclude(self):
         tree = etree.parse(fileInTestDir('test_xinclude.xml'))

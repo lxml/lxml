@@ -13,6 +13,7 @@ cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
     ctypedef void xmlHashScanner(void* payload, void* data, char* name)
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data)
+    void* xmlHashLookup(xmlHashTable* table, char* name)
 
 cdef extern from "libxml/tree.h":
 

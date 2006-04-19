@@ -336,13 +336,6 @@ class ETreeTestCaseBase(unittest.TestCase):
         XMLID = self.etree.XMLID
         XML   = self.etree.XML
         xml_text = '''
-        <!DOCTYPE document [
-        <!ELEMENT document (h1,p)*>
-        <!ELEMENT h1 (#PCDATA)>
-        <!ATTLIST h1 id ID #REQUIRED>
-        <!ELEMENT p  (#PCDATA)>
-        <!ATTLIST p  id ID #REQUIRED>
-        ]>
         <document>
           <h1 id="chapter1">...</h1>
           <p id="note1" class="note">...</p>

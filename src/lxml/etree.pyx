@@ -1,6 +1,6 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, issubclass, hasattr, callable, str, _cstr
+from python cimport isinstance, issubclass, hasattr, callable, iter, str, _cstr
 cimport xpath
 cimport xslt
 cimport xmlerror
@@ -1217,27 +1217,6 @@ def XML(text):
 
 fromstring = XML
 
-def XMLID(text):
-    """Parse the text and return a tuple (root node, ID dictionary).  The root
-    node is the same as returned by the XML() function.  The dictionary
-    contains string-element pairs.  The dictionary keys are the values of ID
-    attributes as specified by the XML DTD.  The elements referenced by the ID
-    are stored as dictionary values.
-    """
-    cdef _NodeBase root
-    root = XML(text)
-    assert root is not None
-    dic = {}
-    if root._doc._c_doc.ids is not NULL:
-        context = (dic, root._doc)
-        tree.xmlHashScan(<tree.xmlHashTable*>root._doc._c_doc.ids,
-                         _collectIdHashItems, <python.PyObject*>context)
-    elif 0:
-        # the ElementTree compatible implementation
-        for elem in root.xpath('//*[string(@id)]'):
-            python.PyDict_SetItem(dic, elem.get('id'), elem)
-    return (root, dic)
-
 cdef class QName:
     cdef readonly object text
     def __init__(self, text_or_uri, tag=None):
@@ -1300,6 +1279,7 @@ def parse(source, parser=None):
 
 # include submodules
 include "xmlerror.pxi"  # error and log handling
+include "xmlid.pxi"     # XMLID and IDDict
 include "nsclasses.pxi" # Namespace implementation and registry
 include "xslt.pxi"      # XPath and XSLT
 include "relaxng.pxi"   # RelaxNG
@@ -1408,16 +1388,6 @@ cdef object _attributeValue(xmlNode* c_element, xmlNode* c_attrib_node):
         value = tree.xmlGetNsProp(c_element, c_attrib_node.name,
                                   c_attrib_node.ns.href)
     return funicode(value)
-
-cdef void _collectIdHashItems(void* payload, void* context, char* name):
-    # collect elements from ID attribute hash table (used by XMLID)
-    cdef tree.xmlID* c_id
-    c_id = <tree.xmlID*>payload
-    if c_id is NULL or c_id.attr is NULL:
-        return
-    dic, doc = <object>context
-    element = _elementFactory(doc, c_id.attr.parent)
-    python.PyDict_SetItemString(dic, name, element)
 
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef python.PyObject* o
