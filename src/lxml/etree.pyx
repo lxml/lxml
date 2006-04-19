@@ -755,8 +755,19 @@ cdef class _Element(_NodeBase):
         else:
             return ElementTagFilter(iterator, tag)
 
-    def makeelement(self, tag, attrib):
-        return Element(tag, attrib)
+    def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
+        "Creates a new element associated with the same document."
+        # a little code duplication, but less overhead through doc reuse
+        cdef xmlNode*  c_node
+        cdef xmlDoc*   c_doc
+        cdef _Document doc
+        ns_utf, name_utf = _getNsTag(_tag)
+        doc = self._doc
+        c_doc = doc._c_doc
+        c_node = _createElement(c_doc, name_utf, attrib, _extra)
+        # add namespaces to node if necessary
+        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+        return _elementFactory(doc, c_node)
 
     def find(self, path):
         return _elementpath.find(self, path)
