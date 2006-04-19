@@ -40,4 +40,5 @@ cdef extern from "etree.h": # redefines some functions as macros
     cdef int hasattr(object obj, object attr)
     cdef int callable(object obj)
     cdef object str(object obj)
+    cdef object iter(object obj)
     cdef char* _cstr(object s)
