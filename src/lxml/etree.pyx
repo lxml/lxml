@@ -1212,15 +1212,30 @@ def ElementTree(_Element element=None, file=None, parser=None):
     return etree
 
 def XML(text):
+    "Parse the XML text and return the root node."
     return _parseMemoryDocument(text, None).getroot()
 
 fromstring = XML
 
 def XMLID(text):
+    """Parse the text and return a tuple (root node, ID dictionary).  The root
+    node is the same as returned by the XML() function.  The dictionary
+    contains string-element pairs.  The dictionary keys are the values of ID
+    attributes as specified by the XML DTD.  The elements referenced by the ID
+    are stored as dictionary values.
+    """
+    cdef _NodeBase root
     root = XML(text)
+    assert root is not None
     dic = {}
-    for elem in root.xpath('//*[string(@id)]'):
-        python.PyDict_SetItem(dic, elem.get('id'), elem)
+    if root._doc._c_doc.ids is not NULL:
+        context = (dic, root._doc)
+        tree.xmlHashScan(<tree.xmlHashTable*>root._doc._c_doc.ids,
+                         _collectIdHashItems, <python.PyObject*>context)
+    elif 0:
+        # the ElementTree compatible implementation
+        for elem in root.xpath('//*[string(@id)]'):
+            python.PyDict_SetItem(dic, elem.get('id'), elem)
     return (root, dic)
 
 cdef class QName:
@@ -1394,6 +1409,15 @@ cdef object _attributeValue(xmlNode* c_element, xmlNode* c_attrib_node):
                                   c_attrib_node.ns.href)
     return funicode(value)
 
+cdef void _collectIdHashItems(void* payload, void* context, char* name):
+    # collect elements from ID attribute hash table (used by XMLID)
+    cdef tree.xmlID* c_id
+    c_id = <tree.xmlID*>payload
+    if c_id is NULL or c_id.attr is NULL:
+        return
+    dic, doc = <object>context
+    element = _elementFactory(doc, c_id.attr.parent)
+    python.PyDict_SetItemString(dic, name, element)
 
 cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
     cdef python.PyObject* o

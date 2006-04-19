@@ -8,7 +8,12 @@ cdef extern from "stdio.h":
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
     cdef xmlCharEncodingHandler* xmlFindCharEncodingHandler(char* name)
-    
+
+cdef extern from "libxml/hash.h":
+    ctypedef struct xmlHashTable
+    ctypedef void xmlHashScanner(void* payload, void* data, char* name)
+    void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data)
+
 cdef extern from "libxml/tree.h":
 
     # for some reason need to define this in this section;
@@ -69,6 +74,7 @@ cdef extern from "libxml/tree.h":
         xmlNode* prev
         xmlDoc* doc
         xmlDict* dict
+        xmlHashTable* ids
         char* URL
         
     ctypedef struct xmlAttr:
@@ -93,6 +99,11 @@ cdef extern from "libxml/tree.h":
         xmlNode* prev
         xmlDoc* doc
 
+    ctypedef struct xmlID:
+        char* value
+        xmlAttr* attr
+        xmlDoc* doc
+        
     ctypedef struct xmlBuffer
     
     ctypedef struct xmlOutputBuffer:
