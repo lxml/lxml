@@ -493,8 +493,10 @@ cdef class XPathDocumentEvaluator(XPathEvaluatorBase):
 
         if isinstance(etree, _Document):
             doc = <_Document>etree # for internal use only!
-        else:
+        elif isinstance(etree, _ElementTree):
             doc = (<_ElementTree>etree)._doc
+        else:
+            raise TypeError, "XPathDocumentEvaluator can only work on ElementTree objects"
         
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
@@ -555,7 +557,7 @@ cdef class XPathElementEvaluator(XPathDocumentEvaluator):
     """
     cdef _Element _element
 
-    def __init__(self, _Element element, namespaces=None, extensions=None):
+    def __init__(self, _Element element not None, namespaces=None, extensions=None):
         XPathDocumentEvaluator.__init__(
             self, element._doc, namespaces, extensions)
         self._element = element

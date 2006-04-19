@@ -411,13 +411,13 @@ cdef class _Element(_NodeBase):
             c_node = _deleteSlice(c_node, start, stop)
         # if the insertion point is at the end, append there
         if c_node is NULL:
+            append = self.append
             for node in value:
-                self.append(node)
+                append(node)
             return
         # if the next element is in the list, insert before it
-        for node in value:
-            _raiseIfNone(node)
-            mynode = node
+        for mynode in value:
+            _raiseIfNone(mynode)
             foreign = self._doc is not mynode._doc
             # store possible text tail
             c_next = mynode._c_node.next
@@ -444,11 +444,10 @@ cdef class _Element(_NodeBase):
     def set(self, key, value):
         self.attrib[key] = value
         
-    def append(self, _Element element):
+    def append(self, _Element element not None):
         cdef xmlNode* c_next
         cdef xmlNode* c_node
         cdef int foreign
-        _raiseIfNone(element)
         foreign = self._doc is not element._doc
         c_node = element._c_node
         # store possible text node
@@ -487,11 +486,10 @@ cdef class _Element(_NodeBase):
                 _removeNode(c_node)
             c_node = c_node_next
     
-    def insert(self, index, _Element element):
+    def insert(self, index, _Element element not None):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef int foreign
-        _raiseIfNone(element)
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             self.append(element)
@@ -502,9 +500,8 @@ cdef class _Element(_NodeBase):
         _moveTail(c_next, element._c_node)
         changeDocumentBelow(element, self._doc, foreign)
 
-    def remove(self, _Element element):
+    def remove(self, _Element element not None):
         cdef xmlNode* c_node
-        _raiseIfNone(element)
         c_node = element._c_node
         if c_node.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
@@ -631,14 +628,13 @@ cdef class _Element(_NodeBase):
     def __reversed__(self):
         return ElementChildIterator(self, reversed=True)
 
-    def index(self, _Element x, start=None, stop=None):
+    def index(self, _Element x not None, start=None, stop=None):
         cdef int k
         cdef int l
         cdef int c_stop
         cdef int c_start
         cdef xmlNode* c_child
         cdef xmlNode* c_start_node
-        _raiseIfNone(x)
         c_child = x._c_node
         if c_child.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
@@ -1058,9 +1054,8 @@ cdef class ElementDepthFirstIterator:
     # keep next node to return and a stack of position state in the tree
     cdef object _stack
     cdef _NodeBase _next_node
-    def __init__(self, _NodeBase node):
+    def __init__(self, _NodeBase node not None):
         cdef xmlNode* c_node
-        _raiseIfNone(node)
         self._next_node = node
         self._stack = []
         self._findAndPushNextNode(node)
@@ -1176,10 +1171,10 @@ def Comment(text=None):
     tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
     return _commentFactory(doc, c_node)
 
-def SubElement(_Element _parent, _tag, attrib=None, nsmap=None, **_extra):
+def SubElement(_Element _parent not None, _tag,
+               attrib=None, nsmap=None, **_extra):
     cdef xmlNode*  c_node
     cdef _Document doc
-    _raiseIfNone(_parent)
     ns_utf, name_utf = _getNsTag(_tag)
     doc = _parent._doc
     c_node = _createElement(doc._c_doc, name_utf, attrib, _extra)
