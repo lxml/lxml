@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* HTMLParser for parsing (broken) HTML
+
 * XMLDTDID function parses XML into tuple (root node, ID dict) based on xml:id
   implementation of libxml2 (as opposed to ET compatible XMLID)
 
