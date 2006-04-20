@@ -7,9 +7,6 @@ from xmlparser cimport xmlParserCtxt, xmlDict
 class XMLSyntaxError(LxmlSyntaxError):
     pass
 
-class HTMLSyntaxError(LxmlSyntaxError):
-    pass
-
 class ParserError(LxmlError):
     pass
 
@@ -63,10 +60,8 @@ __GLOBAL_PARSER_CONTEXT = _ParserContext()
 
 cdef class BaseParser:
     cdef _ErrorLog _error_log
-    cdef object _syntax_error_class
-    def __init__(self, syntax_error_class):
+    def __init__(self):
         self._error_log = _ErrorLog()
-        self._syntax_error_class = syntax_error_class
 
     property error_log:
         def __get__(self):
@@ -82,7 +77,7 @@ cdef class BaseParser:
             result = NULL
         self._error_log.disconnect()
         if result is NULL:
-            raise self._syntax_error_class
+            raise XMLSyntaxError
         return result
 
 
@@ -118,7 +113,7 @@ cdef class XMLParser(BaseParser):
                  no_network=False, ns_clean=False):
         cdef int parse_options
         self._file_parser_ctxt = NULL
-        BaseParser.__init__(self, XMLSyntaxError)
+        BaseParser.__init__(self)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if dtd_validation:
@@ -237,7 +232,7 @@ cdef class HTMLParser(BaseParser):
         cdef int parse_options
         self._memory_parser_ctxt = NULL
         self._file_parser_ctxt   = NULL
-        BaseParser.__init__(self, HTMLSyntaxError)
+        BaseParser.__init__(self)
 
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if recover:

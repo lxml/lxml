@@ -29,7 +29,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
         parser = self.etree.HTMLParser(recover=False)
         parse = self.etree.parse
         f = StringIO("<html></body>")
-        self.assertRaises(self.etree.HTMLSyntaxError,
+        self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
     def test_module_HTML_broken(self):
