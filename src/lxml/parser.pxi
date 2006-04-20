@@ -1,24 +1,104 @@
 # XML parser that provides dictionary sharing
 
 cimport xmlparser
+cimport htmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
 class XMLSyntaxError(LxmlSyntaxError):
     pass
 
-cdef int _DEFAULT_PARSE_OPTIONS
-_DEFAULT_PARSE_OPTIONS = (
+class HTMLSyntaxError(LxmlSyntaxError):
+    pass
+
+class ParserError(LxmlError):
+    pass
+
+cdef class _ParserContext:
+    """Global parser context to share the string dictionary.
+    """
+    cdef xmlDict* _c_dict
+    cdef int _initialized
+
+    def __init__(self):
+        self._c_dict = NULL
+        self._initialized = 0
+
+    def __dealloc__(self):
+        if self._c_dict is not NULL:
+            xmlparser.xmlDictFree(self._c_dict)
+
+    cdef void _initParser(self):
+        if not self._initialized:
+            xmlparser.xmlInitParser()
+            self._initialized = 1
+
+    cdef void _initParserDict(self, xmlParserCtxt* pctxt):
+        "Assure we always use the same string dictionary."
+        if self._c_dict is NULL or self._c_dict is pctxt.dict:
+            return
+        if pctxt.dict is not NULL:
+            xmlparser.xmlDictFree(pctxt.dict)
+        pctxt.dict = self._c_dict
+        xmlparser.xmlDictReference(pctxt.dict)
+
+    cdef void _initDocDict(self, xmlDoc* result):
+        "Store dict of last object parsed if no shared dict yet"
+        if result is NULL:
+            return
+        if self._c_dict is NULL:
+            #print "storing shared dict"
+            if result.dict is NULL:
+                result.dict = xmlparser.xmlDictCreate()
+            self._c_dict = result.dict
+            xmlparser.xmlDictReference(result.dict)
+        elif result.dict != self._c_dict:
+            if result.dict is not NULL:
+                xmlparser.xmlDictFree(result.dict)
+            result.dict = self._c_dict
+            xmlparser.xmlDictReference(self._c_dict)
+
+cdef _ParserContext __GLOBAL_PARSER_CONTEXT
+__GLOBAL_PARSER_CONTEXT = _ParserContext()
+
+
+cdef class BaseParser:
+    cdef _ErrorLog _error_log
+    cdef object _syntax_error_class
+    def __init__(self, syntax_error_class):
+        self._error_log = _ErrorLog()
+        self._syntax_error_class = syntax_error_class
+
+    property error_log:
+        def __get__(self):
+            return self._error_log.copy()
+
+    cdef xmlDoc* _handleResult(self, xmlParserCtxt* ctxt,
+                               xmlDoc* result) except NULL:
+        if ctxt.wellFormed:
+            __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+        elif result is not NULL:
+            # free broken document
+            tree.xmlFreeDoc(result)
+            result = NULL
+        self._error_log.disconnect()
+        if result is NULL:
+            raise self._syntax_error_class
+        return result
+
+
+############################################################
+## XML parser
+############################################################
+
+cdef int _XML_DEFAULT_PARSE_OPTIONS
+_XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NOENT |
     xmlparser.XML_PARSE_NOCDATA |
     xmlparser.XML_PARSE_NOWARNING |
     xmlparser.XML_PARSE_NOERROR
     )
 
-cdef int _ORIG_DEFAULT_PARSE_OPTIONS
-_ORIG_DEFAULT_PARSE_OPTIONS = _DEFAULT_PARSE_OPTIONS
-
-
-cdef class XMLParser:
+cdef class XMLParser(BaseParser):
     """The XML parser.  Parsers can be supplied as additional argument to
     various parse functions of the lxml API.  A default parser is always
     available and can be replaced by a call to the global function
@@ -28,13 +108,19 @@ cdef class XMLParser:
     The keyword arguments in the constructor are mainly based on the libxml2
     parser configuration.  A DTD will only be loaded if validation or
     attribute default values are requested.
+
+    Note that you must not share parsers between threads.
     """
     cdef int _parse_options
+    cdef xmlParserCtxt* _file_parser_ctxt
+    cdef xmlParserCtxt* _memory_parser_ctxt
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  no_network=False, ns_clean=False):
         cdef int parse_options
-        parse_options = _ORIG_DEFAULT_PARSE_OPTIONS
+        self._file_parser_ctxt = NULL
+        BaseParser.__init__(self, XMLSyntaxError)
 
+        parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if dtd_validation:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
                             xmlparser.XML_PARSE_DTDVALID
@@ -52,156 +138,197 @@ cdef class XMLParser:
         def __get__(self):
             return __build_error_log_tuple(self)
 
-##     def copy(self, attribute_defaults=None, dtd_validation=None,
-##              no_network=None, ns_clean=None):
-##         cdef int parse_options
-##         parse_options = self._parse_options
-##         if attribute_defaults is None:
-##             attribute_defaults = parse_options & xmlparser.XML_PARSE_DTDATTR
-##         if dtd_validation is None:
-##             dtd_validation = parse_options & xmlparser.XML_PARSE_DTDVALID
-##         if no_network is None:
-##             no_network = parse_options & xmlparser.XML_PARSE_NONET
-##         if ns_clean is None:
-##             ns_clean = parse_options & xmlparser.XML_PARSE_NSCLEAN
-
-##         return self.__class__(attribute_defaults=attribute_defaults,
-##                               dtd_validation=dtd_validation,
-##                               no_network=no_network, ns_clean=ns_clean)
-
-
-def set_default_parser(parser=None):
-    """Set a default XMLParser.  This parser is used globally whenever no
-    parser is supplied to the various parse functions of the lxml API.  If
-    this function is called without a parser (or if it is None), the default
-    parser is reset to the original configuration.
-    """
-    if parser is not None:
-        _DEFAULT_PARSE_OPTIONS = (<XMLParser>parser)._parse_options
-    else:
-        _DEFAULT_PARSE_OPTIONS = _ORIG_DEFAULT_PARSE_OPTIONS
-
-
-cdef class Parser:
-
-    cdef xmlDict* _c_dict
-    cdef int _parser_initialized
-    
-    def __init__(self):
-        self._c_dict = NULL
-        self._parser_initialized = 0
-        
     def __dealloc__(self):
-        #print "cleanup parser"
-        if self._c_dict is not NULL:
-            #print "freeing dictionary (cleanup parser)"
-            xmlparser.xmlDictFree(self._c_dict)
-        
-    cdef xmlDoc* parseDoc(self, text, parser) except NULL:
+        if self._file_parser_ctxt != NULL:
+            xmlparser.xmlFreeParserCtxt(self._file_parser_ctxt)
+        if self._memory_parser_ctxt != NULL:
+            xmlparser.xmlFreeParserCtxt(self._memory_parser_ctxt)
+
+    cdef xmlParserCtxt* _createContext(self) except NULL:
+        cdef xmlParserCtxt* pctxt
+        pctxt = xmlparser.xmlNewParserCtxt()
+        if pctxt is NULL:
+            self._error_log.disconnect()
+            raise ParserError, "Failed to create parser context"
+        return pctxt
+
+    cdef xmlDoc* _parseDoc(self, text_utf) except NULL:
         """Parse document, share dictionary if possible.
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int parse_error
-
-        if parser is not None:
-            parse_options = (<XMLParser>parser)._parse_options
-        else:
-            parse_options = _DEFAULT_PARSE_OPTIONS
-
-        self._initParse()
-        pctxt = xmlparser.xmlCreateDocParserCtxt(_cstr(text))
+        self._error_log.connect()
+        pctxt = self._memory_parser_ctxt
         if pctxt is NULL:
-            raise XMLSyntaxError
+            pctxt = self._createContext()
+            self._memory_parser_ctxt = pctxt
 
-        self._prepareParse(pctxt)
-        xmlparser.xmlCtxtUseOptions(
-            pctxt,
-            parse_options)
-        parse_error = xmlparser.xmlParseDocument(pctxt)
-        # in case of errors, clean up context plus any document
-        if parse_error != 0 or not pctxt.wellFormed:
-            if pctxt.myDoc is not NULL:
-                tree.xmlFreeDoc(pctxt.myDoc)
-                pctxt.myDoc = NULL
-            xmlparser.xmlFreeParserCtxt(pctxt)
-            raise XMLSyntaxError
-        result = pctxt.myDoc
-        self._finalizeParse(result)
-        xmlparser.xmlFreeParserCtxt(pctxt)
-        return result
+        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        result = xmlparser.xmlCtxtReadDoc(
+            pctxt, _cstr(text_utf), NULL, NULL, self._parse_options)
+        return self._handleResult(pctxt, result)
 
-    cdef xmlDoc* parseDocFromFile(self, char* filename, parser) except NULL:
-        cdef int parse_options
+    cdef xmlDoc* _parseDocFromFile(self, char* filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
+        self._error_log.connect()
+        pctxt = self._file_parser_ctxt
+        if pctxt is NULL:
+            pctxt = self._createContext()
+            self._file_parser_ctxt = pctxt
 
-        if parser is not None:
-            parse_options = (<XMLParser>parser)._parse_options
-        else:
-            parse_options = _DEFAULT_PARSE_OPTIONS
-
-        self._initParse()
-        pctxt = xmlparser.xmlNewParserCtxt()
-        self._prepareParse(pctxt)
-        # XXX set options twice? needed to shut up libxml2
-        xmlparser.xmlCtxtUseOptions(pctxt, parse_options)
-        result = xmlparser.xmlCtxtReadFile(pctxt, filename,
-                                           NULL, parse_options)
+        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        result = xmlparser.xmlCtxtReadFile(
+            pctxt, filename, NULL, self._parse_options)
         if result is NULL:
             if pctxt.lastError.domain == xmlerror.XML_FROM_IO:
+                self._error_log.disconnect()
                 raise IOError, "Could not open file %s" % filename
-        # in case of errors, clean up context plus any document
-        # XXX other errors?
-        if not pctxt.wellFormed:
-            if pctxt.myDoc is not NULL:
-                tree.xmlFreeDoc(pctxt.myDoc)
-                pctxt.myDoc = NULL
-            xmlparser.xmlFreeParserCtxt(pctxt)
-            raise XMLSyntaxError
-        self._finalizeParse(result)
-        xmlparser.xmlFreeParserCtxt(pctxt)
-        return result
-    
-    cdef void _initParse(self):
-        if not self._parser_initialized:
-            xmlparser.xmlInitParser()
-            self._parser_initialized = 1
-            
-    cdef void _prepareParse(self, xmlParserCtxt* pctxt):
-        if self._c_dict is not NULL and pctxt.dict is not NULL:
-            #print "sharing dictionary (parseDoc)"
-            xmlparser.xmlDictFree(pctxt.dict)
-            pctxt.dict = self._c_dict
-            xmlparser.xmlDictReference(pctxt.dict)
+        return self._handleResult(pctxt, result)
 
-    cdef void _finalizeParse(self, xmlDoc* result):
-        # store dict of last object parsed if no shared dict yet
-        if self._c_dict is NULL:
-            #print "storing shared dict"
-            self._c_dict = result.dict
-        xmlparser.xmlDictReference(self._c_dict)
-    
-    cdef xmlDoc* newDoc(self):
+
+cdef XMLParser __DEFAULT_XML_PARSER
+__DEFAULT_XML_PARSER = XMLParser()
+
+cdef BaseParser __DEFAULT_PARSER
+__DEFAULT_PARSER = __DEFAULT_XML_PARSER
+
+def set_default_parser(parser=None):
+    """Set a default parser.  This parser is used globally whenever no parser
+    is supplied to the various parse functions of the lxml API.  If this
+    function is called without a parser (or if it is None), the default parser
+    is reset to the original configuration.
+
+    Note that the default parser is not thread-safe.  Avoid the default parser
+    in multi-threaded environments.  You can create a separate parser for each
+    thread explicitly or use a parser pool.
+    """
+    global __DEFAULT_PARSER
+    if parser is None:
+        __DEFAULT_PARSER = __DEFAULT_XML_PARSER
+    elif isinstance(parser, (HTMLParser, XMLParser)):
+        __DEFAULT_PARSER = parser
+    else:
+        raise TypeError, "Invalid parser"
+
+
+############################################################
+## HTML parser
+############################################################
+
+cdef int _HTML_DEFAULT_PARSE_OPTIONS
+_HTML_DEFAULT_PARSE_OPTIONS = (
+    htmlparser.HTML_PARSE_NOWARNING |
+    htmlparser.HTML_PARSE_NOERROR
+    )
+
+cdef class HTMLParser(BaseParser):
+    """The HTML parser.  This parser allows reading HTML into a normal XML
+    tree.  By default, it can read broken (non well-formed) HTML, depending on
+    the capabilities of libxml2.  Use the 'recover' option to switch this off.
+
+    Note that you must not share parsers between threads.
+    """
+    cdef int _parse_options
+    cdef xmlParserCtxt* _memory_parser_ctxt
+    cdef xmlParserCtxt* _file_parser_ctxt
+    def __init__(self, recover=True, no_network=False, remove_blank_text=False):
+        cdef int parse_options
+        self._memory_parser_ctxt = NULL
+        self._file_parser_ctxt   = NULL
+        BaseParser.__init__(self, HTMLSyntaxError)
+
+        parse_options = _HTML_DEFAULT_PARSE_OPTIONS
+        if recover:
+            # XXX: make it compile on libxml2 < 2.6.21
+            #parse_options = parse_options | htmlparser.HTML_PARSE_RECOVER
+            parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
+        if no_network:
+            parse_options = parse_options | htmlparser.HTML_PARSE_NONET
+        if remove_blank_text:
+            parse_options = parse_options | htmlparser.HTML_PARSE_NOBLANKS
+
+        self._parse_options = parse_options
+
+    def __dealloc__(self):
+        if self._file_parser_ctxt != NULL:
+            htmlparser.htmlFreeParserCtxt(self._file_parser_ctxt)
+        if self._memory_parser_ctxt != NULL:
+            htmlparser.htmlFreeParserCtxt(self._memory_parser_ctxt)
+
+    cdef xmlDoc* _parseDoc(self, text_utf) except NULL:
+        """Parse HTML document, share dictionary if possible.
+        """
         cdef xmlDoc* result
-        cdef xmlDict* d
+        cdef xmlParserCtxt* pctxt
+        cdef char* c_text
+        cdef int c_len
+        self._error_log.connect()
+        c_text = _cstr(text_utf)
+        pctxt = self._memory_parser_ctxt
+        if pctxt is NULL:
+            pctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
+            if pctxt is NULL:
+                self._error_log.disconnect()
+                raise ParserError, "Failed to create parser context"
+            self._memory_parser_ctxt = pctxt
+        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        result = htmlparser.htmlCtxtReadDoc(
+            pctxt, c_text, NULL, NULL, self._parse_options)
+        return self._handleResult(pctxt, result)
 
-        result = tree.xmlNewDoc("1.0")
+    cdef xmlDoc* _parseDocFromFile(self, char* filename) except NULL:
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+        cdef int parser_error
+        self._error_log.connect()
+        pctxt = self._file_parser_ctxt
+        if pctxt is NULL:
+            pctxt = htmlparser.htmlCreateFileParserCtxt(filename, NULL)
+            if pctxt is NULL:
+                self._error_log.disconnect()
+                warnings = self._error_log.filter_from_warnings()
+                if warnings and warnings[-1].domain == xmlerror.XML_FROM_IO:
+                    raise IOError, "Could not open file %s" % filename
+                raise ParserError, "Failed to create parser context"
+            self._file_parser_ctxt = pctxt
+        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        result = htmlparser.htmlCtxtReadFile(
+            pctxt, filename, NULL, self._parse_options)
+        return self._handleResult(pctxt, result)
 
-        if self._c_dict is NULL:
-            # we need to get dict from the new document if it's there,
-            # otherwise make one
-            if result.dict is not NULL:
-                d = result.dict
-            else:
-                d = xmlparser.xmlDictCreate()
-                result.dict = d
-            self._c_dict = d
-            xmlparser.xmlDictReference(self._c_dict)
-        else:
-            # we need to reuse the central dict and get rid of the new one
-            if result.dict is not NULL:
-                xmlparser.xmlDictFree(result.dict)
-            result.dict = self._c_dict
-            xmlparser.xmlDictReference(result.dict)
-        return result
+cdef HTMLParser __DEFAULT_HTML_PARSER
+__DEFAULT_HTML_PARSER = HTMLParser()
+
+############################################################
+## helper functions for document creation
+############################################################
+
+cdef xmlDoc* _parseDoc(text_utf, parser) except NULL:
+    if parser is None:
+        parser = __DEFAULT_PARSER
+    __GLOBAL_PARSER_CONTEXT._initParser()
+    if isinstance(parser, XMLParser):
+        return (<XMLParser>parser)._parseDoc(text_utf)
+    elif isinstance(parser, HTMLParser):
+        return (<HTMLParser>parser)._parseDoc(text_utf)
+    else:
+        raise TypeError, "invalid parser"
+
+cdef xmlDoc* _parseDocFromFile(filename, parser) except NULL:
+    if parser is None:
+        parser = __DEFAULT_PARSER
+    __GLOBAL_PARSER_CONTEXT._initParser()
+    if isinstance(parser, XMLParser):
+        return (<XMLParser>parser)._parseDocFromFile(_cstr(filename))
+    elif isinstance(parser, HTMLParser):
+        return (<HTMLParser>parser)._parseDocFromFile(_cstr(filename))
+    else:
+        raise TypeError, "invalid parser"
+
+cdef xmlDoc* _newDoc():
+    cdef xmlDoc* result
+    result = tree.xmlNewDoc("1.0")
+    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    return result

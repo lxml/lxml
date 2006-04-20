@@ -30,15 +30,15 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_NSCLEAN = 8192 # remove redundant namespaces declarations
         XML_PARSE_NOCDATA = 16384 # merge CDATA as text nodes
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
+# libxml2 2.6.21+ only:
+#        XML_PARSE_COMPACT = 65536 # compact small text nodes
        
     cdef void xmlInitParser()
-    cdef xmlParserCtxt* xmlCreateDocParserCtxt(char* cur)
     cdef xmlParserCtxt* xmlNewParserCtxt()
     cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
- 
-    cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
-    cdef int xmlParseDocument(xmlParserCtxt* ctxt)
-    cdef xmlDoc* xmlParseDoc(char* cur)
+
+    cdef xmlDoc* xmlCtxtReadDoc(xmlParserCtxt* ctxt,
+                                char* cur, char* URL, char* encoding,
+                                int options)
     cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
                                  char* filename, char* encoding, int options)
-    

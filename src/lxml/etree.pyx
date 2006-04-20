@@ -70,7 +70,7 @@ cdef class _Document:
         # the document
         #print "freeing document:", <int>self._c_doc
         #displayNode(<xmlNode*>self._c_doc, 0)
-        #print self._c_doc.dict is theParser._c_dict
+        #print <int>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
         tree.xmlFreeDoc(self._c_doc)
 
     cdef getroot(self):
@@ -141,12 +141,8 @@ cdef class _Document:
 
 cdef _Document _parseDocument(source, parser):
     cdef xmlDoc* c_doc
-    # XXX simplistic (c)StringIO support
-    if hasattr(source, 'getvalue'):
-        return _parseMemoryDocument(source.getvalue(), parser)
-
     filename = _getFilenameForFile(source)
-    # Support for unamed file-like object (eg urlgrabber.urlopen)
+    # Support for unamed file-like object (StringIO, urlgrabber.urlopen, ...)
     if not filename and hasattr(source, 'read'):
         return _parseMemoryDocument(source.read(), parser)
 
@@ -154,14 +150,14 @@ cdef _Document _parseDocument(source, parser):
     if filename is None:
         filename = source
     # open filename
-    c_doc = theParser.parseDocFromFile(filename, parser)
+    c_doc = _parseDocFromFile(filename, parser)
     return _documentFactory(c_doc)
 
 cdef _Document _parseMemoryDocument(text, parser):
     cdef xmlDoc* c_doc
     if python.PyUnicode_Check(text):
         text = _stripDeclaration(_utf8(text))
-    c_doc = theParser.parseDoc(text, parser)
+    c_doc = _parseDoc(text, parser)
     return _documentFactory(c_doc)
 
 cdef _Document _documentFactory(xmlDoc* c_doc):
@@ -1154,7 +1150,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     cdef xmlDoc*   c_doc
     cdef _Document doc
     ns_utf, name_utf = _getNsTag(_tag)
-    c_doc = theParser.newDoc()
+    c_doc = _newDoc()
     c_node = _createElement(c_doc, name_utf, attrib, _extra)
     tree.xmlDocSetRootElement(c_doc, c_node)
     doc = _documentFactory(c_doc)
@@ -1169,7 +1165,7 @@ def Comment(text=None):
         text = '  '
     else:
         text = ' %s ' % _utf8(text)
-    doc = _documentFactory( theParser.newDoc() )
+    doc = _documentFactory( _newDoc() )
     c_node = _createComment(doc._c_doc, text)
     tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
     return _commentFactory(doc, c_node)
@@ -1198,7 +1194,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
     elif file is not None:
         doc = _parseDocument(file, parser)
     else:
-        doc = _documentFactory( theParser.newDoc() )
+        doc = _documentFactory( _newDoc() )
 
     etree = _elementTreeFactory(doc, element)
 
@@ -1211,9 +1207,15 @@ def ElementTree(_Element element=None, file=None, parser=None):
     
     return etree
 
+def HTML(text):
+    cdef _Document doc
+    doc = _parseMemoryDocument(text, __DEFAULT_HTML_PARSER)
+    return doc.getroot()
+
 def XML(text):
-    "Parse the XML text and return the root node."
-    return _parseMemoryDocument(text, None).getroot()
+    cdef _Document doc
+    doc = _parseMemoryDocument(text, __DEFAULT_XML_PARSER)
+    return doc.getroot()
 
 fromstring = XML
 
@@ -1286,11 +1288,6 @@ include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
 include "parser.pxi"    # XML Parser
 include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
-
-
-# Instantiate globally shared XML parser to enable dictionary sharing
-cdef Parser theParser
-theParser = Parser()
 
 
 # Private helper functions
