@@ -30,6 +30,18 @@ def XMLDTDID(text):
     else:
         return (root, _IDDict(root))
 
+def parseid(source, parser=None):
+    """Parses the source into a tuple containing an ElementTree object and an
+    ID dictionary.  If no parser is provided as second argument, the default
+    parser is used.
+
+    Note that you must not modify the XML tree if you use the ID dictionary.
+    The results are undefined.
+    """
+    cdef _Document doc
+    doc = _parseDocument(source, parser)
+    return (ElementTree(doc.getroot()), _IDDict(doc))
+
 cdef class _IDDict:
     """A dictionary-like proxy class that mapps ID attributes to elements.
 
