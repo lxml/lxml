@@ -1279,6 +1279,18 @@ def parse(source, parser=None):
     doc = _parseDocument(source, parser)
     return ElementTree(doc.getroot())
 
+def parseid(source, parser=None):
+    """Parses the source into a tuple containing an ElementTree object and an
+    ID dictionary.  If no parser is provided as second argument, the default
+    parser is used.
+
+    Note that you must not modify the XML tree if you use the ID dictionary.
+    The results are undefined.
+    """
+    cdef _Document doc
+    doc = _parseDocument(source, parser)
+    return (ElementTree(doc.getroot()), _IDDict(doc))
+
 
 # include submodules
 include "xmlerror.pxi"  # error and log handling

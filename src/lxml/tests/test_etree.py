@@ -140,9 +140,44 @@ class ETreeOnlyTestCase(HelperTestCase):
             b,
             d.getparent())
 
+    def test_parseid(self):
+        parseid = self.etree.parseid
+        XML     = self.etree.XML
+        xml_text = '''
+        <!DOCTYPE document [
+        <!ELEMENT document (h1,p)*>
+        <!ELEMENT h1 (#PCDATA)>
+        <!ATTLIST h1 myid ID #REQUIRED>
+        <!ELEMENT p  (#PCDATA)>
+        <!ATTLIST p  someid ID #REQUIRED>
+        ]>
+        <document>
+          <h1 myid="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p xml:id="xmlid">XML:ID paragraph.</p>
+          <p someid="warn1" class="warning">...</p>
+        </document>
+        '''
+
+        tree, dic = parseid(StringIO(xml_text))
+        root = tree.getroot()
+        root2 = XML(xml_text)
+        self.assertEquals(self._writeElement(root),
+                          self._writeElement(root2))
+        expected = {
+            "chapter1" : root[0],
+            "xmlid"    : root[3],
+            "warn1"    : root[4]
+            }
+        self.assert_("chapter1" in dic)
+        self.assert_("warn1" in dic)
+        self.assert_("xmlid" in dic)
+        self._checkIDDict(dic, expected)
+
     def test_XMLDTDID(self):
-        XMLDTDID = etree.XMLDTDID
-        XML      = etree.XML
+        XMLDTDID = self.etree.XMLDTDID
+        XML      = self.etree.XML
         xml_text = '''
         <!DOCTYPE document [
         <!ELEMENT document (h1,p)*>
@@ -169,7 +204,31 @@ class ETreeOnlyTestCase(HelperTestCase):
             "xmlid"    : root[3],
             "warn1"    : root[4]
             }
+        self.assert_("chapter1" in dic)
+        self.assert_("warn1" in dic)
+        self.assert_("xmlid" in dic)
+        self._checkIDDict(dic, expected)
 
+    def test_XMLDTDID_empty(self):
+        XMLDTDID = self.etree.XMLDTDID
+        XML      = self.etree.XML
+        xml_text = '''
+        <document>
+          <h1 myid="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p someid="warn1" class="warning">...</p>
+        </document>
+        '''
+
+        root, dic = XMLDTDID(xml_text)
+        root2 = XML(xml_text)
+        self.assertEquals(self._writeElement(root),
+                          self._writeElement(root2))
+        expected = {}
+        self._checkIDDict(dic, expected)
+
+    def _checkIDDict(self, dic, expected):
         self.assertEquals(dic, expected)
         self.assertEquals(len(dic),
                           len(expected))
@@ -185,35 +244,6 @@ class ETreeOnlyTestCase(HelperTestCase):
                           sorted(expected.values()))
         self.assertEquals(sorted(dic.itervalues()),
                           sorted(expected.itervalues()))
-        self.assert_("chapter1" in dic)
-        self.assert_("warn1" in dic)
-        self.assert_("xmlid" in dic)
-
-    def test_XMLDTDID_empty(self):
-        XMLDTDID = etree.XMLDTDID
-        XML      = etree.XML
-        xml_text = '''
-        <document>
-          <h1 myid="chapter1">...</h1>
-          <p id="note1" class="note">...</p>
-          <p>Regular paragraph.</p>
-          <p someid="warn1" class="warning">...</p>
-        </document>
-        '''
-
-        root, dic = XMLDTDID(xml_text)
-        root2 = XML(xml_text)
-        self.assertEquals(self._writeElement(root),
-                          self._writeElement(root2))
-        expected = {}
-
-        self.assertEquals(dic, expected)
-        self.assertEquals(dic.items(),
-                          expected.items())
-        self.assertEquals(sorted(dic.iteritems()),
-                          sorted(expected.iteritems()))
-        self.assertEquals(dic.keys(),
-                          expected.keys())
 
     def test_namespaces(self):
         etree = self.etree
