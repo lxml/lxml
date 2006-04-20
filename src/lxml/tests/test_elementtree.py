@@ -340,6 +340,7 @@ class ETreeTestCaseBase(unittest.TestCase):
           <h1 id="chapter1">...</h1>
           <p id="note1" class="note">...</p>
           <p>Regular paragraph.</p>
+          <p xml:id="xmlid">XML:ID paragraph.</p>
           <p id="warn1" class="warning">...</p>
         </document>
         '''
@@ -351,7 +352,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         expected = {
             "chapter1" : root[0],
             "note1"    : root[1],
-            "warn1"    : root[3]
+            "warn1"    : root[4]
             }
         self.assertEquals(dic, expected)
 
