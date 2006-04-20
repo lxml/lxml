@@ -18,6 +18,9 @@ def XMLDTDID(text):
     contains string-element pairs.  The dictionary keys are the values of ID
     attributes as defined by the DTD.  The elements referenced by the ID are
     stored as dictionary values.
+
+    Note that you must not modify the XML tree if you use the ID dictionary.
+    The results are undefined.
     """
     cdef _NodeBase root
     root = XML(text)

@@ -1272,7 +1272,8 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     return result
 
 def parse(source, parser=None):
-    """Return an ElementTree object loaded with source elements
+    """Return an ElementTree object loaded with source elements.  If no parser
+    is provided as second argument, the default parser is used.
     """
     cdef _Document doc
     doc = _parseDocument(source, parser)
