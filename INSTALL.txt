@@ -8,10 +8,10 @@ You need Python 2.3 or later.
 
 You need libxml2 and libxslt, in particular:
 
-* libxml 2.6.16 (newer versions should work). It can be found here:
+* libxml 2.6.16 (newer versions are recommended). It can be found here:
   http://xmlsoft.org/downloads.html
 
-* libxslt 1.1.12 (newer versions should work). It can be found here:
+* libxslt 1.1.12 (newer versions are recommended). It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
 For Windows, there is a `binary distribution`_ of libxml2 and libxslt.  Note
