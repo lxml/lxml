@@ -129,10 +129,6 @@ cdef class XMLParser(BaseParser):
 
         self._parse_options = parse_options
 
-    property error_log:
-        def __get__(self):
-            return __build_error_log_tuple(self)
-
     def __dealloc__(self):
         if self._file_parser_ctxt != NULL:
             xmlparser.xmlFreeParserCtxt(self._file_parser_ctxt)
