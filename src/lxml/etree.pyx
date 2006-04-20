@@ -413,7 +413,8 @@ cdef class _Element(_NodeBase):
             return
         # if the next element is in the list, insert before it
         for mynode in value:
-            _raiseIfNone(mynode)
+            if mynode is None:
+                raise TypeError, "Node must not be None."
             foreign = self._doc is not mynode._doc
             # store possible text tail
             c_next = mynode._c_node.next
@@ -1238,7 +1239,7 @@ def iselement(element):
 
 def dump(_NodeBase elem):
     assert elem is not None, "Must supply element."
-    # better, but not ET compatible : _raiseIfNone(elem)
+    # better, but not ET compatible : "_NodeBase elem not None"
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
 def tostring(_NodeBase element, encoding='us-ascii'):
@@ -1248,7 +1249,7 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     cdef char* enc
 
     assert element is not None
-    # better, but not ET compatible : _raiseIfNone(element)
+    # better, but not ET compatible : "_NodeBase element not None"
     
     #if encoding is None:
     #    encoding = 'UTF-8'
@@ -1304,10 +1305,6 @@ include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
 
 
 # Private helper functions
-cdef void _raiseIfNone(el):
-    if el is None:
-        raise TypeError, "Argument must not be None."
-
 cdef _Document _documentOrRaise(object input):
     cdef _Document doc
     doc = _documentOf(input)
