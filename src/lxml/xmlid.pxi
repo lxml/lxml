@@ -1,5 +1,3 @@
-from UserDict import DictMixin
-
 def XMLID(text):
     """Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -29,21 +27,24 @@ def XMLDTDID(text):
     else:
         return (root, _IDDict(root))
 
-class _IDDict(DictMixin):
-    """A dictionary class that mapps ID attributes to elements.
+cdef class _IDDict:
+    """A dictionary-like proxy class that mapps ID attributes to elements.
 
     The dictionary must be instantiated with the root element of a parsed XML
     document, otherwise the behaviour is undefined.  Elements and XML trees
     that were created or modified through the API are not supported.
     """
+    cdef _Document _doc
+    cdef object _keys
+    cdef object _items
     def __init__(self, etree):
         cdef _Document doc
         doc = _documentOrRaise(etree)
         if doc._c_doc.ids is NULL:
             raise ValueError, "No ID dictionary available."
-        self.__doc = doc
-        self.__keys  = None
-        self.__items = None
+        self._doc = doc
+        self._keys  = None
+        self._items = None
 
     def copy(self):
         return IDDict(self._doc)
@@ -52,9 +53,7 @@ class _IDDict(DictMixin):
         cdef tree.xmlHashTable* c_ids
         cdef tree.xmlID* c_id
         cdef xmlAttr* c_attr
-        cdef _Document doc
-        doc = self.__doc
-        c_ids = doc._c_doc.ids
+        c_ids = self._doc._c_doc.ids
         id_utf = _utf8(id_name)
         c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _cstr(id_utf))
         if c_id is NULL:
@@ -62,55 +61,104 @@ class _IDDict(DictMixin):
         c_attr = c_id.attr
         if c_attr is NULL or c_attr.parent is NULL:
             raise KeyError, "ID attribute not found."
-        return _elementFactory(doc, c_attr.parent)
+        return _elementFactory(self._doc, c_attr.parent)
+
+    def get(self, id_name):
+        return self[id_name]
 
     def __contains__(self, id_name):
         cdef tree.xmlID* c_id
-        cdef _Document doc
-        doc = self.__doc
         id_utf = _utf8(id_name)
-        c_id = <tree.xmlID*>tree.xmlHashLookup(doc._c_doc.ids, _cstr(id_utf))
+        c_id = <tree.xmlID*>tree.xmlHashLookup(
+            self._doc._c_doc.ids, _cstr(id_utf))
         return c_id is not NULL
 
+    def has_key(self, id_name):
+        return self.__contains__(id_name)
+
+    def __cmp__(self, other):
+        if other is None:
+            return 1
+        else:
+            return cmp(dict(self), other)
+
+    def __richcmp__(self, other, int op):
+        cdef int c_cmp
+        if other is None:
+            return op == 0 or op == 1 or op == 3
+        c_cmp = cmp(dict(self), other)
+        if c_cmp == 0: # equal
+            return op == 1 or op == 2 or op == 5
+        elif c_cmp < 0:
+            return op == 0 or op == 1 or op == 3
+        else:
+            return op == 4 or op == 5 or op == 3
+
+    def __repr__(self):
+        return repr(dict(self))
+
     def keys(self):
-        keys = self.__keys
+        keys = self._keys
         if keys is not None:
             return python.PySequence_List(keys)
-        keys = self.__build_keys()
-        self.__keys = python.PySequence_Tuple(keys)
+        keys = self._build_keys()
+        self._keys = python.PySequence_Tuple(keys)
         return keys
 
-    def __build_keys(self):
-        cdef _Document doc
+    def __iter__(self):
+        keys = self._keys
+        if keys is None:
+            keys = self.keys()
+        return iter(keys)
+
+    def iterkeys(self):
+        return self.__iter__()
+
+    def __len__(self):
+        keys = self._keys
+        if keys is None:
+            keys = self.keys()
+        return len(keys)
+
+    cdef object _build_keys(self):
         keys = []
-        doc = self.__doc
-        tree.xmlHashScan(<tree.xmlHashTable*>doc._c_doc.ids,
+        tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
                          _collectIdHashKeys, <python.PyObject*>keys)
         return keys
 
     def items(self):
-        items = self.__items
+        items = self._items
         if items is not None:
             return python.PySequence_List(items)
-        items = self.__build_items()
-        self.__items = python.PySequence_Tuple(items)
+        items = self._build_items()
+        self._items = python.PySequence_Tuple(items)
         return items
 
     def iteritems(self):
-        items = self.__items
+        items = self._items
         if items is None:
             items = self.items()
         return iter(items)
 
-    def __build_items(self):
-        cdef _Document doc
+    cdef object _build_items(self):
         items = []
-        doc = self.__doc
-        context = (items, doc)
-        tree.xmlHashScan(<tree.xmlHashTable*>doc._c_doc.ids,
+        context = (items, self._doc)
+        tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
                          _collectIdHashItemList, <python.PyObject*>context)
         return items
-        
+
+    def values(self):
+        items = self._items
+        if items is None:
+            items = self.items()
+        values = []
+        for item in items:
+            value = python.PyTuple_GET_ITEM(item, 1)
+            python.PyList_Append(values, value)
+        return values
+
+    def itervalues(self):
+        return iter(self.values())
 
 cdef void _collectIdHashItemDict(void* payload, void* context, char* name):
     # collect elements from ID attribute hash table

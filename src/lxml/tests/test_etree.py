@@ -171,12 +171,20 @@ class ETreeOnlyTestCase(HelperTestCase):
             }
 
         self.assertEquals(dic, expected)
+        self.assertEquals(len(dic),
+                          len(expected))
         self.assertEquals(sorted(dic.items()),
                           sorted(expected.items()))
         self.assertEquals(sorted(dic.iteritems()),
                           sorted(expected.iteritems()))
         self.assertEquals(sorted(dic.keys()),
                           sorted(expected.keys()))
+        self.assertEquals(sorted(dic.iterkeys()),
+                          sorted(expected.iterkeys()))
+        self.assertEquals(sorted(dic.values()),
+                          sorted(expected.values()))
+        self.assertEquals(sorted(dic.itervalues()),
+                          sorted(expected.itervalues()))
         self.assert_("chapter1" in dic)
         self.assert_("warn1" in dic)
         self.assert_("xmlid" in dic)
@@ -200,12 +208,12 @@ class ETreeOnlyTestCase(HelperTestCase):
         expected = {}
 
         self.assertEquals(dic, expected)
-        self.assertEquals(sorted(dic.items()),
-                          sorted(expected.items()))
+        self.assertEquals(dic.items(),
+                          expected.items())
         self.assertEquals(sorted(dic.iteritems()),
                           sorted(expected.iteritems()))
-        self.assertEquals(sorted(dic.keys()),
-                          sorted(expected.keys()))
+        self.assertEquals(dic.keys(),
+                          expected.keys())
 
     def test_namespaces(self):
         etree = self.etree
