@@ -24,6 +24,8 @@ Features added
 Bugs fixed
 ----------
 
+* document('') now works in XSLT documents parsed from strings
+
 * Crash in XMLSchema and RelaxNG when passing non-schema documents
 
 * Memory leak in RelaxNG() when RelaxNGParseError is raised
