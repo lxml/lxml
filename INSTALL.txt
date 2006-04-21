@@ -32,9 +32,10 @@ source distribution, so no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
-Note that Pyrex up to version 0.9.4 has known problems when compiling lxml
-with gcc 4.0 or Python 2.4.  Do not use it.  If you want to build lxml from
-non-release sources, please install Pyrex version 0.9.4.1 or later.
+Note that Pyrex up to and including version 0.9.4 has known problems when
+compiling lxml with gcc 4.0 or Python 2.4.  Do not use it.  If you want to
+build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
+later.
 
 If you have read these instructions and still cannot manage to install lxml,
 you can check the archives of the `mailing list`_ to see if your problem is
