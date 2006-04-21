@@ -249,6 +249,7 @@ cdef class XSLT:
     """
     cdef XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
+    cdef object _doc_url_utf
     
     def __init__(self, xslt_input, extensions=None):
         # make a copy of the document as stylesheet needs to assume it
@@ -268,9 +269,15 @@ cdef class XSLT:
 
         # XXX work around bug in xmlCopyDoc (fix is upcoming in new release
         # of libxml2)
+        if c_doc.URL is not NULL and c_doc.URL != doc._c_doc.URL:
+            tree.xmlFree(c_doc.URL)
         if doc._c_doc.URL is not NULL:
+            self._doc_url_utf = doc._c_doc.URL
             c_doc.URL = tree.xmlStrdup(doc._c_doc.URL)
-            
+        else:
+            self._doc_url_utf = "__STRING__XSLT__%s" % id(self)
+            c_doc.URL = tree.xmlStrdup(_cstr(self._doc_url_utf))
+
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
         if c_style is NULL:
             raise XSLTParseError, "Cannot parse style sheet"

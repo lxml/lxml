@@ -335,6 +335,25 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           '<A>X</A>')
 
+    def test_xslt_document_XML(self):
+        # make sure document('') works from loaded files
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test><xsl:copy-of select="document('')//test"/></test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(root[0].tag,
+                          'test')
+        self.assertEquals(root[0][0].tag,
+                          '{http://www.w3.org/1999/XSL/Transform}copy-of')
+
     def test_xslt_document_parse(self):
         # make sure document('') works from loaded files
         xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")))
