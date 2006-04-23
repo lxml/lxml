@@ -931,9 +931,6 @@ cdef class _Attrib(_NodeBase):
         except KeyError:
             return default
 
-    def __iter__(self):
-        return iter(self.keys())
-    
     def keys(self):
         result = []
         cdef xmlNode* c_node
@@ -943,6 +940,12 @@ cdef class _Attrib(_NodeBase):
                 python.PyList_Append(result, _namespacedName(c_node))
             c_node = c_node.next
         return result
+
+    def __iter__(self):
+        return iter(self.keys())
+    
+    def iterkeys(self):
+        return iter(self.keys())
 
     def values(self):
         cdef xmlNode* c_node
@@ -954,7 +957,10 @@ cdef class _Attrib(_NodeBase):
                     result, _attributeValue(self._c_node, c_node))
             c_node = c_node.next
         return result
-    
+
+    def itervalues(self):
+        return iter(self.values())
+
     def items(self):
         result = []
         cdef xmlNode* c_node
@@ -967,6 +973,9 @@ cdef class _Attrib(_NodeBase):
                     ))
             c_node = c_node.next
         return result
+
+    def iteritems(self):
+        return iter(self.items())
 
     def has_key(self, key):
         cdef xmlNs* c_ns
