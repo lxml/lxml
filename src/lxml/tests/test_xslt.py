@@ -422,8 +422,8 @@ class ETreeXSLTTestCase(HelperTestCase):
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="*">
     <test>
-      <test1><xsl:copy-of select="regexp:match(string(.), 'd.')"/></test1>
-      <test2><xsl:copy-of select="regexp:match(string(.), 'd.', 'g')"/></test2>
+      <test1><xsl:copy-of  select="regexp:match(string(.), 'd.')"/></test1>
+      <test2><xsl:copy-of  select="regexp:match(string(.), 'd.', 'g')"/></test2>
       <test2i><xsl:copy-of select="regexp:match(string(.), 'd.', 'gi')"/></test2i>
     </test>
   </xsl:template>

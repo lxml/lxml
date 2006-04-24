@@ -208,8 +208,15 @@ cdef class _ExsltRegExp:
     def __init__(self):
         self._compile_map = {}
 
+    cdef _make_string(self, value):
+        if python.PyString_Check(value) or python.PyUnicode_Check(value):
+            return value
+        else:
+            raise TypeError, "Invalid argument type %s" % type(value)
+
     cdef _compile(self, rexp, ignore_case):
         cdef python.PyObject* c_result
+        rexp = self._make_string(rexp)
         key = (rexp, ignore_case)
         c_result = python.PyDict_GetItem(self._compile_map, key)
         if c_result is not NULL:
@@ -223,6 +230,8 @@ cdef class _ExsltRegExp:
         return rexp_compiled
 
     def test(self, ctxt, s, rexp, flags=''):
+        flags = self._make_string(flags)
+        s = self._make_string(s)
         rexpc = self._compile(rexp, 'i' in flags)
         if rexpc.search(s) is None:
             return False
@@ -230,6 +239,8 @@ cdef class _ExsltRegExp:
             return True
 
     def match(self, ctxt, s, rexp, flags=''):
+        flags = self._make_string(flags)
+        s = self._make_string(s)
         rexpc = self._compile(rexp, 'i' in flags)
         if 'g' in flags:
             results = rexpc.findall(s)
@@ -251,6 +262,9 @@ cdef class _ExsltRegExp:
             return (root,)
 
     def replace(self, ctxt, s, rexp, flags, replacement):
+        replacement = self._make_string(replacement)
+        flags = self._make_string(flags)
+        s = self._make_string(s)
         rexpc = self._compile(rexp, 'i' in flags)
         if 'g' in flags:
             count = 0
