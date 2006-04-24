@@ -30,7 +30,7 @@ class XPathSyntaxError(LxmlSyntaxError):
 ################################################################################
 # support for extension functions in XPath/XSLT
 
-cdef class BaseContext:
+cdef class _BaseContext:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _Document _doc
     cdef object _extensions
@@ -201,11 +201,11 @@ cdef class BaseContext:
 ################################################################################
 # XSLT
 
-cdef class XSLTContext(BaseContext):
+cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     def __init__(self, namespaces, extensions):
         self._xsltCtxt = NULL
-        BaseContext.__init__(self, namespaces, extensions)
+        _BaseContext.__init__(self, namespaces, extensions)
 
     cdef register_context(self, xslt.xsltTransformContext* xsltCtxt, _Document doc):
         self._xsltCtxt = xsltCtxt
@@ -247,7 +247,7 @@ cdef class XSLTContext(BaseContext):
 cdef class XSLT:
     """Turn a document into an XSLT object.
     """
-    cdef XSLTContext _context
+    cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
     cdef object _doc_url_utf
     
@@ -283,7 +283,7 @@ cdef class XSLT:
             raise XSLTParseError, "Cannot parse style sheet"
         self._c_style = c_style
 
-        self._context = XSLTContext(None, extensions)
+        self._context = _XSLTContext(None, extensions)
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
         
     def __dealloc__(self):
@@ -380,15 +380,14 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     result._xslt = xslt
     return result
 
-
 ################################################################################
 # XPath
 
-cdef class XPathContext(BaseContext):
+cdef class _XPathContext(_BaseContext):
     cdef object _variables
     cdef object _registered_variables
     def __init__(self, namespaces, extensions, variables):
-        BaseContext.__init__(self, namespaces, extensions)
+        _BaseContext.__init__(self, namespaces, extensions)
         self._variables  = variables
         self._registered_variables  = []
         
@@ -466,10 +465,10 @@ cdef class XPathContext(BaseContext):
 
 
 cdef class XPathEvaluatorBase:
-    cdef XPathContext _context
+    cdef _XPathContext _context
 
     def __init__(self, namespaces, extensions, variables=None):
-        self._context = XPathContext(namespaces, extensions, variables)
+        self._context = _XPathContext(namespaces, extensions, variables)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         _exc_info = self._context._exc_info
@@ -605,7 +604,7 @@ cdef class XPath(XPathEvaluatorBase):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _NodeBase element
-        cdef XPathContext context
+        cdef _XPathContext context
 
         document = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOf(_etree_or_element)
@@ -748,7 +747,7 @@ cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
-    cdef BaseContext extensions
+    cdef _BaseContext extensions
 
     rctxt = ctxt.context
 
@@ -760,7 +759,7 @@ cdef void _xpathCallback(xpath.xmlXPathParserContext* ctxt, int nargs):
         uri = None
 
     # get our evaluator
-    extensions = <BaseContext>(rctxt.userData)
+    extensions = <_BaseContext>(rctxt.userData)
 
     # lookup up the extension function in the context
     f = extensions.find_extension(uri, name)
