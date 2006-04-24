@@ -374,6 +374,84 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[0].tag,
                           '{http://www.w3.org/1999/XSL/Transform}stylesheet')
 
+    def test_exslt_regexp_test(self):
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*">
+    <test><xsl:copy-of select="*[regexp:test(string(.), '8.')]"/></test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a><b>123</b><b>098</b><b>987</b></a>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(len(root), 1)
+        self.assertEquals(root[0].tag,
+                          'b')
+        self.assertEquals(root[0].text,
+                          '987')
+
+    def test_exslt_regexp_replace(self):
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*">
+    <test>
+      <xsl:copy-of select="regexp:replace(string(.), 'd.', '',   'XX')"/>
+      <xsl:text>-</xsl:text>
+      <xsl:copy-of select="regexp:replace(string(.), 'd.', 'gi', 'XX')"/>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a>abdCdEeDed</a>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(len(root), 0)
+        self.assertEquals(root.text, 'abXXdEeDed-abXXXXeXXd')
+
+    def test_exslt_regexp_match(self):
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*">
+    <test>
+      <test1><xsl:copy-of select="regexp:match(string(.), 'd.')"/></test1>
+      <test2><xsl:copy-of select="regexp:match(string(.), 'd.', 'g')"/></test2>
+      <test2i><xsl:copy-of select="regexp:match(string(.), 'd.', 'gi')"/></test2i>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a>abdCdEeDed</a>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 3)
+
+        self.assertEquals(len(root[0]), 1)
+        self.assertEquals(root[0][0].tag, 'match')
+        self.assertEquals(root[0][0].text, 'dC')
+
+        self.assertEquals(len(root[1]), 2)
+        self.assertEquals(root[1][0].tag, 'match')
+        self.assertEquals(root[1][0].text, 'dC')
+        self.assertEquals(root[1][1].tag, 'match')
+        self.assertEquals(root[1][1].text, 'dE')
+
+        self.assertEquals(len(root[2]), 3)
+        self.assertEquals(root[2][0].tag, 'match')
+        self.assertEquals(root[2][0].text, 'dC')
+        self.assertEquals(root[2][1].tag, 'match')
+        self.assertEquals(root[2][1].text, 'dE')
+        self.assertEquals(root[2][2].tag, 'match')
+        self.assertEquals(root[2][2].text, 'De')
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])

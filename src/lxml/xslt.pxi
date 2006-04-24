@@ -197,6 +197,72 @@ cdef class _BaseContext:
                 #print "Holding document:", <int>element._doc._c_doc
                 python.PyDict_SetItem(self._temp_docs, id(element._doc), element._doc)
 
+################################################################################
+# EXSLT regexp implementation
+
+cdef object RE_COMPILE
+RE_COMPILE = re.compile
+
+cdef class _ExsltRegExp:
+    cdef object _compile_map
+    def __init__(self):
+        self._compile_map = {}
+
+    cdef _compile(self, rexp, ignore_case):
+        cdef python.PyObject* c_result
+        key = (rexp, ignore_case)
+        c_result = python.PyDict_GetItem(self._compile_map, key)
+        if c_result is not NULL:
+            return <object>c_result
+        if ignore_case:
+            py_flags = re.IGNORECASE
+        else:
+            py_flags = 0
+        rexp_compiled = RE_COMPILE(rexp, py_flags)
+        python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
+        return rexp_compiled
+
+    def test(self, ctxt, s, rexp, flags=''):
+        rexpc = self._compile(rexp, 'i' in flags)
+        if rexpc.search(s) is None:
+            return False
+        else:
+            return True
+
+    def match(self, ctxt, s, rexp, flags=''):
+        rexpc = self._compile(rexp, 'i' in flags)
+        if 'g' in flags:
+            results = rexpc.findall(s)
+            if not results:
+                return ()
+            result_list = []
+            root = Element('matches')
+            for s_match in results:
+                elem = SubElement(root, 'match')
+                elem.text = s_match
+                python.PyList_Append(result_list, elem)
+            return result_list
+        else:
+            result = rexpc.search(s)
+            if result is None:
+                return ()
+            root = Element('match')
+            root.text = result.group()
+            return (root,)
+
+    def replace(self, ctxt, s, rexp, flags, replacement):
+        rexpc = self._compile(rexp, 'i' in flags)
+        if 'g' in flags:
+            count = 0
+        else:
+            count = 1
+        return rexpc.sub(replacement, s, count)
+
+    cdef void _register_exslt_regexp(self, _BaseContext context):
+        ns = "http://exslt.org/regular-expressions"
+        context._registerExtensionFunction(ns, "test",    self.test)
+        context._registerExtensionFunction(ns, "match",   self.match)
+        context._registerExtensionFunction(ns, "replace", self.replace)
 
 ################################################################################
 # XSLT
@@ -249,6 +315,7 @@ cdef class XSLT:
     """
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
+    cdef _ExsltRegExp _regexp
     cdef object _doc_url_utf
     
     def __init__(self, xslt_input, extensions=None):
@@ -284,6 +351,7 @@ cdef class XSLT:
         self._c_style = c_style
 
         self._context = _XSLTContext(None, extensions)
+        self._regexp  = _ExsltRegExp()
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
         
     def __dealloc__(self):
@@ -333,6 +401,7 @@ cdef class XSLT:
 
         self._context._release_temp_refs()
         self._context.register_context(transform_ctxt, input_doc)
+        self._regexp._register_exslt_regexp(self._context)
 
         c_result = xslt.xsltApplyStylesheetUser(self._c_style, c_doc, params,
                                                 NULL, NULL, transform_ctxt)
