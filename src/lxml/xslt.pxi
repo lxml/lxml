@@ -221,10 +221,9 @@ cdef class _ExsltRegExp:
         c_result = python.PyDict_GetItem(self._compile_map, key)
         if c_result is not NULL:
             return <object>c_result
+        py_flags = re.UNICODE
         if ignore_case:
-            py_flags = re.IGNORECASE
-        else:
-            py_flags = 0
+            py_flags = py_flags | re.IGNORECASE
         rexp_compiled = RE_COMPILE(rexp, py_flags)
         python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
         return rexp_compiled
