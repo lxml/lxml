@@ -1,4 +1,4 @@
-PYTHON=python
+PYTHON?=python
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
