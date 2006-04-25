@@ -110,8 +110,8 @@ cdef class _BaseContext:
         self._free_context()
 
     cdef _free_context(self):
-        self._registered_namespaces = []
-        self._registered_extensions = []
+        del self._registered_namespaces[:]
+        del self._registered_extensions[:]
         python.PyDict_Clear(self._utf_refs)
         self._doc = None
         if self._xpathCtxt is not NULL:
@@ -122,9 +122,8 @@ cdef class _BaseContext:
 
     def addNamespace(self, prefix, uri):
         if self._namespaces is None:
-            self._namespaces = {prefix : uri}
-        else:
-            self._namespaces[prefix] = uri
+            self._namespaces = {}
+        python.PyDict_SetItem(self._namespaces, prefix, uri)
 
     def registerNamespaces(self, namespaces):
         for prefix, uri in namespaces.items():
@@ -134,7 +133,7 @@ cdef class _BaseContext:
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         xpath.xmlXPathRegisterNs(self._xpathCtxt, prefix_utf, ns_uri_utf)
-        self._registered_namespaces.append(prefix_utf)
+        python.PyList_Append(self._registered_namespaces, prefix_utf)
 
     cdef _unregisterNamespaces(self):
         cdef xpath.xmlXPathContext* xpathCtxt
@@ -147,7 +146,8 @@ cdef class _BaseContext:
     def registerExtensionFunctions(self, extensions):
         for ns_uri, extension in extensions.items():
             for name, function in extension.items():
-                self.registerExtensionFunction(ns_uri, name, function)
+                self._registerExtensionFunction(
+                    self._to_utf(ns_uri), self._to_utf(name), function)
 
     def registerExtensionFunction(self, ns_uri, name, function):
         self._registerExtensionFunction(
@@ -292,14 +292,6 @@ cdef class _XSLTContext(_BaseContext):
         self._set_xpath_context(xsltCtxt.xpathCtxt)
         self._register_context(doc, 0)
         xsltCtxt.xpathCtxt.userData = <void*>self
-
-    cdef unregister_context(self):
-        cdef xslt.xsltTransformContext* xsltCtxt
-        xsltCtxt = self._xsltCtxt
-        if xsltCtxt is NULL:
-            return
-        self._unregister_context()
-        self._xsltCtxt = NULL
 
     cdef free_context(self):
         cdef xslt.xsltTransformContext* xsltCtxt
@@ -471,7 +463,7 @@ cdef class _XPathContext(_BaseContext):
     cdef object _registered_variables
     def __init__(self, namespaces, extensions, variables):
         _BaseContext.__init__(self, namespaces, extensions)
-        self._variables  = variables
+        self._variables = variables
         self._registered_variables  = []
         
     cdef register_context(self, xpath.xmlXPathContext* xpathCtxt, _Document doc):
@@ -488,45 +480,36 @@ cdef class _XPathContext(_BaseContext):
         xpathCtxt = self._xpathCtxt
         if xpathCtxt is NULL:
             return
-        xpathCtxt.userData = NULL
-        self._unregister_context()
         self._unregisterVariables()
         self._registered_variables  = []
-        self._xpathCtxt = NULL
+        self._unregister_context()
 
-    cdef free_context(self):
+    cdef void _unregisterVariables(self):
         cdef xpath.xmlXPathContext* xpathCtxt
+        cdef xpath.xmlXPathObject* xpathVarValue
+        cdef char* c_name
         xpathCtxt = self._xpathCtxt
-        if xpathCtxt is NULL:
-            return
-        self._free_context()
-        self._registered_variables  = []
-        xpath.xmlXPathFreeContext(xpathCtxt)
+        for name_utf in self._registered_variables:
+            c_name = _cstr(name_utf)
+            xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, c_name)
+            if xpathVarValue is not NULL:
+                xpath.xmlXPathRegisterVariable(xpathCtxt, c_name, NULL)
+                xpath.xmlXPathFreeObject(xpathVarValue)
 
     def registerVariables(self, variable_dict):
         for name, value in variable_dict.items():
-            self.registerVariable(name, value)
-
-    cdef void _unregisterVariables(self):
-        for name in self._registered_variables:
-            self._unregisterVariable(name)
+            name_utf = self._to_utf(name)
+            self._registerVariable(name_utf, value)
+            python.PyList_Append(self._registered_variables, name_utf)
 
     def registerVariable(self, name, value):
-        self._registerVariable(self._to_utf(name), value)
-        self._registered_variables.append(name)
+        name_utf = self._to_utf(name)
+        self._registerVariable(name_utf, value)
+        python.PyList_Append(self._registered_variables, name_utf)
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
             self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
-
-    cdef void _unregisterVariable(self, name_utf):
-        cdef xpath.xmlXPathContext* xpathCtxt
-        cdef xpath.xmlXPathObject* xpathVarValue
-        xpathCtxt = self._xpathCtxt
-        xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, _cstr(name_utf))
-        if xpathVarValue is not NULL:
-            xpath.xmlXPathRegisterVariable(xpathCtxt, _cstr(name_utf), NULL)
-            xpath.xmlXPathFreeObject(xpathVarValue)
 
     def _contextRegisterExtensionFunction(self, ns_uri_utf, name_utf):
         if ns_uri_utf is not None:
@@ -598,7 +581,8 @@ cdef class XPathDocumentEvaluator(XPathEvaluatorBase):
         XPathEvaluatorBase.__init__(self, namespaces, extensions)
 
     def __dealloc__(self):
-        xpath.xmlXPathFreeContext(self._c_ctxt)
+        if self._c_ctxt is not NULL:
+            xpath.xmlXPathFreeContext(self._c_ctxt)
     
     def registerNamespace(self, prefix, uri):
         """Register a namespace with the XPath context.
@@ -670,6 +654,7 @@ def Extension(module, function_mapping, ns_uri=None):
     return {ns_uri : functions}
 
 cdef class XPath(XPathEvaluatorBase):
+    cdef xpath.xmlXPathContext* _xpathCtxt
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef object _prefix_map
     cdef readonly object path
@@ -681,6 +666,7 @@ cdef class XPath(XPathEvaluatorBase):
         self._xpath = xpath.xmlXPathCompile(_cstr(path))
         if self._xpath is NULL:
             raise XPathSyntaxError, "Error in xpath expression."
+        self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
 
     def __call__(self, _etree_or_element, **_variables):
         cdef xpath.xmlXPathContext* xpathCtxt
@@ -692,7 +678,8 @@ cdef class XPath(XPathEvaluatorBase):
         document = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOf(_etree_or_element)
 
-        xpathCtxt = xpath.xmlXPathNewContext(document._c_doc)
+        xpathCtxt = self._xpathCtxt
+        xpathCtxt.doc = document._c_doc
         xpathCtxt.node = element._c_node
 
         context = self._context
@@ -701,17 +688,15 @@ cdef class XPath(XPathEvaluatorBase):
         context.registerVariables(_variables)
 
         xpathObj = xpath.xmlXPathCompiledEval(self._xpath, xpathCtxt)
-
         context.unregister_context()
-
-        xpath.xmlXPathFreeContext(xpathCtxt)
-
         return self._handle_result(xpathObj, document)
 
     def evaluate(self, _tree, **_variables):
         return self(_tree, **_variables)
 
     def __dealloc__(self):
+        if self._xpathCtxt is not NULL:
+            xpath.xmlXPathFreeContext(self._xpathCtxt)
         if self._xpath is not NULL:
             xpath.xmlXPathFreeCompExpr(self._xpath)
 

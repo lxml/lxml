@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Substantial speedup in XPath.evaluate()
+
 * Exslt:regexp implementation for XSLT based on the Python 're' module
 
 * HTMLParser for parsing (broken) HTML
@@ -72,6 +74,8 @@ Features added
 
 * Support for registering extension functions through new FunctionNamespace
   class (see doc/extensions.txt)
+
+* ETXPath class for XPath expressions in ElementTree notation ('//{ns}tag')
 
 * Support for variables in XPath expressions (also in XPath class)
 
