@@ -36,7 +36,6 @@ cdef class _BaseContext:
     cdef object _extensions
     cdef object _namespaces
     cdef object _registered_namespaces
-    cdef object _registered_extensions
     cdef object _extension_functions
     cdef object _utf_refs
     # for exception handling and temporary reference keeping:
@@ -66,7 +65,6 @@ cdef class _BaseContext:
         self._extensions = extensions
         self._namespaces = namespaces
         self._registered_namespaces = []
-        self._registered_extensions = []
         self._extension_functions = {}
         self._temp_elements = {}
         self._temp_docs = {}
@@ -111,7 +109,7 @@ cdef class _BaseContext:
 
     cdef _free_context(self):
         del self._registered_namespaces[:]
-        del self._registered_extensions[:]
+        python.PyDict_Clear(self._extension_functions)
         python.PyDict_Clear(self._utf_refs)
         self._doc = None
         if self._xpathCtxt is not NULL:
@@ -161,10 +159,9 @@ cdef class _BaseContext:
     cdef _registerExtensionFunction(self, ns_uri_utf, name_utf, function):
         self._contextRegisterExtensionFunction(ns_uri_utf, name_utf)
         self._extension_functions[(ns_uri_utf, name_utf)] = function
-        self._registered_extensions.append((ns_uri_utf, name_utf))
 
     cdef _unregisterExtensionFunctions(self):
-        for ns_uri_utf, name_utf in self._registered_extensions:
+        for ns_uri_utf, name_utf in self._extension_functions:
             self._contextUnregisterExtensionFunction(ns_uri_utf, name_utf)
 
     def find_extension(self, ns_uri_utf, name_utf):
