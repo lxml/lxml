@@ -407,6 +407,44 @@ class BenchMark(BenchMarkBase):
             xpath = self.etree.XPathElementEvaluator(child)
             xpath.evaluate("./*[0]")
 
+    @onlylib('lxe')
+    def bench_xpath_extensions_old(self, root):
+        def return_child(_, element):
+            if element:
+                return element[0]
+            else:
+                return ()
+        extensions = {None : {'child' : return_child}}
+        xpath = self.etree.XPath("child(.)", extensions=extensions)
+        for child in root:
+            xpath(child)
+
+    @onlylib('lxe')
+    def bench_xslt_extensions_old(self, root):
+        tree = self.etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:l="test"
+   xmlns:testns="testns"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <l:data>TEST</l:data>
+  <xsl:template match="/">
+    <l:result>
+      <xsl:for-each select="*/*">
+        <xsl:copy-of select="testns:child(.)"/>
+      </xsl:for-each>
+    </l:result>
+  </xsl:template>
+</xsl:stylesheet>
+""")
+        def return_child(_, elements):
+            return elements[0][0]
+
+        extensions = {'testns' : {'child' : return_child}}
+
+        transform = self.etree.XSLT(tree, extensions)
+        for i in range(10):
+            transform(root)
+
 ############################################################
 # Main program
 ############################################################
