@@ -1570,15 +1570,15 @@ cdef xmlNode* _deleteSlice(xmlNode* c_node, int start, int stop):
         c_node = c_next
     return c_node
 
-cdef int isutf8(char* string):
-    cdef int i
-    i = 0
-    while 1:
-        if string[i] == c'\0':
-            return 0
-        if string[i] & 0x80:
+cdef int isutf8(char* s):
+    cdef char c
+    c = s[0]
+    while c != c'\0':
+        if c & 0x80:
             return 1
-        i = i + 1
+        s = s + 1
+        c = s[0]
+    return 0
 
 cdef object funicode(char* s):
     if isutf8(s):
