@@ -10,6 +10,7 @@ Features added
 * Substantial speedup in XPath.evaluate()
 
 * Exslt:regexp implementation for XSLT based on the Python 're' module
+  on by default, can be switched off with 'regexp=False' keyword argument
 
 * HTMLParser for parsing (broken) HTML
 

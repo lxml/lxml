@@ -191,12 +191,6 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
     else:
         return _xpath_function_call
 
-cdef void _register_global_xslt_function(char* ns_uri, char* name):
-    xslt.xsltRegisterExtModuleFunction(ns_uri, name, _xpath_function_call)
-
-cdef void _unregister_global_xslt_function(char* ns_uri, char* name):
-    xslt.xsltUnRegisterExtModuleFunction(ns_uri, name)
-
  
 ################################################################################
 # XSLT
@@ -394,6 +388,13 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
     return result
+
+# used by FunctionNamespace():
+cdef void _register_global_xslt_function(char* ns_uri, char* name):
+    xslt.xsltRegisterExtModuleFunction(ns_uri, name, _xpath_function_call)
+
+cdef void _unregister_global_xslt_function(char* ns_uri, char* name):
+    xslt.xsltUnRegisterExtModuleFunction(ns_uri, name)
 
 ################################################################################
 # EXSLT regexp implementation
