@@ -37,7 +37,7 @@ cdef class _BaseContext:
     cdef object _namespaces
     cdef object _registered_namespaces
     cdef object _utf_refs
-    cdef object _temp_last_function
+    cdef object _temp_functions
     # for exception handling and temporary reference keeping:
     cdef object _temp_elements
     cdef object _temp_docs
@@ -46,7 +46,7 @@ cdef class _BaseContext:
     def __init__(self, namespaces, extensions):
         self._xpathCtxt = NULL
         self._utf_refs = {}
-        self._temp_last_function = (None, None, None)
+        self._temp_functions = {}
 
         # convert old format extensions to UTF-8
         if isinstance(extensions, (list, tuple)):
@@ -88,7 +88,7 @@ cdef class _BaseContext:
     cdef _register_context(self, _Document doc, int allow_none_namespace):
         self._doc      = doc
         self._exc_info = None
-        self._temp_last_function = (None, None, None)
+        self._temp_functions.clear()
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
@@ -134,9 +134,10 @@ cdef class _BaseContext:
 
     cdef _lookup_extension(self, ns_uri_utf, name_utf):
         cdef python.PyObject* dict_result
-        if self._temp_last_function[0] == ns_uri_utf and \
-           self._temp_last_function[1] == name_utf:
-            return self._temp_last_function[2]
+        key = (ns_uri_utf, name_utf)
+        dict_result = python.PyDict_GetItem(self._temp_functions, key)
+        if dict_result is not NULL:
+            return <object>dict_result
 
         dict_result = python.PyDict_GetItem(self._extensions, ns_uri_utf)
         if dict_result is not NULL:
@@ -146,8 +147,7 @@ cdef class _BaseContext:
         else:
             function = _find_extension(ns_uri_utf, name_utf)
 
-        # store temporarily as it will be looked up again in the next call
-        self._temp_last_function = (ns_uri_utf, name_utf, function)
+        python.PyDict_SetItem(self._temp_functions, key, function)
         return function
 
     # Python reference keeping during XPath function evaluation
@@ -182,6 +182,7 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
     if c_name is NULL:
         return NULL
     if c_ns_uri is NULL:
+        c_ns_uri = ''
         ns_uri = None
     else:
         ns_uri = c_ns_uri
