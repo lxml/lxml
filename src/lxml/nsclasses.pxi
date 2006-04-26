@@ -53,11 +53,19 @@ def FunctionNamespace(ns_uri):
 cdef class _NamespaceRegistry:
     "Dictionary-like registry for namespace implementations"
     cdef object _ns_uri
+    cdef object _ns_uri_utf
     cdef object _classes
     cdef object _extensions
     cdef object _xslt_elements
+    cdef char* _c_ns_uri_utf
     def __init__(self, ns_uri):
         self._ns_uri = ns_uri
+        if ns_uri is None:
+            self._ns_uri_utf = None
+            self._c_ns_uri_utf = NULL
+        else:
+            self._ns_uri_utf = _utf8(ns_uri)
+            self._c_ns_uri_utf = _cstr(self._ns_uri_utf)
         self._classes = {}
         self._extensions = {}
         self._xslt_elements = {}
@@ -95,14 +103,11 @@ cdef class _NamespaceRegistry:
         d[name_utf] = item
 
     def __getitem__(self, name):
-        name_utf = _utf8(name)
-        return self._get(name_utf)
-
-    cdef object _get(self, object name):
         cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItem(self._classes, name)
+        name_utf = _utf8(name)
+        dict_result = python.PyDict_GetItem(self._classes, name_utf)
         if dict_result is NULL:
-            dict_result = python.PyDict_GetItem(self._extensions, name)
+            dict_result = python.PyDict_GetItem(self._extensions, name_utf)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
@@ -130,33 +135,33 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
             self._prefix_utf = _utf8(prefix)
             self._prefix = prefix
 
-    def __setitem__(self, name, item):
-        if not callable(item):
+    def __setitem__(self, name, function):
+        if not callable(function):
             raise NamespaceRegistryError, "Registered function must be callable."
         if name is None:
             name_utf = None
         else:
             name_utf = _utf8(name)
-        self._extensions[name_utf] = item
+        self._extensions[name_utf] = function
+        _register_global_xslt_function(self._c_ns_uri_utf, _cstr(name_utf))
 
-    cdef object _get(self, object name):
+    def __getitem__(self, name):
         cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItem(self._extensions, name)
+        name_utf = _utf8(name)
+        dict_result = python.PyDict_GetItem(self._extensions, name_utf)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
 
+    def clear(self):
+        cdef char* c_uri_utf
+        c_uri_utf = self._c_ns_uri_utf
+        for name_utf in self._extensions:
+            _unregister_global_xslt_function(c_uri_utf, _cstr(name_utf))
+        _NamespaceRegistry.clear(self)
+
     def __repr__(self):
         return "FunctionNamespace(%r)" % self._ns_uri
-
-cdef object _find_all_extensions():
-    "Internal lookup function to find all extension functions for XSLT/XPath."
-    cdef _NamespaceRegistry registry
-    ns_extensions = {}
-    for (ns_utf, registry) in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
-        if registry._extensions:
-            ns_extensions[ns_utf] = registry._extensions
-    return ns_extensions
 
 cdef object _find_all_extension_prefixes():
     "Internal lookup function to find all function prefixes for XSLT/XPath."
@@ -167,25 +172,18 @@ cdef object _find_all_extension_prefixes():
             ns_prefixes[registry._prefix_utf] = ns_utf
     return ns_prefixes
 
-cdef _find_extensions(namespaces):
-    """Returns a dictionary that maps each namespace in the provided list to a
-    dictionary of name-function mappings defined under that namespace."""
+cdef object _find_extension(ns_uri_utf, name_utf):
     cdef python.PyObject* dict_result
-    cdef char* c_ns_utf
-    extension_dict = {}
-    for ns_uri in namespaces:
-        if ns_uri is None:
-            ns_utf = None
-        else:
-            ns_utf = _utf8(ns_uri)
-        dict_result = python.PyDict_GetItem(
-            __FUNCTION_NAMESPACE_REGISTRIES, ns_utf)
-        if dict_result is NULL:
-            continue
-        extensions = (<_NamespaceRegistry>dict_result)._extensions
-        if extensions:
-            python.PyDict_SetItem(extension_dict, ns_utf, extensions)
-    return extension_dict
+    dict_result = python.PyDict_GetItem(
+        __FUNCTION_NAMESPACE_REGISTRIES, ns_uri_utf)
+    if dict_result is NULL:
+        return None
+    extensions = (<_NamespaceRegistry>dict_result)._extensions
+    dict_result = python.PyDict_GetItem(extensions, name_utf)
+    if dict_result is NULL:
+        return None
+    else:
+        return <object>dict_result
 
 cdef object _find_element_class(char* c_namespace_utf,
                                 char* c_element_name_utf):

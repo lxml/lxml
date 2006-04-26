@@ -19,6 +19,9 @@ cdef extern from "libxslt/extensions.h":
                                      char* name,
                                      char * URI,
                                      xmlXPathFunction function)
+    cdef int xsltRegisterExtModuleFunction(char* name, char* URI,
+                                           xmlXPathFunction function)
+    cdef int xsltUnregisterExtModuleFunction(char* name, char* URI)
 
 cdef extern from "libxslt/transform.h":
     cdef xmlDoc* xsltApplyStylesheet(xsltStylesheet* style, xmlDoc* doc,
