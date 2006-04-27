@@ -29,6 +29,36 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           st.tostring(res))
+
+    def test_exslt(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:math="http://exslt.org/math"
+    xmlns:str="http://exslt.org/strings"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    exclude-result-prefixes="math str xsl">
+  <xsl:template match="text()">
+    <xsl:value-of select="str:align(string(.), '---', 'center')" />
+  </xsl:template>
+  <xsl:template match="*">
+    <xsl:copy>
+      <xsl:attribute name="pi">
+        <xsl:value-of select="math:constant('PI', count(*)+2)"/>
+      </xsl:attribute>
+      <xsl:apply-templates/>
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<a pi="3.14"><b pi="3">-B-</b><c pi="3">-C-</c></a>
+''',
+                          st.tostring(res))
+
     def test_xslt_input(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -336,12 +366,12 @@ class ETreeXSLTTestCase(HelperTestCase):
                           '<A>X</A>')
 
     def test_xslt_document_XML(self):
-        # make sure document('') works from loaded files
+        # make sure document('') works from parsed strings
         xslt = etree.XSLT(etree.XML("""\
 <xsl:stylesheet version="1.0"
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
-    <test><xsl:copy-of select="document('')//test"/></test>
+    <test>TEXT<xsl:copy-of select="document('')//test"/></test>
   </xsl:template>
 </xsl:stylesheet>
 """))
@@ -351,6 +381,8 @@ class ETreeXSLTTestCase(HelperTestCase):
                           'test')
         self.assertEquals(root[0].tag,
                           'test')
+        self.assertEquals(root[0].text,
+                          'TEXT')
         self.assertEquals(root[0][0].tag,
                           '{http://www.w3.org/1999/XSL/Transform}copy-of')
 

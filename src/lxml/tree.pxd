@@ -77,6 +77,7 @@ cdef extern from "libxml/tree.h":
         xmlDict* dict
         xmlHashTable* ids
         char* URL
+        void* _private
         
     ctypedef struct xmlAttr:
         void* _private

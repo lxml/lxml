@@ -39,9 +39,8 @@ cdef class _BaseContext:
     cdef object _utf_refs
     cdef object _temp_functions
     # for exception handling and temporary reference keeping:
-    cdef object _temp_elements
-    cdef object _temp_docs
-    cdef object _exc_info
+    cdef _TempStore _temp_refs
+    cdef _ExceptionContext _exc
 
     def __init__(self, namespaces, extensions):
         self._xpathCtxt = NULL
@@ -62,12 +61,11 @@ cdef class _BaseContext:
             extensions = new_extensions or None
 
         self._doc        = None
-        self._exc_info   = None
+        self._exc        = _ExceptionContext()
         self._extensions = extensions
         self._namespaces = namespaces
         self._registered_namespaces = []
-        self._temp_elements = {}
-        self._temp_docs = {}
+        self._temp_refs = _TempStore()
 
     cdef object _to_utf(self, s):
         "Convert to UTF-8 and keep a reference to the encoded string"
@@ -86,9 +84,9 @@ cdef class _BaseContext:
         xpathCtxt.userData = <void*>self
 
     cdef _register_context(self, _Document doc, int allow_none_namespace):
-        self._doc      = doc
-        self._exc_info = None
-        self._temp_functions.clear()
+        self._doc = doc
+        self._exc.clear()
+        python.PyDict_Clear(self._temp_functions)
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
@@ -154,8 +152,7 @@ cdef class _BaseContext:
 
     cdef _release_temp_refs(self):
         "Free temporarily referenced objects from this context."
-        python.PyDict_Clear(self._temp_elements)
-        python.PyDict_Clear(self._temp_docs)
+        self._temp_refs.clear()
         
     cdef _hold(self, obj):
         """A way to temporarily hold references to nodes in the evaluator.
@@ -173,26 +170,127 @@ cdef class _BaseContext:
             if isinstance(o, _NodeBase):
                 element = <_NodeBase>o
                 #print "Holding element:", <int>element._c_node
-                python.PyDict_SetItem(self._temp_elements, id(element), element)
+                self._temp_refs.add(element)
                 #print "Holding document:", <int>element._doc._c_doc
-                python.PyDict_SetItem(self._temp_docs, id(element._doc), element._doc)
+                self._temp_refs.add(element._doc)
 
 cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns_uri):
     cdef _BaseContext context
     if c_name is NULL:
         return NULL
     if c_ns_uri is NULL:
-        c_ns_uri = ''
         ns_uri = None
     else:
         ns_uri = c_ns_uri
     context = <_BaseContext>ctxt
-    if context._lookup_extension(ns_uri, c_name) is None:
-        return NULL
-    else:
+    if context._lookup_extension(ns_uri, c_name) is not None:
         return _xpath_function_call
+    else:
+        return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
 
  
+################################################################################
+# XSLT document loaders
+
+cdef class _XSLTResolverContext(_ResolverContext):
+    cdef xmlDoc* _c_style_doc
+    cdef object _style_url_utf
+    cdef object _style_doc_utf
+    cdef BaseParser _parser
+    def __init__(self, BaseParser parser not None):
+        _ResolverContext.__init__(self, parser.resolvers)
+        self._parser = parser
+        self._c_style_doc = NULL
+        self._style_url_utf = None
+        self._style_doc_utf = None
+
+cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
+                         void* c_ctxt, xslt.xsltLoadType c_type):
+    cdef xmlDoc* c_doc
+    cdef _ResolverRegistry resolvers
+    cdef _InputDocument doc_ref
+    cdef _XSLTResolverContext xslt_resolver_context
+    cdef _XSLTResolverContext doc_resolver_context
+    cdef _XSLTResolverContext resolver_context
+    cdef XMLParser parser
+    # find resolver contexts of stylesheet and transformed doc
+    c_doc = NULL
+    doc_resolver_context = None
+    if c_type == xslt.XSLT_LOAD_DOCUMENT:
+        c_doc = (<xslt.xsltTransformContext*>c_ctxt).document.doc
+        if c_doc is not NULL and c_doc._private is not NULL:
+            if isinstance(<object>c_doc._private, _XSLTResolverContext):
+                doc_resolver_context = <_XSLTResolverContext>c_doc._private
+        c_doc = (<xslt.xsltTransformContext*>c_ctxt).style.doc
+    elif c_type == xslt.XSLT_LOAD_STYLESHEET:
+        c_doc = (<xslt.xsltStylesheet*>c_ctxt).doc
+
+    if c_doc is NULL or c_doc._private is NULL or \
+           not isinstance(<object>c_doc._private, _XSLTResolverContext):
+        # can't call Python without context, fall back to default loader
+        return XSLT_DOC_DEFAULT_LOADER(
+            c_uri, c_dict, parse_options, c_ctxt, c_type)
+
+    xslt_resolver_context = <_XSLTResolverContext>c_doc._private
+
+    # quick check if we are looking for the current stylesheet
+    c_doc = xslt_resolver_context._c_style_doc
+    if c_doc is not NULL and c_doc.URL is not NULL:
+        if tree.strcmp(c_uri, c_doc.URL) == 0:
+            return tree.xmlCopyDoc(c_doc, 1)
+
+    # call the Python document loaders
+    c_doc = NULL
+    resolver_context = xslt_resolver_context # currently use only XSLT resolvers
+    resolvers = resolver_context._resolvers
+    try:
+        uri = funicode(c_uri)
+        doc_ref = resolvers.resolve(uri, None, resolver_context)
+
+        if doc_ref is not None:
+            if doc_ref._type == PARSER_DATA_EMPTY:
+                c_doc = _newDoc()
+            if doc_ref._type == PARSER_DATA_STRING:
+                c_doc = _internalParseDoc(
+                    _cstr(doc_ref._data_utf), parse_options,
+                    resolver_context)
+            elif doc_ref._type == PARSER_DATA_FILE:
+                data = doc_ref._file.read()
+                c_doc = _internalParseDoc(
+                    _cstr(data), parse_options,
+                    resolver_context)
+            elif doc_ref._type == PARSER_DATA_FILENAME:
+                c_doc = _internalParseDocFromFile(
+                    _cstr(doc_ref._data_utf), parse_options,
+                    resolver_context)
+            if c_doc is not NULL and c_doc.URL is NULL:
+                c_doc.URL = tree.xmlStrdup(c_uri)
+
+    except Exception, e:
+        xslt_resolver_context._store_raised()
+        return NULL
+
+    if c_doc is NULL:
+        c_doc = XSLT_DOC_DEFAULT_LOADER(
+            c_uri, c_dict, parse_options, c_ctxt, c_type)
+        if c_doc is NULL:
+            message = "Cannot resolve URI %s" % funicode(c_uri)
+            if c_type == xslt.XSLT_LOAD_DOCUMENT:
+                exception = XSLTApplyError(message)
+            else:
+                exception = XSLTParseError(message)
+            xslt_resolver_context._store_exception(exception)
+            return NULL
+    if c_doc is not NULL and c_doc._private is NULL:
+        c_doc._private = <python.PyObject*>xslt_resolver_context
+    return c_doc
+
+cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER
+XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
+
+xslt.xsltSetLoaderFunc(_doc_loader)
+
+
 ################################################################################
 # XSLT
 
@@ -223,13 +321,14 @@ cdef class _XSLTContext(_BaseContext):
 
     cdef _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
         extensions = self._extensions
-        if self._extensions is None:
+        if extensions is None:
             self._extensions = {ns_utf:{name_utf:function}}
         else:
-            if ns_utf in self._extensions:
-                self._extensions[ns_utf][name_utf] = function
+            if ns_utf in extensions:
+                ns_extensions = extensions[ns_utf]
             else:
-                self._extensions[ns_utf] = ns_extensions = {name_utf:function}
+                ns_extensions = extensions[ns_utf] = {}
+            python.PyDict_SetItem(ns_extensions, name_utf, function)
         xslt.xsltRegisterExtFunction(
             self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
             _xpath_function_call)
@@ -252,12 +351,10 @@ cdef class XSLT:
     """
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
+    cdef _XSLTResolverContext _xslt_resolver_context
     cdef _ExsltRegExp _regexp
-    cdef object _doc_url_utf
-    
+
     def __init__(self, xslt_input, extensions=None, regexp=True):
-        # make a copy of the document as stylesheet needs to assume it
-        # doesn't change
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
@@ -267,23 +364,30 @@ cdef class XSLT:
         doc = _documentOrRaise(xslt_input)
         root_node = _rootNodeOf(xslt_input)
 
+        # make a copy of the document as stylesheet parsing modifies it
         fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         c_doc = tree.xmlCopyDoc(fake_c_doc, 1)
         _destroyFakeDoc(doc._c_doc, fake_c_doc)
 
-        # XXX work around bug in xmlCopyDoc (fix is upcoming in new release
-        # of libxml2)
-        if c_doc.URL is not NULL and c_doc.URL != doc._c_doc.URL:
+        # make sure we always have a stylesheet URL
+        if c_doc.URL is not NULL:
+            # handle a bug in older libxml2 versions
             tree.xmlFree(c_doc.URL)
         if doc._c_doc.URL is not NULL:
-            self._doc_url_utf = doc._c_doc.URL
             c_doc.URL = tree.xmlStrdup(doc._c_doc.URL)
         else:
-            self._doc_url_utf = "__STRING__XSLT__%s" % id(self)
-            c_doc.URL = tree.xmlStrdup(_cstr(self._doc_url_utf))
+            doc_url_utf = "XSLT:__STRING__XSLT__%s" % id(self)
+            c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
+
+        self._xslt_resolver_context = _XSLTResolverContext(doc._parser)
+        # keep a copy in case we need to access the stylesheet via 'document()'
+        self._xslt_resolver_context._c_style_doc = tree.xmlCopyDoc(c_doc, 1)
+        c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
         if c_style is NULL:
+            tree.xmlFreeDoc(c_doc)
+            self._xslt_resolver_context._raise_if_stored()
             raise XSLTParseError, "Cannot parse style sheet"
         self._c_style = c_style
 
@@ -295,6 +399,9 @@ cdef class XSLT:
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
         
     def __dealloc__(self):
+        if self._xslt_resolver_context is not None and \
+               self._xslt_resolver_context._c_style_doc is not NULL:
+            tree.xmlFreeDoc(self._xslt_resolver_context._c_style_doc)
         # this cleans up copy of doc as well
         xslt.xsltFreeStylesheet(self._c_style)
 
@@ -302,15 +409,19 @@ cdef class XSLT:
         cdef _Document input_doc
         cdef _NodeBase root_node
         cdef _Document result_doc
+        cdef _XSLTResolverContext resolver_context
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result
         cdef xmlDoc* c_doc
         cdef char** params
+        cdef void* ptemp
         cdef int i
-        cdef int j
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOf(_input)
+
+        resolver_context = _XSLTResolverContext(input_doc._parser)
+        resolver_context._c_style_doc = self._xslt_resolver_context._c_style_doc
 
         c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
 
@@ -318,6 +429,9 @@ cdef class XSLT:
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             raise XSLTApplyError, "Error preparing stylesheet run"
+
+        ptemp = c_doc._private
+        c_doc._private = <python.PyObject*>resolver_context
 
         if _kw:
             # allocate space for parameters
@@ -352,19 +466,25 @@ cdef class XSLT:
             cstd.free(params)
 
         self._context.free_context()
+        c_doc._private = ptemp # restore _private before _destroyFakeDoc!
         _destroyFakeDoc(input_doc._c_doc, c_doc)
+
+        if self._xslt_resolver_context._has_raised():
+            if c_result is not NULL:
+                tree.xmlFreeDoc(c_result)
+            self._xslt_resolver_context._raise_if_stored()
 
         if c_result is NULL:
             raise XSLTApplyError, "Error applying stylesheet"
 
-        result_doc = _documentFactory(c_result)
+        result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self)
 
     def apply(self, _input, **_kw):
-        return self(_input, **_kw)
+        return self.__call__(_input, **_kw)
 
     def tostring(self, _ElementTree result_tree):
-        """Save result doc to string using stylesheet as guidance.
+        """Save result doc to string based on stylesheet output method.
         """
         return str(result_tree)
 
@@ -396,6 +516,23 @@ cdef void _register_global_xslt_function(char* ns_uri, char* name):
 
 cdef void _unregister_global_xslt_function(char* ns_uri, char* name):
     xslt.xsltUnRegisterExtModuleFunction(ns_uri, name)
+
+# do not register all libxslt extra function, provide only "node-set"
+# functions like "output" and "write" are a potential security risk
+#xslt.xsltRegisterAllExtras()
+xslt.xsltRegisterExtModuleFunction("node-set",
+                                   xslt.XSLT_LIBXSLT_NAMESPACE,
+                                   xslt.xsltFunctionNodeSet)
+xslt.xsltRegisterExtModuleFunction("node-set",
+                                   xslt.XSLT_SAXON_NAMESPACE,
+                                   xslt.xsltFunctionNodeSet)
+xslt.xsltRegisterExtModuleFunction("node-set",
+                                   xslt.XSLT_XT_NAMESPACE,
+                                   xslt.xsltFunctionNodeSet)
+
+# enable EXSLT support for XSLT
+xslt.exsltRegisterAll()
+
 
 ################################################################################
 # EXSLT regexp implementation
@@ -541,17 +678,21 @@ cdef class XPathEvaluatorBase:
         self._context = _XPathContext(namespaces, extensions, variables)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
-        _exc_info = self._context._exc_info
-        if _exc_info is not None:
-            type, value, traceback = _exc_info
-            raise type, value, traceback
+        if self._context._exc._has_raised():
+            if xpathObj is not NULL:
+                xpath.xmlXPathFreeObject(xpathObj)
+                xpathObj = NULL
+            self._context._exc._raise_if_stored()
+
         if xpathObj is NULL:
             raise XPathSyntaxError, "Error in xpath expression."
+
         try:
             result = _unwrapXPathObject(xpathObj, doc)
         except XPathResultError:
             xpath.xmlXPathFreeObject(xpathObj)
             raise
+
         xpath.xmlXPathFreeObject(xpathObj)
         return result
 
@@ -795,6 +936,7 @@ cdef object _createNodeSetResult(_Document doc,
     cdef xmlNode* c_node
     cdef char* s
     cdef _NodeBase element
+    cdef int i
     result = []
     if xpathObj.nodesetval is NULL:
         return result
@@ -819,7 +961,8 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
-    cdef _BaseContext extensions
+    cdef _BaseContext context
+    cdef int i
 
     rctxt = ctxt.context
 
@@ -831,15 +974,15 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
         uri = None
 
     # get our evaluator
-    extensions = <_BaseContext>(rctxt.userData)
+    context = <_BaseContext>(rctxt.userData)
 
     # lookup up the extension function in the context
-    f = extensions._lookup_extension(uri, name)
+    f = context._lookup_extension(uri, name)
 
     args = []
-    doc = extensions._doc
+    doc = context._doc
     for i from 0 <= i < nargs:
-        args.append(_unwrapXPathObject(xpath.valuePop(ctxt), doc))
+        python.PyList_Append(args, _unwrapXPathObject(xpath.valuePop(ctxt), doc))
     args.reverse()
 
     try:
@@ -847,13 +990,13 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
         res = f(None, *args)
         # hold python objects temporarily so that they won't get deallocated
         # during processing
-        extensions._hold(res)
+        context._hold(res)
         # now wrap for XPath consumption
         obj = _wrapXPathObject(res)
     except:
         xpath.xmlXPathErr(
             ctxt,
             xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
-        extensions._exc_info = sys.exc_info()
+        context._exc._store_raised()
         return
     xpath.valuePush(ctxt, obj)

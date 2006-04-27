@@ -1,6 +1,7 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, issubclass, hasattr, callable, iter, str, _cstr
+from python cimport isinstance, issubclass, hasattr, callable
+from python cimport iter, str, _cstr
 cimport xpath
 cimport xslt
 cimport xmlerror
@@ -55,6 +56,53 @@ class XIncludeError(LxmlError):
 class C14NError(LxmlError):
     pass
 
+
+# class for temporary storage of Python references
+cdef class _TempStore:
+    cdef object _storage
+    def __init__(self):
+        self._storage = {}
+
+    cdef void add(self, obj):
+        python.PyDict_SetItem(self._storage, id(obj), obj)
+
+    cdef void clear(self):
+        python.PyDict_Clear(self._storage)
+
+    cdef object dictcopy(self):
+        return self._storage.copy()
+
+# class for temporarily storing exceptions raised in extensions
+cdef class _ExceptionContext:
+    cdef object _exc_info
+    def __init__(self):
+        self._exc_info = None
+
+    cdef void clear(self):
+        self._exc_info = None
+
+    cdef void _store_raised(self):
+        self._exc_info = sys.exc_info()
+
+    cdef void _store_exception(self, exception):
+        self._exc_info = (exception, None, None)
+
+    cdef _has_raised(self):
+        return self._exc_info is not None
+
+    cdef _raise_if_stored(self):
+        _exc_info = self._exc_info
+        if _exc_info is not None:
+            self._exc_info = None
+            type, value, traceback = _exc_info
+            if traceback is None and value is None:
+                raise type
+            else:
+                raise type, value, traceback
+
+
+cdef class BaseParser # forward declaration
+
 cdef class _Document:
     """Internal base class to reference a libxml document.
 
@@ -63,6 +111,7 @@ cdef class _Document:
     """
     cdef int _ns_counter
     cdef xmlDoc* _c_doc
+    cdef BaseParser _parser
     
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
@@ -150,21 +199,24 @@ cdef _Document _parseDocument(source, parser):
     if filename is None:
         filename = source
     # open filename
-    c_doc = _parseDocFromFile(filename, parser)
-    return _documentFactory(c_doc)
+    c_doc = _parseDocFromFile(_utf8(filename), parser)
+    return _documentFactory(c_doc, parser)
 
 cdef _Document _parseMemoryDocument(text, parser):
     cdef xmlDoc* c_doc
     if python.PyUnicode_Check(text):
         text = _stripDeclaration(_utf8(text))
     c_doc = _parseDoc(text, parser)
-    return _documentFactory(c_doc)
+    return _documentFactory(c_doc, parser)
 
-cdef _Document _documentFactory(xmlDoc* c_doc):
+cdef _Document _documentFactory(xmlDoc* c_doc, parser):
     cdef _Document result
     result = _Document()
     result._c_doc = c_doc
     result._ns_counter = 0
+    if parser is None:
+        parser = __DEFAULT_PARSER
+    result._parser = parser.copy()
     return result
 
 # to help with debugging
@@ -438,7 +490,7 @@ cdef class _Element(_NodeBase):
         fake_c_doc = _fakeRootDoc(doc._c_doc, self._c_node)
         c_doc = tree.xmlCopyDoc(fake_c_doc, 1) # recursive copy
         _destroyFakeDoc(doc._c_doc, fake_c_doc)
-        doc = _documentFactory(c_doc)
+        doc = _documentFactory(c_doc, doc._parser)
         return doc.getroot()
         
     def set(self, key, value):
@@ -1163,7 +1215,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     c_doc = _newDoc()
     c_node = _createElement(c_doc, name_utf, attrib, _extra)
     tree.xmlDocSetRootElement(c_doc, c_node)
-    doc = _documentFactory(c_doc)
+    doc = _documentFactory(c_doc, None)
     # add namespaces to node if necessary
     doc._setNodeNamespaces(c_node, ns_utf, nsmap)
     return _elementFactory(doc, c_node)
@@ -1171,13 +1223,15 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
 def Comment(text=None):
     cdef _Document doc
     cdef xmlNode*  c_node
+    cdef xmlDoc*   c_doc
     if text is None:
         text = '  '
     else:
         text = ' %s ' % _utf8(text)
-    doc = _documentFactory( _newDoc() )
-    c_node = _createComment(doc._c_doc, text)
-    tree.xmlAddChild(<xmlNode*>doc._c_doc, c_node)
+    c_doc = _newDoc()
+    doc = _documentFactory(c_doc, None)
+    c_node = _createComment(c_doc, text)
+    tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _commentFactory(doc, c_node)
 
 def SubElement(_Element _parent not None, _tag,
@@ -1196,6 +1250,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
+    cdef xmlDoc*  c_doc
     cdef _ElementTree etree
     cdef _Document doc
 
@@ -1204,7 +1259,8 @@ def ElementTree(_Element element=None, file=None, parser=None):
     elif file is not None:
         doc = _parseDocument(file, parser)
     else:
-        doc = _documentFactory( _newDoc() )
+        c_doc = _newDoc()
+        doc = _documentFactory(c_doc, parser)
 
     etree = _elementTreeFactory(doc, element)
 
@@ -1294,10 +1350,11 @@ def parse(source, parser=None):
 include "xmlerror.pxi"  # error and log handling
 include "xmlid.pxi"     # XMLID and IDDict
 include "nsclasses.pxi" # Namespace implementation and registry
+include "docloader.pxi" # Support for custom document loaders
+include "parser.pxi"    # XML Parser
 include "xslt.pxi"      # XPath and XSLT
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
-include "parser.pxi"    # XML Parser
 include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
 
 

@@ -58,28 +58,122 @@ cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
 
 
+############################################################
+## support for custom document loaders
+############################################################
+
+cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
+                                               xmlParserCtxt* c_context):
+    cdef _ResolverContext context
+    cdef _InputDocument   doc_ref
+    cdef xmlparser.xmlParserInput* c_input
+    if c_context._private is NULL or \
+       not isinstance(<object>c_context._private, _ResolverContext):
+        if __DEFAULT_ENTITY_LOADER is NULL:
+            return NULL
+        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+
+    try:
+        if c_url is NULL:
+            url = None
+        else:
+            url = funicode(c_url)
+        if c_pubid is NULL:
+            pubid = None
+        else:
+            pubid = funicode(c_pubid)
+
+        context = <_ResolverContext>c_context._private
+        doc_ref = context._resolvers.resolve(url, pubid, context)
+    except Exception:
+        context._store_raised()
+        return NULL
+
+    if doc_ref is None:
+        if __DEFAULT_ENTITY_LOADER is NULL:
+            return NULL
+        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+
+    c_input = NULL
+    data = None
+    if doc_ref._type == PARSER_DATA_STRING:
+        data = doc_ref._data_utf
+        c_input = xmlparser.xmlNewStringInputStream(
+            c_context, _cstr(doc_ref._data_utf))
+    elif doc_ref._type == PARSER_DATA_FILENAME:
+        c_input = xmlparser.xmlNewInputFromFile(
+            c_context, _cstr(doc_ref._data_utf))
+    elif doc_ref._type == PARSER_DATA_FILE:
+        data = doc_ref._file.read()
+        c_input = xmlparser.xmlNewStringInputStream(
+            c_context, _cstr(data))
+
+    if data is not None:
+        context._storage.add(data)
+    return c_input
+
+cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
+__DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
+
+xmlparser.xmlSetExternalEntityLoader(_local_resolver)
+
+############################################################
+## Parsers
+############################################################
+
 cdef class BaseParser:
     cdef _ErrorLog _error_log
+    cdef readonly object resolvers
+    cdef _ResolverContext _context
     def __init__(self):
+        cdef _ResolverContext context
         self._error_log = _ErrorLog()
+        self.resolvers = _ResolverRegistry()
+        self._context = _ResolverContext(self.resolvers)
 
     property error_log:
         def __get__(self):
             return self._error_log.copy()
 
-    cdef xmlDoc* _handleResult(self, xmlParserCtxt* ctxt,
-                               xmlDoc* result) except NULL:
-        if ctxt.wellFormed:
-            __GLOBAL_PARSER_CONTEXT._initDocDict(result)
-        elif result is not NULL:
-            # free broken document
-            tree.xmlFreeDoc(result)
-            result = NULL
-        self._error_log.disconnect()
-        if result is NULL:
-            raise XMLSyntaxError
-        return result
+    cdef _copy(self):
+        cdef BaseParser parser
+        parser = self.__class__()
+        parser.resolvers = self.resolvers.copy()
+        parser._context = _ResolverContext(parser.resolvers)
+        return parser
 
+    cdef _initContext(self, xmlParserCtxt* c_ctxt):
+        __GLOBAL_PARSER_CONTEXT._initParserDict(c_ctxt)
+        c_ctxt._private = <python.PyObject*>self._context
+
+cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
+                                char* c_filename) except NULL:
+    cdef _ResolverContext context
+    if ctxt.wellFormed:
+        __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    elif result is not NULL:
+        # free broken document
+        tree.xmlFreeDoc(result)
+        result = NULL
+
+    if ctxt._private is not NULL:
+        context = <_ResolverContext>ctxt._private
+        context._raise_if_stored()
+
+    if result is NULL:
+        if c_filename is not NULL and \
+               ctxt.lastError.domain == xmlerror.XML_FROM_IO:
+            if ctxt.lastError.message is not NULL:
+                message = "Error reading file %s: %s" % (
+                    funicode(c_filename), funicode(ctxt.lastError.message))
+            else:
+                message = "Error reading file %s" % funicode(c_filename)
+            raise IOError, message
+        elif ctxt.lastError.message is not NULL:
+            raise XMLSyntaxError, funicode(ctxt.lastError.message)
+        else:
+            raise XMLSyntaxError
+    return result
 
 ############################################################
 ## XML parser
@@ -110,12 +204,14 @@ cdef class XMLParser(BaseParser):
     cdef xmlParserCtxt* _file_parser_ctxt
     cdef xmlParserCtxt* _memory_parser_ctxt
     def __init__(self, attribute_defaults=False, dtd_validation=False,
-                 no_network=False, ns_clean=False):
+                 load_dtd=False, no_network=False, ns_clean=False):
         cdef int parse_options
         self._file_parser_ctxt = NULL
         BaseParser.__init__(self)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
+        if load_dtd:
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
         if dtd_validation:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
                             xmlparser.XML_PARSE_DTDVALID
@@ -135,6 +231,12 @@ cdef class XMLParser(BaseParser):
         if self._memory_parser_ctxt != NULL:
             xmlparser.xmlFreeParserCtxt(self._memory_parser_ctxt)
 
+    def copy(self):
+        cdef XMLParser parser
+        parser = self._copy()
+        parser._parse_options = self._parse_options
+        return parser
+
     cdef xmlParserCtxt* _createContext(self) except NULL:
         cdef xmlParserCtxt* pctxt
         pctxt = xmlparser.xmlNewParserCtxt()
@@ -143,7 +245,7 @@ cdef class XMLParser(BaseParser):
             raise ParserError, "Failed to create parser context"
         return pctxt
 
-    cdef xmlDoc* _parseDoc(self, text_utf) except NULL:
+    cdef xmlDoc* _parseDoc(self, char* c_text) except NULL:
         """Parse document, share dictionary if possible.
         """
         cdef xmlDoc* result
@@ -154,13 +256,13 @@ cdef class XMLParser(BaseParser):
         if pctxt is NULL:
             pctxt = self._createContext()
             self._memory_parser_ctxt = pctxt
-
-        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        self._initContext(pctxt)
         result = xmlparser.xmlCtxtReadDoc(
-            pctxt, _cstr(text_utf), NULL, NULL, self._parse_options)
-        return self._handleResult(pctxt, result)
+            pctxt, c_text, NULL, NULL, self._parse_options)
+        self._error_log.disconnect()
+        return _handleParseResult(pctxt, result, NULL)
 
-    cdef xmlDoc* _parseDocFromFile(self, char* filename) except NULL:
+    cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         self._error_log.connect()
@@ -168,15 +270,47 @@ cdef class XMLParser(BaseParser):
         if pctxt is NULL:
             pctxt = self._createContext()
             self._file_parser_ctxt = pctxt
-
-        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        self._initContext(pctxt)
         result = xmlparser.xmlCtxtReadFile(
-            pctxt, filename, NULL, self._parse_options)
-        if result is NULL:
-            if pctxt.lastError.domain == xmlerror.XML_FROM_IO:
-                self._error_log.disconnect()
-                raise IOError, "Could not open file %s" % filename
-        return self._handleResult(pctxt, result)
+            pctxt, c_filename, NULL, self._parse_options)
+        self._error_log.disconnect()
+        return _handleParseResult(pctxt, result, c_filename)
+
+cdef xmlDoc* _internalParseDoc(char* c_text, int options,
+                               _ResolverContext context) except NULL:
+    # internal parser function for XSLT
+    cdef xmlParserCtxt* pctxt
+    cdef xmlDoc* c_doc
+    pctxt = xmlparser.xmlNewParserCtxt()
+    if pctxt is NULL:
+        return NULL
+    __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+    pctxt._private = <python.PyObject*>context
+    c_doc = xmlparser.xmlCtxtReadDoc(
+        pctxt, c_text, NULL, NULL, options)
+    try:
+        c_doc = _handleParseResult(pctxt, c_doc, NULL)
+    finally:
+        xmlparser.xmlFreeParserCtxt(pctxt)
+    return c_doc
+
+cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
+                                       _ResolverContext context) except NULL:
+    # internal parser function for XSLT
+    cdef xmlParserCtxt* pctxt
+    cdef xmlDoc* c_doc
+    pctxt = xmlparser.xmlNewParserCtxt()
+    if pctxt is NULL:
+        return NULL
+    __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+    pctxt._private = <python.PyObject*>context
+    c_doc = xmlparser.xmlCtxtReadFile(
+        pctxt, c_filename, NULL, options)
+    try:
+        c_doc = _handleParseResult(pctxt, c_doc, c_filename)
+    finally:
+        xmlparser.xmlFreeParserCtxt(pctxt)
+    return c_doc
 
 
 cdef XMLParser __DEFAULT_XML_PARSER
@@ -203,6 +337,8 @@ def set_default_parser(parser=None):
     else:
         raise TypeError, "Invalid parser"
 
+def get_default_parser():
+    return __DEFAULT_PARSER
 
 ############################################################
 ## HTML parser
@@ -248,15 +384,19 @@ cdef class HTMLParser(BaseParser):
         if self._memory_parser_ctxt != NULL:
             htmlparser.htmlFreeParserCtxt(self._memory_parser_ctxt)
 
-    cdef xmlDoc* _parseDoc(self, text_utf) except NULL:
+    def copy(self):
+        cdef HTMLParser parser
+        parser = self._copy()
+        parser._parse_options = self._parse_options
+        return parser
+
+    cdef xmlDoc* _parseDoc(self, char* c_text) except NULL:
         """Parse HTML document, share dictionary if possible.
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        cdef char* c_text
         cdef int c_len
         self._error_log.connect()
-        c_text = _cstr(text_utf)
         pctxt = self._memory_parser_ctxt
         if pctxt is NULL:
             pctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
@@ -264,30 +404,32 @@ cdef class HTMLParser(BaseParser):
                 self._error_log.disconnect()
                 raise ParserError, "Failed to create parser context"
             self._memory_parser_ctxt = pctxt
-        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        self._initContext(pctxt)
         result = htmlparser.htmlCtxtReadDoc(
             pctxt, c_text, NULL, NULL, self._parse_options)
-        return self._handleResult(pctxt, result)
+        self._error_log.disconnect()
+        return _handleParseResult(pctxt, result, NULL)
 
-    cdef xmlDoc* _parseDocFromFile(self, char* filename) except NULL:
+    cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int parser_error
         self._error_log.connect()
         pctxt = self._file_parser_ctxt
         if pctxt is NULL:
-            pctxt = htmlparser.htmlCreateFileParserCtxt(filename, NULL)
+            pctxt = htmlparser.htmlCreateFileParserCtxt(c_filename, NULL)
             if pctxt is NULL:
                 self._error_log.disconnect()
                 warnings = self._error_log.filter_from_warnings()
                 if warnings and warnings[-1].domain == xmlerror.XML_FROM_IO:
-                    raise IOError, "Could not open file %s" % filename
+                    raise IOError, "Could not open file %s" % c_filename
                 raise ParserError, "Failed to create parser context"
             self._file_parser_ctxt = pctxt
-        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+        self._initContext(pctxt)
         result = htmlparser.htmlCtxtReadFile(
-            pctxt, filename, NULL, self._parse_options)
-        return self._handleResult(pctxt, result)
+            pctxt, c_filename, NULL, self._parse_options)
+        self._error_log.disconnect()
+        return _handleParseResult(pctxt, result, c_filename)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()
@@ -301,9 +443,9 @@ cdef xmlDoc* _parseDoc(text_utf, parser) except NULL:
         parser = __DEFAULT_PARSER
     __GLOBAL_PARSER_CONTEXT._initParser()
     if isinstance(parser, XMLParser):
-        return (<XMLParser>parser)._parseDoc(text_utf)
+        return (<XMLParser>parser)._parseDoc(_cstr(text_utf))
     elif isinstance(parser, HTMLParser):
-        return (<HTMLParser>parser)._parseDoc(text_utf)
+        return (<HTMLParser>parser)._parseDoc(_cstr(text_utf))
     else:
         raise TypeError, "invalid parser"
 

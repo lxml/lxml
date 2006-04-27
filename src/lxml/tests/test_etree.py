@@ -49,7 +49,67 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = open(fileInTestDir('test_broken.xml'), 'r')
         self.assertRaises(SyntaxError, parse, f)
         f.close()
-        
+
+    def test_resolve_string_dtd(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(dtd_validation=True)
+        assertEqual = self.assertEqual
+        test_url = u"__nosuch.dtd"
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, test_url)
+                return self.resolve_string(
+                    u'<!ENTITY myentity "%s">' % url, context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = u'<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
+        tree = parse(StringIO(xml), parser)
+        root = tree.getroot()
+        self.assertEquals(root.text, test_url)
+
+    def test_resolve_empty(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(dtd_validation=True)
+        assertEqual = self.assertEqual
+        test_url = u"__nosuch.dtd"
+
+        class check(object):
+            resolved = False
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, test_url)
+                check.resolved = True
+                return self.resolve_empty(context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = u'<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>' % test_url
+        tree = parse(StringIO(xml), parser)
+        self.assert_(check.resolved)
+
+        root = tree.getroot()
+        self.assertEquals(root.text, None)
+
+    def test_resolve_error(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(dtd_validation=True)
+        test_url = u"__nosuch.dtd"
+
+        class _LocalException(Exception):
+            pass
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                raise _LocalException
+
+        parser.resolvers.add(MyResolver())
+
+        xml = u'<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
+        self.assertRaises(_LocalException, parse, StringIO(xml), parser)
+
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):
         Element = self.etree.Element
@@ -357,6 +417,8 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/api.txt')])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/resolvers.txt')])
     return suite
 
 if __name__ == '__main__':

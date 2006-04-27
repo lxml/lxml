@@ -1,0 +1,187 @@
+Document loading and URL resolving
+==================================
+
+Lxml has support for custom document loaders in both the parsers and XSL
+transformations.  These so-called resolvers are subclasses of the
+etree.Resolver class as in the following example::
+
+  >>> from lxml import etree
+
+  >>> class DTDResolver(etree.Resolver):
+  ...     def resolve(self, url, id, context):
+  ...         print "Resolving URL '%s'" % url
+  ...         return self.resolve_string(
+  ...             '<!ENTITY myentity "[resolved text: %s]">' % url, context)
+
+This defines a resolver that always returns a dynamically generated DTD
+fragment defining an entity.  The 'url' argument passes the system URL of the
+requested document, the 'id' argument is the public ID.  Note that any of
+these may be None.  The context object is not normally used by client code.
+
+Resolving is based on three methods of the Resolver object that build internal
+representations of the result document.  The following methods exist:
+
+* 'resolve_string' takes a parsable string as result document
+* 'resolve_filename' takes a filename
+* 'resolve_file' takes an open file-like object that has at least a read() method
+* 'resolve_empty' resolves into an empty document
+
+The 'resolve' method may choose to return None, in which case the next
+registered resolver (or the default resolver) is consulted.  It is never
+called if the resolver returns the result of any of the above 'resolve_*'
+methods.
+
+Resolvers are registered local to a parser::
+
+  >>> parser = etree.XMLParser(load_dtd=True)
+  >>> parser.resolvers.add( DTDResolver() )
+
+Note that we instantiate a parser that loads the DTD.  This is not done by the
+default parser, which does no validation.  When we use this parser to parse a
+document that requires resolving a URL, it will call our custom resolver::
+
+  >>> xml = u'<!DOCTYPE doc SYSTEM "MissingDTD.dtd"><doc>&myentity;</doc>'
+  >>> from StringIO import StringIO
+  >>> tree = etree.parse(StringIO(xml), parser)
+  Resolving URL 'MissingDTD.dtd'
+  >>> root = tree.getroot()
+  >>> print root.text
+  [resolved text: MissingDTD.dtd]
+
+The entity in the document was correctly resolved by the generated DTD
+fragment.
+
+
+Document loaders in context
+---------------------------
+
+XML documents memorise their initial parser (and its resolvers) during their
+life-time.  This means that a lookup process related to a document will use
+the resolvers of the document's parser.  We can demonstrate this with a
+resolver that only responds to a specific prefix::
+
+  >>> class PrefixResolver(etree.Resolver):
+  ...     def __init__(self, prefix):
+  ...         self.prefix = prefix
+  ...         self.result_xml = '''\
+  ...              <xsl:stylesheet
+  ...                     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...                <test xmlns="testNS">%s-TEST</test>
+  ...              </xsl:stylesheet>
+  ...              ''' % prefix
+  ...     def resolve(self, url, pubid, context):
+  ...         print "Resolving url %s as prefix %s ..." % (url, self.prefix),
+  ...         if url.startswith(self.prefix):
+  ...             print "done"
+  ...             return self.resolve_string(self.result_xml, context)
+  ...         print "failed"
+
+We demonstrate this in XSLT and use the following stylesheet as an example::
+
+  >>> xml_text = """\
+  ... <xsl:stylesheet version="1.0"
+  ...    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...   <xsl:include href="honk:test"/>
+  ...   <xsl:template match="/">
+  ...     <test>
+  ...       <xsl:value-of select="document('hoi:test')/*/*/text()"/>
+  ...     </test>
+  ...   </xsl:template>
+  ... </xsl:stylesheet>
+  ... """
+
+Note that it needs to resolve two URIs: 'honk:test' when compiling the XSLT
+document (i.e. when resolving xsl:import and xsl:include elements) and
+'hoi:test' at transformation time, when calls to the 'document' function are
+resolved.  If we now register different resolvers with two different parsers,
+we can parse our document twice in different resolver contexts::
+
+  >>> hoi_parser = etree.XMLParser()
+  >>> normal_doc = etree.parse(StringIO(xml_text), hoi_parser)
+
+  >>> hoi_parser.resolvers.add( PrefixResolver("hoi") )
+  >>> hoi_doc = etree.parse(StringIO(xml_text), hoi_parser)
+
+  >>> honk_parser = etree.XMLParser()
+  >>> honk_parser.resolvers.add( PrefixResolver("honk") )
+  >>> honk_doc = etree.parse(StringIO(xml_text), honk_parser)
+
+These contexts are important for the further behaviour of the documents.  They
+memorise their original parser so that the correct set of resolvers is used in
+subsequent lookups.  To compile the stylesheet, XSLT must resolve the
+honk:test URI in the xsl:include element.  The "hoi" resolver cannot do that::
+
+  >>> transform = etree.XSLT(normal_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTParseError: Cannot resolve URI honk:test
+
+  >>> transform = etree.XSLT(hoi_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTParseError: Cannot resolve URI honk:test
+
+However, if we use the "honk" resolver associated with the respective
+document, everything works fine::
+
+  >>> transform = etree.XSLT(honk_doc)
+  Resolving url honk:test as prefix honk ... done
+
+Running the transform accesses the same parser context again, but since it now
+needs to resolve the "hoi" URI in the call to the document function, its
+"honk" resolver will fail to do so::
+
+  >>> result = transform(normal_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTApplyError: Cannot resolve URI hoi:test
+
+  >>> result = transform(hoi_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTApplyError: Cannot resolve URI hoi:test
+
+  >>> result = transform(honk_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTApplyError: Cannot resolve URI hoi:test
+
+This can only be solved by adding a "hoi" resolver to the parser.  Note that
+adding it after parsing the XSL document will not work as parsed documents
+remember the state of the parser at the time of their creation::
+
+  >>> honk_parser.resolvers.add( PrefixResolver("hoi") )
+  >>> result = transform(honk_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTApplyError: Cannot resolve URI hoi:test
+
+You have to parse the document again with this updated parser to copy the
+resolver state to the stylesheet::
+
+  >>> honk_doc = etree.parse(StringIO(xml_text), honk_parser)
+  >>> transform = etree.XSLT(honk_doc)
+  Resolving url honk:test as prefix honk ... done
+  >>> result = transform(honk_doc)
+  Resolving url hoi:test as prefix honk ... failed
+  Resolving url hoi:test as prefix hoi ... done
+  >>> print str(result),
+  <?xml version="1.0"?>
+  <test>hoi-TEST</test>
+
+We can see that the "hoi" resolver was called to generate a document that was
+then inserted into the result document by the XSLT transformation.  Note that
+this is completely independent of the XML file you transform, as the URI is
+resolved from within the stylesheet context::
+
+  >>> result = transform(normal_doc)
+  Resolving url hoi:test as prefix honk ... failed
+  Resolving url hoi:test as prefix hoi ... done
+  >>> print str(result),
+  <?xml version="1.0"?>
+  <test>hoi-TEST</test>
+
+It may be seen as a matter of taste what resolvers the generated document
+inherits.  For XSLT, the output document inherits the resolvers of the input
+document and not those of the stylesheet.  Therefore, the last result does not
+inherit any resolvers at all.

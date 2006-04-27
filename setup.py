@@ -11,6 +11,7 @@ version = open('version.txt').read().strip()
 try:
     from setuptools import setup
     from setuptools.extension import Extension
+    # prevent setuptools from making local etree.so copies:
     setup_args['zip_safe'] = False
 except ImportError:
     from distutils.core import setup
@@ -46,6 +47,16 @@ else:
         changelog_text = ''.join(changelog_lines[:-1])
 
     changelog.close()
+
+# compile also against libexslt!
+xslt_libs = flags('xslt-config --libs')
+xslt_libs.append('-lexslt')
+for i, libname in (): # enumerate(xslt_libs):
+    if 'exslt' in libname:
+        break
+    if 'xslt' in libname:
+        xslt_libs.insert(i, libname.replace('xslt', 'exslt'))
+        break
 
 setup(
     name = "lxml",
@@ -85,7 +96,7 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
         "lxml.etree", 
         sources = sources,
         extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-        extra_link_args = flags('xslt-config --libs')
+        extra_link_args = xslt_libs
     )],
     **setup_args
 )

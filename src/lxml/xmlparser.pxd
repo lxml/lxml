@@ -1,6 +1,9 @@
 from tree cimport xmlDoc, xmlDict
 from xmlerror cimport xmlError
 
+cdef extern from "libxml/tree.h":
+    ctypedef struct xmlParserInput
+
 cdef extern from "libxml/parser.h":
 
     cdef xmlDict* xmlDictCreate()
@@ -10,6 +13,7 @@ cdef extern from "libxml/parser.h":
     ctypedef struct xmlParserCtxt:
         xmlDoc* myDoc
         xmlDict* dict
+        void* _private
         int wellFormed
         xmlError lastError
         
@@ -30,8 +34,8 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_NSCLEAN = 8192 # remove redundant namespaces declarations
         XML_PARSE_NOCDATA = 16384 # merge CDATA as text nodes
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
-# libxml2 2.6.21+ only:
-#        XML_PARSE_COMPACT = 65536 # compact small text nodes
+        # libxml2 2.6.21+ only:
+        #XML_PARSE_COMPACT = 65536 # compact small text nodes
        
     cdef void xmlInitParser()
     cdef xmlParserCtxt* xmlNewParserCtxt()
@@ -42,3 +46,18 @@ cdef extern from "libxml/parser.h":
                                 int options)
     cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
                                  char* filename, char* encoding, int options)
+
+# entity loaders:
+
+    ctypedef xmlParserInput* (*xmlExternalEntityLoader)(char * URL,
+                                                        char * ID, 
+                                                        xmlParserCtxt* context)
+    cdef xmlExternalEntityLoader xmlGetExternalEntityLoader()
+    cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f)
+
+cdef extern from "libxml/parserInternals.h":
+    cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 
+						 char* buffer)
+    cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 
+                                             char* filename)
+    cdef void xmlFreeInputStream(xmlParserInput* input)
