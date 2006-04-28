@@ -139,7 +139,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return "hello %s and %s" % (a, b)
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
-        e = etree.XPathEvaluator(tree, None, [extension])
+        e = etree.XPathEvaluator(tree, extensions=[extension])
         self.assertRaises(TypeError, e.evaluate, "foo('you')")
 
     def test_xpath_extensions_error(self):
