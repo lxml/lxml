@@ -75,7 +75,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertRaises(TypeError, etree.XSLT, None)
 
     def test_xslt_input_partial_doc(self):
-        tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
 <otherroot>
 <xsl:stylesheet version="1.0"
@@ -272,6 +271,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         style = etree.XSLT(styledoc)
         result = style.apply(source)
         self.assertEqual('', style.tostring(result))
+        self.assertEqual('', str(result))
 
     def test_xslt_shortcut(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -405,6 +405,18 @@ class ETreeXSLTTestCase(HelperTestCase):
                           'test')
         self.assertEquals(root[0].tag,
                           '{http://www.w3.org/1999/XSL/Transform}stylesheet')
+
+    def test_xslt_document_error(self):
+        # make sure document('') works from parsed strings
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>TEXT<xsl:copy-of select="document('uri:__junkfood__is__evil__')//test"/></test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
 
     def test_exslt_regexp_test(self):
         xslt = etree.XSLT(etree.XML("""\

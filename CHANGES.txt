@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Error reporting now also works in XSLT
+
 * Support for custom document loaders (URI resolvers) in parsers and XSLT,
   resolvers are registered at parser level
 

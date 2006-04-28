@@ -35,6 +35,15 @@ cdef class _LogEntry:
         else:
             self.filename = python.PyString_FromString(error.file)
 
+    cdef _setGeneric(self, int domain, int type, int level, int line,
+                     message, filename):
+        self.domain  = domain
+        self.type    = type
+        self.level   = level
+        self.line    = line
+        self.message = message
+        self.filename = filename
+
     def __repr__(self):
         if self.filename:
             return "%s:%d:%s:%s:%s: %s" % (
@@ -146,15 +155,24 @@ cdef class _ErrorLog(_BaseErrorLog):
 
     cdef void connect(self):
         del self._entries[:]
-        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _localReceiveError)
+        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
 
     cdef void disconnect(self):
-        xmlerror.xmlSetStructuredErrorFunc(NULL, _globalReceiveError)
+        xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._set(error)
+        if __GLOBAL_ERROR_LOG is not self:
+            __GLOBAL_ERROR_LOG.receive(entry)
+        self.receive(entry)
+
+    cdef void _receiveGeneric(self, int domain, int type, int level, int line,
+                              message, filename):
+        cdef _LogEntry entry
+        entry = _LogEntry()
+        entry._setGeneric(domain, type, level, line, message, filename)
         if __GLOBAL_ERROR_LOG is not self:
             __GLOBAL_ERROR_LOG.receive(entry)
         self.receive(entry)
@@ -198,7 +216,7 @@ cdef class PyErrorLog(_ErrorLog):
             logger = logging.getLogger(name)
         else:
             logger = logging.getLogger()
-        self._log    = logger.log
+        self._log = logger.log
 
     def copy(self):
         return self
@@ -220,16 +238,56 @@ def __copyGlobalErrorLog():
     return __GLOBAL_ERROR_LOG.copy()
 
 # local log function: forward error to logger object
-cdef void _localReceiveError(void* c_log_handler, xmlerror.xmlError* error):
+cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):
     cdef _ErrorLog log_handler
     if __DEBUG != 0:
-        log_handler = <_ErrorLog>c_log_handler
+        if c_log_handler is not NULL:
+            log_handler = <_ErrorLog>c_log_handler
+        else:
+            log_handler = __GLOBAL_ERROR_LOG
         log_handler._receive(error)
 
-# global log functions: overridden by local functions
-cdef void _globalReceiveError(void* userData, xmlerror.xmlError* error):
-    if __DEBUG != 0:
-        __GLOBAL_ERROR_LOG._receive(error)
+cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
+    cdef cstd.va_list args
+    cdef _ErrorLog log_handler
+    cdef char* c_text
+    cdef char* c_filename
+    cdef char* c_element
+    cdef int c_line
+    if __DEBUG == 0 or msg == NULL or tree.strlen(msg) < 10:
+        return
+    if c_log_handler is not NULL:
+        log_handler = <_ErrorLog>c_log_handler
+    else:
+        log_handler = __GLOBAL_ERROR_LOG
+
+    cstd.va_start(args, msg)
+    c_text     = cstd.va_charptr(args)
+    c_filename = cstd.va_charptr(args)
+    c_line     = cstd.va_int(args)
+    c_element  = cstd.va_charptr(args)
+    cstd.va_end(args)
+
+    if c_text is NULL:
+        message = None
+    elif c_element is NULL:
+        message = funicode(c_text)
+    else:
+        message = "%s (element '%s')" % (
+            funicode(c_text), funicode(c_element))
+
+    if c_filename is not NULL and tree.strlen(c_filename) > 0:
+        if tree.strncmp(c_filename, 'XSLT:', 5) == 0:
+            filename = '<xslt>'
+        else:
+            filename = funicode(c_filename)
+    else:
+        filename = None
+
+    log_handler._receiveGeneric(xmlerror.XML_FROM_XSLT,
+                                xmlerror.XML_ERR_OK,
+                                xmlerror.XML_ERR_ERROR,
+                                c_line, message, filename)
 
 # dummy function: no debug output at all
 cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
@@ -238,11 +296,10 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
 # setup for global log:
 cdef void _logLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
-    xmlerror.xmlSetStructuredErrorFunc(NULL, _globalReceiveError)
+    xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
 cdef void _logLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
-    # xslt.xsltSetTransformErrorFunc
+    xslt.xsltSetGenericErrorFunc(NULL, _receiveGenericError)
 
 # init global logging
 initThreadLogging()

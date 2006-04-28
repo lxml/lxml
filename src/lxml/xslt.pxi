@@ -355,6 +355,7 @@ cdef class XSLT:
     cdef xslt.xsltStylesheet* _c_style
     cdef _XSLTResolverContext _xslt_resolver_context
     cdef _ExsltRegExp _regexp
+    cdef _ErrorLog _error_log
 
     def __init__(self, xslt_input, extensions=None, regexp=True):
         cdef xslt.xsltStylesheet* c_style
@@ -394,18 +395,23 @@ cdef class XSLT:
         self._c_style = c_style
 
         self._context = _XSLTContext(None, extensions)
+        self._error_log = _ErrorLog()
         if regexp:
             self._regexp  = _ExsltRegExp()
         else:
             self._regexp  = None
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
-        
+
     def __dealloc__(self):
         if self._xslt_resolver_context is not None and \
                self._xslt_resolver_context._c_style_doc is not NULL:
             tree.xmlFreeDoc(self._xslt_resolver_context._c_style_doc)
         # this cleans up copy of doc as well
         xslt.xsltFreeStylesheet(self._c_style)
+
+    property error_log:
+        def __get__(self):
+            return self._error_log.copy()
 
     def __call__(self, _input, **_kw):
         cdef _Document input_doc
@@ -431,6 +437,10 @@ cdef class XSLT:
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             raise XSLTApplyError, "Error preparing stylesheet run"
+
+        self._error_log.clear()
+        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
+                                       _receiveGenericError)
 
         ptemp = c_doc._private
         c_doc._private = <python.PyObject*>resolver_context
@@ -526,7 +536,6 @@ xslt.xsltRegisterExtModuleFunction("node-set",
 
 # enable EXSLT support for XSLT
 xslt.exsltRegisterAll()
-
 
 ################################################################################
 # EXSLT regexp implementation

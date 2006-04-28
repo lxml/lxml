@@ -12,4 +12,8 @@
         ((c_node)->type == XML_ELEMENT_NODE || \
 	 (c_node)->type == XML_COMMENT_NODE)
 
+/* v_arg functions */
+#define va_int(ap)     va_arg(ap, int)
+#define va_charptr(ap) va_arg(ap, char *)
+
 #endif /*HAS_ETREE_H*/
