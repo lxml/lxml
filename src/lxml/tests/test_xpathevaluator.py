@@ -111,11 +111,11 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(child_tree)
         self.assertEquals(
             [],
-            e.evaluate('.//a'))
+            e.evaluate('a'))
         root = child_tree.getroot()
         self.assertEquals(
             [root[0]],
-            e.evaluate('.//c'))
+            e.evaluate('c'))
 
     def test_xpath_evaluator_element(self):
         tree = self.parse('<a><b><c></c></b></a>')
