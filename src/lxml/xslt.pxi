@@ -972,7 +972,7 @@ cdef void _extension_function_call(_BaseContext context,
     doc = context._doc
     for i from 0 <= i < nargs:
         python.PyList_Append(args, _unwrapXPathObject(xpath.valuePop(ctxt), doc))
-    args.reverse()
+    python.PyList_Reverse(args)
 
     try:
         res = context._called_function(None, *args)
