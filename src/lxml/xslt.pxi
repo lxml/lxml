@@ -438,7 +438,7 @@ cdef class XSLT:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             raise XSLTApplyError, "Error preparing stylesheet run"
 
-        self._error_log.clear()
+        self._error_log.connect()
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveGenericError)
 
@@ -480,6 +480,7 @@ cdef class XSLT:
         c_doc._private = ptemp # restore _private before _destroyFakeDoc!
         _destroyFakeDoc(input_doc._c_doc, c_doc)
 
+        self._error_log.disconnect()
         if self._xslt_resolver_context._has_raised():
             if c_result is not NULL:
                 tree.xmlFreeDoc(c_result)
