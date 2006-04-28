@@ -191,8 +191,10 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
     function = context._prepare_function_call(ns_uri, c_name)
     if function is not None:
         return _call_prepared_function
-    else:
+    elif isinstance(context, _XSLTContext):
         return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
+    else:
+        return NULL
 
  
 ################################################################################
