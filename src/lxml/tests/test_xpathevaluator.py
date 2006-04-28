@@ -105,6 +105,18 @@ class ETreeXPathTestCase(HelperTestCase):
             [root],
             e.evaluate('//a'))
 
+    def test_xpath_evaluator_tree(self):
+        tree = self.parse('<a><b><c></c></b></a>')
+        child_tree = etree.ElementTree(tree.getroot()[0])
+        e = etree.XPathEvaluator(child_tree)
+        self.assertEquals(
+            [],
+            e.evaluate('.//a'))
+        root = child_tree.getroot()
+        self.assertEquals(
+            [root[0]],
+            e.evaluate('.//c'))
+
     def test_xpath_evaluator_element(self):
         tree = self.parse('<a><b><c></c></b></a>')
         root = tree.getroot()

@@ -34,7 +34,10 @@ Features added
 Bugs fixed
 ----------
 
-* document('') now works in all XSLT documents
+* ElementTree.xpath() and XPathDocumentEvaluator were not using the
+  ElementTree root node as reference point
+
+* Calling document('') in XSLT failed to return the stylesheet
 
 * Crash in XMLSchema and RelaxNG when passing non-schema documents
 

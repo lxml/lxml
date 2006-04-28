@@ -320,7 +320,8 @@ cdef class _ElementTree:
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
-        return XPathDocumentEvaluator(self._doc, namespaces).evaluate(_path, **_variables)
+        evaluator = XPathElementEvaluator(self._context_node, namespaces)
+        return evaluator.evaluate(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, **_kw):
         """Transform this document using other document.
@@ -827,7 +828,8 @@ cdef class _Element(_NodeBase):
         return _elementpath.findall(self, path)
 
     def xpath(self, _path, namespaces=None, **_variables):
-        return XPathElementEvaluator(self, namespaces).evaluate(_path, **_variables)
+        evaluator = XPathElementEvaluator(self, namespaces)
+        return evaluator.evaluate(_path, **_variables)
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result

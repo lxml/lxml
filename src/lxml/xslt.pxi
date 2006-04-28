@@ -677,32 +677,23 @@ cdef class XPathEvaluatorBase:
         return result
 
 
-cdef class XPathDocumentEvaluator(XPathEvaluatorBase):
-    """Create an XPath evaluator for a document.
+cdef class XPathElementEvaluator(XPathEvaluatorBase):
+    """Create an XPath evaluator for an element.
+
+    XPath evaluators must not be shared between threads.
     """
     cdef xpath.xmlXPathContext* _c_ctxt
-    cdef _Document _doc
-    
-    def __init__(self, etree, namespaces=None, extensions=None):
+    cdef _Element _element
+    def __init__(self, _NodeBase element not None, namespaces=None, extensions=None):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         cdef _Document doc
-
-        if isinstance(etree, _Document):
-            doc = <_Document>etree # for internal use only!
-        elif isinstance(etree, _ElementTree):
-            doc = (<_ElementTree>etree)._doc
-        else:
-            raise TypeError, "XPathDocumentEvaluator can only work on ElementTree objects"
-        
+        doc = element._doc
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
-            # XXX what triggers this exception?
             raise XPathContextError, "Unable to create new XPath context"
-
-        self._doc = doc
+        self._element = element
         self._c_ctxt = xpathCtxt
-        
         XPathEvaluatorBase.__init__(self, namespaces, extensions)
 
     def __dealloc__(self):
@@ -717,55 +708,51 @@ cdef class XPathDocumentEvaluator(XPathEvaluatorBase):
     def registerNamespaces(self, namespaces):
         """Register a prefix -> uri dict.
         """
+        add = self._context.addNamespace
         for prefix, uri in namespaces.items():
-            self.registerNamespace(prefix, uri)
+            add(prefix, uri)
     
     def evaluate(self, _path, **_variables):
-        """Evaluate an XPath expression on the document.  Variables
-        may be given as keyword arguments. Note that namespaces are
-        currently not supported for variables."""
-        return self._evaluate(_path, NULL, _variables)
-
-    cdef object _evaluate(self, path, xmlNode* c_ctxt_node, variable_dict):
+        """Evaluate an XPath expression on the document.  Variables may be
+        provided as keyword arguments. Note that namespaces are currently not
+        supported for variables."""
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
         cdef xmlNode* c_node
-        
+        cdef _Document doc
         xpathCtxt = self._c_ctxt
-        # if element context is requested; unfortunately need to modify ctxt
-        xpathCtxt.node = c_ctxt_node
+        xpathCtxt.node = self._element._c_node
+        doc = self._element._doc
 
         self._context._release_temp_refs()
-        self._context.register_context(xpathCtxt, self._doc)
-        self._context.registerVariables(variable_dict)
+        self._context.register_context(xpathCtxt, doc)
+        self._context.registerVariables(_variables)
 
-        path = _utf8(path)
+        path = _utf8(_path)
         xpathObj = xpath.xmlXPathEvalExpression(_cstr(path), xpathCtxt)
         self._context.unregister_context()
 
-        return self._handle_result(xpathObj, self._doc)
+        return self._handle_result(xpathObj, doc)
 
     #def clone(self):
     #    # XXX pretty expensive so calling this from callback is probably
     #    # not desirable
     #    return XPathEvaluator(self._doc, self._namespaces, self._extensions)
 
-cdef class XPathElementEvaluator(XPathDocumentEvaluator):
-    """Create an XPath evaluator for an element.
-    """
-    cdef _Element _element
-    def __init__(self, _Element element not None, namespaces=None, extensions=None):
-        XPathDocumentEvaluator.__init__(
-            self, element._doc, namespaces, extensions)
-        self._element = element
+cdef class XPathDocumentEvaluator(XPathElementEvaluator):
+    """Create an XPath evaluator for an ElementTree.
 
-    def evaluate(self, _path, **_variables):
-        """Evaluate an XPath expression on the element.  Variables may
-        be given as keyword arguments. Note that namespaces are
-        currently not supported for variables."""
-        return self._evaluate(_path, self._element._c_node, _variables)
+    XPath evaluators must not be shared between threads.
+    """
+    def __init__(self, _ElementTree etree not None, namespaces=None, extensions=None):
+        XPathElementEvaluator.__init__(
+            self, etree._context_node, namespaces, extensions)
 
 def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
+    """Creates and XPath evaluator for an ElementTree or an Element.
+
+    XPath evaluators must not be shared between threads.
+    """
     if isinstance(etree_or_element, _ElementTree):
         return XPathDocumentEvaluator(etree_or_element, namespaces, extensions)
     else:
