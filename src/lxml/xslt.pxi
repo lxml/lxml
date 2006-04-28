@@ -21,6 +21,9 @@ class XPathError(LxmlError):
 class XPathContextError(XPathError):
     pass
 
+class XPathFunctionError(XPathError):
+    pass
+
 class XPathResultError(XPathError):
     pass
 
@@ -32,6 +35,7 @@ class XPathSyntaxError(LxmlSyntaxError):
 
 cdef class _BaseContext:
     cdef xpath.xmlXPathContext* _xpathCtxt
+    cdef xpath.xmlXPathFuncLookupFunc _ext_lookup_function
     cdef _Document _doc
     cdef object _extensions
     cdef object _namespaces
@@ -92,8 +96,8 @@ cdef class _BaseContext:
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
-        xpath.xmlXPathRegisterFuncLookup(self._xpathCtxt, _function_check,
-                                         <python.PyObject*>self)
+        xpath.xmlXPathRegisterFuncLookup(
+            self._xpathCtxt, self._ext_lookup_function, <python.PyObject*>self)
 
     cdef _unregister_context(self):
         self._unregisterNamespaces()
@@ -132,14 +136,14 @@ cdef class _BaseContext:
     
     # extension functions
 
-    cdef _prepare_function_call(self, ns_uri_utf, name_utf):
+    cdef int _prepare_function_call(self, ns_uri_utf, name_utf):
         cdef python.PyObject* dict_result
         key = (ns_uri_utf, name_utf)
         dict_result = python.PyDict_GetItem(self._function_cache, key)
         if dict_result is not NULL:
             function = <object>dict_result
             self._called_function = function
-            return function
+            return function is not None
 
         dict_result = python.PyDict_GetItem(self._extensions, ns_uri_utf)
         if dict_result is not NULL:
@@ -151,7 +155,7 @@ cdef class _BaseContext:
 
         python.PyDict_SetItem(self._function_cache, key, function)
         self._called_function = function
-        return function
+        return function is not None
 
     # Python reference keeping during XPath function evaluation
 
@@ -179,7 +183,8 @@ cdef class _BaseContext:
                 #print "Holding document:", <int>element._doc._c_doc
                 self._temp_refs.add(element._doc)
 
-cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns_uri):
+cdef xpath.xmlXPathFunction _function_check(void* ctxt,
+                                            char* c_name, char* c_ns_uri):
     cdef _BaseContext context
     if c_name is NULL:
         return NULL
@@ -188,15 +193,21 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
     else:
         ns_uri = c_ns_uri
     context = <_BaseContext>ctxt
-    function = context._prepare_function_call(ns_uri, c_name)
-    if function is not None:
+    if context._prepare_function_call(ns_uri, c_name):
         return _call_prepared_function
-    elif isinstance(context, _XSLTContext):
-        return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
     else:
         return NULL
 
- 
+cdef xpath.xmlXPathFunction _xslt_function_check(void* ctxt,
+                                                 char* c_name, char* c_ns_uri):
+    cdef xpath.xmlXPathFunction result
+    result = _function_check(ctxt, c_name, c_ns_uri)
+    if result is NULL:
+        return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
+    else:
+        return result
+
+
 ################################################################################
 # XSLT document loaders
 
@@ -302,8 +313,9 @@ cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     def __init__(self, namespaces, extensions):
         self._xsltCtxt = NULL
+        self._ext_lookup_function = _xslt_function_check
         if extensions and None in extensions:
-            raise XSLTExtensionError, "extensions must have non-empty namespaces"
+            raise XSLTExtensionError, "extensions must not have empty namespaces"
         _BaseContext.__init__(self, namespaces, extensions)
 
     cdef register_context(self, xslt.xsltTransformContext* xsltCtxt,
@@ -603,9 +615,10 @@ cdef class _XPathContext(_BaseContext):
     cdef object _variables
     cdef object _registered_variables
     def __init__(self, namespaces, extensions, variables):
-        _BaseContext.__init__(self, namespaces, extensions)
+        self._ext_lookup_function = _function_check
         self._variables = variables
         self._registered_variables  = []
+        _BaseContext.__init__(self, namespaces, extensions)
         
     cdef register_context(self, xpath.xmlXPathContext* xpathCtxt, _Document doc):
         self._set_xpath_context(xpathCtxt)
@@ -781,7 +794,7 @@ cdef class XPath(XPathEvaluatorBase):
         path = _utf8(path)
         self._xpath = xpath.xmlXPathCompile(_cstr(path))
         if self._xpath is NULL:
-            raise XPathSyntaxError, "Error in xpath expression."
+            raise XPathSyntaxError, "Error in XPath expression"
         self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
 
     def __call__(self, _etree_or_element, **_variables):
@@ -954,8 +967,12 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
         uri = rctxt.functionURI
     else:
         uri = None
-    context._prepare_function_call(uri, name)
-    _extension_function_call(context, ctxt, nargs)
+    if context._prepare_function_call(uri, name):
+        _extension_function_call(context, ctxt, nargs)
+    else:
+        xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
+        exception = XPathFunctionError("XPath function {%s}%s not found" % (uri, name))
+        context._exc._store_exception(exception)
 
 cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
@@ -970,13 +987,14 @@ cdef void _extension_function_call(_BaseContext context,
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef int i
-    args = []
     doc = context._doc
-    for i from 0 <= i < nargs:
-        python.PyList_Append(args, _unwrapXPathObject(xpath.valuePop(ctxt), doc))
-    python.PyList_Reverse(args)
-
     try:
+        args = []
+        for i from 0 <= i < nargs:
+            o = _unwrapXPathObject(xpath.valuePop(ctxt), doc)
+            python.PyList_Append(args, o)
+        python.PyList_Reverse(args)
+
         res = context._called_function(None, *args)
         # wrap result for XPath consumption
         obj = _wrapXPathObject(res)
@@ -984,7 +1002,5 @@ cdef void _extension_function_call(_BaseContext context,
         context._hold(res)
         xpath.valuePush(ctxt, obj)
     except:
-        xpath.xmlXPathErr(
-            ctxt,
-            xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
+        xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
         context._exc._store_raised()

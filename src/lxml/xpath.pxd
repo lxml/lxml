@@ -14,6 +14,31 @@ cdef extern from "libxml/xpath.h":
         XPATH_USERS = 8
         XPATH_XSLT_TREE = 9
 
+    ctypedef enum xmlXPathError:
+        XPATH_EXPRESSION_OK = 0
+        XPATH_NUMBER_ERROR = 1
+        XPATH_UNFINISHED_LITERAL_ERROR = 2
+        XPATH_START_LITERAL_ERROR = 3
+        XPATH_VARIABLE_REF_ERROR = 4
+        XPATH_UNDEF_VARIABLE_ERROR = 5
+        XPATH_INVALID_PREDICATE_ERROR = 6
+        XPATH_EXPR_ERROR = 7
+        XPATH_UNCLOSED_ERROR = 8
+        XPATH_UNKNOWN_FUNC_ERROR = 9
+        XPATH_INVALID_OPERAND = 10
+        XPATH_INVALID_TYPE = 11
+        XPATH_INVALID_ARITY = 12
+        XPATH_INVALID_CTXT_SIZE = 13
+        XPATH_INVALID_CTXT_POSITION = 14
+        XPATH_MEMORY_ERROR = 15
+        XPTR_SYNTAX_ERROR = 16
+        XPTR_RESOURCE_ERROR = 17
+        XPTR_SUB_RESOURCE_ERROR = 18
+        XPATH_UNDEF_PREFIX_ERROR = 19
+        XPATH_ENCODING_ERROR = 20
+        XPATH_INVALID_CHAR_ERROR = 21
+        XPATH_INVALID_CTXT = 22
+
     ctypedef struct xmlNodeSet:
         int nodeNr
         int nodeMax
