@@ -465,3 +465,29 @@ cdef xmlDoc* _newDoc():
     result = tree.xmlNewDoc("1.0")
     __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     return result
+
+############################################################
+## API level helper functions for _Document creation
+############################################################
+
+cdef _Document _parseDocument(source, parser):
+    cdef xmlDoc* c_doc
+    filename = _getFilenameForFile(source)
+    # Support for unamed file-like object (StringIO, urlgrabber.urlopen, ...)
+    if not filename and hasattr(source, 'read'):
+        return _parseMemoryDocument(source.read(), parser)
+
+    # Otherwise parse the file directly from the filesystem
+    if filename is None:
+        filename = source
+    # open filename
+    c_doc = _parseDocFromFile(_utf8(filename), parser)
+    return _documentFactory(c_doc, parser)
+
+cdef _Document _parseMemoryDocument(text, parser):
+    cdef xmlDoc* c_doc
+    if python.PyUnicode_Check(text):
+        text = _stripDeclaration(_utf8(text))
+    c_doc = _parseDoc(text, parser)
+    return _documentFactory(c_doc, parser)
+

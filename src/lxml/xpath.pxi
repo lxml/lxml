@@ -1,4 +1,4 @@
-# XSLT and XPath classes, supports for extension functions
+# XPath evaluation
 
 class XPathContextError(XPathError):
     pass

@@ -1,5 +1,6 @@
-################################################################################
-# DEBUG setup
+# DEBUG and error logging
+
+cimport xmlerror
 
 # module level API functions
 

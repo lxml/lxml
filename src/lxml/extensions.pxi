@@ -1,5 +1,7 @@
 # supports for extension functions in XPath and XSLT
 
+cimport xpath
+
 class XPathError(LxmlError):
     pass
 
