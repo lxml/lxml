@@ -1,0 +1,8 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>

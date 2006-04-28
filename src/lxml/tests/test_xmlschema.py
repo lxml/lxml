@@ -6,7 +6,7 @@ Test cases related to XML Schema parsing and validation
 
 import unittest
 
-from common_imports import etree, HelperTestCase
+from common_imports import etree, HelperTestCase, fileInTestDir
 
 class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema(self):
@@ -45,11 +45,13 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertRaises(etree.XMLSchemaParseError,
                           etree.XMLSchema, schema)
 
-##     def test_xmlschema_include(self):
-##         # this will only work if we access the file through path or
-##         # file object..
-##         f = open(fileInTestDir('test1.rng'), 'r')
-##         schema = etree.RelaxNG(file=f)
+    def test_xmlschema_file(self):
+        # this will only work if we access the file through path or
+        # file object..
+        f = open(fileInTestDir('test.xsd'), 'r')
+        schema = etree.XMLSchema(file=f)
+        tree_valid = self.parse('<a><b></b></a>')
+        self.assert_(schema.validate(tree_valid))
 
     def test_xmlschema_shortcut(self):
         tree_valid = self.parse('<a><b></b></a>')

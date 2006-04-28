@@ -13,13 +13,11 @@ class RelaxNGValidateError(RelaxNGError):
 ################################################################################
 # RelaxNG
 
-cdef class RelaxNG:
+cdef class RelaxNG(_Validator):
     """Turn a document into a Relax NG validator.
     Can also load from filesystem directly given file object or filename.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
-    cdef _ErrorLog _error_log
-    
     def __init__(self, etree=None, file=None):
         cdef _Document doc
         cdef _NodeBase root_node
@@ -64,12 +62,12 @@ cdef class RelaxNG:
         relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         if fake_c_doc is not NULL:
             _destroyFakeDoc(doc._c_doc, fake_c_doc)
-        self._error_log = _ErrorLog()
-        
+        _Validator.__init__(self)
+
     def __dealloc__(self):
         relaxng.xmlRelaxNGFree(self._c_schema)
-        
-    def validate(self, etree):
+
+    def __call__(self, etree):
         """Validate doc using Relax NG.
 
         Returns true if document is valid, false if not."""
@@ -94,7 +92,3 @@ cdef class RelaxNG:
         if ret == -1:
             raise RelaxNGValidateError, "Internal error in Relax NG validation"
         return ret == 0
-
-    property error_log:
-        def __get__(self):
-            return self._error_log.copy()

@@ -50,6 +50,9 @@ class LxmlError(Error):
 class LxmlSyntaxError(LxmlError, SyntaxError):
     pass
 
+class DocumentInvalid(LxmlError):
+    pass
+
 class XIncludeError(LxmlError):
     pass
 
@@ -1349,18 +1352,51 @@ def parse(source, parser=None):
 
 
 # include submodules
+include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
 include "xmlerror.pxi"  # error and log handling
-include "xmlid.pxi"     # XMLID and IDDict
 include "nsclasses.pxi" # Namespace implementation and registry
 include "docloader.pxi" # Support for custom document loaders
 include "parser.pxi"    # XML Parser
+include "xmlid.pxi"     # XMLID and IDDict
 include "xslt.pxi"      # XPath and XSLT
+
+
+################################################################################
+# Validation
+
+cdef class _Validator:
+    "Base class for XML validators."
+    cdef _ErrorLog _error_log
+    def __init__(self):
+        self._error_log = _ErrorLog()
+        
+    def validate(self, etree):
+        """Validate the document using this schema.
+
+        Returns true if document is valid, false if not."""
+        return self(etree)
+
+    def assertValid(self, etree):
+        "Raises DocumentInvalid if the document does not comply with the schema."
+        if not self(etree):
+            raise DocumentInvalid, "Document does not comply with schema"
+
+    def assert_(self, etree):
+        "Raises AssertionError if the document does not comply with the schema."
+        if not self(etree):
+            raise AssertionError, "Document does not comply with schema"
+
+    property error_log:
+        def __get__(self):
+            return self._error_log.copy()
+
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
-include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
 
 
+################################################################################
 # Private helper functions
+
 cdef _Document _documentOrRaise(object input):
     cdef _Document doc
     doc = _documentOf(input)
