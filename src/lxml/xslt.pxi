@@ -620,7 +620,7 @@ cdef class _XPathContext(_BaseContext):
         if xpathCtxt is NULL:
             return
         self._unregisterVariables()
-        self._registered_variables  = []
+        del self._registered_variables[:]
         self._unregister_context()
 
     cdef void _unregisterVariables(self):
@@ -633,7 +633,7 @@ cdef class _XPathContext(_BaseContext):
             xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, c_name)
             if xpathVarValue is not NULL:
                 xpath.xmlXPathRegisterVariable(xpathCtxt, c_name, NULL)
-                xpath.xmlXPathFreeObject(xpathVarValue)
+                _freeXPathObject(xpathVarValue)
 
     def registerVariables(self, variable_dict):
         for name, value in variable_dict.items():
@@ -660,20 +660,24 @@ cdef class XPathEvaluatorBase:
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
             if xpathObj is not NULL:
-                xpath.xmlXPathFreeObject(xpathObj)
+                _freeXPathObject(xpathObj)
                 xpathObj = NULL
+            self._context._release_temp_refs()
             self._context._exc._raise_if_stored()
 
         if xpathObj is NULL:
+            self._context._release_temp_refs()
             raise XPathSyntaxError, "Error in xpath expression."
 
         try:
             result = _unwrapXPathObject(xpathObj, doc)
         except XPathResultError:
-            xpath.xmlXPathFreeObject(xpathObj)
+            _freeXPathObject(xpathObj)
+            self._context._release_temp_refs()
             raise
 
-        xpath.xmlXPathFreeObject(xpathObj)
+        _freeXPathObject(xpathObj)
+        self._context._release_temp_refs()
         return result
 
 
@@ -724,7 +728,6 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         xpathCtxt.node = self._element._c_node
         doc = self._element._doc
 
-        self._context._release_temp_refs()
         self._context.register_context(xpathCtxt, doc)
         self._context.registerVariables(_variables)
 
@@ -851,7 +854,6 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
     if python.PyString_Check(obj):
-        # XXX use the Wrap variant? Or leak...
         return xpath.xmlXPathNewCString(_cstr(obj))
     if python.PyBool_Check(obj):
         return xpath.xmlXPathNewBoolean(obj)
@@ -866,6 +868,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
                 node = <_NodeBase>element
                 xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
             else:
+                xpath.xmlXPathFreeNodeSet(resultSet)
                 raise XPathResultError, "This is not a node: %s" % element
         return xpath.xmlXPathWrapNodeSet(resultSet)
     else:
@@ -877,7 +880,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         raise XPathResultError, "Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
-        return _createNodeSetResult(doc, xpathObj)
+        return _createNodeSetResult(xpathObj, doc)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
         return bool(xpathObj.boolval)
     elif xpathObj.type == xpath.XPATH_NUMBER:
@@ -897,8 +900,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     else:
         raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
 
-cdef object _createNodeSetResult(_Document doc,
-                                 xpath.xmlXPathObject* xpathObj):
+cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     cdef xmlNode* c_node
     cdef char* s
     cdef _NodeBase element
@@ -909,6 +911,12 @@ cdef object _createNodeSetResult(_Document doc,
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
         if _isElement(c_node):
+            if c_node.doc != doc._c_doc:
+                # XXX: works, but maybe not always the right thing to do?
+                # XPath: only runs when extensions create or copy trees
+                #        -> we store Python refs to these, so that is OK
+                # XSLT: can it leak when merging trees from multiple sources?
+                c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
             element = _elementFactory(doc, c_node)
             result.append(element)
         elif c_node.type == tree.XML_TEXT_NODE:
@@ -923,6 +931,14 @@ cdef object _createNodeSetResult(_Document doc,
             raise NotImplementedError
     return result
 
+cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
+    """Free the XPath object, but *never* free the *content* of node sets.
+    Python dealloc will do that for us.
+    """
+    if xpathObj.nodesetval is not NULL:
+        xpath.xmlXPathFreeNodeSet(xpathObj.nodesetval)
+        xpathObj.nodesetval = NULL
+    xpath.xmlXPathFreeObject(xpathObj)
 
 cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
@@ -946,6 +962,7 @@ cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
 
 cdef void _extension_function_call(_BaseContext context,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef _NodeBase node
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef int i
@@ -956,17 +973,14 @@ cdef void _extension_function_call(_BaseContext context,
     args.reverse()
 
     try:
-        # call the function
         res = context._called_function(None, *args)
-        # hold python objects temporarily so that they won't get deallocated
-        # during processing
-        context._hold(res)
-        # now wrap for XPath consumption
+        # wrap result for XPath consumption
         obj = _wrapXPathObject(res)
+        # prevent Python from deallocating elements handed to libxml2
+        context._hold(res)
         xpath.valuePush(ctxt, obj)
     except:
         xpath.xmlXPathErr(
             ctxt,
             xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
         context._exc._store_raised()
-        return
