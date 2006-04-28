@@ -143,7 +143,6 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
         else:
             name_utf = _utf8(name)
         self._extensions[name_utf] = function
-        _register_global_xslt_function(self._c_ns_uri_utf, _cstr(name_utf))
 
     def __getitem__(self, name):
         cdef python.PyObject* dict_result
@@ -152,13 +151,6 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
-
-    def clear(self):
-        cdef char* c_uri_utf
-        c_uri_utf = self._c_ns_uri_utf
-        for name_utf in self._extensions:
-            _unregister_global_xslt_function(c_uri_utf, _cstr(name_utf))
-        _NamespaceRegistry.clear(self)
 
     def __repr__(self):
         return "FunctionNamespace(%r)" % self._ns_uri

@@ -37,7 +37,8 @@ cdef class _BaseContext:
     cdef object _namespaces
     cdef object _registered_namespaces
     cdef object _utf_refs
-    cdef object _temp_functions
+    cdef object _function_cache
+    cdef object _called_function
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef _ExceptionContext _exc
@@ -45,7 +46,8 @@ cdef class _BaseContext:
     def __init__(self, namespaces, extensions):
         self._xpathCtxt = NULL
         self._utf_refs = {}
-        self._temp_functions = {}
+        self._function_cache = {}
+        self._called_function = None
 
         # convert old format extensions to UTF-8
         if isinstance(extensions, (list, tuple)):
@@ -86,7 +88,7 @@ cdef class _BaseContext:
     cdef _register_context(self, _Document doc, int allow_none_namespace):
         self._doc = doc
         self._exc.clear()
-        python.PyDict_Clear(self._temp_functions)
+        python.PyDict_Clear(self._function_cache)
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
@@ -130,12 +132,14 @@ cdef class _BaseContext:
     
     # extension functions
 
-    cdef _lookup_extension(self, ns_uri_utf, name_utf):
+    cdef _prepare_function_call(self, ns_uri_utf, name_utf):
         cdef python.PyObject* dict_result
         key = (ns_uri_utf, name_utf)
-        dict_result = python.PyDict_GetItem(self._temp_functions, key)
+        dict_result = python.PyDict_GetItem(self._function_cache, key)
         if dict_result is not NULL:
-            return <object>dict_result
+            function = <object>dict_result
+            self._called_function = function
+            return function
 
         dict_result = python.PyDict_GetItem(self._extensions, ns_uri_utf)
         if dict_result is not NULL:
@@ -145,7 +149,8 @@ cdef class _BaseContext:
         else:
             function = _find_extension(ns_uri_utf, name_utf)
 
-        python.PyDict_SetItem(self._temp_functions, key, function)
+        python.PyDict_SetItem(self._function_cache, key, function)
+        self._called_function = function
         return function
 
     # Python reference keeping during XPath function evaluation
@@ -183,8 +188,9 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
     else:
         ns_uri = c_ns_uri
     context = <_BaseContext>ctxt
-    if context._lookup_extension(ns_uri, c_name) is not None:
-        return _xpath_function_call
+    function = context._prepare_function_call(ns_uri, c_name)
+    if function is not None:
+        return _call_prepared_function
     else:
         return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
 
@@ -194,15 +200,11 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt, char* c_name, char* c_ns
 
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
-    cdef object _style_url_utf
-    cdef object _style_doc_utf
     cdef BaseParser _parser
     def __init__(self, BaseParser parser not None):
         _ResolverContext.__init__(self, parser.resolvers)
         self._parser = parser
         self._c_style_doc = NULL
-        self._style_url_utf = None
-        self._style_doc_utf = None
 
 cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
                          void* c_ctxt, xslt.xsltLoadType c_type):
@@ -308,7 +310,6 @@ cdef class _XSLTContext(_BaseContext):
         self._set_xpath_context(xsltCtxt.xpathCtxt)
         self._register_context(doc, 0)
         xsltCtxt.xpathCtxt.userData = <void*>self
-        self._registerLocalExtensionFunctions()
 
     cdef free_context(self):
         cdef xslt.xsltTransformContext* xsltCtxt
@@ -318,6 +319,7 @@ cdef class _XSLTContext(_BaseContext):
         self._free_context()
         self._xsltCtxt = NULL
         xslt.xsltFreeTransformContext(xsltCtxt)
+        self._release_temp_refs()
 
     cdef _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
         extensions = self._extensions
@@ -329,20 +331,6 @@ cdef class _XSLTContext(_BaseContext):
             else:
                 ns_extensions = extensions[ns_utf] = {}
             python.PyDict_SetItem(ns_extensions, name_utf, function)
-        xslt.xsltRegisterExtFunction(
-            self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
-            _xpath_function_call)
-
-    cdef _registerLocalExtensionFunctions(self):
-        cdef xslt.xsltTransformContext* xsltCtxt
-        if self._extensions is None:
-            return
-        xsltCtxt = self._xsltCtxt
-        for ns_uri_utf, extension in self._extensions.items():
-            for name_utf, function in extension.items():
-                xslt.xsltRegisterExtFunction(
-                    xsltCtxt, _cstr(name_utf), _cstr(ns_uri_utf),
-                    _xpath_function_call)
 
 cdef class _ExsltRegExp # forward declaration
 
@@ -453,7 +441,6 @@ cdef class XSLT:
         else:
             params = NULL
 
-        self._context._release_temp_refs()
         self._context.register_context(transform_ctxt, input_doc)
         if self._regexp is not None:
             self._regexp._register_in_context(self._context)
@@ -509,13 +496,6 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
     return result
-
-# used by FunctionNamespace():
-cdef void _register_global_xslt_function(char* ns_uri, char* name):
-    xslt.xsltRegisterExtModuleFunction(ns_uri, name, _xpath_function_call)
-
-cdef void _unregister_global_xslt_function(char* ns_uri, char* name):
-    xslt.xsltUnRegisterExtModuleFunction(ns_uri, name)
 
 # do not register all libxslt extra function, provide only "node-set"
 # functions like "output" and "write" are a potential security risk
@@ -774,7 +754,6 @@ cdef class XPathElementEvaluator(XPathDocumentEvaluator):
     """Create an XPath evaluator for an element.
     """
     cdef _Element _element
-
     def __init__(self, _Element element not None, namespaces=None, extensions=None):
         XPathDocumentEvaluator.__init__(
             self, element._doc, namespaces, extensions)
@@ -957,28 +936,32 @@ cdef object _createNodeSetResult(_Document doc,
             raise NotImplementedError
     return result
 
+
 cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef xpath.xmlXPathContext* rctxt
-    cdef _Document doc
-    cdef xpath.xmlXPathObject* obj
     cdef _BaseContext context
-    cdef int i
-
     rctxt = ctxt.context
-
-    # get information on what function is called
+    context = <_BaseContext>(rctxt.userData)
     name = rctxt.function
     if rctxt.functionURI is not NULL:
         uri = rctxt.functionURI
     else:
         uri = None
+    context._prepare_function_call(uri, name)
+    _extension_function_call(context, ctxt, nargs)
 
-    # get our evaluator
+cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef xpath.xmlXPathContext* rctxt
+    cdef _BaseContext context
+    rctxt = ctxt.context
     context = <_BaseContext>(rctxt.userData)
+    _extension_function_call(context, ctxt, nargs)
 
-    # lookup up the extension function in the context
-    f = context._lookup_extension(uri, name)
-
+cdef void _extension_function_call(_BaseContext context,
+                                   xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef _Document doc
+    cdef xpath.xmlXPathObject* obj
+    cdef int i
     args = []
     doc = context._doc
     for i from 0 <= i < nargs:
@@ -987,16 +970,16 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
 
     try:
         # call the function
-        res = f(None, *args)
+        res = context._called_function(None, *args)
         # hold python objects temporarily so that they won't get deallocated
         # during processing
         context._hold(res)
         # now wrap for XPath consumption
         obj = _wrapXPathObject(res)
+        xpath.valuePush(ctxt, obj)
     except:
         xpath.xmlXPathErr(
             ctxt,
             xmlerror.XML_XPATH_EXPR_ERROR - xmlerror.XML_XPATH_EXPRESSION_OK)
         context._exc._store_raised()
         return
-    xpath.valuePush(ctxt, obj)
