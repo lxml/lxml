@@ -859,7 +859,9 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
         return xpath.xmlXPathNewBoolean(obj)
     if python.PyNumber_Check(obj):
         return xpath.xmlXPathNewFloat(obj)
-    if isinstance(obj, _NodeBase):
+    if obj is None:
+        obj = ()
+    elif isinstance(obj, _NodeBase):
         obj = (obj,)
     if python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
