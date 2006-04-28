@@ -182,6 +182,68 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(1, len(r))
         self.assertEquals("true", r[0].get('attr'))
 
+    def test_xpath_extensions_mix(self):
+        x = self.parse('<a attr="true"><test/></a>')
+
+        class LocalException(Exception):
+            pass
+
+        def foo(evaluator, a, varval):
+            etree.Element("DUMMY")
+            if varval == 0:
+                raise LocalException
+            elif varval == 1:
+                return ()
+            elif varval == 2:
+                return None
+            elif varval == 3:
+                return a[0][0]
+            a = a[0]
+            if a.get("attr") == str(varval):
+                return a
+            else:
+                return etree.Element("NODE")
+
+        extension = {(None, 'foo'): foo}
+        e = etree.XPathEvaluator(x, extensions=[extension])
+        del x
+
+        self.assertRaises(LocalException, e.evaluate, "foo(., 0)")
+        self.assertRaises(LocalException, e.evaluate, "foo(., $value)", value=0)
+
+        r = e.evaluate("foo(., $value)", value=1)
+        self.assertEqual(len(r), 0)
+
+        r = e.evaluate("foo(.,  1)")
+        self.assertEqual(len(r), 0)
+
+        r = e.evaluate("foo(., $value)", value=2)
+        self.assertEqual(len(r), 0)
+
+        r = e.evaluate("foo(., $value)", value=3)
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0].tag, "test")
+
+        r = e.evaluate("foo(., $value)", value="false")
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0].tag, "NODE")
+
+        r = e.evaluate("foo(., 'false')")
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0].tag, "NODE")
+
+        r = e.evaluate("foo(., 'true')")
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0].tag, "a")
+        self.assertEqual(r[0][0].tag, "test")
+
+        r = e.evaluate("foo(., $value)", value="true")
+        self.assertEqual(len(r), 1)
+        self.assertEqual(r[0].tag, "a")
+
+        self.assertRaises(LocalException, e.evaluate, "foo(., 0)")
+        self.assertRaises(LocalException, e.evaluate, "foo(., $value)", value=0)
+
 
 class ETreeXPathClassTestCase(HelperTestCase):
     "Tests for the XPath class"
