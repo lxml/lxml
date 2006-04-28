@@ -10,10 +10,6 @@ cdef class ElementBase(_Element):
     persistent state of elements must be stored in the underlying XML."""
     pass
 
-cdef class XSLTElement:
-    "NOT IMPLEMENTED YET!"
-    pass
-
 cdef object __NAMESPACE_REGISTRIES
 __NAMESPACE_REGISTRIES = {}
 
@@ -56,7 +52,6 @@ cdef class _NamespaceRegistry:
     cdef object _ns_uri_utf
     cdef object _classes
     cdef object _extensions
-    cdef object _xslt_elements
     cdef char* _c_ns_uri_utf
     def __init__(self, ns_uri):
         self._ns_uri = ns_uri
@@ -68,7 +63,6 @@ cdef class _NamespaceRegistry:
             self._c_ns_uri_utf = _cstr(self._ns_uri_utf)
         self._classes = {}
         self._extensions = {}
-        self._xslt_elements = {}
 
     def update(self, class_dict_iterable):
         """Forgivingly update the registry. If registered values are
@@ -89,8 +83,6 @@ cdef class _NamespaceRegistry:
             d = self._classes
         elif name is None:
             raise NamespaceRegistryError, "Registered name can only be None for elements."
-        elif python.PyType_Check(item) and issubclass(item, XSLTElement):
-            d = self._xslt_elements
         elif callable(item):
             d = self._extensions
         else:
@@ -115,7 +107,6 @@ cdef class _NamespaceRegistry:
     def clear(self):
         self._classes.clear()
         self._extensions.clear()
-        #self.self._xslt_elements.clear()
 
     def __repr__(self):
         return "Namespace(%r)" % self._ns_uri
