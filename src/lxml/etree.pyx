@@ -1352,13 +1352,15 @@ def parse(source, parser=None):
 
 
 # include submodules
-include "proxy.pxi"     # Proxy handling (element backpointers/memory/etc.)
-include "xmlerror.pxi"  # error and log handling
-include "nsclasses.pxi" # Namespace implementation and registry
-include "docloader.pxi" # Support for custom document loaders
-include "parser.pxi"    # XML Parser
-include "xmlid.pxi"     # XMLID and IDDict
-include "xslt.pxi"      # XPath and XSLT
+include "proxy.pxi"      # Proxy handling (element backpointers/memory/etc.)
+include "xmlerror.pxi"   # error and log handling
+include "nsclasses.pxi"  # Namespace implementation and registry
+include "docloader.pxi"  # Support for custom document loaders
+include "parser.pxi"     # XML Parser
+include "xmlid.pxi"      # XMLID and IDDict
+include "extensions.pxi" # XPath/XSLT extension functions
+include "xpath.pxi"      # XPath evaluation
+include "xslt.pxi"       # XSL transformations
 
 
 ################################################################################
