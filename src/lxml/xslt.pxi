@@ -18,6 +18,10 @@ class XSLTExtensionError(XSLTError):
     pass
 
 
+cdef void _logLibxsltErrors():
+    xslt.xsltSetGenericErrorFunc(NULL, _receiveGenericError)
+
+
 ################################################################################
 # XSLT document loaders
 

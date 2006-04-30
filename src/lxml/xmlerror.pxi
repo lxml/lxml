@@ -12,7 +12,11 @@ def clearErrorLog():
 def initThreadLogging():
     "Setup logging for the current thread."
     _logLibxmlErrors()
-    _logLibxsltErrors()
+    try:
+        _logLibxsltErrors()
+    except NameError:
+        # compiled without libxslt
+        pass
 
 
 # Logging classes
@@ -298,9 +302,6 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
 cdef void _logLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
     xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
-
-cdef void _logLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, _receiveGenericError)
 
 # init global logging
 initThreadLogging()
