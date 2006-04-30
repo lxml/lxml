@@ -1328,7 +1328,10 @@ include "parser.pxi"     # XML Parser
 include "xmlid.pxi"      # XMLID and IDDict
 include "extensions.pxi" # XPath/XSLT extension functions
 include "xpath.pxi"      # XPath evaluation
-include "xslt.pxi"       # XSL transformations
+
+# XSL transformations
+# comment out to compile without libxslt
+include "xslt.pxi"
 
 
 ################################################################################

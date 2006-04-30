@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* etree module can be compiled without libxslt by commenting out the line
+  'include "xslt.pxi"' at the end of the etree.pyx source file
+
 * Error reporting now also works in XSLT
 
 * Support for custom document loaders (URI resolvers) in parsers and XSLT,
