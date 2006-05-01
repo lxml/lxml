@@ -379,7 +379,36 @@ class ETreeOnlyTestCase(HelperTestCase):
             8, e.index(e[8], -12, -1))
         self.assertEquals(
             0, e.index(e[0], -12, -1))
-        
+
+    def test_doctype_public(self):
+        etree = self.etree
+        pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+        xml = '''\
+<!DOCTYPE html PUBLIC "%s" "%s">
+<html><body></body></html>
+''' % (pub_id, sys_id)
+
+        tree = etree.parse(StringIO(xml))
+        self.assertEquals(tree.doctype, (pub_id, sys_id))
+
+    def test_doctype_system(self):
+        etree = self.etree
+        sys_id = "some.dtd"
+        xml = '''\
+<!DOCTYPE html SYSTEM "%s">
+<html><body></body></html>
+''' % sys_id
+
+        tree = etree.parse(StringIO(xml))
+        self.assertEquals(tree.doctype, (None, sys_id))
+
+    def test_doctype_empty(self):
+        etree = self.etree
+        xml = '<html><body></body></html>'
+        tree = etree.parse(StringIO(xml))
+        self.assertEquals(tree.doctype, (None, None))
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

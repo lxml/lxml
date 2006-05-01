@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Read-only 'doctype' attribute in ElementTree class that holds a tuple
+  (public ID, system URL) as seen by the parser
+
 * etree module can be compiled without libxslt by commenting out the line
   'include "xslt.pxi"' at the end of the etree.pyx source file
 

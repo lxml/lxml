@@ -129,6 +129,24 @@ cdef class _Document:
             return None
         return _elementFactory(self, c_node)
 
+    cdef getdoctype(self):
+        cdef tree.xmlDtd* dtd
+        public_id = None
+        sys_url   = None
+        dtd = self._c_doc.intSubset
+        if dtd is not NULL:
+            if dtd.ExternalID is not NULL:
+                public_id = funicode(dtd.ExternalID)
+            if dtd.SystemID is not NULL:
+                sys_url = funicode(dtd.SystemID)
+        dtd = self._c_doc.extSubset
+        if dtd is not NULL:
+            if not public_id and dtd.ExternalID is not NULL:
+                public_id = funicode(dtd.ExternalID)
+            if not sys_url and dtd.SystemID is not NULL:
+                sys_url = funicode(dtd.SystemID)
+        return (public_id, sys_url)
+
     cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         self._ns_counter = self._ns_counter + 1
@@ -233,7 +251,16 @@ cdef class _ElementTree:
     
     def getroot(self):
         return self._context_node
-    
+
+    property doctype:
+        """A tuple (public ID, system URL) of the DOCTYPE seen by the parser.
+        Any of the two may be None.  This value is only defined for
+        ElementTree objects based on the root node of a parsed document (e.g.
+        those returned by the parse functions).
+        """
+        def __get__(self):
+            return self._doc.getdoctype()
+
     def write(self, file, encoding='us-ascii'):
         if not hasattr(file, 'write'):
             # file is a filename, we want a file object
