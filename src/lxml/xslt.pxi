@@ -336,7 +336,7 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     result._xslt = xslt
     return result
 
-# do not register all libxslt extra function, provide only "node-set"
+# do not register all libxslt extra functions, provide only "node-set"
 # functions like "output" and "write" are a potential security risk
 #xslt.xsltRegisterAllExtras()
 xslt.xsltRegisterExtModuleFunction("node-set",
