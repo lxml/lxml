@@ -19,13 +19,14 @@ The following examples usually assume this to be executed first::
   >>> from StringIO import StringIO
 
 
-XMLParser
----------
+Parsers
+-------
 
-One of the differences is the parser.  It is based on libxml2 and therefore
-only supports options that are backed by the library.  Parsers take a number
-of keyword arguments.  The following is an example for namespace cleanup
-during parsing, first with the default parser, then with a parametrized one::
+One of the differences is the parser.  There is support for both XML and
+(broken) HTML.  Both are based on libxml2 and therefore only support options
+that are backed by the library.  Parsers take a number of keyword arguments.
+The following is an example for namespace cleanup during parsing, first with
+the default parser, then with a parametrized one::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
@@ -37,6 +38,23 @@ during parsing, first with the default parser, then with a parametrized one::
   >>> et     = lxml.etree.parse(StringIO(xml), parser)
   >>> print lxml.etree.tostring(et.getroot())
   <a xmlns="test"><b/></a>
+
+HTML parsing is similarly simple::
+
+  >>> broken_html = "<html><head><title>test<body><h1>page title</body></html>"
+
+  >>> parser = lxml.etree.HTMLParser()
+  >>> et     = lxml.etree.parse(StringIO(broken_html), parser)
+
+  >>> print lxml.etree.tostring(et.getroot())
+  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+
+Lxml has an HTML function, similar to the XML shortcut known from
+ElementTree::
+
+  >>> html = lxml.etree.HTML(broken_html)
+  >>> print lxml.etree.tostring(html)
+  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
 
 
 Error handling on exceptions
