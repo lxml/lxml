@@ -1891,8 +1891,6 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeTestCase)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
-    suite.addTests(
-        [doctest.DocFileSuite('../../../doc/api.txt')])
     return suite
 
 if __name__ == '__main__':
