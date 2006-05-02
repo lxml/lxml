@@ -227,7 +227,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_NODESET:
         return _createNodeSetResult(xpathObj, doc)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
-        return bool(xpathObj.boolval)
+        return python.PyBool_FromLong(xpathObj.boolval)
     elif xpathObj.type == xpath.XPATH_NUMBER:
         return xpathObj.floatval
     elif xpathObj.type == xpath.XPATH_STRING:

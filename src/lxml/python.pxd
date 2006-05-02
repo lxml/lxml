@@ -17,6 +17,7 @@ cdef extern from "Python.h":
     cdef object PyString_FromStringAndSize(char* s, int size)
     cdef object PyString_FromString(char* s)
     cdef object PyString_FromFormat(char* format, ...)
+    cdef object PyBool_FromLong(long value)
 
     cdef int PyList_GET_SIZE(object l)
     cdef int PyList_Append(object l, object obj)
