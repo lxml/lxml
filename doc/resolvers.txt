@@ -14,21 +14,21 @@ etree.Resolver class as in the following example::
   ...             '<!ENTITY myentity "[resolved text: %s]">' % url, context)
 
 This defines a resolver that always returns a dynamically generated DTD
-fragment defining an entity.  The 'url' argument passes the system URL of the
-requested document, the 'id' argument is the public ID.  Note that any of
-these may be None.  The context object is not normally used by client code.
+fragment defining an entity.  The ``url`` argument passes the system URL of
+the requested document, the ``id`` argument is the public ID.  Note that any
+of these may be None.  The context object is not normally used by client code.
 
 Resolving is based on three methods of the Resolver object that build internal
 representations of the result document.  The following methods exist:
 
-* 'resolve_string' takes a parsable string as result document
-* 'resolve_filename' takes a filename
-* 'resolve_file' takes an open file-like object that has at least a read() method
-* 'resolve_empty' resolves into an empty document
+* ``resolve_string`` takes a parsable string as result document
+* ``resolve_filename`` takes a filename
+* ``resolve_file`` takes an open file-like object that has at least a read() method
+* ``resolve_empty`` resolves into an empty document
 
-The 'resolve' method may choose to return None, in which case the next
+The ``resolve`` method may choose to return None, in which case the next
 registered resolver (or the default resolver) is consulted.  It is never
-called if the resolver returns the result of any of the above 'resolve_*'
+called if the resolver returns the result of any of the above ``resolve_*``
 methods.
 
 Resolvers are registered local to a parser::
@@ -90,11 +90,11 @@ We demonstrate this in XSLT and use the following stylesheet as an example::
   ... </xsl:stylesheet>
   ... """
 
-Note that it needs to resolve two URIs: 'honk:test' when compiling the XSLT
-document (i.e. when resolving xsl:import and xsl:include elements) and
-'hoi:test' at transformation time, when calls to the 'document' function are
-resolved.  If we now register different resolvers with two different parsers,
-we can parse our document twice in different resolver contexts::
+Note that it needs to resolve two URIs: ``honk:test`` when compiling the XSLT
+document (i.e. when resolving ``xsl:import`` and ``xsl:include`` elements) and
+``hoi:test`` at transformation time, when calls to the ``document`` function
+are resolved.  If we now register different resolvers with two different
+parsers, we can parse our document twice in different resolver contexts::
 
   >>> hoi_parser = etree.XMLParser()
   >>> normal_doc = etree.parse(StringIO(xml_text), hoi_parser)
@@ -109,7 +109,8 @@ we can parse our document twice in different resolver contexts::
 These contexts are important for the further behaviour of the documents.  They
 memorise their original parser so that the correct set of resolvers is used in
 subsequent lookups.  To compile the stylesheet, XSLT must resolve the
-honk:test URI in the xsl:include element.  The "hoi" resolver cannot do that::
+``honk:test`` URI in the ``xsl:include`` element.  The ``hoi`` resolver cannot
+do that::
 
   >>> transform = etree.XSLT(normal_doc)
   Traceback (most recent call last):
@@ -121,15 +122,15 @@ honk:test URI in the xsl:include element.  The "hoi" resolver cannot do that::
     [...]
   XSLTParseError: Cannot resolve URI honk:test
 
-However, if we use the "honk" resolver associated with the respective
+However, if we use the ``honk`` resolver associated with the respective
 document, everything works fine::
 
   >>> transform = etree.XSLT(honk_doc)
   Resolving url honk:test as prefix honk ... done
 
 Running the transform accesses the same parser context again, but since it now
-needs to resolve the "hoi" URI in the call to the document function, its
-"honk" resolver will fail to do so::
+needs to resolve the ``hoi`` URI in the call to the document function, its
+``honk`` resolver will fail to do so::
 
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
@@ -146,7 +147,7 @@ needs to resolve the "hoi" URI in the call to the document function, its
     [...]
   XSLTApplyError: Cannot resolve URI hoi:test
 
-This can only be solved by adding a "hoi" resolver to the parser.  Note that
+This can only be solved by adding a ``hoi`` resolver to the parser.  Note that
 adding it after parsing the XSL document will not work as parsed documents
 remember the state of the parser at the time of their creation::
 
@@ -169,10 +170,10 @@ resolver state to the stylesheet::
   <?xml version="1.0"?>
   <test>hoi-TEST</test>
 
-We can see that the "hoi" resolver was called to generate a document that was
-then inserted into the result document by the XSLT transformation.  Note that
-this is completely independent of the XML file you transform, as the URI is
-resolved from within the stylesheet context::
+We can see that the ``hoi`` resolver was called to generate a document that
+was then inserted into the result document by the XSLT transformation.  Note
+that this is completely independent of the XML file you transform, as the URI
+is resolved from within the stylesheet context::
 
   >>> result = transform(normal_doc)
   Resolving url hoi:test as prefix honk ... failed
