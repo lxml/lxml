@@ -228,6 +228,7 @@ cdef class DocType:
     cdef readonly object public_id
     cdef readonly object system_url
     def __init__(self, tree):
+        "Create a DocType object for an ElementTree object or root Element."
         cdef _Document doc
         doc = _documentOrRaise(tree)
         self.root_name, self.public_id, self.system_url = doc.getdoctype()
