@@ -2,7 +2,7 @@ lxml.etree versus ElementTree
 =============================
 
 A lot of care has been taken to ensure compatibility between etree and
-ElementTree. Nonetheless some differences and incompatibilities exist:
+ElementTree.  Nonetheless some differences and incompatibilities exist:
 
 * Importing etree is obviously different; etree uses a lower case
   package name, while ElementTree a combination of upper-case and
@@ -25,22 +25,22 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
     # use
     from lxml import etree as ElementTree
 
-* Some of the API of ElementTree has not yet been implemented and is
-  thus missing in lxml.etree. Feel free to help out!
+* Some minor parts of the API of ElementTree have not yet been implemented and
+  are thus missing in lxml.etree.  Feel free to help out!
 
 * Then again, lxml.etree offers a lot more functionality, such as
   XPath, XSLT, Relax NG, and XML Schema support, which (c)ElementTree
   does not offer.
 
 * ElementTree allows you to place an Element in two different trees as the
-  same time. Thus, this::
+  same time.  Thus, this::
 
     a = Element('a')
     b = SubElement(a, 'b')
     c = Element('c')
     c.append(b)
 
-  Will result in the following tree a::
+  will result in the following tree a::
 
     <a><b /></a>
 
@@ -48,11 +48,10 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
 
     <c><b /></c>
 
-  In lxml, this behavior is different, because of lxml is built on top
-  of a tree that maintains parent relationships for elements (like W3C
-  DOM). This means an element can only exist in a single tree at the
-  same time. Adding an element in some tree to another tree will cause
-  this element to be moved. 
+  In lxml, this behavior is different, because lxml is built on top of a tree
+  that maintains parent relationships for elements (like W3C DOM).  This means
+  an element can only exist in a single tree at the same time.  Adding an
+  element in some tree to another tree will cause this element to be moved.
 
   So, for tree a we will get::
 
@@ -62,44 +61,43 @@ ElementTree. Nonetheless some differences and incompatibilities exist:
 
     <c><b/></c>
 
-  Unfortunately this is a rather fundamental difference in behavior,
-  which will be hard to solve. It won't affect some applications, but
-  if you want to port code you do unfortunately have to make sure that
-  it doesn't.
+  Unfortunately this is a rather fundamental difference in behavior, which
+  will be hard to solve.  It won't affect some applications, but if you want
+  to port code you must unfortunately make sure that it doesn't.
 
-* ElementTree has a bug when serializing an empty Comment (no text
-  argument given) to XML, etree serializes this successfully.
+* ElementTree has a bug when serializing an empty Comment (no text argument
+  given) to XML, etree serializes this successfully.
 
-* When trying to set a subelement using __setitem__ that is in fact
-  not an Element but some other object, etree raises a TypeError, and
-  ElementTree raises an AssertionError.
+* When trying to set a subelement using __setitem__ that is in fact not an
+  Element but some other object, etree raises a TypeError, and ElementTree
+  raises an AssertionError.
 
-* ElementTree ignores comments when parsing XML, while etree will read
-  them in and treat them as Comment elements.
+* ElementTree ignores comments when parsing XML, while etree will read them in
+  and treat them as Comment elements.
 
-* Because etree is built on top of libxml2, which is namespace prefix
-  aware, etree preserves namespaces declarations and prefixes while
-  ElementTree tends to come up with its own prefixes (ns0, ns1,
-  etc). When no namespace prefix is given however, etree creates
-  ElementTree style prefixes as well.
+* Because etree is built on top of libxml2, which is namespace prefix aware,
+  etree preserves namespaces declarations and prefixes while ElementTree tends
+  to come up with its own prefixes (ns0, ns1, etc).  When no namespace prefix
+  is given however, etree creates ElementTree style prefixes as well.
 
-* etree has a 'prefix' attribute (read-only) on elements giving the
-  Element's prefix, if this is known, and None otherwise (in case of
-  no namespace at all, or default namespace). etree also allows a
-  'nsmap' dictionary which maps namespace prefix to namespace URI to
-  be passed to the Element and SubElement element factories. 
+* etree has a 'prefix' attribute (read-only) on elements giving the Element's
+  prefix, if this is known, and None otherwise (in case of no namespace at
+  all, or default namespace).
 
-  These will be translated into namespace declarations on that
-  element. This means that in the probably rare case that you need to
-  construct an attribute called 'nsmap', you need to be aware that
-  unlike in ElementTree, you cannot pass it as a keyword argument to
-  the Element and SubElement factories directly.
+  etree further allows passing an 'nsmap' dictionary to the Element and
+  SubElement element factories to explicitly map namespace prefixes to
+  namespace URIs.  These will be translated into namespace declarations on
+  that element.  This means that in the probably rare case that you need to
+  construct an attribute called 'nsmap', you need to be aware that unlike in
+  ElementTree, you cannot pass it as a keyword argument to the Element and
+  SubElement factories directly.
 
-* etree elements can be copied using copy.deepcopy() and copy.copy(),
-  just like ElementTree's. copy.copy() however does *not* create a
-  shallow copy where elements are shared between trees, as this makes
-  no sense in the context of libxml2 trees.
+* etree elements can be copied using copy.deepcopy() and copy.copy(), just
+  like ElementTree's.  copy.copy() however does *not* create a shallow copy
+  where elements are shared between trees, as this makes no sense in the
+  context of libxml2 trees.  Note that lxml can deep-copy trees considerably
+  faster than than ElementTree.
 
 * etree allows navigation to the parent of a node by the ``getparent()``
-  method. This is not possible in ElementTree as the underlying tree
-  model does not have this information.
+  method.  This is not possible in ElementTree as the underlying tree model
+  does not have this information.
