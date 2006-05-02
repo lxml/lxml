@@ -70,17 +70,17 @@ original encoding::
   >>> xhtml = xml_header + doctype_string + '<html><body></body></html>'
 
   >>> et = lxml.etree.parse(StringIO(xhtml))
-  >>> doctype = et.doctype
-  >>> print doctype.public_id
+  >>> docinfo = et.docinfo
+  >>> print docinfo.public_id
   -//W3C//DTD XHTML 1.0 Transitional//EN
-  >>> print doctype.system_url
+  >>> print docinfo.system_url
   http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
-  >>> str(doctype) == doctype_string
+  >>> docinfo.doctype == doctype_string
   True
 
-  >>> print doctype.xml_version
+  >>> print docinfo.xml_version
   1.0
-  >>> print doctype.encoding
+  >>> print docinfo.encoding
   ascii
 
 

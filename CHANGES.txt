@@ -7,8 +7,8 @@ current
 Features added
 --------------
 
-* Read-only 'doctype' attribute in ElementTree class holds DOCTYPE information
-  as seen by the parser
+* Read-only 'docinfo' attribute in ElementTree class holds DOCTYPE
+  information, original encoding and XML version as seen by the parser
 
 * etree module can be compiled without libxslt by commenting out the line
   'include "xslt.pxi"' at the end of the etree.pyx source file

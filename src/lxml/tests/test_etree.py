@@ -380,43 +380,51 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             0, e.index(e[0], -12, -1))
 
-    def test_doctype_public(self):
+    def test_docinfo_public(self):
         etree = self.etree
+        xml_header = '<?xml version="1.0" encoding="ascii"?>'
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
         doctype_string = '<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id)
 
-        xml = doctype_string + '<html><body></body></html>'
+        xml = xml_header + doctype_string + '<html><body></body></html>'
 
         tree = etree.parse(StringIO(xml))
-        doctype = tree.doctype
-        self.assertEquals(doctype.public_id,  pub_id)
-        self.assertEquals(doctype.system_url, sys_id)
-        self.assertEquals(doctype.root_name,  'html')
-        self.assertEquals(str(doctype), doctype_string)
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.encoding,    "ascii")
+        self.assertEquals(docinfo.xml_version, "1.0")
+        self.assertEquals(docinfo.public_id,   pub_id)
+        self.assertEquals(docinfo.system_url,  sys_id)
+        self.assertEquals(docinfo.root_name,   'html')
+        self.assertEquals(docinfo.doctype, doctype_string)
 
-    def test_doctype_system(self):
+    def test_docinfo_system(self):
         etree = self.etree
+        xml_header = '<?xml version="1.0" encoding="UTF-8"?>'
         sys_id = "some.dtd"
         doctype_string = '<!DOCTYPE html SYSTEM "%s">' % sys_id
-        xml = doctype_string + '<html><body></body></html>'
+        xml = xml_header + doctype_string + '<html><body></body></html>'
 
         tree = etree.parse(StringIO(xml))
-        doctype = tree.doctype
-        self.assertEquals(doctype.public_id,  None)
-        self.assertEquals(doctype.system_url, sys_id)
-        self.assertEquals(doctype.root_name,  'html')
-        self.assertEquals(str(doctype), doctype_string)
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.encoding,    "UTF-8")
+        self.assertEquals(docinfo.xml_version, "1.0")
+        self.assertEquals(docinfo.public_id,   None)
+        self.assertEquals(docinfo.system_url,  sys_id)
+        self.assertEquals(docinfo.root_name,   'html')
+        self.assertEquals(docinfo.doctype, doctype_string)
 
-    def test_doctype_empty(self):
+    def test_docinfo_empty(self):
         etree = self.etree
         xml = '<html><body></body></html>'
         tree = etree.parse(StringIO(xml))
-        doctype = tree.doctype
-        self.assertEquals(doctype.public_id,  None)
-        self.assertEquals(doctype.system_url, None)
-        self.assertEquals(doctype.root_name,  'html')
-        self.assertEquals(str(doctype), '')
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.encoding,    None)
+        self.assertEquals(docinfo.xml_version, "1.0")
+        self.assertEquals(docinfo.public_id,   None)
+        self.assertEquals(docinfo.system_url,  None)
+        self.assertEquals(docinfo.root_name,   'html')
+        self.assertEquals(docinfo.doctype, '')
 
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.

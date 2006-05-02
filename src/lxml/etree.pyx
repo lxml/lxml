@@ -241,8 +241,8 @@ cdef _Document _documentFactory(xmlDoc* c_doc, parser):
     result._parser = parser.copy()
     return result
 
-cdef class DocType:
-    "Hold Public ID and System URL of a DOCTYPE declaration."
+cdef class DocInfo:
+    "Document information provided by parser and DTD."
     cdef readonly object root_name
     cdef readonly object public_id
     cdef readonly object system_url
@@ -250,7 +250,7 @@ cdef class DocType:
     cdef readonly object encoding
     cdef readonly object URL
     def __init__(self, tree):
-        "Create a DocType object for an ElementTree object or root Element."
+        "Create a DocInfo object for an ElementTree object or root Element."
         cdef _Document doc
         doc = _documentOrRaise(tree)
         self.root_name, self.public_id, self.system_url = doc.getdoctype()
@@ -259,19 +259,20 @@ cdef class DocType:
         self.xml_version, self.encoding = doc.getxmlinfo()
         self.URL = doc.getURL()
 
-    def __str__(self):
-        if self.public_id:
-            if self.system_url:
-                return '<!DOCTYPE %s PUBLIC "%s" "%s">' % (
-                    self.root_name, self.public_id, self.system_url)
+    property doctype:
+        def __get__(self):
+            if self.public_id:
+                if self.system_url:
+                    return '<!DOCTYPE %s PUBLIC "%s" "%s">' % (
+                        self.root_name, self.public_id, self.system_url)
+                else:
+                    return '<!DOCTYPE %s PUBLIC "%s">' % (
+                        self.root_name, self.public_id)
+            elif self.system_url:
+                return '<!DOCTYPE %s SYSTEM "%s">' % (
+                    self.root_name, self.system_url)
             else:
-                return '<!DOCTYPE %s PUBLIC "%s">' % (
-                    self.root_name, self.public_id)
-        elif self.system_url:
-            return '<!DOCTYPE %s SYSTEM "%s">' % (
-                self.root_name, self.system_url)
-        else:
-            return ""
+                return ""
 
 cdef class _NodeBase:
     """Base class to reference a document object and a libxml node.
@@ -309,14 +310,13 @@ cdef class _ElementTree:
     def getroot(self):
         return self._context_node
 
-    property doctype:
-        """A tuple (public ID, system URL) of the DOCTYPE seen by the parser.
-        Any of the two may be None.  This value is only defined for
-        ElementTree objects based on the root node of a parsed document (e.g.
-        those returned by the parse functions).
+    property docinfo:
+        """Information about the document provided by parser and DTD.  This
+        value is only defined for ElementTree objects based on the root node
+        of a parsed document (e.g.  those returned by the parse functions).
         """
         def __get__(self):
-            return DocType(self._doc)
+            return DocInfo(self._doc)
 
     def write(self, file, encoding='us-ascii'):
         if not hasattr(file, 'write'):
