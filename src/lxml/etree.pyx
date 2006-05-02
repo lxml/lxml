@@ -153,6 +153,25 @@ cdef class _Document:
             root_name = funicode(c_root_node.name)
         return (root_name, public_id, sys_url)
 
+    cdef getxmlinfo(self):
+        cdef xmlDoc* c_doc
+        c_doc = self._c_doc
+        if c_doc.version is NULL:
+            version = None
+        else:
+            version = c_doc.version
+        if c_doc.encoding is NULL:
+            encoding = None
+        else:
+            encoding = c_doc.encoding
+        return (version, encoding)
+
+    cdef getURL(self):
+        if self._c_doc.URL is NULL:
+            return None
+        else:
+            return self._c_doc.URL
+
     cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         self._ns_counter = self._ns_counter + 1
@@ -227,6 +246,9 @@ cdef class DocType:
     cdef readonly object root_name
     cdef readonly object public_id
     cdef readonly object system_url
+    cdef readonly object xml_version
+    cdef readonly object encoding
+    cdef readonly object URL
     def __init__(self, tree):
         "Create a DocType object for an ElementTree object or root Element."
         cdef _Document doc
@@ -234,6 +256,8 @@ cdef class DocType:
         self.root_name, self.public_id, self.system_url = doc.getdoctype()
         if not self.root_name and (self.public_id or self.system_url):
             raise ValueError, "Could not find root node"
+        self.xml_version, self.encoding = doc.getxmlinfo()
+        self.URL = doc.getURL()
 
     def __str__(self):
         if self.public_id:

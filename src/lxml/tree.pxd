@@ -81,6 +81,8 @@ cdef extern from "libxml/tree.h":
         xmlDoc* doc
         xmlDict* dict
         xmlHashTable* ids
+        char* version
+        char* encoding
         char* URL
         void* _private
         xmlDtd* intSubset
