@@ -39,9 +39,11 @@ the default parser, then with a parametrized one::
   >>> print lxml.etree.tostring(et.getroot())
   <a xmlns="test"><b/></a>
 
-HTML parsing is similarly simple::
+HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
+argument that the HTMLParser sets by default.  It lets libxml2 try its best to
+return something usable without raising an exception::
 
-  >>> broken_html = "<html><head><title>test<body><h1>page title</body></html>"
+  >>> broken_html = "<html><head><title>test<body><h1>page title"
 
   >>> parser = lxml.etree.HTMLParser()
   >>> et     = lxml.etree.parse(StringIO(broken_html), parser)
