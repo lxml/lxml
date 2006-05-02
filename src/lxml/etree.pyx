@@ -131,6 +131,7 @@ cdef class _Document:
 
     cdef getdoctype(self):
         cdef tree.xmlDtd* dtd
+        cdef xmlNode* c_root_node
         public_id = None
         sys_url   = None
         dtd = self._c_doc.intSubset
@@ -145,7 +146,12 @@ cdef class _Document:
                 public_id = funicode(dtd.ExternalID)
             if not sys_url and dtd.SystemID is not NULL:
                 sys_url = funicode(dtd.SystemID)
-        return (public_id, sys_url)
+        c_root_node = tree.xmlDocGetRootElement(self._c_doc)
+        if c_root_node is NULL:
+            root_name = None
+        else:
+            root_name = funicode(c_root_node.name)
+        return (root_name, public_id, sys_url)
 
     cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
@@ -215,7 +221,33 @@ cdef _Document _documentFactory(xmlDoc* c_doc, parser):
         parser = __DEFAULT_PARSER
     result._parser = parser.copy()
     return result
-        
+
+cdef class DocType:
+    "Hold Public ID and System URL of a DOCTYPE declaration."
+    cdef readonly object root_name
+    cdef readonly object public_id
+    cdef readonly object system_url
+    def __init__(self, tree):
+        cdef _Document doc
+        doc = _documentOrRaise(tree)
+        self.root_name, self.public_id, self.system_url = doc.getdoctype()
+        if not self.root_name and (self.public_id or self.system_url):
+            raise ValueError, "Could not find root node"
+
+    def __str__(self):
+        if self.public_id:
+            if self.system_url:
+                return '<!DOCTYPE %s PUBLIC "%s" "%s">' % (
+                    self.root_name, self.public_id, self.system_url)
+            else:
+                return '<!DOCTYPE %s PUBLIC "%s">' % (
+                    self.root_name, self.public_id)
+        elif self.system_url:
+            return '<!DOCTYPE %s SYSTEM "%s">' % (
+                self.root_name, self.system_url)
+        else:
+            return ""
+
 cdef class _NodeBase:
     """Base class to reference a document object and a libxml node.
 
@@ -259,7 +291,7 @@ cdef class _ElementTree:
         those returned by the parse functions).
         """
         def __get__(self):
-            return self._doc.getdoctype()
+            return DocType(self._doc)
 
     def write(self, file, encoding='us-ascii'):
         if not hasattr(file, 'write'):

@@ -384,30 +384,39 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
         sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-        xml = '''\
-<!DOCTYPE html PUBLIC "%s" "%s">
-<html><body></body></html>
-''' % (pub_id, sys_id)
+        doctype_string = '<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id)
+
+        xml = doctype_string + '<html><body></body></html>'
 
         tree = etree.parse(StringIO(xml))
-        self.assertEquals(tree.doctype, (pub_id, sys_id))
+        doctype = tree.doctype
+        self.assertEquals(doctype.public_id,  pub_id)
+        self.assertEquals(doctype.system_url, sys_id)
+        self.assertEquals(doctype.root_name,  'html')
+        self.assertEquals(str(doctype), doctype_string)
 
     def test_doctype_system(self):
         etree = self.etree
         sys_id = "some.dtd"
-        xml = '''\
-<!DOCTYPE html SYSTEM "%s">
-<html><body></body></html>
-''' % sys_id
+        doctype_string = '<!DOCTYPE html SYSTEM "%s">' % sys_id
+        xml = doctype_string + '<html><body></body></html>'
 
         tree = etree.parse(StringIO(xml))
-        self.assertEquals(tree.doctype, (None, sys_id))
+        doctype = tree.doctype
+        self.assertEquals(doctype.public_id,  None)
+        self.assertEquals(doctype.system_url, sys_id)
+        self.assertEquals(doctype.root_name,  'html')
+        self.assertEquals(str(doctype), doctype_string)
 
     def test_doctype_empty(self):
         etree = self.etree
         xml = '<html><body></body></html>'
         tree = etree.parse(StringIO(xml))
-        self.assertEquals(tree.doctype, (None, None))
+        doctype = tree.doctype
+        self.assertEquals(doctype.public_id,  None)
+        self.assertEquals(doctype.system_url, None)
+        self.assertEquals(doctype.root_name,  'html')
+        self.assertEquals(str(doctype), '')
 
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.

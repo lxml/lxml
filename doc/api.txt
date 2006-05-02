@@ -58,6 +58,24 @@ ElementTree::
   >>> print lxml.etree.tostring(html)
   <html><head><title>test</title></head><body><h1>page title</h1></body></html>
 
+The use of the libxml2 parsers makes some additional information available at
+the API level.  Currently, ElementTree objects can access the DOCTYPE
+information provided by a parsed document::
+
+  >>> pub_id  = "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  >>> sys_url = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+  >>> doctype_string = '<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_url)
+  >>> xhtml = doctype_string + '<html><body></body></html>'
+
+  >>> et = lxml.etree.parse(StringIO(xhtml))
+  >>> doctype = et.doctype
+  >>> print doctype.public_id
+  -//W3C//DTD XHTML 1.0 Transitional//EN
+  >>> print doctype.system_url
+  http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
+  >>> str(doctype) == doctype_string
+  True
+
 
 Error handling on exceptions
 ----------------------------
