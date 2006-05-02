@@ -15,6 +15,7 @@ cdef extern from "libxml/parser.h":
         xmlDict* dict
         void* _private
         int wellFormed
+        int options
         xmlError lastError
         
     ctypedef enum xmlParserOption:

@@ -149,7 +149,7 @@ cdef class BaseParser:
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
                                 char* c_filename) except NULL:
     cdef _ResolverContext context
-    if ctxt.wellFormed:
+    if ctxt.wellFormed or (ctxt.options & xmlparser.XML_PARSE_RECOVER):
         __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     elif result is not NULL:
         # free broken document
@@ -158,7 +158,11 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 
     if ctxt._private is not NULL:
         context = <_ResolverContext>ctxt._private
-        context._raise_if_stored()
+        if context._has_raised():
+            if result is not NULL:
+                tree.xmlFreeDoc(result)
+                result = NULL
+            context._raise_if_stored()
 
     if result is NULL:
         if c_filename is not NULL and \
