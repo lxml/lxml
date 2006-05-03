@@ -208,7 +208,8 @@ cdef class XMLParser(BaseParser):
     cdef xmlParserCtxt* _file_parser_ctxt
     cdef xmlParserCtxt* _memory_parser_ctxt
     def __init__(self, attribute_defaults=False, dtd_validation=False,
-                 load_dtd=False, no_network=False, ns_clean=False):
+                 load_dtd=False, no_network=False, ns_clean=False,
+                 recover=False):
         cdef int parse_options
         self._file_parser_ctxt = NULL
         BaseParser.__init__(self)
@@ -226,6 +227,8 @@ cdef class XMLParser(BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_NONET
         if ns_clean:
             parse_options = parse_options | xmlparser.XML_PARSE_NSCLEAN
+        if recover:
+            parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
 
         self._parse_options = parse_options
 
