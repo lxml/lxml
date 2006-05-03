@@ -41,9 +41,11 @@ the default parser, then with a parametrized one::
 
 HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
 argument that the HTMLParser sets by default.  It lets libxml2 try its best to
-return something usable without raising an exception::
+return something usable without raising an exception.  Note that this
+functionality depends entirely on libxml2.  You should use libxml2 version
+2.6.21 or newer to take advantage of this feature::
 
-  >>> broken_html = "<html><head><title>test<body><h1>page title"
+  >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
 
   >>> parser = lxml.etree.HTMLParser()
   >>> et     = lxml.etree.parse(StringIO(broken_html), parser)

@@ -8,11 +8,15 @@ You need Python 2.3 or later.
 
 You need libxml2 and libxslt, in particular:
 
-* libxml 2.6.16 (newer versions are recommended). It can be found here:
+* libxml 2.6.16 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-* libxslt 1.1.12 (newer versions are recommended). It can be found here:
+* libxslt 1.1.12 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
+
+Newer versions generally contain less bugs and are therefore recommended.  The
+HTML parser benefits from libxml2 version 2.6.21 or later, which support
+parsing horribly broken HTML.
 
 For Windows, there is a `binary distribution`_ of libxml2 and libxslt.  Note
 that you need both libxml2 and libxslt, as well as iconv and zlib.  You can
