@@ -1,12 +1,33 @@
-import os
+import sys, os, os.path, re
 
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().strip().split(' ')
 
+src_dir = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
+version = open(os.path.join(src_dir, 'version.txt')).read().strip()
+
+try:
+    svn_entries = open(os.path.join(src_dir, '.svn', 'entries')).read()
+except IOError:
+    svn_version = version
+else:
+    revision = re.search("<entry[^>]*name=\"\"[^>]*revision=\"([^\"]+)\"",
+                         svn_entries).group(1)
+    svn_version = version + '-' + revision
+
+version_h = open(os.path.join(src_dir, 'src', 'lxml', 'lxml-version.h'), 'w')
+version_h.write('''\
+#ifndef LXML_VERSION_STRING
+#define LXML_VERSION_STRING "%s"
+#endif
+''' % svn_version)
+version_h.close()
+
+print "Building lxml version", svn_version
+
 setup_args = {}
 changelog_text = ""
-version = open('version.txt').read().strip()
 
 try:
     from setuptools import setup
