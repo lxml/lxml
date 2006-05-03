@@ -94,10 +94,10 @@ class ETreeXSLTTestCase(HelperTestCase):
     def test_xslt_broken(self):
         tree = self.parse('<a/>')
         style = self.parse('''\
-<xslt:stylesheet version="1.0"
+<xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:foo />
-</xslt:stylesheet>''')
+</xsl:stylesheet>''')
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
 
