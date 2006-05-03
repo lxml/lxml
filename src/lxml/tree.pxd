@@ -3,6 +3,7 @@
 cdef extern from "stdio.h":
     ctypedef struct FILE
     cdef int strlen(char* s)
+    cdef char* strstr(char* haystack, char* needle)
     cdef int strcmp(char* s1, char* s2)
     cdef int strncmp(char* s1, char* s2, int len)
 

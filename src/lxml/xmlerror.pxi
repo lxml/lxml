@@ -267,27 +267,45 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
         log_handler = __GLOBAL_ERROR_LOG
 
     cstd.va_start(args, msg)
-    c_text     = cstd.va_charptr(args)
-    c_filename = cstd.va_charptr(args)
-    c_line     = cstd.va_int(args)
-    c_element  = cstd.va_charptr(args)
+    if tree.strncmp(msg, '%s:', 3) == 0:
+        c_text = cstd.va_charptr(args)
+    else:
+        c_text = NULL
+    if tree.strstr(msg, 'file %s') is not NULL:
+        c_filename = cstd.va_charptr(args)
+    else:
+        c_filename = NULL
+    if tree.strstr(msg, 'line %d') is not NULL:
+        c_line = cstd.va_int(args)
+    else:
+        c_line = -1
+    if tree.strstr(msg, 'element %s') is not NULL:
+        c_element = cstd.va_charptr(args)
+    else:
+        c_element = NULL
     cstd.va_end(args)
 
-    if c_text is NULL:
-        message = None
-    elif c_element is NULL:
-        message = funicode(c_text)
-    else:
-        message = "%s (element '%s')" % (
-            funicode(c_text), funicode(c_element))
-
-    if c_filename is not NULL and tree.strlen(c_filename) > 0:
-        if tree.strncmp(c_filename, 'XSLT:', 5) == 0:
-            filename = '<xslt>'
+    try:
+        if c_text is NULL:
+            message = None
+        elif c_element is NULL:
+            message = funicode(c_text)
         else:
-            filename = funicode(c_filename)
-    else:
-        filename = None
+            message = "%s (element '%s')" % (
+                funicode(c_text), funicode(c_element))
+    except UnicodeDecodeError:
+        message = "<undecodable message>"
+
+    try:
+        if c_filename is not NULL and tree.strlen(c_filename) > 0:
+            if tree.strncmp(c_filename, 'XSLT:', 5) == 0:
+                filename = '<xslt>'
+            else:
+                filename = funicode(c_filename)
+        else:
+            filename = None
+    except UnicodeDecodeError:
+        filename = "<undecodable filename>"
 
     log_handler._receiveGeneric(xmlerror.XML_FROM_XSLT,
                                 xmlerror.XML_ERR_OK,
@@ -305,6 +323,9 @@ cdef void _logLibxmlErrors():
 
 # init global logging
 initThreadLogging()
+
+# switch on line number reporting
+xmlparser.xmlLineNumbersDefault(1)
 
 ################################################################################
 ## CONSTANTS FROM "xmlerror.pxd"

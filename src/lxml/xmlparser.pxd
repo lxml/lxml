@@ -39,9 +39,15 @@ cdef extern from "libxml/parser.h":
         #XML_PARSE_COMPACT = 65536 # compact small text nodes
        
     cdef void xmlInitParser()
+    cdef int xmlLineNumbersDefault(int onoff)
     cdef xmlParserCtxt* xmlNewParserCtxt()
+    cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
     cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
-
+    cdef int xmlCtxtResetPush(xmlParserCtxt* ctxt,
+                              char* chunk, int size,
+                              char* filename, char* encoding)
+    cdef int xmlParseChunk(xmlParserCtxt* ctxt,
+                           char* chunk, int size, int terminate)
     cdef xmlDoc* xmlCtxtReadDoc(xmlParserCtxt* ctxt,
                                 char* cur, char* URL, char* encoding,
                                 int options)
