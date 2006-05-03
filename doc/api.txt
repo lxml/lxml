@@ -2,21 +2,28 @@
 APIs specific to lxml
 =====================
 
-lxml tries to follow established APIs wherever possible. Sometimes
-however the need to expose a feature in an easy way led to the
-invention of a new API.
+lxml tries to follow established APIs wherever possible.  Sometimes, however,
+the need to expose a feature in an easy way led to the invention of a new API.
 
 lxml.etree
 ==========
 
-lxml.etree tries to follow the etree API wherever it can. There are
-however some incompatibilities (see compatibility.txt). There are also
-some extensions.
+lxml.etree tries to follow the `ElementTree API`_ wherever it can.  There are
+however some incompatibilities (see compatibility.txt).  The extensions are
+documented here.
+
+.. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 
 The following examples usually assume this to be executed first::
 
   >>> import lxml.etree
   >>> from StringIO import StringIO
+
+If you need to know which version of lxml is installed, you can access the
+``lxml.etree.LXML_VERSION`` attribute to retrieve a version tuple.  Note,
+however, that it did not exist before version 1.0, so you will get an
+AttributeError in older versions.  The versions of libxml2 and libxslt are
+available through the attributes ``LIBXML_VERSION`` and ``LIBXSLT_VERSION``.
 
 
 Parsers
