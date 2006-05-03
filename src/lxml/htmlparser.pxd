@@ -13,14 +13,14 @@ cdef extern from "libxml/HTMLparser.h":
 #        HTML_PARSE_RECOVER    # Relaxed parsing
 #        HTML_PARSE_COMPACT    # compact small text nodes
 
-    xmlParserCtxt* htmlCreateMemoryParserCtxt(char* buffer, int size)
-    xmlParserCtxt* htmlCreateFileParserCtxt(char* filename, char* encoding)
-    void htmlFreeParserCtxt(xmlParserCtxt* ctxt)
-    int htmlParseDocument(xmlParserCtxt* ctxt)
+    cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(char* buffer, int size)
+    cdef xmlParserCtxt* htmlCreateFileParserCtxt(char* filename, char* encoding)
+    cdef void htmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    cdef int htmlParseDocument(xmlParserCtxt* ctxt)
 
-    xmlDoc* htmlCtxtReadFile(xmlParserCtxt* ctxt,
-                             char* filename, char* encoding,
-                             int options)
-    xmlDoc* htmlCtxtReadDoc(xmlParserCtxt* ctxt,
-                            char* buffer, char* URL, char* encoding,
-                            int options)
+    cdef xmlDoc* htmlCtxtReadFile(xmlParserCtxt* ctxt,
+                                  char* filename, char* encoding,
+                                  int options)
+    cdef xmlDoc* htmlCtxtReadDoc(xmlParserCtxt* ctxt,
+                                 char* buffer, char* URL, char* encoding,
+                                 int options)

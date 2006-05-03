@@ -1357,12 +1357,12 @@ def ElementTree(_Element element=None, file=None, parser=None):
 
 def HTML(text):
     cdef _Document doc
-    doc = _parseMemoryDocument(text, __DEFAULT_HTML_PARSER)
+    doc = _parseMemoryDocument(text, None, __DEFAULT_HTML_PARSER)
     return doc.getroot()
 
 def XML(text):
     cdef _Document doc
-    doc = _parseMemoryDocument(text, __DEFAULT_XML_PARSER)
+    doc = _parseMemoryDocument(text, None, __DEFAULT_XML_PARSER)
     return doc.getroot()
 
 fromstring = XML

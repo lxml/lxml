@@ -7,7 +7,8 @@ IO test cases that apply to both etree and ElementTree
 import unittest
 import tempfile, gzip
 
-from common_imports import etree, ElementTree, fileInTestDir, SillyFileLike
+from common_imports import etree, ElementTree, fileInTestDir
+from common_imports import SillyFileLike, LargeFileLike
 
 class IOTestCaseBase(unittest.TestCase):
     """(c)ElementTree compatibility for IO functions/methods
@@ -83,6 +84,29 @@ class IOTestCaseBase(unittest.TestCase):
         f = SillyFileLike()
         root = self.etree.ElementTree().parse(f)
         self.assert_(root.tag.endswith('foo'))
+
+    def test_module_parse_large_fileobject(self):
+        # parse from unamed file object
+        f = LargeFileLike()
+        tree = self.etree.parse(f)
+        root = tree.getroot()
+        self.assert_(root.tag.endswith('root'))
+
+    def test_module_parse_fileobject_error(self):
+        class LocalError(Exception):
+            pass
+        class TestFile:
+            def read(*args):
+                raise LocalError
+        f = TestFile()
+        self.assertRaises(LocalError, self.etree.parse, f)
+
+    def test_module_parse_fileobject_type_error(self):
+        class TestFile:
+            def read(*args):
+                return 1
+        f = TestFile()
+        self.assertRaises(TypeError, self.etree.parse, f)
 
     
 class ETreeIOTestCase(IOTestCaseBase):
