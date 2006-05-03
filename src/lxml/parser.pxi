@@ -147,9 +147,9 @@ cdef class BaseParser:
         c_ctxt._private = <python.PyObject*>self._context
 
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
-                                char* c_filename) except NULL:
+                                char* c_filename, int recover) except NULL:
     cdef _ResolverContext context
-    if ctxt.wellFormed or (ctxt.options & xmlparser.XML_PARSE_RECOVER):
+    if ctxt.wellFormed or recover:
         __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     elif result is not NULL:
         # free broken document
@@ -254,7 +254,7 @@ cdef class XMLParser(BaseParser):
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        cdef int parse_error
+        cdef int recover
         self._error_log.connect()
         pctxt = self._memory_parser_ctxt
         if pctxt is NULL:
@@ -264,11 +264,13 @@ cdef class XMLParser(BaseParser):
         result = xmlparser.xmlCtxtReadDoc(
             pctxt, c_text, NULL, NULL, self._parse_options)
         self._error_log.disconnect()
-        return _handleParseResult(pctxt, result, NULL)
+        recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(pctxt, result, NULL, recover)
 
     cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
+        cdef int recover
         self._error_log.connect()
         pctxt = self._file_parser_ctxt
         if pctxt is NULL:
@@ -278,13 +280,15 @@ cdef class XMLParser(BaseParser):
         result = xmlparser.xmlCtxtReadFile(
             pctxt, c_filename, NULL, self._parse_options)
         self._error_log.disconnect()
-        return _handleParseResult(pctxt, result, c_filename)
+        recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(pctxt, result, c_filename, recover)
 
 cdef xmlDoc* _internalParseDoc(char* c_text, int options,
                                _ResolverContext context) except NULL:
     # internal parser function for XSLT
     cdef xmlParserCtxt* pctxt
     cdef xmlDoc* c_doc
+    cdef int recover
     pctxt = xmlparser.xmlNewParserCtxt()
     if pctxt is NULL:
         return NULL
@@ -293,7 +297,8 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
     c_doc = xmlparser.xmlCtxtReadDoc(
         pctxt, c_text, NULL, NULL, options)
     try:
-        c_doc = _handleParseResult(pctxt, c_doc, NULL)
+        recover = options & xmlparser.XML_PARSE_RECOVER
+        c_doc = _handleParseResult(pctxt, c_doc, NULL, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -303,6 +308,7 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
     # internal parser function for XSLT
     cdef xmlParserCtxt* pctxt
     cdef xmlDoc* c_doc
+    cdef int recover
     pctxt = xmlparser.xmlNewParserCtxt()
     if pctxt is NULL:
         return NULL
@@ -311,7 +317,8 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
     c_doc = xmlparser.xmlCtxtReadFile(
         pctxt, c_filename, NULL, options)
     try:
-        c_doc = _handleParseResult(pctxt, c_doc, c_filename)
+        recover = options & xmlparser.XML_PARSE_RECOVER
+        c_doc = _handleParseResult(pctxt, c_doc, c_filename, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -400,6 +407,7 @@ cdef class HTMLParser(BaseParser):
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int c_len
+        cdef int recover
         self._error_log.connect()
         pctxt = self._memory_parser_ctxt
         if pctxt is NULL:
@@ -412,12 +420,13 @@ cdef class HTMLParser(BaseParser):
         result = htmlparser.htmlCtxtReadDoc(
             pctxt, c_text, NULL, NULL, self._parse_options)
         self._error_log.disconnect()
-        return _handleParseResult(pctxt, result, NULL)
+        recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(pctxt, result, NULL, recover)
 
     cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        cdef int parser_error
+        cdef int recover
         self._error_log.connect()
         pctxt = self._file_parser_ctxt
         if pctxt is NULL:
@@ -433,7 +442,8 @@ cdef class HTMLParser(BaseParser):
         result = htmlparser.htmlCtxtReadFile(
             pctxt, c_filename, NULL, self._parse_options)
         self._error_log.disconnect()
-        return _handleParseResult(pctxt, result, c_filename)
+        recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(pctxt, result, c_filename, recover)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()
