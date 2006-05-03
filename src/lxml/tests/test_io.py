@@ -101,6 +101,23 @@ class IOTestCaseBase(unittest.TestCase):
         f = TestFile()
         self.assertRaises(LocalError, self.etree.parse, f)
 
+    def test_module_parse_fileobject_late_error(self):
+        class LocalError(Exception):
+            pass
+        class TestFile:
+            data = '<root>test</'
+            next_char = iter(data).next
+            counter = 0
+            def read(self, *args):
+                try:
+                    self.counter += 1
+                    return self.next_char()
+                except StopIteration:
+                    raise LocalError
+        f = TestFile()
+        self.assertRaises(LocalError, self.etree.parse, f)
+        self.assertEquals(f.counter, len(f.data)+1)
+
     def test_module_parse_fileobject_type_error(self):
         class TestFile:
             def read(*args):
