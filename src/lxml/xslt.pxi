@@ -17,6 +17,9 @@ class XSLTSaveError(XSLTError):
 class XSLTExtensionError(XSLTError):
     pass
 
+# version information
+LIBXSLT_COMPILED_VERSION = __unpackIntVersion(xslt.LIBXSLT_VERSION)
+LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 
 cdef void _logLibxsltErrors():
     xslt.xsltSetGenericErrorFunc(NULL, _receiveGenericError)

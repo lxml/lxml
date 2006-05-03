@@ -5,7 +5,14 @@ cdef extern from "stdio.h":
     cdef int strlen(char* s)
     cdef int strcmp(char* s1, char* s2)
     cdef int strncmp(char* s1, char* s2, int len)
-    
+
+cdef extern from "lxml-version.h":
+    cdef char* LXML_VERSION_STRING
+
+cdef extern from "libxml/xmlversion.h":
+    cdef char* xmlParserVersion
+    cdef int LIBXML_VERSION
+
 cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
     cdef xmlCharEncodingHandler* xmlFindCharEncodingHandler(char* name)

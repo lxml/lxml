@@ -1,6 +1,12 @@
 from tree cimport xmlDoc, xmlDict
 from xpath cimport xmlXPathContext, xmlXPathFunction
 
+cdef extern from "libxslt/xslt.h":
+    cdef int xsltLibxsltVersion
+
+cdef extern from "libxslt/xsltconfig.h":
+    cdef int LIBXSLT_VERSION
+
 cdef extern from "libxslt/xsltInternals.h":
     ctypedef struct xsltDocument:
         xmlDoc* doc

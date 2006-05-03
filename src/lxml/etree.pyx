@@ -56,6 +56,32 @@ class XIncludeError(LxmlError):
 class C14NError(LxmlError):
     pass
 
+# version information
+cdef __unpackDottedVersion(version):
+    version_list = []
+    l = (version.replace('-', '.').split('.') + [0]*4)[:4]
+    for item in l:
+        try:
+            version_list.append(int(item))
+        except ValueError:
+            version_list.append(item)
+    return tuple(version_list)
+
+cdef __unpackIntVersion(int c_version):
+    return (
+        ((c_version / (100*100)) % 100),
+        ((c_version / 100)       % 100),
+        (c_version               % 100)
+        )
+
+LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
+try:
+    LIBXML_VERSION = __unpackIntVersion(
+        int((tree.xmlParserVersion).split('-')[0]))
+except Exception:
+    LIBXML_VERSION = (0,0,0)
+LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
+
 
 # class for temporary storage of Python references
 cdef class _TempStore:
