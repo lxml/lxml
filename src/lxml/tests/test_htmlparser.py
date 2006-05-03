@@ -15,7 +15,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
     etree = etree
 
     html_str = "<html><head><title>test</title></head><body><h1>page title</h1></body></html>"
-    broken_html_str = "<html><head><title>test<body><h1>page title</body></html>"
+    broken_html_str = "<html><head><title>test<body><h1>page title</h3></p></html>"
 
     def tearDown(self):
         self.etree.set_default_parser()
@@ -32,6 +32,13 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
+    def test_module_parse_html_norecover(self):
+        parser = self.etree.HTMLParser(recover=False)
+        parse = self.etree.parse
+        f = StringIO(self.broken_html_str)
+        self.assertRaises(self.etree.XMLSyntaxError,
+                          parse, f, parser)
+
     def test_module_HTML_broken(self):
         element = self.etree.HTML(self.broken_html_str)
         self.assertEqual(self.etree.tostring(element),
@@ -39,8 +46,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
     def test_module_HTML_access(self):
         element = self.etree.HTML(self.html_str)
-        element = element[0][0]
-        self.assertEqual(element.tag, 'title')
+        self.assertEqual(element[0][0].tag, 'title')
 
     def test_module_parse_html(self):
         parser = self.etree.HTMLParser()
