@@ -7,6 +7,10 @@ current
 Features added
 --------------
 
+* Parsing file-like objects now reads chunks rather than the whole file
+
+* Parsing StringIO objects from the start avoid copying the string
+
 * Read-only 'docinfo' attribute in ElementTree class holds DOCTYPE
   information, original encoding and XML version as seen by the parser
 
