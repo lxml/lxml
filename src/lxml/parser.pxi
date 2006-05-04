@@ -585,10 +585,14 @@ cdef _Document _parseMemoryDocument(text, url, parser):
     cdef xmlDoc* c_doc
     if python.PyUnicode_Check(text):
         text = _stripDeclaration(_utf8(text))
+    if url is not None:
+        url = _utf8(url)
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
-cdef _Document _parseFilelikeDocument(source, filename, parser):
+cdef _Document _parseFilelikeDocument(source, url, parser):
     cdef xmlDoc* c_doc
-    c_doc = _parseDocFromFilelike(source, filename, parser)
+    if url is not None:
+        url = _utf8(url)
+    c_doc = _parseDocFromFilelike(source, url, parser)
     return _documentFactory(c_doc, parser)
