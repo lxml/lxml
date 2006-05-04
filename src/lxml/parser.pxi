@@ -570,8 +570,8 @@ cdef _Document _parseDocument(source, parser):
         if source.tell() == 0:
             return _parseMemoryDocument(source.getvalue(), filename, parser)
 
-    # Support for unamed file-like object (StringIO, urlgrabber.urlopen, ...)
-    if not filename and hasattr(source, 'read'):
+    # Support for file-like objects (urlgrabber.urlopen, ...)
+    if hasattr(source, 'read'):
         return _parseFilelikeDocument(source, filename, parser)
 
     # Otherwise parse the file directly from the filesystem
