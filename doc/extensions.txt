@@ -9,13 +9,15 @@ XSLT.  They allow you to do things like this::
 Here is how such a function looks like.  As the first argument, it always
 receives a dummy object.  It is currently None, but do not rely on this as it
 may become meaningful in later versions of lxml.  The other arguments are
-provided by the respective call in the XPath expression.  Any number of
-arguments is allowed::
+provided by the respective call in the XPath expression, one in the following
+examples.  Any number of arguments is allowed::
 
   >>> def hello(dummy, a):
   ...    return "Hello %s" % a
   >>> def ola(dummy, a):
   ...    return "Ola %s" % a
+  >>> def loadsofargs(dummy, *args):
+  ...    return "Got %d arguments." % len(args)
 
 
 The FunctionNamespace
@@ -29,10 +31,12 @@ FunctionNamespace class.  For simplicity, we choose the empty namespace
   >>> from lxml import etree
   >>> ns = etree.FunctionNamespace(None)
   >>> ns['hello'] = hello
+  >>> ns['countargs'] = loadsofargs
 
-This registers the function 'foo' with the name 'myfunction' in the default
-namespace.  Now we're going to create a document that we can run XPath
-expressions against::
+This registers the function `hello` with the name `hello` in the default
+namespace (None), and the function `loadsofargs` with the name `countargs`.
+Now we're going to create a document that we can run XPath expressions
+against::
 
   >>> from lxml import etree
   >>> from StringIO import StringIO
@@ -48,15 +52,18 @@ Done. Now we can have XPath expressions call our new function::
   Hello b
   >>> print root.xpath('hello(string(b))')
   Hello Haegar
+  >>> print root.xpath('countargs(., b, ./*)')
+  Got 3 arguments.
 
-Note how we call both a Python function (hello) and an XPath built-in function
-(local-name) in exactly the same way.  Normally, however, you would want to
-separate the two in different namespaces.  The FunctionNamespace class allows
-you to do this::
+Note how we call both a Python function (`hello`) and an XPath built-in
+function (`string`) in exactly the same way.  Normally, however, you would
+want to separate the two in different namespaces.  The FunctionNamespace class
+allows you to do this::
 
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myfunctions')
   >>> ns['hello'] = hello
-  >>> print root.xpath('f:hello(local-name(*))', {'f' : 'http://mydomain.org/myfunctions'})
+  >>> prefixmap = {'f' : 'http://mydomain.org/myfunctions'}
+  >>> print root.xpath('f:hello(local-name(*))', prefixmap)
   Hello b
 
 
@@ -84,39 +91,11 @@ reasoning is that elements in lxml do not care about prefixes anyway, so it
 would rather complicate things than be of any help.
 
 
-What to return from a function
-------------------------------
-
-Extension functions can return any data type for which there is an XPath
-equivalent.  This includes numbers, boolean values, elements and lists of
-elements::
-
-  >>> def returnsFloat(_):
-  ...    return 1.7
-  >>> def returnsBool(_):
-  ...    return True
-  >>> def returnFirstNode(_, nodes):
-  ...    return nodes[0]
-
-  >>> ns = etree.FunctionNamespace(None)
-  >>> ns['float'] = returnsFloat
-  >>> ns['bool']  = returnsBool
-  >>> ns['first'] = returnFirstNode
-
-  >>> e = etree.XPathEvaluator(doc)
-  >>> e.evaluate("float()")
-  1.7
-  >>> e.evaluate("bool()")
-  True
-  >>> e.evaluate("count(first(//b))")
-  1.0
-
-
 Evaluators and XSLT
 -------------------
 
 Extension functions work for all ways of evaluating XPath expressions and for
-XSLT execution::
+XSL transformations::
 
   >>> e = etree.XPathEvaluator(doc)
   >>> print e.evaluate('es:hello(local-name(/a))')
@@ -142,64 +121,120 @@ XSLT execution::
 It is also possible to register namespaces with a single evaluator.  While the
 following example involves no functions, the idea should still be clear::
   
-  >>> f = StringIO('<hey:a xmlns:hey="http://mydomain.org/myfunctions" />')
+  >>> f = StringIO('<a xmlns="http://mydomain.org/myfunctions" />')
   >>> ns_doc = etree.parse(f)
   >>> e = etree.XPathEvaluator(ns_doc)
   >>> e.evaluate('/a')
   []
 
-This obviously returns nothing, but when we register the namespace with the
-evaluator, we can access it via a prefix.  Note that this prefix mapping is
-only known to this evaluator, as opposed to the global mapping of the
-FunctionNamespace objects::
+This returns nothing, as we did not ask for the right namespace.  When we
+register the namespace with the evaluator, we can access it via a prefix::
 
   >>> e.registerNamespace('foo', 'http://mydomain.org/myfunctions')
   >>> e.evaluate('/foo:a')[0].tag
   '{http://mydomain.org/myfunctions}a'
 
+Note that this prefix mapping is only known to this evaluator, as opposed to
+the global mapping of the FunctionNamespace objects::
 
-BETA Features
--------------
+  >>> e2 = etree.XPathEvaluator(ns_doc)
+  >>> e2.evaluate('/foo:a')
+  Traceback (most recent call last):
+  ...
+  XPathSyntaxError: Error in xpath expression.
 
-Note: the following features are still in beta state.  They may not work as
-expected.
 
-It is possible to return lists of newly created nodes as XML structures::
+What to return from a function
+------------------------------
 
-  >>> def returnsNodeSet(evaluator):
-  ...    results = etree.Element('results')
-  ...    result = etree.SubElement(results, 'result')
-  ...    result.text = "Alpha"
-  ...    result2 = etree.SubElement(results, 'result')
-  ...    result2.text = "Beta"
-  ...    result3 = etree.SubElement(results, 'result')
-  ...    result3.text = "Gamma"
-  ...    return [results]
-  >>> extension4 = { (None, 'returnsNodeSet') : returnsNodeSet }
-  >>> e = etree.XPathEvaluator(doc, None, extensions=[extension4])
-  >>> r = e.evaluate("returnsNodeSet()")
-  >>> len(r)
+Extension functions can return any data type for which there is an XPath
+equivalent.  This includes numbers, boolean values, elements and lists of
+elements.  Note that integers will also be returned as floats::
+
+  >>> def returnsFloat(_):
+  ...    return 1.7
+  >>> def returnsInteger(_):
+  ...    return 1
+  >>> def returnsBool(_):
+  ...    return True
+  >>> def returnFirstNode(_, nodes):
+  ...    return nodes[0]
+
+  >>> ns = etree.FunctionNamespace(None)
+  >>> ns['float'] = returnsFloat
+  >>> ns['int']   = returnsInteger
+  >>> ns['bool']  = returnsBool
+  >>> ns['first'] = returnFirstNode
+
+  >>> e = etree.XPathEvaluator(doc)
+  >>> e.evaluate("float()")
+  1.7
+  >>> e.evaluate("int()")
+  1.0
+  >>> int( e.evaluate("int()") )
   1
-  >>> t = r[0]
-  >>> t.tag
-  'results'
-  >>> len(t)
-  3
-  >>> t[0].tag
-  'result'
-  >>> t[0].text
-  'Alpha'
-  >>> t[1].text
-  'Beta'
+  >>> e.evaluate("bool()")
+  True
+  >>> e.evaluate("count(first(//b))")
+  1.0
 
-It's even possible to filter that result set with another XPath expression::
+As the last example shows, you can pass the results of functions back into
+the XPath expression.  Elements and sequences of elements are treated as
+XPath node-sets::
 
-  >>> r = e.evaluate("returnsNodeSet()/result")
-  >>> len(r)
-  3
-  >>> r[0].tag
-  'result'
-  >>> r[1].tag
-  'result'
-  >>> r[0].text
+  >>> def returnsNodeSet(_):
+  ...     results1 = etree.Element('results1')
+  ...     etree.SubElement(results1, 'result').text = "Alpha"
+  ...     etree.SubElement(results1, 'result').text = "Beta"
+  ...
+  ...     results2 = etree.Element('results2')
+  ...     etree.SubElement(results2, 'result').text = "Gamma"
+  ...     etree.SubElement(results2, 'result').text = "Delta"
+  ...
+  ...     results3 = etree.SubElement(results2, 'subresult')
+  ...     return [results1, results2, results3]
+
+  >>> ns['new-node-set'] = returnsNodeSet
+
+  >>> e = etree.XPathEvaluator(doc, None)
+
+  >>> r = e.evaluate("new-node-set()/result")
+  >>> print [ t.text for t in r ]
+  ['Alpha', 'Beta', 'Gamma', 'Delta']
+
+  >>> r = e.evaluate("new-node-set()")
+  >>> print [ t.tag for t in r ]
+  ['results1', 'results2', 'subresult']
+  >>> print [ len(t) for t in r ]
+  [2, 3, 0]
+  >>> r[0][0].text
   'Alpha'
+
+  >>> print etree.tostring(r[0])
+  <results1><result>Alpha</result><result>Beta</result></results1>
+
+  >>> print etree.tostring(r[1])
+  <results2><result>Gamma</result><result>Delta</result><subresult/></results2>
+
+  >>> print etree.tostring(r[2])
+  <subresult/>
+
+The current implementation deep-copies newly created elements in node-sets.
+Only the elements and their children are passed on, no outlying parents or
+tail texts will be available in the result.  This also means that in the above
+example, the `subresult` elements in `results2` and `results3` are no longer
+identical within the node-set, they belong to independent trees::
+
+  >>> print r[1][-1].tag, r[2].tag
+  subresult subresult
+  >>> print r[1][-1] == r[2]
+  False
+  >>> print r[1][-1].getparent().tag
+  results2
+  >>> print r[2].getparent()
+  None
+
+This is an implementation detail that you should be aware of, but you should
+avoid relying on it in your code.  Note that elements taken from the source
+document (the most common case) do not suffer from this restriction.  They
+will always be passed unchanged.
