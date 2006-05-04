@@ -15,15 +15,15 @@ Features added
   information, original encoding and XML version as seen by the parser
 
 * etree module can be compiled without libxslt by commenting out the line
-  'include "xslt.pxi"' at the end of the etree.pyx source file
+  'include "xslt.pxi"' near the end of the etree.pyx source file
 
 * Error reporting now also works in XSLT
 
 * Support for custom document loaders (URI resolvers) in parsers and XSLT,
   resolvers are registered at parser level
 
-* Exslt:regexp implementation for XSLT based on the Python 're' module
-  on by default, can be switched off with 'regexp=False' keyword argument
+* Implementation of exslt:regexp for XSLT based on the Python 're' module,
+  enabled by default, can be switched off with 'regexp=False' keyword argument
 
 * Support for exslt extensions (libexslt) and node-set function
 
