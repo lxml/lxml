@@ -348,6 +348,9 @@ cdef _getFilenameForFile(source):
     # gzip file instances have a filename attribute
     if hasattr(source, 'filename'):
         return source.filename
+    # urllib2
+    if hasattr(source, 'geturl'):
+        return source.geturl()
     return None
 
 cdef void changeDocumentBelow(_NodeBase node, _Document doc, int recursive):
