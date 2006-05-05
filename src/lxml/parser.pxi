@@ -560,6 +560,7 @@ cdef xmlDoc* _newDoc():
 
 ############################################################
 ## API level helper functions for _Document creation
+## (here we convert to UTF-8)
 ############################################################
 
 cdef _Document _parseDocument(source, parser):
@@ -583,11 +584,12 @@ cdef _Document _parseDocument(source, parser):
 
 cdef _Document _parseMemoryDocument(text, url, parser):
     cdef xmlDoc* c_doc
+    text_utf = _utf8(text)
     if python.PyUnicode_Check(text):
-        text = _stripDeclaration(_utf8(text))
+        text_utf = _stripDeclaration(text_utf)
     if url is not None:
         url = _utf8(url)
-    c_doc = _parseDoc(text, url, parser)
+    c_doc = _parseDoc(text_utf, url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, parser):
