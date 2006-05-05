@@ -208,14 +208,14 @@ cdef class XMLParser(BaseParser):
     Note that you must not share parsers between threads.
     """
     cdef int _parse_options
+    cdef object _chunk_size
     cdef xmlParserCtxt* _file_parser_ctxt
     cdef xmlParserCtxt* _memory_parser_ctxt
     cdef xmlParserCtxt* _push_parser_ctxt
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False):
+                 recover=False, chunk_size=__FILE_READ_CHUNK_SIZE):
         cdef int parse_options
-        self._file_parser_ctxt = NULL
         BaseParser.__init__(self)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
@@ -235,6 +235,7 @@ cdef class XMLParser(BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
 
         self._parse_options = parse_options
+        self._chunk_size    = int(chunk_size)
 
     def __dealloc__(self):
         if self._file_parser_ctxt != NULL:
@@ -313,18 +314,18 @@ cdef class XMLParser(BaseParser):
 
         try:
             read = filelike.read
-            data = read(__FILE_READ_CHUNK_SIZE)
+            data = read(self._chunk_size)
             if python.PyUnicode_Check(data):
-                data = _stripDeclaration(_utf8(data))
+                data = _stripDeclaration(data)
+            data = _utf8(data)
             while data:
-                if python.PyUnicode_Check(data):
-                    data = _utf8(data)
-                elif not python.PyString_Check(data):
-                    raise TypeError, "File-like objects must return string or unicode"
+                if _LIBXML_VERSION_INT < 20624:
+                    # CRLF reading bug in libxml2 <= 2.6.23
+                    data = data.replace('\r\n', '\n')
                 success = xmlparser.xmlParseChunk(pctxt, _cstr(data), len(data), 0)
                 if success != 0:
                     return _handleParseResult(pctxt, NULL, c_filename, 0)
-                data = read(__FILE_READ_CHUNK_SIZE)
+                data = _utf8( read(self._chunk_size) )
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
         except Exception:
             if pctxt.myDoc is not NULL:
@@ -596,9 +597,5 @@ cdef _Document _parseFilelikeDocument(source, url, parser):
     cdef xmlDoc* c_doc
     if url is not None:
         url = _utf8(url)
-    # CRLF reading bug in libxml2 <= 2.6.23
-    if _LIBXML_VERSION_INT >= 20624:
-        c_doc = _parseDocFromFilelike(source, url, parser)
-        return _documentFactory(c_doc, parser)
-    else:
-        return _parseMemoryDocument(source.read(), url, parser)
+    c_doc = _parseDocFromFilelike(source, url, parser)
+    return _documentFactory(c_doc, parser)
