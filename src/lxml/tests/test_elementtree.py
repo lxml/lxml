@@ -1816,7 +1816,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         f = StringIO()
         tree = ElementTree(element=element)
         tree.write(f, encoding)
-        data = f.getvalue()
+        data = unicode(f.getvalue(), encoding)
         return canonicalize(data)
 
     def _writeElementFile(self, element, encoding='us-ascii'):
@@ -1829,7 +1829,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree.write(f, encoding)
         f.close()
         f = open(filename, 'rb')
-        data = f.read()
+        data = unicode(f.read(), encoding)
         f.close()
         os.close(handle)
         os.remove(filename)
