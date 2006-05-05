@@ -426,11 +426,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.doctype, '')
 
     def test_parse_fileobject_crlf(self):
-        # libxml2 <= 2.6.23 has a bug reading CRLF files in chunks
-        xml = '<root>' + '<test>test\r\n</test>\r\n' * 10000 + '</root>'
+        # libxml2 < 2.6.23 has a bug reading CRLF files in chunks
+        etree = self.etree
+        parser = etree.XMLParser(chunk_size=3)
+        xml = '<root>' + '<test>\r\ntest\r\n</test>\r\n' * 10 + '</root>'
         f = SillyFileLike(xml)
-        root = self.etree.parse(f).getroot()
-        self.assertEquals(self.etree.tostring(root).replace('\r', ''),
+        root = etree.parse(f, parser).getroot()
+        self.assertEquals(etree.tostring(root).replace('\r', ''),
                           xml.replace('\r', ''))
 
     def _writeElement(self, element, encoding='us-ascii'):
