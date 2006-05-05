@@ -11,11 +11,9 @@ class XPathSyntaxError(LxmlSyntaxError):
 
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
-    cdef object _registered_variables
     def __init__(self, namespaces, extensions, variables):
         self._ext_lookup_function = _function_check
         self._variables = variables
-        self._registered_variables  = []
         _BaseContext.__init__(self, namespaces, extensions)
         
     cdef register_context(self, xpath.xmlXPathContext* xpathCtxt, _Document doc):
@@ -32,32 +30,15 @@ cdef class _XPathContext(_BaseContext):
         xpathCtxt = self._xpathCtxt
         if xpathCtxt is NULL:
             return
-        self._unregisterVariables()
-        del self._registered_variables[:]
+        xpath.xmlXPathRegisteredVariablesCleanup(xpathCtxt)
         self._unregister_context()
-
-    cdef void _unregisterVariables(self):
-        cdef xpath.xmlXPathContext* xpathCtxt
-        cdef xpath.xmlXPathObject* xpathVarValue
-        cdef char* c_name
-        xpathCtxt = self._xpathCtxt
-        for name_utf in self._registered_variables:
-            c_name = _cstr(name_utf)
-            xpathVarValue = xpath.xmlXPathVariableLookup(xpathCtxt, c_name)
-            if xpathVarValue is not NULL:
-                xpath.xmlXPathRegisterVariable(xpathCtxt, c_name, NULL)
-                _freeXPathObject(xpathVarValue)
 
     def registerVariables(self, variable_dict):
         for name, value in variable_dict.items():
-            name_utf = self._to_utf(name)
-            self._registerVariable(name_utf, value)
-            python.PyList_Append(self._registered_variables, name_utf)
+            self._registerVariable(self._to_utf(name), value)
 
     def registerVariable(self, name, value):
-        name_utf = self._to_utf(name)
-        self._registerVariable(name_utf, value)
-        python.PyList_Append(self._registered_variables, name_utf)
+        self._registerVariable(self._to_utf(name), value)
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
@@ -65,10 +46,23 @@ cdef class _XPathContext(_BaseContext):
 
 
 cdef class XPathEvaluatorBase:
+    cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
 
     def __init__(self, namespaces, extensions, variables=None):
         self._context = _XPathContext(namespaces, extensions, variables)
+
+    def __dealloc__(self):
+        if self._xpathCtxt is not NULL:
+            xpath.xmlXPathFreeContext(self._xpathCtxt)
+
+    cdef _raise_parse_error(self):
+        if self._xpathCtxt is not NULL and \
+               self._xpathCtxt.lastError.message is not NULL:
+            message = funicode(self._xpathCtxt.lastError.message)
+        else:
+            message = "Error in xpath expression."
+        raise XPathSyntaxError, message
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
@@ -80,17 +74,14 @@ cdef class XPathEvaluatorBase:
 
         if xpathObj is NULL:
             self._context._release_temp_refs()
-            raise XPathSyntaxError, "Error in xpath expression."
+            self._raise_parse_error()
 
         try:
             result = _unwrapXPathObject(xpathObj, doc)
-        except XPathResultError:
+        finally:
             _freeXPathObject(xpathObj)
             self._context._release_temp_refs()
-            raise
 
-        _freeXPathObject(xpathObj)
-        self._context._release_temp_refs()
         return result
 
 
@@ -99,7 +90,6 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
 
     XPath evaluators must not be shared between threads.
     """
-    cdef xpath.xmlXPathContext* _c_ctxt
     cdef _Element _element
     def __init__(self, _NodeBase element not None, namespaces=None, extensions=None):
         cdef xpath.xmlXPathContext* xpathCtxt
@@ -107,16 +97,12 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         cdef _Document doc
         doc = element._doc
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
+        self._xpathCtxt = xpathCtxt
         if xpathCtxt is NULL:
             raise XPathContextError, "Unable to create new XPath context"
         self._element = element
-        self._c_ctxt = xpathCtxt
         XPathEvaluatorBase.__init__(self, namespaces, extensions)
 
-    def __dealloc__(self):
-        if self._c_ctxt is not NULL:
-            xpath.xmlXPathFreeContext(self._c_ctxt)
-    
     def registerNamespace(self, prefix, uri):
         """Register a namespace with the XPath context.
         """
@@ -137,7 +123,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef xmlNode* c_node
         cdef _Document doc
-        xpathCtxt = self._c_ctxt
+        xpathCtxt = self._xpathCtxt
         xpathCtxt.node = self._element._c_node
         doc = self._element._doc
 
@@ -173,9 +159,7 @@ def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
 
 
 cdef class XPath(XPathEvaluatorBase):
-    cdef xpath.xmlXPathContext* _xpathCtxt
     cdef xpath.xmlXPathCompExpr* _xpath
-    cdef object _prefix_map
     cdef readonly object path
 
     def __init__(self, path, namespaces=None, extensions=None):
@@ -184,7 +168,7 @@ cdef class XPath(XPathEvaluatorBase):
         path = _utf8(path)
         self._xpath = xpath.xmlXPathCompile(_cstr(path))
         if self._xpath is NULL:
-            raise XPathSyntaxError, "Error in XPath expression"
+            self._raise_parse_error()
         self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
 
     def __call__(self, _etree_or_element, **_variables):
@@ -214,8 +198,6 @@ cdef class XPath(XPathEvaluatorBase):
         return self(_tree, **_variables)
 
     def __dealloc__(self):
-        if self._xpathCtxt is not NULL:
-            xpath.xmlXPathFreeContext(self._xpathCtxt)
         if self._xpath is not NULL:
             xpath.xmlXPathFreeCompExpr(self._xpath)
 

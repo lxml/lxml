@@ -109,8 +109,7 @@ cdef extern from "libxml/xpathInternals.h":
 					 char* name, 
 					 char* ns_uri, 
 					 xmlXPathObject* value)
-    cdef xmlXPathObject* xmlXPathVariableLookup(xmlXPathContext* ctxt,
-						char* name)
+    cdef void xmlXPathRegisteredVariablesCleanup(xmlXPathContext *ctxt)
     cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt)
     cdef int valuePush(xmlXPathParserContext* ctxt, xmlXPathObject *value)
     
