@@ -48,6 +48,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak if write_c14n fails to write the file after conversion
+
 * ElementTree.xpath() and XPathDocumentEvaluator were not using the
   ElementTree root node as reference point
 

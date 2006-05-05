@@ -479,10 +479,12 @@ cdef class _ElementTree:
 
         if bytes < 0:
             raise C14NError, "C14N failed"
-        if not hasattr(file, 'write'):
-            file = open(file, 'wb')
-        file.write(data)
-        tree.xmlFree(data)
+        try:
+            if not hasattr(file, 'write'):
+                file = open(file, 'wb')
+            file.write(data)
+        finally:
+            tree.xmlFree(data)
     
 cdef _ElementTree _elementTreeFactory(_Document doc,
                                       _NodeBase context_node):
