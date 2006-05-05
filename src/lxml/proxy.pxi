@@ -41,7 +41,7 @@ cdef void registerProxy(_NodeBase proxy, int proxy_type):
         return
     # XXX should we check whether we ran into proxy_type before?
     #print "registering for:", <int>proxy._c_node
-    ref = <ProxyRef*>cstd.malloc(sizeof(ProxyRef))
+    ref = <ProxyRef*>python.PyMem_Malloc(sizeof(ProxyRef))
     ref.proxy = <python.PyObject*>proxy
     ref.type = proxy_type
     ref.next = <ProxyRef*>c_node._private
@@ -59,7 +59,7 @@ cdef void unregisterProxy(_NodeBase proxy):
     ref = <ProxyRef*>c_node._private
     if ref.proxy == proxy_ref:
         c_node._private = <void*>ref.next
-        cstd.free(ref)
+        python.PyMem_Free(ref)
         return
     prev_ref = ref
     #print "First registered is:", ref.type
@@ -68,7 +68,7 @@ cdef void unregisterProxy(_NodeBase proxy):
         #print "Registered is:", ref.type
         if ref.proxy == proxy_ref:
             prev_ref.next = ref.next
-            cstd.free(ref)
+            python.PyMem_Free(ref)
             return
         prev_ref = ref
         ref = ref.next

@@ -2,6 +2,7 @@ from tree cimport FILE
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
+    ctypedef int size_t
     
     cdef FILE* PyFile_AsFile(PyObject* p)
     cdef int PyFile_Check(object p)
@@ -38,6 +39,9 @@ cdef extern from "Python.h":
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
+
+    cdef void* PyMem_Malloc(size_t size)
+    cdef void PyMem_Free(void* p)
 
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int isinstance(object instance, object classes)

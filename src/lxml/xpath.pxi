@@ -21,7 +21,7 @@ cdef class _XPathContext(_BaseContext):
         ns_prefixes = _find_all_extension_prefixes()
         if ns_prefixes:
             self.registerNamespaces(ns_prefixes)
-        self._register_context(doc, 1)
+        self._register_context(doc)
         if self._variables is not None:
             self.registerVariables(self._variables)
 

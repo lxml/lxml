@@ -20,7 +20,6 @@ cdef class _BaseContext:
     cdef _Document _doc
     cdef object _extensions
     cdef object _namespaces
-    cdef object _registered_namespaces
     cdef object _utf_refs
     cdef object _function_cache
     cdef object _called_function
@@ -52,7 +51,6 @@ cdef class _BaseContext:
         self._exc        = _ExceptionContext()
         self._extensions = extensions
         self._namespaces = namespaces
-        self._registered_namespaces = []
         self._temp_refs = _TempStore()
 
     cdef object _to_utf(self, s):
@@ -71,7 +69,7 @@ cdef class _BaseContext:
         self._xpathCtxt = xpathCtxt
         xpathCtxt.userData = <void*>self
 
-    cdef _register_context(self, _Document doc, int allow_none_namespace):
+    cdef _register_context(self, _Document doc):
         self._doc = doc
         self._exc.clear()
         python.PyDict_Clear(self._function_cache)
@@ -86,7 +84,6 @@ cdef class _BaseContext:
         self._free_context()
 
     cdef _free_context(self):
-        del self._registered_namespaces[:]
         python.PyDict_Clear(self._utf_refs)
         self._doc = None
         if self._xpathCtxt is not NULL:

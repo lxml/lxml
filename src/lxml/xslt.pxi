@@ -139,7 +139,7 @@ cdef class _XSLTContext(_BaseContext):
                                _Document doc):
         self._xsltCtxt = xsltCtxt
         self._set_xpath_context(xsltCtxt.xpathCtxt)
-        self._register_context(doc, 0)
+        self._register_context(doc)
         xsltCtxt.xpathCtxt.userData = <void*>self
 
     cdef free_context(self):
@@ -260,10 +260,10 @@ cdef class XSLT:
             # allocate space for parameters
             # * 2 as we want an entry for both key and value,
             # and + 1 as array is NULL terminated
-            params = <char**>cstd.malloc(sizeof(char*) * (len(_kw) * 2 + 1))
+            params = <char**>python.PyMem_Malloc(sizeof(char*) * (len(_kw) * 2 + 1))
             i = 0
             keep_ref = []
-            for key, value in _kw.items():
+            for key, value in _kw.iteritems():
                 k = _utf8(key)
                 python.PyList_Append(keep_ref, k)
                 v = _utf8(value)
@@ -285,7 +285,7 @@ cdef class XSLT:
 
         if params is not NULL:
             # deallocate space for parameters
-            cstd.free(params)
+            python.PyMem_Free(params)
 
         self._context.free_context()
         c_doc._private = ptemp # restore _private before _destroyFakeDoc!
