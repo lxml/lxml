@@ -319,8 +319,8 @@ cdef class XMLParser(BaseParser):
                 data = _stripDeclaration(data)
             data = _utf8(data)
             while data:
-                if _LIBXML_VERSION_INT < 20624:
-                    # CRLF reading bug in libxml2 <= 2.6.23
+                if _LIBXML_VERSION_INT <= 20622:
+                    # CRLF reading bug in libxml2 <= 2.6.22
                     data = data.replace('\r\n', '\n')
                 success = xmlparser.xmlParseChunk(pctxt, _cstr(data), len(data), 0)
                 if success != 0:
