@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 import unittest, doctest
 
 from StringIO import StringIO
@@ -6,7 +6,7 @@ from lxml import etree
 
 ascii_uni = u'a'
 
-uni = u'á\uF8D2' # klingon etc.
+uni = u'Ã¡\uF8D2' # klingon etc.
 
 class UnicodeTestCase(unittest.TestCase):
     def test_unicode_xml(self):
