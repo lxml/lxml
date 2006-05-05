@@ -202,7 +202,7 @@ cdef class XMLParser(BaseParser):
     major run-time overhead.
 
     The keyword arguments in the constructor are mainly based on the libxml2
-    parser configuration.  A DTD will only be loaded if validation or
+    parser configuration.  A DTD will also be loaded if validation or
     attribute default values are requested.
 
     Note that you must not share parsers between threads.
@@ -222,11 +222,11 @@ cdef class XMLParser(BaseParser):
         if load_dtd:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
         if dtd_validation:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
-                            xmlparser.XML_PARSE_DTDVALID
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDVALID | \
+                            xmlparser.XML_PARSE_DTDLOAD
         if attribute_defaults:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD | \
-                            xmlparser.XML_PARSE_DTDATTR
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
+                            xmlparser.XML_PARSE_DTDLOAD
         if no_network:
             parse_options = parse_options | xmlparser.XML_PARSE_NONET
         if ns_clean:
