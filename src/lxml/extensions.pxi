@@ -248,7 +248,6 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     cdef xmlNode* c_node
     cdef char* s
-    cdef _NodeBase element
     cdef int i
     result = []
     if xpathObj.nodesetval is NULL:
@@ -262,18 +261,17 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
                 #        -> we store Python refs to these, so that is OK
                 # XSLT: can it leak when merging trees from multiple sources?
                 c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
-            element = _elementFactory(doc, c_node)
-            result.append(element)
+            value = _elementFactory(doc, c_node)
         elif c_node.type == tree.XML_TEXT_NODE:
-            result.append(funicode(c_node.content))
+            value = funicode(c_node.content)
         elif c_node.type == tree.XML_ATTRIBUTE_NODE:
             s = tree.xmlNodeGetContent(c_node)
-            attr_value = funicode(s)
+            value = funicode(s)
             tree.xmlFree(s)
-            result.append(attr_value)
         else:
             print "Not yet implemented result node type:", c_node.type
             raise NotImplementedError
+        python.PyList_Append(result, value)
     return result
 
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
