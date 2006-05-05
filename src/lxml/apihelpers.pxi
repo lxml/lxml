@@ -122,13 +122,15 @@ cdef _dumpNextNode(tree.xmlOutputBuffer* c_buffer, xmlDoc* c_doc,
         tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)
 
 cdef object _stripDeclaration(object xml_string):
+    # this is a hack to remove the XML declaration when we encode to UTF-8
     xml_string = xml_string.strip()
     if xml_string[:5] == '<?xml':
         i = xml_string.find('?>')
         if i != -1:
-            if xml_string[i+2:i+3] == '\n':
+            i = i + 2
+            while xml_string[i:i+1] in '\n\r ':
                 i = i+1
-            xml_string = xml_string[i + 2:]
+            xml_string = xml_string[i:]
     return xml_string
 
 cdef _collectText(xmlNode* c_node):
