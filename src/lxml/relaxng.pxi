@@ -24,7 +24,7 @@ cdef class RelaxNG(_Validator):
         cdef xmlNode* c_node
         cdef xmlDoc* fake_c_doc
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
-
+        self._c_schema = NULL
         fake_c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)

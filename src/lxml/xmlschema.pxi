@@ -23,7 +23,7 @@ cdef class XMLSchema(_Validator):
         cdef xmlDoc* fake_c_doc
         cdef xmlNode* c_node
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
-
+        self._c_schema = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOf(etree)
