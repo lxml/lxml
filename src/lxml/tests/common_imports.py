@@ -64,12 +64,11 @@ class LargeFileLike:
             for element in self.more:
                 append(element)
         result = data.getvalue()
+        data.seek(0)
+        data.truncate()
         if amount:
-            self.data = StringIO(result[amount:])
+            self.data.write(result[amount:])
             result = result[:amount]
-        else:
-            data.seek(0)
-            data.truncate()
         return result
 
 def fileInTestDir(name):
