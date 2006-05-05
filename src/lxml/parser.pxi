@@ -205,7 +205,17 @@ cdef class XMLParser(BaseParser):
     parser configuration.  A DTD will also be loaded if validation or
     attribute default values are requested.
 
-    Note that you must not share parsers between threads.
+    Available keyword arguments:
+    * attribute_defaults - read default attributes from DTD
+    * dtd_validation     - validate (if DTD is available)
+    * load_dtd           - use DTD for parsing
+    * no_network         - prevent network access
+    * ns_clean           - clean up redundant namespace declarations
+    * recover            - try hard to parse through broken XML
+    * chunk_size         - read this many bytes from file-like objects
+
+    Note that you must not share parsers between threads.  This applies also
+    to the default parser.
     """
     cdef int _parse_options
     cdef object _chunk_size
@@ -216,6 +226,9 @@ cdef class XMLParser(BaseParser):
                  load_dtd=False, no_network=False, ns_clean=False,
                  recover=False, chunk_size=__FILE_READ_CHUNK_SIZE):
         cdef int parse_options
+        self._memory_parser_ctxt = NULL
+        self._file_parser_ctxt   = NULL
+        self._push_parser_ctxt   = NULL
         BaseParser.__init__(self)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
@@ -246,6 +259,7 @@ cdef class XMLParser(BaseParser):
             xmlparser.xmlFreeParserCtxt(self._push_parser_ctxt)
 
     def copy(self):
+        "Create a new parser with the same configuration."
         cdef XMLParser parser
         parser = self._copy()
         parser._parse_options = self._parse_options
@@ -423,6 +437,11 @@ cdef class HTMLParser(BaseParser):
     tree.  By default, it can read broken (non well-formed) HTML, depending on
     the capabilities of libxml2.  Use the 'recover' option to switch this off.
 
+    Available keyword arguments:
+    * recover            - try hard to parse through broken HTML (default: True)
+    * no_network         - prevent network access
+    * remove_blank_text  - clean up empty text nodes
+
     Note that you must not share parsers between threads.
     """
     cdef int _parse_options
@@ -453,6 +472,7 @@ cdef class HTMLParser(BaseParser):
             htmlparser.htmlFreeParserCtxt(self._memory_parser_ctxt)
 
     def copy(self):
+        "Create a new parser with the same configuration."
         cdef HTMLParser parser
         parser = self._copy()
         parser._parse_options = self._parse_options
