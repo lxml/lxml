@@ -182,6 +182,18 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(1, len(r))
         self.assertEquals("true", r[0].get('attr'))
 
+    def test_xpath_variables_nodeset(self):
+        x = self.parse('<a attr="true"/>')
+        e = etree.XPathEvaluator(x)
+
+        element = etree.Element("test-el")
+        etree.SubElement(element, "test-sub")
+        expr = "$value"
+        r = e.evaluate(expr, value=element)
+        self.assertEquals(1, len(r))
+        self.assertEquals(element.tag, r[0].tag)
+        self.assertEquals(element[0].tag, r[0][0].tag)
+
     def test_xpath_extensions_mix(self):
         x = self.parse('<a attr="true"><test/></a>')
 
