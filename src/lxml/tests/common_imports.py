@@ -34,7 +34,7 @@ class SillyFileLike:
         return ''
 
 class LargeFileLike:
-    def __init__(self, charlen=100, depth=4, children=10):
+    def __init__(self, charlen=100, depth=4, children=5):
         self.data = StringIO()
         self.chars  = 'a' * charlen
         self.children = range(children)
