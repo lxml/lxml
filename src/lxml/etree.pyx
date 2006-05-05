@@ -74,12 +74,14 @@ cdef __unpackIntVersion(int c_version):
         (c_version               % 100)
         )
 
-LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
+cdef int _LIBXML_VERSION_INT
 try:
-    LIBXML_VERSION = __unpackIntVersion(
-        int((tree.xmlParserVersion).split('-')[0]))
+    _LIBXML_VERSION_INT = int((tree.xmlParserVersion).split('-')[0])
 except Exception:
-    LIBXML_VERSION = (0,0,0)
+    _LIBXML_VERSION_INT = 0
+
+LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
+LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
 LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 
 

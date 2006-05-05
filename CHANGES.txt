@@ -7,7 +7,9 @@ current
 Features added
 --------------
 
-* Parsing file-like objects now reads chunks rather than the whole file
+* Parsing file-like objects now reads chunks rather than the whole file at
+  once (only on libxml2 >= 2.6.24, older versions have a bug with CRLF line
+  endings)
 
 * Parsing StringIO objects from the start avoids copying the string
 

@@ -547,8 +547,8 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename, parser) except NULL:
     if isinstance(parser, XMLParser):
         return (<XMLParser>parser)._parseDocFromFilelike(source, c_filename)
     elif isinstance(parser, HTMLParser):
-        data = source.read()
-        return (<HTMLParser>parser)._parseDoc(_cstr(data), c_filename)
+        data_utf = _utf8(source.read())
+        return (<HTMLParser>parser)._parseDoc(_cstr(data_utf), c_filename)
     else:
         raise TypeError, "invalid parser"
 
@@ -594,5 +594,9 @@ cdef _Document _parseFilelikeDocument(source, url, parser):
     cdef xmlDoc* c_doc
     if url is not None:
         url = _utf8(url)
-    c_doc = _parseDocFromFilelike(source, url, parser)
-    return _documentFactory(c_doc, parser)
+    # CRLF reading bug in libxml2 <= 2.6.23
+    if _LIBXML_VERSION_INT >= 20624:
+        c_doc = _parseDocFromFilelike(source, url, parser)
+        return _documentFactory(c_doc, parser)
+    else:
+        return _parseMemoryDocument(source.read(), url, parser)

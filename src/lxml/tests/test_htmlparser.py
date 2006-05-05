@@ -1,4 +1,4 @@
-# -*- coding: UTF-8 -*-
+# -*- coding: utf-8 -*-
 
 """
 HTML parser test cases for etree
@@ -6,6 +6,7 @@ HTML parser test cases for etree
 
 import unittest
 import tempfile
+import re
 
 from common_imports import StringIO, etree, fileInTestDir, SillyFileLike, HelperTestCase
 
@@ -16,6 +17,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
     html_str = "<html><head><title>test</title></head><body><h1>page title</h1></body></html>"
     broken_html_str = "<html><head><title>test<body><h1>page title</h3></p></html>"
+    uhtml_str = u"<html><head><title>test Ã¡\uF8D2</title></head><body><h1>page Ã¡\uF8D2 title</h1></body></html>"
 
     def tearDown(self):
         self.etree.set_default_parser()
@@ -55,6 +57,15 @@ class HtmlParserTestCaseBase(HelperTestCase):
         f = open(filename, 'r')
         tree = self.etree.parse(f, parser)
         self.assertEqual(self.etree.tostring(tree.getroot()), self.html_str)
+
+    def test_module_parse_html_filelike(self):
+        parser = self.etree.HTMLParser()
+        f = SillyFileLike(self.uhtml_str)
+        tree = self.etree.parse(f, parser)
+        html = self.etree.tostring(tree.getroot())
+        for entity_name, value in re.findall("(&#([0-9]+);)", html):
+            html = html.replace(entity_name, unichr(int(value)))
+        self.assertEqual(html, self.uhtml_str)
 
     def test_html_file_error(self):
         parser = self.etree.HTMLParser()
