@@ -85,14 +85,6 @@ class IOTestCaseBase(unittest.TestCase):
         root = self.etree.ElementTree().parse(f)
         self.assert_(root.tag.endswith('foo'))
 
-    def test_class_parse_fileobject_crlf(self):
-        # libxml2 <= 2.6.23 has a bug reading CRLF files in chunks
-        xml = '<root>' + '<test>test\r\n</test>' * 100 + '</root>'
-        f = SillyFileLike(xml)
-        root = self.etree.ElementTree().parse(f)
-        self.assertEquals(self.etree.tostring(root).replace('\r', ''),
-                          xml.replace('\r', ''))
-
     def test_module_parse_large_fileobject(self):
         # parse from unamed file object
         f = LargeFileLike()

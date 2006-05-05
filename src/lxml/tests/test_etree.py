@@ -10,9 +10,8 @@ test_elementtree
 
 import unittest, doctest
 
-from StringIO import StringIO
-
-from common_imports import etree, HelperTestCase, fileInTestDir, canonicalize
+from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
+from common_imports import SillyFileLike, canonicalize
 
 class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
@@ -425,6 +424,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.system_url,  None)
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
+
+    def test_parse_fileobject_crlf(self):
+        # libxml2 <= 2.6.23 has a bug reading CRLF files in chunks
+        xml = '<root>' + '<test>test\r\n</test>\r\n' * 10000 + '</root>'
+        f = SillyFileLike(xml)
+        root = self.etree.parse(f).getroot()
+        self.assertEquals(self.etree.tostring(root).replace('\r', ''),
+                          xml.replace('\r', ''))
 
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
