@@ -6,9 +6,9 @@ HTML parser test cases for etree
 
 import unittest
 import tempfile
-import re
 
-from common_imports import StringIO, etree, fileInTestDir, SillyFileLike, HelperTestCase
+from common_imports import StringIO, etree, fileInTestDir
+from common_imports import SillyFileLike, HelperTestCase, unentitify
 
 class HtmlParserTestCaseBase(HelperTestCase):
     """HTML parser test cases
@@ -63,9 +63,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
         f = SillyFileLike(self.uhtml_str)
         tree = self.etree.parse(f, parser)
         html = self.etree.tostring(tree.getroot())
-        for entity_name, value in re.findall("(&#([0-9]+);)", html):
-            html = html.replace(entity_name, unichr(int(value)))
-        self.assertEqual(html, self.uhtml_str)
+        self.assertEqual(unentitify(html), self.uhtml_str)
 
     def test_html_file_error(self):
         parser = self.etree.HTMLParser()

@@ -1,6 +1,7 @@
 import unittest
 import os.path
 from StringIO import StringIO
+import re
 
 from lxml import etree
 
@@ -81,3 +82,8 @@ def canonicalize(xml):
     f = StringIO()
     tree.write_c14n(f)
     return f.getvalue()
+
+def unentitify(xml):
+    for entity_name, value in re.findall("(&#([0-9]+);)", xml):
+        xml = xml.replace(entity_name, unichr(int(value)))
+    return xml
