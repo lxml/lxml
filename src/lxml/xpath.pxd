@@ -110,6 +110,7 @@ cdef extern from "libxml/xpathInternals.h":
 					 char* ns_uri, 
 					 xmlXPathObject* value)
     cdef void xmlXPathRegisteredVariablesCleanup(xmlXPathContext *ctxt)
+    cdef void xmlXPathRegisteredNsCleanup(xmlXPathContext *ctxt)
     cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt)
     cdef int valuePush(xmlXPathParserContext* ctxt, xmlXPathObject *value)
     

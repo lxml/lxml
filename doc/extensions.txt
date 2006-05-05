@@ -144,6 +144,85 @@ the global mapping of the FunctionNamespace objects::
   XPathSyntaxError: Error in xpath expression.
 
 
+Evaluator-local extensions
+--------------------------
+
+Apart from the global registration of extension functions, there is also a way
+of making extensions known to a single Evaluator or XSLT.  All evaluators and
+the XSLT object accept a keyword argument ``extensions`` in their constructor.
+The value is a dictionary mapping (namespace, name) tuples to functions::
+
+  >>> extensions = {('local-ns', 'local-hello') : hello}
+  >>> namespaces = {'l' : 'local-ns'}
+
+  >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
+  >>> print e.evaluate('l:local-hello(string(b))')
+  Hello Haegar
+
+For larger numbers of extension functions, you can define classes or modules
+and use the ``Extension`` helper::
+
+  >>> class MyExt:
+  ...     def function1(self, _, arg):
+  ...         return '1'+arg
+  ...     def function2(self, _, arg):
+  ...         return '2'+arg
+  ...     def function3(self, _, arg):
+  ...         return '3'+arg
+
+  >>> ext_module = MyExt()
+  >>> functions = ('function1', 'function2')
+  >>> extensions = etree.Extension( ext_module, functions, 'local-ns' )
+
+  >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
+  >>> print e.evaluate('l:function1(string(b))')
+  1Haegar
+
+The second argument to ``Extension`` can either be be a sequence of names to
+select from the module, a dictionary that explicitly maps function names to
+their XPath alter-ego or ``None`` (explicitly passed) to take all available
+functions under their original name (if their name does not start with '_').
+
+The third argument takes a namespace URI or ``None`` (also if left out) for
+the default namespace.  The following examples will therefore all do the same
+thing::
+
+  >>> functions = ('function1', 'function2', 'function3')
+  >>> extensions = etree.Extension( ext_module, functions )
+  >>> e = etree.XPathEvaluator(doc, extensions=extensions)
+  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  123Haegar
+
+  >>> extensions = etree.Extension( ext_module, functions, None )
+  >>> e = etree.XPathEvaluator(doc, extensions=extensions)
+  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  123Haegar
+
+  >>> extensions = etree.Extension( ext_module, None )
+  >>> e = etree.XPathEvaluator(doc, extensions=extensions)
+  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  123Haegar
+
+  >>> functions = {
+  ...     'function1' : 'function1',
+  ...     'function2' : 'function2',
+  ...     'function3' : 'function3'
+  ...     }
+  >>> extensions = etree.Extension( ext_module, functions )
+  >>> e = etree.XPathEvaluator(doc, extensions=extensions)
+  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  123Haegar
+
+For convenience, you can also pass a sequence of extensions::
+
+  >>> extensions1 = etree.Extension( ext_module, None )
+  >>> extensions2 = etree.Extension( ext_module, None, 'local-ns' )
+  >>> e = etree.XPathEvaluator(doc, extensions=[extensions1, extensions2],
+  ...                          namespaces=namespaces)
+  >>> print e.evaluate('function1(l:function2(function3(string(b))))')
+  123Haegar
+
+
 What to return from a function
 ------------------------------
 

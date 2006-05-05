@@ -33,6 +33,7 @@ cdef extern from "Python.h":
     cdef object PySequence_Tuple(object o)
     cdef object PyTuple_GET_ITEM(object o, int pos)
 
+    cdef int PyDict_Check(object instance)
     cdef int PyNumber_Check(object instance)
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)

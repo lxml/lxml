@@ -34,17 +34,18 @@ cdef class _BaseContext:
         self._function_cache = {}
         self._called_function = None
 
-        # convert old format extensions to UTF-8
-        if isinstance(extensions, (list, tuple)):
+        if extensions is not None:
+            # convert extensions to UTF-8
+            if python.PyDict_Check(extensions):
+                extensions = (extensions,)
+            # format: [ {(ns,name):function} ] -> {(ns_utf,name_utf):function}
             new_extensions = {}
             for extension in extensions:
                 for (ns_uri, name), function in extension.items():
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
-                    try:
-                        new_extensions[ns_utf][name_utf] = function
-                    except KeyError:
-                        new_extensions[ns_utf] = {name_utf : function}
+                    python.PyDict_SetItem(
+                        new_extensions, (ns_utf, name_utf), function)
             extensions = new_extensions or None
 
         self._doc        = None
@@ -81,7 +82,7 @@ cdef class _BaseContext:
             self._xpathCtxt, self._ext_lookup_function, <python.PyObject*>self)
 
     cdef _unregister_context(self):
-        self._unregisterNamespaces()
+        xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
         self._free_context()
 
     cdef _free_context(self):
@@ -107,13 +108,6 @@ cdef class _BaseContext:
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         xpath.xmlXPathRegisterNs(self._xpathCtxt, prefix_utf, ns_uri_utf)
-        python.PyList_Append(self._registered_namespaces, prefix_utf)
-
-    cdef _unregisterNamespaces(self):
-        cdef xpath.xmlXPathContext* xpathCtxt
-        xpathCtxt = self._xpathCtxt
-        for prefix_utf in self._registered_namespaces:
-            xpath.xmlXPathRegisterNs(xpathCtxt, prefix_utf, NULL)
     
     # extension functions
 
@@ -126,9 +120,8 @@ cdef class _BaseContext:
             self._called_function = function
             return function is not None
 
-        dict_result = python.PyDict_GetItem(self._extensions, ns_uri_utf)
-        if dict_result is not NULL:
-            dict_result = python.PyDict_GetItem(<object>dict_result, name_utf)
+        if self._extensions is not None:
+            dict_result = python.PyDict_GetItem(self._extensions, key)
         if dict_result is not NULL:
             function = <object>dict_result
         else:
@@ -165,11 +158,22 @@ cdef class _BaseContext:
                 self._temp_refs.add(element._doc)
 
 
-def Extension(module, function_mapping, ns_uri=None):
-    functions = []
-    for function_name, xpath_name in function_mapping.items():
-        functions[xpath_name] = getattr(module, function_name)
-    return {ns_uri : functions}
+def Extension(module, function_mapping, ns=None):
+    functions = {}
+    if python.PyDict_Check(function_mapping):
+        for function_name, xpath_name in function_mapping.items():
+            python.PyDict_SetItem(functions, (ns, xpath_name),
+                                  getattr(module, function_name))
+    else:
+        if function_mapping is None:
+            function_mapping = []
+            for name in dir(module):
+                if not name.startswith('_'):
+                    python.PyList_Append(function_mapping, name)
+        for function_name in function_mapping:
+            python.PyDict_SetItem(functions, (ns, function_name),
+                                  getattr(module, function_name))
+    return functions
 
 
 ################################################################################

@@ -153,15 +153,9 @@ cdef class _XSLTContext(_BaseContext):
         self._release_temp_refs()
 
     cdef _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
-        extensions = self._extensions
-        if extensions is None:
-            self._extensions = {ns_utf:{name_utf:function}}
-        else:
-            if ns_utf in extensions:
-                ns_extensions = extensions[ns_utf]
-            else:
-                ns_extensions = extensions[ns_utf] = {}
-            python.PyDict_SetItem(ns_extensions, name_utf, function)
+        if self._extensions is None:
+            self._extensions = {}
+        python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
 
 cdef class _ExsltRegExp # forward declaration
 

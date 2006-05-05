@@ -341,7 +341,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         def mytext(ctxt, values):
             return 'X' * len(values)
 
-        result = tree.xslt(style, {'testns' : {'mytext' : mytext}})
+        result = tree.xslt(style, {('testns', 'mytext') : mytext})
         self.assertEquals(self._rootstring(result),
                           '<A>X</A>')
 
