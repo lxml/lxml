@@ -435,6 +435,27 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(etree.tostring(root).replace('\r', ''),
                           xml.replace('\r', ''))
 
+    def test_parse_fileobject_chunk_size(self):
+        etree = self.etree
+        xml = '<root>' + '<test>test</test>' * 10 + '</root>'
+
+        self.assertRaises(ValueError, etree.XMLParser, chunk_size=0)
+
+        parser = etree.XMLParser(chunk_size=-1)
+        f = SillyFileLike(xml)
+        root = etree.parse(f, parser).getroot()
+        self.assertEquals(etree.tostring(root), xml)
+
+        parser = etree.XMLParser(chunk_size=3)
+        f = SillyFileLike(xml)
+        root = etree.parse(f, parser).getroot()
+        self.assertEquals(etree.tostring(root), xml)
+
+        parser = etree.XMLParser(chunk_size=21)
+        f = SillyFileLike(xml)
+        root = etree.parse(f, parser).getroot()
+        self.assertEquals(etree.tostring(root), xml)
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

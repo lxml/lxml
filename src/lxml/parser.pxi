@@ -146,9 +146,28 @@ cdef class BaseParser:
         __GLOBAL_PARSER_CONTEXT._initParserDict(c_ctxt)
         c_ctxt._private = <python.PyObject*>self._context
 
+cdef _raiseParseError(xmlParserCtxt* ctxt, char* c_filename):
+    if c_filename is not NULL and \
+           ctxt.lastError.domain == xmlerror.XML_FROM_IO:
+        if ctxt.lastError.message is not NULL:
+            message = "Error reading file %s: %s" % (
+                funicode(c_filename), funicode(ctxt.lastError.message))
+        else:
+            message = "Error reading file %s" % funicode(c_filename)
+        raise IOError, message
+    elif ctxt.lastError.message is not NULL:
+        raise XMLSyntaxError, funicode(ctxt.lastError.message)
+    else:
+        raise XMLSyntaxError
+
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
                                 char* c_filename, int recover) except NULL:
     cdef _ResolverContext context
+    if ctxt.myDoc is not NULL:
+        if ctxt.myDoc != result:
+            tree.xmlFreeDoc(ctxt.myDoc)
+        ctxt.myDoc = NULL
+
     if ctxt.wellFormed or recover:
         __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     elif result is not NULL:
@@ -165,18 +184,7 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
             context._raise_if_stored()
 
     if result is NULL:
-        if c_filename is not NULL and \
-               ctxt.lastError.domain == xmlerror.XML_FROM_IO:
-            if ctxt.lastError.message is not NULL:
-                message = "Error reading file %s: %s" % (
-                    funicode(c_filename), funicode(ctxt.lastError.message))
-            else:
-                message = "Error reading file %s" % funicode(c_filename)
-            raise IOError, message
-        elif ctxt.lastError.message is not NULL:
-            raise XMLSyntaxError, funicode(ctxt.lastError.message)
-        else:
-            raise XMLSyntaxError
+        _raiseParseError(ctxt, c_filename)
     return result
 
 ############################################################
@@ -191,7 +199,7 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NOERROR
     )
 
-cdef object __FILE_READ_CHUNK_SIZE
+cdef int __FILE_READ_CHUNK_SIZE
 __FILE_READ_CHUNK_SIZE = 32768
 
 cdef class XMLParser(BaseParser):
@@ -213,6 +221,7 @@ cdef class XMLParser(BaseParser):
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
     * chunk_size         - read this many bytes from file-like objects
+                           (< 0 means: read everything in one step)
 
     Note that you must not share parsers between threads.  This applies also
     to the default parser.
@@ -229,6 +238,11 @@ cdef class XMLParser(BaseParser):
         self._memory_parser_ctxt = NULL
         self._file_parser_ctxt   = NULL
         self._push_parser_ctxt   = NULL
+
+        self._chunk_size = int(chunk_size)
+        if self._chunk_size == 0:
+            raise ValueError, "Chunk size must not be 0"
+
         BaseParser.__init__(self)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
@@ -248,7 +262,6 @@ cdef class XMLParser(BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
 
         self._parse_options = parse_options
-        self._chunk_size    = int(chunk_size)
 
     def __dealloc__(self):
         if self._file_parser_ctxt != NULL:
@@ -309,10 +322,15 @@ cdef class XMLParser(BaseParser):
 
     cdef xmlDoc* _parseDocFromFilelike(self, filelike,
                                        char* c_filename) except NULL:
+        # we read Python string, so we must convert to UTF-8
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int recover
         cdef int success
+        if self._chunk_size < 0:
+            # read whole file at once
+            data = _utf8(filelike.read())
+            return self._parseDoc(data, c_filename)
         self._error_log.connect()
         pctxt = self._push_parser_ctxt
         if pctxt is NULL:
@@ -338,7 +356,7 @@ cdef class XMLParser(BaseParser):
                     data = data.replace('\r\n', '\n')
                 success = xmlparser.xmlParseChunk(pctxt, _cstr(data), len(data), 0)
                 if success != 0:
-                    return _handleParseResult(pctxt, NULL, c_filename, 0)
+                    _raiseParseError(pctxt, c_filename)
                 data = _utf8( read(self._chunk_size) )
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
         except Exception:
