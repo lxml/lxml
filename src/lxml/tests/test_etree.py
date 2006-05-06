@@ -437,7 +437,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_parse_fileobject_chunk_size(self):
         etree = self.etree
-        xml = '<root>' + '<test>test</test>' * 10 + '</root>'
+        xml = '<root>' + '<test>test</test>' * 20 + '</root>'
 
         self.assertRaises(ValueError, etree.XMLParser, chunk_size=0)
 
@@ -451,7 +451,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = etree.parse(f, parser).getroot()
         self.assertEquals(etree.tostring(root), xml)
 
-        parser = etree.XMLParser(chunk_size=21)
+        parser = etree.XMLParser(chunk_size=13)
         f = SillyFileLike(xml)
         root = etree.parse(f, parser).getroot()
         self.assertEquals(etree.tostring(root), xml)
