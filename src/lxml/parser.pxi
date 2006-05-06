@@ -346,10 +346,7 @@ cdef class XMLParser(BaseParser):
 
         try:
             read = filelike.read
-            data = read(self._chunk_size)
-            if python.PyUnicode_Check(data):
-                data = _stripDeclaration(data)
-            data = _utf8(data)
+            data = _utf8( read(self._chunk_size) )
             while data:
                 if _LIBXML_VERSION_INT <= 20622:
                     # CRLF reading bug in libxml2 <= 2.6.22
