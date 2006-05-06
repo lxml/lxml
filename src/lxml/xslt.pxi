@@ -68,7 +68,7 @@ cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
     # quick check if we are looking for the current stylesheet
     c_doc = xslt_resolver_context._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
-        if tree.strcmp(c_uri, c_doc.URL) == 0:
+        if cstd.strcmp(c_uri, c_doc.URL) == 0:
             return tree.xmlCopyDoc(c_doc, 1)
 
     # call the Python document loaders

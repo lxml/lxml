@@ -1259,11 +1259,11 @@ cdef class ElementTagFilter:
                 return node
 
     cdef int _tagMatches(self, xmlNode* c_node):
-        if tree.strcmp(c_node.name, self._name) == 0:
+        if cstd.strcmp(c_node.name, self._name) == 0:
             if c_node.ns == NULL or c_node.ns.href == NULL:
                 return self._href == NULL
             else:
-                return tree.strcmp(c_node.ns.href, self._href) == 0
+                return cstd.strcmp(c_node.ns.href, self._href) == 0
         return 0
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf,

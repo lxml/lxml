@@ -32,7 +32,7 @@ cdef class RelaxNG(_Validator):
             c_node = root_node._c_node
             # work around for libxml2 bug if document is not RNG at all
             if c_node.ns is NULL or c_node.ns.href is NULL or \
-                   tree.strcmp(c_node.ns.href,
+                   cstd.strcmp(c_node.ns.href,
                                'http://relaxng.org/ns/structure/1.0') != 0:
                 raise RelaxNGParseError, "Document is not Relax NG"
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)

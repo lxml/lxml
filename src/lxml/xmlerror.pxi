@@ -34,7 +34,7 @@ cdef class _LogEntry:
         self.level    = <int>error.level
         self.line     = error.line
         self.message  = python.PyString_FromStringAndSize(
-            error.message, tree.strlen(error.message) - 1) # strip EOL
+            error.message, cstd.strlen(error.message) - 1) # strip EOL
         if error.file is NULL:
             self.filename = '<string>'
         else:
@@ -259,7 +259,7 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
     cdef char* c_filename
     cdef char* c_element
     cdef int c_line
-    if __DEBUG == 0 or msg == NULL or tree.strlen(msg) < 10:
+    if __DEBUG == 0 or msg == NULL or cstd.strlen(msg) < 10:
         return
     if c_log_handler is not NULL:
         log_handler = <_ErrorLog>c_log_handler
@@ -267,19 +267,19 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
         log_handler = __GLOBAL_ERROR_LOG
 
     cstd.va_start(args, msg)
-    if tree.strncmp(msg, '%s:', 3) == 0:
+    if cstd.strncmp(msg, '%s:', 3) == 0:
         c_text = cstd.va_charptr(args)
     else:
         c_text = NULL
-    if tree.strstr(msg, 'file %s') is not NULL:
+    if cstd.strstr(msg, 'file %s') is not NULL:
         c_filename = cstd.va_charptr(args)
     else:
         c_filename = NULL
-    if tree.strstr(msg, 'line %d') is not NULL:
+    if cstd.strstr(msg, 'line %d') is not NULL:
         c_line = cstd.va_int(args)
     else:
         c_line = -1
-    if tree.strstr(msg, 'element %s') is not NULL:
+    if cstd.strstr(msg, 'element %s') is not NULL:
         c_element = cstd.va_charptr(args)
     else:
         c_element = NULL
@@ -297,8 +297,8 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
         message = "<undecodable message>"
 
     try:
-        if c_filename is not NULL and tree.strlen(c_filename) > 0:
-            if tree.strncmp(c_filename, 'XSLT:', 5) == 0:
+        if c_filename is not NULL and cstd.strlen(c_filename) > 0:
+            if cstd.strncmp(c_filename, 'XSLT:', 5) == 0:
                 filename = '<xslt>'
             else:
                 filename = funicode(c_filename)

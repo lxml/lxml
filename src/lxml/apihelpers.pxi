@@ -286,7 +286,7 @@ cdef int isutf8(char* s):
 
 cdef object funicode(char* s):
     if isutf8(s):
-        return python.PyUnicode_DecodeUTF8(s, tree.strlen(s), NULL)
+        return python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
     return python.PyString_FromString(s)
 
 cdef object _utf8(object s):

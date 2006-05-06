@@ -31,7 +31,7 @@ cdef class XMLSchema(_Validator):
             # work around for libxml2 bug if document is not XML schema at all
             c_node = root_node._c_node
             if c_node.ns is NULL or c_node.ns.href is NULL or \
-                   tree.strcmp(c_node.ns.href, 'http://www.w3.org/2001/XMLSchema') != 0:
+                   cstd.strcmp(c_node.ns.href, 'http://www.w3.org/2001/XMLSchema') != 0:
                 raise XMLSchemaParseError, "Document is not XML Schema"
 
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
