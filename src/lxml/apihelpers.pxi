@@ -140,7 +140,7 @@ cdef _collectText(xmlNode* c_node):
     
     If there was no text to collect, return None
     """
-    cdef int scount
+    cdef Py_ssize_t scount
     cdef char* text
     cdef xmlNode* c_node_cur
     # check for multiple text nodes
@@ -179,17 +179,17 @@ cdef _removeText(xmlNode* c_node):
         tree.xmlFreeNode(c_node)
         c_node = c_next
 
-cdef xmlNode* _findChild(xmlNode* c_node, int index):
+cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
         return _findChildBackwards(c_node, -index - 1)
     else:
         return _findChildForwards(c_node, index)
     
-cdef xmlNode* _findChildForwards(xmlNode* c_node, int index):
+cdef xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
     """Return child element of c_node with index, or return NULL if not found.
     """
     cdef xmlNode* c_child
-    cdef int c
+    cdef Py_ssize_t c
     c_child = c_node.children
     c = 0
     while c_child is not NULL:
@@ -201,12 +201,12 @@ cdef xmlNode* _findChildForwards(xmlNode* c_node, int index):
     else:
         return NULL
 
-cdef xmlNode* _findChildBackwards(xmlNode* c_node, int index):
+cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
     """Return child element of c_node with index, or return NULL if not found.
     Search from the end.
     """
     cdef xmlNode* c_child
-    cdef int c
+    cdef Py_ssize_t c
     c_child = c_node.last
     c = 0
     while c_child is not NULL:
@@ -255,16 +255,11 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_tail
         c_tail = c_next
 
-### see etree.h:
-## cdef int _isElement(xmlNode* c_node):
-##     return (c_node.type == tree.XML_ELEMENT_NODE or
-##             c_node.type == tree.XML_COMMENT_NODE)
-
-cdef xmlNode* _deleteSlice(xmlNode* c_node, int start, int stop):
+cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.
     """
     cdef xmlNode* c_next
-    cdef int c
+    cdef Py_ssize_t c
     if c_node is NULL:
         return NULL
     # now start deleting nodes

@@ -234,7 +234,7 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
         cdef char** params
         cdef void* ptemp
-        cdef int i, kw_count
+        cdef Py_ssize_t i, kw_count
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOf(_input)

@@ -1,7 +1,7 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
 from python cimport isinstance, issubclass, hasattr, callable
-from python cimport iter, str, _cstr
+from python cimport iter, str, _cstr, Py_ssize_t
 cimport xinclude
 cimport c14n
 cimport cstd
@@ -505,7 +505,7 @@ cdef class _Element(_NodeBase):
 
     # MANIPULATORS
 
-    def __setitem__(self, index, _NodeBase element):
+    def __setitem__(self, Py_ssize_t index, _NodeBase element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef int foreign
@@ -519,7 +519,7 @@ cdef class _Element(_NodeBase):
         _moveTail(c_next, element._c_node)
         changeDocumentBelow(element, self._doc, foreign)
         
-    def __delitem__(self, index):
+    def __delitem__(self, Py_ssize_t index):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
@@ -527,12 +527,12 @@ cdef class _Element(_NodeBase):
         _removeText(c_node.next)
         _removeNode(c_node)
 
-    def __delslice__(self, start, stop):
+    def __delslice__(self, Py_ssize_t start, Py_ssize_t stop):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, start)
         _deleteSlice(c_node, start, stop)
         
-    def __setslice__(self, start, stop, value):
+    def __setslice__(self, Py_ssize_t start, Py_ssize_t stop, value):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef _Element mynode
@@ -713,17 +713,17 @@ cdef class _Element(_NodeBase):
     def __repr__(self):
         return "<Element %s at %x>" % (self.tag, id(self))
     
-    def __getitem__(self, index):
+    def __getitem__(self, Py_ssize_t index):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError, "list index out of range"
         return _elementFactory(self._doc, c_node)
 
-    def __getslice__(self, start, stop):
+    def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
         cdef xmlNode* c_node
         cdef _Document doc
-        cdef int c, c_stop
+        cdef Py_ssize_t c
         # this does not work for negative start, stop, however,
         # python seems to convert these to positive start, stop before
         # calling, so this all works perfectly (at the cost of a len() call)
@@ -731,10 +731,9 @@ cdef class _Element(_NodeBase):
         if c_node is NULL:
             return []
         c = start
-        c_stop = stop
         result = []
         doc = self._doc
-        while c_node is not NULL and c < c_stop:
+        while c_node is not NULL and c < stop:
             if _isElement(c_node):
                 ret = python.PyList_Append(result, _elementFactory(doc, c_node))
                 if ret:
@@ -744,7 +743,7 @@ cdef class _Element(_NodeBase):
         return result
             
     def __len__(self):
-        cdef int c
+        cdef Py_ssize_t c
         cdef xmlNode* c_node
         c = 0
         c_node = self._c_node.children
@@ -766,10 +765,8 @@ cdef class _Element(_NodeBase):
         return ElementChildIterator(self, reversed=True)
 
     def index(self, _Element x not None, start=None, stop=None):
-        cdef int k
-        cdef int l
-        cdef int c_stop
-        cdef int c_start
+        cdef Py_ssize_t k, l
+        cdef Py_ssize_t c_start, c_stop
         cdef xmlNode* c_child
         cdef xmlNode* c_start_node
         c_child = x._c_node
@@ -830,7 +827,7 @@ cdef class _Element(_NodeBase):
                     return k
             else:
                 return k
-        if c_start or c_stop:
+        if c_start != 0 or c_stop != 0:
             raise ValueError, "list.index(x): x not in slice"
         else:
             raise ValueError, "list.index(x): x not in list"
@@ -1053,7 +1050,7 @@ cdef class _Attrib(_NodeBase):
         return result
 
     def __len__(self):
-        cdef int c
+        cdef Py_ssize_t c
         cdef xmlNode* c_node
         c = 0
         c_node = <xmlNode*>(self._c_node.properties)

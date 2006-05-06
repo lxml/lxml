@@ -483,7 +483,6 @@ cdef class HTMLParser(BaseParser):
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
-        cdef int c_len
         cdef int recover
         self._error_log.connect()
         pctxt = self._memory_parser_ctxt
