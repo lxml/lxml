@@ -234,7 +234,7 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
         cdef char** params
         cdef void* ptemp
-        cdef int i
+        cdef int i, kw_count
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOf(_input)
@@ -256,11 +256,13 @@ cdef class XSLT:
         ptemp = c_doc._private
         c_doc._private = <python.PyObject*>resolver_context
 
-        if _kw:
+        kw_count = python.PyDict_Size(_kw)
+        if kw_count > 0:
             # allocate space for parameters
             # * 2 as we want an entry for both key and value,
             # and + 1 as array is NULL terminated
-            params = <char**>python.PyMem_Malloc(sizeof(char*) * (len(_kw) * 2 + 1))
+            params = <char**>python.PyMem_Malloc(
+                sizeof(char*) * (kw_count * 2 + 1))
             i = 0
             keep_ref = []
             for key, value in _kw.iteritems():
