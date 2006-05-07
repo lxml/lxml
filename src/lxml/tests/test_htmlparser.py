@@ -60,6 +60,13 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
     def test_module_parse_html_filelike(self):
         parser = self.etree.HTMLParser()
+        f = SillyFileLike(self.html_str)
+        tree = self.etree.parse(f, parser)
+        html = self.etree.tostring(tree.getroot())
+        self.assertEqual(unentitify(html), self.html_str)
+
+    def test_module_parse_html_filelike_unicode(self):
+        parser = self.etree.HTMLParser()
         f = SillyFileLike(self.uhtml_str)
         tree = self.etree.parse(f, parser)
         html = self.etree.tostring(tree.getroot())

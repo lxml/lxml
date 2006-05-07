@@ -30,8 +30,8 @@ cdef void _logLibxsltErrors():
 
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
-    cdef BaseParser _parser
-    def __init__(self, BaseParser parser not None):
+    cdef _BaseParser _parser
+    def __init__(self, _BaseParser parser not None):
         _ResolverContext.__init__(self, parser.resolvers)
         self._parser = parser
         self._c_style_doc = NULL

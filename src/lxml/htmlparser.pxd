@@ -1,4 +1,5 @@
 from tree cimport xmlDoc, xmlDict
+from tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from xmlparser cimport xmlParserCtxt
 from xmlerror cimport xmlError
 
@@ -24,3 +25,8 @@ cdef extern from "libxml/HTMLparser.h":
     cdef xmlDoc* htmlCtxtReadDoc(xmlParserCtxt* ctxt,
                                  char* buffer, char* URL, char* encoding,
                                  int options)
+    cdef xmlDoc* htmlCtxtReadIO(xmlParserCtxt* ctxt, 
+                                xmlInputReadCallback ioread, 
+                                xmlInputCloseCallback ioclose, 
+                                void* ioctx,
+                                char* URL, char* encoding, int options)

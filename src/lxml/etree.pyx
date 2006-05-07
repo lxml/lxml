@@ -129,7 +129,7 @@ cdef class _ExceptionContext:
                 raise type, value, traceback
 
 
-cdef class BaseParser # forward declaration
+cdef class _BaseParser # forward declaration
 
 cdef class _Document:
     """Internal base class to reference a libxml document.
@@ -139,7 +139,7 @@ cdef class _Document:
     """
     cdef int _ns_counter
     cdef xmlDoc* _c_doc
-    cdef BaseParser _parser
+    cdef _BaseParser _parser
     
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
