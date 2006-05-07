@@ -57,9 +57,12 @@ class IOTestCaseBase(unittest.TestCase):
         # and now do it again; previous content should still be there
         root2 = tree.parse(filename)
         self.assertEquals('a', root.tag)
+        self.assertEquals('a', root2.tag)
         # now remove all references to root2, and parse again
         del root2
         root3 = tree.parse(filename)
+        self.assertEquals('a', root.tag)
+        self.assertEquals('a', root3.tag)
         # root2's memory should've been freed here
         # XXX how to check?
         
