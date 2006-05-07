@@ -172,7 +172,6 @@ cdef extern from "libxml/tree.h":
     cdef char* xmlBufferContent(xmlBuffer* buf)
     
 cdef extern from "libxml/xmlIO.h":
-
     cdef xmlOutputBuffer* xmlAllocOutputBuffer(xmlCharEncodingHandler* encoder)
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
         FILE* file,
@@ -180,6 +179,9 @@ cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out)
+
+    ctypedef int (*xmlInputReadCallback)(void* context, char* buffer, int len)
+    ctypedef int (*xmlInputCloseCallback)(void * context)
 
 cdef extern from "libxml/xmlsave.h":
     ctypedef struct xmlSaveCtxt:

@@ -1,8 +1,16 @@
 from tree cimport xmlDoc, xmlDict
+from tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from xmlerror cimport xmlError
 
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput
+    ctypedef struct xmlParserInputBuffer:
+        void* context
+        xmlInputReadCallback  readcallback
+        xmlInputCloseCallback closecallback
+
+cdef extern from "libxml/xmlIO.h":
+    cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)
 
 cdef extern from "libxml/parser.h":
 
@@ -37,15 +45,15 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
         # libxml2 2.6.21+ only:
         #XML_PARSE_COMPACT = 65536 # compact small text nodes
-       
+
     cdef void xmlInitParser()
     cdef int xmlLineNumbersDefault(int onoff)
     cdef xmlParserCtxt* xmlNewParserCtxt()
+    cdef xmlParserInput* xmlNewIOInputStream(xmlParserCtxt* ctxt,
+                                             xmlParserInputBuffer* input,
+                                             int enc)
     cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
     cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
-    cdef int xmlCtxtResetPush(xmlParserCtxt* ctxt,
-                              char* chunk, int size,
-                              char* filename, char* encoding)
     cdef int xmlParseChunk(xmlParserCtxt* ctxt,
                            char* chunk, int size, int terminate)
     cdef xmlDoc* xmlCtxtReadDoc(xmlParserCtxt* ctxt,
@@ -53,6 +61,11 @@ cdef extern from "libxml/parser.h":
                                 int options)
     cdef xmlDoc* xmlCtxtReadFile(xmlParserCtxt* ctxt,
                                  char* filename, char* encoding, int options)
+    cdef xmlDoc* xmlCtxtReadIO(xmlParserCtxt* ctxt, 
+                               xmlInputReadCallback ioread, 
+                               xmlInputCloseCallback ioclose, 
+                               void* ioctx,
+                               char* URL, char* encoding, int options)
 
 # entity loaders:
 

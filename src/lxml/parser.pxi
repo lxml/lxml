@@ -59,6 +59,69 @@ __GLOBAL_PARSER_CONTEXT = _ParserContext()
 
 
 ############################################################
+## support for file-like objects
+############################################################
+
+cdef class _FileParserContext:
+    cdef object _filelike
+    cdef object _url
+    cdef object _bytes_utf
+    cdef _ExceptionContext _exc_context
+    cdef cstd.size_t _bytes_read
+    cdef char* _c_url
+    def __init__(self, filelike, exc_context, url=None):
+        self._exc_context = exc_context
+        self._filelike = filelike
+        self._url = url
+        if url is None:
+            self._c_url = NULL
+        else:
+            self._c_url = _cstr(url)
+        self._bytes_utf = ''
+        self._bytes_read = 0
+
+    cdef xmlparser.xmlParserInput* _createParserInput(self, xmlParserCtxt* ctxt):
+        cdef xmlparser.xmlParserInputBuffer* c_buffer
+        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
+        c_buffer.context = <python.PyObject*>self
+        c_buffer.readcallback = _copyFilelike
+        return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
+
+    cdef xmlDoc* _readDoc(self, xmlParserCtxt* ctxt, int options):
+        return xmlparser.xmlCtxtReadIO(
+            ctxt, _copyFilelike, NULL, <python.PyObject*>self,
+            self._c_url, NULL, options)
+
+    cdef int write(self, char* c_buffer, int c_size):
+        cdef char* c_start
+        cdef Py_ssize_t byte_count, remaining
+        if self._bytes_read < 0:
+            return 0
+        try:
+            byte_count = python.PyString_GET_SIZE(self._bytes_utf)
+            remaining = byte_count - self._bytes_read
+            if remaining <= 0:
+                self._bytes_utf = _utf8( self._filelike.read(c_size) )
+                self._bytes_read = 0
+                remaining = python.PyString_GET_SIZE(self._bytes_utf)
+                if remaining == 0:
+                    self._bytes_read = -1
+                    return 0
+            if c_size > remaining:
+                c_size = remaining
+            c_start = _cstr(self._bytes_utf) + self._bytes_read
+            self._bytes_read = self._bytes_read + c_size
+            cstd.memcpy(c_buffer, c_start, c_size)
+            return c_size
+        except Exception:
+            self._exc_context._store_raised()
+            return -1
+
+cdef int _copyFilelike(void* ctxt, char* c_buffer, int c_size):
+    return (<_FileParserContext>ctxt).write(c_buffer, c_size)
+    
+
+############################################################
 ## support for custom document loaders
 ############################################################
 
@@ -66,6 +129,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
                                                xmlParserCtxt* c_context):
     cdef _ResolverContext context
     cdef _InputDocument   doc_ref
+    cdef _FileParserContext file_context
     cdef xmlparser.xmlParserInput* c_input
     if c_context._private is NULL or \
        not isinstance(<object>c_context._private, _ResolverContext):
@@ -104,9 +168,8 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
         c_input = xmlparser.xmlNewInputFromFile(
             c_context, _cstr(doc_ref._data_utf))
     elif doc_ref._type == PARSER_DATA_FILE:
-        data = doc_ref._file.read()
-        c_input = xmlparser.xmlNewStringInputStream(
-            c_context, _cstr(data))
+        file_context = _FileParserContext(doc_ref._file, context)
+        c_input = file_context._createParserInput(c_context)
 
     if data is not None:
         context._storage.add(data)
@@ -194,13 +257,8 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 cdef int _XML_DEFAULT_PARSE_OPTIONS
 _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NOENT |
-    xmlparser.XML_PARSE_NOCDATA |
-    xmlparser.XML_PARSE_NOWARNING |
-    xmlparser.XML_PARSE_NOERROR
+    xmlparser.XML_PARSE_NOCDATA
     )
-
-cdef int __FILE_READ_CHUNK_SIZE
-__FILE_READ_CHUNK_SIZE = 32768
 
 cdef class XMLParser(BaseParser):
     """The XML parser.  Parsers can be supplied as additional argument to
@@ -220,28 +278,21 @@ cdef class XMLParser(BaseParser):
     * no_network         - prevent network access
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
-    * chunk_size         - read this many bytes from file-like objects
-                           (< 0 means: read everything in one step)
 
     Note that you must not share parsers between threads.  This applies also
     to the default parser.
     """
     cdef int _parse_options
-    cdef object _chunk_size
     cdef xmlParserCtxt* _file_parser_ctxt
     cdef xmlParserCtxt* _memory_parser_ctxt
-    cdef xmlParserCtxt* _push_parser_ctxt
+    cdef xmlParserCtxt* _filelike_parser_ctxt
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False, chunk_size=__FILE_READ_CHUNK_SIZE):
+                 recover=False):
         cdef int parse_options
-        self._memory_parser_ctxt = NULL
-        self._file_parser_ctxt   = NULL
-        self._push_parser_ctxt   = NULL
-
-        self._chunk_size = int(chunk_size)
-        if self._chunk_size == 0:
-            raise ValueError, "Chunk size must not be 0"
+        self._memory_parser_ctxt   = NULL
+        self._file_parser_ctxt     = NULL
+        self._filelike_parser_ctxt = NULL
 
         BaseParser.__init__(self)
 
@@ -268,8 +319,8 @@ cdef class XMLParser(BaseParser):
             xmlparser.xmlFreeParserCtxt(self._file_parser_ctxt)
         if self._memory_parser_ctxt != NULL:
             xmlparser.xmlFreeParserCtxt(self._memory_parser_ctxt)
-        if self._push_parser_ctxt != NULL:
-            xmlparser.xmlFreeParserCtxt(self._push_parser_ctxt)
+        if self._filelike_parser_ctxt != NULL:
+            xmlparser.xmlFreeParserCtxt(self._filelike_parser_ctxt)
 
     def copy(self):
         "Create a new parser with the same configuration."
@@ -323,51 +374,22 @@ cdef class XMLParser(BaseParser):
     cdef xmlDoc* _parseDocFromFilelike(self, filelike,
                                        char* c_filename) except NULL:
         # we read Python string, so we must convert to UTF-8
+        cdef _FileParserContext file_context
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int recover
-        cdef int success
-        if self._chunk_size < 0:
-            # read whole file at once
-            data = _utf8(filelike.read())
-            return self._parseDoc(data, c_filename)
         self._error_log.connect()
-        pctxt = self._push_parser_ctxt
+        pctxt = self._filelike_parser_ctxt
         if pctxt is NULL:
             pctxt = self._createContext()
-            self._push_parser_ctxt = pctxt
+            self._filelike_parser_ctxt = pctxt
         self._initContext(pctxt)
-        result = NULL
-        success = xmlparser.xmlCtxtResetPush(pctxt, NULL, 0, c_filename, NULL)
-        if success != 0:
-            self._error_log.disconnect()
-            raise ParserError, "Failed to setup parser context"
-        xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
-
-        try:
-            read = filelike.read
-            data = _utf8( read(self._chunk_size) )
-            while data:
-                if _LIBXML_VERSION_INT <= 20622:
-                    # CRLF reading bug in libxml2 <= 2.6.22
-                    data = data.replace('\r\n', '\n')
-                success = xmlparser.xmlParseChunk(pctxt, _cstr(data), len(data), 0)
-                if success != 0:
-                    _raiseParseError(pctxt, c_filename)
-                data = _utf8( read(self._chunk_size) )
-            xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
-        except Exception:
-            if pctxt.myDoc is not NULL:
-                tree.xmlFreeDoc(pctxt.myDoc)
-                pctxt.myDoc = NULL
-            self._error_log.disconnect()
-            raise
-
+        file_context = _FileParserContext(filelike, self._context)
+        result = file_context._readDoc(pctxt, self._parse_options)
         self._error_log.disconnect()
-        result = pctxt.myDoc
-        pctxt.myDoc = NULL
         recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-        return _handleParseResult(pctxt, result, c_filename, recover)
+        result = _handleParseResult(pctxt, result, c_filename, recover)
+        return result
 
 cdef xmlDoc* _internalParseDoc(char* c_text, int options,
                                _ResolverContext context) except NULL:
@@ -442,10 +464,7 @@ def get_default_parser():
 ############################################################
 
 cdef int _HTML_DEFAULT_PARSE_OPTIONS
-_HTML_DEFAULT_PARSE_OPTIONS = (
-    htmlparser.HTML_PARSE_NOWARNING |
-    htmlparser.HTML_PARSE_NOERROR
-    )
+_HTML_DEFAULT_PARSE_OPTIONS = 0
 
 cdef class HTMLParser(BaseParser):
     """The HTML parser.  This parser allows reading HTML into a normal XML
