@@ -32,6 +32,22 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   XPath, XSLT, Relax NG, and XML Schema support, which (c)ElementTree
   does not offer.
 
+* etree has a different idea about Python unicode strings than ElementTree.
+  In most parts of the API, ElementTree uses plain strings and unicode strings
+  as what they are.  This includes Element.text, Element.tail and many other
+  places.  However, the ElementTree parsers assume by default that any string
+  (`str` or `unicode`) contains ASCII data and raise an exception if strings
+  do not match the expected encoding.
+
+  etree has the same idea about plain strings (`str`) as ElementTree.  For
+  unicode strings, however, etree assumes throughout the API that they are
+  Python unicode encoded strings rather than byte data.  This includes the
+  parsers.  It is therefore perfectly correct to pass XML unicode data into
+  the etree parsers in form of Python unicode strings.  It is an error, on the
+  other hand, if unicode strings specify an encoding in their XML declaration.
+  Note also that Python unicode strings are platform specific.  Such an
+  encoding specifier would not be portable.
+
 * ElementTree allows you to place an Element in two different trees as the
   same time.  Thus, this::
 
