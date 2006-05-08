@@ -619,9 +619,10 @@ if __name__ == '__main__':
 
             result = run_bench(bench, *benchmark_setup)
 
+            print "%9.4f msec/pass, best of (" % min(result),
             for t in result:
                 print "%9.4f" % t,
-            print "msec/pass, best: %9.4f" % min(result)
+            print ")"
 
         if len(benchmark_suites) > 1:
             print # empty line between different benchmarks
