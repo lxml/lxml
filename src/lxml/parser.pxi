@@ -318,12 +318,13 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
             tree.xmlFreeDoc(ctxt.myDoc)
         ctxt.myDoc = NULL
 
-    if ctxt.wellFormed or recover:
-        __GLOBAL_PARSER_CONTEXT._initDocDict(result)
-    elif result is not NULL:
-        # free broken document
-        tree.xmlFreeDoc(result)
-        result = NULL
+    if result is not NULL:
+        if ctxt.wellFormed or recover:
+            __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+        else:
+            # free broken document
+            tree.xmlFreeDoc(result)
+            result = NULL
 
     if ctxt._private is not NULL:
         context = <_ResolverContext>ctxt._private
