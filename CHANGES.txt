@@ -8,7 +8,7 @@ Features added
 --------------
 
 * Module level `tounicode` function to return XML serialization as Python
-  unicode string (equavalent to `tostring` function)
+  unicode string (equivalent to `tostring` function)
 
 * Parsing a unicode string no longer copies the string (reduced memory
   footprint)
