@@ -1,5 +1,6 @@
 import sys, string, time, copy, gc
 from itertools import *
+from StringIO import StringIO
 
 _TEXT  = "some ASCII text"
 _UTEXT = u"some klingon: \F8D2"
@@ -247,6 +248,26 @@ class BenchMark(BenchMarkBase):
     def bench_iter_children_reversed(self, root):
         for child in reversed(root):
             pass
+
+    @with_text(text=True, utext=True)
+    def bench_tostring_utf8(self, root):
+        self.etree.tostring(root, 'UTF-8')
+
+    @with_text(text=True, utext=True)
+    def bench_tostring_utf16(self, root):
+        self.etree.tostring(root, 'UTF-16')
+
+    @with_text(text=True, utext=True)
+    def bench_tostring_utf8_unicode_XML(self, root):
+        xml = unicode(self.etree.tostring(root, 'UTF-8'), 'UTF-8')
+        self.etree.XML(xml)
+
+    @with_text(text=True, utext=True)
+    def bench_write_utf8_parse_stringIO(self, root):
+        f = StringIO()
+        self.etree.ElementTree(root).write(f, 'UTF-8')
+        f.seek(0)
+        self.etree.parse(f)
 
     def bench_append_from_document(self, root1, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
@@ -588,7 +609,7 @@ if __name__ == '__main__':
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name, method_call = benchmark_setup[:2]
             tree_set_name = build_treeset_name(*benchmark_setup[-3:])
-            print "%-3s: %-23s" % (bench.lib_name, bench_name[6:29]),
+            print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
             if method_call is None:
                 print "skipped"
                 continue
