@@ -62,14 +62,14 @@ cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
 
 ############################################################
-## support for reading Python unicode
+## support for Python unicode I/O
 ############################################################
 
-# can libxml2 read plain Python unicode data?
+# name of Python unicode encoding as known to libxml2
 cdef char* _UNICODE_ENCODING
 _UNICODE_ENCODING = NULL
 
-cdef void _setupUnicodeParser():
+cdef void _setupPythonUnicode():
     """Sets _READ_UNICODE to 1 if libxml2 supports reading native Python
     unicode.  This depends on iconv, so we simply check if we find a matching
     encoding handler.
@@ -100,7 +100,7 @@ cdef char* _findEncodingName(char* buffer, int size):
     else:
         return tree.xmlGetCharEncodingName(enc)
 
-_setupUnicodeParser()
+_setupPythonUnicode()
 
 ############################################################
 ## support for file-like objects
