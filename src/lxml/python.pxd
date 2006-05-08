@@ -4,6 +4,7 @@ cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef int size_t
     ctypedef int Py_ssize_t
+    cdef int INT_MAX
     
     cdef FILE* PyFile_AsFile(PyObject* p)
     cdef int PyFile_Check(object p)
@@ -16,6 +17,8 @@ cdef extern from "Python.h":
                                             char* errors)
     cdef object PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
     cdef object PyUnicode_AsUTF8String(object ustring)
+    cdef char* PyUnicode_AS_DATA(object ustring)
+    cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef object PyString_FromStringAndSize(char* s, Py_ssize_t size)
     cdef object PyString_FromString(char* s)
     cdef object PyString_FromFormat(char* format, ...)

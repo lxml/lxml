@@ -61,6 +61,46 @@ cdef class _ParserContext:
 cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
 
+############################################################
+## support for reading Python unicode
+############################################################
+
+# can libxml2 read plain Python unicode data?
+cdef char* _UNICODE_ENCODING
+_UNICODE_ENCODING = NULL
+
+cdef void _setupUnicodeParser():
+    """Sets _READ_UNICODE to 1 if libxml2 supports reading native Python
+    unicode.  This depends on iconv, so we simply check if we find a matching
+    encoding handler.
+    """
+    cdef Py_ssize_t l
+    cdef char* buffer
+    cdef char* enc
+    utext = unicode("<test/>")
+    l = python.PyUnicode_GET_DATA_SIZE(utext)
+    buffer = python.PyUnicode_AS_DATA(utext)
+    enc = _findEncodingName(buffer, l)
+    if tree.xmlFindCharEncodingHandler(enc) is not NULL:
+        global _UNICODE_ENCODING
+        _UNICODE_ENCODING = enc
+
+cdef char* _findEncodingName(char* buffer, int size):
+    "Work around bug in libxml2: find iconv name of encoding on our own."
+    cdef int enc
+    enc = tree.xmlDetectCharEncoding(buffer, size)
+    if enc == tree.XML_CHAR_ENCODING_UTF16LE:
+        return "UTF16LE"
+    elif enc == tree.XML_CHAR_ENCODING_UTF16BE:
+        return "UTF16BE"
+    elif enc == tree.XML_CHAR_ENCODING_UCS4LE:
+        return "UCS-4LE"
+    elif enc == tree.XML_CHAR_ENCODING_UCS4BE:
+        return "UCS-4BE"
+    else:
+        return tree.xmlGetCharEncodingName(enc)
+
+_setupUnicodeParser()
 
 ############################################################
 ## support for file-like objects
@@ -236,6 +276,41 @@ cdef class _BaseParser:
         parser.resolvers = self.resolvers.copy()
         parser._context = _ResolverContext(parser.resolvers)
         return parser
+
+    cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
+        """Parse unicode document, share dictionary if possible.
+        """
+        cdef xmlDoc* result
+        cdef xmlParserCtxt* pctxt
+        cdef int recover
+        cdef Py_ssize_t py_buffer_len
+        cdef int buffer_len
+        cdef char* c_text
+        cdef char* c_encoding
+        cdef int enc
+        py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
+        if py_buffer_len > python.INT_MAX:
+            text_utf = _utf8(utext)
+            return self._parseDoc(text_utf, c_filename)
+        buffer_len = py_buffer_len
+
+        self._error_log.connect()
+        pctxt = self._parser_ctxt
+        __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+
+        c_text = python.PyUnicode_AS_DATA(utext)
+        if self._parser_type == LXML_HTML_PARSER:
+            result = htmlparser.htmlCtxtReadMemory(
+                pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                self._parse_options)
+        else:
+            result = xmlparser.xmlCtxtReadMemory(
+                pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                self._parse_options)
+
+        self._error_log.disconnect()
+        recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(pctxt, result, NULL, recover)
 
     cdef xmlDoc* _parseDoc(self, char* c_text, char* c_filename) except NULL:
         """Parse document, share dictionary if possible.
@@ -504,7 +579,7 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 ## helper functions for document creation
 ############################################################
 
-cdef xmlDoc* _parseDoc(text_utf, filename, parser) except NULL:
+cdef xmlDoc* _parseDoc(text, filename, parser) except NULL:
     cdef char* c_filename
     if parser is None:
         parser = __DEFAULT_PARSER
@@ -515,7 +590,10 @@ cdef xmlDoc* _parseDoc(text_utf, filename, parser) except NULL:
         c_filename = NULL
     else:
         c_filename = _cstr(filename)
-    return (<_BaseParser>parser)._parseDoc(_cstr(text_utf), c_filename)
+    if python.PyUnicode_Check(text):
+        return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
+    else:
+        return (<_BaseParser>parser)._parseDoc(_cstr(text), c_filename)
 
 cdef xmlDoc* _parseDocFromFile(filename, parser) except NULL:
     if parser is None:
@@ -570,12 +648,15 @@ cdef _Document _parseDocument(source, parser):
 
 cdef _Document _parseMemoryDocument(text, url, parser):
     cdef xmlDoc* c_doc
-    text_utf = _utf8(text)
     if python.PyUnicode_Check(text):
-        text_utf = _stripDeclaration(text_utf)
+        # pass native unicode only if libxml2 can handle it
+        if _UNICODE_ENCODING is NULL:
+            text = _stripDeclaration(_utf8(text))
+    else:
+        text = _utf8(text)
     if url is not None:
         url = _utf8(url)
-    c_doc = _parseDoc(text_utf, url, parser)
+    c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, parser):

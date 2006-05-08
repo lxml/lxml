@@ -23,6 +23,7 @@ cdef extern from "libxml/parser.h":
         xmlDict* dict
         void* _private
         int wellFormed
+        int recovery
         int options
         xmlError lastError
         
@@ -66,6 +67,9 @@ cdef extern from "libxml/parser.h":
                                xmlInputCloseCallback ioclose, 
                                void* ioctx,
                                char* URL, char* encoding, int options)
+    cdef xmlDoc* xmlCtxtReadMemory(xmlParserCtxt* ctxt,
+                                   char* buffer, int size,
+                                   char* filename, char* encoding, int options)
 
 # entity loaders:
 

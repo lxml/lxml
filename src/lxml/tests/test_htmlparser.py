@@ -27,6 +27,11 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertEqual(self.etree.tostring(element),
                          self.html_str)
 
+    def test_module_HTML_unicode(self):
+        element = self.etree.HTML(self.uhtml_str)
+        self.assertEqual(unentitify(self.etree.tostring(element)),
+                         self.uhtml_str)
+
     def test_module_parse_html_error(self):
         parser = self.etree.HTMLParser(recover=False)
         parse = self.etree.parse

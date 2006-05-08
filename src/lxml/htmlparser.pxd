@@ -30,3 +30,6 @@ cdef extern from "libxml/HTMLparser.h":
                                 xmlInputCloseCallback ioclose, 
                                 void* ioctx,
                                 char* URL, char* encoding, int options)
+    cdef xmlDoc* htmlCtxtReadMemory(xmlParserCtxt* ctxt,
+                                    char* buffer, int size,
+                                    char* filename, char* encoding, int options)
