@@ -1409,15 +1409,42 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
-    tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0,
-                           enc)
-    _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
-    tree.xmlOutputBufferFlush(c_buffer)
-    if c_buffer.conv is not NULL: 
-        result = tree.xmlBufferContent(c_buffer.conv)
-    else:
-        result = tree.xmlBufferContent(c_buffer.buffer)
-    tree.xmlOutputBufferClose(c_buffer)
+    try:
+        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, enc)
+        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
+        tree.xmlOutputBufferFlush(c_buffer)
+        if c_buffer.conv is not NULL: 
+            result = tree.xmlBufferContent(c_buffer.conv)
+        else:
+            result = tree.xmlBufferContent(c_buffer.buffer)
+    finally:
+        tree.xmlOutputBufferClose(c_buffer)
+    return result
+
+def tounicode(_NodeBase element):
+    cdef _Document doc
+    cdef tree.xmlOutputBuffer* c_buffer
+    cdef tree.xmlBuffer* c_result_buffer
+
+    assert element is not None
+    # better, but not ET compatible : "_NodeBase element not None"
+
+    doc = element._doc
+    c_buffer = tree.xmlAllocOutputBuffer(NULL)
+    try:
+        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, NULL)
+        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, NULL)
+        tree.xmlOutputBufferFlush(c_buffer)
+        if c_buffer.conv is not NULL:
+            c_result_buffer = c_buffer.conv
+        else:
+            c_result_buffer = c_buffer.buffer
+        result = python.PyUnicode_DecodeUTF8(
+            tree.xmlBufferContent(c_result_buffer),
+            tree.xmlBufferLength(c_result_buffer),
+            'strict')
+    finally:
+        tree.xmlOutputBufferClose(c_buffer)
     return result
 
 def parse(source, parser=None):

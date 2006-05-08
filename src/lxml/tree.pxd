@@ -199,6 +199,7 @@ cdef extern from "libxml/tree.h":
     cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree)
     cdef xmlBuffer* xmlBufferCreate()
     cdef char* xmlBufferContent(xmlBuffer* buf)
+    cdef int xmlBufferLength(xmlBuffer* buf)
     
 cdef extern from "libxml/xmlIO.h":
     cdef xmlOutputBuffer* xmlAllocOutputBuffer(xmlCharEncodingHandler* encoder)
