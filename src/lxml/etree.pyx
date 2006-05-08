@@ -1404,7 +1404,7 @@ def tostring(_NodeBase element, encoding='us-ascii'):
     if encoding in ('utf8', 'UTF8', 'utf-8'):
         encoding = 'UTF-8'
     doc = element._doc
-    enc = _cstr(encoding)
+    enc = encoding
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(enc)
