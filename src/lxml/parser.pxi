@@ -70,9 +70,10 @@ cdef char* _UNICODE_ENCODING
 _UNICODE_ENCODING = NULL
 
 cdef void _setupPythonUnicode():
-    """Sets _READ_UNICODE to 1 if libxml2 supports reading native Python
-    unicode.  This depends on iconv, so we simply check if we find a matching
-    encoding handler.
+    """Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
+    strings if libxmls supports reading native Python unicode.  This depends
+    on iconv and the local Python installation, so we simply check if we find
+    a matching encoding handler.
     """
     cdef Py_ssize_t l
     cdef char* buffer
