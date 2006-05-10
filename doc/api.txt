@@ -272,7 +272,7 @@ This allows you to call the `unicode()` function on the result::
 
 However, encodings that are not supported by Python will result in an error::
 
-  >>> f = StringIO('''\
+  >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
   ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   ...     <xsl:output encoding="UCS4"/>
@@ -280,8 +280,7 @@ However, encodings that are not supported by Python will result in an error::
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = etree.parse(f)
-  >>> transform = etree.XSLT(xslt_doc)
+  >>> transform = etree.XSLT(xslt_tree)
 
   >>> result = transform(doc)
   >>> unicode(result)
@@ -292,16 +291,14 @@ However, encodings that are not supported by Python will result in an error::
 It is possible to pass parameters, in the form of XPath expressions, to the
 XSLT template::
 
-  >>> f = StringIO('''\
+  >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
   ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  ...     <xsl:template match="*" />
   ...     <xsl:template match="/">
   ...         <foo><xsl:value-of select="$a" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = etree.parse(f)
-  >>> transform = etree.XSLT(xslt_doc)
+  >>> transform = etree.XSLT(xslt_tree)
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = etree.parse(f)
 
@@ -323,7 +320,7 @@ transformations.  This is less efficient if you want to apply the same XSL
 transformation to multiple documents, but is shorter to write for one-shot
 operations, as you do not have to instantiate a stylesheet yourself::
 
-  >>> result = doc.xslt(xslt_doc, a="'A'")
+  >>> result = doc.xslt(xslt_tree, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
