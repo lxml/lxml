@@ -457,7 +457,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_tounicode_none(self):
         tounicode = self.etree.tounicode
         self.assertRaises(AssertionError, self.etree.tounicode, None)
-        
+
     def test_tounicode_element_tail(self):
         tounicode = self.etree.tounicode
         Element = self.etree.Element
@@ -472,7 +472,68 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assert_(isinstance(tounicode(b), unicode))
         self.assert_(tounicode(b) == '<b/>Foo' or
                      tounicode(b) == '<b />Foo')
+
+    def test_unicode(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
         
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        
+        self.assert_(isinstance(unicode(a), unicode))
+        self.assertEquals('<a><b></b><c></c></a>',
+                          canonicalize(unicode(a)))
+
+    def test_unicode_element(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(c, 'd')
+        self.assert_(isinstance(unicode(b), unicode))
+        self.assert_(isinstance(unicode(c), unicode))
+        self.assertEquals('<b></b>',
+                          canonicalize(unicode(b)))
+        self.assertEquals('<c><d></d></c>',
+                          canonicalize(unicode(c)))
+
+    def test_unicode_elementtree(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(c, 'd')
+
+        t = ElementTree(b)
+        self.assert_(isinstance(unicode(t), unicode))
+        self.assertEquals('<b></b>',
+                          canonicalize(unicode(t)))
+
+        t = ElementTree(c)
+        self.assert_(isinstance(unicode(t), unicode))
+        self.assertEquals('<c><d></d></c>',
+                          canonicalize(unicode(t)))
+
+    def test_tounicode_element_tail(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(c, 'd')
+        b.tail = 'Foo'
+
+        self.assert_(isinstance(unicode(b), unicode))
+        self.assert_(unicode(b) == '<b/>Foo' or
+                     unicode(b) == '<b />Foo')
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

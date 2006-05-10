@@ -7,10 +7,13 @@ current
 Features added
 --------------
 
-* Support for writing XSLT results to Python unicode strings via `unicode()`
+* Support for writing the XML representation of Elements and ElementTrees to
+  Python unicode strings via ``unicode()``
+
+* Support for writing XSLT results to Python unicode strings via ``unicode()``
 
 * Module level `tounicode` function to return XML serialization as Python
-  unicode string (equivalent to `tostring` function)
+  unicode string (equivalent to ``tostring`` function)
 
 * Parsing a unicode string no longer copies the string (reduced memory
   footprint)
@@ -25,7 +28,7 @@ Features added
   information, original encoding and XML version as seen by the parser
 
 * etree module can be compiled without libxslt by commenting out the line
-  'include "xslt.pxi"' near the end of the etree.pyx source file
+  ``include "xslt.pxi"`` near the end of the etree.pyx source file
 
 * Better error messages in parser exceptions
 

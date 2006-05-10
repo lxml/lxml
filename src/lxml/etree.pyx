@@ -319,6 +319,9 @@ cdef class _NodeBase:
             unregisterProxy(self)
             attemptDeallocation(self._c_node)
 
+    def __unicode__(self):
+        return tounicode(self)
+
     def _init(self):
         """Called after object initialisation. Subclasses may override
         this if they recursively call _init() in the superclasses.
@@ -387,6 +390,9 @@ cdef class _ElementTree:
         return root.findall(path)
     
     # extensions to ElementTree API
+    def __unicode__(self):
+        return tounicode(self._context_node)
+
     def xpath(self, _path, namespaces=None, **_variables):
         """XPath evaluate in context of document.
 

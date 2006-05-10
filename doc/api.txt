@@ -16,7 +16,7 @@ documented here.
 
 The following examples usually assume this to be executed first::
 
-  >>> import lxml.etree
+  >>> from lxml import etree
   >>> from StringIO import StringIO
 
 If you need to know which version of lxml is installed, you can access the
@@ -37,13 +37,13 @@ the default parser, then with a parametrized one::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
-  >>> et     = lxml.etree.parse(StringIO(xml))
-  >>> print lxml.etree.tostring(et.getroot())
+  >>> et     = etree.parse(StringIO(xml))
+  >>> print etree.tostring(et.getroot())
   <a xmlns="test"><b xmlns="test"/></a>
 
-  >>> parser = lxml.etree.XMLParser(ns_clean=True)
-  >>> et     = lxml.etree.parse(StringIO(xml), parser)
-  >>> print lxml.etree.tostring(et.getroot())
+  >>> parser = etree.XMLParser(ns_clean=True)
+  >>> et     = etree.parse(StringIO(xml), parser)
+  >>> print etree.tostring(et.getroot())
   <a xmlns="test"><b/></a>
 
 HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
@@ -54,17 +54,17 @@ functionality depends entirely on libxml2.  You should use libxml2 version
 
   >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
 
-  >>> parser = lxml.etree.HTMLParser()
-  >>> et     = lxml.etree.parse(StringIO(broken_html), parser)
+  >>> parser = etree.HTMLParser()
+  >>> et     = etree.parse(StringIO(broken_html), parser)
 
-  >>> print lxml.etree.tostring(et.getroot())
+  >>> print etree.tostring(et.getroot())
   <html><head><title>test</title></head><body><h1>page title</h1></body></html>
 
 Lxml has an HTML function, similar to the XML shortcut known from
 ElementTree::
 
-  >>> html = lxml.etree.HTML(broken_html)
-  >>> print lxml.etree.tostring(html)
+  >>> html = etree.HTML(broken_html)
+  >>> print etree.tostring(html)
   <html><head><title>test</title></head><body><h1>page title</h1></body></html>
 
 The use of the libxml2 parsers makes some additional information available at
@@ -78,7 +78,7 @@ original encoding::
   >>> xml_header = '<?xml version="1.0" encoding="ascii"?>'
   >>> xhtml = xml_header + doctype_string + '<html><body></body></html>'
 
-  >>> et = lxml.etree.parse(StringIO(xhtml))
+  >>> et = etree.parse(StringIO(xhtml))
   >>> docinfo = et.docinfo
   >>> print docinfo.public_id
   -//W3C//DTD XHTML 1.0 Transitional//EN
@@ -100,13 +100,13 @@ Libxml2 provides error messages for failures, be it during parsing, XPath
 evaluation or schema validation.  Whenever an exception is raised, you can
 retrieve the errors that occured and "might have" lead to the problem::
 
-  >>> lxml.etree.clearErrorLog()
+  >>> etree.clearErrorLog()
   >>> broken_xml = '<a>'
   >>> try:
-  ...   lxml.etree.parse(StringIO(broken_xml))
-  ... except lxml.etree.XMLSyntaxError, e:
+  ...   etree.parse(StringIO(broken_xml))
+  ... except etree.XMLSyntaxError, e:
   ...   pass # just put the exception into e
-  >>> log = e.error_log.filter_levels(lxml.etree.ErrorLevels.FATAL)
+  >>> log = e.error_log.filter_levels(etree.ErrorLevels.FATAL)
   >>> print log
   <string>:1:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag a line 1
 
@@ -120,6 +120,55 @@ that.  You can get it from a log entry like this::
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NOT_FINISHED <string>
+
+
+Python unicode strings
+----------------------
+
+lxml.etree has broader support for Python unicode strings than the ElementTree
+library.  First of all, its parsers can handle unicode strings straight away::
+
+  >>> uxml = u'<test> \uf8d1 + \uf8d2 </test>'
+  >>> uxml
+  u'<test> \uf8d1 + \uf8d2 </test>'
+  >>> root = etree.XML(uxml)
+
+This requires, however, that unicode strings do not specify a conflicting
+encoding themselves and thus lie about their real encoding::
+
+  >>> try:
+  ...   broken = etree.XML(u'<?xml encoding="ASCII"?>' + uxml)
+  ... except etree.XMLSyntaxError:
+  ...   print "This is not well-formed XML!"
+  This is not well-formed XML!
+
+To serialize the result, you can either use the normal ``tostring`` module
+function or the new ``tounicode`` function, which is only available in
+lxml.etree and always returns a Python unicode string::
+
+  >>> etree.tostring(root)
+  '<test> &#63697; + &#63698; </test>'
+
+  >>> etree.tounicode(root)
+  u'<test> \uf8d1 + \uf8d2 </test>'
+
+On the output side, lxml.etree supports calling ``unicode()`` on XML tree
+objects to retrieve a Python unicode representation::
+
+  >>> el = etree.Element("test")
+  >>> unicode(el)
+  u'<test/>'
+
+  >>> subel = etree.SubElement(el, "subtest")
+  >>> et = etree.ElementTree(el)
+  >>> unicode(et)
+  u'<test><subtest/></test>'
+
+Note, however, that the ``str()`` function behaves as in the ElementTree
+library and returns something like ``<Element test at 2b084edbaa00>``.  This
+is due to the fact that this function implies no clear encoding semantics.
+The ``unicode()`` function, on the other hand, is specified to always returns
+a Python unicode string.
 
 
 xpath method on ElementTree, Element
@@ -152,7 +201,7 @@ The return values of xpath vary, depending on the XPath expression used:
 Example::
 
   >>> f = StringIO('<foo><bar></bar></foo>')
-  >>> doc = lxml.etree.parse(f)
+  >>> doc = etree.parse(f)
   >>> r = doc.xpath('/foo/bar')
   >>> len(r)
   1
@@ -167,7 +216,7 @@ Example of using namespace prefixes::
   ...    <b:bar>Text</b:bar>
   ... </a:foo>
   ... ''')
-  >>> doc = lxml.etree.parse(f)
+  >>> doc = etree.parse(f)
   >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
   ...                                'b': 'http://codespeak.net/ns/test2'})
   >>> len(r)
@@ -191,14 +240,14 @@ given an ElementTree object to construct an XSLT transformer::
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = lxml.etree.parse(f)
-  >>> transform = lxml.etree.XSLT(xslt_doc)
+  >>> xslt_doc = etree.parse(f)
+  >>> transform = etree.XSLT(xslt_doc)
 
 You can then run the transformation on an ElementTree document by simply
 calling it, and this results in another ElementTree object::
 
   >>> f = StringIO('<a><b>Text</b></a>')
-  >>> doc = lxml.etree.parse(f)
+  >>> doc = etree.parse(f)
   >>> result = transform(doc)
 
 The result object can be accessed like a normal ElementTree document::
@@ -230,8 +279,8 @@ However, encodings that are not supported by Python will result in an error::
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = lxml.etree.parse(f)
-  >>> transform = lxml.etree.XSLT(xslt_doc)
+  >>> xslt_doc = etree.parse(f)
+  >>> transform = etree.XSLT(xslt_doc)
 
   >>> result = transform(doc)
   >>> unicode(result)
@@ -250,10 +299,10 @@ XSLT template::
   ...         <foo><xsl:value-of select="$a" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = lxml.etree.parse(f)
-  >>> transform = lxml.etree.XSLT(xslt_doc)
+  >>> xslt_doc = etree.parse(f)
+  >>> transform = etree.XSLT(xslt_doc)
   >>> f = StringIO('<a><b>Text</b></a>')
-  >>> doc = lxml.etree.parse(f)
+  >>> doc = etree.parse(f)
 
 The parameters are passed as keyword parameters to the transform call. First
 let's try passing in a simple string expression::
@@ -293,20 +342,20 @@ be given an ElementTree object to construct a Relax NG validator::
   ...  </zeroOrMore>
   ... </element>
   ... ''')
-  >>> relaxng_doc = lxml.etree.parse(f)
-  >>> relaxng = lxml.etree.RelaxNG(relaxng_doc)
+  >>> relaxng_doc = etree.parse(f)
+  >>> relaxng = etree.RelaxNG(relaxng_doc)
 
 You can then validate some ElementTree document against the schema. You'll get
 back True if the document is valid against the Relax NG schema, and False if
 not::
 
   >>> valid = StringIO('<a><b></b></a>')
-  >>> doc = lxml.etree.parse(valid)
+  >>> doc = etree.parse(valid)
   >>> relaxng.validate(doc)
   1
 
   >>> invalid = StringIO('<a><c></c></a>')
-  >>> doc2 = lxml.etree.parse(invalid)
+  >>> doc2 = etree.parse(invalid)
   >>> relaxng.validate(doc2)
   0
 
@@ -314,7 +363,7 @@ Calling the schema object has the same effect as calling its validate
 method. This is sometimes used in conditional statements::
 
   >>> invalid = StringIO('<a><c></c></a>')
-  >>> doc2 = lxml.etree.parse(invalid)
+  >>> doc2 = etree.parse(invalid)
   >>> if not relaxng(doc2):
   ...     print "invalid!"
   invalid!
@@ -375,20 +424,20 @@ XMLSchema validator::
   ... </xsd:complexType>
   ... </xsd:schema>
   ... ''')
-  >>> xmlschema_doc = lxml.etree.parse(f)
-  >>> xmlschema = lxml.etree.XMLSchema(xmlschema_doc)
+  >>> xmlschema_doc = etree.parse(f)
+  >>> xmlschema = etree.XMLSchema(xmlschema_doc)
 
 You can then validate some ElementTree document with this. Like with
 RelaxNG, you'll get back true if the document is valid against the XML
 schema, and false if not::
 
   >>> valid = StringIO('<a><b></b></a>')
-  >>> doc = lxml.etree.parse(valid)
+  >>> doc = etree.parse(valid)
   >>> xmlschema.validate(doc)
   1
 
   >>> invalid = StringIO('<a><c></c></a>')
-  >>> doc2 = lxml.etree.parse(invalid)
+  >>> doc2 = etree.parse(invalid)
   >>> xmlschema.validate(doc2)
   0
 
@@ -396,7 +445,7 @@ Calling the schema object has the same effect as calling its validate
 method. This is sometimes used in conditional statements::
 
   >>> invalid = StringIO('<a><c></c></a>')
-  >>> doc2 = lxml.etree.parse(invalid)
+  >>> doc2 = etree.parse(invalid)
   >>> if not xmlschema(doc2):
   ...     print "invalid!"
   invalid!
@@ -448,9 +497,9 @@ document be processed by calling the xinclude() method on a tree::
   ... <xi:include href="doc/test.xml" />
   ... </doc>''')
 
-  >>> tree = lxml.etree.parse(data)
+  >>> tree = etree.parse(data)
   >>> tree.xinclude()
-  >>> lxml.etree.tostring(tree.getroot())
+  >>> etree.tostring(tree.getroot())
   '<doc xmlns:xi="http://www.w3.org/2001/XInclude">\n<foo/>\n<a xml:base="doc/test.xml"/>\n</doc>'
 
 
@@ -463,7 +512,7 @@ representation of the canonicalized form of the XML, following the W3C
 C14N recommendation. For example::
 
   >>> f = StringIO('<a><b/></a>')
-  >>> tree = lxml.etree.parse(f)
+  >>> tree = etree.parse(f)
   >>> f2 = StringIO()
   >>> tree.write_c14n(f2)
   >>> f2.getvalue()
