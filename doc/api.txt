@@ -126,7 +126,8 @@ Python unicode strings
 ----------------------
 
 lxml.etree has broader support for Python unicode strings than the ElementTree
-library.  First of all, its parsers can handle unicode strings straight away::
+library.  First of all, where ElementTree would raise an exception, the
+parsers in lxml.etree can handle unicode strings straight away::
 
   >>> uxml = u'<test> \uf8d1 + \uf8d2 </test>'
   >>> uxml
