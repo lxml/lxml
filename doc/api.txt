@@ -153,29 +153,23 @@ encodings if asked for::
   >>> etree.tostring(root, 'UTF-8')
   '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-As an extension, lxml.etree supports calling the builtin ``unicode()``
-function on XML tree objects to retrieve a Python unicode representation::
+As an extension, lxml.etree has a new ``lxml.etree.tounicode()`` function that
+you can call on XML tree objects to retrieve a Python unicode representation::
 
-  >>> unicode(root)
+  >>> etree.tounicode(root)
   u'<test> \uf8d1 + \uf8d2 </test>'
 
   >>> el = etree.Element("test")
-  >>> unicode(el)
+  >>> etree.tounicode(el)
   u'<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
-  >>> unicode(el)
+  >>> etree.tounicode(el)
   u'<test><subtest/></test>'
 
   >>> et = etree.ElementTree(el)
-  >>> unicode(et)
+  >>> etree.tounicode(et)
   u'<test><subtest/></test>'
-
-Note, however, that the ``str()`` function behaves as in the ElementTree
-library and returns something like ``<Element test at 2b084edbaa00>``.  This
-is due to the fact that this function implies no clear encoding semantics.
-The ``unicode()`` function, on the other hand, is specified to always returns
-a Python unicode string.
 
 
 xpath method on ElementTree, Element

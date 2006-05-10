@@ -319,9 +319,6 @@ cdef class _NodeBase:
             unregisterProxy(self)
             attemptDeallocation(self._c_node)
 
-    def __unicode__(self):
-        return _tounicode(self)
-
     def _init(self):
         """Called after object initialisation. Subclasses may override
         this if they recursively call _init() in the superclasses.
@@ -390,9 +387,6 @@ cdef class _ElementTree:
         return root.findall(path)
     
     # extensions to ElementTree API
-    def __unicode__(self):
-        return _tounicode(self._context_node)
-
     def xpath(self, _path, namespaces=None, **_variables):
         """XPath evaluate in context of document.
 
@@ -1403,6 +1397,16 @@ def tostring(element_or_tree, encoding='us-ascii'):
         return _tostring(<_NodeBase>element_or_tree, encoding)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node, encoding)
+    else:
+        raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
+
+def tounicode(element_or_tree):
+    "Serialize an element to the Python unicode representation of its XML tree."
+    assert element_or_tree is not None # for ElementTree compatibility only
+    if isinstance(element_or_tree, _NodeBase):
+        return _tounicode(<_NodeBase>element_or_tree)
+    elif isinstance(element_or_tree, _ElementTree):
+        return _tounicode((<_ElementTree>element_or_tree)._context_node)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 

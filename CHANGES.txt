@@ -8,7 +8,7 @@ Features added
 --------------
 
 * Support for writing the XML representation of Elements and ElementTrees to
-  Python unicode strings via ``unicode()``
+  Python unicode strings via ``etree.tounicode()``
 
 * Support for writing XSLT results to Python unicode strings via ``unicode()``
 
