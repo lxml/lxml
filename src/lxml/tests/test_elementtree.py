@@ -1546,6 +1546,19 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         self.assertEquals('<a><b></b><c></c></a>',
                           canonicalize(tostring(a)))
+        
+    def test_tostring_encoding(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        result = unicode(tostring(a, 'UTF-16'), 'UTF-16')
+        self.assertEquals('<a><b></b><c></c></a>',
+                          canonicalize(result))
 
     def test_tostring_element(self):
         tostring = self.etree.tostring

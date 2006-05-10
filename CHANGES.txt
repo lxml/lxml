@@ -49,10 +49,12 @@ Features added
 Bugs fixed
 ----------
 
+* ``tostring()`` failed to serialize encodings that contain 0-bytes
+
 * ElementTree.xpath() and XPathDocumentEvaluator were not using the
   ElementTree root node as reference point
 
-* Calling document('') in XSLT failed to return the stylesheet
+* Calling ``document('')`` in XSLT failed to return the stylesheet
 
 0.9.2 (2006-05-10)
 ==================

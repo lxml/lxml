@@ -4,6 +4,7 @@ cdef _tostring(_NodeBase element, encoding):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef _Document doc
     cdef tree.xmlOutputBuffer* c_buffer
+    cdef tree.xmlBuffer* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* enc
     if element is None:
@@ -22,10 +23,13 @@ cdef _tostring(_NodeBase element, encoding):
         tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, enc)
         _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
         tree.xmlOutputBufferFlush(c_buffer)
-        if c_buffer.conv is not NULL: 
-            result = tree.xmlBufferContent(c_buffer.conv)
+        if c_buffer.conv is not NULL:
+            c_result_buffer = c_buffer.conv
         else:
-            result = tree.xmlBufferContent(c_buffer.buffer)
+            c_result_buffer = c_buffer.buffer
+        result = python.PyString_FromStringAndSize(
+            tree.xmlBufferContent(c_result_buffer),
+            tree.xmlBufferLength(c_result_buffer))
     finally:
         tree.xmlOutputBufferClose(c_buffer)
     return result
