@@ -1,5 +1,60 @@
 # Private helper functions
 
+cdef _tostring(_NodeBase element, encoding):
+    "Serialize an element to an encoded string representation of its XML tree."
+    cdef _Document doc
+    cdef tree.xmlOutputBuffer* c_buffer
+    cdef tree.xmlCharEncodingHandler* enchandler
+    cdef char* enc
+    if element is None:
+        return None
+    #if encoding is None:
+    #    encoding = 'UTF-8'
+    if encoding in ('utf8', 'UTF8', 'utf-8'):
+        encoding = 'UTF-8'
+    doc = element._doc
+    enc = encoding
+    # it is necessary to *and* find the encoding handler *and* use
+    # encoding during output
+    enchandler = tree.xmlFindCharEncodingHandler(enc)
+    c_buffer = tree.xmlAllocOutputBuffer(enchandler)
+    try:
+        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, enc)
+        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
+        tree.xmlOutputBufferFlush(c_buffer)
+        if c_buffer.conv is not NULL: 
+            result = tree.xmlBufferContent(c_buffer.conv)
+        else:
+            result = tree.xmlBufferContent(c_buffer.buffer)
+    finally:
+        tree.xmlOutputBufferClose(c_buffer)
+    return result
+
+cdef _tounicode(_NodeBase element):
+    "Serialize an element to the Python unicode representation of its XML tree."
+    cdef _Document doc
+    cdef tree.xmlOutputBuffer* c_buffer
+    cdef tree.xmlBuffer* c_result_buffer
+    if element is None:
+        return None
+    doc = element._doc
+    c_buffer = tree.xmlAllocOutputBuffer(NULL)
+    try:
+        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, NULL)
+        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, NULL)
+        tree.xmlOutputBufferFlush(c_buffer)
+        if c_buffer.conv is not NULL:
+            c_result_buffer = c_buffer.conv
+        else:
+            c_result_buffer = c_buffer.buffer
+        result = python.PyUnicode_DecodeUTF8(
+            tree.xmlBufferContent(c_result_buffer),
+            tree.xmlBufferLength(c_result_buffer),
+            'strict')
+    finally:
+        tree.xmlOutputBufferClose(c_buffer)
+    return result
+
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
     cdef xmlNode* c_child

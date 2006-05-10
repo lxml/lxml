@@ -12,9 +12,6 @@ Features added
 
 * Support for writing XSLT results to Python unicode strings via ``unicode()``
 
-* Module level `tounicode` function to return XML serialization as Python
-  unicode string (equivalent to ``tostring`` function)
-
 * Parsing a unicode string no longer copies the string (reduced memory
   footprint)
 
@@ -61,7 +58,7 @@ Features added
 Bugs fixed
 ----------
 
-* str(xslt_result) was broken for output other than UTF-8
+* str(xslt_result) was broken for XSLT output other than UTF-8
 
 * Memory leak if write_c14n fails to write the file after conversion
 

@@ -143,18 +143,18 @@ encoding themselves and thus lie about their real encoding::
   ...   print "This is not well-formed XML!"
   This is not well-formed XML!
 
-To serialize the result, you can either use the normal ``tostring`` module
-function or the new ``tounicode`` function, which is only available in
-lxml.etree and always returns a Python unicode string::
+To serialize the result, you would normally use the ``tostring`` module
+function, which serializes to plain ASCII by default or a number of other
+encodings if asked for::
 
   >>> etree.tostring(root)
   '<test> &#63697; + &#63698; </test>'
 
-  >>> etree.tounicode(root)
-  u'<test> \uf8d1 + \uf8d2 </test>'
+  >>> etree.tostring(root, 'UTF-8')
+  '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-On the output side, lxml.etree supports calling ``unicode()`` on XML tree
-objects to retrieve a Python unicode representation::
+As an extension, lxml.etree supports calling the builtin ``unicode()``
+function on XML tree objects to retrieve a Python unicode representation::
 
   >>> unicode(root)
   u'<test> \uf8d1 + \uf8d2 </test>'
@@ -164,6 +164,9 @@ objects to retrieve a Python unicode representation::
   u'<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
+  >>> unicode(el)
+  u'<test><subtest/></test>'
+
   >>> et = etree.ElementTree(el)
   >>> unicode(et)
   u'<test><subtest/></test>'

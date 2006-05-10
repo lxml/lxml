@@ -320,7 +320,7 @@ cdef class _NodeBase:
             attemptDeallocation(self._c_node)
 
     def __unicode__(self):
-        return tounicode(self)
+        return _tounicode(self)
 
     def _init(self):
         """Called after object initialisation. Subclasses may override
@@ -391,7 +391,7 @@ cdef class _ElementTree:
     
     # extensions to ElementTree API
     def __unicode__(self):
-        return tounicode(self._context_node)
+        return _tounicode(self._context_node)
 
     def xpath(self, _path, namespaces=None, **_variables):
         """XPath evaluate in context of document.
@@ -1396,62 +1396,16 @@ def dump(_NodeBase elem):
     # better, but not ET compatible : "_NodeBase elem not None"
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
-def tostring(_NodeBase element, encoding='us-ascii'):
-    cdef _Document doc
-    cdef tree.xmlOutputBuffer* c_buffer
-    cdef tree.xmlCharEncodingHandler* enchandler
-    cdef char* enc
-
-    assert element is not None
+def tostring(element_or_tree, encoding='us-ascii'):
+    "Serialize an element to an encoded string representation of its XML tree."
+    assert element_or_tree is not None
     # better, but not ET compatible : "_NodeBase element not None"
-    
-    #if encoding is None:
-    #    encoding = 'UTF-8'
-    if encoding in ('utf8', 'UTF8', 'utf-8'):
-        encoding = 'UTF-8'
-    doc = element._doc
-    enc = encoding
-    # it is necessary to *and* find the encoding handler *and* use
-    # encoding during output
-    enchandler = tree.xmlFindCharEncodingHandler(enc)
-    c_buffer = tree.xmlAllocOutputBuffer(enchandler)
-    try:
-        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, enc)
-        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
-        tree.xmlOutputBufferFlush(c_buffer)
-        if c_buffer.conv is not NULL: 
-            result = tree.xmlBufferContent(c_buffer.conv)
-        else:
-            result = tree.xmlBufferContent(c_buffer.buffer)
-    finally:
-        tree.xmlOutputBufferClose(c_buffer)
-    return result
-
-def tounicode(_NodeBase element):
-    cdef _Document doc
-    cdef tree.xmlOutputBuffer* c_buffer
-    cdef tree.xmlBuffer* c_result_buffer
-
-    assert element is not None
-    # better, but not ET compatible : "_NodeBase element not None"
-
-    doc = element._doc
-    c_buffer = tree.xmlAllocOutputBuffer(NULL)
-    try:
-        tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, NULL)
-        _dumpNextNode(c_buffer, doc._c_doc, element._c_node, NULL)
-        tree.xmlOutputBufferFlush(c_buffer)
-        if c_buffer.conv is not NULL:
-            c_result_buffer = c_buffer.conv
-        else:
-            c_result_buffer = c_buffer.buffer
-        result = python.PyUnicode_DecodeUTF8(
-            tree.xmlBufferContent(c_result_buffer),
-            tree.xmlBufferLength(c_result_buffer),
-            'strict')
-    finally:
-        tree.xmlOutputBufferClose(c_buffer)
-    return result
+    if isinstance(element_or_tree, _NodeBase):
+        return _tostring(<_NodeBase>element_or_tree, encoding)
+    elif isinstance(element_or_tree, _ElementTree):
+        return _tostring((<_ElementTree>element_or_tree)._context_node, encoding)
+    else:
+        raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
 def parse(source, parser=None):
     """Return an ElementTree object loaded with source elements.  If no parser

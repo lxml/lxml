@@ -425,54 +425,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
-    def test_tounicode(self):
-        tounicode = self.etree.tounicode
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        
-        self.assert_(isinstance(tounicode(a), unicode))
-        self.assertEquals('<a><b></b><c></c></a>',
-                          canonicalize(tounicode(a)))
-
-    def test_tounicode_element(self):
-        tounicode = self.etree.tounicode
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(c, 'd')
-        self.assert_(isinstance(tounicode(b), unicode))
-        self.assert_(isinstance(tounicode(c), unicode))
-        self.assertEquals('<b></b>',
-                          canonicalize(tounicode(b)))
-        self.assertEquals('<c><d></d></c>',
-                          canonicalize(tounicode(c)))
-
-    def test_tounicode_none(self):
-        tounicode = self.etree.tounicode
-        self.assertRaises(AssertionError, self.etree.tounicode, None)
-
-    def test_tounicode_element_tail(self):
-        tounicode = self.etree.tounicode
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(c, 'd')
-        b.tail = 'Foo'
-
-        self.assert_(isinstance(tounicode(b), unicode))
-        self.assert_(tounicode(b) == '<b/>Foo' or
-                     tounicode(b) == '<b />Foo')
-
     def test_unicode(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
