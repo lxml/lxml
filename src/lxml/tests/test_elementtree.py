@@ -1546,19 +1546,6 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         self.assertEquals('<a><b></b><c></c></a>',
                           canonicalize(tostring(a)))
-        
-    def test_tostring_encoding(self):
-        tostring = self.etree.tostring
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-        
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-
-        result = unicode(tostring(a, 'UTF-16'), 'UTF-16')
-        self.assertEquals('<a><b></b><c></c></a>',
-                          canonicalize(result))
 
     def test_tostring_element(self):
         tostring = self.etree.tostring
@@ -1698,7 +1685,20 @@ class ETreeTestCaseBase(unittest.TestCase):
         a = Element('a')
         a.text = u'Søk på nettet'
         self.assert_(tostring(a, 'UTF-8') in [xml, prologue + xml])
+
+    def test_encoding_tostring_utf16(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
         
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        result = unicode(tostring(a, 'UTF-16'), 'UTF-16')
+        self.assertEquals('<a><b></b><c></c></a>',
+                          canonicalize(result))
+
     def test_encoding_tostring_sub(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
