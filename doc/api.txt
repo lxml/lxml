@@ -156,6 +156,9 @@ lxml.etree and always returns a Python unicode string::
 On the output side, lxml.etree supports calling ``unicode()`` on XML tree
 objects to retrieve a Python unicode representation::
 
+  >>> unicode(root)
+  u'<test> \uf8d1 + \uf8d2 </test>'
+
   >>> el = etree.Element("test")
   >>> unicode(el)
   u'<test/>'
