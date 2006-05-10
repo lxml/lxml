@@ -1398,8 +1398,7 @@ def dump(_NodeBase elem):
 
 def tostring(element_or_tree, encoding='us-ascii'):
     "Serialize an element to an encoded string representation of its XML tree."
-    assert element_or_tree is not None
-    # better, but not ET compatible : "_NodeBase element not None"
+    assert element_or_tree is not None # for ElementTree compatibility only
     if isinstance(element_or_tree, _NodeBase):
         return _tostring(<_NodeBase>element_or_tree, encoding)
     elif isinstance(element_or_tree, _ElementTree):
