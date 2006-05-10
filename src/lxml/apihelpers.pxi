@@ -1,6 +1,6 @@
 # Private helper functions
 
-cdef _tostring(_NodeBase element, encoding):
+cdef _tostring(_NodeBase element, encoding, int xml_declaration):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef _Document doc
     cdef tree.xmlOutputBuffer* c_buffer
@@ -9,8 +9,6 @@ cdef _tostring(_NodeBase element, encoding):
     cdef char* enc
     if element is None:
         return None
-    #if encoding is None:
-    #    encoding = 'UTF-8'
     if encoding in ('utf8', 'UTF8', 'utf-8'):
         encoding = 'UTF-8'
     doc = element._doc
@@ -19,6 +17,22 @@ cdef _tostring(_NodeBase element, encoding):
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
+    if c_buffer is NULL:
+        raise LxmlError, "Failed to create output buffer"
+
+    if xml_declaration:
+        if doc._c_doc.version is NULL:
+            version = "1.0"
+        else:
+            version = doc._c_doc.version
+        xml_decl = "<?xml version='%s' encoding='%s'?>" % (
+            version, encoding)
+        tree.xmlOutputBufferWriteString(c_buffer, "<?xml version='")
+        tree.xmlOutputBufferWriteString(c_buffer, _cstr(version))
+        tree.xmlOutputBufferWriteString(c_buffer, "' encoding='")
+        tree.xmlOutputBufferWriteString(c_buffer, _cstr(encoding))
+        tree.xmlOutputBufferWriteString(c_buffer, "'?>\n")
+
     try:
         tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, enc)
         _dumpNextNode(c_buffer, doc._c_doc, element._c_node, enc)
@@ -43,6 +57,8 @@ cdef _tounicode(_NodeBase element):
         return None
     doc = element._doc
     c_buffer = tree.xmlAllocOutputBuffer(NULL)
+    if c_buffer is NULL:
+        raise LxmlError, "Failed to create output buffer"
     try:
         tree.xmlNodeDumpOutput(c_buffer, doc._c_doc, element._c_node, 0, 0, NULL)
         _dumpNextNode(c_buffer, doc._c_doc, element._c_node, NULL)

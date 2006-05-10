@@ -1390,13 +1390,24 @@ def dump(_NodeBase elem):
     # better, but not ET compatible : "_NodeBase elem not None"
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
-def tostring(element_or_tree, encoding='us-ascii'):
+def tostring(element_or_tree, encoding='us-ascii', xml_declaration=None):
     "Serialize an element to an encoded string representation of its XML tree."
+    cdef int write_declaration
     assert element_or_tree is not None # for ElementTree compatibility only
+
+    encoding = str(encoding)
+    if xml_declaration is None:
+        # by default, write an XML declaration only for non-standard encodings
+        write_declaration = (encoding != 'us-ascii')
+    else:
+        write_declaration = bool(xml_declaration)
+
     if isinstance(element_or_tree, _NodeBase):
-        return _tostring(<_NodeBase>element_or_tree, encoding)
+        return _tostring(<_NodeBase>element_or_tree,
+                         encoding, write_declaration)
     elif isinstance(element_or_tree, _ElementTree):
-        return _tostring((<_ElementTree>element_or_tree)._context_node, encoding)
+        return _tostring((<_ElementTree>element_or_tree)._context_node,
+                         encoding, write_declaration)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 

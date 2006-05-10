@@ -49,6 +49,8 @@ Features added
 Bugs fixed
 ----------
 
+* ``tostring()`` now adds an XML declaration for non-ASCII encodings
+
 * ``tostring()`` failed to serialize encodings that contain 0-bytes
 
 * ElementTree.xpath() and XPathDocumentEvaluator were not using the
