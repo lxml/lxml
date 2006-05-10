@@ -377,12 +377,13 @@ cdef _raiseParseError(xmlParserCtxt* ctxt, char* c_filename):
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
         if ctxt.lastError.message is not NULL:
             message = "Error reading file %s: %s" % (
-                funicode(c_filename), funicode(ctxt.lastError.message))
+                funicode(c_filename),
+                funicode(ctxt.lastError.message).strip())
         else:
             message = "Error reading file %s" % funicode(c_filename)
         raise IOError, message
     elif ctxt.lastError.message is not NULL:
-        raise XMLSyntaxError, funicode(ctxt.lastError.message)
+        raise XMLSyntaxError, funicode(ctxt.lastError.message).strip()
     else:
         raise XMLSyntaxError
 
@@ -652,7 +653,7 @@ cdef _Document _parseMemoryDocument(text, url, parser):
     if python.PyUnicode_Check(text):
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
-            text = _stripDeclaration(_utf8(text))
+            text = _stripEncodingDeclaration(_utf8(text))
     else:
         text = _utf8(text)
     if url is not None:
