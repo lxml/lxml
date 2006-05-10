@@ -30,6 +30,66 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           st.tostring(res))
 
+    def test_xslt_utf8(self):
+        tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="UTF-8"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree)
+        expected = u'''\
+<?xml version="1.0" encoding="UTF-8"?>
+<foo>\uF8D2</foo>
+'''
+        self.assertEquals(expected,
+                          unicode(str(res), 'UTF-8'))
+
+    def test_xslt_encoding(self):
+        tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="UTF-16"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree)
+        expected = u'''\
+<?xml version="1.0" encoding="UTF-16"?>
+<foo>\uF8D2</foo>
+'''
+        self.assertEquals(expected,
+                          unicode(str(res), 'UTF-16'))
+
+    def test_xslt_unicode(self):
+        tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="UTF-16"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree)
+        expected = u'''\
+<?xml version="1.0"?>
+<foo>\uF8D2</foo>
+'''
+        self.assertEquals(expected,
+                          unicode(res))
+
     def test_exslt(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -250,10 +310,11 @@ class ETreeXSLTTestCase(HelperTestCase):
         etree.tostring(result.getroot())
         result = transform.apply(source)
         etree.tostring(result.getroot())
-
-        result = transform(source)
-        result = transform(source)
         str(result)
+
+        result1 = transform(source)
+        result2 = transform(source)
+        self.assertEquals(str(result1), str(result2))
         result = transform(source)
         str(result)
 

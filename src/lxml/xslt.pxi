@@ -315,19 +315,37 @@ cdef class XSLT:
 
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
-    def __str__(self):
-        cdef char* s
-        cdef int l
+    cdef _saveToStringAndSize(self, char** s, int* l):
         cdef int r
-        r = xslt.xsltSaveResultToString(&s, &l, self._doc._c_doc,
+        r = xslt.xsltSaveResultToString(s, l, self._doc._c_doc,
                                         self._xslt._c_style)
         if r == -1:
             raise XSLTSaveError, "Error saving XSLT result to string"
+
+    def __str__(self):
+        cdef char* s
+        cdef int l
+        self._saveToStringAndSize(&s, &l)
         if s is NULL:
             return ''
-        result = funicode(s)
+        # we must not use 'funicode' here as this is not always UTF-8
+        result = python.PyString_FromStringAndSize(s, l)
         tree.xmlFree(s)
         return result
+
+    def __unicode__(self):
+        cdef char* encoding
+        cdef char* s
+        cdef int l
+        self._saveToStringAndSize(&s, &l)
+        if s is NULL:
+            return unicode()
+        encoding = self._xslt._c_style.encoding
+        if encoding is NULL:
+            encoding = 'ascii'
+        result = python.PyUnicode_Decode(s, l, encoding, 'strict')
+        tree.xmlFree(s)
+        return _stripEncodingDeclaration(result)
 
 cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     cdef _XSLTResultTree result

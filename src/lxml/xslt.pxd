@@ -12,6 +12,7 @@ cdef extern from "libxslt/xsltInternals.h":
         xmlDoc* doc
 
     ctypedef struct xsltStylesheet:
+        char* encoding
         xmlDoc* doc
 
     ctypedef struct xsltTransformContext:

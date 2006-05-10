@@ -187,7 +187,6 @@ given an ElementTree object to construct an XSLT transformer::
   >>> f = StringIO('''\
   ... <xsl:stylesheet version="1.0"
   ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  ...     <xsl:template match="*" />
   ...     <xsl:template match="/">
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
@@ -212,6 +211,33 @@ or text) string by applying the str() function::
 
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+The result is always a plain string, encoded as requested by the `xsl:output`
+element in the stylesheet.  If you want a Python unicode string instead, you
+should set this encoding to `UTF-8` (or leave it as the `ASCII` default).
+This allows you to call the `unicode()` function on the result::
+
+  >>> unicode(result)
+  u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+However, encodings that are not supported by Python will result in an error::
+
+  >>> f = StringIO('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:output encoding="UCS4"/>
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> xslt_doc = lxml.etree.parse(f)
+  >>> transform = lxml.etree.XSLT(xslt_doc)
+
+  >>> result = transform(doc)
+  >>> unicode(result)
+  Traceback (most recent call last):
+    [...]
+  LookupError: unknown encoding: UCS4
 
 It is possible to pass parameters, in the form of XPath expressions, to the
 XSLT template::

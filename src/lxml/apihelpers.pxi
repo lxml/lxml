@@ -121,6 +121,14 @@ cdef _dumpNextNode(tree.xmlOutputBuffer* c_buffer, xmlDoc* c_doc,
     if c_next is not NULL and c_next.type == tree.XML_TEXT_NODE:
         tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)
 
+cdef object __REPLACE_XML_ENCODING
+__REPLACE_XML_ENCODING = re.compile(
+    r'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U).sub
+
+cdef object _stripEncodingDeclaration(object xml_string):
+    # this is a hack to remove the XML encoding declaration from unicode
+    return __REPLACE_XML_ENCODING(r'\g<1>', xml_string)
+
 cdef object _stripDeclaration(object xml_string):
     # this is a hack to remove the XML declaration when we encode to UTF-8
     xml_string = xml_string.strip()
