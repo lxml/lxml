@@ -46,6 +46,20 @@ Features added
 * XMLDTDID function parses XML into tuple (root node, ID dict) based on xml:id
   implementation of libxml2 (as opposed to ET compatible XMLID)
 
+Bugs fixed
+----------
+
+* ElementTree.xpath() and XPathDocumentEvaluator were not using the
+  ElementTree root node as reference point
+
+* Calling document('') in XSLT failed to return the stylesheet
+
+0.9.2 (2006-05-10)
+==================
+
+Features added
+--------------
+
 * Speedup for Element.makeelement(): the new element now reuses the original
   libxml2 document instead of creating a new empty one
 
@@ -61,11 +75,6 @@ Bugs fixed
 * str(xslt_result) was broken for XSLT output other than UTF-8
 
 * Memory leak if write_c14n fails to write the file after conversion
-
-* ElementTree.xpath() and XPathDocumentEvaluator were not using the
-  ElementTree root node as reference point
-
-* Calling document('') in XSLT failed to return the stylesheet
 
 * Crash in XMLSchema and RelaxNG when passing non-schema documents
 
