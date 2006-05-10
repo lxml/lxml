@@ -1401,7 +1401,12 @@ def tostring(element_or_tree, encoding='us-ascii'):
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
 def tounicode(element_or_tree):
-    "Serialize an element to the Python unicode representation of its XML tree."
+    """Serialize an element to the Python unicode representation of its XML
+    tree.
+
+    Note that the result does not carry an XML encoding declaration and is
+    therefore not necessarily suited for serialization without further
+    treatment."""
     assert element_or_tree is not None # for ElementTree compatibility only
     if isinstance(element_or_tree, _NodeBase):
         return _tounicode(<_NodeBase>element_or_tree)
