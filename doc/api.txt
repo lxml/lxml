@@ -171,12 +171,12 @@ you can call on XML tree objects to retrieve a Python unicode representation::
   >>> etree.tounicode(et)
   u'<test><subtest/></test>'
 
-Note that the unicode string returned by ``tounicode()`` never has an XML
-declaration.  This means, it does not specify an encoding nor an XML version.
-This makes it possible to pass the unicode string back into the lxml parsers.
-However, you may have to add a declaration yourself if you want to serialize
-the unicode string to a byte stream later.  In contrast, the ``tostring()``
-function automatically adds a declaration as needed.
+Note that the unicode strings returned by ``tounicode()`` never have an XML
+declaration and therefore do not specify an encoding.  This makes it possible
+to pass them back into the lxml parsers.  However, you may have to add a
+declaration yourself if you want to serialize such a unicode string to a byte
+stream later.  In contrast, the ``tostring()`` function automatically adds a
+declaration as needed that reflects the encoding of the returned byte string.
 
 
 xpath method on ElementTree, Element
