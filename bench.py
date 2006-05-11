@@ -2,11 +2,16 @@ import sys, string, time, copy, gc
 from itertools import *
 from StringIO import StringIO
 
-_TEXT  = "some ASCII text"
-_UTEXT = u"some klingon: \F8D2"
+TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
+
+_TEXT  = "some ASCII text" * 10 * TREE_FACTOR
+_UTEXT = u"some klingon: \F8D2" * 10 * TREE_FACTOR
 _ATTRIBUTES = {
-    '{attr}test' : _UTEXT,
-    'bla'        : _TEXT
+    '{attr}test1' : _UTEXT,
+    '{attr}test2' : _UTEXT,
+    'bla1'        : _TEXT,
+    'bla2'        : _TEXT,
+    'bla3'        : _TEXT
     }
 
 def with_attributes(use_attributes):
@@ -125,45 +130,45 @@ class BenchMarkBase(object):
         return all_trees
 
     def _setup_tree1(self, text, attributes):
-        "tree with 26 2nd level and 520 3rd level children"
+        "tree with 26 2nd level and 520 * TREE_FACTOR 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{a}root')
+        root = self.etree.Element('{abc}rootnode')
         for ch1 in atoz:
-            el = SubElement(root, "{b}"+ch1, attributes)
+            el = SubElement(root, "{bcd}"+ch1*5, attributes)
             for ch2 in atoz:
-                for i in range(20):
-                    SubElement(el, "{c}%s%03d" % (ch2, i))
+                for i in range(20 * TREE_FACTOR):
+                    SubElement(el, "{cdefg}%s%05d" % (ch2, i))
         t = current_time() - t
         return (root, t)
 
     def _setup_tree2(self, text, attributes):
-        "tree with 520 2nd level and 26 3rd level children"
+        "tree with 520 * TREE_FACTOR 2nd level and 26 3rd level children"
         atoz = self.atoz
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{a}root')
+        root = self.etree.Element('{abc}rootnode')
         for ch1 in atoz:
-            for i in range(20):
-                el = SubElement(root, "{b}"+ch1, attributes)
+            for i in range(20 * TREE_FACTOR):
+                el = SubElement(root, "{bcd}"+ch1*5, attributes)
                 for ch2 in atoz:
-                    SubElement(el, "{c}%s%03d" % (ch2, i))
+                    SubElement(el, "{cdefg}%s%05d" % (ch2, i))
         t = current_time() - t
         return (root, t)
 
     def _setup_tree3(self, text, attributes):
-        "tree of depth 8 with 3 children per node"
+        "tree of depth 8 + TREE_FACTOR with 3 children per node"
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{a}root')
+        root = self.etree.Element('{abc}rootnode')
         children = [root]
-        for i in range(7):
+        for i in range(6 + TREE_FACTOR):
             tag_no = count().next
-            children = [ SubElement(c, "{b}a%d" % i, attributes)
+            children = [ SubElement(c, "{bcd}a%05d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         t = current_time() - t
         return (root, t)
@@ -174,12 +179,12 @@ class BenchMarkBase(object):
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
-        root = self.etree.Element('{a}root')
+        root = self.etree.Element('{abc}rootnode')
         children = [root]
         for ch1 in atoz:
-            el = SubElement(root, "{b}"+ch1, attributes)
-            SubElement(el, "{c}a", attributes)
-            SubElement(el, "{c}b", attributes)
+            el = SubElement(root, "{bcd}"+ch1*5, attributes)
+            SubElement(el, "{cdefg}abcde", attributes)
+            SubElement(el, "{cdefg}bcdef", attributes)
         t = current_time() - t
         return (root, t)
 
@@ -249,19 +254,28 @@ class BenchMark(BenchMarkBase):
         for child in reversed(root):
             pass
 
+    @with_attributes(True)
+    @with_attributes(False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8(self, root):
         self.etree.tostring(root, 'UTF-8')
 
+    @with_attributes(True)
+    @with_attributes(False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf16(self, root):
         self.etree.tostring(root, 'UTF-16')
 
+    @with_attributes(True)
+    @with_attributes(False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8_unicode_XML(self, root):
         xml = unicode(self.etree.tostring(root, 'UTF-8'), 'UTF-8')
+        open("test%03d.txt" % len(root), 'w').write(xml.encode('UTF-8'))
         self.etree.XML(xml)
 
+    @with_attributes(True)
+    @with_attributes(False)
     @with_text(text=True, utext=True)
     def bench_write_utf8_parse_stringIO(self, root):
         f = StringIO()
@@ -495,19 +509,36 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         try:
             sys.argv.remove('-i')
+            # run benchmark 'inplace'
             sys.path.insert(0, 'src')
         except ValueError:
             pass
 
         try:
             sys.argv.remove('-nolxml')
+            # run without lxml
             import_lxml = False
         except ValueError:
             pass
 
         try:
-            sys.argv.remove('-c')
+            sys.argv.remove('-z')
+            # reset callgrind after tree setup
             callgrind_zero = True
+        except ValueError:
+            pass
+
+        try:
+            sys.argv.remove('-l')
+            # use large trees
+            TREE_FACTOR *= 2
+        except ValueError:
+            pass
+
+        try:
+            sys.argv.remove('-L')
+            # use LARGE trees
+            TREE_FACTOR *= 2
         except ValueError:
             pass
 
@@ -517,20 +548,19 @@ if __name__ == '__main__':
         _etrees.append(etree)
 
     if len(sys.argv) > 1:
-        try:
-            sys.argv.remove('-a')
-        except ValueError:
-            pass
-        else:
-            try:
-                from elementtree import ElementTree as ET
-                _etrees.append(ET)
-            except ImportError:
-                pass
-
+        if '-a' in sys.argv or '-c' in sys.argv:
+            # 'all' or 'C-implementations' ?
             try:
                 import cElementTree as cET
                 _etrees.append(cET)
+            except ImportError:
+                pass
+
+        if '-a' in sys.argv:
+            # 'all' ?
+            try:
+                from elementtree import ElementTree as ET
+                _etrees.append(ET)
             except ImportError:
                 pass
 
@@ -551,7 +581,9 @@ if __name__ == '__main__':
             if not name.startswith('bench_'):
                 name = 'bench_' + name
             selected.append(name)
-        benchmarks = [ [ b for b in bs if b[0] in selected ]
+        benchmarks = [ [ b for b in bs
+                         if [ contains for contains in selected
+                              if contains in b[0] ] ]
                        for bs in benchmarks ]
 
     import time
