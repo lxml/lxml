@@ -136,9 +136,13 @@ from svn directly, using a command like this::
 
   svn co http://codespeak.net/svn/lxml/trunk lxml
 
-You can also `browse it through the web`_.
+You can also `browse it through the web`_.  The `latest CHANGES`_ of the
+developer version are also accessible.  You can check there if a bug you found
+has been fixed or a feature you want has been implemented in the latest trunk
+version.
 
 .. _`browse it through the web`: http://codespeak.net/svn/lxml
+.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
 License
 -------

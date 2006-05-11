@@ -278,7 +278,8 @@ the result::
   >>> unicode(result)
   u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-However, encodings that are not supported by Python will result in an error::
+You can use other encodings at the cost of multiple recoding.  Encodings that
+are not supported by Python will result in an error::
 
   >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
