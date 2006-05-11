@@ -269,10 +269,11 @@ or text) string by applying the str() function::
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-The result is always a plain string, encoded as requested by the `xsl:output`
-element in the stylesheet.  If you want a Python unicode string instead, you
-should set this encoding to `UTF-8` (or leave it as the `ASCII` default).
-This allows you to call the `unicode()` function on the result::
+The result is always a plain string, encoded as requested by the
+``xsl:output`` element in the stylesheet.  If you want a Python unicode string
+instead, you should set this encoding to ``UTF-8`` (unless the `ASCII` default
+is sufficient).  This allows you to call the builtin ``unicode()`` function on
+the result::
 
   >>> unicode(result)
   u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
