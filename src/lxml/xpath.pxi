@@ -211,14 +211,15 @@ cdef class ETXPath(XPath):
     """Special XPath class that supports the ElementTree {uri} notation for
     namespaces."""
     def __init__(self, path, extensions=None):
-        path_utf, namespaces = self._nsextract_path(_utf8(path))
-        XPath.__init__(self, funicode(path_utf), namespaces, extensions)
+        path, namespaces = self._nsextract_path(path)
+        XPath.__init__(self, path, namespaces, extensions)
 
-    cdef _nsextract_path(self, path_utf):
+    cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
         cdef int i
-        namespaces = {}
+        path_utf = path.encode('UTF-8')
         stripped_path = _replace_strings('', path_utf) # remove string literals
+        namespaces = {}
         namespace_defs = []
         i = 1
         for namespace_def in _find_namespaces(stripped_path):
@@ -227,8 +228,11 @@ cdef class ETXPath(XPath):
                 i = i+1
                 python.PyList_Append(namespace_defs, namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'
+                namespace = python.PyUnicode_FromEncodedObject(
+                    namespace, 'UTF-8', 'strict')
                 python.PyDict_SetItem(namespaces, prefix, namespace)
                 prefix_str = prefix + ':'
                 # FIXME: this also replaces {namespaces} within strings!
-                path_utf   = path_utf.replace(namespace_def, prefix_str)
-        return path_utf, namespaces
+                path_utf = path_utf.replace(namespace_def, prefix_str)
+        path = python.PyUnicode_FromEncodedObject(path_utf, 'UTF-8', 'strict')
+        return path, namespaces
