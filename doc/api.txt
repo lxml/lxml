@@ -138,7 +138,7 @@ This requires, however, that unicode strings do not specify a conflicting
 encoding themselves and thus lie about their real encoding::
 
   >>> try:
-  ...   broken = etree.XML(u'<?xml encoding="ASCII"?>' + uxml)
+  ...   broken = etree.XML(u'<?xml encoding="ASCII"?>\n' + uxml)
   ... except etree.XMLSyntaxError:
   ...   print "This is not well-formed XML!"
   This is not well-formed XML!
@@ -170,6 +170,13 @@ you can call on XML tree objects to retrieve a Python unicode representation::
   >>> et = etree.ElementTree(el)
   >>> etree.tounicode(et)
   u'<test><subtest/></test>'
+
+Note that the unicode string returned by ``tounicode()`` never has an XML
+declaration.  This means, it does not specify an encoding nor an XML version.
+This makes it possible to pass the unicode string back into the lxml parsers.
+However, you may have to add a declaration yourself if you want to serialize
+the unicode string to a byte stream later.  In contrast, the ``tostring()``
+function automatically adds a declaration as needed.
 
 
 xpath method on ElementTree, Element
