@@ -49,6 +49,9 @@ Features added
 Bugs fixed
 ----------
 
+* Element/SubElement failed to set attribute namespaces from passed ``attrib``
+  dictionary
+
 * ``tostring()`` now adds an XML declaration for non-ASCII encodings
 
 * ``tostring()`` failed to serialize encodings that contain 0-bytes

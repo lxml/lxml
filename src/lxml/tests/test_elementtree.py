@@ -476,6 +476,13 @@ class ETreeTestCaseBase(unittest.TestCase):
         result.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], result)
 
+    def test_element_with_attributes_keywords(self):
+        Element = self.etree.Element
+        
+        el = Element('tag', foo='Foo', bar='Bar')
+        self.assertEquals('Foo', el.attrib['foo'])
+        self.assertEquals('Bar', el.attrib['bar'])
+
     def test_element_with_attributes(self):
         Element = self.etree.Element
         
@@ -483,13 +490,30 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('Foo', el.attrib['foo'])
         self.assertEquals('Bar', el.attrib['bar'])
 
+    def test_element_with_attributes_ns(self):
+        Element = self.etree.Element
+
+        el = Element('tag', {'{ns1}foo':'Foo', '{ns2}bar':'Bar'})
+        self.assertEquals('Foo', el.attrib['{ns1}foo'])
+        self.assertEquals('Bar', el.attrib['{ns2}bar'])
+
     def test_subelement_with_attributes(self):
         Element =  self.etree.Element
         SubElement = self.etree.SubElement
         
         el = Element('tag')
-        SubElement(el, 'foo', baz="Baz")
+        SubElement(el, 'foo', attrib={'foo':'Foo'}, baz="Baz")
         self.assertEquals("Baz", el[0].attrib['baz'])
+        self.assertEquals('Foo', el[0].attrib['foo'])
+
+    def test_subelement_with_attributes_ns(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('tag')
+        SubElement(el, 'foo', {'{ns1}foo':'Foo', '{ns2}bar':'Bar'})
+        self.assertEquals('Foo', el[0].attrib['{ns1}foo'])
+        self.assertEquals('Bar', el[0].attrib['{ns2}bar'])
         
     def test_write(self):
         ElementTree = self.etree.ElementTree

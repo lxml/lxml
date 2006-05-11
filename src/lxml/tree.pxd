@@ -167,6 +167,8 @@ cdef extern from "libxml/tree.h":
                                 char* name, char* content)
     cdef xmlDoc* xmlNewDoc(char* version)
     cdef xmlAttr* xmlNewProp(xmlNode* node, char* name, char* value)
+    cdef xmlAttr* xmlNewNsProp(xmlNode* node, xmlNs* ns,
+                               char* name, char* value)
     cdef char* xmlGetNoNsProp(xmlNode* node, char* name)
     cdef char* xmlGetNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef void xmlSetNs(xmlNode* node, xmlNs* ns)

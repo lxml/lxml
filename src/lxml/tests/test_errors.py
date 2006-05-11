@@ -14,7 +14,7 @@ class ErrorTestCase(unittest.TestCase):
     def test_bad_element(self):
         # attrib argument of Element() should be a dictionary, so if
         # we pass a string we should get an error.
-        self.assertRaises(AttributeError, self.etree.Element, 'a', 'b')
+        self.assertRaises(TypeError, self.etree.Element, 'a', 'b')
 
     def test_empty_parse(self):
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, '')
