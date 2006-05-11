@@ -22,6 +22,7 @@ cdef class _BaseContext:
     cdef object _namespaces
     cdef object _utf_refs
     cdef object _function_cache
+    cdef object _function_cache_ns
     cdef object _called_function
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
@@ -31,6 +32,7 @@ cdef class _BaseContext:
         self._xpathCtxt = NULL
         self._utf_refs = {}
         self._function_cache = {}
+        self._function_cache_ns = {}
         self._called_function = None
 
         if extensions is not None:
@@ -73,6 +75,7 @@ cdef class _BaseContext:
         self._doc = doc
         self._exc.clear()
         python.PyDict_Clear(self._function_cache)
+        python.PyDict_Clear(self._function_cache_ns)
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
@@ -108,23 +111,48 @@ cdef class _BaseContext:
     
     # extension functions
 
-    cdef int _prepare_function_call(self, ns_uri_utf, name_utf):
+    cdef int _prepare_function_call(self, char* c_ns_uri, char* c_name):
+        """Find an extension function and store it in 'self._called_function'.
+        This is absolutely performance-critical for XPath/XSLT!
+        Return 1 if it was found, 0 otherwise.
+        Parameters: c_ns_uri may be NULL, c_name must not be NULL
+        """
+        cdef python.PyObject* c_dict
         cdef python.PyObject* dict_result
-        key = (ns_uri_utf, name_utf)
-        dict_result = python.PyDict_GetItem(self._function_cache, key)
-        if dict_result is not NULL:
-            function = <object>dict_result
-            self._called_function = function
-            return function is not None
+        if c_ns_uri is NULL:
+            c_dict = <python.PyObject*>self._function_cache
+        else:
+            c_dict = python.PyDict_GetItemString(
+                self._function_cache_ns, c_ns_uri)
+
+        if c_dict is not NULL:
+            d = <object>c_dict
+            dict_result = python.PyDict_GetItemString(d, c_name)
+            if dict_result is not NULL:
+                function = <object>dict_result
+                self._called_function = function
+                return function is not None
+        else:
+            d = {}
+            python.PyDict_SetItem(self._function_cache_ns, ns_uri_utf, d)
+
+        # first time we look up this function, so the rest is less critical
+        if c_ns_uri is not NULL:
+            ns_uri_utf = c_ns_uri
+        name_utf = c_name
 
         if self._extensions is not None:
-            dict_result = python.PyDict_GetItem(self._extensions, key)
+            dict_result = python.PyDict_GetItem(
+                self._extensions, (ns_uri_utf, name_utf))
+        else:
+            dict_result = NULL
         if dict_result is not NULL:
             function = <object>dict_result
         else:
             function = _find_extension(ns_uri_utf, name_utf)
 
-        python.PyDict_SetItem(self._function_cache, key, function)
+        # we also store None values here to make sure we remember
+        python.PyDict_SetItem(d, name_utf, function)
         self._called_function = function
         return function is not None
 
@@ -180,14 +208,8 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt,
                                             char* c_name, char* c_ns_uri):
     "Module level lookup function for XPath/XSLT functions"
     cdef _BaseContext context
-    if c_name is NULL:
-        return NULL
-    if c_ns_uri is NULL:
-        ns_uri = None
-    else:
-        ns_uri = c_ns_uri
     context = <_BaseContext>ctxt
-    if context._prepare_function_call(ns_uri, c_name):
+    if context._prepare_function_call(c_ns_uri, c_name):
         return _call_prepared_function
     else:
         return NULL
@@ -289,16 +311,15 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef _BaseContext context
     rctxt = ctxt.context
     context = <_BaseContext>(rctxt.userData)
-    name = rctxt.function
-    if rctxt.functionURI is not NULL:
-        uri = rctxt.functionURI
-    else:
-        uri = None
-    if context._prepare_function_call(uri, name):
+    if context._prepare_function_call(rctxt.functionURI, rctxt.function):
         _extension_function_call(context, ctxt, nargs)
     else:
+        if rctxt.functionURI is not NULL:
+            fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
+        else:
+            fref = rctxt.function
         xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
-        exception = XPathFunctionError("XPath function {%s}%s not found" % (uri, name))
+        exception = XPathFunctionError("XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)
 
 cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
