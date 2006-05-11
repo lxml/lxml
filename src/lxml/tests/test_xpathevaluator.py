@@ -315,6 +315,19 @@ class ETreeETXPathClassTestCase(HelperTestCase):
         self.assertEquals(1, len(r))
         self.assertEquals('{nsb}b', r[0].tag)
 
+    def test_xpath_compile_unicode(self):
+        x = self.parse(u'<a><b xmlns="nsa\uf8d2"/><b xmlns="nsb\uf8d1"/></a>')
+
+        expr = etree.ETXPath(u"/a/{nsa\uf8d2}b")
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+        self.assertEquals(u'{nsa\uf8d2}b', r[0].tag)
+
+        expr = etree.ETXPath(u"/a/{nsb\uf8d1}b")
+        r = expr.evaluate(x)
+        self.assertEquals(1, len(r))
+        self.assertEquals(u'{nsb\uf8d1}b', r[0].tag)
+
 SAMPLE_XML = etree.parse(StringIO("""
 <body>
   <tag>text</tag>
