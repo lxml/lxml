@@ -879,8 +879,6 @@ cdef class _Element(_NodeBase):
         return None
 
     def getiterator(self, tag=None):
-        if tag == '*':
-            tag = None
         return ElementDepthFirstIterator(self, tag)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
@@ -1207,7 +1205,8 @@ cdef class ElementDepthFirstIterator:
     def __init__(self, _NodeBase node not None, tag=None):
         self._next_node = node
         self._depth = 0
-
+        if tag == '*':
+            tag = None
         if tag is None:
             self._href = NULL
             self._name = NULL
