@@ -476,6 +476,23 @@ class ETreeTestCaseBase(unittest.TestCase):
         result.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], result)
 
+    def test_findall(self):
+        XML = self.etree.XML
+        root = XML('<a><b><c/></b><b/><c><b/></c></a>')
+        self.assertEquals(len(root.findall("c")), 1)
+        self.assertEquals(len(root.findall(".//c")), 2)
+        self.assertEquals(len(root.findall(".//b")), 3)
+        self.assertEquals(len(root.findall(".//b")[0]), 1)
+        self.assertEquals(len(root.findall(".//b")[1]), 0)
+        self.assertEquals(len(root.findall(".//b")[2]), 0)
+
+    def test_findall_ns(self):
+        XML = self.etree.XML
+        root = XML('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')
+        self.assertEquals(len(root.findall(".//{X}b")), 2)
+        self.assertEquals(len(root.findall(".//b")), 3)
+        self.assertEquals(len(root.findall("b")), 2)
+
     def test_element_with_attributes_keywords(self):
         Element = self.etree.Element
         
@@ -1107,7 +1124,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             list(a.getiterator('a')))
         self.assertEquals(
             [a2],
-            list(e.getiterator('a'))) 
+            list(c.getiterator('a')))
 
     def test_getiterator_with_text(self):
         Element = self.etree.Element
