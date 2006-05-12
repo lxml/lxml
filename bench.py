@@ -582,8 +582,8 @@ if __name__ == '__main__':
                 name = 'bench_' + name
             selected.append(name)
         benchmarks = [ [ b for b in bs
-                         if [ contains for contains in selected
-                              if contains in b[0] ] ]
+                         if [ match for match in selected
+                              if match in b[0] ] ]
                        for bs in benchmarks ]
 
     import time
