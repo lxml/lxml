@@ -897,7 +897,7 @@ cdef class _Element(_NodeBase):
         c_node = _createElement(c_doc, name_utf)
         # add namespaces to node if necessary
         doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-        _setNodeAttributes(c_node, doc, attrib, _extra)
+        _initNodeAttributes(c_node, doc, attrib, _extra)
         return _elementFactory(doc, c_node)
 
     def find(self, path):
@@ -1277,7 +1277,7 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
-cdef _setNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
+cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     cdef xmlNs* c_ns
     # 'extra' is not checked here (expected to be a keyword dict)
     if attrib is not None and not hasattr(attrib, 'items'):
@@ -1312,7 +1312,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     doc = _documentFactory(c_doc, None)
     # add namespaces to node if necessary
     doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _setNodeAttributes(c_node, doc, attrib, _extra)
+    _initNodeAttributes(c_node, doc, attrib, _extra)
     return _elementFactory(doc, c_node)
 
 def Comment(text=None):
@@ -1339,7 +1339,7 @@ def SubElement(_Element _parent not None, _tag,
     tree.xmlAddChild(_parent._c_node, c_node)
     # add namespaces to node if necessary
     doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _setNodeAttributes(c_node, doc, attrib, _extra)
+    _initNodeAttributes(c_node, doc, attrib, _extra)
     return _elementFactory(doc, c_node)
 
 def ElementTree(_Element element=None, file=None, parser=None):
