@@ -1192,8 +1192,11 @@ cdef class ElementDepthFirstIterator:
     """Iterates over an element and its sub-elements in document order (depth
     first pre-order).
 
-    If the 'tag' argument is not None, it returns only the elements that match
-    the respective name and namespace.
+    If the optional 'tag' argument is not None, it returns only the elements
+    that match the respective name and namespace.
+
+    Note that the behaviour of this iterator is completely undefined if the
+    tree it traverses is modified during iteration.
     """
     # we keep Python references here to control GC
     # keep next node to return and a stack of position state in the tree
@@ -1230,10 +1233,10 @@ cdef class ElementDepthFirstIterator:
         current_node = self._next_node
         if current_node is None:
             raise StopIteration
-        self._findAndPushNextNode()
+        self._prepareNextNode()
         return current_node
 
-    cdef void _findAndPushNextNode(self):
+    cdef void _prepareNextNode(self):
         cdef _NodeBase node
         cdef xmlNode* c_node
         cdef xmlNode* c_parent
@@ -1251,7 +1254,7 @@ cdef class ElementDepthFirstIterator:
                 c_parent, self._href, self._name)
 
             while c_node is NULL and self._depth > 1:
-                # walk up the parent pointers and continue with siblings
+                # walk up the parent pointers and continue with their siblings
                 c_parent = c_parent.parent
                 self._depth = self._depth - 1
                 if c_parent is NULL or not _isElement(c_parent):
