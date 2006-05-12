@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Speedup of Element.findall(tag) and Element.getiterator(tag)
+
 * Support for writing the XML representation of Elements and ElementTrees to
   Python unicode strings via ``etree.tounicode()``
 

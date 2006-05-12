@@ -281,8 +281,7 @@ cdef xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
                 return c_child
             c = c + 1
         c_child = c_child.next
-    else:
-        return NULL
+    return NULL
 
 cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
     """Return child element of c_node with index, or return NULL if not found.
@@ -298,8 +297,7 @@ cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
                 return c_child
             c = c + 1
         c_child = c_child.prev
-    else:
-        return NULL
+    return NULL
     
 cdef xmlNode* _nextElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
@@ -320,6 +318,59 @@ cdef xmlNode* _previousElement(xmlNode* c_node):
             return c_node
         c_node = c_node.prev
     return NULL
+
+cdef xmlNode* _findDepthFirstInDescendents(xmlNode* c_node,
+                                           char* c_href, char* c_name):
+    if c_node is NULL:
+        return NULL
+    c_node = c_node.children
+    if c_node is NULL:
+        return NULL
+    if not _isElement(c_node):
+        c_node = _nextElement(c_node)
+    return _findDepthFirstInFollowing(c_node, c_href, c_name)
+
+cdef xmlNode* _findDepthFirstInFollowingSiblings(xmlNode* c_node,
+                                                 char* c_href, char* c_name):
+    if c_node is NULL:
+        return NULL
+    c_node = _nextElement(c_node)
+    return _findDepthFirstInFollowing(c_node, c_href, c_name)
+
+cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
+                                         char* c_href, char* c_name):
+    """Find the next matching node by traversing:
+    1) the node itself
+    2) its descendents
+    3) its following siblings.
+    """
+    cdef xmlNode* c_child
+    if c_name is NULL:
+        # always match
+        return c_node
+    while c_node is not NULL:
+        if _tagMatches(c_node, c_href, c_name):
+            return c_node
+        if c_node.children is not NULL:
+            c_child = _findDepthFirstInFollowing(c_node.children, c_href, c_name)
+            if c_child is not NULL:
+                return c_child
+        c_node = _nextElement(c_node)
+    return NULL
+
+cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+    if c_name is NULL:
+        # always match
+        return 1
+    if c_href is NULL:
+        if c_node.ns is not NULL and c_node.ns.href is not NULL:
+            return 0
+        return cstd.strcmp(c_node.name, c_name) == 0
+    elif c_node.ns is NULL or c_node.ns.href is NULL:
+        return 0
+    else:
+        return cstd.strcmp(c_node.name, c_name) == 0 and \
+               cstd.strcmp(c_node.ns.href, c_href) == 0
 
 cdef void _removeNode(xmlNode* c_node):
     """Unlink and free a node and subnodes if possible.
