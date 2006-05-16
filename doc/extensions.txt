@@ -101,7 +101,8 @@ XSL transformations::
   >>> print e.evaluate('es:hello(local-name(/a))')
   Ola a
 
-  >>> e = etree.XPathEvaluator(doc, namespaces={'f' : 'http://mydomain.org/myfunctions'})
+  >>> namespaces = {'f' : 'http://mydomain.org/myfunctions'}
+  >>> e = etree.XPathEvaluator(doc, namespaces=namespaces)
   >>> print e.evaluate('f:hello(local-name(/a))')
   Hello a
 
