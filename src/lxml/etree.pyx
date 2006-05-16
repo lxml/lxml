@@ -347,17 +347,14 @@ cdef class _ElementTree:
             return DocInfo(self._doc)
 
     def write(self, file, encoding='us-ascii'):
-        if not hasattr(file, 'write'):
-            # file is a filename, we want a file object
-            file = open(file, 'wb')
-
-        m = tostring(self._context_node, encoding)
-        # XXX this is purely for ElementTree compatibility..
+        if encoding in ('utf8', 'UTF8', 'utf-8'):
+            encoding = 'UTF-8'
         if encoding == 'UTF-8' or encoding == 'us-ascii':
-            m = _stripDeclaration(m)
-            if m[-1:] == '\n':
-                m = m[:-1]
-        file.write(m)
+            # XXX this is purely for ElementTree compatibility..
+            write_declaration = 0
+        else:
+            write_declaration = 1
+        _tofile(file, self._context_node, encoding, write_declaration)
 
     def getiterator(self, tag=None):
         root = self.getroot()

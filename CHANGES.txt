@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* ElementTree.write() no longer serializes in memory (reduced memory
+  footprint)
+
 * Speedup of Element.findall(tag) and Element.getiterator(tag)
 
 * Support for writing the XML representation of Elements and ElementTrees to

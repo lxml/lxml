@@ -204,17 +204,26 @@ cdef extern from "libxml/tree.h":
     cdef int xmlBufferLength(xmlBuffer* buf)
     
 cdef extern from "libxml/xmlIO.h":
-    cdef xmlOutputBuffer* xmlAllocOutputBuffer(xmlCharEncodingHandler* encoder)
-    cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
-        FILE* file,
-        xmlCharEncodingHandler* encoder)
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out)
 
     ctypedef int (*xmlInputReadCallback)(void* context, char* buffer, int len)
-    ctypedef int (*xmlInputCloseCallback)(void * context)
+    ctypedef int (*xmlInputCloseCallback)(void* context)
 
+    ctypedef int (*xmlOutputWriteCallback)(void* context, char* buffer, int len)
+    ctypedef int (*xmlOutputCloseCallback)(void* context)
+
+    cdef xmlOutputBuffer* xmlAllocOutputBuffer(xmlCharEncodingHandler* encoder)
+    cdef xmlOutputBuffer* xmlOutputBufferCreateIO(
+        xmlOutputWriteCallback iowrite,
+        xmlOutputCloseCallback ioclose,
+        void * ioctx, 
+        xmlCharEncodingHandler* encoder)
+    cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
+        FILE* file, xmlCharEncodingHandler* encoder)
+    cdef xmlOutputBuffer* xmlOutputBufferCreateFilename(
+        char* URI, xmlCharEncodingHandler* encoder, int compression)
 cdef extern from "libxml/xmlsave.h":
     ctypedef struct xmlSaveCtxt:
         pass

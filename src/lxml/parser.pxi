@@ -129,21 +129,21 @@ cdef class _FileParserContext:
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
         c_buffer.context = <python.PyObject*>self
-        c_buffer.readcallback = _copyFilelike
+        c_buffer.readcallback = _readFilelikeParser
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
     cdef xmlDoc* _readDoc(self, xmlParserCtxt* ctxt, int options,
                           LxmlParserType parser_type):
         if parser_type == LXML_XML_PARSER:
             return xmlparser.xmlCtxtReadIO(
-                ctxt, _copyFilelike, NULL, <python.PyObject*>self,
+                ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
                 self._c_url, NULL, options)
         else:
             return htmlparser.htmlCtxtReadIO(
-                ctxt, _copyFilelike, NULL, <python.PyObject*>self,
+                ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
                 self._c_url, NULL, options)
 
-    cdef int write(self, char* c_buffer, int c_size):
+    cdef int copyToBuffer(self, char* c_buffer, int c_size):
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
         if self._bytes_read < 0:
@@ -168,9 +168,8 @@ cdef class _FileParserContext:
             self._exc_context._store_raised()
             return -1
 
-cdef int _copyFilelike(void* ctxt, char* c_buffer, int c_size):
-    return (<_FileParserContext>ctxt).write(c_buffer, c_size)
-    
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size):
+    return (<_FileParserContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 ############################################################
 ## support for custom document loaders
