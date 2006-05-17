@@ -7,7 +7,8 @@ Marc-Antoine Parent - XPath extension function help and patches
 
 Stefan Behnel - core development work (SAX support, misc patches)
 
-Olivier Grisel - improved (c)ElementTree compatibility patches
+Olivier Grisel - improved (c)ElementTree compatibility patches, 
+                 website improvements.
 
 Florian Wagner - help with copy.deepcopy support, bug reporting
  
@@ -41,6 +42,10 @@ Kieran Holland - iteration crash bug report
 
 Trent Mick - setup.py patch
 
+Steve Howe - Windows builds
+
+David Sankel - building statically on Windows
+
 Thanks also to:
 
 * the libxml2 project for a great XML library.
@@ -53,4 +58,3 @@ Thanks also to:
   Holger Krekel for hosting it on codespeak.net
 
 * Infrae for initiating the project.
-
