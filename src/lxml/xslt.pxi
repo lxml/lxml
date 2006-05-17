@@ -395,8 +395,10 @@ cdef class _XSLTResultTree(_ElementTree):
         if s is NULL:
             return ''
         # we must not use 'funicode' here as this is not always UTF-8
-        result = python.PyString_FromStringAndSize(s, l)
-        tree.xmlFree(s)
+        try:
+            result = python.PyString_FromStringAndSize(s, l)
+        finally:
+            tree.xmlFree(s)
         return result
 
     def __unicode__(self):
@@ -409,8 +411,10 @@ cdef class _XSLTResultTree(_ElementTree):
         encoding = self._xslt._c_style.encoding
         if encoding is NULL:
             encoding = 'ascii'
-        result = python.PyUnicode_Decode(s, l, encoding, 'strict')
-        tree.xmlFree(s)
+        try:
+            result = python.PyUnicode_Decode(s, l, encoding, 'strict')
+        finally:
+            tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
 
 cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
