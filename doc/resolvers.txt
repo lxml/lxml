@@ -186,3 +186,43 @@ It may be seen as a matter of taste what resolvers the generated document
 inherits.  For XSLT, the output document inherits the resolvers of the input
 document and not those of the stylesheet.  Therefore, the last result does not
 inherit any resolvers at all.
+
+
+I/O access control in XSLT
+--------------------------
+
+XSLT has an additional mechanism to control the access to certain I/O
+operations during the transformation process.  This is most interesting where
+XSL scripts come from potentially insecure sources and must be prevented from
+modifying the local file system.  Note, however, that there is no way to keep
+them from eating up your precious CPU time, so this should not stop you from
+thinking about what XSLT you execute.
+
+Access control is configured using the XSLTAccessControl class.  It can be
+called with a number of keyword arguments that allow or deny specific
+operations::
+
+  >>> transform = etree.XSLT(honk_doc)
+  Resolving url honk:test as prefix honk ... done
+  >>> result = transform(normal_doc)
+  Resolving url hoi:test as prefix honk ... failed
+  Resolving url hoi:test as prefix hoi ... done
+
+  >>> ac = etree.XSLTAccessControl(read_network=False)
+  >>> transform = etree.XSLT(honk_doc, access_control=ac)
+  Resolving url honk:test as prefix honk ... done
+  >>> result = transform(normal_doc)
+  Traceback (most recent call last):
+    [...]
+  XSLTApplyError: runtime error (element 'value-of')
+
+There are a few things to keep in mind:
+
+* XSL parsing (``xsl:import``, etc.) is not affected by this mechanism
+* ``read_file=False`` does not imply ``write_file=False``, all controls are
+  independent.
+* ``read_file`` only applies to files in the file system.  Any other scheme
+  for URLs is controlled by the ``*_network`` keywords.
+* If you need more fine-grained control than switching access on and off, you
+  should consider writing a custom document loader that returns empty
+  documents or raises exceptions if access is denied.

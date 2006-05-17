@@ -26,6 +26,18 @@ cdef void _logLibxsltErrors():
 
 
 ################################################################################
+# Where do we store what?
+#
+# xsltStylesheet->doc->_private
+#    == _XSLTResolverContext for XSL stylesheet
+#
+# xsltTransformContext->document->doc->_private
+#    == _XSLTResolverContext for transformed document
+#
+################################################################################
+
+
+################################################################################
 # XSLT document loaders
 
 cdef class _XSLTResolverContext(_ResolverContext):
@@ -122,6 +134,46 @@ XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
 
 xslt.xsltSetLoaderFunc(_doc_loader)
 
+################################################################################
+# XSLT file/network access control
+
+cdef class XSLTAccessControl:
+    """Access control for XSLT: reading/writing files, directories and network
+    access.  Access to a type of resource is granted or denied by passing the
+    following keyword arguments.  All of them default to True.
+
+    * read_file
+    * write_file
+    * create_dir
+    * read_network
+    * write_network
+    """
+    cdef xslt.xsltSecurityPrefs* _prefs
+    def __init__(self, read_file=True, write_file=True, create_dir=True,
+                 read_network=True, write_network=True):
+        self._prefs = xslt.xsltNewSecurityPrefs()
+        if self._prefs is NULL:
+            raise XSLTError, "Error preparing access control context"
+        self._setAccess(xslt.XSLT_SECPREF_READ_FILE, read_file)
+        self._setAccess(xslt.XSLT_SECPREF_WRITE_FILE, write_file)
+        self._setAccess(xslt.XSLT_SECPREF_CREATE_DIRECTORY, create_dir)
+        self._setAccess(xslt.XSLT_SECPREF_READ_NETWORK, read_network)
+        self._setAccess(xslt.XSLT_SECPREF_WRITE_NETWORK, write_network)
+
+    def __dealloc__(self):
+        if self._prefs is not NULL:
+            xslt.xsltFreeSecurityPrefs(self._prefs)
+
+    cdef _setAccess(self, xslt.xsltSecurityOption option, allow):
+        cdef xslt.xsltSecurityCheck function
+        if allow:
+            function = xslt.xsltSecurityAllow
+        else:
+            function = xslt.xsltSecurityForbid
+        xslt.xsltSetSecurityPrefs(self._prefs, option, function)
+
+    cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
+        xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
 ################################################################################
 # XSLT
@@ -165,10 +217,11 @@ cdef class XSLT:
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
     cdef _XSLTResolverContext _xslt_resolver_context
+    cdef XSLTAccessControl _access_control
     cdef _ExsltRegExp _regexp
     cdef _ErrorLog _error_log
 
-    def __init__(self, xslt_input, extensions=None, regexp=True):
+    def __init__(self, xslt_input, extensions=None, regexp=True, access_control=None):
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
@@ -177,6 +230,9 @@ cdef class XSLT:
 
         doc = _documentOrRaise(xslt_input)
         root_node = _rootNodeOf(xslt_input)
+
+        # set access control or raise TypeError
+        self._access_control = access_control
 
         # make a copy of the document as stylesheet parsing modifies it
         fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
@@ -253,6 +309,9 @@ cdef class XSLT:
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveGenericError)
 
+        if self._access_control is not None:
+            self._access_control._register_in_context(transform_ctxt)
+
         ptemp = c_doc._private
         c_doc._private = <python.PyObject*>resolver_context
 
@@ -300,7 +359,13 @@ cdef class XSLT:
             self._xslt_resolver_context._raise_if_stored()
 
         if c_result is NULL:
-            raise XSLTApplyError, "Error applying stylesheet"
+            message = "Error applying stylesheet"
+            errors = self._error_log.filter_from_errors()
+            if errors:
+                error = errors[-1]
+                if error.message:
+                    message = error.message
+            raise XSLTApplyError, message
 
         result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self)
@@ -369,6 +434,7 @@ xslt.xsltRegisterExtModuleFunction("node-set",
 # enable EXSLT support for XSLT
 xslt.exsltRegisterAll()
 
+# extension function lookup for XSLT
 cdef xpath.xmlXPathFunction _xslt_function_check(void* ctxt,
                                                  char* c_name, char* c_ns_uri):
     "Find XSLT extension function from set of XPath and XSLT functions"

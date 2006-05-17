@@ -69,6 +69,33 @@ cdef extern from "libxslt/xsltutils.h":
                                         void* ctxt,
                                         void (*handler)(void* ctxt, char* msg, ...))
 
+cdef extern from "libxslt/security.h":
+    ctypedef struct xsltSecurityPrefs
+    ctypedef enum xsltSecurityOption:
+        XSLT_SECPREF_READ_FILE = 1
+        XSLT_SECPREF_WRITE_FILE = 2
+        XSLT_SECPREF_CREATE_DIRECTORY = 3
+        XSLT_SECPREF_READ_NETWORK = 4
+        XSLT_SECPREF_WRITE_NETWORK = 5
+
+    ctypedef int (*xsltSecurityCheck)(xsltSecurityPrefs* sec,
+                                      xsltTransformContext* ctxt,
+                                      char* value)
+
+    cdef xsltSecurityPrefs* xsltNewSecurityPrefs()
+    cdef void xsltFreeSecurityPrefs(xsltSecurityPrefs* sec)
+    cdef int xsltSecurityForbid(xsltSecurityPrefs* sec,
+                                xsltTransformContext* ctxt,
+                                char* value)
+    cdef int xsltSecurityAllow(xsltSecurityPrefs* sec,
+                                xsltTransformContext* ctxt,
+                                char* value)
+    cdef int xsltSetSecurityPrefs(xsltSecurityPrefs* sec,
+                                  xsltSecurityOption option,
+                                  xsltSecurityCheck func)
+    cdef int xsltSetCtxtSecurityPrefs(xsltSecurityPrefs* sec,
+                                      xsltTransformContext* ctxt)
+
 cdef extern from "libxslt/extra.h":
     cdef char* XSLT_LIBXSLT_NAMESPACE
     cdef char* XSLT_XALAN_NAMESPACE
