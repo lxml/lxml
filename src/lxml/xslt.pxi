@@ -423,18 +423,9 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
     result._xslt = xslt
     return result
 
-# do not register all libxslt extra functions, provide only "node-set"
-# functions like "output" and "write" are a potential security risk
-#xslt.xsltRegisterAllExtras()
-xslt.xsltRegisterExtModuleFunction("node-set",
-                                   xslt.XSLT_LIBXSLT_NAMESPACE,
-                                   xslt.xsltFunctionNodeSet)
-xslt.xsltRegisterExtModuleFunction("node-set",
-                                   xslt.XSLT_SAXON_NAMESPACE,
-                                   xslt.xsltFunctionNodeSet)
-xslt.xsltRegisterExtModuleFunction("node-set",
-                                   xslt.XSLT_XT_NAMESPACE,
-                                   xslt.xsltFunctionNodeSet)
+# functions like "output" and "write" are a potential security risk, but we
+# rely on the user to configure XSLTAccessControl as needed
+xslt.xsltRegisterAllExtras()
 
 # enable EXSLT support for XSLT
 xslt.exsltRegisterAll()
