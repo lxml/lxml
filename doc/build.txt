@@ -103,7 +103,8 @@ Download lxml and all required libraries to the same directory.  The iconv,
 libxml2, libxslt, and zlib libraries are all available from xmlsoft.org. The
 place to go on the ftp site is ftp://xmlsoft.org/libxml2/win32.
 
-Your directory should now have something like the following files in it::
+Your directory should now have the following files in it (although possibly
+different versions)::
 
 iconv-1.9.1.win32.zip
 libxml2-2.6.23.win32.zip
@@ -111,7 +112,7 @@ libxslt-1.1.15.win32.zip
 lxml-0.9.2.tgz
 zlib-1.2.3.win32.zip
 
-Now extract each of those files in the _same_ directory.  Now you should have
+Now extract each of those files in the *same* directory.  Now you should have
 something like this::
 
 iconv-1.9.1.win32/
