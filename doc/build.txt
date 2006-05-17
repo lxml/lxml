@@ -53,7 +53,7 @@ or, in Unix-like environments::
 
   make
 
-If you then place lxml's "src" directory on your PYTHONPATH somehow, you can
+If you then place lxml's ``src`` directory on your PYTHONPATH somehow, you can
 import ``lxml.etree`` and play with it.
 
 
@@ -66,7 +66,7 @@ from the top-level directory::
   python test.py
 
 Note that the test script only tests the in-place build (see "Installation"
-above), as it searches the "src" directory.  You can use the following
+above), as it searches the ``src`` directory.  You can use the following
 one-step command to trigger an in-place build and test it::
 
   make clean test
@@ -91,7 +91,7 @@ operating system type (Linux, Windows, MacOs, ...).
 Static linking on Windows
 -------------------------
 
-Most operating systems have proper package mangement that makes installing
+Most operating systems have proper package management that makes installing
 current versions of libxml2 and libxslt easy.  However, Microsoft Windows
 lacks these capabilities.  It can therefore be interesting to statically link
 the external libraries into lxml.etree to avoid having to install them
@@ -100,7 +100,7 @@ separately.  `David Sankel`_ proposed the following approach.
 .. _`David Sankel`: http://codespeak.net/pipermail/lxml-dev/2006-May/001196.html
 
 Download lxml and all required libraries to the same directory.  The iconv,
-libxml2, libxslt, and zlib libraries are all availible from xmlsoft.org. The
+libxml2, libxslt, and zlib libraries are all available from xmlsoft.org. The
 place to go on the ftp site is ftp://xmlsoft.org/libxml2/win32.
 
 Your directory should now have something like the following files in it::
