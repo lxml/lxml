@@ -139,8 +139,9 @@ xslt.xsltSetLoaderFunc(_doc_loader)
 
 cdef class XSLTAccessControl:
     """Access control for XSLT: reading/writing files, directories and network
-    access.  Access to a type of resource is granted or denied by passing the
-    following keyword arguments.  All of them default to True to allow access.
+    I/O.  Access to a type of resource is granted or denied by passing any of
+    the following keyword arguments.  All of them default to True to allow
+    access.
 
     * read_file
     * write_file
