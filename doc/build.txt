@@ -65,9 +65,9 @@ from the top-level directory::
 
   python test.py
 
-Note that the test script only tests the in-place build (see "Installation"
-above), as it searches the ``src`` directory.  You can use the following
-one-step command to trigger an in-place build and test it::
+Note that the test script only tests the in-place build (see distutils
+building above), as it searches the ``src`` directory.  You can use the
+following one-step command to trigger an in-place build and test it::
 
   make clean test
 
