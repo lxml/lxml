@@ -1402,16 +1402,12 @@ cdef class QName:
 def iselement(element):
     return isinstance(element, _Element)
 
-def dump(_NodeBase elem):
-    assert elem is not None, "Must supply element."
-    # better, but not ET compatible : "_NodeBase elem not None"
+def dump(_NodeBase elem not None):
     _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
 
 def tostring(element_or_tree, encoding='us-ascii', xml_declaration=None):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef int write_declaration
-    assert element_or_tree is not None # for ElementTree compatibility only
-
     encoding = str(encoding)
     if xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
@@ -1435,7 +1431,6 @@ def tounicode(element_or_tree):
     Note that the result does not carry an XML encoding declaration and is
     therefore not necessarily suited for serialization without further
     treatment."""
-    assert element_or_tree is not None # for ElementTree compatibility only
     if isinstance(element_or_tree, _NodeBase):
         return _tounicode(<_NodeBase>element_or_tree)
     elif isinstance(element_or_tree, _ElementTree):

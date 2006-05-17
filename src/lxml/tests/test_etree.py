@@ -155,7 +155,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     # test passing 'None' to dump
     def test_dump_none(self):
-        self.assertRaises(AssertionError, etree.dump, None)
+        self.assertRaises(TypeError, etree.dump, None)
 
     def test_prefix(self):
         ElementTree = self.etree.ElementTree
@@ -430,6 +430,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
+    def test_tostring_none(self):
+        # ElementTree raises an AssertionError here
+        tostring = self.etree.tostring
+        self.assertRaises(TypeError, self.etree.tostring, None)
+
     def test_tounicode(self):
         tounicode = self.etree.tounicode
         Element = self.etree.Element
@@ -461,7 +466,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_tounicode_none(self):
         tounicode = self.etree.tounicode
-        self.assertRaises(AssertionError, self.etree.tounicode, None)
+        self.assertRaises(TypeError, self.etree.tounicode, None)
 
     def test_tounicode_element_tail(self):
         tounicode = self.etree.tounicode

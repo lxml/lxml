@@ -86,7 +86,9 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
 
 * When trying to set a subelement using __setitem__ that is in fact not an
   Element but some other object, etree raises a TypeError, and ElementTree
-  raises an AssertionError.
+  raises an AssertionError.  This also applies to some other places of the
+  API. In general, etree tries to avoid AssertionErrors in favour of being
+  more specific about the reason for the exception.
 
 * ElementTree ignores comments when parsing XML, while etree will read them in
   and treat them as Comment elements.

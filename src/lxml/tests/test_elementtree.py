@@ -1601,10 +1601,6 @@ class ETreeTestCaseBase(unittest.TestCase):
                           canonicalize(tostring(b)))
         self.assertEquals('<c><d></d></c>',
                           canonicalize(tostring(c)))
-
-    def test_tostring_none(self):
-        tostring = self.etree.tostring
-        self.assertRaises(AssertionError, self.etree.tostring, None)
         
     def test_tostring_element_tail(self):
         tostring = self.etree.tostring
