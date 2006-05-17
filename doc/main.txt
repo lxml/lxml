@@ -13,48 +13,64 @@ the introduction_ for more information about background and goals.
 
 .. _introduction: intro.html
 
-News
-----
+Download
+--------
 
-* 2006-03-30: `lxml 0.9.1`_ released (`changes for 0.9.1`_)
+The best way to download binary versions is to visit `lxml at the Python
+cheeseshop`_.  It has the source, eggs and installers for various platforms.
 
-* 2006-03-20: `lxml 0.9`_ released (`changes for 0.9`_)
+.. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
 
-* 2005-11-03: `lxml 0.8`_ released (`changes for 0.8`_)
+Please take a look at the `installation instructions`_!
 
-* 2005-06-15: `lxml 0.7`_ released (`changes for 0.7`_)
+.. _`installation instructions`: installation.html
 
-* 2005-05-14: `lxml 0.6`_ released (`changes for 0.6`_)
+* `lxml 0.9.2`_, released 2006-05-10 (`changes for 0.9.2`_)
 
-* 2005-04-09: `lxml 0.5.1`_ released (`changes for 0.5.1`_)
+* `lxml 0.9.1`_, released 2006-03-30 (`changes for 0.9.1`_)
 
-* 2005-04-08: `lxml 0.5`_ released!
+* `lxml 0.9`_,   released 2006-03-20 (`changes for 0.9`_)
 
+* `lxml 0.8`_,   released 2005-11-03 (`changes for 0.8`_)
+
+* `lxml 0.7`_,   released 2005-06-15 (`changes for 0.7`_)
+
+* `lxml 0.6`_,   released 2005-05-14 (`changes for 0.6`_)
+
+* `lxml 0.5.1`_, released 2005-04-09 (`changes for 0.5.1`_)
+
+* `lxml 0.5`_,   released 2005-04-08
+
+.. _`lxml 0.9.2`: lxml-0.9.2.tgz
 .. _`lxml 0.9.1`: lxml-0.9.1.tgz
-
 .. _`lxml 0.9`: lxml-0.9.tgz
-
 .. _`lxml 0.8`: lxml-0.8.tgz
-
 .. _`lxml 0.7`: lxml-0.7.tgz
-
 .. _`lxml 0.6`: lxml-0.6.tgz
-
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
-
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`CHANGES for 0.9.2`: changes-0.9.2.html
 .. _`CHANGES for 0.9.1`: changes-0.9.1.html
-
 .. _`CHANGES for 0.9`: changes-0.9.html
-
 .. _`CHANGES for 0.8`: changes-0.8.html
-
 .. _`CHANGES for 0.7`: changes-0.7.html
-
 .. _`CHANGES for 0.6`: changes-0.6.html
-
 .. _`CHANGES for 0.5.1`: changes-0.5.1.html
+
+It's also possible to check out the latest development version of lxml
+from svn directly, using a command like this::
+
+  svn co http://codespeak.net/svn/lxml/trunk lxml
+
+You can also `browse it through the web`_.  Please read `how to build lxml
+from source`_ first.  The `latest CHANGES`_ of the developer version are also
+accessible.  You can check there if a bug you found has been fixed or a
+feature you want has been implemented in the latest trunk version.
+
+.. _`how to build lxml from source`: build.html
+.. _`browse it through the web`: http://codespeak.net/svn/lxml
+.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
 Documentation
 -------------
@@ -76,25 +92,15 @@ lxml also offers a `SAX compliant API`_, that works with the SAX support
 in the standar dlibrary.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
-
 .. _`ElementTree compatibility overview`: compatibility.html
-
 .. _`extends this API`: api.html
-
 .. _`extension functions`: extensions.html
-
 .. _XPath: http://www.w3.org/TR/xpath
-
 .. _`Relax NG`: http://www.relaxng.org/
-
 .. _`XML Schema`: http://www.w3.org/XML/Schema
-
 .. _`XSLT`: http://www.w3.org/TR/xslt
-
 .. _`c14n`: http://www.w3.org/TR/2001/REC-xml-c14n-20010315
-
 .. _`implementing namespaces`: namespace_extensions.html
-
 .. _`SAX compliant API`: sax.html
 
 Mailing list
@@ -103,46 +109,6 @@ Mailing list
 Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
-
-Download
---------
-
-* `lxml 0.9.1`_ (2006-03-30)
-
-* `lxml 0.9`_ (2006-03-20)
-
-* `lxml 0.8`_ (2005-11-03)
-
-* `lxml 0.7`_ (2005-06-15)
-
-* `lxml 0.6`_ (2005-05-14)
-
-* `lxml 0.5.1`_ (2005-04-09)
-
-* `lxml 0.5`_ (2005-04-08)
-
-Instead of downloading the source here, you can also find `lxml at the
-Python cheeseshop`_ in source, egg and installer form for various
-platforms.
-
-.. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
-
-See also the `installation instructions`_.
-
-.. _`installation instructions`: installation.html
-
-It's also possible to check out the latest development version of lxml
-from svn directly, using a command like this::
-
-  svn co http://codespeak.net/svn/lxml/trunk lxml
-
-You can also `browse it through the web`_.  The `latest CHANGES`_ of the
-developer version are also accessible.  You can check there if a bug you found
-has been fixed or a feature you want has been implemented in the latest trunk
-version.
-
-.. _`browse it through the web`: http://codespeak.net/svn/lxml
-.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
 License
 -------

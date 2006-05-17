@@ -30,11 +30,13 @@ distribution of lxml.  Note that the libxslt version on this system is older
 than the required version above.  While there were not any bug reports so far,
 you may still encounter certain differences in behaviour in rare cases.
 
-If you want to build lxml from SVN, you also need Pyrex_. If you are using a
-released version of lxml, it should come with the generated C file in the
-source distribution, so no Pyrex is needed in that case.
+If you want to build lxml from SVN, you also need Pyrex_.  Please read `how to
+build lxml from source`_ in this case.  If you are using a released version of
+lxml, it should come with the generated C file in the source distribution, so
+no Pyrex is needed in that case.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _`how to build lxml from source`: build.html
 
 Note that Pyrex up to and including version 0.9.4 has known problems when
 compiling lxml with gcc 4.0 or Python 2.4.  Do not use it.  If you want to
@@ -59,49 +61,5 @@ If you have easy_install_, you can run the following as super-user::
 
 This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
 libxml2 and libxslt are properly installed.  To compile and install lxml
-without easy_install, download the source tar-ball, unpack it and type::
-
-  python setup.py install
-
-If you do not want to install lxml right away, but first test it from the
-source directory, you can build it in-place like this::
-
-  python setup.py  build_ext -i
-
-or just::
-
-  make
-
-If you then place lxml's "src" directory on your PYTHONPATH somehow, you can
-import lxml.etree and play with it.
-
-
-Running the tests and reporting errors
---------------------------------------
-
-The source distribution (tgz) contains a test suite for lxml.  You can run it
-from the top-level directory::
-
-  python test.py
-
-Note that the test script only tests the in-place build (see "Installation"
-above), as it searches the "src" directory.  You can use the following
-one-step command to trigger an in-place build and test it::
-
-  make clean test
-
-To run the ElementTree and cElementTree compatibility tests, make sure
-you have lxml on your PYTHONPATH first, then run::
-
-  python selftest.py
-
-and::
-
-  python selftest2.py
-
-If the tests give failures, errors, or worse, segmentation faults, we'd really
-like to know. Please contact us on the `mailing list`_, and please specify the
-version of lxml, libxml2, libxslt and Python you were using, as well as your
-operating system type (Linux, Windows, MacOs, ...).
-
-.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+without easy_install, please read `how to build lxml from source`_ (or the
+file ``build.txt`` in the ``doc`` directory of the source tree).

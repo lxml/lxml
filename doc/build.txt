@@ -1,0 +1,170 @@
+How to build lxml from source
+=============================
+
+To build lxml from source, you need libxml2 and libxslt properly installed.
+
+Pyrex
+-----
+
+The lxml.etree module is written in Pyrex_.  To build lxml from source, you
+therefore need a working Pyrex installation.  Pyrex now supports EasyInstall,
+so you can install it by running the following command as super-user::
+
+  easy_install Pyrex
+
+.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+Note that Pyrex up to and including version 0.9.4 has known problems when
+compiling lxml with gcc 4.0 or Python 2.4.  Do not use it.  If you want to
+build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
+later.
+
+
+Subversion
+----------
+
+The lxml package is developed in a Subversion repository.  You can retrieve
+the current developer version by calling::
+
+  svn co http://codespeak.net/svn/lxml/trunk lxml
+
+This will create a directory ``lxml`` and download the source into it.  You
+can also `browse the repository through the web`_ or use your favourite SVN
+client to access it.
+
+.. _`browse the repository through the web`: http://codespeak.net/svn/lxml
+
+
+The distutils approach
+----------------------
+
+Usually, building lxml is done through distutils.  Do a Subversion checkout
+(or download the source tar-ball and unpack it) and then type::
+
+  python setup.py build
+
+If you want to test lxml from the source directory, it is better to build it
+in-place like this::
+
+  python setup.py  build_ext -i
+
+or, in Unix-like environments::
+
+  make
+
+If you then place lxml's "src" directory on your PYTHONPATH somehow, you can
+import ``lxml.etree`` and play with it.
+
+
+Running the tests and reporting errors
+--------------------------------------
+
+The source distribution (tgz) contains a test suite for lxml.  You can run it
+from the top-level directory::
+
+  python test.py
+
+Note that the test script only tests the in-place build (see "Installation"
+above), as it searches the "src" directory.  You can use the following
+one-step command to trigger an in-place build and test it::
+
+  make clean test
+
+To run the ElementTree and cElementTree compatibility tests, make sure
+you have lxml on your PYTHONPATH first, then run::
+
+  python selftest.py
+
+and::
+
+  python selftest2.py
+
+If the tests give failures, errors, or worse, segmentation faults, we'd really
+like to know. Please contact us on the `mailing list`_, and please specify the
+version of lxml, libxml2, libxslt and Python you were using, as well as your
+operating system type (Linux, Windows, MacOs, ...).
+
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+
+Static linking on Windows
+-------------------------
+
+Most operating systems have proper package mangement that makes installing
+current versions of libxml2 and libxslt easy.  However, Microsoft Windows
+lacks these capabilities.  It can therefore be interesting to statically link
+the external libraries into lxml.etree to avoid having to install them
+separately.  `David Sankel`_ proposed the following approach.
+
+.. _`David Sankel`: http://codespeak.net/pipermail/lxml-dev/2006-May/001196.html
+
+Download lxml and all required libraries to the same directory.  The iconv,
+libxml2, libxslt, and zlib libraries are all availible from xmlsoft.org. The
+place to go on the ftp site is ftp://xmlsoft.org/libxml2/win32.
+
+Your directory should now have something like the following files in it::
+
+iconv-1.9.1.win32.zip
+libxml2-2.6.23.win32.zip
+libxslt-1.1.15.win32.zip
+lxml-0.9.2.tgz
+zlib-1.2.3.win32.zip
+
+Now extract each of those files in the _same_ directory.  Now you should have
+something like this::
+
+iconv-1.9.1.win32/
+iconv-1.9.1.win32.zip
+libxml2-2.6.23.win32/
+libxml2-2.6.23.win32.zip
+libxslt-1.1.15.win32/
+libxslt-1.1.15.win32.zip
+lxml-0.9.2/
+lxml-0.9.2.tgz
+zlib-1.2.3.win32/
+zlib-1.2.3.win32.zip
+
+Go to the lxml-0.9.2 directory and edit the Makefile. There should be a
+section that looks like this::
+
+  ext_modules = [ Extension(
+      "lxml.etree",
+      sources = sources,
+      extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
+      extra_link_args = flags('xslt-config --libs')
+  )],
+
+The problem here is that the Windows version of libxslt does not install the
+little program ``xslt-config``, which would normally auto-configure the build
+process.
+
+Change this section to something like this, but take care to use the correct
+version numbers::
+
+   ext_modules = [ Extension(
+       "lxml.etree",
+       sources = sources,
+       extra_compile_args = ['-w'] + [
+         "-I..\\libxml2-2.6.23.win32\\include ",
+         "-I..\\libxslt-1.1.15.win32\\include",
+         "-I..\\zlib-1.2.3.win32\\include",
+         "-I..\\iconv-1.9.1.win32\\include"
+       ],
+       extra_link_args = [
+         "..\\libxml2-2.6.23.win32\\lib\\libxml2_a.lib",
+         "..\\libxslt-1.1.15.win32\\lib\\libxslt_a.lib",
+         "..\\zlib-1.2.3.win32\\lib\\zlib.lib",
+         "..\\iconv- 1.9.1.win32\\lib\\iconv_a.lib"
+         ]
+   )],
+
+The ``_a`` part of the library names means that we are linking statically
+against the named library files.  If you want to use DLLs, you need to link
+against the DLL version of the libraries.
+
+Now you should be able to use setup.py and everything should work well.  Try calling::
+
+  python setup.py bdist_wininst
+
+This will create a windows installer in the ``pkg`` directory.
