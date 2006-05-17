@@ -12,7 +12,7 @@ try:
 except IOError:
     svn_version = version
 else:
-    revision = re.search("<entry[^>]*name=\"\"[^>]*revision=\"([^\"]+)\"",
+    revision = re.search('<entry[^>]*name=""[^>]*revision="([^"]+)"',
                          svn_entries).group(1)
     svn_version = version + '-' + revision
 
@@ -47,22 +47,19 @@ except ImportError:
     sources = ["src/lxml/etree.c"]
 
 try:
-    changelog = open("CHANGES.txt", 'r')
+    changelog = open(os.path.join(src_dir, "CHANGES.txt"), 'r')
 except:
     print "*NOTE*: couldn't open CHANGES.txt !"
 else:
-    inside = 0
     changelog_lines = []
     for line in changelog:
         if line.startswith('====='):
-            inside += 1
-            if inside > 3:
+            if len(changelog_lines) > 1:
                 break
-        if inside > 1:
+        if changelog_lines:
             changelog_lines.append(line)
         elif version in line:
             changelog_lines.append(line)
-            inside += 1
 
     if changelog_lines:
         changelog_text = ''.join(changelog_lines[:-1])
