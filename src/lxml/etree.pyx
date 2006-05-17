@@ -1456,6 +1456,7 @@ include "xmlerror.pxi"   # Error and log handling
 include "nsclasses.pxi"  # Namespace implementation and registry
 include "docloader.pxi"  # Support for custom document loaders
 include "parser.pxi"     # XML Parser
+include "xmlwriter.pxi"  # XML output functions
 include "xmlid.pxi"      # XMLID and IDDict
 include "extensions.pxi" # XPath/XSLT extension functions
 include "xpath.pxi"      # XPath evaluation
