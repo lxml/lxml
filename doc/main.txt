@@ -89,7 +89,7 @@ In addition to the ElementTree API, lxml also features an API for
 simple way to write arbitrary XML driven APIs on top of lxml.
 
 lxml also offers a `SAX compliant API`_, that works with the SAX support
-in the standar dlibrary.
+in the standard library.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 .. _`ElementTree compatibility overview`: compatibility.html
