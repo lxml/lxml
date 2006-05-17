@@ -198,7 +198,7 @@ modifying the local file system.  Note, however, that there is no way to keep
 them from eating up your precious CPU time, so this should not stop you from
 thinking about what XSLT you execute.
 
-Access control is configured using the XSLTAccessControl class.  It can be
+Access control is configured using the ``XSLTAccessControl`` class.  It can be
 called with a number of keyword arguments that allow or deny specific
 operations::
 
