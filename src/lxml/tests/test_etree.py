@@ -430,6 +430,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
+    def test_encoding_tostring_utf16(self):
+        # ElementTree fails to serialize this
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        result = unicode(tostring(a, 'UTF-16'), 'UTF-16')
+        self.assertEquals('<a><b></b><c></c></a>',
+                          canonicalize(result))
+
     def test_tostring_none(self):
         # ElementTree raises an AssertionError here
         tostring = self.etree.tostring
