@@ -36,17 +36,17 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   In most parts of the API, ElementTree uses plain strings and unicode strings
   as what they are.  This includes Element.text, Element.tail and many other
   places.  However, the ElementTree parsers assume by default that any string
-  (`str` or `unicode`) contains ASCII data and raise an exception if strings
-  do not match the expected encoding.
+  (`str` or `unicode`) contains ASCII data.  They raise an exception if
+  strings do not match the expected encoding.
 
   etree has the same idea about plain strings (`str`) as ElementTree.  For
   unicode strings, however, etree assumes throughout the API that they are
   Python unicode encoded strings rather than byte data.  This includes the
   parsers.  It is therefore perfectly correct to pass XML unicode data into
   the etree parsers in form of Python unicode strings.  It is an error, on the
-  other hand, if unicode strings specify an encoding in their XML declaration.
-  Note also that Python unicode strings are platform specific.  Such an
-  encoding specifier would not be portable.
+  other hand, if unicode strings specify an encoding in their XML declaration,
+  as this conflicts with the characteristic encoding of Python unicode
+  strings.
 
 * ElementTree allows you to place an Element in two different trees as the
   same time.  Thus, this::
@@ -114,7 +114,7 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   like ElementTree's.  copy.copy() however does *not* create a shallow copy
   where elements are shared between trees, as this makes no sense in the
   context of libxml2 trees.  Note that lxml can deep-copy trees considerably
-  faster than than ElementTree.
+  faster than ElementTree.
 
 * etree allows navigation to the parent of a node by the ``getparent()``
   method.  This is not possible in ElementTree as the underlying tree model
