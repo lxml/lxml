@@ -574,12 +574,12 @@ if __name__ == '__main__':
     # sorted by name and tree tuple
     benchmarks = [ sorted(b.benchmarks()) for b in benchmark_suites ]
 
-    if len(sys.argv) > 1:
-        selected = []
-        for name in sys.argv[1:]:
-            if not name.startswith('bench_'):
-                name = 'bench_' + name
-            selected.append(name)
+    selected = []
+    for name in sys.argv[1:]:
+        if not name.startswith('bench_'):
+            name = 'bench_' + name
+        selected.append(name)
+    if selected:
         benchmarks = [ [ b for b in bs
                          if [ match for match in selected
                               if match in b[0] ] ]
