@@ -1148,7 +1148,7 @@ cdef class _Attrib(_NodeBase):
             return True
         else:
             return False
-  
+
 cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     cdef _Attrib result
     result = getProxy(c_node, PROXY_ATTRIB)
