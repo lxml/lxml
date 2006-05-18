@@ -171,8 +171,8 @@ Now you should be able to use setup.py and everything should work well.  Try cal
 This will create a windows installer in the ``pkg`` directory.
 
 
-Building Debian packages from Subversion sources
-------------------------------------------------
+Building Debian packages from SVN sources
+-----------------------------------------
 
 `Andreas Pakulat`_ proposed the following approach.
 
@@ -180,7 +180,7 @@ Building Debian packages from Subversion sources
 
 * ``apt-get source lxml``
 * remove the unpacked directory
-* tar.gz the trunk version and replace the orig.tar.gz that lies in the
+* tar.gz the lxml SVN version and replace the orig.tar.gz that lies in the
   directory
 * do ``dpkg -x lxml-...dsc`` and cd into the newly created directory
 * run ``dch -i`` and add a comment like "use trunk version", this will
