@@ -6,7 +6,7 @@ cdef extern from "Python.h":
     ctypedef int Py_ssize_t
     cdef int INT_MAX
     
-    cdef FILE* PyFile_AsFile(PyObject* p)
+    cdef FILE* PyFile_AsFile(object p)
     cdef int PyFile_Check(object p)
     cdef object PyFile_Name(object p)
 

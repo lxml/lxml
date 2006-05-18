@@ -449,6 +449,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         self.assertRaises(TypeError, self.etree.tostring, None)
 
+    def test_tostring_pretty(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        result = tostring(a)
+        self.assertEquals(result, "<a><b/><c/></a>")
+
+        result = tostring(a, pretty_print=False)
+        self.assertEquals(result, "<a><b/><c/></a>")
+
+        result = tostring(a, pretty_print=True)
+        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>")
+
     def test_tounicode(self):
         tounicode = self.etree.tounicode
         Element = self.etree.Element
@@ -496,6 +514,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assert_(isinstance(tounicode(b), unicode))
         self.assert_(tounicode(b) == '<b/>Foo' or
                      tounicode(b) == '<b />Foo')
+
+    def test_tounicode_pretty(self):
+        tounicode = self.etree.tounicode
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+
+        result = tounicode(a)
+        self.assertEquals(result, "<a><b/><c/></a>")
+
+        result = tounicode(a, pretty_print=False)
+        self.assertEquals(result, "<a><b/><c/></a>")
+
+        result = tounicode(a, pretty_print=True)
+        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>")
 
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.

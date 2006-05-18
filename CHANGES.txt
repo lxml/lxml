@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Formatted output via ``pretty_print`` keyword to serialization functions
+
 * XSLT can block access to file system and network via ``XSLTAccessControl``
 
 * ElementTree.write() no longer serializes in memory (reduced memory

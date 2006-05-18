@@ -1,8 +1,10 @@
 # XML serialization and output functions
 
-cdef _tostring(_NodeBase element, encoding, int write_xml_declaration):
+tree.xmlKeepBlanksDefault(0)
+
+cdef _tostring(_NodeBase element, encoding,
+               int write_xml_declaration, int pretty_print):
     "Serialize an element to an encoded string representation of its XML tree."
-    cdef _Document doc
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
@@ -12,7 +14,6 @@ cdef _tostring(_NodeBase element, encoding, int write_xml_declaration):
         return None
     if encoding in ('utf8', 'UTF8', 'utf-8'):
         encoding = 'UTF-8'
-    doc = element._doc
     c_enc = encoding
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
@@ -22,8 +23,8 @@ cdef _tostring(_NodeBase element, encoding, int write_xml_declaration):
         raise LxmlError, "Failed to create output buffer"
 
     try:
-        _writeNodeToBuffer(c_buffer, doc._c_doc, element._c_node,
-                           doc._c_doc.version, c_enc, write_xml_declaration)
+        _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
+                           write_xml_declaration, pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
@@ -36,20 +37,17 @@ cdef _tostring(_NodeBase element, encoding, int write_xml_declaration):
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
-cdef _tounicode(_NodeBase element):
+cdef _tounicode(_NodeBase element, int pretty_print):
     "Serialize an element to the Python unicode representation of its XML tree."
-    cdef _Document doc
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     if element is None:
         return None
-    doc = element._doc
     c_buffer = tree.xmlAllocOutputBuffer(NULL)
     if c_buffer is NULL:
         raise LxmlError, "Failed to create output buffer"
     try:
-        _writeNodeToBuffer(c_buffer, doc._c_doc, element._c_node,
-                           NULL, NULL, 0)
+        _writeNodeToBuffer(c_buffer, element._c_node, NULL, 0, pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
@@ -64,14 +62,15 @@ cdef _tounicode(_NodeBase element):
     return result
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
-                             xmlDoc* c_doc, xmlNode* c_node,
-                             char* xml_version, char* encoding,
-                             int write_xml_declaration):
+                             xmlNode* c_node, char* encoding,
+                             int write_xml_declaration, int pretty_print):
+    cdef xmlDoc* c_doc
+    c_doc = c_node.doc
     if write_xml_declaration:
-        _writeDeclarationToBuffer(c_buffer, xml_version, encoding)
+        _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
-    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, encoding)
-    _dumpNextNode(c_buffer, c_doc, c_node, encoding)
+    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, pretty_print, encoding)
+    _writeTail(c_buffer, c_node, encoding, pretty_print)
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding):
@@ -82,6 +81,16 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWriteString(c_buffer, "' encoding='")
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
     tree.xmlOutputBufferWriteString(c_buffer, "'?>\n")
+
+
+cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
+                     char* encoding, int pretty_print):
+    "Write the element tail."
+    c_node = c_node.next
+    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
+        tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0,
+                               pretty_print, encoding)
+        c_node = c_node.next
 
 # output to file-like objects
 
@@ -127,7 +136,8 @@ cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int len):
 cdef int _closeFilelikeWriter(void* ctxt):
     return (<_FileWriter>ctxt).close()
 
-cdef _tofile(f, _NodeBase element, encoding, int write_declaration):
+cdef _tofilelike(f, _NodeBase element, encoding,
+             int write_xml_declaration, int pretty_print):
     cdef _FileWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
@@ -148,34 +158,21 @@ cdef _tofile(f, _NodeBase element, encoding, int write_declaration):
     else:
         raise TypeError, "File or filename expected, got '%s'" % type(f)
 
-    _writeNodeToBuffer(c_buffer,
-                       element._doc._c_doc, element._c_node,
-                       element._doc._c_doc.version, c_enc,
-                       write_declaration)
+    _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
+                       write_xml_declaration, pretty_print)
 
     tree.xmlOutputBufferClose(c_buffer)
     if writer is not None:
         writer._exc_context._raise_if_stored()
 
-# node dump functions (mainly for debug)
+# dump node to file (mainly for debug)
 
-cdef _dumpToFile(f, xmlDoc* c_doc, xmlNode* c_node):
-    cdef python.PyObject* o
+cdef _dumpToFile(f, xmlNode* c_node):
     cdef tree.xmlOutputBuffer* c_buffer
-    
     if not python.PyFile_Check(f):
         raise ValueError, "Not a file"
-    o = <python.PyObject*>f
-    c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(o), NULL)
-    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, 0, NULL)
-    # dump next node if it's a text node
-    _dumpNextNode(c_buffer, c_doc, c_node, NULL)
+    c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(f), NULL)
+    tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, 0, NULL)
+    _writeTail(c_buffer, c_node, NULL, 0)
     tree.xmlOutputBufferWriteString(c_buffer, '\n')
     tree.xmlOutputBufferFlush(c_buffer)
-
-cdef void _dumpNextNode(tree.xmlOutputBuffer* c_buffer, xmlDoc* c_doc,
-                        xmlNode* c_node, char* encoding):
-    cdef xmlNode* c_next
-    c_next = c_node.next
-    if c_next is not NULL and c_next.type == tree.XML_TEXT_NODE:
-        tree.xmlNodeDumpOutput(c_buffer, c_doc, c_next, 0, 0, encoding)

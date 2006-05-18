@@ -348,7 +348,7 @@ cdef class _ElementTree:
         def __get__(self):
             return DocInfo(self._doc)
 
-    def write(self, file, encoding='us-ascii'):
+    def write(self, file, encoding='us-ascii', pretty_print=False):
         if encoding in ('utf8', 'UTF8', 'utf-8'):
             encoding = 'UTF-8'
         if encoding == 'UTF-8' or encoding == 'us-ascii':
@@ -356,7 +356,8 @@ cdef class _ElementTree:
             write_declaration = 0
         else:
             write_declaration = 1
-        _tofile(file, self._context_node, encoding, write_declaration)
+        _tofilelike(file, self._context_node, encoding,
+                    write_declaration, bool(pretty_print))
 
     def getiterator(self, tag=None):
         root = self.getroot()
@@ -1405,12 +1406,15 @@ def iselement(element):
     return isinstance(element, _Element)
 
 def dump(_NodeBase elem not None):
-    _dumpToFile(sys.stdout, elem._doc._c_doc, elem._c_node)
+    _dumpToFile(sys.stdout, elem._c_node)
 
-def tostring(element_or_tree, encoding='us-ascii', xml_declaration=None):
+def tostring(element_or_tree, encoding='us-ascii',
+             xml_declaration=None, pretty_print=False):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef int write_declaration
+    cdef int c_pretty_print
     encoding = str(encoding)
+    c_pretty_print = bool(pretty_print)
     if xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = (encoding != 'us-ascii')
@@ -1419,24 +1423,27 @@ def tostring(element_or_tree, encoding='us-ascii', xml_declaration=None):
 
     if isinstance(element_or_tree, _NodeBase):
         return _tostring(<_NodeBase>element_or_tree,
-                         encoding, write_declaration)
+                         encoding, write_declaration, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         encoding, write_declaration)
+                         encoding, write_declaration, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
-def tounicode(element_or_tree):
+def tounicode(element_or_tree, pretty_print=False):
     """Serialize an element to the Python unicode representation of its XML
     tree.
 
     Note that the result does not carry an XML encoding declaration and is
     therefore not necessarily suited for serialization without further
     treatment."""
+    cdef int c_pretty_print
+    c_pretty_print = bool(pretty_print)
     if isinstance(element_or_tree, _NodeBase):
-        return _tounicode(<_NodeBase>element_or_tree)
+        return _tounicode(<_NodeBase>element_or_tree, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
-        return _tounicode((<_ElementTree>element_or_tree)._context_node)
+        return _tounicode((<_ElementTree>element_or_tree)._context_node,
+                          c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
