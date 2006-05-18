@@ -68,8 +68,7 @@ else:
 
 # compile also against libexslt!
 xslt_libs = flags('xslt-config --libs')
-xslt_libs.append('-lexslt')
-for i, libname in (): # enumerate(xslt_libs):
+for i, libname in enumerate(xslt_libs):
     if 'exslt' in libname:
         break
     if 'xslt' in libname:
