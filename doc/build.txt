@@ -92,10 +92,11 @@ Static linking on Windows
 -------------------------
 
 Most operating systems have proper package management that makes installing
-current versions of libxml2 and libxslt easy.  However, Microsoft Windows
-lacks these capabilities.  It can therefore be interesting to statically link
-the external libraries into lxml.etree to avoid having to install them
-separately.  `David Sankel`_ proposed the following approach.
+current versions of libxml2 and libxslt easy.  The most famous exception is
+Microsoft Windows, which entirely lacks these capabilities.  It can therefore
+be interesting to statically link the external libraries into lxml.etree to
+avoid having to install them separately.  `David Sankel`_ proposed the
+following approach.
 
 .. _`David Sankel`: http://codespeak.net/pipermail/lxml-dev/2006-May/001196.html
 
@@ -160,11 +161,11 @@ version numbers::
       return result
 
 The ``_a`` part of the library names means that we are linking statically
-against the named library files.  If you want to use DLLs, you need to link
-against the DLL version of the libraries.
+against the named library files.  If you want to use dynamic libraries, you
+need to link against the DLL version of the libraries.
 
-Now you should be able to use setup.py and everything should work well.  Try
-calling::
+Now you should be able to pass the ``--static`` option to setup.py and
+everything should work well.  Try calling::
 
   python setup.py bdist_wininst --static
 
