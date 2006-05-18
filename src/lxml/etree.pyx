@@ -62,13 +62,13 @@ cdef __unpackDottedVersion(version):
     l = (version.replace('-', '.').split('.') + [0]*4)[:4]
     for item in l:
         try:
-            version_list.append(int(item))
+            item = int(item)
         except ValueError:
             if item == 'alpha':
                 item = -2
             elif item == 'beta':
                 item = -1
-            version_list.append(item)
+        version_list.append(item)
     return tuple(version_list)
 
 cdef __unpackIntVersion(int c_version):
