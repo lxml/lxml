@@ -1804,6 +1804,14 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('Foo', a.text)
         # XXX ElementTree will share nodes, but lxml.etree won't..
         
+    def test_deepcopy_append(self):
+        # previously caused a crash
+        Element = self.etree.Element
+        
+        a = Element('a')
+        b = copy.deepcopy(a)
+        b.append( Element('c') )
+
     def test_element_boolean(self):
         etree = self.etree
         e = etree.Element('foo')

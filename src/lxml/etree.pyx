@@ -581,15 +581,13 @@ cdef class _Element(_NodeBase):
     def __copy__(self):
         cdef xmlNode* c_node
         cdef xmlDoc* c_doc
-        cdef xmlDoc* fake_c_doc
         cdef _Document doc
+        cdef _Document new_doc
         doc = self._doc
-        fake_c_doc = _fakeRootDoc(doc._c_doc, self._c_node)
-        c_doc = tree.xmlCopyDoc(fake_c_doc, 1) # recursive copy
-        _destroyFakeDoc(doc._c_doc, fake_c_doc)
-        doc = _documentFactory(c_doc, doc._parser)
-        return doc.getroot()
-        
+        c_doc = _copyDocRoot(doc._c_doc, self._c_node) # recursive
+        new_doc = _documentFactory(c_doc, doc._parser)
+        return new_doc.getroot()
+
     def set(self, key, value):
         self.attrib[key] = value
         

@@ -81,7 +81,7 @@ cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
     c_doc = xslt_resolver_context._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
         if cstd.strcmp(c_uri, c_doc.URL) == 0:
-            return tree.xmlCopyDoc(c_doc, 1)
+            return _copyDoc(c_doc, 1)
 
     # call the Python document loaders
     c_doc = NULL
@@ -236,23 +236,16 @@ cdef class XSLT:
         self._access_control = access_control
 
         # make a copy of the document as stylesheet parsing modifies it
-        fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        c_doc = tree.xmlCopyDoc(fake_c_doc, 1)
-        _destroyFakeDoc(doc._c_doc, fake_c_doc)
+        c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
 
         # make sure we always have a stylesheet URL
-        if c_doc.URL is not NULL:
-            # handle a bug in older libxml2 versions
-            tree.xmlFree(c_doc.URL)
-        if doc._c_doc.URL is not NULL:
-            c_doc.URL = tree.xmlStrdup(doc._c_doc.URL)
-        else:
+        if c_doc.URL is NULL:
             doc_url_utf = "XSLT:__STRING__XSLT__%s" % id(self)
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._xslt_resolver_context = _XSLTResolverContext(doc._parser)
         # keep a copy in case we need to access the stylesheet via 'document()'
-        self._xslt_resolver_context._c_style_doc = tree.xmlCopyDoc(c_doc, 1)
+        self._xslt_resolver_context._c_style_doc = _copyDoc(c_doc, 1)
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
@@ -274,7 +267,7 @@ cdef class XSLT:
         if self._xslt_resolver_context is not None and \
                self._xslt_resolver_context._c_style_doc is not NULL:
             tree.xmlFreeDoc(self._xslt_resolver_context._c_style_doc)
-        # this cleans up copy of doc as well
+        # this cleans up the doc copy as well
         xslt.xsltFreeStylesheet(self._c_style)
 
     property error_log:

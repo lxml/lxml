@@ -7,8 +7,12 @@ current
 Features added
 --------------
 
+* Deep copying Elements and ElementTrees maintains the document information
+
 Bugs fixed
 ----------
+
+* Memory deallocation crash resulting from deep copying elements
 
 
 1.0.beta (2006-05-18)
