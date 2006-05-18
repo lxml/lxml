@@ -59,6 +59,9 @@ Features added
 Bugs fixed
 ----------
 
+* Some ElementTree methods could crash if the root node was not initialized
+  (neither file nor element passed to the constructor)
+
 * Element/SubElement failed to set attribute namespaces from passed ``attrib``
   dictionary
 

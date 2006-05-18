@@ -330,6 +330,11 @@ cdef class _ElementTree:
     cdef _Document _doc
     cdef _NodeBase _context_node
 
+    # we have to take care here: the document may not have a root node!
+    cdef _assertHasRoot(self):
+        assert self._context_node is not None, \
+               "ElementTree not initialized, missing root"
+
     def parse(self, source, parser=None):
         """Updates self with the content of source and returns its root
         """
@@ -349,6 +354,7 @@ cdef class _ElementTree:
             return DocInfo(self._doc)
 
     def write(self, file, encoding='us-ascii', pretty_print=False):
+        self._assertHasRoot()
         if encoding in ('utf8', 'UTF8', 'utf-8'):
             encoding = 'UTF-8'
         if encoding == 'UTF-8' or encoding == 'us-ascii':
@@ -366,22 +372,22 @@ cdef class _ElementTree:
         return root.getiterator(tag)
 
     def find(self, path):
+        self._assertHasRoot()
         root = self.getroot()
-        assert root is not None
         if path[:1] == "/":
             path = "." + path
         return root.find(path)
 
     def findtext(self, path, default=None):
+        self._assertHasRoot()
         root = self.getroot()
-        assert root is not None
         if path[:1] == "/":
             path = "." + path
         return root.findtext(path, default)
 
     def findall(self, path):
+        self._assertHasRoot()
         root = self.getroot()
-        assert root is not None
         if path[:1] == "/":
             path = "." + path
         return root.findall(path)
@@ -402,6 +408,7 @@ cdef class _ElementTree:
         against the same document, it is more efficient to use
         XPathEvaluator directly.
         """
+        self._assertHasRoot()
         evaluator = XPathElementEvaluator(self._context_node, namespaces)
         return evaluator.evaluate(_path, **_variables)
 
@@ -417,6 +424,7 @@ cdef class _ElementTree:
         multiple documents, it is more efficient to use the XSLT
         class directly.
         """
+        self._assertHasRoot()
         style = XSLT(_xslt, extensions)
         return style(self, **_kw)
 
@@ -432,6 +440,7 @@ cdef class _ElementTree:
         multiple documents, it is more efficient to use the RelaxNG
         class directly.
         """
+        self._assertHasRoot()
         schema = RelaxNG(relaxng)
         return schema.validate(self)
 
@@ -447,6 +456,7 @@ cdef class _ElementTree:
         multiple documents, it is more efficient to use the XMLSchema
         class directly.
         """
+        self._assertHasRoot()
         schema = XMLSchema(xmlschema)
         return schema.validate(self)
         
@@ -460,6 +470,7 @@ cdef class _ElementTree:
         # at all. The XInclude nodes appear to be still being in the same
         # parent and same document, but they must not be connected to the
         # tree..
+        self._assertHasRoot()
         result = xinclude.xmlXIncludeProcessTree(self._context_node._c_node)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
@@ -471,6 +482,7 @@ cdef class _ElementTree:
         cdef xmlDoc* c_doc
         cdef char* data
         cdef int bytes
+        self._assertHasRoot()
         c_base_doc = self._doc._c_doc
 
         c_doc = _fakeRootDoc(c_base_doc, self._context_node._c_node)
