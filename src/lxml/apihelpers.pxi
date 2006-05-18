@@ -408,22 +408,16 @@ cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
     """
     cdef ProxyRef* ref
     cdef xmlNode* c_current
-    cdef xmlAttr* c_attr_current
     cdef _NodeBase proxy
-
-    if c_node is NULL:
-        return
-
-    # adjust all children
+    # adjust all children recursively
     c_current = c_node.children
     while c_current is not NULL:
         changeDocumentBelow(c_current, doc)
         c_current = c_current.next
 
-    # adjust Python references last (may trigger GC on _Document)
-    if c_node._private is not NULL:
-        ref = <ProxyRef*>c_node._private
-        while ref is not NULL:
-            proxy = <_NodeBase>ref.proxy
-            proxy._doc = doc
-            ref = ref.next
+    # adjust Python references of current node
+    ref = <ProxyRef*>c_node._private
+    while ref is not NULL:
+        proxy = <_NodeBase>ref.proxy
+        proxy._doc = doc
+        ref = ref.next
