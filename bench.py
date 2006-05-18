@@ -361,9 +361,8 @@ class BenchMark(BenchMarkBase):
     @with_attributes(True)
     def bench_get_attributes(self, root):
         for child in root:
-            child.set('a', 'bla')
-        for child in root:
-            child.get('a')
+            child.get('bla1')
+            child.get('{attr}test1')
 
     def bench_setget_attributes(self, root):
         for child in root:
