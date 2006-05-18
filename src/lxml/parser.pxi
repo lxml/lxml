@@ -623,6 +623,32 @@ cdef xmlDoc* _newDoc():
     __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     return result
 
+cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
+    cdef xmlDoc* result
+    result = tree.xmlCopyDoc(c_doc, recursive)
+    if c_doc.URL is not NULL:
+        # handle a bug in older libxml2 versions
+        if result.URL is not NULL:
+            tree.xmlFree(result.URL)
+        result.URL = tree.xmlStrdup(c_doc.URL)
+    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    return result
+
+cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
+    "Recursively copy the document and make c_new_root the new root node."
+    cdef xmlDoc* result
+    cdef xmlDoc* fake_c_doc
+    fake_c_doc = _fakeRootDoc(c_doc, c_new_root)
+    result = tree.xmlCopyDoc(fake_c_doc, 1)
+    _destroyFakeDoc(c_doc, fake_c_doc)
+    if c_doc.URL is not NULL:
+        # handle a bug in older libxml2 versions
+        if result.URL is not NULL:
+            tree.xmlFree(result.URL)
+        result.URL = tree.xmlStrdup(c_doc.URL)
+    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    return result
+
 ############################################################
 ## API level helper functions for _Document creation
 ## (here we convert to UTF-8)
