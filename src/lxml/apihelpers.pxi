@@ -388,7 +388,7 @@ cdef _getFilenameForFile(source):
         return source.geturl()
     return None
 
-cdef void changeDocumentBelow(_NodeBase node, _Document doc, int recursive):
+cdef void moveNodeToDocument(_NodeBase node, _Document doc):
     """For a node and all nodes below, change document.
 
     A node can change document in certain operations as an XML
@@ -396,11 +396,11 @@ cdef void changeDocumentBelow(_NodeBase node, _Document doc, int recursive):
     tree below (including the current node). It also reconciliates
     namespaces so they're correct inside the new environment.
     """
-    if recursive:
-        changeDocumentBelowHelper(node._c_node, doc)
+    if node._doc is not doc:
+        changeDocumentBelow(node._c_node, doc)
     tree.xmlReconciliateNs(doc._c_doc, node._c_node)
-    
-cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
+
+cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
     cdef ProxyRef* ref
     cdef xmlNode* c_current
     cdef xmlAttr* c_attr_current
@@ -410,22 +410,23 @@ cdef void changeDocumentBelowHelper(xmlNode* c_node, _Document doc):
         return
     # different _c_doc
     c_node.doc = doc._c_doc
-    
+
+    # adjust all children
+    c_current = c_node.children
+    while c_current is not NULL:
+        changeDocumentBelow(c_current, doc)
+        c_current = c_current.next
+        
+    # adjust all attributes
+    c_attr_current = c_node.properties
+    while c_attr_current is not NULL:
+        changeDocumentBelow(c_current, doc)
+        c_attr_current = c_attr_current.next
+
+    # adjust Python references last
     if c_node._private is not NULL:
         ref = <ProxyRef*>c_node._private
         while ref is not NULL:
             proxy = <_NodeBase>ref.proxy
             proxy._doc = doc
             ref = ref.next
-
-    # adjust all children
-    c_current = c_node.children
-    while c_current is not NULL:
-        changeDocumentBelowHelper(c_current, doc)
-        c_current = c_current.next
-        
-    # adjust all attributes
-    c_attr_current = c_node.properties
-    while c_attr_current is not NULL:
-        changeDocumentBelowHelper(c_current, doc)
-        c_attr_current = c_attr_current.next

@@ -524,16 +524,14 @@ cdef class _Element(_NodeBase):
     def __setitem__(self, Py_ssize_t index, _NodeBase element):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
-        cdef int foreign
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             raise IndexError
-        foreign = self._doc is not element._doc
         c_next = element._c_node.next
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element, self._doc, foreign)
+        moveNodeToDocument(element, self._doc)
         
     def __delitem__(self, Py_ssize_t index):
         cdef xmlNode* c_node
@@ -552,7 +550,6 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef _Element mynode
-        cdef int foreign
         # first, find start of slice
         c_node = _findChild(self._c_node, start)
         # now delete the slice
@@ -568,7 +565,6 @@ cdef class _Element(_NodeBase):
         for mynode in value:
             if mynode is None:
                 raise TypeError, "Node must not be None."
-            foreign = self._doc is not mynode._doc
             # store possible text tail
             c_next = mynode._c_node.next
             # now move node previous to insertion point
@@ -577,7 +573,7 @@ cdef class _Element(_NodeBase):
             # and move tail just behind his node
             _moveTail(c_next, mynode._c_node)
             # move it into a new document
-            changeDocumentBelow(mynode, self._doc, foreign)
+            moveNodeToDocument(mynode, self._doc)
 
     def __deepcopy__(self, memo):
         return self.__copy__()
@@ -600,8 +596,6 @@ cdef class _Element(_NodeBase):
     def append(self, _Element element not None):
         cdef xmlNode* c_next
         cdef xmlNode* c_node
-        cdef int foreign
-        foreign = self._doc is not element._doc
         c_node = element._c_node
         # store possible text node
         c_next = c_node.next
@@ -612,7 +606,7 @@ cdef class _Element(_NodeBase):
         _moveTail(c_next, c_node)
         # uh oh, elements may be pointing to different doc when
         # parent element has moved; change them too..
-        changeDocumentBelow(element, self._doc, foreign)
+        moveNodeToDocument(element, self._doc)
 
     def clear(self):
         cdef xmlAttr* c_attr
@@ -642,16 +636,14 @@ cdef class _Element(_NodeBase):
     def insert(self, index, _Element element not None):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
-        cdef int foreign
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             self.append(element)
             return
-        foreign = self._doc is not element._doc
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        changeDocumentBelow(element, self._doc, foreign)
+        moveNodeToDocument(element, self._doc)
 
     def remove(self, _Element element not None):
         cdef xmlNode* c_node
@@ -1381,16 +1373,7 @@ def ElementTree(_Element element=None, file=None, parser=None):
         c_doc = _newDoc()
         doc = _documentFactory(c_doc, parser)
 
-    etree = _elementTreeFactory(doc, element)
-
-##     # XXX what if element and file are both not None?
-##     if element is not None:
-##         c_next = element._c_node.next
-##         tree.xmlDocSetRootElement(etree._c_doc, element._c_node)
-##         _moveTail(c_next, element._c_node)
-##         changeDocumentBelow(element, etree)
-    
-    return etree
+    return _elementTreeFactory(doc, element)
 
 def HTML(text):
     cdef _Document doc
