@@ -100,8 +100,8 @@ separately.  `David Sankel`_ proposed the following approach.
 .. _`David Sankel`: http://codespeak.net/pipermail/lxml-dev/2006-May/001196.html
 
 Download lxml and all required libraries to the same directory.  The iconv,
-libxml2, libxslt, and zlib libraries are all available from xmlsoft.org. The
-place to go on the ftp site is ftp://xmlsoft.org/libxml2/win32.
+libxml2, libxslt, and zlib libraries are all available from the ftp site
+ftp://ftp.zlatkovic.com/pub/libxml/.
 
 Your directory should now have the following files in it (although possibly
 different versions)::
@@ -126,47 +126,47 @@ something like this::
   zlib-1.2.3.win32/
   zlib-1.2.3.win32.zip
 
-Go to the lxml-0.9.2 directory and edit the file ``setup.py``. There should be
-a section that looks like this::
+Go to the lxml-0.9.2 directory and edit the file ``setup.py``.  There should
+be a section near the top that looks like this::
 
-  ext_modules = [ Extension(
-      "lxml.etree",
-      sources = sources,
-      extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-      extra_link_args = flags('xslt-config --libs')
-  )],
-
-The problem here is that the Windows version of libxslt does not install the
-little program ``xslt-config``, which would normally auto-configure the build
-process.
+  def setupStaticBuild():
+      cflags = [
+          ]
+      xslt_libs = [
+          ]
+      result = (cflags, xslt_libs)
+      # return result
+      raise NotImplementedError, \
+            "Static build not configured, see doc/build.txt"
 
 Change this section to something like this, but take care to use the correct
 version numbers::
 
-   ext_modules = [ Extension(
-       "lxml.etree",
-       sources = sources,
-       extra_compile_args = ['-w'] + [
+  def setupStaticBuild():
+      cflags = [
          "-I..\\libxml2-2.6.23.win32\\include ",
          "-I..\\libxslt-1.1.15.win32\\include",
          "-I..\\zlib-1.2.3.win32\\include",
          "-I..\\iconv-1.9.1.win32\\include"
-       ],
-       extra_link_args = [
+         ]
+      xslt_libs = [
          "..\\libxml2-2.6.23.win32\\lib\\libxml2_a.lib",
          "..\\libxslt-1.1.15.win32\\lib\\libxslt_a.lib",
+         "..\\libxslt-1.1.15.win32\\lib\\libexslt_a.lib",
          "..\\zlib-1.2.3.win32\\lib\\zlib.lib",
-         "..\\iconv- 1.9.1.win32\\lib\\iconv_a.lib"
+         "..\\iconv-1.9.1.win32\\lib\\iconv_a.lib"
          ]
-   )],
+      result = (cflags, xslt_libs)
+      return result
 
 The ``_a`` part of the library names means that we are linking statically
 against the named library files.  If you want to use DLLs, you need to link
 against the DLL version of the libraries.
 
-Now you should be able to use setup.py and everything should work well.  Try calling::
+Now you should be able to use setup.py and everything should work well.  Try
+calling::
 
-  python setup.py bdist_wininst
+  python setup.py bdist_wininst --static
 
 This will create a windows installer in the ``pkg`` directory.
 

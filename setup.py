@@ -1,8 +1,31 @@
 import sys, os, os.path, re
 
+setup_args = {}
+try:
+    from setuptools import setup
+    from setuptools.extension import Extension
+    # prevent setuptools from making local etree.so copies:
+    setup_args['zip_safe'] = False
+except ImportError:
+    from distutils.core import setup
+    from distutils.extension import Extension
+
+# This is called if the '--static' option is passed
+def setupStaticBuild():
+    "See doc/build.txt to make this work."
+    cflags = [
+        ]
+    xslt_libs = [
+        ]
+    result = (cflags, xslt_libs)
+    # return result
+    raise NotImplementedError, \
+          "Static build not configured, see doc/build.txt"
+
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().strip().split(' ')
+
 
 src_dir = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 version = open(os.path.join(src_dir, 'version.txt')).read().strip()
@@ -26,17 +49,7 @@ version_h.close()
 
 print "Building lxml version", svn_version
 
-setup_args = {}
-changelog_text = ""
-
-try:
-    from setuptools import setup
-    from setuptools.extension import Extension
-    # prevent setuptools from making local etree.so copies:
-    setup_args['zip_safe'] = False
-except ImportError:
-    from distutils.core import setup
-    from distutils.extension import Extension
+# setup etree extension building
 
 try:
     from Pyrex.Distutils import build_ext as build_pyx
@@ -46,6 +59,35 @@ except ImportError:
     print "*NOTE*: Trying to build without Pyrex, needs pre-generated 'src/lxml/etree.c' !"
     sources = ["src/lxml/etree.c"]
 
+try:
+    sys.argv.remove('--static')
+except ValueError:
+    # we are not compiling statically
+    cflags    = flags('xslt-config --cflags')
+    xslt_libs = flags('xslt-config --libs')
+
+    # compile also against libexslt!
+    for i, libname in enumerate(xslt_libs):
+        if 'exslt' in libname:
+            break
+        if 'xslt' in libname:
+            xslt_libs.insert(i, libname.replace('xslt', 'exslt'))
+            break
+else:
+    # use the static setup as configured in setupStaticBuild
+    cflags, xslt_libs = setupStaticBuild()
+
+ext_modules = [ Extension(
+    "lxml.etree",
+    sources = sources,
+    extra_compile_args = ['-w'] + cflags,
+    extra_link_args = xslt_libs
+    )]
+
+
+# setup ChangeLog entry
+
+changelog_text = ""
 try:
     changelog = open(os.path.join(src_dir, "CHANGES.txt"), 'r')
 except:
@@ -66,14 +108,6 @@ else:
 
     changelog.close()
 
-# compile also against libexslt!
-xslt_libs = flags('xslt-config --libs')
-for i, libname in enumerate(xslt_libs):
-    if 'exslt' in libname:
-        break
-    if 'xslt' in libname:
-        xslt_libs.insert(i, libname.replace('xslt', 'exslt'))
-        break
 
 setup(
     name = "lxml",
@@ -109,11 +143,6 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
 
     package_dir = {'': 'src'},
     packages = ['lxml'],
-    ext_modules = [ Extension(
-        "lxml.etree", 
-        sources = sources,
-        extra_compile_args = ['-w'] + flags('xslt-config --cflags'),
-        extra_link_args = xslt_libs
-    )],
+    ext_modules = ext_modules,
     **setup_args
 )
