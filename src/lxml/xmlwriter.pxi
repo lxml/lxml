@@ -137,7 +137,7 @@ cdef int _closeFilelikeWriter(void* ctxt):
     return (<_FileWriter>ctxt).close()
 
 cdef _tofilelike(f, _NodeBase element, encoding,
-             int write_xml_declaration, int pretty_print):
+                 int write_xml_declaration, int pretty_print):
     cdef _FileWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
