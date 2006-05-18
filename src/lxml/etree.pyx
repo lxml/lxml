@@ -64,6 +64,7 @@ cdef __unpackDottedVersion(version):
         try:
             version_list.append(int(item))
         except ValueError:
+            item = {'alpha':-2, 'beta':-1}.get(item.lower(), item)
             version_list.append(item)
     return tuple(version_list)
 
