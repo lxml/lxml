@@ -555,13 +555,13 @@ if __name__ == '__main__':
             except ImportError:
                 pass
 
-        if '-a' in sys.argv:
+        try:
+            sys.argv.remove('-a')
             # 'all' ?
-            try:
-                from elementtree import ElementTree as ET
-                _etrees.append(ET)
-            except ImportError:
-                pass
+            from elementtree import ElementTree as ET
+            _etrees.append(ET)
+        except (ValueError, ImportError):
+            pass
 
     if not _etrees:
         print "No library to test. Exiting."
@@ -574,12 +574,11 @@ if __name__ == '__main__':
     # sorted by name and tree tuple
     benchmarks = [ sorted(b.benchmarks()) for b in benchmark_suites ]
 
-    selected = []
-    for name in sys.argv[1:]:
-        if not name.startswith('bench_'):
-            name = 'bench_' + name
-        selected.append(name)
-    if selected:
+    if len(sys.argv) > 1:
+        selected = []
+        for name in sys.argv[1:]:
+            selected.append(name)
+        print selected
         benchmarks = [ [ b for b in bs
                          if [ match for match in selected
                               if match in b[0] ] ]
