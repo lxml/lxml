@@ -449,7 +449,7 @@ class BenchMark(BenchMarkBase):
                 return element[0]
             else:
                 return ()
-        extensions = {None : {'child' : return_child}}
+        extensions = {(None, 'child') : return_child}
         xpath = self.etree.XPath("child(.)", extensions=extensions)
         for child in root:
             xpath(child)
@@ -474,7 +474,7 @@ class BenchMark(BenchMarkBase):
         def return_child(_, elements):
             return elements[0][0]
 
-        extensions = {'testns' : {'child' : return_child}}
+        extensions = {('testns', 'child') : return_child}
 
         transform = self.etree.XSLT(tree, extensions)
         for i in range(10):
