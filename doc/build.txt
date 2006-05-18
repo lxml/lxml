@@ -122,12 +122,12 @@ something like this::
   libxml2-2.6.23.win32.zip
   libxslt-1.1.15.win32/
   libxslt-1.1.15.win32.zip
-  lxml-0.9.2/
-  lxml-0.9.2.tgz
+  lxml-1.0.0/
+  lxml-1.0.0.tgz
   zlib-1.2.3.win32/
   zlib-1.2.3.win32.zip
 
-Go to the lxml-0.9.2 directory and edit the file ``setup.py``.  There should
+Go to the lxml-1.0.0 directory and edit the file ``setup.py``.  There should
 be a section near the top that looks like this::
 
   def setupStaticBuild():
