@@ -16,7 +16,18 @@ from common_imports import SillyFileLike, canonicalize
 class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
     etree = etree
-    
+
+    def test_version(self):
+        self.assert_(isinstance(etree.__version__, str))
+        self.assert_(isinstance(etree.LXML_VERSION, tuple))
+        self.assertEqual(len(etree.LXML_VERSION), 4)
+        self.assert_(isinstance(etree.LXML_VERSION[0], int))
+        self.assert_(isinstance(etree.LXML_VERSION[1], int))
+        self.assert_(isinstance(etree.LXML_VERSION[2], int))
+        self.assert_(isinstance(etree.LXML_VERSION[3], int))
+        self.assert_(etree.__version__.startswith(
+            str(etree.LXML_VERSION[0])))
+
     def test_parse_error(self):
         parse = self.etree.parse
         # from StringIO
