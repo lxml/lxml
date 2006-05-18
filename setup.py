@@ -47,6 +47,13 @@ version_h.write('''\
 ''' % svn_version)
 version_h.close()
 
+if 'alpha' in version:
+    dev_status = 'Development Status :: 3 - Alpha'
+elif 'beta' in version:
+    dev_status = 'Development Status :: 4 - Beta'
+else:
+    dev_status = 'Development Status :: 5 - Production/Stable'
+
 print "Building lxml version", svn_version
 
 # setup etree extension building
@@ -130,7 +137,7 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
 """ + changelog_text,
 
     classifiers = [
-    'Development Status :: 5 - Production/Stable',
+    dev_status,
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
     'License :: OSI Approved :: BSD License',
