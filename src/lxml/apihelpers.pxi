@@ -401,6 +401,11 @@ cdef void moveNodeToDocument(_NodeBase node, _Document doc):
     tree.xmlReconciliateNs(doc._c_doc, node._c_node)
 
 cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
+    """Update the Python references in the tree below the node.
+
+    Note that we expect C pointers to the document to be updated already by
+    libxml2.
+    """
     cdef ProxyRef* ref
     cdef xmlNode* c_current
     cdef xmlAttr* c_attr_current
@@ -408,22 +413,14 @@ cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
 
     if c_node is NULL:
         return
-    # different _c_doc
-    c_node.doc = doc._c_doc
 
     # adjust all children
     c_current = c_node.children
     while c_current is not NULL:
         changeDocumentBelow(c_current, doc)
         c_current = c_current.next
-        
-    # adjust all attributes
-    c_attr_current = c_node.properties
-    while c_attr_current is not NULL:
-        changeDocumentBelow(c_current, doc)
-        c_attr_current = c_attr_current.next
 
-    # adjust Python references last
+    # adjust Python references last (may trigger GC on _Document)
     if c_node._private is not NULL:
         ref = <ProxyRef*>c_node._private
         while ref is not NULL:
