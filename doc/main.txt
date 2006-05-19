@@ -75,9 +75,10 @@ feature you want has been implemented in the latest trunk version.
 Documentation
 -------------
 
-lxml follows the `ElementTree API`_ as much as possible, building it
-on top of the native libxml2 tree. See also the `ElementTree
-compatibility overview`_.
+lxml follows the ElementTree_ API as much as possible, building it on top of
+the native libxml2 tree.  See also the `ElementTree compatibility overview`_
+and the `benchmark results`_ comparing lxml to the original ElementTree_ and
+cElementTree_ implementations.
 
 lxml also `extends this API`_ to expose libxml2 and libxslt specific
 functionality, such as XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and
@@ -91,17 +92,21 @@ simple way to write arbitrary XML driven APIs on top of lxml.
 lxml also offers a `SAX compliant API`_, that works with the SAX support
 in the standard library.
 
-.. _`ElementTree API`: http://effbot.org/zone/element-index.htm
+.. _ElementTree:  http://effbot.org/zone/element-index.htm
+.. _cElementTree: http://effbot.org/zone/celementtree.htm
+
+.. _`benchmark results`: performance.html
 .. _`ElementTree compatibility overview`: compatibility.html
 .. _`extends this API`: api.html
 .. _`extension functions`: extensions.html
+.. _`implementing namespaces`: namespace_extensions.html
+.. _`SAX compliant API`: sax.html
+
 .. _XPath: http://www.w3.org/TR/xpath
 .. _`Relax NG`: http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 .. _`XSLT`: http://www.w3.org/TR/xslt
 .. _`c14n`: http://www.w3.org/TR/xml-c14n
-.. _`implementing namespaces`: namespace_extensions.html
-.. _`SAX compliant API`: sax.html
 
 Mailing list
 ------------
