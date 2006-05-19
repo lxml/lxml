@@ -4,8 +4,8 @@ from StringIO import StringIO
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
 
-_TEXT  = "some ASCII text" * 10 * TREE_FACTOR
-_UTEXT = u"some klingon: \F8D2" * 10 * TREE_FACTOR
+_TEXT  = "some ASCII text" * TREE_FACTOR
+_UTEXT = u"some klingon: \F8D2" * TREE_FACTOR
 _ATTRIBUTES = {
     '{attr}test1' : _UTEXT,
     '{attr}test2' : _UTEXT,
@@ -140,6 +140,7 @@ class BenchMarkBase(object):
         root = self.etree.Element('{abc}rootnode')
         for ch1 in atoz:
             el = SubElement(root, "{bcd}"+ch1*5, attributes)
+            el.text = text
             for ch2 in atoz:
                 for i in range(20 * TREE_FACTOR):
                     SubElement(el, "{cdefg}%s%05d" % (ch2, i))
@@ -156,6 +157,7 @@ class BenchMarkBase(object):
         for ch1 in atoz:
             for i in range(20 * TREE_FACTOR):
                 el = SubElement(root, "{bcd}"+ch1*5, attributes)
+                el.text = text
                 for ch2 in atoz:
                     SubElement(el, "{cdefg}%s%05d" % (ch2, i))
         t = current_time() - t
@@ -172,6 +174,8 @@ class BenchMarkBase(object):
             tag_no = count().next
             children = [ SubElement(c, "{bcd}a%05d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
+        for child in root:
+            child.text = text
         t = current_time() - t
         return (root, t)
 
@@ -185,6 +189,7 @@ class BenchMarkBase(object):
         children = [root]
         for ch1 in atoz:
             el = SubElement(root, "{bcd}"+ch1*5, attributes)
+            el.text = text
             SubElement(el, "{cdefg}abcde", attributes)
             SubElement(el, "{cdefg}bcdef", attributes)
         t = current_time() - t
