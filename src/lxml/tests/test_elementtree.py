@@ -89,6 +89,24 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('two', root[1].tag)
         self.assertEquals('three', root[2].tag)
         
+    def test_element_contains(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        root1 = Element('root')
+        SubElement(root1, 'one')
+        self.assert_(root1[0] in root1)
+
+        root2 = Element('root')
+        SubElement(root2, 'two')
+        SubElement(root2, 'three')
+        self.assert_(root2[0] in root2)
+        self.assert_(root2[1] in root2)
+
+        self.assertFalse(root1[0] in root2)
+        self.assertFalse(root2[0] in root1)
+        self.assertFalse(None in root2)
+
     def test_element_indexing_with_text(self):
         ElementTree = self.etree.ElementTree
         

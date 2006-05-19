@@ -764,6 +764,13 @@ cdef class _Element(_NodeBase):
         c_node = _findChildBackwards(self._c_node, 0)
         return c_node != NULL
 
+    def __contains__(self, element):
+        cdef xmlNode* c_node
+        if not isinstance(element, _NodeBase):
+            return 0
+        c_node = (<_NodeBase>element)._c_node
+        return c_node is not NULL and c_node.parent is self._c_node
+
     def __iter__(self):
         return ElementChildIterator(self)
 
@@ -1020,9 +1027,9 @@ cdef class _Attrib(_NodeBase):
         c_node = <xmlNode*>(self._c_node.properties)
         while c_node is not NULL:
             if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                return True
+                return 1
             c_node = c_node.next
-        return False
+        return 0
 
     def __len__(self):
         cdef Py_ssize_t c
@@ -1100,10 +1107,10 @@ cdef class _Attrib(_NodeBase):
         else:
             c_result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
         if c_result is NULL:
-            return False
+            return 0
         else:
             tree.xmlFree(c_result)
-            return True
+            return 1
 
 cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     cdef _Attrib result
