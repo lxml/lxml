@@ -1163,12 +1163,12 @@ cdef class ElementDepthFirstIterator:
     tree it traverses is modified during iteration.
     """
     # we keep Python references here to control GC
-    # keep next node to return and a stack of position state in the tree
+    # keep next node to return and a depth counter in the tree
+    cdef _NodeBase _next_node
+    cdef Py_ssize_t _depth
     cdef object _pystrings
     cdef char* _href
     cdef char* _name
-    cdef Py_ssize_t _depth
-    cdef _NodeBase _next_node
     def __init__(self, _NodeBase node not None, tag=None):
         self._next_node = node
         self._depth = 0
@@ -1226,7 +1226,7 @@ cdef class ElementDepthFirstIterator:
                 c_node = _findDepthFirstInFollowingSiblings(
                     c_parent, self._href, self._name)
 
-            if c_node is NULL:
+            if c_node is NULL or not _isElement(c_parent):
                 self._next_node = None
                 return # all found, nothing left
             # we are at a sibling, so set c_parent to our parent
