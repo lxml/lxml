@@ -12,8 +12,8 @@ ElementTree.
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
 The statements made here are backed by the benchmark script `bench.py`_ that
-comes with the lxml source distribution.  The numbers cited below compare lxml
-1.0, ElementTree 1.2.6 and cElementTree 1.0.5.
+comes with the lxml source distribution.  The numbers that are cited below
+compare lxml 1.0, ElementTree 1.2.6 and cElementTree 1.0.5.
 
 .. _`bench.py`:   http://codespeak.net/svn/lxml/trunk/bench.py
 
