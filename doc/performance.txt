@@ -75,8 +75,7 @@ cycle, the numbers will look similar to these::
   ET : write_utf8_parse_stringIO  (UA T2) 1297.9678 msec/pass
 
 So, lxml also wins this contest, but considering the previous numbers on
-serialization, parser performance is otherwise roughly comparable between cET
-and lxml.
+serialization, cET comes rather close in plain parser performance.
 
 
 The ElementTree API
