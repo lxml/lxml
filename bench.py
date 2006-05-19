@@ -49,6 +49,8 @@ def onlylib(*libs):
         return function
     return set_libs
 
+class SkippedTest(Exception):
+    pass
 
 class BenchMarkBase(object):
     atoz = string.ascii_lowercase
@@ -408,14 +410,17 @@ class BenchMark(BenchMarkBase):
             for i in repeat:
                 child.text
 
+    @onlylib('lxe')
     def bench_index(self, root):
         for child in root:
             root.index(child)
 
+    @onlylib('lxe')
     def bench_index_slice(self, root):
         for child in root[5:100]:
             root.index(child, 5, 100)
 
+    @onlylib('lxe')
     def bench_index_slice_neg(self, root):
         for child in root[-100:-5]:
             root.index(child, start=-100, stop=-5)
@@ -647,12 +652,17 @@ if __name__ == '__main__':
             print "(%-10s)" % tree_set_name,
             sys.stdout.flush()
 
-            result = run_bench(bench, *benchmark_setup)
-
-            print "%9.4f msec/pass, best of (" % min(result),
-            for t in result:
-                print "%9.4f" % t,
-            print ")"
+            try:
+                result = run_bench(bench, *benchmark_setup)
+            except SkippedTest:
+                print "skipped"
+            except Exception, e:
+                print "failed: %s: %s" % (e.__class__.__name__, e)
+            else:
+                print "%9.4f msec/pass, best of (" % min(result),
+                for t in result:
+                    print "%9.4f" % t,
+                print ")"
 
         if len(benchmark_suites) > 1:
             print # empty line between different benchmarks
