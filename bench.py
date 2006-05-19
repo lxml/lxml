@@ -72,7 +72,7 @@ class BenchMarkBase(object):
                 setattr(self, fname, lambda : deepcopy(root))
         else:
             def set_property(root, fname):
-                setattr(self, fname, self.et_make_factory(root))
+                setattr(self, fname, self.et_make_clone_factory(root))
 
         attribute_list = list(izip(count(), ({}, _ATTRIBUTES)))
         text_list = list(izip(count(), (None, _TEXT, _UTEXT)))
@@ -95,7 +95,7 @@ class BenchMarkBase(object):
     def tree_builder(self, tree, tn, an):
         return getattr(self, self._tree_builder_name(tree, tn, an))
 
-    def et_make_factory(self, elem):
+    def et_make_clone_factory(self, elem):
         def generate_elem(append, elem, level):
             var = "e" + str(level)
             arg = repr(elem.tag)
@@ -343,7 +343,6 @@ class BenchMark(BenchMarkBase):
             child.append(el)
 
     def bench_makeelement(self, root):
-        Element = self.etree.Element
         empty_attrib = {}
         for child in root:
             child.makeelement('{test}test', empty_attrib)
@@ -567,8 +566,8 @@ if __name__ == '__main__':
                 pass
 
         try:
-            sys.argv.remove('-a')
             # 'all' ?
+            sys.argv.remove('-a')
             from elementtree import ElementTree as ET
             _etrees.append(ET)
         except (ValueError, ImportError):
