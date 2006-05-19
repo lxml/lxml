@@ -61,7 +61,7 @@ class BenchMarkBase(object):
         'cElementTree' : 'cET'
         }
 
-    SEARCH_TAG = "{cdefg}00001"
+    SEARCH_TAG = "{cdefg}a00001"
 
     def __init__(self, etree):
         self.etree = etree
@@ -183,17 +183,16 @@ class BenchMarkBase(object):
 
     def _setup_tree4(self, text, attributes):
         "small tree with 26 2nd level and 2 3rd level children"
-        atoz = self.atoz
         SubElement = self.etree.SubElement
         current_time = time.time
         t = current_time()
         root = self.etree.Element('{abc}rootnode')
         children = [root]
-        for ch1 in atoz:
+        for ch1 in self.atoz:
             el = SubElement(root, "{bcd}"+ch1*5, attributes)
             el.text = text
-            SubElement(el, "{cdefg}00001", attributes)
-            SubElement(el, "{cdefg}00002", attributes)
+            SubElement(el, "{cdefg}a00001", attributes)
+            SubElement(el, "{cdefg}a00002", attributes)
         t = current_time() - t
         return (root, t)
 
