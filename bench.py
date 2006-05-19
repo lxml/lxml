@@ -450,6 +450,9 @@ class BenchMark(BenchMarkBase):
         list(root.getiterator(self.SEARCH_TAG))
 
     def bench_findall(self, root):
+        root.findall(".//*")
+
+    def bench_findall_tag(self, root):
         root.findall(".//" + self.SEARCH_TAG)
 
     @onlylib('lxe')
@@ -459,10 +462,21 @@ class BenchMark(BenchMarkBase):
             xpath(child)
 
     @onlylib('lxe')
-    def bench_xpath_element(self, root):
+    def bench_xpath_class_repeat(self, root):
         for child in root:
-            xpath = self.etree.XPathElementEvaluator(child)
+            xpath = self.etree.XPath("./*[0]")
+            xpath(child)
+
+    @onlylib('lxe')
+    def bench_xpath_element(self, root):
+        xpath = self.etree.XPathElementEvaluator(root)
+        for child in root:
             xpath.evaluate("./*[0]")
+
+    @onlylib('lxe')
+    def bench_xpath_method(self, root):
+        for child in root:
+            child.xpath("./*[0]")
 
     @onlylib('lxe')
     def bench_xpath_extensions_old(self, root):
