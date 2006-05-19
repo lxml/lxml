@@ -62,7 +62,7 @@ to 40 times faster on serialisation::
 For parsing, the difference between the libraries is smaller.  The (c)ET
 libraries use the expat parser, which is known to be fast and similar in
 performance to the libxml2 parser.  If you take a complete serialize-parse
-cycle, the numbers will look like this::
+cycle, the numbers will look similar to these::
 
   lxe: write_utf8_parse_stringIO  (S- T1)  187.0444 msec/pass
   cET: write_utf8_parse_stringIO  (S- T1)  828.4068 msec/pass
@@ -153,8 +153,8 @@ the other hand, deep copying a tree is fast in lxml::
   cET: deepcopy                  (-- T3   )  107.2124 msec/pass
   ET : deepcopy                  (-- T3   )  173.9782 msec/pass
 
-So, if you often need to create independent subtrees from a large tree that
-you have parsed in, lxml is the best choice here.
+So, for example, if you often need to create independent subtrees from a large
+tree that you have parsed in, lxml is by far the best choice here.
 
 
 Tree traversal
