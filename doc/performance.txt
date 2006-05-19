@@ -172,21 +172,21 @@ Another area where lxml is very fast is iteration for tree traversal.  If your
 algorithms can benefit from step-by-step traversal of the XML tree and
 especially if few elements are of interest, lxml is a good choice::
 
-  lxe: getiterator_all      (-- T2   )   32.3100 msec/pass
-  cET: getiterator_all      (-- T2   )   37.2489 msec/pass
-  ET : getiterator_all      (-- T2   )   46.2996 msec/pass
+  lxe: getiterator_all      (-- T2   )   31.2719 msec/pass
+  cET: getiterator_all      (-- T2   )   36.3687 msec/pass
+  ET : getiterator_all      (-- T2   )   46.2846 msec/pass
 
-  lxe: getiterator_islice   (-- T2   )    3.3567 msec/pass
-  cET: getiterator_islice   (-- T2   )    0.3289 msec/pass
-  ET : getiterator_islice   (-- T2   )   43.9938 msec/pass
+  lxe: getiterator_islice   (-- T2   )    2.8503 msec/pass
+  cET: getiterator_islice   (-- T2   )    0.3299 msec/pass
+  ET : getiterator_islice   (-- T2   )   44.5898 msec/pass
 
-  lxe: getiterator_tag      (-- T2   )    4.7438 msec/pass
-  cET: getiterator_tag      (-- T2   )   31.8628 msec/pass
-  ET : getiterator_tag      (-- T2   )   36.4583 msec/pass
+  lxe: getiterator_tag      (-- T2   )    3.0983 msec/pass
+  cET: getiterator_tag      (-- T2   )   11.2861 msec/pass
+  ET : getiterator_tag      (-- T2   )   37.5661 msec/pass
 
-  lxe: getiterator_tag_all  (-- T2   )    4.6267 msec/pass
-  cET: getiterator_tag_all  (-- T2   )   32.1669 msec/pass
-  ET : getiterator_tag_all  (-- T2   )   36.3365 msec/pass
+  lxe: getiterator_tag_all  (-- T2   )    4.9760 msec/pass
+  cET: getiterator_tag_all  (-- T2   )   33.2602 msec/pass
+  ET : getiterator_tag_all  (-- T2   )   37.6200 msec/pass
 
 This similarly shows in ``Element.findall()``::
 
