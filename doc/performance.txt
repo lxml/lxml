@@ -8,13 +8,13 @@ original ElementTree_ (ET) and cElementTree_ (cET) libraries by Fredrik Lundh.
 The cElementTree library is a fast C-implementation of the original
 ElementTree.
 
-The statements made here are backed by the benchmark script `bench.py`_ that
-comes with the lxml source distribution.  The numbers cited below compare lxml
-1.0, ElementTree 1.2.6 and cElementTree 1.0.5.
-
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 .. _`bench.py`:   http://codespeak.net/svn/lxml/trunk/bench.py
+
+The statements made here are backed by the benchmark script `bench.py`_ that
+comes with the lxml source distribution.  The numbers cited below compare lxml
+1.0, ElementTree 1.2.6 and cElementTree 1.0.5.
 
 The ``bench.py`` script runs a number of simple tests on the different
 libraries, using different XML tree configurations: different tree sizes, with
