@@ -589,7 +589,7 @@ cdef class _Element(_NodeBase):
         return new_doc.getroot()
 
     def set(self, key, value):
-        self.attrib[key] = value
+        _setAttributeValue(self, key, value)
         
     def append(self, _Element element not None):
         cdef xmlNode* c_next
@@ -839,22 +839,7 @@ cdef class _Element(_NodeBase):
             raise ValueError, "list.index(x): x not in list"
 
     def get(self, key, default=None):
-        # XXX more redundancy, but might be slightly faster than
-        #     return self.attrib.get(key, default)
-        cdef char* cresult
-        cdef char* c_tag
-        ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
-        if ns is None:
-            cresult = tree.xmlGetNoNsProp(self._c_node, c_tag)
-        else:
-            cresult = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
-        if cresult is NULL:
-            result = default
-        else:
-            result = funicode(cresult)
-            tree.xmlFree(cresult)
-        return result
+        return _getAttributeValue(self, key, default)
 
     def keys(self):
         return self.attrib.keys()
@@ -1000,21 +985,9 @@ cdef _Comment _commentFactory(_Document doc, xmlNode* c_node):
 cdef class _Attrib(_NodeBase):
     # MANIPULATORS
     def __setitem__(self, key, value):
-        cdef xmlNs* c_ns
-        cdef char* c_value
-        cdef char* c_tag
-        ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
-        value = _utf8(value)
-        c_value = _cstr(value)
-        if ns is None:
-            tree.xmlSetProp(self._c_node, c_tag, c_value)
-        else:
-            c_ns = self._doc._findOrBuildNodeNs(self._c_node, _cstr(ns))
-            tree.xmlSetNsProp(self._c_node, c_ns, c_tag, c_value)
+        _setAttributeValue(self, key, value)
 
     def __delitem__(self, key):
-        cdef xmlNs* c_ns
         cdef xmlAttr* c_attr
         cdef char* c_tag
         ns, tag = _getNsTag(key)
@@ -1036,21 +1009,20 @@ cdef class _Attrib(_NodeBase):
         return repr(result)
     
     def __getitem__(self, key):
-        cdef xmlNs* c_ns
-        cdef char* cresult
-        cdef char* c_tag
-        ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
-        if ns is None:
-            cresult = tree.xmlGetNoNsProp(self._c_node, c_tag)
-        else:
-            cresult = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
-        if cresult is NULL:
-            # XXX free namespace that is not in use..?
+        result = _getAttributeValue(self, key, None)
+        if result is None:
             raise KeyError, key
-        result = funicode(cresult)
-        tree.xmlFree(cresult)
-        return result
+        else:
+            return result
+
+    def __nonzero__(self):
+        cdef xmlNode* c_node
+        c_node = <xmlNode*>(self._c_node.properties)
+        while c_node is not NULL:
+            if c_node.type == tree.XML_ATTRIBUTE_NODE:
+                return True
+            c_node = c_node.next
+        return False
 
     def __len__(self):
         cdef Py_ssize_t c
@@ -1064,10 +1036,7 @@ cdef class _Attrib(_NodeBase):
         return c
     
     def get(self, key, default=None):
-        try:
-            return self.__getitem__(key)
-        except KeyError:
-            return default
+        return _getAttributeValue(self, key, default)
 
     def keys(self):
         result = []
@@ -1116,36 +1085,25 @@ cdef class _Attrib(_NodeBase):
         return iter(self.items())
 
     def has_key(self, key):
-        cdef xmlNs* c_ns
-        cdef char* result
-        cdef char* c_tag
-        ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
-        if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, c_tag)
-        else:
-            result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
-        if result is not NULL:
-            tree.xmlFree(result)
+        if key in self:
             return True
         else:
             return False
 
     def __contains__(self, key):
-        cdef xmlNs* c_ns
-        cdef char* result
+        cdef char* c_result
         cdef char* c_tag
         ns, tag = _getNsTag(key)
         c_tag = _cstr(tag)
         if ns is None:
-            result = tree.xmlGetNoNsProp(self._c_node, c_tag)
+            c_result = tree.xmlGetNoNsProp(self._c_node, c_tag)
         else:
-            result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
-        if result is not NULL:
-            tree.xmlFree(result)
-            return True
-        else:
+            c_result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
+        if c_result is NULL:
             return False
+        else:
+            tree.xmlFree(c_result)
+            return True
 
 cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
     cdef _Attrib result

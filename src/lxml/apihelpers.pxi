@@ -100,6 +100,36 @@ cdef object _attributeValue(xmlNode* c_element, xmlNode* c_attrib_node):
                                   c_attrib_node.ns.href)
     return funicode(value)
 
+cdef object _getAttributeValue(_NodeBase element, key, default):
+    cdef char* c_result
+    cdef char* c_tag
+    ns, tag = _getNsTag(key)
+    c_tag = _cstr(tag)
+    if ns is None:
+        c_result = tree.xmlGetNoNsProp(element._c_node, c_tag)
+    else:
+        c_result = tree.xmlGetNsProp(element._c_node, c_tag, _cstr(ns))
+    if c_result is NULL:
+        # XXX free namespace that is not in use..?
+        return default
+    result = funicode(c_result)
+    tree.xmlFree(c_result)
+    return result
+
+cdef void _setAttributeValue(_NodeBase element, key, value):
+    cdef xmlNs* c_ns
+    cdef char* c_value
+    cdef char* c_tag
+    ns, tag = _getNsTag(key)
+    c_tag = _cstr(tag)
+    value = _utf8(value)
+    c_value = _cstr(value)
+    if ns is None:
+        tree.xmlSetProp(element._c_node, c_tag, c_value)
+    else:
+        c_ns = element._doc._findOrBuildNodeNs(element._c_node, _cstr(ns))
+        tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
+
 cdef object __REPLACE_XML_ENCODING
 __REPLACE_XML_ENCODING = re.compile(
     r'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U).sub
