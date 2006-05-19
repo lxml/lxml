@@ -281,7 +281,6 @@ class BenchMark(BenchMarkBase):
     @with_text(text=True, utext=True)
     def bench_tostring_utf8_unicode_XML(self, root):
         xml = unicode(self.etree.tostring(root, 'UTF-8'), 'UTF-8')
-        open("test%03d.txt" % len(root), 'w').write(xml.encode('UTF-8'))
         self.etree.XML(xml)
 
     @with_attributes(True)
