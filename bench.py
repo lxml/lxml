@@ -61,6 +61,8 @@ class BenchMarkBase(object):
         'cElementTree' : 'cET'
         }
 
+    SEARCH_TAG = "{cdefg}00001"
+
     def __init__(self, etree):
         self.etree = etree
         libname = etree.__name__.split('.')[-1]
@@ -172,7 +174,7 @@ class BenchMarkBase(object):
         children = [root]
         for i in range(6 + TREE_FACTOR):
             tag_no = count().next
-            children = [ SubElement(c, "{bcd}a%05d" % i, attributes)
+            children = [ SubElement(c, "{cdefg}a%05d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         for child in root:
             child.text = text
@@ -190,8 +192,8 @@ class BenchMarkBase(object):
         for ch1 in atoz:
             el = SubElement(root, "{bcd}"+ch1*5, attributes)
             el.text = text
-            SubElement(el, "{cdefg}abcde", attributes)
-            SubElement(el, "{cdefg}bcdef", attributes)
+            SubElement(el, "{cdefg}00001", attributes)
+            SubElement(el, "{cdefg}00002", attributes)
         t = current_time() - t
         return (root, t)
 
@@ -347,11 +349,16 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.makeelement('{test}test', empty_attrib)
 
-    def bench_replace_children(self, root):
+    def bench_replace_children_element(self, root):
         Element = self.etree.Element
         for child in root:
             el = Element('{test}test')
             child[:] = [el]
+
+    def bench_replace_children(self, root):
+        Element = self.etree.Element
+        for child in root:
+            child[:] = [ child[0] ]
 
     def bench_remove_children(self, root):
         for child in root:
@@ -430,14 +437,20 @@ class BenchMark(BenchMarkBase):
         for child in root[-100:-5]:
             root.index(child, start=-100, stop=-5)
 
-    def bench_getiterator(self, root):
+    def bench_getiterator_all(self, root):
+        list(root.getiterator())
+
+    def bench_getiterator_islice(self, root):
         list(islice(root.getiterator(), 10, 110))
 
     def bench_getiterator_tag(self, root):
-        list(islice(root.getiterator("{b}a"), 3, 10))
+        list(islice(root.getiterator(self.SEARCH_TAG), 3, 10))
 
     def bench_getiterator_tag_all(self, root):
-        list(root.getiterator("{b}a"))
+        list(root.getiterator(self.SEARCH_TAG))
+
+    def bench_findall(self, root):
+        root.findall(".//" + self.SEARCH_TAG)
 
     @onlylib('lxe')
     def bench_xpath_class(self, root):
