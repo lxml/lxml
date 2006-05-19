@@ -1807,10 +1807,17 @@ class ETreeTestCaseBase(unittest.TestCase):
     def test_deepcopy_append(self):
         # previously caused a crash
         Element = self.etree.Element
+        tostring = self.etree.tostring
         
         a = Element('a')
         b = copy.deepcopy(a)
-        b.append( Element('c') )
+        a.append( Element('C') )
+        b.append( Element('X') )
+
+        self.assertEquals('<a><C/></a>',
+                          tostring(a).replace(' ', ''))
+        self.assertEquals('<a><X/></a>',
+                          tostring(b).replace(' ', ''))
 
     def test_element_boolean(self):
         etree = self.etree
