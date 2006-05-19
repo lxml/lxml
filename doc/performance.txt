@@ -23,7 +23,8 @@ or without attributes (-/A) and with or without ASCII or unicode text (-/S/U).
 In the result extracts cited below, T1 refers to a 3-level tree with many
 children at the third level, T2 is swapped around to have many children at the
 root element, T3 is a deep tree with few children at each level and T4 is a
-small tree, slightly broader than deep.
+small tree, slightly broader than deep.  Most benchmarks run in a loop over
+all children of the tree root.
 
 
 Bad things first
