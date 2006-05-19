@@ -7,8 +7,8 @@ TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
 _TEXT  = "some ASCII text" * TREE_FACTOR
 _UTEXT = u"some klingon: \F8D2" * TREE_FACTOR
 _ATTRIBUTES = {
-    '{attr}test1' : _UTEXT,
-    '{attr}test2' : _UTEXT,
+    '{attr}test1' : _TEXT,
+    '{attr}test2' : _TEXT,
     'bla1'        : _TEXT,
     'bla2'        : _TEXT,
     'bla3'        : _TEXT
