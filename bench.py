@@ -615,7 +615,6 @@ if __name__ == '__main__':
         selected = []
         for name in sys.argv[1:]:
             selected.append(name)
-        print selected
         benchmarks = [ [ b for b in bs
                          if [ match for match in selected
                               if match in b[0] ] ]
