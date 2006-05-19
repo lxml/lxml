@@ -203,8 +203,9 @@ class BenchMarkBase(object):
                 continue
             method = getattr(self, name)
             if hasattr(method, 'LIBS') and self.lib_name not in method.LIBS:
-                benchmarks.append((name, None, (), 0, 0))
-                continue
+                method_call = None
+            else:
+                method_call = method
             if method.__doc__:
                 tree_sets = method.__doc__.split()
             else:
@@ -223,7 +224,7 @@ class BenchMarkBase(object):
             for tree_tuple in tree_tuples:
                 for tn in sorted(getattr(method, 'TEXT', (0,))):
                     for an in sorted(getattr(method, 'ATTRIBUTES', (0,))):
-                        benchmarks.append((name, method, tree_tuple, tn, an))
+                        benchmarks.append((name, method_call, tree_tuple, tn, an))
 
         return benchmarks
 
@@ -591,6 +592,9 @@ if __name__ == '__main__':
 
     import time
     def run_bench(suite, method_name, method_call, tree_set, tn, an):
+        if method_call is None:
+            raise SkippedTest
+
         current_time = time.time
         call_repeat = range(10)
 
@@ -642,13 +646,9 @@ if __name__ == '__main__':
 
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
-            bench_name, method_call = benchmark_setup[:2]
+            bench_name = benchmark_setup[0]
             tree_set_name = build_treeset_name(*benchmark_setup[-3:])
             print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
-            if method_call is None:
-                print "skipped"
-                continue
-
             print "(%-10s)" % tree_set_name,
             sys.stdout.flush()
 
