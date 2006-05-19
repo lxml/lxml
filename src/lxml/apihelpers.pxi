@@ -371,23 +371,26 @@ cdef _getNsTag(tag):
     Return None for NS uri if no namespace URI available.
     """
     cdef char* c_tag
-    cdef char* c_pos
-    cdef int nslen
+    cdef char* c_ns_end
+    cdef Py_ssize_t taglen
+    cdef Py_ssize_t nslen
     if isinstance(tag, QName):
         tag = (<QName>tag).text
     tag = _utf8(tag)
     c_tag = _cstr(tag)
     if c_tag[0] == c'{':
-        c_pos = tree.xmlStrchr(c_tag+1, c'}')
-        if c_pos is NULL:
+        c_tag = c_tag + 1
+        c_ns_end = cstd.strchr(c_tag, c'}')
+        if c_ns_end is NULL:
             raise ValueError, "Invalid tag name"
-        nslen = c_pos - c_tag - 1
-        ns  = python.PyString_FromStringAndSize(c_tag+1, nslen)
-        tag = python.PyString_FromString(c_pos+1)
+        nslen  = c_ns_end - c_tag
+        taglen = python.PyString_GET_SIZE(tag) - nslen - 2
+        ns  = python.PyString_FromStringAndSize(c_tag,      nslen)
+        tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
     else:
         ns = None
     return ns, tag
-    
+
 cdef object _namespacedName(xmlNode* c_node):
     cdef char* href
     cdef char* name
