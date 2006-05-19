@@ -82,33 +82,40 @@ The ElementTree API
 -------------------
 
 Since all three libraries implement the same API, their performance is easy to
-compare in this area.  A major disadvantage for lxml is the different tree
-model that underlies libxml2.  It allows lxml to provide parent pointers for
-elements, but also increases the overhead of tree restructuring.  This can be
-seen from the tree setup times of the benchmark::
+compare in this area.  A major disadvantage for lxml's performance is the
+different tree model that underlies libxml2.  It allows lxml to provide parent
+pointers for elements, but also increases the overhead of tree building and
+restructuring.  This can be seen from the tree setup times of the benchmark
+(given in seconds)::
 
-  Setup times for trees in seconds:
   lxe:       --     S-     U-     -A     SA     UA
        T1: 0.1658 0.1236 0.1241 0.1243 0.1261 0.1254
        T2: 0.1281 0.1282 0.1299 0.1381 0.1389 0.1395
        T3: 0.0366 0.0300 0.0290 0.0850 0.0851 0.0893
        T4: 0.0010 0.0006 0.0006 0.0018 0.0018 0.0019
+
   cET:       --     S-     U-     -A     SA     UA
        T1: 0.0417 0.0409 0.0403 0.0410 0.0410 0.0415
        T2: 0.0413 0.0414 0.0413 0.0417 0.0411 0.0417
        T3: 0.0097 0.0100 0.0099 0.0187 0.0142 0.0146
        T4: 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001
+
   ET :       --     S-     U-     -A     SA     UA
        T1: 0.2189 0.2832 0.2210 0.2646 0.2905 0.2214
        T2: 0.3022 0.2322 0.2868 0.3192 0.2290 0.3075
        T3: 0.0519 0.0553 0.0527 0.0601 0.0572 0.0911
        T4: 0.0009 0.0008 0.0008 0.0008 0.0009 0.0009
 
-While lxml is still faster than ET in most cases (30-60%), cET can be three to
-four times as fast as lxml here.  So, if the main performance bottleneck of an
-application is creating large XML trees in memory through calls to Element and
-SubElement, cET is the best choice.  Note, however, that the serialisation
-performance may even out this advantage.
+While lxml is still faster than ET in most cases (30-60%), cET can be up to
+three times faster than lxml here.  One of the reasons is that lxml must
+additionally discard the created Python elements after their use, when they
+are no longer referenced.  ET and cET represent the tree itself through these
+objects, which reduces their overhead in creating them.
+
+So, if the main performance bottleneck of an application is creating large XML
+trees in memory through calls to Element and SubElement, cET is the best
+choice.  Note, however, that the serialisation performance may even out this
+advantage.
 
 A critical action for lxml is moving elements between document contexts.  It
 requires lxml to do recursive adaptations throughout the moved tree structure.
