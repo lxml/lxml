@@ -7,10 +7,10 @@ current
 Features added
 --------------
 
-* Deep copying Elements and ElementTrees maintains the document information
-
 Bugs fixed
 ----------
+
+* Deep copying Elements and ElementTrees maintains the document information
 
 * Serialization functions now raise LookupError for unknown encodings
 
