@@ -144,10 +144,26 @@ class ETreeOnlyTestCase(HelperTestCase):
         a = Element('a')
         a.append(Comment())
         self.assertEquals(
-            '<a><!--  --></a>',
+            '<a><!----></a>',
             self._writeElement(a))
 
-    # ignores Comment in ElementTree
+    # ElementTree ignores comments
+    def test_comment_parse_empty(self):
+        ElementTree = self.etree.ElementTree
+        tostring = self.etree.tostring
+
+        xml = '<a><b/><!----><c/></a>'
+        f = StringIO(xml)
+        doc = ElementTree(file=f)
+        a = doc.getroot()
+        self.assertEquals(
+            '',
+            a[1].text)
+        self.assertEquals(
+            xml,
+            tostring(a))
+
+    # ElementTree ignores comments
     def test_comment_no_proxy_yet(self):
         ElementTree = self.etree.ElementTree
         
@@ -157,6 +173,35 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             ' hoi ',
             a[1].text)
+
+    # ElementTree adds whitespace around comments
+    def test_comment_text(self):
+        Element  = self.etree.Element
+        Comment  = self.etree.Comment
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        a.append(Comment('foo'))
+        self.assertEquals(
+            '<a><!--foo--></a>',
+            tostring(a))
+
+        a[0].text = "TEST"
+        self.assertEquals(
+            '<a><!--TEST--></a>',
+            tostring(a))
+
+    # ElementTree adds whitespace around comments
+    def test_comment_whitespace(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        tostring = self.etree.tostring
+
+        a = Element('a')
+        a.append(Comment(' foo  '))
+        self.assertEquals(
+            '<a><!-- foo  --></a>',
+            tostring(a))
 
     # test weird dictionary interaction leading to segfault previously
     def test_weird_dict_interaction(self):

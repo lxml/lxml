@@ -51,6 +51,7 @@ cdef extern from "libxml/tree.h":
     # for some reason need to define this in this section;
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
+    cdef int xmlDictOwns(xmlDict* dict, char* name)
     
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr

@@ -960,11 +960,30 @@ cdef class _Comment(_Element):
         
     property text:
         def __get__(self):
-            return funicode(self._c_node.content)
+            if self._c_node.content is NULL:
+                return ''
+            else:
+                return funicode(self._c_node.content)
 
         def __set__(self, value):
-            pass
-                        
+            cdef tree.xmlDict* c_dict
+            cdef char* c_text
+            if value is None:
+                value = ''
+            else:
+                value = _utf8(value)
+            c_text = self._c_node.content
+            if c_text is not NULL:
+                if self._c_node.doc is not NULL:
+                    c_dict = self._c_node.doc.dict
+                else:
+                    c_dict = NULL
+                # this code is copied from libxml2's DICT_FREE
+                if c_dict is NULL or \
+                       tree.xmlDictOwns(c_dict, c_text) == 0:
+                    tree.xmlFree(c_text)
+            self._c_node.content = tree.xmlStrdup(_cstr(value))
+
     # ACCESSORS
     def __repr__(self):
         return "<Comment[%s]>" % self.text
@@ -1307,12 +1326,12 @@ def Comment(text=None):
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
     if text is None:
-        text = '  '
+        text = ''
     else:
-        text = ' %s ' % _utf8(text)
+        text = _utf8(text)
     c_doc = _newDoc()
     doc = _documentFactory(c_doc, None)
-    c_node = _createComment(c_doc, text)
+    c_node = _createComment(c_doc, _cstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _commentFactory(doc, c_node)
 

@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Comment texts can now be changed through the API
+
 Bugs fixed
 ----------
 

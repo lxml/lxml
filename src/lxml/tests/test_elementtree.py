@@ -706,9 +706,19 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment('foo'))
-        self.assertXML(
-            '<a><!-- foo --></a>',
-            a)
+        self.assertEqual(a[0].text, 'foo')
+
+    def test_comment_text(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        Comment = self.etree.Comment
+
+        a = Element('a')
+        a.append(Comment('foo'))
+        self.assertEqual(a[0].text, 'foo')
+
+        a[0].text = "TEST"
+        self.assertEqual(a[0].text, 'TEST')
         
     def test_comment_whitespace(self):
         Element = self.etree.Element
@@ -717,9 +727,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment(' foo  '))
-        self.assertXML(
-            '<a><!--  foo   --></a>',
-            a)
+        self.assertEqual(a[0].text, ' foo  ')
         
     def test_comment_nonsense(self):
         Comment = self.etree.Comment

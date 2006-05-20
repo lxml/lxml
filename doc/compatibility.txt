@@ -81,17 +81,21 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   will be hard to solve.  It won't affect some applications, but if you want
   to port code you must unfortunately make sure that it doesn't.
 
-* ElementTree has a bug when serializing an empty Comment (no text argument
-  given) to XML, etree serializes this successfully.
-
 * When trying to set a subelement using __setitem__ that is in fact not an
   Element but some other object, etree raises a TypeError, and ElementTree
   raises an AssertionError.  This also applies to some other places of the
   API. In general, etree tries to avoid AssertionErrors in favour of being
   more specific about the reason for the exception.
 
+* ElementTree has a bug when serializing an empty Comment (no text argument
+  given) to XML, etree serializes this successfully.
+
 * ElementTree ignores comments when parsing XML, while etree will read them in
   and treat them as Comment elements.
+
+* ElementTree adds whitespace around comments on serialization, lxml does
+  not.  This means that a comment text "text" that ElementTree serializes as
+  "<!-- text -->" will become "<!--text-->" in lxml.
 
 * Because etree is built on top of libxml2, which is namespace prefix aware,
   etree preserves namespaces declarations and prefixes while ElementTree tends

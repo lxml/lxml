@@ -35,7 +35,7 @@ class UnicodeTestCase(unittest.TestCase):
 
     def test_unicode_comment(self):
         el = etree.Comment(uni)
-        self.assertEquals(' %s ' % uni, el.text)
+        self.assertEquals(uni, el.text)
 
     def test_unicode_parse_stringio(self):
         el = etree.parse(StringIO(u'<p>%s</p>' % uni)).getroot()
