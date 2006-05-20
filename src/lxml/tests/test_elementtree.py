@@ -1675,19 +1675,9 @@ class ETreeTestCaseBase(unittest.TestCase):
         a.text = u'Søk på nettet'
         self.assertXML(
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
-            a)
-
-    def test_encoding2(self):
-        ElementTree = self.etree.ElementTree
-        Element = self.etree.Element
-
-        a = Element('a')
-        a.text = u'Søk på nettet'
-        self.assertXML(
-            u'<a>Søk på nettet</a>'.encode('UTF-8'),
             a, 'UTF-8')
         
-    def test_encoding3(self):
+    def test_encoding2(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
 
