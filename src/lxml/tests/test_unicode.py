@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest, doctest
 
-from common_imports import StringIO, etree, SillyFileLike, unentitify
+from common_imports import StringIO, etree, SillyFileLike
 
 ascii_uni = u'a'
 
@@ -45,7 +45,8 @@ class UnicodeTestCase(unittest.TestCase):
         # parse unicode from unamed file object (not support by ElementTree)
         f = SillyFileLike(uxml)
         root = etree.parse(f).getroot()
-        self.assertEquals(unentitify(etree.tostring(root)), uxml)
+        self.assertEquals(unicode(etree.tostring(root, 'UTF-8'), 'UTF-8'),
+                          uxml)
 
 def test_suite():
     suite = unittest.TestSuite()

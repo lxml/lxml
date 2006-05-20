@@ -8,7 +8,7 @@ import unittest
 import tempfile
 
 from common_imports import StringIO, etree, fileInTestDir
-from common_imports import SillyFileLike, HelperTestCase, unentitify
+from common_imports import SillyFileLike, HelperTestCase
 
 class HtmlParserTestCaseBase(HelperTestCase):
     """HTML parser test cases
@@ -29,7 +29,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
     def test_module_HTML_unicode(self):
         element = self.etree.HTML(self.uhtml_str)
-        self.assertEqual(unentitify(self.etree.tostring(element)),
+        self.assertEqual(unicode(self.etree.tostring(element, 'UTF8'), 'UTF8'),
                          self.uhtml_str)
 
     def test_module_parse_html_error(self):
@@ -67,15 +67,15 @@ class HtmlParserTestCaseBase(HelperTestCase):
         parser = self.etree.HTMLParser()
         f = SillyFileLike(self.html_str)
         tree = self.etree.parse(f, parser)
-        html = self.etree.tostring(tree.getroot())
-        self.assertEqual(unentitify(html), self.html_str)
+        html = self.etree.tostring(tree.getroot(), 'UTF-8')
+        self.assertEqual(html, self.html_str)
 
     def test_module_parse_html_filelike_unicode(self):
         parser = self.etree.HTMLParser()
         f = SillyFileLike(self.uhtml_str)
         tree = self.etree.parse(f, parser)
-        html = self.etree.tostring(tree.getroot())
-        self.assertEqual(unentitify(html), self.uhtml_str)
+        html = self.etree.tostring(tree.getroot(), 'UTF-8')
+        self.assertEqual(unicode(html, 'UTF-8'), self.uhtml_str)
 
     def test_html_file_error(self):
         parser = self.etree.HTMLParser()
