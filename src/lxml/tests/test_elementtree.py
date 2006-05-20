@@ -1731,6 +1731,14 @@ class ETreeTestCaseBase(unittest.TestCase):
         a.text = u'Søk på nettet'
         self.assert_(tostring(a, 'UTF-8') in [xml, prologue + xml])
 
+    def test_encoding_tostring_unknown(self):
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+        
+        a = Element('a')
+        a.text = u'Søk på nettet'
+        self.assertRaises(LookupError, tostring, a, 'Invalid Encoding')
+
     def test_encoding_tostring_sub(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

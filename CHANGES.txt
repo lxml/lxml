@@ -12,6 +12,8 @@ Features added
 Bugs fixed
 ----------
 
+* Serialization functions now raise LookupError for unknown encodings
+
 * Memory deallocation crash resulting from deep copying elements
 
 

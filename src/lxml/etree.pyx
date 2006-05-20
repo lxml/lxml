@@ -334,8 +334,12 @@ cdef class _ElementTree:
     cdef _Document _doc
     cdef _NodeBase _context_node
 
-    # we have to take care here: the document may not have a root node!
     cdef _assertHasRoot(self):
+        """We have to take care here: the document may not have a root node!
+        This can happen if ElementTree() is called without any argument and
+        the caller 'forgets' to call parse() afterwards, so this is a bug in
+        the caller program.
+        """
         assert self._context_node is not None, \
                "ElementTree not initialized, missing root"
 
@@ -357,15 +361,20 @@ cdef class _ElementTree:
         def __get__(self):
             return DocInfo(self._doc)
 
-    def write(self, file, encoding='us-ascii', pretty_print=False):
+    def write(self, file, encoding=None, pretty_print=False):
+        """Write the tree to a file or file-like object.
+        
+        Defaults to ASCII encoding.
+        """
         self._assertHasRoot()
-        if encoding in ('utf8', 'UTF8', 'utf-8'):
-            encoding = 'UTF-8'
-        if encoding == 'UTF-8' or encoding == 'us-ascii':
-            # XXX this is purely for ElementTree compatibility..
+        # suppress decl. in default case (purely for ElementTree compatibility)
+        if encoding is None:
+            encoding = 'ASCII'
             write_declaration = 0
         else:
-            write_declaration = 1
+            encoding = encoding.upper()
+            write_declaration = encoding not in \
+                                ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
         _tofilelike(file, self._context_node, encoding,
                     write_declaration, bool(pretty_print))
 
@@ -521,7 +530,7 @@ cdef class _Element(_NodeBase):
 
     # MANIPULATORS
 
-    def __setitem__(self, Py_ssize_t index, _NodeBase element):
+    def __setitem__(self, Py_ssize_t index, _NodeBase element not None):
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
@@ -1370,16 +1379,24 @@ def iselement(element):
 def dump(_NodeBase elem not None):
     _dumpToFile(sys.stdout, elem._c_node)
 
-def tostring(element_or_tree, encoding='us-ascii',
+def tostring(element_or_tree, encoding=None,
              xml_declaration=None, pretty_print=False):
-    "Serialize an element to an encoded string representation of its XML tree."
+    """Serialize an element to an encoded string representation of its XML
+    tree.
+
+    Defaults to ASCII encoding without XML declaration.
+    """
     cdef int write_declaration
     cdef int c_pretty_print
-    encoding = str(encoding)
+    if encoding is None:
+        encoding = 'ASCII'
+    else:
+        encoding = encoding.upper()
     c_pretty_print = bool(pretty_print)
     if xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
-        write_declaration = (encoding != 'us-ascii')
+        write_declaration = encoding not in \
+                            ('ASCII', 'UTF-8', 'UTF8', 'US-ASCII')
     else:
         write_declaration = bool(xml_declaration)
 
@@ -1397,8 +1414,9 @@ def tounicode(element_or_tree, pretty_print=False):
     tree.
 
     Note that the result does not carry an XML encoding declaration and is
-    therefore not necessarily suited for serialization without further
-    treatment."""
+    therefore not necessarily suited for serialization to byte streams without
+    further treatment.
+    """
     cdef int c_pretty_print
     c_pretty_print = bool(pretty_print)
     if isinstance(element_or_tree, _NodeBase):

@@ -12,12 +12,16 @@ cdef _tostring(_NodeBase element, encoding,
     cdef char* c_version
     if element is None:
         return None
-    if encoding in ('utf8', 'UTF8', 'utf-8'):
-        encoding = 'UTF-8'
-    c_enc = encoding
+    if encoding is None:
+        c_enc = NULL
+    else:
+        c_enc = encoding
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
+    if enchandler is NULL:
+        raise LookupError, python.PyString_FromFormat(
+            "unknown encoding: '%s'", c_enc)
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
         raise LxmlError, "Failed to create output buffer"
@@ -146,8 +150,11 @@ cdef _tofilelike(f, _NodeBase element, encoding,
         c_enc = NULL
     else:
         c_enc = encoding
-
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
+    if enchandler is NULL:
+        raise LookupError, python.PyString_FromFormat(
+            "unknown encoding: '%s'", c_enc)
+
     if python.PyString_Check(f) or python.PyUnicode_Check(f):
         filename = _utf8(f)
         c_buffer = tree.xmlOutputBufferCreateFilename(
