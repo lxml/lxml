@@ -74,11 +74,13 @@ cdef class _LogEntry:
 cdef class _BaseErrorLog:
     "Immutable base version of an error log."
     cdef object _entries
-    def __init__(self, entries):
+    cdef readonly object last_error
+    def __init__(self, entries, last_error=None):
         self._entries = entries
+        self.last_error = last_error
 
     def copy(self):
-        return _BaseErrorLog(self._entries)
+        return _BaseErrorLog(self._entries, self.last_error)
 
     def __iter__(self):
         return iter(self._entries)
@@ -145,19 +147,7 @@ cdef class _BaseErrorLog:
         "Convenience method to get all warnings or worse."
         return self.filter_from_level(ErrorLevels.WARNING)
 
-cdef class _ErrorLog(_BaseErrorLog):
-    def __init__(self):
-        _BaseErrorLog.__init__(self, [])
-
-    def clear(self):
-        del self._entries[:]
-
-    def copy(self):
-        return _BaseErrorLog(self._entries[:])
-
-    def __iter__(self):
-        return iter(self._entries[:])
-
+cdef class _ExtensibleErrorLog(_BaseErrorLog):
     cdef void connect(self):
         del self._entries[:]
         xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
@@ -166,12 +156,16 @@ cdef class _ErrorLog(_BaseErrorLog):
         xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
     cdef void _receive(self, xmlerror.xmlError* error):
+        cdef int level
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._set(error)
         if __GLOBAL_ERROR_LOG is not self:
             __GLOBAL_ERROR_LOG.receive(entry)
         self.receive(entry)
+        level = error.level
+        if level == xmlerror.XML_ERR_ERROR or level == xmlerror.XML_ERR_FATAL:
+            self.last_error = entry
 
     cdef void _receiveGeneric(self, int domain, int type, int level, int line,
                               message, filename):
@@ -181,35 +175,52 @@ cdef class _ErrorLog(_BaseErrorLog):
         if __GLOBAL_ERROR_LOG is not self:
             __GLOBAL_ERROR_LOG.receive(entry)
         self.receive(entry)
+        if level == xmlerror.XML_ERR_ERROR or level == xmlerror.XML_ERR_FATAL:
+            self.last_error = entry
+
+cdef class _ErrorLog(_ExtensibleErrorLog):
+    def __init__(self):
+        _ExtensibleErrorLog.__init__(self, [])
+
+    def clear(self):
+        del self._entries[:]
+
+    def copy(self):
+        return _BaseErrorLog(self._entries[:], self.last_error)
+
+    def __iter__(self):
+        return iter(self._entries[:])
 
     def receive(self, entry):
         python.PyList_Append(self._entries, entry)
 
 cdef class _DomainErrorLog(_ErrorLog):
-    def receive(self, entry):
-        if entry.domain in self._accepted_domains:
-            _ErrorLog.receive(self, entry)
     def __init__(self, domains):
         _ErrorLog.__init__(self)
         self._accepted_domains = tuple(domains)
+
+    def receive(self, entry):
+        if entry.domain in self._accepted_domains:
+            _ErrorLog.receive(self, entry)
 
 cdef class _RotatingErrorLog(_ErrorLog):
     cdef int _max_len
     def __init__(self, max_len):
         _ErrorLog.__init__(self)
         self._max_len = max_len
+
     def receive(self, entry):
         entries = self._entries
         if python.PyList_GET_SIZE(entries) > self._max_len:
             del entries[0]
         python.PyList_Append(entries, entry)
 
-cdef class PyErrorLog(_ErrorLog):
+cdef class PyErrorLog(_ExtensibleErrorLog):
     cdef object _log
     cdef object _level_map
     cdef object _varsOf
     def __init__(self, logger_name=None):
-        _ErrorLog.__init__(self)
+        _ExtensibleErrorLog.__init__(self, [])
         import logging
         self._level_map = {
             ErrorLevels.WARNING : logging.WARNING,
