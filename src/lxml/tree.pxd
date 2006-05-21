@@ -37,6 +37,7 @@ cdef extern from "libxml/encoding.h":
     ctypedef struct xmlCharEncodingHandler
     cdef xmlCharEncodingHandler* xmlFindCharEncodingHandler(char* name)
     cdef xmlCharEncodingHandler* xmlGetCharEncodingHandler(int enc)
+    cdef int xmlCharEncCloseFunc(xmlCharEncodingHandler* handler)
     cdef int xmlDetectCharEncoding(char* text, int len)
     cdef char* xmlGetCharEncodingName(xmlCharEncoding enc)
 

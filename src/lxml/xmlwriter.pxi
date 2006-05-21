@@ -24,6 +24,7 @@ cdef _tostring(_NodeBase element, encoding,
             "unknown encoding: '%s'", c_enc)
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
+        tree.xmlCharEncCloseFunc(enchandler)
         raise LxmlError, "Failed to create output buffer"
 
     try:
@@ -39,6 +40,7 @@ cdef _tostring(_NodeBase element, encoding,
             tree.xmlBufferLength(c_result_buffer))
     finally:
         tree.xmlOutputBufferClose(c_buffer)
+        tree.xmlCharEncCloseFunc(enchandler)
     return result
 
 cdef _tounicode(_NodeBase element, int pretty_print):
@@ -86,7 +88,6 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
     tree.xmlOutputBufferWriteString(c_buffer, "'?>\n")
 
-
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      char* encoding, int pretty_print):
     "Write the element tail."
@@ -98,7 +99,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 
 # output to file-like objects
 
-cdef class _FileWriter:
+cdef class _FilelikeWriter:
     cdef object _filelike
     cdef _ExceptionContext _exc_context
     def __init__(self, filelike, exc_context=None):
@@ -135,14 +136,14 @@ cdef class _FileWriter:
         return 0
 
 cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int len):
-    return (<_FileWriter>ctxt).write(c_buffer, len)
+    return (<_FilelikeWriter>ctxt).write(c_buffer, len)
 
 cdef int _closeFilelikeWriter(void* ctxt):
-    return (<_FileWriter>ctxt).close()
+    return (<_FilelikeWriter>ctxt).close()
 
 cdef _tofilelike(f, _NodeBase element, encoding,
                  int write_xml_declaration, int pretty_print):
-    cdef _FileWriter writer
+    cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* c_enc
@@ -160,26 +161,28 @@ cdef _tofilelike(f, _NodeBase element, encoding,
         c_buffer = tree.xmlOutputBufferCreateFilename(
             _cstr(filename), enchandler, 0)
     elif hasattr(f, 'write'):
-        writer   = _FileWriter(f)
+        writer   = _FilelikeWriter(f)
         c_buffer = writer._createOutputBuffer(enchandler)
     else:
+        tree.xmlCharEncCloseFunc(enchandler)
         raise TypeError, "File or filename expected, got '%s'" % type(f)
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
                        write_xml_declaration, pretty_print)
 
     tree.xmlOutputBufferClose(c_buffer)
+    tree.xmlCharEncCloseFunc(enchandler)
     if writer is not None:
         writer._exc_context._raise_if_stored()
 
 # dump node to file (mainly for debug)
 
-cdef _dumpToFile(f, xmlNode* c_node):
+cdef _dumpToFile(f, xmlNode* c_node, int pretty_print):
     cdef tree.xmlOutputBuffer* c_buffer
     if not python.PyFile_Check(f):
         raise ValueError, "Not a file"
     c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(f), NULL)
-    tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, 0, NULL)
+    tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, pretty_print, NULL)
     _writeTail(c_buffer, c_node, NULL, 0)
     tree.xmlOutputBufferWriteString(c_buffer, '\n')
     tree.xmlOutputBufferFlush(c_buffer)

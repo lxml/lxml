@@ -1395,8 +1395,8 @@ cdef class QName:
 def iselement(element):
     return isinstance(element, _Element)
 
-def dump(_NodeBase elem not None):
-    _dumpToFile(sys.stdout, elem._c_node)
+def dump(_NodeBase elem not None, pretty_print=True):
+    _dumpToFile(sys.stdout, elem._c_node, bool(pretty_print))
 
 def tostring(element_or_tree, encoding=None,
              xml_declaration=None, pretty_print=False):

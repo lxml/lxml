@@ -12,6 +12,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak when using iconv encoders in tostring/write
+
 * Deep copying Elements and ElementTrees maintains the document information
 
 * Serialization functions now raise LookupError for unknown encodings
