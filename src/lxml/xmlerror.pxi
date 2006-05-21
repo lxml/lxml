@@ -156,15 +156,18 @@ cdef class _ExtensibleErrorLog(_BaseErrorLog):
         xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
     cdef void _receive(self, xmlerror.xmlError* error):
-        cdef int level
+        cdef int is_error
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._set(error)
+        is_error = error.level == xmlerror.XML_ERR_ERROR or \
+                   error.level == xmlerror.XML_ERR_FATAL
         if __GLOBAL_ERROR_LOG is not self:
             __GLOBAL_ERROR_LOG.receive(entry)
+            if is_error:
+                __GLOBAL_ERROR_LOG.last_error = entry
         self.receive(entry)
-        level = error.level
-        if level == xmlerror.XML_ERR_ERROR or level == xmlerror.XML_ERR_FATAL:
+        if is_error:
             self.last_error = entry
 
     cdef void _receiveGeneric(self, int domain, int type, int level, int line,
@@ -172,10 +175,14 @@ cdef class _ExtensibleErrorLog(_BaseErrorLog):
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._setGeneric(domain, type, level, line, message, filename)
+        is_error = level == xmlerror.XML_ERR_ERROR or \
+                   level == xmlerror.XML_ERR_FATAL
         if __GLOBAL_ERROR_LOG is not self:
             __GLOBAL_ERROR_LOG.receive(entry)
+            if is_error:
+                __GLOBAL_ERROR_LOG.last_error = entry
         self.receive(entry)
-        if level == xmlerror.XML_ERR_ERROR or level == xmlerror.XML_ERR_FATAL:
+        if is_error:
             self.last_error = entry
 
 cdef class _ErrorLog(_ExtensibleErrorLog):

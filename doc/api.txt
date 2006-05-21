@@ -122,6 +122,13 @@ that.  You can get it from a log entry like this::
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NOT_FINISHED <string>
 
+There is also a convenience attribute ``last_error`` that returns the last
+error::
+
+  >>> entry = e.error_log.last_error
+  >>> print entry.domain_name, entry.type_name, entry.filename
+  PARSER ERR_TAG_NOT_FINISHED <string>
+
 
 Python unicode strings
 ----------------------
