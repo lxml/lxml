@@ -969,20 +969,11 @@ cdef class _Comment(_Element):
             cdef tree.xmlDict* c_dict
             cdef char* c_text
             if value is None:
-                value = ''
+                c_text = NULL
             else:
                 value = _utf8(value)
-            c_text = self._c_node.content
-            if c_text is not NULL:
-                if self._c_node.doc is not NULL:
-                    c_dict = self._c_node.doc.dict
-                else:
-                    c_dict = NULL
-                # this code is copied from libxml2's DICT_FREE
-                if c_dict is NULL or \
-                       tree.xmlDictOwns(c_dict, c_text) == 0:
-                    tree.xmlFree(c_text)
-            self._c_node.content = tree.xmlStrdup(_cstr(value))
+                c_text = _cstr(value)
+            tree.xmlNodeSetContent(self._c_node, c_text)
 
     # ACCESSORS
     def __repr__(self):
