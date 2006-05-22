@@ -9,8 +9,10 @@ def clearErrorLog():
     Note that this log is already bounded to a fixed size."""
     __GLOBAL_ERROR_LOG.clear()
 
-def initThreadLogging():
-    "Setup logging for the current thread."
+cdef void _initThreadLogging():
+    "Setup logging for the current thread. Called from etree.initThread()."
+    # switch on line number reporting
+    xmlparser.xmlLineNumbersDefault(1)
     _logLibxmlErrors()
     try:
         _logLibxsltErrors()
@@ -338,12 +340,6 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
 cdef void _logLibxmlErrors():
     xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
     xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
-
-# init global logging
-initThreadLogging()
-
-# switch on line number reporting
-xmlparser.xmlLineNumbersDefault(1)
 
 ################################################################################
 ## CONSTANTS FROM "xmlerror.pxd"

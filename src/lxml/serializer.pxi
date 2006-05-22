@@ -1,7 +1,5 @@
 # XML serialization and output functions
 
-tree.xmlKeepBlanksDefault(0)
-
 cdef _tostring(_NodeBase element, encoding,
                int write_xml_declaration, int pretty_print):
     "Serialize an element to an encoded string representation of its XML tree."

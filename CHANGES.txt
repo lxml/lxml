@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Removed public function ``initThreadLogging()``, replaced by more general
+  ``initThread()`` which fixes a number of setup problems in threads
+
 * Memory leak when using iconv encoders in tostring/write
 
 * Deep copying Elements and ElementTrees maintains the document information

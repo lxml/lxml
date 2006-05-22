@@ -33,6 +33,11 @@ __MAX_LOG_SIZE = 100
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
 
+def initThread():
+    "Call this method to set up the library from within a new thread."
+    _initThreadLogging()
+    tree.xmlKeepBlanksDefault(0)
+
 # Error superclass for ElementTree compatibility
 class Error(Exception):
     pass
@@ -361,22 +366,28 @@ cdef class _ElementTree:
         def __get__(self):
             return DocInfo(self._doc)
 
-    def write(self, file, encoding=None, pretty_print=False):
+    def write(self, file, encoding=None,
+              pretty_print=False, xml_declaration=None):
         """Write the tree to a file or file-like object.
         
-        Defaults to ASCII encoding.
+        Defaults to ASCII encoding and writing a declaration as needed.
         """
+        cdef int c_write_declaration
         self._assertHasRoot()
         # suppress decl. in default case (purely for ElementTree compatibility)
-        if encoding is None:
+        if xml_declaration is not None:
+            c_write_declaration = bool(xml_declaration)
+            if encoding is None:
+                encoding = 'ASCII'
+        elif encoding is None:
             encoding = 'ASCII'
-            write_declaration = 0
+            c_write_declaration = 0
         else:
             encoding = encoding.upper()
-            write_declaration = encoding not in \
-                                ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
+            c_write_declaration = encoding not in \
+                                  ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
         _tofilelike(file, self._context_node, encoding,
-                    write_declaration, bool(pretty_print))
+                    c_write_declaration, bool(pretty_print))
 
     def getiterator(self, tag=None):
         root = self.getroot()
@@ -1507,3 +1518,6 @@ cdef class _Validator:
 
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
+
+# configure main thread
+initThread()
