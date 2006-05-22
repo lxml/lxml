@@ -5,7 +5,7 @@ HTML parser test cases for etree
 """
 
 import unittest
-import tempfile
+import tempfile, os
 
 from common_imports import StringIO, etree, fileInTestDir
 from common_imports import SillyFileLike, HelperTestCase
@@ -59,9 +59,13 @@ class HtmlParserTestCaseBase(HelperTestCase):
         parser = self.etree.HTMLParser()
         filename = tempfile.mktemp(suffix=".html")
         open(filename, 'wb').write(self.html_str)
-        f = open(filename, 'r')
-        tree = self.etree.parse(f, parser)
-        self.assertEqual(self.etree.tostring(tree.getroot()), self.html_str)
+        try:
+            f = open(filename, 'r')
+            tree = self.etree.parse(f, parser)
+            f.close()
+            self.assertEqual(self.etree.tostring(tree.getroot()), self.html_str)
+        finally:
+            os.remove(filename)
 
     def test_module_parse_html_filelike(self):
         parser = self.etree.HTMLParser()

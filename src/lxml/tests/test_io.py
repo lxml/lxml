@@ -5,7 +5,7 @@ IO test cases that apply to both etree and ElementTree
 """
 
 import unittest
-import tempfile, gzip
+import tempfile, gzip, os
 
 from common_imports import etree, ElementTree, fileInTestDir
 from common_imports import SillyFileLike, LargeFileLike
@@ -27,15 +27,22 @@ class IOTestCaseBase(unittest.TestCase):
         
         filename = tempfile.mktemp(suffix=".xml")
         self.tree.write(filename)
-        self.assertEqual(open(filename).read(), self.root_str)
+        try:
+            self.assertEqual(open(filename).read(), self.root_str)
+        finally:
+            os.remove(filename)
 
     def test_module_parse_gzipobject(self):
         # (c)ElementTree supports gzip instance as parse argument
         filename = tempfile.mktemp(suffix=".xml.gz")
         gzip.open(filename, 'wb').write(self.root_str)
-        f_gz = gzip.open(filename, 'r')
-        tree = self.etree.parse(f_gz)
-        self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
+        try:
+            f_gz = gzip.open(filename, 'r')
+            tree = self.etree.parse(f_gz)
+            self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
+        finally:
+            os.remove(filename)
+
 
     def test_class_parse_filename(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
@@ -45,26 +52,32 @@ class IOTestCaseBase(unittest.TestCase):
         
         filename = tempfile.mktemp(suffix=".xml")
         open(filename, 'wb').write(self.root_str)
-        tree = self.etree.ElementTree()
-        root = tree.parse(filename)
-        self.assertEqual(self.etree.tostring(root), self.root_str)
+        try:
+            tree = self.etree.ElementTree()
+            root = tree.parse(filename)
+            self.assertEqual(self.etree.tostring(root), self.root_str)
+        finally:
+            os.remove(filename)
 
     def test_class_parse_filename_remove_previous(self):
         filename = tempfile.mktemp(suffix=".xml")
         open(filename, "wb").write(self.root_str)
-        tree = self.etree.ElementTree()
-        root = tree.parse(filename)
-        # and now do it again; previous content should still be there
-        root2 = tree.parse(filename)
-        self.assertEquals('a', root.tag)
-        self.assertEquals('a', root2.tag)
-        # now remove all references to root2, and parse again
-        del root2
-        root3 = tree.parse(filename)
-        self.assertEquals('a', root.tag)
-        self.assertEquals('a', root3.tag)
-        # root2's memory should've been freed here
-        # XXX how to check?
+        try:
+            tree = self.etree.ElementTree()
+            root = tree.parse(filename)
+            # and now do it again; previous content should still be there
+            root2 = tree.parse(filename)
+            self.assertEquals('a', root.tag)
+            self.assertEquals('a', root2.tag)
+            # now remove all references to root2, and parse again
+            del root2
+            root3 = tree.parse(filename)
+            self.assertEquals('a', root.tag)
+            self.assertEquals('a', root3.tag)
+            # root2's memory should've been freed here
+            # XXX how to check?
+        finally:
+            os.remove(filename)
         
     def test_class_parse_fileobject(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
@@ -74,10 +87,13 @@ class IOTestCaseBase(unittest.TestCase):
         
         filename = tempfile.mktemp(suffix=".xml")
         open(filename, 'wb').write(self.root_str)
-        f = open(filename, 'r')
-        tree = self.etree.ElementTree()
-        root = tree.parse(f)
-        self.assertEqual(self.etree.tostring(root), self.root_str)
+        try:
+            f = open(filename, 'r')
+            tree = self.etree.ElementTree()
+            root = tree.parse(f)
+            self.assertEqual(self.etree.tostring(root), self.root_str)
+        finally:
+            os.remove(filename)
 
     def test_class_parse_unamed_fileobject(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns

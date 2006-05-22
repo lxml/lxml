@@ -1676,7 +1676,6 @@ class ETreeTestCaseBase(unittest.TestCase):
            )
         
     def test_encoding(self):
-        ElementTree = self.etree.ElementTree
         Element = self.etree.Element
 
         a = Element('a')
@@ -1704,7 +1703,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         test_utf = u'<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><a>Søk på nettet</a>'
         self.assertRaises(SyntaxError, XML, test_utf)
 
-    def test_encoding_default_encoding(self):
+    def test_encoding_write_default_encoding(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
 
@@ -1716,7 +1715,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree.write(f)
         data = f.getvalue()
         self.assertEquals(
-            '<a>S&#248;k p&#229; nettet</a>',
+            u'<a>Søk på nettet</a>'.encode('ASCII', 'xmlcharrefreplace'),
             data)
 
     def test_encoding_tostring(self):
@@ -1783,8 +1782,9 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         # the same, just hex versus decimal
         expected = '<b>S&#248;k p&#229; nettet</b>'
-        expected2 = '<b>S&#xF8;k p&#xE5; nettet</b>'
-        self.assert_(tostring(b) in [expected, expected2])
+        self.assertEquals(
+            expected,
+            tostring(b))
 
     def test_deepcopy(self):
         Element = self.etree.Element
@@ -1885,15 +1885,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         """
         ElementTree = self.etree.ElementTree
         handle, filename = tempfile.mkstemp()
-        f = open(filename, 'wb')
-        tree = ElementTree(element=element)
-        tree.write(f, encoding)
-        f.close()
-        f = open(filename, 'rb')
-        data = unicode(f.read(), encoding)
-        f.close()
-        os.close(handle)
-        os.remove(filename)
+        try:
+            f = open(filename, 'wb')
+            tree = ElementTree(element=element)
+            tree.write(f, encoding)
+            f.close()
+            f = open(filename, 'rb')
+            data = unicode(f.read(), encoding)
+            f.close()
+        finally:
+            os.close(handle)
+            os.remove(filename)
         return canonicalize(data)
 
     def assertXML(self, expected, element, encoding='us-ascii'):
