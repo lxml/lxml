@@ -1683,8 +1683,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         a.text = u'Søk på nettet'
         self.assertXML(
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
-            a, 'UTF-8')
-        
+            a, 'utf-8')
+
     def test_encoding2(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
@@ -1694,13 +1694,9 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         f = StringIO()
         tree = ElementTree(element=a)
-        tree.write(f, 'UTF-8')
-        data = f.getvalue()
-
-        # XXX prologue generation seems to be inconsistent between libraries..
-        xml = u'<a>Søk på nettet</a>'.encode('UTF-8')
-        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
-        self.assert_(data in [xml, prologue + xml])
+        tree.write(f, 'utf-8')
+        self.assertEqual(u'<a>Søk på nettet</a>'.encode('UTF-8'),
+                         f.getvalue())
 
 ##     # ignore wrong (left-over?) encoding declaration in unicode strings
 ##     def _test_wrong_unicode_encoding(self):
@@ -1731,13 +1727,10 @@ class ETreeTestCaseBase(unittest.TestCase):
         Element = self.etree.Element
         tostring = self.etree.tostring
 
-        # XXX prologue generation seems to be inconsistent between libraries..
-        xml = u'<a>Søk på nettet</a>'.encode('UTF-8')
-        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
-        
         a = Element('a')
         a.text = u'Søk på nettet'
-        self.assert_(tostring(a, 'UTF-8') in [xml, prologue + xml])
+        self.assertEqual(u'<a>Søk på nettet</a>'.encode('UTF-8'),
+                         tostring(a, 'utf-8'))
 
     def test_encoding_tostring_unknown(self):
         Element = self.etree.Element
@@ -1755,11 +1748,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         a = Element('a')
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
-
-        # XXX prologue generation seems to be inconsistent between libraries..
-        xml = u'<b>Søk på nettet</b>'.encode('UTF-8')
-        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
-        self.assert_(tostring(b, 'UTF-8') in [xml, prologue + xml])
+        self.assertEqual(u'<b>Søk på nettet</b>'.encode('UTF-8'),
+                         tostring(b, 'utf-8'))
 
     def test_encoding_tostring_sub_tail(self):
         Element = self.etree.Element
@@ -1770,9 +1760,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
         b.tail = u'Søk'
-        xml = u'<b>Søk på nettet</b>Søk'.encode('UTF-8')
-        prologue = u'<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n'.encode('UTF-8')
-        self.assert_(tostring(b, 'UTF-8') in [xml, prologue + xml])
+        self.assertEqual(u'<b>Søk på nettet</b>Søk'.encode('UTF-8'),
+                         tostring(b, 'utf-8'))
         
     def test_encoding_tostring_default_encoding(self):
         Element = self.etree.Element
