@@ -893,7 +893,7 @@ cdef class _Element(_NodeBase):
         cdef char* c_path
         c_path = tree.xmlGetNodePath(self._c_node)
         if c_path is NULL:
-            raise LxmlError, "Cannot create node path."
+            raise LxmlError, "Error creating node path."
         path = c_path
         tree.xmlFree(c_path)
         return path
