@@ -244,6 +244,19 @@ Example of using namespace prefixes::
   >>> r[0].text
   'Text'
 
+A related convenience method of Elements is ``getpath()``, which returns a
+structural XPath expression for the respective element::
+
+  >>> a  = etree.Element("a")
+  >>> b  = etree.SubElement(a, "b")
+  >>> c  = etree.SubElement(a, "c")
+  >>> d1 = etree.SubElement(c, "d")
+  >>> d2 = etree.SubElement(c, "d")
+  >>> print d2.getpath()
+  /a/c/d[2]
+  >>> a.xpath(d2.getpath()) == [d2]
+  True
+
 
 XSLT
 ----

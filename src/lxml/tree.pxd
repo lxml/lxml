@@ -177,6 +177,7 @@ cdef extern from "libxml/tree.h":
     cdef void xmlSetProp(xmlNode* node, char* name, char* value)
     cdef void xmlSetNsProp(xmlNode* node, xmlNs* ns, char* name, char* value)
     cdef void xmlRemoveProp(xmlAttr* cur)
+    cdef char* xmlGetNodePath(xmlNode* node)
     cdef void xmlDocDumpMemory(xmlDoc* cur, char** mem, int* size)
     cdef void xmlDocDumpMemoryEnc(xmlDoc* cur, char** mem, int* size,
                                   char* encoding)

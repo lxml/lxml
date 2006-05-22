@@ -787,6 +787,10 @@ cdef class _Element(_NodeBase):
         return ElementChildIterator(self, reversed=True)
 
     def index(self, _Element x not None, start=None, stop=None):
+        """Find the position of the child within the parent.
+
+        This method is not part of the original ElementTree API.
+        """
         cdef Py_ssize_t k, l
         cdef Py_ssize_t c_start, c_stop
         cdef xmlNode* c_child
@@ -884,6 +888,15 @@ cdef class _Element(_NodeBase):
         if c_node is not NULL and _isElement(c_node):
             return _elementFactory(self._doc, c_node)
         return None
+
+    def getpath(self):
+        cdef char* c_path
+        c_path = tree.xmlGetNodePath(self._c_node)
+        if c_path is NULL:
+            raise LxmlError, "Cannot create node path."
+        path = c_path
+        tree.xmlFree(c_path)
+        return path
 
     def getiterator(self, tag=None):
         return ElementDepthFirstIterator(self, tag)

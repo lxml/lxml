@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Element.getpath() returns an XPath expression to find the node in the tree
+  structure
+
 * Error logs now have a ``last_error`` attribute for convenience
 
 * Comment texts can now be changed through the API
