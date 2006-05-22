@@ -1698,16 +1698,12 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEqual(u'<a>Søk på nettet</a>'.encode('UTF-8'),
                          f.getvalue())
 
-##     # ignore wrong (left-over?) encoding declaration in unicode strings
-##     def _test_wrong_unicode_encoding(self):
-##         XML = self.etree.XML
+    # raise error on wrong (left-over?) encoding declaration in unicode strings
+    def _test_wrong_unicode_encoding(self):
+        XML = self.etree.XML
+        test_utf = u'<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><a>Søk på nettet</a>'
+        self.assertRaises(SyntaxError, XML, test_utf)
 
-##         test_utf = u'<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><a>Søk på nettet</a>'
-##         parsed = XML(test_utf)
-##         self.assertXML(
-##             u'<a>Søk på nettet</a>'.encode('UTF-8'),
-##             parsed, 'UTF-8')
-        
     def test_encoding_default_encoding(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
