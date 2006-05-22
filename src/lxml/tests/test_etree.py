@@ -599,7 +599,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         data = f.getvalue()
         return canonicalize(data)
 
-        
+
 class ETreeXIncludeTestCase(HelperTestCase):
     def test_xinclude(self):
         tree = etree.parse(fileInTestDir('test_xinclude.xml'))

@@ -9,7 +9,7 @@ for IO related test cases.
 """
 
 import unittest, doctest
-import os, shutil, tempfile, copy
+import os, re, shutil, tempfile, copy
 
 from common_imports import StringIO, etree, ElementTree, HelperTestCase, fileInTestDir, canonicalize
 
@@ -186,6 +186,31 @@ class ETreeTestCaseBase(unittest.TestCase):
         root = doc.getroot()
         self.assertEquals(None, root.text)
         self.assertEquals('One', root[0].text)
+
+    def test_text_escape_in(self):
+        ElementTree = self.etree.ElementTree
+
+        f = StringIO('<doc>This is &gt; than a text</doc>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('This is > than a text', root.text)
+
+    def test_text_escape_out(self):
+        Element = self.etree.Element
+
+        a = Element("a")
+        a.text = "<>&"
+        self.assertXML('<a>&lt;&gt;&amp;</a>',
+                       a)
+
+    def test_text_escape_tostring(self):
+        tostring = self.etree.tostring
+        Element  = self.etree.Element
+
+        a = Element("a")
+        a.text = "<>&"
+        self.assertEquals('<a>&lt;&gt;&amp;</a>',
+                         tostring(a))
 
     def test_tail(self):
         ElementTree = self.etree.ElementTree
@@ -706,7 +731,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment('foo'))
-        self.assertEqual(a[0].text, 'foo')
+        self.assertEquals(a[0].text, 'foo')
 
     def test_comment_text(self):
         Element = self.etree.Element
@@ -715,10 +740,10 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment('foo'))
-        self.assertEqual(a[0].text, 'foo')
+        self.assertEquals(a[0].text, 'foo')
 
         a[0].text = "TEST"
-        self.assertEqual(a[0].text, 'TEST')
+        self.assertEquals(a[0].text, 'TEST')
         
     def test_comment_whitespace(self):
         Element = self.etree.Element
@@ -727,7 +752,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment(' foo  '))
-        self.assertEqual(a[0].text, ' foo  ')
+        self.assertEquals(a[0].text, ' foo  ')
         
     def test_comment_nonsense(self):
         Comment = self.etree.Comment
@@ -1684,7 +1709,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
             a, 'utf-8')
 
-    def test_encoding2(self):
+    def test_encoding_exact(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
 
@@ -1694,8 +1719,27 @@ class ETreeTestCaseBase(unittest.TestCase):
         f = StringIO()
         tree = ElementTree(element=a)
         tree.write(f, 'utf-8')
-        self.assertEqual(u'<a>Søk på nettet</a>'.encode('UTF-8'),
-                         f.getvalue())
+        self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
+                          f.getvalue())
+
+    def test_encoding_latin1(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.text = u'Søk på nettet'
+
+        f = StringIO()
+        tree = ElementTree(element=a)
+        tree.write(f, 'iso-8859-1')
+        result = f.getvalue()
+        declaration = "<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>"
+        self.assertEncodingDeclaration(result,'iso-8859-1')
+        result = result.split('?>', 1)[-1]
+        if result[0] == '\n':
+            result = result[1:]
+        self.assertEquals(u'<a>Søk på nettet</a>'.encode('iso-8859-1'),
+                          result)
 
     # raise error on wrong (left-over?) encoding declaration in unicode strings
     def _test_wrong_unicode_encoding(self):
@@ -1724,7 +1768,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.text = u'Søk på nettet'
-        self.assertEqual(u'<a>Søk på nettet</a>'.encode('UTF-8'),
+        self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
                          tostring(a, 'utf-8'))
 
     def test_encoding_tostring_unknown(self):
@@ -1743,7 +1787,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         a = Element('a')
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
-        self.assertEqual(u'<b>Søk på nettet</b>'.encode('UTF-8'),
+        self.assertEquals(u'<b>Søk på nettet</b>'.encode('UTF-8'),
                          tostring(b, 'utf-8'))
 
     def test_encoding_tostring_sub_tail(self):
@@ -1755,7 +1799,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
         b.tail = u'Søk'
-        self.assertEqual(u'<b>Søk på nettet</b>Søk'.encode('UTF-8'),
+        self.assertEquals(u'<b>Søk på nettet</b>Søk'.encode('UTF-8'),
                          tostring(b, 'utf-8'))
         
     def test_encoding_tostring_default_encoding(self):
@@ -1780,7 +1824,6 @@ class ETreeTestCaseBase(unittest.TestCase):
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
 
-        # the same, just hex versus decimal
         expected = '<b>S&#248;k p&#229; nettet</b>'
         self.assertEquals(
             expected,
@@ -1905,6 +1948,13 @@ class ETreeTestCaseBase(unittest.TestCase):
         """
         self.assertEquals(expected, self._writeElement(element, encoding))
         self.assertEquals(expected, self._writeElementFile(element, encoding))
+
+    def assertEncodingDeclaration(self, result, encoding):
+        "Checks if the result XML byte string specifies the encoding."
+        has_encoding = re.compile(r"<\?xml[^>]+ encoding=[\"']([^\"']+)[\"']").match
+        self.assert_(has_encoding(result))
+        result_encoding = has_encoding(result).group(1)
+        self.assertEquals(result_encoding.upper(), encoding.upper())
         
     def _rootstring(self, tree):
         return self.etree.tostring(tree.getroot()).replace(' ', '').replace('\n', '')
