@@ -270,7 +270,7 @@ cdef class _Document:
         if node_ns_utf is not None:
             self._setNodeNs(c_node, node_ns_utf)
 
-cdef _Document _documentFactory(xmlDoc* c_doc, parser):
+cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
     result = _Document()
     result._c_doc = c_doc
@@ -348,7 +348,7 @@ cdef class _ElementTree:
         assert self._context_node is not None, \
                "ElementTree not initialized, missing root"
 
-    def parse(self, source, parser=None):
+    def parse(self, source, _BaseParser parser=None):
         """Updates self with the content of source and returns its root
         """
         self._doc          = _parseDocument(source, parser)
@@ -1363,7 +1363,7 @@ def SubElement(_Element _parent not None, _tag,
     _initNodeAttributes(c_node, doc, attrib, _extra)
     return _elementFactory(doc, c_node)
 
-def ElementTree(_Element element=None, file=None, parser=None):
+def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
@@ -1461,7 +1461,7 @@ def tounicode(element_or_tree, pretty_print=False):
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
-def parse(source, parser=None):
+def parse(source, _BaseParser parser=None):
     """Return an ElementTree object loaded with source elements.  If no parser
     is provided as second argument, the default parser is used.
     """

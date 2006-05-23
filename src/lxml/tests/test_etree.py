@@ -35,6 +35,10 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, parse, f)
         f.close()
 
+    def test_parse_parser_type_error(self):
+        parse = self.etree.parse
+        self.assertRaises(TypeError, parse, 'notthere.xml', object())
+
     def test_parse_error_logging(self):
         parse = self.etree.parse
         # from StringIO

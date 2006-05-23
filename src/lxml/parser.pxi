@@ -517,7 +517,7 @@ __DEFAULT_XML_PARSER = XMLParser()
 cdef _BaseParser __DEFAULT_PARSER
 __DEFAULT_PARSER = __DEFAULT_XML_PARSER
 
-def set_default_parser(parser=None):
+def set_default_parser(_BaseParser parser=None):
     """Set a default parser.  This parser is used globally whenever no parser
     is supplied to the various parse functions of the lxml API.  If this
     function is called without a parser (or if it is None), the default parser
@@ -530,10 +530,8 @@ def set_default_parser(parser=None):
     global __DEFAULT_PARSER
     if parser is None:
         __DEFAULT_PARSER = __DEFAULT_XML_PARSER
-    elif isinstance(parser, _BaseParser):
-        __DEFAULT_PARSER = parser
     else:
-        raise TypeError, "Invalid parser"
+        __DEFAULT_PARSER = parser
 
 def get_default_parser():
     return __DEFAULT_PARSER
@@ -580,12 +578,10 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 ## helper functions for document creation
 ############################################################
 
-cdef xmlDoc* _parseDoc(text, filename, parser) except NULL:
+cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_filename
     if parser is None:
         parser = __DEFAULT_PARSER
-    elif not isinstance(parser, _BaseParser):
-        raise TypeError, "invalid parser"
     __GLOBAL_PARSER_CONTEXT._initParser()
     if not filename:
         c_filename = NULL
@@ -596,20 +592,17 @@ cdef xmlDoc* _parseDoc(text, filename, parser) except NULL:
     else:
         return (<_BaseParser>parser)._parseDoc(_cstr(text), c_filename)
 
-cdef xmlDoc* _parseDocFromFile(filename, parser) except NULL:
+cdef xmlDoc* _parseDocFromFile(filename, _BaseParser parser) except NULL:
     if parser is None:
         parser = __DEFAULT_PARSER
-    elif not isinstance(parser, _BaseParser):
-        raise TypeError, "invalid parser"
     __GLOBAL_PARSER_CONTEXT._initParser()
     return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename))
 
-cdef xmlDoc* _parseDocFromFilelike(source, filename, parser) except NULL:
+cdef xmlDoc* _parseDocFromFilelike(source, filename,
+                                   _BaseParser parser) except NULL:
     cdef char* c_filename
     if parser is None:
         parser = __DEFAULT_PARSER
-    elif not isinstance(parser, _BaseParser):
-        raise TypeError, "invalid parser"
     __GLOBAL_PARSER_CONTEXT._initParser()
     if not filename:
         c_filename = NULL
@@ -654,7 +647,7 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
 ## (here we convert to UTF-8)
 ############################################################
 
-cdef _Document _parseDocument(source, parser):
+cdef _Document _parseDocument(source, _BaseParser parser):
     cdef xmlDoc* c_doc
     filename = _getFilenameForFile(source)
     if hasattr(source, 'getvalue') and hasattr(source, 'tell'):
@@ -673,7 +666,7 @@ cdef _Document _parseDocument(source, parser):
     c_doc = _parseDocFromFile(_utf8(filename), parser)
     return _documentFactory(c_doc, parser)
 
-cdef _Document _parseMemoryDocument(text, url, parser):
+cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
     cdef xmlDoc* c_doc
     if python.PyUnicode_Check(text):
         # pass native unicode only if libxml2 can handle it
@@ -686,7 +679,7 @@ cdef _Document _parseMemoryDocument(text, url, parser):
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
-cdef _Document _parseFilelikeDocument(source, url, parser):
+cdef _Document _parseFilelikeDocument(source, url, _BaseParser parser):
     cdef xmlDoc* c_doc
     if url is not None:
         url = _utf8(url)
