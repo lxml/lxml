@@ -63,14 +63,10 @@ cdef class XPathEvaluatorBase:
         if path is NULL:
             return 0
         c = path[0]
-        while c != c'\0':
-            if c == c'/':
-                return 1
-            elif c != c' ' and c != c'\t':
-                break
+        while c == c' ' or c == c'\t':
             path = path + 1
             c = path[0]
-        return 0
+        return c == c'/'
 
     cdef _raise_parse_error(self):
         if self._xpathCtxt is not NULL and \
