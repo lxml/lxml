@@ -192,14 +192,24 @@ Note that using ``tostring()`` with UTF-8 is also typically faster.
 xpath method on ElementTree, Element
 ------------------------------------
 
-lxml.etree extends the ElementTree and Element interfaces with an xpath
-method.  For ElementTree, the xpath method performs a global xpath query
-against the document.  When xpath is used on an element, the xpath expression
-is performed taking the element as the xpath context node.
+lxml.etree supports the simple path syntax of the ``findall()`` etc.  methods
+on ElementTree and Element, as known from the original ElementTree library.
+As an extension, these classes also provide an ``xpath()`` method that
+supports expressions in the complete XPath syntax.
+
+For ElementTree, the xpath method performs a global xpath query against the
+document (if absolute) or against the root node (if relative).
+
+When xpath is used on an element, the xpath expression is performed taking the
+element as the xpath context node.  Note that it is illegal to run an absolute
+XPath expression (like ``/a``) against an element.  The result is undefined.
 
 You call the xpath() method with the XPath expression to use.  Optionally, you
 can provide a second argument, which should be a dictionary mapping the
-namespace prefixes used in the XPath expression to namespace URIs.
+namespace prefixes used in the XPath expression to namespace URIs.  The
+optional third argument is used to define `extension functions`_.
+
+.. _`extension functions`: extensions.html
 
 The return values of xpath vary, depending on the XPath expression used:
 
