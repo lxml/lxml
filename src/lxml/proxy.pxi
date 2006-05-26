@@ -75,6 +75,58 @@ cdef void unregisterProxy(_NodeBase proxy):
     #print "Proxy:", proxy, "Proxy type:", proxy_type
     assert 0, "Tried to unregister unknown proxy"
 
+################################################################################
+# temporarily make a node the root node of its document
+
+cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
+    # build a temporary document that has the given node as root node
+    # note that copy and original must not be modified during its lifetime!!
+    # always call _destroyFakeDoc() after use!
+    cdef xmlNode* c_child
+    cdef xmlNode* c_root
+    cdef xmlDoc*  c_doc
+    c_root = tree.xmlDocGetRootElement(c_base_doc)
+    if c_root == c_node:
+        # already the root node
+        return c_base_doc
+
+    c_doc  = _copyDoc(c_base_doc, 0)               # non recursive!
+    c_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
+
+    c_root.children = c_node.children
+    c_root.last = c_node.last
+    c_root.next = c_root.prev = c_root.parent = NULL
+
+    # store original node
+    c_root._private = c_node
+
+    # divert parent pointers of children
+    c_child = c_root.children
+    while c_child is not NULL:
+        c_child.parent = c_root
+        c_child = c_child.next
+
+    c_doc.children = c_root
+    return c_doc
+
+cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
+    # delete a temporary document
+    cdef xmlNode* c_child
+    cdef xmlNode* c_parent
+    cdef xmlNode* c_root
+    if c_doc != c_base_doc:
+        c_root = tree.xmlDocGetRootElement(c_doc)
+
+        # restore parent pointers of children
+        c_parent = <xmlNode*>c_root._private
+        c_child = c_root.children
+        while c_child is not NULL:
+            c_child.parent = c_parent
+            c_child = c_child.next
+
+        # prevent recursive removal of children
+        c_root.children = c_root.last = c_root._private = NULL
+        tree.xmlFreeDoc(c_doc)
 
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
