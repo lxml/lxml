@@ -244,8 +244,8 @@ Example of using namespace prefixes::
   >>> r[0].text
   'Text'
 
-A related convenience method of ElementTree is ``getpath(element)``, which
-returns a structural XPath expression for an element::
+A related convenience method of ElementTree objects is ``getpath(element)``,
+which returns a structural, absolute XPath expression to find that element::
 
   >>> a  = etree.Element("a")
   >>> b  = etree.SubElement(a, "b")
@@ -253,16 +253,11 @@ returns a structural XPath expression for an element::
   >>> d1 = etree.SubElement(c, "d")
   >>> d2 = etree.SubElement(c, "d")
 
-  >>> tree = etree.ElementTree(a)
-  >>> print tree.getpath(d2)
-  /a/c/d[2]
-  >>> a.xpath(tree.getpath(d2)) == [d2]
-  True
-
   >>> tree = etree.ElementTree(c)
   >>> print tree.getpath(d2)
   /c/d[2]
-
+  >>> tree.xpath(tree.getpath(d2)) == [d2]
+  True
 
 XSLT
 ----

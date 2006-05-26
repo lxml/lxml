@@ -17,6 +17,11 @@ Features added
 Bugs fixed
 ----------
 
+* Running absolute XPath expressions on Elements now raises an exception in
+  most cases. Otherwise, the behaviour is explicitly marked as undefined.
+
+* Evaluating absolute XPath expressions ('/*') on an ElementTree could fail
+
 * Crashes when calling XSLT, RelaxNG, etc. with uninitialized ElementTree
   objects
 

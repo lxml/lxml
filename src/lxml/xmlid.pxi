@@ -8,7 +8,7 @@ def XMLID(text):
     root = XML(text)
     # ElementTree compatible implementation: look for 'id' attributes
     dic = {}
-    for elem in root.xpath('//*[string(@id)]'):
+    for elem in ElementTree(root).xpath('//*[string(@id)]'):
         python.PyDict_SetItem(dic, elem.get('id'), elem)
     return (root, dic)
 

@@ -447,7 +447,7 @@ cdef class _ElementTree:
         XPathEvaluator directly.
         """
         self._assertHasRoot()
-        evaluator = XPathElementEvaluator(self._context_node, namespaces)
+        evaluator = XPathDocumentEvaluator(self, namespaces)
         return evaluator.evaluate(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, **_kw):

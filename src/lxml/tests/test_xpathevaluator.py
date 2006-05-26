@@ -74,8 +74,8 @@ class ETreeXPathTestCase(HelperTestCase):
         c = root[0]
         self.assertEquals([c[0], c[1]],
                           c.xpath('b'))
-        self.assertEquals([c[0], c[1], root[1][0]],
-                          c.xpath('//b'))
+        self.assertEquals([c[0], c[1]],
+                          c.xpath('.//b'))
 
     def test_xpath_ns(self):
         tree = self.parse('<a xmlns="uri:a"><b></b></a>')
@@ -88,14 +88,40 @@ class ETreeXPathTestCase(HelperTestCase):
             tree.xpath('//foo:b', {'foo': 'uri:c'}))
         self.assertEquals(
             [root[0]],
-            root.xpath('//baz:b', {'baz': 'uri:a'}))
+            root.xpath('.//baz:b', {'baz': 'uri:a'}))
         self.assertRaises(
             TypeError,
-            root.xpath, '//b', {None: 'uri:a'})
+            root.xpath, './/b', {None: 'uri:a'})
 
     def test_xpath_error(self):
         tree = self.parse('<a/>')
         self.assertRaises(SyntaxError, tree.xpath, '\\fad')
+
+    def test_elementtree_getpath(self):
+        a  = etree.Element("a")
+        b  = etree.SubElement(a, "b")
+        c  = etree.SubElement(a, "c")
+        d1 = etree.SubElement(c, "d")
+        d2 = etree.SubElement(c, "d")
+
+        tree = etree.ElementTree(a)
+        self.assertEqual('/a/c/d',
+                         tree.getpath(d2)[:6])
+        self.assertEqual([d2],
+                         tree.xpath(tree.getpath(d2)))
+
+    def test_elementtree_getpath_partial(self):
+        a  = etree.Element("a")
+        b  = etree.SubElement(a, "b")
+        c  = etree.SubElement(a, "c")
+        d1 = etree.SubElement(c, "d")
+        d2 = etree.SubElement(c, "d")
+
+        tree = etree.ElementTree(c)
+        self.assertEqual('/c/d',
+                         tree.getpath(d2)[:4])
+        self.assertEqual([d2],
+                         tree.xpath(tree.getpath(d2)))
 
     def test_xpath_evaluator(self):
         tree = self.parse('<a><b><c></c></b></a>')
