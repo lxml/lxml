@@ -306,7 +306,7 @@ cdef class XSLT:
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
 
-        ptemp = c_doc._private
+        ptemp = c_doc._private # store original _private pointer!
         c_doc._private = <python.PyObject*>resolver_context
 
         kw_count = python.PyDict_Size(_kw)

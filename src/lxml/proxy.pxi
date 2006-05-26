@@ -86,19 +86,20 @@ cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
     cdef xmlNode* c_root
     cdef xmlDoc*  c_doc
     c_root = tree.xmlDocGetRootElement(c_base_doc)
-    if c_root == c_node:
+    if c_root is c_node:
         # already the root node
         return c_base_doc
 
     c_doc  = _copyDoc(c_base_doc, 0)               # non recursive!
     c_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
+    tree.xmlDocSetRootElement(c_doc, c_root)
 
     c_root.children = c_node.children
     c_root.last = c_node.last
     c_root.next = c_root.prev = c_root.parent = NULL
 
     # store original node
-    c_root._private = c_node
+    c_doc._private = c_node
 
     # divert parent pointers of children
     c_child = c_root.children
@@ -118,14 +119,14 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
         c_root = tree.xmlDocGetRootElement(c_doc)
 
         # restore parent pointers of children
-        c_parent = <xmlNode*>c_root._private
+        c_parent = <xmlNode*>c_doc._private
         c_child = c_root.children
         while c_child is not NULL:
             c_child.parent = c_parent
             c_child = c_child.next
 
         # prevent recursive removal of children
-        c_root.children = c_root.last = c_root._private = NULL
+        c_root.children = c_root.last = NULL
         tree.xmlFreeDoc(c_doc)
 
 ################################################################################
