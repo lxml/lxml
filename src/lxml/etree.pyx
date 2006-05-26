@@ -389,6 +389,20 @@ cdef class _ElementTree:
         _tofilelike(file, self._context_node, encoding,
                     c_write_declaration, bool(pretty_print))
 
+    def getpath(self, _NodeBase element not None):
+        cdef xmlDoc* c_doc
+        cdef char* c_path
+        if element._doc is not self._doc:
+            raise ValueError, "Element is not in this tree."
+        c_doc = _fakeRootDoc(self._doc._c_doc, self._context_node._c_node)
+        c_path = tree.xmlGetNodePath(element._c_node)
+        _destroyFakeDoc(self._doc._c_doc, c_doc)
+        if c_path is NULL:
+            raise LxmlError, "Error creating node path."
+        path = c_path
+        tree.xmlFree(c_path)
+        return path
+
     def getiterator(self, tag=None):
         root = self.getroot()
         if root is None:
@@ -899,15 +913,6 @@ cdef class _Element(_NodeBase):
         if c_node is not NULL and _isElement(c_node):
             return _elementFactory(self._doc, c_node)
         return None
-
-    def getpath(self):
-        cdef char* c_path
-        c_path = tree.xmlGetNodePath(self._c_node)
-        if c_path is NULL:
-            raise LxmlError, "Error creating node path."
-        path = c_path
-        tree.xmlFree(c_path)
-        return path
 
     def getiterator(self, tag=None):
         return ElementDepthFirstIterator(self, tag)

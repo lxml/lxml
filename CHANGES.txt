@@ -7,8 +7,8 @@ current
 Features added
 --------------
 
-* Element.getpath() returns a simple XPath expression to find the node in the
-  tree structure
+* ElementTree.getpath(element) returns a simple, absolute XPath expression to
+  find the element in the tree structure
 
 * Error logs have a ``last_error`` attribute for convenience
 
