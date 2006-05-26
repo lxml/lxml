@@ -8,6 +8,12 @@ cimport c14n
 cimport cstd
 import re
 
+import __builtin__
+cdef object True
+cdef object False
+True  = __builtin__.True
+False = __builtin__.False
+
 import _elementpath
 from StringIO import StringIO
 import sys
