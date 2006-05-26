@@ -230,7 +230,7 @@ cdef class XSLT:
         cdef _NodeBase root_node
 
         doc = _documentOrRaise(xslt_input)
-        root_node = _rootNodeOf(xslt_input)
+        root_node = _rootNodeOrRaise(xslt_input)
 
         # set access control or raise TypeError
         self._access_control = access_control
@@ -287,7 +287,7 @@ cdef class XSLT:
         cdef Py_ssize_t i, kw_count
 
         input_doc = _documentOrRaise(_input)
-        root_node = _rootNodeOf(_input)
+        root_node = _rootNodeOrRaise(_input)
 
         resolver_context = _XSLTResolverContext(input_doc._parser)
         resolver_context._c_style_doc = self._xslt_resolver_context._c_style_doc

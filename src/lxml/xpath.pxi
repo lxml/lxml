@@ -179,7 +179,7 @@ cdef class XPath(XPathEvaluatorBase):
         cdef _XPathContext context
 
         document = _documentOrRaise(_etree_or_element)
-        element  = _rootNodeOf(_etree_or_element)
+        element  = _rootNodeOrRaise(_etree_or_element)
 
         xpathCtxt = self._xpathCtxt
         xpathCtxt.doc = document._c_doc

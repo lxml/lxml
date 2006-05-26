@@ -300,6 +300,9 @@ class ETreeXPathClassTestCase(HelperTestCase):
     def test_xpath_compile_error(self):
         self.assertRaises(SyntaxError, etree.XPath, '\\fad')
 
+    def test_xpath_elementtree_error(self):
+        self.assertRaises(ValueError, etree.XPath('*'), etree.ElementTree())
+
 class ETreeETXPathClassTestCase(HelperTestCase):
     "Tests for the ETXPath class"
     def test_xpath_compile_ns(self):

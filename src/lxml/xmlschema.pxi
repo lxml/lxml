@@ -26,7 +26,7 @@ cdef class XMLSchema(_Validator):
         self._c_schema = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
-            root_node = _rootNodeOf(etree)
+            root_node = _rootNodeOrRaise(etree)
 
             # work around for libxml2 bug if document is not XML schema at all
             c_node = root_node._c_node
@@ -73,7 +73,7 @@ cdef class XMLSchema(_Validator):
         cdef int ret
 
         doc = _documentOrRaise(etree)
-        root_node = _rootNodeOf(etree)
+        root_node = _rootNodeOrRaise(etree)
 
         self._error_log.connect()
         valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)

@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crashes when calling XSLT, RelaxNG, etc. with uninitialized ElementTree
+  objects
+
 * Removed public function ``initThreadLogging()``, replaced by more general
   ``initThread()`` which fixes a number of setup problems in threads
 

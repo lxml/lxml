@@ -28,7 +28,7 @@ cdef class RelaxNG(_Validator):
         fake_c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
-            root_node = _rootNodeOf(etree)
+            root_node = _rootNodeOrRaise(etree)
             c_node = root_node._c_node
             # work around for libxml2 bug if document is not RNG at all
             if c_node.ns is NULL or c_node.ns.href is NULL or \
@@ -78,7 +78,7 @@ cdef class RelaxNG(_Validator):
         cdef int ret
 
         doc = _documentOrRaise(etree)
-        root_node = _rootNodeOf(etree)
+        root_node = _rootNodeOrRaise(etree)
 
         self._error_log.connect()
         valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)

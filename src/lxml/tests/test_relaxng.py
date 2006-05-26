@@ -25,6 +25,9 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 
+    def test_relaxng_elementtree_error(self):
+        self.assertRaises(ValueError, etree.RelaxNG, etree.ElementTree())
+
     def test_relaxng_error(self):
         tree_invalid = self.parse('<a><c></c></a>')
         schema = self.parse('''\

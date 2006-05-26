@@ -10,16 +10,49 @@ cdef void displayNode(xmlNode* c_node, indent):
         c_child = c_child.next
 
 cdef _Document _documentOrRaise(object input):
+    """Call this to get the document of a _Document, _ElementTree or _NodeBase
+    object, or to raise an exception if it can't be determined.
+
+    Should be used in all API functions for consistency.
+    """
     cdef _Document doc
-    doc = _documentOf(input)
-    if doc is None:
+    if isinstance(input, _ElementTree):
+        doc = (<_ElementTree>input)._doc
+    elif isinstance(input, _NodeBase):
+        doc = (<_NodeBase>input)._doc
+    elif isinstance(input, _Document):
+        doc = <_Document>input
+    else:
         raise TypeError, "Invalid input object: %s" % type(input)
+    if doc is None:
+        raise ValueError, "Input object has no document: %s" % type(input)
     else:
         return doc
+
+cdef _NodeBase _rootNodeOrRaise(object input):
+    """Call this to get the root node of a _Document, _ElementTree or
+     _NodeBase object, or to raise an exception if it can't be determined.
+
+    Should be used in all API functions for consistency.
+     """
+    cdef _NodeBase node
+    if isinstance(input, _ElementTree):
+        node = (<_ElementTree>input)._context_node
+    elif isinstance(input, _NodeBase):
+        node = <_NodeBase>input
+    elif isinstance(input, _Document):
+        node = (<_Document>input).getroot()
+    else:
+        raise TypeError, "Invalid input object: %s" % type(input)
+    if node is None:
+        raise ValueError, "Input object has no element: %s" % type(input)
+    else:
+        return node
 
 cdef _Document _documentOf(object input):
     # call this to get the document of a
     # _Document, _ElementTree or _NodeBase object
+    # may return None!
     if isinstance(input, _ElementTree):
         return (<_ElementTree>input)._doc
     elif isinstance(input, _NodeBase):
@@ -32,6 +65,7 @@ cdef _Document _documentOf(object input):
 cdef _NodeBase _rootNodeOf(object input):
     # call this to get the root node of a
     # _Document, _ElementTree or _NodeBase object
+    # may return None!
     if isinstance(input, _ElementTree):
         return (<_ElementTree>input)._context_node
     elif isinstance(input, _NodeBase):
