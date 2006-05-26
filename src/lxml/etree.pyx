@@ -2,6 +2,7 @@ cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
 from python cimport isinstance, issubclass, hasattr, callable
 from python cimport iter, str, _cstr, Py_ssize_t
+cimport xpath
 cimport xinclude
 cimport c14n
 cimport cstd
@@ -339,6 +340,10 @@ cdef class _ElementTree:
     cdef _Document _doc
     cdef _NodeBase _context_node
 
+    # Note that _doc is only used to store the original document if we do not
+    # have a _context_node.  All methods should prefer self._context_node._doc
+    # to honour tree restructuring
+
     cdef _assertHasRoot(self):
         """We have to take care here: the document may not have a root node!
         This can happen if ElementTree() is called without any argument and
@@ -351,10 +356,11 @@ cdef class _ElementTree:
     def parse(self, source, _BaseParser parser=None):
         """Updates self with the content of source and returns its root
         """
-        self._doc          = _parseDocument(source, parser)
-        self._context_node = self._doc.getroot()
+        cdef _Document doc
+        doc = _parseDocument(source, parser)
+        self._context_node = doc.getroot()
         return self._context_node
-    
+
     def getroot(self):
         return self._context_node
 
@@ -364,7 +370,8 @@ cdef class _ElementTree:
         of a parsed document (e.g.  those returned by the parse functions).
         """
         def __get__(self):
-            return DocInfo(self._doc)
+            self._assertHasRoot()
+            return DocInfo(self._context_node._doc)
 
     def write(self, file, encoding=None,
               pretty_print=False, xml_declaration=None):
@@ -390,13 +397,15 @@ cdef class _ElementTree:
                     c_write_declaration, bool(pretty_print))
 
     def getpath(self, _NodeBase element not None):
+        cdef _Document doc
         cdef xmlDoc* c_doc
         cdef char* c_path
-        if element._doc is not self._doc:
+        doc = self._context_node._doc
+        if element._doc is not doc:
             raise ValueError, "Element is not in this tree."
-        c_doc = _fakeRootDoc(self._doc._c_doc, self._context_node._c_node)
+        c_doc = _fakeRootDoc(doc._c_doc, self._context_node._c_node)
         c_path = tree.xmlGetNodePath(element._c_node)
-        _destroyFakeDoc(self._doc._c_doc, c_doc)
+        _destroyFakeDoc(doc._c_doc, c_doc)
         if c_path is NULL:
             raise LxmlError, "Error creating node path."
         path = c_path
@@ -521,7 +530,7 @@ cdef class _ElementTree:
         cdef char* data
         cdef int bytes
         self._assertHasRoot()
-        c_base_doc = self._doc._c_doc
+        c_base_doc = self._context_node._doc._c_doc
 
         c_doc = _fakeRootDoc(c_base_doc, self._context_node._c_node)
         bytes = c14n.xmlC14NDocDumpMemory(c_doc, NULL, 0, NULL, 1, &data)

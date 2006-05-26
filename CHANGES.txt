@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Document reference in ElementTree objects was not updated when the root
+  element was moved to a different document
+
 * Running absolute XPath expressions on Elements now raises an exception in
   most cases. Otherwise, the behaviour is explicitly marked as undefined.
 

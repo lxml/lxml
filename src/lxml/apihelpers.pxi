@@ -16,8 +16,11 @@ cdef _Document _documentOrRaise(object input):
     Should be used in all API functions for consistency.
     """
     cdef _Document doc
+    cdef _NodeBase element
     if isinstance(input, _ElementTree):
-        doc = (<_ElementTree>input)._doc
+        element = (<_ElementTree>input)._context_node
+        if element is not None:
+            doc = element._doc
     elif isinstance(input, _NodeBase):
         doc = (<_NodeBase>input)._doc
     elif isinstance(input, _Document):
@@ -53,14 +56,16 @@ cdef _Document _documentOf(object input):
     # call this to get the document of a
     # _Document, _ElementTree or _NodeBase object
     # may return None!
+    cdef _NodeBase element
     if isinstance(input, _ElementTree):
-        return (<_ElementTree>input)._doc
+        element = (<_ElementTree>input)._context_node
+        if element is not None:
+            return element._doc
     elif isinstance(input, _NodeBase):
         return (<_NodeBase>input)._doc
     elif isinstance(input, _Document):
         return <_Document>input
-    else:
-        return None
+    return None
 
 cdef _NodeBase _rootNodeOf(object input):
     # call this to get the root node of a
