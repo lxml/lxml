@@ -329,6 +329,13 @@ class ETreeXPathClassTestCase(HelperTestCase):
     def test_xpath_elementtree_error(self):
         self.assertRaises(ValueError, etree.XPath('*'), etree.ElementTree())
 
+    def test_xpath_element_absolute_error(self):
+        self.assertRaises(ValueError, etree.XPath(' / * '), etree.Element("test"))
+
+    def test_xpath_element_absolute_error2(self):
+        el = etree.Element("test")
+        self.assertRaises(SyntaxError, el.xpath, ' /* ')
+
 class ETreeETXPathClassTestCase(HelperTestCase):
     "Tests for the ETXPath class"
     def test_xpath_compile_ns(self):
