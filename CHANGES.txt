@@ -7,12 +7,12 @@ current
 Features added
 --------------
 
-* Element.getpath() returns an XPath expression to find the node in the tree
-  structure
+* Element.getpath() returns a simple XPath expression to find the node in the
+  tree structure
 
-* Error logs now have a ``last_error`` attribute for convenience
+* Error logs have a ``last_error`` attribute for convenience
 
-* Comment texts can now be changed through the API
+* Comment texts can be changed through the API
 
 Bugs fixed
 ----------
@@ -27,7 +27,7 @@ Bugs fixed
 
 * Deep copying Elements and ElementTrees maintains the document information
 
-* Serialization functions now raise LookupError for unknown encodings
+* Serialization functions raise LookupError for unknown encodings
 
 * Memory deallocation crash resulting from deep copying elements
 
@@ -55,8 +55,8 @@ Features added
 * Parsing a unicode string no longer copies the string (reduced memory
   footprint)
 
-* Parsing file-like objects now reads chunks rather than the whole file
-  (reduced memory footprint)
+* Parsing file-like objects reads chunks rather than the whole file (reduced
+  memory footprint)
 
 * Parsing StringIO objects from the start avoids copying the string (reduced
   memory footprint)
@@ -69,7 +69,7 @@ Features added
 
 * Better error messages in parser exceptions
 
-* Error reporting now also works in XSLT
+* Error reporting also works in XSLT
 
 * Support for custom document loaders (URI resolvers) in parsers and XSLT,
   resolvers are registered at parser level
@@ -96,7 +96,7 @@ Bugs fixed
 * Element/SubElement failed to set attribute namespaces from passed ``attrib``
   dictionary
 
-* ``tostring()`` now adds an XML declaration for non-ASCII encodings
+* ``tostring()`` adds an XML declaration for non-ASCII encodings
 
 * ``tostring()`` failed to serialize encodings that contain 0-bytes
 
@@ -111,14 +111,14 @@ Bugs fixed
 Features added
 --------------
 
-* Speedup for Element.makeelement(): the new element now reuses the original
+* Speedup for Element.makeelement(): the new element reuses the original
   libxml2 document instead of creating a new empty one
 
 * Speedup for reversed() iteration over element children (Py2.4+ only)
 
 * ElementTree compatible QName class
 
-* RelaxNG and XMLSchema now accept any Element, not only ElementTrees
+* RelaxNG and XMLSchema accept any Element, not only ElementTrees
 
 Bugs fixed
 ----------
@@ -140,7 +140,7 @@ Features added
 * lxml.sax.ElementTreeContentHandler checks closing elements and raises
   SaxError on mismatch
 
-* lxml.sax.ElementTreeContentHandler now supports namespace-less SAX events
+* lxml.sax.ElementTreeContentHandler supports namespace-less SAX events
   (startElement, endElement) and defaults to empty attributes (keyword
   argument)
 
@@ -209,8 +209,8 @@ Bugs fixed
 * ElementTree objects no longer interfere, Elements can be root of different
   ElementTrees at the same time
 
-* document('') now works in XSLT documents read from files (in-memory
-  documents cannot support this due to libxslt deficiencies)
+* document('') works in XSLT documents read from files (in-memory documents
+  cannot support this due to libxslt deficiencies)
 
 0.8 (2005-11-03)
 ================
@@ -225,7 +225,7 @@ Features added
   that it works than if copy.copy() isn't supported at all.
 
 * Increased compatibility with (c)ElementTree; .parse() on ElementTree is
-  now supported and parsing of gzipped XML files works.
+  supported and parsing of gzipped XML files works.
 
 * implemented index() on elements, allowing one to find the index of a
   SubElement.
@@ -249,11 +249,10 @@ Bugs fixed
 
 * Fixed error with uncaught exception in Pyrex code.
 
-* Calling lxml.etree.fromstring('') now throws XMLSyntaxError instead
-  of a segfault.
+* Calling lxml.etree.fromstring('') throws XMLSyntaxError instead of a
+  segfault.
 
-* has_key() now works on attrib. 'in' tests also work correctly now on
-  attrib.
+* has_key() works on attrib. 'in' tests also work correctly on attrib.
 
 * INSTALL.txt was saying 2.2.16 instead of 2.6.16 as a supported
   libxml2 version, as it should.
@@ -267,8 +266,8 @@ Bugs fixed
 Features added
 --------------
 
-* parameters (XPath expressions) can now be passed to XSLT using
-  keyword parameters.
+* parameters (XPath expressions) can be passed to XSLT using keyword
+  parameters.
 
 * Simple XInclude support. Calling the xinclude() method on a tree
   will process any XInclude statements in the document.
@@ -315,16 +314,15 @@ Bugs fixed
 
 * Can pass None to 'dump()' without segfaults.
 
-* tostring() now works properly for non-root elements as well.
+* tostring() works properly for non-root elements as well.
 
 * Cleaned out the tostring() method so it should handle encoding
   correctly.
 
-* Cleaned out the ElementTree.write() method so it should handle
-  encoding correctly. Writing directly to a file should also be faster
-  now, as there is no need to go through a Python string in that
-  case. Made sure the test cases test both serializing to StringIO as
-  well as serializing to a real file.
+* Cleaned out the ElementTree.write() method so it should handle encoding
+  correctly. Writing directly to a file should also be faster, as there is no
+  need to go through a Python string in that case. Made sure the test cases
+  test both serializing to StringIO as well as serializing to a real file.
 
 0.6 (2005-05-14)
 ================
