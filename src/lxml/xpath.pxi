@@ -58,6 +58,20 @@ cdef class XPathEvaluatorBase:
         if self._xpathCtxt is not NULL:
             xpath.xmlXPathFreeContext(self._xpathCtxt)
 
+    cdef int _checkAbsolutePath(self, char* path):
+        cdef char c
+        if path is NULL:
+            return 0
+        c = path[0]
+        while c != c'\0':
+            if c == c'/':
+                return 1
+            elif c != c' ' and c != c'\t':
+                break
+            path = path + 1
+            c = path[0]
+        return 0
+
     cdef _raise_parse_error(self):
         if self._xpathCtxt is not NULL and \
                self._xpathCtxt.lastError.message is not NULL:
@@ -133,8 +147,10 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
+        cdef char* c_path
         path = _utf8(_path)
-        if path.lstrip().startswith('/'):
+        c_path = _cstr(path)
+        if self._checkAbsolutePath(c_path):
             raise LxmlSyntaxError, "cannot use absolute path on element"
         xpathCtxt = self._xpathCtxt
         xpathCtxt.node = self._element._c_node
@@ -143,7 +159,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         self._context.register_context(xpathCtxt, doc)
         try:
             self._context.registerVariables(_variables)
-            xpathObj = xpath.xmlXPathEvalExpression(_cstr(path), xpathCtxt)
+            xpathObj = xpath.xmlXPathEvalExpression(c_path, xpathCtxt)
         finally:
             self._context.unregister_context()
 
@@ -206,16 +222,18 @@ cdef class XPath(XPathEvaluatorBase):
     cdef int _absolute
 
     def __init__(self, path, namespaces=None, extensions=None):
+        cdef char* c_path
         XPathEvaluatorBase.__init__(self, namespaces, extensions, None)
         self._xpath = NULL
         self.path = path
         path = _utf8(path)
+        c_path = _cstr(path)
         self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
         _setupDict(self._xpathCtxt)
-        self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, _cstr(path))
+        self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, c_path)
         if self._xpath is NULL:
             self._raise_parse_error()
-        self._absolute = path.lstrip().startswith('/')
+        self._absolute = self._checkAbsolutePath(c_path)
 
     def __call__(self, _etree_or_element, **_variables):
         cdef xpath.xmlXPathContext* xpathCtxt
