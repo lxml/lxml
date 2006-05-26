@@ -54,6 +54,7 @@ cdef extern from "libxml/xpath.h":
     ctypedef struct xmlXPathContext:
         tree.xmlDoc* doc
         tree.xmlNode* node
+        tree.xmlDict* dict
         char* function
         char* functionURI
         # actually signature is void (*error)(void*, xmlError*)
@@ -81,6 +82,8 @@ cdef extern from "libxml/xpath.h":
     cdef xmlXPathObject* xmlXPathCompiledEval(xmlXPathCompExpr* comp,
                                               xmlXPathContext* ctxt)
     cdef xmlXPathCompExpr* xmlXPathCompile(char* str)
+    cdef xmlXPathCompExpr* xmlXPathCtxtCompile(xmlXPathContext* ctxt,
+                                               char* str)
     cdef void xmlXPathFreeContext(xmlXPathContext* ctxt)
     cdef void xmlXPathFreeCompExpr(xmlXPathCompExpr* comp)
     cdef void xmlXPathFreeObject(xmlXPathObject* obj)

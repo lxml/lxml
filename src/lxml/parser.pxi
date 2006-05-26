@@ -42,6 +42,15 @@ cdef class _ParserContext:
         pctxt.dict = self._c_dict
         xmlparser.xmlDictReference(pctxt.dict)
 
+    cdef void _initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
+        "Assure we always use the same string dictionary."
+        if self._c_dict is NULL or self._c_dict is pctxt.dict:
+            return
+        if pctxt.dict is not NULL:
+            xmlparser.xmlDictFree(pctxt.dict)
+        pctxt.dict = self._c_dict
+        xmlparser.xmlDictReference(pctxt.dict)
+
     cdef void _initDocDict(self, xmlDoc* result):
         "Store dict of last object parsed if no shared dict yet"
         if result is NULL:

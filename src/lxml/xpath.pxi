@@ -44,6 +44,8 @@ cdef class _XPathContext(_BaseContext):
         xpath.xmlXPathRegisterVariable(
             self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
 
+cdef void _setupDict(xpath.xmlXPathContext* xpathCtxt):
+    __GLOBAL_PARSER_CONTEXT._initXPathParserDict(xpathCtxt)
 
 cdef class XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
@@ -103,6 +105,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         self._xpathCtxt = xpathCtxt
         if xpathCtxt is NULL:
             raise XPathContextError, "Unable to create new XPath context"
+        _setupDict(xpathCtxt)
         self._element = element
         XPathEvaluatorBase.__init__(self, namespaces, extensions)
 
@@ -207,11 +210,12 @@ cdef class XPath(XPathEvaluatorBase):
         self._xpath = NULL
         self.path = path
         path = _utf8(path)
-        self._xpath = xpath.xmlXPathCompile(_cstr(path))
+        self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
+        _setupDict(self._xpathCtxt)
+        self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, _cstr(path))
         if self._xpath is NULL:
             self._raise_parse_error()
         self._absolute = path.lstrip().startswith('/')
-        self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
 
     def __call__(self, _etree_or_element, **_variables):
         cdef xpath.xmlXPathContext* xpathCtxt
