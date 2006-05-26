@@ -264,6 +264,24 @@ class ETreeOnlyTestCase(HelperTestCase):
             b,
             d.getparent())
 
+    def test_getroottree(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            a,
+            a.getroottree().getroot())
+        self.assertEquals(
+            a,
+            b.getroottree().getroot())
+        self.assertEquals(
+            a,
+            d.getroottree().getroot())
+
     def test_parseid(self):
         parseid = self.etree.parseid
         XML     = self.etree.XML

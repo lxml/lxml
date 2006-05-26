@@ -74,8 +74,8 @@ class ETreeXPathTestCase(HelperTestCase):
         c = root[0]
         self.assertEquals([c[0], c[1]],
                           c.xpath('b'))
-        self.assertEquals([c[0], c[1]],
-                          c.xpath('.//b'))
+        self.assertEquals([c[0], c[1], root[1][0]],
+                          c.xpath('//b'))
 
     def test_xpath_ns(self):
         tree = self.parse('<a xmlns="uri:a"><b></b></a>')
@@ -88,10 +88,10 @@ class ETreeXPathTestCase(HelperTestCase):
             tree.xpath('//foo:b', {'foo': 'uri:c'}))
         self.assertEquals(
             [root[0]],
-            root.xpath('.//baz:b', {'baz': 'uri:a'}))
+            root.xpath('//baz:b', {'baz': 'uri:a'}))
         self.assertRaises(
             TypeError,
-            root.xpath, './/b', {None: 'uri:a'})
+            root.xpath, '//b', {None: 'uri:a'})
 
     def test_xpath_error(self):
         tree = self.parse('<a/>')
@@ -328,13 +328,6 @@ class ETreeXPathClassTestCase(HelperTestCase):
 
     def test_xpath_elementtree_error(self):
         self.assertRaises(ValueError, etree.XPath('*'), etree.ElementTree())
-
-    def test_xpath_element_absolute_error(self):
-        self.assertRaises(ValueError, etree.XPath(' / * '), etree.Element("test"))
-
-    def test_xpath_element_absolute_error2(self):
-        el = etree.Element("test")
-        self.assertRaises(SyntaxError, el.xpath, ' /* ')
 
 class ETreeETXPathClassTestCase(HelperTestCase):
     "Tests for the ETXPath class"

@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* ``element.getroottree()`` returns an ElementTree for the root node of the
+  document that contains the element.
+
 * ElementTree.getpath(element) returns a simple, absolute XPath expression to
   find the element in the tree structure
 
@@ -20,8 +23,8 @@ Bugs fixed
 * Document reference in ElementTree objects was not updated when the root
   element was moved to a different document
 
-* Running absolute XPath expressions on Elements now raises an exception in
-  most cases. Otherwise, the behaviour is explicitly marked as undefined.
+* Running absolute XPath expressions on an Elements now correctly evaluates
+  against the root tree
 
 * Evaluating absolute XPath expressions ('/*') on an ElementTree could fail
 

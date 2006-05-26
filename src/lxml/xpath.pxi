@@ -100,8 +100,8 @@ cdef class XPathEvaluatorBase:
 cdef class XPathElementEvaluator(XPathEvaluatorBase):
     """Create an XPath evaluator for an element.
 
-    Note that the result of evaluating absolute XPath expressions (starting
-    with '/') is undefined for Elements.  Use an ElementTree instead.
+    Absolute XPath expressions (starting with '/') will be evaluated against
+    the ElementTree as returned by getroottree().
 
     XPath evaluators must not be shared between threads.
     """
@@ -137,17 +137,14 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         Variables may be provided as keyword arguments.  Note that namespaces
         are currently not supported for variables.
 
-        The result of evaluating absolute XPath expressions (starting with
-        '/') is undefined for Elements.  Use an ElementTree instead.
+        Absolute XPath expressions (starting with '/') will be evaluated
+        against the ElementTree as returned by getroottree().
         """
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
         cdef char* c_path
         path = _utf8(_path)
-        c_path = _cstr(path)
-        if self._checkAbsolutePath(c_path):
-            raise LxmlSyntaxError, "cannot use absolute path on element"
         xpathCtxt = self._xpathCtxt
         xpathCtxt.node = self._element._c_node
         doc = self._element._doc
@@ -155,7 +152,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         self._context.register_context(xpathCtxt, doc)
         try:
             self._context.registerVariables(_variables)
-            xpathObj = xpath.xmlXPathEvalExpression(c_path, xpathCtxt)
+            xpathObj = xpath.xmlXPathEvalExpression(_cstr(path), xpathCtxt)
         finally:
             self._context.unregister_context()
 
@@ -200,9 +197,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 
 def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
-    """Creates and XPath evaluator for an ElementTree or an Element.  Note
-    that the result of absolute XPath expressions (starting with '/') is
-    undefined for Elements.  Use an ElementTree instead.
+    """Creates and XPath evaluator for an ElementTree or an Element.
 
     XPath evaluators must not be shared between threads.
     """
@@ -215,7 +210,6 @@ def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
 cdef class XPath(XPathEvaluatorBase):
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef readonly object path
-    cdef int _absolute
 
     def __init__(self, path, namespaces=None, extensions=None):
         cdef char* c_path
@@ -229,7 +223,6 @@ cdef class XPath(XPathEvaluatorBase):
         self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, c_path)
         if self._xpath is NULL:
             self._raise_parse_error()
-        self._absolute = self._checkAbsolutePath(c_path)
 
     def __call__(self, _etree_or_element, **_variables):
         cdef xpath.xmlXPathContext* xpathCtxt
@@ -240,9 +233,6 @@ cdef class XPath(XPathEvaluatorBase):
 
         document = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOrRaise(_etree_or_element)
-        
-        if self._absolute and element is _etree_or_element:
-            raise ValueError, "cannot use absolute path on element"
 
         xpathCtxt = self._xpathCtxt
         xpathCtxt.doc = document._c_doc

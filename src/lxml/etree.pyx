@@ -440,11 +440,12 @@ cdef class _ElementTree:
         return root.findall(path)
     
     # extensions to ElementTree API
-    def xpath(self, _path, namespaces=None, **_variables):
+    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
         """XPath evaluate in context of document.
 
-        namespaces is an optional dictionary with prefix to namespace URI
-        mappings, used by XPath.
+        ``namespaces`` is an optional dictionary with prefix to namespace URI
+        mappings, used by XPath.  ``extensions`` defines additional extension
+        functions.
         
         Returns a list (nodeset), or bool, float or string.
 
@@ -456,7 +457,7 @@ cdef class _ElementTree:
         XPathEvaluator directly.
         """
         self._assertHasRoot()
-        evaluator = XPathDocumentEvaluator(self, namespaces)
+        evaluator = XPathDocumentEvaluator(self, namespaces, extensions)
         return evaluator.evaluate(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, **_kw):
@@ -923,6 +924,11 @@ cdef class _Element(_NodeBase):
             return _elementFactory(self._doc, c_node)
         return None
 
+    def getroottree(self):
+        """Return an ElementTree for the root node of the document that
+        contains this element."""
+        return _elementTreeFactory(self._doc, None)
+
     def getiterator(self, tag=None):
         return ElementDepthFirstIterator(self, tag)
 
@@ -950,8 +956,8 @@ cdef class _Element(_NodeBase):
     def findall(self, path):
         return _elementpath.findall(self, path)
 
-    def xpath(self, _path, namespaces=None, **_variables):
-        evaluator = XPathElementEvaluator(self, namespaces)
+    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
+        evaluator = XPathElementEvaluator(self, namespaces, extensions)
         return evaluator.evaluate(_path, **_variables)
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
