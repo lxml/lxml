@@ -129,7 +129,6 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         """
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
-        cdef xmlNode* c_node
         cdef _Document doc
         path = _utf8(_path)
         if path.lstrip().startswith('/'):
@@ -165,7 +164,6 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         """
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
-        cdef xmlNode* c_node
         cdef xmlDoc* c_doc
         cdef _Document doc
         path = _utf8(_path)
@@ -209,10 +207,10 @@ cdef class XPath(XPathEvaluatorBase):
         self._xpath = NULL
         self.path = path
         path = _utf8(path)
-        self._absolute = path.lstrip().startswith('/')
         self._xpath = xpath.xmlXPathCompile(_cstr(path))
         if self._xpath is NULL:
             self._raise_parse_error()
+        self._absolute = path.lstrip().startswith('/')
         self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
 
     def __call__(self, _etree_or_element, **_variables):
