@@ -280,7 +280,7 @@ cdef class ETXPath(XPath):
     cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
         cdef int i
-        path_utf = path.encode('UTF-8')
+        path_utf = _utf8(path)
         stripped_path = _replace_strings('', path_utf) # remove string literals
         namespaces = {}
         namespace_defs = []
