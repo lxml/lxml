@@ -29,7 +29,7 @@ See also the notes on compatibility_ to ElementTree_.
    .. _`the web page`:    http://codespeak.net/lxml/#documentation
 
 
-3) Why are there ``findall()`` and ``xpath()`` methods on Element(Tree)?
+3) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
 
    ``findall()`` is specified in the `ElementTree API`_.  It supports a
    `simple subset of the XPath language`_, without predicates, conditions and
@@ -43,14 +43,15 @@ See also the notes on compatibility_ to ElementTree_.
    ``xpath()``, on the other hand, supports the complete power of the XPath
    language, including predicates, XPath functions and Python extension
    functions.  The syntax is defined by the `XPath specification`_.  If you
-   need the expressiveness and selectivity of XPath, the xpath method, the
-   ``XPath`` class and the ``XPathEvaluator`` are the best choice.
+   need the expressiveness and selectivity of XPath, the ``xpath()`` method,
+   the ``XPath`` class and the ``XPathEvaluator`` are the best choice_.
 
    .. _`simple subset of the XPath language`: http://effbot.org/zone/element-xpath.htm
    .. _`XPath specification`:                 http://www.w3.org/TR/xpath
+   .. _choice:                                performance.html#xpath
 
 
-4) Why doesn't ``findall()`` support XPath expressions?
+4) Why doesn't ``findall()`` support full XPath expressions?
 
    It was decided that it is more important to keep compatibility with
    ElementTree_ to simplify code migration between the libraries.  The main
