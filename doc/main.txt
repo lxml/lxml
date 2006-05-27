@@ -4,14 +4,16 @@ lxml
 Introduction
 ------------
 
-lxml is a Pythonic binding for the libxml2_ and libxslt_ libraries. See
-the introduction_ for more information about background and goals.
+lxml is a Pythonic binding for the libxml2_ and libxslt_ libraries.  See the
+introduction_ for more information about background and goals.  Some common
+questions are answered in the FAQ_.
 
 .. _libxml2: http://xmlsoft.org
-
 .. _libxslt: http://xmlsoft.org/XSLT
 
 .. _introduction: intro.html
+.. _FAQ:          FAQ.html
+
 
 Download
 --------
@@ -72,6 +74,7 @@ feature you want has been implemented in the latest trunk version.
 .. _`browse it through the web`: http://codespeak.net/svn/lxml
 .. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
+
 Documentation
 -------------
 
@@ -108,12 +111,14 @@ in the standard library.
 .. _`XSLT`: http://www.w3.org/TR/xslt
 .. _`c14n`: http://www.w3.org/TR/xml-c14n
 
+
 Mailing list
 ------------
 
 Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
 
 License
 -------
