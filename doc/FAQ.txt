@@ -31,7 +31,7 @@ See also the notes on compatibility_ to ElementTree_.
 
 3) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
 
-   ``findall()`` is specified in the `ElementTree API`_.  It supports a
+   ``findall()`` is part of the original `ElementTree API`_.  It supports a
    `simple subset of the XPath language`_, without predicates, conditions and
    other advanced features.  It is very handy for finding specific tags in a
    tree.  Another important difference is namespace handling, which uses the
