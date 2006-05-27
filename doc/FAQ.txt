@@ -1,0 +1,78 @@
+Frequently Asked Questions
+==========================
+
+See also the notes on compatibility_ to ElementTree_.
+
+.. _compatibility: compatibility.html
+.. _ElementTree:   http://effbot.org/zone/element-index.htm
+
+
+1) Is there a tutorial?
+
+   There is a `tutorial for ElementTree`_ which also works for lxml.etree.
+   The `API documentation`_ also contains many examples.
+
+   .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
+   .. _`API documentation`:        api.html
+
+
+2) Where can I find more documentation about lxml?
+
+   There is a lot of documentation as lxml implements the well-known
+   `ElementTree API`_ and tries to follow its documentation as closely as
+   possible.  There are a couple of issues where lxml cannot keep up
+   compatibility.  They are described in the compatibility_ documentation.
+   The lxml specific extensions to the API are described by individual files
+   in the ``doc`` directory of the distribution and on `the web page`_.
+
+   .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
+   .. _`the web page`:    http://codespeak.net/lxml/#documentation
+
+
+3) Why are there ``findall()`` and ``xpath()`` methods on Element(Tree)?
+
+   ``findall()`` is specified in the `ElementTree API`_.  It supports a
+   `simple subset of the XPath language`_, without predicates, conditions and
+   other advanced features.  It is very handy for finding specific tags in a
+   tree.  Another important difference is namespace handling, which uses the
+   ``{namespace}tagname`` notation.  This is not supported by XPath.  The
+   findall, find and findtext methods are compatible with other ElementTree
+   implementations and allow writing portable code that runs on ElementTree,
+   cElementTree and lxml.etree.
+
+   ``xpath()``, on the other hand, supports the complete power of the XPath
+   language, including predicates, XPath functions and Python extension
+   functions.  The syntax is defined by the `XPath specification`_.  If you
+   need the expressiveness and selectivity of XPath, the xpath method, the
+   ``XPath`` class and the ``XPathEvaluator`` are the best choice.
+
+   .. _`simple subset of the XPath language`: http://effbot.org/zone/element-xpath.htm
+   .. _`XPath specification`:                 http://www.w3.org/TR/xpath
+
+
+4) Why doesn't ``findall()`` support XPath expressions?
+
+   It was decided that it is more important to keep compatibility with
+   ElementTree_ to simplify code migration between the libraries.  The main
+   difference compared to XPath is the ``{namespace}tagname`` notation used in
+   ``findall()``, which is not valid XPath.
+
+   ElementTree and lxml.etree use the same implementation, which assures 100%
+   compatibility.  Note that ``findall()`` is `so fast`_ in lxml that a native
+   implementation would not bring any performance benefits.
+
+   .. _`so fast`: performance.html#tree-traversal
+
+
+5) Why is my application so slow?
+
+   lxml.etree is a very fast library for processing XML.  There are, however,
+   `a few caveats`_ involved in the mapping of the powerful libxml2 library to
+   the simple and convenient ElementTree API.  Not all operations are as fast
+   as the simplicity of the API might suggest.  The `benchmark page`_ has a
+   comparison to other ElementTree implementations and a number of tips for
+   performance tweaking.
+
+   .. _`a few caveats`:  performance.html#the-elementtree-api
+   .. _`benchmark page`: performance.html
+
