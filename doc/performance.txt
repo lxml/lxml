@@ -131,7 +131,7 @@ root of the first tree::
   cET: append_from_document  (-- T3,T4)    0.0227 msec/pass
   ET : append_from_document  (-- T3,T4)    0.1563 msec/pass
 
-Although this are fairly small numbers compared to parsing, this easily shows
+Although these are fairly small numbers compared to parsing, this easily shows
 the different performance classes for lxml and (c)ET.  Where the latter do not
 have to care about parent pointers and tree structures, lxml has to deep
 traverse the appended tree.  The performance difference therefore increases
