@@ -1,14 +1,16 @@
 Credits
 -------
 
-Martijn Faassen - initial and main developer
+Martijn Faassen - initial main developer
+
+Stefan Behnel - main developer and maintainer
 
 Marc-Antoine Parent - XPath extension function help and patches
 
-Stefan Behnel - core development work (SAX support, misc patches)
-
 Olivier Grisel - improved (c)ElementTree compatibility patches, 
                  website improvements.
+
+Kasimier Buchcik - help with specs and libxml2
 
 Florian Wagner - help with copy.deepcopy support, bug reporting
  
@@ -16,15 +18,29 @@ Emil Kroymann - help with encoding support, bug reporting
 
 Slou - help with index() support, bug reporting
  
-Duncan Booth - bugfixing
-
 Paul Everitt - bug reporting, feedback on API design
-
-Julien Anguenot - bug reporting
 
 Paul Clifford - Python 2.2 compatibility fixes
 
+Victor Ng - Discussions on memory management strategies, vlibxml2
+
+Robert Kern - feedback on API design
+
+Trent Mick - setup.py patch
+
+Steve Howe - Windows builds
+
+David Sankel - building statically on Windows
+
+Duncan Booth - bugfixing
+
+Dean Pavlekovic - bug reporting
+
+Julien Anguenot - bug reporting
+
 Wade Leftwich - unicode bug reporting
+
+Kieran Holland - iteration crash bug report
 
 Henrik Thostrup Jensen - bug reporting
 
@@ -34,19 +50,9 @@ Hamish Lawson - bug reporting
 
 Gavrie Philipson - bug reporting
 
-Victor Ng - Discussions on memory management strategies, vlibxml2
-
-Robert Kern - feedback on API design
-
-Kieran Holland - iteration crash bug report
-
-Trent Mick - setup.py patch
-
-Steve Howe - Windows builds
-
-David Sankel - building statically on Windows
 
 Thanks also to:
+---------------
 
 * the libxml2 project for a great XML library.
 
