@@ -6,7 +6,7 @@ Test cases related to XSLT processing
 
 import unittest, doctest
 
-from common_imports import etree, HelperTestCase, fileInTestDir
+from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -72,6 +72,29 @@ class ETreeXSLTTestCase(HelperTestCase):
 '''
         self.assertEquals(expected,
                           unicode(str(res), 'UTF-16'))
+
+    def test_xslt_encoding_override(self):
+        tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="UTF-8"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st.apply(tree)
+        expected = u"""\
+<?xml version='1.0' encoding='UTF-16'?>
+<foo>\uF8D2</foo>"""
+
+        f = StringIO()
+        res.write(f, 'UTF-16')
+        result = unicode(f.getvalue(), 'UTF-16')
+        self.assertEquals(expected,
+                          result)
 
     def test_xslt_unicode(self):
         tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
