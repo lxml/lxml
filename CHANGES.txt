@@ -20,6 +20,9 @@ Features added
 Bugs fixed
 ----------
 
+* On libxml2 <= 2.6.22, parsing strings with encoding declaration could fail
+  in certain cases
+
 * Document reference in ElementTree objects was not updated when the root
   element was moved to a different document
 

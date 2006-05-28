@@ -295,12 +295,11 @@ cdef class _BaseParser:
         cdef Py_ssize_t py_buffer_len
         cdef int buffer_len
         cdef char* c_text
-        cdef char* c_encoding
-        cdef int enc
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
         if py_buffer_len > python.INT_MAX:
             text_utf = _utf8(utext)
-            return self._parseDoc(text_utf, c_filename)
+            py_buffer_len = python.PyString_GET_SIZE(text_utf)
+            return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
         buffer_len = py_buffer_len
 
         self._error_log.connect()
@@ -321,22 +320,26 @@ cdef class _BaseParser:
         recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
         return _handleParseResult(pctxt, result, NULL, recover)
 
-    cdef xmlDoc* _parseDoc(self, char* c_text, char* c_filename) except NULL:
+    cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
+                           char* c_filename) except NULL:
         """Parse document, share dictionary if possible.
         """
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int recover
+        if c_len > python.INT_MAX:
+            raise ParserError, "string is too long to parse it with libxml2"
+
         self._error_log.connect()
         pctxt = self._parser_ctxt
         __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
 
         if self._parser_type == LXML_HTML_PARSER:
-            result = htmlparser.htmlCtxtReadDoc(
-                pctxt, c_text, c_filename, NULL, self._parse_options)
+            result = htmlparser.htmlCtxtReadMemory(
+                pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
         else:
-            result = xmlparser.xmlCtxtReadDoc(
-                pctxt, c_text, c_filename, NULL, self._parse_options)
+            result = xmlparser.xmlCtxtReadMemory(
+                pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
 
         self._error_log.disconnect()
         recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
@@ -589,6 +592,8 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 
 cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_filename
+    cdef char* c_text
+    cdef Py_ssize_t c_len
     if parser is None:
         parser = __DEFAULT_PARSER
     __GLOBAL_PARSER_CONTEXT._initParser()
@@ -599,7 +604,9 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     if python.PyUnicode_Check(text):
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
-        return (<_BaseParser>parser)._parseDoc(_cstr(text), c_filename)
+        c_text = _cstr(text)
+        c_len  = python.PyString_GET_SIZE(text)
+        return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
 
 cdef xmlDoc* _parseDocFromFile(filename, _BaseParser parser) except NULL:
     if parser is None:
