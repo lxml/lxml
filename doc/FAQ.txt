@@ -67,11 +67,12 @@ See also the notes on compatibility_ to ElementTree_.
 
 5) What is the difference between str(xslt(doc)) and xslt(doc).write() ?
 
-   The str() implementation knows about the output method chosen in the
-   stylesheet (xsl:output), write() doesn't.  If you call write(), the result
-   will be a normal XML tree serialization in the requested encoding.  Calling
-   this method may also fail for XSLT results that are not XML trees
-   (e.g. string results).
+   The str() implementation of the XSLTResultTree class (a subclass of
+   ElementTree) knows about the output method chosen in the stylesheet
+   (xsl:output), write() doesn't.  If you call write(), the result will be a
+   normal XML tree serialization in the requested encoding.  Calling this
+   method may also fail for XSLT results that are not XML trees (e.g. string
+   results).
 
    If you call str(), it will return the serialized result as specified by the
    XSL transform.  This correctly serializes string results to encoded Python
