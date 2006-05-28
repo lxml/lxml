@@ -30,7 +30,7 @@ cdef class _LogEntry:
     cdef readonly object level
     cdef readonly object message
     cdef readonly object filename
-    cdef _set(self, xmlerror.xmlError* error):
+    cdef _setError(self, xmlerror.xmlError* error):
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
@@ -52,14 +52,9 @@ cdef class _LogEntry:
         self.filename = filename
 
     def __repr__(self):
-        if self.filename:
-            return "%s:%d:%s:%s:%s: %s" % (
-                self.filename, self.line, self.level_name,
-                self.domain_name, self.type_name, self.message)
-        else:
-            return "[]:%s:%s:%s: %s" % (
-                self.level_name, self.domain_name,
-                self.type_name, self.message)
+        return "%s:%d:%s:%s:%s: %s" % (
+            self.filename, self.line, self.level_name,
+            self.domain_name, self.type_name, self.message)
 
     property domain_name:
         def __get__(self):
@@ -74,94 +69,21 @@ cdef class _LogEntry:
             return ErrorLevels._names[self.level]
 
 cdef class _BaseErrorLog:
-    "Immutable base version of an error log."
-    cdef object _entries
     cdef readonly object last_error
-    def __init__(self, entries, last_error=None):
-        self._entries = entries
+    def __init__(self, last_error=None):
         self.last_error = last_error
 
     def copy(self):
-        return _BaseErrorLog(self._entries, self.last_error)
-
-    def __iter__(self):
-        return iter(self._entries)
+        return _BaseErrorLog(self.last_error)
 
     def __repr__(self):
-        return '\n'.join(map(repr, self._entries))
-
-    def __getitem__(self, index):
-        return self._entries[index]
-
-    def __len__(self):
-        return len(self._entries)
-
-    def filter_domains(self, domains):
-        cdef _LogEntry entry
-        filtered = []
-        if not python.PySequence_Check(domains):
-            domains = (domains,)
-        for entry in self._entries:
-            if entry.domain in domains:
-                python.PyList_Append(filtered, entry)
-        return _BaseErrorLog(filtered)
-
-    def filter_types(self, types):
-        cdef _LogEntry entry
-        if not python.PySequence_Check(types):
-            types = (types,)
-        filtered = []
-        for entry in self._entries:
-            if entry.type in types:
-                python.PyList_Append(filtered, entry)
-        return _BaseErrorLog(filtered)
-
-    def filter_levels(self, levels):
-        """Return a log with all messages of the requested level(s). Takes a
-        single log level or a sequence."""
-        cdef _LogEntry entry
-        if not python.PySequence_Check(levels):
-            levels = (levels,)
-        filtered = []
-        for entry in self._entries:
-            if entry.level in levels:
-                python.PyList_Append(filtered, entry)
-        return _BaseErrorLog(filtered)
-
-    def filter_from_level(self, level):
-        "Return a log with all messages of the requested level of worse."
-        cdef _LogEntry entry
-        filtered = []
-        for entry in self._entries:
-            if entry.level >= level:
-                python.PyList_Append(filtered, entry)
-        return _BaseErrorLog(filtered)
-
-    def filter_from_fatals(self):
-        "Convenience method to get all fatal error messages."
-        return self.filter_from_level(ErrorLevels.FATAL)
-    
-    def filter_from_errors(self):
-        "Convenience method to get all error messages or worse."
-        return self.filter_from_level(ErrorLevels.ERROR)
-    
-    def filter_from_warnings(self):
-        "Convenience method to get all warnings or worse."
-        return self.filter_from_level(ErrorLevels.WARNING)
-
-cdef class _ExtensibleErrorLog(_BaseErrorLog):
-    cdef void connect(self):
-        del self._entries[:]
-        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
-
-    cdef void disconnect(self):
-        xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
+        return ''
 
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef int is_error
         cdef _LogEntry entry
         entry = _LogEntry()
-        entry._set(error)
+        entry._setError(error)
         is_error = error.level == xmlerror.XML_ERR_ERROR or \
                    error.level == xmlerror.XML_ERR_FATAL
         if __GLOBAL_ERROR_LOG is not self:
@@ -187,15 +109,97 @@ cdef class _ExtensibleErrorLog(_BaseErrorLog):
         if is_error:
             self.last_error = entry
 
-cdef class _ErrorLog(_ExtensibleErrorLog):
+cdef class _ListErrorLog(_BaseErrorLog):
+    "Immutable base version of a list based error log."
+    cdef object _entries
+    def __init__(self, entries, last_error=None):
+        _BaseErrorLog.__init__(self, last_error)
+        self._entries = entries
+
+    def copy(self):
+        return _ListErrorLog(self._entries, self.last_error)
+
+    def __iter__(self):
+        return iter(self._entries)
+
+    def __repr__(self):
+        return '\n'.join(map(repr, self._entries))
+
+    def __getitem__(self, index):
+        return self._entries[index]
+
+    def __len__(self):
+        return len(self._entries)
+
+    def filter_domains(self, domains):
+        cdef _LogEntry entry
+        filtered = []
+        if not python.PySequence_Check(domains):
+            domains = (domains,)
+        for entry in self._entries:
+            if entry.domain in domains:
+                python.PyList_Append(filtered, entry)
+        return _ListErrorLog(filtered)
+
+    def filter_types(self, types):
+        cdef _LogEntry entry
+        if not python.PySequence_Check(types):
+            types = (types,)
+        filtered = []
+        for entry in self._entries:
+            if entry.type in types:
+                python.PyList_Append(filtered, entry)
+        return _ListErrorLog(filtered)
+
+    def filter_levels(self, levels):
+        """Return a log with all messages of the requested level(s). Takes a
+        single log level or a sequence."""
+        cdef _LogEntry entry
+        if not python.PySequence_Check(levels):
+            levels = (levels,)
+        filtered = []
+        for entry in self._entries:
+            if entry.level in levels:
+                python.PyList_Append(filtered, entry)
+        return _ListErrorLog(filtered)
+
+    def filter_from_level(self, level):
+        "Return a log with all messages of the requested level of worse."
+        cdef _LogEntry entry
+        filtered = []
+        for entry in self._entries:
+            if entry.level >= level:
+                python.PyList_Append(filtered, entry)
+        return _ListErrorLog(filtered)
+
+    def filter_from_fatals(self):
+        "Convenience method to get all fatal error messages."
+        return self.filter_from_level(ErrorLevels.FATAL)
+    
+    def filter_from_errors(self):
+        "Convenience method to get all error messages or worse."
+        return self.filter_from_level(ErrorLevels.ERROR)
+    
+    def filter_from_warnings(self):
+        "Convenience method to get all warnings or worse."
+        return self.filter_from_level(ErrorLevels.WARNING)
+
+cdef class _ErrorLog(_ListErrorLog):
     def __init__(self):
-        _ExtensibleErrorLog.__init__(self, [])
+        _ListErrorLog.__init__(self, [])
+
+    cdef void connect(self):
+        del self._entries[:]
+        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
+
+    cdef void disconnect(self):
+        xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
     def clear(self):
         del self._entries[:]
 
     def copy(self):
-        return _BaseErrorLog(self._entries[:], self.last_error)
+        return _ListErrorLog(self._entries[:], self.last_error)
 
     def __iter__(self):
         return iter(self._entries[:])
@@ -224,43 +228,71 @@ cdef class _RotatingErrorLog(_ErrorLog):
             del entries[0]
         python.PyList_Append(entries, entry)
 
-cdef class PyErrorLog(_ExtensibleErrorLog):
+cdef class PyErrorLog(_BaseErrorLog):
+    """A global error log that connects to the Python stdlib logging package.
+
+    The constructor accepts an optional logger name.
+
+    If you want to change the mapping between libxml2's ErrorLevels and Python
+    logging levels, you can modify the level_map dictionary from a subclass.
+
+    The default mapping is::
+
+            ErrorLevels.WARNING = logging.WARNING
+            ErrorLevels.ERROR   = logging.ERROR
+            ErrorLevels.FATAL   = logging.CRITICAL
+
+    You can also override the method ``receive()`` that takes a LogEntry
+    object and calls ``self.log(log_entry, format_string, arg1, arg2, ...)``
+    with appropriate data.
+    """
+    cdef public object level_map
     cdef object _log
-    cdef object _level_map
-    cdef object _varsOf
     def __init__(self, logger_name=None):
-        _ExtensibleErrorLog.__init__(self, [])
+        _BaseErrorLog.__init__(self)
         import logging
-        self._level_map = {
+        self.level_map = {
             ErrorLevels.WARNING : logging.WARNING,
             ErrorLevels.ERROR   : logging.ERROR,
             ErrorLevels.FATAL   : logging.CRITICAL
             }
-        self._varsOf = vars
         if logger_name:
-            logger = logging.getLogger(name)
+            logger = logging.getLogger(logger_name)
         else:
             logger = logging.getLogger()
         self._log = logger.log
 
     def copy(self):
-        return self
+        return _ListErrorLog([])
 
-    def receive(self, entry):
-        py_level = self._level_map[entry.level]
+    def log(self, entry, message_format_string, *args):
         self._log(
-            py_level,
-            "%(asctime)s %(levelname)s %(domain_name)s %(message)s",
-            self._varsOf(entry)
+            self.level_map.get(entry.level, 0),
+            message_format_string, *args
             )
 
-# global list to collect error output messages from libxml2/libxslt
-cdef _RotatingErrorLog __GLOBAL_ERROR_LOG
+    def receive(self, entry):
+        self.log(entry, entry)
+
+# global list log to collect error output messages from libxml2/libxslt
+cdef _BaseErrorLog __GLOBAL_ERROR_LOG
 __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
-def __copyGlobalErrorLog():
+cdef __copyGlobalErrorLog():
     "Helper function for properties in exceptions."
     return __GLOBAL_ERROR_LOG.copy()
+
+def useGlobalPythonLog(PyErrorLog log not None):
+    """Replace the global error log by an etree.PyErrorLog that uses the
+    standard Python logging package.
+
+    Note that this slows down processing and disables access to the global
+    error log from exceptions.  Parsers, XSLT etc. will continue to provide
+    their normal local error log.
+    """
+    global __GLOBAL_ERROR_LOG
+    __GLOBAL_ERROR_LOG = log
+
 
 # local log function: forward error to logger object
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):

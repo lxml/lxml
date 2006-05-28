@@ -123,11 +123,19 @@ that.  You can get it from a log entry like this::
   PARSER ERR_TAG_NOT_FINISHED <string>
 
 There is also a convenience attribute ``last_error`` that returns the last
-error::
+error or fatal error that occurred::
 
   >>> entry = e.error_log.last_error
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NOT_FINISHED <string>
+
+Alternatively, lxml.etree supports logging libxml2 messages to the Python
+stdlib logging module.  This is done through the ``etree.PyErrorLog`` class.
+It disables the error reporting from exceptions and forwards log messages to a
+Python logger.  To use it, see the descriptions of the function
+``etree.useGlobalPythonLog`` and the class ``etree.PyErrorLog`` for help.
+Note that this does not affect the local error logs of XSLT, XMLSchema,
+etc. which are described in their respective sections below.
 
 
 Python unicode strings
@@ -462,7 +470,7 @@ second case, you can look up the error log of the validation process and check
 it for relevant messages::
 
   >>> log = relaxng.error_log
-  >>> print log.filter_from_errors()
+  >>> print log.last_error
   <string>:1:ERROR:RELAXNGV:ERR_LT_IN_ATTRIBUTE: Did not expect element c there
 
 You can see that the error (ERROR) happened during RelaxNG validation
@@ -541,13 +549,15 @@ If you prefer getting an exception when validating, you can use the
 Error reporting works like for the RelaxNG class::
 
   >>> log = xmlschema.error_log
-  >>> errors = log.filter_from_errors()
-  >>> print errors[0].domain_name
+  >>> error = log.last_error
+  >>> print error.domain_name
   SCHEMASV
-  >>> print errors[0].type_name
+  >>> print error.type_name
   SCHEMAV_ELEMENT_CONTENT
 
-If you were to print this log entry, you would get something like the following::
+If you were to print this log entry, you would get something like the
+following.  Note that the error message depends on the libxml2 version in
+use::
 
   <string>:1:ERROR::SCHEMAV_ELEMENT_CONTENT: Element 'c': This element is not expected. Expected is ( b ).
 
