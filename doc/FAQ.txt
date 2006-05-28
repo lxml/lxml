@@ -7,7 +7,7 @@ See also the notes on compatibility_ to ElementTree_.
 .. _ElementTree:   http://effbot.org/zone/element-index.htm
 
 
-1) Is there a tutorial?
+#) Is there a tutorial?
 
    There is a `tutorial for ElementTree`_ which also works for lxml.etree.
    The `API documentation`_ also contains many examples.
@@ -16,7 +16,7 @@ See also the notes on compatibility_ to ElementTree_.
    .. _`API documentation`:        api.html
 
 
-2) Where can I find more documentation about lxml?
+#) Where can I find more documentation about lxml?
 
    There is a lot of documentation as lxml implements the well-known
    `ElementTree API`_ and tries to follow its documentation as closely as
@@ -29,7 +29,39 @@ See also the notes on compatibility_ to ElementTree_.
    .. _`the web page`:    http://codespeak.net/lxml/#documentation
 
 
-3) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+#) My application crashes! Why does lxml.etree do that?
+
+   a) If you are using threads, make sure that you are not sharing non
+      thread-safe objects between threads.  Especially the default parser,
+      XSLT() and the validators are not thread-safe for performance reasons.
+      You have to create a new one for each thread, use a thread-safe object
+      pool or assure thread-safe access to them yourself.
+
+   b) One of the goals of lxml is "no segfaults", so if there is no clear
+      warning in the documentation that you were doing something potentially
+      harmful, you have found a bug and we would like to hear about it.
+      Please report this bug to the mailing list.  See the next section on how
+      to do that.
+
+
+#) I think I have found a bug in lxml. What should I do?
+
+   a) First, you should look at the `current developer changelog`_ to see if
+      this is a known problem that has already been fixed in the SVN trunk.
+
+      .. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+
+   b) Otherwise, we would really like to hear about it.  Please report it to
+      the `mailing list`_ so that we can fix it.  It is very helpful in this
+      case if you can come up with a short code snippet that demonstrates your
+      problem.  Please also report the version of lxml, libxml2 and libxslt
+      that you are using (see the module attributes ``etree.LXML_VERSION``
+      etc.).
+
+      .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+
+#) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
 
    ``findall()`` is part of the original `ElementTree API`_.  It supports a
    `simple subset of the XPath language`_, without predicates, conditions and
@@ -51,7 +83,7 @@ See also the notes on compatibility_ to ElementTree_.
    .. _choice:                                performance.html#xpath
 
 
-4) Why doesn't ``findall()`` support full XPath expressions?
+#) Why doesn't ``findall()`` support full XPath expressions?
 
    It was decided that it is more important to keep compatibility with
    ElementTree_ to simplify code migration between the libraries.  The main
@@ -65,7 +97,7 @@ See also the notes on compatibility_ to ElementTree_.
    .. _`so fast`: performance.html#tree-traversal
 
 
-5) What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+#) What is the difference between str(xslt(doc)) and xslt(doc).write() ?
 
    The str() implementation of the XSLTResultTree class (a subclass of
    ElementTree) knows about the output method chosen in the stylesheet
@@ -82,7 +114,7 @@ See also the notes on compatibility_ to ElementTree_.
    encoding and indentation options requested by the stylesheet.
 
 
-6) Why is my application so slow?
+#) Why is my application so slow?
 
    lxml.etree is a very fast library for processing XML.  There are, however,
    `a few caveats`_ involved in the mapping of the powerful libxml2 library to
