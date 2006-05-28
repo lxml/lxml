@@ -79,8 +79,8 @@ original encoding::
   >>> xml_header = '<?xml version="1.0" encoding="ascii"?>'
   >>> xhtml = xml_header + doctype_string + '<html><body></body></html>'
 
-  >>> et = etree.parse(StringIO(xhtml))
-  >>> docinfo = et.docinfo
+  >>> tree = etree.parse(StringIO(xhtml))
+  >>> docinfo = tree.docinfo
   >>> print docinfo.public_id
   -//W3C//DTD XHTML 1.0 Transitional//EN
   >>> print docinfo.system_url
