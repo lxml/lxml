@@ -121,9 +121,6 @@ cdef class _TempStore:
 # class for temporarily storing exceptions raised in extensions
 cdef class _ExceptionContext:
     cdef object _exc_info
-    def __init__(self):
-        self._exc_info = None
-
     cdef void clear(self):
         self._exc_info = None
 
@@ -1207,9 +1204,7 @@ cdef class ElementChildIterator:
         else:
             c_node = _findChildForwards(node._c_node, 0)
             self._next_element = _nextElement
-        if c_node is NULL:
-            self._node = None
-        else:
+        if c_node is not NULL:
             self._node = _elementFactory(node._doc, c_node)
     def __iter__(self):
         return self
