@@ -1699,7 +1699,14 @@ class ETreeTestCaseBase(unittest.TestCase):
             '<a><b></b></a>',
             tree.getroot()
            )
-        
+
+    def test_parse_with_encoding(self):
+        # this can fail in libxml2 <= 2.6.22
+        parse = self.etree.parse
+        tree = parse(StringIO('<?xml version="1.0" encoding="ascii"?><html/>'))
+        self.assertXML('<html></html>',
+                       tree.getroot())
+
     def test_encoding(self):
         Element = self.etree.Element
 
