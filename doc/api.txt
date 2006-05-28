@@ -304,6 +304,7 @@ which returns a structural, absolute XPath expression to find that element::
   >>> tree.xpath(tree.getpath(d2)) == [d2]
   True
 
+
 XSLT
 ----
 
