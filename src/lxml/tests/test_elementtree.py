@@ -1663,7 +1663,27 @@ class ETreeTestCaseBase(unittest.TestCase):
         # as namespace is not moved along with it
         del one
         self.assertEquals('{http://a.b.c}baz', baz.tag)
-        
+
+    def test_attribute_xmlns_move(self):
+        Element = self.etree.Element
+
+        root = etree.Element('element')
+
+        subelement = etree.Element('subelement')
+        subelement.set("{http://www.w3.org/XML/1998/namespace}id", "foo")
+        self.assertEqual(1, len(subelement.attrib))
+        self.assertEquals(
+            "foo",
+            subelement.get("{http://www.w3.org/XML/1998/namespace}id"))
+
+        root.append(subelement)
+        self.assertEqual(1, len(subelement.attrib))
+        self.assertEquals({"{http://www.w3.org/XML/1998/namespace}id" : "foo"},
+                          subelement.attrib)
+        self.assertEquals(
+            "foo",
+            subelement.get("{http://www.w3.org/XML/1998/namespace}id"))
+
     def test_tostring(self):
         tostring = self.etree.tostring
         Element = self.etree.Element
