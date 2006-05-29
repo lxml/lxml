@@ -558,7 +558,7 @@ cdef class HTMLParser(_BaseParser):
     Available keyword arguments:
     * recover            - try hard to parse through broken HTML (default: True)
     * no_network         - prevent network access
-    * remove_blank_text  - clean up empty text nodes
+    * remove_blank_text  - discard empty text nodes
 
     Note that you must not share parsers between threads.
     """
