@@ -50,6 +50,8 @@ cdef extern from "Python.h":
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
 
+    cdef int PyObject_SetAttr(object o, object name, object value)
+
     cdef void* PyMem_Malloc(size_t size)
     cdef void PyMem_Free(void* p)
 

@@ -22,6 +22,11 @@ Features added
 Bugs fixed
 ----------
 
+* Unknown constants from newer libxml2 versions could raise exceptions in the
+  error handlers
+
+* lxml.etree compiles much faster
+
 * On libxml2 <= 2.6.22, parsing strings with encoding declaration could fail
   in certain cases
 
