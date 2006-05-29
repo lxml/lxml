@@ -100,12 +100,14 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 cdef class _FilelikeWriter:
     cdef object _filelike
     cdef _ExceptionContext _exc_context
+    cdef _ErrorLog error_log
     def __init__(self, filelike, exc_context=None):
         self._filelike = filelike
         if exc_context is None:
             self._exc_context = _ExceptionContext()
         else:
             self._exc_context = exc_context
+        self.error_log = _ErrorLog()
 
     cdef tree.xmlOutputBuffer* _createOutputBuffer(
         self, tree.xmlCharEncodingHandler* enchandler) except NULL:
@@ -172,6 +174,42 @@ cdef _tofilelike(f, _NodeBase element, encoding,
     tree.xmlCharEncCloseFunc(enchandler)
     if writer is not None:
         writer._exc_context._raise_if_stored()
+
+cdef _tofilelikeC14N(f, _NodeBase element):
+    cdef _FilelikeWriter writer
+    cdef tree.xmlOutputBuffer* c_buffer
+    cdef xmlDoc* c_base_doc
+    cdef xmlDoc* c_doc
+    cdef int bytes
+
+    c_base_doc = element._c_node.doc
+    c_doc = _fakeRootDoc(c_base_doc, element._c_node)
+    try:
+        if python.PyString_Check(f) or python.PyUnicode_Check(f):
+            filename = _utf8(f)
+            bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1,
+                                        _cstr(filename), 0)
+        elif hasattr(f, 'write'):
+            writer   = _FilelikeWriter(f)
+            c_buffer = writer._createOutputBuffer(NULL)
+            writer.error_log.connect()
+            bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, 0, NULL, 1, c_buffer)
+            writer.error_log.disconnect()
+            tree.xmlOutputBufferClose(c_buffer)
+        else:
+            raise TypeError, "File or filename expected, got '%s'" % type(f)
+    finally:
+        _destroyFakeDoc(c_base_doc, c_doc)
+
+    if writer is not None:
+        writer._exc_context._raise_if_stored()
+
+    if bytes < 0:
+        if writer is not None and len(writer.error_log):
+            message = writer.error_log[0].message
+        else:
+            message = "C14N failed"
+        raise C14NError, message
 
 # dump node to file (mainly for debug)
 

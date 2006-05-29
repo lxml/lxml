@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Writing C14N no longer serializes in memory (reduced memory footprint)
+
 * PyErrorLog for error logging through the Python ``logging`` module
 
 * ``element.getroottree()`` returns an ElementTree for the root node of the
@@ -21,6 +23,9 @@ Features added
 
 Bugs fixed
 ----------
+
+* Setting namespace-less tag names on namespaced elements ('{ns}t' -> 't')
+  didn't reset the namespace
 
 * Unknown constants from newer libxml2 versions could raise exceptions in the
   error handlers

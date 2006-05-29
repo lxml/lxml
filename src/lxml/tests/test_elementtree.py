@@ -823,7 +823,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             '<a><c></c>C2</a>',
             a)
-        
+
     def test_tag_write(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -840,6 +840,43 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             '<c><b></b></c>',
             a)
+
+    def test_tag_reset_ns(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('{a}a')
+        b1 = SubElement(a, '{a}b')
+        b2 = SubElement(a, '{b}b')
+
+        self.assertEquals('{a}b',  b1.tag)
+
+        b1.tag = 'c'
+
+        # can't use C14N here!
+        self.assertEquals('c', b1.tag)
+        self.assertEquals('<c', tostring(b1)[:2])
+        self.assert_('<c' in tostring(a))
+
+    def test_tag_reset_root_ns(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        a = Element('{a}a')
+        b1 = SubElement(a, '{a}b')
+        b2 = SubElement(a, '{b}b')
+
+        a.tag = 'c'
+
+        self.assertEquals(
+            'c',
+            a.tag)
+
+        # can't use C14N here!
+        self.assertEquals('c',  a.tag)
+        self.assertEquals('<c', tostring(a)[:2])
 
     def test_delitem(self):
         Element = self.etree.Element

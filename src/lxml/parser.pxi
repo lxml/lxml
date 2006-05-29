@@ -4,6 +4,9 @@ cimport xmlparser
 cimport htmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
+# initialize parser (and threading)
+xmlparser.xmlInitParser()
+
 class XMLSyntaxError(LxmlSyntaxError):
     pass
 
@@ -27,11 +30,6 @@ cdef class _ParserContext:
     def __dealloc__(self):
         if self._c_dict is not NULL:
             xmlparser.xmlDictFree(self._c_dict)
-
-    cdef void _initParser(self):
-        if not self._initialized:
-            xmlparser.xmlInitParser()
-            self._initialized = 1
 
     cdef void _initParserDict(self, xmlParserCtxt* pctxt):
         "Assure we always use the same string dictionary."
@@ -596,7 +594,6 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef Py_ssize_t c_len
     if parser is None:
         parser = __DEFAULT_PARSER
-    __GLOBAL_PARSER_CONTEXT._initParser()
     if not filename:
         c_filename = NULL
     else:
@@ -611,7 +608,6 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
 cdef xmlDoc* _parseDocFromFile(filename, _BaseParser parser) except NULL:
     if parser is None:
         parser = __DEFAULT_PARSER
-    __GLOBAL_PARSER_CONTEXT._initParser()
     return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename))
 
 cdef xmlDoc* _parseDocFromFilelike(source, filename,
@@ -619,7 +615,6 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename,
     cdef char* c_filename
     if parser is None:
         parser = __DEFAULT_PARSER
-    __GLOBAL_PARSER_CONTEXT._initParser()
     if not filename:
         c_filename = NULL
     else:

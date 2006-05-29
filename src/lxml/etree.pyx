@@ -244,6 +244,8 @@ cdef class _Document:
                                  object node_ns_utf, object nsmap):
         """Lookup current namespace prefixes, then set namespace structure for
         node and register new ns-prefix mappings.
+
+        This only works for a newly created node!
         """
         cdef xmlNs*  c_ns
         cdef xmlDoc* c_doc
@@ -251,7 +253,7 @@ cdef class _Document:
         cdef char*   c_href
         if not nsmap:
             if node_ns_utf is not None:
-                self._setNodeNs(c_node, node_ns_utf)
+                self._setNodeNs(c_node, _cstr(node_ns_utf))
             return
 
         c_doc  = self._c_doc
@@ -272,7 +274,7 @@ cdef class _Document:
                 node_ns_utf = None
 
         if node_ns_utf is not None:
-            self._setNodeNs(c_node, node_ns_utf)
+            self._setNodeNs(c_node, _cstr(node_ns_utf))
 
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
@@ -510,7 +512,7 @@ cdef class _ElementTree:
         self._assertHasRoot()
         schema = XMLSchema(xmlschema)
         return schema.validate(self)
-        
+
     def xinclude(self):
         """Process this document, including using XInclude.
         """
@@ -525,30 +527,13 @@ cdef class _ElementTree:
         result = xinclude.xmlXIncludeProcessTree(self._context_node._c_node)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
-        
+
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
         """
-        cdef xmlDoc* c_base_doc
-        cdef xmlDoc* c_doc
-        cdef char* data
-        cdef int bytes
         self._assertHasRoot()
-        c_base_doc = self._context_node._doc._c_doc
+        _tofilelikeC14N(file, self._context_node)
 
-        c_doc = _fakeRootDoc(c_base_doc, self._context_node._c_node)
-        bytes = c14n.xmlC14NDocDumpMemory(c_doc, NULL, 0, NULL, 1, &data)
-        _destroyFakeDoc(c_base_doc, c_doc)
-
-        if bytes < 0:
-            raise C14NError, "C14N failed"
-        try:
-            if not hasattr(file, 'write'):
-                file = open(file, 'wb')
-            file.write(data)
-        finally:
-            tree.xmlFree(data)
-    
 cdef _ElementTree _elementTreeFactory(_Document doc,
                                       _NodeBase context_node):
     return _newElementTree(doc, context_node, _ElementTree)
@@ -707,13 +692,13 @@ cdef class _Element(_NodeBase):
             return self._tag
     
         def __set__(self, value):
-            cdef xmlNs* c_ns
             ns, text = _getNsTag(value)
             self._tag = value
             tree.xmlNodeSetName(self._c_node, _cstr(text))
             if ns is None:
-                return
-            self._doc._setNodeNs(self._c_node, _cstr(ns))
+                self._c_node.ns = NULL
+            else:
+                self._doc._setNodeNs(self._c_node, _cstr(ns))
 
     # not in ElementTree, read-only
     property prefix:
@@ -982,7 +967,6 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     else:
         assert 0, "Unknown node type: %s" % c_node.type
     result = element_class()
-    result._tag = None
     result._doc = doc
     result._c_node = c_node
     result._proxy_type = PROXY_ELEMENT
