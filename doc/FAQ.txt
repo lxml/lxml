@@ -82,9 +82,9 @@ See also the notes on compatibility_ to ElementTree_.
    only added between nodes that do not contain data.  This is always the case
    for trees constructed element-by-element, so no problems should be expected
    here.  For parsed trees, a good way to assure that no conflicting
-   whitespace is left in the tree is the ``ìgnore_blanks`` option::
+   whitespace is left in the tree is the ``remove_blank_text`` option::
 
-   >>> parser = etree.XMLParser(ignore_blanks=True)
+   >>> parser = etree.XMLParser(remove_blank_text=True)
    >>> tree = etree.parse(file, parser)
 
    This will allow the parser to drop blank text nodes when constructing the

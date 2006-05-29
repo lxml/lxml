@@ -446,14 +446,14 @@ cdef class XMLParser(_BaseParser):
     * no_network         - prevent network access
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
-    * ignore_blanks      - discard blank text nodes
+    * remove_blank_text  - discard blank text nodes
 
     Note that you must not share parsers between threads.  This applies also
     to the default parser.
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False, ignore_blanks=False):
+                 recover=False, remove_blank_text=False):
         cdef int parse_options
         _BaseParser.__init__(self)
 
