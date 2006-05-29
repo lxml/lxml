@@ -1,9 +1,9 @@
 Credits
 -------
 
-Martijn Faassen - initial main developer
-
 Stefan Behnel - main developer and maintainer
+
+Martijn Faassen - creator of lxml and initial main developer
 
 Marc-Antoine Parent - XPath extension function help and patches
 
