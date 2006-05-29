@@ -77,22 +77,19 @@ See also the notes on compatibility_ to ElementTree_.
    Pretty printing (or formatting) an XML document means adding white space to
    the content.  These modifications are harmless if they only impact elements
    in the document that do not carry (text) data.  They corrupt your data if
-   they impact elements that contain data.  The only way to distinguish
-   between harmless and harmful modification is structural information about
-   the document.
+   they impact elements that contain data.  If lxml cannot distinguish between
+   whitespace and data, it will not alter your data.  Whitespace is therefore
+   only added between nodes that do not contain data.  This is always the case
+   for trees constructed element-by-element, so no problems should be expected
+   here.  For parsed trees, a good way to assure that no conflicting
+   whitespace is left in the tree is the ``ìgnore_blanks`` option::
 
-   If lxml cannot distinguish between whitespace and data, it will not alter
-   your data.  The best way to tell lxml where whitespace can be safely added
-   and removed is allowing the parser to load the DTD (which obviously
-   requires the DTD to be accessible)::
+   >>> parser = etree.XMLParser(ignore_blanks=True)
+   >>> tree = etree.parse(file, parser)
 
-   >>> tree = etree.parse(file, etree.XMLParser(load_dtd=True))
-
-   This will allow the parser to drop so-called 'ignorable whitespace' that is
-   not considered data (i.e. not part of the XML infoset).  If you now call a
-   serialization function to pretty print this tree, it will use the
-   structural information it has to determine the correct places where it can
-   add whitespace to the XML tree.
+   This will allow the parser to drop blank text nodes when constructing the
+   tree.  If you now call a serialization function to pretty print this tree,
+   lxml can add fresh whitespace to the XML tree to indent it.
 
 
 #) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
