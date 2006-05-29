@@ -14,10 +14,11 @@ cdef extern from "libxml/xmlerror.h":
         char* file
         int line
 
-    cdef void xmlSetGenericErrorFunc(void* ctxt,
-                                     void (*handler)(void* ctxt, char* msg, ...))
-    cdef void xmlSetStructuredErrorFunc(void* ctxt,
-                                        void (*handler)(void* userData, xmlError* error))
+    ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...)
+    ctypedef void (*xmlStructuredErrorFunc)(void* userData, xmlError* error)
+
+    cdef void xmlSetGenericErrorFunc(void* ctxt, xmlGenericErrorFunc func)
+    cdef void xmlSetStructuredErrorFunc(void* ctxt, xmlStructuredErrorFunc func)
     
     ctypedef enum xmlErrorDomain:
         XML_FROM_NONE = 0
@@ -775,3 +776,9 @@ cdef extern from "libxml/xmlerror.h":
         XML_I18N_NO_OUTPUT = 6004 # 6004
         XML_CHECK_ = 6005 # 5033
         XML_CHECK_X = 6006 # 503
+
+cdef extern from "libxml/globals.h":
+    cdef void xmlThrDefSetGenericErrorFunc(void* ctx,
+                                           xmlGenericErrorFunc handler)
+    cdef void xmlThrDefSetStructuredErrorFunc(void* ctx,
+                                              xmlStructuredErrorFunc handler)

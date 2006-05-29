@@ -228,6 +228,7 @@ cdef extern from "libxml/xmlIO.h":
         FILE* file, xmlCharEncodingHandler* encoder)
     cdef xmlOutputBuffer* xmlOutputBufferCreateFilename(
         char* URI, xmlCharEncodingHandler* encoder, int compression)
+
 cdef extern from "libxml/xmlsave.h":
     ctypedef struct xmlSaveCtxt:
         pass
@@ -236,6 +237,11 @@ cdef extern from "libxml/xmlsave.h":
                                         int options)
     cdef long xmlSaveDoc(xmlSaveCtxt* ctxt, xmlDoc* doc)
     cdef int xmlSaveClose(xmlSaveCtxt* ctxt)
+
+cdef extern from "libxml/globals.h":
+    cdef int xmlThrDefKeepBlanksDefaultValue(int onoff)
+    cdef int xmlThrDefLineNumbersDefaultValue(int onoff)
+    cdef int xmlThrDefIndentTreeOutput(int onoff)
     
 cdef extern from "libxml/xmlstring.h":
     cdef char* xmlStrdup(char* cur)

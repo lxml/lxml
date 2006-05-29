@@ -40,10 +40,21 @@ __MAX_LOG_SIZE = 100
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
 
+# global per-thread setup
+tree.xmlThrDefIndentTreeOutput(1)
+tree.xmlThrDefLineNumbersDefaultValue(1)
+
+_initThreadLogging()
+
+# initialize parser (and threading)
+xmlparser.xmlInitParser()
+
 def initThread():
-    "Call this method to set up the library from within a new thread."
-    _initThreadLogging()
-    tree.xmlKeepBlanksDefault(0)
+    """Must be called by each newly created thread before calling any API
+    functions."""
+    #_initThreadLogging()
+    pass
+
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
@@ -1258,6 +1269,7 @@ cdef class ElementDepthFirstIterator:
     cdef void _prepareNextNode(self):
         cdef _NodeBase node
         cdef xmlNode* c_node
+        cdef xmlNode* c_next_node
         cdef xmlNode* c_parent
         # find in descendants
         node = self._next_node
@@ -1287,11 +1299,12 @@ cdef class ElementDepthFirstIterator:
             # we are at a sibling, so set c_parent to our parent
             c_parent = c_parent.parent
 
-        self._next_node = _elementFactory(node._doc, c_node)
+        c_next_node = c_node
         # fix depth counter by looking up path to original parent
         while c_node is not c_parent:
             self._depth = self._depth + 1
             c_node = c_node.parent
+        self._next_node = _elementFactory(node._doc, c_next_node)
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node
@@ -1523,6 +1536,3 @@ cdef class _Validator:
 
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
-
-# configure main thread
-initThread()

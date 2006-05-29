@@ -14,7 +14,6 @@ def clearErrorLog():
 cdef void _initThreadLogging():
     "Setup logging for the current thread. Called from etree.initThread()."
     # switch on line number reporting
-    xmlparser.xmlLineNumbersDefault(1)
     _logLibxmlErrors()
     try:
         _logLibxsltErrors()
@@ -372,7 +371,10 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
 
 # setup for global log:
 cdef void _logLibxmlErrors():
+    xmlerror.xmlThrDefSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
     xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
+
+    xmlerror.xmlThrDefSetStructuredErrorFunc(NULL, _receiveError)
     xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
 ################################################################################
