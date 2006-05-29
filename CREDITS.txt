@@ -32,6 +32,8 @@ Steve Howe - Windows builds
 
 David Sankel - building statically on Windows
 
+Noah Slater - lots of bug squeezing
+
 Duncan Booth - bugfixing
 
 Dean Pavlekovic - bug reporting
