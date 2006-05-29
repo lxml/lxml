@@ -64,17 +64,18 @@ See also the notes on compatibility_ to ElementTree_.
 #) Can I use threads to concurrently access the lxml API?
 
    You should be able to use lxml in a multi-threaded environment, although
-   support is limited and not very well tested.  Note that lxml does not
-   provide any thread-safety by itself (mainly for performance reasons), so
-   you have to take care when you use parts of the API concurrently.  Most
-   importantly, you must not forget to call ``etree.initThread()`` from each
-   newly generated thread to initialize lxml and libxml2 for the new thread
-   context.  If you call API functions from a thread without having called
-   this function first, lxml can easily crash your program.
+   this is not very well tested.  For performance reasons, lxml.etree provides
+   only very limited thread-safety by itself, so you have to take care when
+   you use parts of the API concurrently.  Most importantly, you must not
+   forget to call ``etree.initThread()`` from each newly generated thread to
+   initialize lxml and libxml2 for the new thread context.  If you call API
+   functions from a thread without having called this function first, lxml can
+   behave unexpectedly and even crash your program.  This is not considered a
+   bug in lxml, it is a bug in your code.
 
    Tree modification is not thread-safe, so you must take care to properly
-   serialize modifications.  Reading from a tree concurrently should not
-   produce any problems (otherwise it is a bug).
+   serialize modifications.  Reading and traversing a tree concurrently should
+   not produce any problems (otherwise it is a bug).
 
    Basically none of the API classes is thread-safe, including parsers, XPath,
    XSLT and the validators.  Each of them represents a stateful object that
@@ -84,6 +85,32 @@ See also the notes on compatibility_ to ElementTree_.
    trees recursively.  So you might want to consider a thread pool approach or
    threaded processing chains to reduce the overhead if you require threading
    here.
+
+   This said, if you have problems with thread support or ideas how to improve
+   it, we would like to hear about it through the mailing list.
+
+
+#) Why doesn't the ``pretty_print`` option reformat my XML output?
+
+   Pretty printing (or formatting) an XML document means adding white space to
+   the content.  These modifications are harmless if they only impact elements
+   in the document that do not carry (text) data.  They corrupt your data if
+   they impact elements that contain data.  The only way to distinguish
+   between harmless and harmful modification is structural information about
+   the document.
+
+   If lxml cannot distinguish between whitespace and data, it will not alter
+   your data.  The best way to tell lxml where whitespace can be safely added
+   and removed is allowing the parser to load the DTD (which obviously
+   requires the DTD to be accessible)::
+
+   >>> tree = etree.parse(file, etree.XMLParser(load_dtd=True))
+
+   This will allow the parser to drop so-called 'ignorable whitespace' that is
+   not considered data (i.e. not part of the XML infoset).  If you now call a
+   serialization function to pretty print this tree, it will use the
+   structural information it has to determine the correct places where it can
+   add whitespace to the XML tree.
 
 
 #) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
