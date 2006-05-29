@@ -472,7 +472,7 @@ cdef class XMLParser(_BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_NSCLEAN
         if recover:
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
-        if ignore_blanks:
+        if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
 
         self._parse_options = parse_options
