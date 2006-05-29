@@ -21,11 +21,8 @@ cdef class _ParserContext:
     """Global parser context to share the string dictionary.
     """
     cdef xmlDict* _c_dict
-    cdef int _initialized
-
     def __init__(self):
         self._c_dict = NULL
-        self._initialized = 0
 
     def __dealloc__(self):
         if self._c_dict is not NULL:

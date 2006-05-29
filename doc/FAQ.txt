@@ -64,21 +64,26 @@ See also the notes on compatibility_ to ElementTree_.
 #) Can I use threads to concurrently access the lxml API?
 
    You should be able to use lxml in a multi-threaded environment, although
-   this is not very well tested.  Note that lxml does not provide any
-   thread-safety by itself (mainly for performance reasons), so you have to
-   take care when you use parts of the API concurrently.  Most importantly,
-   you must not forget to call ``etree.initThread()`` from each newly
-   generated thread to initialize lxml and libxml2 for the new thread context.
-   If you call API functions from a thread without having called this function
-   first, lxml can easily crash your program.
+   support is limited and not very well tested.  Note that lxml does not
+   provide any thread-safety by itself (mainly for performance reasons), so
+   you have to take care when you use parts of the API concurrently.  Most
+   importantly, you must not forget to call ``etree.initThread()`` from each
+   newly generated thread to initialize lxml and libxml2 for the new thread
+   context.  If you call API functions from a thread without having called
+   this function first, lxml can easily crash your program.
+
+   Tree modification is not thread-safe, so you must take care to properly
+   serialize modifications.  Reading from a tree concurrently should not
+   produce any problems (otherwise it is a bug).
 
    Basically none of the API classes is thread-safe, including parsers, XPath,
-   XSLT and the validators.  You cannot use such an object concurrently.
-   However, it is perfectly viable to create independent instances for each
-   thread.  This is a cheap thing to do for parsers, but more expensive for
-   XSLT and validators, which have to compile trees recursively.  So you might
-   want to consider a thread pool approach or threaded processing chains to
-   reduce the overhead if you require threading here.
+   XSLT and the validators.  Each of them represents a stateful object that
+   cannot be used concurrently.  However, it is perfectly viable to create
+   independent instances for each thread.  This is a cheap thing to do for
+   parsers, but more expensive for XSLT and validators, which have to compile
+   trees recursively.  So you might want to consider a thread pool approach or
+   threaded processing chains to reduce the overhead if you require threading
+   here.
 
 
 #) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
