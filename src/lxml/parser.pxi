@@ -79,7 +79,7 @@ cdef void _setupPythonUnicode():
     cdef Py_ssize_t l
     cdef char* buffer
     cdef char* enc
-    utext = unicode("<test/>")
+    utext = python.PyUnicode_DecodeUTF8("<test/>", 7, 'strict')
     l = python.PyUnicode_GET_DATA_SIZE(utext)
     buffer = python.PyUnicode_AS_DATA(utext)
     enc = _findEncodingName(buffer, l)
