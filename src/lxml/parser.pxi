@@ -52,12 +52,12 @@ cdef class _ParserContext:
             if result.dict is NULL:
                 result.dict = xmlparser.xmlDictCreate()
             self._c_dict = result.dict
-            xmlparser.xmlDictReference(result.dict)
+            xmlparser.xmlDictReference(self._c_dict)
         elif result.dict != self._c_dict:
             if result.dict is not NULL:
                 xmlparser.xmlDictFree(result.dict)
             result.dict = self._c_dict
-            xmlparser.xmlDictReference(self._c_dict)
+            xmlparser.xmlDictReference(result.dict)
 
 cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
