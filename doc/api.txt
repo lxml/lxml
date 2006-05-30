@@ -241,8 +241,26 @@ against the element (if relative) or against the root tree (if absolute)::
 
 Optionally, you can provide a ``namespaces`` keyword argument, which should be
 a dictionary mapping the namespace prefixes used in the XPath expression to
-namespace URIs.  The optional ``extensions`` argument is used to define
-`extension functions`_ in Python.
+namespace URIs::
+
+  >>> f = StringIO('''\
+  ... <a:foo xmlns:a="http://codespeak.net/ns/test1" 
+  ...       xmlns:b="http://codespeak.net/ns/test2">
+  ...    <b:bar>Text</b:bar>
+  ... </a:foo>
+  ... ''')
+  >>> doc = etree.parse(f)
+  >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
+  ...                                'b': 'http://codespeak.net/ns/test2'})
+  >>> len(r)
+  1
+  >>> r[0].tag
+  '{http://codespeak.net/ns/test2}bar'
+  >>> r[0].text
+  'Text'
+
+There is also an optional ``extensions`` argument which is used to define
+`extension functions`_ in Python that are local to this evaluation.
 
 .. _`extension functions`: extensions.html
 
@@ -260,34 +278,6 @@ The return values of xpath vary, depending on the XPath expression used:
   (the text node content or attribute value). When the nodeset would
   contain a comment, the result contains a string as well, inside
   ``<!--`` and ``-->`` markers.
-
-Example::
-
-  >>> f = StringIO('<foo><bar></bar></foo>')
-  >>> doc = etree.parse(f)
-  >>> r = doc.xpath('/foo/bar')
-  >>> len(r)
-  1
-  >>> r[0].tag
-  'bar'
-
-Example of using namespace prefixes::
-
-  >>> f = StringIO('''\
-  ... <a:foo xmlns:a="http://codespeak.net/ns/test1" 
-  ...       xmlns:b="http://codespeak.net/ns/test2">
-  ...    <b:bar>Text</b:bar>
-  ... </a:foo>
-  ... ''')
-  >>> doc = etree.parse(f)
-  >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
-  ...                                'b': 'http://codespeak.net/ns/test2'})
-  >>> len(r)
-  1
-  >>> r[0].tag
-  '{http://codespeak.net/ns/test2}bar'
-  >>> r[0].text
-  'Text'
 
 A related convenience method of ElementTree objects is ``getpath(element)``,
 which returns a structural, absolute XPath expression to find that element::
