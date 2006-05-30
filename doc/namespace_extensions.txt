@@ -2,118 +2,111 @@
 Implementing namespaces with the Namespace class
 ================================================
 
-Also see `extensions`_.
+lxml allows you to implement namespaces, in a rather literal sense.  You can
+write your own classes for Elements and have lxml use them for a specific tag
+name in a specific namespace.
 
-.. _`extensions`: extensions.html
+Custom Elements must inherit from the ``etree.ElementBase`` class, which
+provides the Element interface for subclasses::
 
-Imagine, you have a namespace called 'http://hui.de/honk' and have to
-treat all of its elements in a specific way, say, to find out if they
-are really honking.  You could provide a function called 'is_honking'
-that handles that::
-
-  >>> def is_honking(honk_element):
-  ...    return honk_element.get('honking') == 'true'
-
-Then you can use it::
-
-  >>> from lxml.etree import XML
-  >>> honk_element = XML('<honk xmlns="http://hui.de/honk" honking="true"/>')
-  >>> print is_honking(honk_element)
-  True
-
-Not too bad, right?  Now, imagine, you only want to do that to certain
-elements from that namespace and prevent others from being passed to
-is_honking.  You can add a check to is_honking to test the tag name
-before doing anything else.
-
-After a while, however, you remember what you heard at school about
-object oriented programming.  You start wondering if there isn't a
-nicer way to do that.  -- And there is!
-
-
-The Namespace class
-===================
-
-lxml allows you to implement namespaces, in a rather literal
-sense. You can do the above like this::
-
-  >>> from lxml.etree import Namespace, ElementBase
-  >>> class HonkElement(ElementBase):
+  >>> from lxml import etree
+  >>> class HonkElement(etree.ElementBase):
   ...    def honking(self):
   ...       return self.get('honking') == 'true'
   ...    honking = property(honking)
 
-Now you can build the new namespace by calling the Namespace class::
+This defines a new Element class ``HonkElement`` with a property ``honking``.
 
-  >>> namespace = Namespace('http://hui.de/honk')
+Note that you cannot (or rather must not) instantiate this class yourself.
+lxml.etree will do that for you through its normal ElementTree API.  To let
+lxml know about it, you must register it with a namespace.
 
-and then register the new element type with that namespace::
+
+The Namespace class
+-------------------
+
+You can build a new namespace (or retrieve an existing one) by calling the
+Namespace class::
+
+  >>> namespace = etree.Namespace('http://hui.de/honk')
+
+and then register the new element type with that namespace, say, under the tag
+name ``honk``::
 
   >>> namespace['honk'] = HonkElement
 
-After this, you create and use your XML elements::
+After this, you create and use your XML elements through the normal API of
+lxml::
 
-  >>> honk_element = XML('<honk xmlns="http://hui.de/honk" honking="true"/>')
+  >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"/>'
+  >>> honk_element = etree.XML(xml)
   >>> print honk_element.honking
   True
 
 The same works when creating elements by hand::
 
-  >>> from lxml.etree import Element
-  >>> honk_element = Element('{http://hui.de/honk}honk', honking='true')
+  >>> honk_element = etree.Element('{http://hui.de/honk}honk',
+  ...                              honking='true')
   >>> print honk_element.honking
   True
 
-Essentially, what this allows you to do, is giving elements a specific
-API based on their namespace and element name.
+Essentially, what this allows you to do, is to give elements a custom API
+based on their namespace and tag name.
+
+A somewhat related topic are `extension functions`_ which use a similar
+mechanism for registering extension functions in XPath and XSLT.
+
+.. _`extension functions`: extensions.html
 
 
 Element initialization
 ----------------------
 
-There is one thing to remember. Element classes *must not* have a
-constructor, neither must there be any internal state (except for
-their XML representation).  Element instances are created and garbage
+There is one thing to remember.  Element classes *must not* have a
+constructor, neither must there be any internal state (except for the data
+stored in the underlying XML tree).  Element instances are created and garbage
 collected at need, so there is no way to predict when and how often a
-constructor would be called.  Even worse, when the ``__init__`` method
-is called, the object may not even be initialized yet to represent the
-XML tag, so there is not much use in providing an ``__init__`` method
-in subclasses.
+constructor would be called.  Even worse, when the ``__init__`` method is
+called, the object may not even be initialized yet to represent the XML tag,
+so there is not much use in providing an ``__init__`` method in subclasses.
 
-However, there is one possible way to do things on element
-initialization. Element classes have an ``_init()`` method that can be
-overridden.  It can be used to modify the XML tree, e.g. to construct
+However, there is one possible way to do things on element initialization, if
+you really need to.  ElementBase classes have an ``_init()`` method that can
+be overridden.  It can be used to modify the XML tree, e.g. to construct
 special children or verify and update attributes.
 
 The semantics of ``_init()`` are as follows:
 
-* It is called at least once on element instantiation time.  That is,
-  when a Python representation of the element is created.  At that
-  time, the element object is completely initialized to represent a
-  specific XML element within the tree.
+* It is called at least once on element instantiation time.  That is, when a
+  Python representation of the element is created by lxml.  At that time, the
+  element object is completely initialized to represent a specific XML element
+  within the tree.
 
-* The method has complete access to the XML structure.  Modifications
-  can be done in exactly the same way as anywhere else in the program.
+* The method has complete access to the XML tree.  Modifications can be done
+  in exactly the same way as anywhere else in the program.
 
-* It may be called multiple times.  The _init() code provided by
-  subclasses must take special care by itself that multiple executions
-  either are harmless or that they are prevented by some kind of flag
-  in the XML tree.  The latter can be achieved by modifying an
-  attribute value or by removing or adding a specific child node and
-  then verifying this before running through the init process.
+* Python representations of elements may be created multiple times during the
+  lifetime of an XML element in the underlying tree.  The ``_init()`` code
+  provided by subclasses must take special care by itself that multiple
+  executions either are harmless or that they are prevented by some kind of
+  flag in the XML tree.  The latter can be achieved by modifying an attribute
+  value or by removing or adding a specific child node and then verifying this
+  before running through the init process.
+
+* Any exceptions raised in ``_init()`` will be propagated throught the API
+  call that lead to the creation of the Element.  So be careful with the code
+  you write here as its exceptions may turn up in various unexpected places.
 
 
 Default implementations
 -----------------------
 
-There is a slight difference between the Namespace example and the
-simple 'is_honking' method above.  We associated the HonkElement class
-only with the 'honk' element.  If you have other elements in the same
-namespace, they do not pick up the same implementation.
+In the Namespace example above, we associated the HonkElement class only with
+the 'honk' element.  If an XML tree contains different elements in the same
+namespace, they do not pick up the same implementation::
 
-Example::
-
-  >>> honk_element = XML('<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>')
+  >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'
+  >>> honk_element = etree.XML(xml)
   >>> print honk_element.honking
   True
   >>> print honk_element[0].honking
@@ -122,18 +115,18 @@ Example::
   AttributeError: 'etree._Element' object has no attribute 'honking'
 
 You can therefore provide one implementation per element name in each
-namespace and have lxml select the right one on the fly.  If you want
-one element implementation per namespace (ignoring the element name)
-or prefer having a common class for most elements except a few, you
-can specify a default implementation for an entire namespace by
-registering that class with the empty element name (None).
+namespace and have lxml select the right one on the fly.  If you want one
+element implementation per namespace (ignoring the element name) or prefer
+having a common class for most elements except a few, you can specify a
+default implementation for an entire namespace by registering that class with
+the empty element name (None).
 
-You may consider following an object oriented approach.  If you build
-a class hierarchy of element classes, you can also implement a base
-class for a namespace, that is used if no specific element class is
-provided.  Again, you only have to pass None as an element name::
+You may consider following an object oriented approach here.  If you build a
+class hierarchy of element classes, you can also implement a base class for a
+namespace that is used if no specific element class is provided.  Again, you
+can just pass None as an element name::
 
-  >>> class HonkNSElement(ElementBase):
+  >>> class HonkNSElement(etree.ElementBase):
   ...    def honk(self):
   ...       return "HONK"
   >>> namespace[None] = HonkNSElement
@@ -144,9 +137,15 @@ provided.  Again, you only have to pass None as an element name::
   ...    honking = property(honking)
   >>> namespace['honk'] = HonkElement
 
-Now you can use your new namespace::
+Now you can rely on lxml to always return objects of type HonkNSElement or its
+subclasses for elements of this namespace::
 
-  >>> honk_element = XML('<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>')
+  >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'
+  >>> honk_element = etree.XML(xml)
+
+  >>> print type(honk_element), type(honk_element[0])
+  <class 'HonkElement'> <class 'HonkNSElement'>
+
   >>> print honk_element.honking
   True
   >>> print honk_element.honk()
