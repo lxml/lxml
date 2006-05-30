@@ -633,7 +633,7 @@ cdef class _Element(_NodeBase):
 
     def set(self, key, value):
         _setAttributeValue(self, key, value)
-        
+
     def append(self, _Element element not None):
         cdef xmlNode* c_next
         cdef xmlNode* c_node
