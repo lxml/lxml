@@ -1678,8 +1678,9 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         root.append(subelement)
         self.assertEquals(1, len(subelement.attrib))
-        self.assertEquals({"{http://www.w3.org/XML/1998/namespace}id" : "foo"},
-                          subelement.attrib)
+        self.assertEquals(
+            {"{http://www.w3.org/XML/1998/namespace}id" : "foo"}.items(),
+            subelement.attrib.items())
         self.assertEquals(
             "foo",
             subelement.get("{http://www.w3.org/XML/1998/namespace}id"))
