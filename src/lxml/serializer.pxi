@@ -38,7 +38,6 @@ cdef _tostring(_NodeBase element, encoding,
             tree.xmlBufferLength(c_result_buffer))
     finally:
         tree.xmlOutputBufferClose(c_buffer)
-        tree.xmlCharEncCloseFunc(enchandler)
     return result
 
 cdef _tounicode(_NodeBase element, int pretty_print):
