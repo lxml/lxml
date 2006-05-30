@@ -347,6 +347,11 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.makeelement('{test}test', empty_attrib)
 
+    def bench_create_elements(self, root):
+        Element = self.etree.Element
+        for child in root:
+            Element('{test}test')
+
     def bench_replace_children_element(self, root):
         Element = self.etree.Element
         for child in root:
@@ -684,6 +689,9 @@ if __name__ == '__main__':
                 result = run_bench(bench, *benchmark_setup)
             except SkippedTest:
                 print "skipped"
+            except KeyboardInterrupt:
+                print "interrupted by user"
+                sys.exit(1)
             except Exception, e:
                 print "failed: %s: %s" % (e.__class__.__name__, e)
             else:

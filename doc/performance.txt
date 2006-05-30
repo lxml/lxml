@@ -13,7 +13,8 @@ ElementTree.
 
 The statements made here are backed by the benchmark script `bench.py`_ that
 comes with the lxml source distribution.  The timings cited below compare lxml
-1.0, ElementTree 1.2.6 and cElementTree 1.0.5 under CPython 2.4.2.
+1.0, ElementTree 1.2.6 and cElementTree 1.0.5 under CPython 2.4.2 on an AMD64
+machine.
 
 .. _`bench.py`:   http://codespeak.net/svn/lxml/trunk/bench.py
 
@@ -40,10 +41,10 @@ that this is true for most performance critical Python applications.
 Parsing and Serialising
 -----------------------
 
-This is one of the areas where lxml excels.  The reason is that both parts are
-executed entirely at the C level, without major interaction with Python code.
-The results are rather impressive.  Compared to cElementTree, lxml is about 20
-to 40 times faster on serialisation::
+These are areas where lxml excels.  The reason is that both parts are executed
+entirely at the C level, without major interaction with Python code.  The
+results are rather impressive.  Compared to cElementTree, lxml is about 20 to
+40 times faster on serialisation::
 
   lxe: tostring_utf16  (SA T2)   30.9846 msec/pass
   cET: tostring_utf16  (SA T2)  715.5002 msec/pass
@@ -110,12 +111,32 @@ While lxml is still faster than ET in most cases (30-60%), cET can be up to
 three times faster than lxml here.  One of the reasons is that lxml must
 additionally discard the created Python elements after their use, when they
 are no longer referenced.  ET and cET represent the tree itself through these
-objects, which reduces their overhead in creating them.
+objects, which reduces the overhead in creating them.
+
+As opposed to ET, libxml2 has a notion of documents that each element must be
+in.  This results in a major performance difference for creating independent
+Elements that end up in independently created documents::
+
+  lxe: create_elements       (-- T2   )   22.0083 msec/pass
+  cET: create_elements       (-- T2   )    0.3920 msec/pass
+  ET : create_elements       (-- T2   )    3.0865 msec/pass
+
+Therefore, it is always preferable to create Elements for the document they
+are supposed to end up in, either as SubElements of an Element or using the
+explicit ``Element.makeelement()`` call::
+
+  lxe: makeelement           (-- T2   )    4.3003 msec/pass
+  cET: makeelement           (-- T2   )    0.5520 msec/pass
+  ET : makeelement           (-- T2   )    3.8092 msec/pass
+
+  lxe: create_subelements    (-- T2   )    3.9673 msec/pass
+  cET: create_subelements    (-- T2   )    0.5666 msec/pass
+  ET : create_subelements    (-- T2   )    6.4613 msec/pass
 
 So, if the main performance bottleneck of an application is creating large XML
 trees in memory through calls to Element and SubElement, cET is the best
 choice.  Note, however, that the serialisation performance may even out this
-advantage.
+advantage, especially for smaller trees and trees with many attributes.
 
 A critical action for lxml is moving elements between document contexts.  It
 requires lxml to do recursive adaptations throughout the moved tree structure.
@@ -170,7 +191,8 @@ Tree traversal
 
 Another area where lxml is very fast is iteration for tree traversal.  If your
 algorithms can benefit from step-by-step traversal of the XML tree and
-especially if few elements are of interest, lxml is a good choice::
+especially if few elements are of interest or the element tag name is known,
+lxml is a good choice::
 
   lxe: getiterator_all      (-- T2   )   31.2719 msec/pass
   cET: getiterator_all      (-- T2   )   36.3687 msec/pass
