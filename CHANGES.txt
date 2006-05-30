@@ -24,6 +24,9 @@ Features added
 Bugs fixed
 ----------
 
+* Namespace fixing after moving elements between documents could fail if the
+  source document was freed too early
+
 * Setting namespace-less tag names on namespaced elements ('{ns}t' -> 't')
   didn't reset the namespace
 
