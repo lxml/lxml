@@ -276,19 +276,18 @@ cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
         return NULL
     c_start_parent = c_node.parent
     while c_node is not NULL:
-        if _isElement(c_node):
-            if _tagMatches(c_node, c_href, c_name):
-                return c_node
-            # walk through children
-            c_next = c_node.children
+        if _tagMatches(c_node, c_href, c_name):
+            return c_node
+        # walk through children
+        c_next = c_node.children
+        if c_next is NULL:
+            # sibling?
+            c_next = _nextElement(c_node)
+        elif not _isElement(c_next):
+            # we need an element
+            c_next = _nextElement(c_next)
             if c_next is NULL:
                 c_next = _nextElement(c_node)
-            elif not _isElement(c_next):
-                c_next = _nextElement(c_next)
-                if c_next is NULL:
-                    c_next = _nextElement(c_node)
-        else:
-            c_next = _nextElement(c_node)
         # back off through parents
         while c_next is NULL:
             c_node = c_node.parent
