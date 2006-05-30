@@ -267,18 +267,35 @@ cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
     2) its descendents
     3) its following siblings.
     """
-    cdef xmlNode* c_child
+    cdef xmlNode* c_next
+    cdef xmlNode* c_start_parent
     if c_name is NULL:
         # always match
         return c_node
+    if c_node is NULL:
+        return NULL
+    c_start_parent = c_node.parent
     while c_node is not NULL:
-        if _tagMatches(c_node, c_href, c_name):
-            return c_node
-        if c_node.children is not NULL:
-            c_child = _findDepthFirstInFollowing(c_node.children, c_href, c_name)
-            if c_child is not NULL:
-                return c_child
-        c_node = _nextElement(c_node)
+        if _isElement(c_node):
+            if _tagMatches(c_node, c_href, c_name):
+                return c_node
+            # walk through children
+            c_next = c_node.children
+            if c_next is NULL:
+                c_next = _nextElement(c_node)
+            elif not _isElement(c_next):
+                c_next = _nextElement(c_next)
+                if c_next is NULL:
+                    c_next = _nextElement(c_node)
+        else:
+            c_next = _nextElement(c_node)
+        # back off through parents
+        while c_next is NULL:
+            c_node = c_node.parent
+            if c_node is c_start_parent:
+                return NULL
+            c_next = _nextElement(c_node)
+        c_node = c_next
     return NULL
 
 cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
