@@ -347,11 +347,6 @@ cdef class _NodeBase:
             unregisterProxy(self)
             attemptDeallocation(self._c_node)
 
-    def _init(self):
-        """Called after object initialisation. Subclasses may override
-        this if they recursively call _init() in the superclasses.
-        """
-
 cdef class _ElementTree:
     cdef _Document _doc
     cdef _NodeBase _context_node
@@ -561,6 +556,11 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
 
 cdef class _Element(_NodeBase):
     cdef object _tag
+
+    def _init(self):
+        """Called after object initialisation.  Custom subclasses may override
+        this if they recursively call _init() in the superclasses.
+        """
 
     # MANIPULATORS
 
