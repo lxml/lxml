@@ -5,10 +5,13 @@ class NamespaceRegistryError(LxmlError):
 
 cdef class ElementBase(_Element):
     """All classes in namespace implementations must inherit from this one.
+
     Note that subclasses *must not* override __init__ or __new__ as it is
     absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of elements must be stored in the underlying XML."""
-    pass
+    persistent state of elements must be stored in the underlying XML.  If you
+    really need to initialize the object after creation, you can implement an
+    ``_init(self)`` method that will be called after object creation.
+    """
 
 cdef object __NAMESPACE_REGISTRIES
 __NAMESPACE_REGISTRIES = {}
