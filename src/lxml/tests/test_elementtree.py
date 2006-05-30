@@ -1667,9 +1667,9 @@ class ETreeTestCaseBase(unittest.TestCase):
     def test_attribute_xmlns_move(self):
         Element = self.etree.Element
 
-        root = etree.Element('element')
+        root = Element('element')
 
-        subelement = etree.Element('subelement')
+        subelement = Element('subelement')
         subelement.set("{http://www.w3.org/XML/1998/namespace}id", "foo")
         self.assertEqual(1, len(subelement.attrib))
         self.assertEquals(
