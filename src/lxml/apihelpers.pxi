@@ -434,9 +434,9 @@ cdef void moveNodeToDocument(_NodeBase node, _Document doc):
     tree below (including the current node). It also reconciliates
     namespaces so they're correct inside the new environment.
     """
+    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
     if node._doc is not doc:
         changeDocumentBelow(node._c_node, doc)
-    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
 
 cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
     """Update the Python references in the tree below the node.
