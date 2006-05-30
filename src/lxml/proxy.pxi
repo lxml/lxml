@@ -151,21 +151,23 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     cdef xmlNode* c_current
     cdef xmlNode* c_top
     #print "trying to do deallocating:", c_node.type
+    if c_node._private is not NULL:
+        #print "Not freeing: proxies still exist"
+        return NULL
     c_current = c_node.parent
     c_top = c_node
     while c_current is not NULL:
         #print "checking:", c_current.type
-        # if we're still attached to the document, don't deallocate
         if c_current.type == tree.XML_DOCUMENT_NODE or \
                c_current.type == tree.XML_HTML_DOCUMENT_NODE:
             #print "not freeing: still in doc"
             return NULL
+        # if we're still attached to the document, don't deallocate
+        if c_current._private is not NULL:
+            #print "Not freeing: proxies still exist"
+            return NULL
         c_top = c_current
         c_current = c_current.parent
-    # cannot free a top which has proxies pointing to it
-    if c_top._private is not NULL:
-        #print "Not freeing: proxies still exist"
-        return NULL
     # see whether we have children to deallocate
     if canDeallocateChildren(c_top):
         return c_top
