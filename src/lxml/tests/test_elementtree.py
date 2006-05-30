@@ -1669,15 +1669,15 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         root = Element('element')
 
-        subelement = Element('subelement')
-        subelement.set("{http://www.w3.org/XML/1998/namespace}id", "foo")
-        self.assertEqual(1, len(subelement.attrib))
+        subelement = Element('subelement',
+                             {"{http://www.w3.org/XML/1998/namespace}id": "foo"})
+        self.assertEquals(1, len(subelement.attrib))
         self.assertEquals(
             "foo",
             subelement.get("{http://www.w3.org/XML/1998/namespace}id"))
 
         root.append(subelement)
-        self.assertEqual(1, len(subelement.attrib))
+        self.assertEquals(1, len(subelement.attrib))
         self.assertEquals({"{http://www.w3.org/XML/1998/namespace}id" : "foo"},
                           subelement.attrib)
         self.assertEquals(
