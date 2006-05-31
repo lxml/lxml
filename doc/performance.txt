@@ -90,10 +90,10 @@ restructuring.  This can be seen from the tree setup times of the benchmark
 (given in seconds)::
 
   lxe:       --     S-     U-     -A     SA     UA
-       T1: 0.1360 0.1236 0.1241 0.1243 0.1261 0.1254
-       T2: 0.1281 0.1282 0.1299 0.1381 0.1389 0.1395
-       T3: 0.0366 0.0300 0.0290 0.0850 0.0851 0.0893
-       T4: 0.0010 0.0006 0.0006 0.0018 0.0018 0.0019
+       T1: 0.1360 0.1214 0.1214 0.1217 0.1232 0.1226
+       T2: 0.1258 0.1257 0.1250 0.1348 0.1359 0.1358
+       T3: 0.0354 0.0282 0.0288 0.0850 0.0860 0.0862
+       T4: 0.0006 0.0006 0.0006 0.0019 0.0018 0.0019
 
   cET:       --     S-     U-     -A     SA     UA
        T1: 0.0417 0.0409 0.0403 0.0410 0.0410 0.0415
@@ -125,13 +125,13 @@ Therefore, it is always preferable to create Elements for the document they
 are supposed to end up in, either as SubElements of an Element or using the
 explicit ``Element.makeelement()`` call::
 
-  lxe: makeelement           (-- T2   )    4.3003 msec/pass
-  cET: makeelement           (-- T2   )    0.5520 msec/pass
-  ET : makeelement           (-- T2   )    3.8092 msec/pass
+  lxe: makeelement           (-- T2   )    4.2658 msec/pass
+  cET: makeelement           (-- T2   )    0.5658 msec/pass
+  ET : makeelement           (-- T2   )    3.7136 msec/pass
 
-  lxe: create_subelements    (-- T2   )    3.9673 msec/pass
-  cET: create_subelements    (-- T2   )    0.5666 msec/pass
-  ET : create_subelements    (-- T2   )    6.4613 msec/pass
+  lxe: create_subelements    (-- T2   )    3.7640 msec/pass
+  cET: create_subelements    (-- T2   )    0.5332 msec/pass
+  ET : create_subelements    (-- T2   )    6.5937 msec/pass
 
 So, if the main performance bottleneck of an application is creating large XML
 trees in memory through calls to Element and SubElement, cET is the best
@@ -148,9 +148,9 @@ root of the first tree::
   cET: append_from_document  (-- T1,T2)    0.4673 msec/pass
   ET : append_from_document  (-- T1,T2)    2.0460 msec/pass
 
-  lxe: append_from_document  (-- T3,T4)    0.2017 msec/pass
-  cET: append_from_document  (-- T3,T4)    0.0227 msec/pass
-  ET : append_from_document  (-- T3,T4)    0.1563 msec/pass
+  lxe: append_from_document  (-- T3,T4)    0.1582 msec/pass
+  cET: append_from_document  (-- T3,T4)    0.0224 msec/pass
+  ET : append_from_document  (-- T3,T4)    0.1618 msec/pass
 
 Although these are fairly small numbers compared to parsing, this easily shows
 the different performance classes for lxml and (c)ET.  Where the latter do not
@@ -161,9 +161,9 @@ with the size of the tree that is moved.
 This difference is not always as visible, but applies to most parts of the
 API, like inserting newly created elements::
 
-  lxe: insert_from_document      (-- T1,T2)   16.4772 msec/pass
-  cET: insert_from_document      (-- T1,T2)    1.1874 msec/pass
-  ET : insert_from_document      (-- T1,T2)    3.5447 msec/pass
+  lxe: insert_from_document      (-- T1,T2)   16.2342 msec/pass
+  cET: insert_from_document      (-- T1,T2)    1.1786 msec/pass
+  ET : insert_from_document      (-- T1,T2)    3.6107 msec/pass
 
 Or replacing the child slice by a new element::
 
