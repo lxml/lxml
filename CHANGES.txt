@@ -7,6 +7,10 @@ current
 Features added
 --------------
 
+* Another speedup in tree iteration code
+
+* General speedup of Python Element object creation and deallocation
+
 * Writing C14N no longer serializes in memory (reduced memory footprint)
 
 * PyErrorLog for error logging through the Python ``logging`` module
