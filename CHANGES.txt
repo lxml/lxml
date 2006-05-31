@@ -1,14 +1,14 @@
 lxml changelog
 ==============
 
-current
-=======
+1.0 (2006-06-01)
+================
 
 Features added
 --------------
 
 * Element.getiterator() supports iterating through namespaces with the tag
-  expression '{namespace}*'
+  expression ``{namespace}*``
 
 * Another speedup in tree iteration code
 
@@ -53,7 +53,7 @@ Bugs fixed
 * Running absolute XPath expressions on an Element now evaluates against the
   root tree
 
-* Evaluating absolute XPath expressions ('/*') on an ElementTree could fail
+* Evaluating absolute XPath expressions (``/*``) on an ElementTree could fail
 
 * Crashes when calling XSLT, RelaxNG, etc. with uninitialized ElementTree
   objects
