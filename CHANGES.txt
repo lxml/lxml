@@ -7,8 +7,8 @@ lxml changelog
 Features added
 --------------
 
-* Element.getiterator() supports iterating through namespaces with the tag
-  expression ``{namespace}*``
+* Element.getiterator() and the findall() methods support finding arbitrary
+  elements from a namespace (pattern ``{namespace}*``)
 
 * Another speedup in tree iteration code
 

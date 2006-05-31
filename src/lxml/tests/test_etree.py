@@ -473,6 +473,13 @@ class ETreeOnlyTestCase(HelperTestCase):
             [d, f],
             list(a.getiterator('{b}*')))
 
+    def test_findall_ns(self):
+        XML = self.etree.XML
+        root = XML('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')
+        self.assertEquals(len(root.findall(".//{X}b")), 2)
+        self.assertEquals(len(root.findall(".//{X}*")), 2)
+        self.assertEquals(len(root.findall(".//b")), 3)
+
     def test_index(self):
         etree = self.etree
         e = etree.Element('foo')
