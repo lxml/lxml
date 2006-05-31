@@ -23,10 +23,6 @@ import sys
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
 
-ctypedef enum LXML_PROXY_TYPE:
-    PROXY_ELEMENT
-    PROXY_ATTRIB
-
 # what to do with libxml2/libxslt error messages?
 # 0 : drop
 # 1 : use log
@@ -173,7 +169,8 @@ cdef class _Document:
         # the document
         #print "freeing document:", <int>self._c_doc
         #displayNode(<xmlNode*>self._c_doc, 0)
-        #print <int>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
+        #print <long>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
+        #print <long>self._c_doc, canDeallocateChildNodes(<xmlNode*>self._c_doc)
         tree.xmlFreeDoc(self._c_doc)
 
     cdef getroot(self):
@@ -338,7 +335,6 @@ cdef class _NodeBase:
     """
     cdef _Document _doc
     cdef xmlNode* _c_node
-    cdef int _proxy_type
     
     def __dealloc__(self):
         #print "trying to free node:", <int>self._c_node
@@ -556,7 +552,6 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
 
 cdef class _Element(_NodeBase):
     cdef object _tag
-
     def _init(self):
         """Called after object initialisation.  Custom subclasses may override
         this if they recursively call _init() in the superclasses.
@@ -721,8 +716,11 @@ cdef class _Element(_NodeBase):
         
     property attrib:
         def __get__(self):
-            return _attribFactory(self._doc, self._c_node)
-        
+            # do *NOT* keep a reference here to prevent cyclic dependencies
+            # this would free the element in the Cyclic GC, which might let
+            # Python deallocate the document before the element!
+            return _Attrib(self)
+
     property text:
         def __get__(self):
             return _collectText(self._c_node.children)
@@ -962,7 +960,7 @@ cdef class _Element(_NodeBase):
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
     cdef char* c_ns_href
-    result = getProxy(c_node, PROXY_ELEMENT)
+    result = getProxy(c_node)
     if result is not None:
         return result
     if c_node is NULL:
@@ -980,8 +978,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     result = element_class()
     result._doc = doc
     result._c_node = c_node
-    result._proxy_type = PROXY_ELEMENT
-    registerProxy(result, PROXY_ELEMENT)
+    registerProxy(result)
     result._init()
     return result
 
@@ -1038,7 +1035,7 @@ cdef class _Comment(_Element):
     
 cdef _Comment _commentFactory(_Document doc, xmlNode* c_node):
     cdef _Comment result
-    result = getProxy(c_node, PROXY_ELEMENT)
+    result = getProxy(c_node)
     if result is not None:
         return result
     if c_node is NULL:
@@ -1046,24 +1043,29 @@ cdef _Comment _commentFactory(_Document doc, xmlNode* c_node):
     result = _Comment()
     result._doc = doc
     result._c_node = c_node
-    result._proxy_type = PROXY_ELEMENT
-    registerProxy(result, PROXY_ELEMENT)
+    registerProxy(result)
     return result
 
-cdef class _Attrib(_NodeBase):
+cdef class _Attrib:
+    cdef _NodeBase _element
+    def __init__(self, _NodeBase element not None):
+        self._element = element
+
     # MANIPULATORS
     def __setitem__(self, key, value):
-        _setAttributeValue(self, key, value)
+        _setAttributeValue(self._element, key, value)
 
     def __delitem__(self, key):
+        cdef xmlNode* c_node
         cdef xmlAttr* c_attr
         cdef char* c_tag
         ns, tag = _getNsTag(key)
         c_tag = _cstr(tag)
+        c_node = self._element._c_node
         if ns is None:
-            c_attr = tree.xmlHasProp(self._c_node, c_tag)
+            c_attr = tree.xmlHasProp(c_node, c_tag)
         else:
-            c_attr = tree.xmlHasNsProp(self._c_node, c_tag, _cstr(ns))
+            c_attr = tree.xmlHasNsProp(c_node, c_tag, _cstr(ns))
         if c_attr is NULL:
             # XXX free namespace that is not in use..?
             raise KeyError, key
@@ -1077,43 +1079,46 @@ cdef class _Attrib(_NodeBase):
         return repr(result)
     
     def __getitem__(self, key):
-        result = _getAttributeValue(self, key, None)
+        result = _getAttributeValue(self._element, key, None)
         if result is None:
             raise KeyError, key
         else:
             return result
 
     def __nonzero__(self):
-        cdef xmlNode* c_node
-        c_node = <xmlNode*>(self._c_node.properties)
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        cdef xmlAttr* c_attr
+        c_attr = self._element._c_node.properties
+        while c_attr is not NULL:
+            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 return 1
-            c_node = c_node.next
+            c_attr = c_attr.next
         return 0
 
     def __len__(self):
+        cdef xmlAttr* c_attr
         cdef Py_ssize_t c
-        cdef xmlNode* c_node
         c = 0
-        c_node = <xmlNode*>(self._c_node.properties)
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        c_attr = self._element._c_node.properties
+        while c_attr is not NULL:
+            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 c = c + 1
-            c_node = c_node.next
+            c_attr = c_attr.next
         return c
     
     def get(self, key, default=None):
-        return _getAttributeValue(self, key, default)
+        return _getAttributeValue(self._element, key, default)
 
     def keys(self):
-        result = []
         cdef xmlNode* c_node
-        c_node = <xmlNode*>(self._c_node.properties)
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
-                python.PyList_Append(result, _namespacedName(c_node))
-            c_node = c_node.next
+        cdef xmlAttr* c_attr
+        c_node = self._element._c_node
+        c_attr = c_node.properties
+        result = []
+        while c_attr is not NULL:
+            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
+                python.PyList_Append(
+                    result, _namespacedName(<xmlNode*>c_attr))
+            c_attr = c_attr.next
         return result
 
     def __iter__(self):
@@ -1124,13 +1129,15 @@ cdef class _Attrib(_NodeBase):
 
     def values(self):
         cdef xmlNode* c_node
+        cdef xmlAttr* c_attr
+        c_node = self._element._c_node
+        c_attr = c_node.properties
         result = []
-        c_node = <xmlNode*>(self._c_node.properties)
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        while c_attr is not NULL:
+            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 python.PyList_Append(
-                    result, _attributeValue(self._c_node, c_node))
-            c_node = c_node.next
+                    result, _attributeValue(c_node, c_attr))
+            c_attr = c_attr.next
         return result
 
     def itervalues(self):
@@ -1139,14 +1146,16 @@ cdef class _Attrib(_NodeBase):
     def items(self):
         result = []
         cdef xmlNode* c_node
-        c_node = <xmlNode*>(self._c_node.properties)
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        cdef xmlAttr* c_attr
+        c_node = self._element._c_node
+        c_attr = c_node.properties
+        while c_attr is not NULL:
+            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 python.PyList_Append(result, (
-                    _namespacedName(c_node),
-                    _attributeValue(self._c_node, c_node)
+                    _namespacedName(<xmlNode*>c_attr),
+                    _attributeValue(c_node, c_attr)
                     ))
-            c_node = c_node.next
+            c_attr = c_attr.next
         return result
 
     def iteritems(self):
@@ -1159,31 +1168,21 @@ cdef class _Attrib(_NodeBase):
             return False
 
     def __contains__(self, key):
+        cdef xmlNode* c_node
         cdef char* c_result
         cdef char* c_tag
         ns, tag = _getNsTag(key)
         c_tag = _cstr(tag)
+        c_node = self._element._c_node
         if ns is None:
-            c_result = tree.xmlGetNoNsProp(self._c_node, c_tag)
+            c_result = tree.xmlGetNoNsProp(c_node, c_tag)
         else:
-            c_result = tree.xmlGetNsProp(self._c_node, c_tag, _cstr(ns))
+            c_result = tree.xmlGetNsProp(c_node, c_tag, _cstr(ns))
         if c_result is NULL:
             return 0
         else:
             tree.xmlFree(c_result)
             return 1
-
-cdef _Attrib _attribFactory(_Document doc, xmlNode* c_node):
-    cdef _Attrib result
-    result = getProxy(c_node, PROXY_ATTRIB)
-    if result is not None:
-        return result
-    result = _Attrib()
-    result._doc = doc
-    result._c_node = c_node
-    result._proxy_type = PROXY_ATTRIB
-    registerProxy(result, PROXY_ATTRIB)
-    return result
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 

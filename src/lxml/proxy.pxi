@@ -4,76 +4,37 @@
 # structure of the respective node to avoid multiple instantiation of
 # the Python class
 
-cdef struct _ProxyRef
-
-cdef struct _ProxyRef:
-    python.PyObject* proxy
-    LXML_PROXY_TYPE type
-    _ProxyRef* next
-        
-ctypedef _ProxyRef ProxyRef
-
-cdef _NodeBase getProxy(xmlNode* c_node, int proxy_type):
-    """Get a proxy for a given node and node type.
+cdef _NodeBase getProxy(xmlNode* c_node):
+    """Get a proxy for a given node.
     """
-    cdef ProxyRef* ref
     #print "getProxy for:", <int>c_node
-    if c_node is NULL:
+    if c_node is not NULL and c_node._private is not NULL:
+        return <_NodeBase>c_node._private
+    else:
         return None
-    ref = <ProxyRef*>c_node._private
-    while ref is not NULL:
-        if ref.type == proxy_type:
-            return <_NodeBase>ref.proxy
-        ref = ref.next
-    return None
 
 cdef int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef void registerProxy(_NodeBase proxy, int proxy_type):
+cdef registerProxy(_NodeBase proxy):
     """Register a proxy and type for the node it's proxying for.
     """
     cdef xmlNode* c_node
-    cdef ProxyRef* ref
     # cannot register for NULL
     c_node = proxy._c_node
     if c_node is NULL:
         return
-    # XXX should we check whether we ran into proxy_type before?
     #print "registering for:", <int>proxy._c_node
-    ref = <ProxyRef*>python.PyMem_Malloc(sizeof(ProxyRef))
-    ref.proxy = <python.PyObject*>proxy
-    ref.type = proxy_type
-    ref.next = <ProxyRef*>c_node._private
-    c_node._private = ref # prepend
+    assert c_node._private is NULL, "double registering proxy!"
+    c_node._private = <void*>proxy
 
-cdef void unregisterProxy(_NodeBase proxy):
+cdef unregisterProxy(_NodeBase proxy):
     """Unregister a proxy for the node it's proxying for.
     """
-    cdef python.PyObject* proxy_ref
-    cdef ProxyRef* ref
-    cdef ProxyRef* prev_ref
     cdef xmlNode* c_node
-    proxy_ref = <python.PyObject*>proxy
     c_node = proxy._c_node
-    ref = <ProxyRef*>c_node._private
-    if ref.proxy == proxy_ref:
-        c_node._private = <void*>ref.next
-        python.PyMem_Free(ref)
-        return
-    prev_ref = ref
-    #print "First registered is:", ref.type
-    ref = ref.next
-    while ref is not NULL:
-        #print "Registered is:", ref.type
-        if ref.proxy == proxy_ref:
-            prev_ref.next = ref.next
-            python.PyMem_Free(ref)
-            return
-        prev_ref = ref
-        ref = ref.next
-    #print "Proxy:", proxy, "Proxy type:", proxy_type
-    assert 0, "Tried to unregister unknown proxy"
+    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
+    c_node._private = NULL
 
 ################################################################################
 # temporarily make a node the root node of its document
@@ -169,7 +130,7 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
         c_top = c_current
         c_current = c_current.parent
     # see whether we have children to deallocate
-    if canDeallocateChildren(c_top):
+    if canDeallocateChildNodes(c_top):
         return c_top
     else:
         return NULL
@@ -178,38 +139,43 @@ cdef int canDeallocateChildNodes(xmlNode* c_node):
     cdef xmlNode* c_current
     c_current = c_node.children
     while c_current is not NULL:
-        if c_current._private is not NULL:
-            return 0
-        if not canDeallocateChildren(c_current):
-            return 0 
+        if _isElement(c_current):
+            if c_current._private is not NULL:
+                return 0
+            if not canDeallocateChildNodes(c_current):
+                return 0
         c_current = c_current.next
     return 1
 
-cdef int canDeallocateAttributes(xmlNode* c_node):
-    cdef xmlAttr* c_current
-    c_current = c_node.properties
+################################################################################
+# change _Document references when a node changes documents
+
+cdef void moveNodeToDocument(_NodeBase node, _Document doc):
+    """For a node and all nodes below, change document.
+
+    A node can change document in certain operations as an XML
+    subtree can move. This updates all possible proxies in the
+    tree below (including the current node). It also reconciliates
+    namespaces so they're correct inside the new environment.
+    """
+    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
+    if node._doc is not doc:
+        changeDocumentBelow(node._c_node, doc)
+
+cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
+    """Update the Python references in the tree below the node.
+
+    Note that we expect C pointers to the document to be updated already by
+    libxml2.
+    """
+    cdef xmlNode* c_current
+    # adjust all children recursively
+    c_current = c_node.children
     while c_current is not NULL:
-        if c_current._private is not NULL:
-            return 0
-        # only check child nodes, don't try checking properties as
-        # attribute has none
-        if not canDeallocateChildNodes(<xmlNode*>c_current):
-            return 0
+        if _isElement(c_current):
+            changeDocumentBelow(c_current, doc)
         c_current = c_current.next
-    # apparently we can deallocate all subnodes
-    return 1
 
-cdef int canDeallocateChildren(xmlNode* c_node):
-    # the current implementation is inefficient as it does a
-    # tree traversal to find out whether there are any node proxies
-    # we could improve this by a smarter datastructure
-    # check children
-    if not canDeallocateChildNodes(c_node):
-        return 0
-    # check any attributes
-    if (c_node.type == tree.XML_ELEMENT_NODE and
-        not canDeallocateAttributes(c_node)):
-        return 0
-    # apparently we can deallocate all subnodes
-    return 1
-
+    # adjust Python reference of current node
+    if c_node._private is not NULL:
+        (<_NodeBase>c_node._private)._doc = doc

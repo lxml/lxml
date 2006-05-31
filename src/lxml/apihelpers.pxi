@@ -80,7 +80,7 @@ cdef _NodeBase _rootNodeOf(object input):
     else:
         return None
 
-cdef object _attributeValue(xmlNode* c_element, xmlNode* c_attrib_node):
+cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value
     if c_attrib_node.ns is NULL or c_attrib_node.ns.href is NULL:
         value = tree.xmlGetNoNsProp(c_element, c_attrib_node.name)
@@ -425,37 +425,3 @@ cdef _getFilenameForFile(source):
     if hasattr(source, 'geturl'):
         return source.geturl()
     return None
-
-cdef void moveNodeToDocument(_NodeBase node, _Document doc):
-    """For a node and all nodes below, change document.
-
-    A node can change document in certain operations as an XML
-    subtree can move. This updates all possible proxies in the
-    tree below (including the current node). It also reconciliates
-    namespaces so they're correct inside the new environment.
-    """
-    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
-    if node._doc is not doc:
-        changeDocumentBelow(node._c_node, doc)
-
-cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
-    """Update the Python references in the tree below the node.
-
-    Note that we expect C pointers to the document to be updated already by
-    libxml2.
-    """
-    cdef ProxyRef* ref
-    cdef xmlNode* c_current
-    cdef _NodeBase proxy
-    # adjust all children recursively
-    c_current = c_node.children
-    while c_current is not NULL:
-        changeDocumentBelow(c_current, doc)
-        c_current = c_current.next
-
-    # adjust Python references of current node
-    ref = <ProxyRef*>c_node._private
-    while ref is not NULL:
-        proxy = <_NodeBase>ref.proxy
-        proxy._doc = doc
-        ref = ref.next
