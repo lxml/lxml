@@ -249,16 +249,13 @@ cdef xmlNode* _findDepthFirstInDescendents(xmlNode* c_node,
     c_node = c_node.children
     if c_node is NULL:
         return NULL
-    if not _isElement(c_node):
-        c_node = _nextElement(c_node)
     return _findDepthFirstInFollowing(c_node, c_href, c_name)
 
 cdef xmlNode* _findDepthFirstInFollowingSiblings(xmlNode* c_node,
                                                  char* c_href, char* c_name):
     if c_node is NULL:
         return NULL
-    c_node = _nextElement(c_node)
-    return _findDepthFirstInFollowing(c_node, c_href, c_name)
+    return _findDepthFirstInFollowing(c_node.next, c_href, c_name)
 
 cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
                                          char* c_href, char* c_name):
@@ -267,9 +264,6 @@ cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
     2) its descendents
     3) its following siblings.
     """
-    if c_name is NULL:
-        # always match
-        return c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node)
     if _tagMatches(c_node, c_href, c_name):
         return c_node
