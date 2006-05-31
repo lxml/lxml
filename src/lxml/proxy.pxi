@@ -135,9 +135,10 @@ cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     else:
         return NULL
 
-cdef int canDeallocateChildNodes(xmlNode* c_node):
-    c_node = c_node.children
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node)
+cdef int canDeallocateChildNodes(xmlNode* c_parent):
+    cdef xmlNode* c_node
+    c_node = c_parent.children
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_parent, c_node, 1)
     if c_node._private is not NULL:
         return 0
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
@@ -159,15 +160,16 @@ cdef void moveNodeToDocument(_NodeBase node, _Document doc):
         node._doc = doc
         changeDocumentBelow(node._c_node, doc)
 
-cdef void changeDocumentBelow(xmlNode* c_node, _Document doc):
+cdef void changeDocumentBelow(xmlNode* c_parent, _Document doc):
     """Update the Python references in the tree below the node.
     Does not update the node itself.
 
     Note that we expect C pointers to the document to be updated already by
     libxml2.
     """
-    c_node = c_node.children
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node)
+    cdef xmlNode* c_node
+    c_node = c_parent.children
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_parent, c_node, 1)
     if c_node._private is not NULL:
         (<_NodeBase>c_node._private)._doc = doc
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)

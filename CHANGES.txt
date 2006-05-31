@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Element.getiterator() supports iterating through namespaces with the tag
+  expression '{namespace}*'
+
 * Another speedup in tree iteration code
 
 * General speedup of Python Element object creation and deallocation
@@ -27,6 +30,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* Element now raises ValueError on empty tag names
 
 * Namespace fixing after moving elements between documents could fail if the
   source document was freed too early

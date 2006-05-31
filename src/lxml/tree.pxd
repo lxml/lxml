@@ -248,5 +248,6 @@ cdef extern from "libxml/xmlstring.h":
 
 cdef extern from "etree.h":
     cdef int _isElement(xmlNode* node)
-    cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* node)
-    cdef void END_FOR_EACH_ELEMENT_FROM(xmlNode* node)
+    cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* tree_top,
+                                          xmlNode* start_node, int inclusive)
+    cdef void END_FOR_EACH_ELEMENT_FROM(xmlNode* start_node)

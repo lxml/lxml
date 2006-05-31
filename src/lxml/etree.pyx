@@ -1230,15 +1230,13 @@ cdef class ElementDepthFirstIterator:
     # we keep Python references here to control GC
     # keep next node to return and a depth counter in the tree
     cdef _NodeBase _next_node
-    cdef Py_ssize_t _depth
+    cdef _NodeBase _top_node
     cdef object _pystrings
     cdef char* _href
     cdef char* _name
     def __init__(self, _NodeBase node not None, tag=None):
+        self._top_node  = node
         self._next_node = node
-        self._depth = 0
-        if tag == '*':
-            tag = None
         if tag is None:
             self._href = NULL
             self._name = NULL
@@ -1249,10 +1247,11 @@ cdef class ElementDepthFirstIterator:
             else:
                 self._href = _cstr(self._pystrings[0])
             self._name = _cstr(self._pystrings[1])
-
-        if not _tagMatches(node._c_node, self._href, self._name):
-            # this cannot raise StopIteration, self._next_node != None
-            self.next()
+            if cstd.strcmp(self._name, '*') == 0:
+                self._name = NULL
+            if not _tagMatches(node._c_node, self._href, self._name):
+                # this cannot raise StopIteration, self._next_node != None
+                self.next()
 
     def __iter__(self):
         return self
@@ -1262,48 +1261,30 @@ cdef class ElementDepthFirstIterator:
         current_node = self._next_node
         if current_node is None:
             raise StopIteration
-        self._prepareNextNode()
+        if self._name is NULL and self._href is NULL:
+            self._prepareNextNodeAnyTag()
+        else:
+            self._prepareNextNodeMatchTag()
         return current_node
 
-    cdef void _prepareNextNode(self):
-        cdef _NodeBase node
+    cdef void _prepareNextNodeAnyTag(self):
         cdef xmlNode* c_node
-        cdef xmlNode* c_next_node
-        cdef xmlNode* c_parent
-        # find in descendants
-        node = self._next_node
-        c_parent = node._c_node
-        c_node = _findDepthFirstInDescendents(c_parent, self._href, self._name)
-        if c_node is NULL:
-            if self._depth < 1:
-                # nothing left to traverse
-                self._next_node = None
-                return
-            # try siblings
-            c_node = _findDepthFirstInFollowingSiblings(
-                c_parent, self._href, self._name)
+        c_node = self._next_node._c_node
+        tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
+        self._next_node = _elementFactory(self._next_node._doc, c_node)
+        return
+        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+        self._next_node = None
 
-            while c_node is NULL and self._depth > 1:
-                # walk up the parent pointers and continue with their siblings
-                c_parent = c_parent.parent
-                self._depth = self._depth - 1
-                if c_parent is NULL or not _isElement(c_parent):
-                    break
-                c_node = _findDepthFirstInFollowingSiblings(
-                    c_parent, self._href, self._name)
-
-            if c_node is NULL or not _isElement(c_parent):
-                self._next_node = None
-                return # all found, nothing left
-            # we are at a sibling, so set c_parent to our parent
-            c_parent = c_parent.parent
-
-        c_next_node = c_node
-        # fix depth counter by looking up path to original parent
-        while c_node is not c_parent:
-            self._depth = self._depth + 1
-            c_node = c_node.parent
-        self._next_node = _elementFactory(node._doc, c_next_node)
+    cdef void _prepareNextNodeMatchTag(self):
+        cdef xmlNode* c_node
+        c_node = self._next_node._c_node
+        tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
+        if _tagMatches(c_node, self._href, self._name):
+            self._next_node = _elementFactory(self._next_node._doc, c_node)
+            return
+        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+        self._next_node = None
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node

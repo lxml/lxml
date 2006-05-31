@@ -194,38 +194,38 @@ algorithms can benefit from step-by-step traversal of the XML tree and
 especially if few elements are of interest or the element tag name is known,
 lxml is a good choice::
 
-  lxe: getiterator_all      (-- T2   )   23.0440 msec/pass
-  cET: getiterator_all      (-- T2   )   36.3687 msec/pass
+  lxe: getiterator_all      (-- T2   )   22.5847 msec/pass
+  cET: getiterator_all      (-- T2   )   36.8212 msec/pass
   ET : getiterator_all      (-- T2   )   46.2846 msec/pass
 
-  lxe: getiterator_islice   (-- T2   )    2.0699 msec/pass
-  cET: getiterator_islice   (-- T2   )    0.3299 msec/pass
+  lxe: getiterator_islice   (-- T2   )    2.0421 msec/pass
+  cET: getiterator_islice   (-- T2   )    0.3343 msec/pass
   ET : getiterator_islice   (-- T2   )   44.5898 msec/pass
 
-  lxe: getiterator_tag      (-- T2   )    1.9176 msec/pass
-  cET: getiterator_tag      (-- T2   )   11.2861 msec/pass
+  lxe: getiterator_tag      (-- T2   )    1.9593 msec/pass
+  cET: getiterator_tag      (-- T2   )   11.7767 msec/pass
   ET : getiterator_tag      (-- T2   )   37.5661 msec/pass
 
-  lxe: getiterator_tag_all  (-- T2   )    4.5722 msec/pass
-  cET: getiterator_tag_all  (-- T2   )   33.2602 msec/pass
+  lxe: getiterator_tag_all  (-- T2   )    4.5667 msec/pass
+  cET: getiterator_tag_all  (-- T2   )   33.5681 msec/pass
   ET : getiterator_tag_all  (-- T2   )   37.6200 msec/pass
 
 This similarly shows in ``Element.findall()``::
 
-  lxe: findall              (-- T2   )   27.3874 msec/pass
-  cET: findall              (-- T2   )   38.8718 msec/pass
+  lxe: findall              (-- T2   )   26.9907 msec/pass
+  cET: findall              (-- T2   )   39.1728 msec/pass
   ET : findall              (-- T2   )   50.9692 msec/pass
 
-  lxe: findall              (-- T3   )    3.8227 msec/pass
-  cET: findall              (-- T3   )   11.8051 msec/pass
+  lxe: findall              (-- T3   )    3.6452 msec/pass
+  cET: findall              (-- T3   )   12.0210 msec/pass
   ET : findall              (-- T3   )   11.2570 msec/pass
 
-  lxe: findall_tag          (-- T2   )    4.5549 msec/pass
-  cET: findall_tag          (-- T2   )   31.3107 msec/pass
+  lxe: findall_tag          (-- T2   )    4.6065 msec/pass
+  cET: findall_tag          (-- T2   )   34.0267 msec/pass
   ET : findall_tag          (-- T2   )   36.7813 msec/pass
 
-  lxe: findall_tag          (-- T3   )    0.5643 msec/pass
-  cET: findall_tag          (-- T3   )    7.4491 msec/pass
+  lxe: findall_tag          (-- T3   )    0.5884 msec/pass
+  cET: findall_tag          (-- T3   )    7.6307 msec/pass
   ET : findall_tag          (-- T3   )    9.2943 msec/pass
 
 Note that all three libraries currently use the same Python implementation for

@@ -28,6 +28,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assert_(etree.__version__.startswith(
             str(etree.LXML_VERSION[0])))
 
+    def test_element_names(self):
+        Element = self.etree.Element
+        
+        el = Element('name')
+        self.assertEquals(el.tag, 'name')
+        el = Element('{}name')
+        self.assertEquals(el.tag, 'name')
+        self.assertRaises(ValueError, Element, '{test}')
+        self.assertRaises(ValueError, setattr, el, 'tag', '{test}')
+
     def test_parse_error(self):
         parse = self.etree.parse
         # from StringIO
@@ -435,6 +445,33 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
+
+    def test_getiterator_filter_namespace(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('{a}a')
+        b = SubElement(a, '{a}b')
+        c = SubElement(a, '{a}c')
+        d = SubElement(b, '{b}d')
+        e = SubElement(c, '{a}e')
+        f = SubElement(c, '{b}f')
+
+        self.assertEquals(
+            [a],
+            list(a.getiterator('{a}a')))
+        self.assertEquals(
+            [],
+            list(a.getiterator('{b}a')))
+        self.assertEquals(
+            [],
+            list(a.getiterator('a')))
+        self.assertEquals(
+            [f],
+            list(c.getiterator('{b}*')))
+        self.assertEquals(
+            [d, f],
+            list(a.getiterator('{b}*')))
 
     def test_index(self):
         etree = self.etree

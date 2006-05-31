@@ -242,39 +242,16 @@ cdef xmlNode* _previousElement(xmlNode* c_node):
         c_node = c_node.prev
     return NULL
 
-cdef xmlNode* _findDepthFirstInDescendents(xmlNode* c_node,
-                                           char* c_href, char* c_name):
-    if c_node is NULL:
-        return NULL
-    c_node = c_node.children
-    if c_node is NULL:
-        return NULL
-    return _findDepthFirstInFollowing(c_node, c_href, c_name)
-
-cdef xmlNode* _findDepthFirstInFollowingSiblings(xmlNode* c_node,
-                                                 char* c_href, char* c_name):
-    if c_node is NULL:
-        return NULL
-    return _findDepthFirstInFollowing(c_node.next, c_href, c_name)
-
-cdef xmlNode* _findDepthFirstInFollowing(xmlNode* c_node,
-                                         char* c_href, char* c_name):
-    """Find the next matching node by traversing:
-    1) the node itself
-    2) its descendents
-    3) its following siblings.
-    """
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node)
-    if _tagMatches(c_node, c_href, c_name):
-        return c_node
-    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    return NULL
-
 cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     if c_name is NULL:
-        # always match
-        return 1
-    if c_href is NULL:
+        if c_href is NULL:
+            # always match
+            return 1
+        elif c_node.ns is NULL or c_node.ns.href is NULL:
+            return 0
+        else:
+            return cstd.strcmp(c_node.ns.href, c_href) == 0
+    elif c_href is NULL:
         if c_node.ns is not NULL and c_node.ns.href is not NULL:
             return 0
         return cstd.strcmp(c_node.name, c_name) == 0
@@ -363,10 +340,11 @@ cdef _getNsTag(tag):
             raise ValueError, "Invalid tag name"
         nslen  = c_ns_end - c_tag
         taglen = python.PyString_GET_SIZE(tag) - nslen - 2
-        ns  = python.PyString_FromStringAndSize(c_tag,      nslen)
+        if taglen == 0:
+            raise ValueError, "Empty tag name"
+        if nslen > 0:
+            ns = python.PyString_FromStringAndSize(c_tag,   nslen)
         tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
-    else:
-        ns = None
     return ns, tag
 
 cdef object _namespacedName(xmlNode* c_node):
