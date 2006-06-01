@@ -570,7 +570,8 @@ cdef class _Element(_NodeBase):
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
         moveNodeToDocument(element, self._doc)
-        
+        attemptDeallocation(c_node)
+
     def __delitem__(self, Py_ssize_t index):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
