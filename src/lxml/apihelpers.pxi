@@ -87,7 +87,9 @@ cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     else:
         value = tree.xmlGetNsProp(c_element, c_attrib_node.name,
                                   c_attrib_node.ns.href)
-    return funicode(value)
+    result = funicode(value)
+    tree.xmlFree(value)
+    return result
 
 cdef object _getAttributeValue(_NodeBase element, key, default):
     cdef char* c_result

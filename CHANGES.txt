@@ -31,6 +31,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in Element.attrib.items() and Element.attrib.values()
+
 * Memory leak in XPath extension functions
 
 * Memory leak in unicode related setup code
