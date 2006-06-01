@@ -118,13 +118,13 @@ cdef class _FilelikeWriter:
             raise IOError, "Could not create I/O writer context."
         return c_buffer
 
-    cdef int write(self, char* c_buffer, int len):
+    cdef int write(self, char* c_buffer, int size):
         try:
             if self._filelike is None:
                 raise IOError, "File is already closed"
-            py_buffer = python.PyString_FromStringAndSize(c_buffer, len)
+            py_buffer = python.PyString_FromStringAndSize(c_buffer, size)
             self._filelike.write(py_buffer)
-            return len
+            return size
         except Exception:
             self._exc_context._store_raised()
             return -1
