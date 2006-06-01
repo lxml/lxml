@@ -12,6 +12,9 @@ cdef extern from "libxml/xmlerror.h":
         char* message
         xmlErrorLevel level
         char* file
+        char* str1
+        char* str2
+        char* str3
         int line
 
     ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...)
