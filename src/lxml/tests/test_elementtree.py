@@ -799,7 +799,17 @@ class ETreeTestCaseBase(unittest.TestCase):
             a)
         self.assertXML('<c></c>',
                        c)
-        
+
+    def test_setitem_replace(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        SubElement(a, 'b')
+        d = Element('d')
+        a[0] = d
+        self.assertXML('<a><d></d></a>', a)
+
     def test_setitem_indexerror(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
