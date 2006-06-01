@@ -76,6 +76,7 @@ cdef void _setupPythonUnicode():
     on iconv and the local Python installation, so we simply check if we find
     a matching encoding handler.
     """
+    cdef tree.xmlCharEncodingHandler* enchandler
     cdef Py_ssize_t l
     cdef char* buffer
     cdef char* enc
@@ -83,8 +84,10 @@ cdef void _setupPythonUnicode():
     l = python.PyUnicode_GET_DATA_SIZE(utext)
     buffer = python.PyUnicode_AS_DATA(utext)
     enc = _findEncodingName(buffer, l)
-    if tree.xmlFindCharEncodingHandler(enc) is not NULL:
+    enchandler = tree.xmlFindCharEncodingHandler(enc)
+    if enchandler is not NULL:
         global _UNICODE_ENCODING
+        tree.xmlCharEncCloseFunc(enchandler)
         _UNICODE_ENCODING = enc
 
 cdef char* _findEncodingName(char* buffer, int size):
@@ -123,7 +126,7 @@ cdef class _FileParserContext:
             self._c_url = NULL
         else:
             self._c_url = _cstr(url)
-        self._bytes_utf = ''
+        self._bytes_utf  = ''
         self._bytes_read = 0
 
     cdef xmlparser.xmlParserInput* _createParserInput(self, xmlParserCtxt* ctxt):
