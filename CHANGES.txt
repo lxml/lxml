@@ -28,6 +28,9 @@ Features added
 
 * Comment texts can be changed through the API
 
+* See also the features added for lxml 1.0beta (below) to find out
+  more about what's new.
+
 Bugs fixed
 ----------
 
