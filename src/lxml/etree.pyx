@@ -564,7 +564,7 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError
+            raise IndexError, index
         c_next = element._c_node.next
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
@@ -575,7 +575,7 @@ cdef class _Element(_NodeBase):
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError
+            raise IndexError, index
         _removeText(c_node.next)
         _removeNode(c_node)
 
