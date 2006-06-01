@@ -337,7 +337,9 @@ cdef void _extension_function_call(_BaseContext context,
     try:
         args = []
         for i from 0 <= i < nargs:
-            o = _unwrapXPathObject(xpath.valuePop(ctxt), doc)
+            obj = xpath.valuePop(ctxt)
+            o = _unwrapXPathObject(obj, doc)
+            _freeXPathObject(obj)
             python.PyList_Append(args, o)
         python.PyList_Reverse(args)
 
