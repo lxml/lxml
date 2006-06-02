@@ -23,8 +23,8 @@ Bugs fixed
 Features added
 --------------
 
-See also the features added for lxml 1.0beta (below) to find out more about
-what's new.
+See also the features added for lxml 1.0beta to find out more about what's
+new.
 
 * Element.getiterator() and the findall() methods support finding arbitrary
   elements from a namespace (pattern ``{namespace}*``)
