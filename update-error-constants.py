@@ -8,10 +8,11 @@ BUILD_DEF_FILE    = os.path.join("src", "lxml", "xmlerror.pxd")
 if len(sys.argv) < 2 or sys.argv[1].lower() in ('-h', '--help'):
     print "This script generates the constants in file", BUILD_SOURCE_FILE
     print "Call as"
-    print sys.argv[0], "/path/to/libxml2-source-dir"
+    print sys.argv[0], "/path/to/libxml2-doc-dir"
     sys.exit(len(sys.argv) > 1)
 
-HTML_FILE = os.path.join(sys.argv[1], 'doc', 'html', 'libxml-xmlerror.html')
+HTML_FILE = os.path.join(sys.argv[1], 'html', 'libxml-xmlerror.html')
+os.stat(HTML_FILE) # raise an error if we can't find it
 
 sys.path.insert(0, 'src')
 from lxml import etree
