@@ -1,4 +1,7 @@
-include setup.py MANIFEST.in version.txt
+exclude *.py
+include setup.py test.py selftest.py selftest2.py bench.py
+include update-error-constants.py
+include MANIFEST.in version.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py etree.c etree.h
 recursive-include src/lxml/tests *.rng *.xslt *.xml
