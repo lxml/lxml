@@ -47,10 +47,10 @@ model.  It knows about parents and siblings of elements::
 
 You can also iterate over the siblings of an element::
 
-  >>> list(a.itersiblings()) == [b, c, d]
-  True
-  >>> list(c.itersiblings(preceding=True)) == [b, a]
-  True
+  >>> [ el.tag for el in a.itersiblings() ]
+  ['b', 'c', 'd']
+  >>> [ el.tag for el in c.itersiblings(preceding=True) ]
+  ['b', 'a']
 
 Elements always live within a document context in lxml.  This implies that
 there is also a notion of an absolute document root.  You can retrieve an
