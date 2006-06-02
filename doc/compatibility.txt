@@ -121,5 +121,6 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   faster than ElementTree.
 
 * etree allows navigation to the parent of a node by the ``getparent()``
-  method.  This is not possible in ElementTree as the underlying tree model
-  does not have this information.
+  method and to the siblings by calling ``getnext()`` and ``getprevious()``.
+  This is not possible in ElementTree as the underlying tree model does not
+  have this information.

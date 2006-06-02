@@ -901,6 +901,7 @@ cdef class _Element(_NodeBase):
         return self.attrib.items()
 
     def getchildren(self):
+        "Return a list with all children of this element."
         cdef xmlNode* c_node
         cdef _Document doc
         cdef int ret
@@ -916,18 +917,47 @@ cdef class _Element(_NodeBase):
         return result
 
     def getparent(self):
+        "Returns the parent of this element or None for the root element"
         cdef xmlNode* c_node
         c_node = self._c_node.parent
         if c_node is not NULL and _isElement(c_node):
             return _elementFactory(self._doc, c_node)
         return None
 
+    def getnext(self):
+        "Returns the following sibling of this element or None"
+        cdef xmlNode* c_node
+        c_node = _nextElement(self._c_node)
+        if c_node is not NULL:
+            return _elementFactory(self._doc, c_node)
+        return None
+
+    def getprevious(self):
+        "Returns the preceding sibling of this element or None"
+        cdef xmlNode* c_node
+        c_node = _previousElement(self._c_node)
+        if c_node is not NULL:
+            return _elementFactory(self._doc, c_node)
+        return None
+
+    def itersiblings(self, preceding=False):
+        """Iterate over the following or preceding siblings of this element,
+        determined by the 'preceding' keyword (defaults to False)."""
+        return SiblingsIterator(self, preceding)
+
     def getroottree(self):
         """Return an ElementTree for the root node of the document that
-        contains this element."""
+        contains this element.
+
+        This is the same as following element.getparent() up the tree until it
+        returns None (for the root element) and then build an ElementTree for
+        the last parent that was returned."""
         return _elementTreeFactory(self._doc, None)
 
     def getiterator(self, tag=None):
+        """Iterate over all elements in the subtree in document order (depth
+        first pre-order).  Can be restricted to find only elements with a
+        specific tag or from a namespace."""
         return ElementDepthFirstIterator(self, tag)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
@@ -1187,20 +1217,16 @@ cdef class _Attrib:
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
-cdef class ElementChildIterator:
+cdef class _ElementSiblingIterator:
     # we keep Python references here to control GC
     cdef _NodeBase _node
     cdef _node_to_node_function _next_element
-    def __init__(self, _NodeBase node, reversed=False): # Python ref!
-        cdef xmlNode* c_node
-        if reversed:
-            c_node = _findChildBackwards(node._c_node, 0)
+    def __init__(self, _NodeBase node, preceding=False):
+        self._node = node
+        if preceding:
             self._next_element = _previousElement
         else:
-            c_node = _findChildForwards(node._c_node, 0)
             self._next_element = _nextElement
-        if c_node is not NULL:
-            self._node = _elementFactory(node._doc, c_node)
     def __iter__(self):
         return self
     def __next__(self):
@@ -1217,6 +1243,22 @@ cdef class ElementChildIterator:
             # Python ref:
             self._node = _elementFactory(current_node._doc, c_node)
         return current_node
+
+cdef class ElementChildIterator(_ElementSiblingIterator):
+    def __init__(self, _NodeBase node not None, reversed=False):
+        cdef xmlNode* c_node
+        if reversed:
+            c_node = _findChildBackwards(node._c_node, 0)
+        else:
+            c_node = _findChildForwards(node._c_node, 0)
+        if c_node is not NULL:
+            child = _elementFactory(node._doc, c_node) # Python ref!
+        _ElementSiblingIterator.__init__(self, child, reversed)
+
+cdef class SiblingsIterator(_ElementSiblingIterator):
+    def __init__(self, _NodeBase node not None, preceding=False):
+        _ElementSiblingIterator.__init__(self, node, preceding)
+        self.next()
 
 cdef class ElementDepthFirstIterator:
     """Iterates over an element and its sub-elements in document order (depth

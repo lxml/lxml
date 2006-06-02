@@ -1,6 +1,22 @@
 lxml changelog
 ==============
 
+current
+=======
+
+Features added
+--------------
+
+* Element.itersiblings() iterates over the siblings of an element in either
+  direction
+
+* Element.getnext() and Element.getprevious() return the direct siblings of an
+  element
+
+Bugs fixed
+----------
+
+
 1.0 (2006-06-01)
 ================
 

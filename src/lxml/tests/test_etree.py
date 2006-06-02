@@ -292,6 +292,65 @@ class ETreeOnlyTestCase(HelperTestCase):
             a,
             d.getroottree().getroot())
 
+    def test_getnext(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        self.assertEquals(
+            None,
+            a.getnext())
+        self.assertEquals(
+            c,
+            b.getnext())
+        self.assertEquals(
+            None,
+            c.getnext())
+
+    def test_getprevious(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            None,
+            a.getprevious())
+        self.assertEquals(
+            b,
+            c.getprevious())
+        self.assertEquals(
+            None,
+            b.getprevious())
+
+    def test_itersiblings(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            [],
+            list(a.itersiblings()))
+        self.assertEquals(
+            [c],
+            list(b.itersiblings()))
+        self.assertEquals(
+            [],
+            list(c.itersiblings()))
+        self.assertEquals(
+            [b],
+            list(c.itersiblings(preceding=True)))
+        self.assertEquals(
+            [],
+            list(b.itersiblings(preceding=True)))
+
     def test_parseid(self):
         parseid = self.etree.parseid
         XML     = self.etree.XML
