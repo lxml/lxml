@@ -27,6 +27,62 @@ The following examples usually assume this to be executed first::
   >>> from StringIO import StringIO
 
 
+Trees and Documents
+-------------------
+
+Compared to the original ElementTree API, lxml.etree has an extended tree
+model.  It knows about parents and siblings of elements::
+
+  >>> root = etree.Element("root")
+  >>> a = etree.SubElement(root, "a")
+  >>> b = etree.SubElement(root, "b")
+  >>> c = etree.SubElement(root, "c")
+  >>> d = etree.SubElement(root, "d")
+  >>> b.getparent() == root
+  True
+  >>> print b.getnext().tag
+  c
+  >>> print c.getprevious().tag
+  b
+
+You can also iterate over the siblings of an element::
+
+  >>> list(a.itersiblings()) == [b, c, d]
+  True
+  >>> list(c.itersiblings(preceding=True)) == [b, a]
+  True
+
+Elements always live within a document context in lxml.  This implies that
+there is also a notion of an absolute document root.  You can retrieve an
+ElementTree for the root node of a document from any of its elements::
+
+  >>> tree = d.getroottree()
+  >>> print tree.getroot().tag
+  root
+
+Note that this is different from wrapping an Element in an ElementTree.  You
+can use ElementTrees to create XML trees with an explicit root node::
+
+  >>> tree = etree.ElementTree(d)
+  >>> print tree.getroot().tag
+  d
+  >>> print etree.tostring(tree)
+  <d/>
+
+All operations that you run on such an ElementTree (like XPath, XSLT, etc.)
+will understand the explicitly chosen root as root node of a document.  They
+will not see any elements outside the ElementTree.  However, ElementTrees do
+not modify their Elements::
+
+  >>> element = tree.getroot()
+  >>> print element.getparent().tag
+  root
+
+The rule is that all operations that are applied to Elements use either the
+Element itself as reference point, or the absolute root of the document that
+contains this Element.
+
+
 Parsers
 -------
 
