@@ -16,6 +16,8 @@ Features added
 Bugs fixed
 ----------
 
+* MSVC compiler complained about long strings (supports only 2048 bytes)
+
 
 1.0 (2006-06-01)
 ================
