@@ -47,7 +47,7 @@ cdef class _XPathContext(_BaseContext):
 cdef void _setupDict(xpath.xmlXPathContext* xpathCtxt):
     __GLOBAL_PARSER_CONTEXT._initXPathParserDict(xpathCtxt)
 
-cdef class XPathEvaluatorBase:
+cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
 
@@ -57,6 +57,17 @@ cdef class XPathEvaluatorBase:
     def __dealloc__(self):
         if self._xpathCtxt is not NULL:
             xpath.xmlXPathFreeContext(self._xpathCtxt)
+
+    def evaluate(self, _eval_arg, **_variables):
+        """Evaluate an XPath expression.
+
+        Instead of calling this method, you can also call the evaluator object
+        itself.
+
+        Variables may be provided as keyword arguments.  Note that namespaces
+        are currently not supported for variables.
+        """
+        return self(_eval_arg, **_variables)
 
     cdef int _checkAbsolutePath(self, char* path):
         cdef char c
@@ -97,7 +108,7 @@ cdef class XPathEvaluatorBase:
         return result
 
 
-cdef class XPathElementEvaluator(XPathEvaluatorBase):
+cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     """Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
@@ -117,7 +128,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
             raise XPathContextError, "Unable to create new XPath context"
         _setupDict(xpathCtxt)
         self._element = element
-        XPathEvaluatorBase.__init__(self, namespaces, extensions)
+        _XPathEvaluatorBase.__init__(self, namespaces, extensions)
 
     def registerNamespace(self, prefix, uri):
         """Register a namespace with the XPath context.
@@ -131,7 +142,7 @@ cdef class XPathElementEvaluator(XPathEvaluatorBase):
         for prefix, uri in namespaces.items():
             add(prefix, uri)
 
-    def evaluate(self, _path, **_variables):
+    def __call__(self, _path, **_variables):
         """Evaluate an XPath expression on the document.
 
         Variables may be provided as keyword arguments.  Note that namespaces
@@ -168,7 +179,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         XPathElementEvaluator.__init__(
             self, etree._context_node, namespaces, extensions)
 
-    def evaluate(self, _path, **_variables):
+    def __call__(self, _path, **_variables):
         """Evaluate an XPath expression on the document.
 
         Variables may be provided as keyword arguments.  Note that namespaces
@@ -197,7 +208,10 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 
 def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
-    """Creates and XPath evaluator for an ElementTree or an Element.
+    """Creates an XPath evaluator for an ElementTree or an Element.
+
+    The resulting object can be called with an XPath expression as argument
+    and XPath variables provided as keyword arguments.
 
     XPath evaluators must not be shared between threads.
     """
@@ -207,20 +221,25 @@ def XPathEvaluator(etree_or_element, namespaces=None, extensions=None):
         return XPathElementEvaluator(etree_or_element, namespaces, extensions)
 
 
-cdef class XPath(XPathEvaluatorBase):
+cdef class XPath(_XPathEvaluatorBase):
+    """A compiled XPath expression that can be called on Elements and
+    ElementTrees.
+
+    Besides the XPath expression, you can pass namespace mappings and
+    extensions to the constructor through the keyword arguments ``namespaces``
+    and ``extensions``.
+    """
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef readonly object path
 
     def __init__(self, path, namespaces=None, extensions=None):
-        cdef char* c_path
-        XPathEvaluatorBase.__init__(self, namespaces, extensions, None)
+        _XPathEvaluatorBase.__init__(self, namespaces, extensions)
         self._xpath = NULL
         self.path = path
         path = _utf8(path)
-        c_path = _cstr(path)
         self._xpathCtxt = xpath.xmlXPathNewContext(NULL)
         _setupDict(self._xpathCtxt)
-        self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, c_path)
+        self._xpath = xpath.xmlXPathCtxtCompile(self._xpathCtxt, _cstr(path))
         if self._xpath is NULL:
             self._raise_parse_error()
 
@@ -235,7 +254,7 @@ cdef class XPath(XPathEvaluatorBase):
         element  = _rootNodeOrRaise(_etree_or_element)
 
         xpathCtxt = self._xpathCtxt
-        xpathCtxt.doc = document._c_doc
+        xpathCtxt.doc  = document._c_doc
         xpathCtxt.node = element._c_node
 
         context = self._context
@@ -246,9 +265,6 @@ cdef class XPath(XPathEvaluatorBase):
         finally:
             context.unregister_context()
         return self._handle_result(xpathObj, document)
-
-    def evaluate(self, _tree, **_variables):
-        return self(_tree, **_variables)
 
     def __dealloc__(self):
         if self._xpath is not NULL:
