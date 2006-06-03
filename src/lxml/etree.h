@@ -24,6 +24,8 @@
 #define iter(o)         PyObject_GetIter(o)
 #define _cstr(s)        PyString_AS_STRING(s)
 
+#define _isString(obj)   PyObject_TypeCheck(obj, &PyBaseString_Type)
+
 #define _isElement(c_node) \
         ((c_node)->type == XML_ELEMENT_NODE || \
 	 (c_node)->type == XML_COMMENT_NODE)

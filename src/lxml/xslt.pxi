@@ -453,7 +453,7 @@ cdef class _ExsltRegExp:
         self._compile_map = {}
 
     cdef _make_string(self, value):
-        if python.PyString_Check(value) or python.PyUnicode_Check(value):
+        if _isString(value):
             return value
         else:
             raise TypeError, "Invalid argument type %s" % type(value)

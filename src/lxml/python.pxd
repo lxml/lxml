@@ -56,6 +56,7 @@ cdef extern from "Python.h":
     cdef void PyMem_Free(void* p)
 
 cdef extern from "etree.h": # redefines some functions as macros
+    cdef int _isString(object obj)
     cdef int isinstance(object instance, object classes)
     cdef int issubclass(object derived,  object superclasses)
     cdef int hasattr(object obj, object attr)

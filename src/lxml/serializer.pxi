@@ -155,7 +155,7 @@ cdef _tofilelike(f, _NodeBase element, encoding,
         raise LookupError, python.PyString_FromFormat(
             "unknown encoding: '%s'", c_enc)
 
-    if python.PyString_Check(f) or python.PyUnicode_Check(f):
+    if _isString(f):
         filename = _utf8(f)
         c_buffer = tree.xmlOutputBufferCreateFilename(
             _cstr(filename), enchandler, 0)
@@ -184,7 +184,7 @@ cdef _tofilelikeC14N(f, _NodeBase element):
     c_base_doc = element._c_node.doc
     c_doc = _fakeRootDoc(c_base_doc, element._c_node)
     try:
-        if python.PyString_Check(f) or python.PyUnicode_Check(f):
+        if _isString(f):
             filename = _utf8(f)
             bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1,
                                         _cstr(filename), 0)

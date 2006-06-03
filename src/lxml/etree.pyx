@@ -1,7 +1,7 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
 from python cimport isinstance, issubclass, hasattr, callable
-from python cimport iter, str, _cstr, Py_ssize_t
+from python cimport iter, str, _cstr, _isString, Py_ssize_t
 cimport xpath
 cimport xinclude
 cimport c14n
@@ -1439,8 +1439,7 @@ cdef class QName:
     def __init__(self, text_or_uri, tag=None):
         if tag is not None:
             text_or_uri = "{%s}%s" % (text_or_uri, tag)
-        elif not python.PyString_Check(text_or_uri) and \
-             not python.PyUnicode_Check(text_or_uri):
+        elif not _isString(text_or_uri):
             text_or_uri = str(text_or_uri)
         self.text = text_or_uri
     def __str__(self):
