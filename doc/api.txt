@@ -12,7 +12,7 @@ the need to expose a feature in an easy way led to the invention of a new API.
    3   Parsers
    4   Error handling on exceptions
    5   Python unicode strings
-   6   xpath method on ElementTree, Element
+   6   XPath
    7   XSLT
    8   RelaxNG
    9   XMLSchema
@@ -268,13 +268,21 @@ makes it possible for other parsers to correctly parse the XML byte stream.
 Note that using ``tostring()`` with UTF-8 is also typically faster.
 
 
-xpath method on ElementTree, Element
-------------------------------------
+XPath
+-----
 
 lxml.etree supports the simple path syntax of the ``findall()`` etc.  methods
 on ElementTree and Element, as known from the original ElementTree library.
 As an extension, these classes also provide an ``xpath()`` method that
 supports expressions in the complete XPath syntax.
+
+There are also specialized XPath evaluator classes that are more efficient for
+frequent evaluation: ``XPath`` and ``XPathEvaluator``.  See the `performance
+comparison`_ to learn when to use which.  Their semantics when used on
+Elements and ElementTrees are the same as for the ``xpath()`` method described
+here.
+
+.. _`performance comparison`: performance.html#xpath
 
 For ElementTree, the xpath method performs a global XPath query against the
 document (if absolute) or against the root node (if relative)::
@@ -335,7 +343,8 @@ There is also an optional ``extensions`` argument which is used to define
 
 .. _`extension functions`: extensions.html
 
-The return values of xpath vary, depending on the XPath expression used:
+The return values of XPath evaluations vary, depending on the XPath expression
+used:
 
 * True or False, when the XPath expression has a boolean result
 
@@ -343,12 +352,11 @@ The return values of xpath vary, depending on the XPath expression used:
 
 * a (unicode) string, when the XPath expression has a string result.
 
-* a list of items, when the XPath expression has a list as result. The
-  items may include element nodes, strings. When the nodeset would
-  contain text nodes or attributes, the node result is also a string
-  (the text node content or attribute value). When the nodeset would
-  contain a comment, the result contains a string as well, inside
-  ``<!--`` and ``-->`` markers.
+* a list of items, when the XPath expression has a list as result.  The items
+  may include elements and strings.  Text nodes and attributes in the result
+  are returned as strings (the text node content or attribute value).  Comments
+  are also returned as strings, enclosed by the usual ``<!--`` and ``-->``
+  markers.
 
 A related convenience method of ElementTree objects is ``getpath(element)``,
 which returns a structural, absolute XPath expression to find that element::
