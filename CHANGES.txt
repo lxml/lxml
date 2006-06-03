@@ -39,7 +39,7 @@ new.
 
 * PyErrorLog for error logging through the Python ``logging`` module
 
-* ``element.getroottree()`` returns an ElementTree for the root node of the
+* ``Element.getroottree()`` returns an ElementTree for the root node of the
   document that contains the element.
 
 * ElementTree.getpath(element) returns a simple, absolute XPath expression to

@@ -5,6 +5,21 @@ APIs specific to lxml
 lxml tries to follow established APIs wherever possible.  Sometimes, however,
 the need to expose a feature in an easy way led to the invention of a new API.
 
+.. contents::
+.. 
+   1   lxml.etree
+   2   Trees and Documents
+   3   Parsers
+   4   Error handling on exceptions
+   5   Python unicode strings
+   6   xpath method on ElementTree, Element
+   7   XSLT
+   8   RelaxNG
+   9   XMLSchema
+   10  xinclude
+   11  write_c14n on ElementTree
+
+
 lxml.etree
 ----------
 
