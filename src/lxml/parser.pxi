@@ -185,15 +185,12 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
     cdef _InputDocument   doc_ref
     cdef _FileParserContext file_context
     cdef xmlparser.xmlParserInput* c_input
-    cdef python.PyGILState_STATE gil_state
     if c_context._private is NULL or \
        not isinstance(<object>c_context._private, _ResolverContext):
         if __DEFAULT_ENTITY_LOADER is NULL:
             return NULL
         return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
 
-    gil_state = python.PyGILState_Ensure()
-    print "LOADING"
     try:
         if c_url is NULL:
             url = None
@@ -208,10 +205,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
         doc_ref = context._resolvers.resolve(url, pubid, context)
     except Exception:
         context._store_raised()
-        python.PyGILState_Release(gil_state)
         return NULL
-    print "LOADED"
-    python.PyGILState_Release(gil_state)
 
     if doc_ref is None:
         if __DEFAULT_ENTITY_LOADER is NULL:
@@ -350,21 +344,16 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int recover
-        cdef python.PyThreadState* state
         self._error_log.connect()
         pctxt = self._parser_ctxt
         __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
 
-        print ">>START"
-        state = python.PyEval_SaveThread()
         if self._parser_type == LXML_HTML_PARSER:
             result = htmlparser.htmlCtxtReadFile(
                 pctxt, c_filename, NULL, self._parse_options)
         else:
             result = xmlparser.xmlCtxtReadFile(
                 pctxt, c_filename, NULL, self._parse_options)
-        python.PyEval_RestoreThread(state)
-        print ">>DONE"
 
         self._error_log.disconnect()
         recover = self._parse_options & xmlparser.XML_PARSE_RECOVER

@@ -2,7 +2,6 @@ from tree cimport FILE
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
-    ctypedef struct PyThreadState
     ctypedef int size_t
     ctypedef int Py_ssize_t
     cdef int INT_MAX
@@ -56,15 +55,6 @@ cdef extern from "Python.h":
 
     cdef void* PyMem_Malloc(size_t size)
     cdef void PyMem_Free(void* p)
-
-    ctypedef enum PyGILState_STATE:
-        PyGILState_LOCKED
-        PyGILState_UNLOCKED
-
-    cdef PyGILState_STATE PyGILState_Ensure()
-    cdef void PyGILState_Release(PyGILState_STATE state)
-    cdef PyThreadState* PyEval_SaveThread()
-    cdef void PyEval_RestoreThread(PyThreadState* state)
 
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int _isString(object obj)
