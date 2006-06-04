@@ -27,6 +27,10 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
+html:
+	mkdir -p doc/html
+	$(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
+
 # XXX What should the default be?
 test: test_inplace
 

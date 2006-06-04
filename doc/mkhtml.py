@@ -3,14 +3,16 @@ import os, shutil, sys
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
-    stylesheet_url = 'style.css'
+
+    doc_dir = os.path.join(lxml_path, 'doc')
+    stylesheet_url = os.path.join(doc_dir, 'style.css')
 
     shutil.copy(stylesheet_url, dirname)
 
     for name in ['main.txt', 'intro.txt', 'api.txt', 'compatibility.txt',
                  'extensions.txt', 'namespace_extensions.txt', 'sax.txt',
                  'build.txt', 'FAQ.txt', 'performance.txt', 'resolvers.txt']:
-        path = os.path.join(lxml_path, 'doc', name)
+        path = os.path.join(doc_dir, name)
         outname = os.path.splitext(name)[0] + '.html'
         outpath = os.path.join(dirname, outname)
 
