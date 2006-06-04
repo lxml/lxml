@@ -16,6 +16,8 @@ Features added
 Bugs fixed
 ----------
 
+* lxml.sax.ElementTreeProducer did not call startDocument() / endDocument()
+
 * MSVC compiler complained about long strings (supports only 2048 bytes)
 
 

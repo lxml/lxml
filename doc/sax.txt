@@ -7,15 +7,47 @@ turn SAX events into an ElementTree. The SAX API used by lxml is
 compatible with that in the Python core (xml.sax), so is useful for
 interfacing lxml with code that uses the Python core SAX facilities.
 
+.. contents::
+.. 
+   1  Building a tree from SAX events
+   2  Producing SAX events from an ElementTree or Element
+   3  Interfacing with pulldom/minidom
+
+
+Building a tree from SAX events
+-------------------------------
+
+First of all, lxml has support for building a new tree given SAX events.  To
+do this, we use the special SAX content handler defined by lxml named
+``lxml.sax.ElementTreeContentHandler``::
+
+  >>> import lxml.sax
+  >>> handler = lxml.sax.ElementTreeContentHandler()
+
+Now let's fire some SAX events at it::
+
+  >>> handler.startElementNS((None, 'a'), 'a', {})
+  >>> handler.startElementNS((None, 'b'), 'b', {(None, 'foo'): 'bar'})
+  >>> handler.characters('Hello world')
+  >>> handler.endElementNS((None, 'b'), 'b')
+  >>> handler.endElementNS((None, 'a'), 'a')
+
+This constructs an equivalent tree.  You can access it through the ``etree``
+property of the handler::
+
+  >>> tree = handler.etree
+  >>> lxml.etree.tostring(tree.getroot())
+  '<a><b foo="bar">Hello world</b></a>'
+
+
 Producing SAX events from an ElementTree or Element
 ---------------------------------------------------
 
 Let's make a tree we can generate SAX events for::
 
   >>> from StringIO import StringIO
-  >>> import lxml
   >>> f = StringIO('<a><b>Text</b></a>')
-  >>> doc = lxml.etree.parse(f)
+  >>> tree = lxml.etree.parse(f)
 
 To see whether the correct SAX events are produced, we'll write a
 custom content handler::
@@ -41,7 +73,7 @@ Now let's produce some SAX events and handle them with this content
 handler::
 
   >>> handler = MyContentHandler()
-  >>> lxml.sax.saxify(doc, handler)
+  >>> lxml.sax.saxify(tree, handler)
 
 This is what we expect::
 
@@ -52,32 +84,22 @@ This is what we expect::
   >>> handler.text
   'Text'
 
-Building a tree from SAX events
--------------------------------
 
-lxml also has support for building a new tree given SAX events. To do
-this, we use the special SAX content handler defined by lxml named
-`ElementTreeContentHandler`.
+Interfacing with pulldom/minidom
+--------------------------------
 
-Let's make this content handler::
+lxml.sax is a simple way to interface with the standard XML support in the
+Python library.  Note, however, that this is a one-way solution, as Python's
+DOM implementation connot generate SAX events from a DOM tree.
 
-  >>> handler = lxml.sax.ElementTreeContentHandler()
+You can use xml.dom.pulldom to build a minidom from lxml::
 
-Now let's fire some SAX events at it::
+  >>> from xml.dom.pulldom import SAX2DOM
+  >>> handler = SAX2DOM()
+  >>> lxml.sax.saxify(tree, handler)
 
-  >>> handler.startElementNS((None, 'a'), 'a', {})
-  >>> handler.startElementNS((None, 'b'), 'b', {(None, 'foo'): 'bar'})
-  >>> handler.characters('Hello world')
-  >>> handler.endElementNS((None, 'b'), 'b')
-  >>> handler.endElementNS((None, 'a'), 'a')
+PullDOM makes the result available through the ``document`` attribute::
 
-We can now get the tree by accessing the `etree` property on the 
-handler::
-
-  >>> tree = handler.etree
-  >>> lxml.etree.tostring(tree.getroot())
-  '<a><b foo="bar">Hello world</b></a>'
-
-
-
-
+  >>> dom = handler.document
+  >>> print dom.firstChild.localName
+  a
