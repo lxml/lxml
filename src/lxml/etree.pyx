@@ -919,10 +919,11 @@ cdef class _Element(_NodeBase):
     def getparent(self):
         "Returns the parent of this element or None for the root element"
         cdef xmlNode* c_node
-        c_node = self._c_node.parent
-        if c_node is not NULL and _isElement(c_node):
+        c_node = _parentElement(self._c_node)
+        if c_node is NULL:
+            return None
+        else:
             return _elementFactory(self._doc, c_node)
-        return None
 
     def getnext(self):
         "Returns the following sibling of this element or None"
@@ -941,9 +942,25 @@ cdef class _Element(_NodeBase):
         return None
 
     def itersiblings(self, preceding=False):
-        """Iterate over the following or preceding siblings of this element,
-        determined by the 'preceding' keyword (defaults to False)."""
+        """Iterate over the following or preceding siblings of this element.
+
+        The direction is determined by the 'preceding' keyword which defaults
+        to False, i.e. forward iteration over the following siblings."""
         return SiblingsIterator(self, preceding)
+
+    def iterancestors(self):
+        "Iterate over the ancestors of this element (from parent to parent)."
+        return AncestorsIterator(self)
+
+    def iterdescendants(self):
+        """Iterate over the descendants of this element in document order.
+
+        As opposed to getiterator(), this iterator does not yield the element
+        itself.
+        """
+        iterator = ElementDepthFirstIterator(self)
+        iterator.next()
+        return iterator
 
     def getroottree(self):
         """Return an ElementTree for the root node of the document that
@@ -956,8 +973,11 @@ cdef class _Element(_NodeBase):
 
     def getiterator(self, tag=None):
         """Iterate over all elements in the subtree in document order (depth
-        first pre-order).  Can be restricted to find only elements with a
-        specific tag or from a namespace."""
+        first pre-order), starting with this element.
+
+        Can be restricted to find only elements with a specific tag or from a
+        namespace.
+        """
         return ElementDepthFirstIterator(self, tag)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
@@ -1223,6 +1243,16 @@ cdef class _ElementIterator:
     cdef _node_to_node_function _next_element
     def __iter__(self):
         return self
+
+    cdef void _storeNext(self, _NodeBase node):
+        cdef xmlNode* c_node
+        c_node = self._next_element(node._c_node)
+        if c_node is NULL:
+            self._node = None
+        else:
+            # Python ref:
+            self._node = _elementFactory(node._doc, c_node)
+
     def __next__(self):
         cdef xmlNode* c_node
         cdef _NodeBase current_node
@@ -1230,16 +1260,11 @@ cdef class _ElementIterator:
         current_node = self._node
         if current_node is None:
             raise StopIteration
-        c_node = self._next_element(current_node._c_node)
-        if c_node is NULL:
-            self._node = None
-        else:
-            # Python ref:
-            self._node = _elementFactory(current_node._doc, c_node)
+        self._storeNext(current_node)
         return current_node
 
 cdef class ElementChildIterator(_ElementIterator):
-    "Iterates over the children of an element"
+    "Iterates over the children of an element."
     def __init__(self, _NodeBase node not None, reversed=False):
         cdef xmlNode* c_node
         if reversed:
@@ -1249,20 +1274,26 @@ cdef class ElementChildIterator(_ElementIterator):
             c_node = _findChildForwards(node._c_node, 0)
             self._next_element = _nextElement
         if c_node is not NULL:
-            # Python ref!
+            # store Python ref:
             self._node = _elementFactory(node._doc, c_node)
-        else:
-            self._node = None
 
 cdef class SiblingsIterator(_ElementIterator):
-    "Iterates over the siblings of an element"
+    """Iterates over the siblings of an element.
+
+    You can pass the boolean keyword ``preceding`` to specify the direction.
+    """
     def __init__(self, _NodeBase node not None, preceding=False):
         if preceding:
             self._next_element = _previousElement
-            self._node = node.getprevious()
         else:
             self._next_element = _nextElement
-            self._node = node.getnext()
+        self._storeNext(node)
+
+cdef class AncestorsIterator(_ElementIterator):
+    "Iterates over the ancestors of an element (from parent to parent)."
+    def __init__(self, _NodeBase node not None):
+        self._next_element = _parentElement
+        self._storeNext(node)
 
 cdef class ElementDepthFirstIterator:
     """Iterates over an element and its sub-elements in document order (depth

@@ -244,6 +244,15 @@ cdef xmlNode* _previousElement(xmlNode* c_node):
         c_node = c_node.prev
     return NULL
 
+cdef xmlNode* _parentElement(xmlNode* c_node):
+    "Given a node, find the parent element."
+    if c_node is NULL or not _isElement(c_node):
+        return NULL
+    c_node = c_node.parent
+    if c_node is NULL or not _isElement(c_node):
+        return NULL
+    return c_node
+
 cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     if c_name is NULL:
         if c_href is NULL:

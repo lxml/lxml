@@ -7,8 +7,15 @@ current
 Features added
 --------------
 
-* Element.itersiblings() iterates over the siblings of an element in either
-  direction
+* Element iteration over XPath axes:
+
+  * Element.iterdescendants() iterates over the descendants of an element
+
+  * Element.iterancestors() iterates over the ancestors of an element (from
+    parent to parent)
+
+  * Element.itersiblings() iterates over the siblings of an element in either
+    direction
 
 * Element.getnext() and Element.getprevious() return the direct siblings of an
   element

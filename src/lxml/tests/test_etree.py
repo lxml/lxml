@@ -274,6 +274,27 @@ class ETreeOnlyTestCase(HelperTestCase):
             b,
             d.getparent())
 
+    def test_iterancestors(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            [],
+            list(a.iterancestors()))
+        self.assertEquals(
+            [a],
+            list(b.iterancestors()))
+        self.assertEquals(
+            a,
+            c.iterancestors().next())
+        self.assertEquals(
+            [b, a],
+            list(d.iterancestors()))
+
     def test_getroottree(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -341,6 +362,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [c],
             list(b.itersiblings()))
+        self.assertEquals(
+            c,
+            b.itersiblings().next())
         self.assertEquals(
             [],
             list(c.itersiblings()))
