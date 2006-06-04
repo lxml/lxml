@@ -1203,6 +1203,26 @@ class ETreeTestCaseBase(unittest.TestCase):
             [d],
             list(d.getiterator()))
 
+    def test_getiterator_empty(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [],
+            list(a.getiterator('none')))
+        self.assertEquals(
+            [],
+            list(e.getiterator('none')))
+        self.assertEquals(
+            [e],
+            list(e.getiterator()))
+
     def test_getiterator_filter(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

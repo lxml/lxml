@@ -1217,16 +1217,10 @@ cdef class _Attrib:
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
-cdef class _ElementSiblingIterator:
+cdef class _ElementIterator:
     # we keep Python references here to control GC
     cdef _NodeBase _node
     cdef _node_to_node_function _next_element
-    def __init__(self, _NodeBase node, preceding=False):
-        self._node = node
-        if preceding:
-            self._next_element = _previousElement
-        else:
-            self._next_element = _nextElement
     def __iter__(self):
         return self
     def __next__(self):
@@ -1244,21 +1238,31 @@ cdef class _ElementSiblingIterator:
             self._node = _elementFactory(current_node._doc, c_node)
         return current_node
 
-cdef class ElementChildIterator(_ElementSiblingIterator):
+cdef class ElementChildIterator(_ElementIterator):
+    "Iterates over the children of an element"
     def __init__(self, _NodeBase node not None, reversed=False):
         cdef xmlNode* c_node
         if reversed:
             c_node = _findChildBackwards(node._c_node, 0)
+            self._next_element = _previousElement
         else:
             c_node = _findChildForwards(node._c_node, 0)
+            self._next_element = _nextElement
         if c_node is not NULL:
-            child = _elementFactory(node._doc, c_node) # Python ref!
-        _ElementSiblingIterator.__init__(self, child, reversed)
+            # Python ref!
+            self._node = _elementFactory(node._doc, c_node)
+        else:
+            self._node = None
 
-cdef class SiblingsIterator(_ElementSiblingIterator):
+cdef class SiblingsIterator(_ElementIterator):
+    "Iterates over the siblings of an element"
     def __init__(self, _NodeBase node not None, preceding=False):
-        _ElementSiblingIterator.__init__(self, node, preceding)
-        self.next()
+        if preceding:
+            self._next_element = _previousElement
+            self._node = node.getprevious()
+        else:
+            self._next_element = _nextElement
+            self._node = node.getnext()
 
 cdef class ElementDepthFirstIterator:
     """Iterates over an element and its sub-elements in document order (depth
@@ -1290,7 +1294,7 @@ cdef class ElementDepthFirstIterator:
             else:
                 self._href = _cstr(self._pystrings[0])
             self._name = _cstr(self._pystrings[1])
-            if cstd.strcmp(self._name, '*') == 0:
+            if self._name[0] == c'*' and self._name[1] == c'\0':
                 self._name = NULL
             if not _tagMatches(node._c_node, self._href, self._name):
                 # this cannot raise StopIteration, self._next_node != None
@@ -1300,34 +1304,31 @@ cdef class ElementDepthFirstIterator:
         return self
 
     def __next__(self):
+        cdef xmlNode* c_node
         cdef _NodeBase current_node
         current_node = self._next_node
         if current_node is None:
             raise StopIteration
+        c_node = self._next_node._c_node
         if self._name is NULL and self._href is NULL:
-            self._prepareNextNodeAnyTag()
+            c_node = self._nextNodeAnyTag(c_node)
         else:
-            self._prepareNextNodeMatchTag()
+            c_node = self._nextNodeMatchTag(c_node)
+        self._next_node = _elementFactory(current_node._doc, c_node)
         return current_node
 
-    cdef void _prepareNextNodeAnyTag(self):
-        cdef xmlNode* c_node
-        c_node = self._next_node._c_node
+    cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
-        self._next_node = _elementFactory(self._next_node._doc, c_node)
-        return
+        return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-        self._next_node = None
+        return NULL
 
-    cdef void _prepareNextNodeMatchTag(self):
-        cdef xmlNode* c_node
-        c_node = self._next_node._c_node
+    cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node):
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
         if _tagMatches(c_node, self._href, self._name):
-            self._next_node = _elementFactory(self._next_node._doc, c_node)
-            return
+            return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-        self._next_node = None
+        return NULL
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node
