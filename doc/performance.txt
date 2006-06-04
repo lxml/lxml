@@ -117,6 +117,14 @@ additionally discard the created Python elements after their use, when they
 are no longer referenced.  ET and cET represent the tree itself through these
 objects, which reduces the overhead in creating them.
 
+The same reason makes operations like ``getchildren()`` more costly in lxml.
+Where ET and cET can quickly create a shallow copy of their list of children,
+lxml has to create a Python object for each child and collect them in a list::
+
+  lxe: root_getchildren      (-- T2   )    6.3981 msec/pass
+  cET: root_getchildren      (-- T2   )    0.0651 msec/pass
+  ET : root_getchildren      (-- T2   )    0.0224 msec/pass
+
 As opposed to ET, libxml2 has a notion of documents that each element must be
 in.  This results in a major performance difference for creating independent
 Elements that end up in independently created documents::

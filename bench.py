@@ -387,6 +387,9 @@ class BenchMark(BenchMarkBase):
         for child in root:
             child.get('a')
 
+    def bench_root_getchildren(self, root):
+        root.getchildren()
+
     def bench_getchildren(self, root):
         for child in root:
             child.getchildren()
