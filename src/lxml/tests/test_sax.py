@@ -9,6 +9,7 @@ from StringIO import StringIO
 
 from common_imports import HelperTestCase
 from lxml import sax
+from xml.dom import pulldom
 
 class ETreeSaxTestCase(HelperTestCase):
 
@@ -34,19 +35,38 @@ class ETreeSaxTestCase(HelperTestCase):
         tree = self.parse('<a xmlns="bla">ab<b>bb</b>ba</a>')
         new_tree = self._saxify_unsaxify(tree)
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         '{bla}a')
-        self.assertEqual(root[0].tag,
-                         '{bla}b')
+        self.assertEqual('{bla}a',
+                         root.tag)
+        self.assertEqual('{bla}b',
+                         root[0].tag)
 
     def test_etree_sax_ns2(self):
         tree = self.parse('<a xmlns="blaA">ab<b:b xmlns:b="blaB">bb</b:b>ba</a>')
         new_tree = self._saxify_unsaxify(tree)
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         '{blaA}a')
-        self.assertEqual(root[0].tag,
-                         '{blaB}b')
+        self.assertEqual('{blaA}a',
+                         root.tag)
+        self.assertEqual('{blaB}b',
+                         root[0].tag)
+
+    def test_sax_to_pulldom(self):
+        tree = self.parse('<a xmlns="blaA">ab<b:b xmlns:b="blaB">bb</b:b>ba</a>')
+        handler = pulldom.SAX2DOM()
+        sax.saxify(tree, handler)
+        dom = handler.document
+
+        self.assertEqual('a',
+                         dom.firstChild.localName)
+        self.assertEqual('blaA',
+                         dom.firstChild.namespaceURI)
+
+        children = dom.firstChild.childNodes
+        self.assertEqual('ab',
+                         children[0].nodeValue)
+        self.assertEqual('blaB',
+                         children[1].namespaceURI)
+        self.assertEqual('ba',
+                         children[2].nodeValue)
 
     def test_element_sax(self):
         tree = self.parse('<a><b/></a>')
@@ -68,17 +88,17 @@ class ETreeSaxTestCase(HelperTestCase):
 
         new_tree = self._saxify_unsaxify(a)
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         '{blaA}a')
-        self.assertEqual(root[0].tag,
-                         'b')
+        self.assertEqual('{blaA}a',
+                         root.tag)
+        self.assertEqual('b',
+                         root[0].tag)
 
         new_tree = self._saxify_unsaxify(b)
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         'b')
-        self.assertEqual(len(root),
-                         0)
+        self.assertEqual('b',
+                         root.tag)
+        self.assertEqual(0,
+                         len(root))
 
     def test_etree_sax_handler_default_ns(self):
         handler = sax.ElementTreeContentHandler()
@@ -97,12 +117,12 @@ class ETreeSaxTestCase(HelperTestCase):
 
         new_tree = handler.etree
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         '{blaA}a')
-        self.assertEqual(root[0].tag,
-                         '{blaB}b')
-        self.assertEqual(root[1].tag,
-                         '{blaA}c')
+        self.assertEqual('{blaA}a',
+                         root.tag)
+        self.assertEqual('{blaB}b',
+                         root[0].tag)
+        self.assertEqual('{blaA}c',
+                         root[1].tag)
 
     def test_etree_sax_redefine_ns(self):
         handler = sax.ElementTreeContentHandler()
@@ -121,12 +141,12 @@ class ETreeSaxTestCase(HelperTestCase):
 
         new_tree = handler.etree
         root = new_tree.getroot()
-        self.assertEqual(root.tag,
-                         '{blaA}a')
-        self.assertEqual(root[0].tag,
-                         '{blaB}b')
-        self.assertEqual(root[1].tag,
-                         '{blaA}c')
+        self.assertEqual('{blaA}a',
+                         root.tag)
+        self.assertEqual('{blaB}b',
+                         root[0].tag)
+        self.assertEqual('{blaA}c',
+                         root[1].tag)
 
     def test_etree_sax_no_ns(self):
         handler = sax.ElementTreeContentHandler()
@@ -141,9 +161,9 @@ class ETreeSaxTestCase(HelperTestCase):
 
         new_tree = handler.etree
         root = new_tree.getroot()
-        self.assertEqual(root.tag,    'a')
-        self.assertEqual(root[0].tag, 'b')
-        self.assertEqual(root[1].tag, 'c')
+        self.assertEqual('a', root.tag)
+        self.assertEqual('b', root[0].tag)
+        self.assertEqual('c', root[1].tag)
 
     def test_etree_sax_error(self):
         handler = sax.ElementTreeContentHandler()
