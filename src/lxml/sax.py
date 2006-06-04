@@ -122,7 +122,9 @@ class ElementTreeProducer(object):
         self._empty_attributes = attr_class({}, {})
         
     def saxify(self):
+        self._content_handler.startDocument()
         self._recursive_saxify(self._element, {})
+        self._content_handler.endDocument()
 
     def _recursive_saxify(self, element, prefixes):
         new_prefixes = []
