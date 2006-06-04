@@ -6,17 +6,22 @@ cimport xpath
 cimport xinclude
 cimport c14n
 cimport cstd
-import re
 
 import __builtin__
 cdef object True
 cdef object False
 True  = __builtin__.True
 False = __builtin__.False
+del __builtin__
 
+cdef object _elementpath
 import _elementpath
-from StringIO import StringIO
+
+cdef object sys
 import sys
+
+cdef object re
+import re
 
 # the rules
 # any libxml C argument/variable is prefixed with c_
@@ -47,7 +52,11 @@ xmlparser.xmlInitParser()
 
 def initThread():
     """Must be called by each newly created thread before calling any API
-    functions."""
+    functions.
+
+    Note that lxml.etree does not currently release the GIL, so there are no
+    performance gains to be expected from using threads.
+    """
     #_initThreadLogging()
     pass
 
