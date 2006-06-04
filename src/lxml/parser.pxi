@@ -419,6 +419,8 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 
     if result is NULL:
         _raiseParseError(ctxt, c_filename)
+    elif result.URL is NULL and c_filename is not NULL:
+        result.URL = tree.xmlStrdup(c_filename)
     return result
 
 ############################################################

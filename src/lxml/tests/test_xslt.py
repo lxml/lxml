@@ -292,8 +292,14 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals('''<html><body>B</body></html>''',
                           str(res).strip())
 
-    def test_xslt_multiple_files(self):
+    def test_xslt_include(self):
         tree = etree.parse(fileInTestDir('test1.xslt'))
+        st = etree.XSLT(tree)
+
+    def test_xslt_include_from_filelike(self):
+        f = open(fileInTestDir('test1.xslt'), 'r')
+        tree = etree.parse(f)
+        f.close()
         st = etree.XSLT(tree)
 
     def test_xslt_multiple_transforms(self):
