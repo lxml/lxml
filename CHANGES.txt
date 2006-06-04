@@ -16,6 +16,8 @@ Features added
 Bugs fixed
 ----------
 
+* xsl:include failed when the stylesheet was parsed from a file-like object
+
 * lxml.sax.ElementTreeProducer did not call startDocument() / endDocument()
 
 * MSVC compiler complained about long strings (supports only 2048 bytes)
