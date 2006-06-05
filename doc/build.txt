@@ -56,6 +56,10 @@ or, in Unix-like environments::
 If you then place lxml's ``src`` directory on your PYTHONPATH somehow, you can
 import ``lxml.etree`` and play with it.
 
+To recompile after changes, note that you may have to run ``make clean`` or
+delete the file ``src/lxml/etree.c``.  Distutils do not automatically pick up
+changes that affect files other than the main file ``src/lxml/etree.pyx``.
+
 
 Running the tests and reporting errors
 --------------------------------------
