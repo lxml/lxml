@@ -217,13 +217,14 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
     if doc_ref._type == PARSER_DATA_STRING:
         data = doc_ref._data_utf
         c_input = xmlparser.xmlNewStringInputStream(
-            c_context, _cstr(doc_ref._data_utf))
+            c_context, _cstr(data))
     elif doc_ref._type == PARSER_DATA_FILENAME:
         c_input = xmlparser.xmlNewInputFromFile(
             c_context, _cstr(doc_ref._data_utf))
     elif doc_ref._type == PARSER_DATA_FILE:
         file_context = _FileParserContext(doc_ref._file, context)
         c_input = file_context._createParserInput(c_context)
+        data = file_context
 
     if data is not None:
         context._storage.add(data)
