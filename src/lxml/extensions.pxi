@@ -169,8 +169,10 @@ cdef class _BaseContext:
         """
         cdef _NodeBase element
         if isinstance(obj, _NodeBase):
-            obj = (obj,)
-        elif not python.PySequence_Check(obj):
+            self._temp_refs.add(obj)
+            self._temp_refs.add((<_NodeBase>obj)._doc)
+            return
+        elif _isString(obj) or not python.PySequence_Check(obj):
             return
         for o in obj:
             if isinstance(o, _NodeBase):
