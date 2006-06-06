@@ -84,11 +84,19 @@ else:
     # use the static setup as configured in setupStaticBuild
     cflags, xslt_libs = setupStaticBuild()
 
+DEFINES = []
+try:
+    sys.argv.remove('--without-assert')
+    DEFINES.append( ('PYREX_WITHOUT_ASSERTIONS', None) )
+except ValueError:
+    pass
+
 ext_modules = [ Extension(
     "lxml.etree",
     sources = sources,
     extra_compile_args = ['-w'] + cflags,
-    extra_link_args = xslt_libs
+    extra_link_args = xslt_libs,
+    define_macros = DEFINES
     )]
 
 
