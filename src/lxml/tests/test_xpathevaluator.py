@@ -192,6 +192,40 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals('Hoi', r[0].text)
         self.assertEquals('Dag', r[1].text)
 
+    def test_xpath_extensions_nodes_append(self):
+        def f(evaluator, nodes):
+            r = etree.SubElement(nodes[0], 'results')
+            b = etree.SubElement(r, 'result')
+            b.text = 'Hoi'
+            b = etree.SubElement(r, 'result')
+            b.text = 'Dag'
+            return r
+
+        x = self.parse('<a/>')
+        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        r = e.evaluate("foo(/*)/result")
+        self.assertEquals(2, len(r))
+        self.assertEquals('Hoi', r[0].text)
+        self.assertEquals('Dag', r[1].text)
+
+    def test_xpath_extensions_nodes_append2(self):
+        def f(evaluator, nodes):
+            r = etree.Element('results')
+            b = etree.SubElement(r, 'result')
+            b.text = 'Hoi'
+            b = etree.SubElement(r, 'result')
+            b.text = 'Dag'
+            r.append(nodes[0])
+            return r
+
+        x = self.parse('<result>Honk</result>')
+        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        r = e.evaluate("foo(/*)/result")
+        self.assertEquals(3, len(r))
+        self.assertEquals('Hoi',  r[0].text)
+        self.assertEquals('Dag',  r[1].text)
+        self.assertEquals('Honk', r[2].text)
+
     def test_xpath_variables(self):
         x = self.parse('<a attr="true"/>')
         e = etree.XPathEvaluator(x)
