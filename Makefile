@@ -17,6 +17,8 @@ test_build: build
 
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
+	PYTHONPATH=src $(PYTHON) selftest.py
+	PYTHONPATH=src $(PYTHON) selftest2.py
 
 bench_inplace: inplace
 	$(PYTHON) bench.py -i
