@@ -61,47 +61,52 @@
  *       should not segfault !
  */
 
-#define ADVANCE_TO_NEXT_ELEMENT(c_node)              \
+#define _ADVANCE_TO_NEXT_ELEMENT(c_node)             \
     while ((c_node != 0) && (!_isElement(c_node)))   \
         c_node = c_node->next;
 
+#define _TRAVERSE_TO_NEXT_NODE(c_stop_node, c_node)            \
+{                                                              \
+    /* walk through children first */                          \
+    xmlNode* ___next = c_node->children;                       \
+    _ADVANCE_TO_NEXT_ELEMENT(___next)                          \
+    if ((___next == 0) && (c_node != c_stop_node)) {           \
+        /* try siblings */                                     \
+        ___next = c_node->next;                                \
+        _ADVANCE_TO_NEXT_ELEMENT(___next)                      \
+        /* back off through parents */                         \
+        while (___next == 0) {                                 \
+            c_node = c_node->parent;                           \
+            if (c_node == 0)                                   \
+                break;                                         \
+            if (c_node == c_stop_node)                         \
+                break;                                         \
+            if (!_isElement(c_node))                           \
+                break;                                         \
+            /* we already traversed the parents -> siblings */ \
+            ___next = c_node->next;                            \
+            _ADVANCE_TO_NEXT_ELEMENT(___next)                  \
+        }                                                      \
+    }                                                          \
+    c_node = ___next;                                          \
+}
+
 #define BEGIN_FOR_EACH_ELEMENT_FROM(c_tree_top, c_node, inclusive)    \
 {                                                                     \
-    xmlNode* ___next;                                                 \
-    const xmlNode* ___tree_top = (c_tree_top);                        \
-    /* make sure we have an element or NULL */                        \
     if (c_node != 0) {                                                \
+        const xmlNode* ___tree_top = (c_tree_top);                    \
+        /* make sure we start at an element */                        \
         if (!_isElement(c_node)) {                                    \
             /* we skip the node, so 'inclusive' is irrelevant */      \
             if (c_node == ___tree_top)                                \
                 c_node = 0; /* nothing to traverse */                 \
             else {                                                    \
                 c_node = c_node->next;                                \
-                ADVANCE_TO_NEXT_ELEMENT(c_node)                       \
+                _ADVANCE_TO_NEXT_ELEMENT(c_node)                      \
             }                                                         \
         } else if (! (inclusive)) {                                   \
-            /* duplicated for speed: find the second node */          \
-            /* walk through children */                               \
-            ___next = c_node->children;                               \
-            ADVANCE_TO_NEXT_ELEMENT(___next)                          \
-            if ((___next == 0) && (c_node != ___tree_top)) {          \
-                /* try siblings */                                    \
-                ___next = c_node->next;                               \
-                ADVANCE_TO_NEXT_ELEMENT(___next)                      \
-                /* back off through parents */                        \
-                while (___next == 0) {                                \
-                    c_node = c_node->parent;                          \
-                    if (c_node == 0)                                  \
-                        break;                                        \
-                    if (c_node == ___tree_top)                        \
-                        break;                                        \
-                    if (!_isElement(c_node))                          \
-                        break;                                        \
-                    ___next = c_node->next;                           \
-                    ADVANCE_TO_NEXT_ELEMENT(___next)                  \
-                }                                                     \
-            }                                                         \
-            c_node = ___next;                                         \
+            /* skip the first node */                                 \
+            _TRAVERSE_TO_NEXT_NODE(___tree_top, c_node)               \
         }                                                             \
                                                                       \
         /* now run the user code on the elements we find */           \
@@ -109,27 +114,7 @@
             /* here goes the code to be run for each element */
 
 #define END_FOR_EACH_ELEMENT_FROM(c_node)                             \
-            /* walk through children */                               \
-            ___next = c_node->children;                               \
-            ADVANCE_TO_NEXT_ELEMENT(___next)                          \
-            if ((___next == 0) && (c_node != ___tree_top)) {          \
-                /* try siblings */                                    \
-                ___next = c_node->next;                               \
-                ADVANCE_TO_NEXT_ELEMENT(___next)                      \
-                /* back off through parents */                        \
-                while (___next == 0) {                                \
-                    c_node = c_node->parent;                          \
-                    if (c_node == 0)                                  \
-                        break;                                        \
-                    if (c_node == ___tree_top)                        \
-                        break;                                        \
-                    if (!_isElement(c_node))                          \
-                        break;                                        \
-                    ___next = c_node->next;                           \
-                    ADVANCE_TO_NEXT_ELEMENT(___next)                  \
-                }                                                     \
-            }                                                         \
-            c_node = ___next;                                         \
+            _TRAVERSE_TO_NEXT_NODE(___tree_top, c_node)               \
         }                                                             \
     }                                                                 \
 }

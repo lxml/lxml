@@ -268,6 +268,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
 
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     cdef xmlNode* c_node
+    cdef xmlNode* c_save_node
     cdef char* s
     cdef int i
     result = []
@@ -281,7 +282,9 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
                 # XPath: only runs when extensions create or copy trees
                 #        -> we store Python refs to these, so that is OK
                 # XSLT: can it leak when merging trees from multiple sources?
+                c_save_node = c_node
                 c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+                attemptDeallocation(c_save_node)
             value = _elementFactory(doc, c_node)
         elif c_node.type == tree.XML_TEXT_NODE:
             value = funicode(c_node.content)
