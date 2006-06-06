@@ -65,7 +65,7 @@
     while ((c_node != 0) && (!_isElement(c_node)))   \
         c_node = c_node->next;
 
-#define _TRAVERSE_TO_NEXT_NODE(c_stop_node, c_node)            \
+#define _TRAVERSE_TO_NEXT_ELEMENT(c_stop_node, c_node)         \
 {                                                              \
     /* walk through children first */                          \
     xmlNode* ___next = c_node->children;                       \
@@ -106,7 +106,7 @@
             }                                                         \
         } else if (! (inclusive)) {                                   \
             /* skip the first node */                                 \
-            _TRAVERSE_TO_NEXT_NODE(___tree_top, c_node)               \
+            _TRAVERSE_TO_NEXT_ELEMENT(___tree_top, c_node)            \
         }                                                             \
                                                                       \
         /* now run the user code on the elements we find */           \
@@ -114,7 +114,7 @@
             /* here goes the code to be run for each element */
 
 #define END_FOR_EACH_ELEMENT_FROM(c_node)                             \
-            _TRAVERSE_TO_NEXT_NODE(___tree_top, c_node)               \
+            _TRAVERSE_TO_NEXT_ELEMENT(___tree_top, c_node)            \
         }                                                             \
     }                                                                 \
 }
