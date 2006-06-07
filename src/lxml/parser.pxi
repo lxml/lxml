@@ -224,7 +224,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
         c_input = xmlparser.xmlNewInputFromFile(
             c_context, _cstr(doc_ref._data_utf))
     elif doc_ref._type == PARSER_DATA_FILE:
-        file_context = _FileParserContext(doc_ref._file, context)
+        file_context = _FileParserContext(doc_ref._file, context, url)
         c_input = file_context._createParserInput(c_context)
         data = file_context
 
@@ -362,18 +362,22 @@ cdef class _BaseParser:
         recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
         return _handleParseResult(pctxt, result, c_filename, recover)
 
-    cdef xmlDoc* _parseDocFromFilelike(self, filelike,
-                                       char* c_filename) except NULL:
+    cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename) except NULL:
         # we read Python string, so we must convert to UTF-8
         cdef _FileParserContext file_context
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
+        cdef char* c_filename
         cdef int recover
+        if not filename:
+            c_filename = NULL
+        else:
+            c_filename = filename
         self._error_log.connect()
         pctxt = self._parser_ctxt
         __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
 
-        file_context = _FileParserContext(filelike, self._context)
+        file_context = _FileParserContext(filelike, self._context, filename)
         result = file_context._readDoc(
             pctxt, self._parse_options, self._parser_type)
 
@@ -620,11 +624,7 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename,
     cdef char* c_filename
     if parser is None:
         parser = __DEFAULT_PARSER
-    if not filename:
-        c_filename = NULL
-    else:
-        c_filename = _cstr(filename)
-    return (<_BaseParser>parser)._parseDocFromFilelike(source, c_filename)
+    return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
 
 cdef xmlDoc* _newDoc():
     cdef xmlDoc* result
