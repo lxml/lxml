@@ -358,7 +358,7 @@ cdef class _ElementTree:
 
     # Note that _doc is only used to store the original document if we do not
     # have a _context_node.  All methods should prefer self._context_node._doc
-    # to honour tree restructuring
+    # to honour tree restructuring.  _doc can happily be None!
 
     cdef _assertHasRoot(self):
         """We have to take care here: the document may not have a root node!
@@ -375,6 +375,10 @@ cdef class _ElementTree:
         cdef _Document doc
         doc = _parseDocument(source, parser)
         self._context_node = doc.getroot()
+        if self._context_node is None:
+            self._doc = doc
+        else:
+            self._doc = None
         return self._context_node
 
     def getroot(self):
@@ -553,9 +557,10 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
                                   object baseclass):
     cdef _ElementTree result
     result = baseclass()
-    result._doc = doc
     if context_node is None and doc is not None:
-        context_node = doc.getroot()
+            context_node = doc.getroot()
+    if context_node is None:
+        result._doc = doc
     result._context_node = context_node
     return result
 
