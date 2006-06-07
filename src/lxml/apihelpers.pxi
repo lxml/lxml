@@ -289,6 +289,19 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_tail
         c_tail = c_next
 
+cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
+    cdef xmlNode* c_new_tail
+    # tail copying support: look for any text nodes trailing this node and
+    # copy it to the target node
+    while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
+        if c_target.doc is not c_tail.doc:
+            c_new_tail = tree.xmlDocCopyNode(c_tail, c_target.doc, 0)
+        else:
+            c_new_tail = tree.xmlCopyNode(c_tail, 0)
+        tree.xmlAddNextSibling(c_target, c_new_tail)
+        c_target = c_new_tail
+        c_tail = c_tail.next
+
 cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.
     """

@@ -646,16 +646,21 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     "Recursively copy the document and make c_new_root the new root node."
     cdef xmlDoc* result
-    cdef xmlDoc* fake_c_doc
-    fake_c_doc = _fakeRootDoc(c_doc, c_new_root)
-    result = tree.xmlCopyDoc(fake_c_doc, 1)
-    _destroyFakeDoc(c_doc, fake_c_doc)
+    cdef xmlNode* c_node
+    if c_new_root.parent is <xmlNode*>c_doc:
+        result = tree.xmlCopyDoc(c_doc, 1) # recursive doc copy
+        __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    else:
+        result = tree.xmlCopyDoc(c_doc, 2) # non recursive, but with ns
+        __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+        c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
+        tree.xmlDocSetRootElement(result, c_node)
+        _copyTail(c_new_root.next, c_node)
     if c_doc.URL is not NULL:
         # handle a bug in older libxml2 versions
         if result.URL is not NULL:
             tree.xmlFree(result.URL)
         result.URL = tree.xmlStrdup(c_doc.URL)
-    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     return result
 
 ############################################################
