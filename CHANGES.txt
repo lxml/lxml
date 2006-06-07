@@ -23,6 +23,8 @@ Features added
 Bugs fixed
 ----------
 
+* Parsing file(-like) objects failed to load external entities
+
 * Parsing 8-bit strings from file(-like) objects raised an exception
 
 * xsl:include failed when the stylesheet was parsed from a file-like object
