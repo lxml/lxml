@@ -170,7 +170,7 @@ cdef class _FileParserContext:
             self._bytes_read = self._bytes_read + c_size
             cstd.memcpy(c_buffer, c_start, c_size)
             return c_size
-        except Exception:
+        except:
             self._exc_context._store_raised()
             return -1
 
@@ -205,7 +205,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
 
         context = <_ResolverContext>c_context._private
         doc_ref = context._resolvers.resolve(url, pubid, context)
-    except Exception:
+    except:
         context._store_raised()
         return NULL
 

@@ -125,7 +125,7 @@ cdef class _FilelikeWriter:
             py_buffer = python.PyString_FromStringAndSize(c_buffer, size)
             self._filelike.write(py_buffer)
             return size
-        except Exception:
+        except:
             self._exc_context._store_raised()
             return -1
 

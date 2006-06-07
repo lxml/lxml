@@ -110,7 +110,7 @@ cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
             if c_doc is not NULL and c_doc.URL is NULL:
                 c_doc.URL = tree.xmlStrdup(c_uri)
 
-    except Exception, e:
+    except:
         xslt_resolver_context._store_raised()
         return NULL
 
