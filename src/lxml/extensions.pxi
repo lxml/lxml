@@ -337,7 +337,7 @@ cdef void _extension_function_call(_BaseContext context,
     cdef int i
     doc = context._doc
     try:
-        args = []
+        args = python.PyList_New(nargs)
         for i from 0 <= i < nargs:
             obj = xpath.valuePop(ctxt)
             o = _unwrapXPathObject(obj, doc)
