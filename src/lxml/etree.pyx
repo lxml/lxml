@@ -638,7 +638,7 @@ cdef class _Element(_NodeBase):
         cdef _Document new_doc
         doc = self._doc
         c_doc = _copyDocRoot(doc._c_doc, self._c_node) # recursive
-        new_doc = _documentFactory(c_doc, doc._parser)
+        new_doc = _documentFactory(c_doc, doc._parser.copy())
         return new_doc.getroot()
 
     def set(self, key, value):
