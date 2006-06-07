@@ -1955,6 +1955,60 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('Bar', b.text)
         self.assertEquals('Foo', a.text)
 
+        del a
+        self.assertEquals('Bar', b.text)
+
+    def test_deepcopy_tail(self):
+        Element = self.etree.Element
+        
+        a = Element('a')
+        a.tail = 'Foo'
+
+        b = copy.deepcopy(a)
+        self.assertEquals('Foo', b.tail)
+        
+        b.tail = 'Bar'
+        self.assertEquals('Bar', b.tail)
+        self.assertEquals('Foo', a.tail)
+
+        del a
+        self.assertEquals('Bar', b.tail)
+
+    def test_deepcopy_subelement(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        root = Element('root')
+        a = SubElement(root, 'a')
+        a.text = 'FooText'
+        a.tail = 'FooTail'
+
+        b = copy.deepcopy(a)
+        self.assertEquals('FooText', b.text)
+        self.assertEquals('FooTail', b.tail)
+        
+        b.text = 'BarText'
+        b.tail = 'BarTail'
+        self.assertEquals('BarTail', b.tail)
+        self.assertEquals('FooTail', a.tail)
+        self.assertEquals('BarText', b.text)
+        self.assertEquals('FooText', a.text)
+
+        del a
+        self.assertEquals('BarTail', b.tail)
+        self.assertEquals('BarText', b.text)
+
+    def test_deepcopy_namespaces(self):
+        root = self.etree.XML('''<doc xmlns="dns" xmlns:t="tns">
+        <parent><node t:foo="bar" /></parent>
+        </doc>''')
+        self.assertEquals(
+            root[0][0].get('{tns}foo'),
+            copy.deepcopy(root[0])[0].get('{tns}foo') )
+        self.assertEquals(
+            root[0][0].get('{tns}foo'),
+            copy.deepcopy(root[0][0]).get('{tns}foo') )
+
     def test_shallowcopy(self):
         Element = self.etree.Element
         
