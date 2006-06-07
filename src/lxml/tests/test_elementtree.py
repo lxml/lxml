@@ -1817,6 +1817,24 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
                           f.getvalue())
 
+    def test_parse_file_encoding(self):
+        parse = self.etree.parse
+        # from file
+        tree = parse(fileInTestDir('test-string.xml'))
+        self.assertXML(
+            u'<a>Søk på nettet</a>'.encode('UTF-8'),
+            tree.getroot(), 'UTF-8')
+
+    def test_parse_file_object_encoding(self):
+        parse = self.etree.parse
+        # from file object
+        f = open(fileInTestDir('test-string.xml'), 'r')
+        tree = parse(f)
+        f.close()
+        self.assertXML(
+            u'<a>Søk på nettet</a>'.encode('UTF-8'),
+            tree.getroot(), 'UTF-8')
+
     def test_encoding_latin1(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element

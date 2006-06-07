@@ -114,7 +114,7 @@ _setupPythonUnicode()
 cdef class _FileParserContext:
     cdef object _filelike
     cdef object _url
-    cdef object _bytes_utf
+    cdef object _bytes
     cdef _ExceptionContext _exc_context
     cdef cstd.size_t _bytes_read
     cdef char* _c_url
@@ -126,7 +126,7 @@ cdef class _FileParserContext:
             self._c_url = NULL
         else:
             self._c_url = _cstr(url)
-        self._bytes_utf  = ''
+        self._bytes  = ''
         self._bytes_read = 0
 
     cdef xmlparser.xmlParserInput* _createParserInput(self, xmlParserCtxt* ctxt):
@@ -153,18 +153,20 @@ cdef class _FileParserContext:
         if self._bytes_read < 0:
             return 0
         try:
-            byte_count = python.PyString_GET_SIZE(self._bytes_utf)
+            byte_count = python.PyString_GET_SIZE(self._bytes)
             remaining = byte_count - self._bytes_read
             if remaining <= 0:
-                self._bytes_utf = _utf8( self._filelike.read(c_size) )
+                self._bytes = self._filelike.read(c_size)
+                if not python.PyString_Check(self._bytes):
+                    raise TypeError, "reading file objects must return plain strings"
+                remaining = python.PyString_GET_SIZE(self._bytes)
                 self._bytes_read = 0
-                remaining = python.PyString_GET_SIZE(self._bytes_utf)
                 if remaining == 0:
                     self._bytes_read = -1
                     return 0
             if c_size > remaining:
                 c_size = remaining
-            c_start = _cstr(self._bytes_utf) + self._bytes_read
+            c_start = _cstr(self._bytes) + self._bytes_read
             self._bytes_read = self._bytes_read + c_size
             cstd.memcpy(c_buffer, c_start, c_size)
             return c_size
