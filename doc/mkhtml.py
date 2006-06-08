@@ -1,4 +1,4 @@
-import os, shutil, sys
+import os, sys
 
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
