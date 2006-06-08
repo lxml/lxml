@@ -173,13 +173,16 @@ cdef class _Document:
     cdef _BaseParser _parser
     
     def __dealloc__(self):
-        # if there are no more references to the document, it is safe
-        # to clean the whole thing up, as all nodes have a reference to
-        # the document
-        #print "freeing document:", <int>self._c_doc
-        #displayNode(<xmlNode*>self._c_doc, 0)
-        #print <long>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
-        #print <long>self._c_doc, canDeallocateChildNodes(<xmlNode*>self._c_doc)
+        """We cannot rely on Python's GC to *always* dealloc the _Document *after*
+        all proxies it contains => traverse the document and mark all its proxies
+        as dead by clearing their xmlNode* reference.
+        """
+        cdef xmlNode* c_node
+        c_node = self._c_doc.children
+        tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>self._c_doc, c_node, 1)
+        if c_node._private is not NULL:
+            (<_NodeBase>c_node._private)._c_node = NULL
+        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         tree.xmlFreeDoc(self._c_doc)
 
     cdef getroot(self):
