@@ -5,9 +5,7 @@ def publish(dirname, lxml_path, release):
         os.mkdir(dirname)
 
     doc_dir = os.path.join(lxml_path, 'doc')
-    stylesheet_url = os.path.join(doc_dir, 'style.css')
-
-    shutil.copy(stylesheet_url, dirname)
+    stylesheet_url = 'style.css'
 
     for name in ['main.txt', 'intro.txt', 'api.txt', 'compatibility.txt',
                  'extensions.txt', 'namespace_extensions.txt', 'sax.txt',
