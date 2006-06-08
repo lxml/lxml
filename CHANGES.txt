@@ -23,6 +23,8 @@ Features added
 Bugs fixed
 ----------
 
+* Document deallocation could crash in certain garbage collection scenarios
+
 * Extension function calls in XSLT variable declarations could break the
   stylesheet and crash on repeated calls
 
