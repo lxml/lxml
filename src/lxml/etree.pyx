@@ -632,7 +632,6 @@ cdef class _Element(_NodeBase):
         return self.__copy__()
         
     def __copy__(self):
-        cdef xmlNode* c_node
         cdef xmlDoc* c_doc
         cdef _Document doc
         cdef _Document new_doc

@@ -23,6 +23,10 @@ Features added
 Bugs fixed
 ----------
 
+* Deep copying Elements could loose namespaces declared in parents
+
+* Deep copying Elements did not copy tail
+
 * Parsing file(-like) objects failed to load external entities
 
 * Parsing 8-bit strings from file(-like) objects raised an exception
