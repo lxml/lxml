@@ -101,6 +101,13 @@ See also the notes on compatibility_ to ElementTree_.
    serialization.
 
 
+#) How can I specify a default namespace for XPath expressions?
+
+   You can't.  In XPath, there is no such thing as a default namespace.  Just
+   use an arbitrary prefix and let the namespace dictionary of the XPath
+   evaluators map it to your namespace.  See also the question above.
+
+
 #) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
 
    ``findall()`` is part of the original `ElementTree API`_.  It supports a
