@@ -28,7 +28,6 @@ cdef extern from "Python.h":
     cdef object PyBool_FromLong(long value)
     cdef object PyNumber_Int(object value)
 
-    cdef object PyList_New(int size)
     cdef Py_ssize_t PyList_GET_SIZE(object l)
     cdef int PyList_Append(object l, object obj)
     cdef int PyList_Reverse(object l)
