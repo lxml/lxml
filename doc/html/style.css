@@ -1,0 +1,98 @@
+body {
+    /* CSS Hack for IE that does not respect the "margin: auto" rule at the
+     * document level */
+    text-align: center;
+    padding: 1em;
+}
+
+div.document {
+    width: 45em;
+    font: 13px Arial, Verdana, Helvetica, sans-serif;
+    margin: 1em auto 1em auto;
+    background-color: white;
+    color: #222;
+    text-align: left;
+}
+
+h1.title {
+    background: url(http://codespeak.net/img/codespeak1b.png) no-repeat;
+    padding: 20px 0 0 180px;
+    height: 60px;
+    font-size: 200%;
+}
+
+h1.title, h1 a, h2 a, h3 a {
+    color: #666;
+    font-weight: bold;
+    font-family: Helvetica, sans-serif;
+}
+
+h1 {
+    font-size: 150%;
+}
+
+h2 {
+    font-size: 130%;
+}
+
+h3 {
+    font-size: 110%;
+}
+
+a, a:visited {
+    background-color: transparent;
+    font-weight: bold;
+    color: Black;
+    text-decoration: none;
+}
+
+p a:active, ul a:active {
+    color: Red;
+}
+
+p a:hover, ul a:hover {
+    text-decoration: underline;
+}
+
+p {
+    /*margin: 0.5em 0em 1em 0em;*/
+    text-align: justify;
+    line-height: 1.5em;
+    margin: 0.5em 0em 0em 0em;
+}
+
+hr {
+    clear: both;
+    height: 1px;
+    color: #8CACBB;
+    background-color: transparent;
+}
+
+ul {
+    line-height: 1.5em;
+    margin-left: 1em;
+}
+
+ol {
+    line-height: 1.5em;
+    margin-left: 0em;
+}
+
+blockquote {
+    font-family: Times, "Times New Roman", serif;
+    font-style: italic;
+}
+
+code {
+    color: Black;
+    background-color: #cccccc;
+    font-family: "Courier New", Courier, monospace;
+}
+
+pre {
+    padding: 0.5em;
+    border: 1px solid #8cacbb;
+    color: Black;
+    background-color: #cccccc;
+    font-family: "Courier New", Courier, monospace;
+}
