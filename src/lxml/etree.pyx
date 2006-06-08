@@ -382,6 +382,8 @@ cdef class _ElementTree:
         return self._context_node
 
     def getroot(self):
+        """Gets the root element for this tree.
+        """
         return self._context_node
 
     property docinfo:
@@ -417,6 +419,8 @@ cdef class _ElementTree:
                     c_write_declaration, bool(pretty_print))
 
     def getpath(self, _NodeBase element not None):
+        """Returns a structural, absolute XPath expression to find that element.
+        """
         cdef _Document doc
         cdef xmlDoc* c_doc
         cdef char* c_path
@@ -433,12 +437,17 @@ cdef class _ElementTree:
         return path
 
     def getiterator(self, tag=None):
+        """Creates an iterator for the root element. The iterator loops over all elements
+        in this tree, in document order.
+        """
         root = self.getroot()
         if root is None:
             return ()
         return root.getiterator(tag)
 
     def find(self, path):
+        """Finds the first toplevel element with given tag. Same as getroot().find(path).
+        """
         self._assertHasRoot()
         root = self.getroot()
         if path[:1] == "/":
@@ -446,6 +455,8 @@ cdef class _ElementTree:
         return root.find(path)
 
     def findtext(self, path, default=None):
+        """Finds the element text for the first toplevel element with given tag. Same as getroot().findtext(path)
+        """
         self._assertHasRoot()
         root = self.getroot()
         if path[:1] == "/":
@@ -453,6 +464,8 @@ cdef class _ElementTree:
         return root.findtext(path, default)
 
     def findall(self, path):
+        """Finds all toplevel elements with the given tag. Same as getroot().findall(path).
+        """
         self._assertHasRoot()
         root = self.getroot()
         if path[:1] == "/":
@@ -574,6 +587,8 @@ cdef class _Element(_NodeBase):
     # MANIPULATORS
 
     def __setitem__(self, Py_ssize_t index, _NodeBase element not None):
+        """Replaces the given subelement.
+        """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
@@ -587,6 +602,8 @@ cdef class _Element(_NodeBase):
         attemptDeallocation(c_node)
 
     def __delitem__(self, Py_ssize_t index):
+        """Deletes the given subelement.
+        """
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
@@ -595,11 +612,16 @@ cdef class _Element(_NodeBase):
         _removeNode(c_node)
 
     def __delslice__(self, Py_ssize_t start, Py_ssize_t stop):
+        """Deletes a number of subelements.
+        """
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, start)
         _deleteSlice(c_node, start, stop)
         
     def __setslice__(self, Py_ssize_t start, Py_ssize_t stop, value):
+        """Replaces a number of subelements with elements
+        from a sequence.
+        """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef _Element mynode
@@ -641,9 +663,14 @@ cdef class _Element(_NodeBase):
         return new_doc.getroot()
 
     def set(self, key, value):
+        """Sets an element attribute.
+        """
         _setAttributeValue(self, key, value)
 
     def append(self, _Element element not None):
+        """
+        Adds a subelement to the end of this element.
+        """
         cdef xmlNode* c_next
         cdef xmlNode* c_node
         c_node = element._c_node
@@ -659,6 +686,10 @@ cdef class _Element(_NodeBase):
         moveNodeToDocument(element, self._doc)
 
     def clear(self):
+        """Resets an element. This function removes all subelements,
+        clears all attributes and sets the text and tail
+        attributes to None.
+        """
         cdef xmlAttr* c_attr
         cdef xmlAttr* c_attr_next
         cdef xmlNode* c_node
@@ -684,6 +715,8 @@ cdef class _Element(_NodeBase):
             c_node = c_node_next
     
     def insert(self, index, _Element element not None):
+        """Inserts a subelement at the given position in this element
+        """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
@@ -696,6 +729,10 @@ cdef class _Element(_NodeBase):
         moveNodeToDocument(element, self._doc)
 
     def remove(self, _Element element not None):
+        """Removes a matching subelement. Unlike the find methods, this
+        method compares elements based on identity, not on tag value
+        or contents.
+        """
         cdef xmlNode* c_node
         c_node = element._c_node
         if c_node.parent is not self._c_node:
@@ -705,6 +742,8 @@ cdef class _Element(_NodeBase):
         
     # PROPERTIES
     property tag:
+        """Element tag
+        """
         def __get__(self):
             if self._tag is not None:
                 return self._tag
@@ -722,6 +761,8 @@ cdef class _Element(_NodeBase):
 
     # not in ElementTree, read-only
     property prefix:
+        """Namespace Prefix or None.
+        """
         def __get__(self):
             if self._c_node.ns is not NULL:
                 if self._c_node.ns.prefix is not NULL:
@@ -729,6 +770,9 @@ cdef class _Element(_NodeBase):
             return None
         
     property attrib:
+        """Element attribute dictionary. Where possible, use
+        get, set, keys and items to access element attributes.
+        """
         def __get__(self):
             # do *NOT* keep a reference here to prevent cyclic dependencies
             # this would free the element in the Cyclic GC, which might let
@@ -736,6 +780,9 @@ cdef class _Element(_NodeBase):
             return _Attrib(self)
 
     property text:
+        """Text before the first subelement. This is either a string or 
+        the value None, if there was no text
+        """
         def __get__(self):
             return _collectText(self._c_node.children)
         
@@ -756,6 +803,10 @@ cdef class _Element(_NodeBase):
                                        c_text_node)
         
     property tail:
+        """Text after this element's end tag, but before the next sibling
+        element's start tag. This is either a string or the value None, if
+        there was no text.
+        """
         def __get__(self):
             return _collectText(self._c_node.next)
            
@@ -775,6 +826,8 @@ cdef class _Element(_NodeBase):
         return "<Element %s at %x>" % (self.tag, id(self))
     
     def __getitem__(self, Py_ssize_t index):
+        """Returns the given subelement.
+        """        
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
@@ -782,6 +835,8 @@ cdef class _Element(_NodeBase):
         return _elementFactory(self._doc, c_node)
 
     def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
+        """Returns a list containing subelements in the given range.
+        """
         cdef xmlNode* c_node
         cdef _Document doc
         cdef Py_ssize_t c
@@ -804,6 +859,8 @@ cdef class _Element(_NodeBase):
         return result
             
     def __len__(self):
+        """Returns the number of subelements.
+        """
         cdef Py_ssize_t c
         cdef xmlNode* c_node
         c = 0
@@ -905,16 +962,25 @@ cdef class _Element(_NodeBase):
             raise ValueError, "list.index(x): x not in list"
 
     def get(self, key, default=None):
+        """Gets an element attribute.
+        """
         return _getAttributeValue(self, key, default)
 
     def keys(self):
+        """Gets a list of attribute names. The names are returned in an arbitrary
+        order (just like for an ordinary Python dictionary).
+        """
         return self.attrib.keys()
 
     def items(self):
+        """Gets element attributes, as a sequence. The attributes are returned in
+        an arbitrary order.
+        """
         return self.attrib.items()
 
     def getchildren(self):
-        "Return a list with all children of this element."
+        """Returns all subelements. The elements are returned in document order.
+        """
         cdef xmlNode* c_node
         cdef _Document doc
         cdef int ret
@@ -930,7 +996,8 @@ cdef class _Element(_NodeBase):
         return result
 
     def getparent(self):
-        "Returns the parent of this element or None for the root element"
+        """Returns the parent of this element or None for the root element.
+        """
         cdef xmlNode* c_node
         c_node = _parentElement(self._c_node)
         if c_node is NULL:
@@ -939,7 +1006,8 @@ cdef class _Element(_NodeBase):
             return _elementFactory(self._doc, c_node)
 
     def getnext(self):
-        "Returns the following sibling of this element or None"
+        """Returns the following sibling of this element or None.
+        """
         cdef xmlNode* c_node
         c_node = _nextElement(self._c_node)
         if c_node is not NULL:
@@ -947,7 +1015,8 @@ cdef class _Element(_NodeBase):
         return None
 
     def getprevious(self):
-        "Returns the preceding sibling of this element or None"
+        """Returns the preceding sibling of this element or None.
+        """
         cdef xmlNode* c_node
         c_node = _previousElement(self._c_node)
         if c_node is not NULL:
@@ -962,7 +1031,8 @@ cdef class _Element(_NodeBase):
         return SiblingsIterator(self, preceding)
 
     def iterancestors(self):
-        "Iterate over the ancestors of this element (from parent to parent)."
+        """Iterate over the ancestors of this element (from parent to parent).
+        """
         return AncestorsIterator(self)
 
     def iterdescendants(self):
@@ -994,7 +1064,8 @@ cdef class _Element(_NodeBase):
         return ElementDepthFirstIterator(self, tag)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
-        "Creates a new element associated with the same document."
+        """Creates a new element associated with the same document.
+        """
         # a little code duplication, but less overhead through doc reuse
         cdef xmlNode*  c_node
         cdef xmlDoc*   c_doc
@@ -1009,15 +1080,23 @@ cdef class _Element(_NodeBase):
         return _elementFactory(doc, c_node)
 
     def find(self, path):
+        """Finds the first matching subelement, by tag name or path.
+        """
         return _elementpath.find(self, path)
 
     def findtext(self, path, default=None):
+        """Finds text for the first matching subelement, by tag name or path.
+        """
         return _elementpath.findtext(self, path, default)
 
     def findall(self, path):
+        """Finds all matching subelements, by tag name or path.
+        """
         return _elementpath.findall(self, path)
 
     def xpath(self, _path, namespaces=None, extensions=None, **_variables):
+        """Evaluate an xpath expression using the element as context node.
+        """
         evaluator = XPathElementEvaluator(self, namespaces, extensions)
         return evaluator.evaluate(_path, **_variables)
 
@@ -1409,6 +1488,8 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
 # module-level API for ElementTree
 
 def Element(_tag, attrib=None, nsmap=None, **_extra):
+    """Element factory. This function returns an object implementing the Element interface.
+    """
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
     cdef _Document doc
@@ -1423,6 +1504,9 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     return _elementFactory(doc, c_node)
 
 def Comment(text=None):
+    """Comment element factory. This factory function creates a special element that will
+    be serialized as an XML comment.
+    """
     cdef _Document doc
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
@@ -1438,6 +1522,9 @@ def Comment(text=None):
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
+    """Subelement factory. This function creates an element instance, and appends it to an
+    existing element.
+    """
     cdef xmlNode*  c_node
     cdef _Document doc
     ns_utf, name_utf = _getNsTag(_tag)
@@ -1450,6 +1537,8 @@ def SubElement(_Element _parent not None, _tag,
     return _elementFactory(doc, c_node)
 
 def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
+    """ElementTree wrapper class.
+    """
     cdef xmlNode* c_next
     cdef xmlNode* c_node
     cdef xmlNode* c_node_copy
@@ -1468,11 +1557,17 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
     return _elementTreeFactory(doc, element)
 
 def HTML(text):
+    """Parses an HTML document from a string constant. This function can be used
+    to embed "HTML literals" in Python code.
+    """
     cdef _Document doc
     doc = _parseMemoryDocument(text, None, __DEFAULT_HTML_PARSER)
     return doc.getroot()
 
 def XML(text):
+    """Parses an XML document from a string constant. This function can be used
+    to embed "XML literals" in Python code.
+    """
     cdef _Document doc
     doc = _parseMemoryDocument(text, None, __DEFAULT_XML_PARSER)
     return doc.getroot()
@@ -1480,6 +1575,8 @@ def XML(text):
 fromstring = XML
 
 cdef class QName:
+    """QName wrapper.
+    """
     cdef readonly object text
     def __init__(self, text_or_uri, tag=None):
         if tag is not None:
@@ -1493,9 +1590,14 @@ cdef class QName:
         return self.text.__hash__()
 
 def iselement(element):
+    """Checks if an object appears to be a valid element object.
+    """
     return isinstance(element, _Element)
 
 def dump(_NodeBase elem not None, pretty_print=True):
+    """Writes an element tree or element structure to sys.stdout. This function
+    should be used for debugging only.
+    """
     _dumpToFile(sys.stdout, elem._c_node, bool(pretty_print))
 
 def tostring(element_or_tree, encoding=None,
