@@ -635,11 +635,7 @@ cdef xmlDoc* _newDoc():
 cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
     cdef xmlDoc* result
     result = tree.xmlCopyDoc(c_doc, recursive)
-    if c_doc.URL is not NULL:
-        # handle a bug in older libxml2 versions
-        if result.URL is not NULL:
-            tree.xmlFree(result.URL)
-        result.URL = tree.xmlStrdup(c_doc.URL)
+    _bugFixURL(c_doc, result)
     __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     return result
 
@@ -648,16 +644,20 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
+    _bugFixURL(c_doc, result)
     __GLOBAL_PARSER_CONTEXT._initDocDict(result)
     c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)
-    if c_doc.URL is not NULL:
-        # handle a bug in older libxml2 versions
-        if result.URL is not NULL:
-            tree.xmlFree(result.URL)
-        result.URL = tree.xmlStrdup(c_doc.URL)
     return result
+
+cdef void _bugFixURL(xmlDoc* c_source_doc, xmlDoc* c_target_doc):
+    """libxml2 <= 2.6.17 had a bug that prevented them from copying the
+    document URL in xmlDocCopy()"""
+    if c_source_doc.URL is not NULL and _LIBXML_VERSION_INT < 20618:
+        if c_target_doc.URL is not NULL:
+            tree.xmlFree(c_target_doc.URL)
+        c_target_doc.URL = tree.xmlStrdup(c_source_doc.URL)
 
 ############################################################
 ## API level helper functions for _Document creation
