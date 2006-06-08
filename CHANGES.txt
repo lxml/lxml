@@ -23,6 +23,9 @@ Features added
 Bugs fixed
 ----------
 
+* Extension function calls in XSLT variable declarations could break the
+  stylesheet and crash on repeated calls
+
 * Deep copying Elements could loose namespaces declared in parents
 
 * Deep copying Elements did not copy tail

@@ -42,7 +42,7 @@ cdef class _BaseContext:
                 for (ns_uri, name), function in extension.items():
                     if name is None:
                         raise ValueError, \
-                              "extensions must have non empty names and namespaces"
+                              "extensions must have non empty names"
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
                     python.PyDict_SetItem(
@@ -109,8 +109,28 @@ cdef class _BaseContext:
     
     # extension functions
 
+    cdef _find_cached_function(self, char* c_ns_uri, char* c_name):
+        """Lookup an extension function in the cache and return it.
+
+        Parameters: c_ns_uri may be NULL, c_name must not be NULL
+        """
+        cdef python.PyObject* c_dict
+        cdef python.PyObject* dict_result
+        if c_ns_uri is NULL:
+            c_dict = <python.PyObject*>self._function_cache
+        else:
+            c_dict = python.PyDict_GetItemString(
+                self._function_cache_ns, c_ns_uri)
+
+        if c_dict is not NULL:
+            dict_result = python.PyDict_GetItemString(<object>c_dict, c_name)
+            if dict_result is not NULL:
+                return <object>dict_result
+        return None
+
     cdef int _prepare_function_call(self, char* c_ns_uri, char* c_name):
         """Find an extension function and store it in 'self._called_function'.
+
         This is absolutely performance-critical for XPath/XSLT!
         Return 1 if it was found, 0 otherwise.
         Parameters: c_ns_uri may be NULL, c_name must not be NULL
@@ -311,15 +331,16 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef _BaseContext context
     rctxt = ctxt.context
     context = <_BaseContext>(rctxt.userData)
-    if context._prepare_function_call(rctxt.functionURI, rctxt.function):
-        _extension_function_call(context, ctxt, nargs)
+    function = context._find_cached_function(rctxt.functionURI, rctxt.function)
+    if function is not None:
+        _extension_function_call(context, function, ctxt, nargs)
     else:
         if rctxt.functionURI is not NULL:
             fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
         else:
             fref = rctxt.function
         print "FAILED", fref
-        xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
+        xpath.xmlXPathErr(ctxt, xpath.XML_XPATH_UNKNOWN_FUNC_ERROR)
         exception = XPathFunctionError("XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)
 
@@ -328,9 +349,9 @@ cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef _BaseContext context
     rctxt = ctxt.context
     context = <_BaseContext>(rctxt.userData)
-    _extension_function_call(context, ctxt, nargs)
+    _extension_function_call(context, context._called_function, ctxt, nargs)
 
-cdef void _extension_function_call(_BaseContext context,
+cdef void _extension_function_call(_BaseContext context, function,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef _NodeBase node
     cdef _Document doc
@@ -346,7 +367,7 @@ cdef void _extension_function_call(_BaseContext context,
             python.PyList_Append(args, o)
         python.PyList_Reverse(args)
 
-        res = context._called_function(None, *args)
+        res = function(None, *args)
         # wrap result for XPath consumption
         obj = _wrapXPathObject(res)
         # prevent Python from deallocating elements handed to libxml2

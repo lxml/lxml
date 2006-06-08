@@ -36,10 +36,14 @@ cdef class _XPathContext(_BaseContext):
 
     def registerVariables(self, variable_dict):
         for name, value in variable_dict.items():
-            self._registerVariable(self._to_utf(name), value)
+            name_utf = self._to_utf(name)
+            xpath.xmlXPathRegisterVariable(
+                self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
 
     def registerVariable(self, name, value):
-        self._registerVariable(self._to_utf(name), value)
+        name_utf = self._to_utf(name)
+        xpath.xmlXPathRegisterVariable(
+            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
