@@ -12,7 +12,6 @@ class XPathSyntaxError(LxmlSyntaxError):
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
     def __init__(self, namespaces, extensions, variables):
-        self._ext_lookup_function = _function_check
         self._variables = variables
         _BaseContext.__init__(self, namespaces, extensions)
         
@@ -24,6 +23,8 @@ cdef class _XPathContext(_BaseContext):
         self._register_context(doc)
         if self._variables is not None:
             self.registerVariables(self._variables)
+        xpath.xmlXPathRegisterFuncLookup(
+            self._xpathCtxt, _function_check, <python.PyObject*>self)
 
     cdef unregister_context(self):
         cdef xpath.xmlXPathContext* xpathCtxt

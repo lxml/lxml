@@ -30,7 +30,7 @@ def Namespace(ns_uri):
         return __NAMESPACE_REGISTRIES[ns_utf]
     except KeyError:
         registry = __NAMESPACE_REGISTRIES[ns_utf] = \
-                   _NamespaceRegistry(ns_uri)
+                   _ClassNamespaceRegistry(ns_uri)
         return registry
 
 def FunctionNamespace(ns_uri):
@@ -45,16 +45,15 @@ def FunctionNamespace(ns_uri):
         return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
     except KeyError:
         registry = __FUNCTION_NAMESPACE_REGISTRIES[ns_utf] = \
-                   _FunctionNamespaceRegistry(ns_uri)
+                   _XPathFunctionNamespaceRegistry(ns_uri)
         return registry
 
 
 cdef class _NamespaceRegistry:
-    "Dictionary-like registry for namespace implementations"
+    "Dictionary-like namespace registry"
     cdef object _ns_uri
     cdef object _ns_uri_utf
-    cdef object _classes
-    cdef object _extensions
+    cdef object _entries
     cdef char* _c_ns_uri_utf
     def __init__(self, ns_uri):
         self._ns_uri = ns_uri
@@ -64,57 +63,78 @@ cdef class _NamespaceRegistry:
         else:
             self._ns_uri_utf = _utf8(ns_uri)
             self._c_ns_uri_utf = _cstr(self._ns_uri_utf)
-        self._classes = {}
-        self._extensions = {}
+        self._entries = {}
 
     def update(self, class_dict_iterable):
-        """Forgivingly update the registry. If registered values are
-        neither subclasses of ElementBase nor callable extension
-        functions, or if their name starts with '_', they will be
-        silently discarded. This allows registrations at the module or
-        class level using vars(), globals() etc."""
-        if hasattr(class_dict_iterable, 'iteritems'):
-            class_dict_iterable = class_dict_iterable.iteritems()
-        elif hasattr(class_dict_iterable, 'items'):
+        """Forgivingly update the registry. If registered values do not match
+        the required type for this registry, or if their name starts with '_',
+        they will be silently discarded. This allows registrations at the
+        module or class level using vars(), globals() etc."""
+        if hasattr(class_dict_iterable, 'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
             if (name is None or name[:1] != '_') and callable(item):
                 self[name] = item
 
-    def __setitem__(self, name, item):
-        if python.PyType_Check(item) and issubclass(item, ElementBase):
-            d = self._classes
-        elif name is None:
-            raise NamespaceRegistryError, "Registered name can only be None for elements."
-        elif callable(item):
-            d = self._extensions
-        else:
-            raise NamespaceRegistryError, "Registered item must be callable."
-
-        if name is None:
-            name_utf = None
-        else:
-            name_utf = _utf8(name)
-        d[name_utf] = item
-
     def __getitem__(self, name):
+        if name is not None:
+            name = _utf8(name)
+        return self._get(name)
+
+    cdef object _get(self, object name):
         cdef python.PyObject* dict_result
-        name_utf = _utf8(name)
-        dict_result = python.PyDict_GetItem(self._classes, name_utf)
-        if dict_result is NULL:
-            dict_result = python.PyDict_GetItem(self._extensions, name_utf)
+        dict_result = python.PyDict_GetItem(self._entries, name)
         if dict_result is NULL:
             raise KeyError, "Name not registered."
         return <object>dict_result
 
+    cdef object _getForString(self, char* name):
+        cdef python.PyObject* dict_result
+        dict_result = python.PyDict_GetItemString(self._entries, name)
+        if dict_result is NULL:
+            raise KeyError, "Name not registered."
+        return <object>dict_result
+
+    def __iter__(self):
+        return iter(self._entries)
+
+    def items(self):
+        return self._entries.items()
+
+    def iteritems(self):
+        return self._entries.iteritems()
+
     def clear(self):
-        self._classes.clear()
-        self._extensions.clear()
+        self._entries.clear()
+
+cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
+    "Dictionary-like registry for namespace implementation classes"
+    def __setitem__(self, name, item):
+        if not python.PyType_Check(item) or \
+               not issubclass(item, ElementBase):
+            raise NamespaceRegistryError, \
+                  "Registered item must be subtypes of ElementBase"
+        if name is not None:
+            name = _utf8(name)
+        self._entries[name] = item
 
     def __repr__(self):
         return "Namespace(%r)" % self._ns_uri
 
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
+    def __setitem__(self, name, item):
+        if not callable(item):
+            raise NamespaceRegistryError, \
+                  "Registered functions must be callable."
+        if not name:
+            raise ValueError, \
+                  "extensions must have non empty names"
+        self._entries[_utf8(name)] = item
+
+    def __repr__(self):
+        return "FunctionNamespace(%r)" % self._ns_uri
+
+cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
     cdef object _prefix
     cdef object _prefix_utf
     property prefix:
@@ -129,34 +149,20 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
             self._prefix_utf = _utf8(prefix)
             self._prefix = prefix
 
-    def __setitem__(self, name, function):
-        if not callable(function):
-            raise NamespaceRegistryError, "Registered function must be callable."
-        if name is None:
-            name_utf = None
-        else:
-            name_utf = _utf8(name)
-        self._extensions[name_utf] = function
-
-    def __getitem__(self, name):
-        cdef python.PyObject* dict_result
-        name_utf = _utf8(name)
-        dict_result = python.PyDict_GetItem(self._extensions, name_utf)
-        if dict_result is NULL:
-            raise KeyError, "Name not registered."
-        return <object>dict_result
-
-    def __repr__(self):
-        return "FunctionNamespace(%r)" % self._ns_uri
-
 cdef object _find_all_extension_prefixes():
     "Internal lookup function to find all function prefixes for XSLT/XPath."
-    cdef _FunctionNamespaceRegistry registry
+    cdef _XPathFunctionNamespaceRegistry registry
     ns_prefixes = {}
     for (ns_utf, registry) in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
         if registry._prefix_utf is not None:
             ns_prefixes[registry._prefix_utf] = ns_utf
     return ns_prefixes
+
+cdef object _iter_extension_function_names():
+    l = []
+    for (ns_utf, registry) in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
+        python.PyList_Append(l, (ns_utf, registry))
+    return l
 
 cdef object _find_extension(ns_uri_utf, name_utf):
     cdef python.PyObject* dict_result
@@ -164,7 +170,7 @@ cdef object _find_extension(ns_uri_utf, name_utf):
         __FUNCTION_NAMESPACE_REGISTRIES, ns_uri_utf)
     if dict_result is NULL:
         return None
-    extensions = (<_NamespaceRegistry>dict_result)._extensions
+    extensions = (<_NamespaceRegistry>dict_result)._entries
     dict_result = python.PyDict_GetItem(extensions, name_utf)
     if dict_result is NULL:
         return None
@@ -185,7 +191,7 @@ cdef object _find_element_class(char* c_namespace_utf,
         return _Element
 
     registry = <_NamespaceRegistry>dict_result
-    classes = registry._classes
+    classes = registry._entries
 
     if c_element_name_utf is not NULL:
         dict_result = python.PyDict_GetItemString(

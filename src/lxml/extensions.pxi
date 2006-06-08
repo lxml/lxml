@@ -14,7 +14,6 @@ class XPathResultError(XPathError):
 
 cdef class _BaseContext:
     cdef xpath.xmlXPathContext* _xpathCtxt
-    cdef xpath.xmlXPathFuncLookupFunc _ext_lookup_function
     cdef _Document _doc
     cdef object _extensions
     cdef object _namespaces
@@ -41,6 +40,9 @@ cdef class _BaseContext:
             new_extensions = {}
             for extension in extensions:
                 for (ns_uri, name), function in extension.items():
+                    if name is None:
+                        raise ValueError, \
+                              "extensions must have non empty names and namespaces"
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
                     python.PyDict_SetItem(
@@ -77,8 +79,6 @@ cdef class _BaseContext:
         namespaces = self._namespaces
         if namespaces is not None:
             self.registerNamespaces(namespaces)
-        xpath.xmlXPathRegisterFuncLookup(
-            self._xpathCtxt, self._ext_lookup_function, <python.PyObject*>self)
 
     cdef _unregister_context(self):
         xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
@@ -318,6 +318,7 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
             fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
         else:
             fref = rctxt.function
+        print "FAILED", fref
         xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
         exception = XPathFunctionError("XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)

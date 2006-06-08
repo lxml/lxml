@@ -183,7 +183,6 @@ cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     def __init__(self, namespaces, extensions):
         self._xsltCtxt = NULL
-        self._ext_lookup_function = _xslt_function_check
         if extensions and None in extensions:
             raise XSLTExtensionError, "extensions must not have empty namespaces"
         _BaseContext.__init__(self, namespaces, extensions)
@@ -194,6 +193,7 @@ cdef class _XSLTContext(_BaseContext):
         self._set_xpath_context(xsltCtxt.xpathCtxt)
         self._register_context(doc)
         xsltCtxt.xpathCtxt.userData = <void*>self
+        self._registerExtensionFunctions()
 
     cdef free_context(self):
         cdef xslt.xsltTransformContext* xsltCtxt
@@ -205,10 +205,43 @@ cdef class _XSLTContext(_BaseContext):
         xslt.xsltFreeTransformContext(xsltCtxt)
         self._release_temp_refs()
 
-    cdef _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
+    cdef void _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
         if self._extensions is None:
             self._extensions = {}
         python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
+
+    cdef void _registerExtensionFunctions(self):
+        cdef python.PyObject* dict_result
+        if self._extensions is not None:
+            for (ns_utf, name_utf), function in self._extensions.iteritems():
+                if ns_utf is None:
+                    raise ValueError, \
+                          "extensions must have non empty namespaces"
+                dict_result = python.PyDict_GetItem(
+                    self._function_cache_ns, ns_utf)
+                if dict_result is NULL:
+                    d = {}
+                    python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
+                else:
+                    d = <object>dict_result
+                python.PyDict_SetItem(d, name_utf, function)
+                xslt.xsltRegisterExtFunction(
+                    self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
+                    _xpath_function_call)
+        for ns_utf, functions in _iter_extension_function_names():
+            if ns_utf is None:
+                continue
+            dict_result = python.PyDict_GetItem(self._function_cache_ns, ns_utf)
+            if dict_result is NULL:
+                d = {}
+                python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
+            else:
+                d = <object>dict_result
+            for name_utf, function in functions.iteritems():
+                python.PyDict_SetItem(d, name_utf, function)
+                xslt.xsltRegisterExtFunction(
+                    self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
+                    _xpath_function_call)
 
 cdef class _ExsltRegExp # forward declaration
 
@@ -258,7 +291,8 @@ cdef class XSLT:
         self._context = _XSLTContext(None, extensions)
         self._error_log = _ErrorLog()
         if regexp:
-            self._regexp  = _ExsltRegExp()
+            self._regexp = _ExsltRegExp()
+            self._regexp._register_in_context(self._context)
         else:
             self._regexp  = None
         # XXX is it worthwile to use xsltPrecomputeStylesheet here?
@@ -332,9 +366,6 @@ cdef class XSLT:
             params = NULL
 
         self._context.register_context(transform_ctxt, input_doc)
-        if self._regexp is not None:
-            self._regexp._register_in_context(self._context)
-
         c_result = xslt.xsltApplyStylesheetUser(self._c_style, c_doc, params,
                                                 NULL, NULL, transform_ctxt)
 
