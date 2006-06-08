@@ -5,6 +5,7 @@ def publish(dirname, lxml_path, release):
         os.mkdir(dirname)
 
     doc_dir = os.path.join(lxml_path, 'doc')
+    script = os.path.join(doc_dir, 'rest2html.py')
     stylesheet_url = 'style.css'
 
     for name in ['main.txt', 'intro.txt', 'api.txt', 'compatibility.txt',
@@ -14,21 +15,22 @@ def publish(dirname, lxml_path, release):
         outname = os.path.splitext(name)[0] + '.html'
         outpath = os.path.join(dirname, outname)
 
-        rest2html(path, outpath, stylesheet_url)
+        rest2html(script, path, outpath, stylesheet_url)
     # also convert INSTALL.txt and CHANGES.txt
-    rest2html(os.path.join(lxml_path, 'INSTALL.txt'),
+    rest2html(script,
+              os.path.join(lxml_path, 'INSTALL.txt'),
               os.path.join(dirname, 'installation.html'),
               stylesheet_url)
-    rest2html(os.path.join(lxml_path, 'CHANGES.txt'),
+    rest2html(script,
+              os.path.join(lxml_path, 'CHANGES.txt'),
               os.path.join(dirname, 'changes-%s.html' % release),
               stylesheet_url)
     os.rename(os.path.join(dirname, 'main.html'),
               os.path.join(dirname, 'index.html'))
 
-def rest2html(source_path, dest_path, stylesheet_url):
-
-    command = ('rest2html --stylesheet=%s --link-stylesheet %s > %s' %
-               (stylesheet_url, source_path, dest_path))
+def rest2html(script, source_path, dest_path, stylesheet_url):
+    command = ('%s --stylesheet=%s --link-stylesheet %s > %s' %
+               (script, stylesheet_url, source_path, dest_path))
     os.system(command)
 
 if __name__ == '__main__':
