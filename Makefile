@@ -1,4 +1,5 @@
 PYTHON?=python
+PYFLAKES=pyflakes
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
@@ -32,6 +33,10 @@ ftest_inplace: inplace
 html:
 	mkdir -p doc/html
 	$(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
+
+# run pyflakes on all python files (`easy_install pyflakes` first)
+lint:
+	$(PYFLAKES) .
 
 # XXX What should the default be?
 test: test_inplace
