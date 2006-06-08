@@ -205,29 +205,13 @@ cdef class _XSLTContext(_BaseContext):
         xslt.xsltFreeTransformContext(xsltCtxt)
         self._release_temp_refs()
 
-    cdef void _registerLocalExtensionFunction(self, ns_utf, name_utf, function):
+    cdef void _addLocalExtensionFunction(self, ns_utf, name_utf, function):
         if self._extensions is None:
             self._extensions = {}
         python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
 
     cdef void _registerExtensionFunctions(self):
         cdef python.PyObject* dict_result
-        if self._extensions is not None:
-            for (ns_utf, name_utf), function in self._extensions.iteritems():
-                if ns_utf is None:
-                    raise ValueError, \
-                          "extensions must have non empty namespaces"
-                dict_result = python.PyDict_GetItem(
-                    self._function_cache_ns, ns_utf)
-                if dict_result is NULL:
-                    d = {}
-                    python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
-                else:
-                    d = <object>dict_result
-                python.PyDict_SetItem(d, name_utf, function)
-                xslt.xsltRegisterExtFunction(
-                    self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
-                    _xpath_function_call)
         for ns_utf, functions in _iter_extension_function_names():
             if ns_utf is None:
                 continue
@@ -242,6 +226,26 @@ cdef class _XSLTContext(_BaseContext):
                 xslt.xsltRegisterExtFunction(
                     self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
                     _xpath_function_call)
+        if self._extensions is None:
+            return # done
+        last_ns = None
+        for (ns_utf, name_utf), function in self._extensions.iteritems():
+            if ns_utf is None:
+                raise ValueError, \
+                      "extensions must have non empty namespaces"
+            elif ns_utf is not last_ns:
+                last_ns = ns_utf
+                dict_result = python.PyDict_GetItem(
+                    self._function_cache_ns, ns_utf)
+                if dict_result is NULL:
+                    d = {}
+                    python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
+                else:
+                    d = <object>dict_result
+            python.PyDict_SetItem(d, name_utf, function)
+            xslt.xsltRegisterExtFunction(
+                self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
+                _xpath_function_call)
 
 cdef class _ExsltRegExp # forward declaration
 
@@ -546,6 +550,6 @@ cdef class _ExsltRegExp:
 
     cdef _register_in_context(self, _XSLTContext context):
         ns = "http://exslt.org/regular-expressions"
-        context._registerLocalExtensionFunction(ns, "test",    self.test)
-        context._registerLocalExtensionFunction(ns, "match",   self.match)
-        context._registerLocalExtensionFunction(ns, "replace", self.replace)
+        context._addLocalExtensionFunction(ns, "test",    self.test)
+        context._addLocalExtensionFunction(ns, "match",   self.match)
+        context._addLocalExtensionFunction(ns, "replace", self.replace)
