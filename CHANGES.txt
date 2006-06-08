@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Repeated calls to Element.attrib now efficiently return the same instance
+
 * Element iteration over XPath axes:
 
   * Element.iterdescendants() iterates over the descendants of an element

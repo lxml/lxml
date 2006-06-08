@@ -580,6 +580,7 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
 
 cdef class _Element(_NodeBase):
     cdef object _tag
+    cdef object _attrib
     def _init(self):
         """Called after object initialisation.  Custom subclasses may override
         this if they recursively call _init() in the superclasses.
@@ -775,10 +776,9 @@ cdef class _Element(_NodeBase):
         get, set, keys and items to access element attributes.
         """
         def __get__(self):
-            # do *NOT* keep a reference here to prevent cyclic dependencies
-            # this would free the element in the Cyclic GC, which might let
-            # Python deallocate the document before the element!
-            return _Attrib(self)
+            if self._attrib is None:
+                self._attrib = _Attrib(self)
+            return self._attrib
 
     property text:
         """Text before the first subelement. This is either a string or 
