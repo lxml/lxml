@@ -431,6 +431,16 @@ class BenchMark(BenchMarkBase):
             for i in repeat:
                 child.text
 
+    def bench_set_text(self, root):
+        text = _TEXT
+        for child in root:
+            child.text = text
+
+    def bench_set_utext(self, root):
+        text = _UTEXT
+        for child in root:
+            child.text = text
+
     @onlylib('lxe')
     def bench_index(self, root):
         for child in root:
@@ -457,6 +467,9 @@ class BenchMark(BenchMarkBase):
 
     def bench_getiterator_tag_all(self, root):
         list(root.getiterator(self.SEARCH_TAG))
+
+    def bench_getiterator_tag_text(self, root):
+        [ e.text for e in root.getiterator(self.SEARCH_TAG) ]
 
     def bench_findall(self, root):
         root.findall(".//*")
