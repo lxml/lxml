@@ -168,7 +168,8 @@ cdef void moveNodeToDocument(_NodeBase node, _Document doc):
     tree below (including the current node). It also reconciliates
     namespaces so they're correct inside the new environment.
     """
-    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
+    _fixNamespaces(doc, node._c_node)
+    #tree.xmlReconciliateNs(doc._c_doc, node._c_node)
     if node._doc is not doc:
         node._doc = doc
         changeDocumentBelow(node._c_node, doc)

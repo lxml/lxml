@@ -54,7 +54,9 @@ cdef extern from "Python.h":
     cdef int PyObject_SetAttr(object o, object name, object value)
 
     cdef void* PyMem_Malloc(size_t size)
+    cdef void* PyMem_Realloc(void* p, size_t size)
     cdef void PyMem_Free(void* p)
+    cdef object PyErr_NoMemory()
 
 cdef extern from "etree.h": # redefines some functions as macros
     cdef int _isString(object obj)
