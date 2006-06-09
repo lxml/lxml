@@ -7,8 +7,6 @@ current
 Features added
 --------------
 
-* Repeated calls to Element.attrib now efficiently return the same instance
-
 * Element iteration over XPath axes:
 
   * Element.iterdescendants() iterates over the descendants of an element
@@ -21,6 +19,18 @@ Features added
 
 * Element.getnext() and Element.getprevious() return the direct siblings of an
   element
+
+Bugs fixed
+----------
+
+
+1.0.1 (2006-06-09)
+==================
+
+Features added
+--------------
+
+* Repeated calls to Element.attrib now efficiently return the same instance
 
 Bugs fixed
 ----------
