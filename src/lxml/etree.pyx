@@ -527,7 +527,7 @@ cdef class _ElementTree:
         return schema.validate(self)
 
     def xmlschema(self, xmlschema):
-        """Validate this document using other doucment.
+        """Validate this document using other document.
 
         xmlschema is a tree that should contain XML Schema XML.
 
@@ -543,15 +543,17 @@ cdef class _ElementTree:
         return schema.validate(self)
 
     def xinclude(self):
-        """Process this document, including using XInclude.
+        """Process the XInclude nodes in this document and include the
+        referenced XML fragments.
         """
         cdef int result
-        # XXX what happens memory-wise with the original XInclude nodes?
-        # they seem to be still accessible if a reference to them has
-        # been made previously, but I have no idea whether they get freed
-        # at all. The XInclude nodes appear to be still being in the same
-        # parent and same document, but they must not be connected to the
-        # tree..
+        # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
+        # the XInclude nodes - there may still be Python references to them!
+        # Therefore, we allow XInclude nodes to be converted to
+        # XML_XINCLUDE_START nodes.  XML_XINCLUDE_END nodes are added as
+        # siblings.  Tree traversal will simply ignore them as they are not
+        # typed as elements.  The included fragment is added between the two,
+        # i.e. as a sibling, which does not conflict with traversal.
         self._assertHasRoot()
         result = xinclude.xmlXIncludeProcessTree(self._context_node._c_node)
         if result == -1:
