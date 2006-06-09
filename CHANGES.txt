@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Parsers enable the COMPACT option that parses faster and reduces the memory
+  footprint for small text nodes
+
 * Element iteration over XPath axes:
 
   * Element.iterdescendants() iterates over the descendants of an element

@@ -10,9 +10,9 @@ cdef extern from "libxml/HTMLparser.h":
         HTML_PARSE_PEDANTIC   # pedantic error reporting
         HTML_PARSE_NOBLANKS   # remove blank nodes
         HTML_PARSE_NONET      # Forbid network access
-# libxml2 2.6.21+ only:
-#        HTML_PARSE_RECOVER    # Relaxed parsing
-#        HTML_PARSE_COMPACT    # compact small text nodes
+	# libxml2 2.6.21+ only:
+        HTML_PARSE_RECOVER    # Relaxed parsing
+        HTML_PARSE_COMPACT    # compact small text nodes
 
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(char* buffer, int size)
     cdef xmlParserCtxt* htmlCreateFileParserCtxt(char* filename, char* encoding)

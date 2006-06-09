@@ -45,7 +45,7 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_NOCDATA = 16384 # merge CDATA as text nodes
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
         # libxml2 2.6.21+ only:
-        #XML_PARSE_COMPACT = 65536 # compact small text nodes
+        XML_PARSE_COMPACT = 65536 # compact small text nodes
 
     cdef void xmlInitParser()
     cdef int xmlLineNumbersDefault(int onoff)
