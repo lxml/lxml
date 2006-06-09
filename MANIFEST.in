@@ -5,5 +5,6 @@ include MANIFEST.in version.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py etree.c etree.h
 recursive-include src/lxml/tests *.rng *.xslt *.xml
-recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc mkhtml.py
+recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc
+recursive-include doc mkhtml.py rest2html.py
 exclude doc/pyrex.txt
