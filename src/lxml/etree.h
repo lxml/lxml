@@ -17,11 +17,13 @@
 #endif
 
 /* XML_PARSE_COMPACT was added in libxml2 2.6.21 */
+/*
 #include "libxml/xmlversion.h"
 #if LIBXML_VERSION < 20621
 #define XML_PARSE_COMPACT  0
 #define HTML_PARSE_COMPACT 0
 #endif
+*/
 
 /* Redefinition of some Python builtins as C functions */
 #define isinstance(o,c) PyObject_IsInstance(o,c)

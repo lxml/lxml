@@ -437,7 +437,6 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 cdef int _XML_DEFAULT_PARSE_OPTIONS
 _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NOENT |
-    xmlparser.XML_PARSE_COMPACT |
     xmlparser.XML_PARSE_NOCDATA
     )
 
@@ -561,7 +560,7 @@ def get_default_parser():
 ############################################################
 
 cdef int _HTML_DEFAULT_PARSE_OPTIONS
-_HTML_DEFAULT_PARSE_OPTIONS = htmlparser.HTML_PARSE_COMPACT # 0
+_HTML_DEFAULT_PARSE_OPTIONS = 0
 
 cdef class HTMLParser(_BaseParser):
     """The HTML parser.  This parser allows reading HTML into a normal XML
