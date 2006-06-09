@@ -283,7 +283,7 @@ cdef void _fixNamespaces(_Document doc, xmlNode* c_element):
     cdef xmlNs** c_ns_new_cache
     cdef xmlNs** c_ns_old_cache
     cdef xmlNs* c_ns
-    cdef python.size_t i, c_cache_size, c_cache_last
+    cdef cstd.size_t i, c_cache_size, c_cache_last
 
     c_doc = doc._c_doc
     c_start_node = c_element
@@ -302,7 +302,7 @@ cdef void _fixNamespaces(_Document doc, xmlNode* c_element):
                     c_ns = NULL
                     break
             if c_ns is not NULL:
-                # not in cache, must find a replacement from this document
+                # not in cache, must find a replacement from *this* document
                 c_ns = doc._findOrBuildNodeNs(c_element, c_ns.href)
                 if c_ns is NULL:
                     python.PyMem_Free(c_ns_old_cache)
