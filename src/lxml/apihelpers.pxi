@@ -276,6 +276,10 @@ cdef void _fixNamespaces(_Document doc, xmlNode* c_element):
     """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Mainly copied from libxml2's xmlReconciliateNs, except for certain bugs.
+
+    Note that this function does not currently traverse XINCLUDE_START nodes,
+    which *might* also contain namespace definitions (as well as the children
+    they *might* have).
     """
     cdef xmlDoc* c_doc
     cdef xmlNode* c_node
