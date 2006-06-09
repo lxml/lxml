@@ -278,7 +278,6 @@ cdef void _fixNamespaces(_Document doc, xmlNode* c_element):
     Mainly copied from libxml2's xmlReconciliateNs, except for certain bugs.
     """
     cdef xmlDoc* c_doc
-    cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlNs** c_ns_new_cache
     cdef xmlNs** c_ns_old_cache
@@ -286,7 +285,6 @@ cdef void _fixNamespaces(_Document doc, xmlNode* c_element):
     cdef cstd.size_t i, c_cache_size, c_cache_last
 
     c_doc = doc._c_doc
-    c_start_node = c_element
     c_ns_new_cache = NULL
     c_ns_old_cache = NULL
     c_cache_size = 0
