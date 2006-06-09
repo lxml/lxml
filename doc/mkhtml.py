@@ -1,4 +1,4 @@
-import os, sys
+import os, shutil, sys
 
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
@@ -6,7 +6,10 @@ def publish(dirname, lxml_path, release):
 
     doc_dir = os.path.join(lxml_path, 'doc')
     script = os.path.join(doc_dir, 'rest2html.py')
+    pubkey = os.path.join(doc_dir, 'pubkey.asc')
     stylesheet_url = 'style.css'
+
+    shutil.copy(pubkey, dirname)
 
     for name in ['main.txt', 'intro.txt', 'api.txt', 'compatibility.txt',
                  'extensions.txt', 'namespace_extensions.txt', 'sax.txt',
