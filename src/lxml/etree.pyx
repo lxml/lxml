@@ -772,8 +772,8 @@ cdef class _Element(_NodeBase):
             return None
         
     property attrib:
-        """Element attribute dictionary. Where possible, use
-        get, set, keys and items to access element attributes.
+        """Element attribute dictionary. Where possible, use get(), set(),
+        keys() and items() to access element attributes.
         """
         def __get__(self):
             if self._attrib is None:
@@ -782,7 +782,7 @@ cdef class _Element(_NodeBase):
 
     property text:
         """Text before the first subelement. This is either a string or 
-        the value None, if there was no text
+        the value None, if there was no text.
         """
         def __get__(self):
             return _collectText(self._c_node.children)
