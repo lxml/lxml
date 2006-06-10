@@ -66,6 +66,7 @@ cdef class XMLSchema(_Validator):
 
         Returns true if document is valid, false if not.
         """
+        cdef python.PyThreadState* state
         cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
         cdef _Document doc
         cdef _NodeBase root_node
@@ -77,12 +78,20 @@ cdef class XMLSchema(_Validator):
 
         self._error_log.connect()
         valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)
+        if valid_ctxt is NULL:
+            self._error_log.disconnect()
+            raise XMLSchemaError, "Failed to create validation context"
+
+        state = python.PyEval_SaveThread()
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
+
+        python.PyEval_RestoreThread(state)
+
         self._error_log.disconnect()
         if ret == -1:
             raise XMLSchemaValidateError, "Internal error in XML Schema validation."
