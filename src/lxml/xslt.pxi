@@ -31,7 +31,7 @@ cdef void _logLibxsltErrors():
 # xsltStylesheet->doc->_private
 #    == _XSLTResolverContext for XSL stylesheet
 #
-# xsltTransformContext->document->doc->_private
+# xsltTransformContext->_private
 #    == _XSLTResolverContext for transformed document
 #
 ################################################################################
@@ -48,51 +48,30 @@ cdef class _XSLTResolverContext(_ResolverContext):
         self._parser = parser
         self._c_style_doc = NULL
 
-cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
-                         void* c_ctxt, xslt.xsltLoadType c_type):
+cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
     cdef xmlDoc* c_doc
-    cdef _ResolverRegistry resolvers
-    cdef _InputDocument doc_ref
-    cdef _XSLTResolverContext xslt_resolver_context
-    cdef _XSLTResolverContext doc_resolver_context
-    cdef _XSLTResolverContext resolver_context
-    cdef XMLParser parser
-    cdef python.PyGILState_STATE gil_state
-    # find resolver contexts of stylesheet and transformed doc
-    c_doc = NULL
-    doc_resolver_context = None
-    if c_type == xslt.XSLT_LOAD_DOCUMENT:
-        c_doc = (<xslt.xsltTransformContext*>c_ctxt).document.doc
-        if c_doc is not NULL and c_doc._private is not NULL:
-            #if isinstance(<object>c_doc._private, _XSLTResolverContext):
-            doc_resolver_context = <_XSLTResolverContext>c_doc._private
-        c_doc = (<xslt.xsltTransformContext*>c_ctxt).style.doc
-    elif c_type == xslt.XSLT_LOAD_STYLESHEET:
-        c_doc = (<xslt.xsltStylesheet*>c_ctxt).doc
-
-    if c_doc is NULL or c_doc._private is NULL:
-        #or not isinstance(<object>c_doc._private, _XSLTResolverContext):
-        # can't call Python without context, fall back to default loader
-        return XSLT_DOC_DEFAULT_LOADER(
-            c_uri, c_dict, parse_options, c_ctxt, c_type)
-
-    xslt_resolver_context = <_XSLTResolverContext>c_doc._private
-
-    # quick check if we are looking for the current stylesheet
-    c_doc = xslt_resolver_context._c_style_doc
+    c_doc = (<_XSLTResolverContext>context)._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
         if cstd.strcmp(c_uri, c_doc.URL) == 0:
-            return _copyDoc(c_doc, 1)
+            return c_doc
+    return NULL
 
+cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* context,
+                                       int parse_options, int* error):
     # call the Python document loaders
-    gil_state = python.PyGILState_Ensure()
-    c_doc = NULL
-    resolver_context = xslt_resolver_context # currently use only XSLT resolvers
+    cdef _XSLTResolverContext resolver_context
+    cdef _ResolverRegistry resolvers
+    cdef _InputDocument doc_ref
+    cdef xmlDoc* c_doc
+
+    error[0] = 0
+    resolver_context = <_XSLTResolverContext>context
     resolvers = resolver_context._resolvers
     try:
         uri = funicode(c_uri)
         doc_ref = resolvers.resolve(uri, None, resolver_context)
 
+        c_doc = NULL
         if doc_ref is not None:
             if doc_ref._type == PARSER_DATA_EMPTY:
                 c_doc = _newDoc()
@@ -111,33 +90,66 @@ cdef xmlDoc* _doc_loader(char* c_uri, tree.xmlDict* c_dict, int parse_options,
                     resolver_context)
             if c_doc is not NULL and c_doc.URL is NULL:
                 c_doc.URL = tree.xmlStrdup(c_uri)
-
+        return c_doc
     except:
-        xslt_resolver_context._store_raised()
-        python.PyGILState_Release(gil_state)
+        resolver_context._store_raised()
+        error[0] = 1
         return NULL
 
-    if c_doc is NULL:
+cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
+                                         xslt.xsltLoadType c_type):
+    message = "Cannot resolve URI %s" % funicode(c_uri)
+    if c_type == xslt.XSLT_LOAD_DOCUMENT:
+        exception = XSLTApplyError(message)
+    else:
+        exception = XSLTParseError(message)
+    (<_XSLTResolverContext>context)._store_exception(exception)
+
+cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
+                              int parse_options, void* c_ctxt,
+                              xslt.xsltLoadType c_type):
+    # no Python objects here, may be called without thread context !
+    # when we declare a Python object, Pyrex will INCREF(None) !
+    cdef xmlDoc* c_doc
+    cdef xmlDoc* result
+    cdef void* c_pcontext
+    cdef int error
+    cdef python.PyGILState_STATE gil_state
+    # find resolver contexts of stylesheet and transformed doc
+    if c_type == xslt.XSLT_LOAD_DOCUMENT:
+        # transformation time
+        c_pcontext = (<xslt.xsltTransformContext*>c_ctxt)._private
+    elif c_type == xslt.XSLT_LOAD_STYLESHEET:
+        # include/import resolution while parsing
+        c_pcontext = (<xslt.xsltStylesheet*>c_ctxt).doc._private
+    else:
+        c_pcontext = NULL
+
+    if c_pcontext is NULL:
+        # can't call Python without context, fall back to default loader
+        return XSLT_DOC_DEFAULT_LOADER(
+            c_uri, c_dict, parse_options, c_ctxt, c_type)
+
+    gil_state = python.PyGILState_Ensure()
+    c_doc = _xslt_resolve_stylesheet(c_uri, c_pcontext)
+    if c_doc is not NULL:
+        python.PyGILState_Release(gil_state)
+        return _copyDoc(c_doc, 1)
+
+    c_doc = _xslt_resolve_from_python(c_uri, c_pcontext, parse_options, &error)
+    if c_doc is NULL and not error:
         c_doc = XSLT_DOC_DEFAULT_LOADER(
             c_uri, c_dict, parse_options, c_ctxt, c_type)
         if c_doc is NULL:
-            message = "Cannot resolve URI %s" % funicode(c_uri)
-            if c_type == xslt.XSLT_LOAD_DOCUMENT:
-                exception = XSLTApplyError(message)
-            else:
-                exception = XSLTParseError(message)
-            xslt_resolver_context._store_exception(exception)
-            python.PyGILState_Release(gil_state)
-            return NULL
+            _xslt_store_resolver_exception(c_uri, c_pcontext, c_type)
+
     python.PyGILState_Release(gil_state)
-    if c_doc is not NULL and c_doc._private is NULL:
-        c_doc._private = <python.PyObject*>xslt_resolver_context
     return c_doc
 
 cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER
 XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
 
-xslt.xsltSetLoaderFunc(_doc_loader)
+xslt.xsltSetLoaderFunc(_xslt_doc_loader)
 
 ################################################################################
 # XSLT file/network access control
@@ -295,6 +307,7 @@ cdef class XSLT:
             tree.xmlFreeDoc(c_doc)
             self._xslt_resolver_context._raise_if_stored()
             raise XSLTParseError, "Cannot parse style sheet"
+        c_doc._private = NULL # no longer used!
         self._c_style = c_style
 
         self._context = _XSLTContext(None, extensions)
@@ -326,7 +339,6 @@ cdef class XSLT:
         cdef xmlDoc* c_result
         cdef xmlDoc* c_doc
         cdef char** params
-        cdef void* ptemp
         cdef Py_ssize_t i, kw_count
 
         input_doc = _documentOrRaise(_input)
@@ -349,8 +361,7 @@ cdef class XSLT:
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
 
-        ptemp = c_doc._private # store original _private pointer!
-        c_doc._private = <python.PyObject*>resolver_context
+        transform_ctxt._private = <python.PyObject*>self._xslt_resolver_context
 
         kw_count = python.PyDict_Size(_kw)
         if kw_count > 0:
@@ -383,7 +394,6 @@ cdef class XSLT:
             python.PyMem_Free(params)
 
         self._context.free_context()
-        c_doc._private = ptemp # restore _private before _destroyFakeDoc!
         _destroyFakeDoc(input_doc._c_doc, c_doc)
 
         self._error_log.disconnect()

@@ -19,6 +19,7 @@ cdef extern from "libxslt/xsltInternals.h":
         xsltStylesheet* style
         xmlXPathContext* xpathCtxt
         xsltDocument* document
+        void* _private
 
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc)
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet)
