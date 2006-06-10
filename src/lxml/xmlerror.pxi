@@ -298,14 +298,18 @@ def useGlobalPythonLog(PyErrorLog log not None):
 # local log function: forward error to logger object
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):
     cdef _ErrorLog log_handler
+    cdef python.PyGILState_STATE gil_state
     if __DEBUG != 0:
+        gil_state = python.PyGILState_Ensure()
         if c_log_handler is not NULL:
             log_handler = <_ErrorLog>c_log_handler
         else:
             log_handler = __GLOBAL_ERROR_LOG
         log_handler._receive(error)
+        python.PyGILState_Release(gil_state)
 
 cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
+    cdef python.PyGILState_STATE gil_state
     cdef cstd.va_list args
     cdef _ErrorLog log_handler
     cdef char* c_text
@@ -314,11 +318,6 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
     cdef int c_line
     if __DEBUG == 0 or msg == NULL or cstd.strlen(msg) < 10:
         return
-    if c_log_handler is not NULL:
-        log_handler = <_ErrorLog>c_log_handler
-    else:
-        log_handler = __GLOBAL_ERROR_LOG
-
     cstd.va_start(args, msg)
     if cstd.strncmp(msg, '%s:', 3) == 0:
         c_text = cstd.va_charptr(args)
@@ -338,6 +337,7 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
         c_element = NULL
     cstd.va_end(args)
 
+    gil_state = python.PyGILState_Ensure()
     try:
         if c_text is NULL:
             message = None
@@ -360,10 +360,16 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
     except UnicodeDecodeError:
         filename = "<undecodable filename>"
 
+    if c_log_handler is not NULL:
+        log_handler = <_ErrorLog>c_log_handler
+    else:
+        log_handler = __GLOBAL_ERROR_LOG
+
     log_handler._receiveGeneric(xmlerror.XML_FROM_XSLT,
                                 xmlerror.XML_ERR_OK,
                                 xmlerror.XML_ERR_ERROR,
                                 c_line, message, filename)
+    python.PyGILState_Release(gil_state)
 
 # dummy function: no debug output at all
 cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):

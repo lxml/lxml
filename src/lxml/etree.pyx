@@ -23,6 +23,12 @@ import sys
 cdef object re
 import re
 
+cdef object thread
+try:
+    import thread
+except ImportError:
+    pass
+
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
@@ -146,18 +152,18 @@ cdef class _ExceptionContext:
     cdef void _store_exception(self, exception):
         self._exc_info = (exception, None, None)
 
-    cdef _has_raised(self):
+    cdef int _has_raised(self):
         return self._exc_info is not None
 
     cdef _raise_if_stored(self):
-        _exc_info = self._exc_info
-        if _exc_info is not None:
-            self._exc_info = None
-            type, value, traceback = _exc_info
-            if traceback is None and value is None:
-                raise type
-            else:
-                raise type, value, traceback
+        if self._exc_info is None:
+            return
+        type, value, traceback = self._exc_info
+        self._exc_info = None
+        if value is None and traceback is None:
+            raise type
+        else:
+            raise type, value, traceback
 
 
 cdef class _BaseParser # forward declaration
@@ -300,7 +306,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result._c_doc = c_doc
     result._ns_counter = 0
     if parser is None:
-        parser = __DEFAULT_PARSER
+        parser = __GLOBAL_PARSER_CONTEXT._getDefaultParser()
     result._parser = parser.copy()
     return result
 

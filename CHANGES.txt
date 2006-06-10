@@ -7,6 +7,16 @@ current
 Features added
 --------------
 
+* Threading support in parsers and serializers:
+
+  * All in-memory operations (tostring, parse(StringIO), etc.) free the GIL
+
+  * File operations (on file names) free the GIL
+
+  * Reading from file-like objects frees the GIL and reacquires it for reading
+
+  * Serialisation to file-like objects is single-threaded (high lock overhead)
+
 * Element iteration over XPath axes:
 
   * Element.iterdescendants() iterates over the descendants of an element

@@ -15,6 +15,7 @@ cdef extern from "libxml/xmlIO.h":
 cdef extern from "libxml/parser.h":
 
     cdef xmlDict* xmlDictCreate()
+    cdef xmlDict* xmlDictCreateSub(xmlDict* subdict)
     cdef void xmlDictFree(xmlDict* sub)
     cdef int xmlDictReference(xmlDict* dict)
     
