@@ -22,7 +22,7 @@ LIBXSLT_COMPILED_VERSION = __unpackIntVersion(xslt.LIBXSLT_VERSION)
 LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 
 cdef void _logLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, _receiveGenericError)
+    xslt.xsltSetGenericErrorFunc(NULL, _receiveXSLTError)
 
 
 ################################################################################
@@ -356,7 +356,7 @@ cdef class XSLT:
 
         self._error_log.connect()
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
-                                       _receiveGenericError)
+                                       _receiveXSLTError)
 
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)

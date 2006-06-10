@@ -1,6 +1,7 @@
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
+    cdef int sprintf(char* str, char* format, ...)
 
 cdef extern from "string.h":
     ctypedef int size_t

@@ -32,12 +32,15 @@ cdef class _LogEntry:
     cdef readonly object message
     cdef readonly object filename
     cdef _setError(self, xmlerror.xmlError* error):
+        cdef int size
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
         self.line     = error.line
-        self.message  = python.PyString_FromStringAndSize(
-            error.message, cstd.strlen(error.message) - 1) # strip EOL
+        size = cstd.strlen(error.message)
+        if size > 0 and error.message[size-1] == c'\n':
+            size = size - 1 # strip EOL
+        self.message  = python.PyString_FromStringAndSize(error.message, size)
         if error.file is NULL:
             self.filename = '<string>'
         else:
@@ -295,27 +298,34 @@ def useGlobalPythonLog(PyErrorLog log not None):
     __GLOBAL_ERROR_LOG = log
 
 
-# local log function: forward error to logger object
-cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):
+# local log functions: forward error to logger object
+cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error):
     cdef _ErrorLog log_handler
+    if c_log_handler is not NULL:
+        log_handler = <_ErrorLog>c_log_handler
+    else:
+        log_handler = __GLOBAL_ERROR_LOG
+    log_handler._receive(error)
+
+cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):
+    # no Python objects here, may be called without thread context !
+    # when we declare a Python object, Pyrex will INCREF(None) !
     cdef python.PyGILState_STATE gil_state
     if __DEBUG != 0:
         gil_state = python.PyGILState_Ensure()
-        if c_log_handler is not NULL:
-            log_handler = <_ErrorLog>c_log_handler
-        else:
-            log_handler = __GLOBAL_ERROR_LOG
-        log_handler._receive(error)
+        _forwardError(c_log_handler, error)
         python.PyGILState_Release(gil_state)
 
-cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
+cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
+    # no Python objects here, may be called without thread context !
+    # when we declare a Python object, Pyrex will INCREF(None) !
     cdef python.PyGILState_STATE gil_state
+    cdef xmlerror.xmlError c_error
     cdef cstd.va_list args
-    cdef _ErrorLog log_handler
     cdef char* c_text
-    cdef char* c_filename
+    cdef char* c_message
     cdef char* c_element
-    cdef int c_line
+    cdef int i, text_size, element_size
     if __DEBUG == 0 or msg == NULL or cstd.strlen(msg) < 10:
         return
     cstd.va_start(args, msg)
@@ -324,13 +334,16 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
     else:
         c_text = NULL
     if cstd.strstr(msg, 'file %s') is not NULL:
-        c_filename = cstd.va_charptr(args)
+        c_error.file = cstd.va_charptr(args)
+        if c_error.file is not NULL and cstd.strlen(c_error.file) > 0:
+            if cstd.strncmp(c_error.file, 'XSLT:', 5) == 0:
+                c_error.file = '<xslt>'
     else:
-        c_filename = NULL
+        c_error.file = NULL
     if cstd.strstr(msg, 'line %d') is not NULL:
-        c_line = cstd.va_int(args)
+        c_error.line = cstd.va_int(args)
     else:
-        c_line = -1
+        c_error.line = -1
     if cstd.strstr(msg, 'element %s') is not NULL:
         c_element = cstd.va_charptr(args)
     else:
@@ -338,37 +351,25 @@ cdef void _receiveGenericError(void* c_log_handler, char* msg, ...):
     cstd.va_end(args)
 
     gil_state = python.PyGILState_Ensure()
-    try:
-        if c_text is NULL:
-            message = None
-        elif c_element is NULL:
-            message = funicode(c_text)
-        else:
-            message = "%s (element '%s')" % (
-                funicode(c_text), funicode(c_element))
-    except UnicodeDecodeError:
-        message = "<undecodable message>"
+    c_message = NULL
+    if c_text is NULL:
+        c_error.message = ''
+    elif c_element is not NULL:
+        text_size    = cstd.strlen(c_text)
+        element_size = cstd.strlen(c_element)
+        c_message = <char*>python.PyMem_Malloc(
+            (14 + text_size + element_size) * sizeof(char))
+        cstd.sprintf(c_message, "%s (element '%s')", c_text, c_element)
+        c_error.message = c_message
 
-    try:
-        if c_filename is not NULL and cstd.strlen(c_filename) > 0:
-            if cstd.strncmp(c_filename, 'XSLT:', 5) == 0:
-                filename = '<xslt>'
-            else:
-                filename = funicode(c_filename)
-        else:
-            filename = None
-    except UnicodeDecodeError:
-        filename = "<undecodable filename>"
+    c_error.domain = xmlerror.XML_FROM_XSLT
+    c_error.code   = xmlerror.XML_ERR_OK    # what else?
+    c_error.level  = xmlerror.XML_ERR_ERROR # what else?
 
-    if c_log_handler is not NULL:
-        log_handler = <_ErrorLog>c_log_handler
-    else:
-        log_handler = __GLOBAL_ERROR_LOG
+    _forwardError(c_log_handler, &c_error)
 
-    log_handler._receiveGeneric(xmlerror.XML_FROM_XSLT,
-                                xmlerror.XML_ERR_OK,
-                                xmlerror.XML_ERR_ERROR,
-                                c_line, message, filename)
+    if c_message is not NULL:
+        python.PyMem_Free(c_error.message)
     python.PyGILState_Release(gil_state)
 
 # dummy function: no debug output at all
