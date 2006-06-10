@@ -223,11 +223,8 @@ cdef class _FileParserContext:
             self._bytes_read = self._bytes_read + c_size
             cstd.memcpy(c_buffer, c_start, c_size)
             return c_size
-        except Exception, e:
-            self._exc_context._store_exception(e)
-            python.PyGILState_Release(gil_state)
-            return -1
         except:
+            self._exc_context._store_raised()
             python.PyGILState_Release(gil_state)
             return -1
 
@@ -238,19 +235,14 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size):
 ## support for custom document loaders
 ############################################################
 
-cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
-                                               xmlParserCtxt* c_context):
+cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
+    char* c_url, char* c_pubid, xmlParserCtxt* c_context, int* error):
+    # call the Python document loaders
+    cdef xmlparser.xmlParserInput* c_input
     cdef _ResolverContext context
     cdef _InputDocument   doc_ref
     cdef _FileParserContext file_context
-    cdef xmlparser.xmlParserInput* c_input
-    cdef python.PyGILState_STATE gil_state
-    if c_context._private is NULL:
-        if __DEFAULT_ENTITY_LOADER is NULL:
-            return NULL
-        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
-
-    gil_state = python.PyGILState_Ensure()
+    error[0] = 0
     context = <_ResolverContext>c_context._private
     try:
         if c_url is NULL:
@@ -263,19 +255,12 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             pubid = funicode(c_pubid)
 
         doc_ref = context._resolvers.resolve(url, pubid, context)
-    except Exception, e:
-        context._store_exception(e)
-        python.PyGILState_Release(gil_state)
-        return NULL
-    except:
-        python.PyGILState_Release(gil_state)
-        return NULL
-
-    if doc_ref is None:
-        python.PyGILState_Release(gil_state)
-        if __DEFAULT_ENTITY_LOADER is NULL:
+        if doc_ref is None:
             return NULL
-        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+    except:
+        context._store_raised()
+        error[0] = 1
+        return NULL
 
     c_input = NULL
     data = None
@@ -293,8 +278,31 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
 
     if data is not None:
         context._storage.add(data)
-    python.PyGILState_Release(gil_state)
     return c_input
+
+cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
+                                               xmlParserCtxt* c_context):
+    # no Python objects here, may be called without thread context !
+    # when we declare a Python object, Pyrex will INCREF(None) !
+    cdef xmlparser.xmlParserInput* c_input
+    cdef python.PyGILState_STATE gil_state
+    cdef int error
+    if c_context._private is NULL:
+        if __DEFAULT_ENTITY_LOADER is NULL:
+            return NULL
+        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+
+    gil_state = python.PyGILState_Ensure()
+    c_input = _parser_resolve_from_python(c_url, c_pubid, c_context, &error)
+    python.PyGILState_Release(gil_state)
+
+    if c_input is not NULL:
+        return c_input
+    if error:
+        return NULL
+    if __DEFAULT_ENTITY_LOADER is NULL:
+        return NULL
+    return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
 
 cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
