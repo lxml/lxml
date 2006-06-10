@@ -7,6 +7,8 @@ current
 Features added
 --------------
 
+* Threading support in validators (RelaxNG, XMLSchema)
+
 * Threading support in parsers and serializers:
 
   * All in-memory operations (tostring, parse(StringIO), etc.) free the GIL
