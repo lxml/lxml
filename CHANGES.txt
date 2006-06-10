@@ -7,7 +7,7 @@ current
 Features added
 --------------
 
-* Threading support in validators (RelaxNG, XMLSchema)
+* Reentrant threading support in RelaxNG, XMLSchema and XSLT
 
 * Threading support in parsers and serializers:
 
