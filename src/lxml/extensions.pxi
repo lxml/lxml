@@ -55,6 +55,15 @@ cdef class _BaseContext:
         self._namespaces = namespaces
         self._temp_refs = _TempStore()
 
+    cdef _copy(self):
+        cdef _BaseContext context
+        if self._namespaces is not None:
+            namespaces = python.PyDict_Copy(self._namespaces)
+        context = self.__class__(namespaces, None)
+        if self._extensions is not None:
+            context._extensions = python.PyDict_Copy(self._extensions)
+        return context
+
     cdef object _to_utf(self, s):
         "Convert to UTF-8 and keep a reference to the encoded string"
         cdef python.PyObject* dict_result
@@ -326,30 +335,8 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
         xpathObj.nodesetval = NULL
     xpath.xmlXPathFreeObject(xpathObj)
 
-cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef xpath.xmlXPathContext* rctxt
-    cdef _BaseContext context
-    rctxt = ctxt.context
-    context = <_BaseContext>(rctxt.userData)
-    function = context._find_cached_function(rctxt.functionURI, rctxt.function)
-    if function is not None:
-        _extension_function_call(context, function, ctxt, nargs)
-    else:
-        if rctxt.functionURI is not NULL:
-            fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
-        else:
-            fref = rctxt.function
-        print "FAILED", fref
-        xpath.xmlXPathErr(ctxt, xpath.XML_XPATH_UNKNOWN_FUNC_ERROR)
-        exception = XPathFunctionError("XPath function '%s' not found" % fref)
-        context._exc._store_exception(exception)
-
-cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef xpath.xmlXPathContext* rctxt
-    cdef _BaseContext context
-    rctxt = ctxt.context
-    context = <_BaseContext>(rctxt.userData)
-    _extension_function_call(context, context._called_function, ctxt, nargs)
+################################################################################
+# callbacks for XPath/XSLT extension functions
 
 cdef void _extension_function_call(_BaseContext context, function,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
@@ -376,3 +363,46 @@ cdef void _extension_function_call(_BaseContext context, function,
     except:
         xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
         context._exc._store_raised()
+
+# lookup the function by name and call it
+
+cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef python.PyGILState_STATE gil_state
+    gil_state = python.PyGILState_Ensure()
+    _call_python_xpath_function(ctxt, nargs)
+    python.PyGILState_Release(gil_state)
+
+cdef void _call_python_xpath_function(xpath.xmlXPathParserContext* ctxt,
+                                      int nargs):
+    cdef xpath.xmlXPathContext* rctxt
+    cdef _BaseContext context
+    rctxt = ctxt.context
+    context = <_BaseContext>(rctxt.userData)
+    function = context._find_cached_function(rctxt.functionURI, rctxt.function)
+    if function is not None:
+        _extension_function_call(context, function, ctxt, nargs)
+    else:
+        if rctxt.functionURI is not NULL:
+            fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
+        else:
+            fref = rctxt.function
+        print "FAILED", fref
+        xpath.xmlXPathErr(ctxt, xpath.XML_XPATH_UNKNOWN_FUNC_ERROR)
+        exception = XPathFunctionError("XPath function '%s' not found" % fref)
+        context._exc._store_exception(exception)
+
+# call the function that was stored in 'context._called_function'
+
+cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
+    cdef python.PyGILState_STATE gil_state
+    gil_state = python.PyGILState_Ensure()
+    _call_prepared_python_function(ctxt, nargs)
+    python.PyGILState_Release(gil_state)
+
+cdef void _call_prepared_python_function(xpath.xmlXPathParserContext* ctxt,
+                                         int nargs):
+    cdef xpath.xmlXPathContext* rctxt
+    cdef _BaseContext context
+    rctxt = ctxt.context
+    context = <_BaseContext>(rctxt.userData)
+    _extension_function_call(context, context._called_function, ctxt, nargs)

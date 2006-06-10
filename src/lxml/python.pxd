@@ -40,6 +40,7 @@ cdef extern from "Python.h":
     cdef PyObject* PyDict_GetItem(object d, object key)
     cdef int PyDict_DelItem(object d, object key)
     cdef int PyDict_Clear(object d)
+    cdef object PyDict_Copy(object d)
     cdef Py_ssize_t PyDict_Size(object d)
     cdef object PyList_AsTuple(object o)
     cdef object PySequence_List(object o)

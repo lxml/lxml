@@ -277,6 +277,7 @@ cdef class XSLT:
     cdef _ErrorLog _error_log
 
     def __init__(self, xslt_input, extensions=None, regexp=True, access_control=None):
+        cdef python.PyThreadState* state
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
@@ -297,21 +298,30 @@ cdef class XSLT:
             doc_url_utf = "XSLT:__STRING__XSLT__%s" % id(self)
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
+        self._error_log = _ErrorLog()
         self._xslt_resolver_context = _XSLTResolverContext(doc._parser)
         # keep a copy in case we need to access the stylesheet via 'document()'
         self._xslt_resolver_context._c_style_doc = _copyDoc(c_doc, 1)
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
+        self._error_log.connect()
+        state = python.PyEval_SaveThread()
         c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        python.PyEval_RestoreThread(state)
+        self._error_log.disconnect()
+
         if c_style is NULL:
             tree.xmlFreeDoc(c_doc)
             self._xslt_resolver_context._raise_if_stored()
-            raise XSLTParseError, "Cannot parse style sheet"
+            if self._error_log.last_error is not None:
+                raise XSLTParseError, self._error_log.last_error.message
+            else:
+                raise XSLTParseError, "Cannot parse style sheet"
+
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
 
         self._context = _XSLTContext(None, extensions)
-        self._error_log = _ErrorLog()
         if regexp:
             self._regexp = _ExsltRegExp()
             self._regexp._register_in_context(self._context)
@@ -331,6 +341,8 @@ cdef class XSLT:
             return self._error_log.copy()
 
     def __call__(self, _input, **_kw):
+        cdef python.PyThreadState* state
+        cdef _XSLTContext context
         cdef _Document input_doc
         cdef _NodeBase root_node
         cdef _Document result_doc
@@ -385,15 +397,19 @@ cdef class XSLT:
         else:
             params = NULL
 
-        self._context.register_context(transform_ctxt, input_doc)
+        context = self._context._copy()
+        context.register_context(transform_ctxt, input_doc)
+
+        state = python.PyEval_SaveThread()
         c_result = xslt.xsltApplyStylesheetUser(self._c_style, c_doc, params,
                                                 NULL, NULL, transform_ctxt)
+        python.PyEval_RestoreThread(state)
 
         if params is not NULL:
             # deallocate space for parameters
             python.PyMem_Free(params)
 
-        self._context.free_context()
+        context.free_context()
         _destroyFakeDoc(input_doc._c_doc, c_doc)
 
         self._error_log.disconnect()
