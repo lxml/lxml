@@ -70,8 +70,8 @@ content handler.::
   ...         self.text = data
 
 Note that it only defines the startElementNS() method and not startElement().
-The SAX event generator in lxml.sax does not currently support the
-namespace-unaware methods.
+The SAX event generator in lxml.sax currently only supports namespace-aware
+processing.
 
 To test the content handler, we can produce SAX events from the tree::
 
