@@ -56,13 +56,28 @@ See also the notes on compatibility_ to ElementTree_.
 
 #) Can I use threads to concurrently access the lxml API?
 
-   Short answer: No.
+   Yes, although not carelessly.
 
-   Long answer: lxml does not currently release the GIL (Python's global
-   interpreter lock) internally, so you will not benefit from any performance
-   improvements by using threads.  It is also not trivial to free the GIL, as
-   lxml calls back into Python in many places during XML processing: extension
-   functions, Python resolvers, error reporting, etc.
+   lxml frees the GIL (Python's global interpreter lock) internally when
+   parsing from disk and memory, as long as you use either the default parser
+   (which is replicated for each thread) or create a parser for each thread
+   yourself.  lxml also allows concurrency during validation (RelaxNG and
+   XMLSchema) and XSL transformation.  You can share RelaxNG, XMLSchema and
+   XSLT objects between threads.  While you can also share parsers between
+   threads, this will serialize the access to each of them, so it is better to
+   copy() parsers or to use the default parser.  Note that access to the XML()
+   and HTML() functions is always serialized.  If you need to parse from
+   strings, use StringIO.
+
+   Warning: You should generally avoid modifying trees in other threads than
+   the one it was generated in.  Although this should work in many cases,
+   there are certain scenarios where the termination of a thread that parsed a
+   tree can crash the application if subtrees of this tree are moved to other
+   documents.  You should be on the safe side when passing trees between
+   threads if you either
+
+   a) do not modify these trees and do not move its elements to other trees, or
+   b) do not terminate threads while the trees they parsed are still in use
 
 
 #) Why doesn't the ``pretty_print`` option reformat my XML output?
