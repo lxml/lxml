@@ -15,15 +15,24 @@ ctypedef enum LxmlParserType:
     LXML_HTML_PARSER
 
 cdef class _ParserContext:
-    """Global parser context to share the string dictionary.
-    """
+    # Global parser context to share the string dictionary.
+    #
+    # This class is a singleton!
+    #
+    # It creates _ParserContext objects for each thread to keep thread state,
+    # but those must never be used directly.  Always stick to using the static
+    # __GLOBAL_PARSER_CONTEXT as defined below the class.
+    #
+
     cdef xmlDict* _c_dict
     cdef _BaseParser _default_parser
     def __dealloc__(self):
         if self._c_dict is not NULL:
             xmlparser.xmlDictFree(self._c_dict)
 
-    cdef void _initMainParserContext(self):
+    cdef void initMainParserContext(self):
+        """Put the global context into the thread dictionary of the main
+        thread.  To be called once and only in the main thread."""
         cdef python.PyObject* thread_dict
         cdef python.PyObject* result
         thread_dict = python.PyThreadState_GetDict()
@@ -31,9 +40,10 @@ cdef class _ParserContext:
             python.PyDict_SetItem(<object>thread_dict, "_ParserContext", self)
 
     cdef _ParserContext _findThreadParserContext(self):
-        "Find the _ParserContext for the current thread"
+        "Find (or create) the _ParserContext object for the current thread"
         cdef python.PyObject* thread_dict
         cdef python.PyObject* result
+        cdef _ParserContext context
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is NULL:
             return self
@@ -45,12 +55,14 @@ cdef class _ParserContext:
         python.PyDict_SetItem(d, "_ParserContext", context)
         return context
 
-    cdef void _setDefaultParser(self, _BaseParser parser):
+    cdef void setDefaultParser(self, _BaseParser parser):
+        "Set the default parser for the current thread"
         cdef _ParserContext context
         context = self._findThreadParserContext()
         context._default_parser = parser
 
-    cdef _BaseParser _getDefaultParser(self):
+    cdef _BaseParser getDefaultParser(self):
+        "Return (or create) the default parser of the current thread"
         cdef _ParserContext context
         context = self._findThreadParserContext()
         if context._default_parser is None:
@@ -59,52 +71,52 @@ cdef class _ParserContext:
             context._default_parser = self._default_parser.copy()
         return context._default_parser
 
-    cdef void _initParserDict(self, xmlParserCtxt* pctxt):
-        "Assure we always use the same string dictionary."
+    cdef xmlDict* _getThreadDict(self, xmlDict* default):
+        "Return the thread-local dict or create a new one if necessary."
         cdef _ParserContext context
-        context = self._findThreadParserContext()
-        if context._c_dict is NULL or context._c_dict is pctxt.dict:
-            return
-        if pctxt.dict is not NULL:
-            xmlparser.xmlDictFree(pctxt.dict)
-        pctxt.dict = context._c_dict
-        xmlparser.xmlDictReference(pctxt.dict)
-
-    cdef void _initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
-        "Assure we always use the same string dictionary."
-        cdef _ParserContext context
-        context = self._findThreadParserContext()
-        if context._c_dict is NULL or context._c_dict is pctxt.dict:
-            return
-        if pctxt.dict is not NULL:
-            xmlparser.xmlDictFree(pctxt.dict)
-        pctxt.dict = context._c_dict
-        xmlparser.xmlDictReference(pctxt.dict)
-
-    cdef void _initDocDict(self, xmlDoc* result):
-        "Store dict of last object parsed if no shared dict yet"
-        cdef _ParserContext context
-        if result is NULL:
-            return
         context = self._findThreadParserContext()
         if context._c_dict is NULL:
-            #print "storing shared dict"
-            if result.dict is NULL:
-                if self._c_dict is NULL:
-                    result.dict = xmlparser.xmlDictCreate()
-                else:
-                    result.dict = xmlparser.xmlDictCreateSub(self._c_dict)
-            context._c_dict = result.dict
-            xmlparser.xmlDictReference(context._c_dict)
-        elif result.dict != context._c_dict:
-            if result.dict is not NULL:
-                xmlparser.xmlDictFree(result.dict)
-            result.dict = context._c_dict
-            xmlparser.xmlDictReference(result.dict)
+            # thread dict not yet set up => use default or create a new one
+            if default is not NULL:
+                context._c_dict = default
+                xmlparser.xmlDictReference(default)
+                return default
+            if self._c_dict is NULL:
+                self._c_dict = xmlparser.xmlDictCreate()
+            if context is not self:
+                context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
+        return context._c_dict
+
+    cdef void _initThreadDictRef(self, xmlDict** c_dict_ref):
+        cdef xmlDict* c_dict
+        cdef xmlDict* c_thread_dict
+        c_dict = c_dict_ref[0]
+        c_thread_dict = self._getThreadDict(c_dict)
+        if c_dict is c_thread_dict:
+            return
+        if c_dict is not NULL:
+            xmlparser.xmlDictFree(c_dict)
+        c_dict_ref[0] = c_thread_dict
+        xmlparser.xmlDictReference(c_thread_dict)
+
+    cdef void initParserDict(self, xmlParserCtxt* pctxt):
+        "Assure we always use the same string dictionary."
+        self._initThreadDictRef(&pctxt.dict)
+
+    cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
+        "Assure we always use the same string dictionary."
+        self._initThreadDictRef(&pctxt.dict)
+
+    cdef void initDocDict(self, xmlDoc* result):
+        "Store dict of last object parsed if no shared dict yet"
+        # XXX We also free the result dict here if there already was one.
+        # This case should only occur for new documents with empty dicts,
+        # otherwise we'd free data that's in use => segfault
+        self._initThreadDictRef(&result.dict)
 
 cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
-__GLOBAL_PARSER_CONTEXT._initMainParserContext()
+__GLOBAL_PARSER_CONTEXT.initMainParserContext()
 
 ############################################################
 ## support for Python unicode I/O
@@ -391,7 +403,7 @@ cdef class _BaseParser:
         self._error_log.connect()
         try:
             pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             c_text = python.PyUnicode_AS_DATA(utext)
             state = python.PyEval_SaveThread()
@@ -425,7 +437,7 @@ cdef class _BaseParser:
         self._error_log.connect()
         try:
             pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             state = python.PyEval_SaveThread()
             if self._parser_type == LXML_HTML_PARSER:
@@ -452,7 +464,7 @@ cdef class _BaseParser:
         self._error_log.connect()
         try:
             pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             state = python.PyEval_SaveThread()
             if self._parser_type == LXML_HTML_PARSER:
@@ -483,7 +495,7 @@ cdef class _BaseParser:
         self._error_log.connect()
         try:
             pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             file_context = _FileParserContext(filelike, self._context, filename)
             result = file_context._readDoc(
                 pctxt, self._parse_options, self._parser_type)
@@ -519,7 +531,7 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 
     if result is not NULL:
         if ctxt.wellFormed or recover:
-            __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+            __GLOBAL_PARSER_CONTEXT.initDocDict(result)
         else:
             # free broken document
             tree.xmlFreeDoc(result)
@@ -607,7 +619,7 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
     pctxt = xmlparser.xmlNewParserCtxt()
     if pctxt is NULL:
         return NULL
-    __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+    __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
     pctxt._private = <python.PyObject*>context
     c_doc = xmlparser.xmlCtxtReadDoc(
         pctxt, c_text, NULL, NULL, options)
@@ -627,7 +639,7 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
     pctxt = xmlparser.xmlNewParserCtxt()
     if pctxt is NULL:
         return NULL
-    __GLOBAL_PARSER_CONTEXT._initParserDict(pctxt)
+    __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
     pctxt._private = <python.PyObject*>context
     c_doc = xmlparser.xmlCtxtReadFile(
         pctxt, c_filename, NULL, options)
@@ -642,7 +654,7 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
 cdef XMLParser __DEFAULT_XML_PARSER
 __DEFAULT_XML_PARSER = XMLParser()
 
-__GLOBAL_PARSER_CONTEXT._setDefaultParser(__DEFAULT_XML_PARSER)
+__GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
 
 def set_default_parser(_BaseParser parser=None):
     """Set a default parser for the current thread.  This parser is used
@@ -656,10 +668,10 @@ def set_default_parser(_BaseParser parser=None):
     """
     if parser is None:
         parser = __DEFAULT_XML_PARSER
-    __GLOBAL_PARSER_CONTEXT._setDefaultParser(parser)
+    __GLOBAL_PARSER_CONTEXT.setDefaultParser(parser)
 
 def get_default_parser():
-    return __GLOBAL_PARSER_CONTEXT._getDefaultParser()
+    return __GLOBAL_PARSER_CONTEXT.getDefaultParser()
 
 ############################################################
 ## HTML parser
@@ -708,7 +720,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_text
     cdef Py_ssize_t c_len
     if parser is None:
-        parser = __GLOBAL_PARSER_CONTEXT._getDefaultParser()
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     if not filename:
         c_filename = NULL
     else:
@@ -722,27 +734,27 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
 
 cdef xmlDoc* _parseDocFromFile(filename, _BaseParser parser) except NULL:
     if parser is None:
-        parser = __GLOBAL_PARSER_CONTEXT._getDefaultParser()
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename))
 
 cdef xmlDoc* _parseDocFromFilelike(source, filename,
                                    _BaseParser parser) except NULL:
     cdef char* c_filename
     if parser is None:
-        parser = __GLOBAL_PARSER_CONTEXT._getDefaultParser()
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
 
 cdef xmlDoc* _newDoc():
     cdef xmlDoc* result
     result = tree.xmlNewDoc("1.0")
-    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
 cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
     cdef xmlDoc* result
     result = tree.xmlCopyDoc(c_doc, recursive)
     _bugFixURL(c_doc, result)
-    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
@@ -751,7 +763,7 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
     _bugFixURL(c_doc, result)
-    __GLOBAL_PARSER_CONTEXT._initDocDict(result)
+    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)

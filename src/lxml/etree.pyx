@@ -306,7 +306,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result._c_doc = c_doc
     result._ns_counter = 0
     if parser is None:
-        parser = __GLOBAL_PARSER_CONTEXT._getDefaultParser()
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     result._parser = parser.copy()
     return result
 

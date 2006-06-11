@@ -50,7 +50,7 @@ cdef class _XPathContext(_BaseContext):
             self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
 
 cdef void _setupDict(xpath.xmlXPathContext* xpathCtxt):
-    __GLOBAL_PARSER_CONTEXT._initXPathParserDict(xpathCtxt)
+    __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
 
 cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
