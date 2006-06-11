@@ -26,6 +26,10 @@ def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().strip().split(' ')
 
+def fix_alphabeta(version, alphabeta):
+    if '.'+alphabeta in version:
+        return version
+    return version.replace(alphabeta, '.'+alphabeta)
 
 src_dir = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 version = open(os.path.join(src_dir, 'version.txt')).read().strip()
@@ -39,6 +43,15 @@ else:
                          svn_entries).group(1)
     svn_version = version + '-' + revision
 
+if 'alpha' in version:
+    svn_version = fix_alphabeta(svn_version, 'alpha')
+    dev_status = 'Development Status :: 3 - Alpha'
+elif 'beta' in version:
+    svn_version = fix_alphabeta(svn_version, 'beta')
+    dev_status = 'Development Status :: 4 - Beta'
+else:
+    dev_status = 'Development Status :: 5 - Production/Stable'
+
 version_h = open(os.path.join(src_dir, 'src', 'lxml', 'lxml-version.h'), 'w')
 version_h.write('''\
 #ifndef LXML_VERSION_STRING
@@ -46,13 +59,6 @@ version_h.write('''\
 #endif
 ''' % svn_version)
 version_h.close()
-
-if 'alpha' in version:
-    dev_status = 'Development Status :: 3 - Alpha'
-elif 'beta' in version:
-    dev_status = 'Development Status :: 4 - Beta'
-else:
-    dev_status = 'Development Status :: 5 - Production/Stable'
 
 print "Building lxml version", svn_version
 
