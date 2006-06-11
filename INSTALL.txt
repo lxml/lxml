@@ -16,7 +16,8 @@ You need libxml2 and libxslt, in particular:
 
 Newer versions generally contain less bugs and are therefore recommended.  The
 HTML parser benefits from libxml2 version 2.6.21 or later, which support
-parsing horribly broken HTML.
+parsing horribly broken HTML.  XML Schema support is also still worked on in
+libxml2, so newer versions will give you better complience with the W3C spec.
 
 For Windows, there is a `binary distribution`_ of libxml2 and libxslt.  Note
 that you need both libxml2 and libxslt, as well as iconv and zlib.  You can
