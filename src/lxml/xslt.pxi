@@ -419,10 +419,16 @@ cdef class XSLT:
             self._xslt_resolver_context._raise_if_stored()
 
         if c_result is NULL:
-            message = "Error applying stylesheet"
             error = self._error_log.last_error
             if error is not None and error.message:
-                message = error.message
+                if error.line >= 0:
+                    message = "%s, line %d" % (error.message, error.line)
+                else:
+                    message = error.message
+            elif error.line >= 0:
+                message = "Error applying stylesheet, line %d" % error.line
+            else:
+                message = "Error applying stylesheet"
             raise XSLTApplyError, message
 
         result_doc = _documentFactory(c_result, input_doc._parser)

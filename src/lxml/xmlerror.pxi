@@ -354,12 +354,14 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     c_message = NULL
     if c_text is NULL:
         c_error.message = ''
-    elif c_element is not NULL:
+    elif c_element is NULL:
+        c_error.message = c_text
+    else:
         text_size    = cstd.strlen(c_text)
         element_size = cstd.strlen(c_element)
         c_message = <char*>python.PyMem_Malloc(
-            (14 + text_size + element_size) * sizeof(char))
-        cstd.sprintf(c_message, "%s (element '%s')", c_text, c_element)
+            (text_size + 12 + element_size + 1) * sizeof(char))
+        cstd.sprintf(c_message, "%s, element '%s'", c_text, c_element)
         c_error.message = c_message
 
     c_error.domain = xmlerror.XML_FROM_XSLT

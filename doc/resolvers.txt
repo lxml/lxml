@@ -214,7 +214,7 @@ operations::
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
     [...]
-  XSLTApplyError: runtime error (element 'value-of')
+  XSLTApplyError: runtime error, element 'value-of', line 6
 
 There are a few things to keep in mind:
 
