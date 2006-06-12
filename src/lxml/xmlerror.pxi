@@ -326,10 +326,10 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     cdef char* c_message
     cdef char* c_element
     cdef int i, text_size, element_size
-    if __DEBUG == 0 or msg == NULL or cstd.strlen(msg) < 10:
+    if __DEBUG == 0 or msg is NULL or cstd.strlen(msg) < 10:
         return
     cstd.va_start(args, msg)
-    if cstd.strncmp(msg, '%s:', 3) == 0:
+    if msg[0] == c'%' and msg[1] == c's':
         c_text = cstd.va_charptr(args)
     else:
         c_text = NULL
