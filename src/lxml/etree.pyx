@@ -56,16 +56,6 @@ _initThreadLogging()
 # initialize parser (and threading)
 xmlparser.xmlInitParser()
 
-def initThread():
-    """Must be called by each newly created thread before calling any API
-    functions.
-
-    Note that lxml.etree does not currently release the GIL, so there are no
-    performance gains to be expected from using threads.
-    """
-    #_initThreadLogging()
-    pass
-
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
