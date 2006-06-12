@@ -35,9 +35,9 @@ Features added
 Bugs fixed
 ----------
 
-* XSLT exception messages include the error line number
-
 * Module function ``initThread()`` was removed - useless (and never worked)
+
+* XSLT exception messages include the error line number
 
 
 1.0.1 (2006-06-09)
