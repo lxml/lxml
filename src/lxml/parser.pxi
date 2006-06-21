@@ -517,7 +517,10 @@ cdef int _raiseParseError(xmlParserCtxt* ctxt, char* c_filename) except 0:
             message = "Error reading file %s" % funicode(c_filename)
         raise IOError, message
     elif ctxt.lastError.message is not NULL:
-        raise XMLSyntaxError, funicode(ctxt.lastError.message).strip()
+        message = funicode(ctxt.lastError.message).strip()
+        if ctxt.lastError.line >= 0:
+            message = "line %d: %s" % (ctxt.lastError.line, message)
+        raise XMLSyntaxError, message
     else:
         raise XMLSyntaxError
 
