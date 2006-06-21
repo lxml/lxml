@@ -35,9 +35,11 @@ Features added
 Bugs fixed
 ----------
 
+* Parsing 8-bit encoded strings from StringIO objects raised an exception
+
 * Module function ``initThread()`` was removed - useless (and never worked)
 
-* XSLT exception messages include the error line number
+* XSLT and parser exception messages include the error line number
 
 
 1.0.1 (2006-06-09)
