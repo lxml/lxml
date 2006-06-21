@@ -214,7 +214,9 @@ Python unicode strings
 
 lxml.etree has broader support for Python unicode strings than the ElementTree
 library.  First of all, where ElementTree would raise an exception, the
-parsers in lxml.etree can handle unicode strings straight away::
+parsers in lxml.etree can handle unicode strings straight away.  This is most
+helpful for XML snippets embedded in source code using the ``XML()``
+function::
 
   >>> uxml = u'<test> \uf8d1 + \uf8d2 </test>'
   >>> uxml
@@ -224,11 +226,15 @@ parsers in lxml.etree can handle unicode strings straight away::
 This requires, however, that unicode strings do not specify a conflicting
 encoding themselves and thus lie about their real encoding::
 
-  >>> try:
-  ...   broken = etree.XML(u'<?xml encoding="ASCII"?>\n' + uxml)
-  ... except etree.XMLSyntaxError:
-  ...   print "This is not well-formed XML!"
-  This is not well-formed XML!
+  >>> etree.XML(u'<?xml version="1.0" encoding="ASCII"?>\n' + uxml)
+  Traceback (most recent call last):
+    ...
+  ValueError: Unicode strings with encoding declaration are not supported.  Use encoded 8-bit strings instead.
+
+Similarly, you will get errors when you try the same with HTML data in a
+unicode string that specifies a charset in a meta tag of the header.  You
+should generally avoid converting XML/HTML data to unicode before passing it
+into the parsers.  It is both slower and error prone.
 
 To serialize the result, you would normally use the ``tostring`` module
 function, which serializes to plain ASCII by default or a number of other
@@ -240,8 +246,8 @@ encodings if asked for::
   >>> etree.tostring(root, 'UTF-8', xml_declaration=False)
   '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-As an extension, lxml.etree has a new ``lxml.etree.tounicode()`` function that
-you can call on XML tree objects to retrieve a Python unicode representation::
+As an extension, lxml.etree has a new ``tounicode()`` function that you can
+call on XML tree objects to retrieve a Python unicode representation::
 
   >>> etree.tounicode(root)
   u'<test> \uf8d1 + \uf8d2 </test>'
@@ -258,14 +264,18 @@ you can call on XML tree objects to retrieve a Python unicode representation::
   >>> etree.tounicode(et)
   u'<test><subtest/></test>'
 
-If you want to save the result to a file or pass it over the network, you
-should use ``write()`` or ``tostring()`` with an encoding argument (typically
-UTF-8) to serialize the XML.  The main reason is that unicode strings returned
-by ``tounicode()`` never have an XML declaration and therefore do not specify
-an encoding.  In contrast, the ``tostring()`` function automatically adds a
-declaration as needed that reflects the encoding of the returned string.  This
-makes it possible for other parsers to correctly parse the XML byte stream.
-Note that using ``tostring()`` with UTF-8 is also typically faster.
+The result of ``tounicode()`` can be treated like any other Python unicode
+string and then passed back into the parsers.  However, if you want to save
+the result to a file or pass it over the network, you should use ``write()``
+or ``tostring()`` with an encoding argument (typically UTF-8) to serialize the
+XML.  The main reason is that unicode strings returned by ``tounicode()``
+never have an XML declaration and therefore do not specify their encoding.
+These strings are most likely not parsable by other XML libraries.
+
+In contrast, the ``tostring()`` function automatically adds a declaration as
+needed that reflects the encoding of the returned string.  This makes it
+possible for other parsers to correctly parse the XML byte stream.  Note that
+using ``tostring()`` with UTF-8 is also considerably faster in most cases.
 
 
 XPath
