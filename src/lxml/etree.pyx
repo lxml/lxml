@@ -1604,7 +1604,12 @@ def tostring(element_or_tree, encoding=None,
     """Serialize an element to an encoded string representation of its XML
     tree.
 
-    Defaults to ASCII encoding without XML declaration.
+    Defaults to ASCII encoding without XML declaration.  This behaviour can be
+    configured with the keyword arguments 'encoding' (string) and
+    'xml_declaration' (bool).  Note that changing the encoding to a non UTF-8
+    compatible encoding will enable a declaration by default.
+
+    The keyword argument 'pretty_print' (bool) enables formatted XML.
     """
     cdef int write_declaration
     cdef int c_pretty_print
@@ -1636,6 +1641,8 @@ def tounicode(element_or_tree, pretty_print=False):
     Note that the result does not carry an XML encoding declaration and is
     therefore not necessarily suited for serialization to byte streams without
     further treatment.
+
+    The keyword argument 'pretty_print' (bool) enables formatted XML.
     """
     cdef int c_pretty_print
     c_pretty_print = bool(pretty_print)
