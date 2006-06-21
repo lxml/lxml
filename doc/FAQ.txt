@@ -109,6 +109,22 @@ See also the notes on compatibility_ to ElementTree_.
    lxml can add fresh whitespace to the XML tree to indent it.
 
 
+#) Why can't lxml parse my XML from unicode strings?
+
+   lxml can read Python unicode strings and even tries to support them if
+   libxml2 does not.  However, if the unicode string declares an XML encoding
+   internally (``<?xml encoding="..."?>``), parsing is bound to fail, as this
+   encoding is most likely not the real encoding used in Python unicode.  The
+   same is true for HTML unicode strings that contain charset meta tags.  Note
+   that Python uses different encodings for unicode on different platforms, so
+   even specifying the real internal unicode encoding is not portable between
+   Python interpreters.  Don't do it.
+
+   Python unicode strings with XML data or HTML data that carry encoding
+   information are broken.  lxml will not parse them.  You must provide
+   parsable data in a valid encoding.
+
+
 #) How can I find out which namespace prefixes are used in a document?
 
    You can traverse the document (``getiterator()``) and collect the prefix
