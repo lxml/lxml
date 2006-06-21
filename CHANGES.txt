@@ -38,6 +38,9 @@ Features added
 Bugs fixed
 ----------
 
+* Parsing accepted unicode strings with XML encoding declaration in certain
+  cases
+
 * Parsing 8-bit encoded strings from StringIO objects raised an exception
 
 * Module function ``initThread()`` was removed - useless (and never worked)
