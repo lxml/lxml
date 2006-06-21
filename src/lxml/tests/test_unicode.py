@@ -14,6 +14,11 @@ class UnicodeTestCase(unittest.TestCase):
         tree = etree.XML(u'<p>%s</p>' % uni)
         self.assertEquals(uni, tree.text)
 
+    def test_unicode_xml_broken(self):
+        uxml = u'<?xml version="1.0" encoding="UTF-8"?>' + \
+               u'<p>%s</p>' % uni
+        self.assertRaises(ValueError, etree.XML, uxml)
+
     def test_unicode_tag(self):
         el = etree.Element(uni)
         self.assertEquals(uni, el.tag)

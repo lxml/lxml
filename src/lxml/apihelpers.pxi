@@ -121,13 +121,23 @@ cdef void _setAttributeValue(_NodeBase element, key, value):
         c_ns = element._doc._findOrBuildNodeNs(element._c_node, _cstr(ns))
         tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
 
+cdef object __RE_XML_ENCODING
+__RE_XML_ENCODING = re.compile(
+    r'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U)
+
 cdef object __REPLACE_XML_ENCODING
-__REPLACE_XML_ENCODING = re.compile(
-    r'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U).sub
+__REPLACE_XML_ENCODING = __RE_XML_ENCODING.sub
+
+cdef object __HAS_XML_ENCODING
+__HAS_XML_ENCODING = __RE_XML_ENCODING.match
 
 cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
     return __REPLACE_XML_ENCODING(r'\g<1>', xml_string)
+
+cdef int _hasEncodingDeclaration(object xml_string):
+    # check if a (unicode) string has an XML encoding declaration
+    return __HAS_XML_ENCODING(xml_string) is not None
 
 cdef object _stripDeclaration(object xml_string):
     # this is a hack to remove the XML declaration when we encode to UTF-8
