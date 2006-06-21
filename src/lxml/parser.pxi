@@ -807,8 +807,8 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
             text = _stripEncodingDeclaration(_utf8(text))
-    else:
-        text = _utf8(text)
+    elif not python.PyString_Check(text):
+        raise ValueError, "can only parse strings"
     if url is not None:
         url = _utf8(url)
     c_doc = _parseDoc(text, url, parser)
