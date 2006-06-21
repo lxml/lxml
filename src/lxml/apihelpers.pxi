@@ -332,9 +332,20 @@ cdef int isutf8(char* s):
     return 0
 
 cdef object funicode(char* s):
-    if isutf8(s):
-        return python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
-    return python.PyString_FromString(s)
+    cdef Py_ssize_t slen
+    cdef char* spos
+    cdef char c
+    spos = s
+    c = spos[0]
+    while c != c'\0':
+        if c & 0x80:
+            break
+        spos = spos + 1
+        c = spos[0]
+    slen = spos - s
+    if c != c'\0':
+        return python.PyUnicode_DecodeUTF8(s, slen+cstd.strlen(spos), NULL)
+    return python.PyString_FromStringAndSize(s, slen)
 
 cdef object _utf8(object s):
     if python.PyString_Check(s):
