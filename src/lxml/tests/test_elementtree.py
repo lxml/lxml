@@ -1835,7 +1835,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             u'<a>Søk på nettet</a>'.encode('UTF-8'),
             tree.getroot(), 'UTF-8')
 
-    def test_encoding_latin1(self):
+    def test_encoding_8bit_latin1(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
 
@@ -1941,6 +1941,22 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             expected,
             tostring(b))
+
+    def test_encoding_8bit_xml(self):
+        utext = u'Søk på nettet'
+        uxml = u'<p>%s</p>' % utext
+        prologue = '<?xml version="1.0" encoding="iso-8859-1" ?>'
+        isoxml = prologue + uxml.encode('iso-8859-1')
+        tree = self.etree.XML(isoxml)
+        self.assertEquals(utext, tree.text)
+
+    def test_encoding_8bit_parse_stringio(self):
+        utext = u'Søk på nettet'
+        uxml = u'<p>%s</p>' % utext
+        prologue = '<?xml version="1.0" encoding="iso-8859-1" ?>'
+        isoxml = prologue + uxml.encode('iso-8859-1')
+        el = self.etree.parse(StringIO(isoxml)).getroot()
+        self.assertEquals(utext, el.text)
 
     def test_deepcopy(self):
         Element = self.etree.Element
