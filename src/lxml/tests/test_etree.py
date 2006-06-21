@@ -529,6 +529,36 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
 
+    def test_element_nsmap(self):
+        etree = self.etree
+
+        r = {None: 'http://ns.infrae.com/foo',
+             'hoi': 'http://ns.infrae.com/hoi'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
+        self.assertEquals(
+            r,
+            e.nsmap)
+
+    def test_subelement_nsmap(self):
+        etree = self.etree
+
+        re = {None: 'http://ns.infrae.com/foo',
+             'hoi': 'http://ns.infrae.com/hoi'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=re)
+
+        rs = {None: 'http://ns.infrae.com/honk',
+             'top': 'http://ns.infrae.com/top'}
+        s = etree.SubElement(e, '{http://ns.infrae.com/honk}bar', nsmap=rs)
+
+        r = re.copy()
+        r.update(rs)
+        self.assertEquals(
+            re,
+            e.nsmap)
+        self.assertEquals(
+            r,
+            s.nsmap)
+
     def test_getiterator_filter_namespace(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

@@ -759,16 +759,6 @@ cdef class _Element(_NodeBase):
             else:
                 self._doc._setNodeNs(self._c_node, _cstr(ns))
 
-    # not in ElementTree, read-only
-    property prefix:
-        """Namespace Prefix or None.
-        """
-        def __get__(self):
-            if self._c_node.ns is not NULL:
-                if self._c_node.ns.prefix is not NULL:
-                    return funicode(self._c_node.ns.prefix)
-            return None
-        
     property attrib:
         """Element attribute dictionary. Where possible, use get(), set(),
         keys() and items() to access element attributes.
@@ -819,6 +809,38 @@ cdef class _Element(_NodeBase):
             c_text_node = tree.xmlNewDocText(self._doc._c_doc, _cstr(text))
             # XXX what if we're the top element?
             tree.xmlAddNextSibling(self._c_node, c_text_node)
+
+    # not in ElementTree, read-only
+    property prefix:
+        """Namespace prefix or None.
+        """
+        def __get__(self):
+            if self._c_node.ns is not NULL:
+                if self._c_node.ns.prefix is not NULL:
+                    return funicode(self._c_node.ns.prefix)
+            return None
+
+    # not in ElementTree, read-only
+    property nsmap:
+        """Namespace prefix->URI mapping known in the context of this Element.
+        """
+        def __get__(self):
+            cdef xmlNode* c_node
+            cdef xmlNs* c_ns
+            nsmap = {}
+            c_node = self._c_node
+            while c_node is not NULL and _isElement(c_node):
+                c_ns = c_node.nsDef
+                while c_ns is not NULL:
+                    if c_ns.prefix is NULL:
+                        prefix = None
+                    else:
+                        prefix = funicode(c_ns.prefix)
+                    if prefix not in nsmap:
+                        nsmap[prefix] = funicode(c_ns.href)
+                    c_ns = c_ns.next
+                c_node = c_node.parent
+            return nsmap
 
     # ACCESSORS
     def __repr__(self):

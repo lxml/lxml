@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Element.nsmap property returns a mapping of all namespace prefixes known at
+  the Element to their namespace URI
+
 * Reentrant threading support in RelaxNG, XMLSchema and XSLT
 
 * Threading support in parsers and serializers:

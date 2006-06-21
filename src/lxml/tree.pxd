@@ -82,6 +82,7 @@ cdef extern from "libxml/tree.h":
     ctypedef struct xmlNs:
         char* href
         char* prefix
+        xmlNs* next
 
     ctypedef struct xmlNode:
         void* _private
@@ -96,6 +97,7 @@ cdef extern from "libxml/tree.h":
         char* content
         xmlAttr* properties
         xmlNs* ns
+        xmlNs* nsDef
 
     ctypedef struct xmlDtd:
         char* ExternalID
