@@ -255,10 +255,10 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     if python.PyNumber_Check(obj):
         return xpath.xmlXPathNewFloat(obj)
     if obj is None:
-        obj = ()
+        resultSet = xpath.xmlXPathNodeSetCreate(NULL)
     elif isinstance(obj, _NodeBase):
-        obj = (obj,)
-    if python.PySequence_Check(obj):
+        resultSet = xpath.xmlXPathNodeSetCreate((<_NodeBase>obj)._c_node)
+    elif python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
         for element in obj:
             if isinstance(element, _NodeBase):
@@ -267,10 +267,9 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
             else:
                 xpath.xmlXPathFreeNodeSet(resultSet)
                 raise XPathResultError, "This is not a node: %s" % element
-        return xpath.xmlXPathWrapNodeSet(resultSet)
     else:
-        raise XPathResultError, "Unknown return type: %s" % obj
-    return NULL
+        raise XPathResultError, "Unknown return type: %s" % type(obj)
+    return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
                                _Document doc):
