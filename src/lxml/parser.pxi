@@ -809,7 +809,7 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
     if python.PyUnicode_Check(text):
         if _hasEncodingDeclaration(text):
             raise ValueError, \
-                  "Unicode strings with encoding declaration are not supported.  Use encoded 8-bit strings instead."
+                  "Unicode strings with encoding declaration are not supported."
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
             text = python.PyUnicode_AsUTF8String(text)
