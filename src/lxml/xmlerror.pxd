@@ -610,6 +610,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_SCHEMAV_CVC_TYPE_2                             =    1876 # 1876
         XML_SCHEMAV_CVC_IDC                                =    1877 # 1877
         XML_SCHEMAV_CVC_WILDCARD                           =    1878 # 1878
+        XML_SCHEMAV_MISC                                   =    1879 # 1879
         XML_XPTR_UNKNOWN_SCHEME                            =    1900
         XML_XPTR_CHILDSEQ_START                            =    1901 # 1901
         XML_XPTR_EVAL_FAILED                               =    1902 # 1902
