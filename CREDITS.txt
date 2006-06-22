@@ -28,11 +28,13 @@ Robert Kern - feedback on API design
 
 Trent Mick - setup.py patch
 
+Andreas Pakulat - rpath linking support, doc improvements
+
 Steve Howe - Windows builds
 
 David Sankel - building statically on Windows
 
-Noah Slater - lots of bug squeezing
+Noah Slater - bug squeezing
 
 Duncan Booth - bugfixing
 
