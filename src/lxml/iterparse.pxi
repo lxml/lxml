@@ -48,14 +48,6 @@ cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
         c_ns = c_ns.next
     return count
 
-cdef void _appendEndNsEvents(xmlNode* c_node, event_list):
-    cdef xmlNs* c_ns
-    c_ns = c_node.nsDef
-    event = ("end-ns", None)
-    while c_ns is not NULL:
-        python.PyList_Append(event_list, event)
-        c_ns = c_ns.next
-
 cdef class _IterparseResolverContext(_ResolverContext):
     cdef xmlparser.startElementNsSAX2Func _origSaxStart
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
@@ -64,6 +56,8 @@ cdef class _IterparseResolverContext(_ResolverContext):
     cdef int _event_filter
     cdef object _events
     cdef int _event_index
+    cdef object _ns_stack
+    cdef object _pop_ns
     cdef object _node_stack
     cdef object _pop_node
     cdef object _tag_tuple
@@ -72,6 +66,8 @@ cdef class _IterparseResolverContext(_ResolverContext):
 
     def __init__(self, *args):
         _ResolverContext.__init__(self, *args)
+        self._ns_stack = []
+        self._pop_ns = self._ns_stack.pop
         self._node_stack = []
         self._pop_node = self._node_stack.pop
         self._events = []
@@ -82,15 +78,16 @@ cdef class _IterparseResolverContext(_ResolverContext):
         self._origSaxStart = sax.startElementNs
         # only override start event handler if needed
         if self._event_filter == 0 or \
-               self._event_filter & \
-               (ITERPARSE_FILTER_START | ITERPARSE_FILTER_START_NS):
+               self._event_filter & (ITERPARSE_FILTER_START | \
+                                     ITERPARSE_FILTER_START_NS | \
+                                     ITERPARSE_FILTER_END_NS):
            sax.startElementNs = _saxStart
 
         self._origSaxEnd = sax.endElementNs
         # only override end event handler if needed
         if self._event_filter == 0 or \
-               self._event_filter & \
-               (ITERPARSE_FILTER_END | ITERPARSE_FILTER_END_NS):
+               self._event_filter & (ITERPARSE_FILTER_END | \
+                                     ITERPARSE_FILTER_END_NS):
             sax.endElementNs = _saxEnd
 
     cdef void _setEventFilter(self, events, tag):
@@ -113,10 +110,15 @@ cdef class _IterparseResolverContext(_ResolverContext):
                 self._tag_tuple = None
 
     cdef void startNode(self, xmlNode* c_node):
-        cdef xmlNs* c_ns
         cdef _Element node
+        cdef xmlNs* c_ns
+        cdef int ns_count
         if self._event_filter & ITERPARSE_FILTER_START_NS:
-            _appendStartNsEvents(c_node, self._events)
+            ns_count = _appendStartNsEvents(c_node, self._events)
+        elif self._event_filter & ITERPARSE_FILTER_END_NS:
+            ns_count = _countNsDefs(c_node)
+        if self._event_filter & ITERPARSE_FILTER_END_NS:
+            python.PyList_Append(self._ns_stack, ns_count)
         if self._doc is None:
             self._doc = _documentFactory(c_node.doc, None)
             self._root = self._doc.getroot()
@@ -131,11 +133,13 @@ cdef class _IterparseResolverContext(_ResolverContext):
     cdef void endNode(self, xmlNode* c_node):
         cdef _Element node
         cdef xmlNs* c_ns
+        cdef int ns_count
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \
                    _tagMatches(c_node, self._tag_href, self._tag_name):
-                if self._event_filter & \
-                       (ITERPARSE_FILTER_START | ITERPARSE_FILTER_START_NS):
+                if self._event_filter & (ITERPARSE_FILTER_START | \
+                                         ITERPARSE_FILTER_START_NS | \
+                                         ITERPARSE_FILTER_END_NS):
                     node = self._pop_node()
                     assert node._c_node is c_node
                 else:
@@ -146,7 +150,12 @@ cdef class _IterparseResolverContext(_ResolverContext):
                 python.PyList_Append(self._events, ("end", node))
 
         if self._event_filter & ITERPARSE_FILTER_END_NS:
-            _appendEndNsEvents(c_node, self._events)
+            ns_count = self._pop_ns()
+            if ns_count > 0:
+                event = ("end-ns", None)
+                for i from 0 <= i < ns_count:
+                    python.PyList_Append(self._events, event)
+                
 
 cdef void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
     cdef _IterparseResolverContext context
