@@ -1,6 +1,9 @@
 import sys, os, os.path, re
 
 setup_args = {}
+ext_args   = {}
+DEFINES = []
+
 try:
     from setuptools import setup
     from setuptools.extension import Extension
@@ -22,14 +25,38 @@ def setupStaticBuild():
     raise NotImplementedError, \
           "Static build not configured, see doc/build.txt"
 
+# This is called if the '--rpath' option is passed
+def setupRpathBuild(xslt_libs, ext_args):
+    libdirs   = []
+    libs      = []
+    libflags  = []
+    rpathdirs = []
+    for option in xslt_libs:
+        content = option[2:]
+        if option.startswith('-L'):
+            if not content.startswith('/usr'):
+                rpathdirs.append(content)
+            libdirs.append(content)
+        elif option.startswith('-l'):
+            libs.append(content)
+        else:
+            libflags.append(option)
+
+    ext_args['libraries']            = libs
+    ext_args['library_dirs']         = libdirs
+    ext_args['extra_link_args']      = libflags
+    ext_args['runtime_library_dirs'] = rpathdirs
+
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
-    return rf.read().strip().split(' ')
+    return rf.read().split()
 
 def fix_alphabeta(version, alphabeta):
     if '.'+alphabeta in version:
         return version
     return version.replace(alphabeta, '.'+alphabeta)
+
+# determine version number and create lxml-version.h
 
 src_dir = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 version = open(os.path.join(src_dir, 'version.txt')).read().strip()
@@ -72,13 +99,13 @@ except ImportError:
     print "*NOTE*: Trying to build without Pyrex, needs pre-generated 'src/lxml/etree.c' !"
     sources = ["src/lxml/etree.c"]
 
-try:
+if '--static' in sys.argv:
+    # use the static setup as configured in setupStaticBuild
     sys.argv.remove('--static')
-except ValueError:
-    # we are not compiling statically
+    cflags, xslt_libs = setupStaticBuild()
+else:
     cflags    = flags('xslt-config --cflags')
     xslt_libs = flags('xslt-config --libs')
-
     # compile also against libexslt!
     for i, libname in enumerate(xslt_libs):
         if 'exslt' in libname:
@@ -86,11 +113,14 @@ except ValueError:
         if 'xslt' in libname:
             xslt_libs.insert(i, libname.replace('xslt', 'exslt'))
             break
-else:
-    # use the static setup as configured in setupStaticBuild
-    cflags, xslt_libs = setupStaticBuild()
 
-DEFINES = []
+    if '--rpath' in sys.argv:
+        # compile with --rpath under gcc
+        sys.argv.remove('--rpath')
+        setupRpathBuild(xslt_libs, ext_args)
+    else:
+        ext_args['extra_link_args'] = xslt_libs
+
 try:
     sys.argv.remove('--without-assert')
     DEFINES.append( ('PYREX_WITHOUT_ASSERTIONS', None) )
@@ -101,10 +131,9 @@ ext_modules = [ Extension(
     "lxml.etree",
     sources = sources,
     extra_compile_args = ['-w'] + cflags,
-    extra_link_args = xslt_libs,
-    define_macros = DEFINES
+    define_macros = DEFINES,
+    **ext_args
     )]
-
 
 # setup ChangeLog entry
 
