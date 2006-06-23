@@ -178,3 +178,6 @@ subclasses for elements of this namespace::
   Traceback (most recent call last):
   ...
   AttributeError: 'HonkNSElement' object has no attribute 'honking'
+
+Note that you can also combine this with the global default class.  Namespace
+specific classes will simply override the less specific default.
