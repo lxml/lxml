@@ -74,6 +74,130 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, parse, f)
         f.close()
 
+    def test_iterparse_broken(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b><c/></a>')
+        # ET raises ExpatError, lxml raises XMLSyntaxError
+        self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
+
+    def test_iterparse_tag(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b><d/></b><c/></a>')
+
+        iterator = iterparse(f, tag="b", events=('start', 'end'))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('start', root[0]), ('end', root[0])],
+            events)
+
+    def test_iterparse_tag_all(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b><d/></b><c/></a>')
+
+        iterator = iterparse(f, tag="*", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals(
+            8,
+            len(events))
+
+    def test_iterwalk_tag(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b><d/></b><c/></a>')
+
+        iterator = iterwalk(root, tag="b", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals(
+            [('start', root[0]), ('end', root[0])],
+            events)
+
+    def test_iterwalk_tag_all(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b><d/></b><c/></a>')
+
+        iterator = iterwalk(root, tag="*", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals(
+            8,
+            len(events))
+
+    def test_iterwalk(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b></b><c/></a>')
+
+        events = list(iterwalk(root))
+        self.assertEquals(
+            [('end', root[0]), ('end', root[1]), ('end', root)],
+            events)
+
+    def test_iterwalk_start(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b></b><c/></a>')
+
+        iterator = iterwalk(root, events=('start',))
+        events = list(iterator)
+        self.assertEquals(
+            [('start', root), ('start', root[0]), ('start', root[1])],
+            events)
+
+    def test_iterwalk_start_end(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b></b><c/></a>')
+
+        iterator = iterwalk(root, events=('start','end'))
+        events = list(iterator)
+        self.assertEquals(
+            [('start', root), ('start', root[0]), ('end', root[0]),
+             ('start', root[1]), ('end', root[1]), ('end', root)],
+            events)
+
+    def test_iterwalk_clear(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b></b><c/></a>')
+
+        iterator = iterwalk(root)
+        for event, elem in iterator:
+            elem.clear()
+
+        self.assertEquals(0,
+                          len(root))
+
+    def test_iterwalk_attrib_ns(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>')
+
+        attr_name = '{testns}bla'
+        events = []
+        iterator = iterwalk(root, events=('start','end','start-ns','end-ns'))
+        for event, elem in iterator:
+            events.append(event)
+            if event == 'start':
+                if elem.tag != '{ns1}a':
+                    elem.set(attr_name, 'value')
+
+        self.assertEquals(
+            ['start-ns', 'start', 'start', 'start-ns', 'start',
+             'end', 'end-ns', 'end', 'end', 'end-ns'],
+            events)
+
+        self.assertEquals(
+            None,
+            root.get(attr_name))
+        self.assertEquals(
+            'value',
+            root[0].get(attr_name))
+
+    def test_iterwalk_getiterator(self):
+        iterwalk = self.etree.iterwalk
+        root = self.etree.XML('<a><b><d/></b><c/></a>')
+
+        counts = []
+        for event, elem in iterwalk(root):
+            counts.append(len(list(elem.getiterator())))
+        self.assertEquals(
+            [1,2,1,4],
+            counts)
+
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)

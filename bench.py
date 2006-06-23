@@ -14,14 +14,15 @@ _ATTRIBUTES = {
     'bla3'        : _TEXT
     }
 
-def with_attributes(use_attributes):
+def with_attributes(*use_attributes):
     "Decorator for benchmarks that use attributes"
-    value = {False : 0, True : 1}[ bool(use_attributes) ]
+    vmap = {False : 0, True : 1}
+    values = [ vmap[bool(v)] for v in use_attributes ]
     def set_value(function):
         try:
-            function.ATTRIBUTES.add(value)
+            function.ATTRIBUTES.update(values)
         except AttributeError:
-            function.ATTRIBUTES = set([value])
+            function.ATTRIBUTES = set(values)
         return function
     return set_value
 
@@ -43,11 +44,17 @@ def with_text(no_text=False, text=False, utext=False):
     return set_value
 
 def onlylib(*libs):
+    "Decorator to restrict benchmarks to specific libraries"
     def set_libs(function):
         if libs:
             function.LIBS = libs
         return function
     return set_libs
+
+def serialized(function):
+    "Decorator for benchmarks that require serialized XML data"
+    function.STRING = True
+    return function
 
 class SkippedTest(Exception):
     pass
@@ -72,9 +79,13 @@ class BenchMarkBase(object):
             deepcopy = copy.deepcopy
             def set_property(root, fname):
                 setattr(self, fname, lambda : deepcopy(root))
+                xml = self._serialize_tree(root)
+                setattr(self, fname + '_xml', lambda : xml)
         else:
             def set_property(root, fname):
                 setattr(self, fname, self.et_make_clone_factory(root))
+                xml = self._serialize_tree(root)
+                setattr(self, fname + '_xml', lambda : xml)
 
         attribute_list = list(izip(count(), ({}, _ATTRIBUTES)))
         text_list = list(izip(count(), (None, _TEXT, _UTEXT)))
@@ -94,8 +105,14 @@ class BenchMarkBase(object):
     def _tree_builder_name(self, tree, tn, an):
         return '_root%d_T%d_A%d' % (tree, tn, an)
 
-    def tree_builder(self, tree, tn, an):
-        return getattr(self, self._tree_builder_name(tree, tn, an))
+    def tree_builder(self, tree, tn, an, serial):
+        name = self._tree_builder_name(tree, tn, an)
+        if serial:
+            name += '_xml'
+        return getattr(self, name)
+
+    def _serialize_tree(self, root):
+        return self.etree.tostring(root, 'UTF-8')
 
     def et_make_clone_factory(self, elem):
         def generate_elem(append, elem, level):
@@ -227,10 +244,13 @@ class BenchMarkBase(object):
                     arg_count = 1
                 tree_tuples = self._permutations(all_trees, arg_count)
 
+            serialized = getattr(method, 'STRING', False)
+
             for tree_tuple in tree_tuples:
                 for tn in sorted(getattr(method, 'TEXT', (0,))):
                     for an in sorted(getattr(method, 'ATTRIBUTES', (0,))):
-                        benchmarks.append((name, method_call, tree_tuple, tn, an))
+                        benchmarks.append((name, method_call, tree_tuple,
+                                           tn, an, serialized))
 
         return benchmarks
 
@@ -263,33 +283,58 @@ class BenchMark(BenchMarkBase):
         for child in reversed(root):
             pass
 
-    @with_attributes(True)
-    @with_attributes(False)
+    @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8(self, root):
         self.etree.tostring(root, 'UTF-8')
 
-    @with_attributes(True)
-    @with_attributes(False)
+    @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf16(self, root):
         self.etree.tostring(root, 'UTF-16')
 
-    @with_attributes(True)
-    @with_attributes(False)
+    @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8_unicode_XML(self, root):
         xml = unicode(self.etree.tostring(root, 'UTF-8'), 'UTF-8')
         self.etree.XML(xml)
 
-    @with_attributes(True)
-    @with_attributes(False)
+    @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_write_utf8_parse_stringIO(self, root):
         f = StringIO()
         self.etree.ElementTree(root).write(f, 'UTF-8')
         f.seek(0)
         self.etree.parse(f)
+
+    @with_attributes(True, False)
+    @with_text(text=True, utext=True)
+    @serialized
+    def bench_parse_stringIO(self, root_xml):
+        f = StringIO(root_xml)
+        self.etree.parse(f)
+
+    @with_attributes(True, False)
+    @with_text(text=True, utext=True)
+    @serialized
+    def bench_XML(self, root_xml):
+        self.etree.XML(root_xml)
+
+    @with_attributes(True, False)
+    @with_text(text=True, utext=True)
+    @serialized
+    def bench_iterparse_stringIO(self, root_xml):
+        f = StringIO(root_xml)
+        for event, element in self.etree.iterparse(f):
+            pass
+
+    @with_attributes(True, False)
+    @with_text(text=True, utext=True)
+    @serialized
+    def bench_iterparse_stringIO_clear(self, root_xml):
+        f = StringIO(root_xml)
+        for event, element in self.etree.iterparse(f):
+            element.clear()
 
     def bench_append_from_document(self, root1, root2):
         # == "1,2 2,3 1,3 3,1 3,2 2,1" # trees 1 and 2, or 2 and 3, or ...
@@ -643,14 +688,14 @@ if __name__ == '__main__':
                        for bs in benchmarks ]
 
     import time
-    def run_bench(suite, method_name, method_call, tree_set, tn, an):
+    def run_bench(suite, method_name, method_call, tree_set, tn, an, serial):
         if method_call is None:
             raise SkippedTest
 
         current_time = time.time
         call_repeat = range(10)
 
-        tree_builders = [ suite.tree_builder(tree, tn, an)
+        tree_builders = [ suite.tree_builder(tree, tn, an, serial)
                           for tree in tree_set ]
 
         times = []
@@ -670,10 +715,11 @@ if __name__ == '__main__':
             del args
         return times
 
-    def build_treeset_name(trees, tn, an):
+    def build_treeset_name(trees, tn, an, serialized):
         text = {0:'-', 1:'S', 2:'U'}[tn]
         attr = {0:'-', 1:'A'}[an]
-        return "%s%s T%s" % (text, attr, ',T'.join(imap(str, trees))[:6])
+        ser  = {True:'X', False:'T'}[serialized]
+        return "%s%s%s T%s" % (text, attr, ser, ',T'.join(imap(str, trees))[:6])
 
 
     print "Running benchmark on", ', '.join(b.lib_name
@@ -685,7 +731,7 @@ if __name__ == '__main__':
         print "%-3s:    " % b.lib_name,
         for an in (0,1):
             for tn in (0,1,2):
-                print '  %s  ' % build_treeset_name((), tn, an)[:2],
+                print '  %s  ' % build_treeset_name((), tn, an, False)[:2],
         print
         for i, tree_times in enumerate(b.setup_times):
             print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
@@ -699,7 +745,7 @@ if __name__ == '__main__':
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
-            tree_set_name = build_treeset_name(*benchmark_setup[-3:])
+            tree_set_name = build_treeset_name(*benchmark_setup[-4:])
             print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
             print "(%-10s)" % tree_set_name,
             sys.stdout.flush()

@@ -1,6 +1,23 @@
-from tree cimport xmlDoc, xmlDict
+from tree cimport xmlDoc, xmlNode, xmlDict
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from xmlerror cimport xmlError
+
+
+cdef extern from "libxml/parser.h":
+    ctypedef void (*startElementNsSAX2Func)(void* ctx,
+                                            char* localname,
+                                            char* prefix,
+                                            char* URI,
+                                            int nb_namespaces,
+                                            char** namespaces,
+                                            int nb_attributes,
+                                            int nb_defaulted,
+                                            char** attributes)
+
+    ctypedef void (*endElementNsSAX2Func)(void* ctx,
+                                          char* localname,
+                                          char* prefix,
+                                          char* URI)
 
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput
@@ -8,6 +25,10 @@ cdef extern from "libxml/tree.h":
         void* context
         xmlInputReadCallback  readcallback
         xmlInputCloseCallback closecallback
+
+    ctypedef struct xmlSAXHandler:
+        startElementNsSAX2Func startElementNs
+        endElementNsSAX2Func   endElementNs
 
 cdef extern from "libxml/xmlIO.h":
     cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)
@@ -27,6 +48,8 @@ cdef extern from "libxml/parser.h":
         int recovery
         int options
         xmlError lastError
+        xmlNode* node
+        xmlSAXHandler* sax
         
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
@@ -71,6 +94,20 @@ cdef extern from "libxml/parser.h":
     cdef xmlDoc* xmlCtxtReadMemory(xmlParserCtxt* ctxt,
                                    char* buffer, int size,
                                    char* filename, char* encoding, int options)
+
+# iterparse:
+
+    cdef xmlParserCtxt* xmlCreatePushParserCtxt(xmlSAXHandler* sax,
+                                                void* user_data,
+                                                char* chunk,
+                                                int size,
+                                                char* filename)
+
+    cdef int xmlCtxtResetPush(xmlParserCtxt* ctxt,
+                              char* chunk,
+                              int size,
+                              char* filename,
+                              char* encoding)
 
 # entity loaders:
 

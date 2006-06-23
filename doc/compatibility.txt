@@ -87,6 +87,10 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   API. In general, etree tries to avoid AssertionErrors in favour of being
   more specific about the reason for the exception.
 
+* When parsing fails in ``iterparse()``, ElementTree raises an ExpatError
+  instead of a SyntaxError.  lxml.etree follows the other parts of the parser
+  API and raises an (XML)SyntaxError.
+
 * ElementTree has a bug when serializing an empty Comment (no text argument
   given) to XML, etree serializes this successfully.
 

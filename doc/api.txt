@@ -7,18 +7,18 @@ the need to expose a feature in an easy way led to the invention of a new API.
 
 .. contents::
 .. 
-   1   lxml.etree
-   2   Trees and Documents
-   3   Parsers
-   4   Error handling on exceptions
-   5   Python unicode strings
-   6   XPath
-   7   XSLT
-   8   RelaxNG
-   9   XMLSchema
-   10  xinclude
-   11  write_c14n on ElementTree
-
+    1   lxml.etree
+    2   Trees and Documents
+    3   Parsers
+    4   iterparse and iterwalk
+    5   Error handling on exceptions
+    6   Python unicode strings
+    7   XPath
+    8   XSLT
+    9   RelaxNG
+    10  XMLSchema
+    11  xinclude
+    12  write_c14n on ElementTree
 
 lxml.etree
 ----------
@@ -169,6 +169,114 @@ original encoding::
   1.0
   >>> print docinfo.encoding
   ascii
+
+
+iterparse and iterwalk
+----------------------
+
+As known from ElementTree, the ``iterparse()`` utility function returns an
+iterator that generates parser events for an XML file (or file-like object),
+while building the tree.  The values are tuples ``(event-type, object)``.  The
+event types are 'start', 'end', 'start-ns' and 'end-ns'.
+
+The 'start' and 'end' events represent opening and closing elements and are
+accompanied by the respective element.  By default, only 'end' events are
+generated::
+
+  >>> xml = '''\
+  ... <root>
+  ...   <element key='value'>text</element>
+  ...   <element>text</element>tail
+  ...   <empty-element xmlns="testns" />
+  ... </root>
+  ... '''
+
+  >>> context = etree.iterparse(StringIO(xml))
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  end element
+  end element
+  end {testns}empty-element
+  end root
+
+The resulting tree is available through the ``root`` property of the iterator::
+
+  >>> context.root.tag
+  'root'
+
+The other types can be activated with the ``events`` keyword argument::
+
+  >>> events = ("start", "end")
+  >>> context = etree.iterparse(StringIO(xml), events=events)
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start root
+  start element
+  end element
+  start element
+  end element
+  start {testns}empty-element
+  end {testns}empty-element
+  end root
+
+You can modify the element and its descendants when handling the 'end' event.
+To save memory, for example, you can remove subtrees that are no longer
+needed::
+
+  >>> context = etree.iterparse(StringIO(xml))
+  >>> for action, elem in context:
+  ...     print len(elem),
+  ...     elem.clear()
+  0 0 0 3
+  >>> context.root.getchildren()
+  []
+
+During the 'start' event, the descendants and following siblings are not yet
+available.  Note that you should not modify or move the ancestors or siblings
+of the element during either of the two events.  You should also avoid moving
+the element itself.
+
+The 'start-ns' and 'end-ns' events notify about namespace declarations and
+generate tuples ``(prefix, URI)``::
+
+  >>> events = ("start-ns", "end-ns")
+  >>> context = etree.iterparse(StringIO(xml), events=events)
+  >>> for action, obj in context:
+  ...     print action, obj
+  start-ns ('', 'testns')
+  end-ns None
+
+It is common practice to use a list as namespace stack and pop the last entry
+on the 'end-ns' event.
+
+lxml.etree supports two extensions compared to ElementTree.  It accepts a
+``tag`` keyword argument just like ``element.getiterator(tag)``.  This
+restricts events to a specific tag or namespace.
+
+  >>> context = etree.iterparse(StringIO(xml), tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  end element
+  end element
+
+  >>> events = ("start", "end")
+  >>> context = etree.iterparse(StringIO(xml), events=events, tag="{testns}*")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start {testns}empty-element
+  end {testns}empty-element
+
+The second extension is the ``iterwalk()`` function.  It behaves exactly like
+``iterparse()``, but works on Elements and ElementTrees::
+
+  >>> root = context.root
+  >>> context = etree.iterwalk(root, events=events, tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start element
+  end element
+  start element
+  end element
 
 
 Error handling on exceptions

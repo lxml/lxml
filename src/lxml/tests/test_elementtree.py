@@ -1754,7 +1754,92 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         self.assert_(tostring(b) == '<b/>Foo' or
                      tostring(b) == '<b />Foo')
-        
+
+    def test_iterparse(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b></b><c/></a>')
+
+        iterator = iterparse(f)
+        self.assertEquals(None,
+                          iterator.root)
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('end', root[0]), ('end', root[1]), ('end', root)],
+            events)
+
+    def test_iterparse_start(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b></b><c/></a>')
+
+        iterator = iterparse(f, events=('start',))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('start', root), ('start', root[0]), ('start', root[1])],
+            events)
+
+    def test_iterparse_start_end(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b></b><c/></a>')
+
+        iterator = iterparse(f, events=('start','end'))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('start', root), ('start', root[0]), ('end', root[0]),
+             ('start', root[1]), ('end', root[1]), ('end', root)],
+            events)
+
+    def test_iterparse_clear(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b></b><c/></a>')
+
+        iterator = iterparse(f)
+        for event, elem in iterator:
+            elem.clear()
+
+        root = iterator.root
+        self.assertEquals(0,
+                          len(root))
+
+    def test_iterparse_attrib_ns(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>')
+
+        attr_name = '{testns}bla'
+        events = []
+        iterator = iterparse(f, events=('start','end','start-ns','end-ns'))
+        for event, elem in iterator:
+            events.append(event)
+            if event == 'start':
+                if elem.tag != '{ns1}a':
+                    elem.set(attr_name, 'value')
+
+        self.assertEquals(
+            ['start-ns', 'start', 'start', 'start-ns', 'start',
+             'end', 'end-ns', 'end', 'end', 'end-ns'],
+            events)
+
+        root = iterator.root
+        self.assertEquals(
+            None,
+            root.get(attr_name))
+        self.assertEquals(
+            'value',
+            root[0].get(attr_name))
+
+    def test_iterparse_getiterator(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b><d/></b><c/></a>')
+
+        counts = []
+        for event, elem in iterparse(f):
+            counts.append(len(list(elem.getiterator())))
+        self.assertEquals(
+            [1,2,1,4],
+            counts)
+
     def test_parse_file(self):
         parse = self.etree.parse
         # from file

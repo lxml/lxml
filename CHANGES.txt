@@ -7,6 +7,10 @@ current
 Features added
 --------------
 
+* Module level ``iterwalk()`` function as 'iterparse' for trees
+
+* ElementTree compatible ``iterparse()`` module function
+
 * Element.nsmap property returns a mapping of all namespace prefixes known at
   the Element to their namespace URI
 

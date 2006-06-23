@@ -1,16 +1,15 @@
-Benchmarks and speed
+Benchmarks and Speed
 ====================
 
-As an XML library, lxml.etree is very fast.  It is also slow.  As with
-all software, it depends on what you do with it.  Rest assured that
-lxml is fast enough for most applications, so lxml is probably fast
-enough for yours.
+As an XML library, lxml.etree is very fast.  It is also slow.  As with all
+software, it depends on what you do with it.  Rest assured that lxml is fast
+enough for most applications, so lxml is probably somewhere between 'fast
+enough' and 'the best choice' for yours.
 
 This text describes where lxml.etree (lxe) excels, gives hints on some
 performance traps and compares the overall performance to the original
-ElementTree_ (ET) and cElementTree_ (cET) libraries by Fredrik Lundh.
-The cElementTree library is a fast C-implementation of the original
-ElementTree.
+ElementTree_ (ET) and cElementTree_ (cET) libraries by Fredrik Lundh.  The
+cElementTree library is a fast C-implementation of the original ElementTree.
 
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
@@ -30,6 +29,14 @@ children at the third level, T2 is swapped around to have many children at the
 root element, T3 is a deep tree with few children at each level and T4 is a
 small tree, slightly broader than deep.  Most benchmarks run in a loop over
 all children of the tree root.
+
+.. contents::
+.. 
+   1  Bad things first
+   2  Parsing and Serialising
+   3  The ElementTree API
+   4  Tree traversal
+   5  XPath
 
 
 Bad things first
@@ -67,9 +74,20 @@ results are rather impressive.  Compared to cElementTree, lxml is about 20 to
   ET : tostring_utf8   (S- T3)   87.1525 msec/pass
 
 For parsing, the difference between the libraries is smaller.  The (c)ET
-libraries use the expat parser, which is known to be fast and similar in
-performance to the libxml2 parser.  If you take a complete serialize-parse
-cycle, the numbers will look similar to these::
+libraries use the expat parser, which is known to be extremely fast::
+
+  lxe: parse_stringIO  (SA T2)  197.7678 msec/pass
+  cET: parse_stringIO  (SA T2)   38.9390 msec/pass
+  ET : parse_stringIO  (SA T2)  364.3468 msec/pass
+
+  lxe: parse_stringIO  (UA T3)   48.6735 msec/pass
+  cET: parse_stringIO  (UA T3)   39.7455 msec/pass
+  ET : parse_stringIO  (UA T3)  237.9971 msec/pass
+
+The expat parser allows cET to be up to 80% faster than lxml on plain parser
+performance.  The same applies to the ``iterparse()`` function.  However, if
+you take a complete serialize-parse cycle, the numbers will look similar to
+these::
 
   lxe: write_utf8_parse_stringIO  (S- T1)  187.0444 msec/pass
   cET: write_utf8_parse_stringIO  (S- T1)  828.4068 msec/pass
@@ -79,8 +97,10 @@ cycle, the numbers will look similar to these::
   cET: write_utf8_parse_stringIO  (UA T2)  927.2374 msec/pass
   ET : write_utf8_parse_stringIO  (UA T2) 1297.9678 msec/pass
 
-So, lxml also wins this contest, but considering the previous numbers on
-serialization, cET comes rather close in plain parser performance.
+For applications that require a high parser throughput and do little
+serialization, cET is the best choice.  Also for iterparse applications that
+extract small amounts of data from large XML data sets.  If it comes to
+round-trip performance, however, lxml tends to be 3-4 times faster in total.
 
 
 The ElementTree API

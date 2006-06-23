@@ -1693,6 +1693,7 @@ include "nsclasses.pxi"  # Namespace implementation and registry
 include "docloader.pxi"  # Support for custom document loaders
 include "parser.pxi"     # XML Parser
 include "serializer.pxi" # XML output functions
+include "iterparse.pxi"  # incremental XML parsing
 include "xmlid.pxi"      # XMLID and IDDict
 include "extensions.pxi" # XPath/XSLT extension functions
 include "xpath.pxi"      # XPath evaluation

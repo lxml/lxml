@@ -13,6 +13,7 @@ class ParserError(LxmlError):
 ctypedef enum LxmlParserType:
     LXML_XML_PARSER
     LXML_HTML_PARSER
+    LXML_ITERPARSE_PARSER
 
 cdef class _ParserContext:
     # Global parser context to share the string dictionary.
@@ -343,12 +344,15 @@ cdef class _BaseParser:
         elif isinstance(self, XMLParser):
             self._parser_type = LXML_XML_PARSER
             pctxt = xmlparser.xmlNewParserCtxt()
+        elif isinstance(self, iterparse):
+            self._parser_type = LXML_ITERPARSE_PARSER
+            pctxt = xmlparser.xmlNewParserCtxt()
         else:
             raise TypeError, "This class cannot be instantiated"
         self._parser_ctxt = pctxt
         if pctxt is NULL:
             raise ParserError, "Failed to create parser context"
-        if thread is None:
+        if thread is None or self._parser_type == LXML_ITERPARSE_PARSER:
             # no threading
             self._lockParser   = self.__dummy
             self._unlockParser = self.__dummy
@@ -358,7 +362,10 @@ cdef class _BaseParser:
             self._unlockParser = lock.release
         self._error_log = _ErrorLog()
         self.resolvers  = _ResolverRegistry()
-        self._context   = _ResolverContext(self.resolvers)
+        if self._parser_type == LXML_ITERPARSE_PARSER:
+            self._context   = _IterparseResolverContext(self.resolvers)
+        else:
+            self._context   = _ResolverContext(self.resolvers)
         pctxt._private = <python.PyObject*>self._context
 
     def __dealloc__(self):
