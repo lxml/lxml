@@ -38,6 +38,8 @@ Features added
 Bugs fixed
 ----------
 
+* Rare exceptions in Python list functions were not handled
+
 * Parsing accepted unicode strings with XML encoding declaration in certain
   cases
 

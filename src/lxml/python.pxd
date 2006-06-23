@@ -30,16 +30,16 @@ cdef extern from "Python.h":
     cdef object PyNumber_Int(object value)
 
     cdef Py_ssize_t PyList_GET_SIZE(object l)
-    cdef int PyList_Append(object l, object obj)
-    cdef int PyList_Reverse(object l)
-    cdef int PyList_Insert(object l, Py_ssize_t index, object o)
+    cdef int PyList_Append(object l, object obj) except -1
+    cdef int PyList_Reverse(object l) except -1
+    cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
     cdef object PyList_GET_ITEM(object l, Py_ssize_t index)
-    cdef int PyDict_SetItemString(object d, char* key, object value)
-    cdef int PyDict_SetItem(object d, object key, object value)
+    cdef int PyDict_SetItemString(object d, char* key, object value) except -1
+    cdef int PyDict_SetItem(object d, object key, object value) except -1
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
-    cdef int PyDict_DelItem(object d, object key)
-    cdef int PyDict_Clear(object d)
+    cdef int PyDict_DelItem(object d, object key) except -1
+    cdef void PyDict_Clear(object d)
     cdef object PyDict_Copy(object d)
     cdef Py_ssize_t PyDict_Size(object d)
     cdef object PyList_AsTuple(object o)
