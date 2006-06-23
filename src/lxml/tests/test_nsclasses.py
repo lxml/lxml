@@ -67,7 +67,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         etree.Namespace(u'ns11').clear()
 
-    def test_default_class(self):
+    def test_default_tagname(self):
         bluff_dict = {
             None   : self.bluff_class,
             'maeh' : self.maeh_class
@@ -143,6 +143,25 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         etree.Namespace(None).clear()
         etree.Namespace(u'ns30').clear()
+
+    def test_default_element_class(self):
+        class local_default_class(etree.ElementBase):
+            pass
+
+        try:
+            etree.setDefaultElementClass(local_default_class)
+            self.assert_(isinstance(etree.Element("test"),
+                                    local_default_class))
+            self.assert_(isinstance(etree.Element("{http://myns}test"),
+                                    local_default_class))
+
+            etree.setDefaultElementClass()
+            self.assertFalse(isinstance(etree.Element("test"),
+                                        local_default_class))
+            self.assertFalse(isinstance(etree.Element("{http://myns}test"),
+                                        local_default_class))
+        finally:
+            etree.setDefaultElementClass()
 
 def test_suite():
     suite = unittest.TestSuite()

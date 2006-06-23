@@ -1,6 +1,9 @@
 # module-level API for namespace implementations
 
-class NamespaceRegistryError(LxmlError):
+class LxmlRegistryError(LxmlError):
+    pass
+
+class NamespaceRegistryError(LxmlRegistryError):
     pass
 
 cdef class ElementBase(_Element):
@@ -12,6 +15,19 @@ cdef class ElementBase(_Element):
     really need to initialize the object after creation, you can implement an
     ``_init(self)`` method that will be called after object creation.
     """
+
+def setDefaultElementClass(cls=None):
+    global __DEFAULT_ELEMENT_CLASS
+    if cls is None:
+        __DEFAULT_ELEMENT_CLASS = _Element
+    elif not python.PyType_Check(cls) or not issubclass(cls, ElementBase):
+        raise LxmlRegistryError, \
+              "Registered element classes must be subtypes of ElementBase"
+    else:
+        __DEFAULT_ELEMENT_CLASS = cls
+
+cdef object __DEFAULT_ELEMENT_CLASS
+__DEFAULT_ELEMENT_CLASS = _Element
 
 cdef object __NAMESPACE_REGISTRIES
 __NAMESPACE_REGISTRIES = {}
@@ -110,10 +126,9 @@ cdef class _NamespaceRegistry:
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     "Dictionary-like registry for namespace implementation classes"
     def __setitem__(self, name, item):
-        if not python.PyType_Check(item) or \
-               not issubclass(item, ElementBase):
+        if not python.PyType_Check(item) or not issubclass(item, ElementBase):
             raise NamespaceRegistryError, \
-                  "Registered item must be subtypes of ElementBase"
+                  "Registered element classes must be subtypes of ElementBase"
         if name is not None:
             name = _utf8(name)
         self._entries[name] = item
@@ -188,7 +203,7 @@ cdef object _find_element_class(char* c_namespace_utf,
         dict_result = python.PyDict_GetItem(
             __NAMESPACE_REGISTRIES, None)
     if dict_result is NULL:
-        return _Element
+        return __DEFAULT_ELEMENT_CLASS
 
     registry = <_NamespaceRegistry>dict_result
     classes = registry._entries
@@ -205,4 +220,4 @@ cdef object _find_element_class(char* c_namespace_utf,
     if dict_result is not NULL:
         return <object>dict_result
     else:
-        return _Element
+        return __DEFAULT_ELEMENT_CLASS

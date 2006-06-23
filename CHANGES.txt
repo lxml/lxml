@@ -7,6 +7,9 @@ current
 Features added
 --------------
 
+* Support for setting a custom default Element class as opposed to namespace
+  specific classes (which still override the default class)
+
 * Module level ``iterwalk()`` function as 'iterparse' for trees
 
 * ElementTree compatible ``iterparse()`` module function

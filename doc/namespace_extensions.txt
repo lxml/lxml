@@ -1,12 +1,11 @@
-================================================
-Implementing namespaces with the Namespace class
-================================================
+Using custom Element classes in lxml
+====================================
 
-lxml allows you to implement namespaces, in a rather literal sense.  You can
-write your own classes for Elements and have lxml use them for a specific tag
-name in a specific namespace.
+lxml has very sophisticated support for custom Element classes.  You can
+provide your own classes for Elements and have lxml use them by default or
+only for a specific tag name in a specific namespace.
 
-Custom Elements must inherit from the ``etree.ElementBase`` class, which
+Custom Elements must inherit from the ``lxml.etree.ElementBase`` class, which
 provides the Element interface for subclasses::
 
   >>> from lxml import etree
@@ -17,15 +16,38 @@ provides the Element interface for subclasses::
 
 This defines a new Element class ``HonkElement`` with a property ``honking``.
 
-Note that you cannot (or rather must not) instantiate this class yourself.
-lxml.etree will do that for you through its normal ElementTree API.  To let
-lxml know about it, you must register it with a namespace.
+Note that you cannot (or rather *must not*) instantiate this class yourself.
+lxml.etree will do that for you through its normal ElementTree API.
 
 
-The Namespace class
--------------------
+Changing the default element class
+----------------------------------
 
-You can build a new namespace (or retrieve an existing one) by calling the
+You can let lxml use your new class for every Element it generates::
+
+  >>> etree.setDefaultElementClass(HonkElement)
+  >>> el = etree.Element("myelement")
+  >>> print isinstance(el, HonkElement)
+  True
+  >>> el.honking
+  False
+  >>> el = etree.Element("myelement", honking='true')
+  >>> el.honking
+  True
+
+To reset lxml.etree to the original element class, pass ``None`` or nothing::
+
+  >>> etree.setDefaultElementClass()
+  >>> el = etree.Element("myelement")
+  >>> print isinstance(el, HonkElement)
+  False
+
+
+Implementing namespaces
+-----------------------
+
+lxml allows you to implement namespaces, in a rather literal sense.  You can
+build a new element namespace (or retrieve an existing one) by calling the
 Namespace class::
 
   >>> namespace = etree.Namespace('http://hui.de/honk')

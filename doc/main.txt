@@ -98,9 +98,9 @@ functionality, such as XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and
 `c14n`_. Python code can be called from XPath expressions and XSLT stylesheets
 through the use of `extension functions`_.
 
-In addition to the ElementTree API, lxml also features an API for
-`implementing namespaces`_ using tag specific element classes.  This is a
-simple way to write arbitrary XML driven APIs on top of lxml.
+In addition to the ElementTree API, lxml also features a sophisticated API for
+`custom element classes`_.  This is a simple way to write arbitrary XML driven
+APIs on top of lxml.
 
 lxml also offers a `SAX compliant API`_, that works with the SAX support
 in the standard library.
@@ -112,7 +112,7 @@ in the standard library.
 .. _`ElementTree compatibility overview`: compatibility.html
 .. _`extends this API`: api.html
 .. _`extension functions`: extensions.html
-.. _`implementing namespaces`: namespace_extensions.html
+.. _`custom element classes`: namespace_extensions.html
 .. _`SAX compliant API`: sax.html
 
 .. _XPath: http://www.w3.org/TR/xpath
