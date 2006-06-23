@@ -53,6 +53,7 @@ model.  It knows about parents and siblings of elements::
   >>> b = etree.SubElement(root, "b")
   >>> c = etree.SubElement(root, "c")
   >>> d = etree.SubElement(root, "d")
+  >>> e = etree.SubElement(d,    "e")
   >>> b.getparent() == root
   True
   >>> print b.getnext().tag
@@ -60,12 +61,17 @@ model.  It knows about parents and siblings of elements::
   >>> print c.getprevious().tag
   b
 
-You can also iterate over the siblings of an element::
+You can also iterate over the siblings, ancestors and descendants of an
+element, as defined by the respective XPath axes::
 
   >>> [ el.tag for el in a.itersiblings() ]
   ['b', 'c', 'd']
   >>> [ el.tag for el in c.itersiblings(preceding=True) ]
   ['b', 'a']
+  >>> [ el.tag for el in e.iterancestors() ]
+  ['d', 'root']
+  >>> [ el.tag for el in root.iterdescendants() ]
+  ['a', 'b', 'c', 'd', 'e']
 
 Elements always live within a document context in lxml.  This implies that
 there is also a notion of an absolute document root.  You can retrieve an
@@ -82,7 +88,7 @@ can use ElementTrees to create XML trees with an explicit root node::
   >>> print tree.getroot().tag
   d
   >>> print etree.tostring(tree)
-  <d/>
+  <d><e/></d>
 
 All operations that you run on such an ElementTree (like XPath, XSLT, etc.)
 will understand the explicitly chosen root as root node of a document.  They
