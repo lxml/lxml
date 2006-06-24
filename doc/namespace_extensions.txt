@@ -32,6 +32,8 @@ You can let lxml use your new class for every Element it generates::
   >>> el.honking
   False
   >>> el = etree.Element("myelement", honking='true')
+  >>> print etree.tostring(el)
+  <myelement honking="true"/>
   >>> el.honking
   True
 
