@@ -140,6 +140,9 @@ filters the generated elements by tag name::
   >>> [ el.tag for el in root.getiterator(tag='d') ]
   ['d']
 
+See also the section on the utility functions ``iterparse()`` and
+``iterwalk()`` below.
+
 
 Parsers
 -------
