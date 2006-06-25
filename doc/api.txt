@@ -8,17 +8,18 @@ the need to expose a feature in an easy way led to the invention of a new API.
 .. contents::
 .. 
    1   lxml.etree
-   2   Documents, Trees and Iteration
-   3   Parsers
-   4   iterparse and iterwalk
-   5   Error handling on exceptions
-   6   Python unicode strings
-   7   XPath
-   8   XSLT
-   9   RelaxNG
-   10  XMLSchema
-   11  xinclude
-   12  write_c14n on ElementTree
+   2   Trees and Documents
+   3   Iteration
+   4   Parsers
+   5   iterparse and iterwalk
+   6   Error handling on exceptions
+   7   Python unicode strings
+   8   XPath
+   9   XSLT
+   10  RelaxNG
+   11  XMLSchema
+   12  xinclude
+   13  write_c14n on ElementTree
 
 lxml.etree
 ----------
@@ -42,8 +43,8 @@ The following examples usually assume this to be executed first::
   >>> from StringIO import StringIO
 
 
-Documents, Trees and Iteration
-------------------------------
+Trees and Documents
+-------------------
 
 Compared to the original ElementTree API, lxml.etree has an extended tree
 model.  It knows about parents and siblings of elements::
@@ -61,39 +62,8 @@ model.  It knows about parents and siblings of elements::
   >>> print c.getprevious().tag
   b
 
-The ElementTree API makes Elements iterable to supports iteration over their
-children::
-
-  >>> [ el.tag for el in root ]
-  ['a', 'b', 'c', 'd']
-
-lxml.etree also supports this, but additionally features an extended API for
-iteration over the children, following/preceding siblings, ancestors and
-descendants of an element, as defined by the respective XPath axes::
-
-  >>> [ el.tag for el in root.iterchildren() ]
-  ['a', 'b', 'c', 'd']
-  >>> [ el.tag for el in root.iterchildren(reversed=True) ]
-  ['d', 'c', 'b', 'a']
-  >>> [ el.tag for el in a.itersiblings() ]
-  ['b', 'c', 'd']
-  >>> [ el.tag for el in c.itersiblings(preceding=True) ]
-  ['b', 'a']
-  >>> [ el.tag for el in e.iterancestors() ]
-  ['d', 'root']
-  >>> [ el.tag for el in root.iterdescendants() ]
-  ['a', 'b', 'c', 'd', 'e']
-
-All of these iterators support an additional ``tag`` keyword argument that
-filters the generated elements by tag name::
-
-  >>> [ el.tag for el in root.iterchildren(tag='a') ]
-  ['a']
-  >>> [ el.tag for el in root.iterdescendants(tag='d') ]
-  ['d']
-
-In lxml.etree, Elements always live within a document context.  This implies
-that there is also a notion of an absolute document root.  You can retrieve an
+Elements always live within a document context in lxml.  This implies that
+there is also a notion of an absolute document root.  You can retrieve an
 ElementTree for the root node of a document from any of its elements::
 
   >>> tree = d.getroottree()
@@ -121,6 +91,54 @@ not modify their Elements::
 The rule is that all operations that are applied to Elements use either the
 Element itself as reference point, or the absolute root of the document that
 contains this Element (e.g. for absolute XPath expressions).
+
+
+Iteration
+---------
+
+The ElementTree API makes Elements iterable to supports iteration over their
+children.  Using the tree defined above, we get::
+
+  >>> [ el.tag for el in root ]
+  ['a', 'b', 'c', 'd']
+
+Tree traversal is commonly based on the ``element.getiterator()`` method::
+
+  >>> [ el.tag for el in root.getiterator() ]
+  ['root', 'a', 'b', 'c', 'd', 'e']
+
+lxml.etree also supports this, but additionally features an extended API for
+iteration over the children, following/preceding siblings, ancestors and
+descendants of an element, as defined by the respective XPath axis::
+
+  >>> [ el.tag for el in root.iterchildren() ]
+  ['a', 'b', 'c', 'd']
+  >>> [ el.tag for el in root.iterchildren(reversed=True) ]
+  ['d', 'c', 'b', 'a']
+  >>> [ el.tag for el in b.itersiblings() ]
+  ['c', 'd']
+  >>> [ el.tag for el in c.itersiblings(preceding=True) ]
+  ['b', 'a']
+  >>> [ el.tag for el in e.iterancestors() ]
+  ['d', 'root']
+  >>> [ el.tag for el in root.iterdescendants() ]
+  ['a', 'b', 'c', 'd', 'e']
+
+Note how ``element.iterdescendants()`` does not include the element itself, as
+opposed to ``element.getiterator()``.  The latter effectively implements the
+'descendant-or-self' axis in XPath.
+
+All of these iterators support an additional ``tag`` keyword argument that
+filters the generated elements by tag name::
+
+  >>> [ el.tag for el in root.iterchildren(tag='a') ]
+  ['a']
+  >>> [ el.tag for el in d.iterchildren(tag='a') ]
+  []
+  >>> [ el.tag for el in root.iterdescendants(tag='d') ]
+  ['d']
+  >>> [ el.tag for el in root.getiterator(tag='d') ]
+  ['d']
 
 
 Parsers
