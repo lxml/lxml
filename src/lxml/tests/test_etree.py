@@ -398,6 +398,42 @@ class ETreeOnlyTestCase(HelperTestCase):
             b,
             d.getparent())
 
+    def test_iterchildren(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
+        result = []
+        for el in root.iterchildren():
+            result.append(el.tag)
+        self.assertEquals(['one', 'two', 'three'], result)
+
+    def test_iterchildren_reversed(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
+        result = []
+        for el in root.iterchildren(reversed=True):
+            result.append(el.tag)
+        self.assertEquals(['three', 'two', 'one'], result)
+
+    def test_iterchildren_tag(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>')
+        result = []
+        for el in root.iterchildren(tag='two'):
+            result.append(el.text)
+        self.assertEquals(['Two', 'Bla'], result)
+
+    def test_iterchildren_tag_reversed(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>')
+        result = []
+        for el in root.iterchildren(reversed=True, tag='two'):
+            result.append(el.text)
+        self.assertEquals(['Bla', 'Two'], result)
+
     def test_iterancestors(self):
         Element    = self.etree.Element
         SubElement = self.etree.SubElement
@@ -418,6 +454,56 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [b, a],
             list(d.iterancestors()))
+
+    def test_iterancestors_tag(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            [a],
+            list(d.iterancestors(tag='a')))
+
+    def test_iterdescendants(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [b, d, c, e],
+            list(a.iterdescendants()))
+        self.assertEquals(
+            [],
+            list(d.iterdescendants()))
+
+    def test_iterdescendants_tag(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [],
+            list(a.iterdescendants('a')))
+        a2 = SubElement(e, 'a')
+        self.assertEquals(
+            [a2],
+            list(a.iterdescendants('a')))
+        self.assertEquals(
+            [a2],
+            list(c.iterdescendants('a')))
 
     def test_getroottree(self):
         Element = self.etree.Element
@@ -498,6 +584,27 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [],
             list(b.itersiblings(preceding=True)))
+
+    def test_itersiblings_tag(self):
+        Element    = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        self.assertEquals(
+            [],
+            list(a.itersiblings(tag='XXX')))
+        self.assertEquals(
+            [c],
+            list(b.itersiblings(tag='c')))
+        self.assertEquals(
+            [b],
+            list(c.itersiblings(preceding=True, tag='b')))
+        self.assertEquals(
+            [],
+            list(c.itersiblings(preceding=True, tag='c')))
 
     def test_parseid(self):
         parseid = self.etree.parseid

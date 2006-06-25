@@ -36,8 +36,14 @@ Features added
   * Element.iterancestors() iterates over the ancestors of an element (from
     parent to parent)
 
-  * Element.itersiblings() iterates over the siblings of an element in either
+  * Element.itersiblings() iterates over either the following or preceding
+    siblings of an element
+
+  * Element.iterchildren() iterates over the children of an element in either
     direction
+
+  * All iterators support the ``tag`` keyword argument to restrict the
+    generated elements
 
 * Element.getnext() and Element.getprevious() return the direct siblings of an
   element

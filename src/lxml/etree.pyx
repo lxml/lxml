@@ -1044,27 +1044,41 @@ cdef class _Element(_NodeBase):
             return _elementFactory(self._doc, c_node)
         return None
 
-    def itersiblings(self, preceding=False):
+    def itersiblings(self, preceding=False, tag=None):
         """Iterate over the following or preceding siblings of this element.
 
         The direction is determined by the 'preceding' keyword which defaults
-        to False, i.e. forward iteration over the following siblings."""
-        return SiblingsIterator(self, preceding)
-
-    def iterancestors(self):
-        """Iterate over the ancestors of this element (from parent to parent).
+        to False, i.e. forward iteration over the following siblings.  The
+        generated elements can be restricted to a specific tag name with the
+        'tag' keyword.
         """
-        return AncestorsIterator(self)
+        return SiblingsIterator(self, preceding, tag)
 
-    def iterdescendants(self):
+    def iterancestors(self, tag=None):
+        """Iterate over the ancestors of this element (from parent to parent).
+
+        The generated elements can be restricted to a specific tag name with
+        the 'tag' keyword.
+        """
+        return AncestorsIterator(self, tag)
+
+    def iterdescendants(self, tag=None):
         """Iterate over the descendants of this element in document order.
 
         As opposed to getiterator(), this iterator does not yield the element
-        itself.
+        itself.  The generated elements can be restricted to a specific tag
+        name with the 'tag' keyword.
         """
-        iterator = ElementDepthFirstIterator(self)
-        iterator.next()
-        return iterator
+        return ElementDepthFirstIterator(self, tag, False)
+
+    def iterchildren(self, reversed=False, tag=None):
+        """Iterate over the children of this element.
+
+        As opposed to using normal iteration on this element, the generated
+        elements can be restricted to a specific tag name with the 'tag'
+        keyword and reversed with the 'reversed' keyword.
+        """
+        return ElementChildIterator(self, reversed, tag)
 
     def getroottree(self):
         """Return an ElementTree for the root node of the document that
@@ -1350,7 +1364,25 @@ cdef class _Attrib:
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
-cdef class _ElementIterator:
+cdef class _ElementTagMatcher:
+    cdef object _pystrings
+    cdef char* _href
+    cdef char* _name
+    cdef _initTagMatch(self, tag):
+        if tag is None:
+            self._href = NULL
+            self._name = NULL
+        else:
+            self._pystrings = _getNsTag(tag)
+            if self._pystrings[0] is None:
+                self._href = NULL
+            else:
+                self._href = _cstr(self._pystrings[0])
+            self._name = _cstr(self._pystrings[1])
+            if self._name[0] == c'*' and self._name[1] == c'\0':
+                self._name = NULL
+
+cdef class _ElementIterator(_ElementTagMatcher):
     # we keep Python references here to control GC
     cdef _NodeBase _node
     cdef _node_to_node_function _next_element
@@ -1360,6 +1392,9 @@ cdef class _ElementIterator:
     cdef void _storeNext(self, _NodeBase node):
         cdef xmlNode* c_node
         c_node = self._next_element(node._c_node)
+        while c_node is not NULL and \
+                  not _tagMatches(c_node, self._href, self._name):
+            c_node = self._next_element(c_node)
         if c_node is NULL:
             self._node = None
         else:
@@ -1378,14 +1413,19 @@ cdef class _ElementIterator:
 
 cdef class ElementChildIterator(_ElementIterator):
     "Iterates over the children of an element."
-    def __init__(self, _NodeBase node not None, reversed=False):
+    def __init__(self, _NodeBase node not None, reversed=False, tag=None):
         cdef xmlNode* c_node
+        self._initTagMatch(tag)
         if reversed:
             c_node = _findChildBackwards(node._c_node, 0)
             self._next_element = _previousElement
         else:
             c_node = _findChildForwards(node._c_node, 0)
             self._next_element = _nextElement
+        if tag is not None:
+            while c_node is not NULL and \
+                      not _tagMatches(c_node, self._href, self._name):
+                c_node = self._next_element(c_node)
         if c_node is not NULL:
             # store Python ref:
             self._node = _elementFactory(node._doc, c_node)
@@ -1395,7 +1435,8 @@ cdef class SiblingsIterator(_ElementIterator):
 
     You can pass the boolean keyword ``preceding`` to specify the direction.
     """
-    def __init__(self, _NodeBase node not None, preceding=False):
+    def __init__(self, _NodeBase node not None, preceding=False, tag=None):
+        self._initTagMatch(tag)
         if preceding:
             self._next_element = _previousElement
         else:
@@ -1404,16 +1445,20 @@ cdef class SiblingsIterator(_ElementIterator):
 
 cdef class AncestorsIterator(_ElementIterator):
     "Iterates over the ancestors of an element (from parent to parent)."
-    def __init__(self, _NodeBase node not None):
+    def __init__(self, _NodeBase node not None, tag=None):
+        self._initTagMatch(tag)
         self._next_element = _parentElement
         self._storeNext(node)
 
-cdef class ElementDepthFirstIterator:
+cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     """Iterates over an element and its sub-elements in document order (depth
     first pre-order).
 
     If the optional 'tag' argument is not None, it returns only the elements
     that match the respective name and namespace.
+
+    The optional boolean 'inclusive' argument defaults to True and can be set
+    to False to exclude the start element itself.
 
     Note that the behaviour of this iterator is completely undefined if the
     tree it traverses is modified during iteration.
@@ -1422,27 +1467,15 @@ cdef class ElementDepthFirstIterator:
     # keep next node to return and a depth counter in the tree
     cdef _NodeBase _next_node
     cdef _NodeBase _top_node
-    cdef object _pystrings
-    cdef char* _href
-    cdef char* _name
-    def __init__(self, _NodeBase node not None, tag=None):
+    def __init__(self, _NodeBase node not None, tag=None, inclusive=True):
         self._top_node  = node
         self._next_node = node
-        if tag is None:
-            self._href = NULL
-            self._name = NULL
-        else:
-            self._pystrings = _getNsTag(tag)
-            if self._pystrings[0] is None:
-                self._href = NULL
-            else:
-                self._href = _cstr(self._pystrings[0])
-            self._name = _cstr(self._pystrings[1])
-            if self._name[0] == c'*' and self._name[1] == c'\0':
-                self._name = NULL
-            if not _tagMatches(node._c_node, self._href, self._name):
-                # this cannot raise StopIteration, self._next_node != None
-                self.next()
+        self._initTagMatch(tag)
+        if tag is not None and \
+               not _tagMatches(node._c_node, self._href, self._name) or \
+               not inclusive:
+            # this cannot raise StopIteration, self._next_node != None
+            self.next()
 
     def __iter__(self):
         return self
