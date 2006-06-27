@@ -85,6 +85,8 @@ will not see any elements outside the ElementTree.  However, ElementTrees do
 not modify their Elements::
 
   >>> element = tree.getroot()
+  >>> print element.tag
+  d
   >>> print element.getparent().tag
   root
   >>> print element.getroottree().getroot().tag
@@ -92,7 +94,8 @@ not modify their Elements::
 
 The rule is that all operations that are applied to Elements use either the
 Element itself as reference point, or the absolute root of the document that
-contains this Element (e.g. for absolute XPath expressions).
+contains this Element (e.g. for absolute XPath expressions).  All operations
+on an ElementTree use its explicit root node as reference.
 
 
 Iteration
