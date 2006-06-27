@@ -48,7 +48,7 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   as this conflicts with the characteristic encoding of Python unicode
   strings.
 
-* ElementTree allows you to place an Element in two different trees as the
+* ElementTree allows you to place an Element in two different trees at the
   same time.  Thus, this::
 
     a = Element('a')

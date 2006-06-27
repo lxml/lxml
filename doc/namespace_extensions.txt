@@ -20,6 +20,13 @@ This defines a new Element class ``HonkElement`` with a property ``honking``.
 Note that you cannot (or rather *must not*) instantiate this class yourself.
 lxml.etree will do that for you through its normal ElementTree API.
 
+.. contents::
+..
+   1  Changing the default element class
+   2  Implementing namespaces
+   3  Element initialization
+   4  Default implementations
+
 
 Changing the default element class
 ----------------------------------

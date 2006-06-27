@@ -20,6 +20,15 @@ examples.  Any number of arguments is allowed::
   ...    return "Got %d arguments." % len(args)
 
 
+.. contents::
+.. 
+   1  The FunctionNamespace
+   2  Global prefix assignment
+   3  Evaluators and XSLT
+   4  Evaluator-local extensions
+   5  What to return from a function
+
+
 The FunctionNamespace
 ---------------------
 
