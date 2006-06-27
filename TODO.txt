@@ -4,8 +4,6 @@ lxml
 Exposing libxml2 functionalities
 --------------------------------
 
-* potential threading issues in XPath extension functions?
-
 * See whether XInclude support can mimic ElementTree's API.
 
 * Test XML entities, also in an ElementTree context.
@@ -15,7 +13,7 @@ In general
 
 * test namespaces more in-depth
 
-* will namespaces nodes of unknown namespaces be added (and never freed?)
+* will namespace nodes of unknown namespaces be added (and never freed?)
 
 Top level
 ---------
@@ -32,6 +30,8 @@ ElementTree
 
 QName
 -----
+
+* expose prefix support?
 
 Features
 --------
