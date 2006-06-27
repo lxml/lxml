@@ -1,3 +1,4 @@
+==============
 lxml changelog
 ==============
 
@@ -6,9 +7,6 @@ current
 
 Features added
 --------------
-
-* Support for setting a custom default Element class as opposed to namespace
-  specific classes (which still override the default class)
 
 * Module level ``iterwalk()`` function as 'iterparse' for trees
 
@@ -47,6 +45,19 @@ Features added
 
 * Element.getnext() and Element.getprevious() return the direct siblings of an
   element
+
+Bugs fixed
+----------
+
+
+1.0.2 (2006-06-27)
+==================
+
+Features added
+--------------
+
+* Support for setting a custom default Element class as opposed to namespace
+  specific classes (which still override the default class)
 
 Bugs fixed
 ----------
@@ -100,9 +111,6 @@ Bugs fixed
 Features added
 --------------
 
-See also the features added for lxml 1.0beta to find out more about what's
-new.
-
 * Element.getiterator() and the findall() methods support finding arbitrary
   elements from a namespace (pattern ``{namespace}*``)
 
@@ -123,62 +131,6 @@ new.
 * Error logs have a ``last_error`` attribute for convenience
 
 * Comment texts can be changed through the API
-
-Bugs fixed
-----------
-
-* Memory leak in Element.__setitem__
-
-* Memory leak in Element.attrib.items() and Element.attrib.values()
-
-* Memory leak in XPath extension functions
-
-* Memory leak in unicode related setup code
-
-* Element now raises ValueError on empty tag names
-
-* Namespace fixing after moving elements between documents could fail if the
-  source document was freed too early
-
-* Setting namespace-less tag names on namespaced elements ('{ns}t' -> 't')
-  didn't reset the namespace
-
-* Unknown constants from newer libxml2 versions could raise exceptions in the
-  error handlers
-
-* lxml.etree compiles much faster
-
-* On libxml2 <= 2.6.22, parsing strings with encoding declaration could fail
-  in certain cases
-
-* Document reference in ElementTree objects was not updated when the root
-  element was moved to a different document
-
-* Running absolute XPath expressions on an Element now evaluates against the
-  root tree
-
-* Evaluating absolute XPath expressions (``/*``) on an ElementTree could fail
-
-* Crashes when calling XSLT, RelaxNG, etc. with uninitialized ElementTree
-  objects
-
-* Removed public function ``initThreadLogging()``, replaced by more general
-  ``initThread()`` which fixes a number of setup problems in threads
-
-* Memory leak when using iconv encoders in tostring/write
-
-* Deep copying Elements and ElementTrees maintains the document information
-
-* Serialization functions raise LookupError for unknown encodings
-
-* Memory deallocation crash resulting from deep copying elements
-
-
-1.0.beta (2006-05-18)
-=====================
-
-Features added
---------------
 
 * Formatted output via ``pretty_print`` keyword in serialization functions
 
@@ -232,6 +184,52 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in Element.__setitem__
+
+* Memory leak in Element.attrib.items() and Element.attrib.values()
+
+* Memory leak in XPath extension functions
+
+* Memory leak in unicode related setup code
+
+* Element now raises ValueError on empty tag names
+
+* Namespace fixing after moving elements between documents could fail if the
+  source document was freed too early
+
+* Setting namespace-less tag names on namespaced elements ('{ns}t' -> 't')
+  didn't reset the namespace
+
+* Unknown constants from newer libxml2 versions could raise exceptions in the
+  error handlers
+
+* lxml.etree compiles much faster
+
+* On libxml2 <= 2.6.22, parsing strings with encoding declaration could fail
+  in certain cases
+
+* Document reference in ElementTree objects was not updated when the root
+  element was moved to a different document
+
+* Running absolute XPath expressions on an Element now evaluates against the
+  root tree
+
+* Evaluating absolute XPath expressions (``/*``) on an ElementTree could fail
+
+* Crashes when calling XSLT, RelaxNG, etc. with uninitialized ElementTree
+  objects
+
+* Removed public function ``initThreadLogging()``, replaced by more general
+  ``initThread()`` which fixes a number of setup problems in threads
+
+* Memory leak when using iconv encoders in tostring/write
+
+* Deep copying Elements and ElementTrees maintains the document information
+
+* Serialization functions raise LookupError for unknown encodings
+
+* Memory deallocation crash resulting from deep copying elements
+
 * Some ElementTree methods could crash if the root node was not initialized
   (neither file nor element passed to the constructor)
 
@@ -246,6 +244,7 @@ Bugs fixed
   ElementTree root node as reference point
 
 * Calling ``document('')`` in XSLT failed to return the stylesheet
+
 
 0.9.2 (2006-05-10)
 ==================
