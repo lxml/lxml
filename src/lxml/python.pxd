@@ -72,7 +72,7 @@ cdef extern from "Python.h":
     cdef void PyEval_RestoreThread(PyThreadState* state)
     cdef PyObject* PyThreadState_GetDict()
 
-cdef extern from "etree.h": # redefines some functions as macros
+cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef int _isString(object obj)
     cdef int isinstance(object instance, object classes)
     cdef int issubclass(object derived,  object superclasses)

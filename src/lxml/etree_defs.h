@@ -1,5 +1,5 @@
-#ifndef HAS_ETREE_H
-#define HAS_ETREE_H
+#ifndef HAS_ETREE_DEFS_H
+#define HAS_ETREE_DEFS_H
 
 /* v_arg functions */
 #define va_int(ap)     va_arg(ap, int)
@@ -130,4 +130,4 @@
 }
 
 
-#endif /*HAS_ETREE_H*/
+#endif /* HAS_ETREE_DEFS_H */

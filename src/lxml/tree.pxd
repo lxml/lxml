@@ -248,7 +248,7 @@ cdef extern from "libxml/globals.h":
 cdef extern from "libxml/xmlstring.h":
     cdef char* xmlStrdup(char* cur)
 
-cdef extern from "etree.h":
+cdef extern from "etree_defs.h":
     cdef int _isElement(xmlNode* node)
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* tree_top,
                                           xmlNode* start_node, int inclusive)
