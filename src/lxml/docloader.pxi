@@ -53,11 +53,7 @@ cdef class _ResolverRegistry:
     cdef object _resolvers
     cdef Resolver _default_resolver
     def __init__(self, Resolver default_resolver=None):
-        try:
-            self._resolvers = set()
-        except NameError:
-            from sets import Set
-            self._resolvers = Set()
+        self._resolvers = set()
         self._default_resolver = default_resolver
 
     def add(self, Resolver resolver not None):
@@ -74,11 +70,14 @@ cdef class _ResolverRegistry:
     def remove(self, resolver):
         self._resolvers.discard(resolver)
 
-    def copy(self):
+    cdef _ResolverRegistry _copy(self):
         cdef _ResolverRegistry registry
         registry = _ResolverRegistry(self._default_resolver)
         registry._resolvers = self._resolvers.copy()
         return registry
+
+    def copy(self):
+        return self._copy()
 
     def resolve(self, system_url, public_id, context):
         for resolver in self._resolvers:

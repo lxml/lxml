@@ -12,6 +12,13 @@ cdef object True
 cdef object False
 True  = __builtin__.True
 False = __builtin__.False
+
+cdef object set
+try:
+    set = __builtin__.set
+except AttributeError:
+    from sets import Set as set
+
 del __builtin__
 
 cdef object _elementpath
@@ -297,7 +304,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result._ns_counter = 0
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-    result._parser = parser.copy()
+    result._parser = parser._copy()
     return result
 
 cdef class DocInfo:
@@ -655,11 +662,9 @@ cdef class _Element(_NodeBase):
         
     def __copy__(self):
         cdef xmlDoc* c_doc
-        cdef _Document doc
         cdef _Document new_doc
-        doc = self._doc
-        c_doc = _copyDocRoot(doc._c_doc, self._c_node) # recursive
-        new_doc = _documentFactory(c_doc, doc._parser.copy())
+        c_doc = _copyDocRoot(self._doc._c_doc, self._c_node) # recursive
+        new_doc = _documentFactory(c_doc, self._doc._parser._copy())
         return new_doc.getroot()
 
     def set(self, key, value):

@@ -68,8 +68,9 @@ cdef class _ParserContext:
         context = self._findThreadParserContext()
         if context._default_parser is None:
             if self._default_parser is None:
-                self._default_parser = __DEFAULT_XML_PARSER.copy()
-            context._default_parser = self._default_parser.copy()
+                self._default_parser = __DEFAULT_XML_PARSER._copy()
+            if context is not self:
+                context._default_parser = self._default_parser._copy()
         return context._default_parser
 
     cdef xmlDict* _getThreadDict(self, xmlDict* default):
@@ -329,7 +330,7 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 cdef class _BaseParser:
     cdef int _parse_options
     cdef _ErrorLog _error_log
-    cdef readonly object resolvers
+    cdef readonly _ResolverRegistry resolvers
     cdef _ResolverContext _context
     cdef LxmlParserType _parser_type
     cdef xmlParserCtxt* _parser_ctxt
@@ -379,15 +380,19 @@ cdef class _BaseParser:
     def __dummy(self):
         pass
 
-    def copy(self):
+    cdef _BaseParser _copy(self):
         "Create a new parser with the same configuration."
         cdef _BaseParser parser
         parser = self.__class__()
         parser._parse_options = self._parse_options
-        parser.resolvers = self.resolvers.copy()
+        parser.resolvers = self.resolvers._copy()
         parser._context = _ResolverContext(parser.resolvers)
         parser._parser_ctxt._private = <python.PyObject*>parser._context
         return parser
+
+    def copy(self):
+        "Create a new parser with the same configuration."
+        return self._copy()
 
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
         """Parse unicode document, share dictionary if possible.
