@@ -19,6 +19,9 @@ try:
 except AttributeError:
     from sets import Set as set
 
+cdef object id
+id = __builtin__.id
+
 del __builtin__
 
 cdef object _elementpath
