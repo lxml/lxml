@@ -364,9 +364,9 @@ cdef class _BaseParser:
         self._error_log = _ErrorLog()
         self.resolvers  = _ResolverRegistry()
         if self._parser_type == LXML_ITERPARSE_PARSER:
-            self._context   = _IterparseResolverContext(self.resolvers)
+            self._context = _IterparseResolverContext(self.resolvers)
         else:
-            self._context   = _ResolverContext(self.resolvers)
+            self._context = _ResolverContext(self.resolvers)
         pctxt._private = <python.PyObject*>self._context
 
     def __dealloc__(self):

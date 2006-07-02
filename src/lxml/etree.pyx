@@ -304,7 +304,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result._ns_counter = 0
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-    result._parser = parser._copy()
+    result._parser = parser
     return result
 
 cdef class DocInfo:
@@ -664,7 +664,7 @@ cdef class _Element(_NodeBase):
         cdef xmlDoc* c_doc
         cdef _Document new_doc
         c_doc = _copyDocRoot(self._doc._c_doc, self._c_node) # recursive
-        new_doc = _documentFactory(c_doc, self._doc._parser._copy())
+        new_doc = _documentFactory(c_doc, self._doc._parser)
         return new_doc.getroot()
 
     def set(self, key, value):

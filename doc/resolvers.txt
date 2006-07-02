@@ -147,22 +147,9 @@ needs to resolve the ``hoi`` URI in the call to the document function, its
     [...]
   XSLTApplyError: Cannot resolve URI hoi:test
 
-This can only be solved by adding a ``hoi`` resolver to the parser.  Note that
-adding it after parsing the XSL document will not work as parsed documents
-remember the state of the parser at the time of their creation::
+This can only be solved by adding a ``hoi`` resolver to the original parser::
 
   >>> honk_parser.resolvers.add( PrefixResolver("hoi") )
-  >>> result = transform(honk_doc)
-  Traceback (most recent call last):
-    [...]
-  XSLTApplyError: Cannot resolve URI hoi:test
-
-You have to parse the document again with this updated parser to copy the
-resolver state to the stylesheet::
-
-  >>> honk_doc = etree.parse(StringIO(xml_text), honk_parser)
-  >>> transform = etree.XSLT(honk_doc)
-  Resolving url honk:test as prefix honk ... done
   >>> result = transform(honk_doc)
   Resolving url hoi:test as prefix honk ... failed
   Resolving url hoi:test as prefix hoi ... done
