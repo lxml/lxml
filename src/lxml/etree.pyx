@@ -163,9 +163,10 @@ cdef class _ExceptionContext:
             raise type, value, traceback
 
 
-cdef class _BaseParser # forward declaration
+# forward declaration of _BaseParser, see parser.pxi
+cdef class _BaseParser
 
-cdef class _Document:
+cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     """Internal base class to reference a libxml document.
 
     When instances of this class are garbage collected, the libxml
@@ -340,7 +341,8 @@ cdef class DocInfo:
             else:
                 return ""
 
-cdef class _NodeBase:
+cdef public class _NodeBase [ type LxmlNodeBaseType,
+                              object LxmlNodeBase ]:
     """Base class to reference a document object and a libxml node.
 
     By pointing to a Document instance, a reference is kept to
@@ -583,7 +585,8 @@ cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
     result._context_node = context_node
     return result
 
-cdef class _Element(_NodeBase):
+cdef public class _Element(_NodeBase) [ type LxmlElementType,
+                                        object LxmlElement ]:
     cdef object _tag
     cdef object _attrib
     def _init(self):

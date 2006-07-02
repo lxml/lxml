@@ -6,7 +6,8 @@ class LxmlRegistryError(LxmlError):
 class NamespaceRegistryError(LxmlRegistryError):
     pass
 
-cdef class ElementBase(_Element):
+cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
+                                          object LxmlElementBase ]:
     """All custom Element classes must inherit from this one.
 
     Note that subclasses *must not* override __init__ or __new__ as it is
