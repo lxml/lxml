@@ -278,7 +278,7 @@ needed::
 
 **WARNING**: During the 'start' event, the descendants and following siblings
 are not yet available and should not be accessed.  During the 'end' event, the
-descendants of the element can be freely modified, but its following siblings
+element and its descendants can be freely modified, but its following siblings
 should not be accessed.  During either of the two events, you **must not**
 modify or move the ancestors (parents) of the current element.  You should
 also avoid moving or discarding the element itself.  The golden rule is: do
