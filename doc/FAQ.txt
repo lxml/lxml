@@ -89,6 +89,18 @@ See also the notes on compatibility_ to ElementTree_.
    b) do not terminate threads while the trees they parsed are still in use
 
 
+#) Why can't I just delete parents or clear the root node in iterparse()?
+
+   The ``iterparse()`` implementation is based on the libxml2 parser.  It
+   requires the tree to be intact to finish parsing.  If you delete or modify
+   parents of the current node, chances are you modify the structure in a way
+   that breaks the parser.  Normally, this will result in a segfault.  Please
+   refer to the `iterparse section` of the lxml API documentation to find out
+   what you can do and what you can't do.
+
+   .. _`iterparse section`: api.html#iterparse-and-iterwalk
+
+
 #) Why doesn't the ``pretty_print`` option reformat my XML output?
 
    Pretty printing (or formatting) an XML document means adding white space to
