@@ -281,10 +281,12 @@ are not yet available and should not be accessed.  During the 'end' event, the
 following siblings of the element should not be accessed.  During either of
 the two events, you **must not** modify or move the ancestors (parents) of the
 current element.  You should also avoid moving or discarding the element
-itself.
+itself.  The golden rule is: do not touch anything that will have to be
+touched again by the parser later on.
 
-If you want to save more memory without deleting parents, you can clean up the
-preceding siblings of the current element::
+If you have elements with a long list of children in your XML file and want to
+save more memory during parsing, you can clean up the preceding siblings of
+the current element::
 
   >>> for event, element in etree.iterparse(StringIO(xml)):
   ...     # ... do something with the element
@@ -294,9 +296,9 @@ preceding siblings of the current element::
 
 You can use ``while`` instead of ``if`` if you skipped siblings using the
 ``tag`` keyword argument.  The more selective your tag is, however, the more
-thoughts you will have to put into cleaning up the elements that were skipped.
-Therefore, it is sometimes easier to traverse all elements and do the tag
-selection by hand in the event handler code.
+thought you will have to put into finding the right way to clean up the
+elements that were skipped.  Therefore, it is sometimes easier to traverse all
+elements and do the tag selection by hand in the event handler code.
 
 The 'start-ns' and 'end-ns' events notify about namespace declarations and
 generate tuples ``(prefix, URI)``::
