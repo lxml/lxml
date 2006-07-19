@@ -278,11 +278,11 @@ needed::
 
 **WARNING**: During the 'start' event, the descendants and following siblings
 are not yet available and should not be accessed.  During the 'end' event, the
-following siblings of the element should not be accessed.  During either of
-the two events, you **must not** modify or move the ancestors (parents) of the
-current element.  You should also avoid moving or discarding the element
-itself.  The golden rule is: do not touch anything that will have to be
-touched again by the parser later on.
+descendants of the element can be freely modified, but its following siblings
+should not be accessed.  During either of the two events, you **must not**
+modify or move the ancestors (parents) of the current element.  You should
+also avoid moving or discarding the element itself.  The golden rule is: do
+not touch anything that will have to be touched again by the parser later on.
 
 If you have elements with a long list of children in your XML file and want to
 save more memory during parsing, you can clean up the preceding siblings of
