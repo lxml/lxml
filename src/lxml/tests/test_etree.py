@@ -850,6 +850,56 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             0, e.index(e[0], -12, -1))
 
+    def test_replace(self):
+        etree = self.etree
+        e = etree.Element('foo')
+        for i in range(10):
+            el = etree.SubElement(e, 'a%s' % i)
+            el.text = "text%d" % i
+            el.tail = "tail%d" % i
+
+        child0 = e[0]
+        child1 = e[1]
+        child2 = e[2]
+
+        e.replace(e[0], e[1])
+        self.assertEquals(
+            9, len(e))
+        self.assertEquals(
+            child1, e[0])
+        self.assertEquals(
+            child1.text, "text1")
+        self.assertEquals(
+            child1.tail, "tail1")
+        self.assertEquals(
+            child0.tail, "tail0")
+        self.assertEquals(
+            child2, e[1])
+
+        e.replace(e[-1], e[0])
+        self.assertEquals(
+            child1, e[-1])
+        self.assertEquals(
+            child1.text, "text1")
+        self.assertEquals(
+            child1.tail, "tail1")
+        self.assertEquals(
+            child2, e[0])
+
+    def test_replace_new(self):
+        etree = self.etree
+        e = etree.Element('foo')
+        for i in range(10):
+            etree.SubElement(e, 'a%s' % i)
+
+        new_element = etree.Element("test")
+        child1 = e[1]
+        e.replace(e[0], new_element)
+        self.assertEquals(
+            new_element, e[0])
+        self.assertEquals(
+            child1, e[1])
+
     def test_docinfo_public(self):
         etree = self.etree
         xml_header = '<?xml version="1.0" encoding="ascii"?>'

@@ -745,11 +745,32 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         or contents.
         """
         cdef xmlNode* c_node
+        cdef xmlNode* c_next
         c_node = element._c_node
         if c_node.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
-        _removeText(c_node.next)
+        c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
+        _moveTail(c_next, c_node)
+
+    def replace(self, _Element old_element not None,
+                _Element new_element not None):
+        """Replaces a subelement with the element passed as second argument.
+        """
+        cdef xmlNode* c_old_node
+        cdef xmlNode* c_old_next
+        cdef xmlNode* c_new_node
+        cdef xmlNode* c_new_next
+        c_old_node = old_element._c_node
+        if c_old_node.parent is not self._c_node:
+            raise ValueError, "Element is not a child of this node."
+        c_old_next = c_old_node.next
+        c_new_node = new_element._c_node
+        c_new_next = c_new_node.next
+        tree.xmlReplaceNode(c_old_node, c_new_node)
+        moveNodeToDocument(new_element, self._doc)
+        _moveTail(c_new_next, c_new_node)
+        _moveTail(c_old_next, c_old_node)
         
     # PROPERTIES
     property tag:

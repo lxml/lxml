@@ -8,8 +8,12 @@ current
 Features added
 --------------
 
+* Element.replace(old, new) method to replace a subelement by another one
+
 Bugs fixed
 ----------
+
+* Element.remove() deleted the tail text from the removed Element
 
 * Creating documents no longer copies the parser for later URL resolving.  For
   performance reasons, only a reference is kept.  Resolver updates on the
@@ -26,7 +30,8 @@ Features added
 
 * Module level ``iterwalk()`` function as 'iterparse' for trees
 
-* ElementTree compatible ``iterparse()`` module function
+* Module level ``iterparse()`` function similar to ElementTree (see
+  documentation for differences)
 
 * Element.nsmap property returns a mapping of all namespace prefixes known at
   the Element to their namespace URI

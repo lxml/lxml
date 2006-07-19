@@ -1154,6 +1154,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             '<a></a>',
             a)
+        self.assertEquals('b2', b.tail)
         
     def test_getchildren(self):
         Element = self.etree.Element
