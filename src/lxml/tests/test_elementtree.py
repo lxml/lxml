@@ -212,6 +212,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('<a>&lt;&gt;&amp;</a>',
                          tostring(a))
 
+    def test_text_str_subclass(self):
+        Element = self.etree.Element
+
+        class strTest(str):
+            pass
+
+        a = Element("a")
+        a.text = strTest("text")
+        self.assertXML('<a>text</a>',
+                       a)
+
     def test_tail(self):
         ElementTree = self.etree.ElementTree
         
@@ -223,6 +234,18 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(None, root.tail)
         self.assertEquals('mixed', root[0].text)
         self.assertEquals(' content.', root[0].tail)
+
+    def test_tail_str_subclass(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        class strTest(str):
+            pass
+
+        a = Element("a")
+        SubElement(a, "t").tail = strTest("tail")
+        self.assertXML('<a><t></t>tail</a>',
+                       a)
 
     def test_ElementTree(self):
         Element = self.etree.Element
@@ -887,6 +910,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         # can't use C14N here!
         self.assertEquals('c',  a.tag)
         self.assertEquals('<c', tostring(a)[:2])
+
+    def test_tag_str_subclass(self):
+        Element = self.etree.Element
+
+        class strTest(str):
+            pass
+
+        a = Element("a")
+        a.tag = strTest("TAG")
+        self.assertXML('<TAG></TAG>',
+                       a)
 
     def test_delitem(self):
         Element = self.etree.Element
