@@ -107,7 +107,7 @@ cdef object _getAttributeValue(_NodeBase element, key, default):
     tree.xmlFree(c_result)
     return result
 
-cdef void _setAttributeValue(_NodeBase element, key, value):
+cdef int _setAttributeValue(_NodeBase element, key, value) except -1:
     cdef xmlNs* c_ns
     cdef char* c_value
     cdef char* c_tag
@@ -120,6 +120,7 @@ cdef void _setAttributeValue(_NodeBase element, key, value):
     else:
         c_ns = element._doc._findOrBuildNodeNs(element._c_node, _cstr(ns))
         tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
+    return 0
 
 cdef object __RE_XML_ENCODING
 __RE_XML_ENCODING = re.compile(

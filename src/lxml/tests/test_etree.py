@@ -38,6 +38,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, Element, '{test}')
         self.assertRaises(ValueError, setattr, el, 'tag', '{test}')
 
+    def test_attribute_set(self):
+        # ElementTree accepts arbitrary attribute values
+        # lxml.etree allows only strings
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEquals("TEST", root.get("attr"))
+        self.assertRaises(TypeError, root.set, "newattr", 5)
+
     def test_parse_error(self):
         parse = self.etree.parse
         # from StringIO

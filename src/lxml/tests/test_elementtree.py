@@ -391,6 +391,13 @@ class ETreeTestCaseBase(unittest.TestCase):
             True,
             '{http://ns.codespeak.net/test}baz' in root.attrib)
 
+    def test_attribute_set(self):
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEquals("TEST", root.get("attr"))
+
     def test_XML(self):
         XML = self.etree.XML
         

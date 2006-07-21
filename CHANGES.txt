@@ -13,6 +13,8 @@ Features added
 Bugs fixed
 ----------
 
+* Setting an attribute to a non-string value did not raise an exception
+
 * Element.remove() deleted the tail text from the removed Element
 
 * Creating documents no longer copies the parser for later URL resolving.  For
