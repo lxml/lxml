@@ -249,6 +249,7 @@ cdef class iterparse(_BaseParser):
         context = <_IterparseResolverContext>self._context
         if python.PyList_GET_SIZE(context._events) > context._event_index:
             item = python.PyList_GET_ITEM(context._events, context._event_index)
+            python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
             context._event_index = context._event_index + 1
             return item
 
@@ -280,7 +281,9 @@ cdef class iterparse(_BaseParser):
             raise StopIteration
 
         context._event_index = 1
-        return python.PyList_GET_ITEM(context._events, 0)
+        element = python.PyList_GET_ITEM(context._events, 0)
+        python.Py_INCREF(element) # 'borrowed reference' from PyList_GET_ITEM
+        return element
 
 
 cdef class iterwalk:

@@ -1845,6 +1845,17 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(0,
                           len(root))
 
+    def test_iterparse_large(self):
+        iterparse = self.etree.iterparse
+        CHILD_COUNT = 12345
+        f = StringIO('<a>' + ('<b>test</b>'*CHILD_COUNT) + '</a>')
+
+        i = 0
+        for key in iterparse(f):
+            event, element = key
+            i += 1
+        self.assertEquals(i, CHILD_COUNT + 1)
+
     def test_iterparse_attrib_ns(self):
         iterparse = self.etree.iterparse
         f = StringIO('<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>')
