@@ -707,6 +707,16 @@ class ETreeTestCaseBase(unittest.TestCase):
             a.text)
         self.assertXML('<a></a>', a)
         
+    def test_set_text_empty(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertEquals(None, a.text)
+
+        a.text = ''
+        self.assertEquals('', a.text)
+        self.assertXML('<a></a>', a)
+        
     def test_tail1(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement

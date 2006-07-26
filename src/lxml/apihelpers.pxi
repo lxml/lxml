@@ -169,12 +169,15 @@ cdef _collectText(xmlNode* c_node):
     while c_node_cur is not NULL and c_node_cur.type == tree.XML_TEXT_NODE:
         if c_node_cur.content[0] != c'\0':
             text = c_node_cur.content
-            scount = scount + 1
+        scount = scount + 1
         c_node_cur = c_node_cur.next
 
     # handle two most common cases first
     if text is NULL:
-        return None
+        if scount > 0:
+            return ''
+        else:
+            return None
     if scount == 1:
         return funicode(text)
 
