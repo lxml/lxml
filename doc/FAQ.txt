@@ -95,7 +95,7 @@ See also the notes on compatibility_ to ElementTree_.
    requires the tree to be intact to finish parsing.  If you delete or modify
    parents of the current node, chances are you modify the structure in a way
    that breaks the parser.  Normally, this will result in a segfault.  Please
-   refer to the `iterparse section` of the lxml API documentation to find out
+   refer to the `iterparse section`_ of the lxml API documentation to find out
    what you can do and what you can't do.
 
    .. _`iterparse section`: api.html#iterparse-and-iterwalk
@@ -135,6 +135,23 @@ See also the notes on compatibility_ to ElementTree_.
    Python unicode strings with XML data or HTML data that carry encoding
    information are broken.  lxml will not parse them.  You must provide
    parsable data in a valid encoding.
+
+
+#) Why do I get errors about missing UCS4 symbols when installing lxml?
+
+   Most likely, you use a Python installation that was configured for internal
+   use of UCS2 unicode, meaning 16-bit unicode.  The lxml egg distributions
+   are generally compiled on platforms that use UCS4, a 32-bit unicode
+   encoding, as this is used on the majority of platforms.  Sadly, both are
+   not compatible, so the eggs can only support the one they were compiled
+   with.
+
+   This means that you have to compile lxml from sources for your system.
+   Note that you do not need Pyrex for this, the lxml source distribution is
+   directly compilable on both platform types.  See the `build instructions`_
+   on how to do this.
+
+   .. _`build instructions`: build.html
 
 
 #) How can I find out which namespace prefixes are used in a document?
