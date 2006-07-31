@@ -589,6 +589,150 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[2][2].tag, 'match')
         self.assertEquals(root[2][2].text, 'De')
 
+    def test_exslt_regexp_match_groups(self):
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="regexp:match(
+            '123abc567', '([0-9]+)([a-z]+)([0-9]+)' )">
+        <test1><xsl:value-of select="."/></test1>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 4)
+
+        self.assertEquals(root[0].text, "123abc567")
+        self.assertEquals(root[1].text, "123")
+        self.assertEquals(root[2].text, "abc")
+        self.assertEquals(root[3].text, "567")
+
+    def test_exslt_regexp_match1(self):
+        # taken from http://www.exslt.org/regexp/functions/match/index.html
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="regexp:match(
+            'http://www.bayes.co.uk/xml/index.xml?/xml/utils/rechecker.xml',
+            '(\w+):\/\/([^/:]+)(:\d*)?([^# ]*)')">
+        <test1><xsl:value-of select="."/></test1>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 5)
+
+        self.assertEquals(
+            root[0].text,
+            "http://www.bayes.co.uk/xml/index.xml?/xml/utils/rechecker.xml")
+        self.assertEquals(
+            root[1].text,
+            "http")
+        self.assertEquals(
+            root[2].text,
+            "www.bayes.co.uk")
+        self.assertEquals(
+            root[3].text,
+            "")
+        self.assertEquals(
+            root[4].text,
+            "/xml/index.xml?/xml/utils/rechecker.xml")
+
+    def test_exslt_regexp_match2(self):
+        # taken from http://www.exslt.org/regexp/functions/match/index.html
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="regexp:match(
+            'This is a test string', '(\w+)', 'g')">
+        <test1><xsl:value-of select="."/></test1>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 5)
+
+        self.assertEquals(root[0].text, "This")
+        self.assertEquals(root[1].text, "is")
+        self.assertEquals(root[2].text, "a")
+        self.assertEquals(root[3].text, "test")
+        self.assertEquals(root[4].text, "string")
+
+    def _test_exslt_regexp_match3(self):
+        # taken from http://www.exslt.org/regexp/functions/match/index.html
+        # THIS IS NOT SUPPORTED!
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="regexp:match(
+            'This is a test string', '([a-z])+ ', 'g')">
+        <test1><xsl:value-of select="."/></test1>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 4)
+
+        self.assertEquals(root[0].text, "his")
+        self.assertEquals(root[1].text, "is")
+        self.assertEquals(root[2].text, "a")
+        self.assertEquals(root[3].text, "test")
+
+    def _test_exslt_regexp_match4(self):
+        # taken from http://www.exslt.org/regexp/functions/match/index.html
+        # THIS IS NOT SUPPORTED!
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:regexp="http://exslt.org/regular-expressions"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="regexp:match(
+            'This is a test string', '([a-z])+ ', 'gi')">
+        <test1><xsl:value-of select="."/></test1>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+</xsl:stylesheet>
+"""))
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,  'test')
+        self.assertEquals(len(root), 4)
+
+        self.assertEquals(root[0].text, "This")
+        self.assertEquals(root[1].text, "is")
+        self.assertEquals(root[2].text, "a")
+        self.assertEquals(root[3].text, "test")
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])

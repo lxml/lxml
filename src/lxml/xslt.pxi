@@ -559,20 +559,22 @@ cdef class _ExsltRegExp:
             results = rexpc.findall(s)
             if not results:
                 return ()
-            result_list = []
-            root = Element('matches')
-            for s_match in results:
-                elem = SubElement(root, 'match')
-                elem.text = s_match
-                python.PyList_Append(result_list, elem)
-            return result_list
         else:
             result = rexpc.search(s)
-            if result is None:
+            if not result:
                 return ()
-            root = Element('match')
-            root.text = result.group()
-            return (root,)
+            results = [ result.group() ]
+            results.extend( result.groups('') )
+        result_list = []
+        root = Element('matches')
+        join_groups = ''.join
+        for s_match in results:
+            if python.PyTuple_CheckExact(s_match):
+                s_match = join_groups(s_match)
+            elem = SubElement(root, 'match')
+            elem.text = s_match
+            python.PyList_Append(result_list, elem)
+        return result_list
 
     def replace(self, ctxt, s, rexp, flags, replacement):
         replacement = self._make_string(replacement)

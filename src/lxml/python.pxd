@@ -54,6 +54,7 @@ cdef extern from "Python.h":
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)
     cdef int PyType_Check(object instance)
+    cdef int PyTuple_CheckExact(object instance)
 
     cdef int PyObject_SetAttr(object o, object name, object value)
 

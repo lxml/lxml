@@ -13,6 +13,9 @@ Features added
 Bugs fixed
 ----------
 
+* The EXSLT ``regexp:match`` function now works as defined (except for some
+  differences in the regular expression syntax)
+
 * Setting element.text to '' returned None on request, not the empty string
 
 * ``iterparse()`` could crash on long XML files
