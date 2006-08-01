@@ -395,6 +395,15 @@ cdef class _ElementTree:
         """
         return self._context_node
 
+    def __copy__(self):
+        return ElementTree(self._context_node)
+
+    def __deepcopy__(self, memo):
+        if self._context_node is None:
+            return ElementTree()
+        else:
+            return ElementTree( self._context_node.__copy__() )
+
     property docinfo:
         """Information about the document provided by parser and DTD.  This
         value is only defined for ElementTree objects based on the root node

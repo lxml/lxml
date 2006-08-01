@@ -2106,6 +2106,20 @@ class ETreeTestCaseBase(unittest.TestCase):
         el = self.etree.parse(StringIO(isoxml)).getroot()
         self.assertEquals(utext, el.text)
 
+    def test_deepcopy_elementtree(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+
+        a = Element('a')
+        a.text = "Foo"
+        atree = ElementTree(a)
+
+        btree = copy.deepcopy(atree)
+        self.assertEqual("Foo", atree.getroot().text)
+        self.assertEqual("Foo", btree.getroot().text)
+        self.assertFalse(btree is atree)
+        self.assertFalse(btree.getroot() is atree.getroot())
+
     def test_deepcopy(self):
         Element = self.etree.Element
         
@@ -2172,20 +2186,6 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             root[0][0].get('{tns}foo'),
             copy.deepcopy(root[0][0]).get('{tns}foo') )
-
-    def test_shallowcopy(self):
-        Element = self.etree.Element
-        
-        a = Element('a')
-        a.text = 'Foo'
-
-        b = copy.copy(a)
-        self.assertEquals('Foo', b.text)
-        
-        b.text = 'Bar'
-        self.assertEquals('Bar', b.text)
-        self.assertEquals('Foo', a.text)
-        # XXX ElementTree will share nodes, but lxml.etree won't..
         
     def test_deepcopy_append(self):
         # previously caused a crash
@@ -2201,6 +2201,33 @@ class ETreeTestCaseBase(unittest.TestCase):
                           tostring(a).replace(' ', ''))
         self.assertEquals('<a><X/></a>',
                           tostring(b).replace(' ', ''))
+
+    def test_shallowcopy(self):
+        Element = self.etree.Element
+        
+        a = Element('a')
+        a.text = 'Foo'
+
+        b = copy.copy(a)
+        self.assertEquals('Foo', b.text)
+        
+        b.text = 'Bar'
+        self.assertEquals('Bar', b.text)
+        self.assertEquals('Foo', a.text)
+        # XXX ElementTree will share nodes, but lxml.etree won't..
+
+    def test_shallowcopy_elementtree(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+        
+        a = Element('a')
+        a.text = 'Foo'
+        atree = ElementTree(a)
+
+        btree = copy.copy(atree)
+        self.assertFalse(btree is atree)
+        self.assert_(btree.getroot() is atree.getroot())
+        self.assertEquals('Foo', atree.getroot().text)
 
     def test_element_boolean(self):
         etree = self.etree
