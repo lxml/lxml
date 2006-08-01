@@ -1,14 +1,21 @@
 How to build lxml from source
 =============================
 
-To build lxml from source, you need libxml2 and libxslt properly installed.
+To build lxml from source, you need libxml2 and libxslt properly
+installed, include header files (possibly shipped in -dev packages).
 
 Pyrex
 -----
 
-The lxml.etree module is written in Pyrex_.  To build lxml from source, you
-therefore need a working Pyrex installation.  Pyrex now supports EasyInstall,
-so you can install it by running the following command as super-user::
+The lxml.etree module is written in Pyrex_.  Since we ship the
+Pyrex-generated .c file with lxml releases however, you should not
+need Pyrex to build lxml.
+
+If you're interested in building from a svn checkout of lxml or want
+to be a lxml developer, you do need a working Pyrex installation.
+
+Pyrex now supports EasyInstall, so you can install it
+by running the following command as super-user::
 
   easy_install Pyrex
 
