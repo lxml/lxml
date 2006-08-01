@@ -33,9 +33,19 @@ class ETreeXPathTestCase(HelperTestCase):
                           tree.xpath('string(/a/text())'))
 
     def test_xpath_document_root(self):
-        tree = self.parse('<a/>')
-        self.assertEquals([tree.getroot()],
+        tree = self.parse('<a><b/></a>')
+        self.assertEquals([],
                           tree.xpath('/'))
+
+    def test_xpath_namespace(self):
+        tree = self.parse('<a xmlns="test" xmlns:p="myURI"/>')
+        self.assert_((None, "test") in tree.xpath('namespace::*'))
+        self.assert_(('p', 'myURI') in tree.xpath('namespace::*'))
+
+    def test_xpath_namespace_empty(self):
+        tree = self.parse('<a/>')
+        self.assertEquals([('xml', 'http://www.w3.org/XML/1998/namespace')],
+                          tree.xpath('namespace::*'))
 
     def test_xpath_list_elements(self):
         tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
