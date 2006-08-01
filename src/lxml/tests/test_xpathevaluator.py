@@ -32,6 +32,11 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals('Foo',
                           tree.xpath('string(/a/text())'))
 
+    def test_xpath_document_root(self):
+        tree = self.parse('<a/>')
+        self.assertEquals([tree.getroot()],
+                          tree.xpath('/'))
+
     def test_xpath_list_elements(self):
         tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
         root = tree.getroot()

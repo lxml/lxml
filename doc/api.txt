@@ -546,6 +546,10 @@ used:
   are also returned as strings, enclosed by the usual ``<!--`` and ``-->``
   markers.
 
+There is one special case for the XPath expression '/'. Here, lxml.etree
+returns the root element of the document instead of the document root (which
+does not have a representation in ElementTree).
+
 A related convenience method of ElementTree objects is ``getpath(element)``,
 which returns a structural, absolute XPath expression to find that element::
 

@@ -13,6 +13,9 @@ Features added
 Bugs fixed
 ----------
 
+* The XPath expression "/" now returns the root element instead of raising an
+  exception
+
 * Copying/deepcopying did not work for ElementTree objects
 
 * The EXSLT ``regexp:match`` function now works as defined (except for some

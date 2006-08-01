@@ -305,7 +305,11 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
         return result
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
-        if _isElement(c_node):
+        if c_node.type == tree.XML_DOCUMENT_NODE:
+            c_node = _findChildForwards(c_node, 0)
+        if c_node is NULL:
+            value = None
+        elif _isElement(c_node):
             if c_node.doc != doc._c_doc:
                 # XXX: works, but maybe not always the right thing to do?
                 # XPath: only runs when extensions create or copy trees
@@ -320,8 +324,8 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
             value = funicode(s)
             tree.xmlFree(s)
         else:
-            print "Not yet implemented result node type:", c_node.type
-            raise NotImplementedError
+            raise NotImplementedError, \
+                  "Not yet implemented result node type: %d" % c_node.type
         python.PyList_Append(result, value)
     return result
 
