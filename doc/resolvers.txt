@@ -70,11 +70,9 @@ resolver that only responds to a specific prefix::
   ...              </xsl:stylesheet>
   ...              ''' % prefix
   ...     def resolve(self, url, pubid, context):
-  ...         print "Resolving url %s as prefix %s ..." % (url, self.prefix),
   ...         if url.startswith(self.prefix):
-  ...             print "done"
+  ...             print "Resolved url %s as prefix %s" % (url, self.prefix)
   ...             return self.resolve_string(self.result_xml, context)
-  ...         print "failed"
 
 We demonstrate this in XSLT and use the following stylesheet as an example::
 
@@ -126,7 +124,7 @@ However, if we use the ``honk`` resolver associated with the respective
 document, everything works fine::
 
   >>> transform = etree.XSLT(honk_doc)
-  Resolving url honk:test as prefix honk ... done
+  Resolved url honk:test as prefix honk
 
 Running the transform accesses the same parser context again, but since it now
 needs to resolve the ``hoi`` URI in the call to the document function, its
@@ -151,8 +149,7 @@ This can only be solved by adding a ``hoi`` resolver to the original parser::
 
   >>> honk_parser.resolvers.add( PrefixResolver("hoi") )
   >>> result = transform(honk_doc)
-  Resolving url hoi:test as prefix honk ... failed
-  Resolving url hoi:test as prefix hoi ... done
+  Resolved url hoi:test as prefix hoi
   >>> print str(result),
   <?xml version="1.0"?>
   <test>hoi-TEST</test>
@@ -163,8 +160,7 @@ that this is completely independent of the XML file you transform, as the URI
 is resolved from within the stylesheet context::
 
   >>> result = transform(normal_doc)
-  Resolving url hoi:test as prefix honk ... failed
-  Resolving url hoi:test as prefix hoi ... done
+  Resolved url hoi:test as prefix hoi
   >>> print str(result),
   <?xml version="1.0"?>
   <test>hoi-TEST</test>
@@ -190,14 +186,13 @@ called with a number of keyword arguments that allow or deny specific
 operations::
 
   >>> transform = etree.XSLT(honk_doc)
-  Resolving url honk:test as prefix honk ... done
+  Resolved url honk:test as prefix honk
   >>> result = transform(normal_doc)
-  Resolving url hoi:test as prefix honk ... failed
-  Resolving url hoi:test as prefix hoi ... done
+  Resolved url hoi:test as prefix hoi
 
   >>> ac = etree.XSLTAccessControl(read_network=False)
   >>> transform = etree.XSLT(honk_doc, access_control=ac)
-  Resolving url honk:test as prefix honk ... done
+  Resolved url honk:test as prefix honk
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
     [...]
