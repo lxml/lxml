@@ -6,9 +6,12 @@ import re
 from lxml import etree
 
 try:
-    from elementtree import ElementTree
+    from xml.etree import ElementTree # Python 2.5
 except ImportError:
-    ElementTree = None
+    try:
+        from elementtree import ElementTree # standard ET
+    except ImportError:
+        ElementTree = None
 
 class HelperTestCase(unittest.TestCase):
     def parse(self, text):
