@@ -89,7 +89,7 @@ cdef class _ParserContext:
                 context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
         return context._c_dict
 
-    cdef void _initThreadDictRef(self, xmlDict** c_dict_ref):
+    cdef void initThreadDictRef(self, xmlDict** c_dict_ref):
         cdef xmlDict* c_dict
         cdef xmlDict* c_thread_dict
         c_dict = c_dict_ref[0]
@@ -103,18 +103,18 @@ cdef class _ParserContext:
 
     cdef void initParserDict(self, xmlParserCtxt* pctxt):
         "Assure we always use the same string dictionary."
-        self._initThreadDictRef(&pctxt.dict)
+        self.initThreadDictRef(&pctxt.dict)
 
     cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
         "Assure we always use the same string dictionary."
-        self._initThreadDictRef(&pctxt.dict)
+        self.initThreadDictRef(&pctxt.dict)
 
     cdef void initDocDict(self, xmlDoc* result):
         "Store dict of last object parsed if no shared dict yet"
         # XXX We also free the result dict here if there already was one.
         # This case should only occur for new documents with empty dicts,
         # otherwise we'd free data that's in use => segfault
-        self._initThreadDictRef(&result.dict)
+        self.initThreadDictRef(&result.dict)
 
 cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()

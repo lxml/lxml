@@ -366,6 +366,8 @@ cdef class XSLT:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             raise XSLTApplyError, "Error preparing stylesheet run"
 
+        initTransformDict(transform_ctxt)
+
         self._error_log.connect()
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveXSLTError)
@@ -510,6 +512,10 @@ cdef xpath.xmlXPathFunction _xslt_function_check(void* ctxt,
         return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
     else:
         return result
+
+cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
+    __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&transform_ctxt.dict)
+
 
 ################################################################################
 # EXSLT regexp implementation

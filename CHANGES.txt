@@ -13,6 +13,8 @@ Features added
 Bugs fixed
 ----------
 
+* Crash when mixing elements from XSLT results into other trees
+
 * The ``namespace`` axis is supported in XPath and returns (prefix, URI)
   tuples
 
