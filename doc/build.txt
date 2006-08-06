@@ -1,31 +1,46 @@
 How to build lxml from source
 =============================
 
-To build lxml from source, you need libxml2 and libxslt properly
-installed, include header files (possibly shipped in -dev packages).
+To build lxml from source, you need libxml2 and libxslt properly installed,
+including header files (possibly shipped in -dev packages).
 
 Pyrex
 -----
 
-The lxml.etree module is written in Pyrex_.  Since we ship the
-Pyrex-generated .c file with lxml releases however, you should not
-need Pyrex to build lxml.
-
-If you're interested in building from a svn checkout of lxml or want
-to be a lxml developer, you do need a working Pyrex installation.
-
-Pyrex now supports EasyInstall, so you can install it
-by running the following command as super-user::
-
-  easy_install Pyrex
+The lxml.etree and lxml.objectify modules are written in Pyrex_.  Since we
+distribute the Pyrex-generated .c files with lxml releases, however, you do
+not need Pyrex to build lxml from the normal release sources.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
-.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-Note that Pyrex up to and including version 0.9.4 has known problems when
-compiling lxml with gcc 4.0 or Python 2.4.  Do not use it.  If you want to
-build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
-later.
+If you are interested in building lxml from a Subversion checkout or want to
+be an lxml developer, you do need a working Pyrex installation.
+
+* lxml 1.0 and earlier
+
+  The 1.0 series build with a standard installation of Pyrex 0.9.4.1.  Note
+  that Pyrex up to and including version 0.9.4 has known problems when
+  compiling lxml with gcc 4.x or Python 2.4.  Do not use it.  If you want to
+  build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
+  later.
+
+  Pyrex now supports EasyInstall_, so you can install it by running the
+  following command as super-user::
+
+      easy_install Pyrex
+
+  .. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+* lxml 1.1 and later
+
+  Newer versions of lxml depend on features and bug fixes that are not yet
+  available in an official Pyrex release.  This includes support for the
+  external C-API of lxml, for Python 2.5 and for 64 bit architectures.
+
+  To build lxml 1.1 and later from non-release or modified sources, you must
+  therefore install an updated Pyrex version from here:
+
+  http://codespeak.net/svn/lxml/pyrex/
 
 
 Subversion
