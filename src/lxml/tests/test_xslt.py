@@ -511,6 +511,31 @@ class ETreeXSLTTestCase(HelperTestCase):
 """))
         self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
 
+    def test_xslt_move_result(self):
+        root = etree.XML('''\
+        <transform>
+          <widget displayType="fieldset"/>
+        </transform>''')
+
+        xslt = etree.XSLT(etree.XML('''\
+        <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+          <xsl:output method="html" indent="no"/>
+          <xsl:template match="/">
+            <html>
+              <xsl:apply-templates/>
+            </html>
+          </xsl:template>
+
+          <xsl:template match="widget">
+            <xsl:element name="{@displayType}"/>
+          </xsl:template>
+
+        </xsl:stylesheet>'''))
+
+        result = xslt(root[0])
+        root[:] = result.getroot()[:]
+        del root # segfaulted before
+
     def test_exslt_regexp_test(self):
         xslt = etree.XSLT(etree.XML("""\
 <xsl:stylesheet version="1.0"
