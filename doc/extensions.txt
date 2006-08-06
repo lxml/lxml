@@ -151,7 +151,7 @@ the global mapping of the FunctionNamespace objects::
   >>> e2.evaluate('/foo:a')
   Traceback (most recent call last):
   ...
-  XPathSyntaxError: Error in xpath expression.
+  XPathSyntaxError: error in xpath expression
 
 
 Evaluator-local extensions

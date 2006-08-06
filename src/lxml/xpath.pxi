@@ -3,7 +3,7 @@
 class XPathContextError(XPathError):
     pass
 
-class XPathSyntaxError(LxmlSyntaxError):
+class XPathSyntaxError(LxmlSyntaxError, XPathError):
     pass
 
 ################################################################################
@@ -89,7 +89,7 @@ cdef class _XPathEvaluatorBase:
                self._xpathCtxt.lastError.message is not NULL:
             message = funicode(self._xpathCtxt.lastError.message)
         else:
-            message = "Error in xpath expression."
+            message = "error in xpath expression"
         raise XPathSyntaxError, message
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
