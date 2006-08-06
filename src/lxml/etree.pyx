@@ -21,6 +21,8 @@ except AttributeError:
 
 cdef object id
 id = __builtin__.id
+cdef object super
+super = __builtin__.super
 
 del __builtin__
 
@@ -74,8 +76,23 @@ class Error(Exception):
 # module level superclass for all exceptions
 class LxmlError(Error):
     def __init__(self, *args):
-        Error.__init__(self, *args)
+        _initError(self, *args)
         self.error_log = __copyGlobalErrorLog()
+
+cdef object _LxmlError
+_LxmlError = LxmlError
+
+def _superError(obj, *args):
+    super(_LxmlError, obj).__init__(*args)
+
+cdef object _initError
+if issubclass(_LxmlError, object):
+    _initError = _superError    # Python >= 2.5
+else:
+    _initError = Error.__init__ # Python <= 2.4
+
+del _superError
+
 
 # superclass for all syntax errors
 class LxmlSyntaxError(LxmlError, SyntaxError):
