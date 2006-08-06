@@ -86,7 +86,7 @@ def _superError(obj, *args):
     super(_LxmlError, obj).__init__(*args)
 
 cdef object _initError
-if issubclass(_LxmlError, object):
+if isinstance(_LxmlError, type):
     _initError = _superError    # Python >= 2.5
 else:
     _initError = Error.__init__ # Python <= 2.4
