@@ -120,6 +120,16 @@ cdef _ParserContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserContext()
 __GLOBAL_PARSER_CONTEXT.initMainParserContext()
 
+cdef int _checkThreadDict(xmlDict* c_dict):
+    """Check that c_dict is either the local thread dictionary or the global
+    parent dictionary.
+    """
+    if __GLOBAL_PARSER_CONTEXT._c_dict is c_dict:
+        return 1 # main thread
+    if __GLOBAL_PARSER_CONTEXT._getThreadDict(NULL) is c_dict:
+        return 1 # local thread dict
+    return 0
+
 ############################################################
 ## support for Python unicode I/O
 ############################################################
@@ -777,31 +787,40 @@ cdef xmlDoc* _newDoc():
     return result
 
 cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
+    cdef python.PyThreadState* state
     cdef xmlDoc* result
+    if recursive:
+        state = python.PyEval_SaveThread()
     result = tree.xmlCopyDoc(c_doc, recursive)
     _bugFixURL(c_doc, result)
+    if recursive:
+        python.PyEval_RestoreThread(state)
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     "Recursively copy the document and make c_new_root the new root node."
+    cdef python.PyThreadState* state
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
     _bugFixURL(c_doc, result)
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+    state = python.PyEval_SaveThread()
     c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)
+    python.PyEval_RestoreThread(state)
     return result
 
 cdef void _bugFixURL(xmlDoc* c_source_doc, xmlDoc* c_target_doc):
-    """libxml2 <= 2.6.17 had a bug that prevented them from copying the
-    document URL in xmlDocCopy()"""
+    """libxml2 <= 2.6.17 had a bug that prevented it from copying the document
+    URL in xmlDocCopy()"""
     if c_source_doc.URL is not NULL and _LIBXML_VERSION_INT < 20618:
         if c_target_doc.URL is not NULL:
             tree.xmlFree(c_target_doc.URL)
         c_target_doc.URL = tree.xmlStrdup(c_source_doc.URL)
+
 
 ############################################################
 ## API level helper functions for _Document creation

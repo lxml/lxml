@@ -249,6 +249,7 @@ cdef class XPath(_XPathEvaluatorBase):
             self._raise_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
+        cdef python.PyThreadState* state
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
@@ -266,7 +267,9 @@ cdef class XPath(_XPathEvaluatorBase):
         context.register_context(xpathCtxt, document)
         try:
             context.registerVariables(_variables)
+            state = python.PyEval_SaveThread()
             xpathObj = xpath.xmlXPathCompiledEval(self._xpath, xpathCtxt)
+            python.PyEval_RestoreThread(state)
         finally:
             context.unregister_context()
         return self._handle_result(xpathObj, document)

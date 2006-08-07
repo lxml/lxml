@@ -87,15 +87,13 @@ cdef class RelaxNG(_Validator):
             self._error_log.disconnect()
             raise RelaxNGError, "Failed to create validation context"
 
-        state = python.PyEval_SaveThread()
-
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+        state = python.PyEval_SaveThread()
         ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
+        python.PyEval_RestoreThread(state)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
-
-        python.PyEval_RestoreThread(state)
 
         self._error_log.disconnect()
         if ret == -1:

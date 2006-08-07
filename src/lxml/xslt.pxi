@@ -53,7 +53,7 @@ cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
     c_doc = (<_XSLTResolverContext>context)._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
         if cstd.strcmp(c_uri, c_doc.URL) == 0:
-            return c_doc
+            return _copyDoc(c_doc, 1)
     return NULL
 
 cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* context,
@@ -134,7 +134,7 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
     c_doc = _xslt_resolve_stylesheet(c_uri, c_pcontext)
     if c_doc is not NULL:
         python.PyGILState_Release(gil_state)
-        return _copyDoc(c_doc, 1)
+        return c_doc
 
     c_doc = _xslt_resolve_from_python(c_uri, c_pcontext, parse_options, &error)
     if c_doc is NULL and not error:
@@ -352,6 +352,9 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
         cdef char** params
         cdef Py_ssize_t i, kw_count
+
+        if not _checkThreadDict(self._c_style.doc.dict):
+            raise RuntimeError, "stylesheet is not usable in this thread"
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
