@@ -587,7 +587,7 @@ cdef class XMLParser(_BaseParser):
     parser configuration.  A DTD will also be loaded if validation or
     attribute default values are requested.
 
-    Available keyword arguments:
+    Available boolean keyword arguments:
     * attribute_defaults - read default attributes from DTD
     * dtd_validation     - validate (if DTD is available)
     * load_dtd           - use DTD for parsing
@@ -596,12 +596,18 @@ cdef class XMLParser(_BaseParser):
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
 
-    Note that you must not share parsers between threads.  This applies also
-    to the default parser.
+    For read-only documents that will not be altered after parsing, you can
+    also pass the following keyword arguments:
+    * compact            - compactly store element text
+
+    Note that you should avoid sharing parsers between threads.  This does not
+    apply to the default parser.
+
+    You must not modify documents that were parsed with the 'compact' option.
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False, remove_blank_text=False):
+                 recover=False, remove_blank_text=False, compact=False):
         cdef int parse_options
         _BaseParser.__init__(self)
 
@@ -622,6 +628,8 @@ cdef class XMLParser(_BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        if compact:
+            parse_options = parse_options | xmlparser.XML_PARSE_COMPACT
 
         self._parse_options = parse_options
 
@@ -700,26 +708,32 @@ cdef class HTMLParser(_BaseParser):
     tree.  By default, it can read broken (non well-formed) HTML, depending on
     the capabilities of libxml2.  Use the 'recover' option to switch this off.
 
-    Available keyword arguments:
+    Available boolean keyword arguments:
     * recover            - try hard to parse through broken HTML (default: True)
     * no_network         - prevent network access
     * remove_blank_text  - discard empty text nodes
 
-    Note that you must not share parsers between threads.
+    For read-only documents that will not be altered after parsing, you can
+    also pass the following keyword arguments:
+    * compact            - compactly store element text
+
+    Note that you should avoid sharing parsers between threads.  You must not
+    modify documents that were parsed with the 'compact' option.
     """
-    def __init__(self, recover=True, no_network=False, remove_blank_text=False):
+    def __init__(self, recover=True, no_network=False, remove_blank_text=False,
+                 compact=False):
         cdef int parse_options
         _BaseParser.__init__(self)
 
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if recover:
-            # XXX: make it compile on libxml2 < 2.6.21
-            #parse_options = parse_options | htmlparser.HTML_PARSE_RECOVER
-            parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
+            parse_options = parse_options | htmlparser.HTML_PARSE_RECOVER
         if no_network:
             parse_options = parse_options | htmlparser.HTML_PARSE_NONET
         if remove_blank_text:
             parse_options = parse_options | htmlparser.HTML_PARSE_NOBLANKS
+        if compact:
+            parse_options = parse_options | htmlparser.HTML_PARSE_COMPACT
 
         self._parse_options = parse_options
 
