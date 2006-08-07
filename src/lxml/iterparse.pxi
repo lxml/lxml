@@ -212,13 +212,27 @@ cdef class iterparse(_BaseParser):
     those elements that match the given tag.  By default, events are generated
     for all elements.  Note that the 'start-ns' and 'end-ns' events are not
     impacted by this restriction.
+
+    The other keyword arguments in the constructor are mainly based on the
+    libxml2 parser configuration.  A DTD will also be loaded if validation or
+    attribute default values are requested.
+
+    Available boolean keyword arguments:
+    * attribute_defaults - read default attributes from DTD
+    * dtd_validation     - validate (if DTD is available)
+    * load_dtd           - use DTD for parsing
+    * no_network         - prevent network access
+    * remove_blank_text  - discard blank text nodes
     """
     cdef object _source
     cdef object _filename
     cdef readonly object root
-    def __init__(self, source, events=("end",), tag=None):
+    def __init__(self, source, events=("end",), tag=None,
+                 attribute_defaults=False, dtd_validation=False,
+                 load_dtd=False, no_network=False, remove_blank_text=False):
         cdef _IterparseResolverContext context
         cdef char* c_filename
+        cdef int parse_options
         if not hasattr(source, 'read'):
             self._filename = source
             source = open(source, 'rb')
@@ -230,11 +244,27 @@ cdef class iterparse(_BaseParser):
             c_filename = NULL
 
         self._source = source
-        _BaseParser.__init__(self)
+        _BaseParser.__init__(self, _IterparseResolverContext)
+
+        parse_options = _XML_DEFAULT_PARSE_OPTIONS
+        if load_dtd:
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
+        if dtd_validation:
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDVALID | \
+                            xmlparser.XML_PARSE_DTDLOAD
+        if attribute_defaults:
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
+                            xmlparser.XML_PARSE_DTDLOAD
+        if no_network:
+            parse_options = parse_options | xmlparser.XML_PARSE_NONET
+        if remove_blank_text:
+            parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        self._parse_options = parse_options
 
         context = <_IterparseResolverContext>self._context
         context._setEventFilter(events, tag)
         context._wrapCallbacks(self._parser_ctxt.sax)
+        xmlparser.xmlCtxtUseOptions(self._parser_ctxt, parse_options)
         xmlparser.xmlCtxtResetPush(self._parser_ctxt, NULL, 0, c_filename, NULL)
 
     def __iter__(self):

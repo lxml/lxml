@@ -1820,6 +1820,17 @@ class ETreeTestCaseBase(unittest.TestCase):
             [('end', root[0]), ('end', root[1]), ('end', root)],
             events)
 
+    def test_iterparse_file(self):
+        iterparse = self.etree.iterparse
+        iterator = iterparse(fileInTestDir("test.xml"))
+        self.assertEquals(None,
+                          iterator.root)
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('end', root[0]), ('end', root)],
+            events)
+
     def test_iterparse_start(self):
         iterparse = self.etree.iterparse
         f = StringIO('<a><b></b><c/></a>')

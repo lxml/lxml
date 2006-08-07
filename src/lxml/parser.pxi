@@ -337,7 +337,7 @@ cdef class _BaseParser:
     cdef object _lockParser
     cdef object _unlockParser
 
-    def __init__(self):
+    def __init__(self, context_class=_ResolverContext):
         cdef xmlParserCtxt* pctxt
         if isinstance(self, HTMLParser):
             self._parser_type = LXML_HTML_PARSER
@@ -363,10 +363,7 @@ cdef class _BaseParser:
             self._unlockParser = lock.release
         self._error_log = _ErrorLog()
         self.resolvers  = _ResolverRegistry()
-        if self._parser_type == LXML_ITERPARSE_PARSER:
-            self._context = _IterparseResolverContext(self.resolvers)
-        else:
-            self._context = _ResolverContext(self.resolvers)
+        self._context = context_class(self.resolvers)
         pctxt._private = <python.PyObject*>self._context
 
     def __dealloc__(self):
@@ -598,7 +595,7 @@ cdef class XMLParser(_BaseParser):
 
     For read-only documents that will not be altered after parsing, you can
     also pass the following keyword arguments:
-    * compact            - compactly store element text
+    * compact            - compactly store short element text content
 
     Note that you should avoid sharing parsers between threads.  This does not
     apply to the default parser.
@@ -715,7 +712,7 @@ cdef class HTMLParser(_BaseParser):
 
     For read-only documents that will not be altered after parsing, you can
     also pass the following keyword arguments:
-    * compact            - compactly store element text
+    * compact            - compactly store short element text content
 
     Note that you should avoid sharing parsers between threads.  You must not
     modify documents that were parsed with the 'compact' option.

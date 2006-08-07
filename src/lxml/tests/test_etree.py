@@ -48,7 +48,22 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals("TEST", root.get("attr"))
         self.assertRaises(TypeError, root.set, "newattr", 5)
 
+    def test_parse_file_dtd(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(attribute_defaults=True)
+
+        tree = parse(fileInTestDir('test.xml'), parser)
+        root = tree.getroot()
+
+        self.assertEquals(
+            "valueA",
+            root.get("default"))
+        self.assertEquals(
+            "valueB",
+            root[0].get("default"))
+
     def test_parse_error(self):
+        # ET raises ExpatError
         parse = self.etree.parse
         # from StringIO
         f = StringIO('<a><b></c></b></a>')
@@ -56,6 +71,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         f.close()
 
     def test_parse_parser_type_error(self):
+        # ET raises IOError only
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
@@ -89,6 +105,29 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = StringIO('<a><b><c/></a>')
         # ET raises ExpatError, lxml raises XMLSyntaxError
         self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
+
+    def test_iterparse_file_dtd(self):
+        iterparse = self.etree.iterparse
+        iterator = iterparse(fileInTestDir("test.xml"), events=("start",),
+                             attribute_defaults=True)
+        attributes = [ element.get("default")
+                       for event, element in iterator ]
+        self.assertEquals(
+            ["valueA", "valueB"],
+            attributes)
+
+    def test_iterparse_strip(self):
+        iterparse = self.etree.iterparse
+        f = StringIO("""
+               <a>  \n \n  <b> b test </b>  \n
+
+               \n\t <c> \n </c> </a>  \n """)
+        iterator = iterparse(f, remove_blank_text=True)
+        text = [ (element.text, element.tail)
+                 for event, element in iterator ]
+        self.assertEquals(
+            [(None, None), (" b test ", None), (" \n ", None)],
+            text)
 
     def test_iterparse_tag(self):
         iterparse = self.etree.iterparse
