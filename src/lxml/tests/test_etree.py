@@ -126,7 +126,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         text = [ (element.text, element.tail)
                  for event, element in iterator ]
         self.assertEquals(
-            [(None, None), (" b test ", None), (" \n ", None)],
+            [(" b test ", None), (" \n ", None), (None, None)],
             text)
 
     def test_iterparse_tag(self):
