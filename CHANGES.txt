@@ -8,9 +8,9 @@ lxml changelog
 Features added
 --------------
 
-* Unlock the GIL for deep copying documents and for XPath()
-
 * Support for Python 2.5 beta
+
+* Unlock the GIL for deep copying documents and for XPath()
 
 * New ``compact`` keyword argument for parsing read-only documents
 
