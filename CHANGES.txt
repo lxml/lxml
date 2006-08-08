@@ -2,8 +2,64 @@
 lxml changelog
 ==============
 
-current
-=======
+1.1beta (2006-08-08)
+====================
+
+Features added
+--------------
+
+* Unlock the GIL for deep copying documents and for XPath()
+
+* Support for Python 2.5 beta
+
+* New ``compact`` keyword argument for parsing read-only documents
+
+* Support for parser options in iterparse()
+
+* The ``namespace`` axis is supported in XPath and returns (prefix, URI)
+  tuples
+
+* The XPath expression "/" now returns an empty list instead of raising an
+  exception
+
+* XML-Object API on top of lxml (lxml.objectify)
+
+* Customizable Element class lookup:
+
+  * Support for externally provided lookup functions
+
+  * lxml.elements.classlookup module implements different lookup mechanisms
+
+* Support for processing instructions (ET-like, not compatible)
+
+* Public C-level API for independent extension modules
+
+Bugs fixed
+----------
+
+* XPathSyntaxError now inherits from XPathError
+
+* Threading race conditions in RelaxNG and XMLSchema
+
+* Crash when mixing elements from XSLT results into other trees, concurrent
+  XSLT is only allowed when the stylesheet was parsed in the main thread
+
+* The EXSLT ``regexp:match`` function now works as defined (except for some
+  differences in the regular expression syntax)
+
+* Setting element.text to '' returned None on request, not the empty string
+
+* ``iterparse()`` could crash on long XML files
+
+* Creating documents no longer copies the parser for later URL resolving.  For
+  performance reasons, only a reference is kept.  Resolver updates on the
+  parser will now be reflected by documents that were parsed before the
+  change.  Although this should rarely become visible, it is a behavioral
+  change from 1.0.
+
+
+1.0.3 (2006-08-08)
+==================
 
 Features added
 --------------
@@ -15,30 +71,11 @@ Bugs fixed
 
 * Crash when mixing elements from XSLT results into other trees
 
-* The ``namespace`` axis is supported in XPath and returns (prefix, URI)
-  tuples
-
-* The XPath expression "/" now returns an empty list instead of raising an
-  exception
-
 * Copying/deepcopying did not work for ElementTree objects
-
-* The EXSLT ``regexp:match`` function now works as defined (except for some
-  differences in the regular expression syntax)
-
-* Setting element.text to '' returned None on request, not the empty string
-
-* ``iterparse()`` could crash on long XML files
 
 * Setting an attribute to a non-string value did not raise an exception
 
 * Element.remove() deleted the tail text from the removed Element
-
-* Creating documents no longer copies the parser for later URL resolving.  For
-  performance reasons, only a reference is kept.  Resolver updates on the
-  parser will now be reflected by documents that were parsed before the
-  change.  Although this should rarely become visible, it is a behavioral
-  change from 1.0.
 
 
 1.1alpha (2006-06-27)
