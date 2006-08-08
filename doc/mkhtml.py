@@ -12,8 +12,9 @@ def publish(dirname, lxml_path, release):
     shutil.copy(pubkey, dirname)
 
     for name in ['main.txt', 'intro.txt', 'api.txt', 'compatibility.txt',
-                 'extensions.txt', 'namespace_extensions.txt', 'sax.txt',
-                 'build.txt', 'FAQ.txt', 'performance.txt', 'resolvers.txt']:
+                 'extensions.txt', 'element_classes.txt', 'sax.txt',
+                 'build.txt', 'FAQ.txt', 'performance.txt', 'resolvers.txt',
+                 'capi.txt', 'objectify.txt']:
         path = os.path.join(doc_dir, name)
         outname = os.path.splitext(name)[0] + '.html'
         outpath = os.path.join(dirname, outname)

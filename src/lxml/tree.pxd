@@ -161,6 +161,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlNewNode(xmlNs* ns, char* name)
     cdef xmlNode* xmlNewDocText(xmlDoc* doc, char* content)
     cdef xmlNode* xmlNewDocComment(xmlDoc* doc, char* content)
+    cdef xmlNode* xmlNewDocPI(xmlDoc* doc, char* name, char* content)
     cdef xmlNs* xmlNewNs(xmlNode* node, char* href, char* prefix)
     cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur)
     cdef xmlNode* xmlReplaceNode(xmlNode* old, xmlNode* cur)
@@ -175,9 +176,10 @@ cdef extern from "libxml/tree.h":
     cdef char* xmlGetNoNsProp(xmlNode* node, char* name)
     cdef char* xmlGetNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef void xmlSetNs(xmlNode* node, xmlNs* ns)
-    cdef void xmlSetProp(xmlNode* node, char* name, char* value)
-    cdef void xmlSetNsProp(xmlNode* node, xmlNs* ns, char* name, char* value)
-    cdef void xmlRemoveProp(xmlAttr* cur)
+    cdef xmlAttr* xmlSetProp(xmlNode* node, char* name, char* value)
+    cdef xmlAttr* xmlSetNsProp(xmlNode* node, xmlNs* ns,
+                               char* name, char* value)
+    cdef int xmlRemoveProp(xmlAttr* cur)
     cdef char* xmlGetNodePath(xmlNode* node)
     cdef void xmlDocDumpMemory(xmlDoc* cur, char** mem, int* size)
     cdef void xmlDocDumpMemoryEnc(xmlDoc* cur, char** mem, int* size,
@@ -250,6 +252,7 @@ cdef extern from "libxml/xmlstring.h":
 
 cdef extern from "etree_defs.h":
     cdef int _isElement(xmlNode* node)
+    cdef char* _getNs(xmlNode* node)
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* tree_top,
                                           xmlNode* start_node, int inclusive)
     cdef void END_FOR_EACH_ELEMENT_FROM(xmlNode* start_node)

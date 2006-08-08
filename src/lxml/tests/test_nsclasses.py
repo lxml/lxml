@@ -144,31 +144,12 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         etree.Namespace(None).clear()
         etree.Namespace(u'ns30').clear()
 
-    def test_default_element_class(self):
-        class local_default_class(etree.ElementBase):
-            pass
-
-        try:
-            etree.setDefaultElementClass(local_default_class)
-            self.assert_(isinstance(etree.Element("test"),
-                                    local_default_class))
-            self.assert_(isinstance(etree.Element("{http://myns}test"),
-                                    local_default_class))
-
-            etree.setDefaultElementClass()
-            self.assertFalse(isinstance(etree.Element("test"),
-                                        local_default_class))
-            self.assertFalse(isinstance(etree.Element("{http://myns}test"),
-                                        local_default_class))
-        finally:
-            etree.setDefaultElementClass()
-
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
     optionflags = doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/namespace_extensions.txt',
+        [doctest.DocFileSuite('../../../doc/element_classes.txt',
                               optionflags=optionflags)],
         )
     return suite

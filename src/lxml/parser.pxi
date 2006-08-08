@@ -344,6 +344,7 @@ cdef class _BaseParser:
     cdef _ResolverContext _context
     cdef LxmlParserType _parser_type
     cdef xmlParserCtxt* _parser_ctxt
+    cdef ElementClassLookup _class_lookup
     cdef object _lockParser
     cdef object _unlockParser
 
@@ -387,11 +388,15 @@ cdef class _BaseParser:
     def __dummy(self):
         pass
 
+    def setElementClassLookup(self, ElementClassLookup lookup not None):
+        self._class_lookup = lookup
+
     cdef _BaseParser _copy(self):
         "Create a new parser with the same configuration."
         cdef _BaseParser parser
         parser = self.__class__()
         parser._parse_options = self._parse_options
+        parser._class_lookup  = self._class_lookup
         parser.resolvers = self.resolvers._copy()
         parser._context = _ResolverContext(parser.resolvers)
         parser._parser_ctxt._private = <python.PyObject*>parser._context
@@ -400,6 +405,11 @@ cdef class _BaseParser:
     def copy(self):
         "Create a new parser with the same configuration."
         return self._copy()
+
+    def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
+        """Creates a new element associated with this parser.
+        """
+        return _makeElement(_tag, NULL, None, self, attrib, nsmap, _extra)
 
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
         """Parse unicode document, share dictionary if possible.
@@ -686,7 +696,7 @@ __DEFAULT_XML_PARSER = XMLParser()
 
 __GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
 
-def set_default_parser(_BaseParser parser=None):
+def setDefaultParser(_BaseParser parser=None):
     """Set a default parser for the current thread.  This parser is used
     globally whenever no parser is supplied to the various parse functions of
     the lxml API.  If this function is called without a parser (or if it is
@@ -700,8 +710,16 @@ def set_default_parser(_BaseParser parser=None):
         parser = __DEFAULT_XML_PARSER
     __GLOBAL_PARSER_CONTEXT.setDefaultParser(parser)
 
-def get_default_parser():
+def getDefaultParser():
     return __GLOBAL_PARSER_CONTEXT.getDefaultParser()
+
+def set_default_parser(parser):
+    "Deprecated, please use setDefaultParser instead."
+    setDefaultParser(parser)
+
+def get_default_parser():
+    "Deprecated, please use getDefaultParser instead."
+    return getDefaultParser()
 
 ############################################################
 ## HTML parser
@@ -812,6 +830,13 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     _copyTail(c_new_root.next, c_node)
     python.PyEval_RestoreThread(state)
     return result
+
+cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc):
+    "Recursively copy the element into the document. c_doc is not modified."
+    cdef xmlNode* c_root
+    c_root = tree.xmlDocCopyNode(c_node, c_doc, 1) # recursive
+    _copyTail(c_node.next, c_root)
+    return c_root
 
 cdef void _bugFixURL(xmlDoc* c_source_doc, xmlDoc* c_target_doc):
     """libxml2 <= 2.6.17 had a bug that prevented it from copying the document

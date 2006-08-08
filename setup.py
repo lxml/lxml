@@ -1,5 +1,10 @@
 import sys, os, os.path, re
 
+EXT_MODULES = [
+    ("etree",       "lxml.etree"),
+    ("objectify",   "lxml.objectify")
+    ]
+
 setup_args = {}
 ext_args   = {}
 DEFINES = []
@@ -93,16 +98,17 @@ print "Building lxml version", svn_version
 
 try:
     from Pyrex.Distutils import build_ext as build_pyx
-    sources = ["src/lxml/etree.pyx"]
+    source_extension = ".pyx"
     setup_args['cmdclass'] = {'build_ext' : build_pyx}
 except ImportError:
     print "*NOTE*: Trying to build without Pyrex, needs pre-generated 'src/lxml/etree.c' !"
-    sources = ["src/lxml/etree.c"]
+    source_extension = ".c"
 
 if '--static' in sys.argv:
     # use the static setup as configured in setupStaticBuild
     sys.argv.remove('--static')
     cflags, xslt_libs = setupStaticBuild()
+    ext_args['extra_link_args'] = xslt_libs
 else:
     cflags    = flags('xslt-config --cflags')
     xslt_libs = flags('xslt-config --libs')
@@ -127,13 +133,17 @@ try:
 except ValueError:
     pass
 
-ext_modules = [ Extension(
-    "lxml.etree",
-    sources = sources,
-    extra_compile_args = ['-w'] + cflags,
-    define_macros = DEFINES,
-    **ext_args
-    )]
+ext_modules = []
+
+for module, package in EXT_MODULES:
+    ext_modules.append(
+	Extension(
+	package,
+	sources = ["src/lxml/" + module + source_extension],
+	extra_compile_args = ['-w'] + cflags,
+	define_macros = DEFINES,
+	**ext_args
+	))
 
 # setup ChangeLog entry
 
@@ -192,7 +202,7 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
     ],
 
     package_dir = {'': 'src'},
-    packages = ['lxml'],
+    packages = ['lxml', 'lxml.elements'],
     ext_modules = ext_modules,
     **setup_args
 )

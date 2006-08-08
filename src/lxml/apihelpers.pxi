@@ -1,9 +1,9 @@
-# Private helper functions for API functions
+# Private/public helper functions for API functions
 
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
     cdef xmlNode* c_child
-    print indent * ' ', <int>c_node
+    print indent * ' ', <long>c_node
     c_child = c_node.children
     while c_child is not NULL:
         displayNode(c_child, indent + 1)
@@ -80,15 +80,59 @@ cdef _NodeBase _rootNodeOf(object input):
     else:
         return None
 
+cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
+                           _BaseParser parser, attrib, nsmap, extra_attrs):
+    """Create a new element and initialize namespaces and attributes.
+
+    This helper function will reuse as much of the existing document as
+    possible:
+
+    If 'parser' is None, the parser will be inherited from 'doc' or the
+    default parser will be used.
+
+    If 'doc' is None, 'c_doc' is used to create a new _Document and the new
+    element is made its root node.
+
+    If 'c_doc' is also NULL, a new xmlDoc will be created.
+    """
+    cdef xmlNode*  c_node
+    ns_utf, name_utf = _getNsTag(tag)
+    if doc is not None:
+        c_doc = doc._c_doc
+    elif c_doc is NULL:
+        c_doc = _newDoc()
+    c_node = _createElement(c_doc, name_utf)
+    if doc is None:
+        tree.xmlDocSetRootElement(c_doc, c_node)
+        doc = _documentFactory(c_doc, parser)
+    # add namespaces to node if necessary
+    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+    return _elementFactory(doc, c_node)
+
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value
-    if c_attrib_node.ns is NULL or c_attrib_node.ns.href is NULL:
+    cdef char* href
+    href = _getNs(<xmlNode*>c_attrib_node)
+    if href is NULL:
         value = tree.xmlGetNoNsProp(c_element, c_attrib_node.name)
     else:
-        value = tree.xmlGetNsProp(c_element, c_attrib_node.name,
-                                  c_attrib_node.ns.href)
+        value = tree.xmlGetNsProp(c_element, c_attrib_node.name, href)
     result = funicode(value)
     tree.xmlFree(value)
+    return result
+
+cdef object _attributeValueFromNsName(xmlNode* c_element,
+                                      char* c_href, char* c_name):
+    cdef char* c_result
+    if c_href is NULL:
+        c_result = tree.xmlGetNoNsProp(c_element, c_name)
+    else:
+        c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
+    if c_result is NULL:
+        return None
+    result = funicode(c_result)
+    tree.xmlFree(c_result)
     return result
 
 cdef object _getAttributeValue(_NodeBase element, key, default):
@@ -120,6 +164,30 @@ cdef int _setAttributeValue(_NodeBase element, key, value) except -1:
     else:
         c_ns = element._doc._findOrBuildNodeNs(element._c_node, _cstr(ns))
         tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
+    return 0
+
+cdef int _delAttribute(_NodeBase element, key) except -1:
+    cdef xmlAttr* c_attr
+    cdef char* c_href
+    ns, tag = _getNsTag(key)
+    if ns is None:
+        c_href = NULL
+    else:
+        c_href = _cstr(ns)
+    if _delAttributeFromNsName(element._c_node, c_href, _cstr(tag)):
+        raise KeyError, key
+    return 0
+
+cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
+    cdef xmlAttr* c_attr
+    if c_href is NULL:
+        c_attr = tree.xmlHasProp(c_node, c_name)
+    else:
+        c_attr = tree.xmlHasNsProp(c_node, c_name, c_href)
+    if c_attr is NULL:
+        # XXX free namespace that is not in use..?
+        return -1
+    tree.xmlRemoveProp(c_attr)
     return 0
 
 cdef object __RE_XML_ENCODING
@@ -188,7 +256,7 @@ cdef _collectText(xmlNode* c_node):
         c_node = c_node.next
     return funicode(result)
 
-cdef _removeText(xmlNode* c_node):
+cdef void _removeText(xmlNode* c_node):
     """Remove all text nodes.
 
     Start removing at c_node.
@@ -200,6 +268,33 @@ cdef _removeText(xmlNode* c_node):
         # XXX cannot safely free in case of direct text node proxies..
         tree.xmlFreeNode(c_node)
         c_node = c_next
+
+cdef int _setNodeText(xmlNode* c_node, value) except -1:
+    cdef xmlNode* c_text_node
+    # remove all text nodes at the start first
+    _removeText(c_node.children)
+    if value is None:
+        return 0
+    # now add new text node with value at start
+    text = _utf8(value)
+    c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+    if c_node.children is NULL:
+        tree.xmlAddChild(c_node, c_text_node)
+    else:
+        tree.xmlAddPrevSibling(c_node.children, c_text_node)
+    return 0
+
+cdef int _setTailText(xmlNode* c_node, value) except -1:
+    cdef xmlNode* c_text_node
+    # remove all text nodes at the start first
+    _removeText(c_node.next)
+    if value is None:
+        return 0
+    text = _utf8(value)
+    c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+    # XXX what if we're the top element?
+    tree.xmlAddNextSibling(c_node, c_text_node)
+    return 0
 
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
@@ -268,23 +363,42 @@ cdef xmlNode* _parentElement(xmlNode* c_node):
     return c_node
 
 cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+    """Tests if the node matches namespace URI and tag name.
+
+    A node matches if it matches both c_href and c_name.
+
+    A node matches c_href if any of the following is true:
+    * c_href is NULL
+    * its namespace is NULL and c_href is the empty string
+    * its namespace string equals the c_href string
+
+    A node matches c_name if any of the following is true:
+    * c_name is NULL
+    * its name string equals the c_name string
+    """
+    cdef char* c_node_href
     if c_name is NULL:
         if c_href is NULL:
             # always match
             return 1
-        elif c_node.ns is NULL or c_node.ns.href is NULL:
-            return 0
         else:
-            return cstd.strcmp(c_node.ns.href, c_href) == 0
+            c_node_href = _getNs(c_node)
+            if c_node_href is NULL:
+                return c_href[0] == c'\0'
+            else:
+                return cstd.strcmp(c_node_href, c_href) == 0
     elif c_href is NULL:
-        if c_node.ns is not NULL and c_node.ns.href is not NULL:
+        if _getNs(c_node) is not NULL:
             return 0
         return cstd.strcmp(c_node.name, c_name) == 0
-    elif c_node.ns is NULL or c_node.ns.href is NULL:
-        return 0
+    elif cstd.strcmp(c_node.name, c_name) == 0:
+        c_node_href = _getNs(c_node)
+        if c_node_href is NULL:
+            return c_href[0] == c'\0'
+        else:
+            return cstd.strcmp(c_node_href, c_href) == 0
     else:
-        return cstd.strcmp(c_node.name, c_name) == 0 and \
-               cstd.strcmp(c_node.ns.href, c_href) == 0
+        return 0
 
 cdef void _removeNode(xmlNode* c_node):
     """Unlink and free a node and subnodes if possible.
@@ -394,16 +508,17 @@ cdef _getNsTag(tag):
         if nslen > 0:
             ns = python.PyString_FromStringAndSize(c_tag,   nslen)
         tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
+    elif python.PyString_GET_SIZE(tag) == 0:
+        raise ValueError, "Empty tag name"
     return ns, tag
 
 cdef object _namespacedName(xmlNode* c_node):
-    cdef char* href
-    cdef char* name
-    name = c_node.name
-    if c_node.ns is NULL or c_node.ns.href is NULL:
+    return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
+
+cdef object _namespacedNameFromNsName(char* href, char* name):
+    if href is NULL:
         return funicode(name)
     else:
-        href = c_node.ns.href
         s = python.PyString_FromFormat("{%s}%s", href, name)
         if isutf8(href) or isutf8(name):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)

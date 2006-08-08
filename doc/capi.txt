@@ -1,0 +1,84 @@
+==============================
+The public C-API of lxml.etree
+==============================
+
+As of version 1.1, lxml.etree provides a public C-API.  This allows external
+C extensions to efficiently access public functions and classes of lxml,
+without going through the Python API.
+
+The API is described in the file `etreepublic.pxd`_, which is directly
+c-importable by Pyrex modules.
+
+.. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/branch/capi/src/lxml/etreepublic.pxd
+
+
+Writing external modules in Pyrex
+---------------------------------
+
+This is the easiest way of extending lxml at the C level.  A Pyrex module
+should start like this::
+
+    # import the public functions and classes of lxml.etree
+    cimport etreepublic as cetree
+
+    # import the lxml.etree module in Python
+    cdef object etree
+    from lxml import etree
+
+    # initialize the access to the C-API of lxml.etree
+    cetree.import_etree(etree)
+
+From this line on, you can access all public functions of lxml.etree from the
+``cetree`` namespace like this::
+
+    # build a tag name from namespace and element name
+    py_tag = cetree.namespacedNameFromNsName("http://some/url", "myelement")
+
+Public lxml classes are easily subclassed.  For example, to implement and set
+a new default element class, you can write code like the following::
+
+    from etreepublic cimport ElementBase
+    cdef class NewElementClass(ElementBase):
+         def setValue(self, myval):
+             self.set("my_attribute", myval)
+
+    etree.setDefaultElementClass(NewElementClass)
+
+
+Writing external modules in C
+-----------------------------
+
+If you really feel like it, you can also interface with lxml.etree straight
+from C code.  All you have to do is include the header file for the public
+API, import the ``lxml.etree`` module and then call the import function::
+
+    /* My C extension */
+
+    /* common includes */
+    #include "Python.h"
+    #include "stdio.h"
+    #include "string.h"
+    #include "stdarg.h"
+    #include "libxml/xmlversion.h"
+    #include "libxml/encoding.h"
+    #include "libxml/hash.h"
+    #include "libxml/tree.h"
+    #include "libxml/xmlIO.h"
+    #include "libxml/xmlsave.h"
+    #include "libxml/globals.h"
+    #include "libxml/xmlstring.h"
+
+    /* lxml.etree specific includes */
+    #include "lxml-version.h"
+    #include "etree_defs.h"
+    #include "etree.h"
+
+    /* setup code */
+    static PyObject* m_etree;
+    m_etree = _ADD_YOUR_WAY_TO_IMPORT_A_MODULE_("lxml.etree");
+
+    import_etree(m_etree);
+
+Note that including ``etree.h`` does not automatically include the header
+files it requires.  Note also that the above list of common imports may not be
+sufficient.

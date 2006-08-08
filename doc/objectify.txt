@@ -1,0 +1,802 @@
+==============
+lxml.objectify
+==============
+
+lxml supports an alternative API similar to the Amara_ bindery or
+gnosis.xml.objectify_ through a custom Element implementation.  The main idea
+is to hide the usage of XML behind normal Python objects, sometimes referred
+to as data-binding.  It allows you to use XML as if you were dealing with a
+normal Python object hierarchy.
+
+Accessing the children of an XML element deploys object attribute access.  If
+there are multiple children with the same name, slicing and indexing can be
+used.  Python data types are extracted from XML content automatically and made
+available to the normal Python operators.
+
+This API is very different from the ElementTree API.  If it is used, it should
+not be mixed with other element implementations, to avoid non-obvious
+behaviour.
+
+.. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
+.. _gnosis.xml.objectify: http://gnosis.cx/download/
+
+.. contents::
+..
+   1   Setting up lxml.objectify
+   2   Creating objectify trees
+   3   Element access through object attributes
+   4   Namespace handling
+   5   ObjectPath
+   6   Python data types
+   7   Defining additional data classes
+   8   Recursive string representation of elements
+   9   What is different from ElementTree?
+   10  Resetting the API
+
+
+Setting up lxml.objectify
+-------------------------
+
+To make use of ``objectify``, you need both the ``lxml.etree`` module and
+``lxml.objectify``::
+
+    >>> from lxml import etree
+    >>> from lxml import objectify
+
+The normal way to use ``objectify`` is to register it with a dedicated parser.
+This requires setting up ``lxml.etree`` to use `parser specific element
+classes`_ first::
+
+    >>> lookup = etree.ParserBasedElementClassLookup()
+    >>> etree.setElementClassLookup(lookup)
+
+.. _`parser specific element classes`: element_classes.html#parser-based-lookup
+
+The next step is to create a parser that builds objectify documents.  The
+objectify API is meant for data-centric XML (as opposed to document XML with
+mixed content).  Therefore, we configure the parser to let it remove
+whitespace-only text from the parsed document if it is not enclosed by an XML
+element.  Note that this alters the document infoset, so if you consider the
+removed spaces as data in your specific use case, you should go with a normal
+parser and just set the element class lookup.  Most applications, however,
+will work fine with the following setup::
+
+    >>> parser = etree.XMLParser(remove_blank_text=True)
+
+    >>> lookup = objectify.ObjectifyElementClassLookup()
+    >>> parser.setElementClassLookup(lookup)
+
+If you want additional support for `namespace specific classes`_, you can
+register the objectify lookup as a fallback of the namespace lookup.  Note,
+however, that you have to take care in this case, that the namespace classes
+inherit from ``objectify.ObjectifiedElement``, not only from the normal
+``lxml.etree.ElementBase``, so that they support the ``objectify`` API.  The
+above setup code then becomes::
+
+    >>> lookup = etree.ElementNamespaceClassLookup(
+    ...                   objectify.ObjectifyElementClassLookup() )
+    >>> parser.setElementClassLookup(lookup)
+
+.. _`namespace specific classes`: element_classes.html#namespace-class-lookup
+
+
+Creating objectify trees
+------------------------
+
+To create an ``objectify`` tree, you can either parse a document with the
+parser you created::
+
+    >>> from StringIO import StringIO
+    >>> xml = StringIO('<test/>')
+    >>> tree = etree.parse(xml, parser)
+    >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
+    True
+
+or you can call the ``makeelement()`` method of the parser to create a new
+root element from scratch::
+
+    >>> obj_el = parser.makeelement("test")
+    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
+    True
+
+New subelements will automatically inherit the setup.  However, all
+independent elements that you create through the normal etree API will not be
+associated with the parser and therefore not support the ``objectify`` API::
+
+    >>> subel = etree.SubElement(obj_el, "sub")
+    >>> print isinstance(subel, objectify.ObjectifiedElement)
+    True
+
+    >>> independent_el = etree.Element("new")
+    >>> print isinstance(independent_el, objectify.ObjectifiedElement)
+    False
+
+The ``makeelement()`` method of the parser has the same signature as the
+normal ``Element()`` factory known from lxml.etree and can therefore easily
+replace the respective calls.
+
+For convenience, ``objectify`` also replicates the standard factory
+``Element()`` and the ``fromstring()`` function from ``lxml.etree`` using a
+parser that is local to the ``objectify`` module.  So, after setting up the
+parser based element lookup above, you can keep using the same API as in
+``lxml.etree``, except that you have to import these functions from a
+different module::
+
+    >>> obj_el = objectify.Element("new")
+    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
+    True
+
+    >>> obj_el = objectify.fromstring("<test/>")
+    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
+    True
+
+You can change this parser with ``objectify.setDefaultParser(parser)``, which
+also allows to add the above support for namespace specific element classes.
+
+
+Element access through object attributes
+----------------------------------------
+
+The main idea behind the ``objectify`` API is to hide XML element access
+behind the usual object attribute access pattern.  Asking an element for an
+attribute will return the sequence of children with corresponding tag names::
+
+    >>> root = objectify.Element("root")
+    >>> b = etree.SubElement(root, "b")
+    >>> print root.b[0].tag
+    b
+    >>> root.index(root.b[0])
+    0
+    >>> b = etree.SubElement(root, "b")
+    >>> print root.b[0].tag
+    b
+    >>> print root.b[1].tag
+    b
+    >>> root.index(root.b[1])
+    1
+
+For convenience, you can omit the index '0' to access the first child::
+
+    >>> print root.b.tag
+    b
+    >>> root.index(root.b)
+    0
+    >>> del root.b
+
+Iteration and slicing also obey the requested tag::
+
+    >>> x1 = etree.SubElement(root, "x")
+    >>> x2 = etree.SubElement(root, "x")
+    >>> x3 = etree.SubElement(root, "x")
+
+    >>> [ el.tag for el in root.x ]
+    ['x', 'x', 'x']
+
+    >>> [ el.tag for el in root.x[1:3] ]
+    ['x', 'x']
+
+    >>> [ el.tag for el in root.x[-1:] ]
+    ['x']
+
+    >>> del root.x[1:2]
+    >>> [ el.tag for el in root.x ]
+    ['x', 'x']
+
+If you want to iterate over all children or need to provide a specific
+namespace for the tag, use the ``iterchildren()`` method.  Like the other
+methods for iteration, it supports an optional tag keyword argument::
+
+    >>> [ el.tag for el in root.iterchildren() ]
+    ['b', 'x', 'x']
+
+    >>> [ el.tag for el in root.iterchildren(tag='b') ]
+    ['b']
+
+    >>> [ el.tag for el in root.b ]
+    ['b']
+
+XML attributes are accessed as in the normal ElementTree API::
+
+    >>> c = etree.SubElement(root, "c", myattr="someval")
+    >>> print root.c.get("myattr")
+    someval
+
+    >>> root.c.set("c", "oh-oh")
+    >>> print root.c.get("c")
+    oh-oh
+
+In addition to the normal ElementTree API for appending elements to trees,
+subtrees can also be added by assigning them to object attributes.  In this
+case, the subtree is automatically deep copied and the tag name of its root is
+updated to match the attribute name::
+
+    >>> el = objectify.Element("yet_another_child")
+    >>> root.new_child = el
+    >>> print root.new_child.tag
+    new_child
+    >>> print el.tag
+    yet_another_child
+
+    >>> root.y = [ objectify.Element("y"), objectify.Element("y") ]
+    >>> [ el.tag for el in root.y ]
+    ['y', 'y']
+
+The latter is a short form for operations on the full slice::
+
+    >>> root.y[:] = [ objectify.Element("y") ]
+    >>> [ el.tag for el in root.y ]
+    ['y']
+
+You can also replace children that way::
+
+    >>> child1 = etree.SubElement(root, "child")
+    >>> child2 = etree.SubElement(root, "child")
+    >>> child3 = etree.SubElement(root, "child")
+
+    >>> el = objectify.Element("new_child")
+    >>> subel = etree.SubElement(el, "sub")
+
+    >>> root.child = el
+    >>> print root.child.sub.tag
+    sub
+
+    >>> root.child[2] = el
+    >>> print root.child[2].sub.tag
+    sub
+
+Note that special care must be taken when changing the tag name of an element::
+
+    >>> print root.b.tag
+    b
+    >>> root.b.tag = "notB"
+    >>> root.b
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: b
+    >>> print root.notB.tag
+    notB
+
+
+Namespace handling
+------------------
+
+Namespaces are handled mostly behind the scenes.  If you access a child of an
+Element without specifying a namespace, the lookup will use the namespace of
+the parent::
+
+    >>> root = objectify.Element("{ns}root")
+    >>> b = etree.SubElement(root, "{ns}b")
+    >>> c = etree.SubElement(root, "{other}c")
+
+    >>> print root.b.tag
+    {ns}b
+    >>> print root.c
+    Traceback (most recent call last):
+        ...
+    AttributeError: no such child: {ns}c
+
+You can access elements with different namespaces via ``getattr()``::
+
+    >>> print getattr(root, "{other}c").tag
+    {other}c
+
+For convenience, there is also a quick way through item access::
+
+    >>> print root["{other}c"].tag
+    {other}c
+
+The same approach must be used to access children with tag names that are not
+valid Python identifiers::
+
+    >>> el = etree.SubElement(root, "{ns}tag-name")
+    >>> print root["tag-name"].tag
+    {ns}tag-name
+
+    >>> new_el = objectify.Element("{ns}new-element")
+    >>> el = etree.SubElement(new_el, "{ns}child")
+    >>> el = etree.SubElement(new_el, "{ns}child")
+    >>> el = etree.SubElement(new_el, "{ns}child")
+
+    >>> root["tag-name"] = [ new_el, new_el ]
+    >>> print len(root["tag-name"])
+    2
+    >>> print root["tag-name"].tag
+    {ns}tag-name
+
+    >>> print len(root["tag-name"].child)
+    3
+    >>> print root["tag-name"].child.tag
+    {ns}child
+    >>> print root["tag-name"][1].child.tag
+    {ns}child
+
+
+ObjectPath
+----------
+
+For both convenience and speed, objectify supports its own path language,
+represented by the ``ObjectPath`` class::
+
+    >>> root = objectify.Element("{ns}root")
+    >>> b1 = etree.SubElement(root, "{ns}b")
+    >>> c  = etree.SubElement(b1,   "{ns}c")
+    >>> b2 = etree.SubElement(root, "{ns}b")
+    >>> d  = etree.SubElement(root, "{other}d")
+
+    >>> path = objectify.ObjectPath("root.b.c")
+    >>> print path
+    root.b.c
+    >>> path.hasattr(root)
+    True
+    >>> print path.find(root).tag
+    {ns}c
+
+    >>> find = objectify.ObjectPath("root.b.c")
+    >>> print find(root).tag
+    {ns}c
+
+    >>> find = objectify.ObjectPath("root.{other}d")
+    >>> print find(root).tag
+    {other}d
+
+    >>> find = objectify.ObjectPath("root.{not}there")
+    >>> print find(root).tag
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: {not}there
+
+    >>> find = objectify.ObjectPath("{not}there")
+    >>> print find(root).tag
+    Traceback (most recent call last):
+      ...
+    ValueError: root element does not match: need {not}there, got {ns}root
+
+    >>> find = objectify.ObjectPath("root.b[1]")
+    >>> print find(root).tag
+    {ns}b
+
+    >>> find = objectify.ObjectPath("root.{ns}b[1]")
+    >>> print find(root).tag
+    {ns}b
+
+Apart from strings, ObjectPath also accepts lists of path segments:
+
+    >>> find = objectify.ObjectPath(['root', 'b', 'c'])
+    >>> print find(root).tag
+    {ns}c
+
+    >>> find = objectify.ObjectPath(['root', '{ns}b[1]'])
+    >>> print find(root).tag
+    {ns}b
+
+You can also use relative paths starting with a '.' that ignore the actual
+root element and only inherit its namespace::
+
+    >>> find = objectify.ObjectPath(".b[1]")
+    >>> print find(root).tag
+    {ns}b
+
+    >>> find = objectify.ObjectPath(['', 'b[1]'])
+    >>> print find(root).tag
+    {ns}b
+
+    >>> find = objectify.ObjectPath(".unknown[1]")
+    >>> print find(root).tag
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: {ns}unknown
+
+    >>> find = objectify.ObjectPath(".{other}unknown[1]")
+    >>> print find(root).tag
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: {other}unknown
+
+ObjectPath objects can be used to manipulate trees::
+
+    >>> root = objectify.Element("{ns}root")
+
+    >>> path = objectify.ObjectPath(".some.child.{other}unknown")
+    >>> path.hasattr(root)
+    False
+    >>> path.find(root)
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: {ns}some
+
+    >>> path.setattr(root, "my value") # creates children as necessary
+    >>> path.hasattr(root)
+    True
+    >>> print path.find(root).text
+    my value
+    >>> print root.some.child["{other}unknown"].text
+    my value
+
+    >>> print len( path.find(root) )
+    1
+    >>> path.addattr(root, "my new value")
+    >>> print len( path.find(root) )
+    2
+    >>> [ el.text for el in path.find(root) ]
+    ['my value', 'my new value']
+
+As with attribute assignment, ``setattr()`` accepts lists:
+
+    >>> path.setattr(root, ["v1", "v2", "v3"])
+    >>> [ el.text for el in path.find(root) ]
+    ['v1', 'v2', 'v3']
+
+
+Note, however, that indexing is only supported in this context if the children
+exist.  Indexing of non existing children will not extend or create a list of
+such children but raise an exception::
+
+    >>> path = objectify.ObjectPath(".{non}existing[1]")
+    >>> path.setattr(root, "my value")
+    Traceback (most recent call last):
+      ...
+    TypeError: creating indexed path attributes is not supported
+
+It is worth noting that ObjectPath does not depend on the ``objectify`` module
+or the ObjectifiedElement implementation.  It can also be used in combination
+with Elements from the normal lxml.etree API.
+
+
+Python data types
+-----------------
+
+The objectify module knows about Python data types and tries its best to let
+element content behave like them.  For example, they support the normal math
+operators::
+
+    >>> root = objectify.fromstring(
+    ...             "<root><a>5</a><b>11</b><c>true</c><d>hoi</d></root>")
+    >>> root.a + root.b
+    16
+    >>> root.a += root.b
+    >>> print root.a
+    16
+
+    >>> root.a = 2
+    >>> print root.a + 2
+    4
+    >>> print 1 + root.a
+    3
+
+    >>> print root.c
+    True
+    >>> root.c = False
+    >>> if not root.c:
+    ...     print "false!"
+    false!
+
+    >>> print root.d + " test !"
+    hoi test !
+    >>> root.d = "%s - %s"
+    >>> print root.d % (1234, 12345)
+    1234 - 12345
+
+
+To see the data types that are currently used, you can call the module level
+``dump()`` function that returns a recursive string representation for
+elements::
+
+    >>> root = objectify.fromstring("""
+    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    ...   <a attr1="foo" attr2="bar">1</a>
+    ...   <a>1.2</a>
+    ...   <b>1</b>
+    ...   <b>true</b>
+    ...   <c>what?</c>
+    ...   <d xsi:nil="true"/>
+    ... </root>
+    ... """)
+
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 1 [IntElement]
+          * attr1 = 'foo'
+          * attr2 = 'bar'
+        a = 1.2 [FloatElement]
+        b = 1 [IntElement]
+        b = True [BoolElement]
+        c = 'what?' [StringElement]
+        d = None [NoneElement]
+          * xsi:nil = 'true'
+
+You can freely switch between different types for the same child::
+
+    >>> root = objectify.fromstring("<root><a>5</a></root>")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 5 [IntElement]
+
+    >>> root.a = 'nice string!'
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 'nice string!' [StringElement]
+
+    >>> root.a = True
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = True [BoolElement]
+
+    >>> root.a = [1, 2, 3]
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 1 [IntElement]
+        a = 2 [IntElement]
+        a = 3 [IntElement]
+
+    >>> root.a = (1, 2, 3)
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 1 [IntElement]
+        a = 2 [IntElement]
+        a = 3 [IntElement]
+
+However, data elements continue to provide the objectify API.  This means that
+sequence operations such as ``len()``, slicing and indexing (e.g. of strings)
+cannot behave as the Python types.  Like all other tree elements, they show
+the normal slicing behaviour of objectify elements::
+
+    >>> root = objectify.fromstring("<root><a>test</a><b>toast</b></root>")
+    >>> print root.a + ' me' # behaves like a string, right?
+    test me
+    >>> len(root.a) # but there's only one 'a' element!
+    1
+    >>> [ a.tag for a in root.a ]
+    ['a']
+    >>> print root.a[0].tag
+    a
+
+    >>> print root.a
+    test
+    >>> [ str(a) for a in root.a[:1] ]
+    ['test']
+
+If you need to run sequence operations on data types, you must ask the API for
+the *real* Python value.  The string value is always available throught the
+normal ElementTree ``.text`` attribute.  Additionally, all data classes
+provide a ``.pyval`` attribute that returns the value as plain Python type::
+
+    >>> root = objectify.fromstring("<root><a>test</a><b>5</b></root>")
+    >>> root.a.text
+    'test'
+    >>> root.a.pyval
+    'test'
+
+    >>> root.b.text
+    '5'
+    >>> root.b.pyval
+    5
+
+Note, however, that both attributes are read-only in objectify.  If you want
+to change values, just assign them directly to the attribute::
+
+    >>> root.a.text  = "25"
+    Traceback (most recent call last):
+      ...
+    TypeError: attribute 'text' of 'StringElement' objects is not writable
+
+    >>> root.a.pyval = 25
+    Traceback (most recent call last):
+      ...
+    TypeError: attribute 'pyval' of 'StringElement' objects is not writable
+
+    >>> root.a = 25
+    >>> print root.a
+    25
+
+Objectify determines data types by trial and error, unless it finds an
+attribute named ``lxml.objectify.PYTYPE_ATTRIBUTE``, which must contain any of
+the following string values: int, long, float, str, unicode, none::
+
+    >>> print objectify.PYTYPE_ATTRIBUTE
+    {http://codespeak.net/lxml/objectify/pytype}pytype
+    >>> ns, name = objectify.PYTYPE_ATTRIBUTE[1:].split('}')
+
+    >>> root = objectify.fromstring("""\
+    ... <root xmlns:py='%s'>
+    ...   <a py:pytype='str'>5</a>
+    ...   <b py:pytype='int'>5</b>
+    ...   <c py:pytype='none' />
+    ... </root>
+    ... """ % ns)
+
+    >>> print root.a + 10
+    510
+    >>> print root.b + 10
+    15
+    >>> print root.c
+    None
+
+Note that you can change the name and namespace used for this attribute
+through the ``setPytypeAttributeTag(tag)`` module function, in case your
+application ever needs to.  There is also a utility function ``annotate()``
+that recursively generates this attribute for the elements of a tree::
+
+    >>> root = objectify.fromstring("<root><a>test</a><b>5</b></root>")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 'test' [StringElement]
+        b = 5 [IntElement]
+
+    >>> objectify.annotate(root)
+
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 'test' [StringElement]
+          * py:pytype = 'str'
+        b = 5 [IntElement]
+          * py:pytype = 'int'
+
+A second way of specifying data type information uses XML Schema types as
+element annotations.  Objectify knows those that can be mapped to normal
+Python types::
+
+    >>> root = objectify.fromstring('''\
+    ...    <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    ...      <d xsi:type="double">5</d>
+    ...      <l xsi:type="long"  >5</l>
+    ...      <s xsi:type="string">5</s>
+    ...    </root>
+    ...    ''')
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        d = 5.0 [FloatElement]
+          * xsi:type = 'double'
+        l = 5L [LongElement]
+          * xsi:type = 'long'
+        s = '5' [StringElement]
+          * xsi:type = 'string'
+
+
+Defining additional data classes
+--------------------------------
+
+Data classes can either inherit from ``ObjectifiedDataElement`` directly or
+from one of the specialised classes like ``NumberElement`` or ``BoolElement``.
+The numeric types require an initial call to the NumberElement method
+``self._setValueParser(function)`` to set their type conversion funtion
+(string -> numeric Python type).  This call should be placed into the element
+``_init()`` method.
+
+The registration of data classes uses the ``PyType`` class::
+
+    >>> class ChristmasDate(objectify.ObjectifiedDataElement):
+    ...     def callSanta(self):
+    ...         print "Ho ho ho!"
+
+    >>> def checkChristmasDate(date_string):
+    ...     if not date_string.startswith('24.12.'):
+    ...         raise ValueError # or TypeError
+
+    >>> xmas_type = objectify.PyType('date', checkChristmasDate, ChristmasDate)
+
+If you want, you can also register this type under an XML Schema type name::
+
+    >>> xmas_type.xmlSchemaTypes = ("date",)
+
+XML Schema types will be considered if the element has an ``xsi:type``
+attribute that specifies its data type.  The line above binds the XSD type
+``date`` to the newly defined Python type.  Note that this must be done before
+the next step, which is to register the type.  Then you can use it::
+
+    >>> xmas_type.register()
+
+    >>> root = objectify.fromstring(
+    ...             "<root><a>24.12.2000</a><b>12.24.2000</b></root>")
+    >>> root.a.callSanta()
+    Ho ho ho!
+    >>> root.b.callSanta()
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: callSanta
+
+If you need to specify dependencies between the type check functions, you can
+pass a sequence of type names through the ``before`` and ``after`` keyword
+arguments of the ``register()`` method.  The PyType will then try to register
+itself before or after the respective types, as long as they are currently
+registered.  Note that this only impacts the currently registered types at the
+time of registration.  Types that are registered later on will not care about
+the dependencies of already registered types.
+
+If you provide XML Schema type information, this will override the type check
+function defined above::
+
+    >>> root = objectify.fromstring('''\
+    ...    <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    ...      <a xsi:type="date">12.24.2000</a>
+    ...    </root>
+    ...    ''')
+    >>> print root.a
+    12.24.2000
+    >>> root.a.callSanta()
+    Ho ho ho!
+
+To unregister a type, call its ``unregister()`` method::
+
+    >>> root.a.callSanta()
+    Ho ho ho!
+    >>> xmas_type.unregister()
+    >>> root.a.callSanta()
+    Traceback (most recent call last):
+      ...
+    AttributeError: no such child: callSanta
+
+Please read the section on `Resetting the API`_ below to learn about possible
+problems.
+
+.. _`Resetting the API`: #resetting-the-api
+
+
+Recursive string representation of elements
+-------------------------------------------
+
+Normally, elements use the standard string representation for str() that is
+provided by lxml.etree.  You can enable a pretty-print representation for
+objectify elements like this::
+
+    >>> objectify.enableRecursiveStr()
+
+    >>> root = objectify.fromstring("""
+    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    ...   <a attr1="foo" attr2="bar">1</a>
+    ...   <a>1.2</a>
+    ...   <b>1</b>
+    ...   <b>true</b>
+    ...   <c>what?</c>
+    ...   <d xsi:nil="true"/>
+    ... </root>
+    ... """)
+
+    >>> print str(root)
+    root = None [ObjectifiedElement]
+        a = 1 [IntElement]
+          * attr1 = 'foo'
+          * attr2 = 'bar'
+        a = 1.2 [FloatElement]
+        b = 1 [IntElement]
+        b = True [BoolElement]
+        c = 'what?' [StringElement]
+        d = None [NoneElement]
+          * xsi:nil = 'true'
+
+This behaviour can be switched off in the same way::
+
+    >>> objectify.enableRecursiveStr(False)
+
+
+What is different from ElementTree?
+-----------------------------------
+
+Such a different Element API obviously implies some side effects to the normal
+behaviour of the rest of the API.
+
+* Iteration over elements does not yield the children, but the siblings.  You
+  can access all children with the ``iterchildren()`` method on elements or
+  retrieve a list by calling the ``getchildren()`` method.
+
+* The find, findall and findtext methods use a different implementation as
+  they rely on the original iteration scheme.  This has the disadvantage that
+  they may not be 100% backwards compatible, and the additional advantage that
+  they now support any XPath expression.
+
+
+Resetting the API
+-----------------
+
+As the objectify setup is local to a parser, it does not interfere with the
+rest of lxml.  However, if you stop using the parser you registered
+``objectify`` for, and you can make sure no other module is still using the
+parser delegation, you can set the global class lookup mechanism back to the
+default one, to disable the per-parser lookup.  This is easily achieved by
+calling the setup function without arguments::
+
+    >>> etree.setElementClassLookup()
+
+Be aware, though, that this does not immediately apply to elements to which
+there already is a Python reference.  Their Python class will only be changed
+after all references are gone and the Python object is garbage collected.  The
+same applies to registered data classes for elements.

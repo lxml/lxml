@@ -103,15 +103,15 @@ cdef extern from "libxml/xpathInternals.h":
                                     char* ns_uri,
                                     xmlXPathFunction f)
     cdef void xmlXPathRegisterFuncLookup(xmlXPathContext *ctxt,
-					 xmlXPathFuncLookupFunc f,
-					 void *funcCtxt)
+                                         xmlXPathFuncLookupFunc f,
+                                         void *funcCtxt)
     cdef int xmlXPathRegisterVariable(xmlXPathContext *ctxt, 
-					 char* name,
-					 xmlXPathObject* value)
+                                      char* name,
+                                      xmlXPathObject* value)
     cdef int xmlXPathRegisterVariableNS(xmlXPathContext *ctxt, 
-					 char* name, 
-					 char* ns_uri, 
-					 xmlXPathObject* value)
+                                        char* name, 
+                                        char* ns_uri, 
+                                        xmlXPathObject* value)
     cdef void xmlXPathRegisteredVariablesCleanup(xmlXPathContext *ctxt)
     cdef void xmlXPathRegisteredNsCleanup(xmlXPathContext *ctxt)
     cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt)

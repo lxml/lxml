@@ -1,6 +1,6 @@
 cimport tree, python
-from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement
-from python cimport isinstance, issubclass, hasattr, callable
+from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
+from python cimport isinstance, issubclass, hasattr, getattr, callable
 from python cimport iter, str, _cstr, _isString, Py_ssize_t
 cimport xpath
 cimport xinclude
@@ -185,6 +185,7 @@ cdef class _ExceptionContext:
 
 # forward declaration of _BaseParser, see parser.pxi
 cdef class _BaseParser
+
 
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     """Internal base class to reference a libxml document.
@@ -378,7 +379,8 @@ cdef public class _NodeBase [ type LxmlNodeBaseType,
             unregisterProxy(self)
             attemptDeallocation(self._c_node)
 
-cdef class _ElementTree:
+cdef public class _ElementTree [ type LxmlElementTreeType,
+                                 object LxmlElementTree ]:
     cdef _Document _doc
     cdef _NodeBase _context_node
 
@@ -599,8 +601,7 @@ cdef class _ElementTree:
         self._assertHasRoot()
         _tofilelikeC14N(file, self._context_node)
 
-cdef _ElementTree _elementTreeFactory(_Document doc,
-                                      _NodeBase context_node):
+cdef _ElementTree _elementTreeFactory(_Document doc, _NodeBase context_node):
     return _newElementTree(doc, context_node, _ElementTree)
 
 cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
@@ -834,20 +835,7 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
             return _collectText(self._c_node.children)
         
         def __set__(self, value):
-            cdef xmlNode* c_text_node
-            # remove all text nodes at the start first
-            _removeText(self._c_node.children)
-            if value is None:
-                return
-            # now add new text node with value at start
-            text = _utf8(value)
-            c_text_node = tree.xmlNewDocText(self._doc._c_doc,
-                                             _cstr(text))
-            if self._c_node.children is NULL:
-                tree.xmlAddChild(self._c_node, c_text_node)
-            else:
-                tree.xmlAddPrevSibling(self._c_node.children,
-                                       c_text_node)
+            _setNodeText(self._c_node, value)
         
     property tail:
         """Text after this element's end tag, but before the next sibling
@@ -858,15 +846,7 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
             return _collectText(self._c_node.next)
            
         def __set__(self, value):
-            cdef xmlNode* c_text_node
-            # remove all text nodes at the start first
-            _removeText(self._c_node.next)
-            if value is None:
-                return
-            text = _utf8(value)
-            c_text_node = tree.xmlNewDocText(self._doc._c_doc, _cstr(text))
-            # XXX what if we're the top element?
-            tree.xmlAddNextSibling(self._c_node, c_text_node)
+            _setTailText(self._c_node, value)
 
     # not in ElementTree, read-only
     property prefix:
@@ -1159,18 +1139,7 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         """Creates a new element associated with the same document.
         """
-        # a little code duplication, but less overhead through doc reuse
-        cdef xmlNode*  c_node
-        cdef xmlDoc*   c_doc
-        cdef _Document doc
-        ns_utf, name_utf = _getNsTag(_tag)
-        doc = self._doc
-        c_doc = doc._c_doc
-        c_node = _createElement(c_doc, name_utf)
-        # add namespaces to node if necessary
-        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-        _initNodeAttributes(c_node, doc, attrib, _extra)
-        return _elementFactory(doc, c_node)
+        return _makeElement(_tag, NULL, self._doc, None, attrib, nsmap, _extra)
 
     def find(self, path):
         """Finds the first matching subelement, by tag name or path.
@@ -1195,22 +1164,13 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
-    cdef char* c_ns_href
     result = getProxy(c_node)
     if result is not None:
         return result
     if c_node is NULL:
         return None
-    if c_node.type == tree.XML_ELEMENT_NODE:
-        if c_node.ns == NULL:
-            c_ns_href = NULL
-        else:
-            c_ns_href = c_node.ns.href
-        element_class = _find_element_class(c_ns_href, c_node.name)
-    elif c_node.type == tree.XML_COMMENT_NODE:
-        element_class = _Comment
-    else:
-        assert 0, "Unknown node type: %s" % c_node.type
+    element_class = LOOKUP_ELEMENT_CLASS(ELEMENT_CLASS_LOOKUP_STATE,
+                                         doc, c_node)
     result = element_class()
     result._doc = doc
     result._c_node = c_node
@@ -1218,17 +1178,25 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     result._init()
     return result
 
-cdef class _Comment(_Element):
-    def set(self, key, value):
-        pass
-    
-    def append(self, _Element element):
-        pass
+cdef class __ContentOnlyElement(_Element):
+    cdef int _raiseImmutable(self) except -1:
+        raise TypeError, "this element does not have children or attributes"
 
-    property tag:
-        def __get__(self):
-            return None
-        
+    def set(self, key, value):
+        self._raiseImmutable()
+
+    def append(self, value):
+        self._raiseImmutable()
+
+    def insert(self, index, value):
+        self._raiseImmutable()
+
+    def __setitem__(self, index, value):
+        self._raiseImmutable()
+
+    def __setslice__(self, start, end, value):
+        self._raiseImmutable()
+
     property attrib:
         def __get__(self):
             return {}
@@ -1268,19 +1236,26 @@ cdef class _Comment(_Element):
     
     def items(self):
         return []
-    
-cdef _Comment _commentFactory(_Document doc, xmlNode* c_node):
-    cdef _Comment result
-    result = getProxy(c_node)
-    if result is not None:
-        return result
-    if c_node is NULL:
-        return None
-    result = _Comment()
-    result._doc = doc
-    result._c_node = c_node
-    registerProxy(result)
-    return result
+
+cdef class _Comment(__ContentOnlyElement):
+    property tag:
+        def __get__(self):
+            return Comment
+
+cdef class _ProcessingInstruction(__ContentOnlyElement):
+    property tag:
+        def __get__(self):
+            return ProcessingInstruction
+
+    property target:
+        # not in ElementTree
+        def __get__(self):
+            return funicode(self._c_node.name)
+
+        def __set__(self, value):
+            value = _utf8(value)
+            c_text = _cstr(value)
+            tree.xmlNodeSetName(self._c_node, c_text)
 
 cdef class _Attrib:
     cdef _NodeBase _element
@@ -1292,21 +1267,8 @@ cdef class _Attrib:
         _setAttributeValue(self._element, key, value)
 
     def __delitem__(self, key):
-        cdef xmlNode* c_node
-        cdef xmlAttr* c_attr
-        cdef char* c_tag
-        ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
-        c_node = self._element._c_node
-        if ns is None:
-            c_attr = tree.xmlHasProp(c_node, c_tag)
-        else:
-            c_attr = tree.xmlHasNsProp(c_node, c_tag, _cstr(ns))
-        if c_attr is NULL:
-            # XXX free namespace that is not in use..?
-            raise KeyError, key
-        tree.xmlRemoveProp(c_attr)
-        
+        _delAttribute(self._element, key)
+
     # ACCESSORS
     def __repr__(self):
         result = {}
@@ -1422,7 +1384,8 @@ cdef class _Attrib:
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
-cdef class _ElementTagMatcher:
+cdef public class _ElementTagMatcher [ object LxmlElementTagMatcher,
+                                       type LxmlElementTagMatcherType ]:
     cdef object _pystrings
     cdef char* _href
     cdef char* _name
@@ -1440,7 +1403,8 @@ cdef class _ElementTagMatcher:
             if self._name[0] == c'*' and self._name[1] == c'\0':
                 self._name = NULL
 
-cdef class _ElementIterator(_ElementTagMatcher):
+cdef public class _ElementIterator(_ElementTagMatcher) [
+    object LxmlElementIterator, type LxmlElementIteratorType ]:
     # we keep Python references here to control GC
     cdef _NodeBase _node
     cdef _node_to_node_function _next_element
@@ -1575,6 +1539,11 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
+cdef xmlNode* _createPI(xmlDoc* c_doc, char* target, char* text):
+    cdef xmlNode* c_node
+    c_node = tree.xmlNewDocPI(c_doc, target, text)
+    return c_node
+
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     cdef xmlNs* c_ns
     # 'extra' is not checked here (expected to be a keyword dict)
@@ -1602,18 +1571,8 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
 def Element(_tag, attrib=None, nsmap=None, **_extra):
     """Element factory. This function returns an object implementing the Element interface.
     """
-    cdef xmlNode*  c_node
-    cdef xmlDoc*   c_doc
-    cdef _Document doc
-    ns_utf, name_utf = _getNsTag(_tag)
-    c_doc = _newDoc()
-    c_node = _createElement(c_doc, name_utf)
-    tree.xmlDocSetRootElement(c_doc, c_node)
-    doc = _documentFactory(c_doc, None)
-    # add namespaces to node if necessary
-    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _initNodeAttributes(c_node, doc, attrib, _extra)
-    return _elementFactory(doc, c_node)
+    ### also look at _Element.makeelement() and _BaseParser.makeelement() ###
+    return _makeElement(_tag, NULL, None, None, attrib, nsmap, _extra)
 
 def Comment(text=None):
     """Comment element factory. This factory function creates a special element that will
@@ -1630,7 +1589,25 @@ def Comment(text=None):
     doc = _documentFactory(c_doc, None)
     c_node = _createComment(c_doc, _cstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
-    return _commentFactory(doc, c_node)
+    return _elementFactory(doc, c_node)
+
+def ProcessingInstruction(target, text=None):
+    """Comment element factory. This factory function creates a special element that will
+    be serialized as an XML comment.
+    """
+    cdef _Document doc
+    cdef xmlNode*  c_node
+    cdef xmlDoc*   c_doc
+    target = _utf8(target)
+    if text is None:
+        text = ''
+    else:
+        text = _utf8(text)
+    c_doc = _newDoc()
+    doc = _documentFactory(c_doc, None)
+    c_node = _createPI(c_doc, _cstr(target), _cstr(text))
+    tree.xmlAddChild(<xmlNode*>c_doc, c_node)
+    return _elementFactory(doc, c_node)
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
@@ -1668,20 +1645,24 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
 
     return _elementTreeFactory(doc, element)
 
-def HTML(text):
+def HTML(text, _BaseParser parser=None):
     """Parses an HTML document from a string constant. This function can be used
     to embed "HTML literals" in Python code.
     """
     cdef _Document doc
-    doc = _parseMemoryDocument(text, None, __DEFAULT_HTML_PARSER)
+    if parser is None:
+        parser = __DEFAULT_HTML_PARSER
+    doc = _parseMemoryDocument(text, None, parser)
     return doc.getroot()
 
-def XML(text):
+def XML(text, _BaseParser parser=None):
     """Parses an XML document from a string constant. This function can be used
     to embed "XML literals" in Python code.
     """
     cdef _Document doc
-    doc = _parseMemoryDocument(text, None, __DEFAULT_XML_PARSER)
+    if parser is None:
+        parser = __DEFAULT_XML_PARSER
+    doc = _parseMemoryDocument(text, None, parser)
     return doc.getroot()
 
 fromstring = XML
@@ -1776,10 +1757,13 @@ def parse(source, _BaseParser parser=None):
     return ElementTree(doc.getroot())
 
 
-# include submodules
+################################################################################
+# Include submodules
+
 include "proxy.pxi"      # Proxy handling (element backpointers/memory/etc.)
 include "apihelpers.pxi" # Private helper functions
 include "xmlerror.pxi"   # Error and log handling
+include "classlookup.pxi"# Namespace implementation and registry
 include "nsclasses.pxi"  # Namespace implementation and registry
 include "docloader.pxi"  # Support for custom document loaders
 include "parser.pxi"     # XML Parser
@@ -1825,3 +1809,8 @@ cdef class _Validator:
 
 include "relaxng.pxi"   # RelaxNG
 include "xmlschema.pxi" # XMLSchema
+
+################################################################################
+# Public C API
+
+include "public-api.pxi"

@@ -8,18 +8,20 @@ the need to expose a feature in an easy way led to the invention of a new API.
 .. contents::
 .. 
    1   lxml.etree
-   2   Trees and Documents
-   3   Iteration
-   4   Parsers
-   5   iterparse and iterwalk
-   6   Error handling on exceptions
-   7   Python unicode strings
-   8   XPath
-   9   XSLT
-   10  RelaxNG
-   11  XMLSchema
-   12  xinclude
-   13  write_c14n on ElementTree
+   2   Other Element APIs
+   3   Trees and Documents
+   4   Iteration
+   5   Parsers
+   6   iterparse and iterwalk
+   7   Error handling on exceptions
+   8   Python unicode strings
+   9   XPath
+   10  XSLT
+   11  RelaxNG
+   12  XMLSchema
+   13  xinclude
+   14  write_c14n on ElementTree
+
 
 lxml.etree
 ----------
@@ -41,6 +43,25 @@ The following examples usually assume this to be executed first::
 
   >>> from lxml import etree
   >>> from StringIO import StringIO
+
+
+Other Element APIs
+------------------
+
+While lxml.etree itself uses the ElementTree API, it is possible to replace
+the Element implementation by `custom element subclasses`_.  This has been
+used to implement well-known XML APIs on top of lxml.  The ``lxml.elements``
+package contains examples.  Currently, there is a data-binding implementation
+called `objectify`_, which is similar to the `Amara bindery`_ tool.
+
+Additionally, the `lxml.elements.classlookup`_ module provides a number of
+different schemes to customize the mapping between libxml2 nodes and the
+Element classes used by lxml.etree.
+
+.. _`custom element subclasses`: namespace_extensions.html
+.. _`objectify`: objectify.html
+.. _`lxml.elements.classlookup`: elements.html#lxml.elements.classlookup
+.. _`Amara bindery`: http://uche.ogbuji.net/tech/4suite/amara/
 
 
 Trees and Documents

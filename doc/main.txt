@@ -92,32 +92,41 @@ feature you want has been implemented in the latest trunk version.
 Documentation
 -------------
 
-lxml follows the ElementTree_ API as much as possible, building it on top of
-the native libxml2 tree.  See also the `ElementTree compatibility overview`_
-and the `benchmark results`_ comparing lxml to the original ElementTree_ and
-cElementTree_ implementations.
+lxml.etree follows the ElementTree_ API as much as possible, building it on
+top of the native libxml2 tree.  See also the `ElementTree compatibility
+overview`_ and the `benchmark results`_ comparing lxml to the original
+ElementTree_ and cElementTree_ implementations.
 
-lxml also `extends this API`_ to expose libxml2 and libxslt specific
-functionality, such as XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and
-`c14n`_. Python code can be called from XPath expressions and XSLT stylesheets
-through the use of `extension functions`_.
+Right after the ElementTree_ documentation, the most important place to look
+is the `lxml.etree API documentation`_.  It describes how lxml extends the
+ElementTree API to expose libxml2 and libxslt specific functionality, such as
+XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and `c14n`_.  Python code can be
+called from XPath expressions and XSLT stylesheets through the use of
+`extension functions`_.  lxml also offers a `SAX compliant API`_, that works
+with the SAX support in the standard library.
+
+There is a separate module `lxml.objectify`_ that implements a data-binding
+API on top of lxml.etree.  See the `objectify and etree`_ FAQ entry for a
+comparison.
 
 In addition to the ElementTree API, lxml also features a sophisticated API for
 `custom element classes`_.  This is a simple way to write arbitrary XML driven
-APIs on top of lxml.
-
-lxml also offers a `SAX compliant API`_, that works with the SAX support
-in the standard library.
+APIs on top of lxml.  As of version 1.1, lxml.etree has a new `C-level API`_
+that can be used to efficiently extend lxml.etree in external C modules,
+including custom element class support.
 
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
 .. _`benchmark results`: performance.html
 .. _`ElementTree compatibility overview`: compatibility.html
-.. _`extends this API`: api.html
+.. _`lxml.etree API documentation`: api.html
 .. _`extension functions`: extensions.html
-.. _`custom element classes`: namespace_extensions.html
+.. _`custom element classes`: element_classes.html
 .. _`SAX compliant API`: sax.html
+.. _`C-level API`: capi.html
+.. _`lxml.objectify`: objectify.html
+.. _`objectify and etree`: FAQ.html##what-is-the-difference-between-lxml-etree-and-lxml-objectify
 
 .. _XPath: http://www.w3.org/TR/xpath
 .. _`Relax NG`: http://www.relaxng.org/

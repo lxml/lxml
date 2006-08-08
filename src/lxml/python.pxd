@@ -6,6 +6,7 @@ cdef extern from "Python.h":
     ctypedef int size_t
     ctypedef int Py_ssize_t
     cdef int INT_MAX
+    cdef int PY_SSIZE_T_MAX
 
     cdef void Py_INCREF(object o)
 
@@ -28,14 +29,21 @@ cdef extern from "Python.h":
     cdef object PyString_FromString(char* s)
     cdef object PyString_FromFormat(char* format, ...)
     cdef Py_ssize_t PyString_GET_SIZE(object s)
+
     cdef object PyBool_FromLong(long value)
     cdef object PyNumber_Int(object value)
+    cdef Py_ssize_t PyInt_AsSsize_t(object value)
+
+    cdef Py_ssize_t PyTuple_GET_SIZE(object t)
+    cdef object PyTuple_GET_ITEM(object o, Py_ssize_t pos)
 
     cdef Py_ssize_t PyList_GET_SIZE(object l)
+    cdef object PyList_GET_ITEM(object l, Py_ssize_t index)
     cdef int PyList_Append(object l, object obj) except -1
     cdef int PyList_Reverse(object l) except -1
     cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
-    cdef object PyList_GET_ITEM(object l, Py_ssize_t index)
+    cdef object PyList_AsTuple(object o)
+
     cdef int PyDict_SetItemString(object d, char* key, object value) except -1
     cdef int PyDict_SetItem(object d, object key, object value) except -1
     cdef PyObject* PyDict_GetItemString(object d, char* key)
@@ -44,12 +52,13 @@ cdef extern from "Python.h":
     cdef void PyDict_Clear(object d)
     cdef object PyDict_Copy(object d)
     cdef Py_ssize_t PyDict_Size(object d)
-    cdef object PyList_AsTuple(object o)
+    cdef int PyDict_Contains(object d, object key)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
-    cdef object PyTuple_GET_ITEM(object o, Py_ssize_t pos)
 
     cdef int PyDict_Check(object instance)
+    cdef int PyList_Check(object instance)
+    cdef int PyTuple_Check(object instance)
     cdef int PyNumber_Check(object instance)
     cdef int PyBool_Check(object instance)
     cdef int PySequence_Check(object instance)
@@ -57,6 +66,8 @@ cdef extern from "Python.h":
     cdef int PyTuple_CheckExact(object instance)
 
     cdef int PyObject_SetAttr(object o, object name, object value)
+    cdef object PyObject_RichCompare(object o1, object o2, int op)
+    cdef int PyObject_RichCompareBool(object o1, object o2, int op)
 
     cdef void* PyMem_Malloc(size_t size)
     cdef void* PyMem_Realloc(void* p, size_t size)
@@ -78,6 +89,7 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef int isinstance(object instance, object classes)
     cdef int issubclass(object derived,  object superclasses)
     cdef int hasattr(object obj, object attr)
+    cdef object getattr(object obj, object attr)
     cdef int callable(object obj)
     cdef object str(object obj)
     cdef object iter(object obj)

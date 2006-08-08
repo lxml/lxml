@@ -119,7 +119,7 @@ cdef extern from "libxml/parser.h":
 
 cdef extern from "libxml/parserInternals.h":
     cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 
-						 char* buffer)
+                                                 char* buffer)
     cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 
                                              char* filename)
     cdef void xmlFreeInputStream(xmlParserInput* input)

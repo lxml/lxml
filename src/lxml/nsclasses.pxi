@@ -6,35 +6,12 @@ class LxmlRegistryError(LxmlError):
 class NamespaceRegistryError(LxmlRegistryError):
     pass
 
-cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
-                                          object LxmlElementBase ]:
-    """All custom Element classes must inherit from this one.
-
-    Note that subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of elements must be stored in the underlying XML.  If you
-    really need to initialize the object after creation, you can implement an
-    ``_init(self)`` method that will be called after object creation.
-    """
-
-def setDefaultElementClass(cls=None):
-    global __DEFAULT_ELEMENT_CLASS
-    if cls is None:
-        __DEFAULT_ELEMENT_CLASS = _Element
-    elif not python.PyType_Check(cls) or not issubclass(cls, ElementBase):
-        raise LxmlRegistryError, \
-              "Registered element classes must be subtypes of ElementBase"
-    else:
-        __DEFAULT_ELEMENT_CLASS = cls
-
-cdef object __DEFAULT_ELEMENT_CLASS
-__DEFAULT_ELEMENT_CLASS = _Element
-
 cdef object __NAMESPACE_REGISTRIES
 __NAMESPACE_REGISTRIES = {}
 
 cdef object __FUNCTION_NAMESPACE_REGISTRIES
 __FUNCTION_NAMESPACE_REGISTRIES = {}
+
 
 def Namespace(ns_uri):
     """Retrieve the namespace object associated with the given URI. Creates a
@@ -193,32 +170,37 @@ cdef object _find_extension(ns_uri_utf, name_utf):
     else:
         return <object>dict_result
 
-cdef object _find_element_class(char* c_namespace_utf,
-                                char* c_element_name_utf):
+cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     cdef python.PyObject* dict_result
     cdef _NamespaceRegistry registry
+    cdef char* c_namespace_utf
+    if c_node.type != tree.XML_ELEMENT_NODE:
+        if state is None:
+            return _lookupDefaultElementClass(None, doc, c_node)
+        return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)
+    c_namespace_utf = _getNs(c_node)
     if c_namespace_utf is not NULL:
         dict_result = python.PyDict_GetItemString(
             __NAMESPACE_REGISTRIES, c_namespace_utf)
     else:
         dict_result = python.PyDict_GetItem(
             __NAMESPACE_REGISTRIES, None)
-    if dict_result is NULL:
-        return __DEFAULT_ELEMENT_CLASS
-
-    registry = <_NamespaceRegistry>dict_result
-    classes = registry._entries
-
-    if c_element_name_utf is not NULL:
-        dict_result = python.PyDict_GetItemString(
-            classes, c_element_name_utf)
-    else:
-        dict_result = NULL
-
-    if dict_result is NULL:
-        dict_result = python.PyDict_GetItem(classes, None)
-
     if dict_result is not NULL:
-        return <object>dict_result
-    else:
-        return __DEFAULT_ELEMENT_CLASS
+        registry = <_NamespaceRegistry>dict_result
+        classes = registry._entries
+
+        if c_node.name is not NULL:
+            dict_result = python.PyDict_GetItemString(
+                classes, c_node.name)
+        else:
+            dict_result = NULL
+
+        if dict_result is NULL:
+            dict_result = python.PyDict_GetItem(classes, None)
+
+        if dict_result is not NULL:
+            return <object>dict_result
+
+    if state is None:
+        return _lookupDefaultElementClass(None, doc, c_node)
+    return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)

@@ -442,6 +442,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         ElementTree = self.etree.ElementTree
         XML = self.etree.XML
         Comment = self.etree.Comment
+        ProcessingInstruction = self.etree.ProcessingInstruction
         
         el = Element('hoi')
         self.assert_(iselement(el))
@@ -455,6 +456,9 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         c = Comment('test')
         self.assert_(iselement(c))
+
+        p = ProcessingInstruction("test", "some text")
+        self.assert_(iselement(p))
         
     def test_iteration(self):
         XML = self.etree.XML
@@ -763,7 +767,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             None,
             a.tail)
         self.assertXML('<a></a>', a)
-        
+
     def test_comment(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -771,6 +775,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         a = Element('a')
         a.append(Comment('foo'))
+        self.assertEquals(a[0].tag, Comment)
         self.assertEquals(a[0].text, 'foo')
 
     def test_comment_text(self):
@@ -804,6 +809,30 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(0, len(c))
         # should not iterate
         for i in c:
+            pass
+
+    def test_pi(self):
+        # lxml.etree separates target and text
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ProcessingInstruction = self.etree.ProcessingInstruction
+
+        a = Element('a')
+        a.append(ProcessingInstruction('foo', 'some more text'))
+        self.assertEquals(a[0].tag, ProcessingInstruction)
+        self.assertXML("<a><?foo some more text?></a>",
+                       a)
+
+    def test_pi_nonsense(self):
+        ProcessingInstruction = self.etree.ProcessingInstruction
+        pi = ProcessingInstruction('foo')
+        self.assertEquals({}, pi.attrib)
+        self.assertEquals([], pi.keys())
+        self.assertEquals([], pi.items())
+        self.assertEquals(None, pi.get('hoi'))
+        self.assertEquals(0, len(pi))
+        # should not iterate
+        for i in pi:
             pass
 
     def test_setitem(self):

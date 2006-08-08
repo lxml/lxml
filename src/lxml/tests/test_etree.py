@@ -28,6 +28,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assert_(etree.__version__.startswith(
             str(etree.LXML_VERSION[0])))
 
+    def test_c_api(self):
+        self.assert_(hasattr(self.etree, '_import_c_api'))
+
     def test_element_names(self):
         Element = self.etree.Element
         
@@ -61,6 +64,33 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             "valueB",
             root[0].get("default"))
+
+    def test_pi(self):
+        # lxml.etree separates target and text
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ProcessingInstruction = self.etree.ProcessingInstruction
+
+        a = Element('a')
+        a.append(ProcessingInstruction('foo', 'some more text'))
+        self.assertEquals(a[0].target, 'foo')
+        self.assertEquals(a[0].text, 'some more text')
+
+    def test_pi_parse(self):
+        XML = self.etree.XML
+        root = XML("<test><?mypi my test ?></test>")
+        self.assertEquals(root[0].target, "mypi")
+        self.assertEquals(root[0].text, "my test ")
+
+    def test_attribute_set(self):
+        # ElementTree accepts arbitrary attribute values
+        # lxml.etree allows only strings
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEquals("TEST", root.get("attr"))
+        self.assertRaises(TypeError, root.set, "newattr", 5)
 
     def test_parse_error(self):
         # ET raises ExpatError
@@ -389,6 +419,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             '<a><!-- foo  --></a>',
             tostring(a))
+
+    # does not raise an exception in ElementTree
+    def test_comment_immutable(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+
+        c = Comment()
+        el = Element('myel')
+
+        self.assertRaises(TypeError, c.append, el)
+        self.assertRaises(TypeError, c.insert, 0, el)
+        self.assertRaises(TypeError, c.set, "myattr", "test")
 
     # test weird dictionary interaction leading to segfault previously
     def test_weird_dict_interaction(self):

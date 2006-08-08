@@ -31,6 +31,7 @@
 #define isinstance(o,c) PyObject_IsInstance(o,c)
 #define issubclass(c,csuper) PyObject_IsSubclass(c,csuper)
 #define hasattr(o,a)    PyObject_HasAttr(o,a)
+#define getattr(o,a)    PyObject_GetAttr(o,a)
 #define callable(o)     PyCallable_Check(o)
 #define str(o)          PyObject_Str(o)
 #define iter(o)         PyObject_GetIter(o)
@@ -39,8 +40,12 @@
 #define _isString(obj)   PyObject_TypeCheck(obj, &PyBaseString_Type)
 
 #define _isElement(c_node) \
-        ((c_node)->type == XML_ELEMENT_NODE || \
-	 (c_node)->type == XML_COMMENT_NODE)
+        (((c_node)->type == XML_ELEMENT_NODE) || \
+	 ((c_node)->type == XML_COMMENT_NODE) || \
+         ((c_node)->type == XML_PI_NODE))
+
+#define _getNs(c_node) \
+        (((c_node)->ns == 0) ? 0 : ((c_node)->ns->href))
 
 /* Macro pair implementation of a depth first tree walker
  *

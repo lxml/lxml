@@ -20,7 +20,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
     uhtml_str = u"<html><head><title>test Ã¡\uF8D2</title></head><body><h1>page Ã¡\uF8D2 title</h1></body></html>"
 
     def tearDown(self):
-        self.etree.set_default_parser()
+        self.etree.setDefaultParser()
 
     def test_module_HTML(self):
         element = self.etree.HTML(self.html_str)
@@ -92,13 +92,13 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           self.etree.parse, StringIO(self.broken_html_str))
 
-        self.etree.set_default_parser( self.etree.HTMLParser() )
+        self.etree.setDefaultParser( self.etree.HTMLParser() )
 
         tree = self.etree.parse(StringIO(self.broken_html_str))
         self.assertEqual(self.etree.tostring(tree.getroot()),
                          self.html_str)
 
-        self.etree.set_default_parser()
+        self.etree.setDefaultParser()
 
         self.assertRaises(self.etree.XMLSyntaxError,
                           self.etree.parse, StringIO(self.broken_html_str))

@@ -1,3 +1,4 @@
+==========================
 Frequently Asked Questions
 ==========================
 
@@ -6,239 +7,339 @@ See also the notes on compatibility_ to ElementTree_.
 .. _compatibility: compatibility.html
 .. _ElementTree:   http://effbot.org/zone/element-index.htm
 
-
-#) Is there a tutorial?
-
-   There is a `tutorial for ElementTree`_ which also works for lxml.etree.
-   The `API documentation`_ also contains many examples.
-
-   .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
-   .. _`API documentation`:        api.html
-
-
-#) Where can I find more documentation about lxml?
-
-   There is a lot of documentation as lxml implements the well-known
-   `ElementTree API`_ and tries to follow its documentation as closely as
-   possible.  There are a couple of issues where lxml cannot keep up
-   compatibility.  They are described in the compatibility_ documentation.
-   The lxml specific extensions to the API are described by individual files
-   in the ``doc`` directory of the distribution and on `the web page`_.
-
-   .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
-   .. _`the web page`:    http://codespeak.net/lxml/#documentation
-
-
-#) My application crashes! Why does lxml.etree do that?
-
-   One of the goals of lxml is "no segfaults", so if there is no clear warning
-   in the documentation that you were doing something potentially harmful, you
-   have found a bug and we would like to hear about it.  Please report this
-   bug to the mailing list.  See the next section on how to do that.
+.. contents::
+..
+   1  General Questions
+     1.1  Is there a tutorial?
+     1.2  Where can I find more documentation about lxml?
+     1.3  What is the difference between lxml.etree and lxml.objectify?
+     1.4  Why is my application so slow?
+     1.5  Why do I get errors about missing UCS4 symbols when installing lxml?
+   2  Bugs
+     2.1  My application crashes! Why does lxml.etree do that?
+     2.2  I think I have found a bug in lxml. What should I do?
+   3  Threading
+     3.1  Can I use threads to concurrently access the lxml API?
+     3.2  Does my program run faster if I use threads?
+   4  Parsing and Serialisation
+     4.1  Why doesn't the ``pretty_print`` option reformat my XML output?
+     4.2  Why can't lxml parse my XML from unicode strings?
+     4.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+     4.4  Why can't I just delete parents or clear the root node in iterparse()?
+   5  XPath and Document Traversal
+     5.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+     5.2  Why doesn't ``findall()`` support full XPath expressions?
+     5.3  How can I find out which namespace prefixes are used in a document?
+     5.4  How can I specify a default namespace for XPath expressions?
 
 
-#) I think I have found a bug in lxml. What should I do?
+General Questions
+=================
 
-   a) First, you should look at the `current developer changelog`_ to see if
-      this is a known problem that has already been fixed in the SVN trunk.
+Is there a tutorial?
+--------------------
 
-      .. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+There is a `tutorial for ElementTree`_ which also works for ``lxml.etree``.
+The `API documentation`_ also contains many examples for ``lxml.etree``.  To
+learn using ``lxml.objectify``, read the `objectify documentation`_.
 
-   b) If you are using threads, please see the following section to check if
-      you touch on one of the potential pitfalls.
-
-   c) Otherwise, we would really like to hear about it.  Please report it to
-      the `mailing list`_ so that we can fix it.  It is very helpful in this
-      case if you can come up with a short code snippet that demonstrates your
-      problem.  Please also report the version of lxml, libxml2 and libxslt
-      that you are using by calling this::
-
-          from lxml import etree
-          print "lxml.etree:       ", etree.LXML_VERSION
-          print "libxml used:      ", etree.LIBXML_VERSION
-          print "libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
-          print "libxslt used:     ", etree.LIBXSLT_VERSION
-          print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
-
-      .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
+.. _`API documentation`:        api.html
+.. _`objectify documentation`:  objectify.html
 
 
-#) Can I use threads to concurrently access the lxml API?
+Where can I find more documentation about lxml?
+-----------------------------------------------
 
-   Yes, although not carelessly.
+There is a lot of documentation as lxml implements the well-known `ElementTree
+API`_ and tries to follow its documentation as closely as possible.  There are
+a couple of issues where lxml cannot keep up compatibility.  They are
+described in the compatibility_ documentation.  The lxml specific extensions
+to the API are described by individual files in the ``doc`` directory of the
+distribution and on `the web page`_.
 
-   lxml frees the GIL (Python's global interpreter lock) internally when
-   parsing from disk and memory, as long as you use either the default parser
-   (which is replicated for each thread) or create a parser for each thread
-   yourself.  lxml also allows concurrency during validation (RelaxNG and
-   XMLSchema) and XSL transformation.  You can share RelaxNG, XMLSchema and
-   XSLT objects between threads.  While you can also share parsers between
-   threads, this will serialize the access to each of them, so it is better to
-   copy() parsers or to use the default parser.  Note that access to the XML()
-   and HTML() functions is always serialized.  If you need to parse from
-   strings, use StringIO.
-
-   Warning: You should generally avoid modifying trees in other threads than
-   the one it was generated in.  Although this should work in many cases,
-   there are certain scenarios where the termination of a thread that parsed a
-   tree can crash the application if subtrees of this tree are moved to other
-   documents.  You should be on the safe side when passing trees between
-   threads if you either
-
-   a) do not modify these trees and do not move its elements to other trees, or
-   b) do not terminate threads while the trees they parsed are still in use
+.. _`ElementTree API`: http://effbot.org/zone/element-index.htm
+.. _`the web page`:    http://codespeak.net/lxml/#documentation
 
 
-#) Why can't I just delete parents or clear the root node in iterparse()?
+What is the difference between lxml.etree and lxml.objectify?
+-------------------------------------------------------------
 
-   The ``iterparse()`` implementation is based on the libxml2 parser.  It
-   requires the tree to be intact to finish parsing.  If you delete or modify
-   parents of the current node, chances are you modify the structure in a way
-   that breaks the parser.  Normally, this will result in a segfault.  Please
-   refer to the `iterparse section`_ of the lxml API documentation to find out
-   what you can do and what you can't do.
+The two modules provide different ways of handling XML.  However, objectify
+builds on top of lxml.etree and therefore inherits most of its capabilities
+and a large portion of its API.
 
-   .. _`iterparse section`: api.html#iterparse-and-iterwalk
+* lxml.etree is a generic API for XML and HTML handling.  It aims for
+  ElementTree compatibility_ and supports the entire XML infoset.  It is well
+  suited for both mixed content and data centric XML.  Its generality makes it
+  the best choice for most applications.
+
+* lxml.objectify is a specialized API for XML data handling in a Python object
+  syntax.  It provides a very natural way to deal with data fields stored in a
+  structurally well defined XML format.  Data is automatically converted to
+  Python data types and can be manipulated with normal Python operators.  Look
+  at the examples in the `objectify documentation`_ to see what it feels like
+  to use it.
+
+  Objectify is not well suited for mixed contents or HTML documents.  As it is
+  built on top of lxml.etree, however, it inherits the normal support for
+  XPath, XSLT or validation.
 
 
-#) Why doesn't the ``pretty_print`` option reformat my XML output?
+Why is my application so slow?
+------------------------------
 
-   Pretty printing (or formatting) an XML document means adding white space to
-   the content.  These modifications are harmless if they only impact elements
-   in the document that do not carry (text) data.  They corrupt your data if
-   they impact elements that contain data.  If lxml cannot distinguish between
-   whitespace and data, it will not alter your data.  Whitespace is therefore
-   only added between nodes that do not contain data.  This is always the case
-   for trees constructed element-by-element, so no problems should be expected
-   here.  For parsed trees, a good way to assure that no conflicting
-   whitespace is left in the tree is the ``remove_blank_text`` option::
+lxml.etree is a very fast library for processing XML.  There are, however, `a
+few caveats`_ involved in the mapping of the powerful libxml2 library to the
+simple and convenient ElementTree API.  Not all operations are as fast as the
+simplicity of the API might suggest.  The `benchmark page`_ has a comparison
+to other ElementTree implementations and a number of tips for performance
+tweaking.  As with any Python application, the rule of thumb is: the more of
+your processing runs in C, the faster your application gets.
+
+.. _`a few caveats`:  performance.html#the-elementtree-api
+.. _`benchmark page`: performance.html
+
+
+Why do I get errors about missing UCS4 symbols when installing lxml?
+--------------------------------------------------------------------
+
+Most likely, you use a Python installation that was configured for internal
+use of UCS2 unicode, meaning 16-bit unicode.  The lxml egg distributions are
+generally compiled on platforms that use UCS4, a 32-bit unicode encoding, as
+this is used on the majority of platforms.  Sadly, both are not compatible, so
+the eggs can only support the one they were compiled with.
+
+This means that you have to compile lxml from sources for your system.  Note
+that you do not need Pyrex for this, the lxml source distribution is directly
+compilable on both platform types.  See the `build instructions`_ on how to do
+this.
+
+.. _`build instructions`: build.html
+
+
+Bugs
+====
+
+My application crashes! Why does lxml.etree do that?
+----------------------------------------------------
+
+One of the goals of lxml is "no segfaults", so if there is no clear warning in
+the documentation that you were doing something potentially harmful, you have
+found a bug and we would like to hear about it.  Please report this bug to the
+mailing list.  See the next section on how to do that.
+
+
+I think I have found a bug in lxml. What should I do?
+-----------------------------------------------------
+
+a) First, you should look at the `current developer changelog`_ to see if this
+   is a known problem that has already been fixed in the SVN trunk.
+
+   .. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+
+b) If you are using threads, please see the following section to check if
+   you touch on one of the potential pitfalls.
+
+c) Otherwise, we would really like to hear about it.  Please report it to the
+   `mailing list`_ so that we can fix it.  It is very helpful in this case if
+   you can come up with a short code snippet that demonstrates your problem.
+   Please also report the version of lxml, libxml2 and libxslt that you are
+   using by calling this::
+
+       from lxml import etree
+       print "lxml.etree:       ", etree.LXML_VERSION
+       print "libxml used:      ", etree.LIBXML_VERSION
+       print "libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
+       print "libxslt used:     ", etree.LIBXSLT_VERSION
+       print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
+
+   .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+
+Threading
+=========
+
+Can I use threads to concurrently access the lxml API?
+------------------------------------------------------
+
+Yes, although not carelessly.
+
+lxml frees the GIL (Python's global interpreter lock) internally when parsing
+from disk and memory, as long as you use either the default parser (which is
+replicated for each thread) or create a parser for each thread yourself.  lxml
+also allows concurrency during validation (RelaxNG and XMLSchema) and XSL
+transformation.  You can share RelaxNG, XMLSchema and XSLT objects between
+threads.  While you can also share parsers between threads, this will
+serialize the access to each of them, so it is better to copy() parsers or to
+use the default parser.  Note that access to the XML() and HTML() functions is
+always serialized.  If you need to parse concurrently from strings, use
+``parse()`` with ``StringIO``.
+
+Due to the way libxslt handles threading, concurrent access to stylesheets is
+currently only possible if it was parsed in the main thread.  Parsing and
+using a stylesheet inside one thread also works.
+
+Warning: You should generally avoid modifying trees in other threads than the
+one it was generated in.  Although this should work in many cases, there are
+certain scenarios where the termination of a thread that parsed a tree can
+crash the application if subtrees of this tree were moved to other documents.
+You should be on the safe side when passing trees between threads if you
+either
+
+a) do not modify these trees and do not move their elements to other trees, or
+b) do not terminate threads while the trees they parsed are still in use
+   (e.g. by using a fixed size thread-pool or long-running threads in
+   processing chains)
+
+
+Does my program run faster if I use threads?
+--------------------------------------------
+
+Depends.  The best way to answer this is timing and profiling.
+
+The global interpreter lock (GIL) in Python serializes access to the
+interpreter, so if the majority of your processing is done in Python code
+(traversing trees, modifying elements, etc.), your gain will be close to 0.
+The more of your XML processing moves into lxml, however, the higher your
+gain.  If your application is bound by XML parsing and serialisation, or by
+complex XSLTs, your speedup on multi-processor machines can be substantial.
+
+See the question above to learn which operations free the GIL to support
+multi-threading.
+
+
+Parsing and Serialisation
+=========================
+
+Why doesn't the ``pretty_print`` option reformat my XML output?
+---------------------------------------------------------------
+
+Pretty printing (or formatting) an XML document means adding white space to
+the content.  These modifications are harmless if they only impact elements in
+the document that do not carry (text) data.  They corrupt your data if they
+impact elements that contain data.  If lxml cannot distinguish between
+whitespace and data, it will not alter your data.  Whitespace is therefore
+only added between nodes that do not contain data.  This is always the case
+for trees constructed element-by-element, so no problems should be expected
+here.  For parsed trees, a good way to assure that no conflicting whitespace
+is left in the tree is the ``remove_blank_text`` option::
 
    >>> parser = etree.XMLParser(remove_blank_text=True)
    >>> tree = etree.parse(file, parser)
 
-   This will allow the parser to drop blank text nodes when constructing the
-   tree.  If you now call a serialization function to pretty print this tree,
-   lxml can add fresh whitespace to the XML tree to indent it.
+This will allow the parser to drop blank text nodes when constructing the
+tree.  If you now call a serialization function to pretty print this tree,
+lxml can add fresh whitespace to the XML tree to indent it.
 
 
-#) Why can't lxml parse my XML from unicode strings?
+Why can't lxml parse my XML from unicode strings?
+-------------------------------------------------
 
-   lxml can read Python unicode strings and even tries to support them if
-   libxml2 does not.  However, if the unicode string declares an XML encoding
-   internally (``<?xml encoding="..."?>``), parsing is bound to fail, as this
-   encoding is most likely not the real encoding used in Python unicode.  The
-   same is true for HTML unicode strings that contain charset meta tags.  Note
-   that Python uses different encodings for unicode on different platforms, so
-   even specifying the real internal unicode encoding is not portable between
-   Python interpreters.  Don't do it.
+lxml can read Python unicode strings and even tries to support them if libxml2
+does not.  However, if the unicode string declares an XML encoding internally
+(``<?xml encoding="..."?>``), parsing is bound to fail, as this encoding is
+most likely not the real encoding used in Python unicode.  The same is true
+for HTML unicode strings that contain charset meta tags.  Note that Python
+uses different encodings for unicode on different platforms, so even
+specifying the real internal unicode encoding is not portable between Python
+interpreters.  Don't do it.
 
-   Python unicode strings with XML data or HTML data that carry encoding
-   information are broken.  lxml will not parse them.  You must provide
-   parsable data in a valid encoding.
-
-
-#) Why do I get errors about missing UCS4 symbols when installing lxml?
-
-   Most likely, you use a Python installation that was configured for internal
-   use of UCS2 unicode, meaning 16-bit unicode.  The lxml egg distributions
-   are generally compiled on platforms that use UCS4, a 32-bit unicode
-   encoding, as this is used on the majority of platforms.  Sadly, both are
-   not compatible, so the eggs can only support the one they were compiled
-   with.
-
-   This means that you have to compile lxml from sources for your system.
-   Note that you do not need Pyrex for this, the lxml source distribution is
-   directly compilable on both platform types.  See the `build instructions`_
-   on how to do this.
-
-   .. _`build instructions`: build.html
+Python unicode strings with XML data or HTML data that carry encoding
+information are broken.  lxml will not parse them.  You must provide parsable
+data in a valid encoding.
 
 
-#) How can I find out which namespace prefixes are used in a document?
+What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+---------------------------------------------------------------------
 
-   You can traverse the document (``getiterator()``) and collect the prefix
-   attributes from all Elements into a set.  However, it is unlikely that you
-   really want to do that.  You do not need these prefixes, honestly.  You
-   only need the namespace URIs.  All namespace comparisons use these, so feel
-   free to make up your own prefixes when you use XPath expressions or
-   extension functions.
+The str() implementation of the XSLTResultTree class (a subclass of the
+ElementTree class) knows about the output method chosen in the stylesheet
+(xsl:output), write() doesn't.  If you call write(), the result will be a
+normal XML tree serialization in the requested encoding.  Calling this method
+may also fail for XSLT results that are not XML trees (e.g. string results).
 
-   The only place where you might consider specifying prefixes is the
-   serialization of Elements that were created through the API.  Here, you can
-   specify a prefix mapping through the ``nsmap`` argument when creating the
-   root Element.  Its children will then inherit this prefix for
-   serialization.
-
-
-#) How can I specify a default namespace for XPath expressions?
-
-   You can't.  In XPath, there is no such thing as a default namespace.  Just
-   use an arbitrary prefix and let the namespace dictionary of the XPath
-   evaluators map it to your namespace.  See also the question above.
+If you call str(), it will return the serialized result as specified by the
+XSL transform.  This correctly serializes string results to encoded Python
+strings and honours ``xsl:output`` options like ``indent``.  This almost
+certainly does what you want, so you should only use ``write()`` if you are
+sure that the XSLT result is an XML tree and you want to override the encoding
+and indentation options requested by the stylesheet.
 
 
-#) What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+Why can't I just delete parents or clear the root node in iterparse()?
+----------------------------------------------------------------------
 
-   ``findall()`` is part of the original `ElementTree API`_.  It supports a
-   `simple subset of the XPath language`_, without predicates, conditions and
-   other advanced features.  It is very handy for finding specific tags in a
-   tree.  Another important difference is namespace handling, which uses the
-   ``{namespace}tagname`` notation.  This is not supported by XPath.  The
-   findall, find and findtext methods are compatible with other ElementTree
-   implementations and allow writing portable code that runs on ElementTree,
-   cElementTree and lxml.etree.
+The ``iterparse()`` implementation is based on the libxml2 parser.  It
+requires the tree to be intact to finish parsing.  If you delete or modify
+parents of the current node, chances are you modify the structure in a way
+that breaks the parser.  Normally, this will result in a segfault.  Please
+refer to the `iterparse section`_ of the lxml API documentation to find out
+what you can do and what you can't do.
 
-   ``xpath()``, on the other hand, supports the complete power of the XPath
-   language, including predicates, XPath functions and Python extension
-   functions.  The syntax is defined by the `XPath specification`_.  If you
-   need the expressiveness and selectivity of XPath, the ``xpath()`` method,
-   the ``XPath`` class and the ``XPathEvaluator`` are the best choice_.
-
-   .. _`simple subset of the XPath language`: http://effbot.org/zone/element-xpath.htm
-   .. _`XPath specification`:                 http://www.w3.org/TR/xpath
-   .. _choice:                                performance.html#xpath
+.. _`iterparse section`: api.html#iterparse-and-iterwalk
 
 
-#) Why doesn't ``findall()`` support full XPath expressions?
+XPath and Document Traversal
+============================
 
-   It was decided that it is more important to keep compatibility with
-   ElementTree_ to simplify code migration between the libraries.  The main
-   difference compared to XPath is the ``{namespace}tagname`` notation used in
-   ``findall()``, which is not valid XPath.
+What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+--------------------------------------------------------------------
 
-   ElementTree and lxml.etree use the same implementation, which assures 100%
-   compatibility.  Note that ``findall()`` is `so fast`_ in lxml that a native
-   implementation would not bring any performance benefits.
+``findall()`` is part of the original `ElementTree API`_.  It supports a
+`simple subset of the XPath language`_, without predicates, conditions and
+other advanced features.  It is very handy for finding specific tags in a
+tree.  Another important difference is namespace handling, which uses the
+``{namespace}tagname`` notation.  This is not supported by XPath.  The
+findall, find and findtext methods are compatible with other ElementTree
+implementations and allow writing portable code that runs on ElementTree,
+cElementTree and lxml.etree.
 
-   .. _`so fast`: performance.html#tree-traversal
+``xpath()``, on the other hand, supports the complete power of the XPath
+language, including predicates, XPath functions and Python extension
+functions.  The syntax is defined by the `XPath specification`_.  If you need
+the expressiveness and selectivity of XPath, the ``xpath()`` method, the
+``XPath`` class and the ``XPathEvaluator`` are the best choice_.
 
-
-#) What is the difference between str(xslt(doc)) and xslt(doc).write() ?
-
-   The str() implementation of the XSLTResultTree class (a subclass of
-   ElementTree) knows about the output method chosen in the stylesheet
-   (xsl:output), write() doesn't.  If you call write(), the result will be a
-   normal XML tree serialization in the requested encoding.  Calling this
-   method may also fail for XSLT results that are not XML trees (e.g. string
-   results).
-
-   If you call str(), it will return the serialized result as specified by the
-   XSL transform.  This correctly serializes string results to encoded Python
-   strings and honours ``xsl:output`` options like ``indent``.  This almost
-   certainly does what you want, so you should only use ``write()`` if you are
-   sure that the XSLT result is an XML tree and you want to override the
-   encoding and indentation options requested by the stylesheet.
+.. _`simple subset of the XPath language`: http://effbot.org/zone/element-xpath.htm
+.. _`XPath specification`:                 http://www.w3.org/TR/xpath
+.. _choice:                                performance.html#xpath
 
 
-#) Why is my application so slow?
+Why doesn't ``findall()`` support full XPath expressions?
+---------------------------------------------------------
 
-   lxml.etree is a very fast library for processing XML.  There are, however,
-   `a few caveats`_ involved in the mapping of the powerful libxml2 library to
-   the simple and convenient ElementTree API.  Not all operations are as fast
-   as the simplicity of the API might suggest.  The `benchmark page`_ has a
-   comparison to other ElementTree implementations and a number of tips for
-   performance tweaking.
+It was decided that it is more important to keep compatibility with
+ElementTree_ to simplify code migration between the libraries.  The main
+difference compared to XPath is the ``{namespace}tagname`` notation used in
+``findall()``, which is not valid XPath.
 
-   .. _`a few caveats`:  performance.html#the-elementtree-api
-   .. _`benchmark page`: performance.html
+ElementTree and lxml.etree use the same implementation, which assures 100%
+compatibility.  Note that ``findall()`` is `so fast`_ in lxml that a native
+implementation would not bring any performance benefits.
 
+.. _`so fast`: performance.html#tree-traversal
+
+
+How can I find out which namespace prefixes are used in a document?
+-------------------------------------------------------------------
+
+You can traverse the document (``getiterator()``) and collect the prefix
+attributes from all Elements into a set.  However, it is unlikely that you
+really want to do that.  You do not need these prefixes, honestly.  You only
+need the namespace URIs.  All namespace comparisons use these, so feel free to
+make up your own prefixes when you use XPath expressions or extension
+functions.
+
+The only place where you might consider specifying prefixes is the
+serialization of Elements that were created through the API.  Here, you can
+specify a prefix mapping through the ``nsmap`` argument when creating the root
+Element.  Its children will then inherit this prefix for serialization.
+
+
+How can I specify a default namespace for XPath expressions?
+------------------------------------------------------------
+
+You can't.  In XPath, there is no such thing as a default namespace.  Just use
+an arbitrary prefix and let the namespace dictionary of the XPath evaluators
+map it to your namespace.  See also the question above.
