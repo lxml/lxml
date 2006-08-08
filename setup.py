@@ -202,7 +202,7 @@ RelaxNG, XML Schema, XSLT, C14N and much more.
     ],
 
     package_dir = {'': 'src'},
-    packages = ['lxml', 'lxml.elements'],
+    packages = ['lxml'],
     ext_modules = ext_modules,
     **setup_args
 )
