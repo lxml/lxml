@@ -41,6 +41,10 @@ class ObjectifyTestCase(HelperTestCase):
         objectify.setPytypeAttributeTag()
         objectify.unregister()
 
+    def test_root(self):
+        root = self.etree.Element("test")
+        self.assert_(isinstance(root, objectify.ObjectifiedElement))
+
     def test_str(self):
         root = self.etree.Element("test")
         self.assertEquals('', str(root))
@@ -65,6 +69,30 @@ class ObjectifyTestCase(HelperTestCase):
         root.addattr("c1", "test")
         self.assertEquals(2, len(root.c1))
         self.assertEquals("test", root.c1[1].text)
+
+    def test_addattr_element(self):
+        root = self.etree.XML(xml_str)
+        self.assertEquals(1, len(root.c1))
+
+        new_el = self.etree.Element("test", myattr="5")
+        root.addattr("c1", new_el)
+        self.assertEquals(2, len(root.c1))
+        self.assertEquals(None, root.c1[0].get("myattr"))
+        self.assertEquals("5",  root.c1[1].get("myattr"))
+
+    def test_addattr_list(self):
+        root = self.etree.XML(xml_str)
+        self.assertEquals(1, len(root.c1))
+
+        new_el = self.etree.Element("test")
+        self.etree.SubElement(new_el, "a", myattr="A")
+        self.etree.SubElement(new_el, "a", myattr="B")
+
+        root.addattr("c1", list(new_el.a))
+        self.assertEquals(3, len(root.c1))
+        self.assertEquals(None, root.c1[0].get("myattr"))
+        self.assertEquals("A",  root.c1[1].get("myattr"))
+        self.assertEquals("B",  root.c1[2].get("myattr"))
 
     def test_child_addattr(self):
         root = self.etree.XML(xml_str)
@@ -607,9 +635,10 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("1", root.c1.c2[1].text)
 
         new_el = etree.Element("{objectified}test")
-        etree.SubElement(new_el, "{objectified}sub").a = "TEST"
+        etree.SubElement(new_el, "{objectified}sub", myattr="ATTR").a = "TEST"
         path.setattr(root, new_el.sub)
 
+        self.assertEquals("ATTR", root.c1.c2.get("myattr"))
         self.assertEquals("TEST", root.c1.c2.a.text)
         self.assertEquals("TEST", path(root).a.text)
         self.assertEquals("1", root.c1.c2[1].text)
@@ -625,6 +654,39 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(1, len(root.c1.c99))
         self.assertEquals(new_value, root.c1.c99.text)
         self.assertEquals(new_value, path(root).text)
+
+    def test_object_path_set_create_element(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c99" )
+        self.assertRaises(AttributeError, path.find, root)
+
+        new_el = etree.Element("{objectified}test")
+        etree.SubElement(new_el, "{objectified}sub", myattr="ATTR").a = "TEST"
+        path.setattr(root, new_el.sub)
+
+        self.assertEquals(1, len(root.c1.c99))
+        self.assertEquals("ATTR", root.c1.c99.get("myattr"))
+        self.assertEquals("TEST", root.c1.c99.a.text)
+        self.assertEquals("TEST", path(root).a.text)
+
+    def test_object_path_set_create_list(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c99" )
+        self.assertRaises(AttributeError, path.find, root)
+
+        new_el = etree.Element("{objectified}test")
+        new_el.a = ["TEST1", "TEST2"]
+        new_el.a[0].set("myattr", "ATTR1")
+        new_el.a[1].set("myattr", "ATTR2")
+
+        path.setattr(root, list(new_el.a))
+
+        self.assertEquals(2, len(root.c1.c99))
+        self.assertEquals("ATTR1", root.c1.c99[0].get("myattr"))
+        self.assertEquals("TEST1", root.c1.c99[0].text)
+        self.assertEquals("ATTR2", root.c1.c99[1].get("myattr"))
+        self.assertEquals("TEST2", root.c1.c99[1].text)
+        self.assertEquals("TEST1", path(root).text)
 
     def test_object_path_addattr(self):
         root = self.etree.XML(xml_str)
@@ -667,12 +729,13 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertRaises(AttributeError, path.find, root)
 
         new_el = etree.Element("{objectified}test")
-        etree.SubElement(new_el, "{objectified}sub").a = "TEST"
+        etree.SubElement(new_el, "{objectified}sub", myattr="ATTR").a = "TEST"
 
         path.addattr(root, new_el.sub)
         self.assertEquals(1, len(root.c1.c99))
         self.assertEquals("TEST", root.c1.c99.a.text)
         self.assertEquals("TEST", path(root).a.text)
+        self.assertEquals("ATTR", root.c1.c99.get("myattr"))
 
     def test_object_path_addattr_create_list(self):
         root = self.etree.XML(xml_str)
