@@ -265,8 +265,7 @@ cdef class ObjectifiedElement(ElementBase):
         self.remove(child)
 
     def addattr(self, tag, value):
-        element = SubElement(self, _buildChildTag(self, tag))
-        _setElementValue(element, value)
+        _appendValue(self, _buildChildTag(self, tag), value)
 
     def __getitem__(self, key):
         """Return a sibling, counting from the first child of the parent.
