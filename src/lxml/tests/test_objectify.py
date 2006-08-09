@@ -591,12 +591,28 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.etree.XML(xml_str)
         path = objectify.ObjectPath( "root.c1.c2" )
         self.assertEquals(root.c1.c2.text, path.find(root).text)
+        self.assertEquals("1", root.c1.c2[1].text)
 
         new_value = "my new value"
         path.setattr(root, new_value)
 
         self.assertEquals(new_value, root.c1.c2.text)
         self.assertEquals(new_value, path(root).text)
+        self.assertEquals("1", root.c1.c2[1].text)
+
+    def test_object_path_set_element(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c2" )
+        self.assertEquals(root.c1.c2.text, path.find(root).text)
+        self.assertEquals("1", root.c1.c2[1].text)
+
+        new_el = etree.Element("{objectified}test")
+        etree.SubElement(new_el, "{objectified}sub").a = "TEST"
+        path.setattr(root, new_el.sub)
+
+        self.assertEquals("TEST", root.c1.c2.a.text)
+        self.assertEquals("TEST", path(root).a.text)
+        self.assertEquals("1", root.c1.c2[1].text)
 
     def test_object_path_set_create(self):
         root = self.etree.XML(xml_str)
@@ -619,6 +635,20 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(["0", "1", "2", "test"],
                           [el.text for el in root.c1.c2])
 
+    def test_object_path_addattr_element(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c2" )
+        self.assertEquals(3, len(root.c1.c2))
+
+        new_el = etree.Element("{objectified}test")
+        etree.SubElement(new_el, "{objectified}sub").a = "TEST"
+
+        path.addattr(root, new_el.sub)
+        self.assertEquals(4, len(root.c1.c2))
+        self.assertEquals("TEST", root.c1.c2[3].a.text)
+        self.assertEquals(["0", "1", "2"],
+                          [el.text for el in root.c1.c2[:3]])
+
     def test_object_path_addattr_create(self):
         root = self.etree.XML(xml_str)
         path = objectify.ObjectPath( "root.c1.c99" )
@@ -630,6 +660,34 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(1, len(root.c1.c99))
         self.assertEquals(new_value, root.c1.c99.text)
         self.assertEquals(new_value, path(root).text)
+
+    def test_object_path_addattr_create_element(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c99" )
+        self.assertRaises(AttributeError, path.find, root)
+
+        new_el = etree.Element("{objectified}test")
+        etree.SubElement(new_el, "{objectified}sub").a = "TEST"
+
+        path.addattr(root, new_el.sub)
+        self.assertEquals(1, len(root.c1.c99))
+        self.assertEquals("TEST", root.c1.c99.a.text)
+        self.assertEquals("TEST", path(root).a.text)
+
+    def test_object_path_addattr_create_list(self):
+        root = self.etree.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c99" )
+        self.assertRaises(AttributeError, path.find, root)
+
+        new_el = etree.Element("{objectified}test")
+        new_el.a = ["TEST1", "TEST2"]
+
+        self.assertEquals(2, len(new_el.a))
+
+        path.addattr(root, list(new_el.a))
+        self.assertEquals(2, len(root.c1.c99))
+        self.assertEquals("TEST1", root.c1.c99.text)
+        self.assertEquals("TEST2", path(root)[1].text)
 
     def test_descendant_paths(self):
         root = self.etree.XML(xml_str)

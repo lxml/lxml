@@ -41,6 +41,11 @@ True = __builtin__.True
 cdef object False
 False = __builtin__.False
 
+cdef object AttributeError
+AttributeError = __builtin__.AttributeError
+cdef object IndexError
+IndexError = __builtin__.IndexError
+
 cdef object list
 list = __builtin__.list
 cdef object set
@@ -247,30 +252,13 @@ cdef class ObjectifiedElement(ElementBase):
             ElementBase.tag.__set__(self, value)
             return
 
-        if python.PyList_Check(value) or python.PyTuple_Check(value):
-            try:
-                element = _lookupChild(self, tag)
-            except AttributeError:
-                for item in value:
-                    _appendValue(self, tag, item)
-            else:
-                element.__setslice__(0, python.PY_SSIZE_T_MAX, value)
+        tag = _buildChildTag(self, tag)
+        try:
+            element = _lookupChild(self, tag)
+        except AttributeError:
+            _appendValue(self, tag, value)
         else:
-            if isinstance(value, _Element):
-                # deep copy the new element
-                element = cetree.deepcopyNodeToDocument(
-                    self._doc, (<_Element>value)._c_node)
-                element.tag = _buildChildTag(self, tag)
-            else:
-                element = self.makeelement( _buildChildTag(self, tag) )
-                _setElementValue(element, value)
-
-            try:
-                child = _lookupChild(self, tag)
-            except AttributeError:
-                self.append(element)
-            else:
-                self.replace(child, element)
+            _replaceElement(element, value)
 
     def __delattr__(self, tag):
         child = _lookupChild(self, tag)
@@ -492,14 +480,19 @@ cdef object _appendValue(_Element parent, tag, value):
             parent._doc, (<_Element>value)._c_node)
         new_element.tag = tag
         parent.append(new_element)
+    elif python.PyList_Check(value) or python.PyTuple_Check(value):
+        for item in value:
+            _appendValue(parent, tag, item)
     else:
-        new_element = etree.SubElement(parent, tag)
+        new_element = SubElement(parent, tag)
         _setElementValue(new_element, value)
 
 cdef _setElementValue(_Element element, value):
     if value is None:
         cetree.setAttributeValue(
             element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
+    elif isinstance(value, _Element):
+        _replaceElement(element, value)
     else:
         cetree.delAttributeFromNsName(
             element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
@@ -1288,13 +1281,15 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
         elif c_index != 0:
             raise TypeError, \
                   "creating indexed path attributes is not supported"
+        elif c_path_len == 1:
+            _appendValue(cetree.elementFactory(root._doc, c_node),
+                         cetree.namespacedNameFromNsName(c_href, c_name),
+                         value)
+            return
         else:
             child = SubElement(
                 cetree.elementFactory(root._doc, c_node),
                 cetree.namespacedNameFromNsName(c_href, c_name))
-            if c_path_len == 1:
-                _setElementValue(child, value)
-                return
             c_node = child._c_node
 
     # if we get here, the entire path was already there
@@ -1302,10 +1297,8 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
         element = cetree.elementFactory(root._doc, c_node)
         _replaceElement(element, value)
     else:
-        element = SubElement(
-            cetree.elementFactory(root._doc, c_node.parent),
-            cetree.namespacedName(c_node))
-        _setElementValue(element, value)
+        _appendValue(cetree.elementFactory(root._doc, c_node.parent),
+                     cetree.namespacedName(c_node), value)
 
 cdef _buildDescendantPaths(tree.xmlNode* c_node, prefix_string):
     """Returns a list of all descendant paths.
