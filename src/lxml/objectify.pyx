@@ -983,8 +983,12 @@ cdef class ObjectifyElementClassLookup(ElementClassLookup):
 
 cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     cdef python.PyObject* dict_result
+    # if element is root node => no data class
+    if c_node.parent is NULL or not tree._isElement(c_node.parent):
+        return ObjectifiedElement
+
     # if element has children => no data class
-    if c_node.parent is NULL or cetree.findChildForwards(c_node, 0) is not NULL:
+    if cetree.findChildForwards(c_node, 0) is not NULL:
         return ObjectifiedElement
 
     # if element is defined as xsi:nil, return NoneElement class
