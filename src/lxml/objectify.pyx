@@ -1438,8 +1438,11 @@ def fromstring(xml):
 
 XML = fromstring
 
+cdef object DEFAULT_DOCUMENT
+DEFAULT_DOCUMENT = parser.makeelement("root")
+
 cdef object _makeelement
-_makeelement = parser.makeelement
+_makeelement = DEFAULT_DOCUMENT.makeelement
 
 def Element(*args, **kwargs):
     """Objectify specific version of the lxml.etree Element() factory.
