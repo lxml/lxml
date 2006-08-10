@@ -44,9 +44,9 @@ Features added
 
 * Customizable Element class lookup:
 
-  * Support for externally provided lookup functions
+  * different pre-implemented lookup mechanisms
 
-  * lxml.elements.classlookup module implements different lookup mechanisms
+  * support for externally provided lookup functions
 
 * Support for processing instructions (ET-like, not compatible)
 
