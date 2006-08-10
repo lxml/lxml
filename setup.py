@@ -163,7 +163,7 @@ else:
                 break
         if changelog_lines:
             changelog_lines.append(line)
-        elif version in line:
+        elif line.startswith(version):
             changelog_lines.append(line)
 
     if changelog_lines:
