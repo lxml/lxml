@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* 1.1beta did not compile under Python 2.3
+
 * ignore unknown 'pyval' attribute values in objectify
 
 * objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists

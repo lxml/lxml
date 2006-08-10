@@ -184,7 +184,7 @@ cdef class ObjectifiedElement(ElementBase):
                 if c_ns is NULL and tree._getNs(child._c_node) is not NULL:
                     continue
                 name = child._c_node.name
-                if not python.PyDict_Contains(children, name):
+                if python.PyDict_GetItem(children, name) is NULL:
                     python.PyDict_SetItem(children, name, child)
             return children
 
