@@ -115,7 +115,9 @@ cdef __unpackDottedVersion(version):
         try:
             item = int(item)
         except ValueError:
-            if item == 'alpha':
+            if item == 'dev':
+                item = -3
+            elif item == 'alpha':
                 item = -2
             elif item == 'beta':
                 item = -1

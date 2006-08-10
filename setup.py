@@ -75,7 +75,10 @@ else:
                          svn_entries).group(1)
     svn_version = version + '-' + revision
 
-if 'alpha' in version:
+if 'dev' in version:
+    svn_version = fix_alphabeta(svn_version, 'dev')
+    dev_status = 'Development Status :: 3 - Alpha'
+elif 'alpha' in version:
     svn_version = fix_alphabeta(svn_version, 'alpha')
     dev_status = 'Development Status :: 3 - Alpha'
 elif 'beta' in version:
