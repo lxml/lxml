@@ -98,6 +98,8 @@ _XML_SCHEMA_INSTANCE_NS = _cstr(XML_SCHEMA_INSTANCE_NS)
 
 cdef object XML_SCHEMA_INSTANCE_NIL_ATTR
 XML_SCHEMA_INSTANCE_NIL_ATTR = "{%s}nil" % XML_SCHEMA_INSTANCE_NS
+cdef object XML_SCHEMA_INSTANCE_TYPE_ATTR
+XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
 
 
 ################################################################################
@@ -125,28 +127,6 @@ def setDefaultParser(new_parser = None):
         parser = new_parser
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
-
-cdef object _fromstring
-_fromstring = etree.fromstring
-
-def fromstring(xml):
-    """Objectify specific version of the lxml.etree fromstring() function.
-
-    NOTE: requires parser based element class lookup activated in lxml.etree!
-    """
-    return _fromstring(xml, parser)
-
-XML = fromstring
-
-cdef object _makeelement
-_makeelement = parser.makeelement
-
-def Element(*args, **kwargs):
-    """Objectify specific version of the lxml.etree Element() factory.
-
-    NOTE: requires parser based element class lookup activated in lxml.etree!
-    """
-    return _makeelement(*args, **kwargs)
 
 
 ################################################################################
@@ -506,6 +486,9 @@ cdef _setElementValue(_Element element, value):
 # Data type support in subclasses
 
 cdef class ObjectifiedDataElement(ObjectifiedElement):
+    """This is the base class for all data type Elements.  Subclasses should
+    override the 'pyval' property and possibly the __str__ method.
+    """
     property pyval:
         def __get__(self):
             return textOf(self._c_node)
@@ -884,23 +867,6 @@ cdef _registerPyTypes():
 
 _registerPyTypes()
 
-cdef object _guessElementClass(tree.xmlNode* c_node):
-    value = textOf(c_node)
-    if value is None:
-        # default to ObjectifiedElement class
-        return ObjectifiedElement
-    if value == '':
-        return StringElement
-    errors = (ValueError, TypeError)
-    for type_check, pytype in _TYPE_CHECKS:
-        try:
-            type_check(value)
-            return (<PyType>pytype)._type
-        except errors:
-            pass
-
-    return StringElement
-
 def getRegisteredTypes():
     """Returns a list of the currently registered PyType objects.
 
@@ -927,6 +893,23 @@ def getRegisteredTypes():
             known.add(name)
             types.append(pytype)
     return types
+
+cdef object _guessElementClass(tree.xmlNode* c_node):
+    value = textOf(c_node)
+    if value is None:
+        # default to ObjectifiedElement class
+        return ObjectifiedElement
+    if value == '':
+        return StringElement
+    errors = (ValueError, TypeError)
+    for type_check, pytype in _TYPE_CHECKS:
+        try:
+            type_check(value)
+            return (<PyType>pytype)._type
+        except errors:
+            pass
+
+    return StringElement
 
 ################################################################################
 # Recursive element dumping
@@ -1439,6 +1422,71 @@ def annotate(element_or_tree, ignore_old=True):
         tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
                           _cstr(pytype.name))
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+
+################################################################################
+# Module level factory functions
+
+cdef object _fromstring
+_fromstring = etree.fromstring
+
+def fromstring(xml):
+    """Objectify specific version of the lxml.etree fromstring() function.
+
+    NOTE: requires parser based element class lookup activated in lxml.etree!
+    """
+    return _fromstring(xml, parser)
+
+XML = fromstring
+
+cdef object _makeelement
+_makeelement = parser.makeelement
+
+def Element(*args, **kwargs):
+    """Objectify specific version of the lxml.etree Element() factory.
+
+    NOTE: requires parser based element class lookup activated in lxml.etree!
+    """
+    return _makeelement(*args, **kwargs)
+
+def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
+    """Create a new element with a Python value and XML attributes taken from
+    keyword arguments or a dictionary passed as second argument.
+
+    Automatically adds a 'pyval' attribute for the Python type of the value,
+    if the type can be identified.  If '_pyval' or '_xsi' are among the
+    keyword arguments, they will be used instead.
+    """
+    cdef _Element element
+    if _attrib is not None:
+        if python.PyDict_GetSize(_attributes):
+            _attrib.update(_attributes)
+        _attributes = _attrib
+    if _xsi is not None:
+        python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
+        if _pytype is None:
+            _pytype = _SCHEMA_TYPE_DICT[_xsi].name
+    if _pytype is None:
+        errors = (ValueError, TypeError)
+        for type_check, pytype in _TYPE_CHECKS:
+            try:
+                type_check(_value)
+                _pytype = (<PyType>pytype).name
+                break
+            except errors:
+                pass
+        if _pytype is None:
+            if _value is None:
+                _pytype = "none"
+            elif python._isString(_value):
+                _pytype = "str"
+    if _pytype is not None:
+        python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
+
+    element = _makeelement("value", _attributes)
+    if not python._isString(_value):
+        _value = str(_value)
+    cetree.setNodeText(element._c_node, _value)
+    return element
 
 
 ################################################################################

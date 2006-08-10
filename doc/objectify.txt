@@ -588,6 +588,10 @@ to change values, just assign them directly to the attribute::
     >>> print root.a
     25
 
+
+How data types are matched
+--------------------------
+
 Objectify determines data types by trial and error, unless it finds an
 attribute named ``lxml.objectify.PYTYPE_ATTRIBUTE``, which must contain any of
 the following string values: int, long, float, str, unicode, none::
@@ -650,6 +654,31 @@ Python types::
           * xsi:type = 'long'
         s = '5' [StringElement]
           * xsi:type = 'string'
+
+For convenience, there is a special factory ``DataElement()`` that supports
+creating an Element with a Python value in one step.  You can pass the
+required Python type name or the XSI type name::
+
+    >>> root = objectify.Element("root")
+    >>> root.x = objectify.DataElement(5, _pytype="long")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        x = 5L [LongElement]
+          * py:pytype = 'long'
+
+    >>> root.x = objectify.DataElement(5, _pytype="str", myattr="someval")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        x = '5' [StringElement]
+          * py:pytype = 'str'
+          * myattr = 'someval'
+
+    >>> root.x = objectify.DataElement(5, _xsi="integer")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        x = 5 [IntElement]
+          * py:pytype = 'int'
+          * xsi:type = 'integer'
 
 
 Defining additional data classes
