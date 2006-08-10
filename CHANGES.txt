@@ -11,8 +11,6 @@ Features added
 Bugs fixed
 ----------
 
-*
-
 * objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists
 
 * objectify.ObjectPath.setattr() failed to accept Elements and Lists
