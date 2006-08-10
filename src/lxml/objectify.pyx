@@ -128,6 +128,12 @@ def setDefaultParser(new_parser = None):
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
 
+cdef object DEFAULT_DOCUMENT
+DEFAULT_DOCUMENT = parser.makeelement("root")
+
+cdef object _makeelement
+_makeelement = DEFAULT_DOCUMENT.makeelement
+
 
 ################################################################################
 # Element class for the main API
@@ -1437,12 +1443,6 @@ def fromstring(xml):
     return _fromstring(xml, parser)
 
 XML = fromstring
-
-cdef object DEFAULT_DOCUMENT
-DEFAULT_DOCUMENT = parser.makeelement("root")
-
-cdef object _makeelement
-_makeelement = DEFAULT_DOCUMENT.makeelement
 
 def Element(*args, **kwargs):
     """Objectify specific version of the lxml.etree Element() factory.
