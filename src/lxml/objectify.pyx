@@ -991,8 +991,7 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, value)
         if dict_result is not NULL:
             return (<PyType>dict_result)._type
-        raise ValueError, "Invalid pytype attribute in element '%s'" % \
-              cetree.namespacedName(c_node)
+        # unknown 'pyval' => try to figure it out ourself, just go on
 
     # check for XML Schema type hint
     value = cetree.attributeValueFromNsName(

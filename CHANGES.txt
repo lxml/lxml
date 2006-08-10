@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* ignore unknown 'pyval' attribute values in objectify
+
 * objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists
 
 * objectify.ObjectPath.setattr() failed to accept Elements and Lists
