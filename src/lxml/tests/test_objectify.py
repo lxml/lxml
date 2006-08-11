@@ -240,12 +240,26 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(root.none[1], None)
         self.assertFalse(root.none[1])
 
+    def test_data_element_none(self):
+        value = objectify.DataElement(None)
+        self.assert_(isinstance(value, objectify.NoneElement))
+        self.assertEquals(value, None)
+
     def test_type_bool(self):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
         root.none = 'true'
         self.assert_(isinstance(root.none, objectify.BoolElement))
+
+    def test_data_element_bool(self):
+        value = objectify.DataElement(True)
+        self.assert_(isinstance(value, objectify.BoolElement))
+        self.assertEquals(value, True)
+
+        value = objectify.DataElement(False)
+        self.assert_(isinstance(value, objectify.BoolElement))
+        self.assertEquals(value, False)
 
     def test_type_str(self):
         Element = self.Element
@@ -254,6 +268,11 @@ class ObjectifyTestCase(HelperTestCase):
         root.none = "test"
         self.assert_(isinstance(root.none, objectify.StringElement))
 
+    def test_data_element_str(self):
+        value = objectify.DataElement("test")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, "test")
+
     def test_type_int(self):
         Element = self.Element
         SubElement = self.etree.SubElement
@@ -261,12 +280,22 @@ class ObjectifyTestCase(HelperTestCase):
         root.none = 5
         self.assert_(isinstance(root.none, objectify.IntElement))
 
+    def test_data_element_int(self):
+        value = objectify.DataElement(5)
+        self.assert_(isinstance(value, objectify.IntElement))
+        self.assertEquals(value, 5)
+
     def test_type_float(self):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
         root.none = 5.5
         self.assert_(isinstance(root.none, objectify.FloatElement))
+
+    def test_data_element_float(self):
+        value = objectify.DataElement(5.5)
+        self.assert_(isinstance(value, objectify.FloatElement))
+        self.assertEquals(value, 5.5)
 
     def test_schema_types(self):
         XML = self.XML

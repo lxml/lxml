@@ -968,10 +968,6 @@ cdef class ObjectifyElementClassLookup(ElementClassLookup):
 
 cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     cdef python.PyObject* dict_result
-    # if element is root node => no data class
-    if c_node.parent is NULL or not tree._isElement(c_node.parent):
-        return ObjectifiedElement
-
     # if element has children => no data class
     if cetree.findChildForwards(c_node, 0) is not NULL:
         return ObjectifiedElement
@@ -1003,6 +999,10 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     el_class = _guessElementClass(c_node)
     if el_class is not None:
         return el_class
+
+    # if element is root node => no data class
+    if c_node.parent is NULL or not tree._isElement(c_node.parent):
+        return ObjectifiedElement
 
     # default to string element class if type attribute is not exploitable
     return _StringElement
@@ -1464,11 +1464,22 @@ def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
         python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
         if _pytype is None:
             _pytype = _SCHEMA_TYPE_DICT[_xsi].name
+
+    if python._isString(_value):
+        strval = _value
+    elif python.PyBool_Check(_value):
+        if _value:
+            strval = "true"
+        else:
+            strval = "false"
+    else:
+        strval = str(_value)
+
     if _pytype is None:
         errors = (ValueError, TypeError)
         for type_check, pytype in _TYPE_CHECKS:
             try:
-                type_check(_value)
+                type_check(strval)
                 _pytype = (<PyType>pytype).name
                 break
             except errors:
@@ -1482,7 +1493,5 @@ def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
         python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
     element = _makeelement("value", _attributes)
-    if not python._isString(_value):
-        _value = str(_value)
-    cetree.setNodeText(element._c_node, _value)
+    cetree.setNodeText(element._c_node, strval)
     return element
