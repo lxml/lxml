@@ -43,15 +43,6 @@ To make use of ``objectify``, you need both the ``lxml.etree`` module and
     >>> from lxml import etree
     >>> from lxml import objectify
 
-The normal way to use ``objectify`` is to register it with a dedicated parser.
-This requires setting up ``lxml.etree`` to use `parser specific element
-classes`_ first::
-
-    >>> lookup = etree.ParserBasedElementClassLookup()
-    >>> etree.setElementClassLookup(lookup)
-
-.. _`parser specific element classes`: element_classes.html#parser-based-lookup
-
 The next step is to create a parser that builds objectify documents.  The
 objectify API is meant for data-centric XML (as opposed to document XML with
 mixed content).  Therefore, we configure the parser to let it remove
@@ -754,10 +745,9 @@ To unregister a type, call its ``unregister()`` method::
       ...
     AttributeError: no such child: callSanta
 
-Please read the section on `Resetting the API`_ below to learn about possible
-problems.
-
-.. _`Resetting the API`: #resetting-the-api
+Be aware, though, that this does not immediately apply to elements to which
+there already is a Python reference.  Their Python class will only be changed
+after all references are gone and the Python object is garbage collected.
 
 
 Recursive string representation of elements
@@ -811,21 +801,3 @@ behaviour of the rest of the API.
   they rely on the original iteration scheme.  This has the disadvantage that
   they may not be 100% backwards compatible, and the additional advantage that
   they now support any XPath expression.
-
-
-Resetting the API
------------------
-
-As the objectify setup is local to a parser, it does not interfere with the
-rest of lxml.  However, if you stop using the parser you registered
-``objectify`` for, and you can make sure no other module is still using the
-parser delegation, you can set the global class lookup mechanism back to the
-default one, to disable the per-parser lookup.  This is easily achieved by
-calling the setup function without arguments::
-
-    >>> etree.setElementClassLookup()
-
-Be aware, though, that this does not immediately apply to elements to which
-there already is a Python reference.  Their Python class will only be changed
-after all references are gone and the Python object is garbage collected.  The
-same applies to registered data classes for elements.
