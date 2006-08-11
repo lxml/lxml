@@ -128,11 +128,8 @@ def setDefaultParser(new_parser = None):
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
 
-cdef object DEFAULT_DOCUMENT
-DEFAULT_DOCUMENT = parser.makeelement("root")
-
 cdef object _makeelement
-_makeelement = DEFAULT_DOCUMENT.makeelement
+_makeelement = parser.makeelement
 
 
 ################################################################################
