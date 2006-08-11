@@ -61,7 +61,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         if fallback is not None:
             self.setFallback(fallback)
         else:
-            self._fallback_function = DEFAULT_ELEMENT_CLASS_LOOKUP
+            self._fallback_function = _lookupDefaultElementClass
 
     def setFallback(self, ElementClassLookup lookup not None):
         """Sets the fallback scheme for this lookup method.
@@ -71,32 +71,6 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
 
     cdef object _callFallback(self, doc, xmlNode* c_node):
         return self._fallback_function(self.fallback, doc, c_node)
-
-# default lookup: Namespace classes
-cdef _element_class_lookup_function DEFAULT_ELEMENT_CLASS_LOOKUP
-DEFAULT_ELEMENT_CLASS_LOOKUP = _find_nselement_class
-
-cdef _element_class_lookup_function LOOKUP_ELEMENT_CLASS
-LOOKUP_ELEMENT_CLASS = DEFAULT_ELEMENT_CLASS_LOOKUP
-
-cdef object ELEMENT_CLASS_LOOKUP_STATE
-ELEMENT_CLASS_LOOKUP_STATE = None
-
-cdef void _setElementClassLookupFunction(
-    _element_class_lookup_function function, object state):
-    global LOOKUP_ELEMENT_CLASS, ELEMENT_CLASS_LOOKUP_STATE
-    if function is NULL:
-        LOOKUP_ELEMENT_CLASS = DEFAULT_ELEMENT_CLASS_LOOKUP
-        ELEMENT_CLASS_LOOKUP_STATE = None
-    else:
-        LOOKUP_ELEMENT_CLASS = function
-        ELEMENT_CLASS_LOOKUP_STATE = state
-
-def setElementClassLookup(ElementClassLookup lookup = None):
-    if lookup is None or lookup._lookup_function is NULL:
-        _setElementClassLookupFunction(NULL, None)
-    else:
-        _setElementClassLookupFunction(lookup._lookup_function, lookup)
 
 
 ################################################################################
@@ -213,13 +187,11 @@ cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
 
 cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
     cdef FallbackElementClassLookup lookup
-    cdef ElementClassLookup parser_lookup
-
     lookup = <FallbackElementClassLookup>state
     if c_node.type == tree.XML_ELEMENT_NODE:
-        parser_lookup = doc._parser._class_lookup
-        if parser_lookup is not None:
-            return parser_lookup._lookup_function(parser_lookup, doc, c_node)
+        if doc._parser._class_lookup is not None:
+            return doc._parser._class_lookup._lookup_function(
+                doc._parser._class_lookup, doc, c_node)
     return lookup._callFallback(doc, c_node)
 
 
@@ -271,3 +243,32 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     if cls is not None:
         return cls
     return lookup._callFallback(doc, c_node)
+
+
+################################################################################
+# Global setup
+
+cdef _element_class_lookup_function LOOKUP_ELEMENT_CLASS
+cdef object ELEMENT_CLASS_LOOKUP_STATE
+
+cdef void _setElementClassLookupFunction(
+    _element_class_lookup_function function, object state):
+    global LOOKUP_ELEMENT_CLASS, ELEMENT_CLASS_LOOKUP_STATE
+    if function is NULL:
+        state    = DEFAULT_ELEMENT_CLASS_LOOKUP
+        function = DEFAULT_ELEMENT_CLASS_LOOKUP._lookup_function
+
+    ELEMENT_CLASS_LOOKUP_STATE = state
+    LOOKUP_ELEMENT_CLASS = function
+
+def setElementClassLookup(ElementClassLookup lookup = None):
+    if lookup is None or lookup._lookup_function is NULL:
+        _setElementClassLookupFunction(NULL, None)
+    else:
+        _setElementClassLookupFunction(lookup._lookup_function, lookup)
+
+# default setup: parser delegation
+cdef ParserBasedElementClassLookup DEFAULT_ELEMENT_CLASS_LOOKUP
+DEFAULT_ELEMENT_CLASS_LOOKUP = ParserBasedElementClassLookup()
+
+setElementClassLookup(DEFAULT_ELEMENT_CLASS_LOOKUP)

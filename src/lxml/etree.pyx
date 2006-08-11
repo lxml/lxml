@@ -1653,7 +1653,9 @@ def HTML(text, _BaseParser parser=None):
     """
     cdef _Document doc
     if parser is None:
-        parser = __DEFAULT_HTML_PARSER
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
+        if not isinstance(parser, HTMLParser):
+            parser = __DEFAULT_HTML_PARSER
     doc = _parseMemoryDocument(text, None, parser)
     return doc.getroot()
 
@@ -1663,7 +1665,9 @@ def XML(text, _BaseParser parser=None):
     """
     cdef _Document doc
     if parser is None:
-        parser = __DEFAULT_XML_PARSER
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
+        if not isinstance(parser, XMLParser):
+            parser = __DEFAULT_XML_PARSER
     doc = _parseMemoryDocument(text, None, parser)
     return doc.getroot()
 

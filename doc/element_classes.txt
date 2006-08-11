@@ -26,12 +26,11 @@ lxml.etree will do that for you through its normal ElementTree API.
    1  Element initialization
    2  Setting up a class lookup scheme
      2.1  Default class lookup
-     2.2  Parser based lookup
-     2.3  Namespace class lookup
-     2.4  Attribute based lookup
-     2.5  Custom element class lookup
+     2.2  Namespace class lookup
+     2.3  Attribute based lookup
+     2.4  Custom element class lookup
    3  Implementing namespaces
-   4  Resetting the class lookup scheme
+
 
 Element initialization
 ----------------------
@@ -76,92 +75,52 @@ Setting up a class lookup scheme
 --------------------------------
 
 The first thing to do when deploying custom element classes is to register a
-class lookup scheme.  lxml.etree provides quite a number of different schemes,
-that also support class lookup local to a parser or namespace.  Most lookups
-support fallback chaining, which allows the next lookup mechanism to take over
-when the previous one fails to find a class.
+class lookup scheme on a parser.  lxml.etree provides quite a number of
+different schemes, that also support class lookup based on namespaces or
+attribute values.  Most lookups support fallback chaining, which allows the
+next lookup mechanism to take over when the previous one fails to find a
+class.
 
-For small projects, setting a lookup scheme globally can be satisfactory.  To
-avoid interfering with other modules, however, it is usually a better idea to
-globally register the parser specific scheme, instantiate a dedicated parser
-for your module and then register the required lookup scheme only for the
-parser.  Registering the per-parser lookup can be done repeatedly by many
-modules without side effects and the separate parsers will prevent any
-interference.
-
-
-Default class lookup
-....................
-
-This is the default lookup mechanism.  It always returns the default element
-class.  Consequently, no further fallbacks are supported, but this scheme is a
-good fallback for other custom lookup mechanisms.
-
-Usage::
-
-  >>> lookup = etree.ElementDefaultClassLookup()
-  >>> etree.setElementClassLookup(lookup)
-
-Or shorter, since it is the default::
-
-  >>> etree.setElementClassLookup()
-
-To change the default element implementation, you can pass your new class to
-the constructor.  While it accepts classes for ``element``, ``comment`` and
-``pi`` nodes, most use cases will only override the element class::
-
-  >>> el = etree.Element("myelement")
-  >>> print isinstance(el, HonkElement)
-  False
-
-  >>> lookup = etree.ElementDefaultClassLookup(element=HonkElement)
-  >>> etree.setElementClassLookup(lookup)
-
-  >>> el = etree.Element("myelement")
-  >>> print isinstance(el, HonkElement)
-  True
-  >>> el.honking
-  False
-  >>> el = etree.Element("myelement", honking='true')
-  >>> print etree.tostring(el)
-  <myelement honking="true"/>
-  >>> el.honking
-  True
-
-
-Parser based lookup
-...................
-
-This is the preferred global lookup scheme for lxml.etree in the case where a
-more specific element lookup scheme is required.  It delegates the class
-request to the original parser of the current document.  If no specific lookup
-scheme was registered for that parser, the global lookup simply calls its own
-fallback mechanism.
-
-You can enable the parser delegation as follows::
-
-  >>> lookup = etree.ParserBasedElementClassLookup()
-  >>> etree.setElementClassLookup(lookup)
-
-To specify a different fallback scheme than the default class lookup, you can
-pass it in the constructor::
-
-  >>> fallback = etree.ElementDefaultClassLookup()
-  >>> lookup = etree.ParserBasedElementClassLookup(fallback)
-  >>> etree.setElementClassLookup(lookup)
-
-With such a global setup, you can now set a separate lookup mechanism for each
-parser you create, without interfering with other parsers::
+For example, setting a different default element class for a parser works as
+follows::
 
   >>> parser_lookup = etree.ElementDefaultClassLookup(element=HonkElement)
   >>> parser = etree.XMLParser()
   >>> parser.setElementClassLookup(parser_lookup)
 
+There is one drawback of the parser based scheme: the ``Element()`` factory
+creates a new document that deploys the default parser::
+
+  >>> el = etree.Element("root")
+  >>> print isinstance(el, HonkElement)
+  False
+
+You should therefore avoid using this function in code that uses custom
+classes.  The ``makeelement()`` method of parsers provides a simple
+replacement::
+
+  >>> el = parser.makeelement("root")
+  >>> print isinstance(el, HonkElement)
+  True
+
+If you use a parser at the module level, you can easily redirect a module
+level ``Element()`` factory to the parser method by adding code like this::
+
+  >>> MODULE_PARSER = etree.XMLParser()
+  >>> Element = MODULE_PARSER.makeelement
+
+While the ``XML()`` and ``HTML()`` factories also depend on the default
+parser, you can pass them a different parser as second argument::
+
   >>> element = etree.XML("<test/>")
   >>> print isinstance(element, HonkElement)
   False
 
-Whenever you create a document with this parser, it will inherit the lookup
+  >>> element = etree.XML("<test/>", parser)
+  >>> print isinstance(element, HonkElement)
+  True
+
+Whenever you create a document with a parser, it will inherit the lookup
 scheme and all subsequent element instantiations for this document will use
 it::
 
@@ -172,6 +131,51 @@ it::
   >>> print isinstance(el, HonkElement)
   True
 
+For small projects, you may also consider setting a lookup scheme on the
+default parser.  To avoid interfering with other modules, however, it is
+usually a better idea to use a dedicated parser for each module (or a parser
+pool when using threads) and then register the required lookup scheme only for
+this parser.
+
+
+Default class lookup
+....................
+
+This is the most simple lookup mechanism.  It always returns the default
+element class.  Consequently, no further fallbacks are supported, but this
+scheme is a good fallback for other custom lookup mechanisms.
+
+Usage::
+
+  >>> lookup = etree.ElementDefaultClassLookup()
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(lookup)
+
+Note that the default for new parsers is to use the global fallback, which is
+also the default lookup (if not configured otherwise).
+
+To change the default element implementation, you can pass your new class to
+the constructor.  While it accepts classes for ``element``, ``comment`` and
+``pi`` nodes, most use cases will only override the element class::
+
+  >>> el = parser.makeelement("myelement")
+  >>> print isinstance(el, HonkElement)
+  False
+
+  >>> lookup = etree.ElementDefaultClassLookup(element=HonkElement)
+  >>> parser.setElementClassLookup(lookup)
+
+  >>> el = parser.makeelement("myelement")
+  >>> print isinstance(el, HonkElement)
+  True
+  >>> el.honking
+  False
+  >>> el = parser.makeelement("myelement", honking='true')
+  >>> print etree.tostring(el)
+  <myelement honking="true"/>
+  >>> el.honking
+  True
+
 
 Namespace class lookup
 ......................
@@ -180,7 +184,8 @@ This is an advanced lookup mechanism that supports namespace/tag-name specific
 element classes.  You can select it by calling::
 
   >>> lookup = etree.ElementNamespaceClassLookup()
-  >>> etree.setElementClassLookup(lookup)
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(lookup)
 
 See the separate section on `implementing namespaces`_ below to learn how to
 make use of it.
@@ -194,7 +199,7 @@ desired fallback lookup scheme to the constructor::
 
   >>> fallback = etree.ElementDefaultClassLookup(element=HonkElement)
   >>> lookup = etree.ElementNamespaceClassLookup(fallback)
-  >>> etree.setElementClassLookup(lookup)
+  >>> parser.setElementClassLookup(lookup)
 
 
 Attribute based lookup
@@ -206,7 +211,8 @@ value.  It is set up as follows::
 
   >>> id_class_mapping = {} # maps attribute values to element classes
   >>> lookup = etree.AttributeBasedElementClassLookup('id', id_class_mapping)
-  >>> etree.setElementClassLookup(lookup)
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(lookup)
 
 Instead of a global setup of this scheme, you should consider using a
 per-parser setup.
@@ -218,7 +224,8 @@ to use the namespace lookup, for example, you can use this code::
   >>> fallback = etree.ElementNamespaceClassLookup()
   >>> lookup = etree.AttributeBasedElementClassLookup(
   ...                       'id', id_class_mapping, fallback)
-  >>> etree.setElementClassLookup(lookup)
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(lookup)
 
 
 Custom element class lookup
@@ -231,7 +238,8 @@ to implement a custom lookup scheme in a subclass::
   ...     def lookup(self, node_type, document, namespace, name):
   ...         return MyElementClass # defined elsewhere
 
-  >>> etree.setElementClassLookup( MyLookup() )
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(MyLookup())
 
 The ``lookup()`` method must either return None (which triggers the fallback
 mechanism) or a subclass of ``lxml.etree.ElementBase``.  It can take any
@@ -251,7 +259,8 @@ build a new element namespace (or retrieve an existing one) by calling the
 Namespace class::
 
   >>> lookup = etree.ElementNamespaceClassLookup()
-  >>> etree.setElementClassLookup(lookup)
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(lookup)
 
   >>> namespace = etree.Namespace('http://hui.de/honk')
 
@@ -264,14 +273,14 @@ After this, you create and use your XML elements through the normal API of
 lxml::
 
   >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"/>'
-  >>> honk_element = etree.XML(xml)
+  >>> honk_element = etree.XML(xml, parser)
   >>> print honk_element.honking
   True
 
 The same works when creating elements by hand::
 
-  >>> honk_element = etree.Element('{http://hui.de/honk}honk',
-  ...                              honking='true')
+  >>> honk_element = parser.makeelement('{http://hui.de/honk}honk',
+  ...                                   honking='true')
   >>> print honk_element.honking
   True
 
@@ -288,7 +297,7 @@ the 'honk' element.  If an XML tree contains different elements in the same
 namespace, they do not pick up the same implementation::
 
   >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'
-  >>> honk_element = etree.XML(xml)
+  >>> honk_element = etree.XML(xml, parser)
   >>> print honk_element.honking
   True
   >>> print honk_element[0].honking
@@ -323,7 +332,7 @@ Now you can rely on lxml to always return objects of type HonkNSElement or its
 subclasses for elements of this namespace::
 
   >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'
-  >>> honk_element = etree.XML(xml)
+  >>> honk_element = etree.XML(xml, parser)
 
   >>> print type(honk_element), type(honk_element[0])
   <class 'HonkElement'> <class 'HonkNSElement'>
@@ -338,19 +347,3 @@ subclasses for elements of this namespace::
   Traceback (most recent call last):
   ...
   AttributeError: 'HonkNSElement' object has no attribute 'honking'
-
-
-Resetting the class lookup scheme
----------------------------------
-
-To reset lxml.etree to the original class lookup, simply pass ``None`` or
-nothing to the register function::
-
-  >>> etree.setElementClassLookup()
-  >>> el = etree.Element("myelement")
-  >>> print isinstance(el, HonkElement)
-  False
-
-Be aware, though, that this does not immediately apply to elements to which
-there already is a Python reference.  Their Python class will only be changed
-after all references are gone and the Python object is garbage collected.

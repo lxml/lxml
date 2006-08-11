@@ -8,6 +8,10 @@ current
 Features added
 --------------
 
+* Parsers are now the preferred (and default) place where element class lookup
+  schemes should be registered.  Namespace lookup is no longer supported by
+  default.
+
 Bugs fixed
 ----------
 

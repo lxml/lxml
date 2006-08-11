@@ -388,7 +388,11 @@ cdef class _BaseParser:
     def __dummy(self):
         pass
 
-    def setElementClassLookup(self, ElementClassLookup lookup not None):
+    def setElementClassLookup(self, ElementClassLookup lookup = None):
+        """Set a lookup scheme for element classes generated from this parser.
+
+        Reset it by passing None or nothing.
+        """
         self._class_lookup = lookup
 
     cdef _BaseParser _copy(self):
