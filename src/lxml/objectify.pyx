@@ -1489,25 +1489,3 @@ def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
         _value = str(_value)
     cetree.setNodeText(element._c_node, _value)
     return element
-
-
-################################################################################
-# Module setup
-
-def register(prefer_nsclasses=True):
-    """Globally register the objectify element class lookup mechanism.
-
-    By default, namespace specific element classes override this lookup.
-    Passing False for the ``prefer_nsclasses`` keyword argument will prevent
-    the namespace lookup.
-
-    Note that this is not the preferred way of using the objectify
-    module.  Consider using a parser specific setup instead.
-    """
-    lookup = ObjectifyElementClassLookup()
-    if prefer_nsclasses:
-        lookup = etree.ElementNamespaceClassLookup(lookup)
-    etree.setElementClassLookup(lookup)
-
-def unregister():
-    etree.setElementClassLookup()
