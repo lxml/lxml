@@ -900,6 +900,9 @@ def getRegisteredTypes():
 cdef object _guessElementClass(tree.xmlNode* c_node):
     value = textOf(c_node)
     if value is None:
+        # if element is not a root node => default to string node
+        if c_node.parent is not NULL and tree._isElement(c_node.parent):
+            return StringElement
         # default to ObjectifiedElement class
         return ObjectifiedElement
     if value == '':
