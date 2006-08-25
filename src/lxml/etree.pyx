@@ -797,9 +797,9 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         c_new_node = new_element._c_node
         c_new_next = c_new_node.next
         tree.xmlReplaceNode(c_old_node, c_new_node)
-        moveNodeToDocument(new_element, self._doc)
         _moveTail(c_new_next, c_new_node)
         _moveTail(c_old_next, c_old_node)
+        moveNodeToDocument(new_element, self._doc)
         
     # PROPERTIES
     property tag:
