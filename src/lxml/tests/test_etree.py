@@ -984,10 +984,18 @@ class ETreeOnlyTestCase(HelperTestCase):
             etree.SubElement(e, 'a%s' % i)
 
         new_element = etree.Element("test")
+        new_element.text = "TESTTEXT"
+        new_element.tail = "TESTTAIL"
         child1 = e[1]
         e.replace(e[0], new_element)
         self.assertEquals(
             new_element, e[0])
+        self.assertEquals(
+            "TESTTEXT",
+            e[0].text)
+        self.assertEquals(
+            "TESTTAIL",
+            e[0].tail)
         self.assertEquals(
             child1, e[1])
 
