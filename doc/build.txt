@@ -75,16 +75,16 @@ or, in Unix-like environments::
 
   make
 
-If you get errors about missing header files (e.g.,
-``libxml/xmlversion.h``) then you need to add the location of that
-file to the include path like::
+If you get errors about missing header files (e.g., ``libxml/xmlversion.h``)
+then you need to add the location of that file to the include path like::
 
   python setup.py build_ext -i -I /usr/include/libxml2
 
 where the file is in ``/usr/include/libxml2/libxml/xmlversion.h``
 
-If you then place lxml's ``src`` directory on your PYTHONPATH somehow, you can
-import ``lxml.etree`` and play with it.
+To use lxml.etree in-place, you can place lxml's ``src`` directory on your
+Python module search path (PYTHONPATH) and then import ``lxml.etree`` to play
+with it.
 
 To recompile after changes, note that you may have to run ``make clean`` or
 delete the file ``src/lxml/etree.c``.  Distutils do not automatically pick up
