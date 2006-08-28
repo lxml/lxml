@@ -461,7 +461,7 @@ cdef object _appendValue(_Element parent, tag, value):
         new_element = cetree.deepcopyNodeToDocument(
             parent._doc, (<_Element>value)._c_node)
         new_element.tag = tag
-        parent.append(new_element)
+        cetree.appendChild(parent, new_element)
     elif python.PyList_Check(value) or python.PyTuple_Check(value):
         for item in value:
             _appendValue(parent, tag, item)

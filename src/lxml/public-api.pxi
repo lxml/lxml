@@ -101,6 +101,9 @@ cdef public xmlNode* nextElement(xmlNode* c_node):
 cdef public xmlNode* previousElement(xmlNode* c_node):
     return _previousElement(c_node)
 
+cdef public void appendChild(_Element parent, _Element child):
+    _appendChild(parent, child)
+
 cdef public object pyunicode(char* s):
     if s is NULL:
         raise TypeError

@@ -185,6 +185,9 @@ cdef extern from "etree.h":
     # set the tail text value of an element
     cdef int setTailText(tree.xmlNode* c_node, text) except -1
 
+    # append an element to the children of a parent element
+    cdef void appendChild(_Element parent, _Element child)
+
     # recursively lookup a namespace in element or ancestors, or create it
     cdef tree.xmlNs* findOrBuildNodeNs(_Document doc, tree.xmlNode* c_node,
                                        char* href)
