@@ -1216,9 +1216,6 @@ cdef class __ContentOnlyElement(_Element):
             tree.xmlNodeSetContent(self._c_node, c_text)
 
     # ACCESSORS
-    def __repr__(self):
-        return "<Comment[%s]>" % self.text
-    
     def __getitem__(self, n):
         raise IndexError
 
@@ -1239,6 +1236,9 @@ cdef class _Comment(__ContentOnlyElement):
         def __get__(self):
             return Comment
 
+    def __repr__(self):
+        return "<!--%s-->" % self.text
+    
 cdef class _ProcessingInstruction(__ContentOnlyElement):
     property tag:
         def __get__(self):
@@ -1253,6 +1253,13 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
             value = _utf8(value)
             c_text = _cstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
+
+    def __repr__(self):
+        text = self.text
+        if text:
+            return "<?%s %s?>" % (self.target, text)
+        else:
+            return "<?%s?>" % self.target
 
 cdef class _Attrib:
     cdef _NodeBase _element
