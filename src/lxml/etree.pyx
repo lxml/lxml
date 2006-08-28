@@ -668,15 +668,17 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         cdef xmlNode* c_next
         cdef _Element mynode
         # first, find start of slice
-        c_node = _findChild(self._c_node, start)
-        # now delete the slice
-        if start != stop:
-            c_node = _deleteSlice(c_node, start, stop)
+        if start == python.PY_SSIZE_T_MAX:
+            c_node = NULL
+        else:
+            c_node = _findChild(self._c_node, start)
+            # now delete the slice
+            if start != stop:
+                c_node = _deleteSlice(c_node, start, stop)
         # if the insertion point is at the end, append there
         if c_node is NULL:
-            append = self.append
-            for node in value:
-                append(node)
+            for element in value:
+                _appendChild(self, element)
             return
         # if the next element is in the list, insert before it
         for mynode in value:
@@ -708,22 +710,15 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         _setAttributeValue(self, key, value)
 
     def append(self, _Element element not None):
+        """Adds a subelement to the end of this element.
         """
-        Adds a subelement to the end of this element.
+        _appendChild(self, element)
+
+    def extend(self, elements):
+        """Extends the current children by the elements in the iterable.
         """
-        cdef xmlNode* c_next
-        cdef xmlNode* c_node
-        c_node = element._c_node
-        # store possible text node
-        c_next = c_node.next
-        # XXX what if element is coming from a different document?
-        tree.xmlUnlinkNode(c_node)
-        # move node itself
-        tree.xmlAddChild(self._c_node, c_node)
-        _moveTail(c_next, c_node)
-        # uh oh, elements may be pointing to different doc when
-        # parent element has moved; change them too..
-        moveNodeToDocument(element, self._doc)
+        for element in elements:
+            _appendChild(self, element)
 
     def clear(self):
         """Resets an element. This function removes all subelements,
@@ -761,7 +756,7 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         cdef xmlNode* c_next
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            self.append(element)
+            _appendChild(self, element)
             return
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)

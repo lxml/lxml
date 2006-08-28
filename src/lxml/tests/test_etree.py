@@ -999,6 +999,33 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             child1, e[1])
 
+    def test_extend(self):
+        etree = self.etree
+        root = etree.Element('foo')
+        for i in range(3):
+            element = etree.SubElement(root, 'a%s' % i)
+            element.text = "text%d" % i
+            element.tail = "tail%d" % i
+
+        elements = []
+        for i in range(3):
+            new_element = etree.Element("test%s" % i)
+            new_element.text = "TEXT%s" % i
+            new_element.tail = "TAIL%s" % i
+            elements.append(new_element)
+
+        root.extend(elements)
+
+        self.assertEquals(
+            ["a0", "a1", "a2", "test0", "test1", "test2"],
+            [ el.tag for el in root ])
+        self.assertEquals(
+            ["text0", "text1", "text2", "TEXT0", "TEXT1", "TEXT2"],
+            [ el.text for el in root ])
+        self.assertEquals(
+            ["tail0", "tail1", "tail2", "TAIL0", "TAIL1", "TAIL2"],
+            [ el.tail for el in root ])
+
     def test_docinfo_public(self):
         etree = self.etree
         xml_header = '<?xml version="1.0" encoding="ascii"?>'
