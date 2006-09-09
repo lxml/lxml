@@ -1008,7 +1008,7 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
         return ObjectifiedElement
 
     # default to string element class if type attribute is not exploitable
-    return _StringElement
+    return StringElement
 
 
 ################################################################################
