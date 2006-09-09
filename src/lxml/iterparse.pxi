@@ -234,10 +234,12 @@ cdef class iterparse(_BaseParser):
         cdef char* c_filename
         cdef int parse_options
         if not hasattr(source, 'read'):
-            self._filename = source
-            source = open(source, 'rb')
+            self._filename = _encodeFilename(source)
+            source = open(self._filename, 'rb')
         else:
             self._filename = _getFilenameForFile(source)
+            if self._filename is not None:
+                self._filename = _encodeFilename(self._filename)
         if self._filename is not None:
             c_filename = self._filename
         else:
@@ -301,11 +303,7 @@ cdef class iterparse(_BaseParser):
                 break
         if error != 0:
             self._source = None
-            if self._filename is not None:
-                c_filename = self._filename
-            else:
-                c_filename = NULL
-            _raiseParseError(self._parser_ctxt, c_filename)
+            _raiseParseError(self._parser_ctxt, self._filename)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
             raise StopIteration

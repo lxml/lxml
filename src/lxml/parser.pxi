@@ -289,12 +289,12 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
     c_input = NULL
     data = None
     if doc_ref._type == PARSER_DATA_STRING:
-        data = doc_ref._data_utf
+        data = doc_ref._data_bytes
         c_input = xmlparser.xmlNewStringInputStream(
             c_context, _cstr(data))
     elif doc_ref._type == PARSER_DATA_FILENAME:
         c_input = xmlparser.xmlNewInputFromFile(
-            c_context, _cstr(doc_ref._data_utf))
+            c_context, _cstr(doc_ref._data_bytes))
     elif doc_ref._type == PARSER_DATA_FILE:
         file_context = _FileParserContext(doc_ref._file, context, url)
         c_input = file_context._createParserInput(c_context)
@@ -451,7 +451,7 @@ cdef class _BaseParser:
             python.PyEval_RestoreThread(state)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, NULL, recover)
+            return _handleParseResult(pctxt, result, None, recover)
         finally:
             self._error_log.disconnect()
             self._unlockParser()
@@ -482,7 +482,7 @@ cdef class _BaseParser:
             python.PyEval_RestoreThread(state)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, NULL, recover)
+            return _handleParseResult(pctxt, result, None, recover)
         finally:
             self._error_log.disconnect()
             self._unlockParser()
@@ -521,9 +521,7 @@ cdef class _BaseParser:
         cdef char* c_filename
         cdef int recover
         if not filename:
-            c_filename = NULL
-        else:
-            c_filename = filename
+            filename = None
         self._lockParser()
         self._error_log.connect()
         try:
@@ -534,23 +532,22 @@ cdef class _BaseParser:
                 pctxt, self._parse_options, self._parser_type)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, c_filename, recover)
+            return _handleParseResult(pctxt, result, filename, recover)
         finally:
             self._error_log.disconnect()
             self._unlockParser()
 
-cdef int _raiseParseError(xmlParserCtxt* ctxt, char* c_filename) except 0:
-    if c_filename is not NULL and \
+cdef int _raiseParseError(xmlParserCtxt* ctxt, filename) except 0:
+    if filename is not None and \
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
         if ctxt.lastError.message is not NULL:
-            message = "Error reading file %s: %s" % (
-                funicode(c_filename),
-                funicode(ctxt.lastError.message).strip())
+            message = "Error reading file '%s': %s" % (
+                filename, (ctxt.lastError.message).strip())
         else:
-            message = "Error reading file %s" % funicode(c_filename)
+            message = "Error reading file '%s'" % filename
         raise IOError, message
     elif ctxt.lastError.message is not NULL:
-        message = funicode(ctxt.lastError.message).strip()
+        message = (ctxt.lastError.message).strip()
         if ctxt.lastError.line >= 0:
             message = "line %d: %s" % (ctxt.lastError.line, message)
         raise XMLSyntaxError, message
@@ -558,7 +555,7 @@ cdef int _raiseParseError(xmlParserCtxt* ctxt, char* c_filename) except 0:
         raise XMLSyntaxError
 
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
-                                char* c_filename, int recover) except NULL:
+                                filename, int recover) except NULL:
     cdef _ResolverContext context
     if ctxt.myDoc is not NULL:
         if ctxt.myDoc != result:
@@ -582,9 +579,9 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
             context._raise_if_stored()
 
     if result is NULL:
-        _raiseParseError(ctxt, c_filename)
-    elif result.URL is NULL and c_filename is not NULL:
-        result.URL = tree.xmlStrdup(c_filename)
+        _raiseParseError(ctxt, filename)
+    elif result.URL is NULL and filename is not None:
+        result.URL = tree.xmlStrdup(_cstr(filename))
     return result
 
 ############################################################
@@ -669,7 +666,7 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
         pctxt, c_text, NULL, NULL, options)
     try:
         recover = options & xmlparser.XML_PARSE_RECOVER
-        c_doc = _handleParseResult(pctxt, c_doc, NULL, recover)
+        c_doc = _handleParseResult(pctxt, c_doc, None, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -689,7 +686,11 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
         pctxt, c_filename, NULL, options)
     try:
         recover = options & xmlparser.XML_PARSE_RECOVER
-        c_doc = _handleParseResult(pctxt, c_doc, c_filename, recover)
+        if c_filename is NULL:
+            filename = None
+        else:
+            filename = c_filename
+        c_doc = _handleParseResult(pctxt, c_doc, filename, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -782,7 +783,8 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     if not filename:
         c_filename = NULL
     else:
-        c_filename = _cstr(filename)
+        filename_utf = _encodeFilenameUTF8(filename)
+        c_filename = _cstr(filename_utf)
     if python.PyUnicode_Check(text):
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
@@ -790,14 +792,13 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         c_len  = python.PyString_GET_SIZE(text)
         return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
 
-cdef xmlDoc* _parseDocFromFile(filename, _BaseParser parser) except NULL:
+cdef xmlDoc* _parseDocFromFile(filename8, _BaseParser parser) except NULL:
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-    return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename))
+    return (<_BaseParser>parser)._parseDocFromFile(_cstr(filename8))
 
 cdef xmlDoc* _parseDocFromFilelike(source, filename,
                                    _BaseParser parser) except NULL:
-    cdef char* c_filename
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
@@ -862,17 +863,19 @@ cdef _Document _parseDocument(source, _BaseParser parser):
     if hasattr(source, 'getvalue') and hasattr(source, 'tell'):
         # StringIO - reading from start?
         if source.tell() == 0:
-            return _parseMemoryDocument(source.getvalue(), filename, parser)
+            return _parseMemoryDocument(
+                source.getvalue(), _encodeFilenameUTF8(filename), parser)
 
     # Support for file-like objects (urlgrabber.urlopen, ...)
     if hasattr(source, 'read'):
-        return _parseFilelikeDocument(source, filename, parser)
+        return _parseFilelikeDocument(
+            source, _encodeFilenameUTF8(filename), parser)
 
     # Otherwise parse the file directly from the filesystem
     if filename is None:
-        filename = source
+        filename = _encodeFilename(source)
     # open filename
-    c_doc = _parseDocFromFile(_utf8(filename), parser)
+    c_doc = _parseDocFromFile(filename, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
@@ -886,14 +889,14 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
             text = python.PyUnicode_AsUTF8String(text)
     elif not python.PyString_Check(text):
         raise ValueError, "can only parse strings"
-    if url is not None:
-        url = _utf8(url)
+    if python.PyUnicode_Check(url):
+        url = python.PyUnicode_AsUTF8String(url)
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, _BaseParser parser):
     cdef xmlDoc* c_doc
-    if url is not None:
-        url = _utf8(url)
+    if python.PyUnicode_Check(url):
+        url = python.PyUnicode_AsUTF8String(url)
     c_doc = _parseDocFromFilelike(source, url, parser)
     return _documentFactory(c_doc, parser)

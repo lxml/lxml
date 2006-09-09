@@ -501,6 +501,46 @@ cdef object _utf8(object s):
     else:
         raise TypeError, "Argument must be string or unicode."
 
+cdef object _encodeFilename(object filename):
+    if filename is None:
+        return None
+    elif python.PyString_Check(filename):
+        return filename
+    elif python.PyUnicode_Check(filename):
+        return python.PyUnicode_AsEncodedString(
+            filename, _C_FILENAME_ENCODING, NULL)
+    else:
+        raise TypeError, "Argument must be string or unicode."
+
+cdef object _encodeFilenameUTF8(object filename):
+    """Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
+    UTF-8 as source encoding.
+    """
+    cdef char* c_filename
+    if filename is None:
+        return None
+    elif python.PyString_Check(filename):
+        c_filename = _cstr(filename)
+        if not isutf8(c_filename):
+            # plain ASCII!
+            return filename
+        try:
+            # try to decode with default encoding
+            filename = python.PyUnicode_Decode(
+                c_filename, python.PyString_GET_SIZE(filename),
+                _C_FILENAME_ENCODING, NULL)
+        except UnicodeDecodeError, decode_exc:
+            try:
+                # try if it's UTF-8
+                filename = python.PyUnicode_DecodeUTF8(
+                    c_filename, python.PyString_GET_SIZE(filename), NULL)
+            except UnicodeDecodeError:
+                raise decode_exc # otherwise re-raise original exception
+    if python.PyUnicode_Check(filename):
+        return python.PyUnicode_AsUTF8String(filename)
+    else:
+        raise TypeError, "Argument must be string or unicode."
+
 cdef _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI available.

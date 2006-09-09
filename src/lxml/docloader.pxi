@@ -8,7 +8,7 @@ ctypedef enum _InputDocumentDataType:
 
 cdef class _InputDocument:
     cdef _InputDocumentDataType _type
-    cdef object _data_utf
+    cdef object _data_bytes
     cdef object _file
 
 cdef class Resolver:
@@ -28,7 +28,7 @@ cdef class Resolver:
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_STRING
-        doc_ref._data_utf = _utf8(string)
+        doc_ref._data_bytes = _utf8(string)
         return doc_ref
 
     def resolve_filename(self, filename, context):
@@ -36,7 +36,7 @@ cdef class Resolver:
         cdef _InputDocument doc_ref
         doc_ref = _ParserInput()
         doc_ref._type = PARSER_DATA_FILENAME
-        doc_ref._data_utf = _utf8(filename)
+        doc_ref._data_bytes = _encodeFilename(filename)
         return doc_ref
 
     def resolve_file(self, f, context):

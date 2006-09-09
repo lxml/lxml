@@ -44,6 +44,8 @@ cdef class RelaxNG(_Validator):
             if filename is None:
                 # XXX assume a string object
                 filename = file
+            else:
+                filename = _encodeFilename(filename)
             parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(filename)
         else:
             raise RelaxNGParseError, "No tree or file given"

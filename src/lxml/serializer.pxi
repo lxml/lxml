@@ -163,9 +163,9 @@ cdef _tofilelike(f, _NodeBase element, encoding,
             "unknown encoding: '%s'", c_enc)
 
     if _isString(f):
-        filename = _utf8(f)
+        filename8 = _encodeFilename(f)
         c_buffer = tree.xmlOutputBufferCreateFilename(
-            _cstr(filename), enchandler, 0)
+            _cstr(filename8), enchandler, 0)
         state = python.PyEval_SaveThread()
     elif hasattr(f, 'write'):
         writer   = _FilelikeWriter(f)
@@ -196,8 +196,8 @@ cdef _tofilelikeC14N(f, _NodeBase element):
     c_doc = _fakeRootDoc(c_base_doc, element._c_node)
     try:
         if _isString(f):
-            filename = _utf8(f)
-            c_filename = _cstr(filename)
+            filename8 = _encodeFilename(f)
+            c_filename = _cstr(filename8)
             state = python.PyEval_SaveThread()
             bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1, c_filename, 0)
             python.PyEval_RestoreThread(state)

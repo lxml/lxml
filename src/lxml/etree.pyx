@@ -68,6 +68,16 @@ _initThreadLogging()
 # initialize parser (and threading)
 xmlparser.xmlInitParser()
 
+# filename encoding
+cdef object _FILENAME_ENCODING
+_FILENAME_ENCODING = sys.getfilesystemencoding()
+if _FILENAME_ENCODING is None:
+    _FILENAME_ENCODING = sys.getdefaultencoding()
+if _FILENAME_ENCODING is None:
+    _FILENAME_ENCODING = 'ascii'
+cdef char* _C_FILENAME_ENCODING
+_C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
+
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
