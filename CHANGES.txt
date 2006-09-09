@@ -8,8 +8,6 @@ current
 Features added
 --------------
 
-* List-like ``Element.extend()`` method
-
 * Comments and processing instructions return '<!-- coment -->' and
   '<?pi-target content?>' for repr()
 
@@ -20,7 +18,7 @@ Features added
 Bugs fixed
 ----------
 
-* Crash in tail handling in ``Element.replace()``
+* filenames with local 8-bit encoding were not supported
 
 * 1.1beta did not compile under Python 2.3
 
@@ -29,6 +27,20 @@ Bugs fixed
 * objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists
 
 * objectify.ObjectPath.setattr() failed to accept Elements and Lists
+
+
+1.0.4 (09.09.2006)
+==================
+
+Features added
+--------------
+
+* List-like ``Element.extend()`` method
+
+Bugs fixed
+----------
+
+* Crash in tail handling in ``Element.replace()``
 
 
 1.1beta (2006-08-08)
