@@ -217,7 +217,8 @@ Building Debian packages from SVN sources
 * remove the unpacked directory
 * tar.gz the lxml SVN version and replace the orig.tar.gz that lies in the
   directory
-* do ``dpkg -x lxml-...dsc`` and cd into the newly created directory
+* check md5sum of created tar.gz file and place new sum and size in dsc file
+* do ``dpkg-source -x lxml-...dsc`` and cd into the newly created directory
 * run ``dch -i`` and add a comment like "use trunk version", this will
   increase the debian version number so apt/dpkg don't get confused
 * run ``dpkg-buildpackage -rfakeroot -us -uc`` to build the package
