@@ -301,6 +301,18 @@ valid Python identifiers::
     >>> print root["tag-name"][1].child.tag
     {ns}child
 
+or for names that have a special meaning in lxml.objectify::
+
+    >>> root = objectify.XML("<root><text>TEXT</text></root>")
+
+    >>> print root.text.text
+    Traceback (most recent call last):
+      ...
+    AttributeError: 'NoneType' object has no attribute 'text'
+
+    >>> print root["text"].text
+    TEXT
+
 
 ObjectPath
 ----------
