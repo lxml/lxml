@@ -50,9 +50,8 @@ cdef class XMLSchema(_Validator):
             if filename is None:
                 # XXX assume a string object
                 filename = file
-            else:
-                filename = _encodeFilename(filename)
-            parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(filename)
+            filename = _encodeFilename(filename)
+            parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
             xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
         else:
