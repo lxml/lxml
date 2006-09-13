@@ -29,7 +29,7 @@ Bugs fixed
 * objectify.ObjectPath.setattr() failed to accept Elements and Lists
 
 
-1.0.4 (09.09.2006)
+1.0.4 (2006-09-09)
 ==================
 
 Features added
