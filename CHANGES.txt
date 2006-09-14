@@ -15,40 +15,6 @@ Features added
   schemes should be registered.  Namespace lookup is no longer supported by
   default.
 
-Bugs fixed
-----------
-
-* filenames with local 8-bit encoding were not supported
-
-* 1.1beta did not compile under Python 2.3
-
-* ignore unknown 'pyval' attribute values in objectify
-
-* objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists
-
-* objectify.ObjectPath.setattr() failed to accept Elements and Lists
-
-
-1.0.4 (2006-09-09)
-==================
-
-Features added
---------------
-
-* List-like ``Element.extend()`` method
-
-Bugs fixed
-----------
-
-* Crash in tail handling in ``Element.replace()``
-
-
-1.1beta (2006-08-08)
-====================
-
-Features added
---------------
-
 * Support for Python 2.5 beta
 
 * Unlock the GIL for deep copying documents and for XPath()
@@ -74,56 +40,6 @@ Features added
 * Support for processing instructions (ET-like, not compatible)
 
 * Public C-level API for independent extension modules
-
-Bugs fixed
-----------
-
-* XPathSyntaxError now inherits from XPathError
-
-* Threading race conditions in RelaxNG and XMLSchema
-
-* Crash when mixing elements from XSLT results into other trees, concurrent
-  XSLT is only allowed when the stylesheet was parsed in the main thread
-
-* The EXSLT ``regexp:match`` function now works as defined (except for some
-  differences in the regular expression syntax)
-
-* Setting element.text to '' returned None on request, not the empty string
-
-* ``iterparse()`` could crash on long XML files
-
-* Creating documents no longer copies the parser for later URL resolving.  For
-  performance reasons, only a reference is kept.  Resolver updates on the
-  parser will now be reflected by documents that were parsed before the
-  change.  Although this should rarely become visible, it is a behavioral
-  change from 1.0.
-
-
-1.0.3 (2006-08-08)
-==================
-
-Features added
---------------
-
-* Element.replace(old, new) method to replace a subelement by another one
-
-Bugs fixed
-----------
-
-* Crash when mixing elements from XSLT results into other trees
-
-* Copying/deepcopying did not work for ElementTree objects
-
-* Setting an attribute to a non-string value did not raise an exception
-
-* Element.remove() deleted the tail text from the removed Element
-
-
-1.1alpha (2006-06-27)
-=====================
-
-Features added
---------------
 
 * Module level ``iterwalk()`` function as 'iterparse' for trees
 
@@ -166,6 +82,70 @@ Features added
 
 Bugs fixed
 ----------
+
+* filenames with local 8-bit encoding were not supported
+
+* 1.1beta did not compile under Python 2.3
+
+* ignore unknown 'pyval' attribute values in objectify
+
+* objectify.ObjectifiedElement.addattr() failed to accept Elements and Lists
+
+* objectify.ObjectPath.setattr() failed to accept Elements and Lists
+
+* XPathSyntaxError now inherits from XPathError
+
+* Threading race conditions in RelaxNG and XMLSchema
+
+* Crash when mixing elements from XSLT results into other trees, concurrent
+  XSLT is only allowed when the stylesheet was parsed in the main thread
+
+* The EXSLT ``regexp:match`` function now works as defined (except for some
+  differences in the regular expression syntax)
+
+* Setting element.text to '' returned None on request, not the empty string
+
+* ``iterparse()`` could crash on long XML files
+
+* Creating documents no longer copies the parser for later URL resolving.  For
+  performance reasons, only a reference is kept.  Resolver updates on the
+  parser will now be reflected by documents that were parsed before the
+  change.  Although this should rarely become visible, it is a behavioral
+  change from 1.0.
+
+
+1.0.4 (2006-09-09)
+==================
+
+Features added
+--------------
+
+* List-like ``Element.extend()`` method
+
+Bugs fixed
+----------
+
+* Crash in tail handling in ``Element.replace()``
+
+
+1.0.3 (2006-08-08)
+==================
+
+Features added
+--------------
+
+* Element.replace(old, new) method to replace a subelement by another one
+
+Bugs fixed
+----------
+
+* Crash when mixing elements from XSLT results into other trees
+
+* Copying/deepcopying did not work for ElementTree objects
+
+* Setting an attribute to a non-string value did not raise an exception
+
+* Element.remove() deleted the tail text from the removed Element
 
 
 1.0.2 (2006-06-27)
