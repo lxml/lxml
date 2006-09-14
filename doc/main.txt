@@ -138,7 +138,7 @@ including custom element class support.
 .. _`SAX compliant API`: sax.html
 .. _`C-level API`: capi.html
 .. _`lxml.objectify`: objectify.html
-.. _`objectify and etree`: FAQ.html##what-is-the-difference-between-lxml-etree-and-lxml-objectify
+.. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
 
 .. _XPath: http://www.w3.org/TR/xpath
 .. _`Relax NG`: http://www.relaxng.org/
