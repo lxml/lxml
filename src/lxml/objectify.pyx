@@ -67,6 +67,9 @@ cdef char* _PYTYPE_ATTRIBUTE_NAME
 
 PYTYPE_ATTRIBUTE = None
 
+cdef object TREE_PYTYPE
+TREE_PYTYPE = "TREE"
+
 def setPytypeAttributeTag(attribute_tag=None):
     """Changes name and namespace of the XML attribute that holds Python type
     information.
@@ -100,36 +103,6 @@ cdef object XML_SCHEMA_INSTANCE_NIL_ATTR
 XML_SCHEMA_INSTANCE_NIL_ATTR = "{%s}nil" % XML_SCHEMA_INSTANCE_NS
 cdef object XML_SCHEMA_INSTANCE_TYPE_ATTR
 XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
-
-
-################################################################################
-# Module level parser setup
-
-cdef object __DEFAULT_PARSER
-__DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
-__DEFAULT_PARSER.setElementClassLookup( ObjectifyElementClassLookup() )
-
-cdef object parser
-parser = __DEFAULT_PARSER
-
-def setDefaultParser(new_parser = None):
-    """Replace the default parser used by objectify's Element() and
-    fromstring() functions.
-
-    The new parser must be an etree.XMLParser.
-
-    Call without arguments to reset to the original parser.
-    """
-    global parser
-    if new_parser is None:
-        parser = __DEFAULT_PARSER
-    elif isinstance(new_parser, etree.XMLParser):
-        parser = new_parser
-    else:
-        raise TypeError, "parser must inherit from lxml.etree.XMLParser"
-
-cdef object _makeelement
-_makeelement = parser.makeelement
 
 
 ################################################################################
@@ -499,6 +472,12 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
     def __str__(self):
         return textOf(self._c_node) or ''
 
+    def __setText(self, s):
+        """For use in subclasses only. Don't use unless you know what you are
+        doing.
+        """
+        cetree.setNodeText(self._c_node, s)
+
 cdef class NumberElement(ObjectifiedDataElement):
     cdef object _type
     def _setValueParser(self, function):
@@ -760,6 +739,8 @@ cdef class PyType:
     def __init__(self, name, type_check, type_class):
         if not python._isString(name):
             raise TypeError, "Type name must be a string"
+        elif name == TREE_PYTYPE:
+            raise ValueError, "Invalid type name"
         if type_check is not None and not callable(type_check):
             raise TypeError, "Type check function must be callable (or None)"
         if not issubclass(type_class, ObjectifiedDataElement):
@@ -900,11 +881,7 @@ def getRegisteredTypes():
 cdef object _guessElementClass(tree.xmlNode* c_node):
     value = textOf(c_node)
     if value is None:
-        # if element is not a root node => default to string node
-        if c_node.parent is not NULL and tree._isElement(c_node.parent):
-            return StringElement
-        # default to ObjectifiedElement class
-        return ObjectifiedElement
+        return None
     if value == '':
         return StringElement
     errors = (ValueError, TypeError)
@@ -914,8 +891,8 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
             return (<PyType>pytype)._type
         except errors:
             pass
+    return None
 
-    return StringElement
 
 ################################################################################
 # Recursive element dumping
@@ -946,8 +923,10 @@ cdef object _dump(_Element element, int indent):
     result = "%s%s = %r [%s]\n" % (indentstr, element.tag,
                                    value, type(element).__name__)
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
-    pytype_ns = "{%s}" % _PYTYPE_NAMESPACE
+    pytype_ns = "{%s}" % PYTYPE_NAMESPACE
     for name, value in element.items():
+        if name == PYTYPE_ATTRIBUTE and value == TREE_PYTYPE:
+            continue
         name = name.replace(xsi_ns, 'xsi:').replace(pytype_ns, 'py:')
         result = result + "%s  * %s = %r\n" % (indentstr, name, value)
 
@@ -966,14 +945,32 @@ cdef object _dump(_Element element, int indent):
 cdef class ObjectifyElementClassLookup(ElementClassLookup):
     """Element class lookup method that uses the objectify classes.
     """
-    def __init__(self):
+    cdef object empty_data_class
+    cdef object tree_class
+    def __init__(self, tree_class=None, empty_data_class=None):
+        """Lookup mechanism for objectify.
+
+        The default Element classes can be replaced by passing subclasses of
+        ObjectifiedElement and ObjectifiedDataElement as keyword arguments.
+        'tree_class' defines inner tree classes (defaults to
+        ObjectifiedElement), 'empty_data_class' defines the default class for
+        empty data elements (defauls to StringElement).
+        """
         self._lookup_function = _lookupElementClass
+        if tree_class is None:
+            tree_class = ObjectifiedElement
+        self.tree_class = tree_class
+        if empty_data_class is None:
+            empty_data_class = StringElement
+        self.empty_data_class = empty_data_class
 
 cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
+    cdef ObjectifyElementClassLookup lookup
     cdef python.PyObject* dict_result
+    lookup = <ObjectifyElementClassLookup>state
     # if element has children => no data class
     if cetree.findChildForwards(c_node, 0) is not NULL:
-        return ObjectifiedElement
+        return lookup.tree_class
 
     # if element is defined as xsi:nil, return NoneElement class
     if "true" == cetree.attributeValueFromNsName(
@@ -984,6 +981,8 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     value = cetree.attributeValueFromNsName(
         c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
     if value is not None:
+        if value == TREE_PYTYPE:
+            return lookup.tree_class
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, value)
         if dict_result is not NULL:
             return (<PyType>dict_result)._type
@@ -1003,12 +1002,11 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     if el_class is not None:
         return el_class
 
-    # if element is root node => no data class
+    # if element is a root node => default to tree node
     if c_node.parent is NULL or not tree._isElement(c_node.parent):
-        return ObjectifiedElement
+        return lookup.tree_class
 
-    # default to string element class if type attribute is not exploitable
-    return StringElement
+    return lookup.empty_data_class
 
 
 ################################################################################
@@ -1374,7 +1372,7 @@ def annotate(element_or_tree, ignore_old=True):
         # check that old value is valid
         old_value = cetree.attributeValueFromNsName(
             c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-        if old_value is not None:
+        if old_value is not None and old_value != TREE_PYTYPE:
             pytype = _PYTYPE_DICT.get(old_value)
             if pytype is not None:
                 value = textOf(c_node)
@@ -1429,6 +1427,36 @@ def annotate(element_or_tree, ignore_old=True):
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 ################################################################################
+# Module level parser setup
+
+cdef object __DEFAULT_PARSER
+__DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
+__DEFAULT_PARSER.setElementClassLookup( ObjectifyElementClassLookup() )
+
+cdef object parser
+parser = __DEFAULT_PARSER
+
+def setDefaultParser(new_parser = None):
+    """Replace the default parser used by objectify's Element() and
+    fromstring() functions.
+
+    The new parser must be an etree.XMLParser.
+
+    Call without arguments to reset to the original parser.
+    """
+    global parser, _makeelement
+    if new_parser is None:
+        parser = __DEFAULT_PARSER
+    elif isinstance(new_parser, etree.XMLParser):
+        parser = new_parser
+    else:
+        raise TypeError, "parser must inherit from lxml.etree.XMLParser"
+    _makeelement = parser.makeelement
+
+cdef object _makeelement
+_makeelement = parser.makeelement
+
+################################################################################
 # Module level factory functions
 
 cdef object _fromstring
@@ -1443,14 +1471,23 @@ def fromstring(xml):
 
 XML = fromstring
 
-def Element(*args, **kwargs):
-    """Objectify specific version of the lxml.etree Element() factory.
+def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
+    """Objectify specific version of the lxml.etree Element() factory that
+    always creates a structural (tree) element.
 
     NOTE: requires parser based element class lookup activated in lxml.etree!
     """
-    return _makeelement(*args, **kwargs)
+    if attrib is not None:
+        if python.PyDict_GetSize(_attributes):
+            attrib.update(_attributes)
+        _attributes = attrib
+    if _pytype is None:
+        _pytype = TREE_PYTYPE
+    _attributes[PYTYPE_ATTRIBUTE] = _pytype
+    return _makeelement(_tag, _attributes, nsmap)
 
-def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
+def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
+                **_attributes):
     """Create a new element with a Python value and XML attributes taken from
     keyword arguments or a dictionary passed as second argument.
 
@@ -1459,10 +1496,10 @@ def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
     keyword arguments, they will be used instead.
     """
     cdef _Element element
-    if _attrib is not None:
+    if attrib is not None:
         if python.PyDict_GetSize(_attributes):
-            _attrib.update(_attributes)
-        _attributes = _attrib
+            attrib.update(_attributes)
+        _attributes = attrib
     if _xsi is not None:
         python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
         if _pytype is None:
@@ -1495,6 +1532,6 @@ def DataElement(_value, _attrib=None, _pytype=None, _xsi=None, **_attributes):
     if _pytype is not None:
         python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
-    element = _makeelement("value", _attributes)
+    element = _makeelement("value", _attributes, nsmap)
     cetree.setNodeText(element._c_node, strval)
     return element
