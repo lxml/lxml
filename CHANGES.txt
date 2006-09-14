@@ -2,6 +2,29 @@
 lxml changelog
 ==============
 
+current
+=======
+
+Features added
+--------------
+
+* Support custom elements for tree nodes in lxml.objectify
+
+Bugs fixed
+----------
+
+* Factories objectify.Element() and objectify.DataElement() were missing
+  ``attrib`` and ``nsmap`` keyword arguments
+
+* Changing the default parser in lxml.objectify did not update the factories
+  Element() and DataElement()
+
+* Let lxml.objectify.Element() always generate tree elements (not data
+  elements)
+
+* Build under Windows failed ('\0' bug in patched Pyrex version)
+
+
 1.1 (2006-09-13)
 ================
 
