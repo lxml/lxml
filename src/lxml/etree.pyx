@@ -1790,10 +1790,7 @@ include "iterparse.pxi"  # incremental XML parsing
 include "xmlid.pxi"      # XMLID and IDDict
 include "extensions.pxi" # XPath/XSLT extension functions
 include "xpath.pxi"      # XPath evaluation
-
-# XSL transformations
-# comment out to compile without libxslt
-include "xslt.pxi"
+include "xslt.pxi"       # XSL transformations
 
 
 ################################################################################

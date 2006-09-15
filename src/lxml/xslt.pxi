@@ -21,9 +21,6 @@ class XSLTExtensionError(XSLTError):
 LIBXSLT_COMPILED_VERSION = __unpackIntVersion(xslt.LIBXSLT_VERSION)
 LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 
-cdef void _logLibxsltErrors():
-    xslt.xsltSetGenericErrorFunc(NULL, _receiveXSLTError)
-
 
 ################################################################################
 # Where do we store what?

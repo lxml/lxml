@@ -9,17 +9,24 @@ def clearErrorLog():
     Note that this log is already bounded to a fixed size."""
     __GLOBAL_ERROR_LOG.clear()
 
-# setup functions
+# dummy function: no debug output at all
+cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
+    pass
+
+# setup for global log:
 
 cdef void _initThreadLogging():
-    "Setup logging for the current thread. Called from etree.initThread()."
-    # switch on line number reporting
-    _logLibxmlErrors()
-    try:
-        _logLibxsltErrors()
-    except NameError:
-        # compiled without libxslt
-        pass
+    # disable generic error lines from libxml2
+    xmlerror.xmlThrDefSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
+    xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
+
+    # divert error messages to the global error log
+    xmlerror.xmlThrDefSetStructuredErrorFunc(NULL, _receiveError)
+    connectErrorLog(NULL)
+
+cdef void connectErrorLog(void* log):
+    xmlerror.xmlSetStructuredErrorFunc(log, _receiveError)
+    xslt.xsltSetGenericErrorFunc(log, _receiveXSLTError)
 
 
 # Logging classes
@@ -194,10 +201,10 @@ cdef class _ErrorLog(_ListErrorLog):
 
     cdef void connect(self):
         del self._entries[:]
-        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
+        connectErrorLog(<void*>self)
 
     cdef void disconnect(self):
-        xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
+        connectErrorLog(NULL)
 
     def clear(self):
         del self._entries[:]
@@ -326,8 +333,9 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     cdef char* c_message
     cdef char* c_element
     cdef int i, text_size, element_size
-    if __DEBUG == 0 or msg is NULL or cstd.strlen(msg) < 10:
+    if __DEBUG == 0 or msg is NULL or cstd.strcmp(msg, '\n') == 0:
         return
+
     cstd.va_start(args, msg)
     if msg[0] == c'%' and msg[1] == c's':
         c_text = cstd.va_charptr(args)
@@ -374,17 +382,6 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
         python.PyMem_Free(c_error.message)
     python.PyGILState_Release(gil_state)
 
-# dummy function: no debug output at all
-cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
-    pass
-
-# setup for global log:
-cdef void _logLibxmlErrors():
-    xmlerror.xmlThrDefSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
-    xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
-
-    xmlerror.xmlThrDefSetStructuredErrorFunc(NULL, _receiveError)
-    xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
 
 ################################################################################
 ## CONSTANTS FROM "xmlerror.h" (or rather libxml-xmlerror.html)
