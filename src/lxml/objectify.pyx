@@ -184,6 +184,21 @@ cdef class ObjectifiedElement(ElementBase):
             c_node = c_node.prev
         return count
 
+    def countchildren(self):
+        """Return the number of children of this element, regardless of their
+        name.
+        """
+        # copied from etree
+        cdef Py_ssize_t c
+        cdef xmlNode* c_node
+        c = 0
+        c_node = self._c_node.children
+        while c_node is not NULL:
+            if _isElement(c_node):
+                c = c + 1
+            c_node = c_node.next
+        return c
+
     def __getattr__(self, tag):
         """Return the (first) child with the given tag name.  If no namespace
         is provided, the child will be looked up in the same one as self.

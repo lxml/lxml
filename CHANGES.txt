@@ -8,6 +8,8 @@ current
 Features added
 --------------
 
+* countchildren() method on objectify.ObjectifiedElement
+
 * Support custom elements for tree nodes in lxml.objectify
 
 Bugs fixed
