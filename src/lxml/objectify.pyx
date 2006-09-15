@@ -1478,7 +1478,7 @@ def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
     NOTE: requires parser based element class lookup activated in lxml.etree!
     """
     if attrib is not None:
-        if python.PyDict_GetSize(_attributes):
+        if python.PyDict_Size(_attributes):
             attrib.update(_attributes)
         _attributes = attrib
     if _pytype is None:
@@ -1497,7 +1497,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
     """
     cdef _Element element
     if attrib is not None:
-        if python.PyDict_GetSize(_attributes):
+        if python.PyDict_Size(_attributes):
             attrib.update(_attributes)
         _attributes = attrib
     if _xsi is not None:
