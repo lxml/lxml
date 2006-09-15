@@ -61,6 +61,11 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.XML(xml_str)
         self.assertEquals("0", root.c1.c2.text)
 
+    def test_countchildren(self):
+        root = self.XML(xml_str)
+        self.assertEquals(1, root.countchildren())
+        self.assertEquals(5, root.c1.countchildren())
+
     def test_child_getattr(self):
         root = self.XML(xml_str)
         self.assertEquals("0", getattr(root.c1, "{objectified}c2").text)
