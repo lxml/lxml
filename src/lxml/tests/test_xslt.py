@@ -385,6 +385,25 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
 
+    def test_xslt_message_terminate(self):
+        xml = '<blah/>'
+        xslt = '''
+        <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+          <xsl:template match="/">
+            <xsl:message terminate="yes">TEST TEST TEST</xsl:message>
+          </xsl:template>
+        </xsl:stylesheet>
+        '''
+
+        source = self.parse(xml)
+        styledoc = self.parse(xslt)
+        style = etree.XSLT(styledoc)
+        result = style.apply(source)
+        self.assertEqual('', style.tostring(result))
+        self.assertEqual('', str(result))
+        self.assert_("TEST TEST TEST" in [entry.message
+                                          for entry in style.error_log])
+
     def test_xslt_shortcut(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
