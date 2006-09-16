@@ -333,7 +333,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     cdef char* c_message
     cdef char* c_element
     cdef int i, text_size, element_size
-    if __DEBUG == 0 or msg is NULL or cstd.strcmp(msg, '\n') == 0:
+    if __DEBUG == 0 or msg is NULL or msg[0] == c'\n':
         return
 
     cstd.va_start(args, msg)
