@@ -337,12 +337,14 @@ cdef class XSLT:
         def __get__(self):
             return self._error_log.copy()
 
-    def __call__(self, _input, **_kw):
+    def __call__(self, _input, profile_run=False, **_kw):
         cdef python.PyThreadState* state
         cdef _XSLTContext context
         cdef _Document input_doc
         cdef _NodeBase root_node
         cdef _Document result_doc
+        cdef _Document profile_doc
+        cdef xmlDoc* c_profile_doc
         cdef _XSLTResolverContext resolver_context
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result
@@ -374,6 +376,9 @@ cdef class XSLT:
 
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
+
+        if profile_run:
+            transform_ctxt.profile = 1
 
         transform_ctxt._private = <python.PyObject*>self._xslt_resolver_context
 
@@ -411,6 +416,11 @@ cdef class XSLT:
             # deallocate space for parameters
             python.PyMem_Free(params)
 
+        if transform_ctxt.profile:
+            c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
+            if c_profile_doc is not NULL:
+                profile_doc = _documentFactory(c_profile_doc, input_doc._parser)
+
         context.free_context()
         _destroyFakeDoc(input_doc._c_doc, c_doc)
 
@@ -434,10 +444,10 @@ cdef class XSLT:
             raise XSLTApplyError, message
 
         result_doc = _documentFactory(c_result, input_doc._parser)
-        return _xsltResultTreeFactory(result_doc, self)
+        return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
-    def apply(self, _input, **_kw):
-        return self.__call__(_input, **_kw)
+    def apply(self, _input, profile_run=False, **_kw):
+        return self.__call__(_input, profile_run, **_kw)
 
     def tostring(self, _ElementTree result_tree):
         """Save result doc to string based on stylesheet output method.
@@ -446,6 +456,7 @@ cdef class XSLT:
 
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
+    cdef _Document _profile
     cdef _saveToStringAndSize(self, char** s, int* l):
         cdef _Document doc
         cdef int r
@@ -489,10 +500,26 @@ cdef class _XSLTResultTree(_ElementTree):
             tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
 
-cdef _xsltResultTreeFactory(_Document doc, XSLT xslt):
+    property xslt_profile:
+        """Return an ElementTree with profiling data for the stylesheet run.
+        """
+        def __get__(self):
+            cdef _Element root
+            if self._profile is None:
+                return None
+            root = self._profile.getroot()
+            if root is None:
+                return None
+            return ElementTree(root)
+
+        def __del__(self):
+            self._profile = None
+
+cdef _xsltResultTreeFactory(_Document doc, XSLT xslt, _Document profile):
     cdef _XSLTResultTree result
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
+    result._profile = profile
     return result
 
 # functions like "output" and "write" are a potential security risk, but we

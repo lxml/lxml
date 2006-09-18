@@ -689,6 +689,25 @@ enable style sheets to read and write files on the local file system.  See the
 
 .. _`document loader documentation`: resolvers.html
 
+If you want to know how your stylesheet performed, pass the ``profile_run``
+keyword to the transform::
+
+  >>> result = transform(doc, a="/a/b/text()", profile_run=True)
+  >>> profile = result.xslt_profile
+
+The value of the ``xslt_profile`` property is an ElementTree with profiling
+data about each template, similar to the following::
+
+  <profile>
+    <template rank="1" match="/" name="" mode="" calls="1" time="1" average="1"/>
+  </profile>
+
+Note that this is a read-only document.  You must not move any of its elements
+to other documents.  Please deep-copy the document if you need to modify it.
+If you want to free it from memory, just do::
+
+  >>> del result.xslt_profile
+
 
 RelaxNG
 -------

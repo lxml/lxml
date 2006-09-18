@@ -21,6 +21,7 @@ cdef extern from "libxslt/xsltInternals.h":
         xsltDocument* document
         void* _private
         xmlDict* dict
+        int profile
 
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc)
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet)
@@ -97,6 +98,7 @@ cdef extern from "libxslt/security.h":
                                   xsltSecurityCheck func)
     cdef int xsltSetCtxtSecurityPrefs(xsltSecurityPrefs* sec,
                                       xsltTransformContext* ctxt)
+    cdef xmlDoc* xsltGetProfileInformation(xsltTransformContext* ctxt)
 
 cdef extern from "libxslt/extra.h":
     cdef char* XSLT_LIBXSLT_NAMESPACE

@@ -8,6 +8,8 @@ current
 Features added
 --------------
 
+* XSLT profiling support (``profile_run`` keyword)
+
 * countchildren() method on objectify.ObjectifiedElement
 
 * Support custom elements for tree nodes in lxml.objectify
