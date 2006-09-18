@@ -122,6 +122,25 @@ operating system type (Linux, Windows, MacOs, ...).
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
 
+Contributing an egg
+-------------------
+
+This is the procedure to make an lxml egg for your platform:
+
+* download the lxml-x.y.tgz release. This contains the pregenerated C so
+  we don't run into any Pyrex issues. Unpack it and cd into it.
+
+* python setup.py build
+
+* if you're on a unixy platform, cd into build/lib.your.platform and
+  strip any .so file you find there. This reduces the size of the egg.
+
+* python setup.py bdist_egg upload
+
+The last 'upload' step only works if you have access to the lxml
+cheeseshop entry. If not, you can just make an egg with bdist_egg and
+mail it to the lxml maintainer.
+
 Static linking on Windows
 -------------------------
 
