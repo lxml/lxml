@@ -33,8 +33,8 @@ def publish(dirname, lxml_path, release):
               os.path.join(dirname, 'index.html'))
 
 def rest2html(script, source_path, dest_path, stylesheet_url):
-    command = ('%s --stylesheet=%s --link-stylesheet %s > %s' %
-               (script, stylesheet_url, source_path, dest_path))
+    command = ('%s %s --stylesheet=%s --link-stylesheet %s > %s' %
+               (sys.executable, script, stylesheet_url, source_path, dest_path))
     os.system(command)
 
 if __name__ == '__main__':
