@@ -559,7 +559,7 @@ the normal slicing behaviour of objectify elements::
     ['test']
 
 If you need to run sequence operations on data types, you must ask the API for
-the *real* Python value.  The string value is always available throught the
+the *real* Python value.  The string value is always available through the
 normal ElementTree ``.text`` attribute.  Additionally, all data classes
 provide a ``.pyval`` attribute that returns the value as plain Python type::
 
@@ -591,13 +591,48 @@ to change values, just assign them directly to the attribute::
     >>> print root.a
     25
 
+In other words, objectify data elements behave like immutable Python types.
+
 
 How data types are matched
 --------------------------
 
-Objectify determines data types by trial and error, unless it finds an
-attribute named ``lxml.objectify.PYTYPE_ATTRIBUTE``, which must contain any of
-the following string values: int, long, float, str, unicode, none::
+Objectify uses two different types of Elements.  Structural Elements (or tree
+Elements) represent the object tree structure.  Data Elements represent the
+data containers at the leafs.  You can explicitly create tree Elements with
+the ``objectify.Element()`` factory and data Elements with the
+``objectify.DataElement()`` factory.
+
+When Element objects are created, lxml.objectify must determine which
+implementation class to use for them.  This is relatively easy for tree
+Elements and less so for data Elements.  The algorithm is as follows:
+
+1. If an element has children, use the default tree class.
+
+2. If an element is defined as xsi:nil, use the NoneElement class.
+
+3. If a "Python type hint" attribute is given, use this to determine the element
+   class, see below.
+ 
+4. If an XML Schema xsi:type hint is given, use this to determine the element
+   class, see below.
+
+5. Try to determine the element class from the text content type by trial and
+   error.
+
+6. If the element is a root node then use the default tree class.
+
+7. Otherwise, use the default class for empty data classes.
+
+You can change the default classes for tree Elements and empty data Elements
+at setup time.  The ``ObjectifyElementClassLookup()`` call accepts two keyword
+arguments, ``tree_class`` and ``empty_data_class``, that determine the Element
+classes used in these cases.  By default, ``tree_class`` is a class called
+``ObjectifiedElement`` and ``empty_data_class`` is a ``StringElement``.
+
+The "type hint" mechanism deploys an XML attribute defined as
+``lxml.objectify.PYTYPE_ATTRIBUTE``.  It may contain any of the following
+string values: int, long, float, str, unicode, none::
 
     >>> print objectify.PYTYPE_ATTRIBUTE
     {http://codespeak.net/lxml/objectify/pytype}pytype
@@ -658,9 +693,9 @@ Python types::
         s = '5' [StringElement]
           * xsi:type = 'string'
 
-For convenience, there is a special factory ``DataElement()`` that supports
-creating an Element with a Python value in one step.  You can pass the
-required Python type name or the XSI type name::
+For convenience, the ``DataElement()`` factory creates an Element with a
+Python value in one step.  You can pass the required Python type name or the
+XSI type name::
 
     >>> root = objectify.Element("root")
     >>> root.x = objectify.DataElement(5, _pytype="long")
@@ -683,16 +718,38 @@ required Python type name or the XSI type name::
           * py:pytype = 'int'
           * xsi:type = 'integer'
 
+There is a side effect of the type lookup.  If you assign a string value using
+attribute assignment and that string value turns out to be valid for any of
+the type checks, you will end up with the resolved type instead of a
+StringElement::
 
+    >>> root = objectify.Element("root")
+    >>> root.s = "5"
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        s = 5 [IntElement]
+
+You can use the ``DataElement()`` factory to avoid this behaviour and thus
+provide the type of a data element by hand::
+
+    >>> root = objectify.Element("root")
+    >>> root.s = objectify.DataElement(5,  _pytype="str")
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        s = '5' [StringElement]
+          * py:pytype = 'str'
+
+ 
 Defining additional data classes
 --------------------------------
 
-Data classes can either inherit from ``ObjectifiedDataElement`` directly or
-from one of the specialised classes like ``NumberElement`` or ``BoolElement``.
-The numeric types require an initial call to the NumberElement method
-``self._setValueParser(function)`` to set their type conversion funtion
-(string -> numeric Python type).  This call should be placed into the element
-``_init()`` method.
+You can plug additional data classes into objectify that will be used in
+exactly the same way as the predefined types.  Data classes can either inherit
+from ``ObjectifiedDataElement`` directly or from one of the specialised
+classes like ``NumberElement`` or ``BoolElement``.  The numeric types require
+an initial call to the NumberElement method ``self._setValueParser(function)``
+to set their type conversion function (string -> numeric Python type).  This
+call should be placed into the element ``_init()`` method.
 
 The registration of data classes uses the ``PyType`` class::
 
@@ -705,6 +762,16 @@ The registration of data classes uses the ``PyType`` class::
     ...         raise ValueError # or TypeError
 
     >>> xmas_type = objectify.PyType('date', checkChristmasDate, ChristmasDate)
+
+The PyType constructor takes a string type name, an (optional) callable type 
+check and the custom data class.  If a type check is provided it must accept a 
+string as argument and raise ValueError or TypeError if it cannot handle the
+string value.
+
+PyTypes are used if an element carries a ``py:pytype`` attribute denoting its
+data type or, in absence of such an attribute, if the given type check callable
+does not raise a ValueError/TypeError exception when applied to the element
+text. 
 
 If you want, you can also register this type under an XML Schema type name::
 
@@ -804,6 +871,10 @@ What is different from ElementTree?
 
 Such a different Element API obviously implies some side effects to the normal
 behaviour of the rest of the API.
+
+* len(<element>) returns the sibling count, not the number of children of
+  <element>. You can retrieve the number of children with the
+  ``countchildren()`` method. 
 
 * Iteration over elements does not yield the children, but the siblings.  You
   can access all children with the ``iterchildren()`` method on elements or
