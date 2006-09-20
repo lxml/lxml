@@ -6,8 +6,8 @@ import time
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
 
-TEXT  = "some ASCII text" * TREE_FACTOR
-UTEXT = u"some klingon: \F8D2" * TREE_FACTOR
+_TEXT  = "some ASCII text" * TREE_FACTOR
+_UTEXT = u"some klingon: \F8D2" * TREE_FACTOR
 _ATTRIBUTES = {
     '{attr}test1' : _TEXT,
     '{attr}test2' : _TEXT,

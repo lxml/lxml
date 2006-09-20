@@ -19,7 +19,7 @@ comes with the lxml source distribution.  The timings cited below compare lxml
 1.0 (with libxml2 2.6.24), ElementTree 1.2.6 and cElementTree 1.0.5 under
 CPython 2.4.2 on a 1.6GHz AMD64 machine.
 
-.. _`bench.py`:   http://codespeak.net/svn/lxml/trunk/bench.py
+.. _`bench.py`:   http://codespeak.net/svn/lxml/branch/lxml-1.0/bench.py
 
 The ``bench.py`` script runs a number of simple tests on the different
 libraries, using different XML tree configurations: different tree sizes, with

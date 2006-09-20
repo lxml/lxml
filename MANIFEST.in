@@ -1,5 +1,5 @@
 exclude *.py
-include setup.py test.py selftest.py selftest2.py bench.py
+include setup.py test.py selftest.py selftest2.py
 include update-error-constants.py
 include MANIFEST.in version.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
