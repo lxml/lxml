@@ -845,7 +845,7 @@ cdef _registerPyTypes():
                              "int", "unsignedInt", "short", "unsignedShort")
     pytype.register()
 
-    pytype = PyType('long', None, LongElement)
+    pytype = PyType('long', long, LongElement)
     pytype.xmlSchemaTypes = ("long", "unsignedLong")
     pytype.register()
 
