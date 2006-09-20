@@ -17,6 +17,8 @@ Features added
 Bugs fixed
 ----------
 
+* lxml.objectify failed to support long data values (e.g., "123L")
+
 * Error messages from XSLT did not reach ``XSLT.error_log``
 
 * Factories objectify.Element() and objectify.DataElement() were missing
