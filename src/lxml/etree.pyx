@@ -542,7 +542,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         evaluator = XPathDocumentEvaluator(self, namespaces, extensions)
         return evaluator.evaluate(_path, **_variables)
 
-    def xslt(self, _xslt, extensions=None, **_kw):
+    def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
         """Transform this document using other document.
 
         xslt is a tree that should be XSLT
@@ -555,7 +555,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         class directly.
         """
         self._assertHasRoot()
-        style = XSLT(_xslt, extensions)
+        style = XSLT(_xslt, extensions=extensions,
+                     access_control=access_control)
         return style(self, **_kw)
 
     def relaxng(self, relaxng):
