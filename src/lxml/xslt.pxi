@@ -545,10 +545,64 @@ cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
 
 
 ################################################################################
-# EXSLT regexp implementation
+# XSLT PI support
 
-cdef object RE_COMPILE
-RE_COMPILE = re.compile
+cdef object _FIND_PI_HREF
+_FIND_PI_HREF = re.compile('href\s*=\s*["\']([^"\']+)["\']').findall
+
+cdef XPath _findStylesheetByID
+_findStylesheetByID = XPath(
+    "//xsl:stylesheet[@xml:id = $id]",
+    {"xsl":"http://www.w3.org/1999/XSL/Transform"})
+
+cdef class _XSLTProcessingInstruction(PIBase):
+    def parseXSL(self, parser=None):
+        """Try to parse the stylesheet referenced by this PI and return its
+        root node.  If the stylesheet is embedded in the same document
+        (referenced via xml:id), find and return the stylesheet Element.
+
+        The optional ``parser`` keyword argument can be passed to specify the
+        parser used to read from external stylesheet URLs.
+        """
+        cdef _Document result_doc
+        cdef char* c_href
+        cdef xmlAttr* c_attr
+        if self._c_node.content is NULL:
+            raise ValueError, "PI lacks content"
+        hrefs_utf = _FIND_PI_HREF(self._c_node.content)
+        if len(hrefs_utf) != 1:
+            raise ValueError, "malformed PI attributes"
+        href_utf = hrefs_utf[0]
+        c_href = _cstr(href_utf)
+
+        if c_href[0] != c'#':
+            # normal URL, try to parse from it
+            c_href = tree.xmlBuildURI(
+                c_href,
+                tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
+            if c_href is NULL:
+                c_href = _cstr(href_utf)
+            result_doc = _parseDocument(funicode(c_href), parser)
+            return _elementTreeFactory(result_doc, None)
+
+        # ID reference to embedded stylesheet
+        # try XML:ID lookup
+        c_href = c_href+1 # skip leading '#'
+        c_attr = tree.xmlGetID(self._c_node.doc, c_href)
+        if c_attr is not NULL and c_attr.doc is self._c_node.doc:
+            return _elementFactory(self._doc, c_attr.parent)
+
+        # try XPath search
+        root = _findStylesheetByID(self._doc, id=funicode(c_href))
+        if not root:
+            raise ValueError, "reference to non-existing embedded stylesheet"
+        elif len(root) > 1:
+            raise ValueError, "ambiguous reference to embedded stylesheet"
+        return root[0]
+
+
+################################################################################
+# EXSLT regexp implementation
 
 cdef class _ExsltRegExp:
     cdef object _compile_map
@@ -571,7 +625,7 @@ cdef class _ExsltRegExp:
         py_flags = re.UNICODE
         if ignore_case:
             py_flags = py_flags | re.IGNORECASE
-        rexp_compiled = RE_COMPILE(rexp, py_flags)
+        rexp_compiled = re.compile(rexp, py_flags)
         python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
         return rexp_compiled
 

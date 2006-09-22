@@ -210,7 +210,12 @@ cdef extern from "libxml/tree.h":
     cdef char* xmlBufferContent(xmlBuffer* buf)
     cdef int xmlBufferLength(xmlBuffer* buf)
     cdef int xmlKeepBlanksDefault(int val)
-    
+    cdef char* xmlNodeGetBase(xmlDoc* doc, xmlNode* node)
+    cdef char* xmlBuildURI(char* href, char* base)
+
+cdef extern from "libxml/valid.h":
+    cdef xmlAttr* xmlGetID(xmlDoc* doc, char* ID)
+
 cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)

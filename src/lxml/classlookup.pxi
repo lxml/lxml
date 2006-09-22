@@ -120,6 +120,12 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
             return (<ElementDefaultClassLookup>state).comment_class
     elif c_node.type == tree.XML_PI_NODE:
         if state is None:
+            # special case XSLT-PI
+            if c_node.name is not NULL and c_node.content is not NULL:
+                if cstd.strcmp(c_node.name, "xml-stylesheet") == 0:
+                    if cstd.strstr(c_node.content, "text/xsl") is not NULL or \
+                           cstd.strstr(c_node.content, "text/xml") is not NULL:
+                        return _XSLTProcessingInstruction
             return _ProcessingInstruction
         else:
             return (<ElementDefaultClassLookup>state).pi_class
