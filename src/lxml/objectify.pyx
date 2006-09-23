@@ -635,6 +635,8 @@ cdef class StringElement(ObjectifiedDataElement):
     def __mul__(self, other):
         if isinstance(self, StringElement):
             return textOf((<StringElement>self)._c_node) * _numericValueOf(other)
+        elif isinstance(other, StringElement):
+            return _numericValueOf(self) * textOf((<StringElement>other)._c_node)
         else:
             raise TypeError, "invalid types for * operator"
 

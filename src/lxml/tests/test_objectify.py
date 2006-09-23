@@ -273,6 +273,28 @@ class ObjectifyTestCase(HelperTestCase):
         root.none = "test"
         self.assert_(isinstance(root.none, objectify.StringElement))
 
+    def test_type_str_mul(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.none = "test"
+
+        self.assertEquals("test" * 5, root.none * 5)
+        self.assertEquals(5 * "test", 5 * root.none)
+
+        self.assertRaises(TypeError, operator.mul, root.none, "honk")
+        self.assertRaises(TypeError, operator.mul, "honk", root.none)
+
+    def test_type_str_add(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.none = "test"
+
+        s = "toast"
+        self.assertEquals("test" + s, root.none + s)
+        self.assertEquals(s + "test", s + root.none)
+
     def test_data_element_str(self):
         value = objectify.DataElement("test")
         self.assert_(isinstance(value, objectify.StringElement))
