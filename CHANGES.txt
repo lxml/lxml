@@ -13,6 +13,8 @@ Features added
 Bugs fixed
 ----------
 
+* 'integer * objectify.StringElement' operation was not supported
+
 
 1.1.1 (2006-09-21)
 ==================
