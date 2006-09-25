@@ -1195,6 +1195,22 @@ class ETreeXIncludeTestCase(HelperTestCase):
         self.assertEquals(
             'a',
             tree.getroot()[1].tag)
+
+    def test_xinclude_text(self):
+        filename = fileInTestDir('test_broken.xml')
+        root = etree.XML('''\
+        <doc xmlns:xi="http://www.w3.org/2001/XInclude">
+          <xi:include href="%s" parse="text"/>
+        </doc>
+        ''' % filename)
+        old_text = root.text
+        content = open(filename).read()
+        old_tail = root[0].tail
+
+        etree.ElementTree(root).xinclude()
+        self.assertEquals(old_text + content + old_tail,
+                          root.text)
+        
         
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):

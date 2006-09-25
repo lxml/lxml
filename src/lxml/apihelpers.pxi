@@ -233,12 +233,12 @@ cdef _collectText(xmlNode* c_node):
     # check for multiple text nodes
     scount = 0
     text = NULL
-    c_node_cur = c_node
-    while c_node_cur is not NULL and c_node_cur.type == tree.XML_TEXT_NODE:
+    c_node_cur = c_node = _textNodeOrSkip(c_node)
+    while c_node_cur is not NULL:
         if c_node_cur.content[0] != c'\0':
             text = c_node_cur.content
         scount = scount + 1
-        c_node_cur = c_node_cur.next
+        c_node_cur = _textNodeOrSkip(c_node_cur.next)
 
     # handle two most common cases first
     if text is NULL:
@@ -251,9 +251,9 @@ cdef _collectText(xmlNode* c_node):
 
     # the rest is not performance critical anymore
     result = ''
-    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
+    while c_node is not NULL:
         result = result + c_node.content
-        c_node = c_node.next
+        c_node = _textNodeOrSkip(c_node.next)
     return funicode(result)
 
 cdef void _removeText(xmlNode* c_node):
@@ -262,10 +262,10 @@ cdef void _removeText(xmlNode* c_node):
     Start removing at c_node.
     """
     cdef xmlNode* c_next
-    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
-        c_next = c_node.next
+    c_node = _textNodeOrSkip(c_node)
+    while c_node is not NULL:
+        c_next = _textNodeOrSkip(c_node.next)
         tree.xmlUnlinkNode(c_node)
-        # XXX cannot safely free in case of direct text node proxies..
         tree.xmlFreeNode(c_node)
         c_node = c_next
 
@@ -333,6 +333,23 @@ cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.prev
     return NULL
     
+cdef xmlNode* _textNodeOrSkip(xmlNode* c_node):
+    """Return the node if it's a text node.  Skip over ignorable nodes in a
+    series of text nodes.  Return NULL if a non-ignorable node is found.
+
+    This is used to skip over XInclude nodes when collecting adjacent text
+    nodes.
+    """
+    while c_node is not NULL:
+        if c_node.type == tree.XML_TEXT_NODE:
+            return c_node
+        elif c_node.type == tree.XML_XINCLUDE_START or \
+                 c_node.type == tree.XML_XINCLUDE_END:
+            c_node = c_node.next
+        else:
+            return NULL
+    return NULL
+
 cdef xmlNode* _nextElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
     """
@@ -410,8 +427,9 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
     # tail support: look for any text nodes trailing this node and 
     # move them too
-    while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
-        c_next = c_tail.next
+    c_tail = _textNodeOrSkip(c_tail)
+    while c_tail is not NULL:
+        c_next = _textNodeOrSkip(c_tail.next)
         tree.xmlUnlinkNode(c_tail)
         tree.xmlAddNextSibling(c_target, c_tail)
         c_target = c_tail
@@ -421,14 +439,15 @@ cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_new_tail
     # tail copying support: look for any text nodes trailing this node and
     # copy it to the target node
-    while c_tail is not NULL and c_tail.type == tree.XML_TEXT_NODE:
+    c_tail = _textNodeOrSkip(c_tail)
+    while c_tail is not NULL:
         if c_target.doc is not c_tail.doc:
             c_new_tail = tree.xmlDocCopyNode(c_tail, c_target.doc, 0)
         else:
             c_new_tail = tree.xmlCopyNode(c_tail, 0)
         tree.xmlAddNextSibling(c_target, c_new_tail)
         c_target = c_new_tail
-        c_tail = c_tail.next
+        c_tail = _textNodeOrSkip(c_tail.next)
 
 cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.

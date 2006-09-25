@@ -13,6 +13,8 @@ Features added
 Bugs fixed
 ----------
 
+* Show text xincluded between text nodes correctly in .text and .tail
+
 * 'integer * objectify.StringElement' operation was not supported
 
 
