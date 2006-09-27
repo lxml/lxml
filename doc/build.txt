@@ -215,7 +215,11 @@ version numbers::
 
 The ``_a`` part of the library names means that we are linking statically
 against the named library files.  If you want to use dynamic libraries, you
-need to link against the DLL version of the libraries.
+need to link against the DLL version of the libraries.  As `Ashish Kulkarni`_
+notes, you might have to add the standard Windows library ``wsock32.dll`` to
+the above list of libraries to make ``lxml.objectify`` compile.
+
+.. _`Ashish Kulkarni`: 
 
 Now you should be able to pass the ``--static`` option to setup.py and
 everything should work well.  Try calling::
