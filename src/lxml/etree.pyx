@@ -583,7 +583,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Returns True or False, depending on whether validation
         succeeded.
 
-        Note: If you are going to applyt he same XML Schema against
+        Note: If you are going to apply the same XML Schema against
         multiple documents, it is more efficient to use the XMLSchema
         class directly.
         """
