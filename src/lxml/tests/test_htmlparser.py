@@ -51,6 +51,12 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertEqual(self.etree.tostring(element),
                          self.html_str)
 
+    def test_module_HTML_cdata(self):
+        # by default, libxml2 generates CDATA nodes for <script> content
+        html = '<html><head><style>foo</style></head></html>'
+        element = self.etree.HTML(html)
+        self.assertEquals(element[0][0].text, "foo")
+
     def test_module_HTML_access(self):
         element = self.etree.HTML(self.html_str)
         self.assertEqual(element[0][0].tag, 'title')

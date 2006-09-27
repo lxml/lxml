@@ -368,6 +368,9 @@ cdef class _BaseParser:
         self._parser_ctxt = pctxt
         if pctxt is NULL:
             raise ParserError, "Failed to create parser context"
+        if pctxt.sax != NULL:
+            # hard switch-off for CDATA nodes => makes them plain text
+            pctxt.sax.cdataBlock = NULL
         if thread is None or self._parser_type == LXML_ITERPARSE_PARSER:
             # no threading
             self._lockParser   = self.__dummy
