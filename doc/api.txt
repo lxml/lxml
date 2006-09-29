@@ -872,8 +872,8 @@ method to do XML Schema validation::
 xinclude
 --------
 
-Simple XInclude support exists. You can make xinclude statements in a
-document be processed by calling the xinclude() method on a tree::
+Simple XInclude support exists.  You can let lxml process xinclude statements
+in a document by calling the xinclude() method on a tree::
 
   >>> data = StringIO('''\
   ... <doc xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -890,10 +890,10 @@ document be processed by calling the xinclude() method on a tree::
 write_c14n on ElementTree
 -------------------------
 
-The lxml.etree.ElementTree class has a method write_c14n, which takes
-one argument: a file object. This file object will receive an UTF-8
-representation of the canonicalized form of the XML, following the W3C
-C14N recommendation. For example::
+The lxml.etree.ElementTree class has a method write_c14n, which takes a file
+object as argument.  This file object will receive an UTF-8 representation of
+the canonicalized form of the XML, following the W3C C14N recommendation.  For
+example::
 
   >>> f = StringIO('<a><b/></a>')
   >>> tree = etree.parse(f)
