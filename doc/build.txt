@@ -103,7 +103,7 @@ Note that the test script only tests the in-place build (see distutils
 building above), as it searches the ``src`` directory.  You can use the
 following one-step command to trigger an in-place build and test it::
 
-  make clean test
+  make test
 
 To run the ElementTree and cElementTree compatibility tests, make sure
 you have lxml on your PYTHONPATH first, then run::
