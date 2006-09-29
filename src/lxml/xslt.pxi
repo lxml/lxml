@@ -557,14 +557,16 @@ _findStylesheetByID = XPath(
 
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
-        """Try to parse the stylesheet referenced by this PI and return its
-        root node.  If the stylesheet is embedded in the same document
-        (referenced via xml:id), find and return the stylesheet Element.
+        """Try to parse the stylesheet referenced by this PI and return an
+        ElementTree for it.  If the stylesheet is embedded in the same
+        document (referenced via xml:id), find and return an ElementTree for
+        the stylesheet Element.
 
         The optional ``parser`` keyword argument can be passed to specify the
         parser used to read from external stylesheet URLs.
         """
         cdef _Document result_doc
+        cdef _Element  result_node
         cdef char* c_href
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
@@ -590,7 +592,8 @@ cdef class _XSLTProcessingInstruction(PIBase):
         c_href = c_href+1 # skip leading '#'
         c_attr = tree.xmlGetID(self._c_node.doc, c_href)
         if c_attr is not NULL and c_attr.doc is self._c_node.doc:
-            return _elementFactory(self._doc, c_attr.parent)
+            result_node = _elementFactory(self._doc, c_attr.parent)
+            return _elementTreeFactory(result_node._doc, result_node)
 
         # try XPath search
         root = _findStylesheetByID(self._doc, id=funicode(c_href))
@@ -598,7 +601,8 @@ cdef class _XSLTProcessingInstruction(PIBase):
             raise ValueError, "reference to non-existing embedded stylesheet"
         elif len(root) > 1:
             raise ValueError, "ambiguous reference to embedded stylesheet"
-        return root[0]
+        result_node = root[0]
+        return _elementTreeFactory(result_node._doc, result_node)
 
 
 ################################################################################

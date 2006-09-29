@@ -574,6 +574,19 @@ class ETreeXSLTTestCase(HelperTestCase):
         root[:] = result.getroot()[:]
         del root # segfaulted before
         
+    def test_xslt_pi(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="%s"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''' % fileInTestDir("test1.xslt"))
+
+        style_root = tree.getroot().getprevious().parseXSL().getroot()
+        self.assertEquals("{http://www.w3.org/1999/XSL/Transform}stylesheet",
+                          style_root.tag)
+        
     def test_xslt_pi_embedded_xmlid(self):
         # test xml:id dictionary lookup mechanism
         tree = self.parse('''\
@@ -591,11 +604,11 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:stylesheet>
 </a>''')
 
-        style = tree.getroot().getprevious().parseXSL()
+        style_root = tree.getroot().getprevious().parseXSL().getroot()
         self.assertEquals("{http://www.w3.org/1999/XSL/Transform}stylesheet",
-                          style.tag)
+                          style_root.tag)
 
-        st = etree.XSLT(style)
+        st = etree.XSLT(style_root)
         res = st.apply(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
@@ -625,11 +638,11 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         tree.getroot().append(style.getroot())
 
-        style = tree.getroot().getprevious().parseXSL()
+        style_root = tree.getroot().getprevious().parseXSL().getroot()
         self.assertEquals("{http://www.w3.org/1999/XSL/Transform}stylesheet",
-                          style.tag)
+                          style_root.tag)
 
-        st = etree.XSLT(style)
+        st = etree.XSLT(style_root)
         res = st.apply(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
