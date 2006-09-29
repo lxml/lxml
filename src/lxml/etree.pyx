@@ -604,7 +604,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
         self._assertHasRoot()
-        result = xinclude.xmlXIncludeProcessTree(self._context_node._c_node)
+        if self._context_node._doc._parser != None:
+            result = xinclude.xmlXIncludeProcessTreeFlags(
+                self._context_node._c_node,
+                self._context_node._doc._parser._parse_options)
+        else:
+            result = xinclude.xmlXIncludeProcessTree(
+                self._context_node._c_node)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
 

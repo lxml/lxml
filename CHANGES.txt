@@ -8,6 +8,8 @@ current
 Features added
 --------------
 
+* Reuse original parser flags for XInclude
+
 * Simplified support for handling XSLT processing instructions
 
 Bugs fixed
