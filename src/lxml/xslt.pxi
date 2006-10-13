@@ -582,9 +582,12 @@ cdef class _XSLTProcessingInstruction(PIBase):
             c_href = tree.xmlBuildURI(
                 c_href,
                 tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
-            if c_href is NULL:
-                c_href = _cstr(href_utf)
-            result_doc = _parseDocument(funicode(c_href), parser)
+            if c_href is not NULL:
+                href = funicode(c_href)
+                tree.xmlFree(c_href)
+            else:
+                href = funicode(_cstr(href_utf))
+            result_doc = _parseDocument(href, parser)
             return _elementTreeFactory(result_doc, None)
 
         # ID reference to embedded stylesheet
