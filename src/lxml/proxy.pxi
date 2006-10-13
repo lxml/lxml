@@ -104,6 +104,7 @@ cdef void attemptDeallocation(xmlNode* c_node):
     c_top = getDeallocationTop(c_node)
     if c_top is not NULL:
         #print "freeing:", c_top.name
+        _removeText(c_top.next) # tail
         tree.xmlFreeNode(c_top)
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node):
