@@ -21,6 +21,10 @@ cdef public _Element elementFactory(_Document doc, xmlNode* c_node):
         raise TypeError
     return _elementFactory(doc, c_node)
 
+cdef public _Element makeElement(tag, _Document doc, parser,
+                                 text, tail, attrib, nsmap):
+    return _makeElement(tag, NULL, doc, parser, text, tail, attrib, nsmap, None)
+
 cdef public void setElementClassLookupFunction(
     _element_class_lookup_function function, state):
     _setElementClassLookupFunction(function, state)

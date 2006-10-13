@@ -61,7 +61,12 @@ cdef extern from "etree.h":
     # create an ElementTree subclass for an Element
     cdef _ElementTree newElementTree(_NodeBase context_node, object subclass)
 
-    # deep copy a node to include in in the Document
+    # create a new Element for an existing or new document (doc = None)
+    # builds Python object after setting text, tail, namespaces and attributes
+    cdef _Element makeElement(tag, _Document doc, parser,
+                              text, tail, attrib, nsmap)
+
+    # deep copy a node to include it in the Document
     cdef _Element deepcopyNodeToDocument(_Document doc, tree.xmlNode* c_root)
 
     # set the internal lookup function for Element/Comment/PI classes

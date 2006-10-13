@@ -8,6 +8,9 @@ current
 Features added
 --------------
 
+* New C-API function makeElement() to create new elements with text,
+  tail, attributes and namespaces
+
 * Reuse original parser flags for XInclude
 
 * Simplified support for handling XSLT processing instructions

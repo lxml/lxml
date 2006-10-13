@@ -81,8 +81,10 @@ cdef _NodeBase _rootNodeOf(object input):
         return None
 
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
-                           _BaseParser parser, attrib, nsmap, extra_attrs):
-    """Create a new element and initialize namespaces and attributes.
+                           _BaseParser parser, text, tail, attrib, nsmap,
+                           extra_attrs):
+    """Create a new element and initialize text content, namespaces and
+    attributes.
 
     This helper function will reuse as much of the existing document as
     possible:
@@ -102,13 +104,52 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     elif c_doc is NULL:
         c_doc = _newDoc()
     c_node = _createElement(c_doc, name_utf)
-    if doc is None:
-        tree.xmlDocSetRootElement(c_doc, c_node)
-        doc = _documentFactory(c_doc, parser)
-    # add namespaces to node if necessary
-    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
-    return _elementFactory(doc, c_node)
+    try:
+        if text is not None:
+            _setNodeText(c_node, text)
+        if tail is not None:
+            _setTailText(c_node, tail)
+        if doc is None:
+            tree.xmlDocSetRootElement(c_doc, c_node)
+            doc = _documentFactory(c_doc, parser)
+        # add namespaces to node if necessary
+        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+        _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+        return _elementFactory(doc, c_node)
+    except:
+        # free allocated c_node/c_doc unless Python does it for us
+        if c_node.doc is not c_doc:
+            # node not yet in document => will not be freed by document
+            if tail is not None:
+                _removeText(c_node.next) # tail
+            tree.xmlFreeNode(c_node)
+        if doc is None:
+            # c_doc will not be freed by doc
+            tree.xmlFreeDoc(c_doc)
+        raise
+
+cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
+    """Initialise the attributes of an element node.
+    """
+    cdef xmlNs* c_ns
+    # 'extra' is not checked here (expected to be a keyword dict)
+    if attrib is not None and not hasattr(attrib, 'items'):
+        raise TypeError, "Invalid attribute dictionary: %s" % type(attrib)
+    if extra is not None and extra:
+        if attrib is None:
+            attrib = extra
+        else:
+            attrib.update(extra)
+    if attrib:
+        for name, value in attrib.items():
+            attr_ns_utf, attr_name_utf = _getNsTag(name)
+            value_utf = _utf8(value)
+            if attr_ns_utf is None:
+                tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
+            else:
+                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf))
+                tree.xmlNewNsProp(c_node, c_ns,
+                                  _cstr(attr_name_utf), _cstr(value_utf))
 
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value

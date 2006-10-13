@@ -1153,7 +1153,8 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         """Creates a new element associated with the same document.
         """
-        return _makeElement(_tag, NULL, self._doc, None, attrib, nsmap, _extra)
+        return _makeElement(_tag, NULL, self._doc, None, None, None,
+                            attrib, nsmap, _extra)
 
     def find(self, path):
         """Finds the first matching subelement, by tag name or path.
@@ -1565,35 +1566,15 @@ cdef xmlNode* _createPI(xmlDoc* c_doc, char* target, char* text):
     c_node = tree.xmlNewDocPI(c_doc, target, text)
     return c_node
 
-cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
-    cdef xmlNs* c_ns
-    # 'extra' is not checked here (expected to be a keyword dict)
-    if attrib is not None and not hasattr(attrib, 'items'):
-        raise TypeError, "Invalid attribute dictionary: %s" % type(attrib)
-    if extra:
-        if attrib is None:
-            attrib = extra
-        else:
-            attrib.update(extra)
-    if attrib:
-        for name, value in attrib.items():
-            attr_ns_utf, attr_name_utf = _getNsTag(name)
-            value_utf = _utf8(value)
-            if attr_ns_utf is None:
-                tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
-            else:
-                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf))
-                tree.xmlNewNsProp(c_node, c_ns,
-                                  _cstr(attr_name_utf), _cstr(value_utf))
-
-
 # module-level API for ElementTree
 
 def Element(_tag, attrib=None, nsmap=None, **_extra):
-    """Element factory. This function returns an object implementing the Element interface.
+    """Element factory.  This function returns an object implementing the
+    Element interface.
     """
     ### also look at _Element.makeelement() and _BaseParser.makeelement() ###
-    return _makeElement(_tag, NULL, None, None, attrib, nsmap, _extra)
+    return _makeElement(_tag, NULL, None, None, None, None,
+                        attrib, nsmap, _extra)
 
 def Comment(text=None):
     """Comment element factory. This factory function creates a special element that will

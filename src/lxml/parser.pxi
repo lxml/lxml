@@ -420,7 +420,8 @@ cdef class _BaseParser:
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         """Creates a new element associated with this parser.
         """
-        return _makeElement(_tag, NULL, None, self, attrib, nsmap, _extra)
+        return _makeElement(_tag, NULL, None, self, None, None,
+                            attrib, nsmap, _extra)
 
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
         """Parse unicode document, share dictionary if possible.
