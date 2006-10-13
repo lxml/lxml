@@ -1461,17 +1461,16 @@ def setDefaultParser(new_parser = None):
 
     Call without arguments to reset to the original parser.
     """
-    global parser, _makeelement
+    global parser
     if new_parser is None:
         parser = __DEFAULT_PARSER
     elif isinstance(new_parser, etree.XMLParser):
         parser = new_parser
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
-    _makeelement = parser.makeelement
 
-cdef object _makeelement
-_makeelement = parser.makeelement
+cdef _Element _makeElement(tag, text, attrib, nsmap):
+    return cetree.makeElement(tag, None, parser, text, None, attrib, nsmap)
 
 ################################################################################
 # Module level factory functions
@@ -1501,7 +1500,7 @@ def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
     if _pytype is None:
         _pytype = TREE_PYTYPE
     _attributes[PYTYPE_ATTRIBUTE] = _pytype
-    return _makeelement(_tag, _attributes, nsmap)
+    return _makeElement(_tag, None, _attributes, nsmap)
 
 def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
                 **_attributes):
@@ -1549,6 +1548,4 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
     if _pytype is not None:
         python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
-    element = _makeelement("value", _attributes, nsmap)
-    cetree.setNodeText(element._c_node, strval)
-    return element
+    return _makeElement("value", strval, _attributes, nsmap)
