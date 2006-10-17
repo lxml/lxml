@@ -18,6 +18,8 @@ Features added
 Bugs fixed
 ----------
 
+* Copying Comments and ProcessingInstructions failed
+
 * Memory leak for external URLs in _XSLTProcessingInstruction.parseXSL()
 
 * Memory leak when garbage collecting tailed root elements

@@ -8,7 +8,7 @@ test_elementtree
 """
 
 
-import unittest, doctest
+import unittest, doctest, copy
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize
@@ -81,6 +81,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = XML("<test><?mypi my test ?></test>")
         self.assertEquals(root[0].target, "mypi")
         self.assertEquals(root[0].text, "my test ")
+
+    def test_deepcopy_pi(self):
+        # previously caused a crash
+        ProcessingInstruction = self.etree.ProcessingInstruction
+        
+        a = ProcessingInstruction("PI", "ONE")
+        b = copy.deepcopy(a)
+        b.text = "ANOTHER"
+
+        self.assertEquals('ONE',     a.text)
+        self.assertEquals('ANOTHER', b.text)
 
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values
