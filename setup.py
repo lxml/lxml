@@ -65,6 +65,7 @@ def fix_alphabeta(version, alphabeta):
 
 src_dir = os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 version = open(os.path.join(src_dir, 'version.txt')).read().strip()
+branch_version = version[:3]
 
 try:
     svn_entries = open(os.path.join(src_dir, '.svn', 'entries')).read()
@@ -190,7 +191,18 @@ safe and convenient access to these libraries using the ElementTree API.
 It extends the ElementTree API significantly to offer support for XPath,
 RelaxNG, XML Schema, XSLT, C14N and much more.
 
-""" + changelog_text,
+In case you want to use the current in-development version of lxml, you can
+get it from the subversion repository at http://codespeak.net/svn/lxml/trunk .
+Running ``easy_install lxml==dev`` will install it from
+http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
+
+Current bug fixes for the stable version are at
+http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
+Running ``easy_install lxml==lxml-%(branch_version)sbugfix`` will install this
+version from
+http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
+
+""" % {"branch_version":branch_version} + changelog_text,
 
     classifiers = [
     dev_status,
