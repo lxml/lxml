@@ -242,8 +242,8 @@ does not.  However, if the unicode string declares an XML encoding internally
 most likely not the real encoding used in Python unicode.  The same is true
 for HTML unicode strings that contain charset meta tags, although the problems
 may be more subtle here.  The libxml2 HTML parser may not be able to parse the
-meta tags in broken HTML and simply ignore them, so even if parsing succeeds,
-later handling may still fail with character encoding errors.
+meta tags in broken HTML and may end up ignoring them, so even if parsing
+succeeds, later handling may still fail with character encoding errors.
 
 Note that Python uses different encodings for unicode on different platforms,
 so even specifying the real internal unicode encoding is not portable between
