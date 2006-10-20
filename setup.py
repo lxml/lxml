@@ -198,7 +198,7 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
 
 Current bug fixes for the stable version are at
 http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
-Running ``easy_install lxml==lxml-%(branch_version)sbugfix`` will install this
+Running ``easy_install lxml==%(branch_version)sbugfix`` will install this
 version from
 http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
 
