@@ -192,9 +192,8 @@ the default parser, then with a parametrized one::
 
 HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
 argument that the HTMLParser sets by default.  It lets libxml2 try its best to
-return something usable without raising an exception.  Note that this
-functionality depends entirely on libxml2.  You should use libxml2 version
-2.6.21 or newer to take advantage of this feature::
+return something usable without raising an exception.  You should use libxml2
+version 2.6.21 or newer to take advantage of this feature::
 
   >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
 
@@ -210,6 +209,14 @@ ElementTree::
   >>> html = etree.HTML(broken_html)
   >>> print etree.tostring(html)
   <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+
+The support for parsing broken HTML depends entirely on libxml2's recovery
+algorithm.  It is *not* the fault of lxml if you find documents that are so
+heavily broken that the parser cannot handle them.  There is also no guarantee
+that the resulting tree will contain all data from the original document.  The
+parser may have to drop seriously broken parts when struggling to keep
+parsing.  Especially misplaced meta tags can suffer from this, which may lead
+to encoding problems.
 
 The use of the libxml2 parsers makes some additional information available at
 the API level.  Currently, ElementTree objects can access the DOCTYPE

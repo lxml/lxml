@@ -240,10 +240,14 @@ lxml can read Python unicode strings and even tries to support them if libxml2
 does not.  However, if the unicode string declares an XML encoding internally
 (``<?xml encoding="..."?>``), parsing is bound to fail, as this encoding is
 most likely not the real encoding used in Python unicode.  The same is true
-for HTML unicode strings that contain charset meta tags.  Note that Python
-uses different encodings for unicode on different platforms, so even
-specifying the real internal unicode encoding is not portable between Python
-interpreters.  Don't do it.
+for HTML unicode strings that contain charset meta tags, although the problems
+may be more subtle here.  The libxml2 HTML parser may not be able to parse the
+meta tags in broken HTML and simply ignore them, so even if parsing succeeds,
+later handling may still fail with character encoding errors.
+
+Note that Python uses different encodings for unicode on different platforms,
+so even specifying the real internal unicode encoding is not portable between
+Python interpreters.  Don't do it.
 
 Python unicode strings with XML data or HTML data that carry encoding
 information are broken.  lxml will not parse them.  You must provide parsable
