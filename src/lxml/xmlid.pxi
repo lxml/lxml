@@ -113,12 +113,9 @@ cdef class _IDDict:
         return repr(dict(self))
 
     def keys(self):
-        keys = self._keys
-        if keys is not None:
-            return python.PySequence_List(keys)
-        keys = self._build_keys()
-        self._keys = python.PySequence_Tuple(keys)
-        return keys
+        if self._keys is None:
+            self._keys = self._build_keys()
+        return self._keys[:]
 
     def __iter__(self):
         keys = self._keys
@@ -142,12 +139,9 @@ cdef class _IDDict:
         return keys
 
     def items(self):
-        items = self._items
-        if items is not None:
-            return python.PySequence_List(items)
-        items = self._build_items()
-        self._items = python.PySequence_Tuple(items)
-        return items
+        if self._items is None:
+            self._items = self._build_items()
+        return self._items[:]
 
     def iteritems(self):
         items = self._items
@@ -169,6 +163,7 @@ cdef class _IDDict:
         values = []
         for item in items:
             value = python.PyTuple_GET_ITEM(item, 1)
+            python.Py_INCREF(value)
             python.PyList_Append(values, value)
         return values
 
