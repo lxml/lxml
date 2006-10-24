@@ -1309,10 +1309,7 @@ cdef class _Attrib:
 
     # ACCESSORS
     def __repr__(self):
-        result = {}
-        for key, value in self.items():
-            result[key] = value
-        return repr(result)
+        return repr(dict( self.items() ))
     
     def __getitem__(self, key):
         result = _getAttributeValue(self._element, key, None)
