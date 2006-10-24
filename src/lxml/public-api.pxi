@@ -80,6 +80,9 @@ cdef public object attributeValueFromNsName(xmlNode* c_element,
 cdef public object getAttributeValue(_NodeBase element, key, default):
     return _getAttributeValue(element, key, default)
 
+cdef public object iterattributes(_Element element, int keysvalues):
+    return _attributeIteratorFactory(element, keysvalues)
+
 cdef public int setAttributeValue(_NodeBase element, key, value) except -1:
     return _setAttributeValue(element, key, value)
 

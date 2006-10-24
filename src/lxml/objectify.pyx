@@ -941,7 +941,7 @@ cdef object _dump(_Element element, int indent):
                                    value, type(element).__name__)
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = "{%s}" % PYTYPE_NAMESPACE
-    for name, value in element.items():
+    for name, value in cetree.iterattributes(element, 3):
         if name == PYTYPE_ATTRIBUTE and value == TREE_PYTYPE:
             continue
         name = name.replace(xsi_ns, 'xsi:').replace(pytype_ns, 'py:')

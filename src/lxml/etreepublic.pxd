@@ -103,6 +103,10 @@ cdef extern from "etree.h":
     # return the value of attribute "{ns}name", or the default value
     cdef object getAttributeValue(_NodeBase element, key, default)
 
+    # return an iterator over attribute names (1), values (2) or items (3)
+    # attributes must not be removed during iteration!
+    cdef object iterattributes(_Element element, int keysvalues)
+
     # set an attribute value on an element
     # on failure, sets an exception and returns -1
     cdef int setAttributeValue(_NodeBase element, key, value) except -1

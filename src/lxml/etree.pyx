@@ -24,6 +24,9 @@ id = __builtin__.id
 cdef object super
 super = __builtin__.super
 
+cdef object StopIteration
+StopIteration = __builtin__.StopIteration
+
 del __builtin__
 
 cdef object _elementpath
@@ -40,6 +43,9 @@ try:
     import thread
 except ImportError:
     pass
+
+cdef object ITER_EMPTY
+ITER_EMPTY = iter(())
 
 # the rules
 # any libxml C argument/variable is prefixed with c_
@@ -1053,13 +1059,13 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         """Gets a list of attribute names. The names are returned in an arbitrary
         order (just like for an ordinary Python dictionary).
         """
-        return self.attrib.keys()
+        return python.PySequence_List( _attributeIteratorFactory(self, 1) )
 
     def items(self):
         """Gets element attributes, as a sequence. The attributes are returned in
         an arbitrary order.
         """
-        return self.attrib.items()
+        return python.PySequence_List( _attributeIteratorFactory(self, 3) )
 
     def getchildren(self):
         """Returns all subelements. The elements are returned in document order.
@@ -1339,17 +1345,8 @@ cdef class _Attrib:
         return _getAttributeValue(self._element, key, default)
 
     def keys(self):
-        cdef xmlNode* c_node
-        cdef xmlAttr* c_attr
-        c_node = self._element._c_node
-        c_attr = c_node.properties
-        result = []
-        while c_attr is not NULL:
-            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                python.PyList_Append(
-                    result, _namespacedName(<xmlNode*>c_attr))
-            c_attr = c_attr.next
-        return result
+        return python.PySequence_List(
+            _attributeIteratorFactory(self._element, 1) )
 
     def __iter__(self):
         return iter(self.keys())
@@ -1358,35 +1355,15 @@ cdef class _Attrib:
         return iter(self.keys())
 
     def values(self):
-        cdef xmlNode* c_node
-        cdef xmlAttr* c_attr
-        c_node = self._element._c_node
-        c_attr = c_node.properties
-        result = []
-        while c_attr is not NULL:
-            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                python.PyList_Append(
-                    result, _attributeValue(c_node, c_attr))
-            c_attr = c_attr.next
-        return result
+        return python.PySequence_List(
+            _attributeIteratorFactory(self._element, 2) )
 
     def itervalues(self):
         return iter(self.values())
 
     def items(self):
-        result = []
-        cdef xmlNode* c_node
-        cdef xmlAttr* c_attr
-        c_node = self._element._c_node
-        c_attr = c_node.properties
-        while c_attr is not NULL:
-            if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                python.PyList_Append(result, (
-                    _namespacedName(<xmlNode*>c_attr),
-                    _attributeValue(c_node, c_attr)
-                    ))
-            c_attr = c_attr.next
-        return result
+        return python.PySequence_List(
+            _attributeIteratorFactory(self._element, 3) )
 
     def iteritems(self):
         return iter(self.items())
@@ -1413,6 +1390,47 @@ cdef class _Attrib:
         else:
             tree.xmlFree(c_result)
             return 1
+
+cdef class _AttribIterator:
+    """Attribute iterator - for internal use only!
+    """
+    # XML attributes must not be removed while running!
+    cdef _Element _node
+    cdef xmlAttr* _c_attr
+    cdef int _keysvalues # 1 - keys, 2 - values, 3 - items (key, value)
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        cdef xmlAttr* c_attr
+        if self._node is None:
+            raise StopIteration
+        c_attr = self._c_attr
+        while c_attr is not NULL and c_attr.type != tree.XML_ATTRIBUTE_NODE:
+            c_attr = c_attr.next
+        if c_attr is NULL:
+            self._node = None
+            raise StopIteration
+
+        self._c_attr = c_attr.next
+        if self._keysvalues == 1:
+            return _namespacedName(<xmlNode*>c_attr)
+        elif self._keysvalues == 2:
+            return _attributeValue(self._node._c_node, c_attr)
+        else:
+            return (_namespacedName(<xmlNode*>c_attr),
+                    _attributeValue(self._node._c_node, c_attr))
+
+cdef object _attributeIteratorFactory(_Element element, int keysvalues):
+    cdef _AttribIterator attribs
+    if element._c_node.properties is NULL:
+        return ITER_EMPTY
+    attribs = _AttribIterator()
+    attribs._node = element
+    attribs._c_attr = element._c_node.properties
+    attribs._keysvalues = keysvalues
+    return attribs
+
 
 ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
