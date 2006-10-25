@@ -2242,17 +2242,6 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals('<a><X/></a>',
                           tostring(b).replace(' ', ''))
 
-    def test_deepcopy_comment(self):
-        # previously caused a crash
-        Comment = self.etree.Comment
-        
-        a = Comment("ONE")
-        b = copy.deepcopy(a)
-        b.text = "ANOTHER"
-
-        self.assertEquals('ONE',     a.text)
-        self.assertEquals('ANOTHER', b.text)
-
     def test_shallowcopy(self):
         Element = self.etree.Element
         

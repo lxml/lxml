@@ -93,6 +93,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals('ONE',     a.text)
         self.assertEquals('ANOTHER', b.text)
 
+    def test_deepcopy_comment(self):
+        # previously caused a crash
+        # not supported by ET!
+        Comment = self.etree.Comment
+        
+        a = Comment("ONE")
+        b = copy.deepcopy(a)
+        b.text = "ANOTHER"
+
+        self.assertEquals('ONE',     a.text)
+        self.assertEquals('ANOTHER', b.text)
+
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values
         # lxml.etree allows only strings
