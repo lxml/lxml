@@ -18,6 +18,9 @@ Features added
 Bugs fixed
 ----------
 
+* Open files and XML strings returned by Python resolvers were not
+  closed/freed
+
 * Copying Comments and ProcessingInstructions failed
 
 * Memory leak for external URLs in _XSLTProcessingInstruction.parseXSL()

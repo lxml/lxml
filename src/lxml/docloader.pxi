@@ -98,3 +98,7 @@ cdef class _ResolverContext(_ExceptionContext):
         _ExceptionContext.__init__(self)
         self._resolvers = resolvers
         self._storage = _TempStore()
+
+    cdef void clear(self):
+        _ExceptionContext.clear(self)
+        self._storage.clear()

@@ -461,6 +461,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None, recover)
         finally:
+            self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 
@@ -492,6 +493,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None, recover)
         finally:
+            self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 
@@ -519,6 +521,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, c_filename, recover)
         finally:
+            self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 
@@ -542,6 +545,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, filename, recover)
         finally:
+            self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 

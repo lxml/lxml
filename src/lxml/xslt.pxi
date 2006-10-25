@@ -425,23 +425,26 @@ cdef class XSLT:
         _destroyFakeDoc(input_doc._c_doc, c_doc)
 
         self._error_log.disconnect()
-        if self._xslt_resolver_context._has_raised():
-            if c_result is not NULL:
-                tree.xmlFreeDoc(c_result)
-            self._xslt_resolver_context._raise_if_stored()
+        try:
+            if self._xslt_resolver_context._has_raised():
+                if c_result is not NULL:
+                    tree.xmlFreeDoc(c_result)
+                self._xslt_resolver_context._raise_if_stored()
 
-        if c_result is NULL:
-            error = self._error_log.last_error
-            if error is not None and error.message:
-                if error.line >= 0:
-                    message = "%s, line %d" % (error.message, error.line)
+            if c_result is NULL:
+                error = self._error_log.last_error
+                if error is not None and error.message:
+                    if error.line >= 0:
+                        message = "%s, line %d" % (error.message, error.line)
+                    else:
+                        message = error.message
+                elif error.line >= 0:
+                    message = "Error applying stylesheet, line %d" % error.line
                 else:
-                    message = error.message
-            elif error.line >= 0:
-                message = "Error applying stylesheet, line %d" % error.line
-            else:
-                message = "Error applying stylesheet"
-            raise XSLTApplyError, message
+                    message = "Error applying stylesheet"
+                raise XSLTApplyError, message
+        finally:
+            self._xslt_resolver_context.clear()
 
         result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
