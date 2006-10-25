@@ -21,6 +21,8 @@ Bugs fixed
 * Open files and XML strings returned by Python resolvers were not
   closed/freed
 
+* Crash in the IDDict returned by XMLDTDID
+
 * Copying Comments and ProcessingInstructions failed
 
 * Memory leak for external URLs in _XSLTProcessingInstruction.parseXSL()
