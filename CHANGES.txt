@@ -8,6 +8,8 @@ current
 Features added
 --------------
 
+* Source distribution now ships with a patched Pyrex
+
 * New C-API function makeElement() to create new elements with text,
   tail, attributes and namespaces
 
