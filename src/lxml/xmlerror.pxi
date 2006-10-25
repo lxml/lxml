@@ -134,7 +134,10 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return iter(self._entries)
 
     def __repr__(self):
-        return '\n'.join(map(repr, self._entries))
+        l = []
+        for entry in self._entries:
+            python.PyList_Append(l, repr(entry))
+        return '\n'.join(l)
 
     def __getitem__(self, index):
         return self._entries[index]

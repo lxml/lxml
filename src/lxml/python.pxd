@@ -93,5 +93,6 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef object getattr(object obj, object attr)
     cdef int callable(object obj)
     cdef object str(object obj)
+    cdef object repr(object obj)
     cdef object iter(object obj)
     cdef char* _cstr(object s)

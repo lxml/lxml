@@ -1,7 +1,7 @@
 cimport tree, python
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport isinstance, issubclass, hasattr, getattr, callable
-from python cimport iter, str, _cstr, _isString, Py_ssize_t
+from python cimport iter, repr, str, _cstr, _isString, Py_ssize_t
 cimport xpath
 cimport xinclude
 cimport c14n

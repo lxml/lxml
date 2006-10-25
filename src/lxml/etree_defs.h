@@ -34,6 +34,7 @@
 #define getattr(o,a)    PyObject_GetAttr(o,a)
 #define callable(o)     PyCallable_Check(o)
 #define str(o)          PyObject_Str(o)
+#define repr(o)         PyObject_Repr(o)
 #define iter(o)         PyObject_GetIter(o)
 #define _cstr(s)        PyString_AS_STRING(s)
 
