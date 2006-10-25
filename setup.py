@@ -100,6 +100,8 @@ print "Building lxml version", svn_version
 
 # setup etree extension building
 
+sys.path.insert(0, os.path.join(src_dir, 'src')) # in case we use a local Pyrex
+
 try:
     from Pyrex.Distutils import build_ext as build_pyx
     source_extension = ".pyx"
