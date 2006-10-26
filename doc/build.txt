@@ -42,6 +42,12 @@ be an lxml developer, you do need a working Pyrex installation.
 
   http://codespeak.net/svn/lxml/pyrex/
 
+  Since version 1.1.2, the lxml source distribution includes this Pyrex
+  version.  It will be used if the 'pyrex' directory is available in the lxml
+  root directory.  If you install from SVN or delete this directory from the
+  unpacked distribution directory, the normally installed Pyrex version will
+  be used.
+
 
 Subversion
 ----------
