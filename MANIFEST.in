@@ -8,5 +8,6 @@ recursive-include src/lxml etree.c objectify.c etree.h etree_defs.h
 recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd
 recursive-include benchmark *.py
 recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc
+recursive-include pyrex/Pyrex *.py
 include doc/mkhtml.py doc/rest2html.py
 exclude doc/pyrex.txt src/lxml/etree.pxi
