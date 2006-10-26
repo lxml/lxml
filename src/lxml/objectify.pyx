@@ -1,7 +1,8 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport _ElementIterator, ElementClassLookup
 from etreepublic cimport elementFactory, import_etree, textOf
-from python cimport isinstance, issubclass, callable, getattr, _cstr, Py_ssize_t
+from python cimport str, repr, isinstance, issubclass, callable, getattr
+from python cimport _cstr, Py_ssize_t
 cimport etreepublic as cetree
 cimport python
 cimport tree
@@ -27,8 +28,6 @@ cdef object float
 float = __builtin__.float
 cdef object bool
 bool = __builtin__.bool
-cdef object str
-str = __builtin__.str
 cdef object pow
 pow = __builtin__.pow
 cdef object abs
@@ -516,7 +515,7 @@ cdef class NumberElement(ObjectifiedDataElement):
         return float(textOf(self._c_node))
 
     def __str__(self):
-        return str(self._type(textOf(self._c_node)))
+        return repr(self._type(textOf(self._c_node)))
 
 #    def __oct__(self):
 #    def __hex__(self):
@@ -931,13 +930,18 @@ def dump(_Element element not None):
 
 cdef object _dump(_Element element, int indent):
     indentstr = "    " * indent
-    if hasattr(element, "pyval"):
-        value = element.pyval
+    if isinstance(element, StringElement):
+        value = repr(textOf(element._c_node))
+    elif isinstance(element, ObjectifiedDataElement):
+        value = str(element)
     else:
         value = textOf(element._c_node)
-        if value and not value.strip():
-            value = None
-    result = "%s%s = %r [%s]\n" % (indentstr, element.tag,
+        if value is not None:
+            if python.PyString_GET_SIZE( value.strip() ) == 0:
+                value = None
+            else:
+                value = repr(value)
+    result = "%s%s = %s [%s]\n" % (indentstr, element.tag,
                                    value, type(element).__name__)
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = "{%s}" % PYTYPE_NAMESPACE
