@@ -96,7 +96,7 @@ class BenchMarkBase(object):
 
     SEARCH_TAG = "{cdefg}a00001"
 
-    def __init__(self, etree):
+    def __init__(self, etree, etree_parser=None):
         self.etree = etree
         libname = etree.__name__.split('.')[-1]
         self.lib_name = self._LIB_NAME_MAP.get(libname, libname)
@@ -104,8 +104,8 @@ class BenchMarkBase(object):
         if libname == 'etree':
             deepcopy = copy.deepcopy
             def set_property(root, fname):
-                setattr(self, fname, lambda : deepcopy(root))
                 xml = self._serialize_tree(root)
+                setattr(self, fname, lambda : etree.XML(xml, etree_parser))
                 setattr(self, fname + '_xml', lambda : xml)
         else:
             def set_property(root, fname):
@@ -184,7 +184,7 @@ class BenchMarkBase(object):
         t = current_time()
         root = self.etree.Element('{abc}rootnode')
         for ch1 in atoz:
-            el = SubElement(root, "{bcd}"+ch1*5, attributes)
+            el = SubElement(root, "{abc}"+ch1*5, attributes)
             el.text = text
             for ch2 in atoz:
                 for i in range(20 * TREE_FACTOR):
@@ -201,7 +201,7 @@ class BenchMarkBase(object):
         root = self.etree.Element('{abc}rootnode')
         for ch1 in atoz:
             for i in range(20 * TREE_FACTOR):
-                el = SubElement(root, "{bcd}"+ch1*5, attributes)
+                el = SubElement(root, "{abc}"+ch1*5, attributes)
                 el.text = text
                 for ch2 in atoz:
                     SubElement(el, "{cdefg}%s%05d" % (ch2, i))
@@ -232,10 +232,10 @@ class BenchMarkBase(object):
         root = self.etree.Element('{abc}rootnode')
         children = [root]
         for ch1 in self.atoz:
-            el = SubElement(root, "{bcd}"+ch1*5, attributes)
+            el = SubElement(root, "{abc}"+ch1*5, attributes)
             el.text = text
             SubElement(el, "{cdefg}a00001", attributes)
-            SubElement(el, "{cdefg}a00002", attributes)
+            SubElement(el, "{cdefg}z00000", attributes)
         t = current_time() - t
         return (root, t)
 
