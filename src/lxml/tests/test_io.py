@@ -25,22 +25,24 @@ class IOTestCaseBase(unittest.TestCase):
     def test_write_filename(self):
         # (c)ElementTree  supports filename strings as write argument
         
-        filename = tempfile.mktemp(suffix=".xml")
+        handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
             self.assertEqual(open(filename).read(), self.root_str)
         finally:
+            os.close(handle)
             os.remove(filename)
 
     def test_module_parse_gzipobject(self):
         # (c)ElementTree supports gzip instance as parse argument
-        filename = tempfile.mktemp(suffix=".xml.gz")
+        handle, filename = tempfile.mkstemp(suffix=".xml.gz")
         gzip.open(filename, 'wb').write(self.root_str)
         try:
             f_gz = gzip.open(filename, 'r')
             tree = self.etree.parse(f_gz)
             self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
         finally:
+            os.close(handle)
             os.remove(filename)
 
 
@@ -50,17 +52,18 @@ class IOTestCaseBase(unittest.TestCase):
 
         # parse from filename
         
-        filename = tempfile.mktemp(suffix=".xml")
+        handle, filename = tempfile.mkstemp(suffix=".xml")
         open(filename, 'wb').write(self.root_str)
         try:
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
             self.assertEqual(self.etree.tostring(root), self.root_str)
         finally:
+            os.close(handle)
             os.remove(filename)
 
     def test_class_parse_filename_remove_previous(self):
-        filename = tempfile.mktemp(suffix=".xml")
+        handle, filename = tempfile.mkstemp(suffix=".xml")
         open(filename, "wb").write(self.root_str)
         try:
             tree = self.etree.ElementTree()
@@ -77,6 +80,7 @@ class IOTestCaseBase(unittest.TestCase):
             # root2's memory should've been freed here
             # XXX how to check?
         finally:
+            os.close(handle)
             os.remove(filename)
         
     def test_class_parse_fileobject(self):
@@ -85,7 +89,7 @@ class IOTestCaseBase(unittest.TestCase):
 
         # parse from file object
         
-        filename = tempfile.mktemp(suffix=".xml")
+        handle, filename = tempfile.mkstemp(suffix=".xml")
         open(filename, 'wb').write(self.root_str)
         try:
             f = open(filename, 'r')
@@ -93,6 +97,7 @@ class IOTestCaseBase(unittest.TestCase):
             root = tree.parse(f)
             self.assertEqual(self.etree.tostring(root), self.root_str)
         finally:
+            os.close(handle)
             os.remove(filename)
 
     def test_class_parse_unamed_fileobject(self):
