@@ -784,9 +784,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(
             root[2].text,
             "www.bayes.co.uk")
-        self.assertEquals(
-            root[3].text,
-            "")
+        self.assertFalse(root[3].text)
         self.assertEquals(
             root[4].text,
             "/xml/index.xml?/xml/utils/rechecker.xml")
