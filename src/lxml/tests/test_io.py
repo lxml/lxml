@@ -56,9 +56,7 @@ class IOTestCaseBase(unittest.TestCase):
         # parse from filename
         
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        f = open(filename, 'wb')
-        f.write(self.root_str)
-        f.close()
+        os.write(handle, self.root_str)
         try:
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
@@ -69,9 +67,7 @@ class IOTestCaseBase(unittest.TestCase):
 
     def test_class_parse_filename_remove_previous(self):
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        f = open(filename, 'wb')
-        f.write(self.root_str)
-        f.close()
+        os.write(handle, self.root_str)
         try:
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
@@ -97,9 +93,7 @@ class IOTestCaseBase(unittest.TestCase):
         # parse from file object
         
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        f = open(filename, 'wb')
-        f.write(self.root_str)
-        f.close()
+        os.write(handle, self.root_str)
         try:
             f = open(filename, 'r')
             tree = self.etree.ElementTree()
