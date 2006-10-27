@@ -34,7 +34,7 @@ cdef class Resolver:
     def resolve_filename(self, filename, context):
         "Return the name of a parsable file as input document."
         cdef _InputDocument doc_ref
-        doc_ref = _ParserInput()
+        doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILENAME
         doc_ref._data_bytes = _encodeFilename(filename)
         return doc_ref
@@ -44,7 +44,7 @@ cdef class Resolver:
         cdef _InputDocument doc_ref
         if not hasattr(f, 'read'):
             raise TypeError, "Argument is not a file-like object"
-        doc_ref = _ParserInput()
+        doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILE
         doc_ref._file = f
         return doc_ref
