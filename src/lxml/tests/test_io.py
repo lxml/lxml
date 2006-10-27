@@ -48,7 +48,6 @@ class IOTestCaseBase(unittest.TestCase):
             os.close(handle)
             os.remove(filename)
 
-
     def test_class_parse_filename(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
         # the root of the tree
@@ -63,7 +62,10 @@ class IOTestCaseBase(unittest.TestCase):
             self.assertEqual(self.etree.tostring(root), self.root_str)
         finally:
             os.close(handle)
-            os.remove(filename)
+            try:
+                os.remove(filename)
+            except WindowsError:
+                pass # it's windows that's broken, not us
 
     def test_class_parse_filename_remove_previous(self):
         handle, filename = tempfile.mkstemp(suffix=".xml")
@@ -84,7 +86,10 @@ class IOTestCaseBase(unittest.TestCase):
             # XXX how to check?
         finally:
             os.close(handle)
-            os.remove(filename)
+            try:
+                os.remove(filename)
+            except WindowsError:
+                pass # it's windows that's broken, not us
         
     def test_class_parse_fileobject(self):
         # (c)ElementTree class ElementTree has a 'parse' method that returns
