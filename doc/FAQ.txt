@@ -64,6 +64,30 @@ distribution and on `the web page`_.
 .. _`the web page`:    http://codespeak.net/lxml/#documentation
 
 
+What is the difference between lxml.etree and lxml.objectify?
+-------------------------------------------------------------
+
+The two modules provide different ways of handling XML.  However, objectify
+builds on top of lxml.etree and therefore inherits most of its capabilities
+and a large portion of its API.
+
+* lxml.etree is a generic API for XML and HTML handling.  It aims for
+  ElementTree compatibility_ and supports the entire XML infoset.  It is well
+  suited for both mixed content and data centric XML.  Its generality makes it
+  the best choice for most applications.
+
+* lxml.objectify is a specialized API for XML data handling in a Python object
+  syntax.  It provides a very natural way to deal with data fields stored in a
+  structurally well defined XML format.  Data is automatically converted to
+  Python data types and can be manipulated with normal Python operators.  Look
+  at the examples in the `objectify documentation`_ to see what it feels like
+  to use it.
+
+  Objectify is not well suited for mixed contents or HTML documents.  As it is
+  built on top of lxml.etree, however, it inherits the normal support for
+  XPath, XSLT or validation.
+
+
 Why is my application so slow?
 ------------------------------
 
@@ -325,78 +349,3 @@ How can I specify a default namespace for XPath expressions?
 You can't.  In XPath, there is no such thing as a default namespace.  Just use
 an arbitrary prefix and let the namespace dictionary of the XPath evaluators
 map it to your namespace.  See also the question above.
-
-
-lxml.objectify
-==============
-
-What is the difference between lxml.etree and lxml.objectify?
--------------------------------------------------------------
-
-The two modules provide different ways of handling XML.  However, objectify
-builds on top of lxml.etree and therefore inherits most of its capabilities
-and a large portion of its API.
-
-* lxml.etree is a generic API for XML and HTML handling.  It aims for
-  ElementTree compatibility_ and supports the entire XML infoset.  It is well
-  suited for both mixed content and data centric XML.  Its generality makes it
-  the best choice for most applications.
-
-* lxml.objectify is a specialized API for XML data handling in a Python object
-  syntax.  It provides a very natural way to deal with data fields stored in a
-  structurally well defined XML format.  Data is automatically converted to
-  Python data types and can be manipulated with normal Python operators.  Look
-  at the examples in the `objectify documentation`_ to see what it feels like
-  to use it.
-
-  Objectify is not well suited for mixed contents or HTML documents.  As it is
-  built on top of lxml.etree, however, it inherits the normal support for
-  XPath, XSLT or validation.
-
-Is there a way to speed up frequent element access?
----------------------------------------------------
-
-lxml.objectify creates Python representations of elements on the fly.  To save
-memory, the normal Python garbage collection mechanisms will discard them when
-their last reference is gone.  In cases where deeply nested elements are
-frequently accessed through the objectify API, the create-discard cycles can
-become a bottleneck, as elements have to be instantiated over and over again.
-
-If your benchmarks prove that the overhead is too high for your specific use
-case, here are some things to try:
-
-* If you often work in subtrees, assign the parent of the subtree to a
-  variable or pass it into functions instead of starting at the root.  This
-  allows accessing its descendents more directly.
-
-* Use precompiled ObjectPath expressions instead of accessing deeply nested
-  elements step-by-step via object attributes.
-
-* Try assigning data values directly to attributes instead of passing them
-  through DataElement.
-
-* Run ``objectify.annotate()`` over read-only trees to speed up the attribute
-  type inference on access.
-
-* To prevent frequent object create-discard cycles, you can keep a permanent
-  reference to the Python objects in a tree.  Just create a cache dictionary
-  and run::
-
-     cache[root] = list(root.getiterator())
-
-  after parsing and::
-
-     del cache[root]
-
-  when you are done with the tree.  This will keep the Python element
-  representations of all elements alive and thus avoid the overhead of
-  repeated Python object creation.  By choosing the right trees (or even
-  elements) to cache, you can trade memory usage against access speed.
-
-  Things to note: you cannot currently use ``weakref.WeakKeyDictionary``
-  objects for this as lxml's elements do not support weak references for
-  memory reasons.  Also note that new element objects that you add to these
-  trees will not turn up in the cache automatically and will therefore still
-  be garbage collected when all their Python references are gone, so this is
-  most effective for largely immutable trees.  You should consider using a set
-  instead of a list in this case and add new elements by hand.

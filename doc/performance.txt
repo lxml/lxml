@@ -305,3 +305,93 @@ expressions generates a much higher overhead here::
   lxe: xpath_class_repeat   (-- T3)    0.3126 msec/pass
   lxe: xpath_class_repeat   (-- T4)    1.1111 msec/pass
 
+
+lxml.objectify
+--------------
+
+Objectify is a data-binding API for XML based on lxml.etree, that was added in
+version 1.1.  It uses standard Python attribute access to traverse the XML
+tree.  It also features ObjectPath, a fast path language based on the same
+meme.
+
+Just like lxml.etree, lxml.objectify creates Python representations of
+elements on the fly.  To save memory, the normal Python garbage collection
+mechanisms will discard them when their last reference is gone.  In cases
+where deeply nested elements are frequently accessed through the objectify
+API, the create-discard cycles can become a bottleneck, as elements have to be
+instantiated over and over again.
+
+ObjectPath can be used to speed up the access to elements that are deep in the
+tree.  It avoids step-by-step Python element instantiations along the path,
+which can substantially improve the access time::
+
+  lxe: attribute                  (--T T1)   14.8621 msec/pass
+  lxe: attribute                  (--T T2)   61.8820 msec/pass
+  lxe: attribute                  (--T T4)   14.9317 msec/pass
+
+  lxe: objectpath                 (--T T1)   13.7311 msec/pass
+  lxe: objectpath                 (--T T2)   58.5930 msec/pass
+  lxe: objectpath                 (--T T4)    8.0961 msec/pass
+
+  lxe: attributes_deep            (--T T1)   81.4488 msec/pass
+  lxe: attributes_deep            (--T T2)   77.0266 msec/pass
+  lxe: attributes_deep            (--T T4)   27.1226 msec/pass
+
+  lxe: objectpath_deep            (--T T1)   63.1915 msec/pass
+  lxe: objectpath_deep            (--T T2)   65.2469 msec/pass
+  lxe: objectpath_deep            (--T T4)   11.0138 msec/pass
+
+Note, however, that parsing ObjectPath expressions is not for free either, so
+this is most effective for frequently accessing the same element.
+
+A way to improve the normal attribute access time is static instantiation of
+the Python objects, thus trading memory for speed.  Just create a cache
+dictionary and run::
+
+    cache[root] = list(root.getiterator())
+
+after parsing and::
+
+    del cache[root]
+
+when you are done with the tree.  This will keep the Python element
+representations of all elements alive and thus avoid the overhead of repeated
+Python object creation.  You can also consider using filters or generator
+expressions to be more selective.  By choosing the right trees (or even
+subtrees and elements) to cache, you can trade memory usage against access
+speed::
+
+  lxe: attribute_cached           (--T T1)   10.8343 msec/pass
+  lxe: attribute_cached           (--T T2)   55.5890 msec/pass
+  lxe: attribute_cached           (--T T4)   10.9514 msec/pass
+
+  lxe: attributes_deep_cached     (--T T1)   63.7080 msec/pass
+  lxe: attributes_deep_cached     (--T T2)   65.6838 msec/pass
+  lxe: attributes_deep_cached     (--T T4)   15.4514 msec/pass
+
+Things to note: you cannot currently use ``weakref.WeakKeyDictionary`` objects
+for this as lxml's element objects do not support weak references (which are
+costly in terms of memory).  Also note that new element objects that you add
+to these trees will not turn up in the cache automatically and will therefore
+still be garbage collected when all their Python references are gone, so this
+is most effective for largely immutable trees.  You should consider using a
+set instead of a list in this case and add new elements by hand.
+
+Here are some more things to try if optimisation is required:
+
+* A lot of time is usually spent in tree traversal to find the addressed
+  elements in the tree.  If you often work in subtrees, assign the parent of
+  the subtree to a variable or pass it into functions instead of starting at
+  the root.  This allows accessing its descendents more directly.
+
+* Try assigning data values directly to attributes instead of passing them
+  through DataElement.
+
+* If you use custom data types that are costly to parse, try running
+  ``objectify.annotate()`` over read-only trees to speed up the attribute type
+  inference on read access.
+
+Note that none of these measures is guaranteed to speed up your application.
+As usual, you should prefer readable code over premature optimisations and
+profile your expected use cases before bothering to apply optimisations at
+random.
