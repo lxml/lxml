@@ -1,7 +1,8 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport _ElementIterator, ElementClassLookup
 from etreepublic cimport elementFactory, import_etree, textOf
-from python cimport isinstance, issubclass, callable, getattr, _cstr, Py_ssize_t
+from python cimport str, repr, isinstance, issubclass, callable, getattr
+from python cimport _cstr, Py_ssize_t
 cimport etreepublic as cetree
 cimport python
 cimport tree
@@ -27,8 +28,6 @@ cdef object float
 float = __builtin__.float
 cdef object bool
 bool = __builtin__.bool
-cdef object str
-str = __builtin__.str
 cdef object pow
 pow = __builtin__.pow
 cdef object abs
@@ -487,6 +486,9 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
     def __str__(self):
         return textOf(self._c_node) or ''
 
+    def __repr__(self):
+        return textOf(self._c_node) or ''
+
     def __setText(self, s):
         """For use in subclasses only. Don't use unless you know what you are
         doing.
@@ -517,6 +519,9 @@ cdef class NumberElement(ObjectifiedDataElement):
 
     def __str__(self):
         return str(self._type(textOf(self._c_node)))
+
+    def __repr__(self):
+        return repr(self._type(textOf(self._c_node)))
 
 #    def __oct__(self):
 #    def __hex__(self):
@@ -604,6 +609,9 @@ cdef class StringElement(ObjectifiedDataElement):
         def __get__(self):
             return textOf(self._c_node) or ''
 
+    def __repr__(self):
+        return repr(textOf(self._c_node) or '')
+
     def strlen(self):
         text = textOf(self._c_node)
         if text is None:
@@ -654,6 +662,9 @@ cdef class NoneElement(ObjectifiedDataElement):
     def __str__(self):
         return "None"
 
+    def __repr__(self):
+        return "None"
+
     def __nonzero__(self):
         return False
 
@@ -700,6 +711,12 @@ cdef class BoolElement(ObjectifiedDataElement):
         return python.PyObject_RichCompare(self_val, other, op)
 
     def __str__(self):
+        if self._boolval():
+            return "True"
+        else:
+            return "False"
+
+    def __repr__(self):
         if self._boolval():
             return "True"
         else:
@@ -931,20 +948,26 @@ def dump(_Element element not None):
 
 cdef object _dump(_Element element, int indent):
     indentstr = "    " * indent
-    if hasattr(element, "pyval"):
-        value = element.pyval
+    if isinstance(element, ObjectifiedDataElement):
+        value = repr(element)
     else:
         value = textOf(element._c_node)
-        if value and not value.strip():
-            value = None
-    result = "%s%s = %r [%s]\n" % (indentstr, element.tag,
+        if value is not None:
+            if python.PyString_GET_SIZE( value.strip() ) == 0:
+                value = None
+            else:
+                value = repr(value)
+    result = "%s%s = %s [%s]\n" % (indentstr, element.tag,
                                    value, type(element).__name__)
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = "{%s}" % PYTYPE_NAMESPACE
     for name, value in cetree.iterattributes(element, 3):
-        if name == PYTYPE_ATTRIBUTE and value == TREE_PYTYPE:
-            continue
-        name = name.replace(xsi_ns, 'xsi:').replace(pytype_ns, 'py:')
+        if name == PYTYPE_ATTRIBUTE:
+            if value == TREE_PYTYPE:
+                continue
+            else:
+                name = name.replace(pytype_ns, 'py:')
+        name = name.replace(xsi_ns, 'xsi:')
         result = result + "%s  * %s = %r\n" % (indentstr, name, value)
 
     indent = indent + 1
