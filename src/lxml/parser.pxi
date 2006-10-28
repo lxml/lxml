@@ -392,11 +392,8 @@ cdef class _BaseParser:
         cdef xmlParserCtxt* pctxt
         pctxt = self._parser_ctxt
         if pctxt is not NULL:
-            if pctxt.spaceTab is NULL:
-                # work around bug in libxml2
-                pctxt.spaceTab = <int*> tree.xmlMalloc(10 * sizeof(int))
-                pctxt.spaceMax = 10
-            xmlparser.xmlClearParserCtxt(pctxt)
+            if pctxt.spaceTab is not NULL: # work around bug in libxml2
+                xmlparser.xmlClearParserCtxt(pctxt)
 
     property error_log:
         def __get__(self):
