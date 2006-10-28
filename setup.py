@@ -137,6 +137,10 @@ try:
 except ValueError:
     pass
 
+if '--debug' in sys.argv:
+    sys.argv.remove('--debug')
+    cflags.append('-g2')
+
 ext_modules = []
 
 for module, package in EXT_MODULES:
