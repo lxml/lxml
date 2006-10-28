@@ -268,6 +268,7 @@ cdef class iterparse(_BaseParser):
         context._wrapCallbacks(self._parser_ctxt.sax)
         xmlparser.xmlCtxtUseOptions(self._parser_ctxt, parse_options)
         xmlparser.xmlCtxtResetPush(self._parser_ctxt, NULL, 0, c_filename, NULL)
+        self._lockParser() # will not be unlocked - no other methods supported
 
     def __iter__(self):
         return self
