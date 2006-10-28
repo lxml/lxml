@@ -1,4 +1,4 @@
-from cstd cimport FILE
+from cstd cimport FILE, size_t
 
 cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
@@ -254,6 +254,9 @@ cdef extern from "libxml/globals.h":
     
 cdef extern from "libxml/xmlstring.h":
     cdef char* xmlStrdup(char* cur)
+
+cdef extern from "libxml/xmlmemory.h":
+    cdef void* xmlMalloc(size_t size)
 
 cdef extern from "etree_defs.h":
     cdef int _isElement(xmlNode* node)

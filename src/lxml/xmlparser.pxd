@@ -56,6 +56,7 @@ cdef extern from "libxml/parser.h":
         xmlNode* node
         xmlSAXHandler* sax
         int* spaceTab
+        int spaceMax
         
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
