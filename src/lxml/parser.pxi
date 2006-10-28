@@ -388,6 +388,13 @@ cdef class _BaseParser:
         if self._parser_ctxt is not NULL:
             xmlparser.xmlFreeParserCtxt(self._parser_ctxt)
 
+    def _cleanup(self):
+        cdef xmlParserCtxt* pctxt
+        pctxt = self._parser_ctxt
+        if pctxt is not NULL:
+            if pctxt.spaceTab is not NULL: # work around bug in libxml2
+                xmlparser.xmlClearParserCtxt(pctxt)
+
     property error_log:
         def __get__(self):
             return self._error_log.copy()
@@ -461,6 +468,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None, recover)
         finally:
+            self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
@@ -493,6 +501,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None, recover)
         finally:
+            self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
@@ -521,6 +530,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, c_filename, recover)
         finally:
+            self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
@@ -545,6 +555,7 @@ cdef class _BaseParser:
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, filename, recover)
         finally:
+            self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()

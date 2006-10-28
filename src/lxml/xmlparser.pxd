@@ -55,6 +55,7 @@ cdef extern from "libxml/parser.h":
         xmlError lastError
         xmlNode* node
         xmlSAXHandler* sax
+        int* spaceTab
         
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
@@ -84,6 +85,8 @@ cdef extern from "libxml/parser.h":
                                              int enc)
     cdef int xmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
     cdef void xmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    cdef void xmlCtxtReset(xmlParserCtxt* ctxt)
+    cdef void xmlClearParserCtxt(xmlParserCtxt* ctxt)
     cdef int xmlParseChunk(xmlParserCtxt* ctxt,
                            char* chunk, int size, int terminate)
     cdef xmlDoc* xmlCtxtReadDoc(xmlParserCtxt* ctxt,
