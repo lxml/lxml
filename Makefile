@@ -41,7 +41,7 @@ bench: bench_inplace
 ftest: ftest_inplace
 
 clean:
-	find . \( -name '*.o' -o -name '*.c' -o -name '*.so' -o -name '*.py[co]' -o -name '*.dll' \) -exec rm -f {} \;
+	find . \( -name '*.o' -o -name '*.c' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
 	rm -rf build
 
 realclean: clean
