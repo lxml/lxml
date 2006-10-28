@@ -388,7 +388,7 @@ cdef class _BaseParser:
         if self._parser_ctxt is not NULL:
             xmlparser.xmlFreeParserCtxt(self._parser_ctxt)
 
-    def _cleanup(self):
+    cdef void _cleanup(self):
         cdef xmlParserCtxt* pctxt
         pctxt = self._parser_ctxt
         if pctxt is not NULL:
