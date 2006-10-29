@@ -137,8 +137,8 @@ try:
 except ValueError:
     pass
 
-if '--debug' in sys.argv:
-    sys.argv.remove('--debug')
+if '--debug-gcc' in sys.argv:
+    sys.argv.remove('--debug-gcc')
     cflags.append('-g2')
 
 ext_modules = []
