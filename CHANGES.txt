@@ -22,7 +22,7 @@ Features added
 Bugs fixed
 ----------
 
-* Parser resources were not free before the next parser run
+* Parser resources were not freed before the next parser run
 
 * Open files and XML strings returned by Python resolvers were not
   closed/freed
