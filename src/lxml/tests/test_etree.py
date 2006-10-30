@@ -8,13 +8,14 @@ test_elementtree
 """
 
 
-import unittest, doctest, copy
+import unittest, doctest, copy, sys
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize
 
 print
 print "TESTED VERSION:"
+print "    Python:           ", sys.version_info
 print "    lxml.etree:       ", etree.LXML_VERSION
 print "    libxml used:      ", etree.LIBXML_VERSION
 print "    libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
