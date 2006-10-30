@@ -13,6 +13,15 @@ import unittest, doctest, copy
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize
 
+print
+print "TESTED VERSION:"
+print "    lxml.etree:       ", etree.LXML_VERSION
+print "    libxml used:      ", etree.LIBXML_VERSION
+print "    libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
+print "    libxslt used:     ", etree.LIBXSLT_VERSION
+print "    libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
+print
+
 class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
     etree = etree
