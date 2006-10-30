@@ -192,7 +192,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:template match="*" />
   <xsl:template match="/">
     <foo><xsl:value-of select="$bar" /></foo>
   </xsl:template>
@@ -205,7 +204,19 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>Bar</foo>
 ''',
                           st.tostring(res))
-        # apply without needed parameter will lead to XSLTApplyError
+
+    def test_xslt_parameter_fail(self):
+        # apply() without needed parameter will lead to XSLTApplyError
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
         self.assertRaises(etree.XSLTApplyError,
                           st.apply, tree)
 
