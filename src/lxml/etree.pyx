@@ -149,8 +149,9 @@ cdef __unpackIntVersion(int c_version):
 
 cdef int _LIBXML_VERSION_INT
 try:
-    _LIBXML_VERSION_INT = int((tree.xmlParserVersion).split('-')[0])
+    _LIBXML_VERSION_INT = int(re.match('[0-9]+', tree.xmlParserVersion).group(0))
 except Exception:
+    print "Unknown libxml2 version:", tree.xmlParserVersion
     _LIBXML_VERSION_INT = 0
 
 LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
