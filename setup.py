@@ -185,6 +185,7 @@ setup(
     maintainer="lxml dev team",
     maintainer_email="lxml-dev@codespeak.net",
     url="http://codespeak.net/lxml",
+    download_url="http://cheeseshop.python.org/packages/source/l/lxml/lxml-%s.tar.gz" % version,
 
     description="Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.",
 
