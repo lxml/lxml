@@ -450,7 +450,7 @@ cdef class XSLT:
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     def apply(self, _input, profile_run=False, **_kw):
-        return self.__call__(_input, profile_run, **_kw)
+        return self(_input, profile_run, **_kw)
 
     def tostring(self, _ElementTree result_tree):
         """Save result doc to string based on stylesheet output method.
@@ -507,7 +507,7 @@ cdef class _XSLTResultTree(_ElementTree):
         """Return an ElementTree with profiling data for the stylesheet run.
         """
         def __get__(self):
-            cdef _Element root
+            cdef object root
             if self._profile is None:
                 return None
             root = self._profile.getroot()
