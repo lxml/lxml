@@ -12,8 +12,10 @@ See also the notes on compatibility_ to ElementTree_.
    1  General Questions
      1.1  Is there a tutorial?
      1.2  Where can I find more documentation about lxml?
-     1.3  Why is my application so slow?
-     1.4  Why do I get errors about missing UCS4 symbols when installing lxml?
+     1.3  Where are the Windows binaries?
+     1.4  What is the difference between lxml.etree and lxml.objectify?
+     1.5  Why is my application so slow?
+     1.6  Why do I get errors about missing UCS4 symbols when installing lxml?
    2  Bugs
      2.1  My application crashes! Why does lxml.etree do that?
      2.2  I think I have found a bug in lxml. What should I do?
@@ -30,9 +32,6 @@ See also the notes on compatibility_ to ElementTree_.
      5.2  Why doesn't ``findall()`` support full XPath expressions?
      5.3  How can I find out which namespace prefixes are used in a document?
      5.4  How can I specify a default namespace for XPath expressions?
-   6  lxml.objectify
-     6.1  What is the difference between lxml.etree and lxml.objectify?
-     6.2  Is there a way to speed up frequent element access?
 
 
 General Questions
@@ -62,6 +61,32 @@ distribution and on `the web page`_.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 .. _`the web page`:    http://codespeak.net/lxml/#documentation
+
+
+Where are the Windows binaries?
+-------------------------------
+
+Short answer: If you want to contribute a binary build, we are happy to put it
+up on the Cheeseshop.
+
+Long answer: Two of the bigger problems with the Windows system are the lack
+of a pre-installed standard compiler and the missing package management.  Both
+make it non-trivial to build lxml on this platform.  We are trying hard to
+make lxml as platform-independent as possible and it is regularly tested on
+Windows systems.  However, we currently cannot provide Windows binaries
+distributions ourselves.
+
+From time to time, users of different environments kindly contribute binary
+builds of lxml, most frequently for Windows or Mac-OS X.  We put these on the
+Cheeseshop to make it as easy as possible for others to use lxml on their
+platform.
+
+If there is not currently a binary distribution of the most recent lxml
+release for your platform available from the Cheeseshop, please look through
+the older versions to see if they provide a binary build.  This is done by
+appending the version number to the cheeseshop URL, e.g.:
+
+	  http://cheeseshop.python.org/pypi/lxml/1.1.2
 
 
 What is the difference between lxml.etree and lxml.objectify?
