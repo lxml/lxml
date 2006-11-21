@@ -56,6 +56,18 @@ def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().split()
 
+def add_libexslt(lib_flags):
+    if '-lxslt' in lib_flags:
+        xslt, exslt = '-lxslt', '-lexslt'
+    else:
+        xslt, exslt = 'xslt', 'exslt'
+    for i, libname in enumerate(lib_flags):
+        if exslt in libname:
+            return
+        if xslt in libname:
+            lib_flags.insert(i, libname.replace(xslt, exslt))
+            return
+
 def fix_alphabeta(version, alphabeta):
     if '.'+alphabeta in version:
         return version
@@ -116,13 +128,7 @@ if '--static' in sys.argv:
 else:
     cflags    = flags('xslt-config --cflags')
     xslt_libs = flags('xslt-config --libs')
-    # compile also against libexslt!
-    for i, libname in enumerate(xslt_libs):
-        if 'exslt' in libname:
-            break
-        if 'xslt' in libname:
-            xslt_libs.insert(i, libname.replace('xslt', 'exslt'))
-            break
+    add_libexslt(xslt_libs) # compile also against libexslt!
 
     if '--rpath' in sys.argv:
         # compile with --rpath under gcc
