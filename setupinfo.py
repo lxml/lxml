@@ -64,7 +64,7 @@ def ext_args(static_libs):
     xslt_libs = flags('xslt-config --libs')
     add_libexslt(xslt_libs)
     
-    if OPTION_RPATH:
+    if OPTION_AUTO_RPATH:
         return ext_args_rpath(xslt_libs)
     else:
         return {'extra_link_args': xslt_libs}
@@ -120,4 +120,4 @@ def has_option(name):
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
-OPTION_RPATH = has_option('rpath')
+OPTION_AUTO_RPATH = has_option('auto-rpath')

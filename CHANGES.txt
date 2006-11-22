@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+under development
+=================
+
+Features added
+--------------
+
+* setup.py has been refactored for greater readability and flexibility.
+
+* --rpath flag to setup.py to induce automatic linking-in of dynamic library
+  runtime search paths has been renamed to --auto-rpath. This makes it
+  possible to pass an --rpath directly to distutils; previously this was being
+  shadowed.
+
 1.1.2 (2006-10-30)
 ==================
 
