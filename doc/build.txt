@@ -2,7 +2,11 @@ How to build lxml from source
 =============================
 
 To build lxml from source, you need libxml2 and libxslt properly installed,
-including header files (possibly shipped in -dev packages).
+including header files (possibly shipped in -dev packages).  The build process
+also requires setuptools_.
+
+.. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
+
 
 Pyrex
 -----
@@ -64,10 +68,10 @@ client to access it.
 .. _`browse the repository through the web`: http://codespeak.net/svn/lxml
 
 
-The distutils approach
+The setuptools approach
 ----------------------
 
-Usually, building lxml is done through distutils.  Do a Subversion checkout
+Usually, building lxml is done through setuptools.  Do a Subversion checkout
 (or download the source tar-ball and unpack it) and then type::
 
   python setup.py build
@@ -147,6 +151,7 @@ The last 'upload' step only works if you have access to the lxml
 cheeseshop entry. If not, you can just make an egg with bdist_egg and
 mail it to the lxml maintainer.
 
+
 Static linking on Windows
 -------------------------
 
@@ -216,7 +221,7 @@ need to link against the DLL version of the libraries.  As `Ashish Kulkarni`_
 notes, you might have to add the standard Windows library ``wsock32.dll`` to
 the above list of libraries to make ``lxml.objectify`` compile.
 
-.. _`Ashish Kulkarni`: 
+.. _`Ashish Kulkarni`: http://codespeak.net/pipermail/lxml-dev/2006-September/001893.html
 
 Now you should be able to pass the ``--static`` option to setup.py and
 everything should work well.  Try calling::
