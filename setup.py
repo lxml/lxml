@@ -1,5 +1,5 @@
 from ez_setup import use_setuptools
-use_setuptools()
+use_setuptools(version="0.5")
 
 from setuptools import setup
 import versioninfo
