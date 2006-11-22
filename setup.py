@@ -2,13 +2,21 @@ from ez_setup import use_setuptools
 use_setuptools(version="0.5")
 
 from setuptools import setup
+import sys, os
+
+# need to insert this to python path so we're sure we can import
+# versioninfo and setupinfo even if we start setup.py from another
+# location (such as a buildout)
+sys.path.insert(0, os.path.dirname(__file__))
+
 import versioninfo
 import setupinfo
 
 # override these and pass --static for a static build. See
 # doc/build.txt for more information. If you do not pass --static
 # changing this will have no effect.
-STATIC_LIBS = []
+STATIC_INCLUDE_DIRS = []
+STATIC_LIBRARY_DIRS = []
 STATIC_CFLAGS = []
 
 # create lxml-version.h file
@@ -63,6 +71,7 @@ http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_v
     package_dir = {'': 'src'},
     packages = ['lxml'],
     zip_safe = False,
-    ext_modules = setupinfo.ext_modules(STATIC_LIBS, STATIC_CFLAGS),
+    ext_modules = setupinfo.ext_modules(
+    STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
     **setupinfo.extra_setup_args()
 )

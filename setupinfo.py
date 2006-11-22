@@ -12,7 +12,7 @@ EXT_MODULES = [
     ("objectify",   "lxml.objectify")
     ]
 
-def ext_modules(static_libs, static_cflags): 
+def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
     if PYREX_INSTALLED:
         source_extension = ".pyx"
     else:
@@ -20,10 +20,17 @@ def ext_modules(static_libs, static_cflags):
                "'src/lxml/etree.c' needs to be available.")
         source_extension = ".c"
     
-    result = []
-    _ext_args = ext_args(static_libs)
+    _include_dirs = include_dirs(static_include_dirs)
+    _library_dirs = library_dirs(static_library_dirs)
     _cflags = cflags(static_cflags)
     _define_macros = define_macros()
+
+    if OPTION_AUTO_RPATH:
+        runtime_library_dirs = _library_dirs
+    else:
+        runtime_library_dirs = []
+    
+    result = []
     for module, package in EXT_MODULES:
         result.append(
             Extension(
@@ -31,7 +38,10 @@ def ext_modules(static_libs, static_cflags):
             sources = ["src/lxml/" + module + source_extension],
             extra_compile_args = ['-w'] + _cflags,
             define_macros = _define_macros,
-            **_ext_args
+            include_dirs = _include_dirs,
+            library_dirs = _library_dirs,
+            runtime_library_dirs = runtime_library_dirs,
+            libraries=['xslt', 'exslt', 'xml2', 'z', 'm'],
             ))
     return result
 
@@ -41,73 +51,55 @@ def extra_setup_args():
         result['cmdclass'] = {'build_ext': build_pyx}
     return result
 
-def cflags(static_cflags):
+def library_dirs(static_library_dirs):
     if OPTION_STATIC:
-        assert static_cflags, "Static build not configured, see doc/build.txt"
-        result = static_cflags
-    else:
-        result = flags('xslt-config --cflags')
+        assert static_library_dirs, "Static build not configured, see doc/build.txt"
+        return static_library_dirs
+    # filter them from xslt-config --libs
+    result = []
+    possible_library_dirs = flags('xslt-config --libs')
+    for possible_library_dir in possible_library_dirs:
+        if possible_library_dir.startswith('-L'):
+            result.append(possible_library_dir[2:])
+    return result
+
+def include_dirs(static_include_dirs):
+    if OPTION_STATIC:
+        assert static_include_dirs, "Static build not configured, see doc/build.txt"
+        return static_include_dirs
+    # filter them from xslt-config --cflags
+    result = []
+    possible_include_dirs = flags('xslt-config --cflags')
+    for possible_include_dir in possible_include_dirs:
+        if possible_include_dir.startswith('-I'):
+            result.append(possible_include_dir[2:])
+    return result
+
+def cflags(static_cflags):
+    result = []
     if OPTION_DEBUG_GCC:
         result.append('-g2')
+
+    if OPTION_STATIC:
+        assert static_cflags, "Static build not configured, see doc/build.txt"
+        result.extend(static_cflags)
+        return result
+
+    # anything from xslt-config --cflags that doesn't start with -I
+    possible_cflags = flags('xslt-config --cflags')
+    for possible_cflag in possible_cflags:
+        if not possible_cflag.startswith('-I'):
+            result.append(possible_cflag)
     return result
 
 def define_macros():
     if OPTION_WITHOUT_ASSERT:
         return [('PYREX_WITHOUT_ASSERTIONS', None)]
     return []
-
-def ext_args(static_libs):
-    if OPTION_STATIC:
-        assert static_libs, "Static build not configured, see doc/build.txt"
-        return {'extra_link_args': static_libs}
-
-    xslt_libs = flags('xslt-config --libs')
-    add_libexslt(xslt_libs)
-    
-    if OPTION_AUTO_RPATH:
-        return ext_args_rpath(xslt_libs)
-    else:
-        return {'extra_link_args': xslt_libs}
     
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
     return rf.read().split()
-
-def add_libexslt(lib_flags):
-    if '-lxslt' in lib_flags:
-        xslt, exslt = '-lxslt', '-lexslt'
-    else:
-        xslt, exslt = 'xslt', 'exslt'
-    for i, libname in enumerate(lib_flags):
-        if exslt in libname:
-            return
-        if xslt in libname:
-            lib_flags.insert(i, libname.replace(xslt, exslt))
-            return
-
-def ext_args_rpath(xslt_libs):
-    library_dirs = []
-    libraries = []
-    extra_link_args = []
-    runtime_library_dirs = []
-    
-    for option in xslt_libs:
-        content = option[2:]
-        if option.startswith('-L'):
-            if not content.startswith('/usr'):
-                runtime_library_dirs.append(content)
-            library_dirs.append(content)
-        elif option.startswith('-l'):
-            libraries.append(content)
-        else:
-            extra_link_args.append(option)
-
-    return {
-        'libraries': libraries,
-        'library_dirs': library_dirs,
-        'extra_link_args': extra_link_args,
-        'runtime_library_dirs': runtime_library_dirs,
-        }
 
 def has_option(name):
     try:
