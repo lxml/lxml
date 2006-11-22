@@ -1,7 +1,12 @@
 import os, sys, re
 
+__LXML_VERSION = None
+
 def version():
-    return open(os.path.join(get_src_dir(), 'version.txt')).read().strip()
+    global __LXML_VERSION
+    if __LXML_VERSION is None:
+        __LXML_VERSION = open(os.path.join(get_src_dir(), 'version.txt')).read().strip()
+    return __LXML_VERSION
 
 def branch_version():
     return version()[:3]
