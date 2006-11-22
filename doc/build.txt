@@ -186,38 +186,29 @@ something like this::
   zlib-1.2.3.win32/
   zlib-1.2.3.win32.zip
 
-Go to the lxml-1.0.0 directory and edit the file ``setup.py``.  There should
+Go to the lxml directory and edit the file ``setup.py``.  There should
 be a section near the top that looks like this::
 
-  def setupStaticBuild():
-      cflags = [
-          ]
-      xslt_libs = [
-          ]
-      result = (cflags, xslt_libs)
-      # return result
-      raise NotImplementedError, \
-            "Static build not configured, see doc/build.txt"
+  STATIC_LIBS = []
+  STATIC_CFLAGS = []
 
 Change this section to something like this, but take care to use the correct
 version numbers::
 
-  def setupStaticBuild():
-      cflags = [
-         "-I..\\libxml2-2.6.23.win32\\include ",
-         "-I..\\libxslt-1.1.15.win32\\include",
-         "-I..\\zlib-1.2.3.win32\\include",
-         "-I..\\iconv-1.9.1.win32\\include"
-         ]
-      xslt_libs = [
+  STATIC_LIBS = [
          "..\\libxml2-2.6.23.win32\\lib\\libxml2_a.lib",
          "..\\libxslt-1.1.15.win32\\lib\\libxslt_a.lib",
          "..\\libxslt-1.1.15.win32\\lib\\libexslt_a.lib",
          "..\\zlib-1.2.3.win32\\lib\\zlib.lib",
          "..\\iconv-1.9.1.win32\\lib\\iconv_a.lib"
          ]
-      result = (cflags, xslt_libs)
-      return result
+
+  STATIC_CFLAGS = [
+         "-I..\\libxml2-2.6.23.win32\\include ",
+         "-I..\\libxslt-1.1.15.win32\\include",
+         "-I..\\zlib-1.2.3.win32\\include",
+         "-I..\\iconv-1.9.1.win32\\include"
+         ]
 
 The ``_a`` part of the library names means that we are linking statically
 against the named library files.  If you want to use dynamic libraries, you
