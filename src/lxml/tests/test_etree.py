@@ -23,6 +23,15 @@ print "    libxslt used:     ", etree.LIBXSLT_VERSION
 print "    libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
 print
 
+try:
+    sorted(())
+except NameError:
+    # Python 2.3
+    def sorted(seq):
+        seq = list(seq)
+        seq.sort()
+        return seq
+
 class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
     etree = etree
