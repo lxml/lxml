@@ -13,6 +13,17 @@ except ImportError:
     except ImportError:
         ElementTree = None
 
+try:
+    import doctest
+    # check if the system version has everything we need
+    doctest.DocFileSuite
+    doctest.NORMALIZE_WHITESPACE
+    doctest.ELLIPSIS
+except (ImportError, AttributeError):
+    # we need our own version to make it work (Python 2.3?)
+    import lxml.local_doctest as doctest
+
+
 class HelperTestCase(unittest.TestCase):
     def parse(self, text):
         f = StringIO(text)
