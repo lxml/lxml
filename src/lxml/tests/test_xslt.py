@@ -4,9 +4,10 @@
 Test cases related to XSLT processing
 """
 
-import unittest, doctest
+import unittest
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
+from common_imports import doctest
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XPath tests etree"""

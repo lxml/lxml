@@ -5,9 +5,9 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-import unittest, doctest
+import unittest
 
-from common_imports import etree, HelperTestCase
+from common_imports import etree, HelperTestCase, doctest
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
     assertFalse = HelperTestCase.failIf

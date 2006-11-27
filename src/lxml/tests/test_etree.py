@@ -8,10 +8,10 @@ test_elementtree
 """
 
 
-import unittest, doctest, copy, sys
+import unittest, copy, sys
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize
+from common_imports import SillyFileLike, canonicalize, doctest
 
 print
 print "TESTED VERSION:"

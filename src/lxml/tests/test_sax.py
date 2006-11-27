@@ -4,10 +4,10 @@
 Test cases related to SAX I/O
 """
 
-import unittest, doctest
+import unittest
 from StringIO import StringIO
 
-from common_imports import HelperTestCase
+from common_imports import HelperTestCase, doctest
 from lxml import sax
 from xml.dom import pulldom
 

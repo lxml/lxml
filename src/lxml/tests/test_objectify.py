@@ -8,10 +8,10 @@ test_elementtree
 """
 
 
-import unittest, doctest, operator
+import unittest, operator
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize
+from common_imports import SillyFileLike, canonicalize, doctest
 
 from lxml import objectify
 
