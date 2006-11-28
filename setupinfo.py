@@ -125,6 +125,8 @@ def define_macros():
     macros = []
     if OPTION_WITHOUT_ASSERT:
         macros.append(('PYREX_WITHOUT_ASSERTIONS', None))
+    if OPTION_WITHOUT_THREADING:
+        macros.append(('WITHOUT_THREADING', None))
     return macros
     
 def flags(cmd):
