@@ -18,6 +18,12 @@
 
 /* Threading can crash under Python 2.3 */
 #if PY_VERSION_HEX < 0x02040000
+#ifndef WITHOUT_THREADING
+  #define WITHOUT_THREADING
+#endif
+#endif
+
+#ifdef WITHOUT_THREADING
   #define PyEval_SaveThread() (NULL)
   #define PyEval_RestoreThread(state)
   #define PyGILState_Ensure() (PyGILState_UNLOCKED)
