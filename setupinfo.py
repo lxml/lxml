@@ -12,6 +12,16 @@ EXT_MODULES = [
     ("objectify",   "lxml.objectify")
     ]
 
+
+env_map = {'win32':{'INCLUDE': 'INCLUDE',
+                    'LIBRARY': 'LIB',
+                    'CFLAGS' : 'CFLAGS'},
+           }.get(sys.platform, {})
+
+def env_var(name):
+    value = os.getenv(env_map.get(name), '')
+    return value.split(os.pathsep)
+
 def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
     if PYREX_INSTALLED:
         source_extension = ".pyx"
@@ -24,6 +34,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
     _library_dirs = library_dirs(static_library_dirs)
     _cflags = cflags(static_cflags)
     _define_macros = define_macros()
+    _libraries = libraries()
 
     if OPTION_AUTO_RPATH:
         runtime_library_dirs = _library_dirs
@@ -41,7 +52,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
             include_dirs = _include_dirs,
             library_dirs = _library_dirs,
             runtime_library_dirs = runtime_library_dirs,
-            libraries=['xslt', 'exslt', 'xml2', 'z', 'm'],
+            libraries = _libraries,
             ))
     return result
 
@@ -51,8 +62,22 @@ def extra_setup_args():
         result['cmdclass'] = {'build_ext': build_pyx}
     return result
 
+def libraries():
+    if sys.platform in ('win32',):
+        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
+    else:
+        libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
+    if OPTION_STATIC:
+        if sys.platform in ('win32',):
+            libs = ['%s_a' % lib for lib in libs]
+    if sys.platform in ('win32',):
+        libs.extend(['zlib', 'WS2_32'])
+    return libs
+
 def library_dirs(static_library_dirs):
     if OPTION_STATIC:
+        if not static_library_dirs:
+            static_library_dirs = env_var('LIBRARY')
         assert static_library_dirs, "Static build not configured, see doc/build.txt"
         return static_library_dirs
     # filter them from xslt-config --libs
@@ -65,6 +90,8 @@ def library_dirs(static_library_dirs):
 
 def include_dirs(static_include_dirs):
     if OPTION_STATIC:
+        if not static_include_dirs:
+            static_include_dirs = env_var('INCLUDE')
         assert static_include_dirs, "Static build not configured, see doc/build.txt"
         return static_include_dirs
     # filter them from xslt-config --cflags
@@ -81,6 +108,8 @@ def cflags(static_cflags):
         result.append('-g2')
 
     if OPTION_STATIC:
+        if not static_cflags:
+            static_cflags = env_var('CFLAGS')
         assert static_cflags, "Static build not configured, see doc/build.txt"
         result.extend(static_cflags)
         return result
@@ -93,9 +122,10 @@ def cflags(static_cflags):
     return result
 
 def define_macros():
+    macros = []
     if OPTION_WITHOUT_ASSERT:
-        return [('PYREX_WITHOUT_ASSERTIONS', None)]
-    return []
+        macros.append(('PYREX_WITHOUT_ASSERTIONS', None))
+    return macros
     
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
@@ -110,6 +140,7 @@ def has_option(name):
 
 # pick up any commandline options
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
+OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
