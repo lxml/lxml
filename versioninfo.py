@@ -13,14 +13,45 @@ def branch_version():
 
 def svn_version():
     _version = version()
-    try:
-        svn_entries = open(
-            os.path.join(get_src_dir(), '.svn', 'entries')).read()
-        revision = re.search('<entry[^>]*name=""[^>]*revision="([^"]+)"',
-                             svn_entries).group(1)
-        result = _version + '-' + revision
-    except IOError:
-        result = _version
+    src_dir = get_src_dir()
+
+    revision = 0
+    base_url = None
+    urlre = re.compile('url="([^"]+)"')
+    revre = re.compile('committed-rev="(\d+)"')
+
+    for base, dirs, files in os.walk(src_dir):
+        if '.svn' not in dirs:
+            dirs[:] = []
+            continue    # no sense walking uncontrolled subdirs
+        dirs.remove('.svn')
+        f = open(os.path.join(base, '.svn', 'entries'))
+        data = f.read()
+        f.close()
+
+        if data.startswith('8'):
+            del data[0] # get rid of the '8'
+            data = map(str.splitlines, data.split('\n\x0c\n'))
+            dirurl = data[0][3]
+            localrev = max([int(d[9]) for d in data if len(d)>9 and d[9]])
+        elif data.startswith('<?xml'):
+            dirurl = urlre.search(data).group(1)    # get repository URL
+            localrev = max([int(m.group(1)) for m in revre.finditer(data)])
+        else:
+            from warnings import warn
+            warn("unrecognized .svn/entries format; skipping "+base)
+            dirs[:] = []
+            continue
+        if base_url is None:
+            base_url = dirurl+'/'   # save the root url
+        elif not dirurl.startswith(base_url):
+            dirs[:] = []
+            continue    # not part of the same svn tree, skip it
+        revision = max(revision, localrev)
+
+
+    if revision:
+        result = _version + '-' + str(revision)
 
     if 'dev' in _version:
         result = fix_alphabeta(result, 'dev')
