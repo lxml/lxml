@@ -16,6 +16,14 @@
 #endif
 #endif
 
+/* Threading can crash under Python 2.3 */
+#if PY_VERSION_HEX < 0x02040000
+  #define PyEval_SaveThread() (NULL)
+  #define PyEval_RestoreThread(state)
+  #define PyGILState_Ensure() (PyGILState_UNLOCKED)
+  #define PyGILState_Release(state)
+#endif
+
 /* libxml2 version specific setup */
 #include "libxml/xmlversion.h"
 #if LIBXML_VERSION < 20621
