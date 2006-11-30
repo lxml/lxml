@@ -21,7 +21,7 @@ try:
     doctest.ELLIPSIS
 except (ImportError, AttributeError):
     # we need our own version to make it work (Python 2.3?)
-    import lxml.local_doctest as doctest
+    import local_doctest as doctest
 
 
 class HelperTestCase(unittest.TestCase):
