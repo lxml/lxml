@@ -11,9 +11,10 @@ for IO related test cases.
 import unittest, doctest
 import os, re, shutil, tempfile, copy
 
-from common_imports import StringIO, etree, ElementTree, HelperTestCase, fileInTestDir, canonicalize
+from common_imports import StringIO, etree, ElementTree
+from common_imports import HelperTestCase, fileInTestDir, canonicalize
 
-class ETreeTestCaseBase(unittest.TestCase):
+class ETreeTestCaseBase(HelperTestCase):
     etree = None
     
     def setUp(self):

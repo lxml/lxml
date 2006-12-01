@@ -10,7 +10,6 @@ import unittest
 from common_imports import etree, HelperTestCase, doctest
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
-    assertFalse = HelperTestCase.failIf
     
     class default_class(etree.ElementBase):
         pass

@@ -12,6 +12,7 @@ import unittest, operator
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
+from common_imports import itemgetter
 
 from lxml import objectify
 
@@ -119,7 +120,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("0", root.c1.c2[0].text)
         self.assertEquals("1", root.c1.c2[1].text)
         self.assertEquals("2", root.c1.c2[2].text)
-        self.assertRaises(IndexError, operator.itemgetter(3), root.c1.c2)
+        self.assertRaises(IndexError, itemgetter(3), root.c1.c2)
 
     def test_child_index_neg(self):
         root = self.XML(xml_str)
@@ -127,7 +128,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("0", root.c1.c2[-3].text)
         self.assertEquals("1", root.c1.c2[-2].text)
         self.assertEquals("2", root.c1.c2[-1].text)
-        self.assertRaises(IndexError, operator.itemgetter(-4), root.c1.c2)
+        self.assertRaises(IndexError, itemgetter(-4), root.c1.c2)
 
     def test_child_len(self):
         root = self.XML(xml_str)
