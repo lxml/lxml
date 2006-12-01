@@ -202,6 +202,22 @@ cdef class _ExceptionContext:
             raise type, value, traceback
 
 
+cdef class QName:
+    """QName wrapper.
+    """
+    cdef readonly object text
+    def __init__(self, text_or_uri, tag=None):
+        if tag is not None:
+            text_or_uri = "{%s}%s" % (text_or_uri, tag)
+        elif not _isString(text_or_uri):
+            text_or_uri = str(text_or_uri)
+        self.text = text_or_uri
+    def __str__(self):
+        return self.text
+    def __hash__(self):
+        return self.text.__hash__()
+
+
 # forward declaration of _BaseParser, see parser.pxi
 cdef class _BaseParser
 
@@ -1176,16 +1192,22 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
     def find(self, path):
         """Finds the first matching subelement, by tag name or path.
         """
+        if isinstance(path, QName):
+            path = (<QName>path).text
         return _elementpath.find(self, path)
 
     def findtext(self, path, default=None):
         """Finds text for the first matching subelement, by tag name or path.
         """
+        if isinstance(path, QName):
+            path = (<QName>path).text
         return _elementpath.findtext(self, path, default)
 
     def findall(self, path):
         """Finds all matching subelements, by tag name or path.
         """
+        if isinstance(path, QName):
+            path = (<QName>path).text
         return _elementpath.findall(self, path)
 
     def xpath(self, _path, namespaces=None, extensions=None, **_variables):
@@ -1698,21 +1720,6 @@ def XML(text, _BaseParser parser=None):
     return doc.getroot()
 
 fromstring = XML
-
-cdef class QName:
-    """QName wrapper.
-    """
-    cdef readonly object text
-    def __init__(self, text_or_uri, tag=None):
-        if tag is not None:
-            text_or_uri = "{%s}%s" % (text_or_uri, tag)
-        elif not _isString(text_or_uri):
-            text_or_uri = str(text_or_uri)
-        self.text = text_or_uri
-    def __str__(self):
-        return self.text
-    def __hash__(self):
-        return self.text.__hash__()
 
 def iselement(element):
     """Checks if an object appears to be a valid element object.

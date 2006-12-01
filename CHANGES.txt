@@ -15,6 +15,12 @@ Features added
   possible to pass an --rpath directly to distutils; previously this was being
   shadowed.
 
+Bugs fixed
+----------
+
+* Element.find*() did not accept QName objects as path
+
+
 1.1.2 (2006-10-30)
 ==================
 
