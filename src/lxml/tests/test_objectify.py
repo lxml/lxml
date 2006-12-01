@@ -214,8 +214,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(1, len(root.findall("c")))
         self.assertEquals(2, len(root.findall(".//c")))
         self.assertEquals(3, len(root.findall(".//b")))
-        self.assertEquals(root.findall(".//b")[:2],
-                          root.getchildren()[:2])
+        self.assert_(root.findall(".//b")[1] is root.getchildren()[1])
 
     def test_findall_ns(self):
         XML = self.XML
