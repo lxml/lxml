@@ -1228,16 +1228,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         return canonicalize(data)
 
 
-class ETreeXIncludeTestCase(HelperTestCase):
-    def test_xinclude(self):
-        tree = etree.parse(fileInTestDir('test_xinclude.xml'))
-        # process xincludes
-        tree.xinclude()
-        # check whether we find it replaced with included data
-        self.assertEquals(
-            'a',
-            tree.getroot()[1].tag)
-
+class XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')
         root = etree.XML('''\
@@ -1249,11 +1240,30 @@ class ETreeXIncludeTestCase(HelperTestCase):
         content = open(filename).read()
         old_tail = root[0].tail
 
-        etree.ElementTree(root).xinclude()
+        self.include( etree.ElementTree(root) )
         self.assertEquals(old_text + content + old_tail,
                           root.text)
-        
-        
+
+class ETreeXIncludeTestCase(XIncludeTestCase):
+    def include(self, tree):
+        tree.xinclude()
+
+    def test_xinclude(self):
+        tree = etree.parse(fileInTestDir('test_xinclude.xml'))
+        # process xincludes
+        self.include( tree )
+        # check whether we find it replaced with included data
+        self.assertEquals(
+            'a',
+            tree.getroot()[1].tag)
+
+
+class ElementIncludeTestCase(XIncludeTestCase):
+    from lxml import ElementInclude
+    def include(self, tree):
+        self.ElementInclude.include(tree.getroot())
+
+
 class ETreeC14NTestCase(HelperTestCase):
     def test_c14n(self):
         tree = self.parse('<a><b/></a>')
@@ -1267,6 +1277,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
+    suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/api.txt')])

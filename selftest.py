@@ -9,16 +9,21 @@
 # TODO: add xml/html parsing tests
 # TODO: etc
 
-import sys, string, StringIO
+import re, sys, string, StringIO
 
 from lxml import etree as ElementTree
 from lxml import _elementpath as ElementPath
+from lxml import ElementInclude
 
 #from elementtree import ElementTree
 #from elementtree import ElementPath
 #from elementtree import ElementInclude
 #from elementtree import HTMLTreeBuilder
 #from elementtree import SimpleXMLWriter
+
+def fix_compatibility(xml_data):
+    xml_data = re.sub('\s*xmlns:[a-z0-9]+="http://www.w3.org/2001/XInclude"', '', xml_data)
+    return xml_data
 
 def serialize(elem, encoding=None):
     import StringIO
@@ -28,7 +33,7 @@ def serialize(elem, encoding=None):
         tree.write(file, encoding)
     else:
         tree.write(file)
-    return file.getvalue()
+    return fix_compatibility( file.getvalue() )
 
 def summarize(elem):
     return elem.tag
@@ -730,45 +735,45 @@ def xinclude_loader(href, parse="xml", encoding=None):
         return ElementTree.XML(data)
     return data
 
-## def xinclude():
-##     r"""
-##     Basic inclusion example (XInclude C.1)
+def xinclude():
+    r"""
+    Basic inclusion example (XInclude C.1)
 
-##     >>> document = xinclude_loader("C1.xml")
-##     >>> ElementInclude.include(document, xinclude_loader)
-##     >>> print serialize(document) # C1
-##     <document>
-##       <p>120 Mz is adequate for an average home user.</p>
-##       <disclaimer>
-##       <p>The opinions represented herein represent those of the individual
-##       and should not be interpreted as official policy endorsed by this
-##       organization.</p>
-##     </disclaimer>
-##     </document>
+    >>> document = xinclude_loader("C1.xml")
+    >>> ElementInclude.include(document, xinclude_loader)
+    >>> print serialize(document) # C1
+    <document>
+      <p>120 Mz is adequate for an average home user.</p>
+      <disclaimer>
+      <p>The opinions represented herein represent those of the individual
+      and should not be interpreted as official policy endorsed by this
+      organization.</p>
+    </disclaimer>
+    </document>
 
-##     Textual inclusion example (XInclude C.2)
+    Textual inclusion example (XInclude C.2)
 
-##     >>> document = xinclude_loader("C2.xml")
-##     >>> ElementInclude.include(document, xinclude_loader)
-##     >>> print serialize(document) # C2
-##     <document>
-##       <p>This document has been accessed
-##       324387 times.</p>
-##     </document>
+    >>> document = xinclude_loader("C2.xml")
+    >>> ElementInclude.include(document, xinclude_loader)
+    >>> print serialize(document) # C2
+    <document>
+      <p>This document has been accessed
+      324387 times.</p>
+    </document>
 
-##     Textual inclusion of XML example (XInclude C.3)
+    Textual inclusion of XML example (XInclude C.3)
 
-##     >>> document = xinclude_loader("C3.xml")
-##     >>> ElementInclude.include(document, xinclude_loader)
-##     >>> print serialize(document) # C3
-##     <document>
-##       <p>The following is the source of the "data.xml" resource:</p>
-##       <example>&lt;?xml version='1.0'?&gt;
-##     &lt;data&gt;
-##       &lt;item&gt;&lt;![CDATA[Brooks &amp; Shields]]&gt;&lt;/item&gt;
-##     &lt;/data&gt;
-##     </example>
-##     </document>
+    >>> document = xinclude_loader("C3.xml")
+    >>> ElementInclude.include(document, xinclude_loader)
+    >>> print serialize(document) # C3
+    <document>
+      <p>The following is the source of the "data.xml" resource:</p>
+      <example>&lt;?xml version='1.0'?&gt;
+    &lt;data&gt;
+      &lt;item&gt;&lt;![CDATA[Brooks &amp; Shields]]&gt;&lt;/item&gt;
+    &lt;/data&gt;
+    </example>
+    </document>
 
 ##     Fallback example (XInclude C.5)
 ##     Note! Fallback support is not yet implemented
@@ -779,22 +784,22 @@ def xinclude_loader(href, parse="xml", encoding=None):
 ##     IOError: resource not found
 ##     >>> # print serialize(document) # C5
 
-##     """
+    """
 
-## def xinclude_default():
-##     """
-##     >>> document = xinclude_loader("default.xml")
-##     >>> ElementInclude.include(document)
-##     >>> print serialize(document) # default
-##     <document>
-##       <p>Example.</p>
-##       <root>
-##        <element key="value">text</element>
-##        <element>text</element>tail
-##        <empty-element />
-##     </root>
-##     </document>
-##     """
+def xinclude_default():
+    """
+    >>> document = xinclude_loader("default.xml")
+    >>> ElementInclude.include(document)
+    >>> print serialize(document) # default
+    <document>
+      <p>Example.</p>
+      <root>
+       <element key="value">text</element>
+       <element>text</element>tail
+       <empty-element/>
+    </root>
+    </document>
+    """
 
 #
 # xmlwriter
