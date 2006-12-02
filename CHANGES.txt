@@ -8,6 +8,8 @@ under development
 Features added
 --------------
 
+* ElementTree.parser property holds the parser used to parse the document
+
 * setup.py has been refactored for greater readability and flexibility.
 
 * --rpath flag to setup.py to induce automatic linking-in of dynamic library

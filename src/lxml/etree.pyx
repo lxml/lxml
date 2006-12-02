@@ -467,6 +467,15 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             self._assertHasRoot()
             return DocInfo(self._context_node._doc)
 
+    property parser:
+        """The parser that was used to parse the document in this ElementTree.
+        """
+        def __get__(self):
+            if self._context_node is not None and \
+                   self._context_node._doc is not None:
+                return self._context_node._doc._parser
+            return None
+
     def write(self, file, encoding=None,
               pretty_print=False, xml_declaration=None):
         """Write the tree to a file or file-like object.
