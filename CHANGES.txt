@@ -8,6 +8,9 @@ under development
 Features added
 --------------
 
+* ElementInclude module for ElementTree compatible XInclude processing that
+  honours custom resolvers registered with the source document
+
 * ElementTree.parser property holds the parser used to parse the document
 
 * setup.py has been refactored for greater readability and flexibility.

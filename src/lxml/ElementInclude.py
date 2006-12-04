@@ -186,9 +186,11 @@ def _include(elem, loader=None, _parent_hrefs=None):
                     "unknown parse type in xi:include tag (%r)" % parse
                 )
         elif e.tag == XINCLUDE_FALLBACK:
-            raise FatalIncludeError(
-                "xi:fallback tag must be child of xi:include (%r)" % e.tag
-                )
+            parent = e.getparent()
+            if parent is not None and parent.tag != XINCLUDE_INCLUDE:
+                raise FatalIncludeError(
+                    "xi:fallback tag must be child of xi:include (%r)" % e.tag
+                    )
         else:
             raise FatalIncludeError(
                 "Invalid element found in XInclude namespace (%r)" % e.tag
