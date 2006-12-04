@@ -16,8 +16,8 @@
 #endif
 #endif
 
-/* Threading can crash under Python 2.3 */
-#if PY_VERSION_HEX < 0x02040000
+/* Threading can crash under Python <= 2.4.1 */
+#if PY_VERSION_HEX < 0x02040200
 #ifndef WITHOUT_THREADING
   #define WITHOUT_THREADING
 #endif

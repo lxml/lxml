@@ -13,7 +13,7 @@ Features added
 
 * ElementTree.parser property holds the parser used to parse the document
 
-* setup.py has been refactored for greater readability and flexibility.
+* setup.py has been refactored for greater readability and flexibility
 
 * --rpath flag to setup.py to induce automatic linking-in of dynamic library
   runtime search paths has been renamed to --auto-rpath. This makes it
@@ -22,6 +22,9 @@ Features added
 
 Bugs fixed
 ----------
+
+* Error handling could crash under Python <= 2.4.1 - fixed by disabling thread
+  support in these environments
 
 * Element.find*() did not accept QName objects as path
 
