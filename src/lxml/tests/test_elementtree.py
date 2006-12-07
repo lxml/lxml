@@ -623,6 +623,14 @@ class ETreeTestCaseBase(HelperTestCase):
             self.assertEquals(
                 '<doc%s>This is a test.</doc%s>' % (i, i),
                 canonicalize(data))
+        
+    def test_write_fail(self):
+        ElementTree = self.etree.ElementTree
+        XML = self.etree.XML
+
+        tree = ElementTree( XML('<doc>This is a test.</doc>') )
+        self.assertRaises(IOError, tree.write,
+                          "definitely////\\-\\nonexisting\\-\\////FILE")
 
     # this could trigger a crash, apparently because the document
     # reference was prematurely garbage collected

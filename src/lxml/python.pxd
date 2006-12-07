@@ -73,7 +73,10 @@ cdef extern from "Python.h":
     cdef void* PyMem_Malloc(size_t size)
     cdef void* PyMem_Realloc(void* p, size_t size)
     cdef void PyMem_Free(void* p)
-    cdef object PyErr_NoMemory() # always returns NULL to pass on exception
+
+    # these two always return NULL to pass on the exception
+    cdef object PyErr_NoMemory()
+    cdef object PyErr_SetFromErrno(object type)
 
     ctypedef enum PyGILState_STATE:
         PyGILState_LOCKED

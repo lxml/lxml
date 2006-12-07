@@ -166,6 +166,8 @@ cdef _tofilelike(f, _NodeBase element, encoding,
         filename8 = _encodeFilename(f)
         c_buffer = tree.xmlOutputBufferCreateFilename(
             _cstr(filename8), enchandler, 0)
+        if c_buffer is NULL:
+            python.PyErr_SetFromErrno(IOError)
         state = python.PyEval_SaveThread()
     elif hasattr(f, 'write'):
         writer   = _FilelikeWriter(f)
@@ -217,10 +219,11 @@ cdef _tofilelikeC14N(f, _NodeBase element):
         writer._exc_context._raise_if_stored()
 
     if bytes < 0:
-        if writer is not None and len(writer.error_log):
-            message = writer.error_log[0].message
-        else:
-            message = "C14N failed"
+        message = "C14N failed"
+        if writer is not None:
+            errors = writer.error_log
+            if len(errors):
+                message = errors[0].message
         raise C14NError, message
 
 # dump node to file (mainly for debug)
