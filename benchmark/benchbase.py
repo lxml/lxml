@@ -1,4 +1,4 @@
-import sys, string, time, copy, gc
+import sys, re, string, time, copy, gc
 from itertools import *
 from StringIO import StringIO
 import time
@@ -305,10 +305,12 @@ def buildSuites(benchmark_class, etrees, selected):
     # sorted by name and tree tuple
     benchmarks = [ sorted(b.benchmarks()) for b in benchmark_suites ]
 
+    selected = [ re.compile(r).search for r in selected ]
+
     if selected:
         benchmarks = [ [ b for b in bs
                          if [ match for match in selected
-                              if match in b[0] ] ]
+                              if match(b[0]) ] ]
                        for bs in benchmarks ]
 
     return (benchmark_suites, benchmarks)
