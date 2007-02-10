@@ -1,4 +1,4 @@
-cimport tree, python
+cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport isinstance, issubclass, hasattr, getattr, callable
 from python cimport iter, repr, str, _cstr, _isString, Py_ssize_t
@@ -37,12 +37,6 @@ import sys
 
 cdef object re
 import re
-
-cdef object thread
-try:
-    import thread
-except ImportError:
-    pass
 
 cdef object ITER_EMPTY
 ITER_EMPTY = iter(())

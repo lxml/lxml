@@ -349,8 +349,7 @@ cdef class _BaseParser:
     cdef LxmlParserType _parser_type
     cdef xmlParserCtxt* _parser_ctxt
     cdef ElementClassLookup _class_lookup
-    cdef object _lockParser
-    cdef object _unlockParser
+    cdef python.PyThread_type_lock _parser_lock
 
     def __init__(self, context_class=_ResolverContext):
         cdef xmlParserCtxt* pctxt
@@ -371,14 +370,12 @@ cdef class _BaseParser:
         if pctxt.sax != NULL:
             # hard switch-off for CDATA nodes => makes them plain text
             pctxt.sax.cdataBlock = NULL
-        if thread is None or self._parser_type == LXML_ITERPARSE_PARSER:
+        if not config.ENABLE_THREADING or \
+               self._parser_type == LXML_ITERPARSE_PARSER:
             # no threading
-            self._lockParser   = self.__dummy
-            self._unlockParser = self.__dummy
+            self._parser_lock = NULL
         else:
-            lock = thread.allocate_lock()
-            self._lockParser   = lock.acquire
-            self._unlockParser = lock.release
+            self._parser_lock = python.PyThread_allocate_lock()
         self._error_log = _ErrorLog()
         self.resolvers  = _ResolverRegistry()
         self._context = context_class(self.resolvers)
@@ -387,6 +384,8 @@ cdef class _BaseParser:
     def __dealloc__(self):
         if self._parser_ctxt is not NULL:
             xmlparser.xmlFreeParserCtxt(self._parser_ctxt)
+        if self._parser_lock is not NULL:
+            python.PyThread_free_lock(self._parser_lock)
 
     cdef void _cleanup(self):
         cdef xmlParserCtxt* pctxt
@@ -394,6 +393,21 @@ cdef class _BaseParser:
         if pctxt is not NULL:
             if pctxt.spaceTab is not NULL: # work around bug in libxml2
                 xmlparser.xmlClearParserCtxt(pctxt)
+
+    cdef int _lockParser(self) except 1:
+        cdef python.PyThreadState* state
+        cdef int result
+        if config.ENABLE_THREADING and self._parser_lock != NULL:
+            state = python.PyEval_SaveThread()
+            result = python.PyThread_acquire_lock(self._parser_lock, python.WAIT_LOCK)
+            python.PyEval_RestoreThread(state)
+            if result == 0:
+                raise ParserError, "parser locking failed"
+        return 0
+
+    cdef void _unlockParser(self):
+        if config.ENABLE_THREADING and self._parser_lock != NULL:
+            python.PyThread_release_lock(self._parser_lock)
 
     property error_log:
         def __get__(self):

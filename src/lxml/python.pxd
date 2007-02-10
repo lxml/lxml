@@ -88,6 +88,18 @@ cdef extern from "Python.h":
     cdef void PyEval_RestoreThread(PyThreadState* state)
     cdef PyObject* PyThreadState_GetDict()
 
+cdef extern from "pythread.h":
+    ctypedef void* PyThread_type_lock
+    cdef PyThread_type_lock PyThread_allocate_lock()
+    cdef void PyThread_free_lock(PyThread_type_lock lock)
+    cdef int  PyThread_acquire_lock(PyThread_type_lock lock, int mode)
+    cdef void PyThread_release_lock(PyThread_type_lock lock)
+    cdef long PyThread_get_thread_ident()
+
+    ctypedef enum __WaitLock:
+        WAIT_LOCK
+        NOWAIT_LOCK
+
 cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef int _isString(object obj)
     cdef int isinstance(object instance, object classes)
