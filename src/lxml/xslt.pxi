@@ -550,8 +550,17 @@ cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
 ################################################################################
 # XSLT PI support
 
+cdef object _FIND_PI_ATTRIBUTES
+_FIND_PI_ATTRIBUTES = re.compile(r'\s+(\w+)\s*=\s*["\']([^"\']+)["\']', re.U).findall
+
+cdef object _RE_PI_HREF
+_RE_PI_HREF = re.compile(r'\s+href\s*=\s*["\']([^"\']+)["\']')
+
 cdef object _FIND_PI_HREF
-_FIND_PI_HREF = re.compile('href\s*=\s*["\']([^"\']+)["\']').findall
+_FIND_PI_HREF = _RE_PI_HREF.findall
+
+cdef object _REPLACE_PI_HREF
+_REPLACE_PI_HREF = _RE_PI_HREF.sub
 
 cdef XPath _findStylesheetByID
 _findStylesheetByID = XPath(
@@ -574,7 +583,7 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
             raise ValueError, "PI lacks content"
-        hrefs_utf = _FIND_PI_HREF(self._c_node.content)
+        hrefs_utf = _FIND_PI_HREF(' ' + self._c_node.content)
         if len(hrefs_utf) != 1:
             raise ValueError, "malformed PI attributes"
         href_utf = hrefs_utf[0]
@@ -610,6 +619,26 @@ cdef class _XSLTProcessingInstruction(PIBase):
         result_node = root[0]
         return _elementTreeFactory(result_node._doc, result_node)
 
+    def set(self, key, value):
+        if key != "href":
+            raise AttributeError, "only setting the 'href' attribute is supported on XSLT-PIs"
+        if value is None:
+            attrib = ""
+        elif '"' in value or '>' in value:
+            raise ValueError, "Invalid URL, must not contain '\"' or '>'"
+        else:
+            attrib = ' href="%s"' % value
+        text = ' ' + self.text
+        if _FIND_PI_HREF(text):
+            self.text = _REPLACE_PI_HREF(attrib, text)
+        else:
+            self.text = text + attrib
+
+    def get(self, key, default=None):
+        for attr, value in _FIND_PI_ATTRIBUTES(' ' + self.text):
+            if attr == key:
+                return value
+        return default
 
 ################################################################################
 # EXSLT regexp implementation

@@ -8,8 +8,10 @@ under development
 Features added
 --------------
 
-* ElementInclude module for ElementTree compatible XInclude processing that
-  honours custom resolvers registered with the source document
+* get/set emulation (not .attrib!) for attributes on processing instructions
+
+* ElementInclude Python module for ElementTree compatible XInclude processing
+  that honours custom resolvers registered with the source document
 
 * ElementTree.parser property holds the parser used to parse the document
 

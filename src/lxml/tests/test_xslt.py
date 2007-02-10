@@ -599,7 +599,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         style_root = tree.getroot().getprevious().parseXSL().getroot()
         self.assertEquals("{http://www.w3.org/1999/XSL/Transform}stylesheet",
                           style_root.tag)
-        
+
     def test_xslt_pi_embedded_xmlid(self):
         # test xml:id dictionary lookup mechanism
         tree = self.parse('''\
@@ -628,7 +628,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           st.tostring(res))
-        
+
     def test_xslt_pi_embedded_id(self):
         # test XPath lookup mechanism
         tree = self.parse('''\
@@ -662,6 +662,88 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>B</foo>
 ''',
                           st.tostring(res))
+
+    def test_xslt_pi_get(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="TEST"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals("TEST", pi.get("href"))
+
+    def test_xslt_pi_get_all(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="TEST"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals("TEST", pi.get("href"))
+        self.assertEquals("text/xsl", pi.get("type"))
+        self.assertEquals(None, pi.get("motz"))
+
+    def test_xslt_pi_get_all_reversed(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet href="TEST" type="text/xsl"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals("TEST", pi.get("href"))
+        self.assertEquals("text/xsl", pi.get("type"))
+        self.assertEquals(None, pi.get("motz"))
+
+    def test_xslt_pi_get_unknown(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="TEST"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals(None, pi.get("unknownattribute"))
+
+    def test_xslt_pi_set_replace(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="TEST"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals("TEST", pi.get("href"))
+
+        pi.set("href", "TEST123")
+        self.assertEquals("TEST123", pi.get("href"))
+
+    def test_xslt_pi_set_new(self):
+        tree = self.parse('''\
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl"?>
+<a>
+  <b>B</b>
+  <c>C</c>
+</a>''')
+
+        pi = tree.getroot().getprevious()
+        self.assertEquals(None, pi.get("href"))
+
+        pi.set("href", "TEST")
+        self.assertEquals("TEST", pi.get("href"))
 
     def test_exslt_regexp_test(self):
         xslt = etree.XSLT(etree.XML("""\
