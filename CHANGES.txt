@@ -8,6 +8,8 @@ under development
 Features added
 --------------
 
+* Support for regular expressions in benchmark selection
+
 * get/set emulation (not .attrib!) for attributes on processing instructions
 
 * ElementInclude Python module for ElementTree compatible XInclude processing
