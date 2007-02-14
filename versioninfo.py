@@ -30,11 +30,13 @@ def svn_version():
         f.close()
 
         if data.startswith('8'):
+            # SVN >= 1.4
             data = map(str.splitlines, data.split('\n\x0c\n'))
             del data[0][0] # get rid of the '8'
             dirurl = data[0][3]
             localrev = max([int(d[9]) for d in data if len(d)>9 and d[9]])
         elif data.startswith('<?xml'):
+            # SVN <= 1.3
             dirurl = urlre.search(data).group(1)    # get repository URL
             localrev = max([int(m.group(1)) for m in revre.finditer(data)])
         else:
@@ -50,8 +52,9 @@ def svn_version():
         revision = max(revision, localrev)
 
 
+    result = _version
     if revision:
-        result = _version + '-' + str(revision)
+        result += '-' + str(revision)
 
     if 'dev' in _version:
         result = fix_alphabeta(result, 'dev')
@@ -93,6 +96,14 @@ def changes():
 def create_version_h(svn_version):
     """Create lxml-version.h
     """
+    # make sure we have a triple part version number
+    if '-' in svn_version:
+        while svn_version.count('.') < 2:
+            svn_version = svn_version.replace('-', '.0-')
+    else:
+        while svn_version.count('.') < 2:
+            svn_version += '.0'
+
     version_h = open(
         os.path.join(get_src_dir(), 'src', 'lxml', 'lxml-version.h'),
         'w')
