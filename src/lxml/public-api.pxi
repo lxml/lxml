@@ -6,10 +6,10 @@ cdef public _Element deepcopyNodeToDocument(_Document doc, xmlNode* c_root):
     c_node = _copyNodeToDoc(c_root, doc._c_doc)
     return _elementFactory(doc, c_node)
 
-cdef public _ElementTree elementTreeFactory(_NodeBase context_node):
+cdef public _ElementTree elementTreeFactory(_Element context_node):
     return newElementTree(context_node, _ElementTree)
 
-cdef public _ElementTree newElementTree(_NodeBase context_node,
+cdef public _ElementTree newElementTree(_Element context_node,
                                         object subclass):
     if <void*>context_node is NULL or context_node is None:
         raise TypeError
@@ -47,7 +47,7 @@ cdef public int tagMatches(xmlNode* c_node, char* c_href, char* c_name):
 cdef public _Document documentOrRaise(object input):
     return _documentOrRaise(input)
 
-cdef public _NodeBase rootNodeOrRaise(object input):
+cdef public _Element rootNodeOrRaise(object input):
     return _rootNodeOrRaise(input)
 
 cdef public object textOf(xmlNode* c_node):
@@ -77,16 +77,16 @@ cdef public object attributeValueFromNsName(xmlNode* c_element,
                                             char* ns, char* name):
     return _attributeValueFromNsName(c_element, ns, name)
 
-cdef public object getAttributeValue(_NodeBase element, key, default):
+cdef public object getAttributeValue(_Element element, key, default):
     return _getAttributeValue(element, key, default)
 
 cdef public object iterattributes(_Element element, int keysvalues):
     return _attributeIteratorFactory(element, keysvalues)
 
-cdef public int setAttributeValue(_NodeBase element, key, value) except -1:
+cdef public int setAttributeValue(_Element element, key, value) except -1:
     return _setAttributeValue(element, key, value)
 
-cdef public int delAttribute(_NodeBase element, key) except -1:
+cdef public int delAttribute(_Element element, key) except -1:
     return _delAttribute(element, key)
 
 cdef public int delAttributeFromNsName(tree.xmlNode* c_element,
@@ -128,7 +128,7 @@ cdef public object namespacedName(xmlNode* c_node):
 cdef public object namespacedNameFromNsName(char* href, char* name):
     return _namespacedNameFromNsName(href, name)
 
-cdef public void iteratorStoreNext(_ElementIterator iterator, _NodeBase node):
+cdef public void iteratorStoreNext(_ElementIterator iterator, _Element node):
     iterator._storeNext(node)
 
 cdef public void initTagMatch(_ElementTagMatcher matcher, tag):

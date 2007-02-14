@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-under development
-=================
+1.2 (2007-02-14)
+================
 
 Features added
 --------------
@@ -33,6 +33,13 @@ Bugs fixed
   support in these environments
 
 * Element.find*() did not accept QName objects as path
+
+Other changes
+-------------
+
+* code cleanup: redundant _NodeBase super class merged into _Element class
+  Note: although the impact should be zero in most cases, this change breaks
+  the compatibiliy of the public C-API
 
 
 1.1.2 (2006-10-30)

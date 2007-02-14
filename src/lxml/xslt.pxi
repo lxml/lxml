@@ -279,7 +279,7 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
         cdef _Document doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
 
         doc = _documentOrRaise(xslt_input)
         root_node = _rootNodeOrRaise(xslt_input)
@@ -341,7 +341,7 @@ cdef class XSLT:
         cdef python.PyThreadState* state
         cdef _XSLTContext context
         cdef _Document input_doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
         cdef _Document result_doc
         cdef _Document profile_doc
         cdef xmlDoc* c_profile_doc

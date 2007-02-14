@@ -10,19 +10,19 @@ cdef void displayNode(xmlNode* c_node, indent):
         c_child = c_child.next
 
 cdef _Document _documentOrRaise(object input):
-    """Call this to get the document of a _Document, _ElementTree or _NodeBase
+    """Call this to get the document of a _Document, _ElementTree or _Element
     object, or to raise an exception if it can't be determined.
 
     Should be used in all API functions for consistency.
     """
     cdef _Document doc
-    cdef _NodeBase element
+    cdef _Element element
     if isinstance(input, _ElementTree):
         element = (<_ElementTree>input)._context_node
         if element is not None:
             doc = element._doc
-    elif isinstance(input, _NodeBase):
-        doc = (<_NodeBase>input)._doc
+    elif isinstance(input, _Element):
+        doc = (<_Element>input)._doc
     elif isinstance(input, _Document):
         doc = <_Document>input
     else:
@@ -32,17 +32,17 @@ cdef _Document _documentOrRaise(object input):
     else:
         return doc
 
-cdef _NodeBase _rootNodeOrRaise(object input):
+cdef _Element _rootNodeOrRaise(object input):
     """Call this to get the root node of a _Document, _ElementTree or
-     _NodeBase object, or to raise an exception if it can't be determined.
+     _Element object, or to raise an exception if it can't be determined.
 
     Should be used in all API functions for consistency.
      """
-    cdef _NodeBase node
+    cdef _Element node
     if isinstance(input, _ElementTree):
         node = (<_ElementTree>input)._context_node
-    elif isinstance(input, _NodeBase):
-        node = <_NodeBase>input
+    elif isinstance(input, _Element):
+        node = <_Element>input
     elif isinstance(input, _Document):
         node = (<_Document>input).getroot()
     else:
@@ -54,27 +54,27 @@ cdef _NodeBase _rootNodeOrRaise(object input):
 
 cdef _Document _documentOf(object input):
     # call this to get the document of a
-    # _Document, _ElementTree or _NodeBase object
+    # _Document, _ElementTree or _Element object
     # may return None!
-    cdef _NodeBase element
+    cdef _Element element
     if isinstance(input, _ElementTree):
         element = (<_ElementTree>input)._context_node
         if element is not None:
             return element._doc
-    elif isinstance(input, _NodeBase):
-        return (<_NodeBase>input)._doc
+    elif isinstance(input, _Element):
+        return (<_Element>input)._doc
     elif isinstance(input, _Document):
         return <_Document>input
     return None
 
-cdef _NodeBase _rootNodeOf(object input):
+cdef _Element _rootNodeOf(object input):
     # call this to get the root node of a
-    # _Document, _ElementTree or _NodeBase object
+    # _Document, _ElementTree or _Element object
     # may return None!
     if isinstance(input, _ElementTree):
         return (<_ElementTree>input)._context_node
-    elif isinstance(input, _NodeBase):
-        return <_NodeBase>input
+    elif isinstance(input, _Element):
+        return <_Element>input
     elif isinstance(input, _Document):
         return (<_Document>input).getroot()
     else:
@@ -176,7 +176,7 @@ cdef object _attributeValueFromNsName(xmlNode* c_element,
     tree.xmlFree(c_result)
     return result
 
-cdef object _getAttributeValue(_NodeBase element, key, default):
+cdef object _getAttributeValue(_Element element, key, default):
     cdef char* c_result
     cdef char* c_tag
     ns, tag = _getNsTag(key)
@@ -192,7 +192,7 @@ cdef object _getAttributeValue(_NodeBase element, key, default):
     tree.xmlFree(c_result)
     return result
 
-cdef int _setAttributeValue(_NodeBase element, key, value) except -1:
+cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef xmlNs* c_ns
     cdef char* c_value
     cdef char* c_tag
@@ -207,7 +207,7 @@ cdef int _setAttributeValue(_NodeBase element, key, value) except -1:
         tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
     return 0
 
-cdef int _delAttribute(_NodeBase element, key) except -1:
+cdef int _delAttribute(_Element element, key) except -1:
     cdef xmlAttr* c_attr
     cdef char* c_href
     ns, tag = _getNsTag(key)

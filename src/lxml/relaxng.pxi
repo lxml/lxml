@@ -20,7 +20,7 @@ cdef class RelaxNG(_Validator):
     cdef relaxng.xmlRelaxNG* _c_schema
     def __init__(self, etree=None, file=None):
         cdef _Document doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
         cdef xmlNode* c_node
         cdef xmlDoc* fake_c_doc
         cdef char* c_href
@@ -76,7 +76,7 @@ cdef class RelaxNG(_Validator):
         Returns true if document is valid, false if not."""
         cdef python.PyThreadState* state
         cdef _Document doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef relaxng.xmlRelaxNGValidCtxt* valid_ctxt
         cdef int ret

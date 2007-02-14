@@ -122,7 +122,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     XPath evaluators must not be shared between threads.
     """
     cdef _Element _element
-    def __init__(self, _NodeBase element not None, namespaces=None, extensions=None):
+    def __init__(self, _Element element not None, namespaces=None, extensions=None):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         cdef _Document doc
@@ -253,7 +253,7 @@ cdef class XPath(_XPathEvaluatorBase):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
-        cdef _NodeBase element
+        cdef _Element element
         cdef _XPathContext context
 
         document = _documentOrRaise(_etree_or_element)

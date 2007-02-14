@@ -1,6 +1,6 @@
 # XML serialization and output functions
 
-cdef _tostring(_NodeBase element, encoding,
+cdef _tostring(_Element element, encoding,
                int write_xml_declaration, int pretty_print):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef python.PyThreadState* state
@@ -43,7 +43,7 @@ cdef _tostring(_NodeBase element, encoding,
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
-cdef _tounicode(_NodeBase element, int pretty_print):
+cdef _tounicode(_Element element, int pretty_print):
     "Serialize an element to the Python unicode representation of its XML tree."
     cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
@@ -146,7 +146,7 @@ cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int len):
 cdef int _closeFilelikeWriter(void* ctxt):
     return (<_FilelikeWriter>ctxt).close()
 
-cdef _tofilelike(f, _NodeBase element, encoding,
+cdef _tofilelike(f, _Element element, encoding,
                  int write_xml_declaration, int pretty_print):
     cdef python.PyThreadState* state
     cdef _FilelikeWriter writer
@@ -185,7 +185,7 @@ cdef _tofilelike(f, _NodeBase element, encoding,
     else:
         writer._exc_context._raise_if_stored()
 
-cdef _tofilelikeC14N(f, _NodeBase element):
+cdef _tofilelikeC14N(f, _Element element):
     cdef python.PyThreadState* state
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer

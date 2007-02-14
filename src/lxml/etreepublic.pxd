@@ -27,12 +27,9 @@ cdef extern from "etree.h":
     cdef class lxml.etree._Document [ object LxmlDocument ]:
         cdef tree.xmlDoc* _c_doc
 
-    cdef class lxml.etree._NodeBase [ object LxmlNodeBase ]:
+    cdef class lxml.etree._Element [ object LxmlElement ]:
         cdef _Document _doc
         cdef tree.xmlNode* _c_node
-
-    cdef class lxml.etree._Element(_NodeBase) [ object LxmlElement ]:
-        pass
 
     cdef class lxml.etree.ElementBase(_Element) [ object LxmlElementBase ]:
         pass
@@ -56,10 +53,10 @@ cdef extern from "etree.h":
     cdef _Element elementFactory(_Document doc, tree.xmlNode* c_node)
 
     # create an ElementTree for an Element
-    cdef _ElementTree elementTreeFactory(_NodeBase context_node)
+    cdef _ElementTree elementTreeFactory(_Element context_node)
 
     # create an ElementTree subclass for an Element
-    cdef _ElementTree newElementTree(_NodeBase context_node, object subclass)
+    cdef _ElementTree newElementTree(_Element context_node, object subclass)
 
     # create a new Element for an existing or new document (doc = None)
     # builds Python object after setting text, tail, namespaces and attributes
@@ -101,7 +98,7 @@ cdef extern from "etree.h":
                                          char* c_ns, char* c_name)
 
     # return the value of attribute "{ns}name", or the default value
-    cdef object getAttributeValue(_NodeBase element, key, default)
+    cdef object getAttributeValue(_Element element, key, default)
 
     # return an iterator over attribute names (1), values (2) or items (3)
     # attributes must not be removed during iteration!
@@ -109,11 +106,11 @@ cdef extern from "etree.h":
 
     # set an attribute value on an element
     # on failure, sets an exception and returns -1
-    cdef int setAttributeValue(_NodeBase element, key, value) except -1
+    cdef int setAttributeValue(_Element element, key, value) except -1
 
     # delete an attribute
     # on failure, sets an exception and returns -1
-    cdef int delAttribute(_NodeBase element, key) except -1
+    cdef int delAttribute(_Element element, key) except -1
 
     # delete an attribute based on name and namespace URI
     # returns -1 if the attribute was not found (no exception)
@@ -153,12 +150,12 @@ cdef extern from "etree.h":
 
     cdef class lxml.etree._ElementIterator(_ElementTagMatcher) [
         object LxmlElementIterator ]:
-        cdef _NodeBase _node
+        cdef _Element _node
         cdef tree.xmlNode* (*_next_element)(tree.xmlNode*)
 
     # store the initial node of the iterator if it matches the required tag
     # or its next matching sibling if not
-    cdef void iteratorStoreNext(_ElementIterator iterator, _NodeBase node)
+    cdef void iteratorStoreNext(_ElementIterator iterator, _Element node)
 
     ##########################################################################
     # other helper functions
@@ -205,4 +202,4 @@ cdef extern from "etree.h":
     cdef _Document documentOrRaise(object input)
 
     # find the root Element of an Element (itself!), ElementTree or Document
-    cdef _NodeBase rootNodeOrRaise(object input)
+    cdef _Element rootNodeOrRaise(object input)

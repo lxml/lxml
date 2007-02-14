@@ -4,19 +4,19 @@
 # structure of the respective node to avoid multiple instantiation of
 # the Python class
 
-cdef _NodeBase getProxy(xmlNode* c_node):
+cdef _Element getProxy(xmlNode* c_node):
     """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
-        return <_NodeBase>c_node._private
+        return <_Element>c_node._private
     else:
         return None
 
 cdef int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef registerProxy(_NodeBase proxy):
+cdef registerProxy(_Element proxy):
     """Register a proxy and type for the node it's proxying for.
     """
     cdef xmlNode* c_node
@@ -28,7 +28,7 @@ cdef registerProxy(_NodeBase proxy):
     assert c_node._private is NULL, "double registering proxy!"
     c_node._private = <void*>proxy
 
-cdef unregisterProxy(_NodeBase proxy):
+cdef unregisterProxy(_Element proxy):
     """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node
@@ -154,14 +154,14 @@ cdef void _deallocDocument(xmlDoc* c_doc):
     c_node = c_doc.children
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
     if c_node._private is not NULL:
-        (<_NodeBase>c_node._private)._c_node = NULL
+        (<_Element>c_node._private)._c_node = NULL
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
     tree.xmlFreeDoc(c_doc)
 
 ################################################################################
 # change _Document references when a node changes documents
 
-cdef void moveNodeToDocument(_NodeBase node, _Document doc):
+cdef void moveNodeToDocument(_Element node, _Document doc):
     """For a node and all nodes below, change document.
 
     A node can change document in certain operations as an XML
@@ -185,5 +185,5 @@ cdef void changeDocumentBelow(xmlNode* c_parent, _Document doc):
     c_node = c_parent.children
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_parent, c_node, 1)
     if c_node._private is not NULL:
-        (<_NodeBase>c_node._private)._doc = doc
+        (<_Element>c_node._private)._doc = doc
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)

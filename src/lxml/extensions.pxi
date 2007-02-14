@@ -196,16 +196,16 @@ cdef class _BaseContext:
         functions would be reference counted too soon, during the XPath
         evaluation.  This is most important in the case of exceptions.
         """
-        cdef _NodeBase element
-        if isinstance(obj, _NodeBase):
+        cdef _Element element
+        if isinstance(obj, _Element):
             self._temp_refs.add(obj)
-            self._temp_refs.add((<_NodeBase>obj)._doc)
+            self._temp_refs.add((<_Element>obj)._doc)
             return
         elif _isString(obj) or not python.PySequence_Check(obj):
             return
         for o in obj:
-            if isinstance(o, _NodeBase):
-                element = <_NodeBase>o
+            if isinstance(o, _Element):
+                element = <_Element>o
                 #print "Holding element:", <int>element._c_node
                 self._temp_refs.add(element)
                 #print "Holding document:", <int>element._doc._c_doc
@@ -245,7 +245,7 @@ cdef xpath.xmlXPathFunction _function_check(void* ctxt,
 
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
-    cdef _NodeBase node
+    cdef _Element node
     if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
     if python.PyString_Check(obj):
@@ -256,13 +256,13 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
         return xpath.xmlXPathNewFloat(obj)
     if obj is None:
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
-    elif isinstance(obj, _NodeBase):
-        resultSet = xpath.xmlXPathNodeSetCreate((<_NodeBase>obj)._c_node)
+    elif isinstance(obj, _Element):
+        resultSet = xpath.xmlXPathNodeSetCreate((<_Element>obj)._c_node)
     elif python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
         for element in obj:
-            if isinstance(element, _NodeBase):
-                node = <_NodeBase>element
+            if isinstance(element, _Element):
+                node = <_Element>element
                 xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
             else:
                 xpath.xmlXPathFreeNodeSet(resultSet)
@@ -356,7 +356,7 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 
 cdef void _extension_function_call(_BaseContext context, function,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef _NodeBase node
+    cdef _Element node
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef int i

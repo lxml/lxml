@@ -358,6 +358,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result._parser = parser
     return result
 
+
 cdef class DocInfo:
     "Document information provided by parser and DTD."
     cdef readonly object root_name
@@ -391,16 +392,23 @@ cdef class DocInfo:
             else:
                 return ""
 
-cdef public class _NodeBase [ type LxmlNodeBaseType,
-                              object LxmlNodeBase ]:
-    """Base class to reference a document object and a libxml node.
+
+cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
+    """Element class.  References a document object and a libxml node.
 
     By pointing to a Document instance, a reference is kept to
     _Document as long as there is some pointer to a node in it.
     """
     cdef _Document _doc
     cdef xmlNode* _c_node
-    
+    cdef object _tag
+    cdef object _attrib
+
+    def _init(self):
+        """Called after object initialisation.  Custom subclasses may override
+        this if they recursively call _init() in the superclasses.
+        """
+
     def __dealloc__(self):
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
@@ -408,270 +416,9 @@ cdef public class _NodeBase [ type LxmlNodeBaseType,
             unregisterProxy(self)
             attemptDeallocation(self._c_node)
 
-cdef public class _ElementTree [ type LxmlElementTreeType,
-                                 object LxmlElementTree ]:
-    cdef _Document _doc
-    cdef _NodeBase _context_node
-
-    # Note that _doc is only used to store the original document if we do not
-    # have a _context_node.  All methods should prefer self._context_node._doc
-    # to honour tree restructuring.  _doc can happily be None!
-
-    cdef _assertHasRoot(self):
-        """We have to take care here: the document may not have a root node!
-        This can happen if ElementTree() is called without any argument and
-        the caller 'forgets' to call parse() afterwards, so this is a bug in
-        the caller program.
-        """
-        assert self._context_node is not None, \
-               "ElementTree not initialized, missing root"
-
-    def parse(self, source, _BaseParser parser=None):
-        """Updates self with the content of source and returns its root
-        """
-        cdef _Document doc
-        doc = _parseDocument(source, parser)
-        self._context_node = doc.getroot()
-        if self._context_node is None:
-            self._doc = doc
-        else:
-            self._doc = None
-        return self._context_node
-
-    def getroot(self):
-        """Gets the root element for this tree.
-        """
-        return self._context_node
-
-    def __copy__(self):
-        return ElementTree(self._context_node)
-
-    def __deepcopy__(self, memo):
-        if self._context_node is None:
-            return ElementTree()
-        else:
-            return ElementTree( self._context_node.__copy__() )
-
-    property docinfo:
-        """Information about the document provided by parser and DTD.  This
-        value is only defined for ElementTree objects based on the root node
-        of a parsed document (e.g.  those returned by the parse functions).
-        """
-        def __get__(self):
-            self._assertHasRoot()
-            return DocInfo(self._context_node._doc)
-
-    property parser:
-        """The parser that was used to parse the document in this ElementTree.
-        """
-        def __get__(self):
-            if self._context_node is not None and \
-                   self._context_node._doc is not None:
-                return self._context_node._doc._parser
-            return None
-
-    def write(self, file, encoding=None,
-              pretty_print=False, xml_declaration=None):
-        """Write the tree to a file or file-like object.
-        
-        Defaults to ASCII encoding and writing a declaration as needed.
-        """
-        cdef int c_write_declaration
-        self._assertHasRoot()
-        # suppress decl. in default case (purely for ElementTree compatibility)
-        if xml_declaration is not None:
-            c_write_declaration = bool(xml_declaration)
-            if encoding is None:
-                encoding = 'ASCII'
-        elif encoding is None:
-            encoding = 'ASCII'
-            c_write_declaration = 0
-        else:
-            encoding = encoding.upper()
-            c_write_declaration = encoding not in \
-                                  ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
-        _tofilelike(file, self._context_node, encoding,
-                    c_write_declaration, bool(pretty_print))
-
-    def getpath(self, _NodeBase element not None):
-        """Returns a structural, absolute XPath expression to find that element.
-        """
-        cdef _Document doc
-        cdef xmlDoc* c_doc
-        cdef char* c_path
-        doc = self._context_node._doc
-        if element._doc is not doc:
-            raise ValueError, "Element is not in this tree."
-        c_doc = _fakeRootDoc(doc._c_doc, self._context_node._c_node)
-        c_path = tree.xmlGetNodePath(element._c_node)
-        _destroyFakeDoc(doc._c_doc, c_doc)
-        if c_path is NULL:
-            raise LxmlError, "Error creating node path."
-        path = c_path
-        tree.xmlFree(c_path)
-        return path
-
-    def getiterator(self, tag=None):
-        """Creates an iterator for the root element. The iterator loops over all elements
-        in this tree, in document order.
-        """
-        root = self.getroot()
-        if root is None:
-            return ()
-        return root.getiterator(tag)
-
-    def find(self, path):
-        """Finds the first toplevel element with given tag. Same as getroot().find(path).
-        """
-        self._assertHasRoot()
-        root = self.getroot()
-        if path[:1] == "/":
-            path = "." + path
-        return root.find(path)
-
-    def findtext(self, path, default=None):
-        """Finds the element text for the first toplevel element with given tag. Same as getroot().findtext(path)
-        """
-        self._assertHasRoot()
-        root = self.getroot()
-        if path[:1] == "/":
-            path = "." + path
-        return root.findtext(path, default)
-
-    def findall(self, path):
-        """Finds all toplevel elements with the given tag. Same as getroot().findall(path).
-        """
-        self._assertHasRoot()
-        root = self.getroot()
-        if path[:1] == "/":
-            path = "." + path
-        return root.findall(path)
-    
-    # extensions to ElementTree API
-    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
-        """XPath evaluate in context of document.
-
-        ``namespaces`` is an optional dictionary with prefix to namespace URI
-        mappings, used by XPath.  ``extensions`` defines additional extension
-        functions.
-        
-        Returns a list (nodeset), or bool, float or string.
-
-        In case of a list result, return Element for element nodes,
-        string for text and attribute values.
-
-        Note: if you are going to apply multiple XPath expressions
-        against the same document, it is more efficient to use
-        XPathEvaluator directly.
-        """
-        self._assertHasRoot()
-        evaluator = XPathDocumentEvaluator(self, namespaces, extensions)
-        return evaluator.evaluate(_path, **_variables)
-
-    def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
-        """Transform this document using other document.
-
-        xslt is a tree that should be XSLT
-        keyword parameters are XSLT transformation parameters.
-
-        Returns the transformed tree.
-
-        Note: if you are going to apply the same XSLT stylesheet against
-        multiple documents, it is more efficient to use the XSLT
-        class directly.
-        """
-        self._assertHasRoot()
-        style = XSLT(_xslt, extensions=extensions,
-                     access_control=access_control)
-        return style(self, **_kw)
-
-    def relaxng(self, relaxng):
-        """Validate this document using other document.
-
-        relaxng is a tree that should contain Relax NG XML
-
-        Returns True or False, depending on whether validation
-        succeeded.
-
-        Note: if you are going to apply the same Relax NG schema against
-        multiple documents, it is more efficient to use the RelaxNG
-        class directly.
-        """
-        self._assertHasRoot()
-        schema = RelaxNG(relaxng)
-        return schema.validate(self)
-
-    def xmlschema(self, xmlschema):
-        """Validate this document using other document.
-
-        xmlschema is a tree that should contain XML Schema XML.
-
-        Returns True or False, depending on whether validation
-        succeeded.
-
-        Note: If you are going to apply the same XML Schema against
-        multiple documents, it is more efficient to use the XMLSchema
-        class directly.
-        """
-        self._assertHasRoot()
-        schema = XMLSchema(xmlschema)
-        return schema.validate(self)
-
-    def xinclude(self):
-        """Process the XInclude nodes in this document and include the
-        referenced XML fragments.
-        """
-        cdef int result
-        # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
-        # the XInclude nodes - there may still be Python references to them!
-        # Therefore, we allow XInclude nodes to be converted to
-        # XML_XINCLUDE_START nodes.  XML_XINCLUDE_END nodes are added as
-        # siblings.  Tree traversal will simply ignore them as they are not
-        # typed as elements.  The included fragment is added between the two,
-        # i.e. as a sibling, which does not conflict with traversal.
-        self._assertHasRoot()
-        if self._context_node._doc._parser != None:
-            result = xinclude.xmlXIncludeProcessTreeFlags(
-                self._context_node._c_node,
-                self._context_node._doc._parser._parse_options)
-        else:
-            result = xinclude.xmlXIncludeProcessTree(
-                self._context_node._c_node)
-        if result == -1:
-            raise XIncludeError, "XInclude processing failed"
-
-    def write_c14n(self, file):
-        """C14N write of document. Always writes UTF-8.
-        """
-        self._assertHasRoot()
-        _tofilelikeC14N(file, self._context_node)
-
-cdef _ElementTree _elementTreeFactory(_Document doc, _NodeBase context_node):
-    return _newElementTree(doc, context_node, _ElementTree)
-
-cdef _ElementTree _newElementTree(_Document doc, _NodeBase context_node,
-                                  object baseclass):
-    cdef _ElementTree result
-    result = baseclass()
-    if context_node is None and doc is not None:
-            context_node = doc.getroot()
-    if context_node is None:
-        result._doc = doc
-    result._context_node = context_node
-    return result
-
-cdef public class _Element(_NodeBase) [ type LxmlElementType,
-                                        object LxmlElement ]:
-    cdef object _tag
-    cdef object _attrib
-    def _init(self):
-        """Called after object initialisation.  Custom subclasses may override
-        this if they recursively call _init() in the superclasses.
-        """
-
     # MANIPULATORS
 
-    def __setitem__(self, Py_ssize_t index, _NodeBase element not None):
+    def __setitem__(self, Py_ssize_t index, _Element element not None):
         """Replaces the given subelement.
         """
         cdef xmlNode* c_node
@@ -709,7 +456,7 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
-        cdef _Element mynode
+        cdef _Element element
         # first, find start of slice
         if start == python.PY_SSIZE_T_MAX:
             c_node = NULL
@@ -724,18 +471,18 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
                 _appendChild(self, element)
             return
         # if the next element is in the list, insert before it
-        for mynode in value:
-            if mynode is None:
+        for element in value:
+            if element is None:
                 raise TypeError, "Node must not be None."
             # store possible text tail
-            c_next = mynode._c_node.next
+            c_next = element._c_node.next
             # now move node previous to insertion point
-            tree.xmlUnlinkNode(mynode._c_node)
-            tree.xmlAddPrevSibling(c_node, mynode._c_node)
+            tree.xmlUnlinkNode(element._c_node)
+            tree.xmlAddPrevSibling(c_node, element._c_node)
             # and move tail just behind his node
-            _moveTail(c_next, mynode._c_node)
+            _moveTail(c_next, element._c_node)
             # move it into a new document
-            moveNodeToDocument(mynode, self._doc)
+            moveNodeToDocument(element, self._doc)
 
     def __deepcopy__(self, memo):
         return self.__copy__()
@@ -987,9 +734,9 @@ cdef public class _Element(_NodeBase) [ type LxmlElementType,
 
     def __contains__(self, element):
         cdef xmlNode* c_node
-        if not isinstance(element, _NodeBase):
+        if not isinstance(element, _Element):
             return 0
-        c_node = (<_NodeBase>element)._c_node
+        c_node = (<_Element>element)._c_node
         return c_node is not NULL and c_node.parent is self._c_node
 
     def __iter__(self):
@@ -1235,6 +982,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     result._init()
     return result
 
+
 cdef class __ContentOnlyElement(_Element):
     cdef int _raiseImmutable(self) except -1:
         raise TypeError, "this element does not have children or attributes"
@@ -1321,9 +1069,263 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         else:
             return "<?%s?>" % self.target
 
+
+cdef public class _ElementTree [ type LxmlElementTreeType,
+                                 object LxmlElementTree ]:
+    cdef _Document _doc
+    cdef _Element _context_node
+
+    # Note that _doc is only used to store the original document if we do not
+    # have a _context_node.  All methods should prefer self._context_node._doc
+    # to honour tree restructuring.  _doc can happily be None!
+
+    cdef _assertHasRoot(self):
+        """We have to take care here: the document may not have a root node!
+        This can happen if ElementTree() is called without any argument and
+        the caller 'forgets' to call parse() afterwards, so this is a bug in
+        the caller program.
+        """
+        assert self._context_node is not None, \
+               "ElementTree not initialized, missing root"
+
+    def parse(self, source, _BaseParser parser=None):
+        """Updates self with the content of source and returns its root
+        """
+        cdef _Document doc
+        doc = _parseDocument(source, parser)
+        self._context_node = doc.getroot()
+        if self._context_node is None:
+            self._doc = doc
+        else:
+            self._doc = None
+        return self._context_node
+
+    def getroot(self):
+        """Gets the root element for this tree.
+        """
+        return self._context_node
+
+    def __copy__(self):
+        return ElementTree(self._context_node)
+
+    def __deepcopy__(self, memo):
+        if self._context_node is None:
+            return ElementTree()
+        else:
+            return ElementTree( self._context_node.__copy__() )
+
+    property docinfo:
+        """Information about the document provided by parser and DTD.  This
+        value is only defined for ElementTree objects based on the root node
+        of a parsed document (e.g.  those returned by the parse functions).
+        """
+        def __get__(self):
+            self._assertHasRoot()
+            return DocInfo(self._context_node._doc)
+
+    property parser:
+        """The parser that was used to parse the document in this ElementTree.
+        """
+        def __get__(self):
+            if self._context_node is not None and \
+                   self._context_node._doc is not None:
+                return self._context_node._doc._parser
+            return None
+
+    def write(self, file, encoding=None,
+              pretty_print=False, xml_declaration=None):
+        """Write the tree to a file or file-like object.
+        
+        Defaults to ASCII encoding and writing a declaration as needed.
+        """
+        cdef int c_write_declaration
+        self._assertHasRoot()
+        # suppress decl. in default case (purely for ElementTree compatibility)
+        if xml_declaration is not None:
+            c_write_declaration = bool(xml_declaration)
+            if encoding is None:
+                encoding = 'ASCII'
+        elif encoding is None:
+            encoding = 'ASCII'
+            c_write_declaration = 0
+        else:
+            encoding = encoding.upper()
+            c_write_declaration = encoding not in \
+                                  ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
+        _tofilelike(file, self._context_node, encoding,
+                    c_write_declaration, bool(pretty_print))
+
+    def getpath(self, _Element element not None):
+        """Returns a structural, absolute XPath expression to find that element.
+        """
+        cdef _Document doc
+        cdef xmlDoc* c_doc
+        cdef char* c_path
+        doc = self._context_node._doc
+        if element._doc is not doc:
+            raise ValueError, "Element is not in this tree."
+        c_doc = _fakeRootDoc(doc._c_doc, self._context_node._c_node)
+        c_path = tree.xmlGetNodePath(element._c_node)
+        _destroyFakeDoc(doc._c_doc, c_doc)
+        if c_path is NULL:
+            raise LxmlError, "Error creating node path."
+        path = c_path
+        tree.xmlFree(c_path)
+        return path
+
+    def getiterator(self, tag=None):
+        """Creates an iterator for the root element. The iterator loops over all elements
+        in this tree, in document order.
+        """
+        root = self.getroot()
+        if root is None:
+            return ()
+        return root.getiterator(tag)
+
+    def find(self, path):
+        """Finds the first toplevel element with given tag. Same as getroot().find(path).
+        """
+        self._assertHasRoot()
+        root = self.getroot()
+        if path[:1] == "/":
+            path = "." + path
+        return root.find(path)
+
+    def findtext(self, path, default=None):
+        """Finds the element text for the first toplevel element with given tag. Same as getroot().findtext(path)
+        """
+        self._assertHasRoot()
+        root = self.getroot()
+        if path[:1] == "/":
+            path = "." + path
+        return root.findtext(path, default)
+
+    def findall(self, path):
+        """Finds all toplevel elements with the given tag. Same as getroot().findall(path).
+        """
+        self._assertHasRoot()
+        root = self.getroot()
+        if path[:1] == "/":
+            path = "." + path
+        return root.findall(path)
+    
+    # extensions to ElementTree API
+    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
+        """XPath evaluate in context of document.
+
+        ``namespaces`` is an optional dictionary with prefix to namespace URI
+        mappings, used by XPath.  ``extensions`` defines additional extension
+        functions.
+        
+        Returns a list (nodeset), or bool, float or string.
+
+        In case of a list result, return Element for element nodes,
+        string for text and attribute values.
+
+        Note: if you are going to apply multiple XPath expressions
+        against the same document, it is more efficient to use
+        XPathEvaluator directly.
+        """
+        self._assertHasRoot()
+        evaluator = XPathDocumentEvaluator(self, namespaces, extensions)
+        return evaluator.evaluate(_path, **_variables)
+
+    def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
+        """Transform this document using other document.
+
+        xslt is a tree that should be XSLT
+        keyword parameters are XSLT transformation parameters.
+
+        Returns the transformed tree.
+
+        Note: if you are going to apply the same XSLT stylesheet against
+        multiple documents, it is more efficient to use the XSLT
+        class directly.
+        """
+        self._assertHasRoot()
+        style = XSLT(_xslt, extensions=extensions,
+                     access_control=access_control)
+        return style(self, **_kw)
+
+    def relaxng(self, relaxng):
+        """Validate this document using other document.
+
+        relaxng is a tree that should contain Relax NG XML
+
+        Returns True or False, depending on whether validation
+        succeeded.
+
+        Note: if you are going to apply the same Relax NG schema against
+        multiple documents, it is more efficient to use the RelaxNG
+        class directly.
+        """
+        self._assertHasRoot()
+        schema = RelaxNG(relaxng)
+        return schema.validate(self)
+
+    def xmlschema(self, xmlschema):
+        """Validate this document using other document.
+
+        xmlschema is a tree that should contain XML Schema XML.
+
+        Returns True or False, depending on whether validation
+        succeeded.
+
+        Note: If you are going to apply the same XML Schema against
+        multiple documents, it is more efficient to use the XMLSchema
+        class directly.
+        """
+        self._assertHasRoot()
+        schema = XMLSchema(xmlschema)
+        return schema.validate(self)
+
+    def xinclude(self):
+        """Process the XInclude nodes in this document and include the
+        referenced XML fragments.
+        """
+        cdef int result
+        # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
+        # the XInclude nodes - there may still be Python references to them!
+        # Therefore, we allow XInclude nodes to be converted to
+        # XML_XINCLUDE_START nodes.  XML_XINCLUDE_END nodes are added as
+        # siblings.  Tree traversal will simply ignore them as they are not
+        # typed as elements.  The included fragment is added between the two,
+        # i.e. as a sibling, which does not conflict with traversal.
+        self._assertHasRoot()
+        if self._context_node._doc._parser != None:
+            result = xinclude.xmlXIncludeProcessTreeFlags(
+                self._context_node._c_node,
+                self._context_node._doc._parser._parse_options)
+        else:
+            result = xinclude.xmlXIncludeProcessTree(
+                self._context_node._c_node)
+        if result == -1:
+            raise XIncludeError, "XInclude processing failed"
+
+    def write_c14n(self, file):
+        """C14N write of document. Always writes UTF-8.
+        """
+        self._assertHasRoot()
+        _tofilelikeC14N(file, self._context_node)
+
+cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
+    return _newElementTree(doc, context_node, _ElementTree)
+
+cdef _ElementTree _newElementTree(_Document doc, _Element context_node,
+                                  object baseclass):
+    cdef _ElementTree result
+    result = baseclass()
+    if context_node is None and doc is not None:
+            context_node = doc.getroot()
+    if context_node is None:
+        result._doc = doc
+    result._context_node = context_node
+    return result
+
+
 cdef class _Attrib:
-    cdef _NodeBase _element
-    def __init__(self, _NodeBase element not None):
+    cdef _Element _element
+    def __init__(self, _Element element not None):
         self._element = element
 
     # MANIPULATORS
@@ -1479,12 +1481,12 @@ cdef public class _ElementTagMatcher [ object LxmlElementTagMatcher,
 cdef public class _ElementIterator(_ElementTagMatcher) [
     object LxmlElementIterator, type LxmlElementIteratorType ]:
     # we keep Python references here to control GC
-    cdef _NodeBase _node
+    cdef _Element _node
     cdef _node_to_node_function _next_element
     def __iter__(self):
         return self
 
-    cdef void _storeNext(self, _NodeBase node):
+    cdef void _storeNext(self, _Element node):
         cdef xmlNode* c_node
         c_node = self._next_element(node._c_node)
         while c_node is not NULL and \
@@ -1498,7 +1500,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
 
     def __next__(self):
         cdef xmlNode* c_node
-        cdef _NodeBase current_node
+        cdef _Element current_node
         # Python ref:
         current_node = self._node
         if current_node is None:
@@ -1508,7 +1510,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
 
 cdef class ElementChildIterator(_ElementIterator):
     "Iterates over the children of an element."
-    def __init__(self, _NodeBase node not None, reversed=False, tag=None):
+    def __init__(self, _Element node not None, reversed=False, tag=None):
         cdef xmlNode* c_node
         self._initTagMatch(tag)
         if reversed:
@@ -1530,7 +1532,7 @@ cdef class SiblingsIterator(_ElementIterator):
 
     You can pass the boolean keyword ``preceding`` to specify the direction.
     """
-    def __init__(self, _NodeBase node not None, preceding=False, tag=None):
+    def __init__(self, _Element node not None, preceding=False, tag=None):
         self._initTagMatch(tag)
         if preceding:
             self._next_element = _previousElement
@@ -1540,7 +1542,7 @@ cdef class SiblingsIterator(_ElementIterator):
 
 cdef class AncestorsIterator(_ElementIterator):
     "Iterates over the ancestors of an element (from parent to parent)."
-    def __init__(self, _NodeBase node not None, tag=None):
+    def __init__(self, _Element node not None, tag=None):
         self._initTagMatch(tag)
         self._next_element = _parentElement
         self._storeNext(node)
@@ -1560,9 +1562,9 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     """
     # we keep Python references here to control GC
     # keep next node to return and a depth counter in the tree
-    cdef _NodeBase _next_node
-    cdef _NodeBase _top_node
-    def __init__(self, _NodeBase node not None, tag=None, inclusive=True):
+    cdef _Element _next_node
+    cdef _Element _top_node
+    def __init__(self, _Element node not None, tag=None, inclusive=True):
         self._top_node  = node
         self._next_node = node
         self._initTagMatch(tag)
@@ -1577,7 +1579,7 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
 
     def __next__(self):
         cdef xmlNode* c_node
-        cdef _NodeBase current_node
+        cdef _Element current_node
         current_node = self._next_node
         if current_node is None:
             raise StopIteration
@@ -1729,7 +1731,7 @@ def iselement(element):
     """
     return isinstance(element, _Element)
 
-def dump(_NodeBase elem not None, pretty_print=True):
+def dump(_Element elem not None, pretty_print=True):
     """Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
     """
@@ -1761,8 +1763,8 @@ def tostring(element_or_tree, encoding=None,
     else:
         write_declaration = bool(xml_declaration)
 
-    if isinstance(element_or_tree, _NodeBase):
-        return _tostring(<_NodeBase>element_or_tree,
+    if isinstance(element_or_tree, _Element):
+        return _tostring(<_Element>element_or_tree,
                          encoding, write_declaration, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
@@ -1782,8 +1784,8 @@ def tounicode(element_or_tree, pretty_print=False):
     """
     cdef int c_pretty_print
     c_pretty_print = bool(pretty_print)
-    if isinstance(element_or_tree, _NodeBase):
-        return _tounicode(<_NodeBase>element_or_tree, c_pretty_print)
+    if isinstance(element_or_tree, _Element):
+        return _tounicode(<_Element>element_or_tree, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tounicode((<_ElementTree>element_or_tree)._context_node,
                           c_pretty_print)

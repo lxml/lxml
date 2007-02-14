@@ -330,7 +330,7 @@ cdef class iterwalk:
     cdef char*  _tag_name
 
     def __init__(self, element_or_tree, events=("end",), tag=None):
-        cdef _NodeBase root
+        cdef _Element root
         cdef int ns_count
         root = _rootNodeOrRaise(element_or_tree)
         self._event_filter = _buildIterparseEventFilter(events)
@@ -369,8 +369,8 @@ cdef class iterwalk:
         return self
 
     def __next__(self):
-        cdef _NodeBase node
-        cdef _NodeBase next_node
+        cdef _Element node
+        cdef _Element next_node
         cdef int ns_count
         if python.PyList_GET_SIZE(self._events):
             return self._pop_event(0)
@@ -406,7 +406,7 @@ cdef class iterwalk:
                 return self._pop_event(0)
         raise StopIteration
 
-    cdef int _start_node(self, _NodeBase node):
+    cdef int _start_node(self, _Element node):
         cdef int ns_count
         if self._event_filter & ITERPARSE_FILTER_START_NS:
             ns_count = _appendStartNsEvents(node._c_node, self._events)
@@ -420,8 +420,8 @@ cdef class iterwalk:
                 python.PyList_Append(self._events, ("start", node))
         return ns_count
 
-    cdef _NodeBase _end_node(self):
-        cdef _NodeBase node
+    cdef _Element _end_node(self):
+        cdef _Element node
         node, ns_count = self._pop_node()
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \

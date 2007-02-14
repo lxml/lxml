@@ -22,7 +22,7 @@ def XMLDTDID(text):
     Note that you must not modify the XML tree if you use the ID dictionary.
     The results are undefined.
     """
-    cdef _NodeBase root
+    cdef _Element root
     root = XML(text)
     # xml:id spec compatible implementation: use DTD ID attributes from libxml2
     if root._doc._c_doc.ids is NULL:

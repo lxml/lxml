@@ -19,7 +19,7 @@ cdef class XMLSchema(_Validator):
     cdef xmlschema.xmlSchema* _c_schema
     def __init__(self, etree=None, file=None):
         cdef _Document doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
         cdef xmlDoc* fake_c_doc
         cdef xmlNode* c_node
         cdef char* c_href
@@ -72,7 +72,7 @@ cdef class XMLSchema(_Validator):
         cdef python.PyThreadState* state
         cdef xmlschema.xmlSchemaValidCtxt* valid_ctxt
         cdef _Document doc
-        cdef _NodeBase root_node
+        cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef int ret
 
