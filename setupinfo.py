@@ -13,13 +13,8 @@ EXT_MODULES = [
     ]
 
 
-env_map = {'win32':{'INCLUDE': 'INCLUDE',
-                    'LIBRARY': 'LIB',
-                    'CFLAGS' : 'CFLAGS'},
-           }.get(sys.platform, {})
-
 def env_var(name):
-    value = os.getenv(env_map.get(name), '')
+    value = os.getenv(name, '')
     return value.split(os.pathsep)
 
 def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
