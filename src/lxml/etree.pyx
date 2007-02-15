@@ -210,6 +210,9 @@ cdef class QName:
         return self.text
     def __hash__(self):
         return self.text.__hash__()
+    def __richcmp__(one, other, int op):
+        return python.PyObject_RichCompare(
+            str(one), str(other), op)
 
 
 # forward declaration of _BaseParser, see parser.pxi

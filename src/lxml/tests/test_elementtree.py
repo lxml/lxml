@@ -2320,6 +2320,15 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(a1.tag, "{myns}a")
         self.assertEquals(a2.tag, "{myns}a")
 
+    def test_qname_cmp(self):
+        etree = self.etree
+        qname1 = etree.QName('myns', 'a')
+        qname2 = etree.QName('myns', 'a')
+        self.assertEquals(qname1, "{myns}a")
+        self.assertEquals("{myns}a", qname2)
+        self.assertEquals(qname1, qname1)
+        self.assertEquals(qname1, qname2)
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """

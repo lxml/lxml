@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* Rich comparison of QName objects
+
 * Support for regular expressions in benchmark selection
 
 * get/set emulation (not .attrib!) for attributes on processing instructions
