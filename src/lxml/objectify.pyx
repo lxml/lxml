@@ -235,6 +235,10 @@ cdef class ObjectifiedElement(ElementBase):
         self.remove(child)
 
     def addattr(self, tag, value):
+        """Add a child value to the element.
+
+        As opposed to append(), it sets a data value, not an element.
+        """
         _appendValue(self, _buildChildTag(self, tag), value)
 
     def __getitem__(self, key):
