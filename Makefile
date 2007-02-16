@@ -20,6 +20,10 @@ test_inplace: inplace
 	PYTHONPATH=src $(PYTHON) selftest.py
 	PYTHONPATH=src $(PYTHON) selftest2.py
 
+valgrind_test_inplace: inplace
+	valgrind --tool=memcheck --leak-check=full --suppressions=valgrind-python.supp \
+		$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
+
 bench_inplace: inplace
 	$(PYTHON) bench.py -i
 
@@ -35,6 +39,8 @@ html:
 
 # XXX What should the default be?
 test: test_inplace
+
+valtest: valgrind_test_inplace
 
 bench: bench_inplace
 
