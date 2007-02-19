@@ -69,7 +69,7 @@ client to access it.
 
 
 The setuptools approach
-----------------------
+-----------------------
 
 Usually, building lxml is done through setuptools.  Do a Subversion checkout
 (or download the source tar-ball and unpack it) and then type::
