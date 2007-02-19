@@ -147,26 +147,28 @@ cdef class _BaseContext:
         cdef python.PyObject* c_dict
         cdef python.PyObject* dict_result
         if c_ns_uri is NULL:
-            c_dict = <python.PyObject*>self._function_cache
+            d = self._function_cache
+            c_dict = <python.PyObject*>d
         else:
             c_dict = python.PyDict_GetItemString(
                 self._function_cache_ns, c_ns_uri)
+            if c_dict is NULL:
+                d = {}
+                python.PyDict_SetItem(self._function_cache_ns, ns_uri_utf, d)
+            else:
+                d = <object>c_dict
 
+        name_utf = c_name
         if c_dict is not NULL:
-            d = <object>c_dict
-            dict_result = python.PyDict_GetItemString(d, c_name)
+            dict_result = python.PyDict_GetItem(d, name_utf)
             if dict_result is not NULL:
                 function = <object>dict_result
                 self._called_function = function
                 return function is not None
-        else:
-            d = {}
-            python.PyDict_SetItem(self._function_cache_ns, ns_uri_utf, d)
 
         # first time we look up this function, so the rest is less critical
         if c_ns_uri is not NULL:
             ns_uri_utf = c_ns_uri
-        name_utf = c_name
 
         if self._extensions is not None:
             dict_result = python.PyDict_GetItem(
@@ -402,7 +404,6 @@ cdef void _call_python_xpath_function(xpath.xmlXPathParserContext* ctxt,
             fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
         else:
             fref = rctxt.function
-        print "FAILED", fref
         xpath.xmlXPathErr(ctxt, xpath.XML_XPATH_UNKNOWN_FUNC_ERROR)
         exception = XPathFunctionError("XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)
