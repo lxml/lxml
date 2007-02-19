@@ -73,7 +73,7 @@ Long answer: Two of the bigger problems with the Windows system are the lack
 of a pre-installed standard compiler and the missing package management.  Both
 make it non-trivial to build lxml on this platform.  We are trying hard to
 make lxml as platform-independent as possible and it is regularly tested on
-Windows systems.  However, we currently cannot provide Windows binaries
+Windows systems.  However, we currently cannot provide Windows binary
 distributions ourselves.
 
 From time to time, users of different environments kindly contribute binary
@@ -122,10 +122,12 @@ simple and convenient ElementTree API.  Not all operations are as fast as the
 simplicity of the API might suggest.  The `benchmark page`_ has a comparison
 to other ElementTree implementations and a number of tips for performance
 tweaking.  As with any Python application, the rule of thumb is: the more of
-your processing runs in C, the faster your application gets.
+your processing runs in C, the faster your application gets.  See also the
+section on threading_.
 
 .. _`a few caveats`:  performance.html#the-elementtree-api
 .. _`benchmark page`: performance.html
+.. _threading:        #threading
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
@@ -234,6 +236,15 @@ XSLTs, your speedup on multi-processor machines can be substantial.
 
 See the question above to learn which operations free the GIL to support
 multi-threading.
+
+
+Would my single-threaded program run faster if I turned off threading?
+----------------------------------------------------------------------
+
+Can be.  You can see for yourself by compiling lxml entirely without threading
+support.  Pass the ``--without-threading`` option to setup.py when building
+lxml from source.
+
 
 
 Parsing and Serialisation
