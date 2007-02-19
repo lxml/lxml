@@ -28,11 +28,6 @@
   #define PyEval_RestoreThread(state)
   #define PyGILState_Ensure() (PyGILState_UNLOCKED)
   #define PyGILState_Release(state)
-
-  #define PyThread_allocate_lock() (NULL)
-  #define PyThread_free_lock(lock)
-  #define PyThread_acquire_lock(lock, mode) (1)
-  #define PyThread_release_lock(lock)
 #endif
 
 #ifdef WITHOUT_THREADING
