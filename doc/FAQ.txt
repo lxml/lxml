@@ -22,6 +22,7 @@ See also the notes on compatibility_ to ElementTree_.
    3  Threading
      3.1  Can I use threads to concurrently access the lxml API?
      3.2  Does my program run faster if I use threads?
+     3.3  Would my single-threaded program run faster if I turned off threading?
    4  Parsing and Serialisation
      4.1  Why doesn't the ``pretty_print`` option reformat my XML output?
      4.2  Why can't lxml parse my XML from unicode strings?
@@ -244,7 +245,6 @@ Would my single-threaded program run faster if I turned off threading?
 Can be.  You can see for yourself by compiling lxml entirely without threading
 support.  Pass the ``--without-threading`` option to setup.py when building
 lxml from source.
-
 
 
 Parsing and Serialisation
