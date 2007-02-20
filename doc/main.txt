@@ -29,6 +29,8 @@ Please take a look at the `installation instructions`_!
 
 .. _`installation instructions`: installation.html
 
+* `lxml 1.2`_, released 2007-02-20 (`changes for 1.2`_)
+
 * `lxml 1.1.2`_, released 2006-10-30 (`changes for 1.1.2`_)
 
 * `lxml 1.1.1`_, released 2006-09-21 (`changes for 1.1.1`_)
@@ -61,6 +63,7 @@ Please take a look at the `installation instructions`_!
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 1.2`: lxml-1.2.tgz
 .. _`lxml 1.1.2`: lxml-1.1.2.tgz
 .. _`lxml 1.1.1`: lxml-1.1.1.tgz
 .. _`lxml 1.1`: lxml-1.1.tgz
@@ -78,6 +81,7 @@ Please take a look at the `installation instructions`_!
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`CHANGES for 1.2`: changes-1.2.html
 .. _`CHANGES for 1.1.2`: changes-1.1.2.html
 .. _`CHANGES for 1.1.1`: changes-1.1.1.html
 .. _`CHANGES for 1.1`: changes-1.1.html
