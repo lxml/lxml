@@ -4,9 +4,8 @@ lxml
 Exposing libxml2 functionalities
 --------------------------------
 
-* See whether XInclude support can mimic ElementTree's API.
-
 * Test XML entities, also in an ElementTree context.
+
 
 In general
 ----------
@@ -15,67 +14,32 @@ In general
 
 * will namespace nodes of unknown namespaces be added (and never freed?)
 
-Top level
----------
+* more testing on multi-threading
 
-* ProcessingInstruction
-
-ElementInterface
------------------
 
 ElementTree
 -----------
 
 * _setroot(), even though this is not strictly a public method.
 
+
 QName
 -----
 
 * expose prefix support?
 
+
+Objectify
+---------
+
+* set special __attributes__ on ObjectifiedElement's as Python attributes, not
+  XML children
+
+
 Features
 --------
 
-* Relaxed NG compact notation (rnc versus rng) support. May consider
-  integrating this:
+* Relaxed NG compact notation (rnc versus rng) support.  Currently not
+  supported by libxml2 (patch exists)
 
-  http://www.gnosis.cx/download/relax/
-
-Notes on implementing iterparse
--------------------------------
-
-"iterparse" will be (or will return) an iterable object, let's call it
-IterParse for clarity. A class is basically the only way of implementing
-iterators in Pyrex. For the internal SAX part, IterParse will likely work a
-lot like lxml.sax.ElementTreeContentHandler.
-
-We'd need a custom wrapper to the default libxml2 SAX handler to intercept the
-parse events (this means implementing C helper functions for the SAX events)
-/after/ they were processed by libxml2. See xmlSAXVersion (SAX2.c) on how to
-retrieve the SAX2 default parser structure.
-
-IterParse should pass chunks into the parser and buffer the events it
-receives. When its __next__() method is called, it returns one event or passes
-new chunks until there is an event to return. This is needed as IterParse has
-to convert between libxml2 push (SAX) and Python pull (iter).
-
-As for the input to the libxml2 parser, there are two possible ways: one is to
-pass data chunks in through xmlParseChunk and the other is to use
-xmlCreateIOParserCtxt and implement xmlInputReadCallback (xmlio.h) to have
-libxml2 request data by itself. However, xmlParseChunk allows us to control
-how far libxml2 parses in advance, so this is preferable.
-
-Python events (start, end, start-ns, end-ns) are created as follows:
-
-* "*-ns" events must be extracted from the libxml2 xmlSAX2StartElementNs call
-(passed in arguments "prefix"/"URI" and the char* array "namespaces"). They
-must be stored on a stack to build the respective "end-ns" events.
-
-* "start" is somewhat tricky, as it would be a bad idea to allow modifications
-of the XML structure during that iterator cycle. Maybe it's enough to document
-that, but there may be ways to crash lxml with certain tree operations. Note
-also that care has to be taken to prevent Python from garbage collecting the
-element before the "end" event. The best way to do that is to store a Python
-reference to that element on a stack.
-
-* "end" is simple then: pop the element from the stack and return it.
+* setting a DTD for validation (maybe a ``DTD`` class like RelaxNG?)
