@@ -29,6 +29,8 @@ Features added
 Bugs fixed
 ----------
 
+* Element instantiation now uses locks to prevent race conditions with threads
+
 * ElementTree.write() did not raise an exception when the file was not writable
 
 * Error handling could crash under Python <= 2.4.1 - fixed by disabling thread

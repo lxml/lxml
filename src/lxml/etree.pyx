@@ -969,19 +969,41 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         evaluator = XPathElementEvaluator(self, namespaces, extensions)
         return evaluator.evaluate(_path, **_variables)
 
+
+cdef python.PyThread_type_lock ELEMENT_CREATION_LOCK
+if config.ENABLE_THREADING:
+    ELEMENT_CREATION_LOCK = python.PyThread_allocate_lock()
+else:
+    ELEMENT_CREATION_LOCK = NULL
+
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
+    cdef python.PyThreadState* state
     cdef _Element result
     result = getProxy(c_node)
     if result is not None:
         return result
     if c_node is NULL:
         return None
+
+    if config.ENABLE_THREADING:
+        state = python.PyEval_SaveThread()
+        python.PyThread_acquire_lock(ELEMENT_CREATION_LOCK, python.WAIT_LOCK)
+        python.PyEval_RestoreThread(state)
+        result = getProxy(c_node)
+        if result is not None:
+            python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
+            return result
+
     element_class = LOOKUP_ELEMENT_CLASS(ELEMENT_CLASS_LOOKUP_STATE,
                                          doc, c_node)
     result = element_class()
     result._doc = doc
     result._c_node = c_node
     registerProxy(result)
+
+    if config.ENABLE_THREADING:
+        python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
+
     result._init()
     return result
 
