@@ -25,11 +25,122 @@ The source distribution is signed with `this key`_.
 .. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
+The latest version is `lxml 1.2`_, released 2007-02-20 (`changes for 1.2`_).
+`Older versions`_ are listed below.
+
+.. _`lxml 1.2`: lxml-1.2.tgz
+.. _`CHANGES for 1.2`: changes-1.2.html
+.. _`Older versions`: #old-versions
+
 Please take a look at the `installation instructions`_!
 
 .. _`installation instructions`: installation.html
 
-* `lxml 1.2`_, released 2007-02-20 (`changes for 1.2`_)
+It's also possible to check out the latest development version of lxml
+from svn directly, using a command like this::
+
+  svn co http://codespeak.net/svn/lxml/trunk lxml
+
+You can also `browse it through the web`_.  Please read `how to build lxml
+from source`_ first.  The `latest CHANGES`_ of the developer version are also
+accessible.  You can check there if a bug you found has been fixed or a
+feature you want has been implemented in the latest trunk version.
+
+.. _`how to build lxml from source`: build.html
+.. _`browse it through the web`: http://codespeak.net/svn/lxml
+.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+
+
+Documentation
+-------------
+
+* ElementTree:
+
+  * ElementTree_ API
+
+  * compatibility_ and differences of lxml.etree
+
+  * `benchmark results`_
+
+* lxml.etree:
+
+  * `lxml.etree specific API`_ documentation
+
+  * Python `extension functions`_ for XPath and XSLT
+
+  * `custom element classes`_ for custom XML APIs
+
+  * a `SAX compliant API`_
+
+  * the `C-level API`_ for interfacing with external C/Pyrex modules
+
+* lxml.objectify:
+
+  * `lxml.objectify`_ API documentation
+
+  * a brief comparison of `objectify and etree`_
+
+lxml.etree follows the ElementTree_ API as much as possible, building it on
+top of the native libxml2 tree.  See also the ElementTree compatibility_
+overview and the `benchmark results`_ comparing lxml to the original
+ElementTree_ and cElementTree_ implementations.
+
+Right after the ElementTree_ documentation, the most important place to look
+is the `lxml.etree specific API`_ documentation.  It describes how lxml extends the
+ElementTree API to expose libxml2 and libxslt specific functionality, such as
+XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and `c14n`_.  Python code can be
+called from XPath expressions and XSLT stylesheets through the use of
+`extension functions`_.  lxml also offers a `SAX compliant API`_, that works
+with the SAX support in the standard library.
+
+There is a separate module `lxml.objectify`_ that implements a data-binding
+API on top of lxml.etree.  See the `objectify and etree`_ FAQ entry for a
+comparison.
+
+In addition to the ElementTree API, lxml also features a sophisticated API for
+`custom element classes`_.  This is a simple way to write arbitrary XML driven
+APIs on top of lxml.  As of version 1.1, lxml.etree has a new `C-level API`_
+that can be used to efficiently extend lxml.etree in external C modules,
+including custom element class support.
+
+.. _ElementTree:  http://effbot.org/zone/element-index.htm
+.. _cElementTree: http://effbot.org/zone/celementtree.htm
+
+.. _`benchmark results`: performance.html
+.. _`compatibility`: compatibility.html
+.. _`lxml.etree specific API`: api.html
+.. _`extension functions`: extensions.html
+.. _`custom element classes`: element_classes.html
+.. _`SAX compliant API`: sax.html
+.. _`C-level API`: capi.html
+.. _`lxml.objectify`: objectify.html
+.. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
+
+.. _XPath: http://www.w3.org/TR/xpath
+.. _`Relax NG`: http://www.relaxng.org/
+.. _`XML Schema`: http://www.w3.org/XML/Schema
+.. _`XSLT`: http://www.w3.org/TR/xslt
+.. _`c14n`: http://www.w3.org/TR/xml-c14n
+
+
+Mailing list
+------------
+
+Questions? Suggestions? Code to contribute? We have a `mailing list`_.
+
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+
+License
+-------
+
+The lxml library is shipped under a BSD license. libxml2 and libxslt2
+itself are shipped under the MIT license. There should therefore be no
+obstacle to using lxml in your codebase.
+
+
+Old Versions
+------------
 
 * `lxml 1.1.2`_, released 2006-10-30 (`changes for 1.1.2`_)
 
@@ -63,7 +174,6 @@ Please take a look at the `installation instructions`_!
 
 * `lxml 0.5`_,   released 2005-04-08
 
-.. _`lxml 1.2`: lxml-1.2.tgz
 .. _`lxml 1.1.2`: lxml-1.1.2.tgz
 .. _`lxml 1.1.1`: lxml-1.1.1.tgz
 .. _`lxml 1.1`: lxml-1.1.tgz
@@ -81,95 +191,18 @@ Please take a look at the `installation instructions`_!
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
-.. _`CHANGES for 1.2`: changes-1.2.html
-.. _`CHANGES for 1.1.2`: changes-1.1.2.html
-.. _`CHANGES for 1.1.1`: changes-1.1.1.html
-.. _`CHANGES for 1.1`: changes-1.1.html
-.. _`CHANGES for 1.0.4`: changes-1.0.4.html
-.. _`CHANGES for 1.0.3`: changes-1.0.3.html
-.. _`CHANGES for 1.0.2`: changes-1.0.2.html
-.. _`CHANGES for 1.0.1`: changes-1.0.1.html
-.. _`CHANGES for 1.0`: changes-1.0.html
-.. _`CHANGES for 0.9.2`: changes-0.9.2.html
-.. _`CHANGES for 0.9.1`: changes-0.9.1.html
-.. _`CHANGES for 0.9`: changes-0.9.html
-.. _`CHANGES for 0.8`: changes-0.8.html
-.. _`CHANGES for 0.7`: changes-0.7.html
-.. _`CHANGES for 0.6`: changes-0.6.html
-.. _`CHANGES for 0.5.1`: changes-0.5.1.html
-
-It's also possible to check out the latest development version of lxml
-from svn directly, using a command like this::
-
-  svn co http://codespeak.net/svn/lxml/trunk lxml
-
-You can also `browse it through the web`_.  Please read `how to build lxml
-from source`_ first.  The `latest CHANGES`_ of the developer version are also
-accessible.  You can check there if a bug you found has been fixed or a
-feature you want has been implemented in the latest trunk version.
-
-.. _`how to build lxml from source`: build.html
-.. _`browse it through the web`: http://codespeak.net/svn/lxml
-.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
-
-
-Documentation
--------------
-
-lxml.etree follows the ElementTree_ API as much as possible, building it on
-top of the native libxml2 tree.  See also the `ElementTree compatibility
-overview`_ and the `benchmark results`_ comparing lxml to the original
-ElementTree_ and cElementTree_ implementations.
-
-Right after the ElementTree_ documentation, the most important place to look
-is the `lxml.etree API documentation`_.  It describes how lxml extends the
-ElementTree API to expose libxml2 and libxslt specific functionality, such as
-XPath_, `Relax NG`_, `XML Schema`_, `XSLT`_, and `c14n`_.  Python code can be
-called from XPath expressions and XSLT stylesheets through the use of
-`extension functions`_.  lxml also offers a `SAX compliant API`_, that works
-with the SAX support in the standard library.
-
-There is a separate module `lxml.objectify`_ that implements a data-binding
-API on top of lxml.etree.  See the `objectify and etree`_ FAQ entry for a
-comparison.
-
-In addition to the ElementTree API, lxml also features a sophisticated API for
-`custom element classes`_.  This is a simple way to write arbitrary XML driven
-APIs on top of lxml.  As of version 1.1, lxml.etree has a new `C-level API`_
-that can be used to efficiently extend lxml.etree in external C modules,
-including custom element class support.
-
-.. _ElementTree:  http://effbot.org/zone/element-index.htm
-.. _cElementTree: http://effbot.org/zone/celementtree.htm
-
-.. _`benchmark results`: performance.html
-.. _`ElementTree compatibility overview`: compatibility.html
-.. _`lxml.etree API documentation`: api.html
-.. _`extension functions`: extensions.html
-.. _`custom element classes`: element_classes.html
-.. _`SAX compliant API`: sax.html
-.. _`C-level API`: capi.html
-.. _`lxml.objectify`: objectify.html
-.. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
-
-.. _XPath: http://www.w3.org/TR/xpath
-.. _`Relax NG`: http://www.relaxng.org/
-.. _`XML Schema`: http://www.w3.org/XML/Schema
-.. _`XSLT`: http://www.w3.org/TR/xslt
-.. _`c14n`: http://www.w3.org/TR/xml-c14n
-
-
-Mailing list
-------------
-
-Questions? Suggestions? Code to contribute? We have a `mailing list`_.
-
-.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
-
-
-License
--------
-
-The lxml library is shipped under a BSD license. libxml2 and libxslt2
-itself are shipped under the MIT license. There should therefore be no
-obstacle to using lxml in your codebase.
+.. _`changes for 1.1.2`: changes-1.1.2.html
+.. _`changes for 1.1.1`: changes-1.1.1.html
+.. _`changes for 1.1`: changes-1.1.html
+.. _`changes for 1.0.4`: changes-1.0.4.html
+.. _`changes for 1.0.3`: changes-1.0.3.html
+.. _`changes for 1.0.2`: changes-1.0.2.html
+.. _`changes for 1.0.1`: changes-1.0.1.html
+.. _`changes for 1.0`: changes-1.0.html
+.. _`changes for 0.9.2`: changes-0.9.2.html
+.. _`changes for 0.9.1`: changes-0.9.1.html
+.. _`changes for 0.9`: changes-0.9.html
+.. _`changes for 0.8`: changes-0.8.html
+.. _`changes for 0.7`: changes-0.7.html
+.. _`changes for 0.6`: changes-0.6.html
+.. _`changes for 0.5.1`: changes-0.5.1.html
