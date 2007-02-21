@@ -16,6 +16,8 @@ In general
 
 * more testing on multi-threading
 
+* the code on extension functions and XSLT needs some refactoring
+
 
 ElementTree
 -----------
