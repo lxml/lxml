@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+Under Development
+=================
+
+Features added
+--------------
+
+* The pattern for attribute names in ObjectPath was too restrictive
+
+
+Bugs fixed
+----------
+
+
 1.2 (2007-02-20)
 ================
 
