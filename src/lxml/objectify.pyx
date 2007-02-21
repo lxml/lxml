@@ -1130,7 +1130,7 @@ cdef class ObjectPath:
 
 cdef object __MATCH_PATH_SEGMENT
 __MATCH_PATH_SEGMENT = re.compile(
-    r"(\.?)\s*(?:\{([^}]*)\})?\s*(\w+)\s*(?:\[\s*([-0-9]+)\s*\])?",
+    r"(\.?)\s*(?:\{([^}]*)\})?\s*([^.{}\[\]\s]+)\s*(?:\[\s*([-0-9]+)\s*\])?",
     re.U).match
 
 cdef _parseObjectPathString(path):
