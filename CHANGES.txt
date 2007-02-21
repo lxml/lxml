@@ -8,11 +8,14 @@ Under Development
 Features added
 --------------
 
-* The pattern for attribute names in ObjectPath was too restrictive
-
 
 Bugs fixed
 ----------
+
+* renamed ObjectifiedDataElement.__setText() to _setText() to make it easier
+  to access
+
+* The pattern for attribute names in ObjectPath was too restrictive
 
 
 1.2 (2007-02-20)

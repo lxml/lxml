@@ -493,7 +493,7 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
     def __repr__(self):
         return textOf(self._c_node) or ''
 
-    def __setText(self, s):
+    def _setText(self, s):
         """For use in subclasses only. Don't use unless you know what you are
         doing.
         """
