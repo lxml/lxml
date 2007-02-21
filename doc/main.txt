@@ -66,6 +66,8 @@ Documentation
 
   * `lxml.etree specific API`_ documentation
 
+  * `XML validation`_ with RelaxNG and XML Schema
+
   * Python `extension functions`_ for XPath and XSLT
 
   * `custom element classes`_ for custom XML APIs
@@ -109,6 +111,7 @@ including custom element class support.
 .. _`benchmark results`: performance.html
 .. _`compatibility`: compatibility.html
 .. _`lxml.etree specific API`: api.html
+.. _`XML validation`: validation.html
 .. _`extension functions`: extensions.html
 .. _`custom element classes`: element_classes.html
 .. _`SAX compliant API`: sax.html

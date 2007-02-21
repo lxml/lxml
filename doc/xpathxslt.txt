@@ -1,0 +1,243 @@
+========================
+XPath and XSLT with lxml
+========================
+
+lxml supports both XPath and XSLT through libxml2 and libxslt in a standards
+compliant way.
+
+.. contents::
+.. 
+   1  XPath
+   2  XSLT
+
+
+XPath
+-----
+
+lxml.etree supports the simple path syntax of the ``findall()`` etc.  methods
+on ElementTree and Element, as known from the original ElementTree library.
+As an extension, these classes also provide an ``xpath()`` method that
+supports expressions in the complete XPath syntax.
+
+There are also specialized XPath evaluator classes that are more efficient for
+frequent evaluation: ``XPath`` and ``XPathEvaluator``.  See the `performance
+comparison`_ to learn when to use which.  Their semantics when used on
+Elements and ElementTrees are the same as for the ``xpath()`` method described
+here.
+
+.. _`performance comparison`: performance.html#xpath
+
+For ElementTree, the xpath method performs a global XPath query against the
+document (if absolute) or against the root node (if relative)::
+
+  >>> f = StringIO('<foo><bar></bar></foo>')
+  >>> tree = etree.parse(f)
+
+  >>> r = tree.xpath('/foo/bar')
+  >>> len(r)
+  1
+  >>> r[0].tag
+  'bar'
+
+  >>> r = tree.xpath('bar')
+  >>> r[0].tag
+  'bar'
+
+When ``xpath()`` is used on an element, the XPath expression is evaluated
+against the element (if relative) or against the root tree (if absolute)::
+
+  >>> root = tree.getroot()
+  >>> r = root.xpath('bar')
+  >>> r[0].tag
+  'bar'
+
+  >>> bar = root[0]
+  >>> r = bar.xpath('/foo/bar')
+  >>> r[0].tag
+  'bar'
+
+  >>> tree = bar.getroottree()
+  >>> r = tree.xpath('/foo/bar')
+  >>> r[0].tag
+  'bar'
+
+Optionally, you can provide a ``namespaces`` keyword argument, which should be
+a dictionary mapping the namespace prefixes used in the XPath expression to
+namespace URIs::
+
+  >>> f = StringIO('''\
+  ... <a:foo xmlns:a="http://codespeak.net/ns/test1" 
+  ...       xmlns:b="http://codespeak.net/ns/test2">
+  ...    <b:bar>Text</b:bar>
+  ... </a:foo>
+  ... ''')
+  >>> doc = etree.parse(f)
+  >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
+  ...                                'b': 'http://codespeak.net/ns/test2'})
+  >>> len(r)
+  1
+  >>> r[0].tag
+  '{http://codespeak.net/ns/test2}bar'
+  >>> r[0].text
+  'Text'
+
+There is also an optional ``extensions`` argument which is used to define
+`extension functions`_ in Python that are local to this evaluation.
+
+.. _`extension functions`: extensions.html
+
+The return values of XPath evaluations vary, depending on the XPath expression
+used:
+
+* True or False, when the XPath expression has a boolean result
+
+* a float, when the XPath expression has a numeric result (integer or float)
+
+* a (unicode) string, when the XPath expression has a string result.
+
+* a list of items, when the XPath expression has a list as result.  The items
+  may include elements, strings and tuples.  Text nodes and attributes in the
+  result are returned as strings (the text node content or attribute value).
+  Comments are also returned as strings, enclosed by the usual ``<!--`` and
+  ``-->`` markers.  Namespace declarations are returned as tuples of strings:
+  ``(prefix, URI)``.
+
+A related convenience method of ElementTree objects is ``getpath(element)``,
+which returns a structural, absolute XPath expression to find that element::
+
+  >>> a  = etree.Element("a")
+  >>> b  = etree.SubElement(a, "b")
+  >>> c  = etree.SubElement(a, "c")
+  >>> d1 = etree.SubElement(c, "d")
+  >>> d2 = etree.SubElement(c, "d")
+
+  >>> tree = etree.ElementTree(c)
+  >>> print tree.getpath(d2)
+  /c/d[2]
+  >>> tree.xpath(tree.getpath(d2)) == [d2]
+  True
+
+
+XSLT
+----
+
+lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
+given an ElementTree object to construct an XSLT transformer::
+
+  >>> f = StringIO('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> xslt_doc = etree.parse(f)
+  >>> transform = etree.XSLT(xslt_doc)
+
+You can then run the transformation on an ElementTree document by simply
+calling it, and this results in another ElementTree object::
+
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = etree.parse(f)
+  >>> result = transform(doc)
+
+The result object can be accessed like a normal ElementTree document::
+
+  >>> result.getroot().text
+  'Text'
+
+but, as opposed to normal ElementTree objects, can also be turned into an (XML
+or text) string by applying the str() function::
+
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+The result is always a plain string, encoded as requested by the
+``xsl:output`` element in the stylesheet.  If you want a Python unicode string
+instead, you should set this encoding to ``UTF-8`` (unless the `ASCII` default
+is sufficient).  This allows you to call the builtin ``unicode()`` function on
+the result::
+
+  >>> unicode(result)
+  u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+You can use other encodings at the cost of multiple recoding.  Encodings that
+are not supported by Python will result in an error::
+
+  >>> xslt_tree = etree.XML('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:output encoding="UCS4"/>
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> transform = etree.XSLT(xslt_tree)
+
+  >>> result = transform(doc)
+  >>> unicode(result)
+  Traceback (most recent call last):
+    [...]
+  LookupError: unknown encoding: UCS4
+
+It is possible to pass parameters, in the form of XPath expressions, to the
+XSLT template::
+
+  >>> xslt_tree = etree.XML('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="$a" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> transform = etree.XSLT(xslt_tree)
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = etree.parse(f)
+
+The parameters are passed as keyword parameters to the transform call. First
+let's try passing in a simple string expression::
+
+  >>> result = transform(doc, a="'A'")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+
+Let's try a non-string XPath expression now::
+
+  >>> result = transform(doc, a="/a/b/text()")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+There's also a convenience method on the tree object for doing XSL
+transformations.  This is less efficient if you want to apply the same XSL
+transformation to multiple documents, but is shorter to write for one-shot
+operations, as you do not have to instantiate a stylesheet yourself::
+
+  >>> result = doc.xslt(xslt_tree, a="'A'")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+
+By default, XSLT supports all extension functions from libxslt and libexslt as
+well as Python regular expressions through EXSLT.  Note that some extensions
+enable style sheets to read and write files on the local file system.  See the
+`document loader documentation`_ on how to deal with this.
+
+.. _`document loader documentation`: resolvers.html
+
+If you want to know how your stylesheet performed, pass the ``profile_run``
+keyword to the transform::
+
+  >>> result = transform(doc, a="/a/b/text()", profile_run=True)
+  >>> profile = result.xslt_profile
+
+The value of the ``xslt_profile`` property is an ElementTree with profiling
+data about each template, similar to the following::
+
+  <profile>
+    <template rank="1" match="/" name="" mode="" calls="1" time="1" average="1"/>
+  </profile>
+
+Note that this is a read-only document.  You must not move any of its elements
+to other documents.  Please deep-copy the document if you need to modify it.
+If you want to free it from memory, just do::
+
+  >>> del result.xslt_profile

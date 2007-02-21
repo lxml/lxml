@@ -1,0 +1,282 @@
+=====================
+Parsing XML with lxml
+=====================
+
+lxml provides a very simple and powerful API for parsing XML.  It supports
+one-step parsing as well as step-by-step parsing using an event-driven API.
+
+.. contents::
+.. 
+   1  Parsers
+   2  iterparse and iterwalk
+   3  Python unicode strings
+
+
+Parsers
+-------
+
+One of the differences is the parser.  There is support for both XML and
+(broken) HTML.  Both are based on libxml2 and therefore only support options
+that are backed by the library.  Parsers take a number of keyword arguments.
+The following is an example for namespace cleanup during parsing, first with
+the default parser, then with a parametrized one::
+
+  >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
+
+  >>> et     = etree.parse(StringIO(xml))
+  >>> print etree.tostring(et.getroot())
+  <a xmlns="test"><b xmlns="test"/></a>
+
+  >>> parser = etree.XMLParser(ns_clean=True)
+  >>> et     = etree.parse(StringIO(xml), parser)
+  >>> print etree.tostring(et.getroot())
+  <a xmlns="test"><b/></a>
+
+HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
+argument that the HTMLParser sets by default.  It lets libxml2 try its best to
+return something usable without raising an exception.  You should use libxml2
+version 2.6.21 or newer to take advantage of this feature::
+
+  >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
+
+  >>> parser = etree.HTMLParser()
+  >>> et     = etree.parse(StringIO(broken_html), parser)
+
+  >>> print etree.tostring(et.getroot())
+  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+
+Lxml has an HTML function, similar to the XML shortcut known from
+ElementTree::
+
+  >>> html = etree.HTML(broken_html)
+  >>> print etree.tostring(html)
+  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+
+The support for parsing broken HTML depends entirely on libxml2's recovery
+algorithm.  It is *not* the fault of lxml if you find documents that are so
+heavily broken that the parser cannot handle them.  There is also no guarantee
+that the resulting tree will contain all data from the original document.  The
+parser may have to drop seriously broken parts when struggling to keep
+parsing.  Especially misplaced meta tags can suffer from this, which may lead
+to encoding problems.
+
+The use of the libxml2 parsers makes some additional information available at
+the API level.  Currently, ElementTree objects can access the DOCTYPE
+information provided by a parsed document, as well as the XML version and the
+original encoding::
+
+  >>> pub_id  = "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  >>> sys_url = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+  >>> doctype_string = '<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_url)
+  >>> xml_header = '<?xml version="1.0" encoding="ascii"?>'
+  >>> xhtml = xml_header + doctype_string + '<html><body></body></html>'
+
+  >>> tree = etree.parse(StringIO(xhtml))
+  >>> docinfo = tree.docinfo
+  >>> print docinfo.public_id
+  -//W3C//DTD XHTML 1.0 Transitional//EN
+  >>> print docinfo.system_url
+  http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
+  >>> docinfo.doctype == doctype_string
+  True
+
+  >>> print docinfo.xml_version
+  1.0
+  >>> print docinfo.encoding
+  ascii
+
+
+iterparse and iterwalk
+----------------------
+
+As known from ElementTree, the ``iterparse()`` utility function returns an
+iterator that generates parser events for an XML file (or file-like object),
+while building the tree.  The values are tuples ``(event-type, object)``.  The
+event types are 'start', 'end', 'start-ns' and 'end-ns'.
+
+The 'start' and 'end' events represent opening and closing elements and are
+accompanied by the respective element.  By default, only 'end' events are
+generated::
+
+  >>> xml = '''\
+  ... <root>
+  ...   <element key='value'>text</element>
+  ...   <element>text</element>tail
+  ...   <empty-element xmlns="testns" />
+  ... </root>
+  ... '''
+
+  >>> context = etree.iterparse(StringIO(xml))
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  end element
+  end element
+  end {testns}empty-element
+  end root
+
+The resulting tree is available through the ``root`` property of the iterator::
+
+  >>> context.root.tag
+  'root'
+
+The other types can be activated with the ``events`` keyword argument::
+
+  >>> events = ("start", "end")
+  >>> context = etree.iterparse(StringIO(xml), events=events)
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start root
+  start element
+  end element
+  start element
+  end element
+  start {testns}empty-element
+  end {testns}empty-element
+  end root
+
+You can modify the element and its descendants when handling the 'end' event.
+To save memory, for example, you can remove subtrees that are no longer
+needed::
+
+  >>> context = etree.iterparse(StringIO(xml))
+  >>> for action, elem in context:
+  ...     print len(elem),
+  ...     elem.clear()
+  0 0 0 3
+  >>> context.root.getchildren()
+  []
+
+**WARNING**: During the 'start' event, the descendants and following siblings
+are not yet available and should not be accessed.  During the 'end' event, the
+element and its descendants can be freely modified, but its following siblings
+should not be accessed.  During either of the two events, you **must not**
+modify or move the ancestors (parents) of the current element.  You should
+also avoid moving or discarding the element itself.  The golden rule is: do
+not touch anything that will have to be touched again by the parser later on.
+
+If you have elements with a long list of children in your XML file and want to
+save more memory during parsing, you can clean up the preceding siblings of
+the current element::
+
+  >>> for event, element in etree.iterparse(StringIO(xml)):
+  ...     # ... do something with the element
+  ...     element.clear()                # clean up children
+  ...     if element.getprevious():      # clean up preceding siblings
+  ...         del element.getparent()[0]
+
+You can use ``while`` instead of ``if`` if you skipped siblings using the
+``tag`` keyword argument.  The more selective your tag is, however, the more
+thought you will have to put into finding the right way to clean up the
+elements that were skipped.  Therefore, it is sometimes easier to traverse all
+elements and do the tag selection by hand in the event handler code.
+
+The 'start-ns' and 'end-ns' events notify about namespace declarations and
+generate tuples ``(prefix, URI)``::
+
+  >>> events = ("start-ns", "end-ns")
+  >>> context = etree.iterparse(StringIO(xml), events=events)
+  >>> for action, obj in context:
+  ...     print action, obj
+  start-ns ('', 'testns')
+  end-ns None
+
+It is common practice to use a list as namespace stack and pop the last entry
+on the 'end-ns' event.
+
+lxml.etree supports two extensions compared to ElementTree.  It accepts a
+``tag`` keyword argument just like ``element.getiterator(tag)``.  This
+restricts events to a specific tag or namespace.
+
+  >>> context = etree.iterparse(StringIO(xml), tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  end element
+  end element
+
+  >>> events = ("start", "end")
+  >>> context = etree.iterparse(StringIO(xml), events=events, tag="{testns}*")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start {testns}empty-element
+  end {testns}empty-element
+
+The second extension is the ``iterwalk()`` function.  It behaves exactly like
+``iterparse()``, but works on Elements and ElementTrees::
+
+  >>> root = context.root
+  >>> context = etree.iterwalk(root, events=events, tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start element
+  end element
+  start element
+  end element
+
+
+Python unicode strings
+----------------------
+
+lxml.etree has broader support for Python unicode strings than the ElementTree
+library.  First of all, where ElementTree would raise an exception, the
+parsers in lxml.etree can handle unicode strings straight away.  This is most
+helpful for XML snippets embedded in source code using the ``XML()``
+function::
+
+  >>> uxml = u'<test> \uf8d1 + \uf8d2 </test>'
+  >>> uxml
+  u'<test> \uf8d1 + \uf8d2 </test>'
+  >>> root = etree.XML(uxml)
+
+This requires, however, that unicode strings do not specify a conflicting
+encoding themselves and thus lie about their real encoding::
+
+  >>> etree.XML(u'<?xml version="1.0" encoding="ASCII"?>\n' + uxml)
+  Traceback (most recent call last):
+    ...
+  ValueError: Unicode strings with encoding declaration are not supported.
+
+Similarly, you will get errors when you try the same with HTML data in a
+unicode string that specifies a charset in a meta tag of the header.  You
+should generally avoid converting XML/HTML data to unicode before passing it
+into the parsers.  It is both slower and error prone.
+
+To serialize the result, you would normally use the ``tostring`` module
+function, which serializes to plain ASCII by default or a number of other
+encodings if asked for::
+
+  >>> etree.tostring(root)
+  '<test> &#63697; + &#63698; </test>'
+
+  >>> etree.tostring(root, 'UTF-8', xml_declaration=False)
+  '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
+
+As an extension, lxml.etree has a new ``tounicode()`` function that you can
+call on XML tree objects to retrieve a Python unicode representation::
+
+  >>> etree.tounicode(root)
+  u'<test> \uf8d1 + \uf8d2 </test>'
+
+  >>> el = etree.Element("test")
+  >>> etree.tounicode(el)
+  u'<test/>'
+
+  >>> subel = etree.SubElement(el, "subtest")
+  >>> etree.tounicode(el)
+  u'<test><subtest/></test>'
+
+  >>> et = etree.ElementTree(el)
+  >>> etree.tounicode(et)
+  u'<test><subtest/></test>'
+
+The result of ``tounicode()`` can be treated like any other Python unicode
+string and then passed back into the parsers.  However, if you want to save
+the result to a file or pass it over the network, you should use ``write()``
+or ``tostring()`` with an encoding argument (typically UTF-8) to serialize the
+XML.  The main reason is that unicode strings returned by ``tounicode()``
+never have an XML declaration and therefore do not specify their encoding.
+These strings are most likely not parsable by other XML libraries.
+
+In contrast, the ``tostring()`` function automatically adds a declaration as
+needed that reflects the encoding of the returned string.  This makes it
+possible for other parsers to correctly parse the XML byte stream.  Note that
+using ``tostring()`` with UTF-8 is also considerably faster in most cases.
