@@ -362,7 +362,7 @@ represented by the ``ObjectPath`` class::
     >>> print find(root).tag
     {ns}b
 
-Apart from strings, ObjectPath also accepts lists of path segments:
+Apart from strings, ObjectPath also accepts lists of path segments::
 
     >>> find = objectify.ObjectPath(['root', 'b', 'c'])
     >>> print find(root).tag
@@ -423,7 +423,7 @@ ObjectPath objects can be used to manipulate trees::
     >>> [ el.text for el in path.find(root) ]
     ['my value', 'my new value']
 
-As with attribute assignment, ``setattr()`` accepts lists:
+As with attribute assignment, ``setattr()`` accepts lists::
 
     >>> path.setattr(root, ["v1", "v2", "v3"])
     >>> [ el.text for el in path.find(root) ]
