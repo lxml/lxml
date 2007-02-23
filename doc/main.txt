@@ -1,6 +1,16 @@
 lxml
 ====
 
+.. contents::
+.. 
+   1  Introduction
+   2  Download
+   3  Documentation
+   4  Mailing list
+   5  License
+   6  Old Versions
+
+
 Introduction
 ------------
 

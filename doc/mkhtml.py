@@ -66,10 +66,11 @@ def merge_menu(tree, menu, name):
             if tag[0] != '{':
                 el.tag = "{http://www.w3.org/1999/xhtml}" + tag
         current_submenu = find_submenu(menu_root, name=name)
-        for submenu in current_submenu:
-            submenu.set("style", "")
+        if current_submenu:
+            for submenu in current_submenu:
+                submenu.set("style", "")
         else:
-            print "No menu found for", name
+            print "No menu found in", name
     return tree
 
 def rest2html(script, source_path, dest_path, stylesheet_url):
@@ -96,6 +97,8 @@ def publish(dirname, lxml_path, release):
         for filename in text_files:
             path = os.path.join(doc_dir, filename)
             basename = os.path.splitext(filename)[0]
+            if basename == 'main':
+                basename = 'index'
             outname = basename + '.html'
             outpath = os.path.join(dirname, outname)
 
@@ -120,9 +123,6 @@ def publish(dirname, lxml_path, release):
               os.path.join(lxml_path, 'CHANGES.txt'),
               os.path.join(dirname, 'changes-%s.html' % release),
               stylesheet_url)
-
-    os.rename(os.path.join(dirname, 'main.html'),
-              os.path.join(dirname, 'index.html'))
 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
