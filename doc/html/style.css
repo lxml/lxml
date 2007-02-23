@@ -37,6 +37,10 @@ div.contents ul.submenu.current {
     display: block;
 }
 
+div.contents li.menu:hover ul.submenu {
+    display: block;
+}
+
 div.contents ul.submenu {
     display: none;
 }
