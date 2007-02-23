@@ -21,7 +21,7 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
 .. _`XPath functions in Python`: extensions.html
 .. _`Python element classes`: element_classes.html
 .. _`at the C-level`: capi.html
-.. _`URL resolvers`: resolvers.txt
+.. _`URL resolvers`: resolvers.html
 
 
 .. contents::
