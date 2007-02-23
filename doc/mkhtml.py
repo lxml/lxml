@@ -4,8 +4,8 @@ import os, shutil, re, sys, copy
 SITE_STRUCTURE = [
     ('lxml', ('main.txt', 'intro.txt', 'FAQ.txt', 'compatibility.txt',
               'performance.txt', 'build.txt')),
-    ('Developing', ('api.txt', 'parsing.txt', 'validation.txt', 'xpathxslt.txt',
-                    'objectify.txt')),
+    ('Developing with lxml', ('api.txt', 'parsing.txt', 'validation.txt',
+                              'xpathxslt.txt', 'objectify.txt')),
     ('Extending', ('resolvers.txt', 'extensions.txt', 'element_classes.txt',
                    'sax.txt', 'capi.txt')),
     ]
