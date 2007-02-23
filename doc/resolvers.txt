@@ -1,6 +1,12 @@
 Document loading and URL resolving
 ==================================
 
+.. contents::
+..
+   1  Document loaders in context
+   2  I/O access control in XSLT
+
+
 Lxml has support for custom document loaders in both the parsers and XSL
 transformations.  These so-called resolvers are subclasses of the
 etree.Resolver class as in the following example::

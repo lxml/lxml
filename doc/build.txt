@@ -7,6 +7,16 @@ also requires setuptools_.
 
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 
+.. contents::
+..
+   1  Pyrex
+   2  Subversion
+   3  The setuptools approach
+   4  Running the tests and reporting errors
+   5  Contributing an egg
+   6  Static linking on Windows
+   7  Building Debian packages from SVN sources
+
 
 Pyrex
 -----

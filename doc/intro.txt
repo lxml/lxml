@@ -1,6 +1,12 @@
 Why lxml?
 =========
 
+.. contents::
+..
+   1  Motto
+   2  Aims
+
+
 Motto
 -----
 

@@ -11,6 +11,11 @@ c-importable by Pyrex modules.
 
 .. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/branch/capi/src/lxml/etreepublic.pxd
 
+.. contents::
+..
+   1  Writing external modules in Pyrex
+   2  Writing external modules in C
+
 
 Writing external modules in Pyrex
 ---------------------------------
