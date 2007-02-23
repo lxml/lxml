@@ -17,7 +17,7 @@ div.document {
 
 /*** menu ***/
 
-div.contents.topic {
+div.contents {
     position: fixed;
     top: 0px;
     left: 0px;
@@ -28,13 +28,26 @@ div.contents.topic {
     padding-right: 1ex;
 }
 
-div.contents.topic ul {
+div.contents span.section.title {
+    line-height: 1.5em;
+    font-size: 130%;
+}
+
+div.contents ul.submenu.current {
+    display: block;
+}
+
+div.contents ul.submenu {
+    display: none;
+}
+
+div.contents ul {
     line-height: 1em;
     margin: 1ex;
     padding-left: 1em;
 }
 
-div.contents.topic p.topic-title.first {
+div.contents p.topic-title.first {
     display: none;
 }
 

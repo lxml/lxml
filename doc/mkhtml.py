@@ -31,7 +31,7 @@ def build_menu(tree, basename, section, menuroot):
     if not section_head:
         ul = SubElement(menuroot, "ul", id=section)
         section_head = SubElement(ul, "li")
-        title = SubElement(section_head, "span")
+        title = SubElement(section_head, "span", {"class":"section title"})
         title.text = section
     else:
         section_head = section_head[0]
@@ -48,8 +48,7 @@ def build_menu(tree, basename, section, menuroot):
         a = SubElement(title, "a", href=basename+".html")
         a.text = page_title
 
-        subul = SubElement(title, "ul",
-                           {"class":"submenu", "style":"display:none"})
+        subul = SubElement(title, "ul", {"class":"submenu"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
             ref = replace_invalid('-', heading.lower())
@@ -68,7 +67,7 @@ def merge_menu(tree, menu, name):
         current_submenu = find_submenu(menu_root, name=name)
         if current_submenu:
             for submenu in current_submenu:
-                submenu.set("style", "")
+                submenu.set("class", submenu.get("class", "") + " current")
         else:
             print "No menu found in", name
     return tree
