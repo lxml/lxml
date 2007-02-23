@@ -6,8 +6,8 @@ SITE_STRUCTURE = [
               'performance.txt', 'build.txt')),
     ('Developing with lxml', ('api.txt', 'parsing.txt', 'validation.txt',
                               'xpathxslt.txt', 'objectify.txt')),
-    ('Extending', ('resolvers.txt', 'extensions.txt', 'element_classes.txt',
-                   'sax.txt', 'capi.txt')),
+    ('Extending lxml', ('resolvers.txt', 'extensions.txt', 'element_classes.txt',
+                        'sax.txt', 'capi.txt')),
     ]
 
 RST2HTML_OPTIONS = " ".join([
