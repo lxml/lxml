@@ -16,10 +16,11 @@ Parsers
 -------
 
 One of the differences is the parser.  There is support for both XML and
-(broken) HTML.  Both are based on libxml2 and therefore only support options
-that are backed by the library.  Parsers take a number of keyword arguments.
-The following is an example for namespace cleanup during parsing, first with
-the default parser, then with a parametrized one::
+(broken) HTML (note that XHTML is best parsed as XML).  Both are based on
+libxml2 and therefore only support options that are backed by the library.
+Parsers take a number of keyword arguments.  The following is an example for
+namespace cleanup during parsing, first with the default parser, then with a
+parametrized one::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
