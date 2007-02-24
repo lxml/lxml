@@ -15,9 +15,9 @@ one-step parsing as well as step-by-step parsing using an event-driven API.
 Parsers
 -------
 
-One of the differences is the parser.  There is support for both XML and
-(broken) HTML (note that XHTML is best parsed as XML).  Both are based on
-libxml2 and therefore only support options that are backed by the library.
+Parsers are represented by parser objects.  There is support for parsing both
+XML and (broken) HTML (note that XHTML is best parsed as XML).  Both are based
+on libxml2 and therefore only support options that are backed by the library.
 Parsers take a number of keyword arguments.  The following is an example for
 namespace cleanup during parsing, first with the default parser, then with a
 parametrized one::
