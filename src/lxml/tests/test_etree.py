@@ -893,6 +893,81 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<z xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi"><hoi:x></hoi:x></z>',
             self._writeElement(e))
 
+    def test_namespaces_default_copy_element(self):
+        etree = self.etree
+
+        r = {None: 'http://ns.infrae.com/foo'}
+        e1 = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
+        e2 = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
+
+        e1.append(e2)
+
+        self.assertEquals(
+            None,
+            e1.prefix)
+        self.assertEquals(
+            None,
+            e1[0].prefix)
+        self.assertEquals(
+            '{http://ns.infrae.com/foo}bar',
+            e1.tag)
+        self.assertEquals(
+            '{http://ns.infrae.com/foo}bar',
+            e1[0].tag)
+
+    def test_namespaces_copy_element(self):
+        etree = self.etree
+
+        r = {None: 'http://ns.infrae.com/BAR'}
+        e1 = etree.Element('{http://ns.infrae.com/BAR}bar', nsmap=r)
+        e2 = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
+
+        e1.append(e2)
+
+        self.assertEquals(
+            None,
+            e1.prefix)
+        self.assertNotEquals(
+            None,
+            e2.prefix)
+        self.assertEquals(
+            '{http://ns.infrae.com/BAR}bar',
+            e1.tag)
+        self.assertEquals(
+            '{http://ns.infrae.com/foo}bar',
+            e2.tag)
+
+    def test_namespaces_reuse_after_move(self):
+        ns_href = "http://a.b.c"
+        one = self.etree.parse(
+            StringIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
+        baz = one.getroot()[0][0]
+
+        two = self.etree.parse(
+            StringIO('<root xmlns:ns="%s"/>' % ns_href))
+        two.getroot().append(baz)
+        del one # make sure the source document is deallocated
+
+        self.assertEquals('{%s}baz' % ns_href, baz.tag)
+        self.assertEquals(
+            '<root xmlns:ns="%s"><ns:baz/></root>' % ns_href,
+            self.etree.tostring(two))
+
+    def _test_namespaces_after_serialize(self):
+        # FIXME: this currently fails - fix serializer.pxi!
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+
+        ns_href = "http://a.b.c"
+        one = parse(
+            StringIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
+        baz = one.getroot()[0][0]
+
+        print tostring(baz)
+        parsed = parse(StringIO( tostring(baz) )).getroot()
+
+        self.assertEquals('{%s}baz' % ns_href, parsed.tag)
+
     def test_element_nsmap(self):
         etree = self.etree
 

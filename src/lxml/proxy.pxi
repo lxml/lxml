@@ -54,6 +54,7 @@ cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
     c_doc  = _copyDoc(c_base_doc, 0)               # non recursive!
     c_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
     tree.xmlDocSetRootElement(c_doc, c_root)
+    _copyParentNamespaces(c_node, c_new_root)
 
     c_root.children = c_node.children
     c_root.last = c_node.last
@@ -89,6 +90,26 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
         # prevent recursive removal of children
         c_root.children = c_root.last = NULL
         tree.xmlFreeDoc(c_doc)
+
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
+    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
+
+    This is used in _fakeRootDoc() to avoid loosing namespace declarations.
+    """
+    cdef xmlNode* c_parent
+    cdef xmlNs* c_ns
+    cdef xmlNs* c_new_ns
+    cdef int prefix_known
+    c_parent = c_from_node.parent
+    while c_parent is not NULL and tree._isElementOrXInclude(c_parent):
+        c_new_ns = c_parent.nsDef
+        while c_new_ns is not NULL:
+            # check if prefix is already defined
+            c_ns = tree.xmlSearchNs(c_to_node.doc, c_to_node, c_new_ns.prefix)
+            if c_ns is NULL:
+                tree.xmlNewNs(c_to_node, c_new_ns.href, c_new_ns.prefix)
+            c_new_ns = c_new_ns.next
+        c_parent = c_parent.parent
 
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
@@ -159,31 +180,144 @@ cdef void _deallocDocument(xmlDoc* c_doc):
     tree.xmlFreeDoc(c_doc)
 
 ################################################################################
-# change _Document references when a node changes documents
+# fix _Document references and namespaces when a node changes documents
 
 cdef void moveNodeToDocument(_Element node, _Document doc):
-    """For a node and all nodes below, change document.
+    """Fix the xmlNs pointers of a node and its subtree that were moved.
 
-    A node can change document in certain operations as an XML
-    subtree can move. This updates all possible proxies in the
-    tree below (including the current node). It also reconciliates
-    namespaces so they're correct inside the new environment.
+    Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
+    pointers of node to be correct already, but fixes _Document references.
     """
-    tree.xmlReconciliateNs(doc._c_doc, node._c_node)
-    if node._doc is not doc:
-        node._doc = doc
-        changeDocumentBelow(node._c_node, doc)
-
-cdef void changeDocumentBelow(xmlNode* c_parent, _Document doc):
-    """Update the Python references in the tree below the node.
-    Does not update the node itself.
-
-    Note that we expect C pointers to the document to be updated already by
-    libxml2.
-    """
+    cdef xmlDoc* c_doc
+    cdef xmlNode* c_element
+    cdef xmlNode* c_start_node
     cdef xmlNode* c_node
-    c_node = c_parent.children
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_parent, c_node, 1)
-    if c_node._private is not NULL:
-        (<_Element>c_node._private)._doc = doc
-    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+    cdef xmlNs** c_ns_new_cache
+    cdef xmlNs** c_ns_old_cache
+    cdef xmlNs* c_ns
+    cdef xmlNs* c_new_ns
+    cdef cstd.size_t i, c_cache_size, c_cache_last
+
+    c_element = node._c_node
+    c_doc = c_element.doc
+
+    if not tree._isElementOrXInclude(c_element):
+        return
+
+    c_start_node = c_element
+    c_ns_new_cache = NULL
+    c_ns_old_cache = NULL
+    c_cache_size = 0
+    c_cache_last = 0
+
+    while c_element is not NULL:
+        # remove namespaces defined here that are known in the new ancestors
+        if c_element.nsDef is not NULL:
+            while c_element.nsDef is not NULL:
+                c_ns = tree.xmlSearchNsByHref(
+                    c_element.doc, c_element.parent, c_element.nsDef.href)
+                if c_ns is NULL:
+                    break
+                c_element.nsDef = c_element.nsDef.next
+            if c_element.nsDef is not NULL:
+                c_new_ns = c_element.nsDef
+                while c_new_ns.next is not NULL:
+                    if c_new_ns.next is not c_element.ns:
+                        c_ns = tree.xmlSearchNsByHref(
+                            c_element.doc, c_element.parent, c_new_ns.next.href)
+                        if c_ns is not NULL:
+                            # not known or at least not different
+                            c_new_ns.next = c_new_ns.next.next
+                        else:
+                            c_new_ns = c_new_ns.next
+                    else:
+                        c_new_ns = c_new_ns.next
+
+        # make sure the namespace of an element and its attributes is declared
+        # in this document
+        c_node = c_element
+        while c_node is not NULL:
+            if c_node.ns is not NULL:
+                c_ns = c_node.ns
+                for i from 0 <= i < c_cache_last:
+                    if c_ns is c_ns_old_cache[i]:
+                        c_node.ns = c_ns_new_cache[i]
+                        c_ns = NULL
+                        break
+
+                if c_ns is not NULL:
+                    # not in cache, must find a replacement from this document
+                    c_new_ns = doc._findOrBuildNodeNs(c_node, c_ns.href, c_ns.prefix)
+                    if c_cache_last >= c_cache_size:
+                        # must resize cache
+                        if c_cache_size == 0:
+                            c_cache_size = 20
+                        else:
+                            c_cache_size = c_cache_size * 2
+                        c_ns_new_cache = <xmlNs**> python.PyMem_Realloc(
+                            c_ns_new_cache, c_cache_size * sizeof(xmlNs*))
+                        if c_ns_new_cache is NULL:
+                            python.PyMem_Free(c_ns_old_cache)
+                            python.PyErr_NoMemory()
+                        c_ns_old_cache = <xmlNs**> python.PyMem_Realloc(
+                            c_ns_old_cache, c_cache_size * sizeof(xmlNs*))
+                        if c_ns_old_cache is NULL:
+                            python.PyMem_Free(c_ns_new_cache)
+                            python.PyErr_NoMemory()
+                    c_ns_new_cache[c_cache_last] = c_new_ns
+                    c_ns_old_cache[c_cache_last] = c_node.ns
+                    c_cache_last = c_cache_last + 1
+                    c_node.ns = c_new_ns
+            if c_node is c_element:
+                # after the element, continue with its attributes
+                c_node = <xmlNode*>c_element.properties
+            else:
+                c_node = c_node.next
+
+        # traverse to next element, start with children
+        c_node = c_element.children
+        while c_node is not NULL and \
+              not tree._isElementOrXInclude(c_node):
+            c_node = c_node.next
+
+        if c_node is NULL:
+            # no children => back off and continue with siblings and parents
+
+            # fix _Document reference (may dealloc the original document!)
+            if c_element._private is not NULL:
+                (<_NodeBase>c_element._private)._doc = doc
+
+            if c_element is c_start_node:
+                break
+
+            # continue with siblings
+            c_node = c_element.next
+            while (c_node is not NULL and
+                   not tree._isElementOrXInclude(c_node)):
+                c_node = c_node.next
+            # if that didn't help, back off through parents' siblings
+            while c_node is NULL:
+                c_element = c_element.parent
+                if c_element is NULL or not tree._isElementOrXInclude(c_element):
+                    break
+
+                # fix _Document reference (may dealloc the original document!)
+                if c_element._private is not NULL:
+                    (<_NodeBase>c_element._private)._doc = doc
+
+                if c_element is c_start_node:
+                    break
+                # parents already done -> look for their siblings
+                c_node = c_element.next
+                while (c_node is not NULL and
+                       not tree._isElementOrXInclude(c_node)):
+                    c_node = c_node.next
+        if c_node is c_start_node:
+            break
+        c_element = c_node
+
+    # cleanup
+    if c_ns_new_cache is not NULL:
+        python.PyMem_Free(c_ns_new_cache)
+    if c_ns_old_cache is not NULL:
+        python.PyMem_Free(c_ns_old_cache)

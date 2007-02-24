@@ -20,6 +20,9 @@ Bugs fixed
 Other changes
 -------------
 
+* optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
+  a better handling of namespaces when moving elements between documents.
+
 * major restructuring in the documentation
 
 
