@@ -24,7 +24,12 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         print ("NOTE: Trying to build without Pyrex, pre-generated "
                "'src/lxml/etree.c' needs to be available.")
         source_extension = ".c"
-    
+
+    if OPTION_WITHOUT_OBJECTIFY:
+        modules = [ entry for entry in EXT_MODULES if entry[0] != 'objectify' ]
+    else:
+        modules = EXT_MODULES
+
     _include_dirs = include_dirs(static_include_dirs)
     _library_dirs = library_dirs(static_library_dirs)
     _cflags = cflags(static_cflags)
@@ -37,7 +42,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         runtime_library_dirs = []
     
     result = []
-    for module, package in EXT_MODULES:
+    for module, package in modules:
         result.append(
             Extension(
             package,
@@ -136,6 +141,7 @@ def has_option(name):
         return False
 
 # pick up any commandline options
+OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_STATIC = has_option('static')
