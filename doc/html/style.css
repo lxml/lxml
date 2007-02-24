@@ -15,44 +15,51 @@ div.document {
     text-align: left;
 }
 
-/*** menu ***/
+/*** TOC ***/
 
-div.contents {
+div.contents.topic > ul {
+    margin-top: 0px;
+}
+
+div.contents.topic > ul > li {
+    line-height: 1.1em;
+}
+
+/*** side menu ***/
+
+div.sidemenu {
     position: fixed;
     top: 0px;
     left: 0px;
     width: 20em;
+    font-size: 11px;
     text-align: left;
     border-right: solid gray;
     border-bottom: solid gray;
     padding-right: 1ex;
 }
 
-div.contents span.section.title {
+div.sidemenu span.section.title {
     line-height: 1.5em;
     font-size: 130%;
 }
 
-div.contents ul.submenu.current {
+div.sidemenu ul.submenu.current {
     display: block;
 }
 
-div.contents li.menu:hover ul.submenu {
+div.sidemenu li.menu:hover ul.submenu {
     display: block;
 }
 
-div.contents ul.submenu {
+div.sidemenu ul.submenu {
     display: none;
 }
 
-div.contents ul {
+div.sidemenu ul {
     line-height: 1em;
     margin: 1ex;
     padding-left: 1em;
-}
-
-div.contents p.topic-title.first {
-    display: none;
 }
 
 /*** headings ***/

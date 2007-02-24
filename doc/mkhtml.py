@@ -19,8 +19,6 @@ find_title = XPath("/h:html/h:head/h:title/text()",
                             {"h" : "http://www.w3.org/1999/xhtml"})
 find_headings = XPath("//h:h1[not(@class)]/h:a/text()",
                             {"h" : "http://www.w3.org/1999/xhtml"})
-find_toc = XPath("//h:div[@class='contents topic']",
-                       {"h" : "http://www.w3.org/1999/xhtml"})
 find_submenu = XPath("//h:ul[@id=$name]//h:ul[@class='submenu']",
                            {"h" : "http://www.w3.org/1999/xhtml"})
 
@@ -56,20 +54,16 @@ def build_menu(tree, basename, section, menuroot):
             a.text = heading
 
 def merge_menu(tree, menu, name):
-    toc = find_toc(tree)
-    if toc:
-        menu_root = copy.deepcopy(menu)
-        toc[0][:] = [menu_root]
-        for el in menu_root.getiterator():
-            tag = el.tag
-            if tag[0] != '{':
-                el.tag = "{http://www.w3.org/1999/xhtml}" + tag
-        current_submenu = find_submenu(menu_root, name=name)
-        if current_submenu:
-            for submenu in current_submenu:
-                submenu.set("class", submenu.get("class", "") + " current")
-        else:
-            print "No menu found in", name
+    menu_root = copy.deepcopy(menu)
+    tree.getroot()[1][0].append(menu_root) # html->body->div[class=document]
+    for el in menu_root.getiterator():
+        tag = el.tag
+        if tag[0] != '{':
+            el.tag = "{http://www.w3.org/1999/xhtml}" + tag
+    current_submenu = find_submenu(menu_root, name=name)
+    if current_submenu:
+        for submenu in current_submenu:
+            submenu.set("class", submenu.get("class", "") + " current")
     return tree
 
 def rest2html(script, source_path, dest_path, stylesheet_url):
@@ -90,7 +84,7 @@ def publish(dirname, lxml_path, release):
     shutil.copy(pubkey, dirname)
 
     trees = {}
-    menu = Element("div", {"class":"menu"})
+    menu = Element("div", {"class":"sidemenu"})
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
         for filename in text_files:
