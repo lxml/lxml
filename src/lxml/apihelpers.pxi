@@ -147,7 +147,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
             if attr_ns_utf is None:
                 tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
             else:
-                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf))
+                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf), NULL)
                 tree.xmlNewNsProp(c_node, c_ns,
                                   _cstr(attr_name_utf), _cstr(value_utf))
 
@@ -203,7 +203,8 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     if ns is None:
         tree.xmlSetProp(element._c_node, c_tag, c_value)
     else:
-        c_ns = element._doc._findOrBuildNodeNs(element._c_node, _cstr(ns))
+        c_ns = element._doc._findOrBuildNodeNs(element._c_node,
+                                               _cstr(ns), NULL)
         tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
     return 0
 

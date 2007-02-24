@@ -295,24 +295,38 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         self._ns_counter = self._ns_counter + 1
         return ns
 
-    cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node, char* href):
-        """Get or create namespace structure for a node.
+    cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
+                                   char* c_href, char* c_prefix):
+        """Get or create namespace structure for a node.  Reuses the prefix if
+        possible.
         """
+        cdef int i
         cdef xmlNs* c_ns
+        cdef xmlNs* c_doc_ns
         # look for existing ns
-        c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, href)
+        c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, c_href)
         if c_ns is not NULL:
             return c_ns
-        # create ns if existing ns cannot be found
-        # try to simulate ElementTree's namespace prefix creation
-        prefix = self.buildNewPrefix()
-        c_ns = tree.xmlNewNs(c_node, href, _cstr(prefix))
-        return c_ns
+
+        if c_prefix is NULL or \
+               tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:
+            # try to simulate ElementTree's namespace prefix creation
+            for i from 0 <= i < 10000:
+                prefix = self.buildNewPrefix()
+                c_prefix = _cstr(prefix)
+                # make sure it's not used already
+                if tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is NULL:
+                    break
+            if i >= 10000:
+                # XXX too many prefixes in use - this is pretty bad!
+                return NULL
+
+        return tree.xmlNewNs(c_node, c_href, c_prefix)
 
     cdef void _setNodeNs(self, xmlNode* c_node, char* href):
         "Lookup namespace structure and set it for the node."
         cdef xmlNs* c_ns
-        c_ns = self._findOrBuildNodeNs(c_node, href)
+        c_ns = self._findOrBuildNodeNs(c_node, href, NULL)
         tree.xmlSetNs(c_node, c_ns)
 
     cdef void _setNodeNamespaces(self, xmlNode* c_node,

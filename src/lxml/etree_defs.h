@@ -65,6 +65,11 @@
 	 ((c_node)->type == XML_COMMENT_NODE) || \
          ((c_node)->type == XML_PI_NODE))
 
+#define _isElementOrXInclude(c_node) \
+        (_isElement(c_node)                     || \
+         ((c_node)->type == XML_XINCLUDE_START) || \
+         ((c_node)->type == XML_XINCLUDE_END))
+
 #define _getNs(c_node) \
         (((c_node)->ns == 0) ? 0 : ((c_node)->ns->href))
 

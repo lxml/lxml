@@ -77,7 +77,6 @@ cdef extern from "libxml/tree.h":
         XML_NAMESPACE_DECL=         18
         XML_XINCLUDE_START=         19
         XML_XINCLUDE_END=           20
-
     
     ctypedef struct xmlNs:
         char* href
@@ -193,7 +192,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlHasProp(xmlNode* node, char* name)
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace)
     cdef char* xmlNodeGetContent(xmlNode* cur)
-    cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* nameSpace)
+    cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* prefix)
     cdef xmlNs* xmlSearchNsByHref(xmlDoc* doc, xmlNode* node, char* href)
     cdef int xmlIsBlankNode(xmlNode* node)
     cdef void xmlElemDump(FILE* f, xmlDoc* doc, xmlNode* cur)
@@ -206,6 +205,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlCopyNode(xmlNode* node, int extended)
     cdef xmlNode* xmlDocCopyNode(xmlNode* node, xmlDoc* doc, int extended)
     cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree)
+    cdef xmlNs* xmlNewReconciliedNs(xmlDoc* doc, xmlNode* tree, xmlNs* ns)
     cdef xmlBuffer* xmlBufferCreate()
     cdef char* xmlBufferContent(xmlBuffer* buf)
     cdef int xmlBufferLength(xmlBuffer* buf)
@@ -260,6 +260,7 @@ cdef extern from "libxml/xmlmemory.h":
 
 cdef extern from "etree_defs.h":
     cdef int _isElement(xmlNode* node)
+    cdef int _isElementOrXInclude(xmlNode* node)
     cdef char* _getNs(xmlNode* node)
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* tree_top,
                                           xmlNode* start_node, int inclusive)

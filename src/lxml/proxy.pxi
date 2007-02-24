@@ -1,4 +1,4 @@
-# Proxy functions
+# Proxy functions and low level node allocation stuff
 
 # Proxies represent elements, their reference is stored in the C
 # structure of the respective node to avoid multiple instantiation of
@@ -45,31 +45,33 @@ cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
     # always call _destroyFakeDoc() after use!
     cdef xmlNode* c_child
     cdef xmlNode* c_root
+    cdef xmlNode* c_new_root
     cdef xmlDoc*  c_doc
     c_root = tree.xmlDocGetRootElement(c_base_doc)
     if c_root is c_node:
         # already the root node
         return c_base_doc
 
-    c_doc  = _copyDoc(c_base_doc, 0)               # non recursive!
-    c_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
-    tree.xmlDocSetRootElement(c_doc, c_root)
+    c_doc  = _copyDoc(c_base_doc, 0)                   # non recursive!
+    c_new_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
+    tree.xmlDocSetRootElement(c_doc, c_new_root)
     _copyParentNamespaces(c_node, c_new_root)
+    _copyParentNamespaces(c_node, c_root)
 
-    c_root.children = c_node.children
-    c_root.last = c_node.last
-    c_root.next = c_root.prev = c_root.parent = NULL
+    c_new_root.children = c_node.children
+    c_new_root.last = c_node.last
+    c_new_root.next = c_new_root.prev = c_new_root.parent = NULL
 
     # store original node
     c_doc._private = c_node
 
     # divert parent pointers of children
-    c_child = c_root.children
+    c_child = c_new_root.children
     while c_child is not NULL:
-        c_child.parent = c_root
+        c_child.parent = c_new_root
         c_child = c_child.next
 
-    c_doc.children = c_root
+    c_doc.children = c_new_root
     return c_doc
 
 cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
@@ -247,7 +249,8 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
 
                 if c_ns is not NULL:
                     # not in cache, must find a replacement from this document
-                    c_new_ns = doc._findOrBuildNodeNs(c_node, c_ns.href, c_ns.prefix)
+                    c_new_ns = doc._findOrBuildNodeNs(c_node,
+                                                      c_ns.href, c_ns.prefix)
                     if c_cache_last >= c_cache_size:
                         # must resize cache
                         if c_cache_size == 0:
@@ -285,7 +288,7 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
 
             # fix _Document reference (may dealloc the original document!)
             if c_element._private is not NULL:
-                (<_NodeBase>c_element._private)._doc = doc
+                (<_Element>c_element._private)._doc = doc
 
             if c_element is c_start_node:
                 break
@@ -303,7 +306,7 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
 
                 # fix _Document reference (may dealloc the original document!)
                 if c_element._private is not NULL:
-                    (<_NodeBase>c_element._private)._doc = doc
+                    (<_Element>c_element._private)._doc = doc
 
                 if c_element is c_start_node:
                     break

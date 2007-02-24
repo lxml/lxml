@@ -138,4 +138,4 @@ cdef public tree.xmlNs* findOrBuildNodeNs(_Document doc, xmlNode* c_node,
                                           char* href) except NULL:
     if doc is None:
         raise TypeError
-    return doc._findOrBuildNodeNs(c_node, href)
+    return doc._findOrBuildNodeNs(c_node, href, NULL)
