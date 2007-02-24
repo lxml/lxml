@@ -11,7 +11,7 @@ also requires setuptools_.
 ..
    1  Pyrex
    2  Subversion
-   3  The setuptools approach
+   3  Setuptools
    4  Running the tests and reporting errors
    5  Contributing an egg
    6  Static linking on Windows
@@ -30,21 +30,6 @@ not need Pyrex to build lxml from the normal release sources.
 If you are interested in building lxml from a Subversion checkout or want to
 be an lxml developer, you do need a working Pyrex installation.
 
-* lxml 1.0 and earlier
-
-  The 1.0 series build with a standard installation of Pyrex 0.9.4.1.  Note
-  that Pyrex up to and including version 0.9.4 has known problems when
-  compiling lxml with gcc 4.x or Python 2.4.  Do not use it.  If you want to
-  build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
-  later.
-
-  Pyrex now supports EasyInstall_, so you can install it by running the
-  following command as super-user::
-
-      easy_install Pyrex
-
-  .. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
-
 * lxml 1.1 and later
 
   Newer versions of lxml depend on features and bug fixes that are not yet
@@ -62,6 +47,21 @@ be an lxml developer, you do need a working Pyrex installation.
   unpacked distribution directory, the normally installed Pyrex version will
   be used.
 
+* lxml 1.0 and earlier
+
+  The 1.0 series build with a standard installation of Pyrex 0.9.4.1.  Note
+  that Pyrex up to and including version 0.9.4 has known problems when
+  compiling lxml with gcc 4.x or Python 2.4.  Do not use it.  If you want to
+  build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
+  later.
+
+  Pyrex now supports EasyInstall_, so you can install it by running the
+  following command as super-user::
+
+      easy_install Pyrex
+
+  .. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
+
 
 Subversion
 ----------
@@ -78,8 +78,8 @@ client to access it.
 .. _`browse the repository through the web`: http://codespeak.net/svn/lxml
 
 
-The setuptools approach
------------------------
+Setuptools
+----------
 
 Usually, building lxml is done through setuptools.  Do a Subversion checkout
 (or download the source tar-ball and unpack it) and then type::
@@ -114,8 +114,8 @@ changes that affect files other than the main file ``src/lxml/etree.pyx``.
 Running the tests and reporting errors
 --------------------------------------
 
-The source distribution (tgz) contains a test suite for lxml.  You can run it
-from the top-level directory::
+The source distribution (tgz) and the Subversion repository contain a test
+suite for lxml.  You can run it from the top-level directory::
 
   python test.py
 
@@ -135,9 +135,9 @@ and::
   python selftest2.py
 
 If the tests give failures, errors, or worse, segmentation faults, we'd really
-like to know. Please contact us on the `mailing list`_, and please specify the
-version of lxml, libxml2, libxslt and Python you were using, as well as your
-operating system type (Linux, Windows, MacOs, ...).
+like to know.  Please contact us on the `mailing list`_, and please specify
+the version of lxml, libxml2, libxslt and Python you were using, as well as
+your operating system type (Linux, Windows, MacOs, ...).
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
@@ -147,8 +147,8 @@ Contributing an egg
 
 This is the procedure to make an lxml egg for your platform:
 
-* download the lxml-x.y.tgz release. This contains the pregenerated C so
-  we don't run into any Pyrex issues. Unpack it and cd into it.
+* download the lxml-x.y.tar.gz release. This contains the pregenerated C so we
+  don't run into any Pyrex issues. Unpack it and cd into it.
 
 * python setup.py build
 
@@ -157,9 +157,9 @@ This is the procedure to make an lxml egg for your platform:
 
 * python setup.py bdist_egg upload
 
-The last 'upload' step only works if you have access to the lxml
-cheeseshop entry. If not, you can just make an egg with bdist_egg and
-mail it to the lxml maintainer.
+The last 'upload' step only works if you have access to the lxml cheeseshop
+entry.  If not, you can just make an egg with ``bdist_egg`` and mail it to the
+lxml maintainer.
 
 
 Static linking on Windows
@@ -169,16 +169,13 @@ Most operating systems have proper package management that makes installing
 current versions of libxml2 and libxslt easy.  The most famous exception is
 Microsoft Windows, which entirely lacks these capabilities.  It can therefore
 be interesting to statically link the external libraries into lxml.etree to
-avoid having to install them separately.  `David Sankel`_ proposed the
-following approach.
-
-.. _`David Sankel`: http://codespeak.net/pipermail/lxml-dev/2006-May/001196.html
+avoid having to install them separately.
 
 Download lxml and all required libraries to the same directory.  The iconv,
 libxml2, libxslt, and zlib libraries are all available from the ftp site
 ftp://ftp.zlatkovic.com/pub/libxml/.
 
-Your directory should now have the following files in it (although possibly
+Your directory should now have the following files in it (although most likely
 different versions)::
 
   iconv-1.9.1.win32.zip
@@ -204,32 +201,33 @@ something like this::
 Go to the lxml directory and edit the file ``setup.py``.  There should
 be a section near the top that looks like this::
 
-  STATIC_LIBS = []
+  STATIC_INCLUDE_DIRS = []
+  STATIC_LIBRARY_DIRS = []
   STATIC_CFLAGS = []
 
 Change this section to something like this, but take care to use the correct
 version numbers::
 
-  STATIC_LIBS = [
-         "..\\libxml2-2.6.23.win32\\lib\\libxml2_a.lib",
-         "..\\libxslt-1.1.15.win32\\lib\\libxslt_a.lib",
-         "..\\libxslt-1.1.15.win32\\lib\\libexslt_a.lib",
-         "..\\zlib-1.2.3.win32\\lib\\zlib.lib",
-         "..\\iconv-1.9.1.win32\\lib\\iconv_a.lib"
+  STATIC_INCLUDE_DIRS = [
+         "..\\libxml2-2.6.23.win32\\include ",
+         "..\\libxslt-1.1.15.win32\\include",
+         "..\\zlib-1.2.3.win32\\include",
+         "..\\iconv-1.9.1.win32\\include"
          ]
 
-  STATIC_CFLAGS = [
-         "-I..\\libxml2-2.6.23.win32\\include ",
-         "-I..\\libxslt-1.1.15.win32\\include",
-         "-I..\\zlib-1.2.3.win32\\include",
-         "-I..\\iconv-1.9.1.win32\\include"
+  STATIC_LIBRARY_DIRS = [
+         "..\\libxml2-2.6.23.win32\\lib",
+         "..\\libxslt-1.1.15.win32\\lib",
+         "..\\libxslt-1.1.15.win32\\lib",
+         "..\\zlib-1.2.3.win32\\lib",
+         "..\\iconv-1.9.1.win32\\lib"
          ]
 
-The ``_a`` part of the library names means that we are linking statically
-against the named library files.  If you want to use dynamic libraries, you
-need to link against the DLL version of the libraries.  As `Ashish Kulkarni`_
-notes, you might have to add the standard Windows library ``wsock32.dll`` to
-the above list of libraries to make ``lxml.objectify`` compile.
+  STATIC_CFLAGS = []
+
+Add any CFLAGS you might consider useful to the third list.  As `Ashish
+Kulkarni`_ notes, you might have to add the standard Windows library
+``wsock32.dll`` to the list of libraries to make ``lxml.objectify`` compile.
 
 .. _`Ashish Kulkarni`: http://codespeak.net/pipermail/lxml-dev/2006-September/001893.html
 
@@ -253,7 +251,7 @@ Building Debian packages from SVN sources
 * tar.gz the lxml SVN version and replace the orig.tar.gz that lies in the
   directory
 * check md5sum of created tar.gz file and place new sum and size in dsc file
-* do ``dpkg-source -x lxml-...dsc`` and cd into the newly created directory
+* do ``dpkg-source -x lxml-[VERSION].dsc`` and cd into the newly created directory
 * run ``dch -i`` and add a comment like "use trunk version", this will
   increase the debian version number so apt/dpkg won't get confused
 * run ``dpkg-buildpackage -rfakeroot -us -uc`` to build the package
