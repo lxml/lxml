@@ -45,8 +45,7 @@
 # Limited XInclude support for the ElementTree package.
 ##
 
-import copy
-from lxml import etree
+import copy, etree
 
 try:
     set

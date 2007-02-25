@@ -1,5 +1,5 @@
 from xml.sax.handler import ContentHandler
-from lxml.etree import ElementTree, Element, SubElement, LxmlError
+from etree import ElementTree, Element, SubElement, LxmlError
 
 class SaxError(LxmlError):
     pass
