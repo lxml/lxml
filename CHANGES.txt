@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* Support for pickeling ``objectify.ObjectifiedElement`` objects to XML
+
 * ``update()`` method on Element.attrib
 
 * Optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml

@@ -842,6 +842,18 @@ class ObjectifyTestCase(HelperTestCase):
              'root.{objectified}c1.{}c2'],
             root.c1.descendantpaths('root'))
 
+    def test_pickle(self):
+        import pickle
+
+        root = self.XML(xml_str)
+        out = StringIO()
+        pickle.dump(root, out)
+
+        new_root = pickle.loads(out.getvalue())
+        self.assertEquals(
+            etree.tostring(new_root),
+            etree.tostring(root))
+
 
 def test_suite():
     suite = unittest.TestSuite()
