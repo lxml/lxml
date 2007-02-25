@@ -1376,9 +1376,9 @@ cdef class _Attrib:
 
     def update(self, sequence_or_dict):
         if isinstance(sequence_or_dict, dict):
-            sequence_or_dict = dict.iteritems()
-        for name, value in sequence_or_dict:
-            self[name] = value
+            sequence_or_dict = sequence_or_dict.iteritems()
+        for key, value in sequence_or_dict:
+            _setAttributeValue(self._element, key, value)
 
     # ACCESSORS
     def __repr__(self):
