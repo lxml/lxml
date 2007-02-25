@@ -1374,6 +1374,12 @@ cdef class _Attrib:
     def __delitem__(self, key):
         _delAttribute(self._element, key)
 
+    def update(self, sequence_or_dict):
+        if isinstance(sequence_or_dict, dict):
+            sequence_or_dict = dict.iteritems()
+        for name, value in sequence_or_dict:
+            self[name] = value
+
     # ACCESSORS
     def __repr__(self):
         return repr(dict( _attributeIteratorFactory(self._element, 3) ))

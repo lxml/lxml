@@ -290,6 +290,60 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(None, root.get('three'))
         self.assertEquals('foo', root.get('three', 'foo'))
 
+    def test_attribute_update_dict(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc alpha="Alpha" beta="Beta"/>')
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'Alpha'), ('beta', 'Beta')],
+            values)
+
+        root.attrib.update({'alpha' : 'test', 'gamma' : 'Gamma'})
+
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'test'), ('beta', 'Beta'), ('gamma' : 'Gamma')],
+            values)
+
+    def test_attribute_update_sequence(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc alpha="Alpha" beta="Beta"/>')
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'Alpha'), ('beta', 'Beta')],
+            values)
+
+        root.attrib.update({'alpha' : 'test', 'gamma' : 'Gamma'}.items())
+
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'test'), ('beta', 'Beta'), ('gamma' : 'Gamma')],
+            values)
+
+    def test_attribute_update_iter(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc alpha="Alpha" beta="Beta"/>')
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'Alpha'), ('beta', 'Beta')],
+            values)
+
+        root.attrib.update({'alpha' : 'test', 'gamma' : 'Gamma'}.iteritems())
+
+        items = root.attrib.items()
+        values.sort()
+        self.assertEquals(
+            [('alpha', 'test'), ('beta', 'Beta'), ('gamma' : 'Gamma')],
+            values)
+
     def test_attribute_keys(self):
         XML = self.etree.XML
         

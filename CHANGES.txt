@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* ``update()`` method on Element.attrib
+
 * Optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
   a better handling of namespaces when moving elements between documents.
 
