@@ -8,6 +8,10 @@ Under Development
 Features added
 --------------
 
+* HTML generator helpers by Fredrik Lundh in ``lxml.htmlbuilder``
+
+* ``ElementMaker`` XML generator by Fredrik Lundh in ``lxml.builder.E``
+
 * Support for pickeling ``objectify.ObjectifiedElement`` objects to XML
 
 * ``update()`` method on Element.attrib
