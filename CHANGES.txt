@@ -8,20 +8,22 @@ Under Development
 Features added
 --------------
 
+* Optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
+  a better handling of namespaces when moving elements between documents.
 
 Bugs fixed
 ----------
 
-* renamed ObjectifiedDataElement.__setText() to _setText() to make it easier
+* Possible memory leaks in namespace handling when moving elements between
+  documents
+
+* Renamed ObjectifiedDataElement.__setText() to _setText() to make it easier
   to access
 
 * The pattern for attribute names in ObjectPath was too restrictive
 
 Other changes
 -------------
-
-* optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
-  a better handling of namespaces when moving elements between documents.
 
 * major restructuring in the documentation
 

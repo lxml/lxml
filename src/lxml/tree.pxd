@@ -155,6 +155,8 @@ cdef extern from "libxml/tree.h":
         
     cdef void xmlFreeDoc(xmlDoc *cur)
     cdef void xmlFreeNode(xmlNode* cur)
+    cdef void xmlFreeNsList(xmlNs* ns)
+    cdef void xmlFreeNs(xmlNs* ns)
     cdef void xmlFree(char* buf)
     
     cdef xmlNode* xmlNewNode(xmlNs* ns, char* name)

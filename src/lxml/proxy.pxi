@@ -198,6 +198,8 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
     cdef xmlNs** c_ns_old_cache
     cdef xmlNs* c_ns
     cdef xmlNs* c_new_ns
+    cdef xmlNs* c_del_ns
+    cdef xmlNs* c_last_del_ns
     cdef cstd.size_t i, c_cache_size, c_cache_last
 
     c_element = node._c_node
@@ -211,6 +213,7 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
     c_ns_old_cache = NULL
     c_cache_size = 0
     c_cache_last = 0
+    c_del_ns = c_last_del_ns = NULL
 
     while c_element is not NULL:
         # remove namespaces defined here that are known in the new ancestors
@@ -220,6 +223,11 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
                     c_element.doc, c_element.parent, c_element.nsDef.href)
                 if c_ns is NULL:
                     break
+                if c_del_ns is NULL:
+                    c_del_ns = c_last_del_ns = c_element.nsDef
+                else:
+                    c_last_del_ns.next = c_element.nsDef
+                    c_last_del_ns = c_element.nsDef
                 c_element.nsDef = c_element.nsDef.next
             if c_element.nsDef is not NULL:
                 c_new_ns = c_element.nsDef
@@ -228,7 +236,12 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
                         c_ns = tree.xmlSearchNsByHref(
                             c_element.doc, c_element.parent, c_new_ns.next.href)
                         if c_ns is not NULL:
-                            # not known or at least not different
+                            # already known or equal to a known definition
+                            if c_del_ns is NULL:
+                                c_del_ns = c_last_del_ns = c_new_ns.next
+                            else:
+                                c_last_del_ns.next = c_new_ns.next
+                                c_last_del_ns = c_new_ns.next
                             c_new_ns.next = c_new_ns.next.next
                         else:
                             c_new_ns = c_new_ns.next
@@ -318,6 +331,11 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
         if c_node is c_start_node:
             break
         c_element = c_node
+
+    # free now unused namespace declarations
+    if c_del_ns is not NULL:
+        c_last_del_ns.next = NULL
+        tree.xmlFreeNsList(c_del_ns)
 
     # cleanup
     if c_ns_new_cache is not NULL:
