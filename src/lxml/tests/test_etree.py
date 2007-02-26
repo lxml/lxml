@@ -70,20 +70,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals("TEST", root.get("attr"))
         self.assertRaises(TypeError, root.set, "newattr", 5)
 
-    def test_parse_file_dtd(self):
-        parse = self.etree.parse
-        parser = self.etree.XMLParser(attribute_defaults=True)
-
-        tree = parse(fileInTestDir('test.xml'), parser)
-        root = tree.getroot()
-
-        self.assertEquals(
-            "valueA",
-            root.get("default"))
-        self.assertEquals(
-            "valueB",
-            root[0].get("default"))
-
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element
@@ -177,16 +163,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = StringIO('<a><b><c/></a>')
         # ET raises ExpatError, lxml raises XMLSyntaxError
         self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
-
-    def test_iterparse_file_dtd(self):
-        iterparse = self.etree.iterparse
-        iterator = iterparse(fileInTestDir("test.xml"), events=("start",),
-                             attribute_defaults=True)
-        attributes = [ element.get("default")
-                       for event, element in iterator ]
-        self.assertEquals(
-            ["valueA", "valueB"],
-            attributes)
 
     def test_iterparse_strip(self):
         iterparse = self.etree.iterparse

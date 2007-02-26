@@ -1,4 +1,4 @@
-from tree cimport xmlDoc, xmlNode, xmlDict
+from tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from xmlerror cimport xmlError
 
@@ -124,6 +124,13 @@ cdef extern from "libxml/parser.h":
                                                         xmlParserCtxt* context)
     cdef xmlExternalEntityLoader xmlGetExternalEntityLoader()
     cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f)
+
+# DTDs:
+
+    cdef xmlDtd* xmlParseDTD(char* ExternalID, char* SystemID)
+    cdef xmlDtd* xmlIOParseDTD(xmlSAXHandler* sax,
+                               xmlParserInputBuffer* input,
+                               int enc)
 
 cdef extern from "libxml/parserInternals.h":
     cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 

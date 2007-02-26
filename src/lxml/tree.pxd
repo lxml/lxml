@@ -153,7 +153,8 @@ cdef extern from "libxml/tree.h":
         xmlBuffer* buffer
         xmlBuffer* conv
         
-    cdef void xmlFreeDoc(xmlDoc *cur)
+    cdef void xmlFreeDoc(xmlDoc* cur)
+    cdef void xmlFreeDtd(xmlDtd* cur)
     cdef void xmlFreeNode(xmlNode* cur)
     cdef void xmlFreeNsList(xmlNs* ns)
     cdef void xmlFreeNs(xmlNs* ns)

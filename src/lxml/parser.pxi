@@ -220,6 +220,18 @@ cdef class _FileParserContext:
         python.PyEval_RestoreThread(state)
         return result
 
+    cdef tree.xmlDtd* _readDtd(self):
+        cdef python.PyThreadState* state
+        cdef tree.xmlDtd* result
+        cdef xmlparser.xmlParserInputBuffer* c_buffer
+        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
+        c_buffer.context = <python.PyObject*>self
+        c_buffer.readcallback = _readFilelikeParser
+        state = python.PyEval_SaveThread()
+        result = xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
+        python.PyEval_RestoreThread(state)
+        return result
+
     cdef int copyToBuffer(self, char* c_buffer, int c_size):
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining

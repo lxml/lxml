@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* ``DTD`` validator class (like ``RelaxNG`` and ``XMLSchema``)
+
 * HTML generator helpers by Fredrik Lundh in ``lxml.htmlbuilder``
 
 * ``ElementMaker`` XML generator by Fredrik Lundh in ``lxml.builder.E``
