@@ -3,10 +3,12 @@ Validation with lxml
 ====================
 
 Apart from the built-in DTD support in parsers, lxml currently supports three
-schema languages: DTD, `Relax NG`_ and `XML Schema`_.  All three provide
-identical APIs, represented by a validator class with the obvious names.
+schema languages: DTD_, `Relax NG`_ and `XML Schema`_.  All three provide
+identical APIs in lxml, represented by a validator class with the obvious
+names.
 
-.. _`Relax NG`: http://www.relaxng.org/
+.. _DTD:          http://en.wikipedia.org/wiki/Document_Type_Definition
+.. _`Relax NG`:   http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 
 .. contents::
