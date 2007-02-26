@@ -2,24 +2,67 @@
 Validation with lxml
 ====================
 
-Apart from DTD support in the parsers, lxml currently supports two schema
-languages: `Relax NG`_ and `XML Schema`_.  Both provide identical APIs,
-represented by a validator class with the obvious names.
+Apart from the built-in DTD support in parsers, lxml currently supports three
+schema languages: DTD, `Relax NG`_ and `XML Schema`_.  All three provide
+identical APIs, represented by a validator class with the obvious names.
 
 .. _`Relax NG`: http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 
 .. contents::
 .. 
-   1  RelaxNG
+   1  DTD
+   2  RelaxNG
    2  XMLSchema
+
+The usual setup procedure::
+
+  >>> from lxml import etree
+  >>> from StringIO import StringIO
+
+
+DTD
+---
+
+There are two places in lxml where DTDs are supported: parsers and the DTD
+class.  If you pass a keyword option to a parser that requires DTD loading,
+lxml will automatically include the DTD in the parsing process.  If you pass
+the keyword for DTD validation, lxml (or rather libxml2) will use this DTD
+right inside the parser and report failure or success when parsing terminates.
+
+The parser support for DTDs depends on internal or external subsets of the XML
+file.  This means that the XML file itself must either contain a DTD or must
+reference a DTD to make this work.  If you want to validate an XML document
+against a DTD that is not referenced by the document itself, you can use the
+``DTD`` class.
+
+To use the ``DTD`` class, you must first pass a filename or file-like object
+into the constructor to parse a DTD::
+
+  >>> f = StringIO("<!ELEMENT b EMPTY>")
+  >>> dtd = etree.DTD(f)
+
+Now you can use it to validate documents::
+
+  >>> root = etree.XML("<b/>")
+  >>> print dtd.validate(root)
+  1
+
+  >>> root = etree.XML("<b><a/></b>")
+  >>> print dtd.validate(root)
+  0
+
+The reason for the validation failure can be found in the error log::
+
+  >>> print dtd.error_log.filter_from_errors()[0]
+  <string>:1:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
 
 
 RelaxNG
 -------
 
-lxml.etree introduces a new class, lxml.etree.RelaxNG. The class can
-be given an ElementTree object to construct a Relax NG validator::
+The ``RelaxNG`` class takes an ElementTree object to construct a Relax NG
+validator::
 
   >>> f = StringIO('''\
   ... <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
