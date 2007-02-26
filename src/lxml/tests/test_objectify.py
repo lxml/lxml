@@ -208,6 +208,37 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(["TEST"],
                           [ c.text for c in root.c ])
 
+    def test_setitem_string(self):
+        # make sure strings are set as children
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("root")
+        root["c"] = "TEST"
+        self.assertEquals(["TEST"],
+                          [ c.text for c in root.c ])
+
+    def test_setitem_string_special(self):
+        # make sure 'text' etc. are set as children
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("root")
+
+        root["text"] = "TEST"
+        self.assertEquals(["TEST"],
+                          [ c.text for c in root["text"] ])
+
+        root["tail"] = "TEST"
+        self.assertEquals(["TEST"],
+                          [ c.text for c in root["tail"] ])
+
+        root["pyval"] = "TEST"
+        self.assertEquals(["TEST"],
+                          [ c.text for c in root["pyval"] ])
+
+        root["tag"] = "TEST"
+        self.assertEquals(["TEST"],
+                          [ c.text for c in root["tag"] ])
+
     def test_findall(self):
         XML = self.XML
         root = XML('<a><b><c/></b><b/><c><b/></c></a>')

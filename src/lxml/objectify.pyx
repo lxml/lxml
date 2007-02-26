@@ -289,7 +289,13 @@ cdef class ObjectifiedElement(ElementBase):
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
         if python._isString(key):
-            self.__setattr__(key, value)
+            key = _buildChildTag(self, key)
+            try:
+                element = _lookupChild(self, key)
+            except AttributeError:
+                _appendValue(self, key, value)
+            else:
+                _replaceElement(element, value)
             return
 
         c_self_node = self._c_node
