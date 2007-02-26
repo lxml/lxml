@@ -6,7 +6,7 @@ Test cases related to RelaxNG parsing and validation
 
 import unittest
 
-from common_imports import etree, HelperTestCase, fileInTestDir
+from common_imports import etree, doctest, HelperTestCase, fileInTestDir
 
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):
@@ -137,6 +137,8 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/validation.txt')])
     return suite
 
 if __name__ == '__main__':

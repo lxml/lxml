@@ -6,7 +6,7 @@ Test cases related to XML Schema parsing and validation
 
 import unittest
 
-from common_imports import etree, HelperTestCase, fileInTestDir
+from common_imports import etree, doctest, HelperTestCase, fileInTestDir
 
 class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema(self):
@@ -76,6 +76,8 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/validation.txt')])
     return suite
 
 if __name__ == '__main__':

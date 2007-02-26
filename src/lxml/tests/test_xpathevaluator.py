@@ -503,6 +503,8 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeXPathClassTestCase)])
     suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':

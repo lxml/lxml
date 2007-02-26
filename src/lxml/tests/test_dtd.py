@@ -6,7 +6,8 @@ Test cases related to DTD parsing and validation
 
 import unittest
 
-from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
+from common_imports import etree, StringIO, doctest
+from common_imports import HelperTestCase, fileInTestDir
 
 class ETreeDtdTestCase(HelperTestCase):
     def test_dtd(self):
@@ -61,6 +62,8 @@ class ETreeDtdTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/validation.txt')])
     return suite
 
 if __name__ == '__main__':

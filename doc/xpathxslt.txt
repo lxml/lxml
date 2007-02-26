@@ -10,6 +10,11 @@ compliant way.
    1  XPath
    2  XSLT
 
+The usual setup procedure::
+
+  >>> from lxml import etree
+  >>> from StringIO import StringIO
+
 
 XPath
 -----

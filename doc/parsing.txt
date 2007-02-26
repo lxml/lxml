@@ -11,6 +11,11 @@ one-step parsing as well as step-by-step parsing using an event-driven API.
    2  iterparse and iterwalk
    3  Python unicode strings
 
+The usual setup procedure::
+
+  >>> from lxml import etree
+  >>> from StringIO import StringIO
+
 
 Parsers
 -------

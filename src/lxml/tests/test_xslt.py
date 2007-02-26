@@ -970,6 +970,8 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/extensions.txt')])
+    suite.addTests(
+        [doctest.DocFileSuite('../../../doc/xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':
