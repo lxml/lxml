@@ -675,7 +675,7 @@ cdef class XMLParser(_BaseParser):
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False, remove_blank_text=False, compact=False):
+                 recover=False, remove_blank_text=False, compact=True):
         cdef int parse_options
         _BaseParser.__init__(self)
 
@@ -696,8 +696,8 @@ cdef class XMLParser(_BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
-        if compact:
-            parse_options = parse_options | xmlparser.XML_PARSE_COMPACT
+        if not compact:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
 
         self._parse_options = parse_options
 
@@ -802,7 +802,7 @@ cdef class HTMLParser(_BaseParser):
     modify documents that were parsed with the 'compact' option.
     """
     def __init__(self, recover=True, no_network=False, remove_blank_text=False,
-                 compact=False):
+                 compact=True):
         cdef int parse_options
         _BaseParser.__init__(self)
 
@@ -813,8 +813,8 @@ cdef class HTMLParser(_BaseParser):
             parse_options = parse_options | htmlparser.HTML_PARSE_NONET
         if remove_blank_text:
             parse_options = parse_options | htmlparser.HTML_PARSE_NOBLANKS
-        if compact:
-            parse_options = parse_options | htmlparser.HTML_PARSE_COMPACT
+        if not compact:
+            parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
         self._parse_options = parse_options
 
