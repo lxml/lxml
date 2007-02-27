@@ -59,8 +59,8 @@ div.sidemenu li.menu:hover ul.submenu.foreign {
     border: solid red;
     padding: 1ex 1ex 1ex 3ex;
     margin-top: 0px;
-    margin-left: 2em;
-    margin-right: -10em;
+    margin-left: 4em;
+    margin-right: -20em;
     background-color: white;
 }
 
