@@ -3,13 +3,13 @@ body {
      * document level */
     text-align: center;
     padding: 1em;
-    padding-left: 26em
 }
 
 div.document {
     width: 45em;
     font: 13px Arial, Verdana, Helvetica, sans-serif;
     margin: 1em auto 1em auto;
+    padding-left: 20em;
     background-color: white;
     color: #222;
     text-align: left;
@@ -44,16 +44,20 @@ div.sidemenu span.section.title {
     font-size: 130%;
 }
 
-div.sidemenu ul.submenu.current {
+div.sidemenu ul.menu.current > li > a {
+    background-color: yellow;
+}
+
+div.sidemenu ul.menu.current ul.submenu {
     display: block;
 }
 
-div.sidemenu ul.submenu.foreign li {
+div.sidemenu ul.menu.foreign ul.submenu li {
     padding-top: 2px;
     padding-bottom: 2px;
 }
 
-div.sidemenu li.menu:hover ul.submenu.foreign {
+div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     display: block;
     position: absolute;
     border: solid red;
