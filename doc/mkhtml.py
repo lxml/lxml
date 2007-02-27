@@ -19,7 +19,7 @@ find_title = XPath("/h:html/h:head/h:title/text()",
                             {"h" : "http://www.w3.org/1999/xhtml"})
 find_headings = XPath("//h:h1[not(@class)]/h:a/text()",
                             {"h" : "http://www.w3.org/1999/xhtml"})
-find_submenu = XPath("//h:ul[@id=$name]//h:ul[@class='submenu']",
+find_submenu = XPath("//h:ul[@id=$name]//h:ul[starts-with(@class, 'submenu')]",
                            {"h" : "http://www.w3.org/1999/xhtml"})
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
@@ -46,7 +46,7 @@ def build_menu(tree, basename, section, menuroot):
         a = SubElement(title, "a", href=basename+".html")
         a.text = page_title
 
-        subul = SubElement(title, "ul", {"class":"submenu"})
+        subul = SubElement(title, "ul", {"class":"submenu foreign"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
             ref = replace_invalid('-', heading.lower())
@@ -63,7 +63,8 @@ def merge_menu(tree, menu, name):
     current_submenu = find_submenu(menu_root, name=name)
     if current_submenu:
         for submenu in current_submenu:
-            submenu.set("class", submenu.get("class", "") + " current")
+            submenu.set("class", submenu.get("class", "").
+                        replace("foreign", "current"))
     return tree
 
 def rest2html(script, source_path, dest_path, stylesheet_url):

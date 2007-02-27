@@ -48,8 +48,20 @@ div.sidemenu ul.submenu.current {
     display: block;
 }
 
-div.sidemenu li.menu:hover ul.submenu {
+div.sidemenu ul.submenu.foreign li {
+    padding-top: 2px;
+    padding-bottom: 2px;
+}
+
+div.sidemenu li.menu:hover ul.submenu.foreign {
     display: block;
+    position: absolute;
+    border: solid red;
+    padding: 1ex 1ex 1ex 3ex;
+    margin-top: 0px;
+    margin-left: 2em;
+    margin-right: -10em;
+    background-color: white;
 }
 
 div.sidemenu ul.submenu {
