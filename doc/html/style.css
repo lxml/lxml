@@ -34,8 +34,8 @@ div.sidemenu {
     width: 20em;
     font-size: 11px;
     text-align: left;
-    border-right: solid gray;
-    border-bottom: solid gray;
+    border-right: groove gray;
+    border-bottom: groove gray;
     padding-right: 1ex;
 }
 
@@ -44,7 +44,9 @@ div.sidemenu span.section.title {
     font-size: 130%;
 }
 
-div.sidemenu ul.menu.current > li > a {
+div.sidemenu ul.menu.current > li {
+    color: orange;
+    border: groove orange;
     background-color: yellow;
 }
 
@@ -60,7 +62,7 @@ div.sidemenu ul.menu.foreign ul.submenu li {
 div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     display: block;
     position: absolute;
-    border: solid red;
+    border: groove orange;
     padding: 1ex 1ex 1ex 3ex;
     margin-top: 0px;
     margin-left: 4em;
