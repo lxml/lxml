@@ -43,5 +43,3 @@ Features
 
 * Relaxed NG compact notation (rnc versus rng) support.  Currently not
   supported by libxml2 (patch exists)
-
-* setting a DTD for validation (maybe a ``DTD`` class like RelaxNG?)
