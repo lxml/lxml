@@ -24,6 +24,8 @@ Features added
 Bugs fixed
 ----------
 
+* Build fixes for MS compiler
+
 * Item assignments to special names like ``element["text"]`` failed
 
 * Possible memory leaks in namespace handling when moving elements between
