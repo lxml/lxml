@@ -70,10 +70,12 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* context,
 
         c_doc = NULL
         if doc_ref is not None:
-            if doc_ref._type == PARSER_DATA_EMPTY:
-                c_doc = _newDoc()
             if doc_ref._type == PARSER_DATA_STRING:
                 c_doc = _internalParseDoc(
+                    _cstr(doc_ref._data_bytes), parse_options,
+                    resolver_context)
+            elif doc_ref._type == PARSER_DATA_FILENAME:
+                c_doc = _internalParseDocFromFile(
                     _cstr(doc_ref._data_bytes), parse_options,
                     resolver_context)
             elif doc_ref._type == PARSER_DATA_FILE:
@@ -81,10 +83,8 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* context,
                 c_doc = _internalParseDoc(
                     _cstr(data), parse_options,
                     resolver_context)
-            elif doc_ref._type == PARSER_DATA_FILENAME:
-                c_doc = _internalParseDocFromFile(
-                    _cstr(doc_ref._data_bytes), parse_options,
-                    resolver_context)
+            elif doc_ref._type == PARSER_DATA_EMPTY:
+                c_doc = _newDoc()
             if c_doc is not NULL and c_doc.URL is NULL:
                 c_doc.URL = tree.xmlStrdup(c_uri)
         return c_doc
