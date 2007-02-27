@@ -24,22 +24,29 @@ Features added
 Bugs fixed
 ----------
 
-* Build fixes for MS compiler
-
-* Item assignments to special names like ``element["text"]`` failed
-
 * Possible memory leaks in namespace handling when moving elements between
   documents
-
-* Renamed ObjectifiedDataElement.__setText() to _setText() to make it easier
-  to access
-
-* The pattern for attribute names in ObjectPath was too restrictive
 
 Other changes
 -------------
 
 * major restructuring in the documentation
+
+
+1.2.1 (2007-02-27)
+==================
+
+Bugs fixed
+----------
+
+* Build fixes for MS compiler
+
+* Item assignments to special names like ``element["text"]`` failed
+
+* Renamed ObjectifiedDataElement.__setText() to _setText() to make it easier
+  to access
+
+* The pattern for attribute names in ObjectPath was too restrictive
 
 
 1.2 (2007-02-20)
