@@ -47,6 +47,12 @@
 #define HTML_PARSE_RECOVER XML_PARSE_RECOVER
 #endif
 
+/* work around MSDEV 6.0 */
+#if (_MSC_VER == 1200) && (WINVER < 0x0500)
+extern "C" long _ftol( double ); //defined by VC6 C libs
+extern "C" long _ftol2( double dblSource ) { return _ftol( dblSource ); }
+#endif
+
 /* Redefinition of some Python builtins as C functions */
 #define isinstance(o,c) PyObject_IsInstance(o,c)
 #define issubclass(c,csuper) PyObject_IsSubclass(c,csuper)
