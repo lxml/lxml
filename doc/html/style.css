@@ -5,12 +5,29 @@ body {
     padding: 1em;
 }
 
+
+@media screen {
+    div.document {
+        width: 45em;
+        padding-left: 21em;
+        background-color: white;
+    }
+}
+
+@media print {
+    div.document {
+        width: auto;
+        padding-left: 0px;
+    }
+
+    div.sidemenu {
+        display: none;
+    }
+}
+
 div.document {
-    width: 45em;
     font: 13px Arial, Verdana, Helvetica, sans-serif;
     margin: 1em auto 1em auto;
-    padding-left: 20em;
-    background-color: white;
     color: #222;
     text-align: left;
 }
@@ -22,7 +39,12 @@ div.contents.topic > ul {
 }
 
 div.contents.topic > ul > li {
+    text-decoration: none;
     line-height: 1.1em;
+}
+
+div.contents.topic > p > a {
+    text-decoration: none;
 }
 
 /*** side menu ***/
@@ -31,12 +53,13 @@ div.sidemenu {
     position: fixed;
     top: 0px;
     left: 0px;
-    width: 20em;
+    width: 22em;
     font-size: 11px;
     text-align: left;
     border-right: groove gray;
     border-bottom: groove gray;
     padding-right: 1ex;
+    background-color: #FFFAFA;
 }
 
 div.sidemenu span.section.title {
@@ -47,7 +70,7 @@ div.sidemenu span.section.title {
 div.sidemenu ul.menu.current > li {
     color: orange;
     border: groove orange;
-    background-color: yellow;
+    background-color: #FFFACA;
 }
 
 div.sidemenu ul.menu.current ul.submenu {
@@ -67,7 +90,7 @@ div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     margin-top: 0px;
     margin-left: 4em;
     margin-right: -20em;
-    background-color: white;
+    background-color: #FFFACA;
 }
 
 div.sidemenu ul.submenu {
@@ -93,6 +116,14 @@ h1.title, h1 a, h2 a, h3 a {
     color: #666;
     font-weight: bold;
     font-family: Helvetica, sans-serif;
+}
+
+@media screen {
+    div.section > h1 > a:before {
+        margin-left: -2ex;
+        color: orange;
+        content: "\00BB" " ";
+    }
 }
 
 h1 {
