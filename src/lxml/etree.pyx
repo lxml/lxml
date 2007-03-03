@@ -1893,9 +1893,10 @@ cdef class _Validator:
         def __get__(self):
             return self._error_log.copy()
 
-include "dtd.pxi"       # DTD
-include "relaxng.pxi"   # RelaxNG
-include "xmlschema.pxi" # XMLSchema
+include "dtd.pxi"        # DTD
+include "relaxng.pxi"    # RelaxNG
+include "xmlschema.pxi"  # XMLSchema
+#include "schematron.pxi" # Schematron
 
 ################################################################################
 # Public C API
