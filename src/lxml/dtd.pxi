@@ -16,8 +16,9 @@ class DTDValidateError(DTDError):
 cdef class DTD(_Validator):
     """A DTD validator.
 
-    Can load from filesystem directly given a filename.  Alternatively, pass
-    the keyword parameter ``external_id`` to load from a catalog.
+    Can load from filesystem directly given a filename or file-like object.
+    Alternatively, pass the keyword parameter ``external_id`` to load from a
+    catalog.
     """
     cdef tree.xmlDtd* _c_dtd
     def __init__(self, file=None, external_id=None):
