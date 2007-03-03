@@ -242,8 +242,7 @@ cdef extern from "libxml/xmlIO.h":
         char* URI, xmlCharEncodingHandler* encoder, int compression)
 
 cdef extern from "libxml/xmlsave.h":
-    ctypedef struct xmlSaveCtxt:
-        pass
+    ctypedef struct xmlSaveCtxt
     
     cdef xmlSaveCtxt* xmlSaveToFilename(char* filename, char* encoding,
                                         int options)
