@@ -406,7 +406,7 @@ cdef class _BaseParser:
             if pctxt.spaceTab is not NULL: # work around bug in libxml2
                 xmlparser.xmlClearParserCtxt(pctxt)
 
-    cdef int _lockParser(self) except 1:
+    cdef int _lockParser(self) except -1:
         cdef python.PyThreadState* state
         cdef int result
         if config.ENABLE_THREADING and self._parser_lock != NULL:
