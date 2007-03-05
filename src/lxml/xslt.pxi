@@ -1,4 +1,4 @@
-# XSLT and XPath classes, supports for extension functions
+# XSLT
 
 cimport xslt
 
@@ -265,6 +265,15 @@ cdef class _ExsltRegExp # forward declaration
 
 cdef class XSLT:
     """Turn a document into an XSLT object.
+
+    Keyword arguments of the constructor:
+    * regexp - enable exslt regular expression support in XPath (default: True)
+    * access_control - access restrictions for network or file system
+
+    Keyword arguments of the XSLT run:
+    * profile_run - enable XSLT profiling
+
+    Other keyword arguments are passed to the stylesheet.
     """
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
@@ -415,6 +424,7 @@ cdef class XSLT:
         if params is not NULL:
             # deallocate space for parameters
             python.PyMem_Free(params)
+            keep_ref = None
 
         if transform_ctxt.profile:
             c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
