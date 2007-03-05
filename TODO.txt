@@ -41,5 +41,5 @@ Objectify
 Features
 --------
 
-* Relaxed NG compact notation (rnc versus rng) support.  Currently not
-  supported by libxml2 (patch exists)
+* RelaxNG compact notation (rnc versus rng) support.  Currently not supported
+  by libxml2 (patch exists)
