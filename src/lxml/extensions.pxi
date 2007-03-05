@@ -102,16 +102,16 @@ cdef class _BaseContext:
 
     # namespaces (internal UTF-8 methods with leading '_')
 
-    def addNamespace(self, prefix, uri):
+    cdef addNamespace(self, prefix, uri):
         if self._namespaces is None:
             self._namespaces = {}
         python.PyDict_SetItem(self._namespaces, prefix, uri)
 
-    def registerNamespaces(self, namespaces):
+    cdef registerNamespaces(self, namespaces):
         for prefix, uri in namespaces.items():
             self.registerNamespace(prefix, uri)
     
-    def registerNamespace(self, prefix, ns_uri):
+    cdef registerNamespace(self, prefix, ns_uri):
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         xpath.xmlXPathRegisterNs(self._xpathCtxt, prefix_utf, ns_uri_utf)
@@ -238,12 +238,14 @@ def Extension(module, function_mapping, ns=None):
 cdef xpath.xmlXPathFunction _function_check(void* ctxt,
                                             char* c_name, char* c_ns_uri):
     "Module level lookup function for XPath/XSLT functions"
+    cdef xpath.xmlXPathFunction c_func
     cdef _BaseContext context
     context = <_BaseContext>ctxt
     if context._prepare_function_call(c_ns_uri, c_name):
-        return _call_prepared_function
+        c_func = _call_prepared_function
     else:
-        return NULL
+        c_func = NULL
+    return c_func
 
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
@@ -358,7 +360,6 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 
 cdef void _extension_function_call(_BaseContext context, function,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef _Element node
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef int i
