@@ -143,9 +143,8 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     def registerNamespaces(self, namespaces):
         """Register a prefix -> uri dict.
         """
-        add = self._context.addNamespace
         for prefix, uri in namespaces.items():
-            add(prefix, uri)
+            self._context.addNamespace(prefix, uri)
 
     def __call__(self, _path, **_variables):
         """Evaluate an XPath expression on the document.
