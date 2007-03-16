@@ -44,7 +44,8 @@ cdef extern from "Python.h":
     cdef int PyList_Append(object l, object obj) except -1
     cdef int PyList_Reverse(object l) except -1
     cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
-    cdef object PyList_AsTuple(object o)
+    cdef object PyList_AsTuple(object l)
+    cdef void PyList_Clear(object l)
 
     cdef int PyDict_SetItemString(object d, char* key, object value) except -1
     cdef int PyDict_SetItem(object d, object key, object value) except -1
