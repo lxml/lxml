@@ -67,10 +67,12 @@ div.sidemenu span.section.title {
     font-size: 130%;
 }
 
-div.sidemenu ul.menu.current > li {
-    color: orange;
-    border: groove orange;
-    background-color: #FFFACA;
+div.sidemenu ul.menu.current li {
+    color: #CC0000;
+}
+
+div.sidemenu ul.menu.current > li > a {
+    color: #CC0000;
 }
 
 div.sidemenu ul.menu.current ul.submenu {
@@ -85,12 +87,13 @@ div.sidemenu ul.menu.foreign ul.submenu li {
 div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     display: block;
     position: absolute;
-    border: groove orange;
+    border: groove #990000;
     padding: 1ex 1ex 1ex 3ex;
     margin-top: 0px;
     margin-left: 4em;
     margin-right: -20em;
-    background-color: #FFFACA;
+    color: #990000;
+    background-color: white;
 }
 
 div.sidemenu ul.submenu {
@@ -121,7 +124,7 @@ h1.title, h1 a, h2 a, h3 a {
 @media screen {
     div.section > h1 > a:before {
         margin-left: -2ex;
-        color: orange;
+        color: #CC0000;
         content: "\00BB" " ";
     }
 }
