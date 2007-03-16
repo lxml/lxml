@@ -1289,7 +1289,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def relaxng(self, relaxng):
         """Validate this document using other document.
 
-        relaxng is a tree that should contain Relax NG XML
+        The relaxng argument is a tree that should contain a Relax NG schema.
 
         Returns True or False, depending on whether validation
         succeeded.
@@ -1305,7 +1305,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def xmlschema(self, xmlschema):
         """Validate this document using other document.
 
-        xmlschema is a tree that should contain XML Schema XML.
+        The xmlschema argument is a tree that should contain an XML Schema.
 
         Returns True or False, depending on whether validation
         succeeded.
@@ -1321,7 +1321,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def xinclude(self):
         """Process the XInclude nodes in this document and include the
         referenced XML fragments.
+
+        There is support for loading files through the file system, HTTP and
+        FTP.
+
+        Note that XInclude does not support custom resolvers in Python space.
         """
+        cdef python.PyThreadState* state
         cdef int result
         # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
         # the XInclude nodes - there may still be Python references to them!
@@ -1331,13 +1337,15 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
         self._assertHasRoot()
-        if self._context_node._doc._parser != None:
+        state = python.PyEval_SaveThread()
+        if self._context_node._doc._parser is not None:
             result = xinclude.xmlXIncludeProcessTreeFlags(
                 self._context_node._c_node,
                 self._context_node._doc._parser._parse_options)
         else:
             result = xinclude.xmlXIncludeProcessTree(
                 self._context_node._c_node)
+        python.PyEval_RestoreThread(state)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
 
