@@ -104,6 +104,10 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(
             [root[0]],
             root.xpath('//baz:b', {'baz': 'uri:a'}))
+
+    def test_xpath_ns_none(self):
+        tree = self.parse('<a xmlns="uri:a"><b></b></a>')
+        root = tree.getroot()
         self.assertRaises(
             TypeError,
             root.xpath, '//b', {None: 'uri:a'})
