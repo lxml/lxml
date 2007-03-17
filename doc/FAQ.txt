@@ -12,10 +12,11 @@ See also the notes on compatibility_ to ElementTree_.
    1  General Questions
      1.1  Is there a tutorial?
      1.2  Where can I find more documentation about lxml?
-     1.3  Where are the Windows binaries?
-     1.4  What is the difference between lxml.etree and lxml.objectify?
-     1.5  Why is my application so slow?
-     1.6  Why do I get errors about missing UCS4 symbols when installing lxml?
+     1.3  What standards does lxml implement?
+     1.4  Where are the Windows binaries?
+     1.5  What is the difference between lxml.etree and lxml.objectify?
+     1.6  Why is my application so slow?
+     1.7  Why do I get errors about missing UCS4 symbols when installing lxml?
    2  Bugs
      2.1  My application crashes! Why does lxml.etree do that?
      2.2  I think I have found a bug in lxml. What should I do?
@@ -62,6 +63,23 @@ distribution and on `the web page`_.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 .. _`the web page`:    http://codespeak.net/lxml/#documentation
+
+
+What standards does lxml implement?
+-----------------------------------
+
+The compliance to XML Standards depends on the support in libxml2 and libxslt.
+Here is a quote from `http://xmlsoft.org/`:
+
+  In most cases libxml2 tries to implement the specifications in a relatively
+  strictly compliant way. As of release 2.4.16, libxml2 passed all 1800+ tests
+  from the OASIS XML Tests Suite.
+
+lxml currently supports libxml2 2.6.16 or later, which has even better support
+for various XML standards.  Some of the more important ones are: HTML, XML
+namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
+XML:ID.  Support for XML Schema and Schematron is currently incomplete.
+libxml2 also supports loading documents through HTTP and FTP.
 
 
 Where are the Windows binaries?
