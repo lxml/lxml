@@ -673,6 +673,24 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return None
 
     # not in ElementTree, read-only
+    property sourceline:
+        """Original line number as found by the parser or None if unknown.
+        """
+        def __get__(self):
+            cdef long line
+            line = tree.xmlGetLineNo(self._c_node)
+            if line > 0:
+                return line
+            else:
+                return None
+
+        def __set__(self, line):
+            if line < 0:
+                self._c_node.line = 0
+            else:
+                self._c_node.line = line
+
+    # not in ElementTree, read-only
     property nsmap:
         """Namespace prefix->URI mapping known in the context of this Element.
         """

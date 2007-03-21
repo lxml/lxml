@@ -1119,6 +1119,37 @@ class ETreeOnlyTestCase(HelperTestCase):
             ["tail0", "tail1", "tail2", "TAIL0", "TAIL1", "TAIL2"],
             [ el.tail for el in root ])
 
+    def test_sourceline_XML(self):
+        XML = self.etree.XML
+        root = XML('''<?xml version="1.0"?>
+        <root><test>
+
+        <bla/></test>
+        </root>
+        ''')
+
+        self.assertEquals(
+            [2, 2, 4],
+            [ el.sourceline for el in root.getiterator() ])
+
+    def test_sourceline_parse(self):
+        parse = self.etree.parse
+        tree = parse(fileInTestDir('test_xinclude.xml'))
+
+        self.assertEquals(
+            [1, 2, 3],
+            [ el.sourceline for el in tree.getiterator() ])
+
+    def test_sourceline_element(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        el = Element("test")
+        self.assertEquals(None, el.sourceline)
+
+        child = SubElement(el, "test")
+        self.assertEquals(None, el.sourceline)
+        self.assertEquals(None, child.sourceline)
+
     def test_docinfo_public(self):
         etree = self.etree
         xml_header = '<?xml version="1.0" encoding="ascii"?>'

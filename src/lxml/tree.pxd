@@ -97,6 +97,7 @@ cdef extern from "libxml/tree.h":
         xmlAttr* properties
         xmlNs* ns
         xmlNs* nsDef
+        unsigned short line
 
     ctypedef struct xmlDtd:
         char* ExternalID
@@ -198,6 +199,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* prefix)
     cdef xmlNs* xmlSearchNsByHref(xmlDoc* doc, xmlNode* node, char* href)
     cdef int xmlIsBlankNode(xmlNode* node)
+    cdef long xmlGetLineNo(xmlNode* node)
     cdef void xmlElemDump(FILE* f, xmlDoc* doc, xmlNode* cur)
     cdef void xmlNodeDumpOutput(xmlOutputBuffer* buf,
                                 xmlDoc* doc, xmlNode* cur, int level,
