@@ -206,7 +206,7 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
 
     You can inherit from this class and override the method
 
-        lookup(type, doc, namespace, name)
+        lookup(self, type, doc, namespace, name)
 
     to lookup the element class for a node. Arguments of the method:
     * type:      one of 'element', 'comment', 'PI'

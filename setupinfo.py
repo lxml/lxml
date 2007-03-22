@@ -8,8 +8,9 @@ except ImportError:
     PYREX_INSTALLED = False
 
 EXT_MODULES = [
-    ("etree",       "lxml.etree"),
-    ("objectify",   "lxml.objectify")
+    ("etree",         "lxml.etree"),
+    ("objectify",     "lxml.objectify"),
+    ("pyclasslookup", "lxml.pyclasslookup")
     ]
 
 

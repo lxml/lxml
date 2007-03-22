@@ -232,6 +232,29 @@ cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
     tree.xmlRemoveProp(c_attr)
     return 0
 
+cdef object _collectAttributes(xmlNode* c_node, int collecttype):
+    """Collect all attributes of a node in a list.  Depending on collecttype,
+    it collects either the name (1), the value (2) or the name-value tuples.
+    """
+    cdef xmlAttr* c_attr
+    c_attr = c_node.properties
+    attributes = []
+    while c_attr is not NULL:
+        if c_attr.type == tree.XML_ATTRIBUTE_NODE:
+            if collecttype == 1:
+                item = _namespacedName(<xmlNode*>c_attr)
+            elif collecttype == 2:
+                item = _attributeValue(c_node, c_attr)
+            else:
+                item = (_namespacedName(<xmlNode*>c_attr),
+                        _attributeValue(c_node, c_attr))
+
+            ret = python.PyList_Append(attributes, item)
+            if ret:
+                raise
+        c_attr = c_attr.next
+    return attributes
+
 cdef object __RE_XML_ENCODING
 __RE_XML_ENCODING = re.compile(
     r'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U)

@@ -89,7 +89,8 @@ follows::
   >>> parser.setElementClassLookup(parser_lookup)
 
 There is one drawback of the parser based scheme: the ``Element()`` factory
-creates a new document that deploys the default parser::
+does not know about your specialised parser and creates a new document that
+deploys the default parser::
 
   >>> el = etree.Element("root")
   >>> print isinstance(el, HonkElement)
@@ -231,8 +232,8 @@ to use the namespace lookup, for example, you can use this code::
 Custom element class lookup
 ...........................
 
-This is the most customisable way of finding element classes.  It allows you
-to implement a custom lookup scheme in a subclass::
+This is the most customisable way of finding element classes on a per-element
+basis.  It allows you to implement a custom lookup scheme in a subclass::
 
   >>> class MyLookup(etree.CustomElementClassLookup):
   ...     def lookup(self, node_type, document, namespace, name):
@@ -248,6 +249,45 @@ the XML document of the element, or its namespace or tag name.
 
 Instead of a global setup of this scheme, you should consider using a
 per-parser setup.
+
+
+Tree based element class lookup in Python
+.........................................
+
+Taking more elaborate decisions than allowed by the custom scheme is difficult
+to achieve in pure Python.  It would require access to the tree - before the
+elements in the tree have been instantiated as Python Element objects.
+
+Luckily, there is a way to do this.  The separate module
+``lxml.pyclasslookup`` provides a lookup class called
+``PythonElementClassLookup`` that works similar to the custom lookup scheme::
+
+  >>> from lxml.pyclasslookup import PythonElementClassLookup
+  >>> class MyLookup(PythonElementClassLookup):
+  ...     def lookup(self, document, element):
+  ...         return MyElementClass # defined elsewhere
+
+  >>> parser = etree.XMLParser()
+  >>> parser.setElementClassLookup(MyLookup())
+
+As before, the first argument to the ``lookup()`` method is the opaque
+document instance that contains the Element.  The second arguments is a
+lightweight Element proxy implementation that is only valid during the lookup.
+Do not try to keep a reference to it.  Once the lookup is finished, the proxy
+will become invalid.  You will get an ``AssertionError`` if you access any of
+the properties or methods outside the scope of the lookup call where they were
+instantiated.
+
+During the lookup, the element object behaves mostly like a normal Element
+instance.  It provides the properties ``tag``, ``text``, ``tail`` etc. and
+supports indexing, slicing and the ``getchildren()``, ``getparent()``
+etc. methods.  It does *not* support iteration, nor does it support any kind
+of modification.  All of its properties are read-only and it cannot be removed
+or inserted into other trees.  You can use it as a starting point to freely
+traverse the tree and collect any kind of information that its elements
+provide.  Once you have taken the decision which class to use for this
+element, you can simply return it and have lxml take care of cleaning up the
+instantiated proxy classes.
 
 
 Implementing namespaces

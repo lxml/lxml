@@ -104,6 +104,9 @@ cdef extern from "etree.h":
     # attributes must not be removed during iteration!
     cdef object iterattributes(_Element element, int keysvalues)
 
+    # return the list of all attribute names (1), values (2) or items (3)
+    cdef object collectAttributes(tree.xmlNode* c_element, int keysvalues)
+
     # set an attribute value on an element
     # on failure, sets an exception and returns -1
     cdef int setAttributeValue(_Element element, key, value) except -1

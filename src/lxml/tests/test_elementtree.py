@@ -360,6 +360,16 @@ class ETreeTestCaseBase(HelperTestCase):
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
+    def test_attribute_items2(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>')
+        items = root.items()
+        items.sort()
+        self.assertEquals(
+            [('alpha','Alpha'), ('beta','Beta'), ('gamma','Gamma')],
+            items)
+
     def test_attribute_keys_ns(self):
         XML = self.etree.XML
 

@@ -2,6 +2,29 @@
 lxml changelog
 ==============
 
+under development
+=================
+
+Features added
+--------------
+
+* ``lxml.pyclasslookup`` module that can access the entire tree to determine a
+  suitable Element class
+
+* ``Element.values()`` to accompany the existing ``keys()`` and ``items()``
+
+* ``collectAttributes()`` C-function to build a list of attribute
+  keys/values/items for a libxml2 node
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* major rewrite of internal extension function setup
+
+
 1.3beta (2007-02-27)
 ====================
 
