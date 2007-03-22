@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tests specific to the extended etree API
-
-Tests that apply to the general ElementTree API should go into
-test_elementtree
+Tests specific to the lxml.objectify API
 """
 
 
@@ -28,7 +25,7 @@ xml_str = '''\
 </obj:root>'''
 
 class ObjectifyTestCase(HelperTestCase):
-    """Test cases for lxml.elementlib.objectify
+    """Test cases for lxml.objectify
     """
     etree = etree
 
