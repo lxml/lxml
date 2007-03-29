@@ -1205,6 +1205,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
+    def test_byte_zero(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertRaises(AssertionError, setattr, a, "text", 'ha\0ho')
+        self.assertRaises(AssertionError, setattr, a, "tail", 'ha\0ho')
+
+        self.assertRaises(AssertionError, Element, 'ha\0ho')
+
     def test_encoding_tostring_utf16(self):
         # ElementTree fails to serialize this
         tostring = self.etree.tostring
