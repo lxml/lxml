@@ -16,8 +16,6 @@ In general
 
 * more testing on multi-threading
 
-* the code on extension functions and XSLT needs some refactoring
-
 
 ElementTree
 -----------
@@ -34,8 +32,8 @@ QName
 Objectify
 ---------
 
-* set special __attributes__ on ObjectifiedElement's as Python attributes, not
-  XML children
+* emulate setting special __attributes__ on ObjectifiedElement's as Python
+  attributes, not XML children
 
 
 Features
