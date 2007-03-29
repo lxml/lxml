@@ -560,6 +560,21 @@ cdef int isutf8(char* s):
         c = s[0]
     return 0
 
+cdef int isutf8py(pystring):
+    cdef char* s
+    cdef char* c_end
+    cdef char c
+    s = _cstr(pystring)
+    c_end = s + python.PyString_GET_SIZE(pystring)
+    while s < c_end:
+        c = s[0]
+        if c == c'\0':
+            return -1 # invalid!
+        if c & 0x80:
+            return 1  # non-ASCII
+        s = s + 1
+    return 0          # plain 7-bit ASCII
+
 cdef object funicode(char* s):
     cdef Py_ssize_t slen
     cdef char* spos
@@ -578,7 +593,8 @@ cdef object funicode(char* s):
 
 cdef object _utf8(object s):
     if python.PyString_Check(s):
-        assert not isutf8(_cstr(s)), "All strings must be Unicode or ASCII"
+        assert not isutf8py(s), \
+               "All strings must be Unicode or ASCII"
         return s
     elif python.PyUnicode_Check(s):
         return python.PyUnicode_AsUTF8String(s)
@@ -604,10 +620,10 @@ cdef object _encodeFilenameUTF8(object filename):
     if filename is None:
         return None
     elif python.PyString_Check(filename):
-        c_filename = _cstr(filename)
-        if not isutf8(c_filename):
+        if not isutf8py(filename):
             # plain ASCII!
             return filename
+        c_filename = _cstr(filename)
         try:
             # try to decode with default encoding
             filename = python.PyUnicode_Decode(
