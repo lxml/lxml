@@ -23,6 +23,8 @@ Bugs fixed
 
 * Thread safety in XPath evaluators
 
+* Raise AssertionError when passing strings containing '\0' bytes
+
 Other changes
 -------------
 
