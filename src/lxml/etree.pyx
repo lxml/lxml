@@ -1386,7 +1386,7 @@ cdef _ElementTree _newElementTree(_Document doc, _Element context_node,
     cdef _ElementTree result
     result = baseclass()
     if context_node is None and doc is not None:
-            context_node = doc.getroot()
+        context_node = doc.getroot()
     if context_node is None:
         result._doc = doc
     result._context_node = context_node
