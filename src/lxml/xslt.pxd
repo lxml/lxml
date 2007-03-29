@@ -35,6 +35,8 @@ cdef extern from "libxslt/extensions.h":
                                            xmlXPathFunction function)
     cdef int xsltUnregisterExtModuleFunction(char* name, char* URI)
     cdef xmlXPathFunction xsltExtModuleFunctionLookup(char* name, char* URI)
+    cdef int xsltRegisterExtPrefix(xsltStylesheet* style, 
+                                   char* prefix, char* URI)
 
 cdef extern from "libxslt/documents.h":
     ctypedef enum xsltLoadType:

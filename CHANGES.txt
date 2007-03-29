@@ -2,11 +2,13 @@
 lxml changelog
 ==============
 
-under development
+Under Development
 =================
 
 Features added
 --------------
+
+* EXSLT RegExp support in standard XPath (not only XSLT)
 
 * ``lxml.pyclasslookup`` module that can access the entire tree in read-only
   mode to help determining a suitable Element class
@@ -19,10 +21,12 @@ Features added
 Bugs fixed
 ----------
 
+* Thread safety in XPath evaluators
+
 Other changes
 -------------
 
-* major rewrite of internal extension function setup
+* major refactoring in XPath/XSLT extension function code
 
 
 1.3beta (2007-02-27)

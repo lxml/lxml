@@ -1,4 +1,4 @@
-# supports for extension functions in XPath and XSLT
+# support for extension functions in XPath and XSLT
 
 class XPathError(LxmlError):
     pass
@@ -9,6 +9,11 @@ class XPathFunctionError(XPathError):
 class XPathResultError(XPathError):
     pass
 
+# forward declarations
+
+ctypedef int _register_function(void* ctxt, name_utf, ns_uri_utf)
+cdef class _ExsltRegExp
+
 ################################################################################
 # Base class for XSLT and XPath evaluation contexts: functions, namespaces, ...
 
@@ -17,6 +22,7 @@ cdef class _BaseContext:
     cdef _Document _doc
     cdef object _extensions
     cdef object _namespaces
+    cdef object _global_namespaces
     cdef object _utf_refs
     cdef object _function_cache
     cdef object _function_cache_ns
@@ -25,18 +31,18 @@ cdef class _BaseContext:
     cdef _TempStore _temp_refs
     cdef _ExceptionContext _exc
 
-    def __init__(self, namespaces, extensions):
-        self._xpathCtxt = NULL
+    def __init__(self, namespaces, extensions, enable_regexp):
+        cdef _ExsltRegExp _regexp 
         self._utf_refs = {}
+        self._global_namespaces = []
         self._function_cache = {}
         self._function_cache_ns = {}
-        self._called_function = None
 
         if extensions is not None:
             # convert extensions to UTF-8
             if python.PyDict_Check(extensions):
                 extensions = (extensions,)
-            # format: [ {(ns,name):function} ] -> {(ns_utf,name_utf):function}
+            # format: [ {(ns, name):function} ] -> {(ns_utf, name_utf):function}
             new_extensions = {}
             for extension in extensions:
                 for (ns_uri, name), function in extension.items():
@@ -49,17 +55,38 @@ cdef class _BaseContext:
                         new_extensions, (ns_utf, name_utf), function)
             extensions = new_extensions or None
 
+        if namespaces is not None:
+            if python.PyDict_Check(namespaces):
+                namespaces = namespaces.items()
+            if namespaces:
+                ns = []
+                for prefix, ns_uri in namespaces:
+                    if prefix is None:
+                        raise TypeError, \
+                              "empty namespace prefix is not supported in XPath"
+                    if ns_uri is None:
+                        raise TypeError, \
+                              "setting default namespace is not supported in XPath"
+                    prefix_utf = self._to_utf(prefix)
+                    ns_uri_utf = self._to_utf(ns_uri)
+                    python.PyList_Append(ns, (prefix_utf, ns_uri_utf))
+                namespaces = ns
+
         self._doc        = None
         self._exc        = _ExceptionContext()
         self._extensions = extensions
         self._namespaces = namespaces
         self._temp_refs = _TempStore()
 
+        if enable_regexp:
+            _regexp = _ExsltRegExp()
+            _regexp._register_in_context(self)
+
     cdef _copy(self):
         cdef _BaseContext context
         if self._namespaces is not None:
-            namespaces = python.PyDict_Copy(self._namespaces)
-        context = self.__class__(namespaces, None)
+            namespaces = self._namespaces[:]
+        context = self.__class__(namespaces, None, False)
         if self._extensions is not None:
             context._extensions = python.PyDict_Copy(self._extensions)
         return context
@@ -83,40 +110,146 @@ cdef class _BaseContext:
     cdef _register_context(self, _Document doc):
         self._doc = doc
         self._exc.clear()
-        python.PyDict_Clear(self._function_cache)
-        python.PyDict_Clear(self._function_cache_ns)
-        namespaces = self._namespaces
-        if namespaces is not None:
-            self.registerNamespaces(namespaces)
 
-    cdef _unregister_context(self):
-        xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
-        self._free_context()
-
-    cdef _free_context(self):
+    cdef _cleanup_context(self):
+        #xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
+        #self.unregisterGlobalNamespaces()
         python.PyDict_Clear(self._utf_refs)
         self._doc = None
+
+    cdef _release_context(self):
         if self._xpathCtxt is not NULL:
             self._xpathCtxt.userData = NULL
             self._xpathCtxt = NULL
 
     # namespaces (internal UTF-8 methods with leading '_')
 
-    cdef addNamespace(self, prefix, uri):
-        if self._namespaces is None:
-            self._namespaces = {}
-        python.PyDict_SetItem(self._namespaces, prefix, uri)
-
-    cdef registerNamespaces(self, namespaces):
-        for prefix, uri in namespaces.items():
-            self.registerNamespace(prefix, uri)
-    
-    cdef registerNamespace(self, prefix, ns_uri):
+    cdef addNamespace(self, prefix, ns_uri):
+        if prefix is None:
+            raise TypeError, "empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
-        xpath.xmlXPathRegisterNs(self._xpathCtxt, prefix_utf, ns_uri_utf)
+        new_item = (prefix_utf, ns_uri_utf)
+        if self._namespaces is None:
+            self._namespaces = [new_item]
+        else:
+            namespaces = []
+            for item in self._namespaces:
+                if item[0] == prefix_utf:
+                    item = new_item
+                    new_item = None
+                python.PyList_Append(namespaces, item)
+            if new_item is not None:
+                python.PyList_Append(namespaces, new_item)
+            self._namespaces = namespaces
+        if self._xpathCtxt is not NULL:
+            xpath.xmlXPathRegisterNs(
+                self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+
+    cdef registerNamespace(self, prefix, ns_uri):
+        if prefix is None:
+            raise TypeError, "empty prefix is not supported in XPath"
+        prefix_utf = self._to_utf(prefix)
+        ns_uri_utf = self._to_utf(ns_uri)
+        python.PyList_Append(self._global_namespaces, prefix_utf)
+        xpath.xmlXPathRegisterNs(self._xpathCtxt,
+                                 _cstr(prefix_utf), _cstr(ns_uri_utf))
+
+    cdef registerLocalNamespaces(self):
+        if self._namespaces is None:
+            return
+        for prefix_utf, ns_uri_utf in self._namespaces:
+            xpath.xmlXPathRegisterNs(
+                self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+
+    cdef registerGlobalNamespaces(self):
+        ns_prefixes = _find_all_extension_prefixes()
+        if python.PyList_GET_SIZE(ns_prefixes) > 0:
+            for prefix_utf, ns_uri_utf in ns_prefixes:
+                python.PyList_Append(self._global_namespaces, prefix_utf)
+                xpath.xmlXPathRegisterNs(
+                    self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+
+    cdef unregisterGlobalNamespaces(self):
+        if python.PyList_GET_SIZE(self._global_namespaces) > 0:
+            for prefix_utf in self._global_namespaces:
+                xpath.xmlXPathRegisterNs(self._xpathCtxt,
+                                         _cstr(prefix_utf), NULL)
+            del self._global_namespaces[:]
+    
+    cdef void _unregisterNamespace(self, prefix_utf):
+        xpath.xmlXPathRegisterNs(self._xpathCtxt,
+                                 _cstr(prefix_utf), NULL)
     
     # extension functions
+
+    cdef void _addLocalExtensionFunction(self, ns_utf, name_utf, function):
+        if self._extensions is None:
+            self._extensions = {}
+        python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
+
+    cdef void registerGlobalFunctions(self, void* ctxt,
+                                    _register_function reg_func):
+        cdef python.PyObject* dict_result
+        for ns_utf, ns_functions in _iter_ns_extension_functions():
+            if ns_utf is None:
+                d = self._function_cache
+            else:
+                dict_result = python.PyDict_GetItem(
+                    self._function_cache_ns, ns_utf)
+                if dict_result is NULL:
+                    d = {}
+                    python.PyDict_SetItem(
+                        self._function_cache_ns, ns_utf, d)
+                else:
+                    d = <object>dict_result
+            for name_utf, function in ns_functions.iteritems():
+                python.PyDict_SetItem(d, name_utf, function)
+                reg_func(ctxt, name_utf, ns_utf)
+
+    cdef void registerLocalFunctions(self, void* ctxt,
+                                      _register_function reg_func):
+        cdef python.PyObject* dict_result
+        if self._extensions is None:
+            return # done
+        last_ns = None
+        d = self._function_cache
+        for (ns_utf, name_utf), function in self._extensions.iteritems():
+            if ns_utf is not last_ns:
+                last_ns = ns_utf
+                if ns_utf is None:
+                    d = self._function_cache
+                else:
+                    dict_result = python.PyDict_GetItem(
+                        self._function_cache_ns, ns_utf)
+                    if dict_result is NULL:
+                        d = {}
+                        python.PyDict_SetItem(self._function_cache_ns,
+                                              ns_utf, d)
+                    else:
+                        d = <object>dict_result
+            python.PyDict_SetItem(d, name_utf, function)
+            reg_func(ctxt, name_utf, ns_utf)
+
+    cdef unregisterAllFunctions(self, void* ctxt,
+                                      _register_function unreg_func):
+        for name_utf in self._function_cache:
+            unreg_func(ctxt, name_utf, None)
+        for ns_utf, functions in self._function_cache_ns.iteritems():
+            for name_utf in functions:
+                unreg_func(ctxt, name_utf, ns_utf)
+
+    cdef unregisterGlobalFunctions(self, void* ctxt,
+                                         _register_function unreg_func):
+        for name_utf in self._function_cache:
+            if self._extensions is None or \
+                   (None, name_utf) not in self._extensions:
+                unreg_func(ctxt, name_utf, None)
+        for ns_utf, functions in self._function_cache_ns.iteritems():
+            for name_utf in functions:
+                if self._extensions is None or \
+                       (ns_utf, name_utf) not in self._extensions:
+                    unreg_func(ctxt, name_utf, ns_utf)
 
     cdef _find_cached_function(self, char* c_ns_uri, char* c_name):
         """Lookup an extension function in the cache and return it.
@@ -137,7 +270,7 @@ cdef class _BaseContext:
                 return <object>dict_result
         return None
 
-    cdef int _prepare_function_call(self, char* c_ns_uri, char* c_name):
+    cdef int __prepare_function_call(self, char* c_ns_uri, char* c_name):
         """Find an extension function and store it in 'self._called_function'.
 
         This is absolutely performance-critical for XPath/XSLT!
@@ -233,19 +366,87 @@ def Extension(module, function_mapping, ns=None):
 
 
 ################################################################################
-# helper functions
+# EXSLT regexp implementation
 
-cdef xpath.xmlXPathFunction _function_check(void* ctxt,
-                                            char* c_name, char* c_ns_uri):
-    "Module level lookup function for XPath/XSLT functions"
-    cdef xpath.xmlXPathFunction c_func
-    cdef _BaseContext context
-    context = <_BaseContext>ctxt
-    if context._prepare_function_call(c_ns_uri, c_name):
-        c_func = _call_prepared_function
-    else:
-        c_func = NULL
-    return c_func
+cdef class _ExsltRegExp:
+    cdef object _compile_map
+    def __init__(self):
+        self._compile_map = {}
+
+    cdef _make_string(self, value):
+        if _isString(value):
+            return value
+        else:
+            raise TypeError, "Invalid argument type %s" % type(value)
+
+    cdef _compile(self, rexp, ignore_case):
+        cdef python.PyObject* c_result
+        rexp = self._make_string(rexp)
+        key = (rexp, ignore_case)
+        c_result = python.PyDict_GetItem(self._compile_map, key)
+        if c_result is not NULL:
+            return <object>c_result
+        py_flags = re.UNICODE
+        if ignore_case:
+            py_flags = py_flags | re.IGNORECASE
+        rexp_compiled = re.compile(rexp, py_flags)
+        python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
+        return rexp_compiled
+
+    def test(self, ctxt, s, rexp, flags=''):
+        flags = self._make_string(flags)
+        s = self._make_string(s)
+        rexpc = self._compile(rexp, 'i' in flags)
+        if rexpc.search(s) is None:
+            return False
+        else:
+            return True
+
+    def match(self, ctxt, s, rexp, flags=''):
+        flags = self._make_string(flags)
+        s = self._make_string(s)
+        rexpc = self._compile(rexp, 'i' in flags)
+        if 'g' in flags:
+            results = rexpc.findall(s)
+            if not results:
+                return ()
+        else:
+            result = rexpc.search(s)
+            if not result:
+                return ()
+            results = [ result.group() ]
+            results.extend( result.groups('') )
+        result_list = []
+        root = Element('matches')
+        join_groups = ''.join
+        for s_match in results:
+            if python.PyTuple_CheckExact(s_match):
+                s_match = join_groups(s_match)
+            elem = SubElement(root, 'match')
+            elem.text = s_match
+            python.PyList_Append(result_list, elem)
+        return result_list
+
+    def replace(self, ctxt, s, rexp, flags, replacement):
+        replacement = self._make_string(replacement)
+        flags = self._make_string(flags)
+        s = self._make_string(s)
+        rexpc = self._compile(rexp, 'i' in flags)
+        if 'g' in flags:
+            count = 0
+        else:
+            count = 1
+        return rexpc.sub(replacement, s, count)
+
+    cdef _register_in_context(self, _BaseContext context):
+        ns = "http://exslt.org/regular-expressions"
+        context._addLocalExtensionFunction(ns, "test",    self.test)
+        context._addLocalExtensionFunction(ns, "match",   self.match)
+        context._addLocalExtensionFunction(ns, "replace", self.replace)
+
+
+################################################################################
+# helper functions
 
 cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     cdef xpath.xmlNodeSet* resultSet
@@ -405,22 +606,6 @@ cdef void _call_python_xpath_function(xpath.xmlXPathParserContext* ctxt,
             fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
         else:
             fref = rctxt.function
-        xpath.xmlXPathErr(ctxt, xpath.XML_XPATH_UNKNOWN_FUNC_ERROR)
+        xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
         exception = XPathFunctionError("XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)
-
-# call the function that was stored in 'context._called_function'
-
-cdef void _call_prepared_function(xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef python.PyGILState_STATE gil_state
-    gil_state = python.PyGILState_Ensure()
-    _call_prepared_python_function(ctxt, nargs)
-    python.PyGILState_Release(gil_state)
-
-cdef void _call_prepared_python_function(xpath.xmlXPathParserContext* ctxt,
-                                         int nargs):
-    cdef xpath.xmlXPathContext* rctxt
-    cdef _BaseContext context
-    rctxt = ctxt.context
-    context = <_BaseContext>(rctxt.userData)
-    _extension_function_call(context, context._called_function, ctxt, nargs)

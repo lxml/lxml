@@ -35,31 +35,32 @@ class XPathBenchMark(benchbase.BenchMarkBase):
 
     @onlylib('lxe')
     def bench_xpath_old_extensions(self, root):
-        def return_child(_, element):
-            if element:
-                return element[0]
+        def return_child(_, elements):
+            if elements:
+                return elements[0][0]
             else:
                 return ()
-        extensions = {(None, 'child') : return_child}
-        xpath = self.etree.XPath("child(.)", extensions=extensions)
+        extensions = {("test", "child") : return_child}
+        xpath = self.etree.XPath("t:child(.)", namespaces={"test":"t"},
+                                 extensions=extensions)
         for child in root:
             xpath(child)
 
     @onlylib('lxe')
     def bench_xpath_extensions(self, root):
-        def return_child(_, element):
-            if element:
-                return element[0]
+        def return_child(_, elements):
+            if elements:
+                return elements[0][0]
             else:
                 return ()
-        self.etree.FunctionNamespace("test")["t"] = return_child
+        self.etree.FunctionNamespace("testns")["t"] = return_child
 
         try:
-            xpath = self.etree.XPath("test:t(.)", {"test":"test"})
+            xpath = self.etree.XPath("test:t(.)", {"test":"testns"})
             for child in root:
                 xpath(child)
         finally:
-            del self.etree.FunctionNamespace("test")["t"]
+            del self.etree.FunctionNamespace("testns")["t"]
 
 if __name__ == '__main__':
     benchbase.main(XPathBenchMark)

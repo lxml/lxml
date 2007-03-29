@@ -193,75 +193,48 @@ cdef class XSLTAccessControl:
 ################################################################################
 # XSLT
 
+cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
+    if ns_utf is None:
+        return 0
+    return xslt.xsltRegisterExtFunction(
+        <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
+        _xpath_function_call)
+
+cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
+    if ns_utf is None:
+        return 0
+    return xslt.xsltRegisterExtFunction(
+        <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
+        NULL)
+
+
 cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
-    def __init__(self, namespaces, extensions):
+    def __init__(self, namespaces, extensions, enable_regexp):
         self._xsltCtxt = NULL
-        if extensions and None in extensions:
-            raise XSLTExtensionError, "extensions must not have empty namespaces"
-        _BaseContext.__init__(self, namespaces, extensions)
+        if extensions is not None:
+            for ns, prefix in extensions:
+                if ns is None:
+                    raise XSLTExtensionError, \
+                          "extensions must not have empty namespaces"
+        _BaseContext.__init__(self, namespaces, extensions, enable_regexp)
 
     cdef register_context(self, xslt.xsltTransformContext* xsltCtxt,
                                _Document doc):
         self._xsltCtxt = xsltCtxt
         self._set_xpath_context(xsltCtxt.xpathCtxt)
         self._register_context(doc)
-        xsltCtxt.xpathCtxt.userData = <void*>self
-        self._registerExtensionFunctions()
+        self.registerLocalFunctions(xsltCtxt, _register_xslt_function)
+        self.registerGlobalFunctions(xsltCtxt, _register_xslt_function)
 
     cdef free_context(self):
-        cdef xslt.xsltTransformContext* xsltCtxt
-        xsltCtxt = self._xsltCtxt
-        if xsltCtxt is NULL:
-            return
-        self._free_context()
-        self._xsltCtxt = NULL
-        xslt.xsltFreeTransformContext(xsltCtxt)
+        self._cleanup_context()
+        self._release_context()
+        if self._xsltCtxt is not NULL:
+            xslt.xsltFreeTransformContext(self._xsltCtxt)
+            self._xsltCtxt = NULL
         self._release_temp_refs()
 
-    cdef void _addLocalExtensionFunction(self, ns_utf, name_utf, function):
-        if self._extensions is None:
-            self._extensions = {}
-        python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
-
-    cdef void _registerExtensionFunctions(self):
-        cdef python.PyObject* dict_result
-        for ns_utf, functions in _iter_extension_function_names():
-            if ns_utf is None:
-                continue
-            dict_result = python.PyDict_GetItem(self._function_cache_ns, ns_utf)
-            if dict_result is NULL:
-                d = {}
-                python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
-            else:
-                d = <object>dict_result
-            for name_utf, function in functions.iteritems():
-                python.PyDict_SetItem(d, name_utf, function)
-                xslt.xsltRegisterExtFunction(
-                    self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
-                    _xpath_function_call)
-        if self._extensions is None:
-            return # done
-        last_ns = None
-        for (ns_utf, name_utf), function in self._extensions.iteritems():
-            if ns_utf is None:
-                raise ValueError, \
-                      "extensions must have non empty namespaces"
-            elif ns_utf is not last_ns:
-                last_ns = ns_utf
-                dict_result = python.PyDict_GetItem(
-                    self._function_cache_ns, ns_utf)
-                if dict_result is NULL:
-                    d = {}
-                    python.PyDict_SetItem(self._function_cache_ns, ns_utf, d)
-                else:
-                    d = <object>dict_result
-            python.PyDict_SetItem(d, name_utf, function)
-            xslt.xsltRegisterExtFunction(
-                self._xsltCtxt, _cstr(name_utf), _cstr(ns_utf),
-                _xpath_function_call)
-
-cdef class _ExsltRegExp # forward declaration
 
 cdef class XSLT:
     """Turn a document into an XSLT object.
@@ -279,16 +252,17 @@ cdef class XSLT:
     cdef xslt.xsltStylesheet* _c_style
     cdef _XSLTResolverContext _xslt_resolver_context
     cdef XSLTAccessControl _access_control
-    cdef _ExsltRegExp _regexp
     cdef _ErrorLog _error_log
 
-    def __init__(self, xslt_input, extensions=None, regexp=True, access_control=None):
+    def __init__(self, xslt_input, extensions=None, regexp=True,
+                 access_control=None):
         cdef python.PyThreadState* state
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
         cdef _Document doc
         cdef _Element root_node
+        cdef _ExsltRegExp _regexp 
 
         doc = _documentOrRaise(xslt_input)
         root_node = _rootNodeOrRaise(xslt_input)
@@ -327,13 +301,7 @@ cdef class XSLT:
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
 
-        self._context = _XSLTContext(None, extensions)
-        if regexp:
-            self._regexp = _ExsltRegExp()
-            self._regexp._register_in_context(self._context)
-        else:
-            self._regexp  = None
-        # XXX is it worthwile to use xsltPrecomputeStylesheet here?
+        self._context = _XSLTContext(None, extensions, regexp)
 
     def __dealloc__(self):
         if self._xslt_resolver_context is not None and \
@@ -346,29 +314,30 @@ cdef class XSLT:
         def __get__(self):
             return self._error_log.copy()
 
+    def apply(self, _input, profile_run=False, **_kw):
+        return self(_input, profile_run, **_kw)
+
+    def tostring(self, _ElementTree result_tree):
+        """Save result doc to string based on stylesheet output method.
+        """
+        return str(result_tree)
+
     def __call__(self, _input, profile_run=False, **_kw):
-        cdef python.PyThreadState* state
         cdef _XSLTContext context
         cdef _Document input_doc
         cdef _Element root_node
         cdef _Document result_doc
         cdef _Document profile_doc
         cdef xmlDoc* c_profile_doc
-        cdef _XSLTResolverContext resolver_context
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result
         cdef xmlDoc* c_doc
-        cdef char** params
-        cdef Py_ssize_t i, kw_count
 
         if not _checkThreadDict(self._c_style.doc.dict):
             raise RuntimeError, "stylesheet is not usable in this thread"
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
-
-        resolver_context = _XSLTResolverContext(input_doc._parser)
-        resolver_context._c_style_doc = self._xslt_resolver_context._c_style_doc
 
         c_doc = _fakeRootDoc(input_doc._c_doc, root_node._c_node)
 
@@ -379,62 +348,28 @@ cdef class XSLT:
 
         initTransformDict(transform_ctxt)
 
-        self._error_log.connect()
-        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
-                                       _receiveXSLTError)
-
-        if self._access_control is not None:
-            self._access_control._register_in_context(transform_ctxt)
-
         if profile_run:
             transform_ctxt.profile = 1
 
-        transform_ctxt._private = <python.PyObject*>self._xslt_resolver_context
+        try:
+            self._error_log.connect()
+            context = self._context._copy()
+            context.register_context(transform_ctxt, input_doc)
 
-        kw_count = python.PyDict_Size(_kw)
-        if kw_count > 0:
-            # allocate space for parameters
-            # * 2 as we want an entry for both key and value,
-            # and + 1 as array is NULL terminated
-            params = <char**>python.PyMem_Malloc(
-                sizeof(char*) * (kw_count * 2 + 1))
-            i = 0
-            keep_ref = []
-            for key, value in _kw.iteritems():
-                k = _utf8(key)
-                python.PyList_Append(keep_ref, k)
-                v = _utf8(value)
-                python.PyList_Append(keep_ref, v)
-                params[i] = _cstr(k)
-                i = i + 1
-                params[i] = _cstr(v)
-                i = i + 1
-            params[i] = NULL
-        else:
-            params = NULL
+            c_result = self._run_transform(
+                input_doc, c_doc, _kw, context, transform_ctxt)
 
-        context = self._context._copy()
-        context.register_context(transform_ctxt, input_doc)
+            if transform_ctxt.profile:
+                c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
+                if c_profile_doc is not NULL:
+                    profile_doc = _documentFactory(
+                        c_profile_doc, input_doc._parser)
+        finally:
+            if context is not None:
+                context.free_context()
+            _destroyFakeDoc(input_doc._c_doc, c_doc)
+            self._error_log.disconnect()
 
-        state = python.PyEval_SaveThread()
-        c_result = xslt.xsltApplyStylesheetUser(self._c_style, c_doc, params,
-                                                NULL, NULL, transform_ctxt)
-        python.PyEval_RestoreThread(state)
-
-        if params is not NULL:
-            # deallocate space for parameters
-            python.PyMem_Free(params)
-            keep_ref = None
-
-        if transform_ctxt.profile:
-            c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
-            if c_profile_doc is not NULL:
-                profile_doc = _documentFactory(c_profile_doc, input_doc._parser)
-
-        context.free_context()
-        _destroyFakeDoc(input_doc._c_doc, c_doc)
-
-        self._error_log.disconnect()
         try:
             if self._xslt_resolver_context._has_raised():
                 if c_result is not NULL:
@@ -459,13 +394,58 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
-    def apply(self, _input, profile_run=False, **_kw):
-        return self(_input, profile_run, **_kw)
+    cdef xmlDoc* _run_transform(self, _Document input_doc, xmlDoc* c_input_doc,
+                               parameters, _XSLTContext context,
+                               xslt.xsltTransformContext* transform_ctxt):
+        cdef python.PyThreadState* state
+        cdef _XSLTResolverContext resolver_context
+        cdef xmlDoc* c_result
+        cdef char** params
+        cdef Py_ssize_t i, parameter_count
 
-    def tostring(self, _ElementTree result_tree):
-        """Save result doc to string based on stylesheet output method.
-        """
-        return str(result_tree)
+        resolver_context = _XSLTResolverContext(input_doc._parser)
+        resolver_context._c_style_doc = self._xslt_resolver_context._c_style_doc
+
+        xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
+                                       _receiveXSLTError)
+
+        if self._access_control is not None:
+            self._access_control._register_in_context(transform_ctxt)
+
+        transform_ctxt._private = <python.PyObject*>self._xslt_resolver_context
+
+        parameter_count = python.PyDict_Size(parameters)
+        if parameter_count > 0:
+            # allocate space for parameters
+            # * 2 as we want an entry for both key and value,
+            # and + 1 as array is NULL terminated
+            params = <char**>python.PyMem_Malloc(
+                sizeof(char*) * (parameter_count * 2 + 1))
+            i = 0
+            keep_ref = []
+            for key, value in parameters.iteritems():
+                k = _utf8(key)
+                python.PyList_Append(keep_ref, k)
+                v = _utf8(value)
+                python.PyList_Append(keep_ref, v)
+                params[i] = _cstr(k)
+                i = i + 1
+                params[i] = _cstr(v)
+                i = i + 1
+            params[i] = NULL
+        else:
+            params = NULL
+
+        state = python.PyEval_SaveThread()
+        c_result = xslt.xsltApplyStylesheetUser(
+            self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
+        python.PyEval_RestoreThread(state)
+
+        if params is not NULL:
+            # deallocate space for parameters
+            python.PyMem_Free(params)
+
+        return c_result
 
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
@@ -541,17 +521,6 @@ xslt.xsltRegisterAllExtras()
 
 # enable EXSLT support for XSLT
 xslt.exsltRegisterAll()
-
-# extension function lookup for XSLT
-cdef xpath.xmlXPathFunction _xslt_function_check(void* ctxt,
-                                                 char* c_name, char* c_ns_uri):
-    "Find XSLT extension function from set of XPath and XSLT functions"
-    cdef xpath.xmlXPathFunction result
-    result = _function_check(ctxt, c_name, c_ns_uri)
-    if result is NULL:
-        return xslt.xsltExtModuleFunctionLookup(c_name, c_ns_uri)
-    else:
-        return result
 
 cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
     __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&transform_ctxt.dict)
@@ -649,82 +618,3 @@ cdef class _XSLTProcessingInstruction(PIBase):
             if attr == key:
                 return value
         return default
-
-################################################################################
-# EXSLT regexp implementation
-
-cdef class _ExsltRegExp:
-    cdef object _compile_map
-    def __init__(self):
-        self._compile_map = {}
-
-    cdef _make_string(self, value):
-        if _isString(value):
-            return value
-        else:
-            raise TypeError, "Invalid argument type %s" % type(value)
-
-    cdef _compile(self, rexp, ignore_case):
-        cdef python.PyObject* c_result
-        rexp = self._make_string(rexp)
-        key = (rexp, ignore_case)
-        c_result = python.PyDict_GetItem(self._compile_map, key)
-        if c_result is not NULL:
-            return <object>c_result
-        py_flags = re.UNICODE
-        if ignore_case:
-            py_flags = py_flags | re.IGNORECASE
-        rexp_compiled = re.compile(rexp, py_flags)
-        python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
-        return rexp_compiled
-
-    def test(self, ctxt, s, rexp, flags=''):
-        flags = self._make_string(flags)
-        s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
-        if rexpc.search(s) is None:
-            return False
-        else:
-            return True
-
-    def match(self, ctxt, s, rexp, flags=''):
-        flags = self._make_string(flags)
-        s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
-        if 'g' in flags:
-            results = rexpc.findall(s)
-            if not results:
-                return ()
-        else:
-            result = rexpc.search(s)
-            if not result:
-                return ()
-            results = [ result.group() ]
-            results.extend( result.groups('') )
-        result_list = []
-        root = Element('matches')
-        join_groups = ''.join
-        for s_match in results:
-            if python.PyTuple_CheckExact(s_match):
-                s_match = join_groups(s_match)
-            elem = SubElement(root, 'match')
-            elem.text = s_match
-            python.PyList_Append(result_list, elem)
-        return result_list
-
-    def replace(self, ctxt, s, rexp, flags, replacement):
-        replacement = self._make_string(replacement)
-        flags = self._make_string(flags)
-        s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
-        if 'g' in flags:
-            count = 0
-        else:
-            count = 1
-        return rexpc.sub(replacement, s, count)
-
-    cdef _register_in_context(self, _XSLTContext context):
-        ns = "http://exslt.org/regular-expressions"
-        context._addLocalExtensionFunction(ns, "test",    self.test)
-        context._addLocalExtensionFunction(ns, "match",   self.match)
-        context._addLocalExtensionFunction(ns, "replace", self.replace)

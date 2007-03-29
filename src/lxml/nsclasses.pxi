@@ -75,6 +75,11 @@ cdef class _NamespaceRegistry:
             name = _utf8(name)
         return self._get(name)
 
+    def __delitem__(self, name):
+        if name is not None:
+            name = _utf8(name)
+        python.PyDict_DelItem(self._entries, name)
+
     cdef object _get(self, object name):
         cdef python.PyObject* dict_result
         dict_result = python.PyDict_GetItem(self._entries, name)
@@ -99,7 +104,7 @@ cdef class _NamespaceRegistry:
         return self._entries.iteritems()
 
     def clear(self):
-        self._entries.clear()
+        python.PyDict_Clear(self._entries)
 
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     "Dictionary-like registry for namespace implementation classes"
@@ -130,32 +135,39 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
 cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
     cdef object _prefix
     cdef object _prefix_utf
+
     property prefix:
         "Namespace prefix for extension functions."
         def __del__(self):
             self._prefix = None # no prefix configured
+            self._prefix_utf = None
         def __get__(self):
-            return self._prefix
+            if self._prefix is None:
+                return ''
+            else:
+                return self._prefix
         def __set__(self, prefix):
+            if prefix == '':
+                prefix = None # empty prefix
             if prefix is None:
-                prefix = '' # empty prefix
-            self._prefix_utf = _utf8(prefix)
+                self._prefix_utf = None
+            else:
+                self._prefix_utf = _utf8(prefix)
             self._prefix = prefix
 
 cdef object _find_all_extension_prefixes():
     "Internal lookup function to find all function prefixes for XSLT/XPath."
     cdef _XPathFunctionNamespaceRegistry registry
-    ns_prefixes = {}
-    for (ns_utf, registry) in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
+    ns_prefixes = []
+    for registry in __FUNCTION_NAMESPACE_REGISTRIES.itervalues():
         if registry._prefix_utf is not None:
-            ns_prefixes[registry._prefix_utf] = ns_utf
+            if registry._ns_uri_utf is not None:
+                python.PyList_Append(
+                    ns_prefixes, (registry._prefix_utf, registry._ns_uri_utf))
     return ns_prefixes
 
-cdef object _iter_extension_function_names():
-    l = []
-    for (ns_utf, registry) in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
-        python.PyList_Append(l, (ns_utf, registry))
-    return l
+cdef object _iter_ns_extension_functions():
+    return __FUNCTION_NAMESPACE_REGISTRIES.iteritems()
 
 cdef object _find_extension(ns_uri_utf, name_utf):
     cdef python.PyObject* dict_result
