@@ -25,8 +25,6 @@ cdef class _BaseContext:
     cdef object _global_namespaces
     cdef object _utf_refs
     cdef object _function_cache
-    cdef object _function_cache_ns
-    cdef object _called_function
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef _ExceptionContext _exc
@@ -36,7 +34,6 @@ cdef class _BaseContext:
         self._utf_refs = {}
         self._global_namespaces = []
         self._function_cache = {}
-        self._function_cache_ns = {}
 
         if extensions is not None:
             # convert extensions to UTF-8
@@ -192,17 +189,14 @@ cdef class _BaseContext:
                                     _register_function reg_func):
         cdef python.PyObject* dict_result
         for ns_utf, ns_functions in _iter_ns_extension_functions():
-            if ns_utf is None:
-                d = self._function_cache
+            dict_result = python.PyDict_GetItem(
+                self._function_cache, ns_utf)
+            if dict_result is not NULL:
+                d = <object>dict_result
             else:
-                dict_result = python.PyDict_GetItem(
-                    self._function_cache_ns, ns_utf)
-                if dict_result is NULL:
-                    d = {}
-                    python.PyDict_SetItem(
-                        self._function_cache_ns, ns_utf, d)
-                else:
-                    d = <object>dict_result
+                d = {}
+                python.PyDict_SetItem(
+                    self._function_cache, ns_utf, d)
             for name_utf, function in ns_functions.iteritems():
                 python.PyDict_SetItem(d, name_utf, function)
                 reg_func(ctxt, name_utf, ns_utf)
@@ -213,39 +207,30 @@ cdef class _BaseContext:
         if self._extensions is None:
             return # done
         last_ns = None
-        d = self._function_cache
+        d = None
         for (ns_utf, name_utf), function in self._extensions.iteritems():
-            if ns_utf is not last_ns:
+            if ns_utf is not last_ns or d is None:
                 last_ns = ns_utf
-                if ns_utf is None:
-                    d = self._function_cache
+                dict_result = python.PyDict_GetItem(
+                    self._function_cache, ns_utf)
+                if dict_result is not NULL:
+                    d = <object>dict_result
                 else:
-                    dict_result = python.PyDict_GetItem(
-                        self._function_cache_ns, ns_utf)
-                    if dict_result is NULL:
-                        d = {}
-                        python.PyDict_SetItem(self._function_cache_ns,
-                                              ns_utf, d)
-                    else:
-                        d = <object>dict_result
+                    d = {}
+                    python.PyDict_SetItem(self._function_cache,
+                                          ns_utf, d)
             python.PyDict_SetItem(d, name_utf, function)
             reg_func(ctxt, name_utf, ns_utf)
 
     cdef unregisterAllFunctions(self, void* ctxt,
                                       _register_function unreg_func):
-        for name_utf in self._function_cache:
-            unreg_func(ctxt, name_utf, None)
-        for ns_utf, functions in self._function_cache_ns.iteritems():
+        for ns_utf, functions in self._function_cache.iteritems():
             for name_utf in functions:
                 unreg_func(ctxt, name_utf, ns_utf)
 
     cdef unregisterGlobalFunctions(self, void* ctxt,
                                          _register_function unreg_func):
-        for name_utf in self._function_cache:
-            if self._extensions is None or \
-                   (None, name_utf) not in self._extensions:
-                unreg_func(ctxt, name_utf, None)
-        for ns_utf, functions in self._function_cache_ns.iteritems():
+        for ns_utf, functions in self._function_cache.iteritems():
             for name_utf in functions:
                 if self._extensions is None or \
                        (ns_utf, name_utf) not in self._extensions:
@@ -259,64 +244,18 @@ cdef class _BaseContext:
         cdef python.PyObject* c_dict
         cdef python.PyObject* dict_result
         if c_ns_uri is NULL:
-            c_dict = <python.PyObject*>self._function_cache
+            c_dict = python.PyDict_GetItem(
+                self._function_cache, None)
         else:
             c_dict = python.PyDict_GetItemString(
-                self._function_cache_ns, c_ns_uri)
+                self._function_cache, c_ns_uri)
 
         if c_dict is not NULL:
-            dict_result = python.PyDict_GetItemString(<object>c_dict, c_name)
+            dict_result = python.PyDict_GetItemString(
+                <object>c_dict, c_name)
             if dict_result is not NULL:
                 return <object>dict_result
         return None
-
-    cdef int __prepare_function_call(self, char* c_ns_uri, char* c_name):
-        """Find an extension function and store it in 'self._called_function'.
-
-        This is absolutely performance-critical for XPath/XSLT!
-        Return 1 if it was found, 0 otherwise.
-        Parameters: c_ns_uri may be NULL, c_name must not be NULL
-        """
-        cdef python.PyObject* c_dict
-        cdef python.PyObject* dict_result
-        if c_ns_uri is NULL:
-            d = self._function_cache
-            c_dict = <python.PyObject*>d
-        else:
-            c_dict = python.PyDict_GetItemString(
-                self._function_cache_ns, c_ns_uri)
-            if c_dict is NULL:
-                d = {}
-                python.PyDict_SetItem(self._function_cache_ns, ns_uri_utf, d)
-            else:
-                d = <object>c_dict
-
-        name_utf = c_name
-        if c_dict is not NULL:
-            dict_result = python.PyDict_GetItem(d, name_utf)
-            if dict_result is not NULL:
-                function = <object>dict_result
-                self._called_function = function
-                return function is not None
-
-        # first time we look up this function, so the rest is less critical
-        if c_ns_uri is not NULL:
-            ns_uri_utf = c_ns_uri
-
-        if self._extensions is not None:
-            dict_result = python.PyDict_GetItem(
-                self._extensions, (ns_uri_utf, name_utf))
-        else:
-            dict_result = NULL
-        if dict_result is not NULL:
-            function = <object>dict_result
-        else:
-            function = _find_extension(ns_uri_utf, name_utf)
-
-        # we also store None values here to make sure we remember
-        python.PyDict_SetItem(d, name_utf, function)
-        self._called_function = function
-        return function is not None
 
     # Python reference keeping during XPath function evaluation
 
@@ -340,11 +279,10 @@ cdef class _BaseContext:
             return
         for o in obj:
             if isinstance(o, _Element):
-                element = <_Element>o
                 #print "Holding element:", <int>element._c_node
-                self._temp_refs.add(element)
+                self._temp_refs.add(o)
                 #print "Holding document:", <int>element._doc._c_doc
-                self._temp_refs.add(element._doc)
+                self._temp_refs.add((<_Element>o)._doc)
 
 
 def Extension(module, function_mapping, ns=None):
