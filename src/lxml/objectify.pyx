@@ -42,8 +42,17 @@ False = __builtin__.False
 
 cdef object AttributeError
 AttributeError = __builtin__.AttributeError
+cdef object TypeError
+TypeError = __builtin__.TypeError
+cdef object ValueError
+ValueError = __builtin__.ValueError
 cdef object IndexError
 IndexError = __builtin__.IndexError
+cdef object StopIteration
+StopIteration = __builtin__.StopIteration
+
+cdef object IGNORABLE_ERRORS
+IGNORABLE_ERRORS = (ValueError, TypeError)
 
 cdef object list
 list = __builtin__.list
@@ -202,7 +211,7 @@ cdef class ObjectifiedElement(ElementBase):
         """Return the (first) child with the given tag name.  If no namespace
         is provided, the child will be looked up in the same one as self.
         """
-        return _lookupChild(self, tag)
+        return _lookupChildOrRaise(self, tag)
 
     def __setattr__(self, tag, value):
         """Set the value of the (first) child with the given tag name.  If no
@@ -223,15 +232,14 @@ cdef class ObjectifiedElement(ElementBase):
             return
 
         tag = _buildChildTag(self, tag)
-        try:
-            element = _lookupChild(self, tag)
-        except AttributeError:
+        element = _lookupChild(self, tag)
+        if element is None:
             _appendValue(self, tag, value)
         else:
             _replaceElement(element, value)
 
     def __delattr__(self, tag):
-        child = _lookupChild(self, tag)
+        child = _lookupChildOrRaise(self, tag)
         self.remove(child)
 
     def addattr(self, tag, value):
@@ -253,7 +261,7 @@ cdef class ObjectifiedElement(ElementBase):
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
         if python._isString(key):
-            return _lookupChild(self, key)
+            return _lookupChildOrRaise(self, key)
         c_self_node = self._c_node
         c_parent = c_self_node.parent
         if c_parent is NULL:
@@ -290,9 +298,8 @@ cdef class ObjectifiedElement(ElementBase):
         cdef tree.xmlNode* c_node
         if python._isString(key):
             key = _buildChildTag(self, key)
-            try:
-                element = _lookupChild(self, key)
-            except AttributeError:
+            element = _lookupChild(self, key)
+            if element is None:
                 _appendValue(self, key, value)
             else:
                 _replaceElement(element, value)
@@ -421,9 +428,15 @@ cdef object _lookupChild(_Element parent, tag):
         c_href = _cstr(ns)
     c_result = _findFollowingSibling(c_node.children, c_href, c_tag, 0)
     if c_result is NULL:
-        raise AttributeError, "no such child: " + \
-              cetree.namespacedNameFromNsName(c_href, c_tag)
+        return None
     return elementFactory(parent._doc, c_result)
+
+cdef object _lookupChildOrRaise(_Element parent, tag):
+    element = _lookupChild(parent, tag)
+    if element is None:
+        raise AttributeError, "no such child: " + \
+              _buildChildTag(parent, tag)
+    return element
 
 cdef object _buildChildTag(_Element parent, tag):
     cdef char* c_href
@@ -910,16 +923,17 @@ def getRegisteredTypes():
     """
     types = []
     known = set()
+    add_to_known = known.add
     for check, pytype in _TYPE_CHECKS:
         name = pytype.name
         if name not in known:
-            known.add(name)
-            types.append(pytype)
+            add_to_known(name)
+            python.PyList_Append(types, pytype)
     for pytype in _PYTYPE_DICT.itervalues():
         name = pytype.name
         if name not in known:
-            known.add(name)
-            types.append(pytype)
+            add_to_known(name)
+            python.PyList_Append(types, pytype)
     return types
 
 cdef object _guessElementClass(tree.xmlNode* c_node):
@@ -928,12 +942,11 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
         return None
     if value == '':
         return StringElement
-    errors = (ValueError, TypeError)
     for type_check, pytype in _TYPE_CHECKS:
         try:
             type_check(value)
             return (<PyType>pytype)._type
-        except errors:
+        except IGNORABLE_ERRORS:
             pass
     return None
 
@@ -1426,7 +1439,6 @@ def annotate(element_or_tree, ignore_old=True):
     doc = element._doc
     ignore = bool(ignore_old)
 
-    _ValueError = ValueError
     StrType = _PYTYPE_DICT.get('str')
     c_node = element._c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
@@ -1443,7 +1455,7 @@ def annotate(element_or_tree, ignore_old=True):
                 try:
                     if not (<PyType>pytype).type_check(value):
                         pytype = None
-                except _ValueError:
+                except ValueError:
                     pytype = None
 
     if pytype is None:
@@ -1474,7 +1486,7 @@ def annotate(element_or_tree, ignore_old=True):
                         if type_check(value) is not False:
                             pytype = tested_pytype
                             break
-                    except _ValueError:
+                    except ValueError:
                         pass
                 else:
                     pytype = StrType
@@ -1579,13 +1591,12 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
         strval = str(_value)
 
     if _pytype is None:
-        errors = (ValueError, TypeError)
         for type_check, pytype in _TYPE_CHECKS:
             try:
                 type_check(strval)
                 _pytype = (<PyType>pytype).name
                 break
-            except errors:
+            except IGNORABLE_ERRORS:
                 pass
         if _pytype is None:
             if _value is None:
