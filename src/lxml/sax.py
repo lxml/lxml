@@ -13,12 +13,15 @@ def _getNsTag(tag):
 class ElementTreeContentHandler(object, ContentHandler):
     """Build an lxml ElementTree from SAX events.
     """
-    def __init__(self):
+    def __init__(self, makeelement=None):
         self._root = None
         self._element_stack = []
         self._default_ns = None
         self._ns_mapping = { None : [None] }
         self._new_mappings = {}
+        if makeelement is None:
+            makeelement = Element
+        self._makeelement = makeelement
 
     def _get_etree(self):
         "Contains the generated ElementTree after parsing is finished."
@@ -77,7 +80,8 @@ class ElementTreeContentHandler(object, ContentHandler):
 
         element_stack = self._element_stack
         if self._root is None:
-            element = self._root = Element(el_name, attrs, self._new_mappings)
+            element = self._root = \
+                      self._makeelement(el_name, attrs, self._new_mappings)
         else:
             element = SubElement(element_stack[-1], el_name,
                                  attrs, self._new_mappings)
