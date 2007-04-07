@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* '.' represents empty ObjectPath (identity)
+
 * EXSLT RegExp support in standard XPath (not only XSLT)
 
 * ``lxml.pyclasslookup`` module that can access the entire tree in read-only

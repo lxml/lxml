@@ -593,6 +593,16 @@ class ObjectifyTestCase(HelperTestCase):
         path = objectify.ObjectPath( "root.c1[1].c2" )
         self.assertFalse(path.hasattr(root))
 
+    def test_object_path_dot(self):
+        root = self.XML(xml_str)
+        path = objectify.ObjectPath( "." )
+        self.assertEquals(root.c1.c2.text, path(root).c1.c2.text)
+
+    def test_object_path_dot_list(self):
+        root = self.XML(xml_str)
+        path = objectify.ObjectPath( [''] )
+        self.assertEquals(root.c1.c2.text, path(root).c1.c2.text)
+
     def test_object_path_dot_root(self):
         root = self.XML(xml_str)
         path = objectify.ObjectPath( ".c1.c2" )
@@ -652,9 +662,7 @@ class ObjectifyTestCase(HelperTestCase):
                           ['root[2]', 'c1', 'c2'])
 
         self.assertRaises(ValueError, objectify.ObjectPath,
-                          ".")
-        self.assertRaises(ValueError, objectify.ObjectPath,
-                          [''])
+                          [])
         self.assertRaises(ValueError, objectify.ObjectPath,
                           ['', '', ''])
 

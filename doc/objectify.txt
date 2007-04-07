@@ -372,8 +372,8 @@ Apart from strings, ObjectPath also accepts lists of path segments::
     >>> print find(root).tag
     {ns}b
 
-You can also use relative paths starting with a '.' that ignore the actual
-root element and only inherit its namespace::
+You can also use relative paths starting with a '.' to ignore the actual root
+element and only inherit its namespace::
 
     >>> find = objectify.ObjectPath(".b[1]")
     >>> print find(root).tag
@@ -394,6 +394,12 @@ root element and only inherit its namespace::
     Traceback (most recent call last):
       ...
     AttributeError: no such child: {other}unknown
+
+For convenience, a single dot represents the empty ObjectPath (identity)::
+
+    >>> find = objectify.ObjectPath(".")
+    >>> print find(root).tag
+    {ns}root
 
 ObjectPath objects can be used to manipulate trees::
 

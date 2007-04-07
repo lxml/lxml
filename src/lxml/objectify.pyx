@@ -1166,6 +1166,9 @@ __MATCH_PATH_SEGMENT = re.compile(
     r"(\.?)\s*(?:\{([^}]*)\})?\s*([^.{}\[\]\s]+)\s*(?:\[\s*([-0-9]+)\s*\])?",
     re.U).match
 
+cdef object _RELATIVE_PATH_SEGMENT
+_RELATIVE_PATH_SEGMENT = (None, None, 0)
+
 cdef _parseObjectPathString(path):
     """Parse object path string into a 'hrefOnameOhrefOnameOOO' string and an
     index list.  The index list is None if no index was used in the path.
@@ -1173,6 +1176,8 @@ cdef _parseObjectPathString(path):
     cdef int has_dot
     new_path = []
     path = cetree.utf8(path.strip())
+    if path == '.':
+        return [_RELATIVE_PATH_SEGMENT]
     path_pos = 0
     while python.PyString_GET_SIZE(path) > 0:
         match = __MATCH_PATH_SEGMENT(path, path_pos)
@@ -1188,7 +1193,7 @@ cdef _parseObjectPathString(path):
         if python.PyList_GET_SIZE(new_path) == 0:
             if has_dot:
                 # path '.child' => ignore root
-                python.PyList_Append(new_path, (None, None, 0))
+                python.PyList_Append(new_path, _RELATIVE_PATH_SEGMENT)
             elif index != 0:
                 raise ValueError, "index not allowed on root node"
         elif not has_dot:
@@ -1234,9 +1239,7 @@ cdef _parseObjectPathList(path):
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, "index not allowed on root node"
         python.PyList_Append(new_path, (ns, name, index))
-    if python.PyList_GET_SIZE(new_path) == 0 or \
-           (python.PyList_GET_SIZE(new_path) == 1 and \
-            new_path[0] == (None, None, 0)):
+    if python.PyList_GET_SIZE(new_path) == 0:
         raise ValueError, "invalid path"
     return new_path
 
