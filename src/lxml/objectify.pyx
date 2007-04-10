@@ -717,7 +717,7 @@ cdef class BoolElement(ObjectifiedDataElement):
                 # '0' or 'f' or 'false'
                 return 0
         elif c_str[0] == c'1' or c_str[0] == c't' or c_str[0] == c'T':
-            if c_str[1] == c'\0' or text.lower() == 'true'):
+            if c_str[1] == c'\0' or text.lower() == 'true':
                 # '1' or 't' or 'true'
                 return 1
         raise ValueError, "Invalid boolean value: '%s'" % text
