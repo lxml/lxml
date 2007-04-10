@@ -699,6 +699,61 @@ Python types::
         s = '5' [StringElement]
           * xsi:type = 'string'
 
+Again, there is a utility function ``xsiannotate()`` that recursively 
+generates the "xsi:type" attribute for the elements of a tree::
+
+    >>> root = objectify.fromstring('''\
+    ...    <root><a>test</a><b>5</b><c>true</c></root>
+    ...    ''')
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 'test' [StringElement]
+        b = 5 [IntElement]
+        c = True [BoolElement]
+
+    >>> objectify.xsiannotate(root)
+
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        a = 'test' [StringElement]
+          * xsi:type = 'string'
+        b = 5 [IntElement]
+          * xsi:type = 'int'
+        c = True [BoolElement]
+          * xsi:type = 'boolean'
+
+Note, however, that ``xsiannotate()`` will always use the first XML Schema
+datatype that is defined for any given Python type, see also
+`Defining additional data classes`_.
+
+The utility function ``deannotate()`` can be used to get rid of 'py:pytype'
+and/or 'xsi:type' information::
+
+    >>> root = objectify.fromstring('''\
+    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    ...   <d xsi:type="double">5</d>
+    ...   <l xsi:type="long"  >5</l>
+    ...   <s xsi:type="string">5</s>
+    ... </root>''')
+    >>> objectify.annotate(root)
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        d = 5.0 [FloatElement]
+          * xsi:type = 'double'
+          * py:pytype = 'float'
+        l = 5L [LongElement]
+          * xsi:type = 'long'
+          * py:pytype = 'long'
+        s = '5' [StringElement]
+          * xsi:type = 'string'
+          * py:pytype = 'str'
+    >>> objectify.deannotate(root)
+    >>> print objectify.dump(root)
+    root = None [ObjectifiedElement]
+        d = 5 [IntElement]
+        l = 5 [IntElement]
+        s = 5 [IntElement]
+
 For convenience, the ``DataElement()`` factory creates an Element with a
 Python value in one step.  You can pass the required Python type name or the
 XSI type name::
@@ -720,8 +775,8 @@ XSI type name::
     >>> root.x = objectify.DataElement(5, _xsi="integer")
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
-        x = 5 [IntElement]
-          * py:pytype = 'int'
+        x = 5L [LongElement]
+          * py:pytype = 'long'
           * xsi:type = 'integer'
 
 There is a side effect of the type lookup.  If you assign a string value using

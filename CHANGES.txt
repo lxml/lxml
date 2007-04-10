@@ -8,6 +8,9 @@ Under Development
 Features added
 --------------
 
+* Extended type annotation in objectify: cleaner annotation namespace setup
+  plus new ``xsiannotate()`` and ``deannotate()`` functions
+
 * Support for custom Element class instantiation in lxml.sax
 
 * '.' represents empty ObjectPath (identity)
