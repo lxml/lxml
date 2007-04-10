@@ -296,7 +296,7 @@ cdef class XSLT:
             if self._error_log.last_error is not None:
                 raise XSLTParseError, self._error_log.last_error.message
             else:
-                raise XSLTParseError, "Cannot parse style sheet"
+                raise XSLTParseError, "Cannot parse stylesheet"
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
@@ -344,7 +344,7 @@ cdef class XSLT:
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            raise XSLTApplyError, "Error preparing stylesheet run"
+            python.PyErr_NoMemory()
 
         initTransformDict(transform_ctxt)
 
@@ -383,7 +383,7 @@ cdef class XSLT:
                         message = "%s, line %d" % (error.message, error.line)
                     else:
                         message = error.message
-                elif error.line >= 0:
+                elif error is not None and error.line >= 0:
                     message = "Error applying stylesheet, line %d" % error.line
                 else:
                     message = "Error applying stylesheet"
