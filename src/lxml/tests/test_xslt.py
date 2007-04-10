@@ -34,6 +34,23 @@ class ETreeXSLTTestCase(HelperTestCase):
     def test_xslt_elementtree_error(self):
         self.assertRaises(ValueError, etree.XSLT, etree.ElementTree())
 
+    def test_xslt_input_none(self):
+        self.assertRaises(TypeError, etree.XSLT, None)
+
+    def test_xslt_invalid_stylesheet(self):
+        if etree.LIBXSLT_VERSION < (1,1,15):
+            return # no error from libxslt?
+
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <xsl:template />
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        self.assertRaises(etree.XSLTParseError, etree.XSLT, style)
+
     def test_xslt_utf8(self):
         tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')
         style = self.parse('''\
@@ -144,10 +161,9 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <a pi="3.14"><b pi="3">-B-</b><c pi="3">-C-</c></a>
 ''',
-                          st.tostring(res))
+                          str(res))
 
     def test_xslt_input(self):
-        tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -159,7 +175,6 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         st = etree.XSLT(style.getroot())
-        self.assertRaises(TypeError, etree.XSLT, None)
 
     def test_xslt_input_partial_doc(self):
         style = self.parse('''\
@@ -206,8 +221,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           st.tostring(res))
 
-    def _test_xslt_parameter_missing(self):
-        # DISABLED - NOT RELIABLE?
+    def test_xslt_parameter_missing(self):
+        # DISABLED - NOT RELIABLE!
+        if etree.LIBXSLT_VERSION >= (1,1,18) and etree.LIBXSLT_VERSION < (1,1,20):
+            return # no error from libxslt?
         # apply() without needed parameter will lead to XSLTApplyError
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
