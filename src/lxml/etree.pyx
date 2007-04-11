@@ -1924,7 +1924,7 @@ cdef class _Validator:
 include "dtd.pxi"        # DTD
 include "relaxng.pxi"    # RelaxNG
 include "xmlschema.pxi"  # XMLSchema
-#include "schematron.pxi" # Schematron
+#include "schematron.pxi" # Schematron (requires libxml2 2.6.21+)
 
 ################################################################################
 # Public C API
