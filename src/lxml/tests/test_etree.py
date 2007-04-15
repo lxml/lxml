@@ -70,6 +70,39 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals("TEST", root.get("attr"))
         self.assertRaises(TypeError, root.set, "newattr", 5)
 
+    def test_attrib_pop(self):
+        ElementTree = self.etree.ElementTree
+        
+        f = StringIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        self.assertEquals('One', root.attrib['one'])
+        self.assertEquals('Two', root.attrib['two'])
+
+        self.assertEquals('One', root.attrib.pop('one'))
+
+        self.assertEquals(None, root.attrib.get('one'))
+        self.assertEquals('Two', root.attrib['two'])
+
+    def test_attrib_pop_unknown(self):
+        root = self.etree.XML('<doc one="One" two="Two"/>')
+        self.assertRaises(KeyError, root.attrib.pop, 'NONE')
+
+        self.assertEquals('One', root.attrib['one'])
+        self.assertEquals('Two', root.attrib['two'])
+
+    def test_attrib_pop_default(self):
+        root = self.etree.XML('<doc one="One" two="Two"/>')
+        self.assertEquals('Three', root.attrib.pop('three', 'Three'))
+
+    def test_attrib_pop_empty_default(self):
+        root = self.etree.XML('<doc/>')
+        self.assertEquals('Three', root.attrib.pop('three', 'Three'))
+
+    def test_attrib_pop_invalid_args(self):
+        root = self.etree.XML('<doc one="One" two="Two"/>')
+        self.assertRaises(TypeError, root.attrib.pop, 'One', None, None)
+
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element

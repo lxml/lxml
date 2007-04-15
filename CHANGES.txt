@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* Element.attrib now has a ``pop()`` method
+
 * Extended type annotation in objectify: cleaner annotation namespace setup
   plus new ``xsiannotate()`` and ``deannotate()`` functions
 

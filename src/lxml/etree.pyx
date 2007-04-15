@@ -1411,6 +1411,20 @@ cdef class _Attrib:
         for key, value in sequence_or_dict:
             _setAttributeValue(self._element, key, value)
 
+    def pop(self, key, *default):
+        if python.PyTuple_GET_SIZE(default) > 1:
+            raise TypeError, "pop expected at most 2 arguments, got %d" % \
+                  (python.PyTuple_GET_SIZE(default)+1)
+        result = _getAttributeValue(self._element, key, None)
+        if result is None:
+            if python.PyTuple_GET_SIZE(default) == 0:
+                raise KeyError, key
+            else:
+                return python.PyTuple_GET_ITEM(default, 0)
+        else:
+            _delAttribute(self._element, key)
+            return result
+
     # ACCESSORS
     def __repr__(self):
         return repr(dict( _attributeIteratorFactory(self._element, 3) ))
