@@ -367,12 +367,12 @@ def runBench(suite, method_name, method_call, tree_set, tn, an, serial, children
             args = [ build() for build in tree_builders ]
             t_one_call = current_time()
             method_call(*args)
-            t_one_call = 1000.0 * (current_time() - t_one_call)
+            t_one_call = current_time() - t_one_call
             if t < 0:
                 t = t_one_call
             else:
                 t = min(t, t_one_call)
-        times.append(t)
+        times.append(1000.0 * t)
         gc.enable()
         del args
     return times
