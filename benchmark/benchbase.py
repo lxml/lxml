@@ -78,6 +78,11 @@ def serialized(function):
     function.STRING = True
     return function
 
+def children(function):
+    "Decorator for benchmarks that require a list of root children"
+    function.CHILDREN = True
+    return function
+
 ############################################################
 # benchmark baseclass
 ############################################################
@@ -105,13 +110,18 @@ class BenchMarkBase(object):
             deepcopy = copy.deepcopy
             def set_property(root, fname):
                 xml = self._serialize_tree(root)
-                setattr(self, fname, lambda : etree.XML(xml, etree_parser))
+                if etree_parser is not None:
+                    setattr(self, fname, lambda : etree.XML(xml, etree_parser))
+                else:
+                    setattr(self, fname, lambda : deepcopy(root))
                 setattr(self, fname + '_xml', lambda : xml)
+                setattr(self, fname + '_children', lambda : root[:])
         else:
             def set_property(root, fname):
                 setattr(self, fname, self.et_make_clone_factory(root))
                 xml = self._serialize_tree(root)
                 setattr(self, fname + '_xml', lambda : xml)
+                setattr(self, fname + '_children', lambda : root[:])
 
         attribute_list = list(izip(count(), ({}, _ATTRIBUTES)))
         text_list = list(izip(count(), (None, _TEXT, _UTEXT)))
@@ -131,10 +141,12 @@ class BenchMarkBase(object):
     def _tree_builder_name(self, tree, tn, an):
         return '_root%d_T%d_A%d' % (tree, tn, an)
 
-    def tree_builder(self, tree, tn, an, serial):
+    def tree_builder(self, tree, tn, an, serial, children):
         name = self._tree_builder_name(tree, tn, an)
         if serial:
             name += '_xml'
+        elif children:
+            name += '_children'
         return getattr(self, name)
 
     def _serialize_tree(self, root):
@@ -270,13 +282,14 @@ class BenchMarkBase(object):
                     arg_count = 1
                 tree_tuples = self._permutations(all_trees, arg_count)
 
-            serialized = getattr(method, 'STRING', False)
+            serialized = getattr(method, 'STRING',   False)
+            children   = getattr(method, 'CHILDREN', False)
 
             for tree_tuple in tree_tuples:
                 for tn in sorted(getattr(method, 'TEXT', (0,))):
                     for an in sorted(getattr(method, 'ATTRIBUTES', (0,))):
                         benchmarks.append((name, method_call, tree_tuple,
-                                           tn, an, serialized))
+                                           tn, an, serialized, children))
 
         return benchmarks
 
@@ -315,11 +328,12 @@ def buildSuites(benchmark_class, etrees, selected):
 
     return (benchmark_suites, benchmarks)
 
-def build_treeset_name(trees, tn, an, serialized):
+def build_treeset_name(trees, tn, an, serialized, children):
     text = {0:'-', 1:'S', 2:'U'}[tn]
     attr = {0:'-', 1:'A'}[an]
     ser  = {True:'X', False:'T'}[serialized]
-    return "%s%s%s T%s" % (text, attr, ser, ',T'.join(imap(str, trees))[:6])
+    chd  = {True:'C', False:'R'}[children]
+    return "%s%s%s%s T%s" % (text, attr, ser, chd, ',T'.join(imap(str, trees))[:6])
 
 def printSetupTimes(benchmark_suites):
     print "Setup times for trees in seconds:"
@@ -327,20 +341,20 @@ def printSetupTimes(benchmark_suites):
         print "%-3s:    " % b.lib_name,
         for an in (0,1):
             for tn in (0,1,2):
-                print '  %s  ' % build_treeset_name((), tn, an, False)[:2],
+                print '  %s  ' % build_treeset_name((), tn, an, False, False)[:2],
         print
         for i, tree_times in enumerate(b.setup_times):
             print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
     print
 
-def runBench(suite, method_name, method_call, tree_set, tn, an, serial):
+def runBench(suite, method_name, method_call, tree_set, tn, an, serial, children):
     if method_call is None:
         raise SkippedTest
 
     current_time = time.time
     call_repeat = range(10)
 
-    tree_builders = [ suite.tree_builder(tree, tn, an, serial)
+    tree_builders = [ suite.tree_builder(tree, tn, an, serial, children)
                       for tree in tree_set ]
 
     times = []
@@ -364,7 +378,7 @@ def runBenchmarks(benchmark_suites, benchmarks):
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
-            tree_set_name = build_treeset_name(*benchmark_setup[-4:])
+            tree_set_name = build_treeset_name(*benchmark_setup[-5:])
             print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
             print "(%-10s)" % tree_set_name,
             sys.stdout.flush()

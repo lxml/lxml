@@ -3,7 +3,7 @@ from itertools import *
 from StringIO import StringIO
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized
+from benchbase import with_attributes, with_text, onlylib, serialized, children
 
 ############################################################
 # Benchmarks
@@ -77,8 +77,10 @@ class BenchMark(benchbase.BenchMarkBase):
             root1.append(el)
 
     def bench_insert_from_document(self, root1, root2):
+        pos = len(root1)/2
         for el in root2:
-            root1.insert(len(root1)/2, el)
+            root1.insert(pos, el)
+            pos = pos + 1
 
     def bench_rotate_children(self, root):
         # == "1 2 3" # runs on any single tree independently
@@ -102,18 +104,21 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_clear(self, root):
         root.clear()
 
-    def bench_has_children(self, root):
-        for child in root:
+    @children
+    def bench_has_children(self, children):
+        for child in children:
             if child and child and child and child and child:
                 pass
 
-    def bench_len(self, root):
-        for child in root:
+    @children
+    def bench_len(self, children):
+        for child in children:
             map(len, repeat(child, 20))
 
-    def bench_create_subelements(self, root):
+    @children
+    def bench_create_subelements(self, children):
         SubElement = self.etree.SubElement
-        for child in root:
+        for child in children:
             SubElement(child, '{test}test')
 
     def bench_append_elements(self, root):
@@ -122,103 +127,120 @@ class BenchMark(benchbase.BenchMarkBase):
             el = Element('{test}test')
             child.append(el)
 
-    def bench_makeelement(self, root):
+    @children
+    def bench_makeelement(self, children):
         empty_attrib = {}
-        for child in root:
+        for child in children:
             child.makeelement('{test}test', empty_attrib)
 
-    def bench_create_elements(self, root):
+    @children
+    def bench_create_elements(self, children):
         Element = self.etree.Element
-        for child in root:
+        for child in children:
             Element('{test}test')
 
-    def bench_replace_children_element(self, root):
+    @children
+    def bench_replace_children_element(self, children):
         Element = self.etree.Element
-        for child in root:
+        for child in children:
             el = Element('{test}test')
             child[:] = [el]
 
-    def bench_replace_children(self, root):
-        Element = self.etree.Element
-        for child in root:
-            child[:] = [ child[0] ]
+    @children
+    def bench_replace_children(self, children):
+        els = [ self.etree.Element("newchild") ]
+        for child in children:
+            child[:] = els
 
     def bench_remove_children(self, root):
         for child in root:
             root.remove(child)
 
     def bench_remove_children_reversed(self, root):
-        for child in reversed(root[:]):
+        for child in reversed(root):
             root.remove(child)
 
-    def bench_set_attributes(self, root):
-        for child in root:
+    @children
+    def bench_set_attributes(self, children):
+        for child in children:
             child.set('a', 'bla')
 
     @with_attributes(True)
-    def bench_get_attributes(self, root):
-        for child in root:
+    @children
+    def bench_get_attributes(self, children):
+        for child in children:
             child.get('bla1')
             child.get('{attr}test1')
 
-    def bench_setget_attributes(self, root):
-        for child in root:
+    @children
+    def bench_setget_attributes(self, children):
+        for child in children:
             child.set('a', 'bla')
-        for child in root:
+        for child in children:
             child.get('a')
 
     def bench_root_getchildren(self, root):
         root.getchildren()
 
-    def bench_getchildren(self, root):
-        for child in root:
+    @children
+    def bench_getchildren(self, children):
+        for child in children:
             child.getchildren()
 
-    def bench_get_children_slice(self, root):
-        for child in root:
+    @children
+    def bench_get_children_slice(self, children):
+        for child in children:
             child[:]
 
-    def bench_get_children_slice_2x(self, root):
-        for child in root:
-            children = child[:]
+    @children
+    def bench_get_children_slice_2x(self, children):
+        for child in children:
+            child[:]
             child[:]
 
-    def bench_deepcopy(self, root):
-        for child in root:
+    @children
+    def bench_deepcopy(self, children):
+        for child in children:
             copy.deepcopy(child)
 
     def bench_deepcopy_all(self, root):
         copy.deepcopy(root)
 
-    def bench_tag(self, root):
-        for child in root:
+    @children
+    def bench_tag(self, children):
+        for child in children:
             child.tag
 
-    def bench_tag_repeat(self, root):
-        for child in root:
+    @children
+    def bench_tag_repeat(self, children):
+        for child in children:
             for i in repeat(0, 100):
                 child.tag
 
     @with_text(utext=True, text=True, no_text=True)
-    def bench_text(self, root):
-        for child in root:
+    @children
+    def bench_text(self, children):
+        for child in children:
             child.text
 
     @with_text(utext=True, text=True, no_text=True)
-    def bench_text_repeat(self, root):
+    @children
+    def bench_text_repeat(self, children):
         repeat = range(500)
-        for child in root:
+        for child in children:
             for i in repeat:
                 child.text
 
-    def bench_set_text(self, root):
+    @children
+    def bench_set_text(self, children):
         text = TEXT
-        for child in root:
+        for child in children:
             child.text = text
 
-    def bench_set_utext(self, root):
+    @children
+    def bench_set_utext(self, children):
         text = UTEXT
-        for child in root:
+        for child in children:
             child.text = text
 
     @onlylib('lxe')
