@@ -1,15 +1,15 @@
 body {
-    /* CSS Hack for IE that does not respect the "margin: auto" rule at the
-     * document level */
+    font: 13px Arial, Verdana, Helvetica, sans-serif;
     text-align: center;
-    padding: 1em;
 }
 
-
 @media screen {
+    body {
+        padding: 1em 1em 1em 21em;
+    }
+
     div.document {
         width: 45em;
-        padding-left: 21em;
         background-color: white;
     }
 }
@@ -26,7 +26,6 @@ body {
 }
 
 div.document {
-    font: 13px Arial, Verdana, Helvetica, sans-serif;
     margin: 1em auto 1em auto;
     color: #222;
     text-align: left;
@@ -50,7 +49,7 @@ div.contents.topic > p > a {
 /*** side menu ***/
 
 div.sidemenu {
-    position: fixed;
+    position: absolute;
     top: 0px;
     left: 0px;
     width: 22em;
@@ -60,6 +59,11 @@ div.sidemenu {
     border-bottom: groove gray;
     padding-right: 1ex;
     background-color: #FFFAFA;
+}
+
+html > body div.sidemenu {
+    /* ignored by IE -> everyone else knows 'fixed', right?  */
+    position: fixed;
 }
 
 div.sidemenu span.section.title {

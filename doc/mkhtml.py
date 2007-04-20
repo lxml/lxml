@@ -55,7 +55,7 @@ def build_menu(tree, basename, section, menuroot):
 
 def merge_menu(tree, menu, name):
     menu_root = copy.deepcopy(menu)
-    tree.getroot()[1][0].append(menu_root) # html->body->div[class=document]
+    tree.getroot()[1][0].insert(0, menu_root) # html->body->div[class=document]
     for el in menu_root.getiterator():
         tag = el.tag
         if tag[0] != '{':
