@@ -10,6 +10,9 @@ from benchbase import with_attributes, with_text, onlylib, serialized
 ############################################################
 
 class BenchMark(benchbase.BenchMarkBase):
+    repeat1000 = range(1000)
+    repeat3000 = range(3000)
+
     def __init__(self, lib):
         from lxml import etree, objectify
         self.objectify = objectify
@@ -20,37 +23,37 @@ class BenchMark(benchbase.BenchMarkBase):
 
     def bench_attribute(self, root):
         "1 2 4"
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             root.zzzzz
 
     def bench_attribute_cached(self, root):
         "1 2 4"
         cache = root.zzzzz
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             root.zzzzz
 
     def bench_attributes_deep(self, root):
         "1 2 4"
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             root.zzzzz['{cdefg}z00000']
 
     def bench_attributes_deep_cached(self, root):
         "1 2 4"
         cache1 = root.zzzzz
         cache2 = cache1['{cdefg}z00000']
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             root.zzzzz['{cdefg}z00000']
 
     def bench_objectpath(self, root):
         "1 2 4"
         path = self.objectify.ObjectPath(".zzzzz")
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             path(root)
 
     def bench_objectpath_deep(self, root):
         "1 2 4"
         path = self.objectify.ObjectPath(".zzzzz.{cdefg}z00000")
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             path(root)
 
     def bench_objectpath_deep_cached(self, root):
@@ -58,7 +61,7 @@ class BenchMark(benchbase.BenchMarkBase):
         cache1 = root.zzzzz
         cache2 = cache1['{cdefg}z00000']
         path = self.objectify.ObjectPath(".zzzzz.{cdefg}z00000")
-        for i in repeat(None, 3000):
+        for i in self.repeat3000:
             path(root)
 
     @with_text(text=True, utext=True, no_text=True)
@@ -72,7 +75,7 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_type_inference(self, root):
         "1 2 4"
         el = root.aaaaa
-        for i in repeat(None, 1000):
+        for i in self.repeat1000:
             el.getchildren()
 
     @with_text(text=True)
@@ -80,7 +83,7 @@ class BenchMark(benchbase.BenchMarkBase):
         "1 2 4"
         el = root.aaaaa
         self.objectify.annotate(el)
-        for i in repeat(None, 1000):
+        for i in self.repeat1000:
             el.getchildren()
 
 

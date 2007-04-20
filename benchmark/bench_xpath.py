@@ -3,7 +3,7 @@ from itertools import *
 from StringIO import StringIO
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized
+from benchbase import with_attributes, with_text, onlylib, serialized, children
 
 ############################################################
 # Benchmarks
@@ -11,14 +11,16 @@ from benchbase import with_attributes, with_text, onlylib, serialized
 
 class XPathBenchMark(benchbase.BenchMarkBase):
     @onlylib('lxe')
-    def bench_xpath_class(self, root):
+    @children
+    def bench_xpath_class(self, children):
         xpath = self.etree.XPath("./*[0]")
-        for child in root:
+        for child in children:
             xpath(child)
 
     @onlylib('lxe')
-    def bench_xpath_class_repeat(self, root):
-        for child in root:
+    @children
+    def bench_xpath_class_repeat(self, children):
+        for child in children:
             xpath = self.etree.XPath("./*[0]")
             xpath(child)
 
@@ -29,12 +31,14 @@ class XPathBenchMark(benchbase.BenchMarkBase):
             xpath.evaluate("./*[0]")
 
     @onlylib('lxe')
-    def bench_xpath_method(self, root):
-        for child in root:
+    @children
+    def bench_xpath_method(self, children):
+        for child in children:
             child.xpath("./*[0]")
 
     @onlylib('lxe')
-    def bench_xpath_old_extensions(self, root):
+    @children
+    def bench_xpath_old_extensions(self, children):
         def return_child(_, elements):
             if elements:
                 return elements[0][0]
@@ -43,11 +47,12 @@ class XPathBenchMark(benchbase.BenchMarkBase):
         extensions = {("test", "child") : return_child}
         xpath = self.etree.XPath("t:child(.)", namespaces={"test":"t"},
                                  extensions=extensions)
-        for child in root:
+        for child in children:
             xpath(child)
 
     @onlylib('lxe')
-    def bench_xpath_extensions(self, root):
+    @children
+    def bench_xpath_extensions(self, children):
         def return_child(_, elements):
             if elements:
                 return elements[0][0]
@@ -57,7 +62,7 @@ class XPathBenchMark(benchbase.BenchMarkBase):
 
         try:
             xpath = self.etree.XPath("test:t(.)", {"test":"testns"})
-            for child in root:
+            for child in children:
                 xpath(child)
         finally:
             del self.etree.FunctionNamespace("testns")["t"]
