@@ -31,8 +31,9 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    3  Trees and Documents
    4  Iteration
    5  Error handling on exceptions
-   6  xinclude
-   7  write_c14n on ElementTree
+   6  Serialisation
+   7  xinclude
+   8  write_c14n on ElementTree
 
 
 lxml.etree
@@ -62,17 +63,16 @@ Other Element APIs
 
 While lxml.etree itself uses the ElementTree API, it is possible to replace
 the Element implementation by `custom element subclasses`_.  This has been
-used to implement well-known XML APIs on top of lxml.  The ``lxml.elements``
-package contains examples.  Currently, there is a data-binding implementation
-called `objectify`_, which is similar to the `Amara bindery`_ tool.
+used to implement well-known XML APIs on top of lxml.  For example, lxml ships
+with a data-binding implementation called `objectify`_, which is similar to
+the `Amara bindery`_ tool.
 
-Additionally, the `lxml.elements.classlookup`_ module provides a number of
-different schemes to customize the mapping between libxml2 nodes and the
-Element classes used by lxml.etree.
+lxml.etree comes with a number of `different lookup schemes`_ to customize the
+mapping between libxml2 nodes and the Element classes used by lxml.etree.
 
 .. _`custom element subclasses`: namespace_extensions.html
 .. _`objectify`: objectify.html
-.. _`lxml.elements.classlookup`: elements.html#lxml.elements.classlookup
+.. _`different lookup schemes`: element_classes.html#setting-up-a-class-lookup-scheme
 .. _`Amara bindery`: http://uche.ogbuji.net/tech/4suite/amara/
 
 
@@ -226,6 +226,31 @@ Python logger.  To use it, see the descriptions of the function
 ``etree.useGlobalPythonLog`` and the class ``etree.PyErrorLog`` for help.
 Note that this does not affect the local error logs of XSLT, XMLSchema,
 etc. which are described in their respective sections below.
+
+
+Serialisation
+-------------
+
+lxml.etree has direct support for pretty printing XML output.  Functions like
+``ElementTree.write()`` and ``tostring()`` support it through a keyword
+argument::
+
+  >>> root = etree.XML("<root><test/></root>")
+  >>> print etree.tostring(root)
+  <root><test/></root>
+
+  >>> print etree.tostring(root, pretty_print=True)
+  <root>
+    <test/>
+  </root>
+
+By default, lxml (and ElementTree) output the XML declaration only if it is
+required.  You can enable or disable it explicitly by passing another keyword
+argument for the serialisation::
+
+  >>> print etree.tostring(root, xml_declaration=True)
+  <?xml version='1.0' encoding='ASCII'?>
+  <root><test/></root>
 
 
 xinclude
