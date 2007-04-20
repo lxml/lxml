@@ -252,8 +252,12 @@ argument for the serialisation::
   <?xml version='1.0' encoding='ASCII'?>
   <root><test/></root>
 
+Also see the general remarks on `Unicode support`_.
 
-xinclude
+.. _`Unicode support`: parsing.html#python-unicode-strings
+
+
+XInclude
 --------
 
 Simple XInclude support exists.  You can let lxml process xinclude statements
