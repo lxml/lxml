@@ -271,8 +271,11 @@ xinclude() method on a tree::
 
   >>> tree = etree.parse(data)
   >>> tree.xinclude()
-  >>> etree.tostring(tree.getroot())
-  '<doc xmlns:xi="http://www.w3.org/2001/XInclude">\n<foo/>\n<a xml:base="doc/test.xml"/>\n</doc>'
+  >>> print etree.tostring(tree.getroot())
+  <doc xmlns:xi="http://www.w3.org/2001/XInclude">
+  <foo/>
+  <a xml:base="doc/test.xml"/>
+  </doc>
 
 Note that the ElementTree compatible ElementInclude_ module is also supported
 as ``lxml.ElementInclude``.  It has the additional advantage of supporting
