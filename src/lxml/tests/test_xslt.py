@@ -223,7 +223,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 
     def test_xslt_parameter_missing(self):
         # DISABLED - NOT RELIABLE!
-        if etree.LIBXSLT_VERSION >= (1,1,18) and etree.LIBXSLT_VERSION < (1,1,20):
+        if etree.LIBXSLT_VERSION >= (1,1,18):
             return # no error from libxslt?
         # apply() without needed parameter will lead to XSLTApplyError
         tree = self.parse('<a><b>B</b><c>C</c></a>')
