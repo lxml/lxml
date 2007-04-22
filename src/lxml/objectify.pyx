@@ -101,7 +101,12 @@ def setPytypeAttributeTag(attribute_tag=None):
 setPytypeAttributeTag()
 
 
-# namespace for XML Schema instance
+# namespaces for XML Schema
+cdef object XML_SCHEMA_NS
+XML_SCHEMA_NS = "http://www.w3.org/2001/XMLSchema"
+cdef char* _XML_SCHEMA_NS
+_XML_SCHEMA_NS = _cstr(XML_SCHEMA_NS)
+
 cdef object XML_SCHEMA_INSTANCE_NS
 XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"
 cdef char* _XML_SCHEMA_INSTANCE_NS
@@ -1694,7 +1699,9 @@ def fromstring(xml):
 XML = fromstring
 
 cdef object _DEFAULT_NSMAP
-_DEFAULT_NSMAP = { "py": PYTYPE_NAMESPACE, "xsi": XML_SCHEMA_INSTANCE_NS }
+_DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,
+                   "xsi" : XML_SCHEMA_INSTANCE_NS,
+                   "xsd" : XML_SCHEMA_NS}
 
 def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
     """Objectify specific version of the lxml.etree Element() factory that
@@ -1722,6 +1729,8 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
     if the type can be identified.  If '_pytype' or '_xsi' are among the
     keyword arguments, they will be used instead.
     """
+    if nsmap is None:
+        nsmap = _DEFAULT_NSMAP
     if attrib is not None:
         if python.PyDict_Size(_attributes):
             attrib.update(_attributes)
