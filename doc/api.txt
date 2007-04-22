@@ -32,7 +32,7 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    4  Iteration
    5  Error handling on exceptions
    6  Serialisation
-   7  xinclude
+   7  XInclude and ElementInclude
    8  write_c14n on ElementTree
 
 
@@ -257,11 +257,11 @@ Also see the general remarks on `Unicode support`_.
 .. _`Unicode support`: parsing.html#python-unicode-strings
 
 
-XInclude
---------
+XInclude and ElementInclude
+---------------------------
 
-Simple XInclude support exists.  You can let lxml process xinclude statements
-in a document by calling the xinclude() method on a tree::
+You can let lxml process xinclude statements in a document by calling the
+xinclude() method on a tree::
 
   >>> data = StringIO('''\
   ... <doc xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -273,6 +273,14 @@ in a document by calling the xinclude() method on a tree::
   >>> tree.xinclude()
   >>> etree.tostring(tree.getroot())
   '<doc xmlns:xi="http://www.w3.org/2001/XInclude">\n<foo/>\n<a xml:base="doc/test.xml"/>\n</doc>'
+
+Note that the ElementTree compatible ElementInclude_ module is also supported
+as ``lxml.ElementInclude``.  It has the additional advantage of supporting
+custom `URL resolvers`_ at the Python level.  The normal XInclude mechanism
+cannot deploy these.  If you need ElementTree compatibility or custom
+resolvers, you have to stick to the external Python module.
+
+.. _ElementInclude: http://effbot.org/zone/element-xinclude.htm
 
 
 write_c14n on ElementTree
