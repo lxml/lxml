@@ -15,7 +15,7 @@ See also the notes on compatibility_ to ElementTree_.
      1.3  What standards does lxml implement?
      1.4  Where are the Windows binaries?
      1.5  What is the difference between lxml.etree and lxml.objectify?
-     1.6  Why is my application so slow?
+     1.6  How can I make my application run faster?
      1.7  Why do I get errors about missing UCS4 symbols when installing lxml?
    2  Contributing
      2.1  Why is lxml not written in Python?
@@ -136,17 +136,18 @@ and a large portion of its API.
   XPath, XSLT or validation.
 
 
-Why is my application so slow?
-------------------------------
+How can I make my application run faster?
+-----------------------------------------
 
 lxml.etree is a very fast library for processing XML.  There are, however, `a
 few caveats`_ involved in the mapping of the powerful libxml2 library to the
 simple and convenient ElementTree API.  Not all operations are as fast as the
-simplicity of the API might suggest.  The `benchmark page`_ has a comparison
-to other ElementTree implementations and a number of tips for performance
-tweaking.  As with any Python application, the rule of thumb is: the more of
-your processing runs in C, the faster your application gets.  See also the
-section on threading_.
+simplicity of the API might suggest, while some use cases can heavily benefit
+from finding the right way of doing them.  The `benchmark page`_ has a
+comparison to other ElementTree implementations and a number of tips for
+performance tweaking.  As with any Python application, the rule of thumb is:
+the more of your processing runs in C, the faster your application gets.  See
+also the section on threading_.
 
 .. _`a few caveats`:  performance.html#the-elementtree-api
 .. _`benchmark page`: performance.html
@@ -182,7 +183,7 @@ the C-level is required for performance reasons.
 To avoid writing plain C-code and caring too much about the details of
 built-in types and reference counting, lxml is written in Pyrex_, a
 Python-like language that is translated into C-code.  Chances are that if you
-know Python, you can write code that Pyrex accepts.  Again, the C-ish style
+know Python, you can write `code that Pyrex accepts`_.  Again, the C-ish style
 used in the lxml code is just for performance optimisations.  If you want to
 contribute, don't bother with the details, a Python implementation of your
 contribution is better than none.  And keep in mind that lxml's flexible API
@@ -192,6 +193,7 @@ with C-code at all.
 Please contact the `mailing list`_ if you need any help.
 
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/
+.. _`code that Pyrex accepts`: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/version/Doc/overview.html
 
 
 How can I contribute?

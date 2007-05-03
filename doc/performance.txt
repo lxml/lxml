@@ -30,10 +30,15 @@ different XML tree configurations: different tree sizes, with or without
 attributes (-/A), with or without ASCII or unicode text (-/S/U), and either
 against a tree or its serialised form (T/X).  In the result extracts cited
 below, T1 refers to a 3-level tree with many children at the third level, T2
-is swapped around to have many children at the root element, T3 is a deep tree
-with few children at each level and T4 is a small tree, slightly broader than
-deep.  If repetition is involved, this usually means running the benchmark in
-a loop over all children of the tree root.
+is swapped around to have many children below the root element, T3 is a deep
+tree with few children at each level and T4 is a small tree, slightly broader
+than deep.  If repetition is involved, this usually means running the
+benchmark in a loop over all children of the tree root, otherwise, the
+operation is run on the root node (C/R).
+
+As an example, the character code ``(SATR T1)`` states that the benchmark was
+running for tree T1, with plain string text (S) and attributes (A).  It was
+run against the root element (R) in the tree structure of the data (T).
 
 .. contents::
 .. 
@@ -48,11 +53,11 @@ a loop over all children of the tree root.
 Bad things first
 ----------------
 
-First thing to say: there *is* an overhead involved in having a C library
-mimic the ElementTree API.  As opposed to ElementTree, lxml has to generate
-Python objects on the fly when asked for them.  What this means is: the more
-of your code runs in Python, the slower your application gets.  Note, however,
-that this is true for most performance critical Python applications.
+First thing to say: there *is* an overhead involved in having a DOM-like C
+library mimic the ElementTree API.  As opposed to ElementTree, lxml has to
+generate Python objects on the fly when asked for them.  What this means is:
+the more of your code runs in Python, the slower your application gets.  Note,
+however, that this is true for most performance critical Python applications.
 
 
 Parsing and Serialising
