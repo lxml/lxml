@@ -14,7 +14,7 @@ cElementTree library is a fast C-implementation of the original ElementTree.
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
-The statements made here are backed by the benchmark scripts
+The statements made here are backed by the (micro-)benchmark scripts
 `bench_etree.py`_, `bench_xpath.py`_ and `bench_objectify.py`_ that come with
 the lxml source distribution.  The timings cited below compare lxml 1.3 (with
 libxml2 2.6.26) to the ElementTree and cElementTree versions shipped with
@@ -165,6 +165,29 @@ lxml has to create a Python object for each child and collect them in a list::
   lxe: root_getchildren          (--TR T2)    0.3500 msec/pass
   cET: root_getchildren          (--TR T2)    0.0150 msec/pass
   ET : root_getchildren          (--TR T2)    0.0091 msec/pass
+
+When accessing single children, however, e.g. by index, this handicap is
+negligible::
+
+  lxe: first_child               (--TR T2)    0.2499 msec/pass
+  cET: first_child               (--TR T2)    0.2048 msec/pass
+  ET : first_child               (--TR T2)    0.9291 msec/pass
+
+  lxe: last_child                (--TR T1)    0.2511 msec/pass
+  cET: last_child                (--TR T1)    0.2148 msec/pass
+  ET : last_child                (--TR T1)    0.9191 msec/pass
+
+... unless you add the time to find a child index in a bigger list, as ET and
+cET use Python lists here, which are based on arrays.  The data structure used
+by libxml2 is a linked tree, and thus, a linked list of children::
+
+  lxe: middle_child              (--TR T1)    0.2921 msec/pass
+  cET: middle_child              (--TR T1)    0.2069 msec/pass
+  ET : middle_child              (--TR T1)    0.9291 msec/pass
+
+  lxe: middle_child              (--TR T2)    1.9028 msec/pass
+  cET: middle_child              (--TR T2)    0.2089 msec/pass
+  ET : middle_child              (--TR T2)    0.9360 msec/pass
 
 As opposed to ET, libxml2 has a notion of documents that each element must be
 in.  This results in a major performance difference for creating independent

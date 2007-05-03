@@ -18,6 +18,19 @@ class BenchMark(benchbase.BenchMarkBase):
         for child in reversed(root):
             pass
 
+    def bench_first_child(self, root):
+        for i in range(1000):
+            child = root[0]
+
+    def bench_last_child(self, root):
+        for i in range(1000):
+            child = root[-1]
+
+    def bench_middle_child(self, root):
+        pos = len(root) / 2
+        for i in range(1000):
+            child = root[pos]
+
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8(self, root):
