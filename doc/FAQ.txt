@@ -1,6 +1,6 @@
-==========================
-Frequently Asked Questions
-==========================
+================================
+Frequently Asked Questions (FAQ)
+================================
 
 See also the notes on compatibility_ to ElementTree_.
 
