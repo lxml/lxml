@@ -17,23 +17,26 @@ See also the notes on compatibility_ to ElementTree_.
      1.5  What is the difference between lxml.etree and lxml.objectify?
      1.6  Why is my application so slow?
      1.7  Why do I get errors about missing UCS4 symbols when installing lxml?
-   2  Bugs
-     2.1  My application crashes! Why does lxml.etree do that?
-     2.2  I think I have found a bug in lxml. What should I do?
-   3  Threading
-     3.1  Can I use threads to concurrently access the lxml API?
-     3.2  Does my program run faster if I use threads?
-     3.3  Would my single-threaded program run faster if I turned off threading?
-   4  Parsing and Serialisation
-     4.1  Why doesn't the ``pretty_print`` option reformat my XML output?
-     4.2  Why can't lxml parse my XML from unicode strings?
-     4.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
-     4.4  Why can't I just delete parents or clear the root node in iterparse()?
-   5  XPath and Document Traversal
-     5.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
-     5.2  Why doesn't ``findall()`` support full XPath expressions?
-     5.3  How can I find out which namespace prefixes are used in a document?
-     5.4  How can I specify a default namespace for XPath expressions?
+   2  Contributing
+     2.1  Why is lxml not written in Python?
+     2.2  How can I contribute?
+   3  Bugs
+     3.1  My application crashes! Why does lxml.etree do that?
+     3.2  I think I have found a bug in lxml. What should I do?
+   4  Threading
+     4.1  Can I use threads to concurrently access the lxml API?
+     4.2  Does my program run faster if I use threads?
+     4.3  Would my single-threaded program run faster if I turned off threading?
+   5  Parsing and Serialisation
+     5.1  Why doesn't the ``pretty_print`` option reformat my XML output?
+     5.2  Why can't lxml parse my XML from unicode strings?
+     5.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+     5.4  Why can't I just delete parents or clear the root node in iterparse()?
+   6  XPath and Document Traversal
+     6.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+     6.2  Why doesn't ``findall()`` support full XPath expressions?
+     6.3  How can I find out which namespace prefixes are used in a document?
+     6.4  How can I specify a default namespace for XPath expressions?
 
 
 General Questions
@@ -167,6 +170,64 @@ this.
 .. _`build instructions`: build.html
 
 
+Contributing
+============
+
+Why is lxml not written in Python?
+----------------------------------
+
+lxml interfaces with two C libraries: libxml2 and libxslt.  Accessing them at
+the C-level is required for performance reasons.
+
+To avoid writing plain C-code and caring too much about the details of
+built-in types and reference counting, lxml is written in Pyrex_, a
+Python-like language that is translated into C-code.  Chances are that if you
+know Python, you can write code that Pyrex accepts.  Again, the C-ish style
+used in the lxml code is just for performance optimisations.  If you want to
+contribute, don't bother with the details, a Python implementation of your
+contribution is better than none.  And keep in mind that lxml's flexible API
+often favours an implementation of features in pure Python, without bothering
+with C-code at all.
+
+Please contact the `mailing list`_ if you need any help.
+
+.. _Pyrex: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/
+
+
+How can I contribute?
+---------------------
+
+Besides enhancing the code, there are a lot of places where you can help the
+project and its user base.  You can
+
+* spread the word and write about lxml.  Many users (especially new Python
+  users) have not yet heared about lxml, although our user base is constantly
+  growing.  If you write your own blog and feel like saying something about
+  lxml, go ahead and do so.  If we think your contribution or criticism is
+  valuable to other users, we may even put a link or a quote on the project
+  page.
+
+* provide code examples for the general usage of lxml or specific problems
+  solved with lxml.  Readable code is a very good way of showing how a library
+  can be used and what great things you can do with it.  Again, if we hear
+  about it, we can set a link on the project page.
+
+* work on the documentation.  The web page is generated from a set of ReST_
+  `text files`_.  It is meant both as a representative project page for lxml
+  and as a site for documenting lxml's API and usage.  If you have questions
+  or an idea how to make it more readable and accessible while you are reading
+  it, please send a comment to the `mailing list`_.
+
+.. _ReST: http://docutils.sourceforge.net/rst.html
+.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
+
+* improve the docstrings.  lxml uses docstrings to support Python's integrated
+  online ``help()`` function.  However, sometimes these are not sufficient to
+  grasp the details of the function in question.  If you find such a place,
+  you can try to write up a better description and send it to the `mailing
+  list`_.
+
+
 Bugs
 ====
 
@@ -176,7 +237,7 @@ My application crashes! Why does lxml.etree do that?
 One of the goals of lxml is "no segfaults", so if there is no clear warning in
 the documentation that you were doing something potentially harmful, you have
 found a bug and we would like to hear about it.  Please report this bug to the
-mailing list.  See the next section on how to do that.
+`mailing list`_.  See the next section on how to do that.
 
 
 I think I have found a bug in lxml. What should I do?

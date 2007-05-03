@@ -2,8 +2,10 @@ How to build lxml from source
 =============================
 
 To build lxml from source, you need libxml2 and libxslt properly installed,
-including header files (possibly shipped in -dev packages).  The build process
-also requires setuptools_.
+*including the header files*.  These are likely shipped in separate ``-dev``
+or ``-devel`` packages like ``libxml2-dev``, which you need to install.  The
+build process also requires setuptools_.  The lxml source distribution comes
+with a script called ``ez_setup.py`` that can be used to install them.
 
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 
@@ -34,18 +36,22 @@ be an lxml developer, you do need a working Pyrex installation.
 
   Newer versions of lxml depend on features and bug fixes that are not yet
   available in an official Pyrex release.  This includes support for the
-  external C-API of lxml, for Python 2.5 and for 64 bit architectures.
+  external C-API of lxml.etree, for Python 2.5 and for 64 bit architectures.
 
   To build lxml 1.1 and later from non-release or modified sources, you must
-  therefore install an updated Pyrex version from here:
+  therefore use an updated Pyrex version from here:
 
   http://codespeak.net/svn/lxml/pyrex/
 
-  Since version 1.1.2, the lxml source distribution includes this Pyrex
-  version.  It will be used if the 'pyrex' directory is available in the lxml
-  root directory.  If you install from SVN or delete this directory from the
-  unpacked distribution directory, the normally installed Pyrex version will
-  be used.
+  A subversion checkout of lxml will automatically retrieve the latest Pyrex
+  as external project source (``svn:externals``).  Look out for the ``Pyrex``
+  directory in the source tree.
+
+  Since version 1.1.2, the lxml source distribution also includes this Pyrex
+  version.  It will be used if the ``Pyrex`` directory is available in the
+  lxml root directory.  If you install from SVN or delete this directory from
+  the unpacked distribution directory, the normally installed Pyrex version
+  will be used.
 
 * lxml 1.0 and earlier
 
@@ -86,6 +92,10 @@ Usually, building lxml is done through setuptools.  Do a Subversion checkout
 
   python setup.py build
 
+or::
+
+  python setup.py bdist_egg
+
 If you want to test lxml from the source directory, it is better to build it
 in-place like this::
 
@@ -96,15 +106,24 @@ or, in Unix-like environments::
   make
 
 If you get errors about missing header files (e.g., ``libxml/xmlversion.h``)
-then you need to add the location of that file to the include path like::
+then you need to make sure the development packages of libxml2 and libxslt are
+properly installed.  If this doesn't help, you may have to add the location of
+the header files to the include path like::
 
-  python setup.py build_ext -i -I /usr/include/libxml2
+  python setup.py build_ext -i  -I /usr/include/libxml2
 
 where the file is in ``/usr/include/libxml2/libxml/xmlversion.h``
 
 To use lxml.etree in-place, you can place lxml's ``src`` directory on your
 Python module search path (PYTHONPATH) and then import ``lxml.etree`` to play
-with it.
+with it::
+
+  # cd lxml
+  # PYTHONPATH=src python
+  Python 2.5.1
+  Type "help", "copyright", "credits" or "license" for more information.
+  >>> from lxml import etree
+  >>>
 
 To recompile after changes, note that you may have to run ``make clean`` or
 delete the file ``src/lxml/etree.c``.  Distutils do not automatically pick up
@@ -125,8 +144,8 @@ following one-step command to trigger an in-place build and test it::
 
   make test
 
-To run the ElementTree and cElementTree compatibility tests, make sure
-you have lxml on your PYTHONPATH first, then run::
+This also runs the ElementTree and cElementTree compatibility tests.  To call
+them separately, make sure you have lxml on your PYTHONPATH first, then run::
 
   python selftest.py
 
@@ -147,15 +166,16 @@ Contributing an egg
 
 This is the procedure to make an lxml egg for your platform:
 
-* download the lxml-x.y.tar.gz release. This contains the pregenerated C so we
-  don't run into any Pyrex issues. Unpack it and cd into it.
+* Download the lxml-x.y.tar.gz release.  This contains the pregenerated C so
+  that you don't run into any Pyrex issues.  Unpack it and cd into it.
 
 * python setup.py build
 
-* if you're on a unixy platform, cd into build/lib.your.platform and
-  strip any .so file you find there. This reduces the size of the egg.
+* If you're on a unixy platform, cd into ``build/lib.your.platform`` and strip
+  any ``.so`` file you find there.  This reduces the size of the egg
+  considerably.
 
-* python setup.py bdist_egg upload
+* ``python setup.py bdist_egg upload``
 
 The last 'upload' step only works if you have access to the lxml cheeseshop
 entry.  If not, you can just make an egg with ``bdist_egg`` and mail it to the
