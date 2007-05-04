@@ -1101,6 +1101,9 @@ cdef class __ContentOnlyElement(_Element):
     def items(self):
         return []
 
+    def values(self):
+        return []
+
 cdef class _Comment(__ContentOnlyElement):
     property tag:
         def __get__(self):
@@ -1750,6 +1753,8 @@ def ProcessingInstruction(target, text=None):
     c_node = _createPI(c_doc, _cstr(target), _cstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
+
+PI = ProcessingInstruction
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
