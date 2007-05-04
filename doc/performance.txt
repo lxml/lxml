@@ -40,6 +40,13 @@ As an example, the character code ``(SATR T1)`` states that the benchmark was
 running for tree T1, with plain string text (S) and attributes (A).  It was
 run against the root element (R) in the tree structure of the data (T).
 
+Note that very small operations are repeated in integer loops to make them
+measurable.  It is therefore not always possible to compare the absolute
+timings of, say, a single access benchmark (which usually loops) and a 'get
+all in one step' benchmark, which already takes enough time to be measurable
+and is therefore measured as is.  Take a look at the concrete benchmarks in
+the scripts to understand how the numbers compare.
+
 .. contents::
 .. 
    1  Bad things first
@@ -137,20 +144,20 @@ restructuring.  This can be seen from the tree setup times of the benchmark
 (given in seconds)::
 
   lxe:       --     S-     U-     -A     SA     UA
-       T1: 0.1029 0.1005 0.0998 0.1003 0.0998 0.1002
-       T2: 0.1035 0.1013 0.1015 0.1090 0.1089 0.1090
-       T3: 0.0276 0.0270 0.0273 0.0679 0.0673 0.0673
-       T4: 0.0004 0.0004 0.0004 0.0013 0.0013 0.0013
+       T1: 0.1155 0.1154 0.1153 0.1159 0.1181 0.1158
+       T2: 0.1183 0.1197 0.1200 0.1267 0.1261 0.1264
+       T3: 0.0341 0.0312 0.0314 0.0726 0.0717 0.0720
+       T4: 0.0005 0.0004 0.0004 0.0014 0.0014 0.0014
   cET:       --     S-     U-     -A     SA     UA
-       T1: 0.0277 0.0273 0.0273 0.0272 0.0278 0.0275
-       T2: 0.0281 0.0347 0.0281 0.0285 0.0284 0.0284
-       T3: 0.0074 0.0074 0.0074 0.0122 0.0102 0.0101
+       T1: 0.0290 0.0271 0.0275 0.0297 0.0273 0.0274
+       T2: 0.0280 0.0280 0.0281 0.0285 0.0283 0.0286
+       T3: 0.0071 0.0072 0.0071 0.0113 0.0096 0.0096
        T4: 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001
   ET :       --     S-     U-     -A     SA     UA
-       T1: 0.1349 0.1962 0.2356 0.1288 0.2642 0.1351
-       T2: 0.3104 0.1344 0.3566 0.3857 0.1354 0.4677
-       T3: 0.0313 0.0325 0.0312 0.0356 0.3803 0.0364
-       T4: 0.0005 0.0005 0.0008 0.0006 0.0007 0.0006
+       T1: 0.1362 0.1985 0.2300 0.1344 0.2672 0.1335
+       T2: 0.3107 0.1386 0.3581 0.3886 0.1388 0.4277
+       T3: 0.0334 0.0332 0.0320 0.0367 0.3769 0.0375
+       T4: 0.0006 0.0005 0.0008 0.0007 0.0007 0.0006
 
 While lxml is still faster than ET in most cases (30-60%), cET can be up to
 three times faster than lxml here.  One of the reasons is that lxml must
