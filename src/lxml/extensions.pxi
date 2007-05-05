@@ -306,6 +306,18 @@ def Extension(module, function_mapping, ns=None):
 ################################################################################
 # EXSLT regexp implementation
 
+cdef int _collect_tree_text(element, l) except -1:
+    # recursively collect all text (XPath 'string-value' of a node) 
+    text = element.text
+    if text is not None:
+        python.PyList_Append(l, text)
+    for child in element:
+        _collect_tree_text(child, l)
+    tail = element.tail
+    if tail is not None:
+        python.PyList_Append(l, tail)
+    return 0
+
 cdef class _ExsltRegExp:
     cdef object _compile_map
     def __init__(self):
@@ -314,6 +326,19 @@ cdef class _ExsltRegExp:
     cdef _make_string(self, value):
         if _isString(value):
             return value
+        elif python.PyList_Check(value):
+            # node set: take recursive text concatenation of first element
+            if python.PyList_GET_SIZE(value) == 0:
+                return ''
+            firstnode = value[0]
+            if _isString(firstnode):
+                return firstnode
+            elif isinstance(firstnode, _Element):
+                l = []
+                _collect_tree_text(firstnode, l)
+                return ''.join(l)
+            else:
+                return str(firstnode)
         else:
             raise TypeError, "Invalid argument type %s" % type(value)
 

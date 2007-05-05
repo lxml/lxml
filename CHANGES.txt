@@ -8,6 +8,9 @@ Under Development
 Features added
 --------------
 
+* The regular expression functions in XPath now support passing a node-set
+  instead of a string
+
 * ``Element.addnext(el)`` and ``Element.addprevious(el)`` methods to support
   adding processing instructions and comments around the root node
 
@@ -17,7 +20,7 @@ Features added
   plus new ``xsiannotate()`` and ``deannotate()`` functions
 
 * Support for custom Element class instantiation in lxml.sax: passing a
-  ``makeelement()`` function to the ElementTreeContentHandler will reuse the
+  ``makeelement`` function to the ElementTreeContentHandler will reuse the
   lookup context of that function
 
 * '.' represents empty ObjectPath (identity)
