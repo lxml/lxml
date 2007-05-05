@@ -6,9 +6,14 @@ lxml supports both XPath and XSLT through libxml2 and libxslt in a standards
 compliant way.
 
 .. contents::
-.. 
+..
    1  XPath
+     1.1  The ``xpath()`` method
+     1.2  The ``XPath`` class
+     1.3  The ``XPathEvaluator`` classes
+     1.4  ``ETXPath``
    2  XSLT
+
 
 The usual setup procedure::
 
@@ -17,12 +22,17 @@ The usual setup procedure::
 
 
 XPath
------
+=====
 
-lxml.etree supports the simple path syntax of the ``findall()`` etc.  methods
-on ElementTree and Element, as known from the original ElementTree library.
-As an extension, these classes also provide an ``xpath()`` method that
-supports expressions in the complete XPath syntax.
+lxml.etree supports the simple path syntax of the `find, findall and
+findtext`_ methods on ElementTree and Element, as known from the original
+ElementTree library (ElementPath_).  As an lxml specific extension, these
+classes also provide an ``xpath()`` method that supports expressions in the
+complete XPath syntax, as well as `extension functions`_.
+
+.. _ElementPath: http://effbot.org/zone/element-xpath.htm
+.. _`find,  findall and findtext`: http://effbot.org/zone/element.htm#searching-for-subelements
+.. _`extension functions`: extensions.html
 
 There are also specialized XPath evaluator classes that are more efficient for
 frequent evaluation: ``XPath`` and ``XPathEvaluator``.  See the `performance
@@ -31,6 +41,10 @@ Elements and ElementTrees are the same as for the ``xpath()`` method described
 here.
 
 .. _`performance comparison`: performance.html#xpath
+
+
+The ``xpath()`` method
+----------------------
 
 For ElementTree, the xpath method performs a global XPath query against the
 document (if absolute) or against the root node (if relative)::
@@ -48,7 +62,7 @@ document (if absolute) or against the root node (if relative)::
   >>> r[0].tag
   'bar'
 
-When ``xpath()`` is used on an element, the XPath expression is evaluated
+When ``xpath()`` is used on an Element, the XPath expression is evaluated
 against the element (if relative) or against the root tree (if absolute)::
 
   >>> root = tree.getroot()
@@ -65,6 +79,19 @@ against the element (if relative) or against the root tree (if absolute)::
   >>> r = tree.xpath('/foo/bar')
   >>> r[0].tag
   'bar'
+
+The ``xpath()`` method has support for XPath variables::
+
+  >>> expr = "//*[local-name() = $name]"
+
+  >>> print root.xpath(expr, name = "foo")[0].tag
+  foo
+
+  >>> print root.xpath(expr, name = "bar")[0].tag
+  bar
+
+  >>> print root.xpath("$text", text = "Hello World!")
+  Hello World!
 
 Optionally, you can provide a ``namespaces`` keyword argument, which should be
 a dictionary mapping the namespace prefixes used in the XPath expression to
@@ -102,11 +129,10 @@ used:
 * a (unicode) string, when the XPath expression has a string result.
 
 * a list of items, when the XPath expression has a list as result.  The items
-  may include elements, strings and tuples.  Text nodes and attributes in the
-  result are returned as strings (the text node content or attribute value).
-  Comments are also returned as strings, enclosed by the usual ``<!--`` and
-  ``-->`` markers.  Namespace declarations are returned as tuples of strings:
-  ``(prefix, URI)``.
+  may include elements (also comments and processing instructions), strings
+  and tuples.  Text nodes and attributes in the result are returned as strings
+  (the text node content or attribute value).  Namespace declarations are
+  returned as tuples of strings: ``(prefix, URI)``.
 
 A related convenience method of ElementTree objects is ``getpath(element)``,
 which returns a structural, absolute XPath expression to find that element::
@@ -124,8 +150,111 @@ which returns a structural, absolute XPath expression to find that element::
   True
 
 
+The ``XPath`` class
+-------------------
+
+The ``XPath`` class compiles an XPath expression into a callable function::
+
+  >>> root = etree.XML("<root><a><b/></a><b/></root>")
+
+  >>> find = etree.XPath("//b")
+  >>> print find(root)[0].tag
+  b
+
+The compilation takes as much time as in the ``xpath()`` method, but it is
+done only once per class instantiation.  This makes it especially efficient
+for repeated evaluation of the same XPath expression.
+
+Just like the ``xpath()`` method, the ``XPath`` class supports XPath
+variables::
+
+  >>> count_elements = etree.XPath("count(//*[local-name() = $name])")
+
+  >>> print count_elements(root, name = "a")
+  1.0
+  >>> print count_elements(root, name = "b")
+  2.0
+
+This supports very efficient evaluation of modified versions of an XPath
+expression, as compilation is still only required once.
+
+Prefix-to-namespace mappings can be passed as second parameter::
+
+  >>> root = etree.XML("<root xmlns='NS'><a><b/></a><b/></root>")
+
+  >>> find = etree.XPath("//n:b", {'n':'NS'})
+  >>> print find(root)[0].tag
+  {NS}b
+
+You can pass the boolean keyword ``regexp`` to enable Python regular
+expressions in the EXSLT_ namespace::
+
+  >>> regexpNS = "http://exslt.org/regular-expressions"
+  >>> find = etree.XPath("//*[r:test(., '^abc$', 'i')]",
+  ...                    {'r':regexpNS}, regexp = True)
+
+  >>> root = etree.XML("<root><a>aB</a><b>aBc</b></root>")
+  >>> print find(root)[0].text
+  aBc
+
+.. _EXSLT: http://www.exslt.org/
+
+
+The ``XPathEvaluator`` classes
+------------------------------
+
+lxml.etree provides two other efficient XPath evaluators that work on
+ElementTrees or Elements respectively: ``XPathDocumentEvaluator`` and
+``XPathElementEvaluator``.  They are automatically selected if you use the
+XPathEvaluator helper for instantiation::
+
+  >>> root = etree.XML("<root><a><b/></a><b/></root>")
+  >>> xpatheval = etree.XPathEvaluator(root)
+
+  >>> print isinstance(xpatheval, etree.XPathElementEvaluator)
+  True
+
+  >>> print xpatheval("//b")[0].tag
+  b
+
+This class provides efficient support for evaluating different XPath
+expressions on the same Element or ElementTree.
+
+
+``ETXPath``
+-----------
+
+ElementTree supports a language named ElementPath_ in its ``find*()`` methods.
+One of the main differences between XPath and ElementPath is that the XPath
+language requires an indirection through prefixes for namespace support,
+whereas ElementTree uses the Clark notation (``{ns}name``) to avoid prefixes
+completely.  The other major difference regards the capabilities of both path
+languages.  Where XPath supports various sophisticated ways of restricting the
+result set through functions and boolean expressions, ElementPath only
+supports pure path traversal without nesting or further conditions.  So, while
+the ElementPath syntax is self-contained and therefore easier to write and
+handle, XPath is much more powerful and expressive.
+
+lxml.etree bridges this gap through the class ``ETXPath``, which accepts XPath
+expressions with namespaces in Clark notation.  It is identical to the
+``XPath`` class, except for the namespace notation.  Normally, you would
+write::
+
+  >>> root = etree.XML("<root xmlns='ns'><a><b/></a><b/></root>")
+
+  >>> find = etree.XPath("//p:b", {'p' : 'ns'})
+  >>> print find(root)[0].tag
+  {ns}b
+
+``ETXPath`` allows you to change this to::
+
+  >>> find = etree.ETXPath("//{ns}b")
+  >>> print find(root)[0].tag
+  {ns}b
+
+
 XSLT
-----
+====
 
 lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
 given an ElementTree object to construct an XSLT transformer::
