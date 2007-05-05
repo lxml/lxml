@@ -78,8 +78,10 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     if write_xml_declaration:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
+    _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, pretty_print, encoding)
     _writeTail(c_buffer, c_node, encoding, pretty_print)
+    _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding):
@@ -99,6 +101,36 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0,
                                pretty_print, encoding)
         c_node = c_node.next
+
+cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
+                             char* encoding, int pretty_print):
+    cdef xmlNode* c_sibling
+    if c_node.parent is not NULL and _isElement(c_node.parent):
+        return
+    # we are at a root node, so add PI and comment siblings
+    c_sibling = c_node
+    while c_sibling.prev != NULL and \
+              (c_sibling.prev.type == tree.XML_PI_NODE or \
+               c_sibling.prev.type == tree.XML_COMMENT_NODE):
+        c_sibling = c_sibling.prev
+    while c_sibling != c_node:
+        tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
+                               pretty_print, encoding)
+        c_sibling = c_sibling.next
+
+cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
+                             char* encoding, int pretty_print):
+    cdef xmlNode* c_sibling
+    if c_node.parent is not NULL and _isElement(c_node.parent):
+        return
+    # we are at a root node, so add PI and comment siblings
+    c_sibling = c_node.next
+    while c_sibling != NULL and \
+              (c_sibling.type == tree.XML_PI_NODE or \
+               c_sibling.type == tree.XML_COMMENT_NODE):
+        tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
+                               pretty_print, encoding)
+        c_sibling = c_sibling.next
 
 # output to file-like objects
 

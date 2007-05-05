@@ -25,6 +25,30 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEquals('<a>ab<b>bb</b>ba</a>',
                           xml_out)
 
+    def test_etree_sax_comment(self):
+        tree = self.parse('<a>ab<!-- TEST -->ba</a>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEquals('<a>abba</a>',
+                          xml_out)
+
+    def test_etree_sax_pi(self):
+        tree = self.parse('<a>ab<?this and that?>ba</a>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEquals('<a>ab<?this and that?>ba</a>',
+                          xml_out)
+
+    def test_etree_sax_comment_root(self):
+        tree = self.parse('<!-- TEST --><a>ab</a>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEquals('<a>ab</a>',
+                          xml_out)
+
+    def test_etree_sax_pi_root(self):
+        tree = self.parse('<?this and that?><a>ab</a>')
+        xml_out = self._saxify_serialize(tree)
+        self.assertEquals('<?this and that?><a>ab</a>',
+                          xml_out)
+
     def test_etree_sax_attributes(self):
         tree = self.parse('<a aa="5">ab<b b="5"/>ba</a>')
         xml_out = self._saxify_serialize(tree)

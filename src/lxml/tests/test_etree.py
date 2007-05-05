@@ -404,6 +404,156 @@ class ETreeOnlyTestCase(HelperTestCase):
         Element = self.etree.Element
         self.assertRaises(TypeError, Element('a').append, None)
 
+    def test_addnext(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b')
+
+        self.assertEquals(['a', 'b'],
+                          [c.tag for c in root])
+        root[1].addnext(root[0])
+        self.assertEquals(['b', 'a'],
+                          [c.tag for c in root])
+
+    def test_addprevious(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        SubElement(root, 'a')
+        SubElement(root, 'b')
+
+        self.assertEquals(['a', 'b'],
+                          [c.tag for c in root])
+        root[0].addprevious(root[1])
+        self.assertEquals(['b', 'a'],
+                          [c.tag for c in root])
+
+    def test_addnext_root(self):
+        Element = self.etree.Element
+        a = Element('a')
+        b = Element('b')
+        self.assertRaises(TypeError, a.addnext, b)
+
+    def test_addnext_root(self):
+        Element = self.etree.Element
+        a = Element('a')
+        b = Element('b')
+        self.assertRaises(TypeError, a.addnext, b)
+
+    def test_addprevious_pi(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        PI = self.etree.PI
+        root = Element('root')
+        SubElement(root, 'a')
+        pi = PI('TARGET', 'TEXT')
+        pi.tail = "TAIL"
+
+        self.assertEquals('<root><a></a></root>',
+                          self._writeElement(root))
+        root[0].addprevious(pi)
+        self.assertEquals('<root><?TARGET TEXT?>TAIL<a></a></root>',
+                          self._writeElement(root))
+
+    def test_addprevious_root_pi(self):
+        Element = self.etree.Element
+        PI = self.etree.PI
+        root = Element('root')
+        pi = PI('TARGET', 'TEXT')
+        pi.tail = "TAIL"
+
+        self.assertEquals('<root></root>',
+                          self._writeElement(root))
+        root.addprevious(pi)
+        self.assertEquals('<?TARGET TEXT?>\n<root></root>',
+                          self._writeElement(root))
+
+    def test_addnext_pi(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        PI = self.etree.PI
+        root = Element('root')
+        SubElement(root, 'a')
+        pi = PI('TARGET', 'TEXT')
+        pi.tail = "TAIL"
+
+        self.assertEquals('<root><a></a></root>',
+                          self._writeElement(root))
+        root[0].addnext(pi)
+        self.assertEquals('<root><a></a><?TARGET TEXT?>TAIL</root>',
+                          self._writeElement(root))
+
+    def test_addnext_root_pi(self):
+        Element = self.etree.Element
+        PI = self.etree.PI
+        root = Element('root')
+        pi = PI('TARGET', 'TEXT')
+        pi.tail = "TAIL"
+
+        self.assertEquals('<root></root>',
+                          self._writeElement(root))
+        root.addnext(pi)
+        self.assertEquals('<root></root>\n<?TARGET TEXT?>',
+                          self._writeElement(root))
+
+    def test_addnext_comment(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        Comment = self.etree.Comment
+        root = Element('root')
+        SubElement(root, 'a')
+        comment = Comment('TEXT ')
+        comment.tail = "TAIL"
+
+        self.assertEquals('<root><a></a></root>',
+                          self._writeElement(root))
+        root[0].addnext(comment)
+        self.assertEquals('<root><a></a><!--TEXT -->TAIL</root>',
+                          self._writeElement(root))
+
+    def test_addnext_root_comment(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        root = Element('root')
+        comment = Comment('TEXT ')
+        comment.tail = "TAIL"
+
+        self.assertEquals('<root></root>',
+                          self._writeElement(root))
+        root.addnext(comment)
+        self.assertEquals('<root></root>\n<!--TEXT -->',
+                          self._writeElement(root))
+
+    def test_addprevious_comment(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        Comment = self.etree.Comment
+        root = Element('root')
+        SubElement(root, 'a')
+        comment = Comment('TEXT ')
+        comment.tail = "TAIL"
+
+        self.assertEquals('<root><a></a></root>',
+                          self._writeElement(root))
+        root[0].addprevious(comment)
+        self.assertEquals('<root><!--TEXT -->TAIL<a></a></root>',
+                          self._writeElement(root))
+
+    def test_addprevious_root_comment(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        root = Element('root')
+        comment = Comment('TEXT ')
+        comment.tail = "TAIL"
+
+        self.assertEquals('<root></root>',
+                          self._writeElement(root))
+        root.addprevious(comment)
+        self.assertEquals('<!--TEXT -->\n<root></root>',
+                          self._writeElement(root))
+
     # ET's Elements have items() and key(), but not values()
     def test_attribute_values(self):
         XML = self.etree.XML

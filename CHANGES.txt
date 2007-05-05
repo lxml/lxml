@@ -8,12 +8,17 @@ Under Development
 Features added
 --------------
 
+* ``Element.addnext(el)`` and ``Element.addprevious(el)`` methods to support
+  adding processing instructions and comments around the root node
+
 * Element.attrib now has a ``pop()`` method
 
 * Extended type annotation in objectify: cleaner annotation namespace setup
   plus new ``xsiannotate()`` and ``deannotate()`` functions
 
-* Support for custom Element class instantiation in lxml.sax
+* Support for custom Element class instantiation in lxml.sax: passing a
+  ``makeelement()`` function to the ElementTreeContentHandler will reuse the
+  lookup context of that function
 
 * '.' represents empty ObjectPath (identity)
 
@@ -29,6 +34,11 @@ Features added
 
 Bugs fixed
 ----------
+
+* Documents lost their top-level PIs and comments on serialisation
+
+* lxml.sax failed on comments and PIs. Comments are now properly ignored and
+  PIs are copied.
 
 * Thread safety in XPath evaluators
 

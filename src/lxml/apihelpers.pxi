@@ -541,7 +541,6 @@ cdef void _appendChild(_Element parent, _Element child):
     c_node = child._c_node
     # store possible text node
     c_next = c_node.next
-    # XXX what if element is coming from a different document?
     tree.xmlUnlinkNode(c_node)
     # move node itself
     tree.xmlAddChild(parent._c_node, c_node)
@@ -549,6 +548,38 @@ cdef void _appendChild(_Element parent, _Element child):
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(child, parent._doc)
+
+cdef void _appendSibling(_Element element, _Element sibling):
+    """Append a new child to a parent element.
+    """
+    cdef xmlNode* c_next
+    cdef xmlNode* c_node
+    c_node = sibling._c_node
+    # store possible text node
+    c_next = c_node.next
+    tree.xmlUnlinkNode(c_node)
+    # move node itself
+    tree.xmlAddNextSibling(element._c_node, c_node)
+    _moveTail(c_next, c_node)
+    # uh oh, elements may be pointing to different doc when
+    # parent element has moved; change them too..
+    moveNodeToDocument(sibling, element._doc)
+
+cdef void _prependSibling(_Element element, _Element sibling):
+    """Append a new child to a parent element.
+    """
+    cdef xmlNode* c_next
+    cdef xmlNode* c_node
+    c_node = sibling._c_node
+    # store possible text node
+    c_next = c_node.next
+    tree.xmlUnlinkNode(c_node)
+    # move node itself
+    tree.xmlAddPrevSibling(element._c_node, c_node)
+    _moveTail(c_next, c_node)
+    # uh oh, elements may be pointing to different doc when
+    # parent element has moved; change them too..
+    moveNodeToDocument(sibling, element._doc)
 
 cdef int isutf8(char* s):
     cdef char c
