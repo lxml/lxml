@@ -144,9 +144,9 @@ restructuring.  This can be seen from the tree setup times of the benchmark
 (given in seconds)::
 
   lxe:       --     S-     U-     -A     SA     UA
-       T1: 0.1155 0.1154 0.1153 0.1159 0.1181 0.1158
-       T2: 0.1183 0.1197 0.1200 0.1267 0.1261 0.1264
-       T3: 0.0341 0.0312 0.0314 0.0726 0.0717 0.0720
+       T1: 0.1181 0.1080 0.1074 0.1088 0.1087 0.1099
+       T2: 0.1103 0.1109 0.1164 0.1241 0.1203 0.1231
+       T3: 0.0297 0.0309 0.0297 0.0716 0.0704 0.0703
        T4: 0.0005 0.0004 0.0004 0.0014 0.0014 0.0014
   cET:       --     S-     U-     -A     SA     UA
        T1: 0.0290 0.0271 0.0275 0.0297 0.0273 0.0274
@@ -169,18 +169,18 @@ The same reason makes operations like ``getchildren()`` more costly in lxml.
 Where ET and cET can quickly create a shallow copy of their list of children,
 lxml has to create a Python object for each child and collect them in a list::
 
-  lxe: root_getchildren          (--TR T2)    0.3500 msec/pass
+  lxe: root_getchildren          (--TR T2)    0.1960 msec/pass
   cET: root_getchildren          (--TR T2)    0.0150 msec/pass
   ET : root_getchildren          (--TR T2)    0.0091 msec/pass
 
 When accessing single children, however, e.g. by index, this handicap is
 negligible::
 
-  lxe: first_child               (--TR T2)    0.2499 msec/pass
+  lxe: first_child               (--TR T2)    0.2289 msec/pass
   cET: first_child               (--TR T2)    0.2048 msec/pass
   ET : first_child               (--TR T2)    0.9291 msec/pass
 
-  lxe: last_child                (--TR T1)    0.2511 msec/pass
+  lxe: last_child                (--TR T1)    0.2310 msec/pass
   cET: last_child                (--TR T1)    0.2148 msec/pass
   ET : last_child                (--TR T1)    0.9191 msec/pass
 
@@ -188,11 +188,11 @@ negligible::
 cET use Python lists here, which are based on arrays.  The data structure used
 by libxml2 is a linked tree, and thus, a linked list of children::
 
-  lxe: middle_child              (--TR T1)    0.2921 msec/pass
+  lxe: middle_child              (--TR T1)    0.2759 msec/pass
   cET: middle_child              (--TR T1)    0.2069 msec/pass
   ET : middle_child              (--TR T1)    0.9291 msec/pass
 
-  lxe: middle_child              (--TR T2)    1.9028 msec/pass
+  lxe: middle_child              (--TR T2)    1.7111 msec/pass
   cET: middle_child              (--TR T2)    0.2089 msec/pass
   ET : middle_child              (--TR T2)    0.9360 msec/pass
 
@@ -208,11 +208,11 @@ Therefore, it is always preferable to create Elements for the document they
 are supposed to end up in, either as SubElements of an Element or using the
 explicit ``Element.makeelement()`` call::
 
-  lxe: makeelement               (--TC T2)    2.5990 msec/pass
+  lxe: makeelement               (--TC T2)    2.3680 msec/pass
   cET: makeelement               (--TC T2)    0.3128 msec/pass
   ET : makeelement               (--TC T2)    1.6940 msec/pass
 
-  lxe: create_subelements        (--TC T2)    2.3072 msec/pass
+  lxe: create_subelements        (--TC T2)    2.2051 msec/pass
   cET: create_subelements        (--TC T2)    0.2370 msec/pass
   ET : create_subelements        (--TC T2)    3.2189 msec/pass
 
@@ -257,11 +257,11 @@ Or replacing the child slice by a new element::
 You should keep this difference in mind when you merge very large trees.  On
 the other hand, deep copying a tree is fast in lxml::
 
-  lxe: deepcopy                  (--TC T1)   10.6010 msec/pass
+  lxe: deepcopy                  (--TC T1)   10.5221 msec/pass
   cET: deepcopy                  (--TC T1)  220.2251 msec/pass
   ET : deepcopy                  (--TC T1)  463.7730 msec/pass
 
-  lxe: deepcopy                  (--TC T3)    8.2979 msec/pass
+  lxe: deepcopy                  (--TC T3)    8.2841 msec/pass
   cET: deepcopy                  (--TC T3)   53.8740 msec/pass
   ET : deepcopy                  (--TC T3)  118.2799 msec/pass
 
@@ -277,33 +277,33 @@ algorithms can benefit from step-by-step traversal of the XML tree and
 especially if few elements are of interest or the element tag name is known,
 lxml is a good choice::
 
-  lxe: getiterator_all      (--TR T2)   10.3800 msec/pass
+  lxe: getiterator_all      (--TR T2)    6.4790 msec/pass
   cET: getiterator_all      (--TR T2)   28.2831 msec/pass
   ET : getiterator_all      (--TR T2)   26.0720 msec/pass
 
-  lxe: getiterator_islice   (--TR T2)    0.1140 msec/pass
+  lxe: getiterator_islice   (--TR T2)    0.0892 msec/pass
   cET: getiterator_islice   (--TR T2)    0.2460 msec/pass
   ET : getiterator_islice   (--TR T2)   26.6550 msec/pass
 
-  lxe: getiterator_tag      (--TR T2)    0.3879 msec/pass
+  lxe: getiterator_tag      (--TR T2)    0.3850 msec/pass
   cET: getiterator_tag      (--TR T2)    9.3720 msec/pass
   ET : getiterator_tag      (--TR T2)   22.8221 msec/pass
 
-  lxe: getiterator_tag_all  (--TR T2)    0.8819 msec/pass
+  lxe: getiterator_tag_all  (--TR T2)    0.7222 msec/pass
   cET: getiterator_tag_all  (--TR T2)   27.2939 msec/pass
   ET : getiterator_tag_all  (--TR T2)   22.8271 msec/pass
 
 This similarly shows in ``Element.findall()``::
 
-  lxe: findall              (--TR T2)   10.9370 msec/pass
+  lxe: findall              (--TR T2)    6.8321 msec/pass
   cET: findall              (--TR T2)   28.8639 msec/pass
   ET : findall              (--TR T2)   27.1060 msec/pass
 
-  lxe: findall              (--TR T3)    2.1989 msec/pass
+  lxe: findall              (--TR T3)    1.3590 msec/pass
   cET: findall              (--TR T3)    8.9881 msec/pass
   ET : findall              (--TR T3)    6.4890 msec/pass
 
-  lxe: findall_tag          (--TR T2)    0.9520 msec/pass
+  lxe: findall_tag          (--TR T2)    0.9229 msec/pass
   cET: findall_tag          (--TR T2)   27.2651 msec/pass
   ET : findall_tag          (--TR T2)   22.7208 msec/pass
 
