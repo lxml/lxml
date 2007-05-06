@@ -9,10 +9,15 @@ compliant way.
 ..
    1  XPath
      1.1  The ``xpath()`` method
-     1.2  The ``XPath`` class
-     1.3  The ``XPathEvaluator`` classes
-     1.4  ``ETXPath``
+     1.2  XPath return values
+     1.3  The ``XPath`` class
+     1.4  The ``XPathEvaluator`` classes
+     1.5  ``ETXPath``
    2  XSLT
+     2.1  XSLT result objects
+     2.2  Stylesheet parameters
+     2.3  The ``xslt()`` tree method
+     2.4  Profiling
 
 
 The usual setup procedure::
@@ -276,9 +281,28 @@ calling it, and this results in another ElementTree object::
 
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = etree.parse(f)
-  >>> result = transform(doc)
+  >>> result_tree = transform(doc)
 
-The result object can be accessed like a normal ElementTree document::
+By default, XSLT supports all extension functions from libxslt and libexslt as
+well as Python regular expressions through the `EXSLT regexp functions`_.
+Also see the documentation on `custom extension functions`_ and `document
+resolvers`_.  There is a separate section on `controlling access`_ to external
+documents and resources.
+
+.. _`EXSLT regexp functions`: http://www.exslt.org/regexp/
+.. _`document resolvers`: resolvers.html
+.. _`controlling access`: resolvers.html#i-o-access-control-in-xslt
+
+
+XSLT result objects
+-------------------
+
+The result of an XSL transformation can be accessed like a normal ElementTree
+document::
+
+  >>> f = StringIO('<a><b>Text</b></a>')
+  >>> doc = etree.parse(f)
+  >>> result = transform(doc)
 
   >>> result.getroot().text
   'Text'
@@ -316,14 +340,6 @@ are not supported by Python will result in an error::
   Traceback (most recent call last):
     [...]
   LookupError: unknown encoding: UCS4
-
-By default, XSLT supports all extension functions from libxslt and libexslt as
-well as Python regular expressions through EXSLT.  Also see the documentation
-on `custom extension functions`_ and `document resolvers`_.  There is a
-separate section on `controlling access`_ to external documents and resources.
-
-.. _`document resolvers`: resolvers.html
-.. _`controlling access`: resolvers.html#i-o-access-control-in-xslt
 
 
 Stylesheet parameters
