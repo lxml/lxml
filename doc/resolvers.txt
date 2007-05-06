@@ -3,13 +3,20 @@ Document loading and URL resolving
 
 .. contents::
 ..
-   1  Document loaders in context
-   2  I/O access control in XSLT
+   1  Resolvers
+   2  Document loading in context
+   3  I/O access control in XSLT
 
 
 Lxml has support for custom document loaders in both the parsers and XSL
 transformations.  These so-called resolvers are subclasses of the
-etree.Resolver class as in the following example::
+etree.Resolver class.
+
+
+Resolvers
+---------
+
+Here is an example of a custom resolver::
 
   >>> from lxml import etree
 
@@ -32,10 +39,10 @@ representations of the result document.  The following methods exist:
 * ``resolve_file`` takes an open file-like object that has at least a read() method
 * ``resolve_empty`` resolves into an empty document
 
-The ``resolve`` method may choose to return None, in which case the next
-registered resolver (or the default resolver) is consulted.  It is never
-called if the resolver returns the result of any of the above ``resolve_*``
-methods.
+The ``resolve()`` method may choose to return None, in which case the next
+registered resolver (or the default resolver) is consulted.  Resolving always
+terminates if ``resolve()`` returns the result of any of the above
+``resolve_*()`` methods.
 
 Resolvers are registered local to a parser::
 
@@ -58,7 +65,7 @@ The entity in the document was correctly resolved by the generated DTD
 fragment.
 
 
-Document loaders in context
+Document loading in context
 ---------------------------
 
 XML documents memorise their initial parser (and its resolvers) during their
@@ -180,12 +187,16 @@ inherit any resolvers at all.
 I/O access control in XSLT
 --------------------------
 
-XSLT has an additional mechanism to control the access to certain I/O
-operations during the transformation process.  This is most interesting where
-XSL scripts come from potentially insecure sources and must be prevented from
-modifying the local file system.  Note, however, that there is no way to keep
-them from eating up your precious CPU time, so this should not stop you from
-thinking about what XSLT you execute.
+By default, XSLT supports all extension functions from libxslt and libexslt as
+well as Python regular expressions through EXSLT.  Some extensions enable
+style sheets to read and write files on the local file system.
+
+XSLT has a mechanism to control the access to certain I/O operations during
+the transformation process.  This is most interesting where XSL scripts come
+from potentially insecure sources and must be prevented from modifying the
+local file system.  Note, however, that there is no way to keep them from
+eating up your precious CPU time, so this should not stop you from thinking
+about what XSLT you execute.
 
 Access control is configured using the ``XSLTAccessControl`` class.  It can be
 called with a number of keyword arguments that allow or deny specific

@@ -28,11 +28,11 @@ lxml.etree supports the simple path syntax of the `find, findall and
 findtext`_ methods on ElementTree and Element, as known from the original
 ElementTree library (ElementPath_).  As an lxml specific extension, these
 classes also provide an ``xpath()`` method that supports expressions in the
-complete XPath syntax, as well as `extension functions`_.
+complete XPath syntax, as well as `custom extension functions`_.
 
 .. _ElementPath: http://effbot.org/zone/element-xpath.htm
 .. _`find,  findall and findtext`: http://effbot.org/zone/element.htm#searching-for-subelements
-.. _`extension functions`: extensions.html
+.. _`custom extension functions`: extensions.html
 
 There are also specialized XPath evaluator classes that are more efficient for
 frequent evaluation: ``XPath`` and ``XPathEvaluator``.  See the `performance
@@ -115,9 +115,11 @@ namespace URIs::
   'Text'
 
 There is also an optional ``extensions`` argument which is used to define
-`extension functions`_ in Python that are local to this evaluation.
+`custom extension functions`_ in Python that are local to this evaluation.
 
-.. _`extension functions`: extensions.html
+
+XPath return values
+-------------------
 
 The return values of XPath evaluations vary, depending on the XPath expression
 used:
@@ -315,6 +317,18 @@ are not supported by Python will result in an error::
     [...]
   LookupError: unknown encoding: UCS4
 
+By default, XSLT supports all extension functions from libxslt and libexslt as
+well as Python regular expressions through EXSLT.  Also see the documentation
+on `custom extension functions`_ and `document resolvers`_.  There is a
+separate section on `controlling access`_ to external documents and resources.
+
+.. _`document resolvers`: resolvers.html
+.. _`controlling access`: resolvers.html#i-o-access-control-in-xslt
+
+
+Stylesheet parameters
+---------------------
+
 It is possible to pass parameters, in the form of XPath expressions, to the
 XSLT template::
 
@@ -342,7 +356,11 @@ Let's try a non-string XPath expression now::
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-There's also a convenience method on the tree object for doing XSL
+
+The ``xslt()`` tree method
+--------------------------
+
+There's also a convenience method on ElementTree objects for doing XSL
 transformations.  This is less efficient if you want to apply the same XSL
 transformation to multiple documents, but is shorter to write for one-shot
 operations, as you do not have to instantiate a stylesheet yourself::
@@ -351,12 +369,16 @@ operations, as you do not have to instantiate a stylesheet yourself::
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
-By default, XSLT supports all extension functions from libxslt and libexslt as
-well as Python regular expressions through EXSLT.  Note that some extensions
-enable style sheets to read and write files on the local file system.  See the
-`document loader documentation`_ on how to deal with this.
+This is a shortcut for the following code::
 
-.. _`document loader documentation`: resolvers.html
+  >>> transform = etree.XSLT(xslt_tree)
+  >>> result = transform(doc, a="'A'")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>A</foo>\n'
+
+
+Profiling
+---------
 
 If you want to know how your stylesheet performed, pass the ``profile_run``
 keyword to the transform::
