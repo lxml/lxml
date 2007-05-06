@@ -29,11 +29,12 @@ lxml.etree will do that for you through its normal ElementTree API.
      2.2  Namespace class lookup
      2.3  Attribute based lookup
      2.4  Custom element class lookup
+     2.5  Tree based element class lookup in Python
    3  Implementing namespaces
 
 
 Element initialization
-----------------------
+======================
 
 There is one thing to know up front.  Element classes *must not* have a
 constructor, neither must there be any internal state (except for the data
@@ -72,7 +73,7 @@ The semantics of ``_init()`` are as follows:
 
 
 Setting up a class lookup scheme
---------------------------------
+================================
 
 The first thing to do when deploying custom element classes is to register a
 class lookup scheme on a parser.  lxml.etree provides quite a number of
@@ -140,7 +141,7 @@ this parser.
 
 
 Default class lookup
-....................
+--------------------
 
 This is the most simple lookup mechanism.  It always returns the default
 element class.  Consequently, no further fallbacks are supported, but this
@@ -179,7 +180,7 @@ the constructor.  While it accepts classes for ``element``, ``comment`` and
 
 
 Namespace class lookup
-......................
+----------------------
 
 This is an advanced lookup mechanism that supports namespace/tag-name specific
 element classes.  You can select it by calling::
@@ -204,14 +205,15 @@ desired fallback lookup scheme to the constructor::
 
 
 Attribute based lookup
-......................
+----------------------
 
 This scheme uses a mapping from attribute values to classes.  An attribute
 name is set at initialisation time and is then used to find the corresponding
 value.  It is set up as follows::
 
   >>> id_class_mapping = {} # maps attribute values to element classes
-  >>> lookup = etree.AttributeBasedElementClassLookup('id', id_class_mapping)
+  >>> lookup = etree.AttributeBasedElementClassLookup(
+  ...                                      'id', id_class_mapping)
   >>> parser = etree.XMLParser()
   >>> parser.setElementClassLookup(lookup)
 
@@ -230,7 +232,7 @@ to use the namespace lookup, for example, you can use this code::
 
 
 Custom element class lookup
-...........................
+---------------------------
 
 This is the most customisable way of finding element classes on a per-element
 basis.  It allows you to implement a custom lookup scheme in a subclass::
@@ -252,7 +254,7 @@ per-parser setup.
 
 
 Tree based element class lookup in Python
-.........................................
+-----------------------------------------
 
 Taking more elaborate decisions than allowed by the custom scheme is difficult
 to achieve in pure Python.  It would require access to the tree - before the
@@ -291,7 +293,7 @@ instantiated proxy classes.
 
 
 Implementing namespaces
------------------------
+=======================
 
 lxml allows you to implement namespaces, in a rather literal sense.  After
 setting up the namespace class lookup mechanism as described above, you can
