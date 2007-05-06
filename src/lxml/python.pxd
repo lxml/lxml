@@ -112,3 +112,4 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef object repr(object obj)
     cdef object iter(object obj)
     cdef char* _cstr(object s)
+    cdef object PY_NEW(object t)

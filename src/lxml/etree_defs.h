@@ -64,6 +64,16 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define iter(o)         PyObject_GetIter(o)
 #define _cstr(s)        PyString_AS_STRING(s)
 
+static PyObject* __PY_NEW_GLOBAL_EMPTY_TUPLE = NULL;
+
+#define PY_NEW(T) \
+     (((PyTypeObject*)(T))->tp_new( \
+         (PyTypeObject*)(T), \
+         ((__PY_NEW_GLOBAL_EMPTY_TUPLE == NULL) ? \
+             (__PY_NEW_GLOBAL_EMPTY_TUPLE = PyTuple_New(0)) : \
+             (__PY_NEW_GLOBAL_EMPTY_TUPLE)), \
+         NULL))
+
 #define _isString(obj)   PyObject_TypeCheck(obj, &PyBaseString_Type)
 
 #define _isElement(c_node) \
