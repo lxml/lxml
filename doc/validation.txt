@@ -13,7 +13,8 @@ names.
 
 There is also initial support for Schematron_.  However, it is currently
 disabled in lxml builds due to insufficiencies in the implementation as of
-libxml2 2.6.27.
+libxml2 2.6.27.  To enable it when you build from sources, you currently have
+to uncomment the include line at the end of the file ``src/lxml/etree.pyx``.
 
 .. _Schematron:   http://www.ascc.net/xml/schematron
 
@@ -84,6 +85,10 @@ validator::
   >>> relaxng_doc = etree.parse(f)
   >>> relaxng = etree.RelaxNG(relaxng_doc)
 
+Alternatively, pass a filename to the ``file`` keyword argument to parse from
+a file.  This also enables correct handling of include files from within the
+RelaxNG parser.
+
 You can then validate some ElementTree document against the schema. You'll get
 back True if the document is valid against the Relax NG schema, and False if
 not::
@@ -130,7 +135,7 @@ messages::
 
 You can see that the error (ERROR) happened during RelaxNG validation
 (RELAXNGV).  The message then tells you what went wrong.  Note that this error
-is local to the RelaxNG object.  It will only contain log entries that
+log is local to the RelaxNG object.  It will only contain log entries that
 appeared during the validation.  The DocumentInvalid exception raised by the
 ``assertValid`` method above provides access to the global error log (like all
 other lxml exceptions).
@@ -147,10 +152,9 @@ do one-shot RelaxNG validation::
 XMLSchema
 ---------
 
-lxml.etree also has a XML Schema (XSD) support, using the class
-lxml.etree.XMLSchema. This support is very similar to the Relax NG
-support. The class can be given an ElementTree object to construct a
-XMLSchema validator::
+lxml.etree also has XML Schema (XSD) support, using the class
+lxml.etree.XMLSchema.  The API is very similar to the Relax NG and DTD
+classes.  Pass an ElementTree object to construct a XMLSchema validator::
 
   >>> f = StringIO('''\
   ... <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -165,9 +169,9 @@ XMLSchema validator::
   >>> xmlschema_doc = etree.parse(f)
   >>> xmlschema = etree.XMLSchema(xmlschema_doc)
 
-You can then validate some ElementTree document with this. Like with
-RelaxNG, you'll get back true if the document is valid against the XML
-schema, and false if not::
+You can then validate some ElementTree document with this.  Like with RelaxNG,
+you'll get back true if the document is valid against the XML schema, and
+false if not::
 
   >>> valid = StringIO('<a><b></b></a>')
   >>> doc = etree.parse(valid)
@@ -179,8 +183,8 @@ schema, and false if not::
   >>> xmlschema.validate(doc2)
   0
 
-Calling the schema object has the same effect as calling its validate
-method. This is sometimes used in conditional statements::
+Calling the schema object has the same effect as calling its validate method.
+This is sometimes used in conditional statements::
 
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
@@ -201,7 +205,7 @@ If you prefer getting an exception when validating, you can use the
     [...]
   AssertionError: Document does not comply with schema
 
-Error reporting works like for the RelaxNG class::
+Error reporting works as for the RelaxNG class::
 
   >>> log = xmlschema.error_log
   >>> error = log.last_error
