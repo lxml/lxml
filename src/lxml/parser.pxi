@@ -664,14 +664,9 @@ cdef class XMLParser(_BaseParser):
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
 
-    For read-only documents that will not be altered after parsing, you can
-    also pass the following keyword arguments:
-    * compact            - compactly store short element text content
-
-    Note that you should avoid sharing parsers between threads.  This does not
+    Note that you should avoid sharing parsers between threads.  While this is
+    not harmful, it is more efficient to use separate parsers.  This does not
     apply to the default parser.
-
-    You must not modify documents that were parsed with the 'compact' option.
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
@@ -794,12 +789,8 @@ cdef class HTMLParser(_BaseParser):
     * no_network         - prevent network access
     * remove_blank_text  - discard empty text nodes
 
-    For read-only documents that will not be altered after parsing, you can
-    also pass the following keyword arguments:
-    * compact            - compactly store short element text content
-
-    Note that you should avoid sharing parsers between threads.  You must not
-    modify documents that were parsed with the 'compact' option.
+    Note that you should avoid sharing parsers between threads for parformance
+    reasons.
     """
     def __init__(self, recover=True, no_network=False, remove_blank_text=False,
                  compact=True):

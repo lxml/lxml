@@ -18,25 +18,55 @@ The usual setup procedure::
 
 
 Parsers
--------
+=======
 
 Parsers are represented by parser objects.  There is support for parsing both
-XML and (broken) HTML (note that XHTML is best parsed as XML).  Both are based
-on libxml2 and therefore only support options that are backed by the library.
-Parsers take a number of keyword arguments.  The following is an example for
-namespace cleanup during parsing, first with the default parser, then with a
-parametrized one::
+XML and (broken) HTML.  Note that XHTML is best parsed as XML, parsing it with
+the HTML parser can lead to unexpected results.  Here is a simple example for
+XML parsing::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
-  >>> et     = etree.parse(StringIO(xml))
+  >>> et = etree.parse(StringIO(xml))
   >>> print etree.tostring(et.getroot())
   <a xmlns="test"><b xmlns="test"/></a>
+
+
+Parser options
+--------------
+
+The parsers accept a number of setup options as keyword arguments.  The above
+example is easily extended to clean up namespaces during parsing::
 
   >>> parser = etree.XMLParser(ns_clean=True)
   >>> et     = etree.parse(StringIO(xml), parser)
   >>> print etree.tostring(et.getroot())
   <a xmlns="test"><b/></a>
+
+The keyword arguments in the constructor are mainly based on the libxml2
+parser configuration.  A DTD will also be loaded if validation or attribute
+default values are requested.
+
+Available boolean keyword arguments:
+
+* attribute_defaults - read the DTD (if referenced by the document) and add
+  the default attributes from it
+
+* dtd_validation - validate while parsing (if a DTD was referenced)
+
+* load_dtd - load and parse the DTD while parsing (no validation is performed)
+
+* no_network - prevent network access when looking up external documents
+
+* ns_clean - try to clean up redundant namespace declarations
+
+* recover - try hard to parse through broken XML
+
+* remove_blank_text - discard blank text nodes between tags
+
+
+Parsing HTML
+------------
 
 HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
 argument that the HTMLParser sets by default.  It lets libxml2 try its best to
@@ -48,15 +78,29 @@ version 2.6.21 or newer to take advantage of this feature::
   >>> parser = etree.HTMLParser()
   >>> et     = etree.parse(StringIO(broken_html), parser)
 
-  >>> print etree.tostring(et.getroot())
-  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+  >>> print etree.tostring(et.getroot(), pretty_print=True)
+  <html>
+    <head>
+      <title>test</title>
+    </head>
+    <body>
+      <h1>page title</h1>
+    </body>
+  </html>
 
 Lxml has an HTML function, similar to the XML shortcut known from
 ElementTree::
 
   >>> html = etree.HTML(broken_html)
-  >>> print etree.tostring(html)
-  <html><head><title>test</title></head><body><h1>page title</h1></body></html>
+  >>> print etree.tostring(html, pretty_print=True)
+  <html>
+    <head>
+      <title>test</title>
+    </head>
+    <body>
+      <h1>page title</h1>
+    </body>
+  </html>
 
 The support for parsing broken HTML depends entirely on libxml2's recovery
 algorithm.  It is *not* the fault of lxml if you find documents that are so
@@ -65,6 +109,10 @@ that the resulting tree will contain all data from the original document.  The
 parser may have to drop seriously broken parts when struggling to keep
 parsing.  Especially misplaced meta tags can suffer from this, which may lead
 to encoding problems.
+
+
+Doctype information
+-------------------
 
 The use of the libxml2 parsers makes some additional information available at
 the API level.  Currently, ElementTree objects can access the DOCTYPE
@@ -93,7 +141,7 @@ original encoding::
 
 
 iterparse and iterwalk
-----------------------
+======================
 
 As known from ElementTree, the ``iterparse()`` utility function returns an
 iterator that generates parser events for an XML file (or file-like object),
@@ -125,7 +173,7 @@ The resulting tree is available through the ``root`` property of the iterator::
   >>> context.root.tag
   'root'
 
-The other types can be activated with the ``events`` keyword argument::
+The other event types can be activated with the ``events`` keyword argument::
 
   >>> events = ("start", "end")
   >>> context = etree.iterparse(StringIO(xml), events=events)
@@ -139,6 +187,32 @@ The other types can be activated with the ``events`` keyword argument::
   start {testns}empty-element
   end {testns}empty-element
   end root
+
+
+Selective tag events
+--------------------
+
+As an extension over ElementTree, lxml.etree accepts a ``tag`` keyword
+argument just like ``element.getiterator(tag)``.  This restricts events to a
+specific tag or namespace::
+
+  >>> context = etree.iterparse(StringIO(xml), tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  end element
+  end element
+
+  >>> events = ("start", "end")
+  >>> context = etree.iterparse(
+  ...             StringIO(xml), events=events, tag="{testns}*")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start {testns}empty-element
+  end {testns}empty-element
+
+
+Modifying the tree
+------------------
 
 You can modify the element and its descendants when handling the 'end' event.
 To save memory, for example, you can remove subtrees that are no longer
@@ -170,11 +244,12 @@ the current element::
   ...     if element.getprevious():      # clean up preceding siblings
   ...         del element.getparent()[0]
 
-You can use ``while`` instead of ``if`` if you skipped siblings using the
-``tag`` keyword argument.  The more selective your tag is, however, the more
-thought you will have to put into finding the right way to clean up the
-elements that were skipped.  Therefore, it is sometimes easier to traverse all
-elements and do the tag selection by hand in the event handler code.
+You can use ``while`` instead of the ``if`` to delete multiple siblings in a
+row if you skipped over them using the ``tag`` keyword argument.  The more
+selective your tag is, however, the more thought you will have to put into
+finding the right way to clean up the elements that were skipped.  Therefore,
+it is sometimes easier to traverse all elements and do the tag selection by
+hand in the event handler code.
 
 The 'start-ns' and 'end-ns' events notify about namespace declarations and
 generate tuples ``(prefix, URI)``::
@@ -189,28 +264,16 @@ generate tuples ``(prefix, URI)``::
 It is common practice to use a list as namespace stack and pop the last entry
 on the 'end-ns' event.
 
-lxml.etree supports two extensions compared to ElementTree.  It accepts a
-``tag`` keyword argument just like ``element.getiterator(tag)``.  This
-restricts events to a specific tag or namespace.
 
-  >>> context = etree.iterparse(StringIO(xml), tag="element")
-  >>> for action, elem in context:
-  ...     print action, elem.tag
-  end element
-  end element
+iterwalk
+--------
 
-  >>> events = ("start", "end")
-  >>> context = etree.iterparse(StringIO(xml), events=events, tag="{testns}*")
-  >>> for action, elem in context:
-  ...     print action, elem.tag
-  start {testns}empty-element
-  end {testns}empty-element
+A second extension over ElementTree is the ``iterwalk()`` function.  It
+behaves exactly like ``iterparse()``, but works on Elements and ElementTrees::
 
-The second extension is the ``iterwalk()`` function.  It behaves exactly like
-``iterparse()``, but works on Elements and ElementTrees::
-
-  >>> root = context.root
-  >>> context = etree.iterwalk(root, events=events, tag="element")
+  >>> root = etree.XML(xml)
+  >>> context = etree.iterwalk(
+  ...             root, events=("start", "end"), tag="element")
   >>> for action, elem in context:
   ...     print action, elem.tag
   start element
@@ -220,7 +283,7 @@ The second extension is the ``iterwalk()`` function.  It behaves exactly like
 
 
 Python unicode strings
-----------------------
+======================
 
 lxml.etree has broader support for Python unicode strings than the ElementTree
 library.  First of all, where ElementTree would raise an exception, the
@@ -245,6 +308,10 @@ Similarly, you will get errors when you try the same with HTML data in a
 unicode string that specifies a charset in a meta tag of the header.  You
 should generally avoid converting XML/HTML data to unicode before passing it
 into the parsers.  It is both slower and error prone.
+
+
+Serialising to Unicode strings
+------------------------------
 
 To serialize the result, you would normally use the ``tostring`` module
 function, which serializes to plain ASCII by default or a number of other
