@@ -10,9 +10,10 @@ compliant way.
    1  XPath
      1.1  The ``xpath()`` method
      1.2  XPath return values
-     1.3  The ``XPath`` class
-     1.4  The ``XPathEvaluator`` classes
-     1.5  ``ETXPath``
+     1.3  Generating XPath expressions
+     1.4  The ``XPath`` class
+     1.5  The ``XPathEvaluator`` classes
+     1.6  ``ETXPath``
    2  XSLT
      2.1  XSLT result objects
      2.2  Stylesheet parameters
@@ -141,8 +142,12 @@ used:
   (the text node content or attribute value).  Namespace declarations are
   returned as tuples of strings: ``(prefix, URI)``.
 
-A related convenience method of ElementTree objects is ``getpath(element)``,
-which returns a structural, absolute XPath expression to find that element::
+
+Generating XPath expressions
+----------------------------
+
+A convenience method of ElementTree objects is ``getpath(element)``, which
+returns a structural, absolute XPath expression to find that element::
 
   >>> a  = etree.Element("a")
   >>> b  = etree.SubElement(a, "b")
