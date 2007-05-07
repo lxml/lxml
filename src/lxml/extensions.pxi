@@ -306,18 +306,6 @@ def Extension(module, function_mapping, ns=None):
 ################################################################################
 # EXSLT regexp implementation
 
-cdef int _collect_tree_text(element, l) except -1:
-    # recursively collect all text (XPath 'string-value' of a node) 
-    text = element.text
-    if text is not None:
-        python.PyList_Append(l, text)
-    for child in element:
-        _collect_tree_text(child, l)
-    tail = element.tail
-    if tail is not None:
-        python.PyList_Append(l, tail)
-    return 0
-
 cdef class _ExsltRegExp:
     cdef object _compile_map
     def __init__(self):
@@ -334,9 +322,8 @@ cdef class _ExsltRegExp:
             if _isString(firstnode):
                 return firstnode
             elif isinstance(firstnode, _Element):
-                l = []
-                _collect_tree_text(firstnode, l)
-                return ''.join(l)
+                return funicode(
+                    tree.xmlNodeGetContent((<_Element>firstnode)._c_node))
             else:
                 return str(firstnode)
         else:
