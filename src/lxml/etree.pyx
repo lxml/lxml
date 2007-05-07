@@ -1044,7 +1044,7 @@ else:
     ELEMENT_CREATION_LOCK = NULL
 
 cdef extern from "etree_defs.h":
-    # macro call to 'tp_new()' for fast instantiation
+    # macro call to 't->tp_new()' for fast instantiation
     cdef _Element NEW_ELEMENT "PY_NEW" (object t)
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
