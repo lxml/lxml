@@ -6,35 +6,57 @@ software, it depends on what you do with it.  Rest assured that lxml is fast
 enough for most applications, so lxml is probably somewhere between 'fast
 enough' and 'the best choice' for yours.
 
-This text describes where lxml.etree (lxe) excels, gives hints on some
-performance traps and compares the overall performance to the original
-ElementTree_ (ET) and cElementTree_ (cET) libraries by Fredrik Lundh.  The
-cElementTree library is a fast C-implementation of the original ElementTree.
+This text describes where lxml.etree (abbreviated to 'lxe') excels, gives
+hints on some performance traps and compares the overall performance to the
+original ElementTree_ (ET) and cElementTree_ (cET) libraries by Fredrik Lundh.
+The cElementTree library is a fast C-implementation of the original
+ElementTree.
 
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
+.. contents::
+.. 
+   1  How to read the timings
+   2  Bad things first
+   3  Parsing and Serialising
+   4  The ElementTree API
+   5  Tree traversal
+   6  XPath
+   7  lxml.objectify
+
+
+How to read the timings
+-----------------------
+
 The statements made here are backed by the (micro-)benchmark scripts
 `bench_etree.py`_, `bench_xpath.py`_ and `bench_objectify.py`_ that come with
-the lxml source distribution.  The timings cited below compare lxml 1.3 (with
-libxml2 2.6.26) to the ElementTree and cElementTree versions shipped with
-CPython 2.5 (based on ElementTree 1.2.6).  They were run single-threaded on a
-1.8GHz Intel Core Duo machine.
+the lxml source distribution.  They are distributed under the same BSD license
+as lxml itself, and the lxml project would like to promote them as a general
+benchmarking suite for all ElementTree implementations.  New benchmarks are
+very easy to add as tiny test methods, so if you write a performance test for
+a specific part of the API yourself, please consider sending it to the lxml
+mailing list.
+
+The timings cited below compare lxml 1.3 (with libxml2 2.6.27) to the
+ElementTree and cElementTree versions shipped with CPython 2.5 (based on
+ElementTree 1.2.6).  They were run single-threaded on a 1.8GHz Intel Core Duo
+machine under Ubuntu Linux 7.04 (Feisty).
 
 .. _`bench_etree.py`:     http://codespeak.net/svn/lxml/branch/lxml-1.3/benchmark/bench_etree.py
 .. _`bench_xpath.py`:     http://codespeak.net/svn/lxml/branch/lxml-1.3/benchmark/bench_xpath.py
 .. _`bench_objectify.py`: http://codespeak.net/svn/lxml/branch/lxml-1.3/benchmark/bench_objectify.py
 
 The scripts run a number of simple tests on the different libraries, using
-different XML tree configurations: different tree sizes, with or without
-attributes (-/A), with or without ASCII or unicode text (-/S/U), and either
-against a tree or its serialised form (T/X).  In the result extracts cited
-below, T1 refers to a 3-level tree with many children at the third level, T2
-is swapped around to have many children below the root element, T3 is a deep
-tree with few children at each level and T4 is a small tree, slightly broader
-than deep.  If repetition is involved, this usually means running the
-benchmark in a loop over all children of the tree root, otherwise, the
-operation is run on the root node (C/R).
+different XML tree configurations: different tree sizes (T1-4), with or
+without attributes (-/A), with or without ASCII string or unicode text
+(-/S/U), and either against a tree or its serialised XML form (T/X).  In the
+result extracts cited below, T1 refers to a 3-level tree with many children at
+the third level, T2 is swapped around to have many children below the root
+element, T3 is a deep tree with few children at each level and T4 is a small
+tree, slightly broader than deep.  If repetition is involved, this usually
+means running the benchmark in a loop over all children of the tree root,
+otherwise, the operation is run on the root node (C/R).
 
 As an example, the character code ``(SATR T1)`` states that the benchmark was
 running for tree T1, with plain string text (S) and attributes (A).  It was
@@ -44,27 +66,29 @@ Note that very small operations are repeated in integer loops to make them
 measurable.  It is therefore not always possible to compare the absolute
 timings of, say, a single access benchmark (which usually loops) and a 'get
 all in one step' benchmark, which already takes enough time to be measurable
-and is therefore measured as is.  Take a look at the concrete benchmarks in
-the scripts to understand how the numbers compare.
-
-.. contents::
-.. 
-   1  Bad things first
-   2  Parsing and Serialising
-   3  The ElementTree API
-   4  Tree traversal
-   5  XPath
-   6  lxml.objectify
+and is therefore measured as is.  An example is the index access to a single
+child, which cannot be compared to the timings for ``getchildren()``.  Take a
+look at the concrete benchmarks in the scripts to understand how the numbers
+compare.
 
 
-Bad things first
-----------------
+General notes
+-------------
 
 First thing to say: there *is* an overhead involved in having a DOM-like C
 library mimic the ElementTree API.  As opposed to ElementTree, lxml has to
-generate Python objects on the fly when asked for them.  What this means is:
-the more of your code runs in Python, the slower your application gets.  Note,
-however, that this is true for most performance critical Python applications.
+generate Python representations of tree nodes on the fly when asked for them,
+and the internal tree structure of libxml2 results in a higher maintenance
+overhead than the simpler top-down structure of ElementTree.  What this means
+is: the more of your code runs in Python, the less you can benefit from the
+speed of lxml and libxml2.  Note, however, that this is true for most
+performance critical Python applications.  No one would implement complex
+matrix calculations in pure Python when you can use Numeric.
+
+The up side then is that lxml provides powerful tools like tree iterators,
+XPath and XSLT, that can handle complex operations at the speed of C.  Their
+pythonic API in lxml makes them so flexible that most applications can easily
+benefit from them.
 
 
 Parsing and Serialising
@@ -111,26 +135,32 @@ libraries use the expat parser, which is known to be extremely fast::
   ET : parse_stringIO  (UAXR T3)  163.5361 msec/pass
 
 The expat parser allows cET to be up to 80% faster than lxml on plain parser
-performance.  Similar timings can be observer for the ``iterparse()``
-function.  However, if you take a complete serialize-parse cycle, the numbers
+performance.  Similar timings can be observed for the ``iterparse()``
+function.  However, if you take a complete input-output cycle, the numbers
 will look similar to these::
 
-  lxe: write_utf8_parse_stringIO  (S-TR T1)  316.6230 msec/pass
-  cET: write_utf8_parse_stringIO  (S-TR T1)  592.1209 msec/pass
-  ET : write_utf8_parse_stringIO  (S-TR T1)  817.9121 msec/pass
+  lxe: write_utf8_parse_stringIO  (S-TR T1)  166.3210 msec/pass
+  cET: write_utf8_parse_stringIO  (S-TR T1)  581.2099 msec/pass
+  ET : write_utf8_parse_stringIO  (S-TR T1)  803.5331 msec/pass
 
-  lxe: write_utf8_parse_stringIO  (UATR T3)   49.9680 msec/pass
-  cET: write_utf8_parse_stringIO  (UATR T3)  434.6111 msec/pass
-  ET : write_utf8_parse_stringIO  (UATR T3)  574.1441 msec/pass
+  lxe: write_utf8_parse_stringIO  (UATR T2)  184.4249 msec/pass
+  cET: write_utf8_parse_stringIO  (UATR T2)  671.5119 msec/pass
+  ET : write_utf8_parse_stringIO  (UATR T2)  924.3481 msec/pass
 
-  lxe: write_utf8_parse_stringIO  (SATR T4)    1.2789 msec/pass
-  cET: write_utf8_parse_stringIO  (SATR T4)   12.2640 msec/pass
-  ET : write_utf8_parse_stringIO  (SATR T4)   15.6620 msec/pass
+  lxe: write_utf8_parse_stringIO  (S-TR T3)    9.1329 msec/pass
+  cET: write_utf8_parse_stringIO  (S-TR T3)   77.9850 msec/pass
+  ET : write_utf8_parse_stringIO  (S-TR T3)  157.0492 msec/pass
+
+  lxe: write_utf8_parse_stringIO  (SATR T4)    1.3900 msec/pass
+  cET: write_utf8_parse_stringIO  (SATR T4)   12.6081 msec/pass
+  ET : write_utf8_parse_stringIO  (SATR T4)   16.2580 msec/pass
 
 For applications that require a high parser throughput and do little
 serialization, cET is the best choice.  Also for iterparse applications that
 extract small amounts of data from large XML data sets.  If it comes to
-round-trip performance, however, lxml tends to be 3-4 times faster in total.
+round-trip performance, however, lxml tends to be 3-4 times faster in
+total. So, whenever the input documents are not considerably bigger than the
+output, lxml is the clear winner.
 
 
 The ElementTree API
@@ -261,7 +291,7 @@ the other hand, deep copying a tree is fast in lxml::
   cET: deepcopy                  (--TC T1)  220.2251 msec/pass
   ET : deepcopy                  (--TC T1)  463.7730 msec/pass
 
-  lxe: deepcopy                  (--TC T3)    8.2841 msec/pass
+  lxe: deepcopy                  (--TC T3)    4.2651 msec/pass
   cET: deepcopy                  (--TC T3)   53.8740 msec/pass
   ET : deepcopy                  (--TC T3)  118.2799 msec/pass
 
@@ -359,6 +389,115 @@ expressions generates a much higher overhead here::
   lxe: xpath_class_repeat   (--TC T4)    1.0269 msec/pass
 
 
+An bigger example
+-----------------
+
+A while ago, Uche Ogbuji posted a benchmark proposal at `xml.org`_ that would
+read in a 3 MB XML version of the Old Testament of the Bible and look for the
+text "begat" in all verses.  Apparently, it is contained in 120 of them.  This
+is easy to implement in ElementTree using ``findall()``.  However, the fastest
+way to do this is obviously ``iterparse()``, as most of the data is not of any
+interest.
+
+.. _`xml.org`: http://xml.org/...
+
+Now, Uche's original proposal was::
+
+  def bench_ET():
+      tree = ElementTree.parse("ot.xml")
+      result = []
+      for v in tree.findall("//v"):
+          text = v.text
+          if 'begat' in text:
+              result.append(text)
+      return len(result)
+
+which takes about one second on my machine today.  The faster ``iterparse()``
+variant looks like this::
+
+  def bench_ET_iterparse():
+      result = []
+      for event, v in ElementTree.iterparse("ot.xml"):
+          if v.tag == 'v':
+              text = v.text
+              if 'begat' in text:
+                  result.append(text)
+          v.clear()
+      return len(result)
+
+The improvement is about 10%.  At the time I first tried (early 2006), lxml
+didn't have ``iterparse()`` support, but the ``findall()`` variant was already
+faster than ElementTree.  This changes immediately when you switch to
+cElementTree.  The latter only needs 0.17 seconds to do the trick today and
+only some impressive 0.10 seconds when running the iterparse version.  And
+even back then, it was quite a bit faster than what lxml could achieve.
+
+Since then, lxml has matured a lot and has gotten much faster.  The iterparse
+variant now runs in 0.14 seconds, and if you remove the ``v.clear()``, it is
+even a little faster (which isn't the case for cElementTree).  When you move
+the whole thing to a pure XPath implementation, it will look like this::
+
+  def bench_lxml_xpath_all():
+      tree = etree.parse("ot.xml")
+      result = tree.xpath("//v[contains(., 'begat')]/text()")
+      return len(result)
+
+This runs in about 0.13 seconds and is about the shortest possible
+implementation (in lines of Python code) that I could come up with.  Now, this
+is already a rather complex XPath expression compared to the simple "//v"
+ElementPath expression we started with.  Since this is also valid XPath, let's
+try this instead::
+
+  def bench_lxml_xpath():
+      tree = etree.parse("ot.xml")
+      result = []
+      for v in tree.xpath("//v"):
+          text = v.text
+          if 'begat' in text:
+              result.append(text)
+      return len(result)
+
+This gets us down to 0.12 seconds.  However, since this is not much different
+from the original findall variant, we can remove the complexity of the XPath
+call completely and just go with what we had in the beginning.  Under lxml,
+this runs in the same 0.12 seconds.
+
+But there is one thing left to try.  We can replace the simple ElementPath
+expression with a native tree iterator::
+
+  def bench_lxml_getiterator():
+      tree = etree.parse("ot.xml")
+      result = []
+      for v in tree.getiterator("v"):
+          text = v.text
+          if 'begat' in text:
+              result.append(text)
+      return len(result)
+
+This implements the same thing, just without the overhead of parsing and
+evaluating a path expression.  And this makes it another bit faster, down to
+0.11 seconds.  For comparison, cElementTree runs this version in 0.17 seconds.
+
+So, what have we learned?
+
+* It's important to know the available options - and it's worth starting with
+  the most simple one.  In this case, a programmer would then probably have
+  started with ``getiterator("v")`` or ``iterparse()``.  Either of them would
+  already have been the most efficient, depending on which library is used.
+
+* It's not always worth optimising.  After all that hassle we got from 0.12
+  seconds for the initial implementation to 0.11 seconds.  Switching over to
+  cElementTree and writing an ``iterparse()`` based version would have given
+  us 0.10 seconds - not a big difference for 3MB of XML.
+
+* Take care what operation is really dominating in your use case.  Here, lxml
+  is little slower than cElementTree on ``parse()`` (both about 0.06 seconds),
+  but more visibly slower on ``iterparse()``: 0.07 versus 0.10 seconds.
+  However, tree iteration in lxml is increadibly fast, so it can be faster to
+  parse the whole tree and then iterate over it rather than using
+  ``iterparse()`` to do both in one step.
+
+
 lxml.objectify
 --------------
 
@@ -439,9 +578,10 @@ set instead of a list in this case and add new elements by hand.
 Here are some more things to try if optimisation is required:
 
 * A lot of time is usually spent in tree traversal to find the addressed
-  elements in the tree.  If you often work in subtrees, assign the parent of
-  the subtree to a variable or pass it into functions instead of starting at
-  the root.  This allows accessing its descendents more directly.
+  elements in the tree.  If you often work in subtrees, do what you would also
+  do with deep Python objects: assign the parent of the subtree to a variable
+  or pass it into functions instead of starting at the root.  This allows
+  accessing its descendents more directly.
 
 * Try assigning data values directly to attributes instead of passing them
   through DataElement.
