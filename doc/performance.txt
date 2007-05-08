@@ -82,8 +82,8 @@ and the internal tree structure of libxml2 results in a higher maintenance
 overhead than the simpler top-down structure of ElementTree.  What this means
 is: the more of your code runs in Python, the less you can benefit from the
 speed of lxml and libxml2.  Note, however, that this is true for most
-performance critical Python applications.  No one would implement complex
-matrix calculations in pure Python when you can use NumPy.
+performance critical Python applications.  No one would implement fourier
+transformations in pure Python when you can use NumPy.
 
 The up side then is that lxml provides powerful tools like tree iterators,
 XPath and XSLT, that can handle complex operations at the speed of C.  Their
@@ -479,6 +479,11 @@ evaluating a path expression.  And this makes it another bit faster, down to
 0.11 seconds.  For comparison, cElementTree runs this version in 0.17 seconds.
 
 So, what have we learned?
+
+* Python code is not slow.  The pure XPath solution was not even as fast as
+  the first shot Python implementation.  In general, a few more lines in
+  Python make things more readable, which is much more important than the last
+  5% of performance.
 
 * It's important to know the available options - and it's worth starting with
   the most simple one.  In this case, a programmer would then probably have
