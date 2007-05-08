@@ -1,3 +1,4 @@
+====================
 Benchmarks and Speed
 ====================
 
@@ -27,7 +28,7 @@ ElementTree.
 
 
 How to read the timings
------------------------
+=======================
 
 The statements made here are backed by the (micro-)benchmark scripts
 `bench_etree.py`_, `bench_xpath.py`_ and `bench_objectify.py`_ that come with
@@ -73,7 +74,7 @@ compare.
 
 
 General notes
--------------
+=============
 
 First thing to say: there *is* an overhead involved in having a DOM-like C
 library mimic the ElementTree API.  As opposed to ElementTree, lxml has to
@@ -92,7 +93,7 @@ benefit from them.
 
 
 Parsing and Serialising
------------------------
+=======================
 
 These are areas where lxml excels.  The reason is that both parts are executed
 entirely at the C level, without major interaction with Python code.  The
@@ -164,7 +165,7 @@ output, lxml is the clear winner.
 
 
 The ElementTree API
--------------------
+===================
 
 Since all three libraries implement the same API, their performance is easy to
 compare in this area.  A major disadvantage for lxml's performance is the
@@ -390,7 +391,7 @@ expressions generates a much higher overhead here::
 
 
 An bigger example
------------------
+=================
 
 A while ago, Uche Ogbuji posted a benchmark proposal at `xml.org`_ that would
 read in a 3 MB XML version of the Old Testament of the Bible and look for the
@@ -504,7 +505,7 @@ So, what have we learned?
 
 
 lxml.objectify
---------------
+==============
 
 The following timings are based on the benchmark script `bench_objectify.py`_.
 
