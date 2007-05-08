@@ -1,5 +1,5 @@
 from lxml.etree import parse, Element, SubElement, XPath
-import os, shutil, re, sys, copy
+import os, shutil, re, sys, copy, time
 
 SITE_STRUCTURE = [
     ('lxml', ('main.txt', 'intro.txt', 'FAQ.txt', 'compatibility.txt',
@@ -21,6 +21,8 @@ find_headings = XPath("//h:h1[not(@class)]/h:a/text()",
                             {"h" : "http://www.w3.org/1999/xhtml"})
 find_menu = XPath("//h:ul[@id=$name]",
                   {"h" : "http://www.w3.org/1999/xhtml"})
+find_page_end = XPath("/h:html/h:body/h:div[last()]",
+                      {"h" : "http://www.w3.org/1999/xhtml"})
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
@@ -103,9 +105,15 @@ def publish(dirname, lxml_path, release):
 
             build_menu(tree, basename, section, menu)
 
-    # integrate menu
+    # integrate menu and date
+    date = Element("{http://www.w3.org/1999/xhtml}p", {"class":"timestamp"})
+    date.text = "Page generated on " + time.strftime("%Y-%m-%d")
     for tree, basename, outpath in trees.itervalues():
         new_tree = merge_menu(tree, menu, basename)
+        div = find_page_end(new_tree)
+        if div:
+            div[-1].append(copy.deepcopy(date))
+                
         new_tree.write(outpath)
 
     # also convert INSTALL.txt and CHANGES.txt

@@ -162,11 +162,22 @@ p a:hover, ul a:hover {
     text-decoration: underline;
 }
 
+p.timestamp {
+    text-align: right;
+    font-size: 70%;
+}
+
 p {
     /*margin: 0.5em 0em 1em 0em;*/
     text-align: justify;
     line-height: 1.5em;
     margin: 0.5em 0em 0em 0em;
+}
+
+th.docinfo-name {
+    padding-left: 3ex;
+    text-align: right;
+    font-weight: bold;
 }
 
 hr {
