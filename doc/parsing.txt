@@ -271,9 +271,21 @@ iterwalk
 A second extension over ElementTree is the ``iterwalk()`` function.  It
 behaves exactly like ``iterparse()``, but works on Elements and ElementTrees::
 
+
   >>> root = etree.XML(xml)
   >>> context = etree.iterwalk(
   ...             root, events=("start", "end"), tag="element")
+  >>> for action, elem in context:
+  ...     print action, elem.tag
+  start element
+  end element
+  start element
+  end element
+
+  >>> f = StringIO(xml)
+  >>> context = etree.iterparse(
+  ...             f, events=("start", "end"), tag="element")
+
   >>> for action, elem in context:
   ...     print action, elem.tag
   start element
