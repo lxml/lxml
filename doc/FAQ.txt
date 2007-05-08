@@ -2,6 +2,11 @@
 Frequently Asked Questions (FAQ)
 ================================
 
+.. meta::
+  :description: Frequently Asked Questions about lxml (FAQ)
+  :keywords: lxml, lxml.etree, FAQ, frequently asked questions
+
+
 See also the notes on compatibility_ to ElementTree_.
 
 .. _compatibility: compatibility.html

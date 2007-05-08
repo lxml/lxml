@@ -2,6 +2,9 @@
 lxml.objectify
 ==============
 
+:Author:
+  Stefan Behnel
+
 lxml supports an alternative API similar to the Amara_ bindery or
 gnosis.xml.objectify_ through a custom Element implementation.  The main idea
 is to hide the usage of XML behind normal Python objects, sometimes referred

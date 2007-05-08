@@ -2,6 +2,14 @@
 Benchmarks and Speed
 ====================
 
+:Author:
+  Stefan Behnel
+
+.. meta::
+  :description: Performance evaluation of lxml and ElementTree 
+  :keywords: lxml performance, lxml.etree, lxml.objectify, benchmarks, ElementTree
+
+
 As an XML library, lxml.etree is very fast.  It is also slow.  As with all
 software, it depends on what you do with it.  Rest assured that lxml is fast
 enough for most applications, so lxml is probably somewhere between 'fast
@@ -410,16 +418,17 @@ expressions generates a much higher overhead here::
 A bigger example
 ================
 
-A while ago, Uche Ogbuji posted a benchmark proposal at `xml.org`_ that would
-read in a 3 MB XML version of the Old Testament of the Bible and look for the
-text "begat" in all verses.  Apparently, it is contained in 120 of them.  This
-is easy to implement in ElementTree using ``findall()``.  However, the fastest
+A while ago, Uche Ogbuji posted a `benchmark proposal`_ that would read in a
+3MB XML version of the `Old Testament`_ of the Bible and look for the word
+*begat* in all verses.  Apparently, it is contained in 120 of them.  This is
+easy to implement in ElementTree using ``findall()``.  However, the fastest
 way to do this is obviously ``iterparse()``, as most of the data is not of any
 interest.
 
-.. _`xml.org`: http://xml.org/...
+.. _`benchmark proposal`: http://www.onlamp.com/pub/wlg/6291
+.. _`Old Testament`: http://www.ibiblio.org/bosak/xml/eg/religion.2.00.xml.zip
 
-Now, Uche's original proposal was::
+Now, Uche's original proposal was more or less the following::
 
   def bench_ET():
       tree = ElementTree.parse("ot.xml")
