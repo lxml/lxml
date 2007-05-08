@@ -83,7 +83,7 @@ overhead than the simpler top-down structure of ElementTree.  What this means
 is: the more of your code runs in Python, the less you can benefit from the
 speed of lxml and libxml2.  Note, however, that this is true for most
 performance critical Python applications.  No one would implement complex
-matrix calculations in pure Python when you can use Numeric.
+matrix calculations in pure Python when you can use NumPy.
 
 The up side then is that lxml provides powerful tools like tree iterators,
 XPath and XSLT, that can handle complex operations at the speed of C.  Their
