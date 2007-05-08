@@ -196,6 +196,10 @@ additionally discard the created Python elements after their use, when they
 are no longer referenced.  ET and cET represent the tree itself through these
 objects, which reduces the overhead in creating them.
 
+
+Child access
+------------
+
 The same reason makes operations like ``getchildren()`` more costly in lxml.
 Where ET and cET can quickly create a shallow copy of their list of children,
 lxml has to create a Python object for each child and collect them in a list::
@@ -227,6 +231,10 @@ by libxml2 is a linked tree, and thus, a linked list of children::
   cET: middle_child              (--TR T2)    0.2089 msec/pass
   ET : middle_child              (--TR T2)    0.9360 msec/pass
 
+
+Element creation
+----------------
+
 As opposed to ET, libxml2 has a notion of documents that each element must be
 in.  This results in a major performance difference for creating independent
 Elements that end up in independently created documents::
@@ -251,6 +259,10 @@ So, if the main performance bottleneck of an application is creating large XML
 trees in memory through calls to Element and SubElement, cET is the best
 choice.  Note, however, that the serialisation performance may even out this
 advantage, especially for smaller trees and trees with many attributes.
+
+
+Merging different sources
+-------------------------
 
 A critical action for lxml is moving elements between document contexts.  It
 requires lxml to do recursive adaptations throughout the moved tree structure.
@@ -285,8 +297,13 @@ Or replacing the child slice by a new element::
   cET: replace_children_element  (--TC T1)    0.0238 msec/pass
   ET : replace_children_element  (--TC T1)    0.1628 msec/pass
 
-You should keep this difference in mind when you merge very large trees.  On
-the other hand, deep copying a tree is fast in lxml::
+You should keep this difference in mind when you merge very large trees.
+
+
+deepcopy
+--------
+
+Deep copying a tree is fast in lxml::
 
   lxe: deepcopy                  (--TC T1)   10.5221 msec/pass
   cET: deepcopy                  (--TC T1)  220.2251 msec/pass
@@ -347,7 +364,7 @@ Note that all three libraries currently use the same Python implementation for
 
 
 XPath
------
+=====
 
 The following timings are based on the benchmark script `bench_xpath.py`_.
 
@@ -390,8 +407,8 @@ expressions generates a much higher overhead here::
   lxe: xpath_class_repeat   (--TC T4)    1.0269 msec/pass
 
 
-An bigger example
-=================
+A bigger example
+================
 
 A while ago, Uche Ogbuji posted a benchmark proposal at `xml.org`_ that would
 read in a 3 MB XML version of the Old Testament of the Bible and look for the
@@ -521,6 +538,10 @@ where deeply nested elements are frequently accessed through the objectify
 API, the create-discard cycles can become a bottleneck, as elements have to be
 instantiated over and over again.
 
+
+ObjectPath
+----------
+
 ObjectPath can be used to speed up the access to elements that are deep in the
 tree.  It avoids step-by-step Python element instantiations along the path,
 which can substantially improve the access time::
@@ -543,6 +564,10 @@ which can substantially improve the access time::
 
 Note, however, that parsing ObjectPath expressions is not for free either, so
 this is most effective for frequently accessing the same element.
+
+
+Caching Elements
+----------------
 
 A way to improve the normal attribute access time is static instantiation of
 the Python objects, thus trading memory for speed.  Just create a cache
@@ -580,6 +605,10 @@ to these trees will not turn up in the cache automatically and will therefore
 still be garbage collected when all their Python references are gone, so this
 is most effective for largely immutable trees.  You should consider using a
 set instead of a list in this case and add new elements by hand.
+
+
+Further optimisations
+---------------------
 
 Here are some more things to try if optimisation is required:
 
