@@ -484,10 +484,11 @@ try this instead::
               result.append(text)
       return len(result)
 
-This gets us down to 0.12 seconds.  However, since this is not much different
-from the original findall variant, we can remove the complexity of the XPath
-call completely and just go with what we had in the beginning.  Under lxml,
-this runs in the same 0.12 seconds.
+This gets us down to 0.12 seconds, thus showing that a generic XPath
+evaluation engine cannot always compete with a simpler, tailored solution.
+However, since this is not much different from the original findall variant,
+we can remove the complexity of the XPath call completely and just go with
+what we had in the beginning.  Under lxml, this runs in the same 0.12 seconds.
 
 But there is one thing left to try.  We can replace the simple ElementPath
 expression with a native tree iterator::
@@ -522,13 +523,14 @@ So, what have we learned?
   cElementTree and writing an ``iterparse()`` based version would have given
   us 0.10 seconds - not a big difference for 3MB of XML.
 
-* Take care what operation is really dominating in your use case.  Here, lxml
-  is little slower than cElementTree on ``parse()`` (both about 0.06 seconds),
-  but more visibly slower on ``iterparse()``: 0.07 versus 0.10 seconds.
-  However, tree iteration in lxml is increadibly fast, so it can be faster to
-  parse the whole tree and then iterate over it rather than using
-  ``iterparse()`` to do both in one step.  Or, you can just wait for the lxml
-  authors to optimise iterparse in one of the next releases...
+* Take care what operation is really dominating in your use case.  If we split
+  up the operations, we can see that lxml is slightly slower than cElementTree
+  on ``parse()`` (both about 0.06 seconds), but more visibly slower on
+  ``iterparse()``: 0.07 versus 0.10 seconds.  However, tree iteration in lxml
+  is increadibly fast, so it can be better to parse the whole tree and then
+  iterate over it rather than using ``iterparse()`` to do both in one step.
+  Or, you can just wait for the lxml authors to optimise iterparse in one of
+  the next releases...
 
 
 lxml.objectify
