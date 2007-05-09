@@ -8,14 +8,14 @@ body {
         padding: 1em 1em 1em 21em;
     }
 
-    div.document {
+    div.document, div.footer {
         width: 45em;
         background-color: white;
     }
 }
 
 @media print {
-    div.document {
+    div.document, div.footer {
         width: auto;
         padding-left: 0px;
     }
@@ -25,10 +25,18 @@ body {
     }
 }
 
-div.document {
+div.document, div.footer {
     margin: 1em auto 1em auto;
     color: #222;
+}
+
+div.document {
     text-align: left;
+}
+
+div.footer {
+    text-align: center;
+    font-size: 70%;
 }
 
 /*** TOC ***/
@@ -160,11 +168,6 @@ p a:active, ul a:active {
 
 p a:hover, ul a:hover {
     text-decoration: underline;
-}
-
-p.timestamp {
-    text-align: right;
-    font-size: 70%;
 }
 
 p {

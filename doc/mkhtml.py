@@ -13,6 +13,8 @@ SITE_STRUCTURE = [
 RST2HTML_OPTIONS = " ".join([
     "--no-toc-backlinks",
     "--strip-comments",
+    "--language en",
+    "--date",
     ])
 
 find_title = XPath("/h:html/h:head/h:title/text()",
@@ -105,15 +107,9 @@ def publish(dirname, lxml_path, release):
 
             build_menu(tree, basename, section, menu)
 
-    # integrate menu and date
-    date = Element("{http://www.w3.org/1999/xhtml}p", {"class":"timestamp"})
-    date.text = "Page generated on " + time.strftime("%Y-%m-%d")
+    # integrate menu
     for tree, basename, outpath in trees.itervalues():
         new_tree = merge_menu(tree, menu, basename)
-        div = find_page_end(new_tree)
-        if div:
-            div[-1].append(copy.deepcopy(date))
-                
         new_tree.write(outpath)
 
     # also convert INSTALL.txt and CHANGES.txt
