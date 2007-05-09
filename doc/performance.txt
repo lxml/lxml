@@ -527,7 +527,7 @@ So, what have we learned?
   but more visibly slower on ``iterparse()``: 0.07 versus 0.10 seconds.
   However, tree iteration in lxml is increadibly fast, so it can be faster to
   parse the whole tree and then iterate over it rather than using
-  ``iterparse()`` to do both in one step.  Or, you can just rely on the lxml
+  ``iterparse()`` to do both in one step.  Or, you can just wait for the lxml
   authors to optimise iterparse in one of the next releases...
 
 
