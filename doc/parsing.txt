@@ -240,16 +240,17 @@ the current element::
 
   >>> for event, element in etree.iterparse(StringIO(xml)):
   ...     # ... do something with the element
-  ...     element.clear()                # clean up children
-  ...     if element.getprevious():      # clean up preceding siblings
-  ...         del element.getparent()[0]
+  ...     element.clear()                 # clean up children
+  ...     while element.getprevious() is not None: 
+  ...         del element.getparent()[0]  # clean up preceding siblings
 
-You can use ``while`` instead of the ``if`` to delete multiple siblings in a
-row if you skipped over them using the ``tag`` keyword argument.  The more
-selective your tag is, however, the more thought you will have to put into
-finding the right way to clean up the elements that were skipped.  Therefore,
-it is sometimes easier to traverse all elements and do the tag selection by
-hand in the event handler code.
+The ``while`` loop deletes multiple siblings in a row.  This is only necessary
+if you skipped over some of them using the ``tag`` keyword argument.
+Otherwise, a simple ``if`` should do.  The more selective your tag is,
+however, the more thought you will have to put into finding the right way to
+clean up the elements that were skipped.  Therefore, it is sometimes easier to
+traverse all elements and do the tag selection by hand in the event handler
+code.
 
 The 'start-ns' and 'end-ns' events notify about namespace declarations and
 generate tuples ``(prefix, URI)``::
