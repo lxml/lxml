@@ -1,7 +1,7 @@
 # iterparse -- incremental parsing
 
 cdef object __ITERPARSE_CHUNK_SIZE
-__ITERPARSE_CHUNK_SIZE = 16384
+__ITERPARSE_CHUNK_SIZE = 32768
 
 ctypedef enum IterparseEventFilter:
     ITERPARSE_FILTER_START     = 1
