@@ -212,10 +212,14 @@ class BenchMark(benchbase.BenchMarkBase):
             child[:]
 
     @children
+    @with_attributes(True, False)
+    @with_text(utext=True, text=True, no_text=True)
     def bench_deepcopy(self, children):
         for child in children:
             copy.deepcopy(child)
 
+    @with_attributes(True, False)
+    @with_text(utext=True, text=True, no_text=True)
     def bench_deepcopy_all(self, root):
         copy.deepcopy(root)
 
