@@ -313,16 +313,21 @@ deepcopy
 
 Deep copying a tree is fast in lxml::
 
-  lxe: deepcopy                  (--TC T1)   10.5221 msec/pass
-  cET: deepcopy                  (--TC T1)  220.2251 msec/pass
-  ET : deepcopy                  (--TC T1)  463.7730 msec/pass
+  lxe: deepcopy_all              (--TR T1)   11.0400 msec/pass
+  cET: deepcopy_all              (--TR T1)  119.6141 msec/pass
+  ET : deepcopy_all              (--TR T1)  451.2160 msec/pass
 
-  lxe: deepcopy                  (--TC T3)    4.2651 msec/pass
-  cET: deepcopy                  (--TC T3)   53.8740 msec/pass
-  ET : deepcopy                  (--TC T3)  118.2799 msec/pass
+  lxe: deepcopy_all              (-ATR T2)   13.5410 msec/pass
+  cET: deepcopy_all              (-ATR T2)  135.2482 msec/pass
+  ET : deepcopy_all              (-ATR T2)  476.1350 msec/pass
 
-So, for example, if you often need to create independent subtrees from a large
-tree that you have parsed in, lxml is by far the best choice here.
+  lxe: deepcopy_all              (S-TR T3)    4.2889 msec/pass
+  cET: deepcopy_all              (S-TR T3)   36.0429 msec/pass
+  ET : deepcopy_all              (S-TR T3)  113.4322 msec/pass
+
+So, for example, if you have a database-like scenario where you parse in a
+large tree and then search and copy independent subtrees from it for further
+processing, lxml is by far the best choice here.
 
 
 Tree traversal
@@ -330,8 +335,8 @@ Tree traversal
 
 Another area where lxml is very fast is iteration for tree traversal.  If your
 algorithms can benefit from step-by-step traversal of the XML tree and
-especially if few elements are of interest or the element tag name is known,
-lxml is a good choice::
+especially if few elements are of interest or the target element tag name is
+known, lxml is a good choice::
 
   lxe: getiterator_all      (--TR T2)    6.4790 msec/pass
   cET: getiterator_all      (--TR T2)   28.2831 msec/pass
@@ -349,7 +354,7 @@ lxml is a good choice::
   cET: getiterator_tag_all  (--TR T2)   27.2939 msec/pass
   ET : getiterator_tag_all  (--TR T2)   22.8271 msec/pass
 
-This similarly shows in ``Element.findall()``::
+This translates directly into similar timings for ``Element.findall()``::
 
   lxe: findall              (--TR T2)    6.8321 msec/pass
   cET: findall              (--TR T2)   28.8639 msec/pass
