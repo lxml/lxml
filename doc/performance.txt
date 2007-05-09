@@ -415,7 +415,7 @@ expressions generates a much higher overhead here::
   lxe: xpath_class_repeat   (--TC T4)    1.0269 msec/pass
 
 
-A bigger example
+A longer example
 ================
 
 A while ago, Uche Ogbuji posted a `benchmark proposal`_ that would read in a
