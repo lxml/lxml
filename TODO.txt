@@ -16,6 +16,9 @@ In general
 
 * more testing on multi-threading
 
+* better exception messages for XPath and schemas based on error log,
+  e.g. missing namespace mappings in XPath
+
 
 ElementTree
 -----------
