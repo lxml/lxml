@@ -1467,6 +1467,12 @@ cdef class _Attrib:
             _delAttribute(self._element, key)
             return result
 
+    def clear(self):
+        cdef xmlNode* c_node
+        c_node = self._element._c_node
+        while c_node.properties is not NULL:
+            tree.xmlRemoveProp(c_node.properties)
+
     # ACCESSORS
     def __repr__(self):
         return repr(dict( _attributeIteratorFactory(self._element, 3) ))
@@ -1882,17 +1888,15 @@ def tostring(element_or_tree, encoding=None,
     """
     cdef int write_declaration
     cdef int c_pretty_print
-    if encoding is None:
-        encoding = 'ASCII'
-    else:
-        encoding = encoding.upper()
     c_pretty_print = bool(pretty_print)
     if xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
-        write_declaration = encoding not in \
+        write_declaration = encoding is not None and encoding.upper() not in \
                             ('ASCII', 'UTF-8', 'UTF8', 'US-ASCII')
     else:
         write_declaration = bool(xml_declaration)
+    if encoding is None:
+        encoding = 'ASCII'
 
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree,

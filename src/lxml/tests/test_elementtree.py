@@ -290,6 +290,27 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(None, root.get('three'))
         self.assertEquals('foo', root.get('three', 'foo'))
 
+    def test_attrib_clear(self):
+        XML = self.etree.XML
+        
+        root = XML('<doc one="One" two="Two"/>')
+        self.assertEquals('One', root.get('one'))
+        self.assertEquals('Two', root.get('two'))
+        root.attrib.clear()
+        self.assertEquals(None, root.get('one'))
+        self.assertEquals(None, root.get('two'))
+
+    def test_attrib_set_clear(self):
+        Element = self.etree.Element
+        
+        root = Element("root", one="One")
+        root.set("two", "Two")
+        self.assertEquals('One', root.get('one'))
+        self.assertEquals('Two', root.get('two'))
+        root.attrib.clear()
+        self.assertEquals(None, root.get('one'))
+        self.assertEquals(None, root.get('two'))
+
     def test_attribute_update_dict(self):
         XML = self.etree.XML
         

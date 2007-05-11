@@ -38,6 +38,10 @@ Features added
 Bugs fixed
 ----------
 
+* More ET compatible behaviour when writing out XML declarations or not
+
+* ``Element.attrib`` was missing ``clear()`` method
+
 * More robust error handling in ``iterparse()``
 
 * Documents lost their top-level PIs and comments on serialisation
