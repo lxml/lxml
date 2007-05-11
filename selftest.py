@@ -272,28 +272,31 @@ def parsefile():
 ##     '<p>spam<b>egg</b></p>'
 ##     """
 
-## def parseliteral():
-##     r"""
-##     >>> element = ElementTree.XML("<html><body>text</body></html>")
-##     >>> ElementTree.ElementTree(element).write(sys.stdout)
-##     <html><body>text</body></html>
-##     >>> element = ElementTree.fromstring("<html><body>text</body></html>")
-##     >>> ElementTree.ElementTree(element).write(sys.stdout)
-##     <html><body>text</body></html>
-##     >>> print ElementTree.tostring(element)
-##     <html><body>text</body></html>
-##     >>> print ElementTree.tostring(element, "ascii")
-##     <?xml version='1.0' encoding='ascii'?>
-##     <html><body>text</body></html>
-##     >>> _, ids = ElementTree.XMLID("<html><body>text</body></html>")
-##     >>> len(ids)
-##     0
-##     >>> _, ids = ElementTree.XMLID("<html><body id='body'>text</body></html>")
-##     >>> len(ids)
-##     1
-##     >>> ids["body"].tag
-##     'body'
-##     """
+def parseliteral():
+    r"""
+    >>> element = ElementTree.XML("<html><body>text</body></html>")
+    >>> ElementTree.ElementTree(element).write(sys.stdout)
+    <html><body>text</body></html>
+    >>> element = ElementTree.fromstring("<html><body>text</body></html>")
+    >>> ElementTree.ElementTree(element).write(sys.stdout)
+    <html><body>text</body></html>
+    >>> print ElementTree.tostring(element)
+    <html><body>text</body></html>
+
+# looks different in lxml
+#    >>> print ElementTree.tostring(element, "ascii")
+#    <?xml version='1.0' encoding='ascii'?>
+#    <html><body>text</body></html>
+
+    >>> _, ids = ElementTree.XMLID("<html><body>text</body></html>")
+    >>> len(ids)
+    0
+    >>> _, ids = ElementTree.XMLID("<html><body id='body'>text</body></html>")
+    >>> len(ids)
+    1
+    >>> ids["body"].tag
+    'body'
+    """
 
 ## def simpleparsefile():
 ##     """
@@ -519,16 +522,18 @@ ENTITY_XML = """\
 
 ##     """
 
-## def xmllang():
-##     """
-##     This appears to be a problem; in underlying libxml2?
+def xmllang():
+    """
+    This appears to be a problem; in underlying libxml2?
     
-##     1) xml namespace
+    1) xml namespace
 
-##     >>> elem = ElementTree.XML("<tag xml:lang='en' />")
-##     >>> serialize(elem) # 1.1
-##     '<tag xml:lang="en" />'
-##     """
+    >>> elem = ElementTree.XML("<tag xml:lang='en' />")
+    >>> serialize(elem) # 1.1
+    '<tag xml:lang="en"/>'
+
+#   '<tag xml:lang="en" />' # ElementTree produces an extra blank
+    """
     
 def namespace():
     """

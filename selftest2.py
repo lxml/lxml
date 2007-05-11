@@ -133,30 +133,30 @@ def writefile():
     '<tag>text<subtag>subtext</subtag></tag>'
     """
 
-## def encoding():
-##     r"""
-##     Test encoding issues.
+def encoding():
+    r"""
+    Test encoding issues.
 
-##     >>> elem = ElementTree.Element("tag")
-##     >>> elem.text = u"abc"
-##     >>> serialize(elem)
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>abc</tag>"
+    >>> elem = ElementTree.Element("tag")
+    >>> elem.text = u"abc"
+    >>> serialize(elem)
+    '<tag>abc</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>abc</tag>'
+    >>> serialize(elem, "us-ascii")
+    '<tag>abc</tag>'
+    >>> serialize(elem, "iso-8859-1").lower()
+    "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>abc</tag>"
 
-##     >>> elem.text = "<&\"\'>"
-##     >>> serialize(elem)
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "us-ascii") # cdata characters
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> elem.text = "<&\"\'>"
+    >>> serialize(elem)
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "us-ascii") # cdata characters
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "iso-8859-1").lower()
+    '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag>&lt;&amp;"\'&gt;</tag>'
 
 ##     >>> elem.attrib["key"] = "<&\"\'>"
 ##     >>> elem.text = None
@@ -169,16 +169,16 @@ def writefile():
 ##     >>> serialize(elem, "iso-8859-1")
 ##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;" />'
 
-##     >>> elem.text = u'\xe5\xf6\xf6<>'
-##     >>> elem.attrib.clear()
-##     >>> serialize(elem)
-##     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;</tag>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
+    >>> elem.text = u'\xe5\xf6\xf6<>'
+    >>> elem.attrib.clear()
+    >>> serialize(elem)
+    '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;</tag>'
+    >>> serialize(elem, "us-ascii")
+    '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
+    >>> serialize(elem, "iso-8859-1").lower()
+    "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
 
 ##     >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
 ##     >>> elem.text = None
@@ -191,25 +191,25 @@ def writefile():
 ##     >>> serialize(elem, "iso-8859-1")
 ##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;" />'
 
-##     """
+    """
 
-## def qname():
-##     """
-##     Test QName handling.
+def qname():
+    """
+    Test QName handling.
 
-##     1) decorated tags
+    1) decorated tags
 
-##     >>> elem = ElementTree.Element("{uri}tag")
-##     >>> serialize(elem) # 1.1
-##     '<ns0:tag xmlns:ns0="uri" />'
+    >>> elem = ElementTree.Element("{uri}tag")
+    >>> serialize(elem) # 1.1
+    '<ns0:tag xmlns:ns0="uri"/>'
 
 ##     2) decorated attributes
 
 ##     >>> elem.attrib["{uri}key"] = "value"
 ##     >>> serialize(elem) # 2.1
-##     '<ns0:tag ns0:key="value" xmlns:ns0="uri" />'
+##     '<ns0:tag ns0:key="value" xmlns:ns0="uri"/>'
 
-##     """
+    """
 
 def cdata():
     """
