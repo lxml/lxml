@@ -38,6 +38,8 @@ Features added
 Bugs fixed
 ----------
 
+* More robust error handling in ``iterparse()``
+
 * Documents lost their top-level PIs and comments on serialisation
 
 * lxml.sax failed on comments and PIs. Comments are now properly ignored and
