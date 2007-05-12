@@ -5,8 +5,9 @@ cimport xmlerror
 # module level API functions
 
 def clearErrorLog():
-    """Clear the global error log.
-    Note that this log is already bounded to a fixed size."""
+    """Clear the global error log.  Note that this log is already bound to a
+    fixed size.
+    """
     __GLOBAL_ERROR_LOG.clear()
 
 # dummy function: no debug output at all
@@ -144,6 +145,15 @@ cdef class _ListErrorLog(_BaseErrorLog):
 
     def __len__(self):
         return len(self._entries)
+
+    def __contains__(self, error_type):
+        for entry in self._entries:
+            if entry.type == error_type:
+                return True
+        return False
+
+    def __nonzero__(self):
+        return bool(self._entries)
 
     def filter_domains(self, domains):
         cdef _LogEntry entry

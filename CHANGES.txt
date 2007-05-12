@@ -8,6 +8,10 @@ Under Development
 Features added
 --------------
 
+* Error specific messages in XPath parsing and evaluation
+  NOTE: for evaluation errors, you will now get an XPathEvalError instead of
+  an XPathSyntaxError.  To catch both, you can except on ``XPathError``
+
 * The regular expression functions in XPath now support passing a node-set
   instead of a string
 

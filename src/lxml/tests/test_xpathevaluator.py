@@ -114,7 +114,20 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_error(self):
         tree = self.parse('<a/>')
-        self.assertRaises(SyntaxError, tree.xpath, '\\fad')
+        self.assertRaises(etree.XPathEvalError, tree.xpath, '\\fad')
+
+    def test_xpath_class_error(self):
+        self.assertRaises(SyntaxError, etree.XPath, '\\fad')
+        self.assertRaises(etree.XPathSyntaxError, etree.XPath, '\\fad')
+
+    def test_xpath_prefix_error(self):
+        tree = self.parse('<a/>')
+        self.assertRaises(etree.XPathEvalError, tree.xpath, '/fa:d')
+
+    def test_xpath_class_prefix_error(self):
+        tree = self.parse('<a/>')
+        xpath = etree.XPath("/fa:d")
+        self.assertRaises(etree.XPathEvalError, xpath, tree)
 
     def test_elementtree_getpath(self):
         a  = etree.Element("a")

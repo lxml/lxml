@@ -1,13 +1,35 @@
 # XPath evaluation
 
-class XPathContextError(XPathError):
+class XPathSyntaxError(LxmlSyntaxError, XPathError):
     pass
 
-class XPathSyntaxError(LxmlSyntaxError, XPathError):
+class XPathEvalError(XPathError):
     pass
 
 ################################################################################
 # XPath
+
+cdef object _XPATH_SYNTAX_ERRORS
+_XPATH_SYNTAX_ERRORS = (
+    xmlerror.XML_XPATH_NUMBER_ERROR,
+    xmlerror.XML_XPATH_UNFINISHED_LITERAL_ERROR,
+    xmlerror.XML_XPATH_VARIABLE_REF_ERROR,
+    xmlerror.XML_XPATH_INVALID_PREDICATE_ERROR,
+    xmlerror.XML_XPATH_UNCLOSED_ERROR,
+    xmlerror.XML_XPATH_INVALID_CHAR_ERROR
+)
+
+cdef object _XPATH_EVAL_ERRORS
+_XPATH_EVAL_ERRORS = (
+    xmlerror.XML_XPATH_UNDEF_VARIABLE_ERROR,
+    xmlerror.XML_XPATH_UNDEF_PREFIX_ERROR,
+    xmlerror.XML_XPATH_UNKNOWN_FUNC_ERROR,
+    xmlerror.XML_XPATH_INVALID_OPERAND,
+    xmlerror.XML_XPATH_INVALID_TYPE,
+    xmlerror.XML_XPATH_INVALID_ARITY,
+    xmlerror.XML_XPATH_INVALID_CTXT_SIZE,
+    xmlerror.XML_XPATH_INVALID_CTXT_POSITION
+)
 
 cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
@@ -76,10 +98,16 @@ cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
     cdef python.PyThread_type_lock _eval_lock
+    cdef _ErrorLog _error_log
 
     def __init__(self, namespaces, extensions, enable_regexp):
+        self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None)
+
+    property error_log:
+        def __get__(self):
+            return self._error_log.copy()
 
     def __dealloc__(self):
         if self._xpathCtxt is not NULL:
@@ -127,12 +155,36 @@ cdef class _XPathEvaluatorBase:
             python.PyThread_release_lock(self._eval_lock)
 
     cdef _raise_parse_error(self):
+        entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
+        if entries:
+            entry = entries[0]
+            if entry is not None and entry.message:
+                raise XPathSyntaxError, entry.message
+
         if self._xpathCtxt is not NULL and \
                self._xpathCtxt.lastError.message is not NULL:
             message = funicode(self._xpathCtxt.lastError.message)
         else:
             message = "error in xpath expression"
         raise XPathSyntaxError, message
+
+    cdef _raise_eval_error(self):
+        entries = self._error_log.filter_types(_XPATH_EVAL_ERRORS)
+        if entries:
+            entry = entries[0]
+            if entry is not None and entry.message:
+                raise XPathEvalError, entry.message
+        entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
+        if entries:
+            entry = entries[0]
+            if entry is not None and entry.message:
+                raise XPathSyntaxError, entry.message
+        if self._xpathCtxt is not NULL and \
+               self._xpathCtxt.lastError.message is not NULL:
+            message = funicode(self._xpathCtxt.lastError.message)
+        else:
+            message = "error in xpath evaluation"
+        raise XPathEvalError, message
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
@@ -144,7 +196,7 @@ cdef class _XPathEvaluatorBase:
 
         if xpathObj is NULL:
             self._context._release_temp_refs()
-            self._raise_parse_error()
+            self._raise_eval_error()
 
         try:
             result = _unwrapXPathObject(xpathObj, doc)
@@ -176,7 +228,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         _XPathEvaluatorBase.__init__(self, namespaces, extensions, regexp)
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
-            raise XPathContextError, "Unable to create new XPath context"
+            python.PyErr_NoMemory()
         self.set_context(xpathCtxt)
 
     def registerNamespace(self, prefix, uri):
@@ -207,6 +259,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         doc = self._element._doc
 
         self._lock()
+        self._error_log.connect()
         self._xpathCtxt.node = self._element._c_node
         try:
             self._context.register_context(doc)
@@ -217,6 +270,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
             python.PyEval_RestoreThread(state)
             result = self._handle_result(xpathObj, doc)
         finally:
+            self._error_log.disconnect()
             self._context.unregister_context()
             self._unlock()
 
@@ -249,6 +303,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         doc = self._element._doc
 
         self._lock()
+        self._error_log.connect()
         try:
             self._context.register_context(doc)
             c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)
@@ -265,6 +320,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
                 _destroyFakeDoc(doc._c_doc, c_doc)
                 self._context.unregister_context()
         finally:
+            self._error_log.disconnect()
             self._unlock()
 
         return result
@@ -308,9 +364,11 @@ cdef class XPath(_XPathEvaluatorBase):
         path = _utf8(path)
         xpathCtxt = xpath.xmlXPathNewContext(NULL)
         if xpathCtxt is NULL:
-            raise XPathContextError, "Unable to create new XPath context"
+            python.PyErr_NoMemory()
         self.set_context(xpathCtxt)
+        self._error_log.connect()
         self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(path))
+        self._error_log.disconnect()
         if self._xpath is NULL:
             self._raise_parse_error()
 
@@ -325,6 +383,7 @@ cdef class XPath(_XPathEvaluatorBase):
         element  = _rootNodeOrRaise(_etree_or_element)
 
         self._lock()
+        self._error_log.connect()
         self._xpathCtxt.doc  = document._c_doc
         self._xpathCtxt.node = element._c_node
 
@@ -337,6 +396,7 @@ cdef class XPath(_XPathEvaluatorBase):
             python.PyEval_RestoreThread(state)
             result = self._handle_result(xpathObj, document)
         finally:
+            self._error_log.disconnect()
             self._context.unregister_context()
             self._unlock()
         return result
