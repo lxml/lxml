@@ -2,12 +2,18 @@
 cimport relaxng
 
 class RelaxNGError(LxmlError):
+    """Base class for RelaxNG errors.
+    """
     pass
 
 class RelaxNGParseError(RelaxNGError):
+    """Error while parsing an XML document as RelaxNG.
+    """
     pass
 
 class RelaxNGValidateError(RelaxNGError):
+    """Error while validating an XML document with a RelaxNG schema.
+    """
     pass
 
 ################################################################################

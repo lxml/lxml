@@ -5,9 +5,13 @@ cimport htmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
 class XMLSyntaxError(LxmlSyntaxError):
+    """Syntax error while parsing an XML document.
+    """
     pass
 
 class ParserError(LxmlError):
+    """Internal lxml parser error.
+    """
     pass
 
 ctypedef enum LxmlParserType:
@@ -378,7 +382,7 @@ cdef class _BaseParser:
             raise TypeError, "This class cannot be instantiated"
         self._parser_ctxt = pctxt
         if pctxt is NULL:
-            raise ParserError, "Failed to create parser context"
+            python.PyErr_NoMemory()
         if pctxt.sax != NULL:
             # hard switch-off for CDATA nodes => makes them plain text
             pctxt.sax.cdataBlock = NULL

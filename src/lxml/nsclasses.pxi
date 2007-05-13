@@ -1,9 +1,13 @@
 # module-level API for namespace implementations
 
 class LxmlRegistryError(LxmlError):
+    """Base class of lxml registry errors.
+    """
     pass
 
 class NamespaceRegistryError(LxmlRegistryError):
+    """Error registering a namespace extension.
+    """
     pass
 
 cdef object __NAMESPACE_REGISTRIES

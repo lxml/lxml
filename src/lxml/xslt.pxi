@@ -3,18 +3,28 @@
 cimport xslt
 
 class XSLTError(LxmlError):
+    """Base class of all XSLT errors.
+    """
     pass
 
 class XSLTParseError(XSLTError):
+    """Error parsing a stylesheet document.
+    """
     pass
 
 class XSLTApplyError(XSLTError):
+    """Error running an XSL transformation.
+    """
     pass
 
 class XSLTSaveError(XSLTError):
+    """Error serialising an XSLT result.
+    """
     pass
 
 class XSLTExtensionError(XSLTError):
+    """Error registering an XSLT extension.
+    """
     pass
 
 # version information

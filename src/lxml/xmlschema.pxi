@@ -2,12 +2,18 @@
 cimport xmlschema
 
 class XMLSchemaError(LxmlError):
+    """Base class of all XML Schema errors
+    """
     pass
 
 class XMLSchemaParseError(XMLSchemaError):
+    """Error while parsing an XML document as XML Schema.
+    """
     pass
 
 class XMLSchemaValidateError(XMLSchemaError):
+    """Error while validating an XML document with an XML Schema.
+    """
     pass
 
 ################################################################################

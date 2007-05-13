@@ -85,6 +85,9 @@ class Error(Exception):
 
 # module level superclass for all exceptions
 class LxmlError(Error):
+    """Main exception base class for lxml.  All other exceptions inherit from
+    this one.
+    """
     def __init__(self, *args):
         _initError(self, *args)
         self.error_log = __copyGlobalErrorLog()
@@ -106,15 +109,18 @@ del _superError
 
 # superclass for all syntax errors
 class LxmlSyntaxError(LxmlError, SyntaxError):
-    pass
-
-class DocumentInvalid(LxmlError):
+    """Base class for all syntax errors.
+    """
     pass
 
 class XIncludeError(LxmlError):
+    """Error during XInclude processing.
+    """
     pass
 
 class C14NError(LxmlError):
+    """Error during C14N serialisation.
+    """
     pass
 
 # version information
@@ -1956,6 +1962,12 @@ include "xslt.pxi"       # XSL transformations
 
 ################################################################################
 # Validation
+
+class DocumentInvalid(LxmlError):
+    """Validation error.  Raised by all document validators when their
+    ``assertValid(tree)`` method fails.
+    """
+    pass
 
 cdef class _Validator:
     "Base class for XML validators."

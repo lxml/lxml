@@ -1,15 +1,23 @@
 # support for extension functions in XPath and XSLT
 
 class XPathError(LxmlError):
+    """Base class of all XPath errors.
+    """
     pass
 
 class XPathEvalError(XPathError):
+    """Error during XPath evaluation.
+    """
     pass
 
 class XPathFunctionError(XPathEvalError):
+    """Internal error looking up an XPath extension function.
+    """
     pass
 
 class XPathResultError(XPathEvalError):
+    """Error handling an XPath result.
+    """
     pass
 
 # forward declarations

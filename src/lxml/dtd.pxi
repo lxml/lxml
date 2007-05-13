@@ -2,12 +2,18 @@
 cimport dtdvalid
 
 class DTDError(LxmlError):
+    """Base class for DTD errors.
+    """
     pass
 
 class DTDParseError(DTDError):
+    """Error while parsing a DTD.
+    """
     pass
 
 class DTDValidateError(DTDError):
+    """Error while validating an XML document with a DTD.
+    """
     pass
 
 ################################################################################

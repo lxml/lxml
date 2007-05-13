@@ -3,6 +3,8 @@ from etree import ElementTree, Element, SubElement, LxmlError
 from etree import XML, Comment, ProcessingInstruction
 
 class SaxError(LxmlError):
+    """General SAX error.
+    """
     pass
 
 def _getNsTag(tag):

@@ -48,12 +48,18 @@ lxml.
 """
 
 class SchematronError(LxmlError):
+    """Base class of all Schematron errors.
+    """
     pass
 
 class SchematronParseError(SchematronError):
+    """Error while parsing an XML document as Schematron schema.
+    """
     pass
 
 class SchematronValidateError(SchematronError):
+    """Error while validating an XML document with a Schematron schema.
+    """
     pass
 
 ################################################################################
