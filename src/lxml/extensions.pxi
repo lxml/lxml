@@ -3,10 +3,13 @@
 class XPathError(LxmlError):
     pass
 
-class XPathFunctionError(XPathError):
+class XPathEvalError(XPathError):
     pass
 
-class XPathResultError(XPathError):
+class XPathFunctionError(XPathEvalError):
+    pass
+
+class XPathResultError(XPathEvalError):
     pass
 
 # forward declarations

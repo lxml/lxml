@@ -3,9 +3,6 @@
 class XPathSyntaxError(LxmlSyntaxError, XPathError):
     pass
 
-class XPathEvalError(XPathError):
-    pass
-
 ################################################################################
 # XPath
 
@@ -165,7 +162,7 @@ cdef class _XPathEvaluatorBase:
                self._xpathCtxt.lastError.message is not NULL:
             message = funicode(self._xpathCtxt.lastError.message)
         else:
-            message = "error in xpath expression"
+            message = "Error in xpath expression"
         raise XPathSyntaxError, message
 
     cdef _raise_eval_error(self):
@@ -178,12 +175,12 @@ cdef class _XPathEvaluatorBase:
         if entries:
             entry = entries[0]
             if entry is not None and entry.message:
-                raise XPathSyntaxError, entry.message
+                raise XPathEvalError, entry.message
         if self._xpathCtxt is not NULL and \
                self._xpathCtxt.lastError.message is not NULL:
             message = funicode(self._xpathCtxt.lastError.message)
         else:
-            message = "error in xpath evaluation"
+            message = "Error in xpath evaluation"
         raise XPathEvalError, message
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):

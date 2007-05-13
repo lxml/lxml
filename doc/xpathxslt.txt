@@ -14,6 +14,7 @@ compliant way.
      1.4  The ``XPath`` class
      1.5  The ``XPathEvaluator`` classes
      1.6  ``ETXPath``
+     1.7  Error handling
    2  XSLT
      2.1  XSLT result objects
      2.2  Stylesheet parameters
@@ -263,6 +264,58 @@ write::
   >>> find = etree.ETXPath("//{ns}b")
   >>> print find(root)[0].tag
   {ns}b
+
+
+Error handling
+--------------
+
+lxml.etree raises exceptions when errors occur while parsing or evaluating an
+XPath expression::
+
+  >>> find = etree.XPath("\\")
+  Traceback (most recent call last):
+    ...
+  XPathSyntaxError: Error in xpath expression
+
+lxml will also try to give you a hint what went wrong, so if you pass a more
+complex expression, you may get a somewhat more specific error::
+
+  >>> find = etree.XPath("//*[1.1.1]")
+  Traceback (most recent call last):
+    ...
+  XPathSyntaxError: Invalid predicate
+
+During evaluation, lxml will emit an XPathEvalError on errors::
+
+  >>> find = etree.XPath("//ns:a")
+  >>> find(root)
+  Traceback (most recent call last):
+    ...
+  XPathEvalError: Undefined namespace prefix
+
+This works for the ``XPath`` class, however, the other evaluators (including
+the ``xpath()`` method) are one-shot operations that do parsing and evaluation
+in one step.  They therefore raise evaluation exceptions in all cases::
+
+  >>> root = etree.Element("test")
+  >>> find = root.xpath("//*[1.1.1]")
+  Traceback (most recent call last):
+    ...
+  XPathEvalError: Invalid predicate
+
+  >>> find = root.xpath("//ns:a")
+  Traceback (most recent call last):
+    ...
+  XPathEvalError: Undefined namespace prefix
+
+  >>> find = root.xpath("\\")
+  Traceback (most recent call last):
+    ...
+  XPathEvalError: Error in xpath evaluation
+
+Note that lxml versions before 1.3 always raised an ``XPathSyntaxError`` for
+all errors, including evaluation errors.  The best way to support older
+versions is to except on the superclass ``XPathError``.
 
 
 XSLT
