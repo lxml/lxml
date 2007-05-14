@@ -1,3 +1,7 @@
+===============
+ToDo's for lxml
+===============
+
 lxml
 ====
 
@@ -44,3 +48,11 @@ Features
 
 * RelaxNG compact notation (rnc versus rng) support.  Currently not supported
   by libxml2 (patch exists)
+
+
+lxml 2.0
+========
+
+* print column number in error log lines
+
+* clean up (and remove?) duplicated API for extension functions
