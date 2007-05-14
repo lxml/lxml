@@ -183,6 +183,10 @@ class ETreeOnlyTestCase(HelperTestCase):
                        if 'PARSER'   in log.domain_name])
         self.assert_([ log for log in logs
                        if 'TAG_NAME_MISMATCH' in log.type_name ])
+        self.assert_([ log for log in logs
+                       if 1 == log.line ])
+        self.assert_([ log for log in logs
+                       if 15 == log.column ])
 
     def test_parse_error_from_file(self):
         parse = self.etree.parse

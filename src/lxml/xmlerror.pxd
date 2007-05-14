@@ -780,6 +780,8 @@ cdef extern from "libxml/xmlerror.h":
         char* str2
         char* str3
         int line
+        int int1
+        int int2
 
     ctypedef void (*xmlGenericErrorFunc)(void* ctxt, char* msg, ...)
     ctypedef void (*xmlStructuredErrorFunc)(void* userData, xmlError* error)

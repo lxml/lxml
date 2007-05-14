@@ -36,15 +36,18 @@ cdef class _LogEntry:
     cdef readonly object domain
     cdef readonly object type
     cdef readonly object line
+    cdef readonly object column
     cdef readonly object level
     cdef readonly object message
     cdef readonly object filename
+
     cdef _setError(self, xmlerror.xmlError* error):
         cdef int size
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
         self.line     = error.line
+        self.column   = error.int2
         size = cstd.strlen(error.message)
         if size > 0 and error.message[size-1] == c'\n':
             size = size - 1 # strip EOL

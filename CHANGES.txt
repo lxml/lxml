@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* ``column`` field on error log entries to accompany the ``line`` field
+
 * Error specific messages in XPath parsing and evaluation
   NOTE: for evaluation errors, you will now get an XPathEvalError instead of
   an XPathSyntaxError.  To catch both, you can except on ``XPathError``
