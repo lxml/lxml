@@ -31,9 +31,10 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    3  Trees and Documents
    4  Iteration
    5  Error handling on exceptions
-   6  Serialisation
-   7  XInclude and ElementInclude
-   8  write_c14n on ElementTree
+   6  Error logging
+   7  Serialisation
+   8  XInclude and ElementInclude
+   9  write_c14n on ElementTree
 
 
 lxml.etree
@@ -188,29 +189,46 @@ Error handling on exceptions
 ----------------------------
 
 Libxml2 provides error messages for failures, be it during parsing, XPath
-evaluation or schema validation.  Whenever an exception is raised, you can
-retrieve the errors that occured and "might have" lead to the problem::
+evaluation or schema validation.  The preferred way of accessing them is
+through the local ``error_log`` property of the respective evaluator or
+transformer object.  See their documentation for details.
+
+However, lxml also keeps a global error log of all errors that occurred at the
+application level.  Whenever an exception is raised, you can retrieve the
+errors that occured and "might have" lead to the problem from the error log
+copy attached to the exception::
 
   >>> etree.clearErrorLog()
-  >>> broken_xml = '<a>'
+  >>> broken_xml = '''
+  ... <root>
+  ...   <a>
+  ... </root>
+  ... '''
   >>> try:
   ...   etree.parse(StringIO(broken_xml))
   ... except etree.XMLSyntaxError, e:
   ...   pass # just put the exception into e
-  >>> log = e.error_log.filter_levels(etree.ErrorLevels.FATAL)
+
+Once you have caught this exception, you can access its ``error_log`` property
+to retrieve the log entries or filter them by a specific type, error domain or
+error level::
+
+  >>> log = e.error_log.filter_from_level(etree.ErrorLevels.FATAL)
   >>> print log
-  <string>:1:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag a line 1
+  <string>:4:FATAL:PARSER:ERR_TAG_NAME_MISMATCH: Opening and ending tag mismatch: a line 3 and root
+  <string>:5:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag root line 2
 
 This might look a little cryptic at first, but it is the information that
 libxml2 gives you.  At least the message at the end should give you a hint
-what went wrong and you can see that the fatal error (FATAL) happened during
-parsing (PARSER) line 1 of a string (<string>, or filename if available).
-Here, PARSER is the so-called error domain, see lxml.etree.ErrorDomains for
-that.  You can get it from a log entry like this::
+what went wrong and you can see that the fatal errors (FATAL) happened during
+parsing (PARSER) lines 4 and 5 of a string (<string>, or the filename if
+available).  Here, PARSER is the so-called error domain, see
+``lxml.etree.ErrorDomains`` for that.  You can get it from a log entry like
+this::
 
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename
-  PARSER ERR_TAG_NOT_FINISHED <string>
+  PARSER ERR_TAG_NAME_MISMATCH <string>
 
 There is also a convenience attribute ``last_error`` that returns the last
 error or fatal error that occurred::
@@ -219,13 +237,16 @@ error or fatal error that occurred::
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NOT_FINISHED <string>
 
-Alternatively, lxml.etree supports logging libxml2 messages to the Python
-stdlib logging module.  This is done through the ``etree.PyErrorLog`` class.
-It disables the error reporting from exceptions and forwards log messages to a
-Python logger.  To use it, see the descriptions of the function
-``etree.useGlobalPythonLog`` and the class ``etree.PyErrorLog`` for help.
-Note that this does not affect the local error logs of XSLT, XMLSchema,
-etc. which are described in their respective sections below.
+
+Error logging
+-------------
+
+lxml.etree supports logging libxml2 messages to the Python stdlib logging
+module.  This is done through the ``etree.PyErrorLog`` class.  It disables the
+error reporting from exceptions and forwards log messages to a Python logger.
+To use it, see the descriptions of the function ``etree.useGlobalPythonLog``
+and the class ``etree.PyErrorLog`` for help.  Note that this does not affect
+the local error logs of XSLT, XMLSchema, etc.
 
 
 Serialisation
