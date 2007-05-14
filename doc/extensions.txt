@@ -128,8 +128,9 @@ XSL transformations::
   >>> print xslt(doc)
   Ola Haegar
 
-It is also possible to register namespaces with a single evaluator.  While the
-following example involves no functions, the idea should still be clear::
+It is also possible to register namespaces with a single evaluator after its
+creation.  While the following example involves no functions, the idea should
+still be clear::
   
   >>> f = StringIO('<a xmlns="http://mydomain.org/myfunctions" />')
   >>> ns_doc = etree.parse(f)
@@ -138,7 +139,8 @@ following example involves no functions, the idea should still be clear::
   []
 
 This returns nothing, as we did not ask for the right namespace.  When we
-register the namespace with the evaluator, we can access it via a prefix::
+register the namespace with the evaluator, however, we can access it via a
+prefix::
 
   >>> e.registerNamespace('foo', 'http://mydomain.org/myfunctions')
   >>> e.evaluate('/foo:a')[0].tag
@@ -151,7 +153,7 @@ the global mapping of the FunctionNamespace objects::
   >>> e2.evaluate('/foo:a')
   Traceback (most recent call last):
   ...
-  XPathSyntaxError: error in xpath expression
+  XPathEvalError: Undefined namespace prefix
 
 
 Evaluator-local extensions
