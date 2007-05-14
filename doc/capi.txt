@@ -9,7 +9,7 @@ without going through the Python API.
 The API is described in the file `etreepublic.pxd`_, which is directly
 c-importable by Pyrex modules.
 
-.. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/branch/capi/src/lxml/etreepublic.pxd
+.. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/trunk/src/lxml/etreepublic.pxd
 
 .. contents::
 ..
@@ -22,6 +22,8 @@ Writing external modules in Pyrex
 
 This is the easiest way of extending lxml at the C level.  A Pyrex module
 should start like this::
+
+    # My Pyrex extension
 
     # import the public functions and classes of lxml.etree
     cimport etreepublic as cetree
@@ -47,7 +49,8 @@ a new default element class, you can write code like the following::
          def setValue(self, myval):
              self.set("my_attribute", myval)
 
-    etree.setDefaultElementClass(NewElementClass)
+    etree.setElementClassLookup(
+         DefaultElementClassLookup(element=NewElementClass))
 
 
 Writing external modules in C
