@@ -167,11 +167,8 @@ cdef class _XPathEvaluatorBase:
 
     cdef _raise_eval_error(self):
         entries = self._error_log.filter_types(_XPATH_EVAL_ERRORS)
-        if entries:
-            entry = entries[0]
-            if entry is not None and entry.message:
-                raise XPathEvalError, entry.message
-        entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
+        if not entries:
+            entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
         if entries:
             entry = entries[0]
             if entry is not None and entry.message:
