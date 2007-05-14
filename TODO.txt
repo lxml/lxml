@@ -53,6 +53,11 @@ Features
 lxml 2.0
 ========
 
-* print column number in error log lines
+* reformat error log lines, add column number
+
+* always use '<string>' as URL when tree was parsed from string? (can libxml2
+  handle this?)
 
 * clean up (and remove?) duplicated API for extension functions
+
+* find a way to integrate Schematron (if it's available)
