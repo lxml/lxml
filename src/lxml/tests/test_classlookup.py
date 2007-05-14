@@ -51,6 +51,31 @@ class ClassLookupTestCase(HelperTestCase):
 
     def test_default_class_lookup(self):
         class TestElement(etree.ElementBase):
+            FIND_ME = "default element"
+        class TestComment(etree.CommentBase):
+            FIND_ME = "default comment"
+        class TestPI(etree.PIBase):
+            FIND_ME = "default pi"
+
+        parser = etree.XMLParser()
+
+        lookup = etree.ElementDefaultClassLookup(
+            element=TestElement, comment=TestComment, pi=TestPI)
+        parser.setElementClassLookup(lookup)
+
+        root = etree.XML("""<?xml version='1.0'?>
+        <root>
+          <?myPI?>
+          <!-- hi -->
+        </root>
+        """, parser)
+
+        self.assertEquals("default element", root.FIND_ME)
+        self.assertEquals("default pi", root[0].FIND_ME)
+        self.assertEquals("default comment", root[1].FIND_ME)
+
+    def test_default_class_lookup_is_not_nslookup(self):
+        class TestElement(etree.ElementBase):
             FIND_ME = "namespace class"
 
         ns = etree.Namespace("myNS")

@@ -79,6 +79,9 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
 cdef class ElementDefaultClassLookup(ElementClassLookup):
     """Element class lookup scheme that always returns the default Element
     class.
+
+    The keyword arguments ``element``, ``comment`` and ``pi`` accept the
+    respective Element classes.
     """
     cdef readonly object element_class
     cdef readonly object comment_class
@@ -86,21 +89,21 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
     def __init__(self, element=None, comment=None, pi=None):
         self._lookup_function = _lookupDefaultElementClass
         if element is None:
-            self.element_class = _Element
+            self.element_class = None
         elif issubclass(element, ElementBase):
             self.element_class = element
         else:
             raise TypeError, "element class must be subclass of ElementBase"
 
         if comment is None:
-            self.comment_class = _Comment
+            self.comment_class = None
         elif issubclass(comment, CommentBase):
             self.comment_class = comment
         else:
             raise TypeError, "comment class must be subclass of CommentBase"
 
         if pi is None:
-            self.pi_class = _ProcessingInstruction
+            self.pi_class = None
         elif issubclass(pi, PIBase):
             self.pi_class = pi
         else:
@@ -109,17 +112,23 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
 cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     "Trivial class lookup function that always returns the default class."
     if c_node.type == tree.XML_ELEMENT_NODE:
-        if state is None:
+        if state is not None:
+            cls =  (<ElementDefaultClassLookup>state).element_class
+        if cls is None:
             return _Element
         else:
-            return (<ElementDefaultClassLookup>state).element_class
+            return cls
     elif c_node.type == tree.XML_COMMENT_NODE:
-        if state is None:
+        if state is not None:
+            cls = (<ElementDefaultClassLookup>state).comment_class
+        if cls is None:
             return _Comment
         else:
-            return (<ElementDefaultClassLookup>state).comment_class
+            return cls
     elif c_node.type == tree.XML_PI_NODE:
-        if state is None:
+        if state is not None:
+            cls = (<ElementDefaultClassLookup>state).pi_class
+        if cls is None:
             # special case XSLT-PI
             if c_node.name is not NULL and c_node.content is not NULL:
                 if cstd.strcmp(c_node.name, "xml-stylesheet") == 0:
@@ -128,7 +137,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
         else:
-            return (<ElementDefaultClassLookup>state).pi_class
+            return cls
     else:
         assert 0, "Unknown node type: %s" % c_node.type
 
@@ -145,9 +154,9 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     dictionary.  
 
     Arguments:
-    * attribute name ('{ns}name' style string)
-    * class mapping  (Python dict mapping attribute values to Element classes)
-    * fallback       (optional fallback lookup mechanism)
+    * attribute name - '{ns}name' style string
+    * class mapping  - Python dict mapping attribute values to Element classes
+    * fallback       - optional fallback lookup mechanism
 
     A None key in the class mapping will be checked if the attribute is
     missing.
@@ -194,10 +203,9 @@ cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
 cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
     cdef FallbackElementClassLookup lookup
     lookup = <FallbackElementClassLookup>state
-    if c_node.type == tree.XML_ELEMENT_NODE:
-        if doc._parser._class_lookup is not None:
-            return doc._parser._class_lookup._lookup_function(
-                doc._parser._class_lookup, doc, c_node)
+    if doc._parser._class_lookup is not None:
+        return doc._parser._class_lookup._lookup_function(
+            doc._parser._class_lookup, doc, c_node)
     return lookup._callFallback(doc, c_node)
 
 
