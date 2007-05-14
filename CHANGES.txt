@@ -44,6 +44,8 @@ Features added
 Bugs fixed
 ----------
 
+* Objectify couldn't handle prefixed XSD type names in ``xsi:type``
+
 * More ET compatible behaviour when writing out XML declarations or not
 
 * More robust error handling in ``iterparse()``

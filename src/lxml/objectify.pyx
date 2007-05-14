@@ -1011,12 +1011,13 @@ cdef object _dump(_Element element, int indent):
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = "{%s}" % PYTYPE_NAMESPACE
     for name, value in cetree.iterattributes(element, 3):
-        if name == PYTYPE_ATTRIBUTE:
-            if value == TREE_PYTYPE:
-                continue
-            else:
-                name = name.replace(pytype_ns, 'py:')
-        name = name.replace(xsi_ns, 'xsi:')
+        if '{' in name:
+            if name == PYTYPE_ATTRIBUTE:
+                if value == TREE_PYTYPE:
+                    continue
+                else:
+                    name = name.replace(pytype_ns, 'py:')
+            name = name.replace(xsi_ns, 'xsi:')
         result = result + "%s  * %s = %r\n" % (indentstr, name, value)
 
     indent = indent + 1
@@ -1097,6 +1098,9 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
 
     if value is not None:
         dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
+        if dict_result is NULL and ':' in value:
+            prefix, value = value.split(':', 1)
+            dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
         if dict_result is not NULL:
             return (<PyType>dict_result)._type
 
@@ -1516,6 +1520,9 @@ def annotate(element_or_tree, ignore_old=True):
 
         if value is not None:
             dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
+            if dict_result is NULL and ':' in value:
+                prefix, value = value.split(':', 1)
+                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
             if dict_result is not NULL:
                 pytype = <PyType>dict_result
 
@@ -1574,6 +1581,9 @@ def xsiannotate(element_or_tree, ignore_old=True):
             c_node, _XML_SCHEMA_INSTANCE_NS, "type")
         if typename is not None:
             dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
+            if dict_result is NULL and ':' in typename:
+                prefix, typename = typename.split(':', 1)
+                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
             if dict_result is not NULL:
                 pytype = <PyType>dict_result
                 if pytype is not StrType:
@@ -1617,6 +1627,15 @@ def xsiannotate(element_or_tree, ignore_old=True):
         cetree.delAttributeFromNsName(c_node, _XML_SCHEMA_INSTANCE_NS, "type")
     else:
         # update or create attribute
+        c_ns = cetree.findOrBuildNodeNs(doc, c_node, _XML_SCHEMA_NS)
+        if c_ns is not NULL:
+            if c_ns.prefix is not NULL and c_ns.prefix[0] != c'\0':
+                if ':' in typename:
+                    oldprefix, name = typename.split(':', 1)
+                    if cstd.strcmp(_cstr(oldprefix), c_ns.prefix) != 0:
+                        typename = c_ns.prefix + ':' + name
+            elif ':' in typename:
+                _, typename = typename.split(':', 1)
         c_ns = cetree.findOrBuildNodeNs(doc, c_node, _XML_SCHEMA_INSTANCE_NS)
         tree.xmlSetNsProp(c_node, c_ns, "type", _cstr(typename))
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
@@ -1729,6 +1748,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
     if the type can be identified.  If '_pytype' or '_xsi' are among the
     keyword arguments, they will be used instead.
     """
+    cdef python.PyObject* dict_result
     if nsmap is None:
         nsmap = _DEFAULT_NSMAP
     if attrib is not None:
@@ -1736,12 +1756,30 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             attrib.update(_attributes)
         _attributes = attrib
     if _xsi is not None:
+        if ':' in _xsi:
+            prefix, name = _xsi.split(':', 1)
+            ns = nsmap.get(prefix)
+            if ns != XML_SCHEMA_NS:
+                raise TypeError, "XSD types require the XSD namespace"
+        elif nsmap is _DEFAULT_NSMAP:
+            name = _xsi
+            _xsi = 'xsd' + ':' + _xsi
+        else:
+            name = _xsi
+            for p, ns in nsmap.items():
+                if ns == XML_SCHEMA_NS:
+                    _xsi = prefix + ':' + _xsi
+                    break
+            else:
+                raise TypeError, "XSD types require the XSD namespace"
         python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
         if _pytype is None:
-            # allow for s.o. using unregistered or even wrong xsi:type names
-            pytype_lookup = _SCHEMA_TYPE_DICT.get(_xsi)
-            if pytype_lookup is not None:
-                _pytype = pytype_lookup.name
+            # allow using unregistered or even wrong xsi:type names
+            dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, _xsi)
+            if dict_result is NULL:
+                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, name)
+            if dict_result is not NULL:
+                _pytype = (<PyType>dict_result).name
 
     if python._isString(_value):
         strval = _value

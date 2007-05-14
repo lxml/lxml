@@ -733,22 +733,23 @@ The utility function ``deannotate()`` can be used to get rid of 'py:pytype'
 and/or 'xsi:type' information::
 
     >>> root = objectify.fromstring('''\
-    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    ...   <d xsi:type="double">5</d>
-    ...   <l xsi:type="long"  >5</l>
-    ...   <s xsi:type="string">5</s>
+    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    ...       xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    ...   <d xsi:type="xsd:double">5</d>
+    ...   <l xsi:type="xsd:long"  >5</l>
+    ...   <s xsi:type="xsd:string">5</s>
     ... </root>''')
     >>> objectify.annotate(root)
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
-          * xsi:type = 'double'
+          * xsi:type = 'xsd:double'
           * py:pytype = 'float'
         l = 5L [LongElement]
-          * xsi:type = 'long'
+          * xsi:type = 'xsd:long'
           * py:pytype = 'long'
         s = '5' [StringElement]
-          * xsi:type = 'string'
+          * xsi:type = 'xsd:string'
           * py:pytype = 'str'
     >>> objectify.deannotate(root)
     >>> print objectify.dump(root)
@@ -780,7 +781,7 @@ XSI type name::
     root = None [ObjectifiedElement]
         x = 5L [LongElement]
           * py:pytype = 'long'
-          * xsi:type = 'integer'
+          * xsi:type = 'xsd:integer'
 
 There is a side effect of the type lookup.  If you assign a string value using
 attribute assignment and that string value turns out to be valid for any of
