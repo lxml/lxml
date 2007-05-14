@@ -36,7 +36,7 @@ cdef extern from "etree.h":
 
     cdef class lxml.etree._ElementTree [ object LxmlElementTree ]:
         cdef _Document _doc
-        cdef _Element  _element
+        cdef _Element  _context_node
 
     cdef class lxml.etree.ElementClassLookup [ object LxmlElementClassLookup ]:
         cdef object (*_lookup_function)(object, _Document, tree.xmlNode*)
@@ -82,7 +82,7 @@ cdef extern from "etree.h":
     cdef object lookupNamespaceElementClass(_1, _Document _2,
                                             tree.xmlNode* c_node)
 
-    # call the fallback lookup function of an FallbackElementClassLookup
+    # call the fallback lookup function of a FallbackElementClassLookup
     cdef object callLookupFallback(FallbackElementClassLookup lookup,
                                    _Document doc, tree.xmlNode* c_node)
 
