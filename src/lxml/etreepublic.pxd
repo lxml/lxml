@@ -201,6 +201,10 @@ cdef extern from "etree.h":
     cdef tree.xmlNs* findOrBuildNodeNs(_Document doc, tree.xmlNode* c_node,
                                        char* href)
 
+    # recursively lookup a namespace in element or ancestors, or create it
+    cdef tree.xmlNs* findOrBuildNodeNsPrefix(
+        _Document doc, tree.xmlNode* c_node, char* href, char* prefix)
+
     # find the Document of an Element, ElementTree or Document (itself!)
     cdef _Document documentOrRaise(object input)
 

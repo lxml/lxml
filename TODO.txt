@@ -63,3 +63,6 @@ lxml 2.0
 * find a way to integrate Schematron (if it's available)
 
 * always use ns-prefixed type names in objectify's ``xsi:type`` attributes
+
+* remove ``findOrBuildNodeNs()`` from C-API (replaced by
+  findOrBuildNodeNsPrefix)
