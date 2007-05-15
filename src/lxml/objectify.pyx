@@ -1768,7 +1768,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             name = _xsi
             for p, ns in nsmap.items():
                 if ns == XML_SCHEMA_NS:
-                    if p is not None and P:
+                    if p is not None and p:
                         _xsi = prefix + ':' + _xsi
                     break
             else:
