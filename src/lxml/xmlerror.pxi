@@ -406,6 +406,11 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     c_error.domain = xmlerror.XML_FROM_XSLT
     c_error.code   = xmlerror.XML_ERR_OK    # what else?
     c_error.level  = xmlerror.XML_ERR_ERROR # what else?
+    c_error.str1   = NULL
+    c_error.str2   = NULL
+    c_error.str3   = NULL
+    c_error.int1   = 0
+    c_error.int2   = 0
 
     _forwardError(c_log_handler, &c_error)
 
