@@ -44,6 +44,8 @@ Features added
 Bugs fixed
 ----------
 
+* passing '' as namespace prefix in nsmap could be passed through to libxml2
+
 * Objectify couldn't handle prefixed XSD type names in ``xsi:type``
 
 * More ET compatible behaviour when writing out XML declarations or not

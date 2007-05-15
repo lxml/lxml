@@ -1768,7 +1768,8 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             name = _xsi
             for p, ns in nsmap.items():
                 if ns == XML_SCHEMA_NS:
-                    _xsi = prefix + ':' + _xsi
+                    if p is not None and P:
+                        _xsi = prefix + ':' + _xsi
                     break
             else:
                 raise TypeError, "XSD types require the XSD namespace"
