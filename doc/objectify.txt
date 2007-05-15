@@ -688,19 +688,19 @@ Python types::
 
     >>> root = objectify.fromstring('''\
     ...    <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    ...      <d xsi:type="double">5</d>
-    ...      <l xsi:type="long"  >5</l>
-    ...      <s xsi:type="string">5</s>
+    ...      <d xsi:type="xsd:double">5</d>
+    ...      <l xsi:type="xsd:long"  >5</l>
+    ...      <s xsi:type="xsd:string">5</s>
     ...    </root>
     ...    ''')
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
-          * xsi:type = 'double'
+          * xsi:type = 'xsd:double'
         l = 5L [LongElement]
-          * xsi:type = 'long'
+          * xsi:type = 'xsd:long'
         s = '5' [StringElement]
-          * xsi:type = 'string'
+          * xsi:type = 'xsd:string'
 
 Again, there is a utility function ``xsiannotate()`` that recursively 
 generates the "xsi:type" attribute for the elements of a tree::
@@ -719,11 +719,11 @@ generates the "xsi:type" attribute for the elements of a tree::
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         a = 'test' [StringElement]
-          * xsi:type = 'string'
+          * xsi:type = 'xsd:string'
         b = 5 [IntElement]
-          * xsi:type = 'int'
+          * xsi:type = 'xsd:int'
         c = True [BoolElement]
-          * xsi:type = 'boolean'
+          * xsi:type = 'xsd:boolean'
 
 Note, however, that ``xsiannotate()`` will always use the first XML Schema
 datatype that is defined for any given Python type, see also

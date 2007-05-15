@@ -1538,7 +1538,8 @@ def annotate(element_or_tree, ignore_old=True):
             c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
     else:
         # update or create attribute
-        c_ns = cetree.findOrBuildNodeNs(doc, c_node, _PYTYPE_NAMESPACE)
+        c_ns = cetree.findOrBuildNodeNsPrefix(
+            doc, c_node, _PYTYPE_NAMESPACE, 'py')
         tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
                           _cstr(pytype.name))
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
@@ -1627,16 +1628,21 @@ def xsiannotate(element_or_tree, ignore_old=True):
         cetree.delAttributeFromNsName(c_node, _XML_SCHEMA_INSTANCE_NS, "type")
     else:
         # update or create attribute
-        c_ns = cetree.findOrBuildNodeNs(doc, c_node, _XML_SCHEMA_NS)
+        c_ns = cetree.findOrBuildNodeNsPrefix(
+            doc, c_node, _XML_SCHEMA_NS, 'xsd')
         if c_ns is not NULL:
-            if c_ns.prefix is not NULL and c_ns.prefix[0] != c'\0':
-                if ':' in typename:
-                    oldprefix, name = typename.split(':', 1)
-                    if cstd.strcmp(_cstr(oldprefix), c_ns.prefix) != 0:
-                        typename = c_ns.prefix + ':' + name
-            elif ':' in typename:
-                _, typename = typename.split(':', 1)
-        c_ns = cetree.findOrBuildNodeNs(doc, c_node, _XML_SCHEMA_INSTANCE_NS)
+            if ':' in typename:
+                prefix, name = typename.split(':', 1)
+                if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
+                    typename = name
+                elif cstd.strcmp(_cstr(prefix), c_ns.prefix) != 0:
+                    prefix = c_ns.prefix
+                    typename = prefix + ':' + name
+            elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
+                prefix = c_ns.prefix
+                typename = prefix + ':' + typename
+        c_ns = cetree.findOrBuildNodeNsPrefix(
+            doc, c_node, _XML_SCHEMA_INSTANCE_NS, 'xsi')
         tree.xmlSetNsProp(c_node, c_ns, "type", _cstr(typename))
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
@@ -1763,12 +1769,12 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
                 raise TypeError, "XSD types require the XSD namespace"
         elif nsmap is _DEFAULT_NSMAP:
             name = _xsi
-            _xsi = 'xsd' + ':' + _xsi
+            _xsi = 'xsd:' + _xsi
         else:
             name = _xsi
-            for p, ns in nsmap.items():
+            for prefix, ns in nsmap.items():
                 if ns == XML_SCHEMA_NS:
-                    if p is not None and p:
+                    if prefix is not None and prefix:
                         _xsi = prefix + ':' + _xsi
                     break
             else:
