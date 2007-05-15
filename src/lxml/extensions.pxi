@@ -341,7 +341,7 @@ cdef class _ExsltRegExp:
             else:
                 return str(firstnode)
         else:
-            raise TypeError, "Invalid argument type %s" % type(value)
+            return str(value)
 
     cdef _compile(self, rexp, ignore_case):
         cdef python.PyObject* c_result
