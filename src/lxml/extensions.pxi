@@ -323,6 +323,7 @@ cdef class _ExsltRegExp:
         self._compile_map = {}
 
     cdef _make_string(self, value):
+        cdef char* c_text
         if _isString(value):
             return value
         elif python.PyList_Check(value):
@@ -333,8 +334,10 @@ cdef class _ExsltRegExp:
             if _isString(firstnode):
                 return firstnode
             elif isinstance(firstnode, _Element):
-                return funicode(
-                    tree.xmlNodeGetContent((<_Element>firstnode)._c_node))
+                c_text = tree.xmlNodeGetContent((<_Element>firstnode)._c_node)
+                s = funicode(c_text)
+                tree.xmlFree(c_text)
+                return s
             else:
                 return str(firstnode)
         else:
