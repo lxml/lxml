@@ -61,3 +61,5 @@ lxml 2.0
 * clean up (and remove?) duplicated API for extension functions
 
 * find a way to integrate Schematron (if it's available)
+
+* always use ns-prefixed type names in objectify's ``xsi:type`` attributes
