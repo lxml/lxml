@@ -1567,6 +1567,8 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
+        [doctest.DocFileSuite('../../../doc/tutorial.txt')])
+    suite.addTests(
         [doctest.DocFileSuite('../../../doc/api.txt')])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/parsing.txt')])

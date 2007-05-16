@@ -4,10 +4,11 @@ import os, shutil, re, sys, copy, time
 SITE_STRUCTURE = [
     ('lxml', ('main.txt', 'intro.txt', 'FAQ.txt', 'compatibility.txt',
               'performance.txt', 'build.txt')),
-    ('Developing with lxml', ('api.txt', 'parsing.txt', 'validation.txt',
-                              'xpathxslt.txt', 'objectify.txt')),
-    ('Extending lxml', ('resolvers.txt', 'extensions.txt', 'element_classes.txt',
-                        'sax.txt', 'capi.txt')),
+    ('Developing with lxml', ('tutorial.txt', 'api.txt', 'parsing.txt',
+                              'validation.txt', 'xpathxslt.txt',
+                              'objectify.txt')),
+    ('Extending lxml', ('resolvers.txt', 'extensions.txt',
+                        'element_classes.txt', 'sax.txt', 'capi.txt')),
     ]
 
 RST2HTML_OPTIONS = " ".join([

@@ -1,0 +1,336 @@
+=======================
+The lxml.etree Tutorial
+=======================
+
+This tutorial briefly overviews the main concepts of the `ElementTree API`_ as
+implemented by lxml.etree, and some simple enhancements that make your life as
+a programmer easier.
+
+.. _`ElementTree API`: http://effbot.org/zone/element-index.htm#documentation
+
+.. contents::
+.. 
+   1  Elements and ElementTrees
+     1.1  The Element class
+     1.2  The ElementTree class
+   2  Parsing and XML literals
+     2.1  The XML() function
+     2.2  The parse() function
+   3  Namespaces
+   4  The find*() methods
+     4.1  findall()
+     4.2  find()
+     4.3  findtext()
+
+
+A common way to import ``lxml.etree`` is as follows::
+
+    >>> from lxml import etree
+
+If your code only uses the ElementTree API and does not rely on any
+functionality that is specific to ``lxml.etree``, you can also use the
+following import chain as a fall-back to the original ElementTree::
+
+    try:
+      from lxml import etree
+      print "running with lxml.etree"
+    except ImportError:
+      try:
+        # Python 2.5
+        import xml.etree.cElementTree as etree
+        print "running with cElementTree on Python 2.5+"
+      except ImportError:
+        try:
+          # Python 2.5
+          import xml.etree.ElementTree as etree
+          print "running with ElementTree on Python 2.5+"
+        except ImportError:
+          try:
+            # normal cElementTree install
+            import cElementTree as etree
+            print "running with cElementTree"
+          except ImportError:
+            try:
+              # normal ElementTree install
+              import elementtree.ElementTree as etree
+              print "running with ElementTree"
+            except ImportError:
+              print "Failed to import ElementTree from any known place"
+
+To aid in writing portable code, this tutorial makes it clear in the examples
+which part of the presented API is an extension of lxml.etree over the
+original `ElementTree API`_, as defined by Fredrik Lundh's `ElementTree
+library`_.
+
+.. _`ElementTree library`: http://effbot.org/zone/element-index.htm
+
+
+The Element class
+=================
+
+An ``Element`` is the main container object for the ElementTree API.  Most of
+the XML tree functionality is accessed through this class.  Elements are
+easily created through the ``Element`` factory::
+
+    >>> root = etree.Element("root")
+
+The XML tag name of elements is accessed through the ``tag`` property::
+
+    >>> print root.tag
+    root
+
+Elements are organised in an XML tree structure.  To create child elements and
+add them to a parent element, you can use the ``append()`` method::
+
+    >>> root.append( etree.Element("child1") )
+
+However, a much more efficient and more common way to do this is through the
+``SubElement`` factory.  It accepts the same arguments as the ``Element``
+factory, but additionally requires the parent as first argument::
+
+    >>> child2 = etree.SubElement(root, "child2")
+    >>> child3 = etree.SubElement(root, "child3")
+
+To see that this is really XML, you can serialise the tree you have created::
+
+    >>> print etree.tostring(root, pretty_print=True)
+    <root>
+      <child1/>
+      <child2/>
+      <child3/>
+    </root>
+
+
+Elements are lists
+------------------
+
+To make the access to these subelements as easy and straight forward as
+possible, elements behave exactly like normal Python lists::
+
+    >>> child = root[0]
+    >>> print child.tag
+    child1
+
+    >>> for child in root:
+    ...     print child.tag
+    child1
+    child2
+    child3
+
+    >>> if root:
+    ...     print "root has children!"
+    root has children!
+
+    >>> root.insert(0, etree.Element("child0"))
+    >>> start = root[:1]
+    >>> end   = root[-1:]
+
+    >>> print start[0].tag
+    child0
+    >>> print end[0].tag
+    child3
+
+    >>> root[0] = root[-1]
+    >>> for child in root:
+    ...     print child.tag
+    child3
+    child1
+    child2
+
+Note how the last element was moved to a different position in the last
+example.  This is a difference from the original ElementTree (and from lists),
+where elements can sit in multiple positions of any number of trees.  In
+lxml.etree, elements can only sit in one position of one tree at a time.
+
+To retrieve a 'real' Python list of all children (or a *shallow copy* of the
+element children list), you can call the ``getchildren()`` method::
+
+    >>> children = root.getchildren()
+
+    >>> print type(children) is type([])
+    True
+
+    >>> for child in children:
+    ...     print child.tag
+    child3
+    child1
+    child2
+
+The way up in the tree is provided through the ``getparent()`` method::
+
+    >>> root is root[0].getparent()  # lxml.etree only!
+    True
+
+The siblings (or neighbours) of an element are accessed as next and previous
+elements::
+
+    >>> root[0] is root[1].getprevious() # lxml.etree only!
+    True
+    >>> root[1] is root[0].getnext() # lxml.etree only!
+    True
+
+
+Elements carry attributes
+-------------------------
+
+XML elements support attributes.  You can create them directly in the Element
+factory::
+
+    >>> root = etree.Element("root", interesting="totally")
+    >>> print etree.tostring(root)
+    <root interesting="totally"/>
+
+Fast and direct access to these attributes is provided by the ``set()`` and
+``get()`` methods of elements::
+
+    >>> print root.get("interesting")
+    totally
+
+    >>> root.set("interesting", "somewhat")
+    >>> print root.get("interesting")
+    somewhat
+
+However, a very convenient way of dealing with them is through the dictionary
+interface of the ``attrib`` property::
+
+    >>> attributes = root.attrib
+
+    >>> print attributes["interesting"]
+    somewhat
+
+    >>> print attributes.get("hello")
+    None
+
+    >>> attributes["hello"] = "Guten Tag"
+    >>> print attributes.get("hello")
+    Guten Tag
+    >>> print root.get("hello")
+    Guten Tag
+
+
+Elements carry text
+-------------------
+
+Elements can contain text::
+
+    >>> root = etree.Element("root")
+    >>> root.text = "TEXT"
+
+    >>> print root.text
+    TEXT
+
+    >>> print etree.tostring(root)
+    <root>TEXT</root>
+
+In many XML documents (so-called *data-centric* documents), this is the only
+place where text can be found.  It is encapsulated by a leaf tag somewhere in
+the tree hierarchy.
+
+However, if XML is used for tagged text documents such as (X)HTML, text can
+also appear between different elements, right in the middle of the tree::
+
+    <html><body>Hello<br/>World</body></html>
+
+Here, the ``<br/>`` tag is surrounded by text.  This is often referred to as
+*document-style* XML.  Elements support this through their ``tail`` property.
+It contains the text that directly follows the element, up to the next element
+in the XML tree::
+
+    >>> html = etree.Element("html")
+    >>> body = etree.SubElement(html, "body")
+    >>> body.text = "TEXT"
+
+    >>> print etree.tostring(html)
+    <html><body>TEXT</body></html>
+
+    >>> br = etree.SubElement(body, "br")
+    >>> print etree.tostring(html)
+    <html><body>TEXT<br/></body></html>
+
+    >>> br.tail = "TAIL"
+    >>> print etree.tostring(html)
+    <html><body>TEXT<br/>TAIL</body></html>
+
+These two properties are enough to represent any text content in an XML
+document.  If you want to read the text without the intermediate tags,
+however, you have to recursively concatenate all ``text`` and ``tail``
+attributes in the correct order.  A simpler way to do this is XPath_::
+
+    >>> print html.xpath("string()") # lxml.etree only!
+    TEXTTAIL
+
+.. _XPath: xpathxslt.txt#xpath
+
+
+Tree iteration
+--------------
+
+For problems like the above, where you want to recursively traverse the tree
+and do something with its elements, tree iteration is a very convenient
+solution.  Elements provide a tree iterator for this purpose.  It yields
+elements in *document order*, i.e. in the order their tags would appear if you
+serialised the tree to XML::
+
+    >>> root = etree.Element("root")
+    >>> etree.SubElement(root, "child").text = "Child 1"
+    >>> etree.SubElement(root, "child").text = "Child 2"
+    >>> etree.SubElement(root, "another").text = "Child 3"
+
+    >>> print etree.tostring(root, pretty_print=True)
+    <root>
+      <child>Child 1</child>
+      <child>Child 2</child>
+      <another>Child 3</another>
+    </root>
+
+    >>> for element in root.getiterator():
+    ...     print element.tag, '-', element.text
+    root - None
+    child - Child 1
+    child - Child 2
+    another - Child 3
+
+If you know you are only interested in a single tag, you can pass its name to
+``getiterator()`` to have it filter for you::
+
+    >>> for element in root.getiterator("child"):
+    ...     print element.tag, '-', element.text
+    child - Child 1
+    child - Child 2
+
+In lxml.etree, elements provide `further iterators`_ for all directions in the
+tree: children, parents (or rather ancestors) and siblings.
+
+.. _`further iterators`: api.html#iteration
+
+
+
+
+The ElementTree class
+=====================
+
+
+Parsing files and XML literals
+==============================
+
+The XML() function
+------------------
+
+The parse() function
+--------------------
+
+Namespaces
+==========
+
+
+ElementPath
+===========
+
+findall()
+---------
+
+find()
+------
+
+findtext()
+----------
