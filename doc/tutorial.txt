@@ -145,6 +145,20 @@ example.  This is a difference from the original ElementTree (and from lists),
 where elements can sit in multiple positions of any number of trees.  In
 lxml.etree, elements can only sit in one position of one tree at a time.
 
+If you want to *copy* an element to a different position, consider creating a
+independent *deep copy* using the ``copy`` module from Python's standard
+library::
+
+    >>> from copy import deepcopy
+
+    >>> element = etree.Element("neu")
+    >>> element.append( deepcopy(root[1]) )
+
+    >>> print element[0].tag
+    child1
+    >>> print [ c.tag for c in root ]
+    ['child3', 'child1', 'child2']
+
 To retrieve a 'real' Python list of all children (or a *shallow copy* of the
 element children list), you can call the ``getchildren()`` method::
 
