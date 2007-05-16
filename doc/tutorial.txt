@@ -2,6 +2,9 @@
 The lxml.etree Tutorial
 =======================
 
+:Author:
+  Stefan Behnel
+
 This tutorial briefly overviews the main concepts of the `ElementTree API`_ as
 implemented by lxml.etree, and some simple enhancements that make your life as
 a programmer easier.
@@ -208,8 +211,8 @@ interface of the ``attrib`` property::
     Guten Tag
 
 
-Elements carry text
--------------------
+Elements contain text
+---------------------
 
 Elements can contain text::
 
