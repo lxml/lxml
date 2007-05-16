@@ -145,7 +145,7 @@ example.  This is a difference from the original ElementTree (and from lists),
 where elements can sit in multiple positions of any number of trees.  In
 lxml.etree, elements can only sit in one position of one tree at a time.
 
-If you want to *copy* an element to a different position, consider creating a
+If you want to *copy* an element to a different position, consider creating an
 independent *deep copy* using the ``copy`` module from Python's standard
 library::
 
