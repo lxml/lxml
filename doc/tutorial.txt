@@ -140,7 +140,7 @@ possible, elements behave exactly like normal Python lists::
     child1
     child2
 
-Note how the last element was moved to a different position in the last
+Note how the last element was *moved* to a different position in the last
 example.  This is a difference from the original ElementTree (and from lists),
 where elements can sit in multiple positions of any number of trees.  In
 lxml.etree, elements can only sit in one position of one tree at a time.
