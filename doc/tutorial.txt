@@ -240,8 +240,8 @@ Elements can contain text::
     <root>TEXT</root>
 
 In many XML documents (so-called *data-centric* documents), this is the only
-place where text can be found.  It is encapsulated by a leaf tag somewhere in
-the tree hierarchy.
+place where text can be found.  It is encapsulated by a leaf tag at the very
+bottom of the tree hierarchy.
 
 However, if XML is used for tagged text documents such as (X)HTML, text can
 also appear between different elements, right in the middle of the tree::
