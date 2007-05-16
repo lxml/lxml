@@ -278,7 +278,7 @@ attributes in the correct order.  A simpler way to do this is XPath_::
     >>> print html.xpath("//text()") # lxml.etree only!
     ['TEXT', 'TAIL']
 
-.. _XPath: xpathxslt.txt#xpath
+.. _XPath: xpathxslt.html#xpath
 
 
 Tree iteration
