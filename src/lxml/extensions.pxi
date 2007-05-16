@@ -69,10 +69,10 @@ cdef class _BaseContext:
             if namespaces:
                 ns = []
                 for prefix, ns_uri in namespaces:
-                    if prefix is None:
+                    if prefix is None or not prefix:
                         raise TypeError, \
                               "empty namespace prefix is not supported in XPath"
-                    if ns_uri is None:
+                    if ns_uri is None or not ns_uri:
                         raise TypeError, \
                               "setting default namespace is not supported in XPath"
                     prefix_utf = self._to_utf(prefix)

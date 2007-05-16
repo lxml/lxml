@@ -112,6 +112,13 @@ class ETreeXPathTestCase(HelperTestCase):
             TypeError,
             root.xpath, '//b', {None: 'uri:a'})
 
+    def test_xpath_ns_empty(self):
+        tree = self.parse('<a xmlns="uri:a"><b></b></a>')
+        root = tree.getroot()
+        self.assertRaises(
+            TypeError,
+            root.xpath, '//b', {'': 'uri:a'})
+
     def test_xpath_error(self):
         tree = self.parse('<a/>')
         self.assertRaises(etree.XPathEvalError, tree.xpath, '\\fad')
