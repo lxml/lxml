@@ -134,17 +134,38 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(expected,
                           unicode(res))
 
-    def test_exslt(self):
+    def test_exslt_str(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:str="http://exslt.org/strings"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    exclude-result-prefixes="str xsl">
+  <xsl:template match="text()">
+    <xsl:value-of select="str:align(string(.), '---', 'center')" />
+  </xsl:template>
+  <xsl:template match="*">
+    <xsl:copy>
+      <xsl:apply-templates/>
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<a><b>-B-</b><c>-C-</c></a>
+''',
+                          str(res))
+
+    def test_exslt_math(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:math="http://exslt.org/math"
-    xmlns:str="http://exslt.org/strings"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    exclude-result-prefixes="math str xsl">
-  <xsl:template match="text()">
-    <xsl:value-of select="str:align(string(.), '---', 'center')" />
-  </xsl:template>
+    exclude-result-prefixes="math xsl">
   <xsl:template match="*">
     <xsl:copy>
       <xsl:attribute name="pi">
@@ -159,7 +180,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
-<a pi="3.14"><b pi="3">-B-</b><c pi="3">-C-</c></a>
+<a pi="3.14"><b pi="3">B</b><c pi="3">C</c></a>
 ''',
                           str(res))
 
