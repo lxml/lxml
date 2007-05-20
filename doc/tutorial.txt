@@ -278,6 +278,12 @@ attributes in the correct order.  A simpler way to do this is XPath_::
     >>> print html.xpath("//text()") # lxml.etree only!
     ['TEXT', 'TAIL']
 
+If you want to use this more often, you can wrap it in a function::
+
+    >>> buildTextList = etree.XPath("//text()") # lxml.etree only!
+    >>> print buildTextList(html)
+    ['TEXT', 'TAIL']
+
 .. _XPath: xpathxslt.html#xpath
 
 
