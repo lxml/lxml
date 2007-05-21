@@ -1458,7 +1458,7 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
     # StrType does not have a typecheck but is the default anyway,
     # so just accept it if given as type information
     if pytype is None:
-        return pytype
+        return None
     value = textOf(c_node)
     try:
         pytype.type_check(value)
@@ -1467,7 +1467,6 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
         # could not be parsed as the specified type => ignore
         pass
     return None
-
 
 def annotate(element_or_tree, ignore_old=True):
     """Recursively annotates the elements of an XML tree with 'pytype'
@@ -1503,8 +1502,8 @@ def annotate(element_or_tree, ignore_old=True):
             if dict_result is not NULL:
                 pytype = <PyType>dict_result
                 if pytype is not StrType:
-                    # StrType does not have a typecheck but is the default anyway,
-                    # so just accept it if given as type information
+                    # StrType does not have a typecheck but is the default
+                    # anyway, so just accept it if given as type information
                     pytype = _check_type(c_node, pytype)
 
     if pytype is None:
@@ -1766,7 +1765,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             prefix, name = _xsi.split(':', 1)
             ns = nsmap.get(prefix)
             if ns != XML_SCHEMA_NS:
-                raise TypeError, "XSD types require the XSD namespace"
+                raise ValueError, "XSD types require the XSD namespace"
         elif nsmap is _DEFAULT_NSMAP:
             name = _xsi
             _xsi = 'xsd:' + _xsi
@@ -1778,7 +1777,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
                         _xsi = prefix + ':' + _xsi
                     break
             else:
-                raise TypeError, "XSD types require the XSD namespace"
+                raise ValueError, "XSD types require the XSD namespace"
         python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
         if _pytype is None:
             # allow using unregistered or even wrong xsi:type names
