@@ -407,10 +407,14 @@ _find_namespaces = re.compile('({[^}]+})').findall
 
 cdef class ETXPath(XPath):
     """Special XPath class that supports the ElementTree {uri} notation for
-    namespaces."""
-    def __init__(self, path, extensions=None):
+    namespaces.
+
+    Note that this class does not accept the ``namespace`` keyword
+    argument. All namespaces must be passed as part of the path string.
+    """
+    def __init__(self, path, extensions=None, regexp=True):
         path, namespaces = self._nsextract_path(path)
-        XPath.__init__(self, path, namespaces, extensions)
+        XPath.__init__(self, path, namespaces, extensions, regexp)
 
     cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
@@ -422,7 +426,7 @@ cdef class ETXPath(XPath):
         i = 1
         for namespace_def in _find_namespaces(stripped_path):
             if namespace_def not in namespace_defs:
-                prefix = python.PyString_FromFormat("xpp%02d", i)
+                prefix = python.PyString_FromFormat("__xpp%02d", i)
                 i = i+1
                 python.PyList_Append(namespace_defs, namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'
