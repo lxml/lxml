@@ -41,13 +41,13 @@ div.footer {
 
 /*** TOC ***/
 
-div.contents.topic > ul {
+div.contents.topic ul {
     margin-top: 0px;
 }
 
-div.contents.topic > ul > li {
+div.contents.topic ul > li {
     text-decoration: none;
-    line-height: 1.1em;
+    line-height: 1.2em;
 }
 
 div.contents.topic > p > a {
