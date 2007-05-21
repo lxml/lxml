@@ -1,11 +1,11 @@
-=====================
-APIs specific to lxml
-=====================
+===========================
+APIs specific to lxml.etree
+===========================
 
-lxml tries to follow established APIs wherever possible.  Sometimes, however,
-the need to expose a feature in an easy way led to the invention of a new API.
-This page describes the major differences and a few additions to the main
-ElementTree API.
+lxml.etree tries to follow established APIs wherever possible.  Sometimes,
+however, the need to expose a feature in an easy way led to the invention of a
+new API.  This page describes the major differences and a few additions to the
+main ElementTree API.
 
 Separate pages describe the support for `parsing XML`_, executing `XPath and
 XSLT`_, `validating XML`_ and interfacing with other XML tools through the
