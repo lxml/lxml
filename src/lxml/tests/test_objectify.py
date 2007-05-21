@@ -13,6 +13,7 @@ from common_imports import itemgetter
 
 from lxml import objectify
 
+XML_SCHEMA_NS = "http://www.w3.org/2001/XMLSchema"
 XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"
 XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
 XML_SCHEMA_NIL_ATTR = "{%s}nil" % XML_SCHEMA_INSTANCE_NS
@@ -496,6 +497,23 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(root.b)
         root.b = False
         self.assertFalse(root.b)
+
+    def test_dataelement_xsi(self):
+        el = objectify.DataElement(1, _xsi="string")
+        self.assertEquals(
+            el.get(XML_SCHEMA_INSTANCE_TYPE_ATTR),
+            'xsd:string')
+
+    def test_dataelement_xsi_nsmap(self):
+        el = objectify.DataElement(1, _xsi="string", 
+                                   nsmap={'schema': XML_SCHEMA_NS})
+        self.assertEquals(
+            el.get(XML_SCHEMA_INSTANCE_TYPE_ATTR),
+            'schema:string')
+
+    def test_dataelement_xsi_prefix_error(self):
+        self.assertRaises(ValueError, objectify.DataElement, 1,
+                          _xsi="foo:string")
 
     def test_pytype_annotation(self):
         XML = self.XML
