@@ -1685,8 +1685,8 @@ cdef object __DEFAULT_PARSER
 __DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
 __DEFAULT_PARSER.setElementClassLookup( ObjectifyElementClassLookup() )
 
-cdef object parser
-parser = __DEFAULT_PARSER
+cdef object objectify_parser
+objectify_parser = __DEFAULT_PARSER
 
 def setDefaultParser(new_parser = None):
     """Replace the default parser used by objectify's Element() and
@@ -1696,16 +1696,16 @@ def setDefaultParser(new_parser = None):
 
     Call without arguments to reset to the original parser.
     """
-    global parser
+    global objectify_parser
     if new_parser is None:
-        parser = __DEFAULT_PARSER
+        objectify_parser = __DEFAULT_PARSER
     elif isinstance(new_parser, etree.XMLParser):
-        parser = new_parser
+        objectify_parser = new_parser
     else:
         raise TypeError, "parser must inherit from lxml.etree.XMLParser"
 
 cdef _Element _makeElement(tag, text, attrib, nsmap):
-    return cetree.makeElement(tag, None, parser, text, None, attrib, nsmap)
+    return cetree.makeElement(tag, None, objectify_parser, text, None, attrib, nsmap)
 
 ################################################################################
 # Module level factory functions
@@ -1718,9 +1718,17 @@ def fromstring(xml):
 
     NOTE: requires parser based element class lookup activated in lxml.etree!
     """
-    return _fromstring(xml, parser)
+    return _fromstring(xml, objectify_parser)
 
 XML = fromstring
+
+cdef object _parse
+_parse = etree.parse
+
+def parse(f, parser=None):
+    if parser is None:
+        parser = objectify_parser
+    return _parse(f, parser)
 
 cdef object _DEFAULT_NSMAP
 _DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,

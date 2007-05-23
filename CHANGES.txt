@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* ``parse()`` function in ``objectify``, corresponding to ``XML()`` etc.
+
 * ``column`` field on error log entries to accompany the ``line`` field
 
 * Error specific messages in XPath parsing and evaluation
