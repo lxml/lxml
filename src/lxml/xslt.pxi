@@ -141,6 +141,8 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
     c_doc = _xslt_resolve_stylesheet(c_uri, c_pcontext)
     if c_doc is not NULL:
         python.PyGILState_Release(gil_state)
+        if c_type == xslt.XSLT_LOAD_STYLESHEET:
+            c_doc._private = c_pcontext
         return c_doc
 
     c_doc = _xslt_resolve_from_python(c_uri, c_pcontext, parse_options, &error)
@@ -151,6 +153,8 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
             _xslt_store_resolver_exception(c_uri, c_pcontext, c_type)
 
     python.PyGILState_Release(gil_state)
+    if c_doc is not NULL and c_type == xslt.XSLT_LOAD_STYLESHEET:
+        c_doc._private = c_pcontext
     return c_doc
 
 cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER
