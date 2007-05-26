@@ -16,8 +16,6 @@ In general
 
 * test namespaces more in-depth
 
-* will namespace nodes of unknown namespaces be added (and never freed?)
-
 * more testing on multi-threading
 
 * better exception messages for XPath and schemas based on error log,
