@@ -47,6 +47,27 @@
 #define HTML_PARSE_RECOVER XML_PARSE_RECOVER
 #endif
 
+/* added to xmlsave API in libxml2 2.6.23 */
+#if LIBXML_VERSION < 20623
+#define xmlSaveToBuffer(buffer, encoding, options)
+#endif
+
+/* added to xmlsave API in libxml2 2.6.22 */
+#if LIBXML_VERSION < 20622
+#define XML_SAVE_NO_EMPTY   1<<2, /* no empty tags */
+#define XML_SAVE_NO_XHTML   1<<3  /* disable XHTML1 specific rules */
+#endif
+
+/* added to xmlsave API in libxml2 2.6.21 */
+#if LIBXML_VERSION < 20621
+#define XML_SAVE_NO_DECL    1<<1, /* drop the xml declaration */
+#endif
+
+/* added to xmlsave API in libxml2 2.6.17 */
+#if LIBXML_VERSION < 20617
+#define XML_SAVE_FORMAT    1<<0, /* format save output */
+#endif
+
 /* work around MSDEV 6.0 */
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
 long _ftol( double ); //defined by VC6 C libs

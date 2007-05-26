@@ -212,6 +212,7 @@ cdef extern from "libxml/tree.h":
     cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree)
     cdef xmlNs* xmlNewReconciliedNs(xmlDoc* doc, xmlNode* tree, xmlNs* ns)
     cdef xmlBuffer* xmlBufferCreate()
+    cdef void xmlBufferFree(xmlBuffer* buf)
     cdef char* xmlBufferContent(xmlBuffer* buf)
     cdef int xmlBufferLength(xmlBuffer* buf)
     cdef int xmlKeepBlanksDefault(int val)
@@ -245,11 +246,23 @@ cdef extern from "libxml/xmlIO.h":
 
 cdef extern from "libxml/xmlsave.h":
     ctypedef struct xmlSaveCtxt
-    
+
+    ctypedef enum xmlSaveOption:
+        XML_SAVE_FORMAT   = 1   # format save output            (2.6.17)
+        XML_SAVE_NO_DECL  = 2   # drop the xml declaration      (2.6.21)
+        XML_SAVE_NO_EMPTY = 4   # no empty tags                 (2.6.22)
+        XML_SAVE_NO_XHTML = 8   # disable XHTML1 specific rules (2.6.22)
+
     cdef xmlSaveCtxt* xmlSaveToFilename(char* filename, char* encoding,
                                         int options)
+    cdef xmlSaveCtxt* xmlSaveToBuffer(xmlBuffer* buffer, char* encoding,
+                                      int options) # libxml2 2.6.23
     cdef long xmlSaveDoc(xmlSaveCtxt* ctxt, xmlDoc* doc)
+    cdef long xmlSaveTree(xmlSaveCtxt* ctxt, xmlNode* node)
     cdef int xmlSaveClose(xmlSaveCtxt* ctxt)
+    cdef int xmlSaveFlush(xmlSaveCtxt* ctxt)
+    cdef int xmlSaveSetAttrEscape(xmlSaveCtxt* ctxt, void* escape_func)
+    cdef int xmlSaveSetEscape(xmlSaveCtxt* ctxt, void* escape_func)
 
 cdef extern from "libxml/globals.h":
     cdef int xmlThrDefKeepBlanksDefaultValue(int onoff)
