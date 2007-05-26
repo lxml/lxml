@@ -1240,6 +1240,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             if self._context_node is not None and \
                    self._context_node._doc is not None:
                 return self._context_node._doc._parser
+            if self._doc is not None:
+                return self._doc._parser
             return None
 
     def write(self, file, encoding=None,
@@ -1319,7 +1321,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             path = "." + path
         return root.findall(path)
     
-    # extensions to ElementTree API
     def xpath(self, _path, namespaces=None, extensions=None, **_variables):
         """XPath evaluate in context of document.
 
@@ -1396,7 +1397,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         There is support for loading files through the file system, HTTP and
         FTP.
 
-        Note that XInclude does not support custom resolvers in Python space.
+        Note that XInclude does not support custom resolvers in Python space
+        due to restrictions of libxml2 <= 2.6.28.
         """
         cdef python.PyThreadState* state
         cdef int result
