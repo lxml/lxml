@@ -46,6 +46,9 @@ Features added
 Bugs fixed
 ----------
 
+* The text in exceptions raised by XML parsers and XPath evaluators now
+  reports the first error that occurred instead of the last
+
 * XSLT parsing failed to pass resolver context on to imported documents
 
 * ``ETXPath`` was missing the ``regexp`` keyword argument

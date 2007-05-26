@@ -222,10 +222,13 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return self.filter_from_level(ErrorLevels.WARNING)
 
 cdef class _ErrorLog(_ListErrorLog):
+    cdef object _first_error
     def __init__(self):
+        self._first_error = None
         _ListErrorLog.__init__(self, [])
 
     cdef void connect(self):
+        self._first_error = None
         del self._entries[:]
         connectErrorLog(<void*>self)
 
@@ -233,6 +236,7 @@ cdef class _ErrorLog(_ListErrorLog):
         connectErrorLog(NULL)
 
     def clear(self):
+        self._first_error = None
         del self._entries[:]
 
     def copy(self):
@@ -244,6 +248,8 @@ cdef class _ErrorLog(_ListErrorLog):
         return iter(self._entries[:])
 
     def receive(self, entry):
+        if self._first_error is None:
+            self._first_error = entry
         python.PyList_Append(self._entries, entry)
 
 cdef class _DomainErrorLog(_ErrorLog):

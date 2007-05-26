@@ -314,7 +314,7 @@ cdef class iterparse(_BaseParser):
                 break
         if error != 0:
             self._source = None
-            _raiseParseError(self._parser_ctxt, self._filename)
+            _raiseParseError(self._parser_ctxt, self._filename, None)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
             self._source = None

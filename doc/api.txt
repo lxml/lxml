@@ -265,17 +265,43 @@ argument::
     <test/>
   </root>
 
-By default, lxml (and ElementTree) output the XML declaration only if it is
-required.  You can enable or disable it explicitly by passing another keyword
-argument for the serialisation::
+By default, lxml (just as ElementTree) outputs the XML declaration only if it
+is required by the standard::
+
+  >>> unicode_root = etree.Element(u"t\u1234st")
+  >>> unicode_root.text = u"t\u4321st"
+  >>> etree.tostring(unicode_root, encoding="utf-8")
+  '<t\xe1\x88\xb4st>t\xe4\x8c\xa1st</t\xe1\x88\xb4st>'
+
+  >>> print etree.tostring(unicode_root, encoding="iso-8859-1")
+  <?xml version='1.0' encoding='iso-8859-1'?>
+  <t&#4660;st>t&#17185;st</t&#4660;st>
+
+Also see the general remarks on `Unicode support`_.
+
+.. _`Unicode support`: parsing.html#python-unicode-strings
+
+You can enable or disable the declaration explicitly by passing another
+keyword argument for the serialisation::
 
   >>> print etree.tostring(root, xml_declaration=True)
   <?xml version='1.0' encoding='ASCII'?>
   <root><test/></root>
 
-Also see the general remarks on `Unicode support`_.
+  >>> etree.tostring(unicode_root, encoding="utf-8",
+  ...                              xml_declaration=False)
+  '<t\xe1\x88\xb4st>t\xe4\x8c\xa1st</t\xe1\x88\xb4st>'
 
-.. _`Unicode support`: parsing.html#python-unicode-strings
+Note that a standard compliant XML parser will not consider the last line
+well-formed XML if the encoding is not explicitly provided somehow, e.g. in an
+underlying transport protocol::
+
+  >>> notxml = etree.tostring(unicode_root, encoding="utf-8",
+  ...                                       xml_declaration=False)
+  >>> etree.XML(notxml)
+  Traceback (most recent call last):
+    ...
+  XMLSyntaxError: line 1: error parsing attribute name
 
 
 XInclude and ElementInclude

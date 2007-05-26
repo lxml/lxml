@@ -429,9 +429,6 @@ cdef class _BaseParser:
         def __get__(self):
             return self._error_log.copy()
 
-    def __dummy(self):
-        pass
-
     def setElementClassLookup(self, ElementClassLookup lookup = None):
         """Set a lookup scheme for element classes generated from this parser.
 
@@ -496,7 +493,8 @@ cdef class _BaseParser:
             python.PyEval_RestoreThread(state)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, None, recover)
+            return _handleParseResult(pctxt, result, None,
+                                      self._error_log._first_error, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -529,7 +527,8 @@ cdef class _BaseParser:
             python.PyEval_RestoreThread(state)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, None, recover)
+            return _handleParseResult(pctxt, result, None,
+                                      self._error_log._first_error, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -558,7 +557,8 @@ cdef class _BaseParser:
             python.PyEval_RestoreThread(state)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, c_filename, recover)
+            return _handleParseResult(pctxt, result, c_filename,
+                                      self._error_log._first_error, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -583,14 +583,15 @@ cdef class _BaseParser:
                 pctxt, self._parse_options, self._parser_type)
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, filename, recover)
+            return _handleParseResult(pctxt, result, filename,
+                                      self._error_log._first_error, recover)
         finally:
             self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 
-cdef int _raiseParseError(xmlParserCtxt* ctxt, filename) except 0:
+cdef int _raiseParseError(xmlParserCtxt* ctxt, filename, error) except 0:
     if filename is not None and \
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
         if ctxt.lastError.message is not NULL:
@@ -599,16 +600,21 @@ cdef int _raiseParseError(xmlParserCtxt* ctxt, filename) except 0:
         else:
             message = "Error reading file '%s'" % filename
         raise IOError, message
+    elif error is not None and error.message is not None:
+        message = error.message
+        if error.line > 0:
+            message = "line %d: %s" % (error.line, message)
+        raise XMLSyntaxError, message
     elif ctxt.lastError.message is not NULL:
         message = (ctxt.lastError.message).strip()
-        if ctxt.lastError.line >= 0:
+        if ctxt.lastError.line > 0:
             message = "line %d: %s" % (ctxt.lastError.line, message)
         raise XMLSyntaxError, message
     else:
         raise XMLSyntaxError
 
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
-                                filename, int recover) except NULL:
+                                filename, error, int recover) except NULL:
     cdef _ResolverContext context
     if ctxt.myDoc is not NULL:
         if ctxt.myDoc != result:
@@ -632,7 +638,7 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
             context._raise_if_stored()
 
     if result is NULL:
-        _raiseParseError(ctxt, filename)
+        _raiseParseError(ctxt, filename, error)
     elif result.URL is NULL and filename is not None:
         result.URL = tree.xmlStrdup(_cstr(filename))
     return result
@@ -715,7 +721,7 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
         pctxt, c_text, NULL, NULL, options)
     try:
         recover = options & xmlparser.XML_PARSE_RECOVER
-        c_doc = _handleParseResult(pctxt, c_doc, None, recover)
+        c_doc = _handleParseResult(pctxt, c_doc, None, None, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -739,7 +745,7 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
             filename = None
         else:
             filename = c_filename
-        c_doc = _handleParseResult(pctxt, c_doc, filename, recover)
+        c_doc = _handleParseResult(pctxt, c_doc, filename, None, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc

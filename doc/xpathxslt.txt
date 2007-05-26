@@ -277,7 +277,7 @@ XPath expression::
   >>> find = etree.XPath("\\")
   Traceback (most recent call last):
     ...
-  XPathSyntaxError: Error in xpath expression
+  XPathSyntaxError: Invalid expression
 
 lxml will also try to give you a hint what went wrong, so if you pass a more
 complex expression, you may get a somewhat more specific error::
