@@ -20,8 +20,12 @@ This API is very different from the ElementTree API.  If it is used, it should
 not be mixed with other element implementations, to avoid non-obvious
 behaviour.
 
+The `benchmark page`_ has some hints on performance optimisation of code using
+lxml.objectify.
+
 .. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
 .. _gnosis.xml.objectify: http://gnosis.cx/download/
+.. _`benchmark page`: performance.html#lxml-objectify
 
 .. contents::
 ..
