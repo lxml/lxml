@@ -158,7 +158,10 @@ cdef class _XPathEvaluatorBase:
             if entry is not None and entry.message:
                 raise XPathSyntaxError, entry.message
 
-        if self._xpathCtxt is not NULL and \
+        if self._error_log._first_error is not None and \
+               self._error_log._first_error.message is not None:
+            message = self._error_log._first_error.message
+        elif self._xpathCtxt is not NULL and \
                self._xpathCtxt.lastError.message is not NULL:
             message = funicode(self._xpathCtxt.lastError.message)
         else:
