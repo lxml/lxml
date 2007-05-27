@@ -65,4 +65,6 @@ lxml 2.0
 * remove ``findOrBuildNodeNs()`` from C-API (replaced by
   findOrBuildNodeNsPrefix)
 
-* follow PEP 8 in API naming
+* follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
+
+* clean support for entities (maybe an Entity element class?)
