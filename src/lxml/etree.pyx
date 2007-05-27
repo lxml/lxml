@@ -1976,7 +1976,7 @@ cdef class _Validator:
     cdef _ErrorLog _error_log
     def __init__(self):
         self._error_log = _ErrorLog()
-        
+
     def validate(self, etree):
         """Validate the document using this schema.
 
@@ -1986,12 +1986,14 @@ cdef class _Validator:
     def assertValid(self, etree):
         "Raises DocumentInvalid if the document does not comply with the schema."
         if not self(etree):
-            raise DocumentInvalid, "Document does not comply with schema"
+            raise DocumentInvalid, self._error_log._buildExceptionMessage(
+                "Document does not comply with schema")
 
     def assert_(self, etree):
         "Raises AssertionError if the document does not comply with the schema."
         if not self(etree):
-            raise AssertionError, "Document does not comply with schema"
+            raise AssertionError, self._error_log._buildExceptionMessage(
+                "Document does not comply with schema")
 
     property error_log:
         def __get__(self):

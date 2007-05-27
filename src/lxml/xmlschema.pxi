@@ -30,7 +30,9 @@ cdef class XMLSchema(_Validator):
         cdef xmlNode* c_node
         cdef char* c_href
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
+        _Validator.__init__(self)
         self._c_schema = NULL
+        fake_c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
@@ -44,29 +46,32 @@ cdef class XMLSchema(_Validator):
                     raise XMLSchemaParseError, "Document is not XML Schema"
 
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            self._error_log.connect()
             parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(fake_c_doc)
-            if parser_ctxt is NULL:
-                _destroyFakeDoc(doc._c_doc, fake_c_doc)
-                raise XMLSchemaParseError, "Document is not parsable as XML Schema"
-            self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-
-            xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
-            _destroyFakeDoc(doc._c_doc, fake_c_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
             if filename is None:
                 # XXX assume a string object
                 filename = file
             filename = _encodeFilename(filename)
+            self._error_log.connect()
             parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
-            self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-            xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
         else:
             raise XMLSchemaParseError, "No tree or file given"
 
+        if parser_ctxt is not NULL:
+            self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+            if _LIBXML_VERSION_INT > 20624:
+                xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+
+        self._error_log.disconnect()
+
+        if fake_c_doc is not NULL:
+            _destroyFakeDoc(doc._c_doc, fake_c_doc)
+
         if self._c_schema is NULL:
-            raise XMLSchemaParseError, "Document is not valid XML Schema"
-        _Validator.__init__(self)
+            raise XMLSchemaParseError, self._error_log._buildExceptionMessage(
+                "Document is not valid XML Schema")
 
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)

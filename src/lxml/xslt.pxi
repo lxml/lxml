@@ -307,6 +307,7 @@ cdef class XSLT:
         if c_style is NULL:
             tree.xmlFreeDoc(c_doc)
             self._xslt_resolver_context._raise_if_stored()
+            # last error seems to be the most accurate here
             if self._error_log.last_error is not None:
                 raise XSLTParseError, self._error_log.last_error.message
             else:
@@ -391,6 +392,7 @@ cdef class XSLT:
                 self._xslt_resolver_context._raise_if_stored()
 
             if c_result is NULL:
+                # last error seems to be the most accurate here
                 error = self._error_log.last_error
                 if error is not None and error.message:
                     if error.line >= 0:

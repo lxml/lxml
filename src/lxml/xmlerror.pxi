@@ -84,12 +84,14 @@ cdef class _LogEntry:
             return ErrorLevels._getName(self.level, "unknown")
 
 cdef class _BaseErrorLog:
+    cdef _LogEntry _first_error
     cdef readonly object last_error
-    def __init__(self, last_error=None):
+    def __init__(self, first_error, last_error):
+        self._first_error = first_error
         self.last_error = last_error
 
     def copy(self):
-        return _BaseErrorLog(self.last_error)
+        return _BaseErrorLog(self._first_error, self.last_error)
 
     def __repr__(self):
         return ''
@@ -124,18 +126,40 @@ cdef class _BaseErrorLog:
         if is_error:
             self.last_error = entry
 
+    cdef _buildExceptionMessage(self, default_message):
+        if self._first_error is None:
+            return default_message
+        if self._first_error.message is not None and self._first_error.message:
+            message = self._first_error.message
+        elif default_message is None:
+            return None
+        else:
+            message = default_message
+        if self._first_error.line > 0:
+            if self._first_error.column > 0:
+                message = "%s, line %d, column %d" % (
+                    message, self._first_error.line, self._first_error.column)
+            else:
+                message = "%s, line %d" % (message, self._first_error.line)
+        return message
+
 cdef class _ListErrorLog(_BaseErrorLog):
     "Immutable base version of a list based error log."
     cdef object _entries
-    def __init__(self, entries, last_error=None):
-        _BaseErrorLog.__init__(self, last_error)
+    def __init__(self, entries, first_error, last_error):
+        if entries:
+            if first_error is None:
+                first_error = entries[0]
+            if last_error is None:
+                last_error = entries[-1]
+        _BaseErrorLog.__init__(self, first_error, last_error)
         self._entries = entries
 
     def copy(self):
         """Creates a shallow copy of this error log.  Reuses the list of
         entries.
         """
-        return _ListErrorLog(self._entries, self.last_error)
+        return _ListErrorLog(self._entries, self._first_error, self.last_error)
 
     def __iter__(self):
         return iter(self._entries)
@@ -172,7 +196,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         for entry in self._entries:
             if entry.domain in domains:
                 python.PyList_Append(filtered, entry)
-        return _ListErrorLog(filtered)
+        return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
         """Filter the errors by the given types and return a new error log
@@ -185,7 +209,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         for entry in self._entries:
             if entry.type in types:
                 python.PyList_Append(filtered, entry)
-        return _ListErrorLog(filtered)
+        return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
         """Filter the errors by the given error levels and return a new error
@@ -198,7 +222,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         for entry in self._entries:
             if entry.level in levels:
                 python.PyList_Append(filtered, entry)
-        return _ListErrorLog(filtered)
+        return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
         "Return a log with all messages of the requested level of worse."
@@ -207,7 +231,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         for entry in self._entries:
             if entry.level >= level:
                 python.PyList_Append(filtered, entry)
-        return _ListErrorLog(filtered)
+        return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
         "Convenience method to get all fatal error messages."
@@ -222,10 +246,8 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return self.filter_from_level(ErrorLevels.WARNING)
 
 cdef class _ErrorLog(_ListErrorLog):
-    cdef object _first_error
     def __init__(self):
-        self._first_error = None
-        _ListErrorLog.__init__(self, [])
+        _ListErrorLog.__init__(self, [], None, None)
 
     cdef void connect(self):
         self._first_error = None
@@ -242,7 +264,8 @@ cdef class _ErrorLog(_ListErrorLog):
     def copy(self):
         """Creates a shallow copy of this error log and the list of entries.
         """
-        return _ListErrorLog(self._entries[:], self.last_error)
+        return _ListErrorLog(self._entries[:], self._first_error,
+                             self.last_error)
 
     def __iter__(self):
         return iter(self._entries[:])
@@ -295,7 +318,7 @@ cdef class PyErrorLog(_BaseErrorLog):
     cdef object _map_level
     cdef object _log
     def __init__(self, logger_name=None):
-        _BaseErrorLog.__init__(self)
+        _BaseErrorLog.__init__(self, None, None)
         import logging
         self.level_map = {
             ErrorLevels.WARNING : logging.WARNING,
@@ -312,7 +335,7 @@ cdef class PyErrorLog(_BaseErrorLog):
     def copy(self):
         """Dummy method that returns an empty error log.
         """
-        return _ListErrorLog([])
+        return _ListErrorLog([], None, None)
 
     def log(self, entry, message_format_string, *args):
         self._log(
@@ -344,9 +367,9 @@ def useGlobalPythonLog(PyErrorLog log not None):
 
 # local log functions: forward error to logger object
 cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error):
-    cdef _ErrorLog log_handler
+    cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
-        log_handler = <_ErrorLog>c_log_handler
+        log_handler = <_BaseErrorLog>c_log_handler
     else:
         log_handler = __GLOBAL_ERROR_LOG
     log_handler._receive(error)

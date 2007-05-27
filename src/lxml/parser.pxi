@@ -494,7 +494,7 @@ cdef class _BaseParser:
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None,
-                                      self._error_log._first_error, recover)
+                                      self._error_log, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -528,7 +528,7 @@ cdef class _BaseParser:
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, None,
-                                      self._error_log._first_error, recover)
+                                      self._error_log, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -558,7 +558,7 @@ cdef class _BaseParser:
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, c_filename,
-                                      self._error_log._first_error, recover)
+                                      self._error_log, recover)
         finally:
             self._cleanup()
             self._context.clear()
@@ -584,14 +584,15 @@ cdef class _BaseParser:
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, filename,
-                                      self._error_log._first_error, recover)
+                                      self._error_log, recover)
         finally:
             self._cleanup()
             self._context.clear()
             self._error_log.disconnect()
             self._unlockParser()
 
-cdef int _raiseParseError(xmlParserCtxt* ctxt, filename, error) except 0:
+cdef int _raiseParseError(xmlParserCtxt* ctxt, filename,
+                          _ErrorLog error_log) except 0:
     if filename is not None and \
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
         if ctxt.lastError.message is not NULL:
@@ -600,11 +601,9 @@ cdef int _raiseParseError(xmlParserCtxt* ctxt, filename, error) except 0:
         else:
             message = "Error reading file '%s'" % filename
         raise IOError, message
-    elif error is not None and error.message is not None:
-        message = error.message
-        if error.line > 0:
-            message = "line %d: %s" % (error.line, message)
-        raise XMLSyntaxError, message
+    elif error_log is not None:
+        raise XMLSyntaxError, error_log._buildExceptionMessage(
+            "Document is not well formed")
     elif ctxt.lastError.message is not NULL:
         message = (ctxt.lastError.message).strip()
         if ctxt.lastError.line > 0:
@@ -614,7 +613,8 @@ cdef int _raiseParseError(xmlParserCtxt* ctxt, filename, error) except 0:
         raise XMLSyntaxError
 
 cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
-                                filename, error, int recover) except NULL:
+                                filename, _ErrorLog error_log,
+                                int recover) except NULL:
     cdef _ResolverContext context
     if ctxt.myDoc is not NULL:
         if ctxt.myDoc != result:
@@ -638,7 +638,7 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
             context._raise_if_stored()
 
     if result is NULL:
-        _raiseParseError(ctxt, filename, error)
+        _raiseParseError(ctxt, filename, error_log)
     elif result.URL is NULL and filename is not None:
         result.URL = tree.xmlStrdup(_cstr(filename))
     return result

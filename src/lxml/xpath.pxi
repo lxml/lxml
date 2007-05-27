@@ -152,36 +152,26 @@ cdef class _XPathEvaluatorBase:
             python.PyThread_release_lock(self._eval_lock)
 
     cdef _raise_parse_error(self):
+        cdef _BaseErrorLog entries
         entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
         if entries:
-            entry = entries[0]
-            if entry is not None and entry.message:
-                raise XPathSyntaxError, entry.message
-
-        if self._error_log._first_error is not None and \
-               self._error_log._first_error.message is not None:
-            message = self._error_log._first_error.message
-        elif self._xpathCtxt is not NULL and \
-               self._xpathCtxt.lastError.message is not NULL:
-            message = funicode(self._xpathCtxt.lastError.message)
-        else:
-            message = "Error in xpath expression"
-        raise XPathSyntaxError, message
+            message = entries._buildExceptionMessage(None)
+            if message is not None:
+                raise XPathSyntaxError, message
+        raise XPathSyntaxError, self._error_log._buildExceptionMessage(
+            "Error in xpath expression")
 
     cdef _raise_eval_error(self):
+        cdef _BaseErrorLog entries
         entries = self._error_log.filter_types(_XPATH_EVAL_ERRORS)
         if not entries:
             entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
         if entries:
-            entry = entries[0]
-            if entry is not None and entry.message:
-                raise XPathEvalError, entry.message
-        if self._xpathCtxt is not NULL and \
-               self._xpathCtxt.lastError.message is not NULL:
-            message = funicode(self._xpathCtxt.lastError.message)
-        else:
-            message = "Error in xpath evaluation"
-        raise XPathEvalError, message
+            message = entries._buildExceptionMessage(None)
+            if message is not None:
+                raise XPathEvalError, message
+        raise XPathEvalError, self._error_log._buildExceptionMessage(
+            "Error in xpath expression")
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
