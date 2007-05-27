@@ -352,7 +352,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = tree.getroot()
         self.assertEquals(root.text, test_url)
 
-    def _test_resolve_empty(self):
+    def test_resolve_empty(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(load_dtd=True)
         assertEqual = self.assertEqual

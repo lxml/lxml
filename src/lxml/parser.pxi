@@ -622,7 +622,8 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
         ctxt.myDoc = NULL
 
     if result is not NULL:
-        if ctxt.wellFormed or recover:
+        if recover or (ctxt.wellFormed and \
+                       ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
             __GLOBAL_PARSER_CONTEXT.initDocDict(result)
         else:
             # free broken document
