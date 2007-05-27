@@ -118,12 +118,12 @@ If you prefer getting an exception when validating, you can use the
   >>> relaxng.assertValid(doc2)
   Traceback (most recent call last):
     [...]
-  DocumentInvalid: Document does not comply with schema
+  DocumentInvalid: Did not expect element c there, line 1
 
   >>> relaxng.assert_(doc2)
   Traceback (most recent call last):
     [...]
-  AssertionError: Document does not comply with schema
+  AssertionError: Did not expect element c there, line 1
 
 If you want to find out why the validation failed in the second case, you can
 look up the error log of the validation process and check it for relevant
@@ -198,12 +198,12 @@ If you prefer getting an exception when validating, you can use the
   >>> xmlschema.assertValid(doc2)
   Traceback (most recent call last):
     [...]
-  DocumentInvalid: Document does not comply with schema
+  DocumentInvalid: Element 'c': This element is not expected. Expected is ( b )., line 1
 
   >>> xmlschema.assert_(doc2)
   Traceback (most recent call last):
     [...]
-  AssertionError: Document does not comply with schema
+  AssertionError: Element 'c': This element is not expected. Expected is ( b )., line 1
 
 Error reporting works as for the RelaxNG class::
 

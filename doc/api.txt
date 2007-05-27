@@ -301,7 +301,7 @@ underlying transport protocol::
   >>> etree.XML(notxml)
   Traceback (most recent call last):
     ...
-  XMLSyntaxError: line 1: error parsing attribute name
+  XMLSyntaxError: error parsing attribute name, line 1, column 3
 
 
 XInclude and ElementInclude
