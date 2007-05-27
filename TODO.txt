@@ -64,3 +64,5 @@ lxml 2.0
 
 * remove ``findOrBuildNodeNs()`` from C-API (replaced by
   findOrBuildNodeNsPrefix)
+
+* follow PEP 8 in API naming
