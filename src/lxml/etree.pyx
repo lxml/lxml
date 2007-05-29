@@ -1228,6 +1228,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             self._doc = None
         return self._context_node
 
+    def _setroot(self, _Element root not None):
+        """Relocate the ElementTree to a new root node.
+        """
+        if root._c_node.type != tree.XML_ELEMENT_NODE:
+            raise TypeError, "Only elements can be the root of an ElementTree"
+        self._context_node = root
+        self._doc = None
+
     def getroot(self):
         """Gets the root element for this tree.
         """
