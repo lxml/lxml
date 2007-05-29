@@ -8,6 +8,10 @@ Under Development
 Features added
 --------------
 
+* Entity support through an ``Entity`` factory and element classes. XML
+  parsers now have a ``resolve_entities`` keyword argument that can be set to
+  False to keep entities in the document.
+
 * ``parse()`` function in ``objectify``, corresponding to ``XML()`` etc.
 
 * ``column`` field on error log entries to accompany the ``line`` field
@@ -45,6 +49,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath
   evaluators now reports the first error that occurred instead of the last
