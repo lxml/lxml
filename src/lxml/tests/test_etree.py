@@ -410,6 +410,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_entity_append(self):
         Entity = self.etree.Entity
         Element = self.etree.Element
+        tostring = self.etree.tostring
 
         root = Element("root")
         root.append( Entity("test") )
