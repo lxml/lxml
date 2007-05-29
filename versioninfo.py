@@ -38,7 +38,9 @@ def svn_version():
         elif data.startswith('<?xml'):
             # SVN <= 1.3
             dirurl = urlre.search(data).group(1)    # get repository URL
-            localrev = max([int(m.group(1)) for m in revre.finditer(data)])
+            revs = [int(m.group(1)) for m in revre.finditer(data)]
+            if revs:
+                localrev = max(revs)
         else:
             from warnings import warn
             warn("unrecognized .svn/entries format; skipping "+base)
