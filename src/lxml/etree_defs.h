@@ -99,7 +99,8 @@ static PyObject* __PY_NEW_GLOBAL_EMPTY_TUPLE = NULL;
 
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
-	 ((c_node)->type == XML_COMMENT_NODE) || \
+         ((c_node)->type == XML_COMMENT_NODE) || \
+         ((c_node)->type == XML_ENTITY_REF_NODE) || \
          ((c_node)->type == XML_PI_NODE))
 
 #define _isElementOrXInclude(c_node) \

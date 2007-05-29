@@ -1179,6 +1179,24 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         else:
             return "<?%s?>" % self.target
 
+cdef class _Entity(__ContentOnlyElement):
+    property tag:
+        def __get__(self):
+            return Entity
+
+    property name:
+        # not in ElementTree
+        def __get__(self):
+            return funicode(self._c_node.name)
+
+        def __set__(self, value):
+            value = _utf8(value)
+            c_text = _cstr(value)
+            tree.xmlNodeSetName(self._c_node, c_text)
+
+    def __repr__(self):
+        return "&%s;" % self.name
+
 
 cdef public class _ElementTree [ type LxmlElementTreeType,
                                  object LxmlElementTree ]:
@@ -1692,12 +1710,15 @@ cdef class AncestorsIterator(_ElementIterator):
 
 cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     """Iterates over an element and its sub-elements in document order (depth
-    first pre-order).
+    first pre-order).  Note that this also includes comments, entities and
+    processing instructions.  To filter them out, check if the ``tag``
+    property of the returned element is a string (i.e. not None and not a
+    factory function).
 
-    If the optional 'tag' argument is not None, it returns only the elements
-    that match the respective name and namespace.
+    If the optional 'tag' argument is not None, the iterator returns only the
+    elements that match the respective name and namespace.
 
-    The optional boolean 'inclusive' argument defaults to True and can be set
+    The optional boolean argument 'inclusive' defaults to True and can be set
     to False to exclude the start element itself.
 
     Note that the behaviour of this iterator is completely undefined if the
@@ -1707,6 +1728,7 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     # keep next node to return and a depth counter in the tree
     cdef _Element _next_node
     cdef _Element _top_node
+    cdef int _include_all_types
     def __init__(self, _Element node not None, tag=None, inclusive=True):
         self._top_node  = node
         self._next_node = node
@@ -1731,7 +1753,10 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
             c_node = self._nextNodeAnyTag(c_node)
         else:
             c_node = self._nextNodeMatchTag(c_node)
-        self._next_node = _elementFactory(current_node._doc, c_node)
+        if c_node is NULL:
+            self._next_node = None
+        else:
+            self._next_node = _elementFactory(current_node._doc, c_node)
         return current_node
 
     cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
@@ -1742,8 +1767,9 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
 
     cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node):
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
-        if _tagMatches(c_node, self._href, self._name):
-            return c_node
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            if _tagMatches(c_node, self._href, self._name):
+                return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
 
@@ -1760,6 +1786,11 @@ cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
 cdef xmlNode* _createPI(xmlDoc* c_doc, char* target, char* text):
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocPI(c_doc, target, text)
+    return c_node
+
+cdef xmlNode* _createEntity(xmlDoc* c_doc, char* name):
+    cdef xmlNode* c_node
+    c_node = tree.xmlNewReference(c_doc, name)
     return c_node
 
 # module-level API for ElementTree
@@ -1808,6 +1839,22 @@ def ProcessingInstruction(target, text=None):
     return _elementFactory(doc, c_node)
 
 PI = ProcessingInstruction
+
+def Entity(name):
+    """Entity factory.  This factory function creates a special element that
+    will be serialized as an XML entity.  Note, however, that the entity will
+    not be automatically declared in the document.  A document that uses
+    entities requires a DTD.
+    """
+    cdef _Document doc
+    cdef xmlNode*  c_node
+    cdef xmlDoc*   c_doc
+    name = _utf8(name)
+    c_doc = _newDoc()
+    doc = _documentFactory(c_doc, None)
+    c_node = _createEntity(c_doc, _cstr(name))
+    tree.xmlAddChild(<xmlNode*>c_doc, c_node)
+    return _elementFactory(doc, c_node)
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):

@@ -34,6 +34,16 @@ cdef class PIBase(_ProcessingInstruction):
     ``_init(self)`` method that will be called after object creation.
     """
 
+cdef class EntityBase(_Entity):
+    """All custom Entity classes must inherit from this one.
+
+    Note that subclasses *must not* override __init__ or __new__ as it is
+    absolutely undefined when these objects will be created or destroyed.  All
+    persistent state of Entities must be stored in the underlying XML.  If you
+    really need to initialize the object after creation, you can implement an
+    ``_init(self)`` method that will be called after object creation.
+    """
+    
 
 ################################################################################
 # Element class lookup
@@ -80,13 +90,14 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
     """Element class lookup scheme that always returns the default Element
     class.
 
-    The keyword arguments ``element``, ``comment`` and ``pi`` accept the
-    respective Element classes.
+    The keyword arguments ``element``, ``comment``, ``pi`` and ``entity``
+    accept the respective Element classes.
     """
     cdef readonly object element_class
     cdef readonly object comment_class
     cdef readonly object pi_class
-    def __init__(self, element=None, comment=None, pi=None):
+    cdef readonly object entity_class
+    def __init__(self, element=None, comment=None, pi=None, entity=None):
         self._lookup_function = _lookupDefaultElementClass
         if element is None:
             self.element_class = None
@@ -108,6 +119,13 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
             self.pi_class = pi
         else:
             raise TypeError, "PI class must be subclass of PIBase"
+
+        if entity is None:
+            self.entity_class = None
+        elif issubclass(pi, EntityBase):
+            self.entity_class = pi
+        else:
+            raise TypeError, "Entity class must be subclass of EntityBase"
 
 cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     "Trivial class lookup function that always returns the default class."
@@ -136,6 +154,13 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
                            cstd.strstr(c_node.content, "text/xml") is not NULL:
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
+        else:
+            return cls
+    elif c_node.type == tree.XML_ENTITY_REF_NODE:
+        if state is not None:
+            cls = (<ElementDefaultClassLookup>state).entity_class
+        if cls is None:
+            return _Entity
         else:
             return cls
     else:
@@ -217,10 +242,10 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
         lookup(self, type, doc, namespace, name)
 
     to lookup the element class for a node. Arguments of the method:
-    * type:      one of 'element', 'comment', 'PI'
+    * type:      one of 'element', 'comment', 'PI', 'entity'
     * doc:       document that the node is in
-    * namespace: namespace URI of the node (or None for comments/PIs)
-    * name:      name of the element, None for comments, target for PIs
+    * namespace: namespace URI of the node (or None for comments/PIs/entities)
+    * name:      name of the element/entity, None for comments, target for PIs
 
     If you return None from this method, the fallback will be called.
     """
@@ -237,10 +262,14 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
 
     lookup = <CustomElementClassLookup>state
 
-    if c_node.type == tree.XML_COMMENT_NODE:
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        element_type = "element"
+    elif c_node.type == tree.XML_COMMENT_NODE:
         element_type = "comment"
     elif c_node.type == tree.XML_PI_NODE:
         element_type = "PI"
+    elif c_node.type == tree.XML_ENTITY_REF_NODE:
+        element_type = "entity"
     else:
         element_type = "element"
     if c_node.name is NULL:

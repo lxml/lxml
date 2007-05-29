@@ -54,6 +54,8 @@ cdef extern from "libxml/parser.h":
         int options
         int disableSAX
         int errNo
+        int replaceEntities
+        int validate
         xmlError lastError
         xmlNode* node
         xmlSAXHandler* sax

@@ -616,6 +616,7 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
                                 filename, _ErrorLog error_log,
                                 int recover) except NULL:
     cdef _ResolverContext context
+    cdef int well_formed
     if ctxt.myDoc is not NULL:
         if ctxt.myDoc != result:
             tree.xmlFreeDoc(ctxt.myDoc)
@@ -624,6 +625,20 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
     if result is not NULL:
         if recover or (ctxt.wellFormed and \
                        ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
+            well_formed = 1
+        elif not ctxt.replaceEntities and not ctxt.validate:
+            # in this mode, we ignore errors about undefined entities
+            for error in error_log.filter_from_errors():
+                if error.type != ErrorTypes.WAR_UNDECLARED_ENTITY and \
+                       error.type != ErrorTypes.ERR_UNDECLARED_ENTITY:
+                    well_formed = 0
+                    break
+            else:
+                well_formed = 1
+        else:
+            well_formed = 0
+
+        if well_formed:
             __GLOBAL_PARSER_CONTEXT.initDocDict(result)
         else:
             # free broken document
@@ -674,6 +689,8 @@ cdef class XMLParser(_BaseParser):
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
+    * compact            - safe memory for short text content (default: on)
+    * resolve_entities   - replace entities by their text value (default: on)
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -681,7 +698,8 @@ cdef class XMLParser(_BaseParser):
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, ns_clean=False,
-                 recover=False, remove_blank_text=False, compact=True):
+                 recover=False, remove_blank_text=False, compact=True,
+                 resolve_entities=True):
         cdef int parse_options
         _BaseParser.__init__(self)
 
@@ -704,6 +722,8 @@ cdef class XMLParser(_BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
         if not compact:
             parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
+        if not resolve_entities:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
         self._parse_options = parse_options
 
@@ -799,6 +819,7 @@ cdef class HTMLParser(_BaseParser):
     * recover            - try hard to parse through broken HTML (default: True)
     * no_network         - prevent network access
     * remove_blank_text  - discard empty text nodes
+    * compact            - safe memory for short text content (default: on)
 
     Note that you should avoid sharing parsers between threads for parformance
     reasons.
