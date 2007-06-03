@@ -258,7 +258,12 @@ a) First, you should look at the `current developer changelog`_ to see if this
 b) If you are using threads, please see the following section to check if
    you touch on one of the potential pitfalls.
 
-c) Otherwise, we would really like to hear about it.  Please report it to the
+c) Try to reproduce the problem with the latest versions of libxml2 and
+   libxslt.  From time to time, bugs and race conditions are found in these
+   libraries, so a more recent version might already contain a fix for your
+   problem.
+
+d) Otherwise, we would really like to hear about it.  Please report it to the
    `mailing list`_ so that we can fix it.  It is very helpful in this case if
    you can come up with a short code snippet that demonstrates your problem.
    Please also report the version of lxml, libxml2 and libxslt that you are
