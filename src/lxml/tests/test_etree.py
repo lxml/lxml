@@ -390,22 +390,23 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = u'<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
         self.assertRaises(_LocalException, parse, StringIO(xml), parser)
 
-    def test_entity(self):
-        parse = self.etree.parse
-        tostring = self.etree.tostring
-        parser = self.etree.XMLParser(resolve_entities=False)
-        Entity = self.etree.Entity
+    if etree.LIBXML_VERSION > (2,6,20):
+        def test_entity_parse(self):
+            parse = self.etree.parse
+            tostring = self.etree.tostring
+            parser = self.etree.XMLParser(resolve_entities=False)
+            Entity = self.etree.Entity
 
-        xml = '<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
-        tree = parse(StringIO(xml), parser)
-        root = tree.getroot()
-        self.assertEquals(root[0].tag, Entity)
-        self.assertFalse(root[0].text)
-        self.assertEquals(root[0].tail, None)
-        self.assertEquals(root[0].name, "myentity")
+            xml = '<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
+            tree = parse(StringIO(xml), parser)
+            root = tree.getroot()
+            self.assertEquals(root[0].tag, Entity)
+            self.assertFalse(root[0].text)
+            self.assertEquals(root[0].tail, None)
+            self.assertEquals(root[0].name, "myentity")
 
-        self.assertEquals('<doc>&myentity;</doc>',
-                          tostring(root))
+            self.assertEquals('<doc>&myentity;</doc>',
+                              tostring(root))
 
     def test_entity_append(self):
         Entity = self.etree.Entity
