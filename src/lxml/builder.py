@@ -16,9 +16,6 @@ except ImportError:
         return lambda *args, **kwargs: func(tag, *args, **kwargs)
 
 
-class _C:
-    pass
-
 class ElementMaker(object):
     """Element generator factory.
 
@@ -97,7 +94,12 @@ class ElementMaker(object):
         </html>
     """
 
-    def __init__(self, typemap=None):
+    def __init__(self, typemap=None, parser=None):
+        if parser is not None:
+            self._makeelement = parser.makeelement
+        else:
+            self._makeelement = ET.Element
+
 	# initialize type map for this element factory
 
 	if typemap:
@@ -121,20 +123,12 @@ class ElementMaker(object):
 		    attrib[k] = typemap[type(v)](None, v)
 	typemap[dict] = add_dict
 
-	def add_elem(elem, item):
-	    elem.append(item)
-	t = type(ET.Element("tag"))
-	if t is not type(_C()):
-	    typemap[t] = add_elem
-
 	self._typemap = typemap
-
-	# print typemap
 
     def __call__(self, tag, *children, **attrib):
 	get = self._typemap.get
 
-        elem = ET.Element(tag)
+        elem = self._makeelement(tag)
 	if attrib:
 	    get(dict)(elem, attrib)
 
