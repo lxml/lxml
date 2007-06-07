@@ -58,6 +58,8 @@ lxml 2.0
 
 * clean up (and remove?) duplicated API for extension functions
 
+* allow (and prefer) Namespace classes local to a parser
+
 * remove first 'context' argument from extension functions
 
 * find a way to integrate Schematron (if it's available)
