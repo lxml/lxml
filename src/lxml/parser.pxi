@@ -665,8 +665,9 @@ cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
 
 cdef int _XML_DEFAULT_PARSE_OPTIONS
 _XML_DEFAULT_PARSE_OPTIONS = (
-    xmlparser.XML_PARSE_NOENT |
+    xmlparser.XML_PARSE_NOENT   |
     xmlparser.XML_PARSE_NOCDATA |
+    xmlparser.XML_PARSE_NONET   |
     xmlparser.XML_PARSE_COMPACT
     )
 
@@ -685,19 +686,19 @@ cdef class XMLParser(_BaseParser):
     * attribute_defaults - read default attributes from DTD
     * dtd_validation     - validate (if DTD is available)
     * load_dtd           - use DTD for parsing
-    * no_network         - prevent network access
+    * no_network         - prevent network access (default: True)
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
-    * compact            - safe memory for short text content (default: on)
-    * resolve_entities   - replace entities by their text value (default: on)
+    * compact            - safe memory for short text content (default: True)
+    * resolve_entities   - replace entities by their text value (default: True)
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
     apply to the default parser.
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
-                 load_dtd=False, no_network=False, ns_clean=False,
+                 load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True):
         cdef int parse_options
@@ -712,14 +713,14 @@ cdef class XMLParser(_BaseParser):
         if attribute_defaults:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
                             xmlparser.XML_PARSE_DTDLOAD
-        if no_network:
-            parse_options = parse_options | xmlparser.XML_PARSE_NONET
         if ns_clean:
             parse_options = parse_options | xmlparser.XML_PARSE_NSCLEAN
         if recover:
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        if not no_network:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
         if not compact:
             parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
         if not resolve_entities:
@@ -777,7 +778,15 @@ __DEFAULT_XML_PARSER = XMLParser()
 
 __GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
 
-def setDefaultParser(_BaseParser parser=None):
+def setDefaultParser(parser):
+    "Deprecated, please use set_default_parser instead."
+    set_default_parser(parser)
+
+def getDefaultParser():
+    "Deprecated, please use get_default_parser instead."
+    return get_default_parser()
+
+def set_default_parser(_BaseParser parser=None):
     """Set a default parser for the current thread.  This parser is used
     globally whenever no parser is supplied to the various parse functions of
     the lxml API.  If this function is called without a parser (or if it is
@@ -791,24 +800,19 @@ def setDefaultParser(_BaseParser parser=None):
         parser = __DEFAULT_XML_PARSER
     __GLOBAL_PARSER_CONTEXT.setDefaultParser(parser)
 
-def getDefaultParser():
-    return __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-
-def set_default_parser(parser):
-    "Deprecated, please use setDefaultParser instead."
-    setDefaultParser(parser)
-
 def get_default_parser():
-    "Deprecated, please use getDefaultParser instead."
-    return getDefaultParser()
+    return __GLOBAL_PARSER_CONTEXT.getDefaultParser()
 
 ############################################################
 ## HTML parser
 ############################################################
 
 cdef int _HTML_DEFAULT_PARSE_OPTIONS
-_HTML_DEFAULT_PARSE_OPTIONS = \
+_HTML_DEFAULT_PARSE_OPTIONS = (
+    htmlparser.HTML_PARSE_RECOVER |
+    htmlparser.HTML_PARSE_NONET   |
     htmlparser.HTML_PARSE_COMPACT
+    )
 
 cdef class HTMLParser(_BaseParser):
     """The HTML parser.  This parser allows reading HTML into a normal XML
@@ -817,25 +821,25 @@ cdef class HTMLParser(_BaseParser):
 
     Available boolean keyword arguments:
     * recover            - try hard to parse through broken HTML (default: True)
-    * no_network         - prevent network access
+    * no_network         - prevent network access (default: True)
     * remove_blank_text  - discard empty text nodes
-    * compact            - safe memory for short text content (default: on)
+    * compact            - safe memory for short text content (default: True)
 
-    Note that you should avoid sharing parsers between threads for parformance
+    Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
-    def __init__(self, recover=True, no_network=False, remove_blank_text=False,
+    def __init__(self, recover=True, no_network=True, remove_blank_text=False,
                  compact=True):
         cdef int parse_options
         _BaseParser.__init__(self)
 
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
-        if recover:
-            parse_options = parse_options | htmlparser.HTML_PARSE_RECOVER
-        if no_network:
-            parse_options = parse_options | htmlparser.HTML_PARSE_NONET
         if remove_blank_text:
             parse_options = parse_options | htmlparser.HTML_PARSE_NOBLANKS
+        if not recover:
+            parse_options = parse_options ^ htmlparser.HTML_PARSE_RECOVER
+        if not no_network:
+            parse_options = parse_options ^ htmlparser.HTML_PARSE_NONET
         if not compact:
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 

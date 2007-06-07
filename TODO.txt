@@ -73,4 +73,8 @@ lxml 2.0
 
 * clean support for entities (maybe an Entity element class?)
 
-* disable network access in parsers by default
+
+Changes in 2.0
+--------------
+
+* network access in parsers disabled by default
