@@ -44,7 +44,7 @@ be an lxml developer, you do need a working Pyrex installation.
   http://codespeak.net/svn/lxml/pyrex/
 
   A subversion checkout of lxml will automatically retrieve the latest Pyrex
-  as external project source (``svn:externals``).  Look out for the ``Pyrex``
+  as external project source (``svn:externals``).  Look for the ``Pyrex``
   directory in the source tree.
 
   Since version 1.1.2, the lxml source distribution also includes this Pyrex
@@ -180,6 +180,26 @@ This is the procedure to make an lxml egg for your platform:
 The last 'upload' step only works if you have access to the lxml cheeseshop
 entry.  If not, you can just make an egg with ``bdist_egg`` and mail it to the
 lxml maintainer.
+
+
+Providing newer library versions on Mac-OS X
+--------------------------------------------
+
+The Unix environment in Mac-OS X makes it relatively easy to install
+Unix/Linux style package management tools and new software.  However, it seems
+to be hard to get libraries set up for exclusive usage that Mac-OS X ships in
+an older version.  The result can be segfaults on this platform that are hard
+to track down.
+
+To make sure the newer libxml2 and libxslt versions are used (e.g. under
+fink), you should add the directory where you installed the libraries to the
+``DYLD_LIBRARY_PATH`` environment variable.  This seems to fix a lot of
+problems for users.
+
+Alternatively, you can build lxml statically.  A way to do this on MS Windows
+is described in the next section, but it should be easy to adapt it for
+Mac-OS.  That way, you can always be sure you use the versions you compiled
+lxml with, regardless of the runtime environement.
 
 
 Static linking on Windows
