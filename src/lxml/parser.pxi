@@ -778,7 +778,7 @@ __DEFAULT_XML_PARSER = XMLParser()
 
 __GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
 
-def setDefaultParser(parser):
+def setDefaultParser(parser=None):
     "Deprecated, please use set_default_parser instead."
     set_default_parser(parser)
 
