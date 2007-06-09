@@ -595,16 +595,20 @@ cdef int isutf8py(pystring):
     cdef char* s
     cdef char* c_end
     cdef char c
+    cdef int is_non_ascii
     s = _cstr(pystring)
     c_end = s + python.PyString_GET_SIZE(pystring)
+    is_non_ascii = 0
     while s < c_end:
         c = s[0]
+        if c & 0x80:
+            is_non_ascii = 1
         if c == c'\0':
             return -1 # invalid!
-        if c & 0x80:
-            return 1  # non-ASCII
+        if is_non_ascii == 0 and not tree.xmlIsChar_ch(c):
+            return -1 # invalid!
         s = s + 1
-    return 0          # plain 7-bit ASCII
+    return is_non_ascii
 
 cdef object funicode(char* s):
     cdef Py_ssize_t slen
@@ -625,12 +629,15 @@ cdef object funicode(char* s):
 cdef object _utf8(object s):
     if python.PyString_Check(s):
         assert not isutf8py(s), \
-               "All strings must be Unicode or ASCII"
-        return s
+               "All strings must be XML compatible, either Unicode or ASCII"
     elif python.PyUnicode_Check(s):
-        return python.PyUnicode_AsUTF8String(s)
+        # FIXME: we should test these strings, too ...
+        s = python.PyUnicode_AsUTF8String(s)
+        assert isutf8py(s) != -1, \
+               "All strings must be XML compatible, either Unicode or ASCII"
     else:
         raise TypeError, "Argument must be string or unicode."
+    return s
 
 cdef object _encodeFilename(object filename):
     if filename is None:

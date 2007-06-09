@@ -50,6 +50,9 @@ Features added
 Bugs fixed
 ----------
 
+* API functions now check incoming strings for XML conformity.  Zero bytes or
+  low ASCII characters are no longer accepted.
+
 * The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath

@@ -41,6 +41,9 @@ cdef extern from "libxml/encoding.h":
     cdef xmlCharEncoding xmlDetectCharEncoding(char* text, int len)
     cdef char* xmlGetCharEncodingName(xmlCharEncoding enc)
 
+cdef extern from "libxml/chvalid.h":
+    cdef int xmlIsChar_ch(char c)
+
 cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
     ctypedef void xmlHashScanner(void* payload, void* data, char* name)

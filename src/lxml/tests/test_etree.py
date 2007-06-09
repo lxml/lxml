@@ -1433,6 +1433,41 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertRaises(AssertionError, Element, 'ha\0ho')
 
+    def test_unicode_byte_zero(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertRaises(AssertionError, setattr, a, "text", u'ha\0ho')
+        self.assertRaises(AssertionError, setattr, a, "tail", u'ha\0ho')
+
+        self.assertRaises(AssertionError, Element, u'ha\0ho')
+
+    def test_byte_invalid(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertRaises(AssertionError, setattr, a, "text", 'ha\x07ho')
+        self.assertRaises(AssertionError, setattr, a, "text", 'ha\x02ho')
+
+        self.assertRaises(AssertionError, setattr, a, "tail", 'ha\x07ho')
+        self.assertRaises(AssertionError, setattr, a, "tail", 'ha\x02ho')
+
+        self.assertRaises(AssertionError, Element, 'ha\x07ho')
+        self.assertRaises(AssertionError, Element, 'ha\x02ho')
+
+    def test_unicode_byte_invalid(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertRaises(AssertionError, setattr, a, "text", u'ha\x07ho')
+        self.assertRaises(AssertionError, setattr, a, "text", u'ha\x02ho')
+
+        self.assertRaises(AssertionError, setattr, a, "tail", u'ha\x07ho')
+        self.assertRaises(AssertionError, setattr, a, "tail", u'ha\x02ho')
+
+        self.assertRaises(AssertionError, Element, u'ha\x07ho')
+        self.assertRaises(AssertionError, Element, u'ha\x02ho')
+
     def test_encoding_tostring_utf16(self):
         # ElementTree fails to serialize this
         tostring = self.etree.tostring
