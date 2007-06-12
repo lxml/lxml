@@ -50,6 +50,9 @@ Features added
 Bugs fixed
 ----------
 
+* Replacing the children slice of an Element would cut off the tails of the
+  original children
+
 * API functions now check incoming strings for XML conformity.  Zero bytes or
   low ASCII characters are no longer accepted.
 

@@ -1161,6 +1161,26 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertXML('<b><bs></bs></b>', b)
         self.assertXML('<c><cs></cs></c>', c)
 
+    def test_delslice_tail(self):
+        XML = self.etree.XML
+        a = XML('<a><b></b>B2<c></c>C2</a>')
+        b, c = a
+
+        del a[:]
+
+        self.assertEquals("B2", b.tail)
+        self.assertEquals("C2", c.tail)
+
+    def test_replace_slice_tail(self):
+        XML = self.etree.XML
+        a = XML('<a><b></b>B2<c></c>C2</a>')
+        b, c = a
+
+        a[:] = []
+
+        self.assertEquals("B2", b.tail)
+        self.assertEquals("C2", c.tail)
+
     def test_delitem_tail(self):
         ElementTree = self.etree.ElementTree
         f = StringIO('<a><b></b>B2<c></c>C2</a>')

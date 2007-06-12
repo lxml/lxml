@@ -486,7 +486,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         else:
             c_node = _findChild(self._c_node, start)
             # now delete the slice
-            if start != stop:
+            if c_node is not NULL and start != stop:
                 c_node = _deleteSlice(c_node, start, stop)
         # if the insertion point is at the end, append there
         if c_node is NULL:
@@ -597,8 +597,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         while c_node is not NULL:
             c_node_next = c_node.next
             if _isElement(c_node):
-                _removeText(c_node_next)
-                c_node_next = c_node.next
+                while c_node_next is not NULL and not _isElement(c_node_next):
+                    c_node_next = c_node_next.next
                 _removeNode(c_node)
             c_node = c_node_next
     

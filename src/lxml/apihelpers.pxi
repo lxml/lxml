@@ -485,7 +485,10 @@ cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
 cdef void _removeNode(xmlNode* c_node):
     """Unlink and free a node and subnodes if possible.
     """
+    cdef xmlNode* c_next
+    c_next = c_node.next
     tree.xmlUnlinkNode(c_node)
+    _moveTail(c_next, c_node)
     attemptDeallocation(c_node)
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
@@ -526,8 +529,8 @@ cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
     while c_node is not NULL and c < stop:
         c_next = c_node.next
         if _isElement(c_node):
-            _removeText(c_node.next)
-            c_next = c_node.next
+            while c_next is not NULL and not _isElement(c_next):
+                c_next = c_next.next
             _removeNode(c_node)
             c = c + 1
         c_node = c_next
