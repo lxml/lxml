@@ -18,10 +18,11 @@ See also the notes on compatibility_ to ElementTree_.
      1.1  Is there a tutorial?
      1.2  Where can I find more documentation about lxml?
      1.3  What standards does lxml implement?
-     1.4  Where are the Windows binaries?
-     1.5  What is the difference between lxml.etree and lxml.objectify?
-     1.6  How can I make my application run faster?
-     1.7  Why do I get errors about missing UCS4 symbols when installing lxml?
+     1.4  Which version of libxml2 and libxslt should I use or require?
+     1.5  Where are the Windows binaries?
+     1.6  What is the difference between lxml.etree and lxml.objectify?
+     1.7  How can I make my application run faster?
+     1.8  Why do I get errors about missing UCS4 symbols when installing lxml?
    2  Contributing
      2.1  Why is lxml not written in Python?
      2.2  How can I contribute?
@@ -89,6 +90,33 @@ namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
 XML:ID.  Support for XML Schema and Schematron is currently incomplete in
 libxml2, but is mostly usable and still being worked on.  libxml2 also
 supports loading documents through HTTP and FTP.
+
+
+Which version of libxml2 and libxslt should I use or require?
+-------------------------------------------------------------
+
+It really depends on your application, but the rule of thumb is: more recent
+versions contain less bugs and provide more features.
+
+* Try to use versions of both libraries that were released together.
+
+* If you use XML Schema or Schematron which are still under development, the
+most recent version of libxml2 is usually a good bet.
+
+* The same applies to XPath, where a substantial number of bugs and memory
+leaks were fixed over time.  If you encounter crashes or memory leaks in XPath
+applications, try a more recent version of libxml2.
+
+* For parsing and fixing broken HTML, lxml requires at least libxml2 2.6.21.
+
+* For the normal tree handling, however, any libxml2 version starting with
+2.6.16 should do.
+
+Read the `release notes of libxml2`_ and the `release notes of libxslt`_ to
+see if a specific bug has been fixed.
+
+.. _`release notes of libxml2`: http://xmlsoft.org/news.html
+.. _`release notes of libxslt`: http://xmlsoft.org/XSLT/news.html
 
 
 Where are the Windows binaries?
