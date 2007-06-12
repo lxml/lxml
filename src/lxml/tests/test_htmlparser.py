@@ -30,7 +30,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
     def test_module_HTML_unicode(self):
         element = self.etree.HTML(self.uhtml_str)
         self.assertEqual(unicode(self.etree.tostring(element, 'UTF8'), 'UTF8'),
-                         self.uhtml_str)
+                         unicode(self.uhtml_str.encode('UTF8'), 'UTF8'))
 
     def test_module_parse_html_error(self):
         parser = self.etree.HTMLParser(recover=False)
