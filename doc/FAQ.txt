@@ -51,10 +51,16 @@ General Questions
 Is there a tutorial?
 --------------------
 
-There is a `tutorial for ElementTree`_ which also works for ``lxml.etree``.
+Read the `lxml.etree Tutorial`_.  While this is still work in progress (just
+as any good documentation), it provides an overview of the most important
+concepts in ``lxml.etree``.  If you want to help out, the tutorial is a very
+good place to start.
+
+There is also a `tutorial for ElementTree`_ which works for ``lxml.etree``.
 The `API documentation`_ also contains many examples for ``lxml.etree``.  To
 learn using ``lxml.objectify``, read the `objectify documentation`_.
 
+.. _`lxml.etree Tutorial`:      tutorial.html
 .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
 .. _`API documentation`:        api.html
 .. _`objectify documentation`:  objectify.html
@@ -255,6 +261,11 @@ project and its user base.  You can
 
 .. _ReST: http://docutils.sourceforge.net/rst.html
 .. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
+
+* help with the tutorial.  A tutorial is the most important stating point for
+  new users, so it is important for us to provide an easy to understand guide
+  into lxml.  As allo documentation, the tutorial is work in progress, so we
+  appreciate every helping hand.
 
 * improve the docstrings.  lxml uses docstrings to support Python's integrated
   online ``help()`` function.  However, sometimes these are not sufficient to
