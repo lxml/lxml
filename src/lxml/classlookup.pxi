@@ -122,8 +122,8 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
 
         if entity is None:
             self.entity_class = None
-        elif issubclass(pi, EntityBase):
-            self.entity_class = pi
+        elif issubclass(entity, EntityBase):
+            self.entity_class = entity
         else:
             raise TypeError, "Entity class must be subclass of EntityBase"
 
