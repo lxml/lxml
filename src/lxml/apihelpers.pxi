@@ -459,6 +459,11 @@ cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     * its name string equals the c_name string
     """
     cdef char* c_node_href
+    if c_node is NULL:
+        return 0
+    if c_node.type != tree.XML_ELEMENT_NODE:
+        # not an element, only succeed if we match everything
+        return c_name is NULL and c_href is NULL
     if c_name is NULL:
         if c_href is NULL:
             # always match
@@ -606,9 +611,9 @@ cdef int isutf8py(pystring):
         c = s[0]
         if c & 0x80:
             is_non_ascii = 1
-        if c == c'\0':
+        elif c == c'\0':
             return -1 # invalid!
-        if is_non_ascii == 0 and not tree.xmlIsChar_ch(c):
+        elif is_non_ascii == 0 and not tree.xmlIsChar_ch(c):
             return -1 # invalid!
         s = s + 1
     return is_non_ascii
