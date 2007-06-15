@@ -63,8 +63,6 @@ Bugs fixed
 
 * XSLT parsing failed to pass resolver context on to imported documents
 
-* ``ETXPath`` was missing the ``regexp`` keyword argument
-
 * passing '' as XPath namespace prefix did not raise an error
 
 * passing '' as namespace prefix in nsmap could be passed through to libxml2

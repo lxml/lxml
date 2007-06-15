@@ -27,7 +27,7 @@ See also the notes on compatibility_ to ElementTree_.
      2.1  Why is lxml not written in Python?
      2.2  How can I contribute?
    3  Bugs
-     3.1  My application crashes! Why does lxml.etree do that?
+     3.1  My application crashes!
      3.2  I think I have found a bug in lxml. What should I do?
    4  Threading
      4.1  Can I use threads to concurrently access the lxml API?
@@ -277,45 +277,68 @@ project and its user base.  You can
 Bugs
 ====
 
-My application crashes! Why does lxml.etree do that?
-----------------------------------------------------
+My application crashes!
+-----------------------
 
 One of the goals of lxml is "no segfaults", so if there is no clear warning in
 the documentation that you were doing something potentially harmful, you have
 found a bug and we would like to hear about it.  Please report this bug to the
 `mailing list`_.  See the next section on how to do that.
 
+However, there are a few things to try first, to make sure the problem is
+really within lxml (or libxml2 or libxslt):
+
+a) If your application (or e.g. your web container) uses threads, please see
+   the FAQ section on threading to check if you touch on one of the
+   potential pitfalls.
+
+b) If you are on Mac-OS X, make sure lxml uses the correct libraries.  If you
+   have updated the old system libraries (e.g. through fink), this is best
+   achieved by building lxml statically to prevent the different library
+   versions from interfering.  If you choose to use a dynamically linked
+   version, make sure the ``DYLD_LIBRARY_PATH`` environment variable
+   contains the directory where you installed the libraries.
+
+In any case, try to reproduce the problem with the latest versions of
+libxml2 and libxslt.  From time to time, bugs and race conditions are found
+in these libraries, so a more recent version might already contain a fix for
+your problem.
+
 
 I think I have found a bug in lxml. What should I do?
 -----------------------------------------------------
 
-a) First, you should look at the `current developer changelog`_ to see if this
-   is a known problem that has already been fixed in the SVN trunk.
+First, you should look at the `current developer changelog`_ to see if this
+is a known problem that has already been fixed in the SVN trunk since the
+release you are using.
 
-   .. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+.. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
-b) If you are using threads, please see the following section to check if
-   you touch on one of the potential pitfalls.
+Also, the 'crash' section above has a few good advices what to try to see if
+the problem is really in lxml - and not in your setup.  Believe it or not,
+that happens more often than you might think, especially when old libraries
+or even multiple library versions are installed.
 
-c) Try to reproduce the problem with the latest versions of libxml2 and
-   libxslt.  From time to time, bugs and race conditions are found in these
-   libraries, so a more recent version might already contain a fix for your
-   problem.
+You should always try to reproduce the problem with the latest versions of
+libxml2 and libxslt - and make sure they are used (``lxml.etree`` can tell
+you what it runs with, see below).
 
-d) Otherwise, we would really like to hear about it.  Please report it to the
-   `mailing list`_ so that we can fix it.  It is very helpful in this case if
-   you can come up with a short code snippet that demonstrates your problem.
-   Please also report the version of lxml, libxml2 and libxslt that you are
-   using by calling this::
+Otherwise, we would really like to hear about it.  Please report it to the
+`mailing list`_ so that we can fix it.  It is very helpful in this case if
+you can come up with a short code snippet that demonstrates your problem.
+If others can reproduce and see the problem, it is much easier for them to
+fix it - and maybe even easier for you to describe it and get people
+convinced that it really is a problem to fix.  Please also report the
+version of lxml, libxml2 and libxslt that you are using by calling this::
 
-       from lxml import etree
-       print "lxml.etree:       ", etree.LXML_VERSION
-       print "libxml used:      ", etree.LIBXML_VERSION
-       print "libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
-       print "libxslt used:     ", etree.LIBXSLT_VERSION
-       print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
+   from lxml import etree
+   print "lxml.etree:       ", etree.LXML_VERSION
+   print "libxml used:      ", etree.LIBXML_VERSION
+   print "libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
+   print "libxslt used:     ", etree.LIBXSLT_VERSION
+   print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
 
-   .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
 
 Threading

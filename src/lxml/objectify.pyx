@@ -1694,6 +1694,9 @@ cdef object objectify_parser
 objectify_parser = __DEFAULT_PARSER
 
 def setDefaultParser(new_parser = None):
+    set_default_parser(new_parser)
+
+def set_default_parser(new_parser = None):
     """Replace the default parser used by objectify's Element() and
     fromstring() functions.
 
