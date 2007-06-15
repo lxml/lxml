@@ -8,6 +8,8 @@ Under Development
 Features added
 --------------
 
+* Parsers take a ``remove_comments`` keyword argument that skips over comments
+
 * Entity support through an ``Entity`` factory and element classes. XML
   parsers now have a ``resolve_entities`` keyword argument that can be set to
   False to keep entities in the document.
