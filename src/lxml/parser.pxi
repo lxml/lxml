@@ -827,8 +827,8 @@ cdef class HTMLParser(_BaseParser):
     * recover            - try hard to parse through broken HTML (default: True)
     * no_network         - prevent network access (default: True)
     * remove_blank_text  - discard empty text nodes
-    * compact            - safe memory for short text content (default: True)
     * remove_comments    - discard comments
+    * compact            - safe memory for short text content (default: True)
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.
