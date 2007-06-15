@@ -23,6 +23,9 @@ cdef extern from "libxml/parser.h":
                                        char* value,
                                        int len)
 
+    ctypedef void (*commentSAXFunc)(void* ctx,
+                                    char* value)
+
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput
     ctypedef struct xmlParserInputBuffer:
@@ -34,6 +37,7 @@ cdef extern from "libxml/tree.h":
         startElementNsSAX2Func startElementNs
         endElementNsSAX2Func   endElementNs
         cdataBlockSAXFunc      cdataBlock
+        commentSAXFunc         comment
 
 cdef extern from "libxml/xmlIO.h":
     cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)

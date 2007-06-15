@@ -161,6 +161,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(SyntaxError, parse, f)
         f.close()
 
+    def test_parse_remove_comments(self):
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+        XMLParser = self.etree.XMLParser
+
+        f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        parser = XMLParser(remove_comments=True)
+        tree = parse(f, parser)
+        self.assertEquals(
+            '<a><b><c/></b></a>',
+            tostring(tree))
+
     def test_parse_parser_type_error(self):
         # ET raises IOError only
         parse = self.etree.parse
@@ -194,6 +206,30 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = open(fileInTestDir('test_broken.xml'), 'r')
         self.assertRaises(SyntaxError, parse, f)
         f.close()
+
+    def test_iterparse_comments(self):
+        # ET removes comments
+        iterparse = self.etree.iterparse
+        tostring = self.etree.tostring
+
+        f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        events = list(iterparse(f))
+        root = events[-1][1]
+        self.assertEquals(3, len(events))
+        self.assertEquals(
+            '<a><!--A--><b><!-- B --><c/></b><!--C--></a>',
+            tostring(root))
+
+    def test_iterparse_remove_comments(self):
+        iterparse = self.etree.iterparse
+        tostring = self.etree.tostring
+
+        f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        events = list(iterparse(f, remove_comments=True))
+        root = events[-1][1]
+        self.assertEquals(
+            '<a><b><c/></b></a>',
+            tostring(root))
 
     def test_iterparse_broken(self):
         iterparse = self.etree.iterparse
