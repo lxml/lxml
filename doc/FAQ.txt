@@ -90,7 +90,7 @@ Here is a quote from `http://xmlsoft.org/`:
   strictly compliant way. As of release 2.4.16, libxml2 passed all 1800+ tests
   from the OASIS XML Tests Suite.
 
-lxml currently supports libxml2 2.6.16 or later, which has even better support
+lxml currently supports libxml2 2.6.20 or later, which has even better support
 for various XML standards.  Some of the more important ones are: HTML, XML
 namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
 XML:ID.  Support for XML Schema and Schematron is currently incomplete in
@@ -104,22 +104,23 @@ Which version of libxml2 and libxslt should I use or require?
 It really depends on your application, but the rule of thumb is: more recent
 versions contain less bugs and provide more features.
 
-* Try to use versions of both libraries that were released together.
+* Try to use versions of both libraries that were released together.  At least
+  the libxml2 version should not be older than the libxslt version.
 
 * If you use XML Schema or Schematron which are still under development, the
-most recent version of libxml2 is usually a good bet.
+  most recent version of libxml2 is usually a good bet.
 
 * The same applies to XPath, where a substantial number of bugs and memory
-leaks were fixed over time.  If you encounter crashes or memory leaks in XPath
-applications, try a more recent version of libxml2.
+  leaks were fixed over time.  If you encounter crashes or memory leaks in
+  XPath applications, try a more recent version of libxml2.
 
 * For parsing and fixing broken HTML, lxml requires at least libxml2 2.6.21.
 
 * For the normal tree handling, however, any libxml2 version starting with
-2.6.16 should do.
+  2.6.20 should do.
 
 Read the `release notes of libxml2`_ and the `release notes of libxslt`_ to
-see if a specific bug has been fixed.
+see when (or if) a specific bug has been fixed.
 
 .. _`release notes of libxml2`: http://xmlsoft.org/news.html
 .. _`release notes of libxslt`: http://xmlsoft.org/XSLT/news.html

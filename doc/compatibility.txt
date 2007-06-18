@@ -1,3 +1,4 @@
+=============================
 lxml.etree versus ElementTree
 =============================
 
@@ -25,12 +26,8 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
     # use
     from lxml import etree as ElementTree
 
-* Some minor parts of the API of ElementTree have not yet been implemented and
-  are thus missing in lxml.etree.  Feel free to help out!
-
-* Then again, lxml.etree offers a lot more functionality, such as
-  XPath, XSLT, Relax NG, and XML Schema support, which (c)ElementTree
-  does not offer.
+* lxml.etree offers a lot more functionality, such as XPath, XSLT, Relax NG,
+  and XML Schema support, which (c)ElementTree does not offer.
 
 * etree has a different idea about Python unicode strings than ElementTree.
   In most parts of the API, ElementTree uses plain strings and unicode strings
@@ -77,32 +74,40 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
 
     <c><b/></c>
 
-  Unfortunately this is a rather fundamental difference in behavior, which
-  will be hard to solve.  It won't affect some applications, but if you want
-  to port code you must unfortunately make sure that it doesn't.
+  Unfortunately this is a rather fundamental difference in behavior, which is
+  hard to change.  It won't affect some applications, but if you want to port
+  code you must unfortunately make sure that it doesn't affect yours.
+
+* etree allows navigation to the parent of a node by the ``getparent()``
+  method and to the siblings by calling ``getnext()`` and ``getprevious()``.
+  This is not possible in ElementTree as the underlying tree model does not
+  have this information.
 
 * When trying to set a subelement using __setitem__ that is in fact not an
   Element but some other object, etree raises a TypeError, and ElementTree
   raises an AssertionError.  This also applies to some other places of the
-  API. In general, etree tries to avoid AssertionErrors in favour of being
+  API.  In general, etree tries to avoid AssertionErrors in favour of being
   more specific about the reason for the exception.
 
-* When parsing fails in ``iterparse()``, ElementTree raises an ExpatError
-  instead of a SyntaxError.  lxml.etree follows the other parts of the parser
-  API and raises an (XML)SyntaxError.
+* When parsing fails in ``iterparse()``, ElementTree raises a low-level
+  ExpatError instead of a SyntaxError as the other parsers.  lxml.etree
+  follows the other parts of the parser API and raises an (XML)SyntaxError.
 
 * The ``iterparse()`` function in lxml is implemented based on the libxml2
-  parser.  This means that modifications of the document root or the ancestors
-  of the current element during parsing can irritate the parser and even
-  segfault.  While this is not a problem in the Python object structure used
-  by ElementTree, the C tree underlying lxml suffers from it.  The golden rule
-  for ``iterparse()`` on lxml therefore is: do not touch anything that will
-  have to be touched again by the parser later on.  See the lxml API
-  documentation on this.
+  parser and tree generator.  This means that modifications of the document
+  root or the ancestors of the current element during parsing can irritate the
+  parser and even segfault.  While this is not a problem in the Python object
+  structure used by ElementTree, the C tree underlying lxml suffers from it.
+  The golden rule for ``iterparse()`` on lxml therefore is: do not touch
+  anything that will have to be touched again by the parser later on.  See the
+  lxml parser documentation on this.
 
 * ElementTree ignores comments and processing instructions when parsing XML,
   while etree will read them in and treat them as Comment or
-  ProcessingInstruction elements respectively.
+  ProcessingInstruction elements respectively.  This is especially visible
+  where comments are found inside text content, which is then split by the
+  Comment element.  You can disable this behaviour by passing the boolean
+  ``remove_comments`` keyword argument to the parser you use.
 
 * ElementTree has a bug when serializing an empty Comment (no text argument
   given) to XML, etree serializes this successfully.
@@ -113,18 +118,19 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
 
 * ElementTree merges the target of a processing instruction into ``PI.text``,
   while lxml.etree puts it into the ``.target`` property and leaves it out of
-  the ``.text`` property.
+  the ``.text`` property.  The ``pi.text`` in ElementTree therefore
+  correspondents to ``pi.target + " " + pi.text`` in lxml.etree.
 
 * Because etree is built on top of libxml2, which is namespace prefix aware,
   etree preserves namespaces declarations and prefixes while ElementTree tends
   to come up with its own prefixes (ns0, ns1, etc).  When no namespace prefix
-  is given however, etree creates ElementTree style prefixes as well.
+  is given, however, etree creates ElementTree style prefixes as well.
 
 * etree has a 'prefix' attribute (read-only) on elements giving the Element's
   prefix, if this is known, and None otherwise (in case of no namespace at
   all, or default namespace).
 
-  etree further allows passing an 'nsmap' dictionary to the Element and
+* etree further allows passing an 'nsmap' dictionary to the Element and
   SubElement element factories to explicitly map namespace prefixes to
   namespace URIs.  These will be translated into namespace declarations on
   that element.  This means that in the probably rare case that you need to
@@ -132,13 +138,9 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   ElementTree, you cannot pass it as a keyword argument to the Element and
   SubElement factories directly.
 
-* etree elements can be copied using copy.deepcopy() and copy.copy(), just
-  like ElementTree's.  copy.copy() however does *not* create a shallow copy
-  where elements are shared between trees, as this makes no sense in the
-  context of libxml2 trees.  Note that lxml can deep-copy trees considerably
-  faster than ElementTree.
-
-* etree allows navigation to the parent of a node by the ``getparent()``
-  method and to the siblings by calling ``getnext()`` and ``getprevious()``.
-  This is not possible in ElementTree as the underlying tree model does not
-  have this information.
+* etree elements can be copied using ``copy.deepcopy()`` and ``copy.copy()``,
+  just like ElementTree's.  However, ``copy.copy()`` does *not* create a
+  shallow copy where elements are shared between trees, as this makes no sense
+  in the context of libxml2 trees.  Note that lxml can deep-copy trees
+  considerably faster than ElementTree, so a deep copy might still be fast
+  enough to replace a shallow copy in your case.

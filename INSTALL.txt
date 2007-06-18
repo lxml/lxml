@@ -8,10 +8,10 @@ You need Python 2.3 or later.
 
 You need libxml2 and libxslt, in particular:
 
-* libxml 2.6.16 or later. It can be found here:
+* libxml 2.6.20 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-* libxslt 1.1.12 or later. It can be found here:
+* libxslt 1.1.15 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
 Newer versions generally contain less bugs and are therefore recommended.  The
@@ -19,30 +19,31 @@ HTML parser benefits from libxml2 version 2.6.21 or later, which support
 parsing horribly broken HTML.  XML Schema support is also still worked on in
 libxml2, so newer versions will give you better complience with the W3C spec.
 
-For Windows, there is a `binary distribution`_ of libxml2 and libxslt.  Note
-that you need both libxml2 and libxslt, as well as iconv and zlib.  You can
-then install the `binary egg distribution`_ of lxml (see below).
 
-.. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
-.. _`binary egg distribution`: http://cheeseshop.python.org/pypi/lxml
+Installation
+------------
 
-On MacOS-X 10.4, you can use the installed system libraries and the binary egg
-distribution of lxml.  Note that the libxslt version on this system is older
-than the required version above.  While there were not any bug reports so far,
-you may still encounter certain differences in behaviour in rare cases.
+If you have easy_install_, you can run the following as super-user (or
+administrator)::
 
-If you want to build lxml from SVN, you also need Pyrex_.  Please read `how to
-build lxml from source`_ in this case.  If you are using a released version of
-lxml, it should come with the generated C file in the source distribution, so
-no Pyrex is needed in that case.
+  easy_install lxml
 
-.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+
+This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
+libxml2 and libxslt are properly installed (including development packages,
+i.e. header files etc.).
+
+
+Building lxml from sources
+--------------------------
+
+If you want to build lxml from SVN you should read `how to build lxml from
+source`_ (or the file ``build.txt`` in the ``doc`` directory of the source
+tree).  Both the subversion sources and the source distribution ship with an
+adapted version of Pyrex, so you do not need Pyrex installed.
+
 .. _`how to build lxml from source`: build.html
-
-Note that Pyrex up to and including version 0.9.4 has known problems when
-compiling lxml with gcc 4.0 or Python 2.4.  Do not use it.  If you want to
-build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
-later.
 
 If you have read these instructions and still cannot manage to install lxml,
 you can check the archives of the `mailing list`_ to see if your problem is
@@ -51,16 +52,30 @@ known or otherwise send a mail to the list.
  .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
 
-Installation
-------------
+MS Windows
+----------
 
-If you have easy_install_, you can run the following as super-user::
+For MS Windows, the `binary egg distribution of lxml`_ is statically built
+against the libraries, i.e. it already includes them.  There is no need to
+install the external libraries if you use an official lxml build from
+cheeseshop.
 
-  easy_install lxml
+If you want to upgrade the libraries and/or compile lxml from sources, you
+should install a `binary distribution`_ of libxml2 and libxslt.  You need both
+libxml2 and libxslt, as well as iconv and zlib.
 
-.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
+.. _`binary egg distribution of lxml`: http://cheeseshop.python.org/pypi/lxml
 
-This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
-libxml2 and libxslt are properly installed.  To compile and install lxml
-without easy_install, please read `how to build lxml from source`_ (or the
-file ``build.txt`` in the ``doc`` directory of the source tree).
+
+MacOS-X
+-------
+
+On MacOS-X 10.4, you can try to use the installed system libraries when you
+build lxml yourself.  However, the library versions on this system are older
+than the required versions, so you may encounter certain differences in
+behaviour or even crashes.  A number of users reported success with updated
+libraries (e.g. using fink_), but needed to set the environment variable
+``DYLD_LIBRARY_PATH`` to the directory where fink keeps the libraries.
+
+.. _fink: http://finkproject.org/
