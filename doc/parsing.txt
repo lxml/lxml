@@ -1,9 +1,10 @@
-=====================
-Parsing XML with lxml
-=====================
+==============================
+Parsing XML and HTML with lxml
+==============================
 
-lxml provides a very simple and powerful API for parsing XML.  It supports
-one-step parsing as well as step-by-step parsing using an event-driven API.
+lxml provides a very simple and powerful API for parsing XML and HTML.  It
+supports one-step parsing as well as step-by-step parsing using an
+event-driven API (currently only for XML).
 
 .. contents::
 .. 
@@ -63,6 +64,10 @@ Available boolean keyword arguments:
 * recover - try hard to parse through broken XML
 
 * remove_blank_text - discard blank text nodes between tags
+
+* remove_comments - discard comments
+
+* compact - use compact storage for short text content (on by default)
 
 
 Parsing HTML
