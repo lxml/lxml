@@ -14,20 +14,19 @@ Motto
 
 To explain the motto:
 
-"Programming with libxml2 is like the thrilling embrace of an exotic
-stranger. It seems to have the potential to fulfill your wildest
-dreams, but there's a nagging voice somewhere in your head warning you
-that you're about to get screwed in the worst way." (`a quote by Mark
-Pilgrim`_)
+"Programming with libxml2 is like the thrilling embrace of an exotic stranger.
+It seems to have the potential to fulfill your wildest dreams, but there's a
+nagging voice somewhere in your head warning you that you're about to get
+screwed in the worst way."  (`a quote by Mark Pilgrim`_)
 
-Mark Pilgrim was describing in particular the experience a Python
-programmer has when dealing with libxml2. libxml2's default Python
-bindings are fast, thrilling, powerful, and your code might fail in
-some horrible way that you really shouldn't have to worry about when
-writing Python code. lxml tries to combine the power of libxml2 with
-the ease of use of Python.
+Mark Pilgrim was describing in particular the experience a Python programmer
+has when dealing with libxml2.  The default Python bindings of libxml2 are
+fast, thrilling, powerful, and your code might fail in some horrible way that
+you really shouldn't have to worry about when writing Python code.  lxml
+combines the power of libxml2 with the ease of use of Python.
 
 .. _`a quote by Mark Pilgrim`: http://diveintomark.org/archives/2004/02/18/libxml2
+
 
 Aims
 ----
@@ -35,6 +34,8 @@ Aims
 The C libraries libxml2_ and libxslt_ have huge benefits:
 
 * Standards-compliant XML support.
+
+* Support for (broken) HTML.
 
 * Full-featured.
 
@@ -46,8 +47,9 @@ The C libraries libxml2_ and libxslt_ have huge benefits:
 
 .. _libxslt: http://xmlsoft.org/XSLT
 
-These libraries already ship with Python bindings, but these Python
-bindings have problems. In particular:
+
+These libraries already ship with Python bindings, but these Python bindings
+mimic the C-level interface.  This yields a number of problems:
 
 * very low level and C-ish (not Pythonic).
 
@@ -55,12 +57,13 @@ bindings have problems. In particular:
 
 * UTF-8 in API, instead of Python unicode strings.
 
-* can cause segfaults from Python.
+* Can easily cause segfaults from Python.
 
-* have to do manual memory management!
+* Require manual memory management!
 
-lxml is a new Python binding for libxml2 and libxslt, completely
-independent from these existing Python bindings. Its aim:
+
+lxml is a new Python binding for libxml2 and libxslt, completely independent
+from these existing Python bindings.  Its aims:
 
 * Pythonic API.
 
@@ -72,9 +75,8 @@ independent from these existing Python bindings. Its aim:
 
 * No manual memory management!
 
-lxml aims to provide a Pythonic API by following as much as possible
-the `ElementTree API`_. We're trying to avoid having to invent too
-many new APIs, or you having to learn new things -- XML is complicated
-enough.
+lxml aims to provide a Pythonic API by following as much as possible the
+`ElementTree API`_.  We're trying to avoid inventing too many new APIs, or you
+having to learn new things -- XML is complicated enough.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
