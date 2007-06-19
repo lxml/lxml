@@ -759,7 +759,7 @@ cdef class BoolElement(ObjectifiedDataElement):
             return self.__nonzero__()
 
 def __checkBool(s):
-    if s != 'true' and s != 'false':
+    if s != 'true' and s != 'false' and s != '1' and s != '0':
         raise ValueError
 
 cdef object _strValueOf(obj):
