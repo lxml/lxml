@@ -18,31 +18,32 @@ See also the notes on compatibility_ to ElementTree_.
      1.1  Is there a tutorial?
      1.2  Where can I find more documentation about lxml?
      1.3  What standards does lxml implement?
-     1.4  Which version of libxml2 and libxslt should I use or require?
-     1.5  Where are the Windows binaries?
-     1.6  What is the difference between lxml.etree and lxml.objectify?
-     1.7  How can I make my application run faster?
-     1.8  Why do I get errors about missing UCS4 symbols when installing lxml?
-   2  Contributing
-     2.1  Why is lxml not written in Python?
-     2.2  How can I contribute?
-   3  Bugs
-     3.1  My application crashes!
-     3.2  I think I have found a bug in lxml. What should I do?
-   4  Threading
-     4.1  Can I use threads to concurrently access the lxml API?
-     4.2  Does my program run faster if I use threads?
-     4.3  Would my single-threaded program run faster if I turned off threading?
-   5  Parsing and Serialisation
-     5.1  Why doesn't the ``pretty_print`` option reformat my XML output?
-     5.2  Why can't lxml parse my XML from unicode strings?
-     5.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
-     5.4  Why can't I just delete parents or clear the root node in iterparse()?
-   6  XPath and Document Traversal
-     6.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
-     6.2  Why doesn't ``findall()`` support full XPath expressions?
-     6.3  How can I find out which namespace prefixes are used in a document?
-     6.4  How can I specify a default namespace for XPath expressions?
+     1.4  What is the difference between lxml.etree and lxml.objectify?
+     1.5  How can I make my application run faster?
+   2  Installation
+     2.1  Which version of libxml2 and libxslt should I use or require?
+     2.2  Where are the Windows binaries?
+     2.3  Why do I get errors about missing UCS4 symbols when installing lxml?
+   3  Contributing
+     3.1  Why is lxml not written in Python?
+     3.2  How can I contribute?
+   4  Bugs
+     4.1  My application crashes!
+     4.2  I think I have found a bug in lxml. What should I do?
+   5  Threading
+     5.1  Can I use threads to concurrently access the lxml API?
+     5.2  Does my program run faster if I use threads?
+     5.3  Would my single-threaded program run faster if I turned off threading?
+   6  Parsing and Serialisation
+     6.1  Why doesn't the ``pretty_print`` option reformat my XML output?
+     6.2  Why can't lxml parse my XML from unicode strings?
+     6.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+     6.4  Why can't I just delete parents or clear the root node in iterparse()?
+   7  XPath and Document Traversal
+     7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
+     7.2  Why doesn't ``findall()`` support full XPath expressions?
+     7.3  How can I find out which namespace prefixes are used in a document?
+     7.4  How can I specify a default namespace for XPath expressions?
 
 
 General Questions
@@ -98,6 +99,51 @@ libxml2, but is mostly usable and still being worked on.  libxml2 also
 supports loading documents through HTTP and FTP.
 
 
+What is the difference between lxml.etree and lxml.objectify?
+-------------------------------------------------------------
+
+The two modules provide different ways of handling XML.  However, objectify
+builds on top of lxml.etree and therefore inherits most of its capabilities
+and a large portion of its API.
+
+* lxml.etree is a generic API for XML and HTML handling.  It aims for
+  ElementTree compatibility_ and supports the entire XML infoset.  It is well
+  suited for both mixed content and data centric XML.  Its generality makes it
+  the best choice for most applications.
+
+* lxml.objectify is a specialized API for XML data handling in a Python object
+  syntax.  It provides a very natural way to deal with data fields stored in a
+  structurally well defined XML format.  Data is automatically converted to
+  Python data types and can be manipulated with normal Python operators.  Look
+  at the examples in the `objectify documentation`_ to see what it feels like
+  to use it.
+
+  Objectify is not well suited for mixed contents or HTML documents.  As it is
+  built on top of lxml.etree, however, it inherits the normal support for
+  XPath, XSLT or validation.
+
+
+How can I make my application run faster?
+-----------------------------------------
+
+lxml.etree is a very fast library for processing XML.  There are, however, `a
+few caveats`_ involved in the mapping of the powerful libxml2 library to the
+simple and convenient ElementTree API.  Not all operations are as fast as the
+simplicity of the API might suggest, while some use cases can heavily benefit
+from finding the right way of doing them.  The `benchmark page`_ has a
+comparison to other ElementTree implementations and a number of tips for
+performance tweaking.  As with any Python application, the rule of thumb is:
+the more of your processing runs in C, the faster your application gets.  See
+also the section on threading_.
+
+.. _`a few caveats`:  performance.html#the-elementtree-api
+.. _`benchmark page`: performance.html
+.. _threading:        #threading
+
+
+Installation
+============
+
 Which version of libxml2 and libxslt should I use or require?
 -------------------------------------------------------------
 
@@ -150,48 +196,6 @@ the older versions to see if they provide a binary build.  This is done by
 appending the version number to the cheeseshop URL, e.g.:
 
 	  http://cheeseshop.python.org/pypi/lxml/1.1.2
-
-
-What is the difference between lxml.etree and lxml.objectify?
--------------------------------------------------------------
-
-The two modules provide different ways of handling XML.  However, objectify
-builds on top of lxml.etree and therefore inherits most of its capabilities
-and a large portion of its API.
-
-* lxml.etree is a generic API for XML and HTML handling.  It aims for
-  ElementTree compatibility_ and supports the entire XML infoset.  It is well
-  suited for both mixed content and data centric XML.  Its generality makes it
-  the best choice for most applications.
-
-* lxml.objectify is a specialized API for XML data handling in a Python object
-  syntax.  It provides a very natural way to deal with data fields stored in a
-  structurally well defined XML format.  Data is automatically converted to
-  Python data types and can be manipulated with normal Python operators.  Look
-  at the examples in the `objectify documentation`_ to see what it feels like
-  to use it.
-
-  Objectify is not well suited for mixed contents or HTML documents.  As it is
-  built on top of lxml.etree, however, it inherits the normal support for
-  XPath, XSLT or validation.
-
-
-How can I make my application run faster?
------------------------------------------
-
-lxml.etree is a very fast library for processing XML.  There are, however, `a
-few caveats`_ involved in the mapping of the powerful libxml2 library to the
-simple and convenient ElementTree API.  Not all operations are as fast as the
-simplicity of the API might suggest, while some use cases can heavily benefit
-from finding the right way of doing them.  The `benchmark page`_ has a
-comparison to other ElementTree implementations and a number of tips for
-performance tweaking.  As with any Python application, the rule of thumb is:
-the more of your processing runs in C, the faster your application gets.  See
-also the section on threading_.
-
-.. _`a few caveats`:  performance.html#the-elementtree-api
-.. _`benchmark page`: performance.html
-.. _threading:        #threading
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
