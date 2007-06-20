@@ -34,7 +34,10 @@ def svn_version():
             data = map(str.splitlines, data.split('\n\x0c\n'))
             del data[0][0] # get rid of the '8'
             dirurl = data[0][3]
-            localrev = max([int(d[9]) for d in data if len(d)>9 and d[9]])
+            try:
+                localrev = max([int(d[9]) for d in data if len(d)>9 and d[9]])
+            except ValueError:
+                pass # may be some newly added directory
         elif data.startswith('<?xml'):
             # SVN <= 1.3
             dirurl = urlre.search(data).group(1)    # get repository URL
