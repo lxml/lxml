@@ -1634,18 +1634,18 @@ class XIncludeTestCase(HelperTestCase):
         self.assertEquals(old_text + content + old_tail,
                           root.text)
 
-class ETreeXIncludeTestCase(XIncludeTestCase):
-    def include(self, tree):
-        tree.xinclude()
-
     def test_xinclude(self):
-        tree = etree.parse(fileInTestDir('test_xinclude.xml'))
+        tree = etree.parse(fileInTestDir('include/test_xinclude.xml'))
         # process xincludes
         self.include( tree )
         # check whether we find it replaced with included data
         self.assertEquals(
             'a',
             tree.getroot()[1].tag)
+
+class ETreeXIncludeTestCase(XIncludeTestCase):
+    def include(self, tree):
+        tree.xinclude()
 
 
 class ElementIncludeTestCase(XIncludeTestCase):

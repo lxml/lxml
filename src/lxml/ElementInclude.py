@@ -46,6 +46,7 @@
 ##
 
 import copy, etree
+from urlparse import urljoin
 
 try:
     set
@@ -123,13 +124,15 @@ def _wrap_et_loader(loader):
 
 def include(elem, loader=None):
     if hasattr(elem, 'getroot'):
-        #if hasattr(elem, 'docinfo'):
-        #    base_url = elem.docinfo.URL
-        _include(elem.getroot(), loader)
+        tree = elem
+        elem = elem.getroot()
     else:
-        _include(elem, loader)
+        tree = elem.getroottree()
+    if hasattr(tree, 'docinfo'):
+        base_url = tree.docinfo.URL
+    _include(elem, loader, base_url=base_url)
 
-def _include(elem, loader=None, _parent_hrefs=None):
+def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
     if loader is not None:
         load_include = _wrap_et_loader(loader)
     else:
@@ -146,7 +149,7 @@ def _include(elem, loader=None, _parent_hrefs=None):
     for e in include_elements:
         if e.tag == XINCLUDE_INCLUDE:
             # process xinclude directive
-            href = e.get("href")
+            href = urljoin(base_url, e.get("href"))
             parse = e.get("parse", "xml")
             parent = e.getparent()
             if parse == "xml":
