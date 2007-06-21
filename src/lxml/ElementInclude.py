@@ -47,6 +47,7 @@
 
 import copy, etree
 from urlparse import urljoin
+from urllib2 import urlopen
 
 try:
     set
@@ -96,7 +97,12 @@ def _lxml_default_loader(href, parse, encoding=None, parser=None):
     if parse == "xml":
         data = etree.parse(href, parser).getroot()
     else:
-        data = open(href).read()
+        if "://" in href:
+            f = urlopen(href)
+        else:
+            f = open(href)
+        data = f.read()
+        f.close()
         if encoding:
             data = data.decode(encoding)
     return data
@@ -122,14 +128,17 @@ def _wrap_et_loader(loader):
 # @throws IOError If the function fails to load a given resource.
 # @returns the node or its replacement if it was an XInclude node
 
-def include(elem, loader=None):
-    if hasattr(elem, 'getroot'):
-        tree = elem
+def include(elem, loader=None, base_url=None):
+    if base_url is None:
+        if hasattr(elem, 'getroot'):
+            tree = elem
+            elem = elem.getroot()
+        else:
+            tree = elem.getroottree()
+        if hasattr(tree, 'docinfo'):
+            base_url = tree.docinfo.URL
+    elif hasattr(elem, 'getroot'):
         elem = elem.getroot()
-    else:
-        tree = elem.getroottree()
-    if hasattr(tree, 'docinfo'):
-        base_url = tree.docinfo.URL
     _include(elem, loader, base_url=base_url)
 
 def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
