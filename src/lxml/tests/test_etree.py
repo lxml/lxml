@@ -1636,6 +1636,9 @@ class XIncludeTestCase(HelperTestCase):
 
     def test_xinclude(self):
         tree = etree.parse(fileInTestDir('include/test_xinclude.xml'))
+        self.assertNotEquals(
+            'a',
+            tree.getroot()[1].tag)
         # process xincludes
         self.include( tree )
         # check whether we find it replaced with included data
