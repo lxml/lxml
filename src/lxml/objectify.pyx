@@ -903,7 +903,7 @@ cdef _registerPyTypes():
     pytype.register()
 
     pytype = PyType('float', float, FloatElement)
-    pytype.xmlSchemaTypes = ("float", "double")
+    pytype.xmlSchemaTypes = ("double", "float")
     pytype.register()
 
     pytype = PyType('bool', __checkBool, BoolElement)
