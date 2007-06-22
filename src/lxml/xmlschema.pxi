@@ -61,7 +61,7 @@ cdef class XMLSchema(_Validator):
 
         if parser_ctxt is not NULL:
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-            if _LIBXML_VERSION_INT > 20624:
+            if _LIBXML_VERSION_INT >= 20624:
                 xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
 
         self._error_log.disconnect()
