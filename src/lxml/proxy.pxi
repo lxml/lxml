@@ -116,19 +116,21 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
-cdef void attemptDeallocation(xmlNode* c_node):
+cdef int attemptDeallocation(xmlNode* c_node):
     """Attempt deallocation of c_node (or higher up in tree).
     """
     cdef xmlNode* c_top
     # could be we actually aren't referring to the tree at all
     if c_node is NULL:
         #print "not freeing, node is NULL"
-        return
+        return 0
     c_top = getDeallocationTop(c_node)
     if c_top is not NULL:
         #print "freeing:", c_top.name
         _removeText(c_top.next) # tail
         tree.xmlFreeNode(c_top)
+        return 1
+    return 0
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     """Return the top of the tree that can be deallocated, or NULL.
@@ -184,14 +186,14 @@ cdef void _deallocDocument(xmlDoc* c_doc):
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
-cdef void moveNodeToDocument(_Element node, _Document doc):
+cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
     """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
     pointers of node to be correct already, but fixes _Document references.
     """
+    cdef _Element element
     cdef xmlDoc* c_doc
-    cdef xmlNode* c_element
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef xmlNs** c_ns_new_cache
@@ -202,12 +204,10 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
     cdef xmlNs* c_last_del_ns
     cdef cstd.size_t i, c_cache_size, c_cache_last
 
-    c_element = node._c_node
-    c_doc = c_element.doc
-
     if not tree._isElementOrXInclude(c_element):
         return
 
+    c_doc = c_element.doc
     c_start_node = c_element
     c_ns_new_cache = NULL
     c_ns_old_cache = NULL
@@ -301,7 +301,9 @@ cdef void moveNodeToDocument(_Element node, _Document doc):
 
             # fix _Document reference (may dealloc the original document!)
             if c_element._private is not NULL:
-                (<_Element>c_element._private)._doc = doc
+                element = <_Element>c_element._private
+                if element._doc is not doc:
+                    element._doc = doc
 
             if c_element is c_start_node:
                 break

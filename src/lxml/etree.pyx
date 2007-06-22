@@ -453,8 +453,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _removeText(c_node.next)
         tree.xmlReplaceNode(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        moveNodeToDocument(element, self._doc)
-        attemptDeallocation(c_node)
+        moveNodeToDocument(self._doc, element._c_node)
+        if not attemptDeallocation(c_node):
+            moveNodeToDocument(self._doc, c_node)
 
     def __delitem__(self, Py_ssize_t index):
         """Deletes the given subelement.
@@ -464,14 +465,14 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if c_node is NULL:
             raise IndexError, index
         _removeText(c_node.next)
-        _removeNode(c_node)
+        _removeNode(self._doc, c_node)
 
     def __delslice__(self, Py_ssize_t start, Py_ssize_t stop):
         """Deletes a number of subelements.
         """
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, start)
-        _deleteSlice(c_node, start, stop)
+        _deleteSlice(self._doc, c_node, start, stop)
         
     def __setslice__(self, Py_ssize_t start, Py_ssize_t stop, value):
         """Replaces a number of subelements with elements
@@ -487,7 +488,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_node = _findChild(self._c_node, start)
             # now delete the slice
             if c_node is not NULL and start != stop:
-                c_node = _deleteSlice(c_node, start, stop)
+                c_node = _deleteSlice(self._doc, c_node, start, stop)
         # if the insertion point is at the end, append there
         if c_node is NULL:
             for element in value:
@@ -505,7 +506,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # and move tail just behind his node
             _moveTail(c_next, element._c_node)
             # move it into a new document
-            moveNodeToDocument(element, self._doc)
+            moveNodeToDocument(self._doc, element._c_node)
 
     def __deepcopy__(self, memo):
         return self.__copy__()
@@ -599,7 +600,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if _isElement(c_node):
                 while c_node_next is not NULL and not _isElement(c_node_next):
                     c_node_next = c_node_next.next
-                _removeNode(c_node)
+                _removeNode(self._doc, c_node)
             c_node = c_node_next
     
     def insert(self, index, _Element element not None):
@@ -614,7 +615,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        moveNodeToDocument(element, self._doc)
+        moveNodeToDocument(self._doc, element._c_node)
 
     def remove(self, _Element element not None):
         """Removes a matching subelement. Unlike the find methods, this
@@ -629,6 +630,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
+        moveNodeToDocument(self._doc, c_node)
 
     def replace(self, _Element old_element not None,
                 _Element new_element not None):
@@ -647,7 +649,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         tree.xmlReplaceNode(c_old_node, c_new_node)
         _moveTail(c_new_next, c_new_node)
         _moveTail(c_old_next, c_old_node)
-        moveNodeToDocument(new_element, self._doc)
+        moveNodeToDocument(self._doc, c_new_node)
         
     # PROPERTIES
     property tag:

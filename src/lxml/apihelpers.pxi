@@ -487,14 +487,17 @@ cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     else:
         return 0
 
-cdef void _removeNode(xmlNode* c_node):
-    """Unlink and free a node and subnodes if possible.
+cdef void _removeNode(_Document doc, xmlNode* c_node):
+    """Unlink and free a node and subnodes if possible.  Otherwise, make sure
+    it's self-contained.
     """
     cdef xmlNode* c_next
     c_next = c_node.next
     tree.xmlUnlinkNode(c_node)
     _moveTail(c_next, c_node)
-    attemptDeallocation(c_node)
+    if not attemptDeallocation(c_node):
+        # make namespaces absolute
+        moveNodeToDocument(doc, c_node)
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
@@ -522,7 +525,8 @@ cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_new_tail
         c_tail = _textNodeOrSkip(c_tail.next)
 
-cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
+cdef xmlNode* _deleteSlice(_Document doc, xmlNode* c_node,
+                           Py_ssize_t start, Py_ssize_t stop):
     """Delete slice, starting with c_node, start counting at start, end at stop.
     """
     cdef xmlNode* c_next
@@ -536,7 +540,7 @@ cdef xmlNode* _deleteSlice(xmlNode* c_node, Py_ssize_t start, Py_ssize_t stop):
         if _isElement(c_node):
             while c_next is not NULL and not _isElement(c_next):
                 c_next = c_next.next
-            _removeNode(c_node)
+            _removeNode(doc, c_node)
             c = c + 1
         c_node = c_next
     return c_node
@@ -555,7 +559,7 @@ cdef void _appendChild(_Element parent, _Element child):
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(child, parent._doc)
+    moveNodeToDocument(parent._doc, c_node)
 
 cdef void _appendSibling(_Element element, _Element sibling):
     """Append a new child to a parent element.
@@ -571,7 +575,7 @@ cdef void _appendSibling(_Element element, _Element sibling):
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(sibling, element._doc)
+    moveNodeToDocument(element._doc, c_node)
 
 cdef void _prependSibling(_Element element, _Element sibling):
     """Append a new child to a parent element.
@@ -587,7 +591,7 @@ cdef void _prependSibling(_Element element, _Element sibling):
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
-    moveNodeToDocument(sibling, element._doc)
+    moveNodeToDocument(element._doc, c_node)
 
 cdef int isutf8(char* s):
     cdef char c

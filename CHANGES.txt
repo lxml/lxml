@@ -52,6 +52,9 @@ Features added
 Bugs fixed
 ----------
 
+* Removing Elements from a tree could make them loose their namespace
+  declarations
+
 * ``ElementInclude`` didn't honour base URL of original document
 
 * Replacing the children slice of an Element would cut off the tails of the

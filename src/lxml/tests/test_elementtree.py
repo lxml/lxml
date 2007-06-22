@@ -1325,6 +1325,22 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertXML(
             '<a><c></c></a>',
             a)
+        
+    def test_remove_ns(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('{http://test}a')
+        b = SubElement(a, '{http://test}b')
+        c = SubElement(a, '{http://test}c')
+
+        a.remove(b)
+        self.assertXML(
+            '<ns0:a xmlns:ns0="http://test"><ns0:c></ns0:c></ns0:a>',
+            a)
+        self.assertXML(
+            '<ns0:b xmlns:ns0="http://test"></ns0:b>',
+            b)
 
     def test_remove_nonexisting(self):
         Element = self.etree.Element
