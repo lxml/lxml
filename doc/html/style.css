@@ -205,6 +205,12 @@ blockquote {
     font-style: italic;
 }
 
+div.line-block {
+    font-family: Times, "Times New Roman", serif;
+    text-align: center;
+    font-size: 140%;
+}
+
 code {
     color: Black;
     background-color: #cccccc;
