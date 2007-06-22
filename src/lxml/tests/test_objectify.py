@@ -555,6 +555,26 @@ class ObjectifyTestCase(HelperTestCase):
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
+    def test_pytype_annotation_empty(self):
+        XML = self.XML
+        root = XML(u'''\
+        <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+          <n></n>
+        </a>
+        ''')
+        objectify.annotate(root)
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals(None,    child_types[0])
+
+        objectify.annotate(root, empty_pytype="str")
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals("str",    child_types[0])
+
     def test_pytype_annotation_use_old(self):
         XML = self.XML
         root = XML(u'''\

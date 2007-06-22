@@ -1455,8 +1455,6 @@ cdef _recursiveBuildDescendantPaths(tree.xmlNode* c_node, path, path_list):
 # Type annotations
 
 cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
-    # StrType does not have a typecheck but is the default anyway,
-    # so just accept it if given as type information
     if pytype is None:
         return None
     value = textOf(c_node)
@@ -1468,34 +1466,114 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
         pass
     return None
 
-def annotate(element_or_tree, ignore_old=True):
+def annotate(element_or_tree, ignore_old=True, ignore_xsi=False,
+             empty_pytype=None):
     """Recursively annotates the elements of an XML tree with 'pytype'
     attributes.
 
     If the 'ignore_old' keyword argument is True (the default), current 'pytype'
     attributes will be ignored and replaced.  Otherwise, they will be checked
     and only replaced if they no longer fit the current text value.
+
+    Setting the keyword argument ``ignore_xsi`` to True makes the function
+    additionally ignore existing ``xsi:type`` annotations.  The default is to
+    use them as a type hint.
+
+    The default annotation of empty elements can be set with the
+    ``empty_pytype`` keyword argument.  The default is not to annotate empty
+    elements.  Pass 'str', for example, to make string values the default.
     """
     cdef _Element  element
+    element = cetree.rootNodeOrRaise(element_or_tree)
+    _annotate(element, 0, 1, bool(ignore_xsi), bool(ignore_old),
+              None, empty_pytype)
+
+def xsiannotate(element_or_tree, ignore_old=True, ignore_pytype=False,
+                empty_type=None):
+    """Recursively annotates the elements of an XML tree with 'xsi:type'
+    attributes.
+
+    If the 'ignore_old' keyword argument is True (the default), current
+    'xsi:type' attributes will be ignored and replaced.  Otherwise, they will be
+    checked and only replaced if they no longer fit the current text value.
+
+    Note that the mapping from Python types to XSI types is usually ambiguous.
+    Currently, only the first XSI type name in the corresponding PyType
+    definition will be used for annotation.  Thus, you should consider naming
+    the widest type first if you define additional types.
+
+    Setting the keyword argument ``ignore_pytype`` to True makes the function
+    additionally ignore existing ``pytype`` annotations.  The default is to
+    use them as a type hint.
+
+    The default annotation of empty elements can be set with the
+    ``empty_type`` keyword argument.  The default is not to annotate empty
+    elements.  Pass 'string', for example, to make string values the default.
+    """
+    cdef _Element  element
+    element = cetree.rootNodeOrRaise(element_or_tree)
+    _annotate(element, 1, 0, bool(ignore_old), bool(ignore_pytype),
+              empty_type, None)
+
+cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
+               int ignore_xsi, int ignore_pytype,
+               empty_type_name, empty_pytype_name):
     cdef _Document doc
-    cdef int ignore
     cdef tree.xmlNode* c_node
     cdef tree.xmlNs*   c_ns
     cdef python.PyObject* dict_result
-    cdef PyType pytype
-    element = cetree.rootNodeOrRaise(element_or_tree)
+    cdef PyType pytype, empty_pytype, StrType, NoneType
+
+    if not annotate_xsi and not annotate_pytype:
+        return
+
     doc = element._doc
-    ignore = bool(ignore_old)
+
+    if empty_type_name is not None:
+        dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, empty_type_name)
+    elif empty_pytype_name is not None:
+        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, empty_pytype_name)
+    else:
+        dict_result = NULL
+    if dict_result is not NULL:
+        empty_pytype = <PyType>dict_result
+    else:
+        empty_pytype = None
 
     StrType  = _PYTYPE_DICT.get('str')
     NoneType = _PYTYPE_DICT.get('none')
     c_node = element._c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
+        typename = None
         pytype = None
         value  = None
-        if not ignore:
-            # check that old value is valid
+        istree = 0
+        # if element is defined as xsi:nil, represent it as None
+        if cetree.attributeValueFromNsName(
+            c_node, _XML_SCHEMA_INSTANCE_NS, "nil") == "true":
+            pytype = NoneType
+
+        if  pytype is None and not ignore_xsi:
+            # check that old xsi type value is valid
+            typename = cetree.attributeValueFromNsName(
+                c_node, _XML_SCHEMA_INSTANCE_NS, "type")
+            if typename is not None:
+                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
+                if dict_result is NULL and ':' in typename:
+                    prefix, typename = typename.split(':', 1)
+                    dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
+                if dict_result is not NULL:
+                    pytype = <PyType>dict_result
+                    if pytype is not StrType:
+                        # StrType does not have a typecheck but is the default anyway,
+                        # so just accept it if given as type information
+                        pytype = _check_type(c_node, pytype)
+                        if pytype is None:
+                            typename = None
+
+        if pytype is None and not ignore_pytype:
+            # check that old pytype value is valid
             old_value = cetree.attributeValueFromNsName(
                 c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
             if old_value is not None and old_value != TREE_PYTYPE:
@@ -1508,43 +1586,73 @@ def annotate(element_or_tree, ignore_old=True):
                         pytype = _check_type(c_node, pytype)
 
         if pytype is None:
-            # if element is defined as xsi:nil, represent it as None
-            if cetree.attributeValueFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, "nil") == "true":
-                pytype = NoneType
-
-        if pytype is None:
-            # check for XML Schema type hint
-            value = cetree.attributeValueFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, "type")
-
-            if value is not None:
-                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
-                if dict_result is NULL and ':' in value:
-                    prefix, value = value.split(':', 1)
-                    dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, value)
-                if dict_result is not NULL:
-                    pytype = <PyType>dict_result
-
-        if pytype is None:
             # try to guess type
             if cetree.findChildForwards(c_node, 0) is NULL:
                 # element has no children => data class
                 pytype = _guessPyType(textOf(c_node), StrType)
+            else:
+                istree = 1
 
         if pytype is None:
-            # delete attribute if it exists
-            cetree.delAttributeFromNsName(
-                c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-        else:
-            # update or create attribute
-            c_ns = cetree.findOrBuildNodeNsPrefix(
-                doc, c_node, _PYTYPE_NAMESPACE, 'py')
-            tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
-                              _cstr(pytype.name))
+            # use default type for empty elements
+            if textOf(c_node) is None:
+                pytype = empty_pytype
+                if typename is None:
+                    typename = empty_type_name
+            else:
+                pytype = StrType
+
+        if pytype is not None:
+            if typename is None:
+                if not istree:
+                    if python.PyList_GET_SIZE(pytype._schema_types) > 0:
+                        # pytype->xsi:type is a 1:n mapping
+                        # simply take the first
+                        typename = pytype._schema_types[0]
+            elif typename not in pytype._schema_types:
+                typename = pytype._schema_types[0]
+
+        if annotate_xsi:
+            if typename is None or istree:
+                cetree.delAttributeFromNsName(
+                    c_node, _XML_SCHEMA_INSTANCE_NS, "type")
+            else:
+                # update or create attribute
+                c_ns = cetree.findOrBuildNodeNsPrefix(
+                    doc, c_node, _XML_SCHEMA_NS, 'xsd')
+                if c_ns is not NULL:
+                    if ':' in typename:
+                        prefix, name = typename.split(':', 1)
+                        if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
+                            typename = name
+                        elif cstd.strcmp(_cstr(prefix), c_ns.prefix) != 0:
+                            prefix = c_ns.prefix
+                            typename = prefix + ':' + name
+                    elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
+                        prefix = c_ns.prefix
+                        typename = prefix + ':' + typename
+                c_ns = cetree.findOrBuildNodeNsPrefix(
+                    doc, c_node, _XML_SCHEMA_INSTANCE_NS, 'xsi')
+                tree.xmlSetNsProp(c_node, c_ns, "type", _cstr(typename))
+
+        if annotate_pytype:
+            if pytype is None:
+                # delete attribute if it exists
+                cetree.delAttributeFromNsName(
+                    c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
+            else:
+                # update or create attribute
+                c_ns = cetree.findOrBuildNodeNsPrefix(
+                    doc, c_node, _PYTYPE_NAMESPACE, 'py')
+                tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
+                                  _cstr(pytype.name))
+                if pytype is NoneType:
+                    c_ns = cetree.findOrBuildNodeNsPrefix(
+                        doc, c_node, _XML_SCHEMA_INSTANCE_NS, 'xsi')
+                    tree.xmlSetNsProp(c_node, c_ns, "nil", "true")
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-def xsiannotate(element_or_tree, ignore_old=True):
+def __xsiannotate(element_or_tree, ignore_old=True):
     """Recursively annotates the elements of an XML tree with 'xsi:type'
     attributes.
 
