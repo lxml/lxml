@@ -1398,11 +1398,32 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_sourceline_parse(self):
         parse = self.etree.parse
-        tree = parse(fileInTestDir('test_xinclude.xml'))
+        tree = parse(fileInTestDir('include/test_xinclude.xml'))
 
         self.assertEquals(
             [1, 2, 3],
             [ el.sourceline for el in tree.getiterator() ])
+
+    def test_sourceline_iterparse_end(self):
+        iterparse = self.etree.iterparse
+        lines = list(
+            el.sourceline for (event, el) in 
+            iterparse(fileInTestDir('include/test_xinclude.xml')))
+
+        self.assertEquals(
+            [2, 3, 1],
+            lines)
+
+    def test_sourceline_iterparse_start(self):
+        iterparse = self.etree.iterparse
+        lines = list(
+            el.sourceline for (event, el) in 
+            iterparse(fileInTestDir('include/test_xinclude.xml'),
+                      events=("start",)))
+
+        self.assertEquals(
+            [1, 2, 3],
+            lines)
 
     def test_sourceline_element(self):
         Element = self.etree.Element
