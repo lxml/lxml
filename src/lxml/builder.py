@@ -121,9 +121,10 @@ class ElementMaker(object):
         </html>
     """
 
-    def __init__(self, typemap=None, parser=None):
-        if parser is not None:
-            self._makeelement = parser.makeelement
+    def __init__(self, typemap=None, makeelement=None):
+        if makeelement is not None:
+            assert callable(makeelement)
+            self._makeelement = makeelement
         else:
             self._makeelement = ET.Element
 
