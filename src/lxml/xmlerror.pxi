@@ -480,7 +480,9 @@ class ErrorTypes:
 
 # Constants are stored in tuples of strings, for which Pyrex generates very
 # efficient setup code.  To parse them, iterate over the tuples and parse each
-# line in each string independently.
+# line in each string independently.  Tuples of strings (instead of a plain
+# string) are required as some C-compilers of a certain well-known OS vendor
+# cannot handle strings that are a few thousand bytes in length.
 
 cdef object __ERROR_LEVELS
 __ERROR_LEVELS = ("""\
