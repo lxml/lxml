@@ -129,7 +129,7 @@ The source distribution is signed with `this key`_.
 .. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
-The latest version is `lxml 1.3`_, released 2007-06-XX (`changes for 1.3`_).
+The latest version is `lxml 1.3`_, released 2007-06-24 (`changes for 1.3`_).
 `Older versions`_ are listed below.
 
 .. _`Older versions`: #old-versions
