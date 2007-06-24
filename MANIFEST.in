@@ -5,7 +5,7 @@ include update-error-constants.py
 include MANIFEST.in version.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py
-recursive-include src/lxml etree.c objectify.c etree.h etree_defs.h
+recursive-include src/lxml etree.c objectify.c pyclasslookup.c etree.h etree_defs.h
 recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd
 recursive-include benchmark *.py
 recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc
