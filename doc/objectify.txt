@@ -274,14 +274,18 @@ To simplify the generation of trees even further, you can use the E-factory::
 
     >>> E = objectify.E
     >>> root = E.root(
-    ...   E.a("5"),
-    ...   E.b("6")
+    ...   E.a(5),
+    ...   E.b(6.1),
+    ...   E.c(True),
+    ...   E.d("how")
     ... )
 
     >>> print etree.tostring(root, pretty_print=True)
     <root>
       <a>5</a>
-      <b>6</b>
+      <b>6.1</b>
+      <c>true</c>
+      <d>how</d>
     </root>
     
 
