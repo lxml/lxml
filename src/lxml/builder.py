@@ -140,7 +140,10 @@ class ElementMaker(object):
 		elem[-1].tail = (elem[-1].tail or "") + item
 	    else:
 		elem.text = (elem.text or "") + item
-	typemap[str] = typemap[unicode] = add_text
+        if str not in typemap:
+            typemap[str] = add_text
+        if unicode not in typemap:
+            typemap[unicode] = add_text
 
 	def add_dict(elem, item):
 	    attrib = elem.attrib
@@ -149,7 +152,8 @@ class ElementMaker(object):
 		    attrib[k] = v
 		else:
 		    attrib[k] = typemap[type(v)](None, v)
-	typemap[dict] = add_dict
+        if dict not in typemap:
+            typemap[dict] = add_dict
 
 	self._typemap = typemap
 

@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* E-factory support for lxml.objectify (``objectify.E``)
+
 * Entity support through an ``Entity`` factory and element classes. XML
   parsers now have a ``resolve_entities`` keyword argument that can be set to
   False to keep entities in the document.
