@@ -8,6 +8,23 @@ Under development
 Features added
 --------------
 
+* Entity support through an ``Entity`` factory and element classes. XML
+  parsers now have a ``resolve_entities`` keyword argument that can be set to
+  False to keep entities in the document.
+
+* ``column`` field on error log entries to accompany the ``line`` field
+
+* Error specific messages in XPath parsing and evaluation
+  NOTE: for evaluation errors, you will now get an XPathEvalError instead of
+  an XPathSyntaxError.  To catch both, you can except on ``XPathError``
+
+* The regular expression functions in XPath now support passing a node-set
+  instead of a string
+
+* Extended type annotation in objectify: new ``xsiannotate()`` function
+
+* EXSLT RegExp support in standard XPath (not only XSLT)
+
 Bugs fixed
 ----------
 
@@ -21,22 +38,13 @@ Other changes
 Features added
 --------------
 
+* Module ``lxml.pyclasslookup`` module implements an Element class lookup
+  scheme that can access the entire tree in read-only mode to help determining
+  a suitable Element class
+
 * Parsers take a ``remove_comments`` keyword argument that skips over comments
 
-* Entity support through an ``Entity`` factory and element classes. XML
-  parsers now have a ``resolve_entities`` keyword argument that can be set to
-  False to keep entities in the document.
-
 * ``parse()`` function in ``objectify``, corresponding to ``XML()`` etc.
-
-* ``column`` field on error log entries to accompany the ``line`` field
-
-* Error specific messages in XPath parsing and evaluation
-  NOTE: for evaluation errors, you will now get an XPathEvalError instead of
-  an XPathSyntaxError.  To catch both, you can except on ``XPathError``
-
-* The regular expression functions in XPath now support passing a node-set
-  instead of a string
 
 * ``Element.addnext(el)`` and ``Element.addprevious(el)`` methods to support
   adding processing instructions and comments around the root node
@@ -44,7 +52,7 @@ Features added
 * ``Element.attrib`` was missing ``clear()`` and ``pop()`` methods
 
 * Extended type annotation in objectify: cleaner annotation namespace setup
-  plus new ``xsiannotate()`` and ``deannotate()`` functions
+  plus new ``deannotate()`` function
 
 * Support for custom Element class instantiation in lxml.sax: passing a
   ``makeelement`` function to the ElementTreeContentHandler will reuse the
@@ -52,15 +60,23 @@ Features added
 
 * '.' represents empty ObjectPath (identity)
 
-* EXSLT RegExp support in standard XPath (not only XSLT)
-
-* ``lxml.pyclasslookup`` module that can access the entire tree in read-only
-  mode to help determining a suitable Element class
-
 * ``Element.values()`` to accompany the existing ``.keys()`` and ``.items()``
 
 * ``collectAttributes()`` C-function to build a list of attribute
   keys/values/items for a libxml2 node
+
+* ``DTD`` validator class (like ``RelaxNG`` and ``XMLSchema``)
+
+* HTML generator helpers by Fredrik Lundh in ``lxml.htmlbuilder``
+
+* ``ElementMaker`` XML generator by Fredrik Lundh in ``lxml.builder.E``
+
+* Support for pickeling ``objectify.ObjectifiedElement`` objects to XML
+
+* ``update()`` method on Element.attrib
+
+* Optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
+  a better handling of namespaces when moving elements between documents.
 
 Bugs fixed
 ----------
@@ -102,39 +118,13 @@ Bugs fixed
 
 * Raise AssertionError when passing strings containing '\0' bytes
 
-Other changes
--------------
-
-* major refactoring in XPath/XSLT extension function code
-
-
-1.3beta (2007-02-27)
-====================
-
-Features added
---------------
-
-* ``DTD`` validator class (like ``RelaxNG`` and ``XMLSchema``)
-
-* HTML generator helpers by Fredrik Lundh in ``lxml.htmlbuilder``
-
-* ``ElementMaker`` XML generator by Fredrik Lundh in ``lxml.builder.E``
-
-* Support for pickeling ``objectify.ObjectifiedElement`` objects to XML
-
-* ``update()`` method on Element.attrib
-
-* Optimised replacement for libxml2's _xmlReconsiliateNs(). This allows lxml
-  a better handling of namespaces when moving elements between documents.
-
-Bugs fixed
-----------
-
 * Possible memory leaks in namespace handling when moving elements between
   documents
 
 Other changes
 -------------
+
+* major refactoring in XPath/XSLT extension function code
 
 * major restructuring in the documentation
 
