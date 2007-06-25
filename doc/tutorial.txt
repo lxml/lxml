@@ -31,8 +31,8 @@ A common way to import ``lxml.etree`` is as follows::
     >>> from lxml import etree
 
 If your code only uses the ElementTree API and does not rely on any
-functionality that is specific to ``lxml.etree``, you can also use the
-following import chain as a fall-back to the original ElementTree::
+functionality that is specific to ``lxml.etree``, you can also use (any part
+of) the following import chain as a fall-back to the original ElementTree::
 
     try:
       from lxml import etree
@@ -108,7 +108,7 @@ Elements are lists
 ------------------
 
 To make the access to these subelements as easy and straight forward as
-possible, elements behave exactly like normal Python lists::
+possible, elements behave like normal Python lists::
 
     >>> child = root[0]
     >>> print child.tag
@@ -133,7 +133,7 @@ possible, elements behave exactly like normal Python lists::
     >>> print end[0].tag
     child3
 
-    >>> root[0] = root[-1]
+    >>> root[0] = root[-1] # this moves the element!
     >>> for child in root:
     ...     print child.tag
     child3
@@ -239,9 +239,9 @@ Elements can contain text::
     >>> print etree.tostring(root)
     <root>TEXT</root>
 
-In many XML documents (so-called *data-centric* documents), this is the only
-place where text can be found.  It is encapsulated by a leaf tag at the very
-bottom of the tree hierarchy.
+In many XML documents (*data-centric* documents), this is the only place where
+text can be found.  It is encapsulated by a leaf tag at the very bottom of the
+tree hierarchy.
 
 However, if XML is used for tagged text documents such as (X)HTML, text can
 also appear between different elements, right in the middle of the tree::
@@ -249,9 +249,9 @@ also appear between different elements, right in the middle of the tree::
     <html><body>Hello<br/>World</body></html>
 
 Here, the ``<br/>`` tag is surrounded by text.  This is often referred to as
-*document-style* XML.  Elements support this through their ``tail`` property.
-It contains the text that directly follows the element, up to the next element
-in the XML tree::
+*document-style* or *mixed-content* XML.  Elements support this through their
+``tail`` property.  It contains the text that directly follows the element, up
+to the next element in the XML tree::
 
     >>> html = etree.Element("html")
     >>> body = etree.SubElement(html, "body")
@@ -280,8 +280,8 @@ attributes in the correct order.  A simpler way to do this is XPath_::
 
 If you want to use this more often, you can wrap it in a function::
 
-    >>> buildTextList = etree.XPath("//text()") # lxml.etree only!
-    >>> print buildTextList(html)
+    >>> build_text_list = etree.XPath("//text()") # lxml.etree only!
+    >>> print build_text_list(html)
     ['TEXT', 'TAIL']
 
 .. _XPath: xpathxslt.html#xpath
@@ -344,8 +344,147 @@ The XML() function
 The parse() function
 --------------------
 
+
 Namespaces
 ==========
+
+The ElementTree API avoids `namespace prefixes`_ wherever possible and deploys
+the real namespaces instead::
+
+    >>> xhtml = etree.Element("{http://www.w3.org/1999/xhtml}html")
+    >>> body = etree.SubElement(xhtml, "{http://www.w3.org/1999/xhtml}body")
+    >>> body.text = "Hello World"
+
+    >>> print etree.tostring(xhtml, pretty_print=True)
+    <ns0:html xmlns:ns0="http://www.w3.org/1999/xhtml">
+      <ns0:body>Hello World</ns0:body>
+    </ns0:html>
+
+.. _`namespace prefixes`: http://www.w3.org/TR/xml-names/#ns-qualnames
+
+As you can see, prefixes only become important when you serialise the result.
+However, the above code becomes somewhat verbose due to the lengthy namespace
+names.  And retyping or copying a string over and over again is error prone.
+It is therefore common practice to store a namespace URI in a global variable.
+To adapt the namespace prefixes for serialisation, you can also pass a mapping
+to the Element factory, e.g. to define the default namespace::
+
+    >>> XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
+    >>> XHTML = "{%s}" % XHTML_NAMESPACE
+
+    >>> NSMAP = {None : XHTML_NAMESPACE} # the default namespace (no prefix)
+
+    >>> xhtml = etree.Element(XHTML + "html", nsmap=NSMAP) # lxml only!
+    >>> body = etree.SubElement(xhtml, XHTML + "body")
+    >>> body.text = "Hello World"
+
+    >>> print etree.tostring(xhtml, pretty_print=True)
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <body>Hello World</body>
+    </html>
+
+Namespaces on attributes work alike::
+
+    >>> body.set(XHTML + "bgcolor", "#CCFFAA")
+
+    >>> print etree.tostring(xhtml, pretty_print=True)
+    <html xmlns="http://www.w3.org/1999/xhtml">
+      <body bgcolor="#CCFFAA">Hello World</body>
+    </html>
+
+    >>> print body.get("bgcolor")
+    None
+    >>> body.get(XHTML + "bgcolor")
+    '#CCFFAA'
+
+You can also use XPath in this way::
+
+    >>> find_xhtml_body = etree.ETXPath(      # lxml only !
+    ...     "//{%s}body" % XHTML_NAMESPACE)
+    >>> results = find_xhtml_body(xhtml)
+
+    >>> print results[0].tag
+    {http://www.w3.org/1999/xhtml}body
+
+
+The E-factory
+=============
+
+The ``E-factory`` provides a simple and compact syntax for generating XML and
+HTML::
+
+    >>> from lxml.builder import E
+
+    >>> def CLASS(*args): # class is a reserved word in Python
+    ...     return {"class":' '.join(args)}
+
+    >>> html = page = (
+    ...   E.html(       # create an Element called "html"
+    ...     E.head(
+    ...       E.title("This is a sample document")
+    ...     ),
+    ...     E.body(
+    ...       E.h1("Hello!", CLASS("title")),
+    ...       E.p("This is a paragraph with ", E.b("bold"), " text in it!"),
+    ...       E.p("This is another paragraph, with a ",
+    ...         E.a("link", href="http://www.python.org"), "."),
+    ...       E.p("Here are some reservered characters: <spam&egg>."),
+    ...       etree.XML("<p>And finally an embedded XHTML fragment.</p>"),
+    ...     )
+    ...   )
+    ... )
+
+    >>> print etree.tostring(page, pretty_print=True)
+    <html>
+      <head>
+        <title>This is a sample document</title>
+      </head>
+      <body>
+        <h1 class="title">Hello!</h1>
+        <p>This is a paragraph with <b>bold</b> text in it!</p>
+        <p>This is another paragraph, with a <a href="http://www.python.org">link</a>.</p>
+        <p>Here are some reservered characters: &lt;spam&amp;egg&gt;.</p>
+        <p>And finally an embedded XHTML fragment.</p>
+      </body>
+    </html>
+
+The Element creation based on attribute access makes it easy to build up a
+simple vocabulary for an XML language::
+
+    >>> DOC = E.doc
+    >>> TITLE = E.title
+    >>> SECTION = E.section
+    >>> PAR = E.par
+
+    >>> my_doc = DOC(
+    ...   TITLE("The dog and the hog"),
+    ...   SECTION(
+    ...     TITLE("The dog"),
+    ...     PAR("Once upon a time, ..."),
+    ...     PAR("And then ...")
+    ...   ),
+    ...   SECTION(
+    ...     TITLE("The hog"),
+    ...     PAR("Sooner or later ...")
+    ...   )
+    ... )
+
+    >>> print etree.tostring(my_doc, pretty_print=True)
+    <doc>
+      <title>The dog and the hog</title>
+      <section>
+        <title>The dog</title>
+        <par>Once upon a time, ...</par>
+        <par>And then ...</par>
+      </section>
+      <section>
+        <title>The hog</title>
+        <par>Sooner or later ...</par>
+      </section>
+    </doc>
+
+One such example is the module ``lxml.html.builder``, which provides a
+vocabulary for HTML.
 
 
 ElementPath
