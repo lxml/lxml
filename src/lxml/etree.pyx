@@ -1498,10 +1498,11 @@ cdef class _Attrib:
             if python.PyTuple_GET_SIZE(default) == 0:
                 raise KeyError, key
             else:
-                return python.PyTuple_GET_ITEM(default, 0)
+                result = python.PyTuple_GET_ITEM(default, 0)
+                python.Py_INCREF(result)
         else:
             _delAttribute(self._element, key)
-            return result
+        return result
 
     def clear(self):
         cdef xmlNode* c_node

@@ -30,6 +30,8 @@ Features added
 Bugs fixed
 ----------
 
+* Reference-counting bug in ``Element.attrib.pop()``
+
 * The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath
