@@ -277,7 +277,7 @@ To simplify the generation of trees even further, you can use the E-factory::
     ...   E.a(5),
     ...   E.b(6.1),
     ...   E.c(True),
-    ...   E.d("how")
+    ...   E.d("how", tell="me")
     ... )
 
     >>> print etree.tostring(root, pretty_print=True)
@@ -285,10 +285,9 @@ To simplify the generation of trees even further, you can use the E-factory::
       <a>5</a>
       <b>6.1</b>
       <c>true</c>
-      <d>how</d>
+      <d tell="me">how</d>
     </root>
     
-
 
 Namespace handling
 ------------------
