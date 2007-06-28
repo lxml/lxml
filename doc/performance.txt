@@ -466,8 +466,11 @@ even back then, it was quite a bit faster than what lxml could achieve.
 
 Since then, lxml has matured a lot and has gotten much faster.  The iterparse
 variant now runs in 0.14 seconds, and if you remove the ``v.clear()``, it is
-even a little faster (which isn't the case for cElementTree).  When you move
-the whole thing to a pure XPath implementation, it will look like this::
+even a little faster (which isn't the case for cElementTree).
+
+One of the many great tools in lxml is XPath, a swiss army knife for finding
+things in XML documents.  It is possible to move the whole thing to a pure
+XPath implementation, which looks like this::
 
   def bench_lxml_xpath_all():
       tree = etree.parse("ot.xml")
@@ -522,6 +525,11 @@ So, what have we learned?
   the most simple one.  In this case, a programmer would then probably have
   started with ``getiterator("v")`` or ``iterparse()``.  Either of them would
   already have been the most efficient, depending on which library is used.
+
+* It's important to know your tool.  lxml and cElementTree are both very fast
+  libraries, but they do not have the same performance characteristics.  The
+  fastest solution in one library can be comparatively slow in the other.  If
+  you optimise, optimise for the specific target platform.
 
 * It's not always worth optimising.  After all that hassle we got from 0.12
   seconds for the initial implementation to 0.11 seconds.  Switching over to
