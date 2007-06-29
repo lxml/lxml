@@ -3,7 +3,7 @@
 cdef object __ITERPARSE_CHUNK_SIZE
 __ITERPARSE_CHUNK_SIZE = 32768
 
-ctypedef enum IterparseEventFilter:
+ctypedef enum _IterparseEventFilter:
     ITERPARSE_FILTER_START     = 1
     ITERPARSE_FILTER_END       = 2
     ITERPARSE_FILTER_START_NS  = 4
