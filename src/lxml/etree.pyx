@@ -501,7 +501,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # store possible text tail
             c_next = element._c_node.next
             # now move node previous to insertion point
-            tree.xmlUnlinkNode(element._c_node)
             tree.xmlAddPrevSibling(c_node, element._c_node)
             # and move tail just behind his node
             _moveTail(c_next, element._c_node)
@@ -630,6 +629,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
+        # fix namespace declarations
         moveNodeToDocument(self._doc, c_node)
 
     def replace(self, _Element old_element not None,
@@ -650,6 +650,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _moveTail(c_new_next, c_new_node)
         _moveTail(c_old_next, c_old_node)
         moveNodeToDocument(self._doc, c_new_node)
+        # fix namespace declarations
+        moveNodeToDocument(self._doc, c_old_node)
         
     # PROPERTIES
     property tag:
