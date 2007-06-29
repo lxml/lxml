@@ -9,6 +9,7 @@ cdef extern from "Python.h":
     cdef int PY_SSIZE_T_MAX
 
     cdef void Py_INCREF(object o)
+    cdef void Py_DECREF(object o)
 
     cdef FILE* PyFile_AsFile(object p)
     cdef int PyFile_Check(object p)

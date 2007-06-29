@@ -27,6 +27,8 @@ cdef registerProxy(_Element proxy):
     #print "registering for:", <int>proxy._c_node
     assert c_node._private is NULL, "double registering proxy!"
     c_node._private = <void*>proxy
+    # additional INCREF to make sure _Document is GC-ed LAST!
+    python.Py_INCREF(proxy._doc)
 
 cdef unregisterProxy(_Element proxy):
     """Unregister a proxy for the node it's proxying for.
@@ -35,6 +37,7 @@ cdef unregisterProxy(_Element proxy):
     c_node = proxy._c_node
     assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
+    python.Py_DECREF(proxy._doc)
 
 ################################################################################
 # temporarily make a node the root node of its document
@@ -170,18 +173,18 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
     return 1
 
-cdef void _deallocDocument(xmlDoc* c_doc):
-    """We cannot rely on Python's GC to *always* dealloc the _Document *after*
-    all proxies it contains => traverse the document and mark all its proxies
-    as dead by deleting their xmlNode* reference.
-    """
-    cdef xmlNode* c_node
-    c_node = c_doc.children
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
-    if c_node._private is not NULL:
-        (<_Element>c_node._private)._c_node = NULL
-    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    tree.xmlFreeDoc(c_doc)
+## cdef void _deallocDocument(xmlDoc* c_doc):
+##     """We cannot rely on Python's GC to *always* dealloc the _Document *after*
+##     all proxies it contains => traverse the document and mark all its proxies
+##     as dead by deleting their xmlNode* reference.
+##     """
+##     cdef xmlNode* c_node
+##     c_node = c_doc.children
+##     tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
+##     if c_node._private is not NULL:
+##         (<_Element>c_node._private)._c_node = NULL
+##     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+##     tree.xmlFreeDoc(c_doc)
 
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
@@ -303,6 +306,8 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
             if c_element._private is not NULL:
                 element = <_Element>c_element._private
                 if element._doc is not doc:
+                    python.Py_INCREF(doc)
+                    python.Py_DECREF(element._doc)
                     element._doc = doc
 
             if c_element is c_start_node:
@@ -321,7 +326,11 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
 
                 # fix _Document reference (may dealloc the original document!)
                 if c_element._private is not NULL:
-                    (<_Element>c_element._private)._doc = doc
+                    element = <_Element>c_element._private
+                    if element._doc is not doc:
+                        python.Py_INCREF(doc)
+                        python.Py_DECREF(element._doc)
+                        element._doc = doc
 
                 if c_element is c_start_node:
                     break

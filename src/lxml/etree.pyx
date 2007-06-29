@@ -243,8 +243,8 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         #displayNode(<xmlNode*>self._c_doc, 0)
         #print <long>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
         #print <long>self._c_doc, canDeallocateChildNodes(<xmlNode*>self._c_doc)
-        #tree.xmlFreeDoc(c_doc)
-        _deallocDocument(self._c_doc)
+        tree.xmlFreeDoc(self._c_doc)
+        #_deallocDocument(self._c_doc)
 
     cdef getroot(self):
         cdef xmlNode* c_node
