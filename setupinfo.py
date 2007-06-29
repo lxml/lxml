@@ -1,5 +1,8 @@
 import sys, os
-from setuptools.extension import Extension
+try:
+    from setuptools.extension import Extension
+except ImportError:
+    from distutils.extension import Extension
 
 try:
     from Pyrex.Distutils import build_ext as build_pyx

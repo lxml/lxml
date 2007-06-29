@@ -1,12 +1,21 @@
-from ez_setup import use_setuptools
-use_setuptools(version="0.6c5")
-
-from setuptools import setup
 import sys, os
 
-# need to insert this to python path so we're sure we can import
-# versioninfo and setupinfo even if we start setup.py from another
-# location (such as a buildout)
+try:
+    try:
+        import pkg_resources
+        pkg_resources.require("setuptools>=0.6c5")
+    except pkg_resources.VersionConflict, e:
+        from ez_setup import use_setuptools
+        use_setuptools(version="0.6c5")
+    raise ImportError
+    from setuptools import setup
+except ImportError:
+    # not setuptools installed
+    from distutils.core import setup
+
+# need to insert this to python path so we're sure we can import versioninfo,
+# setupinfo and Pyrex (!) even if we start setup.py from another location
+# (such as a buildout)
 sys.path.insert(0, os.path.dirname(__file__))
 
 import versioninfo
