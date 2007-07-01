@@ -33,6 +33,8 @@ Features added
 Bugs fixed
 ----------
 
+* Better way to prevent crashes in Element proxy cleanup code
+
 * objectify.DataElement didn't set up None value correctly
 
 * objectify.DataElement didn't check the value against the provided type hints
