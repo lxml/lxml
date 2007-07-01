@@ -1918,10 +1918,34 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
     cdef python.PyObject* dict_result
     if nsmap is None:
         nsmap = _DEFAULT_NSMAP
-    if attrib is not None:
+    if attrib is not None and attrib:
         if python.PyDict_Size(_attributes):
+            attrib = dict(attrib)
             attrib.update(_attributes)
         _attributes = attrib
+    if isinstance(_value, ObjectifiedDataElement):
+        # reuse existing nsmap unless redefined in nsmap parameter
+        temp = _value.nsmap
+        if temp is not None and temp:
+            temp = dict(_value.nsmap)
+            temp.update(nsmap)
+            nsmap = temp
+        # reuse existing attributes unless redefined in attrib/_attributes
+        temp = _value.attrib
+        if temp is not None and temp:
+            temp = dict(_value.attrib)
+            temp.update(_attributes)
+            _attributes = temp
+        # reuse existing xsi:type or py:pytype attributes, unless provided as
+        # arguments
+        if _xsi is None and _pytype is None:
+            dict_result = python.PyDict_GetItem(_attributes,
+                                                XML_SCHEMA_INSTANCE_TYPE_ATTR)
+            if dict_result is not NULL:
+                _xsi = <object>dict_result
+            dict_result = python.PyDict_GetItem(_attributes, PYTYPE_ATTRIBUTE)
+            if dict_result is not NULL:
+                _pytype = <object>dict_result
     if _xsi is not None:
         if ':' in _xsi:
             prefix, name = _xsi.split(':', 1)
@@ -1956,23 +1980,34 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             strval = "true"
         else:
             strval = "false"
+    elif _value is None:
+        strval = None
     else:
         strval = str(_value)
 
     if _pytype is None:
-        for type_check, pytype in _TYPE_CHECKS:
-            try:
-                type_check(strval)
-                _pytype = (<PyType>pytype).name
-                break
-            except IGNORABLE_ERRORS:
-                pass
+        if strval is not None:
+            for type_check, pytype in _TYPE_CHECKS:
+                try:
+                    type_check(strval)
+                    _pytype = (<PyType>pytype).name
+                    break
+                except IGNORABLE_ERRORS:
+                    pass
         if _pytype is None:
             if _value is None:
-                _pytype = "none"
+                python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
             elif python._isString(_value):
                 _pytype = "str"
-    if _pytype is not None:
+    else:
+        # check if type information from arguments is valid
+        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
+        if dict_result is not NULL:
+            type_check = (<PyType>dict_result).type_check
+            if type_check is not None:
+                type_check(strval)
+        
+    if _pytype is not None: 
         python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
     return _makeElement("value", strval, _attributes, nsmap)
