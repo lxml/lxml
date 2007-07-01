@@ -173,19 +173,6 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
     return 1
 
-## cdef void _deallocDocument(xmlDoc* c_doc):
-##     """We cannot rely on Python's GC to *always* dealloc the _Document *after*
-##     all proxies it contains => traverse the document and mark all its proxies
-##     as dead by deleting their xmlNode* reference.
-##     """
-##     cdef xmlNode* c_node
-##     c_node = c_doc.children
-##     tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
-##     if c_node._private is not NULL:
-##         (<_Element>c_node._private)._c_node = NULL
-##     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-##     tree.xmlFreeDoc(c_doc)
-
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
