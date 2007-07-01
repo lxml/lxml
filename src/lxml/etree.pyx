@@ -739,15 +739,16 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             cdef xmlNs* c_ns
             nsmap = {}
             c_node = self._c_node
-            while c_node is not NULL and _isElement(c_node):
+            while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
                 c_ns = c_node.nsDef
                 while c_ns is not NULL:
                     if c_ns.prefix is NULL:
                         prefix = None
                     else:
                         prefix = funicode(c_ns.prefix)
-                    if prefix not in nsmap:
-                        nsmap[prefix] = funicode(c_ns.href)
+                    if not python.PyDict_Contains(nsmap, prefix):
+                        python.PyDict_SetItem(
+                            nsmap, prefix, funicode(c_ns.href))
                     c_ns = c_ns.next
                 c_node = c_node.parent
             return nsmap
