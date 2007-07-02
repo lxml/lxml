@@ -14,7 +14,7 @@ from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
 
 print
-print "TESTED VERSION:"
+print "TESTED VERSION:", etree.__version__
 print "    Python:           ", sys.version_info
 print "    lxml.etree:       ", etree.LXML_VERSION
 print "    libxml used:      ", etree.LIBXML_VERSION
@@ -24,7 +24,7 @@ print "    libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
 print
 
 try:
-    sorted(())
+    sorted
 except NameError:
     # Python 2.3
     def sorted(seq):
