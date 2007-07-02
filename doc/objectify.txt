@@ -287,7 +287,24 @@ To simplify the generation of trees even further, you can use the E-factory::
       <c>true</c>
       <d tell="me">how</d>
     </root>
-    
+
+This allows you to write up a specific language in tags::
+
+    >>> ROOT = objectify.E.root
+    >>> TITLE = objectify.E.title
+    >>> TYPE = objectify.E.type
+
+    >>> root = ROOT(
+    ...   TITLE("The title"),
+    ...   TYPE(5)
+    ... )
+
+    >>> print etree.tostring(root, pretty_print=True)
+    <root>
+      <title>The title</title>
+      <type>5</type>
+    </root>
+
 
 Namespace handling
 ------------------
