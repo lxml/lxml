@@ -131,12 +131,19 @@ cdef __unpackDottedVersion(version):
         try:
             item = int(item)
         except ValueError:
-            if item == 'dev':
-                item = -3
-            elif item == 'alpha':
-                item = -2
-            elif item == 'beta':
-                item = -1
+            if item.startswith('dev'):
+                count = item[3:]
+                item = -30
+            elif item.startswith('alpha'):
+                count = item[5:]
+                item = -20
+            elif item.startswith('beta'):
+                count = item[4:]
+                item = -10
+            else:
+                count = 0
+            if count:
+                item = item + int(count)
         version_list.append(item)
     return tuple(version_list)
 
