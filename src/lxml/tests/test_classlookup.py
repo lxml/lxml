@@ -178,4 +178,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    unittest.main()
+    print 'to test use test.py %s' % __file__
