@@ -392,6 +392,9 @@ cdef class XPath(_XPathEvaluatorBase):
         if self._xpath is not NULL:
             xpath.xmlXPathFreeCompExpr(self._xpath)
 
+    def __repr__(self):
+        return path
+
 
 cdef object _replace_strings
 cdef object _find_namespaces
