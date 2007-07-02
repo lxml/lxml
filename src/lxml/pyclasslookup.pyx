@@ -15,6 +15,8 @@ from lxml import etree
 # initialize C-API of lxml.etree
 import_etree(etree)
 
+__version__ = etree.__version__
+
 cdef class _ElementProxy:
     cdef tree.xmlNode* _c_node
     cdef object _source_proxy

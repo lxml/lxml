@@ -13,6 +13,8 @@ from lxml import etree
 # initialize C-API of lxml.etree
 import_etree(etree)
 
+__version__ = etree.__version__
+
 cdef object SubElement
 SubElement = etree.SubElement
 
