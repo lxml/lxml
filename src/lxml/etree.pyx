@@ -142,7 +142,7 @@ cdef __unpackDottedVersion(version):
                 item = -100
             else:
                 count = 0
-            if count.trim():
+            if count:
                 item = item + int(count)
         version_list.append(item)
     return tuple(version_list)
