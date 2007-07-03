@@ -7,9 +7,8 @@ try:
     except pkg_resources.VersionConflict, e:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
-    raise ImportError
     from setuptools import setup
-except ImportError:
+except (ImportError, NameError), e:
     # not setuptools installed
     from distutils.core import setup
 
