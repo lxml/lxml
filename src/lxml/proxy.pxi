@@ -28,6 +28,7 @@ cdef registerProxy(_Element proxy):
     assert c_node._private is NULL, "double registering proxy!"
     c_node._private = <void*>proxy
     # additional INCREF to make sure _Document is GC-ed LAST!
+    proxy._gc_doc = <python.PyObject*>proxy._doc
     python.Py_INCREF(proxy._doc)
 
 cdef unregisterProxy(_Element proxy):
@@ -37,7 +38,7 @@ cdef unregisterProxy(_Element proxy):
     c_node = proxy._c_node
     assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
-    python.Py_DECREF(proxy._doc)
+    python.Py_DECREF(<object>proxy._gc_doc)
 
 ################################################################################
 # temporarily make a node the root node of its document
@@ -296,6 +297,7 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
                     python.Py_INCREF(doc)
                     python.Py_DECREF(element._doc)
                     element._doc = doc
+                    element._gc_doc = <python.PyObject*>doc
 
             if c_element is c_start_node:
                 break
@@ -318,6 +320,7 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
                         python.Py_INCREF(doc)
                         python.Py_DECREF(element._doc)
                         element._doc = doc
+                        element._gc_doc = <python.PyObject*>doc
 
                 if c_element is c_start_node:
                     break

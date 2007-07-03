@@ -429,6 +429,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     By pointing to a Document instance, a reference is kept to
     _Document as long as there is some pointer to a node in it.
     """
+    cdef python.PyObject* _gc_doc
     cdef _Document _doc
     cdef xmlNode* _c_node
     cdef object _tag
