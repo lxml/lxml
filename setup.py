@@ -1,14 +1,14 @@
 import sys, os
 
 try:
+    import pkg_resources
     try:
-        import pkg_resources
         pkg_resources.require("setuptools>=0.6c5")
     except pkg_resources.VersionConflict, e:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
     from setuptools import setup
-except (ImportError, NameError), e:
+except ImportError:
     # not setuptools installed
     from distutils.core import setup
 
