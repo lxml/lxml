@@ -6,6 +6,7 @@ import unittest, doctest
 # It is likely that if there are errors, instead of failing the code
 # will simply crash.
 
+import sys, gc
 from lxml import etree
 
 class ErrorTestCase(unittest.TestCase):
@@ -18,6 +19,21 @@ class ErrorTestCase(unittest.TestCase):
 
     def test_empty_parse(self):
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, '')
+
+    def test_element_cyclic_gc_none(self):
+        # test if cyclic reference can crash etree
+        Element = self.etree.Element
+        gc.collect()
+
+        count = sys.getrefcount(None)
+
+        l = [Element('name'), Element('name')]
+        l.append(l)
+
+        del l
+        gc.collect()
+
+        self.assertEquals(sys.getrefcount(None), count)
 
 def test_suite():
     suite = unittest.TestSuite()
