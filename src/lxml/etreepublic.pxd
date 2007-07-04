@@ -4,7 +4,7 @@ cimport tree
 cimport python
 
 cdef extern from "etree_defs.h":
-    # test if c_node is considered an Element (i.e. Element or Comment)
+    # test if c_node is considered an Element (i.e. Element, Comment, etc.)
     cdef int _isElement(tree.xmlNode* c_node)
 
     # return the namespace URI of the node or NULL
@@ -13,7 +13,7 @@ cdef extern from "etree_defs.h":
     # pair of macros for tree traversal
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(tree.xmlNode* tree_top,
                                           tree.xmlNode* start_node,
-                                          int inclusive)
+                                          int start_node_inclusive)
     cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node)
 
 cdef extern from "etree.h":
