@@ -1868,10 +1868,11 @@ class ElementMaker(_ElementMaker):
 
 def __add_text(_Element elem not None, text):
     cdef tree.xmlNode* c_child
-    if isinstance(text, bool):
-        text = str(text).lower()
-    else:
-        text = str(text)
+    if not python._isString(text):
+        if isinstance(text, bool):
+            text = str(text).lower()
+        else:
+            text = str(text)
     c_child = cetree.findChildBackwards(elem._c_node, 0)
     if c_child is not NULL:
         old = cetree.tailOf(c_child)
