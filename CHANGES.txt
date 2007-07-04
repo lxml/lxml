@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* Extended type support for ``objectify.E`` based on registered PyTypes.
+  Supports an additional argument to ``PyType()`` that takes a conversion
+  function to strings to support setting text values from arbitrary types.
+
 * Entity support through an ``Entity`` factory and element classes. XML
   parsers now have a ``resolve_entities`` keyword argument that can be set to
   False to keep entities in the document.

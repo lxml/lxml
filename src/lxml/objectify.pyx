@@ -499,7 +499,7 @@ cdef _setElementValue(_Element element, value):
             element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
         if not python._isString(value):
             if isinstance(value, bool):
-                value = str(value).lower()
+                value = _lower_bool(value)
             else:
                 value = str(value)
     cetree.setNodeText(element._c_node, value)
@@ -804,9 +804,10 @@ cdef class PyType:
     """
     cdef readonly object name
     cdef readonly object type_check
+    cdef object _stringify
     cdef object _type
     cdef object _schema_types
-    def __init__(self, name, type_check, type_class):
+    def __init__(self, name, type_check, type_class, stringify=None):
         if not python._isString(name):
             raise TypeError, "Type name must be a string"
         elif name == TREE_PYTYPE:
@@ -819,6 +820,10 @@ cdef class PyType:
         self.name  = name
         self._type = type_class
         self.type_check = type_check
+        if stringify is None:
+            self._stringify = _StringValueSetter(__builtin__.str)
+        else:
+            self._stringify = _StringValueSetter(stringify)
         self._schema_types = []
 
     def __repr__(self):
@@ -884,6 +889,15 @@ cdef class PyType:
         def __set__(self, types):
             self._schema_types = list(types)
 
+cdef class _StringValueSetter:
+    cdef object _stringify
+    def __init__(self, stringify):
+        self._stringify = stringify
+
+    def __call__(self, elem, value):
+        _add_text(elem, self._stringify(value))
+
+
 cdef object _PYTYPE_DICT
 _PYTYPE_DICT = {}
 
@@ -892,6 +906,15 @@ _SCHEMA_TYPE_DICT = {}
 
 cdef object _TYPE_CHECKS
 _TYPE_CHECKS = []
+
+cdef _lower_bool(b):
+    if b:
+        return "true"
+    else:
+        return "false"
+
+def __lower_bool(b):
+    return _lower_bool(b)
 
 cdef _registerPyTypes():
     pytype = PyType('int', int, IntElement)
@@ -910,7 +933,7 @@ cdef _registerPyTypes():
     pytype.xmlSchemaTypes = ("double", "float")
     pytype.register()
 
-    pytype = PyType('bool', __checkBool, BoolElement)
+    pytype = PyType('bool', __checkBool, BoolElement, __lower_bool)
     pytype.xmlSchemaTypes = ("boolean",)
     pytype.register()
 
@@ -980,6 +1003,92 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
             pass
     return None
 
+################################################################################
+# adapted ElementMaker supports registered PyTypes
+
+class ElementMaker(_ElementMaker):
+    def __init__(self, typemap=None):
+        typemap = _ObjectifyTypemap(typemap)
+        _ElementMaker.__init__(self, typemap, objectify_parser.makeelement)
+
+cdef class _ObjectifyTypemap:
+    """Type map for the ElementMaker.
+    """
+    cdef object _typemap
+    cdef object _typemap_get
+
+    def __init__(self, initial=None):
+        if initial is None:
+            self._typemap = {}
+        else:
+            self._typemap = dict(initial)
+
+        self._typemap[__builtin__.str]          = __add_text
+        self._typemap[__builtin__.str.__name__] = __add_text
+
+        self._typemap[__builtin__.unicode]          = __add_text
+        self._typemap[__builtin__.unicode.__name__] = __add_text
+
+        self._typemap[__builtin__.int]          = __add_stringifyable
+        self._typemap[__builtin__.int.__name__] = __add_stringifyable
+
+        self._typemap[__builtin__.long]          = __add_stringifyable
+        self._typemap[__builtin__.long.__name__] = __add_stringifyable
+
+        self._typemap[__builtin__.float]          = __add_stringifyable
+        self._typemap[__builtin__.float.__name__] = __add_stringifyable
+
+        self._typemap[__builtin__.bool]          = __add_bool
+        self._typemap[__builtin__.bool.__name__] = __add_bool
+
+    def copy(self):
+        return self
+
+    def get(self, type):
+        cdef python.PyObject* result
+        result = python.PyDict_GetItem(self._typemap, type)
+        if result is NULL:
+            name = type.__name__
+            result = python.PyDict_GetItem(self._typemap, name)
+            if result is NULL:
+                result = python.PyDict_GetItem(_PYTYPE_DICT, name)
+                if result is NULL:
+                    return None
+                return (<object>result)._stringify
+        return <object>result
+
+    def __contains__(self, type):
+        return type in self._typemap or type.__name__ in self._typemap
+
+    def __getitem__(self, key):
+        return self._typemap[key]
+
+    def __setitem__(self, key, value):
+        self._typemap[key] = value
+        self._typemap[key.__name__] = value
+
+def __add_stringifyable(_Element elem not None, number):
+    _add_text(elem, str(number))
+
+def __add_bool(_Element elem not None, boolval):
+    _add_text(elem, _lower_bool(boolval))
+
+def __add_text(_Element elem not None, text):
+    _add_text(elem, text)
+
+cdef _add_text(_Element elem, text):
+    cdef tree.xmlNode* c_child
+    c_child = cetree.findChildBackwards(elem._c_node, 0)
+    if c_child is not NULL:
+        old = cetree.tailOf(c_child)
+        if old is not None:
+            text = old + text
+        cetree.setTailText(c_child, text)
+    else:
+        old = cetree.textOf(elem._c_node)
+        if old is not None:
+            text = old + text
+        cetree.setNodeText(elem._c_node, text)
 
 ################################################################################
 # Recursive element dumping
@@ -1849,41 +1958,6 @@ def parse(f, parser=None):
     if parser is None:
         parser = objectify_parser
     return _parse(f, parser)
-
-class ElementMaker(_ElementMaker):
-    def __init__(self, typemap=None):
-        if typemap is None:
-            typemap = {}
-        else:
-            typemap = typemap.copy()
-
-        typemap[__builtin__.str]     = __add_text
-        typemap[__builtin__.unicode] = __add_text
-        typemap[__builtin__.int]     = __add_text
-        typemap[__builtin__.long]    = __add_text
-        typemap[__builtin__.float]   = __add_text
-        typemap[__builtin__.bool]    = __add_text
-
-        _ElementMaker.__init__(self, typemap, objectify_parser.makeelement)
-
-def __add_text(_Element elem not None, text):
-    cdef tree.xmlNode* c_child
-    if not python._isString(text):
-        if isinstance(text, bool):
-            text = str(text).lower()
-        else:
-            text = str(text)
-    c_child = cetree.findChildBackwards(elem._c_node, 0)
-    if c_child is not NULL:
-        old = cetree.tailOf(c_child)
-        if old is not None:
-            text = old + text
-        cetree.setTailText(c_child, text)
-    else:
-        old = cetree.textOf(elem._c_node)
-        if old is not None:
-            text = old + text
-        cetree.setNodeText(elem._c_node, text)
 
 E = ElementMaker()
 
