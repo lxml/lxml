@@ -1054,7 +1054,7 @@ cdef class _ObjectifyTypemap:
                 result = python.PyDict_GetItem(_PYTYPE_DICT, name)
                 if result is NULL:
                     return None
-                return (<object>result)._stringify
+                return (<PyType>result)._stringify
         return <object>result
 
     def __contains__(self, type):
