@@ -35,6 +35,10 @@ answered in the FAQ_.
 .. _FAQ:          FAQ.html
 
 
+This page describes the current in-development version of lxml that will
+eventually become lxml 2.0.
+
+
 Documentation
 -------------
 
