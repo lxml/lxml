@@ -94,9 +94,9 @@ Here is a quote from `http://xmlsoft.org/`:
 lxml currently supports libxml2 2.6.20 or later, which has even better support
 for various XML standards.  Some of the more important ones are: HTML, XML
 namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
-XML:ID.  Support for XML Schema and Schematron is currently incomplete in
-libxml2, but is mostly usable and still being worked on.  libxml2 also
-supports loading documents through HTTP and FTP.
+XML:ID.  Support for XML Schema and especially Schematron is currently
+incomplete in libxml2, but is definitely usable and actively being worked on.
+libxml2 also supports loading documents through HTTP and FTP.
 
 
 What is the difference between lxml.etree and lxml.objectify?
