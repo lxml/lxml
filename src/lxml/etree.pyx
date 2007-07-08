@@ -1917,6 +1917,13 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
 def HTML(text, _BaseParser parser=None, base_url=None):
     """Parses an HTML document from a string constant. This function can be used
     to embed "HTML literals" in Python code.
+
+    To override the parser with a different ``HTMLParser`` you can pass it to
+    the ``parser`` keyword argument.
+
+    The ``base_url`` keyword argument allows to set the original base URL of
+    the document to support relative Paths when looking up external entities
+    (DTD, XInclude, ...).
     """
     cdef _Document doc
     if parser is None:
@@ -1929,6 +1936,13 @@ def HTML(text, _BaseParser parser=None, base_url=None):
 def XML(text, _BaseParser parser=None, base_url=None):
     """Parses an XML document from a string constant. This function can be used
     to embed "XML literals" in Python code.
+
+    To override the parser with a different ``XMLParser`` you can pass it to
+    the ``parser`` keyword argument.
+
+    The ``base_url`` keyword argument allows to set the original base URL of
+    the document to support relative Paths when looking up external entities
+    (DTD, XInclude, ...).
     """
     cdef _Document doc
     if parser is None:
