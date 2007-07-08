@@ -1435,6 +1435,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(None, el.sourceline)
         self.assertEquals(None, child.sourceline)
 
+    def test_XML_base_url_docinfo(self):
+        etree = self.etree
+        root = etree.XML("<root/>", base_url="http://no/such/url")
+        docinfo = root.getroottree().docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+
+    def test_HTML_base_url_docinfo(self):
+        etree = self.etree
+        root = etree.HTML("<html/>", base_url="http://no/such/url")
+        docinfo = root.getroottree().docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+
     def test_docinfo_public(self):
         etree = self.etree
         xml_header = '<?xml version="1.0" encoding="ascii"?>'

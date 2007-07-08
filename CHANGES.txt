@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Support ``base_url`` keyword argument in ``HTML()`` and ``XML()``
+
 * Extended type support for ``objectify.E`` based on registered PyTypes.
   Supports an additional argument to ``PyType()`` that takes a conversion
   function to strings to support setting text values from arbitrary types.

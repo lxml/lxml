@@ -1914,7 +1914,7 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
 
     return _elementTreeFactory(doc, element)
 
-def HTML(text, _BaseParser parser=None):
+def HTML(text, _BaseParser parser=None, base_url=None):
     """Parses an HTML document from a string constant. This function can be used
     to embed "HTML literals" in Python code.
     """
@@ -1923,10 +1923,10 @@ def HTML(text, _BaseParser parser=None):
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
         if not isinstance(parser, HTMLParser):
             parser = __DEFAULT_HTML_PARSER
-    doc = _parseMemoryDocument(text, None, parser)
+    doc = _parseMemoryDocument(text, base_url, parser)
     return doc.getroot()
 
-def XML(text, _BaseParser parser=None):
+def XML(text, _BaseParser parser=None, base_url=None):
     """Parses an XML document from a string constant. This function can be used
     to embed "XML literals" in Python code.
     """
@@ -1935,7 +1935,7 @@ def XML(text, _BaseParser parser=None):
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
         if not isinstance(parser, XMLParser):
             parser = __DEFAULT_XML_PARSER
-    doc = _parseMemoryDocument(text, None, parser)
+    doc = _parseMemoryDocument(text, base_url, parser)
     return doc.getroot()
 
 fromstring = XML
