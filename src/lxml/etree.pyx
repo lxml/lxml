@@ -1935,7 +1935,9 @@ def HTML(text, _BaseParser parser=None, base_url=None):
 
 def XML(text, _BaseParser parser=None, base_url=None):
     """Parses an XML document from a string constant. This function can be used
-    to embed "XML literals" in Python code.
+    to embed "XML literals" in Python code, like in
+
+       >>> root = etree.XML("<root><test/></root>")
 
     To override the parser with a different ``XMLParser`` you can pass it to
     the ``parser`` keyword argument.
@@ -1952,7 +1954,21 @@ def XML(text, _BaseParser parser=None, base_url=None):
     doc = _parseMemoryDocument(text, base_url, parser)
     return doc.getroot()
 
-fromstring = XML
+def fromstring(text, _BaseParser parser=None, base_url=None):
+    """Parses an XML document from a string.
+
+    To override the default parser with a different parser you can pass it to
+    the ``parser`` keyword argument.
+
+    The ``base_url`` keyword argument allows to set the original base URL of
+    the document to support relative Paths when looking up external entities
+    (DTD, XInclude, ...).
+    """
+    cdef _Document doc
+    if parser is None:
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
+    doc = _parseMemoryDocument(text, base_url, parser)
+    return doc.getroot()
 
 def iselement(element):
     """Checks if an object appears to be a valid element object.

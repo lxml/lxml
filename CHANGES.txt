@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ``etree.fromstring()`` now supports parsing both HTML and XML, depending on
+  the parser you pass.
+
 * Support ``base_url`` keyword argument in ``HTML()`` and ``XML()``
 
 * Extended type support for ``objectify.E`` based on registered PyTypes.
