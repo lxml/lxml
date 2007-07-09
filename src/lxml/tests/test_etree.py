@@ -52,13 +52,26 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_element_names(self):
         Element = self.etree.Element
-        
         el = Element('name')
         self.assertEquals(el.tag, 'name')
         el = Element('{}name')
         self.assertEquals(el.tag, 'name')
+
+    def test_element_name_empty(self):
+        Element = self.etree.Element
+        el = Element('name')
+        self.assertRaises(ValueError, Element, '{}')
+        self.assertRaises(ValueError, setattr, el, 'tag', '{}')
+
         self.assertRaises(ValueError, Element, '{test}')
         self.assertRaises(ValueError, setattr, el, 'tag', '{test}')
+
+    def test_element_name_colon(self):
+        Element = self.etree.Element
+        self.assertRaises(ValueError, Element, 'p:name')
+
+        el = Element('name')
+        self.assertRaises(ValueError, setattr, el, 'tag', 'p:name')
 
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values

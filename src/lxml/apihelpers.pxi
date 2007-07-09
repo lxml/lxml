@@ -708,6 +708,8 @@ cdef _getNsTag(tag):
         c_ns_end = cstd.strchr(c_tag, c'}')
         if c_ns_end is NULL:
             raise ValueError, "Invalid tag name"
+        if cstd.strchr(c_ns_end, c':') is not NULL:
+            raise ValueError, "Invalid tag name"
         nslen  = c_ns_end - c_tag
         taglen = python.PyString_GET_SIZE(tag) - nslen - 2
         if taglen == 0:
@@ -717,6 +719,8 @@ cdef _getNsTag(tag):
         tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
     elif python.PyString_GET_SIZE(tag) == 0:
         raise ValueError, "Empty tag name"
+    elif cstd.strchr(c_tag, c':') is not NULL:
+        raise ValueError, "Invalid tag name"
     return ns, tag
 
 cdef object _namespacedName(xmlNode* c_node):

@@ -34,6 +34,8 @@ Features added
 Bugs fixed
 ----------
 
+* ``Element()`` did not raise an exception on tag names containing ':'
+
 * The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath
