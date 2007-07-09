@@ -69,6 +69,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_element_name_colon(self):
         Element = self.etree.Element
         self.assertRaises(ValueError, Element, 'p:name')
+        self.assertRaises(ValueError, Element, '{test}p:name')
 
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', 'p:name')
