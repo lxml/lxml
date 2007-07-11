@@ -37,7 +37,7 @@ html: inplace
 	mkdir -p doc/html
 	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
 	[ -x "`which epydoc`" ] \
-		&& (cd src && PYTHONPATH=. epydoc -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ --top http://codespeak.net/lxml/api lxml/) \
+		&& (cd src && PYTHONPATH=. epydoc -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
 # XXX What should the default be?
