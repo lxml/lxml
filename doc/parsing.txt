@@ -43,7 +43,7 @@ Note how the ``parse()`` function reads from a file-like object here.  If
 parsing is done from a real file, it is more common (and also somewhat more
 efficient) to pass a filename::
 
-  >>> tree = etree.parse("test.xml")
+  >>> tree = etree.parse("doc/test.xml")
 
 lxml can parse from a local file, an HTTP URL or an FTP URL.  It also
 auto-detects and reads gzip-compressed XML files (.gz).
