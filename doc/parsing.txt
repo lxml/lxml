@@ -24,24 +24,35 @@ Parsers
 Parsers are represented by parser objects.  There is support for parsing both
 XML and (broken) HTML.  Note that XHTML is best parsed as XML, parsing it with
 the HTML parser can lead to unexpected results.  Here is a simple example for
-XML parsing::
+parsing XML from an in-memory string::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
+
+  >>> root = etree.fromstring(xml)
+  >>> print etree.tostring(root)
+  <a xmlns="test"><b xmlns="test"/></a>
+
+To read from a file or file-like object, you can use the ``parse()`` function,
+which returns an ``ElementTree`` object::
 
   >>> tree = etree.parse(StringIO(xml))
   >>> print etree.tostring(tree.getroot())
   <a xmlns="test"><b xmlns="test"/></a>
 
 Note how the ``parse()`` function reads from a file-like object here.  If
-parsing is done from a real file, it is more common (and also more efficient)
-to pass a filename or a URL.  HTTP and FTP access is directly supported by
-libxml2, as well as gzip-compressed files (.gz).
-
-If you want to parse from memory and still provide a base URL for the document
-(e.g. to support relative paths in an XInclude), you can provide the
-``base_url`` keyword argument::
+parsing is done from a real file, it is more common (and also somewhat more
+efficient) to pass a filename::
 
   >>> tree = etree.parse("test.xml")
+
+lxml can parse from a local file, an HTTP URL or an FTP URL.  It also
+auto-detects and reads gzip-compressed XML files (.gz).
+
+If you want to parse from memory and still provide a base URL for the document
+(e.g. to support relative paths in an XInclude), you can pass the ``base_url``
+keyword argument::
+
+  >>> root = etree.fromstring(xml, base_url="http://where.it/is/from.xml")
 
 
 Parser options
