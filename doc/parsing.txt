@@ -28,9 +28,20 @@ XML parsing::
 
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
-  >>> et = etree.parse(StringIO(xml))
-  >>> print etree.tostring(et.getroot())
+  >>> tree = etree.parse(StringIO(xml))
+  >>> print etree.tostring(tree.getroot())
   <a xmlns="test"><b xmlns="test"/></a>
+
+Note how the ``parse()`` function reads from a file-like object here.  If
+parsing is done from a real file, it is more common (and also more efficient)
+to pass a filename or a URL.  HTTP and FTP access is directly supported by
+libxml2, as well as gzip-compressed files (.gz).
+
+If you want to parse from memory and still provide a base URL for the document
+(e.g. to support relative paths in an XInclude), you can provide the
+``base_url`` keyword argument::
+
+  >>> tree = etree.parse("test.xml")
 
 
 Parser options
@@ -40,8 +51,8 @@ The parsers accept a number of setup options as keyword arguments.  The above
 example is easily extended to clean up namespaces during parsing::
 
   >>> parser = etree.XMLParser(ns_clean=True)
-  >>> et     = etree.parse(StringIO(xml), parser)
-  >>> print etree.tostring(et.getroot())
+  >>> tree   = etree.parse(StringIO(xml), parser)
+  >>> print etree.tostring(tree.getroot())
   <a xmlns="test"><b/></a>
 
 The keyword arguments in the constructor are mainly based on the libxml2
@@ -81,9 +92,9 @@ version 2.6.21 or newer to take advantage of this feature::
   >>> broken_html = "<html><head><title>test<body><h1>page title</h3>"
 
   >>> parser = etree.HTMLParser()
-  >>> et     = etree.parse(StringIO(broken_html), parser)
+  >>> tree   = etree.parse(StringIO(broken_html), parser)
 
-  >>> print etree.tostring(et.getroot(), pretty_print=True)
+  >>> print etree.tostring(tree.getroot(), pretty_print=True)
   <html>
     <head>
       <title>test</title>
