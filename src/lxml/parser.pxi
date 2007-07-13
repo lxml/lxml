@@ -156,6 +156,15 @@ cdef void _setupPythonUnicode():
     l = python.PyUnicode_GET_DATA_SIZE(utext)
     buffer = python.PyUnicode_AS_DATA(utext)
     enc = _findEncodingName(buffer, l)
+    if enc == NULL:
+        # apparently, libxml2 can't detect UTF16LE on some systems
+        if l >= 4 and \
+               buffer[0] == c'<' and buffer[1] == c'\0' and \
+               buffer[2] == c't' and buffer[3] == c'\0':
+            enc = "UTF16LE"
+        else:
+            # not my fault, it's YOUR broken system :)
+            return
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     if enchandler is not NULL:
         global _UNICODE_ENCODING
@@ -174,6 +183,8 @@ cdef char* _findEncodingName(char* buffer, int size):
         return "UCS-4LE"
     elif enc == tree.XML_CHAR_ENCODING_UCS4BE:
         return "UCS-4BE"
+    elif enc == tree.XML_CHAR_ENCODING_NONE:
+        return NULL
     else:
         return tree.xmlGetCharEncodingName(enc)
 
