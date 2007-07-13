@@ -144,7 +144,7 @@ _UNICODE_ENCODING = NULL
 
 cdef void _setupPythonUnicode():
     """Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
-    strings if libxmls supports reading native Python unicode.  This depends
+    strings if libxml2 supports reading native Python unicode.  This depends
     on iconv and the local Python installation, so we simply check if we find
     a matching encoding handler.
     """
