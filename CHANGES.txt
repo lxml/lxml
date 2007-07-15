@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Parsers now support stripping PIs (keyword argument 'remove_pis')
+
 * ``etree.fromstring()`` now supports parsing both HTML and XML, depending on
   the parser you pass.
 
