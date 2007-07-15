@@ -41,6 +41,9 @@ Bugs fixed
 
 * ``Element()`` did not raise an exception on tag names containing ':'
 
+* ``Element.getiterator(tag)`` did not accept ``Comment`` and
+  ``ProcessingInstruction`` as tags. It also accepts ``Element`` now.
+
 * The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath

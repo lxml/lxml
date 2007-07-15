@@ -1299,6 +1299,64 @@ class ETreeOnlyTestCase(HelperTestCase):
             [d, f],
             list(a.getiterator('{b}*')))
 
+    def test_getiterator_filter_entities(self):
+        Element = self.etree.Element
+        Entity = self.etree.Entity
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        entity_b = Entity("TEST-b")
+        b.append(entity_b)
+
+        self.assertEquals(
+            [entity_b],
+            list(a.getiterator(Entity)))
+
+        entity_a = Entity("TEST-a")
+        a.append(entity_a)
+
+        self.assertEquals(
+            [entity_b, entity_a],
+            list(a.getiterator(Entity)))
+
+        self.assertEquals(
+            [entity_b],
+            list(b.getiterator(Entity)))
+
+    def test_getiterator_filter_element(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        PI = self.etree.PI
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        a.append(Comment("test"))
+        a.append(PI("pi", "content"))
+        c = SubElement(a, 'c')
+
+        self.assertEquals(
+            [a, b, c],
+            list(a.getiterator(Element)))
+
+    def test_getiterator_filter_all_comment_pi(self):
+        # ElementTree iterates over everything here
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        PI = self.etree.PI
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        a.append(Comment("test"))
+        a.append(PI("pi", "content"))
+        c = SubElement(a, 'c')
+
+        self.assertEquals(
+            [a, b, c],
+            list(a.getiterator('*')))
+
     def test_findall_ns(self):
         XML = self.etree.XML
         root = XML('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')

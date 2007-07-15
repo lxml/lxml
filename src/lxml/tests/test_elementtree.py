@@ -1455,6 +1455,70 @@ class ETreeTestCaseBase(HelperTestCase):
             [a2],
             list(c.getiterator('a')))
 
+    def test_getiterator_filter_all(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [a, b, d, c, e],
+            list(a.getiterator('*')))
+
+    def test_getiterator_filter_comment(self):
+        Element = self.etree.Element
+        Comment = self.etree.Comment
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        comment_b = Comment("TEST-b")
+        b.append(comment_b)
+
+        self.assertEquals(
+            [comment_b],
+            list(a.getiterator(Comment)))
+
+        comment_a = Comment("TEST-a")
+        a.append(comment_a)
+
+        self.assertEquals(
+            [comment_b, comment_a],
+            list(a.getiterator(Comment)))
+
+        self.assertEquals(
+            [comment_b],
+            list(b.getiterator(Comment)))
+
+    def test_getiterator_filter_pi(self):
+        Element = self.etree.Element
+        PI = self.etree.ProcessingInstruction
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        pi_b = PI("TEST-b")
+        b.append(pi_b)
+
+        self.assertEquals(
+            [pi_b],
+            list(a.getiterator(PI)))
+
+        pi_a = PI("TEST-a")
+        a.append(pi_a)
+
+        self.assertEquals(
+            [pi_b, pi_a],
+            list(a.getiterator(PI)))
+
+        self.assertEquals(
+            [pi_b],
+            list(b.getiterator(PI)))
+
     def test_getiterator_with_text(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
