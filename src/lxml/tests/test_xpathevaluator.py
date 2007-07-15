@@ -23,7 +23,7 @@ class ETreeXPathTestCase(HelperTestCase):
                           tree.xpath('number(/a)'))
         tree = self.parse('<a>A</a>')
         actual = str(tree.xpath('number(/a)'))
-        expected = ['nan', '1.#qnan']
+        expected = ['nan', '1.#qnan', 'nanq']
         if not actual.lower() in expected:
             self.fail('Expected a NAN value, got %s' % actual)
         
