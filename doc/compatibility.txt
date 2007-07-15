@@ -106,8 +106,14 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   while etree will read them in and treat them as Comment or
   ProcessingInstruction elements respectively.  This is especially visible
   where comments are found inside text content, which is then split by the
-  Comment element.  You can disable this behaviour by passing the boolean
-  ``remove_comments`` keyword argument to the parser you use.
+  Comment element.
+
+  You can disable this behaviour by passing the boolean ``remove_comments``
+  and/or ``remove_pis`` keyword arguments to the parser you use.  For
+  convenience and to support portable code, you can also use the
+  ``etree.ETCompatXMLParser`` instead of the default ``etree.XMLParser``.  It
+  tries to provide a default setup that is as close to the ElementTree parser
+  as possible.
 
 * ElementTree has a bug when serializing an empty Comment (no text argument
   given) to XML, etree serializes this successfully.

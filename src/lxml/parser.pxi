@@ -742,6 +742,25 @@ cdef class XMLParser(_BaseParser):
 
         self._parse_options = parse_options
 
+cdef class ETCompatXMLParser(XMLParser):
+    """An XML parser with an ElementTree compatible default setup.  See the
+    XMLParser class for details.
+
+    This parser defaults to removing processing instructions and comments from
+    the tree.
+    """
+    def __init__(self, attribute_defaults=False, dtd_validation=False,
+                 load_dtd=False, no_network=True, ns_clean=False,
+                 recover=False, remove_blank_text=False, compact=True,
+                 resolve_entities=True, remove_comments=True,
+                 remove_pis=True):
+        XMLParser.__init__(self,
+                 attribute_defaults, dtd_validation,
+                 load_dtd, no_network, ns_clean,
+                 recover, remove_blank_text, compact,
+                 resolve_entities, remove_comments,
+                 remove_pis)
+
 cdef xmlDoc* _internalParseDoc(char* c_text, int options,
                                _ResolverContext context) except NULL:
     # internal parser function for XSLT
