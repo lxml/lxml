@@ -235,6 +235,7 @@ cdef class iterparse(_BaseParser):
     * no_network         - prevent network access
     * remove_blank_text  - discard blank text nodes
     * remove_comments    - discard comments
+    * remove_pis         - discard processing instructions
     """
     cdef object _source
     cdef object _filename
@@ -242,7 +243,7 @@ cdef class iterparse(_BaseParser):
     def __init__(self, source, events=("end",), tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=False, remove_blank_text=False,
-                 remove_comments=False):
+                 remove_comments=False, remove_pis=False):
         cdef _IterparseContext context
         cdef char* c_filename
         cdef int parse_options
@@ -259,7 +260,8 @@ cdef class iterparse(_BaseParser):
             c_filename = NULL
 
         self._source = source
-        _BaseParser.__init__(self, remove_comments, _IterparseContext)
+        _BaseParser.__init__(self, remove_comments, remove_pis,
+                             _IterparseContext)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:

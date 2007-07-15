@@ -187,6 +187,26 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<a><b><c/></b></a>',
             tostring(tree))
 
+    def test_parse_remove_pis(self):
+        parse = self.etree.parse
+        tostring = self.etree.tostring
+        XMLParser = self.etree.XMLParser
+
+        xml = '<?test?><a><?A?><b><?B?><c/></b><?C?></a><?tail?>'
+
+        f = StringIO(xml)
+        tree = parse(f)
+        self.assertEquals(
+            xml,
+            tostring(tree))
+
+        f = StringIO(xml)
+        parser = XMLParser(remove_pis=True)
+        tree = parse(f, parser)
+        self.assertEquals(
+            '<a><b><c/></b></a>',
+            tostring(tree))
+
     def test_parse_parser_type_error(self):
         # ET raises IOError only
         parse = self.etree.parse

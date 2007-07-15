@@ -372,7 +372,8 @@ cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
     cdef python.PyThread_type_lock _parser_lock
 
-    def __init__(self, remove_comments, context_class=_ResolverContext):
+    def __init__(self, remove_comments, remove_pis,
+                 context_class=_ResolverContext):
         cdef xmlParserCtxt* pctxt
         if isinstance(self, HTMLParser):
             self._parser_type = LXML_HTML_PARSER
@@ -391,6 +392,8 @@ cdef class _BaseParser:
         if pctxt.sax != NULL:
             if remove_comments:
                 pctxt.sax.comment = NULL
+            if remove_pis:
+                pctxt.sax.processingInstruction = NULL
             # hard switch-off for CDATA nodes => makes them plain text
             pctxt.sax.cdataBlock = NULL
 
@@ -699,6 +702,7 @@ cdef class XMLParser(_BaseParser):
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
     * remove_comments    - discard comments
+    * remove_pis         - discard processing instructions
     * compact            - safe memory for short text content (default: True)
     * resolve_entities   - replace entities by their text value (default: True)
 
@@ -709,9 +713,10 @@ cdef class XMLParser(_BaseParser):
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
-                 resolve_entities=True, remove_comments=False):
+                 resolve_entities=True, remove_comments=False,
+                 remove_pis=False):
         cdef int parse_options
-        _BaseParser.__init__(self, remove_comments)
+        _BaseParser.__init__(self, remove_comments, remove_pis)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -833,15 +838,16 @@ cdef class HTMLParser(_BaseParser):
     * no_network         - prevent network access (default: True)
     * remove_blank_text  - discard empty text nodes
     * remove_comments    - discard comments
+    * remove_pis         - discard processing instructions
     * compact            - safe memory for short text content (default: True)
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
     def __init__(self, recover=True, no_network=True, remove_blank_text=False,
-                 compact=True, remove_comments=False):
+                 compact=True, remove_comments=False, remove_pis=False):
         cdef int parse_options
-        _BaseParser.__init__(self, remove_comments)
+        _BaseParser.__init__(self, remove_comments, remove_pis)
 
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
