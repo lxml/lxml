@@ -157,8 +157,18 @@ cdef void _setupPythonUnicode():
     buffer = python.PyUnicode_AS_DATA(utext)
     enc = _findEncodingName(buffer, l)
     if enc == NULL:
-        # not my fault, it's YOUR broken system :)
-        return
+        # apparently, libxml2 can't detect UTF-16 on some systems
+        if l >= 4 and \
+               buffer[0] == c'<' and buffer[1] == c'\0' and \
+               buffer[2] == c't' and buffer[3] == c'\0':
+            enc = "UTF-16LE"
+        elif l >= 4 and \
+               buffer[0] == c'\0' and buffer[1] == c'<' and \
+               buffer[2] == c'\0' and buffer[3] == c't':
+            enc = "UTF-16BE"
+        else:
+            # not my fault, it's YOUR broken system :)
+            return
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     if enchandler is not NULL:
         global _UNICODE_ENCODING
@@ -479,8 +489,8 @@ cdef class _BaseParser:
         cdef int buffer_len
         cdef char* c_text
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
-        if py_buffer_len > python.INT_MAX:
-            text_utf = _utf8(utext)
+        if py_buffer_len > python.INT_MAX or _UNICODE_ENCODING is NULL:
+            text_utf = python.PyUnicode_AsUTF8String(utext)
             py_buffer_len = python.PyString_GET_SIZE(text_utf)
             return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
         buffer_len = py_buffer_len
