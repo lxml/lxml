@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ElementTree compatible parser ``ETCompatXMLParser`` strips processing
+  instructions and comments while parsing XML
+
 * Parsers now support stripping PIs (keyword argument 'remove_pis')
 
 * ``etree.fromstring()`` now supports parsing both HTML and XML, depending on
@@ -38,6 +41,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* Parsing from Python Unicode strings failed on some platforms
 
 * ``Element()`` did not raise an exception on tag names containing ':'
 
