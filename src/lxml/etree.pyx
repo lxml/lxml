@@ -214,25 +214,24 @@ cdef class QName:
     """
     cdef readonly object text
     def __init__(self, text_or_uri, tag=None):
-        cdef int valid
-        valid = 0
         if tag is not None:
+            _tagValidOrRaise(_utf8(tag))
             text_or_uri = "{%s}%s" % (text_or_uri, tag)
-            valid = _pyTagNameIsValid(_utf8(tag))
         else:
             if not _isString(text_or_uri):
                 text_or_uri = str(text_or_uri)
-            valid = _pyTagNameIsValid(_utf8(text_or_uri))
-        if not valid:
-            raise ValueError, "QName is invalid"
+            _tagValidOrRaise(_utf8(text_or_uri))
         self.text = text_or_uri
     def __str__(self):
         return self.text
     def __hash__(self):
         return self.text.__hash__()
     def __richcmp__(one, other, int op):
-        return python.PyObject_RichCompare(
-            str(one), str(other), op)
+        if not _isString(one):
+            one = str(one)
+        if not _isString(other):
+            other = str(other)
+        return python.PyObject_RichCompare(one, other, op)
 
 
 # forward declaration of _BaseParser, see parser.pxi
@@ -679,9 +678,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return self._tag
     
         def __set__(self, value):
-            ns, text = _getNsTag(value)
+            ns, name = _getNsTag(value)
+            _tagValidOrRaise(name)
             self._tag = value
-            tree.xmlNodeSetName(self._c_node, _cstr(text))
+            tree.xmlNodeSetName(self._c_node, _cstr(name))
             if ns is None:
                 self._c_node.ns = NULL
             else:
@@ -1902,12 +1902,13 @@ def Entity(name):
 
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
-    """Subelement factory. This function creates an element instance, and appends it to an
-    existing element.
+    """Subelement factory.  This function creates an element instance, and
+    appends it to an existing element.
     """
     cdef xmlNode*  c_node
     cdef _Document doc
     ns_utf, name_utf = _getNsTag(_tag)
+    _tagValidOrRaise(name_utf)
     doc = _parent._doc
     c_node = _createElement(doc._c_doc, name_utf)
     tree.xmlAddChild(_parent._c_node, c_node)

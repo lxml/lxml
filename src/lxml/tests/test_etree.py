@@ -74,6 +74,56 @@ class ETreeOnlyTestCase(HelperTestCase):
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', 'p:name')
 
+    def test_element_name_space(self):
+        Element = self.etree.Element
+        self.assertRaises(ValueError, Element, ' name ')
+        self.assertRaises(ValueError, Element, 'na me')
+        self.assertRaises(ValueError, Element, '{test} name')
+
+        el = Element('name')
+        self.assertRaises(ValueError, setattr, el, 'tag', ' name ')
+
+    def test_subelement_name_empty(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, '{}')
+        self.assertRaises(ValueError, SubElement, el, '{test}')
+
+    def test_subelement_name_colon(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, 'p:name')
+        self.assertRaises(ValueError, SubElement, el, '{test}p:name')
+
+    def test_subelement_name_space(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, ' name ')
+        self.assertRaises(ValueError, SubElement, el, 'na me')
+        self.assertRaises(ValueError, SubElement, el, '{test} name')
+
+    def test_qname_empty(self):
+        QName = self.etree.QName
+        self.assertRaises(ValueError, QName, '')
+        self.assertRaises(ValueError, QName, 'test', '')
+
+    def test_qname_colon(self):
+        QName = self.etree.QName
+        self.assertRaises(ValueError, QName, 'p:name')
+        self.assertRaises(ValueError, QName, 'test', 'p:name')
+
+    def test_qname_space(self):
+        QName = self.etree.QName
+        self.assertRaises(ValueError, QName, ' name ')
+        self.assertRaises(ValueError, QName, 'na me')
+        self.assertRaises(ValueError, QName, 'test', ' name')
+
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values
         # lxml.etree allows only strings

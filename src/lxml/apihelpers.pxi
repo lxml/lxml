@@ -99,8 +99,7 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     """
     cdef xmlNode* c_node
     ns_utf, name_utf = _getNsTag(tag)
-    if not _pyTagNameIsValid(name_utf):
-        raise ValueError, "Invalid tag name %r" % name_utf.decode("UTF-8")
+    _tagValidOrRaise(name_utf)
     if doc is not None:
         c_doc = doc._c_doc
     elif c_doc is NULL:
@@ -145,8 +144,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     if attrib:
         for name, value in attrib.items():
             attr_ns_utf, attr_name_utf = _getNsTag(name)
-            if not _pyTagNameIsValid(attr_name_utf):
-                raise ValueError, "Invalid attribute name"
+            _attributeValidOrRaise(attr_name_utf)
             value_utf = _utf8(value)
             if attr_ns_utf is None:
                 tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
@@ -201,9 +199,8 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef char* c_value
     cdef char* c_tag
     ns, tag = _getNsTag(key)
+    _attributeValidOrRaise(tag)
     c_tag = _cstr(tag)
-    if not _tagNameIsValid(c_tag):
-        raise ValueError, "Invalid attribute name"
     value = _utf8(value)
     c_value = _cstr(value)
     if ns is None:
@@ -714,8 +711,6 @@ cdef _getNsTag(tag):
         c_ns_end = cstd.strchr(c_tag, c'}')
         if c_ns_end is NULL:
             raise ValueError, "Invalid tag name"
-        if cstd.strchr(c_ns_end, c':') is not NULL:
-            raise ValueError, "Invalid tag name"
         nslen  = c_ns_end - c_tag
         taglen = python.PyString_GET_SIZE(tag) - nslen - 2
         if taglen == 0:
@@ -725,15 +720,25 @@ cdef _getNsTag(tag):
         tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
     elif python.PyString_GET_SIZE(tag) == 0:
         raise ValueError, "Empty tag name"
-    elif cstd.strchr(c_tag, c':') is not NULL:
-        raise ValueError, "Invalid tag name"
     return ns, tag
 
-cdef int _pyTagNameIsValid(name_utf8):
-    return _tagNameIsValid(_cstr(name_utf8))
+cdef int _pyXmlNameIsValid(name_utf8):
+    return _xmlNameIsValid(_cstr(name_utf8))
 
-cdef int _tagNameIsValid(char* c_name):
+cdef int _xmlNameIsValid(char* c_name):
     return tree.xmlValidateNCName(c_name, 0) == 0
+
+cdef int _tagValidOrRaise(tag_utf) except -1:
+    if not _pyXmlNameIsValid(tag_utf):
+        raise ValueError, "Invalid tag name %r" % \
+              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+    return 0
+
+cdef int _attributeValidOrRaise(name_utf) except -1:
+    if not _pyXmlNameIsValid(name_utf):
+        raise ValueError, "Invalid attribute name %r" % \
+              python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict')
+    return 0
 
 cdef object _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
