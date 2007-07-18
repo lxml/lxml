@@ -42,6 +42,8 @@ Features added
 Bugs fixed
 ----------
 
+* lxml.etree did not check tag/attribute names
+
 * Parsing from Python Unicode strings failed on some platforms
 
 * ``Element()`` did not raise an exception on tag names containing ':'

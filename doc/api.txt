@@ -268,14 +268,14 @@ argument::
 By default, lxml (just as ElementTree) outputs the XML declaration only if it
 is required by the standard::
 
-  >>> unicode_root = etree.Element(u"t\u1234st")
-  >>> unicode_root.text = u"t\u4321st"
+  >>> unicode_root = etree.Element(u"t\u3120st")
+  >>> unicode_root.text = u"t\u0A0Ast"
   >>> etree.tostring(unicode_root, encoding="utf-8")
-  '<t\xe1\x88\xb4st>t\xe4\x8c\xa1st</t\xe1\x88\xb4st>'
+  '<t\xe3\x84\xa0st>t\xe0\xa8\x8ast</t\xe3\x84\xa0st>'
 
   >>> print etree.tostring(unicode_root, encoding="iso-8859-1")
   <?xml version='1.0' encoding='iso-8859-1'?>
-  <t&#4660;st>t&#17185;st</t&#4660;st>
+  <t&#12576;st>t&#2570;st</t&#12576;st>
 
 Also see the general remarks on `Unicode support`_.
 
@@ -288,20 +288,21 @@ keyword argument for the serialisation::
   <?xml version='1.0' encoding='ASCII'?>
   <root><test/></root>
 
-  >>> etree.tostring(unicode_root, encoding="utf-8",
+  >>> unicode_root.clear()
+  >>> etree.tostring(unicode_root, encoding="UTF-16LE",
   ...                              xml_declaration=False)
-  '<t\xe1\x88\xb4st>t\xe4\x8c\xa1st</t\xe1\x88\xb4st>'
+  '<\x00t\x00 1s\x00t\x00/\x00>\x00'
 
 Note that a standard compliant XML parser will not consider the last line
 well-formed XML if the encoding is not explicitly provided somehow, e.g. in an
 underlying transport protocol::
 
-  >>> notxml = etree.tostring(unicode_root, encoding="utf-8",
+  >>> notxml = etree.tostring(unicode_root, encoding="UTF-16LE",
   ...                                       xml_declaration=False)
-  >>> etree.XML(notxml)
+  >>> root = etree.XML(notxml)
   Traceback (most recent call last):
     ...
-  XMLSyntaxError: error parsing attribute name, line 1, column 3
+  XMLSyntaxError: StartTag: invalid element name, line 1, column 2
 
 
 XInclude and ElementInclude

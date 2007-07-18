@@ -222,6 +222,7 @@ cdef extern from "libxml/tree.h":
     cdef int xmlKeepBlanksDefault(int val)
     cdef char* xmlNodeGetBase(xmlDoc* doc, xmlNode* node)
     cdef char* xmlBuildURI(char* href, char* base)
+    cdef int xmlValidateNCName(char* value, int space)
 
 cdef extern from "libxml/valid.h":
     cdef xmlAttr* xmlGetID(xmlDoc* doc, char* ID)

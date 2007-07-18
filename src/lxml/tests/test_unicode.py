@@ -5,9 +5,9 @@ from common_imports import StringIO, etree, SillyFileLike
 
 ascii_uni = u'a'
 
-uni = u'Ã¡\uF8D2' # klingon etc.
+uni = u'Ã\u0680\u3120' # some non-ASCII characters
 
-uxml = u"<test><title>test Ã¡\uF8D2</title><h1>page Ã¡\uF8D2 title</h1></test>"
+uxml = u"<test><title>test Ã¡\u3120</title><h1>page Ã¡\u3120 title</h1></test>"
 
 class UnicodeTestCase(unittest.TestCase):
     def test_unicode_xml(self):
