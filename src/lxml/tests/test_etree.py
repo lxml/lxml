@@ -125,14 +125,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, QName, 'test', ' name')
 
     def test_attribute_set(self):
-        # ElementTree accepts arbitrary attribute values
-        # lxml.etree allows only strings
         Element = self.etree.Element
-
         root = Element("root")
         root.set("attr", "TEST")
         self.assertEquals("TEST", root.get("attr"))
+
+    def test_attribute_set_invalid(self):
+        # ElementTree accepts arbitrary attribute values
+        # lxml.etree allows only strings
+        Element = self.etree.Element
+        root = Element("root")
         self.assertRaises(TypeError, root.set, "newattr", 5)
+        self.assertRaises(TypeError, root.set, "newattr", None)
 
     def test_attrib_pop(self):
         ElementTree = self.etree.ElementTree
