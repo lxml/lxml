@@ -214,10 +214,17 @@ cdef class QName:
     """
     cdef readonly object text
     def __init__(self, text_or_uri, tag=None):
+        cdef int valid
+        valid = 0
         if tag is not None:
             text_or_uri = "{%s}%s" % (text_or_uri, tag)
-        elif not _isString(text_or_uri):
-            text_or_uri = str(text_or_uri)
+            valid = _pyTagNameIsValid(_utf8(tag))
+        else:
+            if not _isString(text_or_uri):
+                text_or_uri = str(text_or_uri)
+            valid = _pyTagNameIsValid(_utf8(text_or_uri))
+        if not valid:
+            raise ValueError, "QName is invalid"
         self.text = text_or_uri
     def __str__(self):
         return self.text
