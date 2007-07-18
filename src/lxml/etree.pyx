@@ -1865,8 +1865,8 @@ def Comment(text=None):
     return _elementFactory(doc, c_node)
 
 def ProcessingInstruction(target, text=None):
-    """Comment element factory. This factory function creates a special element that will
-    be serialized as an XML comment.
+    """ProcessingInstruction element factory. This factory function creates a
+    special element that will be serialized as an XML processing instruction.
     """
     cdef _Document doc
     cdef xmlNode*  c_node
