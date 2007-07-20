@@ -215,16 +215,16 @@ error level::
 
   >>> log = e.error_log.filter_from_level(etree.ErrorLevels.FATAL)
   >>> print log
-  <string>:4:FATAL:PARSER:ERR_TAG_NAME_MISMATCH: Opening and ending tag mismatch: a line 3 and root
-  <string>:5:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag root line 2
+  <string>:4:8:FATAL:PARSER:ERR_TAG_NAME_MISMATCH: Opening and ending tag mismatch: a line 3 and root
+  <string>:5:1:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag root line 2
 
 This might look a little cryptic at first, but it is the information that
 libxml2 gives you.  At least the message at the end should give you a hint
 what went wrong and you can see that the fatal errors (FATAL) happened during
-parsing (PARSER) lines 4 and 5 of a string (<string>, or the filename if
-available).  Here, PARSER is the so-called error domain, see
-``lxml.etree.ErrorDomains`` for that.  You can get it from a log entry like
-this::
+parsing (PARSER) lines 4, column 8 and line 5, column 1 of a string (<string>,
+or the filename if available).  Here, PARSER is the so-called error domain,
+see ``lxml.etree.ErrorDomains`` for that.  You can get it from a log entry
+like this::
 
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename

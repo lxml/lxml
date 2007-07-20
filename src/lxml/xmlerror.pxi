@@ -35,9 +35,9 @@ cdef void connectErrorLog(void* log):
 cdef class _LogEntry:
     cdef readonly object domain
     cdef readonly object type
+    cdef readonly object level
     cdef readonly object line
     cdef readonly object column
-    cdef readonly object level
     cdef readonly object message
     cdef readonly object filename
 
@@ -63,12 +63,13 @@ cdef class _LogEntry:
         self.type    = type
         self.level   = level
         self.line    = line
+        self.column  = 0
         self.message = message
         self.filename = filename
 
     def __repr__(self):
-        return "%s:%d:%s:%s:%s: %s" % (
-            self.filename, self.line, self.level_name,
+        return "%s:%d:%d:%s:%s:%s: %s" % (
+            self.filename, self.line, self.column, self.level_name,
             self.domain_name, self.type_name, self.message)
 
     property domain_name:

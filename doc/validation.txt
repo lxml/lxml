@@ -64,7 +64,7 @@ Now you can use it to validate documents::
 The reason for the validation failure can be found in the error log::
 
   >>> print dtd.error_log.filter_from_errors()[0]
-  <string>:1:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
+  <string>:1:0:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
 
 
 RelaxNG
@@ -131,7 +131,7 @@ messages::
 
   >>> log = relaxng.error_log
   >>> print log.last_error
-  <string>:1:ERROR:RELAXNGV:ERR_LT_IN_ATTRIBUTE: Did not expect element c there
+  <string>:1:0:ERROR:RELAXNGV:ERR_LT_IN_ATTRIBUTE: Did not expect element c there
 
 You can see that the error (ERROR) happened during RelaxNG validation
 (RELAXNGV).  The message then tells you what went wrong.  Note that this error
