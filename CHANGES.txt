@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Schematron validation
+
 * ElementTree compatible parser ``ETCompatXMLParser`` strips processing
   instructions and comments while parsing XML
 
