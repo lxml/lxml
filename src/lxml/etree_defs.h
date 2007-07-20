@@ -7,65 +7,80 @@
 
 /* Py_ssize_t support was added in Python 2.5 */
 #if PY_VERSION_HEX < 0x02050000
-#ifndef PY_SSIZE_T_MAX /* patched Pyrex? */
-  typedef int Py_ssize_t;
-  #define PY_SSIZE_T_MAX INT_MAX
-  #define PY_SSIZE_T_MIN INT_MIN
-  #define PyInt_FromSsize_t(z) PyInt_FromLong(z)
-  #define PyInt_AsSsize_t(o)   PyInt_AsLong(o)
-#endif
+#  ifndef PY_SSIZE_T_MAX /* patched Pyrex? */
+     typedef int Py_ssize_t;
+#    define PY_SSIZE_T_MAX INT_MAX
+#    define PY_SSIZE_T_MIN INT_MIN
+#    define PyInt_FromSsize_t(z) PyInt_FromLong(z)
+#    define PyInt_AsSsize_t(o)   PyInt_AsLong(o)
+#  endif
 #endif
 
 /* Threading can crash under Python <= 2.4.1 */
 #if PY_VERSION_HEX < 0x02040200
-#ifndef WITHOUT_THREADING
-  #define WITHOUT_THREADING
-#endif
-#endif
-
-#ifdef WITHOUT_THREADING
-  #define PyEval_SaveThread() (NULL)
-  #define PyEval_RestoreThread(state)
-  #define PyGILState_Ensure() (PyGILState_UNLOCKED)
-  #define PyGILState_Release(state)
+#  ifndef WITHOUT_THREADING
+#    define WITHOUT_THREADING
+#  endif
 #endif
 
 #ifdef WITHOUT_THREADING
-  #define ENABLE_THREADING 0
+#  define PyEval_SaveThread() (NULL)
+#  define PyEval_RestoreThread(state)
+#  define PyGILState_Ensure() (PyGILState_UNLOCKED)
+#  define PyGILState_Release(state)
+#endif
+
+#ifdef WITHOUT_THREADING
+#  define ENABLE_THREADING 0
 #else
-  #define ENABLE_THREADING 1
+#  define ENABLE_THREADING 1
 #endif
 
 /* libxml2 version specific setup */
 #include "libxml/xmlversion.h"
 #if LIBXML_VERSION < 20621
 /* (X|HT)ML_PARSE_COMPACT were added in libxml2 2.6.21 */
-#define XML_PARSE_COMPACT  0
-#define HTML_PARSE_COMPACT 0
+#  define XML_PARSE_COMPACT  0
+#  define HTML_PARSE_COMPACT 0
 
 /* HTML_PARSE_RECOVER was added in libxml2 2.6.21 */
-#define HTML_PARSE_RECOVER XML_PARSE_RECOVER
+#  define HTML_PARSE_RECOVER XML_PARSE_RECOVER
 #endif
 
 /* added to xmlsave API in libxml2 2.6.23 */
 #if LIBXML_VERSION < 20623
-#define xmlSaveToBuffer(buffer, encoding, options)
+#  define xmlSaveToBuffer(buffer, encoding, options)
 #endif
 
 /* added to xmlsave API in libxml2 2.6.22 */
 #if LIBXML_VERSION < 20622
-#define XML_SAVE_NO_EMPTY   1<<2, /* no empty tags */
-#define XML_SAVE_NO_XHTML   1<<3  /* disable XHTML1 specific rules */
+#  define XML_SAVE_NO_EMPTY   1<<2, /* no empty tags */
+#  define XML_SAVE_NO_XHTML   1<<3  /* disable XHTML1 specific rules */
 #endif
 
 /* added to xmlsave API in libxml2 2.6.21 */
 #if LIBXML_VERSION < 20621
-#define XML_SAVE_NO_DECL    1<<1, /* drop the xml declaration */
+#  define XML_SAVE_NO_DECL    1<<1, /* drop the xml declaration */
 #endif
 
-/* added to xmlsave API in libxml2 2.6.17 */
-#if LIBXML_VERSION < 20617
-#define XML_SAVE_FORMAT    1<<0, /* format save output */
+/* schematron was added in libxml2 2.6.21 */
+#ifdef LIBXML_SCHEMATRON_ENABLED
+#  define ENABLE_SCHEMATRON 1
+#else
+#  define ENABLE_SCHEMATRON 0
+#  define XML_SCHEMATRON_OUT_QUIET 0
+#  define XML_SCHEMATRON_OUT_XML 0
+   typedef void xmlSchematron;
+   typedef void xmlSchematronParserCtxt;
+   typedef void xmlSchematronValidCtxt;
+#  define xmlSchematronNewDocParserCtxt(doc) NULL
+#  define xmlSchematronNewParserCtxt(file) NULL
+#  define xmlSchematronParse(ctxt) NULL
+#  define xmlSchematronFreeParserCtxt(ctxt)
+#  define xmlSchematronFree(schema)
+#  define xmlSchematronNewValidCtxt(schema, options) NULL
+#  define xmlSchematronValidateDoc(ctxt, doc) 0
+#  define xmlSchematronFreeValidCtxt(ctxt)
 #endif
 
 /* work around MSDEV 6.0 */

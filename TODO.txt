@@ -51,8 +51,6 @@ Features
 lxml 2.0
 ========
 
-* reformat error log lines, add column number
-
 * always use '<string>' as URL when tree was parsed from string? (can libxml2
   handle this?)
 
@@ -62,8 +60,6 @@ lxml 2.0
 
 * remove first 'context' argument from extension functions
 
-* find a way to integrate Schematron (if it's available)
-
 * always use ns-prefixed type names in objectify's ``xsi:type`` attributes
 
 * remove ``findOrBuildNodeNs()`` from C-API (replaced by
@@ -71,7 +67,7 @@ lxml 2.0
 
 * follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
 
-* clean support for entities (maybe an Entity element class?)
+* clean support for entities (is the Entity element class enough?)
 
 
 Changes in 2.0
