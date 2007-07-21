@@ -80,7 +80,10 @@ cdef class DTD(_Validator):
         self._error_log.disconnect()
         if ret == -1:
             raise DTDValidateError, "Internal error in DTD validation"
-        return ret == 1
+        if ret == 1:
+            return True
+        else:
+            return False
 
 
 cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:

@@ -55,11 +55,11 @@ Now you can use it to validate documents::
 
   >>> root = etree.XML("<b/>")
   >>> print dtd.validate(root)
-  1
+  True
 
   >>> root = etree.XML("<b><a/></b>")
   >>> print dtd.validate(root)
-  0
+  False
 
 The reason for the validation failure can be found in the error log::
 
@@ -96,12 +96,12 @@ not::
   >>> valid = StringIO('<a><b></b></a>')
   >>> doc = etree.parse(valid)
   >>> relaxng.validate(doc)
-  1
+  True
 
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
   >>> relaxng.validate(doc2)
-  0
+  False
 
 Calling the schema object has the same effect as calling its validate
 method. This is sometimes used in conditional statements::
@@ -144,9 +144,9 @@ Similar to XSLT, there's also a less efficient but easier shortcut method to
 do one-shot RelaxNG validation::
 
   >>> doc.relaxng(relaxng_doc)
-  1
+  True
   >>> doc2.relaxng(relaxng_doc)
-  0
+  False
 
 
 XMLSchema
@@ -176,12 +176,12 @@ false if not::
   >>> valid = StringIO('<a><b></b></a>')
   >>> doc = etree.parse(valid)
   >>> xmlschema.validate(doc)
-  1
+  True
 
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
   >>> xmlschema.validate(doc2)
-  0
+  False
 
 Calling the schema object has the same effect as calling its validate method.
 This is sometimes used in conditional statements::
@@ -224,9 +224,9 @@ Similar to XSLT and RelaxNG, there's also a less efficient but easier shortcut
 method to do XML Schema validation::
 
   >>> doc.xmlschema(xmlschema_doc)
-  1
+  True
   >>> doc2.xmlschema(xmlschema_doc)
-  0
+  False
 
 
 Schematron
@@ -264,12 +264,12 @@ not::
 
   >>> doc = etree.parse(valid)
   >>> schematron.validate(doc)
-  1
+  True
 
   >>> etree.SubElement(doc.getroot(), "Percent").text = "10"
 
   >>> schematron.validate(doc)
-  0
+  False
 
 Calling the schema object has the same effect as calling its validate method.
 This is sometimes used in conditional statements::

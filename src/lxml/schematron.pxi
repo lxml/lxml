@@ -151,4 +151,7 @@ cdef class Schematron(_Validator):
         self._error_log.disconnect()
         if ret == -1:
             raise SchematronValidateError, "Internal error in Schematron validation"
-        return ret == 0
+        if ret == 0:
+            return True
+        else:
+            return False

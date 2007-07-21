@@ -108,4 +108,7 @@ cdef class XMLSchema(_Validator):
         self._error_log.disconnect()
         if ret == -1:
             raise XMLSchemaValidateError, "Internal error in XML Schema validation."
-        return ret == 0
+        if ret == 0:
+            return True
+        else:
+            return False
