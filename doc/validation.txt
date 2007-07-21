@@ -11,10 +11,9 @@ names.
 .. _`Relax NG`:   http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 
-There is also initial support for Schematron_.  However, it is currently
-disabled in lxml builds due to insufficiencies in the implementation as of
-libxml2 2.6.27.  To enable it when you build from sources, you currently have
-to uncomment the include line at the end of the file ``src/lxml/etree.pyx``.
+There is also initial support for Schematron_.  However, it does not currently
+support error reporting in the validation phase due to insufficiencies in the
+implementation as of libxml2 2.6.29.
 
 .. _Schematron:   http://www.ascc.net/xml/schematron
 
@@ -23,6 +22,7 @@ to uncomment the include line at the end of the file ``src/lxml/etree.pyx``.
    1  DTD
    2  RelaxNG
    3  XMLSchema
+   4  Schematron
 
 The usual setup procedure::
 
@@ -227,3 +227,59 @@ method to do XML Schema validation::
   1
   >>> doc2.xmlschema(xmlschema_doc)
   0
+
+
+Schematron
+----------
+
+Since version 2.0, lxml.etree features Schematron support, using the class
+lxml.etree.Schematron.  It requires libxml2 2.6.21.  The API is the same as
+for the other validators.  Pass an ElementTree object to construct a
+Schematron validator::
+
+  >>> f = StringIO('''\
+  ... <schema xmlns="http://www.ascc.net/xml/schematron" >
+  ...   <pattern name="Sum equals 100%.">
+  ...     <rule context="Total">
+  ...          <assert test="sum(//Percent) = 100">The sum is not 100%.</assert>
+  ...     </rule>
+  ...   </pattern>
+  ... </schema>
+  ... ''')
+
+  >>> sct_doc = etree.parse(f)
+  >>> schematron = etree.Schematron(sct_doc)
+
+You can then validate some ElementTree document with this.  Like with RelaxNG,
+you'll get back true if the document is valid against the schema, and false if
+not::
+
+  >>> valid = StringIO('''\
+  ... <Total>
+  ...   <Percent>20</Percent>
+  ...   <Percent>30</Percent>
+  ...   <Percent>50</Percent>
+  ... </Total>
+  ... ''')
+
+  >>> doc = etree.parse(valid)
+  >>> schematron.validate(doc)
+  1
+
+  >>> etree.SubElement(doc.getroot(), "Percent").text = "10"
+
+  >>> schematron.validate(doc)
+  0
+
+Calling the schema object has the same effect as calling its validate method.
+This is sometimes used in conditional statements::
+
+  >>> is_valid = etree.Schematron(sct_doc)
+
+  >>> if not is_valid(doc):
+  ...     print "invalid!"
+  invalid!
+
+Note that libxml2 restricts error reporting to the parsing step (when creating
+the Schematron instance).  There is not currently any support for error
+reporting during validation.
