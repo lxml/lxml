@@ -65,9 +65,3 @@ lxml 2.0
 * follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
 
 * clean support for entities (is the Entity element class enough?)
-
-
-Changes in 2.0
---------------
-
-* network access in parsers disabled by default
