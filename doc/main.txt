@@ -24,9 +24,9 @@ Introduction
 
 lxml is a Pythonic binding for the libxml2_ and libxslt_ libraries.  It is
 unique in that it combines the speed and feature completeness of these
-libraries with the simplicity of a native Python API.  See the introduction_
-for more information about background and goals.  Some common questions are
-answered in the FAQ_.
+libraries with the simplicity of a native Python API, mostly compatible but
+superior to the ElementTree_ API.  See the introduction_ for more information
+about background and goals.  Some common questions are answered in the FAQ_.
 
 .. _libxml2: http://xmlsoft.org
 .. _libxslt: http://xmlsoft.org/XSLT
