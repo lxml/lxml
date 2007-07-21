@@ -198,10 +198,6 @@ cdef extern from "etree.h":
     cdef void appendChild(_Element parent, _Element child)
 
     # recursively lookup a namespace in element or ancestors, or create it
-    cdef tree.xmlNs* findOrBuildNodeNs(_Document doc, tree.xmlNode* c_node,
-                                       char* href)
-
-    # recursively lookup a namespace in element or ancestors, or create it
     cdef tree.xmlNs* findOrBuildNodeNsPrefix(
         _Document doc, tree.xmlNode* c_node, char* href, char* prefix)
 

@@ -48,6 +48,9 @@ Bugs fixed
 Other changes
 -------------
 
+* In the public C-API, ``findOrBuildNodeNs()`` was replaced by the more
+  generic ``findOrBuildNodeNsPrefix``
+
 * major refactoring in XPath/XSLT extension function code
 
 

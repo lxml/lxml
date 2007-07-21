@@ -62,9 +62,6 @@ lxml 2.0
 
 * always use ns-prefixed type names in objectify's ``xsi:type`` attributes
 
-* remove ``findOrBuildNodeNs()`` from C-API (replaced by
-  findOrBuildNodeNsPrefix)
-
 * follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
 
 * clean support for entities (is the Entity element class enough?)

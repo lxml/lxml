@@ -137,12 +137,6 @@ cdef public void iteratorStoreNext(_ElementIterator iterator, _Element node):
 cdef public void initTagMatch(_ElementTagMatcher matcher, tag):
     matcher._initTagMatch(tag)
 
-cdef public tree.xmlNs* findOrBuildNodeNs(_Document doc, xmlNode* c_node,
-                                          char* href) except NULL:
-    if doc is None:
-        raise TypeError
-    return doc._findOrBuildNodeNs(c_node, href, NULL)
-
 cdef public tree.xmlNs* findOrBuildNodeNsPrefix(
     _Document doc, xmlNode* c_node, char* href, char* prefix) except NULL:
     if doc is None:
