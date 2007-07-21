@@ -300,13 +300,13 @@ Implementing namespaces
 lxml allows you to implement namespaces, in a rather literal sense.  After
 setting up the namespace class lookup mechanism as described above, you can
 build a new element namespace (or retrieve an existing one) by calling the
-Namespace class::
+``get_namespace(uri)`` method of the lookup::
 
   >>> lookup = etree.ElementNamespaceClassLookup()
   >>> parser = etree.XMLParser()
   >>> parser.setElementClassLookup(lookup)
 
-  >>> namespace = etree.Namespace('http://hui.de/honk')
+  >>> namespace = lookup.get_namespace('http://hui.de/honk')
 
 and then register the new element type with that namespace, say, under the tag
 name ``honk``::
@@ -336,8 +336,8 @@ mechanism for registering extension functions in XPath and XSLT.
 
 .. _`extension functions`: extensions.html
 
-In the Namespace example above, we associated the HonkElement class only with
-the 'honk' element.  If an XML tree contains different elements in the same
+In the setup example above, we associated the HonkElement class only with the
+'honk' element.  If an XML tree contains different elements in the same
 namespace, they do not pick up the same implementation::
 
   >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'

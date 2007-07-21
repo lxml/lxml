@@ -61,18 +61,20 @@ class ObjectifyTestCase(HelperTestCase):
 
     def setUp(self):
         self.parser = self.etree.XMLParser(remove_blank_text=True)
-        lookup = etree.ElementNamespaceClassLookup(
+        self.lookup = etree.ElementNamespaceClassLookup(
             objectify.ObjectifyElementClassLookup() )
-        self.parser.setElementClassLookup(lookup)
+        self.parser.setElementClassLookup(self.lookup)
 
         self.Element = self.parser.makeelement
 
-        ns = self.etree.Namespace("otherNS")
+        ns = self.lookup.get_namespace("otherNS")
         ns[None] = self.etree.ElementBase
 
     def tearDown(self):
-        self.etree.Namespace("otherNS").clear()
+        self.lookup.get_namespace("otherNS").clear()
         objectify.setPytypeAttributeTag()
+        del self.lookup
+        del self.parser
 
     def test_element_nsmap_default(self):
         elt = objectify.Element("test")

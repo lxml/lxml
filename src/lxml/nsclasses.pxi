@@ -10,42 +10,6 @@ class NamespaceRegistryError(LxmlRegistryError):
     """
     pass
 
-cdef object __NAMESPACE_REGISTRIES
-__NAMESPACE_REGISTRIES = {}
-
-cdef object __FUNCTION_NAMESPACE_REGISTRIES
-__FUNCTION_NAMESPACE_REGISTRIES = {}
-
-
-def Namespace(ns_uri):
-    """Retrieve the namespace object associated with the given URI. Creates a
-    new one if it does not yet exist."""
-    if ns_uri:
-        ns_utf = _utf8(ns_uri)
-    else:
-        ns_utf = None
-    try:
-        return __NAMESPACE_REGISTRIES[ns_utf]
-    except KeyError:
-        registry = __NAMESPACE_REGISTRIES[ns_utf] = \
-                   _ClassNamespaceRegistry(ns_uri)
-        return registry
-
-def FunctionNamespace(ns_uri):
-    """Retrieve the function namespace object associated with the given
-    URI. Creates a new one if it does not yet exist. A function namespace can
-    only be used to register extension functions."""
-    if ns_uri:
-        ns_utf = _utf8(ns_uri)
-    else:
-        ns_utf = None
-    try:
-        return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
-    except KeyError:
-        registry = __FUNCTION_NAMESPACE_REGISTRIES[ns_utf] = \
-                   _XPathFunctionNamespaceRegistry(ns_uri)
-        return registry
-
 
 cdef class _NamespaceRegistry:
     "Dictionary-like namespace registry"
@@ -123,6 +87,89 @@ cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     def __repr__(self):
         return "Namespace(%r)" % self._ns_uri
 
+
+cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
+    """Element class lookup scheme that searches the Element class in the
+    Namespace registry.
+    """
+    cdef object _namespace_registries
+    def __init__(self, ElementClassLookup fallback=None):
+        self._namespace_registries = {}
+        FallbackElementClassLookup.__init__(self, fallback)
+        self._lookup_function = _find_nselement_class
+
+    def get_namespace(self, ns_uri):
+        """Retrieve the namespace object associated with the given URI. Creates a
+        new one if it does not yet exist."""
+        if ns_uri:
+            ns_utf = _utf8(ns_uri)
+        else:
+            ns_utf = None
+        try:
+            return self._namespace_registries[ns_utf]
+        except KeyError:
+            registry = self._namespace_registries[ns_utf] = \
+                       _ClassNamespaceRegistry(ns_uri)
+            return registry
+
+cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
+    cdef python.PyObject* dict_result
+    cdef ElementNamespaceClassLookup lookup
+    cdef _NamespaceRegistry registry
+    cdef char* c_namespace_utf
+    if state is None:
+        return _lookupDefaultElementClass(None, doc, c_node)
+
+    lookup = <ElementNamespaceClassLookup>state
+    if c_node.type != tree.XML_ELEMENT_NODE:
+        return lookup._callFallback(doc, c_node)
+
+    c_namespace_utf = _getNs(c_node)
+    if c_namespace_utf is not NULL:
+        dict_result = python.PyDict_GetItemString(
+            lookup._namespace_registries, c_namespace_utf)
+    else:
+        dict_result = python.PyDict_GetItem(
+            lookup._namespace_registries, None)
+    if dict_result is not NULL:
+        registry = <_NamespaceRegistry>dict_result
+        classes = registry._entries
+
+        if c_node.name is not NULL:
+            dict_result = python.PyDict_GetItemString(
+                classes, c_node.name)
+        else:
+            dict_result = NULL
+
+        if dict_result is NULL:
+            dict_result = python.PyDict_GetItem(classes, None)
+
+        if dict_result is not NULL:
+            return <object>dict_result
+    return lookup._callFallback(doc, c_node)
+
+
+################################################################################
+# XPath extension functions
+
+cdef object __FUNCTION_NAMESPACE_REGISTRIES
+__FUNCTION_NAMESPACE_REGISTRIES = {}
+
+def FunctionNamespace(ns_uri):
+    """Retrieve the function namespace object associated with the given
+    URI. Creates a new one if it does not yet exist. A function namespace can
+    only be used to register extension functions."""
+    if ns_uri:
+        ns_utf = _utf8(ns_uri)
+    else:
+        ns_utf = None
+    try:
+        return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
+    except KeyError:
+        registry = __FUNCTION_NAMESPACE_REGISTRIES[ns_utf] = \
+                   _XPathFunctionNamespaceRegistry(ns_uri)
+        return registry
+
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
         if not callable(item):
@@ -185,38 +232,3 @@ cdef object _find_extension(ns_uri_utf, name_utf):
         return None
     else:
         return <object>dict_result
-
-cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
-    cdef python.PyObject* dict_result
-    cdef _NamespaceRegistry registry
-    cdef char* c_namespace_utf
-    if c_node.type != tree.XML_ELEMENT_NODE:
-        if state is None:
-            return _lookupDefaultElementClass(None, doc, c_node)
-        return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)
-    c_namespace_utf = _getNs(c_node)
-    if c_namespace_utf is not NULL:
-        dict_result = python.PyDict_GetItemString(
-            __NAMESPACE_REGISTRIES, c_namespace_utf)
-    else:
-        dict_result = python.PyDict_GetItem(
-            __NAMESPACE_REGISTRIES, None)
-    if dict_result is not NULL:
-        registry = <_NamespaceRegistry>dict_result
-        classes = registry._entries
-
-        if c_node.name is not NULL:
-            dict_result = python.PyDict_GetItemString(
-                classes, c_node.name)
-        else:
-            dict_result = NULL
-
-        if dict_result is NULL:
-            dict_result = python.PyDict_GetItem(classes, None)
-
-        if dict_result is not NULL:
-            return <object>dict_result
-
-    if state is None:
-        return _lookupDefaultElementClass(None, doc, c_node)
-    return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)

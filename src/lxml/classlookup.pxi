@@ -166,14 +166,6 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     else:
         assert 0, "Unknown node type: %s" % c_node.type
 
-cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
-    """Element class lookup scheme that searches the Element class in the
-    Namespace registry.
-    """
-    def __init__(self, ElementClassLookup fallback=None):
-        FallbackElementClassLookup.__init__(self, fallback)
-        self._lookup_function = _find_nselement_class
-
 cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     """Checks an attribute of an Element and looks up the value in a class
     dictionary.  
@@ -305,6 +297,11 @@ cdef void _setElementClassLookupFunction(
     LOOKUP_ELEMENT_CLASS = function
 
 def setElementClassLookup(ElementClassLookup lookup = None):
+    "Deprecated, use ``set_element_class_lookup(lookup)`` instead"
+    set_element_class_lookup(lookup)
+
+def set_element_class_lookup(ElementClassLookup lookup = None):
+    "Set the global default element class lookup method."
     if lookup is None or lookup._lookup_function is NULL:
         _setElementClassLookupFunction(NULL, None)
     else:

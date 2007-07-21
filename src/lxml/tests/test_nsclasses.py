@@ -21,30 +21,32 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
             return u'bluff'
 
     def setUp(self):
+        lookup = etree.ElementNamespaceClassLookup()
+        self.Namespace = lookup.get_namespace
         parser = etree.XMLParser()
-        parser.setElementClassLookup(
-            etree.ElementNamespaceClassLookup() )
+        parser.setElementClassLookup(lookup)
         etree.setDefaultParser(parser)
 
     def tearDown(self):
         etree.setDefaultParser()
+        del self.Namespace
 
     def test_registry(self):
-        ns = etree.Namespace(u'ns01')
+        ns = self.Namespace(u'ns01')
         ns[u'maeh'] = self.maeh_class
 
-        etree.Namespace(u'ns01').clear()
+        self.Namespace(u'ns01').clear()
 
-        etree.Namespace(u'ns02').update({u'maeh'  : self.maeh_class})
-        etree.Namespace(u'ns03').update({u'bluff' : self.bluff_class}.items())
-        etree.Namespace(u'ns02').clear()
-        etree.Namespace(u'ns03').clear()
+        self.Namespace(u'ns02').update({u'maeh'  : self.maeh_class})
+        self.Namespace(u'ns03').update({u'bluff' : self.bluff_class}.items())
+        self.Namespace(u'ns02').clear()
+        self.Namespace(u'ns03').clear()
 
     def test_ns_classes(self):
         bluff_dict = {u'bluff' : self.bluff_class}
         maeh_dict  = {u'maeh'  : self.maeh_class}
 
-        etree.Namespace(u'ns10').update(bluff_dict)
+        self.Namespace(u'ns10').update(bluff_dict)
 
         tree = self.parse(u'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
 
@@ -56,7 +58,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEquals(el.bluff(), u'bluff')
         del el
 
-        etree.Namespace(u'ns11').update(maeh_dict)
+        self.Namespace(u'ns11').update(maeh_dict)
         el = tree.getroot()
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
@@ -64,7 +66,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEquals(el[0].maeh(), u'maeh')
         del el
 
-        etree.Namespace(u'ns10').clear()
+        self.Namespace(u'ns10').clear()
 
         tree = self.parse(u'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
         el = tree.getroot()
@@ -73,7 +75,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertFalse(hasattr(el[0], 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
 
-        etree.Namespace(u'ns11').clear()
+        self.Namespace(u'ns11').clear()
 
     def test_default_tagname(self):
         bluff_dict = {
@@ -81,7 +83,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
             'maeh' : self.maeh_class
             }
 
-        ns = etree.Namespace("uri:nsDefClass")
+        ns = self.Namespace("uri:nsDefClass")
         ns.update(bluff_dict)
 
         tree = self.parse(u'''
@@ -107,10 +109,10 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
     def test_create_element(self):
         bluff_dict = {u'bluff' : self.bluff_class}
-        etree.Namespace(u'ns20').update(bluff_dict)
+        self.Namespace(u'ns20').update(bluff_dict)
 
         maeh_dict  = {u'maeh'  : self.maeh_class}
-        etree.Namespace(u'ns21').update(maeh_dict)
+        self.Namespace(u'ns21').update(maeh_dict)
 
         el = etree.Element("{ns20}bluff")
         self.assert_(hasattr(el, 'bluff'))
@@ -132,15 +134,15 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEquals(el[0].maeh(), u'maeh')
         self.assertEquals(el[1].bluff(), u'bluff')
 
-        etree.Namespace(u'ns20').clear()
-        etree.Namespace(u'ns21').clear()
+        self.Namespace(u'ns20').clear()
+        self.Namespace(u'ns21').clear()
 
     def test_create_element_default(self):
         bluff_dict = {None : self.bluff_class}
-        etree.Namespace(u'ns30').update(bluff_dict)
+        self.Namespace(u'ns30').update(bluff_dict)
 
         maeh_dict  = {u'maeh'  : self.maeh_class}
-        etree.Namespace(None).update(maeh_dict)
+        self.Namespace(None).update(maeh_dict)
 
         el = etree.Element("{ns30}bluff")
         etree.SubElement(el, "maeh")
@@ -149,8 +151,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertEquals(el.bluff(), u'bluff')
         self.assertEquals(el[0].maeh(), u'maeh')
 
-        etree.Namespace(None).clear()
-        etree.Namespace(u'ns30').clear()
+        self.Namespace(None).clear()
+        self.Namespace(u'ns30').clear()
 
 def test_suite():
     suite = unittest.TestSuite()

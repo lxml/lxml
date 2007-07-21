@@ -451,6 +451,10 @@ cdef class _BaseParser:
             return self._error_log.copy()
 
     def setElementClassLookup(self, ElementClassLookup lookup = None):
+        "Deprecated, use ``parser.set_element_class_lookup(lookup)`` instead."
+        self.set_element_class_lookup(lookup)
+
+    def set_element_class_lookup(self, ElementClassLookup lookup = None):
         """Set a lookup scheme for element classes generated from this parser.
 
         Reset it by passing None or nothing.

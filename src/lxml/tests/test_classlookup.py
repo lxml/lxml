@@ -29,18 +29,16 @@ class ClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         etree.setElementClassLookup()
-        etree.Namespace("myNS").clear()
-        etree.Namespace("otherNS").clear()
 
     def test_namespace_lookup(self):
         class TestElement(etree.ElementBase):
             FIND_ME = "namespace class"
 
-        ns = etree.Namespace("myNS")
-        ns[None] = TestElement
-
         lookup = etree.ElementNamespaceClassLookup()
         etree.setElementClassLookup(lookup)
+
+        ns = lookup.get_namespace("myNS")
+        ns[None] = TestElement
 
         root = etree.XML(xml_str)
         self.assertEquals(root.FIND_ME,
@@ -73,20 +71,6 @@ class ClassLookupTestCase(HelperTestCase):
         self.assertEquals("default element", root.FIND_ME)
         self.assertEquals("default pi", root[0].FIND_ME)
         self.assertEquals("default comment", root[1].FIND_ME)
-
-    def test_default_class_lookup_is_not_nslookup(self):
-        class TestElement(etree.ElementBase):
-            FIND_ME = "namespace class"
-
-        ns = etree.Namespace("myNS")
-        ns[None] = TestElement
-
-        lookup = etree.ElementDefaultClassLookup()
-        etree.setElementClassLookup(lookup)
-
-        root = etree.XML(xml_str)
-        self.assertFalse(hasattr(root, 'FIND_ME'))
-        self.assertFalse(hasattr(root[0][-1], 'FIND_ME'))
 
     def test_attribute_based_lookup(self):
         class TestElement(etree.ElementBase):
@@ -133,11 +117,11 @@ class ClassLookupTestCase(HelperTestCase):
                 if name == 'c1':
                     return TestElement1
 
-        ns = etree.Namespace("otherNS")
-        ns[None] = TestElement2
-
         lookup = etree.ElementNamespaceClassLookup( MyLookup() )
         etree.setElementClassLookup(lookup)
+
+        ns = lookup.get_namespace("otherNS")
+        ns[None] = TestElement2
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
