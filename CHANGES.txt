@@ -10,21 +10,11 @@ Features added
 
 * Schematron validation
 
-* ElementTree compatible parser ``ETCompatXMLParser`` strips processing
-  instructions and comments while parsing XML
-
-* Parsers now support stripping PIs (keyword argument 'remove_pis')
-
-* ``etree.fromstring()`` now supports parsing both HTML and XML, depending on
-  the parser you pass.
-
-* Support ``base_url`` keyword argument in ``HTML()`` and ``XML()``
-
 * Extended type support for ``objectify.E`` based on registered PyTypes.
   Supports an additional argument to ``PyType()`` that takes a conversion
   function to strings to support setting text values from arbitrary types.
 
-* Entity support through an ``Entity`` factory and element classes. XML
+* Entity support through an ``Entity`` factory and element classes.  XML
   parsers now have a ``resolve_entities`` keyword argument that can be set to
   False to keep entities in the document.
 
@@ -46,14 +36,6 @@ Bugs fixed
 
 * lxml.etree did not check tag/attribute names
 
-* Parsing from Python Unicode strings failed on some platforms
-
-* ``Element()`` did not raise an exception on tag names containing ':'
-
-* ``Element.getiterator(tag)`` did not accept ``Comment`` and
-  ``ProcessingInstruction`` as tags. It also accepts ``Element`` and
-  ``Entity`` now.
-
 * The XML parser did not report undefined entities as error
 
 * The text in exceptions raised by XML parsers, validators and XPath
@@ -67,6 +49,33 @@ Other changes
 -------------
 
 * major refactoring in XPath/XSLT extension function code
+
+
+1.3.3 (xxx)
+=================
+
+Features added
+--------------
+
+* ElementTree compatible parser ``ETCompatXMLParser`` strips processing
+  instructions and comments while parsing XML
+
+* Parsers now support stripping PIs (keyword argument 'remove_pis')
+
+* ``etree.fromstring()`` now supports parsing both HTML and XML, depending on
+  the parser you pass.
+
+* Support ``base_url`` keyword argument in ``HTML()`` and ``XML()``
+
+Bugs fixed
+----------
+
+* Parsing from Python Unicode strings failed on some platforms
+
+* ``Element()`` did not raise an exception on tag names containing ':'
+
+* ``Element.getiterator(tag)`` did not accept ``Comment`` and
+  ``ProcessingInstruction`` as tags. It also accepts ``Element`` now.
 
 
 1.3.2 (2007-07-03)
