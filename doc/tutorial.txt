@@ -87,9 +87,9 @@ add them to a parent element, you can use the ``append()`` method::
 
     >>> root.append( etree.Element("child1") )
 
-However, a much more efficient and more common way to do this is through the
-``SubElement`` factory.  It accepts the same arguments as the ``Element``
-factory, but additionally requires the parent as first argument::
+However, this is so common that there is a shorter and much more efficient way
+to do this: the ``SubElement`` factory.  It accepts the same arguments as the
+``Element`` factory, but additionally requires the parent as first argument::
 
     >>> child2 = etree.SubElement(root, "child2")
     >>> child3 = etree.SubElement(root, "child3")
