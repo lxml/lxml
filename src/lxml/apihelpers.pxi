@@ -288,6 +288,12 @@ cdef object _stripDeclaration(object xml_string):
             xml_string = xml_string[i:]
     return xml_string
 
+cdef int _hasText(xmlNode* c_node):
+    return c_node is not NULL and _textNodeOrSkip(c_node.children) is not NULL
+
+cdef int _hasTail(xmlNode* c_node):
+    return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
+
 cdef _collectText(xmlNode* c_node):
     """Collect all text nodes and return them as a unicode string.
 

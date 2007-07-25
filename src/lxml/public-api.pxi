@@ -50,6 +50,12 @@ cdef public _Document documentOrRaise(object input):
 cdef public _Element rootNodeOrRaise(object input):
     return _rootNodeOrRaise(input)
 
+cdef public int hasText(xmlNode* c_node):
+    return _hasText(c_node)
+
+cdef public int hasTail(xmlNode* c_node):
+    return _hasTail(c_node)
+
 cdef public object textOf(xmlNode* c_node):
     if c_node is NULL:
         return None
