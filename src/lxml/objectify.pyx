@@ -1029,17 +1029,21 @@ cdef class _ObjectifyTypemap:
         self._typemap[__builtin__.unicode]          = __add_text
         self._typemap[__builtin__.unicode.__name__] = __add_text
 
-        self._typemap[__builtin__.int]          = __add_stringifyable
-        self._typemap[__builtin__.int.__name__] = __add_stringifyable
+        self._typemap[__builtin__.int]          = __add_stringifiable
+        self._typemap[__builtin__.int.__name__] = __add_stringifiable
 
-        self._typemap[__builtin__.long]          = __add_stringifyable
-        self._typemap[__builtin__.long.__name__] = __add_stringifyable
+        self._typemap[__builtin__.long]          = __add_stringifiable
+        self._typemap[__builtin__.long.__name__] = __add_stringifiable
 
-        self._typemap[__builtin__.float]          = __add_stringifyable
-        self._typemap[__builtin__.float.__name__] = __add_stringifyable
+        self._typemap[__builtin__.float]          = __add_stringifiable
+        self._typemap[__builtin__.float.__name__] = __add_stringifiable
 
         self._typemap[__builtin__.bool]          = __add_bool
         self._typemap[__builtin__.bool.__name__] = __add_bool
+
+        NoneType = type(None)
+        self._typemap[NoneType]          = __add_none
+        self._typemap[NoneType.__name__] = __add_none
 
     def copy(self):
         return self
@@ -1067,14 +1071,17 @@ cdef class _ObjectifyTypemap:
         self._typemap[key] = value
         self._typemap[key.__name__] = value
 
-def __add_stringifyable(_Element elem not None, number):
+def __add_stringifiable(_Element elem not None, number):
     _add_text(elem, str(number))
 
-def __add_bool(_Element elem not None, boolval):
-    _add_text(elem, _lower_bool(boolval))
+def __add_bool(_Element elem not None, bool_val):
+    _add_text(elem, _lower_bool(bool_val))
 
 def __add_text(_Element elem not None, text):
     _add_text(elem, text)
+
+def __add_none(_Element elem not None, none_val):
+    pass
 
 cdef _add_text(_Element elem, text):
     cdef tree.xmlNode* c_child
@@ -1654,7 +1661,7 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
         empty_pytype = None
 
     StrType  = _PYTYPE_DICT.get('str')
-    NoneType = _PYTYPE_DICT.get('none')
+    NoneType = _PYTYPE_DICT.get('NoneType')
     c_node = element._c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
@@ -1690,6 +1697,9 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
             old_value = cetree.attributeValueFromNsName(
                 c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
             if old_value is not None and old_value != TREE_PYTYPE:
+                if old_value == 'none':
+                    # transition from lxml 1.x
+                    old_value = "NoneType"
                 dict_result = python.PyDict_GetItem(_PYTYPE_DICT, old_value)
                 if dict_result is not NULL:
                     pytype = <PyType>dict_result
@@ -1708,12 +1718,12 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
 
         if pytype is None:
             # use default type for empty elements
-            if textOf(c_node) is None:
+            if cetree.hasText(c_node):
+                pytype = StrType
+            else:
                 pytype = empty_pytype
                 if typename is None:
                     typename = empty_type_name
-            else:
-                pytype = StrType
 
         if pytype is not None:
             if typename is None:
@@ -1985,12 +1995,16 @@ def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
 
 def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
                 **_attributes):
-    """Create a new element with a Python value and XML attributes taken from
+    """Create a new element from a Python value and XML attributes taken from
     keyword arguments or a dictionary passed as second argument.
 
     Automatically adds a 'pytype' attribute for the Python type of the value,
     if the type can be identified.  If '_pytype' or '_xsi' are among the
     keyword arguments, they will be used instead.
+
+    If the _value argument is an ObjectifiedDataElement instance, its py:pytype,
+    xsi:type and other attributes and nsmap are reused unless they are redefined
+    in attrib and/or keyword arguments.
     """
     cdef python.PyObject* dict_result
     if nsmap is None:
@@ -2023,6 +2037,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             dict_result = python.PyDict_GetItem(_attributes, PYTYPE_ATTRIBUTE)
             if dict_result is not NULL:
                 _pytype = <object>dict_result
+
     if _xsi is not None:
         if ':' in _xsi:
             prefix, name = _xsi.split(':', 1)
@@ -2050,32 +2065,29 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             if dict_result is not NULL:
                 _pytype = (<PyType>dict_result).name
 
-    if python._isString(_value):
+    if _value is None:
+        strval = None
+        _pytype = "NoneType"
+    elif python._isString(_value):
         strval = _value
     elif python.PyBool_Check(_value):
         if _value:
             strval = "true"
         else:
             strval = "false"
-    elif _value is None:
-        strval = None
     else:
         strval = str(_value)
 
     if _pytype is None:
-        if strval is not None:
-            for type_check, pytype in _TYPE_CHECKS:
-                try:
-                    type_check(strval)
-                    _pytype = (<PyType>pytype).name
-                    break
-                except IGNORABLE_ERRORS:
-                    pass
+        for type_check, pytype in _TYPE_CHECKS:
+            try:
+                type_check(strval)
+                _pytype = (<PyType>pytype).name
+                break
+            except IGNORABLE_ERRORS:
+                pass
         if _pytype is None:
-            if _value is None:
-                python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
-            elif python._isString(_value):
-                _pytype = "str"
+            _pytype = "str"
     else:
         # check if type information from arguments is valid
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
@@ -2083,8 +2095,12 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             type_check = (<PyType>dict_result).type_check
             if type_check is not None:
                 type_check(strval)
-        
+
     if _pytype is not None: 
-        python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
+        if _pytype == "NoneType":
+            strval = None
+            python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
+        else:
+            python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
     return _makeElement("value", strval, _attributes, nsmap)
