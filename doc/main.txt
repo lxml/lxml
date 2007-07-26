@@ -176,8 +176,8 @@ Bug tracker
 
 lxml uses the `launchpad bug tracker`_.  If you are sure you found a bug in
 lxml, please file a bug report there.  If you are not sure whether some
-unexpected behaviour of lxml is a bug or not, please ask on the mailing list
-first.
+unexpected behaviour of lxml is a bug or not, please ask on the `mailing
+list`_ first.
 
 .. _`launchpad bug tracker`: https://launchpad.net/lxml
 
