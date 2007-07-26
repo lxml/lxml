@@ -15,8 +15,9 @@ lxml
    2  Documentation
    3  Download
    4  Mailing list
-   5  License
-   6  Old Versions
+   5  Bug tracker
+   6  License
+   7  Old Versions
 
 
 Introduction
@@ -168,6 +169,17 @@ You can search the archive with Gmane_ or Google_.
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 .. _Gmane: http://blog.gmane.org/gmane.comp.python.lxml.devel
 .. _Google: http://www.google.com/webhp?q=site:codespeak.net/mailman/listinfo/lxml-dev%20
+
+
+Bug tracker
+-----------
+
+lxml uses the `launchpad bug tracker`_.  If you are sure you found a bug in
+lxml, please file a bug report there.  If you are not sure whether some
+unexpected behaviour of lxml is a bug or not, please ask on the mailing list
+first.
+
+.. _`launchpad bug tracker`: https://launchpad.net/lxml
 
 
 License
