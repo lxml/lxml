@@ -59,8 +59,8 @@ Other changes
 * Network access in parsers disabled by default
 
 
-1.3.3 (xxx)
-=================
+1.3.3 (2007-07-26)
+==================
 
 Features added
 --------------
