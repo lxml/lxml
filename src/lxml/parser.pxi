@@ -567,6 +567,7 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlParserCtxt* pctxt
         cdef int recover
+        cdef int orig_options
         result = NULL
         self._lockParser()
         self._error_log.connect()
@@ -574,6 +575,7 @@ cdef class _BaseParser:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
+            orig_options = pctxt.options
             state = python.PyEval_SaveThread()
             if self._parser_type == LXML_HTML_PARSER:
                 result = htmlparser.htmlCtxtReadFile(
@@ -582,6 +584,7 @@ cdef class _BaseParser:
                 result = xmlparser.xmlCtxtReadFile(
                     pctxt, c_filename, NULL, self._parse_options)
             python.PyEval_RestoreThread(state)
+            pctxt.options = orig_options # work around libxml2 problem
 
             recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
             return _handleParseResult(pctxt, result, c_filename,
