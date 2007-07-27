@@ -52,6 +52,9 @@ API.
 It extends the ElementTree API significantly to offer support for XPath,
 RelaxNG, XML Schema, XSLT, C14N and much more.
 
+To contact the project, go to the project home page or see our bug tracker at
+https://launchpad.net/lxml
+
 In case you want to use the current in-development version of lxml, you can
 get it from the subversion repository at http://codespeak.net/svn/lxml/trunk .
 Running ``easy_install lxml==dev`` will install it from
