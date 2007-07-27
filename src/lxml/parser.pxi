@@ -382,7 +382,7 @@ cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
     cdef python.PyThread_type_lock _parser_lock
 
-    def __init__(self, remove_comments, remove_pis,
+    def __init__(self, int parse_options, remove_comments, remove_pis,
                  context_class=_ResolverContext):
         cdef xmlParserCtxt* pctxt
         if isinstance(self, HTMLParser):
@@ -396,6 +396,7 @@ cdef class _BaseParser:
             pctxt = xmlparser.xmlNewParserCtxt()
         else:
             raise TypeError, "This class cannot be instantiated"
+        self._parse_options = parse_options
         self._parser_ctxt = pctxt
         if pctxt is NULL:
             python.PyErr_NoMemory()
@@ -436,7 +437,8 @@ cdef class _BaseParser:
         cdef int result
         if config.ENABLE_THREADING and self._parser_lock != NULL:
             state = python.PyEval_SaveThread()
-            result = python.PyThread_acquire_lock(self._parser_lock, python.WAIT_LOCK)
+            result = python.PyThread_acquire_lock(
+                self._parser_lock, python.WAIT_LOCK)
             python.PyEval_RestoreThread(state)
             if result == 0:
                 raise ParserError, "parser locking failed"
@@ -730,8 +732,6 @@ cdef class XMLParser(_BaseParser):
                  resolve_entities=True, remove_comments=False,
                  remove_pis=False):
         cdef int parse_options
-        _BaseParser.__init__(self, remove_comments, remove_pis)
-
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
@@ -754,7 +754,7 @@ cdef class XMLParser(_BaseParser):
         if not resolve_entities:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
-        self._parse_options = parse_options
+        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis)
 
 cdef class ETCompatXMLParser(XMLParser):
     """An XML parser with an ElementTree compatible default setup.  See the
@@ -880,8 +880,6 @@ cdef class HTMLParser(_BaseParser):
     def __init__(self, recover=True, no_network=True, remove_blank_text=False,
                  compact=True, remove_comments=False, remove_pis=False):
         cdef int parse_options
-        _BaseParser.__init__(self, remove_comments, remove_pis)
-
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
             parse_options = parse_options | htmlparser.HTML_PARSE_NOBLANKS
@@ -892,7 +890,7 @@ cdef class HTMLParser(_BaseParser):
         if not compact:
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
-        self._parse_options = parse_options
+        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()

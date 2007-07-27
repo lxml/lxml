@@ -242,7 +242,7 @@ cdef class iterparse(_BaseParser):
     cdef readonly object root
     def __init__(self, source, events=("end",), tag=None,
                  attribute_defaults=False, dtd_validation=False,
-                 load_dtd=False, no_network=False, remove_blank_text=False,
+                 load_dtd=False, no_network=True, remove_blank_text=False,
                  remove_comments=False, remove_pis=False):
         cdef _IterparseContext context
         cdef char* c_filename
@@ -260,8 +260,6 @@ cdef class iterparse(_BaseParser):
             c_filename = NULL
 
         self._source = source
-        _BaseParser.__init__(self, remove_comments, remove_pis,
-                             _IterparseContext)
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -272,11 +270,13 @@ cdef class iterparse(_BaseParser):
         if attribute_defaults:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
                             xmlparser.XML_PARSE_DTDLOAD
-        if no_network:
-            parse_options = parse_options | xmlparser.XML_PARSE_NONET
+        if not no_network:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
-        self._parse_options = parse_options
+
+        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
+                             _IterparseContext)
 
         context = <_IterparseContext>self._context
         context._setEventFilter(events, tag)
