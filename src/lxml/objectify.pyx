@@ -1401,7 +1401,7 @@ cdef _ObjectPath* _buildObjectPathSegments(path_list) except NULL:
     c_path_segments = <_ObjectPath*>python.PyMem_Malloc(sizeof(_ObjectPath) *
                                                         c_len)
     if c_path_segments is NULL:
-        PyErr_NoMemory()
+        python.PyErr_NoMemory()
         return NULL
     c_path = c_path_segments
     for href, name, index in path_list:

@@ -499,7 +499,7 @@ cdef class _XSLTResultTree(_ElementTree):
         cdef int l
         self._saveToStringAndSize(&s, &l)
         if s is NULL:
-            return unicode()
+            return unicode('')
         encoding = self._xslt._c_style.encoding
         if encoding is NULL:
             encoding = 'ascii'

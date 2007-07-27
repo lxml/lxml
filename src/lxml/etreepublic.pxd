@@ -183,10 +183,10 @@ cdef extern from "etree.h":
     cdef object namespacedNameFromNsName(char* c_ns, char* c_tag)
 
     # check if the node has a text value (which may be '')
-    cdef int hasText(xmlNode* c_node)
+    cdef int hasText(tree.xmlNode* c_node)
 
     # check if the node has a tail value (which may be '')
-    cdef int hasTail(xmlNode* c_node):
+    cdef int hasTail(tree.xmlNode* c_node)
 
     # get the text content of an element (or None)
     cdef object textOf(tree.xmlNode* c_node)
