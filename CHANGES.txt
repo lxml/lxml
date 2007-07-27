@@ -37,6 +37,8 @@ Features added
 Bugs fixed
 ----------
 
+* Parsing with the ``no_network`` option could fail
+
 * lxml.etree did not check tag/attribute names
 
 * The XML parser did not report undefined entities as error
