@@ -62,7 +62,7 @@ cdef class _IDDict:
         self._items = None
 
     def copy(self):
-        return IDDict(self._doc)
+        return _IDDict(self._doc)
 
     def __getitem__(self, id_name):
         cdef tree.xmlHashTable* c_ids

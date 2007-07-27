@@ -393,7 +393,7 @@ cdef class XPath(_XPathEvaluatorBase):
             xpath.xmlXPathFreeCompExpr(self._xpath)
 
     def __repr__(self):
-        return path
+        return self.path
 
 
 cdef object _replace_strings
