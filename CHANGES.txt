@@ -51,6 +51,9 @@ Bugs fixed
 Other changes
 -------------
 
+* ``el.getiterator()`` renamed to ``el.iter()``, following ElementTree 1.3 -
+  original name is still available as alias
+
 * In the public C-API, ``findOrBuildNodeNs()`` was replaced by the more
   generic ``findOrBuildNodeNsPrefix``
 

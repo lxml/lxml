@@ -996,7 +996,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def iterdescendants(self, tag=None):
         """Iterate over the descendants of this element in document order.
 
-        As opposed to getiterator(), this iterator does not yield the element
+        As opposed to ``el.iter()``, this iterator does not yield the element
         itself.  The generated elements can be restricted to a specific tag
         name with the 'tag' keyword.
         """
@@ -1026,6 +1026,24 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Can be restricted to find only elements with a specific tag or from a
         namespace.
+
+        You can also pass the Element, Comment, ProcessingInstruction and
+        Entity factory functions to look only for the specific element type.
+
+        Note that this method is deprecated in favour of the ``el.iter()``
+        method.  In new code, use it only for backwards compatibility.
+        """
+        return ElementDepthFirstIterator(self, tag)
+
+    def iter(self, tag=None):
+        """Iterate over all elements in the subtree in document order (depth
+        first pre-order), starting with this element.
+
+        Can be restricted to find only elements with a specific tag or from a
+        namespace.
+
+        You can also pass the Element, Comment, ProcessingInstruction and
+        Entity factory functions to look only for the specific element type.
         """
         return ElementDepthFirstIterator(self, tag)
 
@@ -1334,11 +1352,24 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def getiterator(self, tag=None):
         """Creates an iterator for the root element. The iterator loops over all elements
         in this tree, in document order.
+
+        Note that this method is deprecated in favour of the ``el.iter()``
+        method.  In new code, use it only if you require backwards
+        compatibility.
         """
         root = self.getroot()
         if root is None:
             return ()
-        return root.getiterator(tag)
+        return root.iter(tag)
+
+    def iter(self, tag=None):
+        """Creates an iterator for the root element. The iterator loops over all elements
+        in this tree, in document order.
+        """
+        root = self.getroot()
+        if root is None:
+            return ()
+        return root.iter(tag)
 
     def find(self, path):
         """Finds the first toplevel element with given tag. Same as getroot().find(path).
