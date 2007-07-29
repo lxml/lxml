@@ -5,10 +5,16 @@ except ImportError:
     from distutils.extension import Extension
 
 try:
-    from Pyrex.Distutils import build_ext as build_pyx
+    from Cython.Distutils import build_ext as build_pyx
+    print "Building with Cython."
     PYREX_INSTALLED = True
 except ImportError:
-    PYREX_INSTALLED = False
+    try:
+        from Pyrex.Distutils import build_ext as build_pyx
+        print "Trying to build with Pyrex."
+        PYREX_INSTALLED = True
+    except ImportError:
+        PYREX_INSTALLED = False
 
 EXT_MODULES = [
     ("etree",         "lxml.etree"),

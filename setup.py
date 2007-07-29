@@ -12,10 +12,13 @@ except ImportError:
     # not setuptools installed
     from distutils.core import setup
 
-# need to insert this to python path so we're sure we can import versioninfo,
-# setupinfo and Pyrex (!) even if we start setup.py from another location
-# (such as a buildout)
-sys.path.insert(0, os.path.dirname(__file__))
+try:
+    import Cython
+except ImportError:
+    # need to insert this to python path so we're sure we can import versioninfo,
+    # setupinfo and Cython/Pyrex (!) even if we start setup.py from another location
+    # (such as a buildout)
+    sys.path.insert(0, os.path.dirname(__file__))
 
 import versioninfo
 import setupinfo
