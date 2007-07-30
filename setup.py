@@ -4,12 +4,13 @@ try:
     import pkg_resources
     try:
         pkg_resources.require("setuptools>=0.6c5")
+        pkg_resources.require("Cython>=0.9.6.2")
     except pkg_resources.VersionConflict, e:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
     from setuptools import setup
 except ImportError:
-    # not setuptools installed
+    # no setuptools installed
     from distutils.core import setup
 
 try:
