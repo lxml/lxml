@@ -347,7 +347,7 @@ namespace, they do not pick up the same implementation::
   >>> print honk_element[0].honking
   Traceback (most recent call last):
   ...
-  AttributeError: 'etree._Element' object has no attribute 'honking'
+  AttributeError: 'lxml.etree._Element' object has no attribute 'honking'
 
 You can therefore provide one implementation per element name in each
 namespace and have lxml select the right one on the fly.  If you want one
