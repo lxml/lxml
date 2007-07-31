@@ -40,6 +40,18 @@ objectclass2xsitype = {
 xsitype2objclass = dict(( (v, k) for k in objectclass2xsitype
                           for v in objectclass2xsitype[k] ))
 
+objectclass2pytype = {
+    # objectify built-in
+    objectify.IntElement: "int",
+    objectify.LongElement: "long",
+    objectify.FloatElement: "float",
+    objectify.BoolElement: "bool",
+    objectify.StringElement: "str",
+    # None: xsi:nil="true"
+    }
+
+pytype2objclass = dict(( (objectclass2pytype[k], k) for k in objectclass2pytype))
+
 xml_str = '''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
   <obj:c1 a1="A1" a2="A2" other:a3="A3">
@@ -209,6 +221,22 @@ class ObjectifyTestCase(HelperTestCase):
         value = objectify.DataElement(arg)
         self.assert_(isinstance(value, objectify.StringElement))
         for attr in arg.attrib:
+            self.assertEquals(value.get(attr), arg.get(attr))
+
+    def test_data_element_data_element_arg_pytype_none(self):
+        # Check that _pytype arg overrides original py:pytype of
+        # ObjectifiedDataElement
+        arg = objectify.DataElement(23, _pytype="str", _xsi="foobar",
+                                    attrib={"gnu": "muh", "cat": "meeow",
+                                            "dog": "wuff"},
+                                    bird="tchilp", dog="grrr")
+        value = objectify.DataElement(arg, _pytype="NoneType")
+        self.assert_(isinstance(value, objectify.NoneElement))
+        self.assertEquals(value.get(XML_SCHEMA_NIL_ATTR), "true")
+        self.assertEquals(value.text, None)
+        self.assertEquals(value.pyval, None)
+        for attr in arg.attrib:
+            #if not attr == objectify.PYTYPE_ATTRIBUTE:
             self.assertEquals(value.get(attr), arg.get(attr))
 
     def test_data_element_data_element_arg_pytype(self):
@@ -487,7 +515,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(isinstance(root.a, objectify.IntElement))
         self.assert_(isinstance(root.b, objectify.IntElement))
 
-    def test_type_none(self):
+    def test_type_NoneType(self):
         Element = self.Element
         SubElement = self.etree.SubElement
 
@@ -501,7 +529,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(root.none[1], None)
         self.assertFalse(root.none[1])
 
-    def test_data_element_none(self):
+    def test_data_element_NoneType(self):
         value = objectify.DataElement(None)
         self.assert_(isinstance(value, objectify.NoneElement))
         self.assertEquals(value, None)
@@ -589,14 +617,20 @@ class ObjectifyTestCase(HelperTestCase):
     def test_data_element_xsitypes(self):
         for xsi, objclass in xsitype2objclass.iteritems():
             # 1 is a valid value for all ObjectifiedDataElement classes
-            value = objectify.DataElement(1, _xsi=xsi)
-            self.assert_(isinstance(value, objclass))
+            pyval = 1
+            value = objectify.DataElement(pyval, _xsi=xsi)
+            self.assert_(isinstance(value, objclass),
+                         "DataElement(%s, _xsi='%s') returns %s, expected %s"
+                         % (pyval, xsi, type(value), objclass))
         
     def test_data_element_xsitypes_xsdprefixed(self):
         for xsi, objclass in xsitype2objclass.iteritems():
             # 1 is a valid value for all ObjectifiedDataElement classes
-            value = objectify.DataElement(1, _xsi="xsd:%s" % xsi)
-            self.assert_(isinstance(value, objclass))
+            pyval = 1
+            value = objectify.DataElement(pyval, _xsi="xsd:%s" % xsi)
+            self.assert_(isinstance(value, objclass),
+                         "DataElement(%s, _xsi='%s') returns %s, expected %s"
+                         % (pyval, xsi, type(value), objclass))
         
     def test_data_element_xsitypes_prefixed(self):
         for xsi, objclass in xsitype2objclass.iteritems():
@@ -604,6 +638,26 @@ class ObjectifyTestCase(HelperTestCase):
             self.assertRaises(ValueError, objectify.DataElement, 1,
                               _xsi="foo:%s" % xsi)
 
+    def test_data_element_pytypes(self):
+        for pytype, objclass in pytype2objclass.iteritems():
+            # 1 is a valid value for all ObjectifiedDataElement classes
+            pyval = 1
+            value = objectify.DataElement(pyval, _pytype=pytype)
+            self.assert_(isinstance(value, objclass),
+                         "DataElement(%s, _pytype='%s') returns %s, expected %s"
+                         % (pyval, pytype, type(value), objclass))
+
+    def test_data_element_pytype_none(self):
+        pyval = 1
+        pytype = "NoneType"
+        objclass = objectify.NoneElement
+        value = objectify.DataElement(pyval, _pytype=pytype)
+        self.assert_(isinstance(value, objclass),
+                     "DataElement(%s, _pytype='%s') returns %s, expected %s"
+                     % (pyval, pytype, type(value), objclass))
+        self.assertEquals(value.text, None)
+        self.assertEquals(value.pyval, None)
+            
     def test_schema_types(self):
         XML = self.XML
         root = XML('''\
@@ -860,7 +914,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("float", child_types[ 2])
         self.assertEquals("str",   child_types[ 3])
         self.assertEquals("bool",  child_types[ 4])
-        self.assertEquals("none",  child_types[ 5])
+        self.assertEquals("NoneType",  child_types[ 5])
         self.assertEquals(None,    child_types[ 6])
         self.assertEquals("float", child_types[ 7])
         self.assertEquals("float", child_types[ 8])
@@ -920,7 +974,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("float", child_types[ 2])
         self.assertEquals("str",   child_types[ 3])
         self.assertEquals("bool",  child_types[ 4])
-        self.assertEquals("none",  child_types[ 5])
+        self.assertEquals("NoneType",  child_types[ 5])
         self.assertEquals(None,    child_types[ 6])
         self.assertEquals("float", child_types[ 7])
         self.assertEquals("float", child_types[ 8])
@@ -1114,7 +1168,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("float", child_types[ 2])
         self.assertEquals("str",   child_types[ 3])
         self.assertEquals("bool",  child_types[ 4])
-        self.assertEquals("none",  child_types[ 5])
+        self.assertEquals("NoneType",  child_types[ 5])
         self.assertEquals(None,    child_types[ 6])
         self.assertEquals("float", child_types[ 7])
         self.assertEquals("float", child_types[ 8])

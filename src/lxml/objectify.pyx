@@ -943,6 +943,11 @@ cdef _registerPyTypes():
                              "NMTOKEN", )
     pytype.register()
 
+    # since lxml 2.0
+    pytype = PyType('NoneType', None, NoneElement)
+    pytype.register()
+
+    # backwards compatibility
     pytype = PyType('none', None, NoneElement)
     pytype.register()
 

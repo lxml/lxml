@@ -743,7 +743,7 @@ Type annotations
 
 The "type hint" mechanism deploys an XML attribute defined as
 ``lxml.objectify.PYTYPE_ATTRIBUTE``.  It may contain any of the following
-string values: int, long, float, str, unicode, none::
+string values: int, long, float, str, unicode, NoneType::
 
     >>> print objectify.PYTYPE_ATTRIBUTE
     {http://codespeak.net/lxml/objectify/pytype}pytype
@@ -753,7 +753,7 @@ string values: int, long, float, str, unicode, none::
     ... <root xmlns:py='%s'>
     ...   <a py:pytype='str'>5</a>
     ...   <b py:pytype='int'>5</b>
-    ...   <c py:pytype='none' />
+    ...   <c py:pytype='NoneType' />
     ... </root>
     ... """ % ns)
 
