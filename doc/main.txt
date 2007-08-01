@@ -129,10 +129,10 @@ Download
 --------
 
 The best way to download binary versions is to visit `lxml at the Python
-cheeseshop`_.  It has the source, eggs and installers for various platforms.
+Package Index`_.  It has the source, eggs and installers for various platforms.
 The source distribution is signed with `this key`_.
 
-.. _`lxml at the Python cheeseshop`: http://cheeseshop.python.org/pypi/lxml/
+.. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
 The latest version is `lxml 1.3.2`_, released 2007-07-03 (`changes for 1.3.2`_).
