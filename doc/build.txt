@@ -11,7 +11,7 @@ with a script called ``ez_setup.py`` that can be used to install them.
 
 .. contents::
 ..
-   1  Pyrex
+   1  Cython
    2  Subversion
    3  Setuptools
    4  Running the tests and reporting errors
@@ -20,53 +20,22 @@ with a script called ``ez_setup.py`` that can be used to install them.
    7  Building Debian packages from SVN sources
 
 
-Pyrex
------
+Cython
+------
 
-The lxml.etree and lxml.objectify modules are written in Pyrex_.  Since we
-distribute the Pyrex-generated .c files with lxml releases, however, you do
-not need Pyrex to build lxml from the normal release sources.
+The lxml.etree and lxml.objectify modules are written in Cython_.  Since we
+distribute the Cython-generated .c files with lxml releases, however, you do
+not need Cython to build lxml from the normal release sources.
 
-.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _Cython: http://www.cython.org
 
 If you are interested in building lxml from a Subversion checkout or want to
-be an lxml developer, you do need a working Pyrex installation.
+be an lxml developer, you do need a working Cython installation.  You can use
+EasyInstall_ to install it::
 
-* lxml 1.1 and later
+    easy_install Cython
 
-  Newer versions of lxml depend on features and bug fixes that are not yet
-  available in an official Pyrex release.  This includes support for the
-  external C-API of lxml.etree, for Python 2.5 and for 64 bit architectures.
-
-  To build lxml 1.1 and later from non-release or modified sources, you must
-  therefore use an updated Pyrex version from here:
-
-  http://codespeak.net/svn/lxml/pyrex/
-
-  A subversion checkout of lxml will automatically retrieve the latest Pyrex
-  as external project source (``svn:externals``).  Look for the ``Pyrex``
-  directory in the source tree.
-
-  Since version 1.1.2, the lxml source distribution also includes this Pyrex
-  version.  It will be used if the ``Pyrex`` directory is available in the
-  lxml root directory.  If you install from SVN or delete this directory from
-  the unpacked distribution directory, the normally installed Pyrex version
-  will be used.
-
-* lxml 1.0 and earlier
-
-  The 1.0 series build with a standard installation of Pyrex 0.9.4.1.  Note
-  that Pyrex up to and including version 0.9.4 has known problems when
-  compiling lxml with gcc 4.x or Python 2.4.  Do not use it.  If you want to
-  build lxml from non-release sources, please install Pyrex version 0.9.4.1 or
-  later.
-
-  Pyrex now supports EasyInstall_, so you can install it by running the
-  following command as super-user::
-
-      easy_install Pyrex
-
-  .. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
 
 
 Subversion
@@ -167,7 +136,8 @@ Contributing an egg
 This is the procedure to make an lxml egg for your platform:
 
 * Download the lxml-x.y.tar.gz release.  This contains the pregenerated C so
-  that you don't run into any Pyrex issues.  Unpack it and cd into it.
+  that you can be sure you build exactly from the release sources.  Unpack
+  them and cd into the resulting directory.
 
 * python setup.py build
 
