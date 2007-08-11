@@ -22,7 +22,6 @@ EXT_MODULES = [
     ("pyclasslookup", "lxml.pyclasslookup")
     ]
 
-
 def env_var(name):
     value = os.getenv(name, '')
     return value.split(os.pathsep)
