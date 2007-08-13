@@ -58,7 +58,8 @@ cdef extern from "libxml/tree.h":
     
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
-    
+    ctypedef struct xmlNotationTable
+
     ctypedef enum xmlElementType:
         XML_ELEMENT_NODE=           1
         XML_ATTRIBUTE_NODE=         2
@@ -103,8 +104,16 @@ cdef extern from "libxml/tree.h":
         unsigned short line
 
     ctypedef struct xmlDtd:
+        char* name
         char* ExternalID
         char* SystemID
+        void* notations
+        void* entities
+        void* pentities
+        void* attributes
+        void* elements
+        xmlNode* children
+        xmlDoc* doc
 
     ctypedef struct xmlDoc:
         xmlElementType type
@@ -152,7 +161,7 @@ cdef extern from "libxml/tree.h":
         xmlDoc* doc
         
     ctypedef struct xmlBuffer
-    
+
     ctypedef struct xmlOutputBuffer:
         xmlBuffer* buffer
         xmlBuffer* conv
@@ -226,9 +235,12 @@ cdef extern from "libxml/tree.h":
 
 cdef extern from "libxml/valid.h":
     cdef xmlAttr* xmlGetID(xmlDoc* doc, char* ID)
+    cdef void xmlDumpNotationTable(xmlBuffer* buffer, xmlNotationTable* table)
 
 cdef extern from "libxml/xmlIO.h":
+    cdef void xmlBufferWriteQuotedString(xmlOutputBuffer* out, char* str)
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str)
+    cdef int xmlOutputBufferWrite(xmlOutputBuffer* out, int len, char* str)
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out)
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out)
 

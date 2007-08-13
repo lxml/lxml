@@ -1638,6 +1638,20 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.system_url,  None)
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
+        
+    def test_dtd_io(self):
+        # check that DTDs that go in also go back out
+        xml = '''\
+        <!DOCTYPE test SYSTEM "test.dtd" [
+          <!ENTITY entity "tasty">
+          <!ELEMENT test (a)>
+          <!ELEMENT a (#PCDATA)>
+        ]>
+        <test><a>test-test</a></test>\
+        '''
+        root = self.etree.parse(StringIO(xml))
+        self.assertEqual(self.etree.tostring(root).replace(" ", ""),
+                         xml.replace(" ", ""))
 
     def test_byte_zero(self):
         Element = self.etree.Element

@@ -267,22 +267,22 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return _elementFactory(self, c_node)
 
     cdef getdoctype(self):
-        cdef tree.xmlDtd* dtd
+        cdef tree.xmlDtd* c_dtd
         cdef xmlNode* c_root_node
         public_id = None
         sys_url   = None
-        dtd = self._c_doc.intSubset
-        if dtd is not NULL:
-            if dtd.ExternalID is not NULL:
-                public_id = funicode(dtd.ExternalID)
-            if dtd.SystemID is not NULL:
-                sys_url = funicode(dtd.SystemID)
-        dtd = self._c_doc.extSubset
-        if dtd is not NULL:
-            if not public_id and dtd.ExternalID is not NULL:
-                public_id = funicode(dtd.ExternalID)
-            if not sys_url and dtd.SystemID is not NULL:
-                sys_url = funicode(dtd.SystemID)
+        c_dtd = self._c_doc.intSubset
+        if c_dtd is not NULL:
+            if c_dtd.ExternalID is not NULL:
+                public_id = funicode(c_dtd.ExternalID)
+            if c_dtd.SystemID is not NULL:
+                sys_url = funicode(c_dtd.SystemID)
+        c_dtd = self._c_doc.extSubset
+        if c_dtd is not NULL:
+            if not public_id and c_dtd.ExternalID is not NULL:
+                public_id = funicode(c_dtd.ExternalID)
+            if not sys_url and c_dtd.SystemID is not NULL:
+                sys_url = funicode(c_dtd.SystemID)
         c_root_node = tree.xmlDocGetRootElement(self._c_doc)
         if c_root_node is NULL:
             root_name = None
@@ -1329,7 +1329,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             c_write_declaration = encoding not in \
                                   ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
         _tofilelike(file, self._context_node, encoding,
-                    c_write_declaration, bool(pretty_print))
+                    c_write_declaration, 1, bool(pretty_print))
 
     def getpath(self, _Element element not None):
         """Returns a structural, absolute XPath expression to find that element.
@@ -2061,10 +2061,10 @@ def tostring(element_or_tree, encoding=None,
 
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree,
-                         encoding, write_declaration, c_pretty_print)
+                         encoding, write_declaration, 0, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         encoding, write_declaration, c_pretty_print)
+                         encoding, write_declaration, 1, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
@@ -2081,10 +2081,10 @@ def tounicode(element_or_tree, pretty_print=False):
     cdef int c_pretty_print
     c_pretty_print = bool(pretty_print)
     if isinstance(element_or_tree, _Element):
-        return _tounicode(<_Element>element_or_tree, c_pretty_print)
+        return _tounicode(<_Element>element_or_tree, 0, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tounicode((<_ElementTree>element_or_tree)._context_node,
-                          c_pretty_print)
+                          1, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
