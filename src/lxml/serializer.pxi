@@ -1,7 +1,8 @@
 # XML serialization and output functions
 
 cdef _tostring(_Element element, encoding,
-               int write_xml_declaration, int write_doctype, int pretty_print):
+               int write_xml_declaration, int write_complete_document,
+               int pretty_print):
     "Serialize an element to an encoded string representation of its XML tree."
     cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
@@ -29,7 +30,7 @@ cdef _tostring(_Element element, encoding,
     try:
         state = python.PyEval_SaveThread()
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
-                           write_xml_declaration, write_doctype,
+                           write_xml_declaration, write_complete_document,
                            pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
         python.PyEval_RestoreThread(state)
@@ -44,7 +45,7 @@ cdef _tostring(_Element element, encoding,
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
-cdef _tounicode(_Element element, int write_doctype, int pretty_print):
+cdef _tounicode(_Element element, int write_complete_document, int pretty_print):
     "Serialize an element to the Python unicode representation of its XML tree."
     cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
@@ -57,7 +58,7 @@ cdef _tounicode(_Element element, int write_doctype, int pretty_print):
     try:
         state = python.PyEval_SaveThread()
         _writeNodeToBuffer(c_buffer, element._c_node, NULL, 0,
-                           write_doctype, pretty_print)
+                           write_complete_document, pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
         python.PyEval_RestoreThread(state)
         if c_buffer.conv is not NULL:
@@ -74,19 +75,21 @@ cdef _tounicode(_Element element, int write_doctype, int pretty_print):
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding,
-                             int write_xml_declaration, int write_doctype,
+                             int write_xml_declaration,
+                             int write_complete_document,
                              int pretty_print):
     cdef xmlDoc* c_doc
     c_doc = c_node.doc
-    if write_xml_declaration:
+    if write_complete_document:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
-    if write_doctype:
+    if write_complete_document:
         _writeDtdToBuffer(c_buffer, c_doc, c_node.name, encoding)
-    _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
+        _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, pretty_print, encoding)
     _writeTail(c_buffer, c_node, encoding, pretty_print)
-    _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
+    if write_complete_document:
+        _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding):
