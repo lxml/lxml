@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* Serialising an ElementTree now includes any internal DTD subsets that are
+  part of the document, as well as comments and PIs that are siblings of the
+  root node.
+
 * Namespace class setup is now local to the ``ElementNamespaceClassLookup``
   instance and no longer global.
 
@@ -52,6 +56,9 @@ Bugs fixed
 
 Other changes
 -------------
+
+* Serialising an Element no longer includes includes its comment and PI
+  siblings (only ElementTree serialisation includes them).
 
 * ``el.getiterator()`` renamed to ``el.iter()``, following ElementTree 1.3 -
   original name is still available as alias
