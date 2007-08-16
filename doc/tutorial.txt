@@ -332,7 +332,52 @@ tree: children, parents (or rather ancestors) and siblings.
 The ElementTree class
 =====================
 
-An ``ElementTree`` is mainly a wrapper around a tree with a root node.
+An ``ElementTree`` is mainly a document wrapper around a tree with a root
+node.  It provides a couple of methods for parsing, serialisation and general
+document handling.  One of the bigger differences is that it serialises as a
+complete document, as opposed to a single Element.  This includes top-level
+processing instructions and comments, as well as a DOCTYPE and other DTD
+content in the document::
+
+    >>> from StringIO import StringIO
+    >>> tree = etree.parse(StringIO('''\
+    ... <?xml version="1.0"?>
+    ... <!DOCTYPE root SYSTEM "test" [ <!ENTITY tasty "eggs"> ]>
+    ... <root>
+    ...   <a>&tasty;</a>
+    ... </root>
+    ... '''))
+
+    >>> print tree.docinfo.doctype
+    <!DOCTYPE root SYSTEM "test">
+
+    >>> # lxml 1.3.4 and later
+    >>> print etree.tostring(tree)
+    <!DOCTYPE root SYSTEM "test" [
+    <!ENTITY tasty "eggs">
+    ]>
+    <root>
+      <a>eggs</a>
+    </root>
+
+    >>> # lxml 1.3.4 and later
+    >>> print etree.tostring(etree.ElementTree(tree.getroot()))
+    <!DOCTYPE root SYSTEM "test" [
+    <!ENTITY tasty "eggs">
+    ]>
+    <root>
+      <a>eggs</a>
+    </root>
+
+    >>> # ElementTree and lxml <= 1.3.3
+    >>> print etree.tostring(tree.getroot())
+    <root>
+      <a>eggs</a>
+    </root>
+
+Note that this has changed in lxml 1.3.4 to match the behaviour of the
+upcoming lxml 2.0.  Before, both would serialise without DTD content, which
+made lxml loose DTD information in an input-output cycle.
 
 
 Parsing files and XML literals
