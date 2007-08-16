@@ -80,7 +80,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              int pretty_print):
     cdef xmlDoc* c_doc
     c_doc = c_node.doc
-    if write_complete_document:
+    if write_xml_declaration:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
     if write_complete_document:
