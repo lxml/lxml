@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* The ``docinfo`` on ElementTree objects has new properties ``internalDTD``
+  and ``externalDTD`` that return a DTD object for the internal or external
+  subset of the document respectively.
+
 * Namespace class setup is now local to the ``ElementNamespaceClassLookup``
   instance and no longer global.
 

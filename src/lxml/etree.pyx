@@ -397,36 +397,75 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
 
 cdef class DocInfo:
     "Document information provided by parser and DTD."
-    cdef readonly object root_name
-    cdef readonly object public_id
-    cdef readonly object system_url
-    cdef readonly object xml_version
-    cdef readonly object encoding
-    cdef readonly object URL
+    cdef _Document _doc
     def __init__(self, tree):
         "Create a DocInfo object for an ElementTree object or root Element."
-        cdef _Document doc
-        doc = _documentOrRaise(tree)
-        self.root_name, self.public_id, self.system_url = doc.getdoctype()
-        if not self.root_name and (self.public_id or self.system_url):
+        self._doc = _documentOrRaise(tree)
+        root_name, public_id, system_url = self._doc.getdoctype()
+        if not root_name and (public_id or system_url):
             raise ValueError, "Could not find root node"
-        self.xml_version, self.encoding = doc.getxmlinfo()
-        self.URL = doc.getURL()
+
+    property root_name:
+        "Returns the name of the root node as defined by the DOCTYPE."
+        def __get__(self):
+            root_name, public_id, system_url = self._doc.getdoctype()
+            return root_name
+
+    property public_id:
+        "Returns the public ID of the DOCTYPE."
+        def __get__(self):
+            root_name, public_id, system_url = self._doc.getdoctype()
+            return public_id
+
+    property system_url:
+        "Returns the system ID of the DOCTYPE."
+        def __get__(self):
+            root_name, public_id, system_url = self._doc.getdoctype()
+            return system_url
+
+    property xml_version:
+        "Returns the XML version as declared by the document."
+        def __get__(self):
+            xml_version, encoding = self._doc.getxmlinfo()
+            return xml_version
+
+    property encoding:
+        "Returns the encoding name as declared by the document."
+        def __get__(self):
+            xml_version, encoding = self._doc.getxmlinfo()
+            return encoding
+
+    property URL:
+        "Returns the source URL of the document (or None if unknown)."
+        def __get__(self):
+            return self._doc.getURL()
 
     property doctype:
+        "Returns a DOCTYPE declaration string for the document."
         def __get__(self):
-            if self.public_id:
-                if self.system_url:
+            root_name, public_id, system_url = self._doc.getdoctype()
+            if public_id:
+                if system_url:
                     return '<!DOCTYPE %s PUBLIC "%s" "%s">' % (
-                        self.root_name, self.public_id, self.system_url)
+                        root_name, public_id, system_url)
                 else:
                     return '<!DOCTYPE %s PUBLIC "%s">' % (
-                        self.root_name, self.public_id)
-            elif self.system_url:
+                        root_name, public_id)
+            elif system_url:
                 return '<!DOCTYPE %s SYSTEM "%s">' % (
-                    self.root_name, self.system_url)
+                    root_name, system_url)
             else:
                 return ""
+
+    property internalDTD:
+        "Returns a DTD validator based on the internal subset of the document."
+        def __get__(self):
+            return _dtdFactory(self._doc._c_doc.intSubset)
+
+    property externalDTD:
+        "Returns a DTD validator based on the external subset of the document."
+        def __get__(self):
+            return _dtdFactory(self._doc._c_doc.extSubset)
 
 
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:

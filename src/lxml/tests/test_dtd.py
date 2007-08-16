@@ -36,6 +36,31 @@ class ETreeDtdTestCase(HelperTestCase):
         dtd = etree.DTD(StringIO("<!ELEMENT b (a)><!ELEMENT a EMPTY>"))
         dtd.assertValid(root)
 
+    def test_dtd_internal(self):
+        root = etree.XML('''
+        <!DOCTYPE b SYSTEM "none" [
+        <!ELEMENT b (a)>
+        <!ELEMENT a EMPTY>
+        ]>
+        <b><a/></b>
+        ''')
+        dtd = etree.ElementTree(root).docinfo.internalDTD
+        self.assert_(dtd)
+        dtd.assertValid(root)
+
+    def test_dtd_internal_invalid(self):
+        root = etree.XML('''
+        <!DOCTYPE b SYSTEM "none" [
+        <!ELEMENT b (a)>
+        <!ELEMENT a (c)>
+        <!ELEMENT c EMPTY>
+        ]>
+        <b><a/></b>
+        ''')
+        dtd = etree.ElementTree(root).docinfo.internalDTD
+        self.assert_(dtd)
+        self.assertFalse(dtd.validate(root))
+
     def test_dtd_broken(self):
         self.assertRaises(etree.DTDParseError, etree.DTD,
                           StringIO("<!ELEMENT b HONKEY>"))
