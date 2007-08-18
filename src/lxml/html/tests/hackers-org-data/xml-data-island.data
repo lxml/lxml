@@ -1,0 +1,10 @@
+Description: XML data island with comment obfuscation (this is another take on the same exploit that doesn't use CDATA fields, but rather uses comments to break up the javascript directive)
+    http://ha.ckers.org/xss.html#XSS_XML_data_island_comment
+Ignore: true
+Notes: I don't understand the vector here.  Maybe datasrc should be filtered?
+
+<div><XML ID="xss"><I><B>&lt;IMG SRC="javas<!-- -->cript:alert('XSS')"&gt;</B></I></XML>
+<SPAN DATASRC="#xss" DATAFLD="B" DATAFORMATAS="HTML"></SPAN></div>
+----------
+<div><XML ID="xss"><I><B>&lt;IMG SRC="javas<!-- -->cript:alert('XSS')"&gt;</B></I></XML>
+<SPAN DATASRC="#xss" DATAFLD="B" DATAFORMATAS="HTML"></SPAN>x</div>

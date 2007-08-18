@@ -1,0 +1,8 @@
+Description: entry content contains embed
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+Notes: <div> wrapper, close <embed> tag (not closing it lost the <b> tag)
+
+<div>safe<embed src="http://example.com/"></embed> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>

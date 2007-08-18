@@ -1,0 +1,143 @@
+>>> from lxml.html import usedoctest
+>>> from lxml.html import fromstring, tostring
+>>> h = fromstring('''<html><body>
+... <form action="test">
+...   <input type="hidden" name="hidden_field" value="hidden_value">
+...   <input type="text" name="text_field" value="text_value">
+...   <input type="checkbox" name="single_checkbox">
+...   <input type="checkbox" name="single_checkbox2" value="good">
+...   <input type="checkbox" name="check_group" value="1">
+...   <input type="checkbox" name="check_group" value="2" checked>
+...   <input type="checkbox" name="check_group" value="3" checked>
+...   <input type="checkbox" name="check_group" value="4">
+...   <textarea name="textarea_field">some text</textarea>
+...   <label for="value1">value 1</label>
+...     <input type="radio" name="radios" value="value1" id="value1">
+...   <label for="value2">value 2</label>
+...     <input type="radio" name="radios" value="value2" id="value2">
+...   <label for="value3">value 3</label>
+...     <input type="radio" name="radios" value="value3" id="value3" checked>
+...   <select name="select1">
+...     <option>No value</option>
+...     <option value="">Empty</option>
+...     <option value="1">number 1</option>
+...   </select>
+...   <select name="select2" multiple>
+...     <option value="1">number 1</option>
+...     <option value="2">number 2</option>
+...     <option value="3">number 3</option>
+...   </select>
+...   <input type="submit" name="submit1" value="submit">
+...   <input type="submit" name="submit2" value="submit">
+...   <input type="reset" name="reset1">linksys
+... </form>
+... </body></html>''', base_url='http://example.org/form.html')
+>>> h.base_url
+'http://example.org/form.html'
+>>> f = h.forms[0]
+>>> f.action
+'http://example.org/test'
+>>> f.method
+'GET'
+>>> f.inputs
+<InputGetter for form 0>
+>>> hidden = f.inputs['hidden_field']
+>>> hidden.checkable
+False
+>>> hidden.value
+'hidden_value'
+>>> hidden.value = 'new value'
+>>> print tostring(hidden)
+<input type="hidden" name="hidden_field" value="new value">
+>>> checkbox = f.inputs['single_checkbox']
+>>> checkbox.checkable
+True
+>>> checkbox.type
+'checkbox'
+>>> checkbox.checked
+False
+>>> print checkbox.value
+None
+>>> checkbox.checked = True
+>>> checkbox.value
+'on'
+>>> print tostring(checkbox)
+<input type="checkbox" name="single_checkbox" checked>
+>>> checkbox2 = f.inputs['single_checkbox2']
+>>> checkbox2.checked = True
+>>> checkbox2.value
+'good'
+>>> group = f.inputs['check_group']
+>>> group.value
+<CheckboxValues {'2', '3'} for checkboxes name='check_group'>
+>>> group.value.add('1')
+>>> group.value
+<CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
+>>> print tostring(group[0])
+<input type="checkbox" name="check_group" value="1" checked>
+>>> group.value.add('doesnotexist')
+Traceback (most recent call last):
+    ...
+KeyError: "No checkbox with value 'doesnotexist'"
+>>> textarea = f.inputs['textarea_field']
+>>> textarea.value
+'some text'
+>>> radios = f.inputs['radios']
+>>> radios[0].label.text
+'value 1'
+>>> radios.value
+'value3'
+>>> radios.value = 'value1'
+>>> radios.value
+'value1'
+>>> print tostring(radios[0])
+<input type="radio" name="radios" value="value1" id="value1" checked>
+>>> radios.value = None
+>>> print tostring(radios[0])
+<input type="radio" name="radios" value="value1" id="value1">
+>>> radios.value_options
+['value1', 'value2', 'value3']
+>>> select = f.inputs['select1']
+>>> print select.value
+None
+>>> select.value = ""
+>>> select.value
+''
+>>> select.value = 'asdf'
+Traceback (most recent call last):
+    ...
+ValueError: There is no option with the value of 'asdf'
+>>> select.value_options
+[None, '', '1']
+>>> select = f.inputs['select2']
+>>> select.value
+<MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
+>>> select.value.update(['2', '3'])
+>>> select.value.remove('3')
+>>> select.value.add('asdf')
+Traceback (most recent call last):
+    ...
+ValueError: There is no option with the value 'asdf'
+>>> select.value_options
+['1', '2', '3']
+>>> import urllib
+>>> print urllib.urlencode(f.form_values())
+hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=&select2=1&select2=2&select2=3
+>>> fields = f.fields
+>>> fields
+<FieldsDict for form 0>
+>>> for name, value in fields.items():
+...     print '%s: %r' % (name, value)
+textarea_field: 'some text'
+radios: None
+submit2: 'submit'
+submit1: 'submit'
+select1: ''
+hidden_field: 'new value'
+text_field: 'text_value'
+reset1: None
+single_checkbox: 'on'
+select2: <MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
+single_checkbox2: 'good'
+check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
+

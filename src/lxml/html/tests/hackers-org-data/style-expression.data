@@ -1,0 +1,10 @@
+Description: (this is really a hybrid of the above XSS vectors, but it really does show how hard STYLE tags can be to parse apart, like above this can send IE into a loop)
+    http://ha.ckers.org/xss.html#XSS_IMG_STYLE_expression
+Options: -safe_attrs_only
+Notes: Modified to avoid a parsing in libxml2 that ruins the XSS (the " marks).  
+       Also there seemed to be an extra "p" in exppression
+
+<div><img style="xss: ex/*<A STYLE='no\xss:noxss(*//*);
+xss:&#101;x&#x2F;*XSS*//*/*/pression(alert('XSS'))"></div>
+----------
+<div><img></div>

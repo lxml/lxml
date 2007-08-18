@@ -1,0 +1,8 @@
+Description: tags with broken up JavaScript for XSS (this XSS at times sends IE into an infinite loop of alerts)
+    http://ha.ckers.org/xss.html#XSS_STYLE
+Options: -safe_attrs_only
+
+<div><STYLE>@im\port'\ja\vasc\ript:alert("XSS")';</STYLE></div>
+----------
+<div><style>/* deleted */</style></div>
+

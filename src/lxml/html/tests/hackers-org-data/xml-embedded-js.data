@@ -1,0 +1,9 @@
+Description: Locally hosted XML with embedded JavaScript#XSS_Local_XML that is generated using an XML data island. This is the same as above but instead referrs to a locally hosted (must be on the same server) XML file that contains your cross site scripting vector. You can see the result here <http://ha.ckers.org/xssxmltest.html>
+    http://ha.ckers.org/xss.html#XSS_Local_XML
+
+<div><XML SRC="xsstest.xml" ID=I></XML>
+<SPAN DATASRC=#I DATAFLD=C DATAFORMATAS=HTML></SPAN></div>
+----------
+<div>
+ <span></span>
+</div>

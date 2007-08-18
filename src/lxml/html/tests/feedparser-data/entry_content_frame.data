@@ -1,0 +1,7 @@
+Description: entry content contains frameset
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+
+<div>safe<frameset rows="*"><frame src="http://example.com/"></frameset> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>

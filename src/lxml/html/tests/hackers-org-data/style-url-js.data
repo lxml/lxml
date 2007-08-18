@@ -1,0 +1,8 @@
+Description: http://ha.ckers.org/xss.html#XSS_STYLE_background-image
+Options: -style, -safe_attrs_only
+Notes: The CSS is messed up here, but so it goes
+
+<div><STYLE>.XSS{background-image:url("javascript:alert('XSS')");}</STYLE><A CLASS=XSS></A></div>
+----------
+<div><style>.XSS{background-image:url()");}</style><a class="XSS"></a></div>
+

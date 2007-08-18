@@ -1,0 +1,7 @@
+Description: (Older versions of Netscape only)
+    http://ha.ckers.org/xss.html#XSS_STYLE_tag
+Options: -safe_attrs_only
+
+<div><STYLE TYPE="text/javascript">alert('XSS');</STYLE></div>
+----------
+<div></div>

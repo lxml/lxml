@@ -1,0 +1,98 @@
+lxml.html adds a find_class method to elements::
+
+    >>> from lxml.etree import Comment
+    >>> from lxml.html import document_fromstring, fragment_fromstring, tostring
+    >>> from lxml.html.clean import clean, clean_html
+    >>> from lxml.html import usedoctest
+    >>> h = document_fromstring('''
+    ... <html><head></head>
+    ... <body>
+    ...   <a class="vcard
+    ... fn   url" href="foobar">P1</a>
+    ...   <a class="not-fn vcard" href="baz">P2</a>
+    ... </body></html>''')
+    >>> print tostring(h)
+    <html>
+      <head></head>
+      <body>
+        <a class="vcard
+    fn   url" href="foobar">P1</a>
+        <a class="not-fn vcard" href="baz">P2</a>
+      </body>
+    </html>
+    >>> print [e.text for e in h.find_class('fn')]
+    ['P1']
+    >>> print [e.text for e in h.find_class('vcard')]
+    ['P1', 'P2']
+
+Also added is a get_rel_links, which you can use to search for links
+like ``<a rel="$something">``::
+
+    >>> h = document_fromstring('''
+    ... <a href="1">test 1</a>
+    ... <a href="2" rel="tag">item 2</a>
+    ... <a href="3" rel="tagging">item 3</a>
+    ... <a href="4" rel="TAG">item 4</a>''')
+    >>> print [e.attrib['href'] for e in h.find_rel_links('tag')]
+    ['2', '4']
+    >>> print [e.attrib['href'] for e in h.find_rel_links('nofollow')]
+    []
+
+Another method is ``get_element_by_id`` that does what it says::
+
+    >>> print tostring(fragment_fromstring('''
+    ... <div>
+    ...  <span id="test">stuff</span>
+    ... </div>''').get_element_by_id('test'))
+    <span id="test">stuff</span>
+
+Or to get the content of an element without the tags, use text_content()::
+
+    >>> el = fragment_fromstring('''
+    ... <div>This is <a href="foo">a <b>bold</b> link</a></div>''')
+    >>> el.text_content()
+    'This is a bold link'
+
+Or drop an element (leaving its content) or the entire tree, like::
+
+    >>> doc = document_fromstring('''
+    ... <html>
+    ...  <body>
+    ...   <div id="body">
+    ...    This is a <a href="foo" id="link">test</a> of stuff.
+    ...   </div>
+    ...   <!-- a comment -->
+    ...   <div>footer</div>
+    ...  </body>
+    ... </html>''')
+    >>> doc.get_element_by_id('link').drop_tag()
+    >>> print tostring(doc)
+    <html>
+     <body>
+      <div id="body">
+       This is a test of stuff.
+      </div>
+      <!-- a comment -->
+      <div>footer</div>
+     </body>
+    </html>
+    >>> doc.get_element_by_id('body').drop_tree()
+    >>> print tostring(doc)
+    <html>
+     <body>
+      <!-- a comment -->
+      <div>footer</div>
+     </body>
+    </html>
+
+Note, however, that comment text will not be merged into the tree when you
+drop the comment.  Here, ``drop_tag()`` behaves exactly like ``drop_tree()``:
+
+    >>> for comment in doc.getiterator(Comment):
+    ...     comment.drop_tag()
+    >>> print tostring(doc)
+    <html>
+     <body>
+      <div>footer</div>
+     </body>
+    </html>

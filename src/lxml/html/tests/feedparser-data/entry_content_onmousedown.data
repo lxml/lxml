@@ -1,0 +1,7 @@
+Description: entry content contains onmousedown
+Expect: not bozo and entries[0]['content'][0]['value'] == u'<img src="http://www.ragingplatypus.com/i/cam-full.jpg" />'
+Options: 
+
+<img src="http://www.ragingplatypus.com/i/cam-full.jpg" onmousedown="location.href='http://www.ragingplatypus.com/';" />
+----------
+<img src="http://www.ragingplatypus.com/i/cam-full.jpg" />

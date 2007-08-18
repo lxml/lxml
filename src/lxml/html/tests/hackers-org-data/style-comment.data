@@ -1,0 +1,8 @@
+Description: to break up expression (Thanks to Roman Ivanov for this one)
+    http://ha.ckers.org/xss.html#XSS_STYLE_comment
+Options: -safe_attrs_only
+Notes: Because of the suspicious stuff in there, the style is removed entirely
+
+<IMG STYLE="xss:expr/*XSS*/ession(alert('XSS'))">
+----------
+<img>

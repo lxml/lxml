@@ -1,0 +1,225 @@
+lxml.html.diff does HTML comparisons.  These are word-based comparisons.
+
+First, a handy function for normalizing whitespace and doing word wrapping::
+
+    >>> import re, textwrap
+    >>> def pwrapped(text):
+    ...     text = re.sub(r'[ \n\t\r]+', ' ', text)
+    ...     text = textwrap.fill(text)
+    ...     print text
+    >>> def pdiff(text1, text2):
+    ...     pwrapped(htmldiff(text1, text2))
+
+Example::
+
+    >>> from lxml.html.diff import htmldiff, html_annotate
+    >>> html1 = '<p>This is some test text with some changes and some same stuff</p>'
+    >>> html2 = '''<p>This is some test textual writing with some changed stuff 
+    ... and some same stuff</p>'''
+    >>> pdiff(html1, html2)
+    <p>This is some test <ins>textual writing with some changed
+    stuff</ins> <del>text with some changes</del> and some same stuff</p>
+
+Style tags are largely ignored in terms of differences, though markup is not eliminated::
+
+    >>> html1 = '<p>Hi <i>you guys</i></p>'
+    >>> html2 = '<p>Hi <i>you</i> guys</p>'
+    >>> pdiff(html1, html2)
+    <p>Hi <i>you</i> guys</p>
+    >>> pdiff('text', '<p>text</p>')
+    <p>text</p>
+    >>> pdiff('<i>Hi guys</i> !!', '<i>Hi guy</i> !!')
+    <i>Hi <ins>guy</ins> <del>guys</del> </i> !!
+    >>> pdiff('H<i>i</i>', 'Hi')
+    <ins>Hi</ins> <del>H<i>i</i></del>
+    >>> pdiff('<i>A B</i> C', '<i>A</i> C')
+    <i>A <del>B</del> </i> C
+    >>> pdiff('<i>A B</i> C', '<i>B</i> C')
+    <i> <del>A</del> B</i> C
+    >>> pdiff('<p></p>', '<p></p>')
+    <p></p>
+    >>> pdiff('<p>Hi</p>', '<p>Bye</p>')
+    <p><ins>Bye</ins></p> <p><del>Hi</del></p>
+    >>> pdiff('<p>Hi Guy</p>', '<p>Bye Guy</p>')
+    <p> <ins>Bye</ins> <del>Hi</del> Guy</p>
+    >>> pdiff('<p>Hey there</p>', '')
+    <ins></ins> <p><del>Hey there</del></p>
+
+Whitespace is ignored, as it's not meaningful in HTML::
+
+    >>> pdiff('<div>Hi\n\nguys</div>', '<div>Hi guy</div>')
+    <div>Hi <ins>guy</ins> <del>guys</del> </div>
+
+Movement between paragraphs is ignored, as tag-based changes are generally ignored::
+    >>> 
+    >>> pdiff('<p>Hello</p><p>World</p>', '<p>Hello World</p>')
+    <p>Hello World</p>
+
+As a special case, changing the href of a link is displayed, and
+images are treated like words:
+
+    >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://google.com">search</a>')
+    <a href="http://google.com">search <ins>Link: http://google.com</ins>
+    <del>Link: http://yahoo.com</del> </a>
+    >>> pdiff('<p>Print this <img src="print.gif"></p>', '<p>Print this</p>')
+    <p>Print this <del><img src="print.gif"></del> </p>
+    >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://yahoo.com">search</a>')
+    <a href="http://yahoo.com">search</a>
+
+The sixteen combinations::
+
+First "insert start" (del start/middle/end/none):
+
+    >>> pdiff('<b>A B C</b>', '<b>D B C</b')
+    <b> <ins>D</ins> <del>A</del> B C</b>
+    >>> pdiff('<b>A B C</b>', '<b>D A C</b>')
+    <b> <ins>D</ins> A <del>B</del> C</b>
+    >>> pdiff('<b>A B C</b>', '<b>D A B</b>')
+    <b> <ins>D</ins> A B <del>C</del> </b>
+    >>> pdiff('<b>A B C</b>', '<b>D A B C</b>')
+    <b> <ins>D</ins> A B C</b>
+
+Next, "insert middle" (del start/middle/end/none):
+
+    >>> pdiff('<b>A B C</b>', '<b>D B C</b>')
+    <b> <ins>D</ins> <del>A</del> B C</b>
+    >>> pdiff('<b>A B C</b>', '<b>A D C</b>')
+    <b>A <ins>D</ins> <del>B</del> C</b>
+    >>> pdiff('<b>A B C</b>', '<b>A D B</b>')
+    <b>A <ins>D</ins> B <del>C</del> </b>
+
+This one case hits the threshold of our insensitive matching:
+
+    >>> pdiff('<b>A B C</b>', '<b>A D B C</b>')
+    <b> <ins>A D</ins> <del>A</del> B C</b>
+
+
+Then "insert end" (del start/middle/end/none):
+
+    >>> pdiff('<b>A B C</b>', '<b>B C D</b>')
+    <b> <del>A</del> B C <ins>D</ins> </b>
+    >>> pdiff('<b>A B C</b>', '<b>A C D</b>')
+    <b>A <del>B</del> C <ins>D</ins> </b>
+    >>> pdiff('<b>A B C</b>', '<b>A B D</b>')
+    <b>A B <ins>D</ins> <del>C</del> </b>
+    >>> pdiff('<b>A B C</b>', '<b>A B C D</b>')
+    <b>A B C <ins>D</ins> </b>
+
+Then no insert (del start/middle/end):
+
+    >>> pdiff('<b>A B C</b>', '<b>B C</b>')
+    <b> <del>A</del> B C</b>
+    >>> pdiff('<b>A B C</b>', '<b>A C</b>')
+    <b>A <del>B</del> C</b>
+    >>> pdiff('<b>A B C</b>', '<b>A B</b>')
+    <b>A B <del>C</del> </b>
+
+    >>> pdiff('<b>A B</b> C', '<b>A B</b>')
+    <b>A B</b> <del>C</del>
+    >>> pdiff('<b>A B</b> <b>C</b>', '<b>A B</b>')
+    <b>A B</b> <del><b>C</b></del>
+    >>> pdiff('A <p><b>hey there</b> <i>how are you?</i></p>', 'A')
+    A <p><del><b>hey there</b> <i>how are you?</i></del></p>
+    
+Testing a larger document, to make sure there are not weird
+unnecessary parallels found:
+
+    >>> pdiff('''
+    ... <p>This is a test document with many words in it that goes on
+    ... for a while and doesn't have anything do to with the next
+    ... document that we match this against</p>''', '''
+    ... <p>This is another document with few similarities to the preceding
+    ... one, but enough that it may have overlap that could turn into
+    ... a confusing series of deletes and inserts.
+    ... </p>''')
+    <p><ins>This is another document with few similarities to the
+    preceding one, but enough that it may have overlap that could turn
+    into a confusing series of deletes and inserts. </ins></p>
+    <p><del>This is a test document with many words in it that goes on for
+    a while and doesn't have anything do to with the next document that we
+    match this against</del></p>
+
+
+
+Annotation of content can also be done, where every bit of content is
+marked up with information about where it came from.
+
+First, some setup; note that html_annotate is called with a sequence
+of documents and the annotation associated with that document.  We'll
+just use indexes, but you could use author or timestamp information.
+
+    >>> def markup(text, annotation):
+    ...     return '<span version="%s">%s</span>' % (annotation, text)
+    >>> def panno(*docs):
+    ...     pwrapped(html_annotate([(doc, index) for index, doc in enumerate(docs)],
+    ...                            markup=markup))
+
+Now, a sequence of documents:
+
+    >>> panno('Hello cruel world', 'Hi cruel world', 'Hi world')
+    <span version="1">Hi</span> <span version="0">world</span>
+    >>> panno('A similar document', 'A similar document',
+    ...       'A similar document here')
+    <span version="0">A similar document</span> <span
+    version="2">here</span>
+    >>> panno('<p>P1 para</p><p>P2 para</p>', '<p>P1 para</p><p>P3 foo</p>')
+    <p><span version="0">P1 para</span></p><p><span version="1">P3
+    foo</span></p>
+    >>> panno('Hello<p>There World</p>','Hello<p>There Town</p>')
+    <span version="0">Hello</span><p><span version="0">There</span> <span
+    version="1">Town</span></p>
+    >>> panno('<p>Hello</p>There World','<p>Hello</p>There Town')
+    <p><span version="0">Hello</span></p><span version="0">There</span>
+    <span version="1">Town</span>
+    >>> panno('<p>Hello</p><p>There World</p>','<p>Hello</p><p>There Town</p>')
+    <p><span version="0">Hello</span></p><p><span version="0">There</span>
+    <span version="1">Town</span></p>
+    >>> panno('<p>Hi <img src="/foo"> You</p>',
+    ...       '<p>Hi You</p>',
+    ...       '<p>Hi You <img src="/bar"></p>')
+    <p><span version="0">Hi</span> <span version="1">You</span> <span
+    version="2"><img src="/bar"></span></p>
+    >>> panno('<p><a href="/foo">Hey</a></p>',
+    ...       '<p><a href="/bar">Hey</a></p>')
+    <p><a href="/bar"><span version="0">Hey</span></a></p>
+    >>> panno('<p><a href="/foo">Hey You</a></p>',
+    ...       '<p><a href="/foo">Hey Guy</a></p>')
+    <p><a href="/foo"><span version="0">Hey</span> <span
+    version="1">Guy</span></a></p>
+
+Internals
+---------
+
+
+Some utility functions::
+
+    >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced
+    >>> def pfixup(text):
+    ...     print fixup_ins_del_tags(text).strip()
+    >>> pfixup('<ins><p>some text <b>and more text</b> and more</p></ins>')
+    <p><ins>some text <b>and more text</b> and more</ins></p>
+    >>> pfixup('<p><ins>Hi!</ins> you</p>')
+    <p><ins>Hi!</ins> you</p>
+    >>> pfixup('<div>Some text <ins>and <p>more text</p></ins> </div>')
+    <div>Some text <ins>and </ins><p><ins>more text</ins></p> </div>
+    >>> pfixup('''
+    ...    <ins><table><tr><td>One table</td><td>More stuff</td></tr></table></ins>''')
+    <table><tr>
+    <td><ins>One table</ins></td>
+    <td><ins>More stuff</ins></td>
+    </tr></table>
+
+
+Testing split_unbalanced::
+
+    >>> split_unbalanced(['<a href="blah">', 'hey', '</a>'])
+    ([], ['<a href="blah">', 'hey', '</a>'], [])
+    >>> split_unbalanced(['<a href="blah">', 'hey'])
+    (['<a href="blah">'], ['hey'], [])
+    >>> split_unbalanced(['Hey', '</i>', 'You', '</b>'])
+    ([], ['Hey', 'You'], ['</i>', '</b>'])
+    >>> split_unbalanced(['So', '</i>', 'Hi', '<b>', 'There', '</b>'])
+    ([], ['So', 'Hi', '<b>', 'There', '</b>'], ['</i>'])
+    >>> split_unbalanced(['So', '</i>', 'Hi', '<b>', 'There'])
+    (['<b>'], ['So', 'Hi', 'There'], ['</i>'])
+    

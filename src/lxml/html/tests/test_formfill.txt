@@ -1,0 +1,100 @@
+Some basic imports:
+
+    >>> from lxml.html import usedoctest
+    >>> from lxml.html.formfill import fill_form_html
+
+The simplest kind of filling is just filling an input with a value:
+
+    >>> print fill_form_html('''
+    ... <form><input type="text" name="foo"></form>''', dict(foo='bar'))
+    <form><input type="text" name="foo" value="bar"></form>
+    
+You can also fill multiple inputs, like:
+
+    >>> print fill_form_html('''
+    ... <form>
+    ...   <input type="text" name="foo">
+    ...   <input type="text" name="foo">
+    ... </form>''', dict(foo=['bar1', 'bar2']))
+    <form>
+      <input type="text" name="foo" value="bar1">
+      <input type="text" name="foo" value="bar2">
+    </form>
+
+Checkboxes can work either as boolean true/false, or be selected based
+on their inclusion in a set of values::
+
+    >>> print fill_form_html('''
+    ... <form>
+    ...   Would you like to be spammed?
+    ...   <input type="checkbox" name="spam_me"> <br>
+    ...   Spam you'd like to receive:<br>
+    ...   Viagra spam:
+    ...       <input type="checkbox" name="type" value="viagra"><br>
+    ...   Stock spam:
+    ...       <input type="checkbox" name="type" value="stock"><br>
+    ...   Other spam:
+    ...       <input type="checkbox" name="type" value="other"><br>
+    ...   <input type="submit" value="Spam!">
+    ... </form>''', dict(spam_me=True, type=['viagra', 'other']))
+    <form>
+      Would you like to be spammed?
+      <input type="checkbox" name="spam_me" checked> <br>
+      Spam you'd like to receive:<br>
+      Viagra spam:
+          <input type="checkbox" name="type" value="viagra" checked><br>
+      Stock spam:
+          <input type="checkbox" name="type" value="stock"><br>
+      Other spam:
+          <input type="checkbox" name="type" value="other" checked><br>
+      <input type="submit" value="Spam!">
+    </form>
+
+FIXME: I need to test more of this.  But I'm lazy and want to use the
+coverage report for some of this.
+
+
+This module also allows you to add error messages to the form.  The errors
+add an "error" class to the input fields, and any labels if the field
+has a label.  It also inserts an error message into the form, using a
+function you can provide (or the default function).
+
+Example::
+
+    >>> from lxml.html.formfill import insert_errors_html
+    >>> print insert_errors_html('''
+    ... <form>
+    ...   <fieldset id="fieldset">
+    ...     <input name="v1"><br>
+    ...     <label for="v2">label</label>
+    ...     <input name="v2" id="v2"><br>
+    ...   </fieldset>
+    ...   <input name="v3" class="foo">
+    ...   <input name="v3" class="foo">
+    ...   <input name="v4">
+    ...   <input name="v4">
+    ... </form>''', {
+    ...   'v1': "err1",
+    ...   'v2': "err2",
+    ...   'v3': [None, "err3-2"],
+    ...   'v4': "err4",
+    ...   None: 'general error',
+    ...   '#fieldset': 'area error',
+    ... })
+    <form>
+      <div class="error-message error-block">general error</div>
+      <fieldset id="fieldset" class="error">
+        <div class="error-message error-block">area error</div>
+        <div class="error-message">err1</div>
+        <input name="v1" class="error"><br>
+        <label for="v2" class="error">label</label>
+        <div class="error-message">err2</div>
+        <input name="v2" id="v2" class="error"><br>
+      </fieldset>
+      <input name="v3" class="foo">
+      <div class="error-message">err3-2</div>
+      <input name="v3" class="foo error">
+      <div class="error-message">err4</div>
+      <input name="v4" class="error">
+      <input name="v4">
+    </form>

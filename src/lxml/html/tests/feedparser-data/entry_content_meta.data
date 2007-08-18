@@ -1,0 +1,7 @@
+Description: entry content contains meta
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+
+<div>safe<meta http-equiv="Refresh" content="0; URL=http://example.com/"> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>

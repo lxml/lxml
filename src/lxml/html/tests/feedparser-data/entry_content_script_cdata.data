@@ -1,0 +1,13 @@
+Description: entry content contains script (cdata)
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe description'
+Options: 
+Notes: div wrapper.  Currently not working because of how HTML() is parsing the CDATA (not in a useful way)
+       The resulting code is safe, it just includes crap from the <script> tag (but not the script tag
+       itself).
+Ignore: true
+
+<div>
+  <![CDATA[safe<script type="text/javascript">location.href='http:/'+'/example.com/';</script> description]]>
+</div>
+----------
+<div>safe description</div>

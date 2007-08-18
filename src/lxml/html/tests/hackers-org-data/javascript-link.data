@@ -1,0 +1,15 @@
+Description: javascript: in many forms
+
+<div>
+ <a href="java
+script:alert()">x</a>
+ <a href="j a v a s c r i p t:alert()">x</a>
+ <a href="jscript
+:alert()">x</a>
+</div>
+----------
+<div>
+ <a href="">x</a>
+ <a href="">x</a>
+ <a href="">x</a>
+</div>

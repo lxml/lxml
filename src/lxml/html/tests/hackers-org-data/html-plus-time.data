@@ -1,0 +1,12 @@
+Description: HTML+TIME in XML. This is how Grey Magic hacked Hotmail and Yahoo!. This only works in Internet Explorer and Netscape 8.1 in IE rendering engine mode and remember that you need to be between HTML and BODY tags for this to work
+    http://ha.ckers.org/xss.html#XSS_HTML_plus_time
+Ignore: true
+Notes: I don't understand the vector here, or how this is supposed to work.
+
+<div>
+<t:set attributeName="innerHTML" to="XSS&lt;SCRIPT DEFER&gt;alert(&quot;XSS&quot;)&lt;/SCRIPT&gt;">
+</BODY></HTML></div>
+----------
+<div>
+<t:set attributeName="innerHTML" to="XSS&lt;SCRIPT DEFER&gt;alert(&quot;XSS&quot;)&lt;/SCRIPT&gt;">
+</BODY></HTML>x</div>

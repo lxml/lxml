@@ -1,0 +1,8 @@
+Description: entry content contains iframe
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+Notes: div wrapper, close <iframe>
+
+<div>safe<iframe src="http://example.com/"></iframe> <b>description</b></iframe></div>
+----------
+<div>safe <b>description</b></div>

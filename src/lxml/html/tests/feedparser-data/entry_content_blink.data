@@ -1,0 +1,8 @@
+Description: entry content contains embed
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe description'
+Options: 
+Notes: <div> wrapper
+
+<div><blink>safe</blink> description</div>
+----------
+<div>safe description</div>

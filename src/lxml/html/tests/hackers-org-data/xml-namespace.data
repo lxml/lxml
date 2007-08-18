@@ -1,0 +1,16 @@
+Description: XML namespace. The htc file must be located on the same server as your XSS vector
+    http://ha.ckers.org/xss.html#XSS_XML_namespace
+Note: I don't completely understand the vector here.  page_structure is what does this.
+
+<HTML xmlns:xss>
+  <body>
+    <?import namespace="xss" implementation="http://ha.ckers.org/xss.htc">
+    <xss:xss>XSS</xss:xss>
+  </body>
+</HTML>
+----------
+<HTML>
+  <body>
+    <div>XSS</div>
+  </body>
+</HTML>

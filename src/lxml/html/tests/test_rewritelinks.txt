@@ -1,0 +1,117 @@
+We'll define a link translation function:
+
+    >>> base_href = 'http://old/base/path.html'
+    >>> import urlparse
+    >>> def relocate_href(link):
+    ...     link = urlparse.urljoin(base_href, link)
+    ...     if link.startswith('http://old'):
+    ...         return 'https://new' + link[len('http://old'):]
+    ...     else:
+    ...         return link
+
+Now for content.  First, to make it easier on us, we need to trim the
+normalized HTML we get from these functions::
+
+Some basics::
+
+    >>> from lxml.html import usedoctest, tostring
+    >>> from lxml.html import rewrite_links
+    >>> print rewrite_links(
+    ...     '<a href="http://old/blah/blah.html">link</a>', relocate_href)
+    <a href="https://new/blah/blah.html">link</a>
+    >>> print rewrite_links(
+    ...     '<script src="http://old/foo.js"></script>', relocate_href)
+    <script src="https://new/foo.js"></script>
+    >>> print rewrite_links(
+    ...     '<link href="foo.css">', relocate_href)
+    <link href="https://new/base/foo.css">
+    >>> print rewrite_links('''\
+    ... <base href="http://blah/stuff/index.html">
+    ... <link href="foo.css">
+    ... <a href="http://old/bar.html">x</a>\
+    ... ''', relocate_href)
+    <link href="http://blah/stuff/foo.css">
+    <a href="https://new/bar.html">x</a>
+
+Links in CSS are also handled::
+
+    >>> print rewrite_links('''
+    ... <style>
+    ...   body {background-image: url(http://old/image.gif)};
+    ...   @import "http://old/other-style.css";
+    ... </style>''', relocate_href)
+    <html><head><style>
+      body {background-image: url(https://new/image.gif)};
+      @import "https://new/other-style.css";
+    </style></head></html>
+
+Those links in style attributes are also rewritten::
+
+    >>> print rewrite_links('''
+    ... <div style="background-image: url(http://old/image.gif)">text</div>
+    ... ''', relocate_href)
+    <div style="background-image: url(https://new/image.gif)">text</div>
+
+The ``<base href>`` tag is also respected (but also removed)::
+
+    >>> print rewrite_links('''
+    ... <html><head>
+    ...  <base href="http://old/">
+    ... </head>
+    ... <body>
+    ...  <a href="foo.html">link</a>
+    ... </body></html>''', relocate_href)
+    <html>
+     <head></head>
+     <body>
+      <a href="https://new/foo.html">link</a>
+     </body>
+    </html>
+
+The ``iterlinks`` method (and function) gives you all the links in
+the document, along with the element and attribute the link comes
+from.  This makes it fairly easy to see what resources the document
+references or embeds (an ``<a>`` tag is a reference, an ``<img>`` tag
+is something embedded).  It returns a generator of ``(element, attrib,
+link)``, which is awkward to test here, so we'll make a printer::
+
+    >>> from lxml.html import iterlinks, document_fromstring, tostring
+    >>> def print_iter(seq):
+    ...     for element, attrib, link, pos in seq:
+    ...         if pos:
+    ...             extra = '@%s' % pos
+    ...         else:
+    ...             extra = ''
+    ...         print '%s %s="%s"%s' % (element.tag, attrib, link, extra)
+    >>> print_iter(iterlinks('''
+    ... <html>
+    ...  <head>
+    ...   <link rel="stylesheet" href="style.css">
+    ...   <style type="text/css">
+    ...     body {
+    ...       background-image: url(/bg.gif);
+    ...     }
+    ...     @import "/other-styles.css";
+    ...   </style>
+    ...   <script src="/js-funcs.js"></script>
+    ...  </head>
+    ...  <body>
+    ...   <table>
+    ...    <tr><td><ul>
+    ...     <li><a href="/test.html">Test stuff</a></li>
+    ...     <li><a href="/other.html">Other stuff</a></li>
+    ...    </td></tr>
+    ...    <td style="background-image: url(/td-bg.png)">
+    ...      <img src="/logo.gif">
+    ...      Hi world!
+    ...    </td></tr>
+    ...   </table>
+    ...  </body></html>'''))
+    link href="style.css"
+    style None="/bg.gif"@40
+    style None="/other-styles.css"@69
+    script src="/js-funcs.js"
+    a href="/test.html"
+    a href="/other.html"
+    td style="/td-bg.png"@22
+    img src="/logo.gif"

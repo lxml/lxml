@@ -1,0 +1,7 @@
+Description: entry content contains applet
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+
+<div>safe<applet code="foo.class" codebase="http://example.com/"></applet> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>

@@ -1,0 +1,8 @@
+Description: entry content contains object
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options: 
+Notes: div wrapper, close <object>
+
+<div>safe<object classid="clsid:C932BA85-4374-101B-A56C-00AA003668DC"></object> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>

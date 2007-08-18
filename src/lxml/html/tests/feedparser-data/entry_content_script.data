@@ -1,0 +1,7 @@
+Description: entry content contains script
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe description'
+Options: 
+
+<div>safe<script type="text/javascript">location.href='http:/'+'/example.com/';</script> description</div>
+----------
+<div>safe description</div>

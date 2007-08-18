@@ -1,0 +1,7 @@
+Description: entry content contains link
+Expect: not bozo and entries[0]['content'][0]['value'] == u'safe <b>description</b>'
+Options:
+
+<div>safe<link rel="stylesheet" type="text/css" href="http://example.com/evil.css"> <b>description</b></div>
+----------
+<div>safe <b>description</b></div>
