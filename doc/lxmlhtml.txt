@@ -351,9 +351,11 @@ autolink
 
 In addition to cleaning up malicious HTML, ``lxml.html.clean``
 contains functions to do other things to your HTML.  This includes
-autolinking:
+autolinking::
 
-  ``autolink(doc, ...)`` and ``autolink_html(html, ...)``
+   autolink(doc, ...)
+
+   autolink_html(html, ...)
 
 This finds anything that looks like a link (e.g.,
 ``http://example.com``) in the *text* of an HTML document, and
@@ -378,9 +380,11 @@ string first, and returns a string.
 wordwrap
 --------
 
-You can also wrap long words in your html:
+You can also wrap long words in your html::
 
-  ``word_break(doc, max_width=40, ...)`` and ``word_break_html(html, ...)``
+   word_break(doc, max_width=40, ...)
+
+   word_break_html(html, ...)
 
 This finds any long words in the text of the document and inserts
 ``&#8203;`` in the document (which is the Unicode zero-width space).
@@ -416,7 +420,7 @@ First we get the page::
     >>> doc = HTML(content)
     >>> doc.make_links_absolute(url)
 
-Then we create some objects to put the information in:
+Then we create some objects to put the information in::
 
     >>> class Card(object):
     ...     def __init__(self, **kw):
@@ -426,7 +430,7 @@ Then we create some objects to put the information in:
     ...     def __init__(self, phone, types=()):
     ...         self.phone, self.types = phone, types
 
-And some generally handy functions for microformats:
+And some generally handy functions for microformats::
 
     >>> def get_text(el, class_name):
     ...     els = el.find_class(class_name)
@@ -442,7 +446,7 @@ And some generally handy functions for microformats:
     ...     # Ideally this would parse street, etc.
     ...     return el.find_class('adr')
 
-Then the parsing:
+Then the parsing::
 
     >>> for el in doc.find_class('hcard'):
     ...     card = Card()
