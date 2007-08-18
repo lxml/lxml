@@ -17,8 +17,8 @@ Features added
 * New module ``lxml.cssselect`` by Ian Bicking for selecting Elements with CSS
   selectors.
 
-* New package ``lxml.html`` written by Ian Bicking for sophisticated HTML
-  handling.
+* New package ``lxml.html`` written by Ian Bicking for advanced HTML
+  treatment.
 
 * Namespace class setup is now local to the ``ElementNamespaceClassLookup``
   instance and no longer global.
