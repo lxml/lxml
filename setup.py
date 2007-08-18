@@ -85,7 +85,7 @@ http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_v
     ],
 
     package_dir = {'': 'src'},
-    packages = ['lxml'],
+    packages = ['lxml', 'lxml.html'],
     zip_safe = False,
     ext_modules = setupinfo.ext_modules(
     STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),

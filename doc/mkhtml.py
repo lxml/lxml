@@ -6,7 +6,8 @@ SITE_STRUCTURE = [
               'performance.txt', 'build.txt')),
     ('Developing with lxml', ('tutorial.txt', 'api.txt', 'parsing.txt',
                               'validation.txt', 'xpathxslt.txt',
-                              'objectify.txt')),
+                              'objectify.txt', 'lxmlhtml.txt',
+                              'cssselect.txt', 'elementsoup.txt')),
     ('Extending lxml', ('resolvers.txt', 'extensions.txt',
                         'element_classes.txt', 'sax.txt', 'capi.txt')),
     ]

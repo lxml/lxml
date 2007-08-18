@@ -8,14 +8,22 @@ Under development
 Features added
 --------------
 
-* The ``docinfo`` on ElementTree objects has new properties ``internalDTD``
-  and ``externalDTD`` that return a DTD object for the internal or external
-  subset of the document respectively.
+* HTML tag soup parser based on BeautifulSoup in ``lxml.html.ElementSoup``
+
+* New module ``lxml.doctestcompare`` by Ian Bicking for writing simplified
+  doctests based on XML/HTML output.  Use by importing ``lxml.usedoctest`` or
+  ``lxml.html.usedoctest`` from within a doctest.
+
+* New module ``lxml.cssselect`` by Ian Bicking for selecting Elements with CSS
+  selectors.
+
+* New package ``lxml.html`` written by Ian Bicking for sophisticated HTML
+  handling.
 
 * Namespace class setup is now local to the ``ElementNamespaceClassLookup``
   instance and no longer global.
 
-* Schematron validation
+* Schematron validation (incomplete in libxml2)
 
 * Extended type support for ``objectify.E`` based on registered PyTypes.
   Supports an additional argument to ``PyType()`` that takes a conversion
@@ -70,6 +78,10 @@ Other changes
 
 1.3.4 (???)
 ==================
+
+* The ``docinfo`` on ElementTree objects has new properties ``internalDTD``
+  and ``externalDTD`` that return a DTD object for the internal or external
+  subset of the document respectively.
 
 * Serialising an ElementTree now includes any internal DTD subsets that are
   part of the document, as well as comments and PIs that are siblings of the
