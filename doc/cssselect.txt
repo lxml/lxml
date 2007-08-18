@@ -1,0 +1,100 @@
+==============
+lxml.cssselect
+==============
+
+lxml supports a number of interesting languages for tree traversal and element
+selection.  The most important is obviously XPath_, but there is also
+ObjectPath_ in the `lxml.objectify`_ module.  The newest child of this family
+is CSS selection, which is implemented in the new ``lxml.cssselect`` module.
+
+.. _XPath: xpathxslt.html#xpath
+.. _ObjectPath: objectify.html#objectpath
+.. _`lxml.objectify`: objectify.html
+
+.. contents::
+..
+   1  The CSSSelector class
+   2  CSS Selectors
+     2.1  Namespaces
+   3  Limitations
+
+
+The CSSSelector class
+=====================
+
+The most important class in the ``cssselect`` module is ``CSSSelector``.  It
+provides the same interface as the XPath_ class, but accepts a CSS selector
+expression as input::
+
+    >>> sel = CSSSelector('div.content')
+    >>> sel
+    <CSSSelector ... for 'div.content'>
+    >>> sel.css
+    'div.content'
+
+The selector actually compiles to XPath, and you can see the
+expression by inspecting the object::
+
+    >>> sel.path
+    "descendant-or-self::div[contains(concat(' ', normalize-space(@class), ' '), ' content ')]"
+
+To use the selector, simply call it with a document or element
+object::
+
+    >>> from lxml.etree import HTML
+    >>> h = HTML('''<div id="outer">
+    ...   <div id="inner" class="content body">
+    ...       text
+    ...   </div></div>''')
+    >>> [e.get('id') for e in sel(h)]
+    ['inner']
+
+
+CSS Selectors
+=============
+
+This libraries attempts to implement CSS selectors `as described in
+the w3c specification
+<http://www.w3.org/TR/2001/CR-css3-selectors-20011113/>`_.  Many of
+the pseudo-classes do not apply in this context, including all
+`dynamic pseudo-classes
+<http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#dynamic-pseudos>`_.
+In particular these will not be available:
+
+* link state: ``:link``, ``:visited``, ``:target``
+* actions: ``:hover``, ``:active``, ``:focus``
+* UI states: ``:enabled``, ``:disabled``, ``:indeterminate``
+  (``:checked`` and ``:unchecked`` *are* available)
+
+Also, none of the psuedo-elements apply, because the selector only
+returns elements and psuedo-elements select portions of text, like
+``::first-line``.
+
+
+Namespaces
+----------
+
+In CSS you can use ``namespace-prefix|element``, similar to
+``namespace-prefix:element`` in an XPath expression.  In fact, it maps
+one-to-one, and the same rules are used to map namespace prefixes to
+namespace URIs.
+
+
+Limitations
+===========
+
+These applicable pseudoclasses are not yet implemented:
+
+* ``:lang(language)``
+* ``:root``
+* ``*:first-of-type``, ``*:last-of-type``, ``*:nth-of-type``,
+  ``*:nth-last-of-type``, ``*:only-of-type``.  All of these work when
+  you specify an element type, but not with ``*``
+
+Unlike XPath you cannot provide parameters in your expressions -- all
+expressions are completely static.
+
+XPath has underspecified string quoting rules (there seems to be no
+string quoting at all), so if you use expressions that contain
+characters that requiring quoting you might have problems with the
+translation from CSS to XPath.
