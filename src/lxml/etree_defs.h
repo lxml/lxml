@@ -99,6 +99,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define repr(o)         PyObject_Repr(o)
 #define iter(o)         PyObject_GetIter(o)
 #define _cstr(s)        PyString_AS_STRING(s)
+#define _fqtypename(o)  (((PyTypeObject*)o)->ob_type->tp_name)
 
 static PyObject* __PY_NEW_GLOBAL_EMPTY_TUPLE = NULL;
 

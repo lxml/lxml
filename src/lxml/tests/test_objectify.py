@@ -658,6 +658,18 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(value.text, None)
         self.assertEquals(value.pyval, None)
             
+    def test_data_element_pytype_none_compat(self):
+        # pre-2.0 lxml called NoneElement "none"
+        pyval = 1
+        pytype = "none"
+        objclass = objectify.NoneElement
+        value = objectify.DataElement(pyval, _pytype=pytype)
+        self.assert_(isinstance(value, objclass),
+                     "DataElement(%s, _pytype='%s') returns %s, expected %s"
+                     % (pyval, pytype, type(value), objclass))
+        self.assertEquals(value.text, None)
+        self.assertEquals(value.pyval, None)
+            
     def test_schema_types(self):
         XML = self.XML
         root = XML('''\

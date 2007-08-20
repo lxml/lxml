@@ -70,6 +70,16 @@ from itertools import islice
 cdef object _ElementMaker
 from builder import ElementMaker as _ElementMaker
 
+cdef object _typename(object t):
+    cdef char* c_name
+    cdef char* s
+    c_name = python._fqtypename(t)
+    s = cstd.strrchr(c_name, c'.')
+    if s == NULL:
+        return c_name
+    else:
+        return (s+1)
+
 # namespace/name for "pytype" hint attribute
 cdef object PYTYPE_NAMESPACE
 cdef char* _PYTYPE_NAMESPACE
@@ -232,7 +242,7 @@ cdef class ObjectifiedElement(ElementBase):
         if tag == 'text' or tag == 'pyval':
             # read-only !
             raise TypeError, "attribute '%s' of '%s' objects is not writable"% \
-                  (tag, type(self).__name__)
+                  (tag, _typename(self))
         elif tag == 'tail':
             cetree.setTailText(self._c_node, value)
             return
@@ -916,6 +926,15 @@ cdef _lower_bool(b):
 def __lower_bool(b):
     return _lower_bool(b)
 
+cdef _get_pytypename(obj):
+    if python.PyUnicode_Check(obj):
+        return "str"
+    else:
+        return _typename(obj)
+
+def __get_pytypename(obj):
+    return _get_pytypename(obj)
+
 cdef _registerPyTypes():
     pytype = PyType('int', int, IntElement)
     pytype.xmlSchemaTypes = ("int", "short", "byte", "unsignedShort",
@@ -1020,7 +1039,6 @@ cdef class _ObjectifyTypemap:
     """Type map for the ElementMaker.
     """
     cdef object _typemap
-    cdef object _typemap_get
 
     def __init__(self, initial=None):
         if initial is None:
@@ -1132,7 +1150,7 @@ cdef object _dump(_Element element, int indent):
             else:
                 value = repr(value)
     result = "%s%s = %s [%s]\n" % (indentstr, element.tag,
-                                   value, type(element).__name__)
+                                   value, _typename(element))
     xsi_ns    = "{%s}" % XML_SCHEMA_INSTANCE_NS
     pytype_ns = "{%s}" % PYTYPE_NAMESPACE
     for name, value in cetree.iterattributes(element, 3):
@@ -2019,6 +2037,13 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             attrib = dict(attrib)
             attrib.update(_attributes)
         _attributes = attrib
+    if isinstance(_value, ObjectifiedElement):
+        if _pytype is None:
+            if _xsi is None and not _attributes and nsmap is _DEFAULT_NSMAP:
+                # special case: no change!
+                return _value.__copy__()
+            elif PYTYPE_ATTRIBUTE not in _attributes:
+                _pytype = _get_pytypename(_value)
     if isinstance(_value, ObjectifiedDataElement):
         # reuse existing nsmap unless redefined in nsmap parameter
         temp = _value.nsmap
@@ -2070,9 +2095,9 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             if dict_result is not NULL:
                 _pytype = (<PyType>dict_result).name
 
-    if _value is None:
+    if _value is None and _pytype != "str":
+        _pytype = _pytype or "NoneType"
         strval = None
-        _pytype = "NoneType"
     elif python._isString(_value):
         strval = _value
     elif python.PyBool_Check(_value):
@@ -2102,7 +2127,7 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
                 type_check(strval)
 
     if _pytype is not None: 
-        if _pytype == "NoneType":
+        if _pytype == "NoneType" or _pytype == "none":
             strval = None
             python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
         else:
