@@ -242,16 +242,17 @@ class HtmlMixin(object):
         """
         link_attrs = defs.link_attrs
         for el in self.getiterator():
+            attribs = el.attrib
             for attrib in link_attrs:
-                if attrib in el.attrib:
-                    yield (el, attrib, el.attrib[attrib], 0)
+                if attrib in attribs:
+                    yield (el, attrib, attribs[attrib], 0)
             if el.tag == 'style' and el.text:
                 for match in _css_url_re.finditer(el.text):
                     yield (el, None, match.group(1), match.start(1))
                 for match in _css_import_re.finditer(el.text):
                     yield (el, None, match.group(1), match.start(1))
-            if 'style' in el.attrib:
-                for match in _css_url_re.finditer(el.attrib['style']):
+            if 'style' in attribs:
+                for match in _css_url_re.finditer(attribs['style']):
                     yield (el, 'style', match.group(1), match.start(1))
 
     def rewrite_links(self, link_repl_func, resolve_base_href=True,
