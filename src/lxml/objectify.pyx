@@ -814,7 +814,7 @@ cdef class PyType:
     """
     cdef readonly object name
     cdef readonly object type_check
-    cdef object _stringify
+    cdef object _add_text
     cdef object _type
     cdef object _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
@@ -831,9 +831,9 @@ cdef class PyType:
         self._type = type_class
         self.type_check = type_check
         if stringify is None:
-            self._stringify = _StringValueSetter(__builtin__.str)
+            self._add_text = _StringValueSetter(__builtin__.str)
         else:
-            self._stringify = _StringValueSetter(stringify)
+            self._add_text = _StringValueSetter(stringify)
         self._schema_types = []
 
     def __repr__(self):
@@ -1081,7 +1081,7 @@ cdef class _ObjectifyTypemap:
                 result = python.PyDict_GetItem(_PYTYPE_DICT, name)
                 if result is NULL:
                     return None
-                return (<PyType>result)._stringify
+                return (<PyType>result)._add_text
         return <object>result
 
     def __contains__(self, type):
@@ -1798,110 +1798,6 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
                     tree.xmlSetNsProp(c_node, c_ns, "nil", "true")
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-def __xsiannotate(element_or_tree, ignore_old=True):
-    """Recursively annotates the elements of an XML tree with 'xsi:type'
-    attributes.
-
-    If the 'ignore_old' keyword argument is True (the default), current
-    'xsi:type' attributes will be ignored and replaced.  Otherwise, they will be
-    checked and only replaced if they no longer fit the current text value.
-
-    Note that tha mapping from Python types to XSI types is usually ambiguous.
-    Currently, only the first XSI type name in the corresponding PyType
-    definition will be used for annotation.  Thus, you should consider naming
-    the widest type first here if you define additional types.
-    """
-    cdef _Element  element
-    cdef _Document doc
-    cdef int ignore
-    cdef int istree
-    cdef tree.xmlNode* c_node
-    cdef tree.xmlNs*   c_ns
-    cdef python.PyObject* dict_result
-    cdef PyType pytype
-    element = cetree.rootNodeOrRaise(element_or_tree)
-    doc = element._doc
-    ignore = bool(ignore_old)
-
-    StrType = _PYTYPE_DICT.get('str')
-    c_node = element._c_node
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
-    if c_node.type == tree.XML_ELEMENT_NODE:
-        typename = None
-        pytype = None
-        value  = None
-        istree = 0
-        if not ignore:
-            # check that old value is valid
-            typename = cetree.attributeValueFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, "type")
-            if typename is not None:
-                dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
-                if dict_result is NULL and ':' in typename:
-                    prefix, typename = typename.split(':', 1)
-                    dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, typename)
-                if dict_result is not NULL:
-                    pytype = <PyType>dict_result
-                    if pytype is not StrType:
-                        # StrType does not have a typecheck but is the default anyway,
-                        # so just accept it if given as type information
-                        pytype = _check_type(c_node, pytype)
-                        if pytype is None:
-                            typename = None
-
-        if typename is None:
-            if pytype is None:
-                # check for pytype hint
-                value = cetree.attributeValueFromNsName(
-                    c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-
-                if value is not None:
-                    if value == TREE_PYTYPE:
-                        istree = 1
-                    else:
-                        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, value)
-                        if dict_result is not NULL:
-                            pytype = <PyType>dict_result
-                            if pytype is not StrType:
-                                pytype = _check_type(c_node, pytype)
-
-            if not istree and pytype is None:
-                # try to guess type
-                if cetree.findChildForwards(c_node, 0) is NULL:
-                    # element has no children => data class
-                    pytype = _guessPyType(textOf(c_node), StrType)
-                else:
-                    istree = 1
-
-        if typename is None and not istree and pytype is not None:
-            if python.PyList_GET_SIZE(pytype._schema_types) > 0:
-                # pytype->xsi:type is a 1:n mapping so simply take the first
-                typename = pytype._schema_types[0]
-
-        if typename is None or istree:
-            # delete attribute if it exists
-            cetree.delAttributeFromNsName(c_node, _XML_SCHEMA_INSTANCE_NS, "type")
-        else:
-            # update or create attribute
-            c_ns = cetree.findOrBuildNodeNsPrefix(
-                doc, c_node, _XML_SCHEMA_NS, 'xsd')
-            if c_ns is not NULL:
-                if ':' in typename:
-                    prefix, name = typename.split(':', 1)
-                    if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
-                        typename = name
-                    elif cstd.strcmp(_cstr(prefix), c_ns.prefix) != 0:
-                        prefix = c_ns.prefix
-                        typename = prefix + ':' + name
-                elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
-                    prefix = c_ns.prefix
-                    typename = prefix + ':' + typename
-            c_ns = cetree.findOrBuildNodeNsPrefix(
-                doc, c_node, _XML_SCHEMA_INSTANCE_NS, 'xsi')
-            tree.xmlSetNsProp(c_node, c_ns, "type", _cstr(typename))
-    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-
-
 def deannotate(element_or_tree, pytype=True, xsi=True):
     """Recursively de-annotate the elements of an XML tree by removing 'pytype'
     and/or 'type' attributes.
@@ -2042,19 +1938,17 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
             if _xsi is None and not _attributes and nsmap is _DEFAULT_NSMAP:
                 # special case: no change!
                 return _value.__copy__()
-            elif PYTYPE_ATTRIBUTE not in _attributes:
-                _pytype = _get_pytypename(_value)
     if isinstance(_value, ObjectifiedDataElement):
         # reuse existing nsmap unless redefined in nsmap parameter
         temp = _value.nsmap
         if temp is not None and temp:
-            temp = dict(_value.nsmap)
+            temp = dict(temp)
             temp.update(nsmap)
             nsmap = temp
         # reuse existing attributes unless redefined in attrib/_attributes
         temp = _value.attrib
         if temp is not None and temp:
-            temp = dict(_value.attrib)
+            temp = dict(temp)
             temp.update(_attributes)
             _attributes = temp
         # reuse existing xsi:type or py:pytype attributes, unless provided as
