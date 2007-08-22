@@ -1062,7 +1062,6 @@ cdef class _ObjectifyElementMakerCaller:
         self._nsmap = nsmap
 
     def __call__(self, *children, **attrib):
-        cdef _ObjectifyElementMakerCaller elementMaker
         cdef python.PyObject* pytype
         cdef _Element element
         if self._element_factory is None:
@@ -1074,7 +1073,7 @@ cdef class _ObjectifyElementMakerCaller:
 
         for child in children:
             if child is None:
-                if len(children) == 1:
+                if python.PyTuple_GET_SIZE(children) == 1:
                     cetree.setAttributeValue(
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
             elif python._isString(child):
@@ -1082,14 +1081,14 @@ cdef class _ObjectifyElementMakerCaller:
             elif isinstance(child, _Element):
                 cetree.appendChild(element, child)
             elif isinstance(child, _ObjectifyElementMakerCaller):
-                elementMaker = <_ObjectifyElementMakerCaller>child
-                if elementMaker._element_factory is None:
+                if (<_ObjectifyElementMakerCaller>child)._element_factory is None:
                     child = cetree.makeElement(
                         elementMaker._tag, element._doc, objectify_parser,
                         None, None, None, None)
                 else:
-                    child = elementMaker._element_factory(
-                        (<_ObjectifyElementMakerCaller>child)._tag)
+                    child = (<_ObjectifyElementMakerCaller>child).
+                        _element_factory((
+                            <_ObjectifyElementMakerCaller>child)._tag)
                 cetree.appendChild(element, child)
             else:
                 pytype = python.PyDict_GetItem(
