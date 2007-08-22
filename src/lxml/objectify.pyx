@@ -1030,6 +1030,78 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
 ################################################################################
 # adapted ElementMaker supports registered PyTypes
 
+cdef class ElementMaker:
+    cdef object _makeelement
+    cdef object _namespace
+    cdef object _nsmap
+    def __init__(self, namespace=None, nsmap=None, makeelement=None):
+        self._nsmap = nsmap
+        if namespace is None:
+            self._namespace = None
+        else:
+            self._namespace = "{%s}" % namespace
+        if makeelement is not None:
+            assert callable(makeelement)
+            self._makeelement = makeelement
+        else:
+            self._makeelement = None
+
+    def __getattr__(self, tag):
+        if tag[0] != "{" and self._namespace is not None:
+            tag = self._namespace + tag
+        return _ObjectifyElementMakerCaller(
+            self._makeelement, tag, self._nsmap)
+
+cdef class _ObjectifyElementMakerCaller:
+    cdef object _tag
+    cdef object _nsmap
+    cdef object _element_factory
+    def __init__(self, element_factory, tag, nsmap):
+        self._element_factory = element_factory
+        self._tag = tag
+        self._nsmap = nsmap
+
+    def __call__(self, *children, **attrib):
+        cdef _ObjectifyElementMakerCaller elementMaker
+        cdef python.PyObject* pytype
+        cdef _Element element
+        if self._element_factory is None:
+            element = cetree.makeElement(
+                self._tag, None, objectify_parser,
+                None, None, attrib, self._nsmap)
+        else:
+            element = self._element_factory(self._tag, attrib, self._nsmap)
+
+        for child in children:
+            if child is None:
+                if len(children) == 1:
+                    cetree.setAttributeValue(
+                        element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
+            elif python._isString(child):
+                _add_text(element, child)
+            elif isinstance(child, _Element):
+                cetree.appendChild(element, child)
+            elif isinstance(child, _ObjectifyElementMakerCaller):
+                elementMaker = <_ObjectifyElementMakerCaller>child
+                if elementMaker._element_factory is None:
+                    child = cetree.makeElement(
+                        elementMaker._tag, element._doc, objectify_parser,
+                        None, None, None, None)
+                else:
+                    child = elementMaker._element_factory(
+                        (<_ObjectifyElementMakerCaller>child)._tag)
+                cetree.appendChild(element, child)
+            else:
+                pytype = python.PyDict_GetItem(
+                    _PYTYPE_DICT, _typename(child))
+                if pytype is not NULL:
+                    (<PyType>pytype)._add_text(element, child)
+                else:
+                    child = str(child)
+                    _add_text(element, child)
+
+        return element
+
 class ElementMaker(_ElementMaker):
     def __init__(self, typemap=None):
         typemap = _ObjectifyTypemap(typemap)
