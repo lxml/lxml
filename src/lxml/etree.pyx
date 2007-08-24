@@ -489,8 +489,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         #print "trying to free node:", <int>self._c_node
         #displayNode(self._c_node, 0)
         if self._c_node is not NULL:
-            unregisterProxy(self)
+            _unregisterProxy(self)
             attemptDeallocation(self._c_node)
+        _releaseProxy(self)
 
     # MANIPULATORS
 
@@ -1157,7 +1158,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         result = element_class()
     result._doc = doc
     result._c_node = c_node
-    registerProxy(result)
+    _registerProxy(result)
 
     if config.ENABLE_THREADING:
         python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
