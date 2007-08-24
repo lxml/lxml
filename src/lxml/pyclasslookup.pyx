@@ -246,15 +246,15 @@ cdef object _getAttributeValue(tree.xmlNode* c_node, key, default):
 cdef class PythonElementClassLookup(FallbackElementClassLookup):
     """Element class lookup based on a subclass method.
 
-    To use it, inherit from this class and override the method
+    To use it, inherit from this class and override the lookup method to
+    lookup the element class for a node::
 
         lookup(self, document, node_proxy)
 
-    to lookup the element class for a node. The first argument is the opaque
-    document instance that contains the Element. The second arguments is a
-    lightweight Element proxy implementation that is only valid during the
-    lookup. Do not try to keep a reference to it. Once the lookup is done, the
-    proxy will be invalid.
+    The first argument is the opaque document instance that contains the
+    Element. The second arguments is a lightweight Element proxy
+    implementation that is only valid during the lookup. Do not try to keep a
+    reference to it. Once the lookup is done, the proxy will be invalid.
 
     If you return None from this method, the fallback will be called.
     """

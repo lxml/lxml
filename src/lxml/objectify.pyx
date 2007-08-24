@@ -806,7 +806,7 @@ cdef class PyType:
     string value.  It may be None in which case it is not considered for type
     guessing.
 
-    Example:
+    Example::
         PyType('int', int, MyIntClass).register()
 
     Note that the order in which types are registered matters.  The first
