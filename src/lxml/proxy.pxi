@@ -38,7 +38,7 @@ cdef unregisterProxy(_Element proxy):
     c_node = proxy._c_node
     assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
-    python.Py_DECREF(<object>proxy._gc_doc)
+    python._Py_DECREF(proxy._gc_doc)
 
 ################################################################################
 # temporarily make a node the root node of its document
