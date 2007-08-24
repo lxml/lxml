@@ -36,6 +36,7 @@ cdef class _BaseContext:
     cdef object _global_namespaces
     cdef object _utf_refs
     cdef object _function_cache
+    cdef object _eval_context_dict
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef _ExceptionContext _exc
@@ -45,6 +46,7 @@ cdef class _BaseContext:
         self._utf_refs = {}
         self._global_namespaces = []
         self._function_cache = {}
+        self._eval_context_dict = None
 
         if extensions is not None:
             # convert extensions to UTF-8
@@ -123,6 +125,7 @@ cdef class _BaseContext:
         #xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
         #self.unregisterGlobalNamespaces()
         python.PyDict_Clear(self._utf_refs)
+        self._eval_context_dict = None
         self._doc = None
 
     cdef _release_context(self):
@@ -267,6 +270,31 @@ cdef class _BaseContext:
             if dict_result is not NULL:
                 return <object>dict_result
         return None
+
+    # Python access to the XPath context for extension functions
+
+    property context_node:
+        def __get__(self):
+            cdef xmlNode* c_node
+            if self._xpathCtxt is NULL:
+                raise XPathError, \
+                      "XPath context is only usable during the evaluation"
+            c_node = self._xpathCtxt.node
+            if c_node is NULL:
+                raise XPathError, "no context node"
+            if c_node.doc != self._xpathCtxt.doc:
+                raise XPathError, \
+                      "document-external context nodes are not supported"
+            if self._doc is None:
+                raise XPathError, \
+                      "document context is missing"
+            return _elementFactory(self._doc, c_node)
+
+    property eval_context:
+        def __get__(self):
+            if self._eval_context_dict is None:
+                self._eval_context_dict = {}
+            return self._eval_context_dict
 
     # Python reference keeping during XPath function evaluation
 
@@ -538,7 +566,7 @@ cdef void _extension_function_call(_BaseContext context, function,
             python.PyList_Append(args, o)
         python.PyList_Reverse(args)
 
-        res = function(None, *args)
+        res = function(context, *args)
         # wrap result for XPath consumption
         obj = _wrapXPathObject(res)
         # prevent Python from deallocating elements handed to libxml2

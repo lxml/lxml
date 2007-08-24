@@ -8,6 +8,11 @@ Under development
 Features added
 --------------
 
+* XPath extension functions can now access the current context node
+  (``context.context_node``) and use a context dictionary
+  (``context.eval_context``) from the context provided in their first
+  parameter
+
 * HTML tag soup parser based on BeautifulSoup in ``lxml.html.ElementSoup``
 
 * New module ``lxml.doctestcompare`` by Ian Bicking for writing simplified

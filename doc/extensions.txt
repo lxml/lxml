@@ -7,10 +7,9 @@ XSLT.  They allow you to do things like this::
   <xsl:value-of select="f:myPythonFunction(.//sometag)" />
 
 Here is how such a function looks like.  As the first argument, it always
-receives a dummy object.  It is currently None, but do not rely on this as it
-may become meaningful in later versions of lxml.  The other arguments are
-provided by the respective call in the XPath expression, one in the following
-examples.  Any number of arguments is allowed::
+receives a context object (see below).  The other arguments are provided by
+the respective call in the XPath expression, one in the following examples.
+Any number of arguments is allowed::
 
   >>> def hello(dummy, a):
   ...    return "Hello %s" % a
@@ -98,6 +97,40 @@ The prefix assignment only works with functions and FunctionNamespace objects,
 not with the general Namespace object that registers element classes.  The
 reasoning is that elements in lxml do not care about prefixes anyway, so it
 would rather complicate things than be of any help.
+
+
+The XPath context
+-----------------
+
+Functions get a context object as first parameter.  In lxml 1.x, this value
+was None, but since lxml 2.0 it provides two properties: ``eval_context`` and
+``context_node``.  The context node is the Element where the current function
+is called::
+
+  >>> def print_tag(context, nodes):
+  ...     print context.context_node.tag, [ n.tag for n in nodes ]
+
+  >>> ns = etree.FunctionNamespace('http://mydomain.org/printtag')
+  >>> ns.prefix = "pt"
+  >>> ns["print_tag"] = print_tag
+
+  >>> ignore = root.xpath("//*[pt:print_tag(.//*)]")
+  a ['b']
+  b []
+
+The ``eval_context`` is a dictionary that is local to the evaluation.  It
+allows functions to keep state::
+
+  >>> def print_context(context):
+  ...     context.eval_context[context.context_node.tag] = "done"
+  ...     entries = context.eval_context.items()
+  ...     entries.sort()
+  ...     print entries
+  >>> ns["print_context"] = print_context
+
+  >>> ignore = root.xpath("//*[pt:print_context()]")
+  [('a', 'done')]
+  [('a', 'done'), ('b', 'done')]
 
 
 Evaluators and XSLT
@@ -238,9 +271,12 @@ For convenience, you can also pass a sequence of extensions::
 What to return from a function
 ------------------------------
 
+.. _`XPath return values`: xpathxslt.html#xpath-return-values
+
 Extension functions can return any data type for which there is an XPath
-equivalent.  This includes numbers, boolean values, elements and lists of
-elements.  Note that integers will also be returned as floats::
+equivalent (see the documentation on `XPath return values`).  This includes
+numbers, boolean values, elements and lists of elements.  Note that integers
+will also be returned as floats::
 
   >>> def returnsFloat(_):
   ...    return 1.7

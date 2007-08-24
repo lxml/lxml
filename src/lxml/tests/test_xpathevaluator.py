@@ -265,6 +265,72 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals('Dag',  r[1].text)
         self.assertEquals('Honk', r[2].text)
 
+    def test_xpath_context_node(self):
+        tree = self.parse('<root><a/><b><c/></b></root>')
+
+        check_call = []
+        def check_context(ctxt, nodes):
+            self.assertEquals(len(nodes), 1)
+            check_call.append(nodes[0].tag)
+            self.assertEquals(ctxt.context_node, nodes[0])
+            return True
+
+        find = etree.XPath("//*[p:foo(.)]",
+                           namespaces={'p' : 'ns'},
+                           extensions=[{('ns', 'foo') : check_context}])
+        find(tree)
+
+        check_call.sort()
+        self.assertEquals(check_call, ["a", "b", "c", "root"])
+
+    def test_xpath_eval_context_propagation(self):
+        tree = self.parse('<root><a/><b><c/></b></root>')
+
+        check_call = {}
+        def check_context(ctxt, nodes):
+            self.assertEquals(len(nodes), 1)
+            tag = nodes[0].tag
+            # empty during the "b" call, a "b" during the "c" call
+            check_call[tag] = ctxt.eval_context.get("b")
+            ctxt.eval_context[tag] = tag
+            return True
+
+        find = etree.XPath("//b[p:foo(.)]/c[p:foo(.)]",
+                           namespaces={'p' : 'ns'},
+                           extensions=[{('ns', 'foo') : check_context}])
+        result = find(tree)
+
+        self.assertEquals(result, [tree.getroot()[1][0]])
+        self.assertEquals(check_call, {'b':None, 'c':'b'})
+
+    def test_xpath_eval_context_clear(self):
+        tree = self.parse('<root><a/><b><c/></b></root>')
+
+        check_call = {}
+        def check_context(ctxt):
+            check_call["done"] = True
+            # context must be empty for each new evaluation
+            self.assertEquals(len(ctxt.eval_context), 0)
+            ctxt.eval_context["test"] = True
+            return True
+
+        find = etree.XPath("//b[p:foo()]",
+                           namespaces={'p' : 'ns'},
+                           extensions=[{('ns', 'foo') : check_context}])
+        result = find(tree)
+
+        self.assertEquals(result, [tree.getroot()[1]])
+        self.assertEquals(check_call["done"], True)
+
+        check_call.clear()
+        find = etree.XPath("//b[p:foo()]",
+                           namespaces={'p' : 'ns'},
+                           extensions=[{('ns', 'foo') : check_context}])
+        result = find(tree)
+
+        self.assertEquals(result, [tree.getroot()[1]])
+        self.assertEquals(check_call["done"], True)
+
     def test_xpath_variables(self):
         x = self.parse('<a attr="true"/>')
         e = etree.XPathEvaluator(x)
