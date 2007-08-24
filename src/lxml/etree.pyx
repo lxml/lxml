@@ -728,7 +728,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     property attrib:
         """Element attribute dictionary. Where possible, use get(), set(),
-        keys() and items() to access element attributes.
+        keys(), values() and items() to access element attributes.
         """
         def __get__(self):
             if self._attrib is None:
