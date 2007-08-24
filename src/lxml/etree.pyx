@@ -1156,6 +1156,10 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         result = NEW_ELEMENT(_Element)
     else:
         result = element_class()
+    if hasProxy(c_node):
+        # prevent re-entry race condition - we just called into Python
+        result._c_node = NULL
+        return getProxy(c_node)
     result._doc = doc
     result._c_node = c_node
     _registerProxy(result)
