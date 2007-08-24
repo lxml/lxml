@@ -10,7 +10,7 @@ cdef extern from "Python.h":
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
-    cdef void _Py_DECREF "Py_DECREF" (PyObject* o)
+    cdef void Py_XDECREF(PyObject* o)
 
     cdef FILE* PyFile_AsFile(object p)
     cdef int PyFile_Check(object p)
