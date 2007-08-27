@@ -507,11 +507,15 @@ cdef _setElementValue(_Element element, value):
     else:
         cetree.delAttributeFromNsName(
             element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
-        if not python._isString(value):
+        if python._isString(value):
+            pytype_name = "str"
+        else:
+            pytype_name = _typename(value)
             if isinstance(value, bool):
                 value = _lower_bool(value)
             else:
                 value = str(value)
+        cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
     cetree.setNodeText(element._c_node, value)
 
 ################################################################################

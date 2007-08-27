@@ -643,25 +643,33 @@ You can freely switch between different types for the same child::
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         a = 'nice string!' [StringElement]
+          * py:pytype = 'str'
 
     >>> root.a = True
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         a = True [BoolElement]
+          * py:pytype = 'bool'
 
     >>> root.a = [1, 2, 3]
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
+          * py:pytype = 'int'
         a = 2 [IntElement]
+          * py:pytype = 'int'
         a = 3 [IntElement]
+          * py:pytype = 'int'
 
     >>> root.a = (1, 2, 3)
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
+          * py:pytype = 'int'
         a = 2 [IntElement]
+          * py:pytype = 'int'
         a = 3 [IntElement]
+          * py:pytype = 'int'
 
 
 Recursive string representation of elements
@@ -886,34 +894,6 @@ XSI type name::
         x = '5' [StringElement]
           * py:pytype = 'str'
           * myattr = 'someval'
-
-    >>> root.x = objectify.DataElement(5, _xsi="integer")
-    >>> print objectify.dump(root)
-    root = None [ObjectifiedElement]
-        x = 5L [LongElement]
-          * py:pytype = 'long'
-          * xsi:type = 'xsd:integer'
-
-There is a side effect of the type lookup.  If you assign a string value using
-attribute assignment and that string value turns out to be valid for any of
-the type checks, you will end up with the resolved type instead of a
-StringElement::
-
-    >>> root = objectify.Element("root")
-    >>> root.s = "5"
-    >>> print objectify.dump(root)
-    root = None [ObjectifiedElement]
-        s = 5 [IntElement]
-
-You can use the ``DataElement()`` factory to avoid this behaviour and thus
-provide the type of a data element by hand::
-
-    >>> root = objectify.Element("root")
-    >>> root.s = objectify.DataElement(5, _pytype="str")
-    >>> print objectify.dump(root)
-    root = None [ObjectifiedElement]
-        s = '5' [StringElement]
-          * py:pytype = 'str'
 
 Likewise, the data type can be provided as an XML Schema type using the _xsi
 argument of ``DataElement()``::
