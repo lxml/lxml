@@ -895,16 +895,12 @@ XSI type name::
           * py:pytype = 'str'
           * myattr = 'someval'
 
-Likewise, the data type can be provided as an XML Schema type using the _xsi
-argument of ``DataElement()``::
-
-    >>> root = objectify.Element("root")
-    >>> root.s = objectify.DataElement(5, _xsi="string")
+    >>> root.x = objectify.DataElement(5, _xsi="integer")
     >>> print objectify.dump(root)
     root = None [ObjectifiedElement]
-        s = '5' [StringElement]
-          * py:pytype = 'str'
-          * xsi:type = 'xsd:string'
+        x = 5L [LongElement]
+          * py:pytype = 'long'
+          * xsi:type = 'xsd:integer'
 
 XML Schema types reside in the XML schema namespace thus ``DataElement()`` 
 tries to correctly prefix the xsi:type attribute value for you::
