@@ -539,13 +539,13 @@ class ObjectifyTestCase(HelperTestCase):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
-        root.bool = 'true'
-        self.assert_(isinstance(root.bool, objectify.BoolElement))
+        root.bool = True
         self.assertEquals(root.bool, True)
-
-        root.bool = 'false'
         self.assert_(isinstance(root.bool, objectify.BoolElement))
+
+        root.bool = False
         self.assertEquals(root.bool, False)
+        self.assert_(isinstance(root.bool, objectify.BoolElement))
 
     def test_data_element_bool(self):
         value = objectify.DataElement(True)
