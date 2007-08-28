@@ -499,6 +499,7 @@ cdef object _appendValue(_Element parent, tag, value):
         _setElementValue(new_element, value)
 
 cdef _setElementValue(_Element element, value):
+    cdef python.PyObject* dict_result
     if value is None:
         cetree.setAttributeValue(
             element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
@@ -515,7 +516,9 @@ cdef _setElementValue(_Element element, value):
                 value = _lower_bool(value)
             else:
                 value = str(value)
-        cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
+        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
+        if dict_result is not NULL:
+            cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
     cetree.setNodeText(element._c_node, value)
 
 ################################################################################
