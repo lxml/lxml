@@ -121,7 +121,18 @@ class ElementMaker(object):
         </html>
     """
 
-    def __init__(self, typemap=None, makeelement=None):
+    def __init__(self, typemap=None,
+                 namespace=None, nsmap=None, makeelement=None):
+        if namespace is not None:
+            self._namespace = '{' + namespace + '}'
+        else:
+            self._namespace = None
+
+        if nsmap:
+            self._nsmap = dict(nsmap)
+        else:
+            self._nsmap = None
+
         if makeelement is not None:
             assert callable(makeelement)
             self._makeelement = makeelement
@@ -160,7 +171,9 @@ class ElementMaker(object):
     def __call__(self, tag, *children, **attrib):
 	get = self._typemap.get
 
-        elem = self._makeelement(tag)
+        if self._namespace is not None and tag[0] != '{':
+            tag = self._namespace + tag
+        elem = self._makeelement(tag, nsmap=self._nsmap)
 	if attrib:
 	    get(dict)(elem, attrib)
 

@@ -87,6 +87,10 @@ Other changes
 Features added
 --------------
 
+* The ``ElementMaker`` in ``lxml.builder`` now accepts the keyword arguments
+  ``namespace`` and ``nsmap`` to set a namespace and nsmap for the Elements it
+  creates.
+
 * The ``docinfo`` on ElementTree objects has new properties ``internalDTD``
   and ``externalDTD`` that return a DTD object for the internal or external
   subset of the document respectively.
