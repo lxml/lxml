@@ -37,8 +37,8 @@ the FAQ_.
 .. _FAQ:          FAQ.html
 
 
-This page describes the current in-development version of lxml that will
-eventually become lxml 2.0.
+**This page describes the current in-development version of lxml that will
+become lxml 2.0.**
 
 
 Documentation
@@ -57,6 +57,8 @@ Documentation
   * the `lxml.etree Tutorial`_
 
   * `lxml.etree specific API`_ documentation
+
+  * the `generated API documentation`_
 
   * parsing_ and validating_ XML
 
@@ -105,6 +107,7 @@ including custom element class support.
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
 .. _`lxml.etree Tutorial`: tutorial.html
+.. _`generated API documentation`:   api/index.html
 .. _`benchmark results`: performance.html
 .. _`compatibility`: compatibility.html
 .. _`lxml.etree specific API`: api.html
