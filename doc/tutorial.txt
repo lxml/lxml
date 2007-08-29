@@ -497,6 +497,11 @@ HTML::
 The Element creation based on attribute access makes it easy to build up a
 simple vocabulary for an XML language::
 
+    >>> from lxml.builder import ElementMaker
+
+    >>> E = ElementMaker(namespace="http://my.de/fault/namespace",
+    ...                  nsmap={'p' : "http://my.de/fault/namespace"})
+
     >>> DOC = E.doc
     >>> TITLE = E.title
     >>> SECTION = E.section
@@ -516,18 +521,18 @@ simple vocabulary for an XML language::
     ... )
 
     >>> print etree.tostring(my_doc, pretty_print=True)
-    <doc>
-      <title>The dog and the hog</title>
-      <section>
-        <title>The dog</title>
-        <par>Once upon a time, ...</par>
-        <par>And then ...</par>
-      </section>
-      <section>
-        <title>The hog</title>
-        <par>Sooner or later ...</par>
-      </section>
-    </doc>
+    <p:doc xmlns:p="http://my.de/fault/namespace">
+      <p:title>The dog and the hog</p:title>
+      <p:section>
+        <p:title>The dog</p:title>
+        <p:par>Once upon a time, ...</p:par>
+        <p:par>And then ...</p:par>
+      </p:section>
+      <p:section>
+        <p:title>The hog</p:title>
+        <p:par>Sooner or later ...</p:par>
+      </p:section>
+    </p:doc>
 
 One such example is the module ``lxml.html.builder``, which provides a
 vocabulary for HTML.
