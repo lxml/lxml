@@ -5,11 +5,12 @@ lxml.cssselect
 lxml supports a number of interesting languages for tree traversal and element
 selection.  The most important is obviously XPath_, but there is also
 ObjectPath_ in the `lxml.objectify`_ module.  The newest child of this family
-is CSS selection, which is implemented in the new ``lxml.cssselect`` module.
+is `CSS selection`_, which is implemented in the new ``lxml.cssselect`` module.
 
 .. _XPath: xpathxslt.html#xpath
 .. _ObjectPath: objectify.html#objectpath
 .. _`lxml.objectify`: objectify.html
+.. _`CSS selection`: http://www.w3.org/TR/CSS21/selector.html
 
 .. contents::
 ..

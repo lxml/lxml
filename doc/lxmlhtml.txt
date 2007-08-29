@@ -88,7 +88,7 @@ supports relaxed comparison of XML and HTML pages and provides a
 readable diff in the output when a test fails.  The HTML comparison is
 most easily used by importing the ``usedoctest`` module in a doctest::
 
-    >>> from lxml.html import usedoctest
+    >>> import lxml.html.usedoctest
 
 Now, if you have a HTML document and want to compare it to an expected result
 document in a doctest, you can do the following::

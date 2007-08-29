@@ -84,6 +84,9 @@ Other changes
 1.3.4 (???)
 ==================
 
+Features added
+--------------
+
 * The ``docinfo`` on ElementTree objects has new properties ``internalDTD``
   and ``externalDTD`` that return a DTD object for the internal or external
   subset of the document respectively.
@@ -91,9 +94,6 @@ Other changes
 * Serialising an ElementTree now includes any internal DTD subsets that are
   part of the document, as well as comments and PIs that are siblings of the
   root node.
-
-Features added
---------------
 
 Bugs fixed
 ----------
