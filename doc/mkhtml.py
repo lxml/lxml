@@ -2,8 +2,8 @@ from lxml.etree import parse, Element, SubElement, XPath
 import os, shutil, re, sys, copy, time
 
 SITE_STRUCTURE = [
-    ('lxml', ('main.txt', 'intro.txt', 'FAQ.txt', 'compatibility.txt',
-              'performance.txt', 'build.txt')),
+    ('lxml', ('main.txt', 'intro.txt', 'lxml2.txt', 'FAQ.txt',
+              'compatibility.txt', 'performance.txt', 'build.txt')),
     ('Developing with lxml', ('tutorial.txt', 'api.txt', 'parsing.txt',
                               'validation.txt', 'xpathxslt.txt',
                               'objectify.txt', 'lxmlhtml.txt',
