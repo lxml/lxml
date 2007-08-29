@@ -67,9 +67,6 @@ except AttributeError:
 cdef object islice
 from itertools import islice
 
-cdef object _ElementMaker
-from builder import ElementMaker as _ElementMaker
-
 cdef object _typename(object t):
     cdef char* c_name
     cdef char* s
