@@ -670,6 +670,18 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(value.text, None)
         self.assertEquals(value.pyval, None)
             
+    def test_data_element_pytype_none_compat(self):
+        # pre-2.0 lxml called NoneElement "none"
+        pyval = 1
+        pytype = "none"
+        objclass = objectify.NoneElement
+        value = objectify.DataElement(pyval, _pytype=pytype)
+        self.assert_(isinstance(value, objclass),
+                     "DataElement(%s, _pytype='%s') returns %s, expected %s"
+                     % (pyval, pytype, type(value), objclass))
+        self.assertEquals(value.text, None)
+        self.assertEquals(value.pyval, None)
+            
     def test_schema_types(self):
         XML = self.XML
         root = XML('''\
@@ -1657,6 +1669,67 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(
             etree.tostring(new_root),
             etree.tostring(root))
+
+    # E-Factory tests, need to use sub-elements as root element is always
+    # type-looked-up as ObjectifiedElement (no annotations)
+    def test_efactory_int(self):
+        E = objectify.E
+        root = E.root(E.val(23))
+        self.assert_(isinstance(root.val, objectify.IntElement))
+
+    def test_efactory_long(self):
+        E = objectify.E
+        root = E.root(E.val(23L))
+        self.assert_(isinstance(root.val, objectify.IntElement))
+
+    def test_efactory_float(self):
+        E = objectify.E
+        root = E.root(E.val(233.23))
+        self.assert_(isinstance(root.val, objectify.FloatElement))
+
+    def test_efactory_str(self):
+        E = objectify.E
+        root = E.root(E.val("what?"))
+        self.assert_(isinstance(root.val, objectify.StringElement))
+
+    def test_efactory_unicode(self):
+        E = objectify.E
+        root = E.root(E.val(unicode("blöödy häll", encoding="ISO-8859-1")))
+        self.assert_(isinstance(root.val, objectify.StringElement))
+
+    def test_efactory_bool(self):
+        E = objectify.E
+        root = E.root(E.val(True))
+        self.assert_(isinstance(root.val, objectify.BoolElement))
+
+    def test_efactory_none(self):
+        E = objectify.E
+        root = E.root(E.val(None))
+        self.assert_(isinstance(root.val, objectify.NoneElement))
+
+    def test_efactory_value_concatenation(self):
+        E = objectify.E
+        root = E.root(E.val(1, "foo", 2.0, "bar ", True, None))
+        self.assert_(isinstance(root.val, objectify.StringElement))
+
+    def test_efactory_attrib(self):
+        E = objectify.E
+        root = E.root(foo="bar")
+        self.assertEquals(root.get("foo"), "bar")
+
+    def test_efactory_nested(self):
+        E = objectify.E
+        DataElement = objectify.DataElement
+        root = E.root("text", E.sub(E.subsub()), "tail", DataElement(1),
+                      DataElement(2.0))
+        self.assert_(isinstance(root, objectify.ObjectifiedElement))
+        self.assertEquals(root.text, "text")
+        self.assert_(isinstance(root.sub, objectify.ObjectifiedElement))
+        self.assertEquals(root.sub.tail, "tail")
+        self.assert_(isinstance(root.sub.subsub, objectify.StringElement))
+        self.assertEquals(len(root.value), 2)
+        self.assert_(isinstance(root.value[0], objectify.IntElement))
+        self.assert_(isinstance(root.value[1], objectify.FloatElement))
 
 def test_suite():
     suite = unittest.TestSuite()
