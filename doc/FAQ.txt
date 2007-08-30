@@ -20,6 +20,7 @@ ElementTree_.
      1.3  What standards does lxml implement?
      1.4  What is the difference between lxml.etree and lxml.objectify?
      1.5  How can I make my application run faster?
+     1.6  What about that trailing text on serialised Elements?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the Windows binaries?
@@ -34,6 +35,7 @@ ElementTree_.
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
      5.3  Would my single-threaded program run faster if I turned off threading?
+     5.4  My program crashes when run with mod_python/Pyro/Zope/Plone/...
    6  Parsing and Serialisation
      6.1  Why doesn't the ``pretty_print`` option reformat my XML output?
      6.2  Why can't lxml parse my XML from unicode strings?
@@ -318,7 +320,7 @@ However, there are a few things to try first, to make sure the problem is
 really within lxml (or libxml2 or libxslt):
 
 a) If your application (or e.g. your web container) uses threads, please see
-   the FAQ section on threading to check if you touch on one of the
+   the FAQ section on threading_ to check if you touch on one of the
    potential pitfalls.
 
 b) If you are on Mac-OS X, make sure lxml uses the correct libraries.  If you
@@ -387,7 +389,7 @@ threads.  While you can also share parsers between threads, this will
 serialize the access to each of them, so it is better to copy() parsers or to
 use the default parser.  Note that access to the XML() and HTML() functions is
 always serialized.  If you need to parse concurrently from strings, use
-``parse()`` with ``StringIO``.
+``parse()`` with ``StringIO`` or pass a separate parser to these functions.
 
 Due to the way libxslt handles threading, concurrent access to stylesheets is
 currently only possible if it was parsed in the main thread.  Parsing and
@@ -428,6 +430,38 @@ Would my single-threaded program run faster if I turned off threading?
 Can be.  You can see for yourself by compiling lxml entirely without threading
 support.  Pass the ``--without-threading`` option to setup.py when building
 lxml from source.
+
+
+My program crashes when run with mod_python/Pyro/Zope/Plone/...
+---------------------------------------------------------------
+
+These environments can use threads in a way that may not make it obvious what
+happens, and thus make it hard to ensure lxml's threading support is used in a
+reliable way.  If you encounter crashes in these systems, but your code runs
+perfectly when started by hand, try one of the following::
+
+* compile lxml without threading support by passing the
+  ``--without-threading`` option.  While this might be a bit slower in certain
+  scenarios on well equiped systems, it might also keep your application from
+  crashing, which should be worth more to you than peek performance.  lxml is
+  fast anyway, so concurrency may not even be worth it.
+
+* avoid doing fancy XSLT stuff like foreign document access or passing in
+  Elements trough XSLT variables.  This might work, but if you try, you're
+  really pushing it.
+
+* try copying trees at suspicious places and working with those instead of a
+  tree shared between threads.  A good candidate might be the result of an
+  XSLT or the stylesheet itself.
+
+* try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
+  instead of sharing one.
+
+* you can try to serialise suspicious parts of your code with explicit locks,
+  thus disabling the concurrency of the runtime system.
+
+* report back on the mailing list to see if there are other ways to work
+  around your specific problems.
 
 
 Parsing and Serialisation
