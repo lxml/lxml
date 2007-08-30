@@ -36,6 +36,7 @@ ftest_inplace: inplace
 html: inplace
 	mkdir -p doc/html
 	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
+	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
 			PYTHONPATH=. epydoc -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ lxml/) \
@@ -52,7 +53,7 @@ ftest: ftest_inplace
 
 clean:
 	find . \( -name '*.o' -o -name '*.c' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
-	rm -rf build doc/html/api
+	rm -rf build
 
 realclean: clean
 	rm -f TAGS
