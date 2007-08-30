@@ -1036,6 +1036,12 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
 ################################################################################
 # adapted ElementMaker supports registered PyTypes
 
+cdef class _ObjectifyElementMakerCaller # forward declaration
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _ObjectifyElementMakerCaller NEW_ELEMENT_MAKER "PY_NEW" (object t)
+
 cdef class ElementMaker:
     cdef object _makeelement
     cdef object _namespace
@@ -1053,19 +1059,19 @@ cdef class ElementMaker:
             self._makeelement = None
 
     def __getattr__(self, tag):
-        if tag[0] != "{" and self._namespace is not None:
+        cdef _ObjectifyElementMakerCaller element_maker
+        if self._namespace is not None and tag[0] != "{":
             tag = self._namespace + tag
-        return _ObjectifyElementMakerCaller(
-            self._makeelement, tag, self._nsmap)
+        element_maker = NEW_ELEMENT_MAKER(_ObjectifyElementMakerCaller)
+        element_maker._tag = tag
+        element_maker._nsmap = self._nsmap
+        element_maker._element_factory = self._makeelement
+        return element_maker
 
 cdef class _ObjectifyElementMakerCaller:
     cdef object _tag
     cdef object _nsmap
     cdef object _element_factory
-    def __init__(self, element_factory, tag, nsmap):
-        self._element_factory = element_factory
-        self._tag = tag
-        self._nsmap = nsmap
 
     def __call__(self, *children, **attrib):
         cdef _ObjectifyElementMakerCaller elementMaker
