@@ -4,7 +4,7 @@
 Test cases related to XSLT processing
 """
 
-import unittest
+import unittest, copy
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import doctest
@@ -49,6 +49,41 @@ class ETreeXSLTTestCase(HelperTestCase):
 
                 self.assertRaises(
                     etree.XSLTParseError, etree.XSLT, style)
+        
+    def test_xslt_copy(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        transform = etree.XSLT(style)
+        res = transform(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          str(res))
+
+        transform_copy = copy.deepcopy(transform)
+        res = transform_copy(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          str(res))
+
+        transform = etree.XSLT(style)
+        res = transform(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          str(res))
 
     def test_xslt_utf8(self):
         tree = self.parse(u'<a><b>\uF8D2</b><c>\uF8D2</c></a>')

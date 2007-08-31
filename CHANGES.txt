@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* XSLT objects now support deep copying
+
 * New ``makeSubElement()`` C-API function that allows creating a new
   subelement straight with text, tail and attributes.
 

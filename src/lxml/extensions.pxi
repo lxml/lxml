@@ -92,7 +92,7 @@ cdef class _BaseContext:
             _regexp = _ExsltRegExp()
             _regexp._register_in_context(self)
 
-    cdef _copy(self):
+    cdef _BaseContext _copy(self):
         cdef _BaseContext context
         if self._namespaces is not None:
             namespaces = self._namespaces[:]

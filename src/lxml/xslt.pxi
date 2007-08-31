@@ -55,6 +55,12 @@ cdef class _XSLTResolverContext(_ResolverContext):
         self._parser = parser
         self._c_style_doc = NULL
 
+    cdef _XSLTResolverContext _copy(self):
+        cdef _XSLTResolverContext context
+        context = _XSLTResolverContext(self._parser)
+        context._c_style_doc = _copyDoc(self._c_style_doc, 1)
+        return context
+
 cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
     cdef xmlDoc* c_doc
     c_doc = (<_XSLTResolverContext>context)._c_style_doc
@@ -337,6 +343,26 @@ cdef class XSLT:
         """
         return str(result_tree)
 
+    def __deepcopy__(self, memo):
+        return self.__copy__()
+
+    def __copy__(self):
+        cdef XSLT new_xslt
+        cdef xmlDoc* c_doc
+        new_xslt = NEW_XSLT(XSLT)
+        new_xslt._access_control = self._access_control
+        new_xslt._error_log = _ErrorLog()
+        new_xslt._context = self._context._copy()
+        new_xslt._xslt_resolver_context = self._xslt_resolver_context._copy()
+
+        c_doc = _copyDoc(self._c_style.doc, 1)
+        new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        if new_xslt._c_style is NULL:
+            tree.xmlFreeDoc(c_doc)
+            python.PyErr_NoMemory()
+
+        return new_xslt
+
     def __call__(self, _input, profile_run=False, **_kw):
         cdef _XSLTContext context
         cdef _Document input_doc
@@ -462,6 +488,10 @@ cdef class XSLT:
             python.PyMem_Free(params)
 
         return c_result
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for instantiation without calling __init__()
+    cdef XSLT NEW_XSLT "PY_NEW" (object t)
 
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
