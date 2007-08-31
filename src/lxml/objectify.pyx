@@ -517,7 +517,8 @@ cdef _setElementValue(_Element element, value):
         if dict_result is not NULL:
             cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
         else:
-            cetree.delAttribute(element, PYTYPE_ATTRIBUTE)
+            cetree.delAttributeFromNsName(element._c_node, PYTYPE_NAMESPACE,
+                                          PYTYPE_ATTRIBUTE_NAME)
     cetree.setNodeText(element._c_node, value)
 
 ################################################################################
