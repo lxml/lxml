@@ -1107,7 +1107,7 @@ cdef class _ObjectifyElementMakerCaller:
                 elementMaker = <_ObjectifyElementMakerCaller>child
                 if elementMaker._element_factory is None:
                     cetree.makeSubElement(element, elementMaker._tag,
-                                          None, None, None)
+                                          None, None, None, None)
                 else:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
