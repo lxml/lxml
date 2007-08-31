@@ -560,35 +560,59 @@ class ObjectifyTestCase(HelperTestCase):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
-        root.none = "test"
-        self.assert_(isinstance(root.none, objectify.StringElement))
+        root.s = "test"
+        self.assert_(isinstance(root.s, objectify.StringElement))
+
+    def test_type_str_intliteral(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = "3"
+        self.assert_(isinstance(root.s, objectify.StringElement))
+
+    def test_type_str_floatliteral(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = "3.72"
+        self.assert_(isinstance(root.s, objectify.StringElement))
 
     def test_type_str_mul(self):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
-        root.none = "test"
+        root.s = "test"
 
-        self.assertEquals("test" * 5, root.none * 5)
-        self.assertEquals(5 * "test", 5 * root.none)
+        self.assertEquals("test" * 5, root.s * 5)
+        self.assertEquals(5 * "test", 5 * root.s)
 
-        self.assertRaises(TypeError, operator.mul, root.none, "honk")
-        self.assertRaises(TypeError, operator.mul, "honk", root.none)
+        self.assertRaises(TypeError, operator.mul, root.s, "honk")
+        self.assertRaises(TypeError, operator.mul, "honk", root.s)
 
     def test_type_str_add(self):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("{objectified}root")
-        root.none = "test"
+        root.s = "test"
 
         s = "toast"
-        self.assertEquals("test" + s, root.none + s)
-        self.assertEquals(s + "test", s + root.none)
+        self.assertEquals("test" + s, root.s + s)
+        self.assertEquals(s + "test", s + root.s)
 
     def test_data_element_str(self):
         value = objectify.DataElement("test")
         self.assert_(isinstance(value, objectify.StringElement))
         self.assertEquals(value, "test")
+
+    def test_data_element_str_intliteral(self):
+        value = objectify.DataElement("3")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, "3")
+
+    def test_data_element_str_floatliteral(self):
+        value = objectify.DataElement("3.20")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, "3.20")
 
     def test_type_int(self):
         Element = self.Element
@@ -669,19 +693,25 @@ class ObjectifyTestCase(HelperTestCase):
                      % (pyval, pytype, type(value), objclass))
         self.assertEquals(value.text, None)
         self.assertEquals(value.pyval, None)
-            
-    def test_data_element_pytype_none_compat(self):
-        # pre-2.0 lxml called NoneElement "none"
-        pyval = 1
-        pytype = "none"
-        objclass = objectify.NoneElement
-        value = objectify.DataElement(pyval, _pytype=pytype)
-        self.assert_(isinstance(value, objclass),
-                     "DataElement(%s, _pytype='%s') returns %s, expected %s"
-                     % (pyval, pytype, type(value), objclass))
-        self.assertEquals(value.text, None)
-        self.assertEquals(value.pyval, None)
-            
+
+    def test_type_unregistered(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        class MyFloat(float):
+            pass
+        root = Element("{objectified}root")
+        root.myfloat = MyFloat(5.5)
+        self.assert_(isinstance(root.myfloat, objectify.FloatElement))
+        self.assertEquals(root.myfloat.get(objectify.PYTYPE_ATTRIBUTE), None)
+
+    def test_data_element_unregistered(self):
+        class MyFloat(float):
+            pass
+        value = objectify.DataElement(MyFloat(5.5))
+        self.assert_(isinstance(value, objectify.FloatElement))
+        self.assertEquals(value, 5.5)
+        self.assertEquals(value.get(objectify.PYTYPE_ATTRIBUTE), None)
+
     def test_schema_types(self):
         XML = self.XML
         root = XML('''\
