@@ -1680,7 +1680,7 @@ class ObjectifyTestCase(HelperTestCase):
     def test_efactory_long(self):
         E = objectify.E
         root = E.root(E.val(23L))
-        self.assert_(isinstance(root.val, objectify.IntElement))
+        self.assert_(isinstance(root.val, objectify.LongElement))
 
     def test_efactory_float(self):
         E = objectify.E

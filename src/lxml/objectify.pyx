@@ -1084,9 +1084,7 @@ cdef class _ObjectifyElementMakerCaller:
         cdef int has_children
         cdef int has_string_value
         if self._element_factory is None:
-            element = cetree.makeElement(
-                self._tag, None, objectify_parser,
-                None, None, attrib, self._nsmap)
+            element = _makeElement(self._tag, None, attrib, self._nsmap)
         else:
             element = self._element_factory(self._tag, attrib, self._nsmap)
 
@@ -1917,12 +1915,12 @@ def parse(f, parser=None):
         parser = objectify_parser
     return _parse(f, parser)
 
-E = ElementMaker()
-
 cdef object _DEFAULT_NSMAP
 _DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,
                    "xsi" : XML_SCHEMA_INSTANCE_NS,
                    "xsd" : XML_SCHEMA_NS}
+
+E = ElementMaker()
 
 def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
     """Objectify specific version of the lxml.etree Element() factory that
