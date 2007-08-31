@@ -327,8 +327,11 @@ b) If you are on Mac-OS X, make sure lxml uses the correct libraries.  If you
    have updated the old system libraries (e.g. through fink), this is best
    achieved by building lxml statically to prevent the different library
    versions from interfering.  If you choose to use a dynamically linked
-   version, make sure the ``DYLD_LIBRARY_PATH`` environment variable
-   contains the directory where you installed the libraries.
+   version, make sure the ``DYLD_LIBRARY_PATH`` environment variable contains
+   the directory where you installed the libraries.  To make sure the correct
+   libraries are used, print the module level version numbers that
+   ``lxml.etree`` provides from *within* your application rather than relying
+   on what your operating system tells you.
 
 In any case, try to reproduce the problem with the latest versions of
 libxml2 and libxslt.  From time to time, bugs and race conditions are found
@@ -435,20 +438,36 @@ lxml from source.
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
 ---------------------------------------------------------------
 
-These environments can use threads in a way that may not make it obvious what
-happens, and thus make it hard to ensure lxml's threading support is used in a
-reliable way.  If you encounter crashes in these systems, but your code runs
-perfectly when started by hand, try one of the following::
+These environments can use threads in a way that may not make it obvious when
+threads are created and what happens in which thread.  This makes it hard to
+ensure lxml's threading support is used in a reliable way.  Sadly, if problems
+arise, they are as diverse as the applications, so it is difficult to provide
+any generally applicable solution.  Also, these environments are so complex
+that problems become hard to debug and even harder to reproduce in a
+predictable way.  If you encounter crashes in one these systems, but your code
+runs perfectly when started by hand, the following gives you a few hints for
+possible approaches to solve your specific problem::
 
-* compile lxml without threading support by passing the
-  ``--without-threading`` option.  While this might be a bit slower in certain
-  scenarios on well equiped systems, it might also keep your application from
-  crashing, which should be worth more to you than peek performance.  lxml is
-  fast anyway, so concurrency may not even be worth it.
+* make sure you use recent versions of libxml2, libxslt and lxml.  The libxml2
+  developers keep fixing bugs in each release, and lxml also tries to become
+  more robust against possible pitfalls.  So newer versions might already fix
+  your problem in a reliable way.
+
+* make sure the library versions you installed are really used.  Do not rely
+  on what your operating system tells you!  Print the version constants in
+  ``lxml.etree`` from within your runtime environment to make sure it is the
+  case.  This is especially a problem under MacOS-X when newer library
+  versions were installed in addition to the outdated system libraries.
+
+* compile lxml without threading support by running ``setup.py`` with the
+  ``--without-threading`` option.  While this might be slower in certain
+  scenarios on multi-processor systems, it *might* also keep your application
+  from crashing, which should be worth more to you than peek performance.
+  Remember that lxml is fast anyway, so concurrency may not even be worth it.
 
 * avoid doing fancy XSLT stuff like foreign document access or passing in
-  Elements trough XSLT variables.  This might work, but if you try, you're
-  really pushing it.
+  subtrees trough XSLT variables.  This might or might not work, depending on
+  your specific usage.
 
 * try copying trees at suspicious places and working with those instead of a
   tree shared between threads.  A good candidate might be the result of an
@@ -457,11 +476,12 @@ perfectly when started by hand, try one of the following::
 * try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
   instead of sharing one.
 
-* you can try to serialise suspicious parts of your code with explicit locks,
-  thus disabling the concurrency of the runtime system.
+* you can try to serialise suspicious parts of your code with explicit thread
+  locks, thus disabling the concurrency of the runtime system.
 
 * report back on the mailing list to see if there are other ways to work
-  around your specific problems.
+  around your specific problems.  Do not forget to report the version numbers
+  of lxml, libxml2 and libxslt you are using.
 
 
 Parsing and Serialisation
