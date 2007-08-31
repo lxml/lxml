@@ -2030,28 +2030,20 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
         strval = str(_value)
 
     if _pytype is None:
-        for type_check, pytype in _TYPE_CHECKS:
-            try:
-                type_check(strval)
-                _pytype = (<PyType>pytype).name
-                break
-            except IGNORABLE_ERRORS:
-                pass
-        if _pytype is None:
-            _pytype = "str"
-    else:
-        # check if type information from arguments is valid
-        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
-        if dict_result is not NULL:
-            type_check = (<PyType>dict_result).type_check
-            if type_check is not None:
-                type_check(strval)
-
+        _pytype = _typename(_value)
+        
     if _pytype is not None: 
         if _pytype == "NoneType" or _pytype == "none":
             strval = None
             python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
         else:
-            python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
+            # check if type information from arguments is valid
+            dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
+            if dict_result is not NULL:
+                type_check = (<PyType>dict_result).type_check
+                if type_check is not None:
+                    type_check(strval)
+
+                python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
 
     return _makeElement("value", strval, _attributes, nsmap)
