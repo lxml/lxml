@@ -63,6 +63,11 @@ cdef extern from "etree.h":
     cdef _Element makeElement(tag, _Document doc, parser,
                               text, tail, attrib, nsmap)
 
+    # create a new SubElement for an existing parent
+    # builds Python object after setting text, tail, namespaces and attributes
+    cdef _Element makeSubElement(_Element parent, tag, text, tail,
+                                 attrib, nsmap)
+
     # deep copy a node to include it in the Document
     cdef _Element deepcopyNodeToDocument(_Document doc, tree.xmlNode* c_root)
 

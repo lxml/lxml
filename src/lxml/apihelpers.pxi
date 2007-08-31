@@ -105,6 +105,8 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     elif c_doc is NULL:
         c_doc = _newDoc()
     c_node = _createElement(c_doc, name_utf)
+    if c_node is NULL:
+        return python.PyErr_NoMemory()
     try:
         if text is not None:
             _setNodeText(c_node, text)
@@ -128,6 +130,47 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
             # c_doc will not be freed by doc
             tree.xmlFreeDoc(c_doc)
         raise
+
+cdef _Element _makeSubElement(_Element parent, tag, text, tail,
+                              attrib, nsmap, extra_attrs):
+    """Create a new child element and initialize text content, namespaces and
+    attributes.
+
+    This helper function will reuse as much of the existing document as
+    possible:
+
+    If 'parser' is None, the parser will be inherited from 'doc' or the
+    default parser will be used.
+
+    If 'doc' is None, 'c_doc' is used to create a new _Document and the new
+    element is made its root node.
+
+    If 'c_doc' is also NULL, a new xmlDoc will be created.
+    """
+    cdef _Document doc
+    cdef xmlNode* c_node
+    cdef xmlDoc* c_doc
+    if parent is None or parent._doc is None:
+        return None
+    ns_utf, name_utf = _getNsTag(tag)
+    _tagValidOrRaise(name_utf)
+    doc = parent._doc
+    c_doc = doc._c_doc
+
+    c_node = _createElement(c_doc, name_utf)
+    if c_node is NULL:
+        return python.PyErr_NoMemory()
+    tree.xmlAddChild(parent._c_node, c_node)
+
+    if text is not None:
+        _setNodeText(c_node, text)
+    if tail is not None:
+        _setTailText(c_node, tail)
+
+    # add namespaces to node if necessary
+    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+    return _elementFactory(doc, c_node)
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     """Initialise the attributes of an element node.

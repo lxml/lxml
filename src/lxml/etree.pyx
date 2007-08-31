@@ -1980,17 +1980,7 @@ def SubElement(_Element _parent not None, _tag,
     """Subelement factory.  This function creates an element instance, and
     appends it to an existing element.
     """
-    cdef xmlNode*  c_node
-    cdef _Document doc
-    ns_utf, name_utf = _getNsTag(_tag)
-    _tagValidOrRaise(name_utf)
-    doc = _parent._doc
-    c_node = _createElement(doc._c_doc, name_utf)
-    tree.xmlAddChild(_parent._c_node, c_node)
-    # add namespaces to node if necessary
-    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _initNodeAttributes(c_node, doc, attrib, _extra)
-    return _elementFactory(doc, c_node)
+    return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
 
 def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
     """ElementTree wrapper class.

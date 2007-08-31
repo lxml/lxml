@@ -1097,13 +1097,12 @@ cdef class _ObjectifyElementMakerCaller:
             elif isinstance(child, _ObjectifyElementMakerCaller):
                 elementMaker = <_ObjectifyElementMakerCaller>child
                 if elementMaker._element_factory is None:
-                    childElement = cetree.makeElement(
-                        elementMaker._tag, element._doc, objectify_parser,
-                        None, None, None, None)
+                    cetree.makeSubElement(element, elementMaker._tag,
+                                          None, None, None, None)
                 else:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
-                cetree.appendChild(element, childElement)
+                    cetree.appendChild(element, childElement)
             else:
                 pytype = python.PyDict_GetItem(
                     _PYTYPE_DICT, _typename(child))
