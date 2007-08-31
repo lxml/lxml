@@ -138,8 +138,8 @@ The source distribution is signed with `this key`_.
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
-The latest version is `lxml 1.3.2`_, released 2007-07-03 (`changes for 1.3.2`_).
-`Older versions`_ are listed below.
+The latest version is `lxml 2.0alpha1`_, released 2007-08-31
+(`changes for 2.0alpha1`_).  `Older versions`_ are listed below.
 
 .. _`Older versions`: #old-versions
 
@@ -199,6 +199,12 @@ obstacle to using lxml in your codebase.
 Old Versions
 ------------
 
+* `lxml 1.3.4`_, released 2007-08-30 (`changes for 1.3.4`_)
+
+* `lxml 1.3.3`_, released 2007-07-26 (`changes for 1.3.3`_)
+
+* `lxml 1.3.2`_, released 2007-07-03 (`changes for 1.3.2`_)
+
 * lxml 1.3.1, released 2007-07-02 (`changes for 1.3.1`_)
 
 * `lxml 1.3`_, released 2007-06-24 (`changes for 1.3`_)
@@ -239,6 +245,9 @@ Old Versions
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.0alpha1`: lxml-2.0alpha1.tgz
+.. _`lxml 1.3.4`: lxml-1.3.4.tgz
+.. _`lxml 1.3.3`: lxml-1.3.3.tgz
 .. _`lxml 1.3.2`: lxml-1.3.2.tgz
 .. _`lxml 1.3`: lxml-1.3.tgz
 .. _`lxml 1.2.1`: lxml-1.2.1.tgz
@@ -260,6 +269,9 @@ Old Versions
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.0alpha1`: changes-2.0alpha1.html
+.. _`changes for 1.3.4`: changes-1.3.4.html
+.. _`changes for 1.3.3`: changes-1.3.3.html
 .. _`changes for 1.3.2`: changes-1.3.2.html
 .. _`changes for 1.3.1`: changes-1.3.1.html
 .. _`changes for 1.3`: changes-1.3.html
