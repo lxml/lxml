@@ -159,7 +159,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
 
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
-        return python.PyErr_NoMemory()
+        python.PyErr_NoMemory()
     tree.xmlAddChild(parent._c_node, c_node)
 
     if text is not None:
