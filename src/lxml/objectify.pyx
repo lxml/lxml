@@ -1048,6 +1048,8 @@ cdef class ElementMaker:
     cdef object _namespace
     cdef object _nsmap
     def __init__(self, namespace=None, nsmap=None, makeelement=None):
+        if nsmap is None:
+            nsmap = _DEFAULT_NSMAP
         self._nsmap = nsmap
         if namespace is None:
             self._namespace = None
@@ -1079,6 +1081,8 @@ cdef class _ObjectifyElementMakerCaller:
         cdef python.PyObject* pytype
         cdef _Element element
         cdef _Element childElement
+        cdef int has_children
+        cdef int has_string_value
         if self._element_factory is None:
             element = cetree.makeElement(
                 self._tag, None, objectify_parser,
@@ -1086,6 +1090,8 @@ cdef class _ObjectifyElementMakerCaller:
         else:
             element = self._element_factory(self._tag, attrib, self._nsmap)
 
+        has_children = 0
+        has_string_value = 0
         for child in children:
             if child is None:
                 if python.PyTuple_GET_SIZE(children) == 1:
@@ -1093,25 +1099,39 @@ cdef class _ObjectifyElementMakerCaller:
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
             elif python._isString(child):
                 _add_text(element, child)
+                has_string_value = 1
             elif isinstance(child, _Element):
                 cetree.appendChild(element, <_Element>child)
+                has_children = 1
             elif isinstance(child, _ObjectifyElementMakerCaller):
                 elementMaker = <_ObjectifyElementMakerCaller>child
                 if elementMaker._element_factory is None:
                     cetree.makeSubElement(element, elementMaker._tag,
-                                          None, None, None, None)
+                                          None, None, None)
                 else:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
                     cetree.appendChild(element, childElement)
+                has_children = 1
             else:
-                pytype = python.PyDict_GetItem(
-                    _PYTYPE_DICT, _typename(child))
+                if pytype_name is not None:
+                    # concatenation makes the result a string
+                    has_string_value = 1
+                pytype_name = _typename(child)
+                pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
                 if pytype is not NULL:
                     (<PyType>pytype)._add_text(element, child)
                 else:
+                    has_string_value = 1
                     child = str(child)
                     _add_text(element, child)
+
+        if not has_children:
+            if has_string_value:
+                cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, "str")
+            elif pytype_name is not None:
+                cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE,
+                                         pytype_name)
 
         return element
 
