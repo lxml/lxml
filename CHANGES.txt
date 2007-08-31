@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* New ``makeSubElement()`` C-API function that allows creating a new
+  subelement straight with text, tail and attributes.
+
 * XPath extension functions can now access the current context node
   (``context.context_node``) and use a context dictionary
   (``context.eval_context``) from the context provided in their first
