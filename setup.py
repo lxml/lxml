@@ -7,7 +7,7 @@ try:
     except pkg_resources.VersionConflict, e:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
-    #pkg_resources.require("Cython>=0.9.6.4")
+    #pkg_resources.require("Cython==0.9.6.5")
     from setuptools import setup
 except ImportError:
     # no setuptools installed
