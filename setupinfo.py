@@ -1,20 +1,12 @@
 import sys, os
-try:
-    from setuptools.extension import Extension
-except ImportError:
-    from distutils.extension import Extension
+from distutils.core import Extension
 
 try:
     from Cython.Distutils import build_ext as build_pyx
     print "Building with Cython."
-    PYREX_INSTALLED = True
+    CYTHON_INSTALLED = True
 except ImportError:
-    try:
-        from Pyrex.Distutils import build_ext as build_pyx
-        print "Trying to build with Pyrex."
-        PYREX_INSTALLED = True
-    except ImportError:
-        PYREX_INSTALLED = False
+    CYTHON_INSTALLED = False
 
 EXT_MODULES = [
     ("etree",         "lxml.etree"),
@@ -27,10 +19,10 @@ def env_var(name):
     return value.split(os.pathsep)
 
 def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
-    if PYREX_INSTALLED:
+    if CYTHON_INSTALLED:
         source_extension = ".pyx"
     else:
-        print ("NOTE: Trying to build without Pyrex, pre-generated "
+        print ("NOTE: Trying to build without Cython, pre-generated "
                "'src/lxml/etree.c' needs to be available.")
         source_extension = ".c"
 
@@ -67,7 +59,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
 
 def extra_setup_args():
     result = {}
-    if PYREX_INSTALLED:
+    if CYTHON_INSTALLED:
         result['cmdclass'] = {'build_ext': build_pyx}
     return result
 

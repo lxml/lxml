@@ -1,25 +1,28 @@
 import sys, os
 
+extra_options = {}
+
+try:
+    import Cython
+    # may need to work around setuptools bug by providing a fake Pyrex
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "fake_pyrex"))
+except ImportError:
+    pass
+
 try:
     import pkg_resources
     try:
         pkg_resources.require("setuptools>=0.6c5")
-    except pkg_resources.VersionConflict, e:
+    except pkg_resources.VersionConflict:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
     #pkg_resources.require("Cython==0.9.6.5")
     from setuptools import setup
+    extra_options["zip_safe"] = False
 except ImportError:
     # no setuptools installed
     from distutils.core import setup
 
-try:
-    import Cython
-except ImportError:
-    # need to insert this to python path so we're sure we can import versioninfo,
-    # setupinfo and Cython/Pyrex (!) even if we start setup.py from another location
-    # (such as a buildout)
-    sys.path.insert(0, os.path.dirname(__file__))
 
 import versioninfo
 import setupinfo
@@ -31,10 +34,14 @@ STATIC_INCLUDE_DIRS = []
 STATIC_LIBRARY_DIRS = []
 STATIC_CFLAGS = []
 
+
 # create lxml-version.h file
 svn_version = versioninfo.svn_version()
 versioninfo.create_version_h(svn_version)
 print "Building lxml version", svn_version
+
+
+extra_options.update(setupinfo.extra_setup_args())
 
 setup(
     name = "lxml",
@@ -86,8 +93,7 @@ http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_v
 
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.html'],
-    zip_safe = False,
     ext_modules = setupinfo.ext_modules(
     STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
-    **setupinfo.extra_setup_args()
+    **extra_options
 )
