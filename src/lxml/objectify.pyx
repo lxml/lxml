@@ -1047,7 +1047,9 @@ cdef class ElementMaker:
     cdef object _makeelement
     cdef object _namespace
     cdef object _nsmap
-    def __init__(self, namespace=None, nsmap=None, makeelement=None):
+    cdef int _annotate
+    def __init__(self, namespace=None, nsmap=None, annotate=True,
+                 makeelement=None):
         if nsmap is None:
             nsmap = _DEFAULT_NSMAP
         self._nsmap = nsmap
@@ -1055,6 +1057,7 @@ cdef class ElementMaker:
             self._namespace = None
         else:
             self._namespace = "{%s}" % namespace
+        self._annotate = bool(annotate)
         if makeelement is not None:
             assert callable(makeelement)
             self._makeelement = makeelement
@@ -1068,6 +1071,7 @@ cdef class ElementMaker:
         element_maker = NEW_ELEMENT_MAKER(_ObjectifyElementMakerCaller)
         element_maker._tag = tag
         element_maker._nsmap = self._nsmap
+        element_maker._annotate = self._annotate
         element_maker._element_factory = self._makeelement
         return element_maker
 
@@ -1075,6 +1079,7 @@ cdef class _ObjectifyElementMakerCaller:
     cdef object _tag
     cdef object _nsmap
     cdef object _element_factory
+    cdef int _annotate
 
     def __call__(self, *children, **attrib):
         cdef _ObjectifyElementMakerCaller elementMaker
@@ -1088,6 +1093,7 @@ cdef class _ObjectifyElementMakerCaller:
         else:
             element = self._element_factory(self._tag, attrib, self._nsmap)
 
+        pytype_name = None
         has_children = 0
         has_string_value = 0
         for child in children:
@@ -1113,7 +1119,7 @@ cdef class _ObjectifyElementMakerCaller:
                 has_children = 1
             else:
                 if pytype_name is not None:
-                    # concatenation makes the result a string
+                    # concatenation always makes the result a string
                     has_string_value = 1
                 pytype_name = _typename(child)
                 pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
@@ -1124,12 +1130,11 @@ cdef class _ObjectifyElementMakerCaller:
                     child = str(child)
                     _add_text(element, child)
 
-        if not has_children:
+        if self._annotate and not has_children:
             if has_string_value:
                 cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, "str")
             elif pytype_name is not None:
-                cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE,
-                                         pytype_name)
+                cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
 
         return element
 
@@ -1911,6 +1916,10 @@ cdef object _parse
 _parse = etree.parse
 
 def parse(f, parser=None):
+    """Parse a file or file-like object with the objectify parser.
+
+    You can pass a different parser as second argument.
+    """
     if parser is None:
         parser = objectify_parser
     return _parse(f, parser)

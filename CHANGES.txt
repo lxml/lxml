@@ -8,6 +8,10 @@ lxml changelog
 Features added
 --------------
 
+* Reimplemented ``objectify.E`` for better performance and improved
+  integration with objectify.  Provides extended type support based on
+  registered PyTypes.
+
 * XSLT objects now support deep copying
 
 * New ``makeSubElement()`` C-API function that allows creating a new
@@ -35,8 +39,7 @@ Features added
 
 * Schematron validation (incomplete in libxml2)
 
-* Extended type support for ``objectify.E`` based on registered PyTypes.
-  Supports an additional argument to ``PyType()`` that takes a conversion
+* Additional ``stringify`` argument to ``PyType()`` that takes a conversion
   function to strings to support setting text values from arbitrary types.
 
 * Entity support through an ``Entity`` factory and element classes.  XML

@@ -299,17 +299,32 @@ This allows you to write up a specific language in tags::
 
     >>> ROOT = objectify.E.root
     >>> TITLE = objectify.E.title
-    >>> TYPE = objectify.E.type
+    >>> HOWMANY = getattr(objectify.E, "how-many")
 
     >>> root = ROOT(
     ...   TITLE("The title"),
-    ...   TYPE(5)
+    ...   HOWMANY(5)
     ... )
 
     >>> print etree.tostring(root, pretty_print=True)
     <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
       <title py:pytype="str">The title</title>
-      <type py:pytype="int">5</type>
+      <how-many py:pytype="int">5</how-many>
+    </root>
+
+``objectify.E`` is an instance of ``objectify.ElementMaker``.  By default, it
+creates pytype annotated Elements without a namespace.  You can switch off the
+pytype annotation by passing False to the ``annotate`` keyword argument of the
+constructor.  You can also pass a default namespace and an ``nsmap``::
+
+    >>> myE = objectify.ElementMaker(annotate=False,
+    ...           namespace="http://my/ns", nsmap={None : "http://my/ns"})
+
+    >>> root = myE.root( myE.someint(2) )
+
+    >>> print etree.tostring(root, pretty_print=True)
+    <root xmlns="http://my/ns">
+      <someint>2</someint>
     </root>
 
 
