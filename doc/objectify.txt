@@ -82,6 +82,13 @@ above setup code then becomes::
 
 .. _`namespace specific classes`: element_classes.html#namespace-class-lookup
 
+To make the doctests in this document look a little nicer, we also use this:
+
+    >>> import lxml.usedoctest
+
+Imported from within a doctest, this relieves us from caring about the exact
+formatting of XML output.
+
 
 The lxml.objectify API
 ======================
@@ -274,18 +281,18 @@ To simplify the generation of trees even further, you can use the E-factory::
 
     >>> E = objectify.E
     >>> root = E.root(
-    ...   E.a(5),
+    ...   E.a(5L),
     ...   E.b(6.1),
     ...   E.c(True),
     ...   E.d("how", tell="me")
     ... )
 
     >>> print etree.tostring(root, pretty_print=True)
-    <root>
-      <a>5</a>
-      <b>6.1</b>
-      <c>true</c>
-      <d tell="me">how</d>
+    <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+      <a py:pytype="long">5</a>
+      <b py:pytype="float">6.1</b>
+      <c py:pytype="bool">true</c>
+      <d py:pytype="str" tell="me">how</d>
     </root>
 
 This allows you to write up a specific language in tags::
@@ -300,9 +307,9 @@ This allows you to write up a specific language in tags::
     ... )
 
     >>> print etree.tostring(root, pretty_print=True)
-    <root>
-      <title>The title</title>
-      <type>5</type>
+    <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+      <title py:pytype="str">The title</title>
+      <type py:pytype="int">5</type>
     </root>
 
 
