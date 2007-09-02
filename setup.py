@@ -71,10 +71,10 @@ get it from the subversion repository at http://codespeak.net/svn/lxml/trunk .
 Running ``easy_install lxml==dev`` will install it from
 http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
 
-Current bug fixes for the stable version are at
-http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
-Running ``easy_install lxml==%(branch_version)sbugfix`` will install this
-version from
+After an official release of a new stable series, current bug fixes might
+become available at
+http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .  Running
+``easy_install lxml==%(branch_version)sbugfix`` will install this version from
 http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
 
 """ % { "branch_version" : versioninfo.branch_version() }) +
