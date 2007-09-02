@@ -89,7 +89,7 @@ won't even notice them, but they make the maintenance of lxml easier and thus
 facilitate further enhancements and an improved integration between lxml's
 features.
 
-* lxml.objectify now has its own implementation of the ``E factory``.  It uses
+* lxml.objectify now has its own implementation of the `E factory`_.  It uses
   the built-in type lookup mechanism of lxml.objectify, thus removing the need
   for an additional type registry mechanism (as previously available through
   the ``typemap`` parameter).
@@ -103,6 +103,8 @@ features.
 * A major part of the XPath code was rewritten and can now benefit from a
   bigger overlap with the XSLT code.  The main benefits are improved thread
   safety in the XPath evaluators and Python RegExp support in standard XPath.
+
+.. _`E factory`: objectify.html#tree-generation-with-the-e-factory
 
 
 New modules

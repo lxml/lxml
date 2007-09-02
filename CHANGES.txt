@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-2.0alpha1 (2007-08-31)
+2.0alpha1 (2007-09-02)
 ======================
 
 Features added
@@ -39,8 +39,9 @@ Features added
 
 * Schematron validation (incomplete in libxml2)
 
-* Additional ``stringify`` argument to ``PyType()`` that takes a conversion
-  function to strings to support setting text values from arbitrary types.
+* Additional ``stringify`` argument to ``objectify.PyType()`` takes a
+  conversion function to strings to support setting text values from arbitrary
+  types.
 
 * Entity support through an ``Entity`` factory and element classes.  XML
   parsers now have a ``resolve_entities`` keyword argument that can be set to
