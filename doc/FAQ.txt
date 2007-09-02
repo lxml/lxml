@@ -446,7 +446,7 @@ any generally applicable solution.  Also, these environments are so complex
 that problems become hard to debug and even harder to reproduce in a
 predictable way.  If you encounter crashes in one these systems, but your code
 runs perfectly when started by hand, the following gives you a few hints for
-possible approaches to solve your specific problem::
+possible approaches to solve your specific problem:
 
 * make sure you use recent versions of libxml2, libxslt and lxml.  The libxml2
   developers keep fixing bugs in each release, and lxml also tries to become
