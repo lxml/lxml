@@ -67,7 +67,7 @@ Incompatible changes
 
 * The type annotations in lxml.objectify (the ``pytype`` attribute) now use
   ``NoneType`` for the None value as this is the correct Python type name.
-  Previously, lxml 1.x used a lower case ``ǹone``.
+  Previously, lxml 1.x used a lower case ``none``.
 
 * Another change in objectify regards the way it deals with ambiguous types.
   Previously, setting a value like the string ``"3"`` through normal attribute
