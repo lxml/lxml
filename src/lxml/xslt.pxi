@@ -58,7 +58,7 @@ cdef class _XSLTResolverContext(_ResolverContext):
     cdef _XSLTResolverContext _copy(self):
         cdef _XSLTResolverContext context
         context = _XSLTResolverContext(self._parser)
-        context._c_style_doc = _copyDoc(self._c_style_doc, 1)
+        context._c_style_doc = self._c_style_doc
         return context
 
 cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
@@ -353,7 +353,10 @@ cdef class XSLT:
         new_xslt._access_control = self._access_control
         new_xslt._error_log = _ErrorLog()
         new_xslt._context = self._context._copy()
+
         new_xslt._xslt_resolver_context = self._xslt_resolver_context._copy()
+        new_xslt._xslt_resolver_context._c_style_doc = _copyDoc(
+            self._xslt_resolver_context._c_style_doc, 1)
 
         c_doc = _copyDoc(self._c_style.doc, 1)
         new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
@@ -365,6 +368,7 @@ cdef class XSLT:
 
     def __call__(self, _input, profile_run=False, **_kw):
         cdef _XSLTContext context
+        cdef _XSLTResolverContext resolver_context
         cdef _Document input_doc
         cdef _Element root_node
         cdef _Document result_doc
@@ -397,6 +401,9 @@ cdef class XSLT:
             context = self._context._copy()
             context.register_context(transform_ctxt, input_doc)
 
+            resolver_context = self._xslt_resolver_context._copy()
+            transform_ctxt._private = <python.PyObject*>resolver_context
+
             c_result = self._run_transform(
                 input_doc, c_doc, _kw, context, transform_ctxt)
 
@@ -412,10 +419,10 @@ cdef class XSLT:
             self._error_log.disconnect()
 
         try:
-            if self._xslt_resolver_context._has_raised():
+            if resolver_context is not None and resolver_context._has_raised():
                 if c_result is not NULL:
                     tree.xmlFreeDoc(c_result)
-                self._xslt_resolver_context._raise_if_stored()
+                resolver_context._raise_if_stored()
 
             if c_result is NULL:
                 # last error seems to be the most accurate here
@@ -431,30 +438,25 @@ cdef class XSLT:
                     message = "Error applying stylesheet"
                 raise XSLTApplyError, message
         finally:
-            self._xslt_resolver_context.clear()
+            if resolver_context is not None:
+                resolver_context.clear()
 
         result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     cdef xmlDoc* _run_transform(self, _Document input_doc, xmlDoc* c_input_doc,
-                               parameters, _XSLTContext context,
-                               xslt.xsltTransformContext* transform_ctxt):
+                                parameters, _XSLTContext context,
+                                xslt.xsltTransformContext* transform_ctxt):
         cdef python.PyThreadState* state
-        cdef _XSLTResolverContext resolver_context
         cdef xmlDoc* c_result
         cdef char** params
         cdef Py_ssize_t i, parameter_count
-
-        resolver_context = _XSLTResolverContext(input_doc._parser)
-        resolver_context._c_style_doc = self._xslt_resolver_context._c_style_doc
 
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveXSLTError)
 
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
-
-        transform_ctxt._private = <python.PyObject*>self._xslt_resolver_context
 
         parameter_count = python.PyDict_Size(parameters)
         if parameter_count > 0:
@@ -463,17 +465,21 @@ cdef class XSLT:
             # and + 1 as array is NULL terminated
             params = <char**>python.PyMem_Malloc(
                 sizeof(char*) * (parameter_count * 2 + 1))
-            i = 0
-            keep_ref = []
-            for key, value in parameters.iteritems():
-                k = _utf8(key)
-                python.PyList_Append(keep_ref, k)
-                v = _utf8(value)
-                python.PyList_Append(keep_ref, v)
-                params[i] = _cstr(k)
-                i = i + 1
-                params[i] = _cstr(v)
-                i = i + 1
+            try:
+                i = 0
+                keep_ref = []
+                for key, value in parameters.iteritems():
+                    k = _utf8(key)
+                    python.PyList_Append(keep_ref, k)
+                    v = _utf8(value)
+                    python.PyList_Append(keep_ref, v)
+                    params[i] = _cstr(k)
+                    i = i + 1
+                    params[i] = _cstr(v)
+                    i = i + 1
+            except:
+                python.PyMem_Free(params)
+                raise
             params[i] = NULL
         else:
             params = NULL
