@@ -6,7 +6,7 @@ import re
 from lxml import etree
 
 try:
-    from xml.etree import ElementTree # Python 2.5
+    from xml.etree import ElementTree # Python 2.5+
 except ImportError:
     try:
         from elementtree import ElementTree # standard ET
@@ -14,10 +14,10 @@ except ImportError:
         ElementTree = None
 
 try:
-    from xml.etree import cElementTree # Python 2.5
+    from xml.etree import cElementTree # Python 2.5+
 except ImportError:
     try:
-        from celementtree import cElementTree # standard ET
+        import cElementTree # standard ET
     except ImportError:
         cElementTree = None
 
