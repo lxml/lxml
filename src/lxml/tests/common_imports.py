@@ -31,12 +31,6 @@ except (ImportError, AttributeError):
     # we need our own version to make it work (Python 2.3?)
     import local_doctest as doctest
 
-try:
-    from operator import itemgetter
-except ImportError:
-    def itemgetter(item):
-        return lambda obj: obj[item]
-
 class HelperTestCase(unittest.TestCase):
     def parse(self, text):
         f = StringIO(text)

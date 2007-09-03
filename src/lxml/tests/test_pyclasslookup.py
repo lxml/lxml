@@ -9,7 +9,6 @@ import unittest, operator
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
-from common_imports import itemgetter
 
 from lxml.pyclasslookup import PythonElementClassLookup
 
