@@ -172,16 +172,13 @@ __version__ = tree.LXML_VERSION_STRING
 cdef class _TempStore:
     cdef object _storage
     def __init__(self):
-        self._storage = {}
+        self._storage = []
 
     cdef void add(self, obj):
-        python.PyDict_SetItem(self._storage, id(obj), obj)
+        python.PyList_Append(self._storage, obj)
 
     cdef void clear(self):
-        python.PyDict_Clear(self._storage)
-
-    cdef object dictcopy(self):
-        return self._storage.copy()
+        del self._storage[:]
 
 # class for temporarily storing exceptions raised in extensions
 cdef class _ExceptionContext:
