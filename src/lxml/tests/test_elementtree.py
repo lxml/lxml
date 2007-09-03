@@ -687,7 +687,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         SubElement = self.etree.SubElement
         
         el = Element('tag')
-        SubElement(el, 'foo', attrib={'foo':'Foo'}, baz="Baz")
+        SubElement(el, 'foo', {'foo':'Foo'}, baz="Baz")
         self.assertEquals("Baz", el[0].attrib['baz'])
         self.assertEquals('Foo', el[0].attrib['foo'])
 
