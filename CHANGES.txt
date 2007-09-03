@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Race condition in XSLT where the resolver context leaked between concurrent
+  XSLT calls
+
+Other changes
+-------------
+
+
 2.0alpha1 (2007-09-02)
 ======================
 
