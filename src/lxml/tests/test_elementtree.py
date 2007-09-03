@@ -9,12 +9,17 @@ for IO related test cases.
 """
 
 import unittest, doctest
-import os, re, shutil, tempfile, copy
+import os, re, shutil, tempfile, copy, operator
 
-from common_imports import StringIO, etree, ElementTree
-from common_imports import HelperTestCase, fileInTestDir, canonicalize
+from common_imports import StringIO, etree, ElementTree, cElementTree
+from common_imports import fileInTestDir, canonicalize
 
-class ETreeTestCaseBase(HelperTestCase):
+if cElementTree is not None:
+    if tuple([int(n) for n in
+              getattr(cElementTree, "VERSION", "0.0").split(".")]) <= (1,0,6):
+        cElementTree = None
+
+class ETreeTestCaseBase(unittest.TestCase):
     etree = None
     
     def setUp(self):
@@ -75,7 +80,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals('one', root[0].tag)
         self.assertEquals('two', root[1].tag)
         self.assertEquals('three', root[2].tag)
-        self.assertRaises(IndexError, root.__getitem__, 3)
+        self.assertRaises(IndexError, operator.getitem, root, 3)
 
     def test_subelement(self):
         Element = self.etree.Element
@@ -116,7 +121,7 @@ class ETreeTestCaseBase(HelperTestCase):
         root = doc.getroot()
         self.assertEquals(1, len(root))
         self.assertEquals('one', root[0].tag)
-        self.assertRaises(IndexError, root.__getitem__, 1)
+        self.assertRaises(IndexError, operator.getitem, root, 1)
         
     def test_element_indexing_with_text2(self):
         ElementTree = self.etree.ElementTree
@@ -147,7 +152,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(d, a[-1])
         self.assertEquals(c, a[-2])
         self.assertEquals(b, a[-3])
-        self.assertRaises(IndexError, a.__getitem__, -4)
+        self.assertRaises(IndexError, operator.getitem, a, -4)
         a[-1] = e = Element('e')
         self.assertEquals(e, a[-1])
         del a[-1]
@@ -266,7 +271,7 @@ class ETreeTestCaseBase(HelperTestCase):
         root = doc.getroot()
         self.assertEquals('One', root.attrib['one'])
         self.assertEquals('Two', root.attrib['two'])
-        self.assertRaises(KeyError, root.attrib.__getitem__, 'three')  
+        self.assertRaises(KeyError, operator.getitem, root.attrib, 'three')
 
     def test_attributes2(self):
         ElementTree = self.etree.ElementTree
@@ -917,6 +922,18 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertXML("<a><?foo some more text?></a>",
                        a)
 
+    def test_processinginstruction(self):
+        # lxml.etree separates target and text
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ProcessingInstruction = self.etree.PI
+
+        a = Element('a')
+        a.append(ProcessingInstruction('foo', 'some more text'))
+        self.assertEquals(a[0].tag, ProcessingInstruction)
+        self.assertXML("<a><?foo some more text?></a>",
+                       a)
+
     def test_pi_nonsense(self):
         ProcessingInstruction = self.etree.ProcessingInstruction
         pi = ProcessingInstruction('foo')
@@ -980,7 +997,7 @@ class ETreeTestCaseBase(HelperTestCase):
         a = Element('a')
         b = SubElement(a, 'b')
 
-        self.assertRaises(IndexError, a.__setitem__, 1, Element('c'))
+        self.assertRaises(IndexError, operator.setitem, a, 1, Element('c'))
 
     def test_setitem_tail(self):
         Element = self.etree.Element
@@ -1583,7 +1600,7 @@ class ETreeTestCaseBase(HelperTestCase):
         a.attrib['bar'] = 'Bar'
         self.assertEquals('Foo', a.attrib['foo'])
         del a.attrib['foo']
-        self.assertRaises(KeyError, a.attrib.__getitem__, 'foo')
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
 
     def test_getslice(self):
         Element = self.etree.Element
@@ -2514,6 +2531,15 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(qname1, qname1)
         self.assertEquals(qname1, qname2)
 
+    def test_parser_version(self):
+        etree = self.etree
+        parser = etree.XMLParser()
+        if hasattr(parser, "version"):
+            # ElementTree 1.3+, cET
+            self.assert_(re.match("[^ ]+ [0-9.]+", parser.version))
+
+    # helper methods
+
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
@@ -2592,19 +2618,33 @@ class ETreeTestCaseBase(HelperTestCase):
         mapping["key"] = "value"
         self.assertEquals("value", mapping["key"])
 
+    # assertFalse doesn't exist in Python 2.3
+    try:
+        unittest.TestCase.assertFalse
+    except AttributeError:
+        assertFalse = unittest.TestCase.failIf
 
-class ETreeTestCase(ETreeTestCaseBase):
-    etree = etree
+
+if etree:
+    class ETreeTestCase(ETreeTestCaseBase):
+        etree = etree
 
 if ElementTree:
     class ElementTreeTestCase(ETreeTestCaseBase):
         etree = ElementTree
 
+if cElementTree:
+    class CElementTreeTestCase(ETreeTestCaseBase):
+        etree = cElementTree
+
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ETreeTestCase)])
+    if etree:
+        suite.addTests([unittest.makeSuite(ETreeTestCase)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+    if cElementTree:
+        suite.addTests([unittest.makeSuite(CElementTreeTestCase)])
     return suite
 
 if __name__ == '__main__':
