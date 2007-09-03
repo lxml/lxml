@@ -484,6 +484,11 @@ cdef class _BaseParser:
         return _makeElement(_tag, NULL, None, self, None, None,
                             attrib, nsmap, _extra)
 
+    property version:
+        "The version of the underlying XML parser."
+        def __get__(self):
+            return "libxml2 %d.%d.%d" % LIBXML_VERSION
+
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
         """Parse unicode document, share dictionary if possible.
         """
