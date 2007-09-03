@@ -14,6 +14,14 @@ except ImportError:
         ElementTree = None
 
 try:
+    from xml.etree import cElementTree # Python 2.5
+except ImportError:
+    try:
+        from celementtree import cElementTree # standard ET
+    except ImportError:
+        cElementTree = None
+
+try:
     import doctest
     # check if the system version has everything we need
     doctest.DocFileSuite
