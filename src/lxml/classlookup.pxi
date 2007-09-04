@@ -231,7 +231,7 @@ cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
 cdef class CustomElementClassLookup(FallbackElementClassLookup):
     """Element class lookup based on a subclass method.
 
-    You can inherit from this class and override the method
+    You can inherit from this class and override the method::
 
         lookup(self, type, doc, namespace, name)
 

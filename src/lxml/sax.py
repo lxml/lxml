@@ -1,8 +1,9 @@
 from xml.sax.handler import ContentHandler
-from etree import ElementTree, Element, SubElement, LxmlError
-from etree import XML, Comment, ProcessingInstruction
+import etree
+from etree import ElementTree, SubElement
+from etree import Comment, ProcessingInstruction
 
-class SaxError(LxmlError):
+class SaxError(etree.LxmlError):
     """General SAX error.
     """
     pass
@@ -24,7 +25,7 @@ class ElementTreeContentHandler(object, ContentHandler):
         self._ns_mapping = { None : [None] }
         self._new_mappings = {}
         if makeelement is None:
-            makeelement = Element
+            makeelement = etree.Element
         self._makeelement = makeelement
 
     def _get_etree(self):

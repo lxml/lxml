@@ -39,7 +39,7 @@ html: inplace
 	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
-			PYTHONPATH=. epydoc -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ lxml/) \
+			PYTHONPATH=. epydoc -v -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
 # XXX What should the default be?

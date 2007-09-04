@@ -266,12 +266,14 @@ cdef class ObjectifiedElement(ElementBase):
         _appendValue(self, _buildChildTag(self, tag), value)
 
     def __getitem__(self, key):
-        """Return a sibling, counting from the first child of the parent.
+        """Return a sibling, counting from the first child of the parent.  The
+        method behaves like both a dict and a sequence.
 
         * If argument is an integer, returns the sibling at that position.
 
-        * If argument is a string, does the same as getattr().  This is used
-          to provide namespaces for element lookup.
+        * If argument is a string, does the same as getattr().  This can be
+          used to provide namespaces for element lookup, or to look up
+          children with special names (``text`` etc.).
         """
         cdef tree.xmlNode* c_self_node
         cdef tree.xmlNode* c_parent
