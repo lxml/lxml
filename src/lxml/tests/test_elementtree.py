@@ -2538,6 +2538,34 @@ class ETreeTestCaseBase(unittest.TestCase):
             # ElementTree 1.3+, cET
             self.assert_(re.match("[^ ]+ [0-9.]+", parser.version))
 
+    def test_feed_parser(self):
+        parser = self.etree.XMLParser()
+
+        parser.feed('<?xml version=')
+        parser.feed('"1.0"?><ro')
+        parser.feed('ot><')
+        parser.feed('a test="works"/')
+        parser.feed('></root')
+        parser.feed('>')
+
+        root = parser.close()
+
+        self.assertEquals(root.tag, "root")
+        self.assertEquals(root[0].tag, "a")
+        self.assertEquals(root[0].get("test"), "works")
+
+    def test_feed_parser_error_close_empty(self):
+        parser = self.etree.XMLParser()
+        self.assertRaises(Exception, parser.close)
+
+    def test_feed_parser_error_close_incomplete(self):
+        parser = self.etree.XMLParser()
+
+        parser.feed('<?xml version=')
+        parser.feed('"1.0"?><ro')
+
+        self.assertRaises(Exception, parser.close)
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii'):

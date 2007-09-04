@@ -4,7 +4,14 @@ cimport xmlparser
 cimport htmlparser
 from xmlparser cimport xmlParserCtxt, xmlDict
 
-class XMLSyntaxError(LxmlSyntaxError):
+class ParseError(LxmlSyntaxError):
+    """Syntax error while parsing an XML document.
+
+    For compatibility with ElementTree 1.3 and later.
+    """
+    pass
+
+class XMLSyntaxError(ParseError):
     """Syntax error while parsing an XML document.
     """
     pass
@@ -381,6 +388,7 @@ cdef class _BaseParser:
     cdef xmlParserCtxt* _parser_ctxt
     cdef ElementClassLookup _class_lookup
     cdef python.PyThread_type_lock _parser_lock
+    cdef int _feed_parser_running
 
     def __init__(self, int parse_options, remove_comments, remove_pis,
                  context_class=_ResolverContext):
@@ -488,6 +496,113 @@ cdef class _BaseParser:
         "The version of the underlying XML parser."
         def __get__(self):
             return "libxml2 %d.%d.%d" % LIBXML_VERSION
+
+    # feed parser interface
+
+    def feed(self, data):
+        """Feeds data to the parser.  The argument should be an 8-bit string
+        buffer containing encoded data, although Unicode is supported as long
+        as both string types are not mixed.
+
+        This is the main entry point to the consumer interface of a parser.
+        The parser will parse as much of the XML stream as it can on each
+        call.  To finish parsing, call the ``close()`` method.
+
+        It is not possible to use the parser in any other way after calling
+        the ``feed()`` method.  The parser can only be reset by calling
+        ``close()``.
+        """
+        cdef xmlParserCtxt* pctxt
+        cdef Py_ssize_t py_buffer_len
+        cdef char* c_data
+        cdef char* c_encoding
+        cdef int buffer_len
+        cdef int error
+        cdef int recover
+        if python.PyString_Check(data):
+            c_encoding = NULL
+            c_data = _cstr(data)
+            py_buffer_len = python.PyString_GET_SIZE(data)
+        elif python.PyUnicode_Check(data):
+            if _UNICODE_ENCODING is NULL:
+                raise ParserError, \
+                      "Unicode parsing is not supported on this platform"
+            c_encoding = _UNICODE_ENCODING
+            c_data = python.PyUnicode_AS_DATA(data)
+            py_buffer_len = python.PyUnicode_GET_DATA_SIZE(data)
+        else:
+            raise TypeError, "Parsing requires string data"
+
+        if py_buffer_len > python.INT_MAX:
+            buffer_len = python.INT_MAX
+        else:
+            buffer_len = <int>py_buffer_len
+
+        pctxt = self._parser_ctxt
+        error = 0
+        if not self._feed_parser_running:
+            self._lockParser()
+            self._feed_parser_running = 1
+            self._error_log.connect()
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+            xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
+            error = xmlparser.xmlCtxtResetPush(
+                pctxt, c_data, <int>buffer_len, NULL, c_encoding)
+            py_buffer_len = py_buffer_len - buffer_len
+
+        while error == 0 and py_buffer_len > 0:
+            c_data = c_data + buffer_len
+            if py_buffer_len > python.INT_MAX:
+                buffer_len = python.INT_MAX
+            else:
+                buffer_len = <int>py_buffer_len
+            py_buffer_len = py_buffer_len - buffer_len
+            error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
+
+        if error:
+            self._feed_parser_running = 0
+            try:
+                recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+                _handleParseResult(pctxt, pctxt.myDoc, None,
+                                   self._error_log, recover)
+            finally:
+                self._cleanup()
+                self._context.clear()
+                self._error_log.disconnect()
+                self._unlockParser()
+
+    def close(self):
+        """Finishes feeding of data to this parser.  This tells the parser to
+        process any remaining data in the feed buffer, and then returns the
+        root Element of the tree that was parsed.
+
+        This method must be called after passing the last chunk of data into
+        the ``feed()`` method.  It should only be called when using the feed
+        parser interface is used, all other usage is undefined.
+        """
+        cdef xmlParserCtxt* pctxt
+        cdef xmlDoc* c_doc
+        cdef _Document doc
+        cdef int error
+        if not self._feed_parser_running:
+            raise XMLSyntaxError, "no element found"
+        pctxt = self._parser_ctxt
+        self._feed_parser_running = 0
+        error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
+        try:
+            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
+            c_doc = _handleParseResult(pctxt, pctxt.myDoc, None,
+                                       self._error_log, recover)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._error_log.disconnect()
+            self._unlockParser()
+
+        doc = _documentFactory(c_doc, self)
+        return doc.getroot()
+
+    # internal parser methods
 
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
         """Parse unicode document, share dictionary if possible.

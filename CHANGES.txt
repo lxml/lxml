@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ElementTree-like feed parser interface on XMLParser and HTMLParser
+  (``feed()`` and ``close()`` methods)
+
 Bugs fixed
 ----------
 
