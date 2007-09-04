@@ -2566,6 +2566,19 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         self.assertRaises(Exception, parser.close)
 
+    def test_feed_parser_error_broken(self):
+        parser = self.etree.XMLParser()
+
+        parser.feed('<?xml version=')
+        parser.feed('"1.0"?><ro')
+        try:
+            parser.feed('<ro<ro<ro<ro')
+        except:
+            # can raise, but not required before close()
+            pass
+
+        self.assertRaises(Exception, parser.close)
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii'):
