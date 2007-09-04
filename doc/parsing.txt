@@ -9,8 +9,17 @@ event-driven API (currently only for XML).
 .. contents::
 .. 
    1  Parsers
-   2  iterparse and iterwalk
-   3  Python unicode strings
+     1.1  Parser options
+     1.2  Parsing HTML
+     1.3  Doctype information
+   2  The feed parser interface
+   3  iterparse and iterwalk
+     3.1  Selective tag events
+     3.2  Modifying the tree
+     3.3  iterwalk
+   4  Python unicode strings
+     4.1  Serialising to Unicode strings
+
 
 The usual setup procedure::
 
@@ -165,6 +174,45 @@ original encoding::
   1.0
   >>> print docinfo.encoding
   ascii
+
+
+The feed parser interface
+=========================
+
+Since lxml 2.0, the parsers have a feed parser interface that is compatible to
+the `ElementTree parsers`_.  You can use it to feed data into the parser in a
+controlled step-by-step way.  Note that you can only use one interface at a
+time: the ``parse()`` or ``XML()`` functions, or the feed parser interface.
+
+.. _`ElementTree parsers`: http://effbot.org/elementtree/elementtree-xmlparser.htm
+
+To start parsing with a feed parser, just call its ``feed()`` method::
+
+  >>> parser = etree.XMLParser()
+
+  >>> for data in ('<?xml versio', 'n="1.0"?', '><roo', 't><a', '/></root>'):
+  ...     parser.feed(data)
+
+When you are done parsing, you **must** call the ``close()`` method to
+retrieve the root Element of the parse result document, and to unlock the
+parser::
+
+  >>> root = parser.close()
+
+  >>> print root.tag
+  root
+  >>> print root[0].tag
+  a
+
+If you do not call ``close()``, the parser will stay locked and subsequent
+usages will block till the end of times.  So make sure you also close it in
+the exception case.
+
+Another way of achieving the same step-by-step parsing is by writing your own
+file-like object that returns a chunk of data on each ``read()`` call.  Where
+the feed parser interface allows you to actively pass data chunks into the
+parser, a file-like object passively responds to ``read()`` requests of the
+parser itself.  Depending on the data source, either way may be more natural.
 
 
 iterparse and iterwalk

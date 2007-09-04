@@ -578,7 +578,7 @@ cdef class _BaseParser:
 
         This method must be called after passing the last chunk of data into
         the ``feed()`` method.  It should only be called when using the feed
-        parser interface is used, all other usage is undefined.
+        parser interface, all other usage is undefined.
         """
         cdef xmlParserCtxt* pctxt
         cdef xmlDoc* c_doc
