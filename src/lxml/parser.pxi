@@ -1,4 +1,4 @@
-# XML parser that provides dictionary sharing
+# Parsers for XML and HTML
 
 cimport xmlparser
 cimport htmlparser
@@ -533,11 +533,6 @@ cdef class _BaseParser:
         else:
             raise TypeError, "Parsing requires string data"
 
-        if py_buffer_len > python.INT_MAX:
-            buffer_len = python.INT_MAX
-        else:
-            buffer_len = <int>py_buffer_len
-
         pctxt = self._parser_ctxt
         error = 0
         if not self._feed_parser_running:
@@ -546,18 +541,26 @@ cdef class _BaseParser:
             self._error_log.connect()
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
+
+            if py_buffer_len > python.INT_MAX:
+                buffer_len = python.INT_MAX
+            else:
+                buffer_len = <int>py_buffer_len
+
             error = xmlparser.xmlCtxtResetPush(
-                pctxt, c_data, <int>buffer_len, NULL, c_encoding)
+                pctxt, c_data, buffer_len, NULL, c_encoding)
+
             py_buffer_len = py_buffer_len - buffer_len
+            c_data = c_data + buffer_len
 
         while error == 0 and py_buffer_len > 0:
-            c_data = c_data + buffer_len
             if py_buffer_len > python.INT_MAX:
                 buffer_len = python.INT_MAX
             else:
                 buffer_len = <int>py_buffer_len
             py_buffer_len = py_buffer_len - buffer_len
             error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
+            c_data = c_data + buffer_len
 
         if error:
             self._feed_parser_running = 0
