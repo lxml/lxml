@@ -27,6 +27,7 @@ __all__ = ['clean_html', 'clean', 'Cleaner', 'autolink', 'autolink_html',
 #     <HEAD><META HTTP-EQUIV="CONTENT-TYPE" CONTENT="text/html; charset=UTF-7"> </HEAD>+ADw-SCRIPT+AD4-alert('XSS');+ADw-/SCRIPT+AD4-
 #   you don't always have to have the charset set, if the page has no charset
 #   and there's UTF7-like code in it.
+# Look at these tests: http://htmlpurifier.org/live/smoketests/xssAttacks.php
 
 
 # This is an IE-specific construct you can have in a stylesheet to
@@ -355,7 +356,7 @@ class Cleaner(object):
             doc = fromstring(html)
         else:
             return_string = False
-            doc = copy.deepcopy(doc)
+            doc = copy.deepcopy(html)
         self(doc)
         if return_string:
             return tostring(doc)
