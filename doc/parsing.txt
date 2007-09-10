@@ -182,7 +182,8 @@ The feed parser interface
 Since lxml 2.0, the parsers have a feed parser interface that is compatible to
 the `ElementTree parsers`_.  You can use it to feed data into the parser in a
 controlled step-by-step way.  Note that you can only use one interface at a
-time: the ``parse()`` or ``XML()`` functions, or the feed parser interface.
+time with each parser: the ``parse()`` or ``XML()`` functions, or the feed
+parser interface.
 
 .. _`ElementTree parsers`: http://effbot.org/elementtree/elementtree-xmlparser.htm
 
