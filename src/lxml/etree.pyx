@@ -2131,19 +2131,20 @@ def parse(source, _BaseParser parser=None):
 ################################################################################
 # Include submodules
 
-include "proxy.pxi"      # Proxy handling (element backpointers/memory/etc.)
-include "apihelpers.pxi" # Private helper functions
-include "xmlerror.pxi"   # Error and log handling
-include "classlookup.pxi"# Element class lookup mechanisms
-include "nsclasses.pxi"  # Namespace implementation and registry
-include "docloader.pxi"  # Support for custom document loaders
-include "parser.pxi"     # XML Parser
-include "serializer.pxi" # XML output functions
-include "iterparse.pxi"  # incremental XML parsing
-include "xmlid.pxi"      # XMLID and IDDict
-include "extensions.pxi" # XPath/XSLT extension functions
-include "xpath.pxi"      # XPath evaluation
-include "xslt.pxi"       # XSL transformations
+include "proxy.pxi"        # Proxy handling (element backpointers/memory/etc.)
+include "apihelpers.pxi"   # Private helper functions
+include "xmlerror.pxi"     # Error and log handling
+include "classlookup.pxi"  # Element class lookup mechanisms
+include "nsclasses.pxi"    # Namespace implementation and registry
+include "docloader.pxi"    # Support for custom document loaders
+include "parser.pxi"       # XML Parser
+include "parsertarget.pxi" # ET Parser target
+include "serializer.pxi"   # XML output functions
+include "iterparse.pxi"    # incremental XML parsing
+include "xmlid.pxi"        # XMLID and IDDict
+include "extensions.pxi"   # XPath/XSLT extension functions
+include "xpath.pxi"        # XPath evaluation
+include "xslt.pxi"         # XSL transformations
 
 
 ################################################################################

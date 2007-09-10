@@ -17,7 +17,11 @@ cdef extern from "libxml/HTMLparser.h":
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(char* buffer, int size)
     cdef xmlParserCtxt* htmlCreateFileParserCtxt(char* filename, char* encoding)
     cdef void htmlFreeParserCtxt(xmlParserCtxt* ctxt)
+    cdef void htmlCtxtReset(xmlParserCtxt* ctxt)
+    cdef int htmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
     cdef int htmlParseDocument(xmlParserCtxt* ctxt)
+    cdef int htmlParseChunk(xmlParserCtxt* ctxt, 
+                            char* chunk, int size, int terminate)
 
     cdef xmlDoc* htmlCtxtReadFile(xmlParserCtxt* ctxt,
                                   char* filename, char* encoding,

@@ -13,6 +13,7 @@ cdef extern from "string.h":
     cdef int strcmp(char* s1, char* s2)
     cdef int strncmp(char* s1, char* s2, size_t len)
     cdef void* memcpy(void* dest, void* src, size_t len)
+    cdef void* memset(void* s, int c, size_t len)
 
 cdef extern from "stdarg.h":
     ctypedef void *va_list

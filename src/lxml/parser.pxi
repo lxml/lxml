@@ -2,7 +2,6 @@
 
 cimport xmlparser
 cimport htmlparser
-from xmlparser cimport xmlParserCtxt, xmlDict
 
 class ParseError(LxmlSyntaxError):
     """Syntax error while parsing an XML document.
@@ -26,17 +25,17 @@ ctypedef enum LxmlParserType:
     LXML_HTML_PARSER
     LXML_ITERPARSE_PARSER
 
-cdef class _ParserContext:
+cdef class _ParserDictionaryContext:
     # Global parser context to share the string dictionary.
     #
-    # This class is a singleton!
+    # This class is a delegate singleton!
     #
-    # It creates _ParserContext objects for each thread to keep thread state,
+    # It creates _ParserDictionaryContext objects for each thread to keep thread state,
     # but those must never be used directly.  Always stick to using the static
     # __GLOBAL_PARSER_CONTEXT as defined below the class.
     #
 
-    cdef xmlDict* _c_dict
+    cdef tree.xmlDict* _c_dict
     cdef _BaseParser _default_parser
     def __dealloc__(self):
         if self._c_dict is not NULL:
@@ -49,33 +48,33 @@ cdef class _ParserContext:
         cdef python.PyObject* result
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is not NULL:
-            python.PyDict_SetItem(<object>thread_dict, "_ParserContext", self)
+            python.PyDict_SetItem(<object>thread_dict, "_ParserDictionaryContext", self)
 
-    cdef _ParserContext _findThreadParserContext(self):
-        "Find (or create) the _ParserContext object for the current thread"
+    cdef _ParserDictionaryContext _findThreadParserContext(self):
+        "Find (or create) the _ParserDictionaryContext object for the current thread"
         cdef python.PyObject* thread_dict
         cdef python.PyObject* result
-        cdef _ParserContext context
+        cdef _ParserDictionaryContext context
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is NULL:
             return self
         d = <object>thread_dict
-        result = python.PyDict_GetItem(d, "_ParserContext")
+        result = python.PyDict_GetItem(d, "_ParserDictionaryContext")
         if result is not NULL:
             return <object>result
-        context = _ParserContext()
-        python.PyDict_SetItem(d, "_ParserContext", context)
+        context = _ParserDictionaryContext()
+        python.PyDict_SetItem(d, "_ParserDictionaryContext", context)
         return context
 
     cdef void setDefaultParser(self, _BaseParser parser):
         "Set the default parser for the current thread"
-        cdef _ParserContext context
+        cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
         context._default_parser = parser
 
     cdef _BaseParser getDefaultParser(self):
         "Return (or create) the default parser of the current thread"
-        cdef _ParserContext context
+        cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
         if context._default_parser is None:
             if self._default_parser is None:
@@ -84,9 +83,9 @@ cdef class _ParserContext:
                 context._default_parser = self._default_parser._copy()
         return context._default_parser
 
-    cdef xmlDict* _getThreadDict(self, xmlDict* default):
+    cdef tree.xmlDict* _getThreadDict(self, tree.xmlDict* default):
         "Return the thread-local dict or create a new one if necessary."
-        cdef _ParserContext context
+        cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
         if context._c_dict is NULL:
             # thread dict not yet set up => use default or create a new one
@@ -100,9 +99,9 @@ cdef class _ParserContext:
                 context._c_dict = xmlparser.xmlDictCreateSub(self._c_dict)
         return context._c_dict
 
-    cdef void initThreadDictRef(self, xmlDict** c_dict_ref):
-        cdef xmlDict* c_dict
-        cdef xmlDict* c_thread_dict
+    cdef void initThreadDictRef(self, tree.xmlDict** c_dict_ref):
+        cdef tree.xmlDict* c_dict
+        cdef tree.xmlDict* c_thread_dict
         c_dict = c_dict_ref[0]
         c_thread_dict = self._getThreadDict(c_dict)
         if c_dict is c_thread_dict:
@@ -112,7 +111,7 @@ cdef class _ParserContext:
         c_dict_ref[0] = c_thread_dict
         xmlparser.xmlDictReference(c_thread_dict)
 
-    cdef void initParserDict(self, xmlParserCtxt* pctxt):
+    cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt):
         "Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
 
@@ -127,11 +126,11 @@ cdef class _ParserContext:
         # otherwise we'd free data that's in use => segfault
         self.initThreadDictRef(&result.dict)
 
-cdef _ParserContext __GLOBAL_PARSER_CONTEXT
-__GLOBAL_PARSER_CONTEXT = _ParserContext()
+cdef _ParserDictionaryContext __GLOBAL_PARSER_CONTEXT
+__GLOBAL_PARSER_CONTEXT = _ParserDictionaryContext()
 __GLOBAL_PARSER_CONTEXT.initMainParserContext()
 
-cdef int _checkThreadDict(xmlDict* c_dict):
+cdef int _checkThreadDict(tree.xmlDict* c_dict):
     """Check that c_dict is either the local thread dictionary or the global
     parent dictionary.
     """
@@ -205,7 +204,7 @@ _setupPythonUnicode()
 ## support for file-like objects
 ############################################################
 
-cdef class _FileParserContext:
+cdef class _FileReaderContext:
     cdef object _filelike
     cdef object _url
     cdef object _bytes
@@ -223,14 +222,15 @@ cdef class _FileParserContext:
         self._bytes  = ''
         self._bytes_read = 0
 
-    cdef xmlparser.xmlParserInput* _createParserInput(self, xmlParserCtxt* ctxt):
+    cdef xmlparser.xmlParserInput* _createParserInput(
+            self, xmlparser.xmlParserCtxt* ctxt):
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
         c_buffer.context = <python.PyObject*>self
         c_buffer.readcallback = _readFilelikeParser
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
-    cdef xmlDoc* _readDoc(self, xmlParserCtxt* ctxt, int options,
+    cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options,
                           LxmlParserType parser_type):
         cdef python.PyThreadState* state
         cdef xmlDoc* result
@@ -291,19 +291,19 @@ cdef class _FileParserContext:
             return -1
 
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size):
-    return (<_FileParserContext>ctxt).copyToBuffer(c_buffer, c_size)
+    return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 ############################################################
 ## support for custom document loaders
 ############################################################
 
 cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
-    char* c_url, char* c_pubid, xmlParserCtxt* c_context, int* error):
+    char* c_url, char* c_pubid, xmlparser.xmlParserCtxt* c_context, int* error):
     # call the Python document loaders
     cdef xmlparser.xmlParserInput* c_input
     cdef _ResolverContext context
     cdef _InputDocument   doc_ref
-    cdef _FileParserContext file_context
+    cdef _FileReaderContext file_context
     error[0] = 0
     context = <_ResolverContext>c_context._private
     try:
@@ -338,7 +338,7 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
         c_input = xmlparser.xmlNewInputFromFile(
             c_context, _cstr(doc_ref._data_bytes))
     elif doc_ref._type == PARSER_DATA_FILE:
-        file_context = _FileParserContext(doc_ref._file, context, url)
+        file_context = _FileReaderContext(doc_ref._file, context, url)
         c_input = file_context._createParserInput(c_context)
         data = file_context
 
@@ -347,7 +347,7 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
     return c_input
 
 cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
-                                               xmlParserCtxt* c_context):
+                                               xmlparser.xmlParserCtxt* c_context):
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
     cdef xmlparser.xmlParserInput* c_input
@@ -379,42 +379,145 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 ## Parsers
 ############################################################
 
+cdef class _ParserContext(_ResolverContext):
+    cdef _ErrorLog _error_log
+    cdef xmlparser.xmlParserCtxt* _c_ctxt
+    def __init__(self):
+        _ResolverContext.__init__(self, _ResolverRegistry())
+        self._error_log = _ErrorLog()
+
+    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
+        self._c_ctxt = c_ctxt
+
+    cdef object _handleParseResult(self, _BaseParser parser,
+                                   xmlDoc* result, filename):
+        cdef xmlDoc* c_doc
+        cdef int recover
+        recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
+        c_doc = _handleParseResult(self, self._c_ctxt, result,
+                                   filename, recover)
+        return _documentFactory(c_doc, parser)
+
+    cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
+                                       xmlDoc* result, filename) except NULL:
+        cdef int recover
+        recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
+        return _handleParseResult(self, self._c_ctxt, result,
+                                   filename, recover)
+
+cdef class _InternalParserContext(_ParserContext):
+    """Parser context for internal single-shot parsing
+    """
+
+cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
+                          _ErrorLog error_log) except 0:
+    if filename is not None and \
+           ctxt.lastError.domain == xmlerror.XML_FROM_IO:
+        if ctxt.lastError.message is not NULL:
+            message = "Error reading file '%s': %s" % (
+                filename, (ctxt.lastError.message).strip())
+        else:
+            message = "Error reading file '%s'" % filename
+        raise IOError, message
+    elif error_log:
+        raise XMLSyntaxError, error_log._buildExceptionMessage(
+            "Document is not well formed")
+    elif ctxt.lastError.message is not NULL:
+        message = (ctxt.lastError.message).strip()
+        if ctxt.lastError.line > 0:
+            message = "line %d: %s" % (ctxt.lastError.line, message)
+        raise XMLSyntaxError, message
+    else:
+        raise XMLSyntaxError
+
+cdef xmlDoc* _handleParseResult(_ParserContext context,
+                                xmlparser.xmlParserCtxt* c_ctxt,
+                                xmlDoc* result, filename,
+                                int recover) except NULL:
+    cdef int well_formed
+    if c_ctxt.myDoc is not NULL:
+        if c_ctxt.myDoc != result:
+            tree.xmlFreeDoc(c_ctxt.myDoc)
+        c_ctxt.myDoc = NULL
+
+    if result is not NULL:
+        if recover or (c_ctxt.wellFormed and \
+                       c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
+            well_formed = 1
+        elif not c_ctxt.replaceEntities and not c_ctxt.validate \
+                 and context is not None:
+            # in this mode, we ignore errors about undefined entities
+            for error in context._error_log.filter_from_errors():
+                if error.type != ErrorTypes.WAR_UNDECLARED_ENTITY and \
+                       error.type != ErrorTypes.ERR_UNDECLARED_ENTITY:
+                    well_formed = 0
+                    break
+            else:
+                well_formed = 1
+        else:
+            well_formed = 0
+
+        if well_formed:
+            __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+        else:
+            # free broken document
+            tree.xmlFreeDoc(result)
+            result = NULL
+
+    if context is not None and context._has_raised():
+        if result is not NULL:
+            tree.xmlFreeDoc(result)
+            result = NULL
+        context._raise_if_stored()
+
+    if result is NULL:
+        if context is not None:
+            _raiseParseError(c_ctxt, filename, context._error_log)
+        else:
+            _raiseParseError(c_ctxt, filename, None)
+    elif result.URL is NULL and filename is not None:
+        result.URL = tree.xmlStrdup(_cstr(filename))
+    return result
+
+
 cdef class _BaseParser:
     cdef int _parse_options
-    cdef _ErrorLog _error_log
-    cdef readonly _ResolverRegistry resolvers
-    cdef _ResolverContext _context
+    cdef _ParserContext _context
     cdef LxmlParserType _parser_type
-    cdef xmlParserCtxt* _parser_ctxt
+    cdef xmlparser.xmlParserCtxt* _parser_ctxt
     cdef ElementClassLookup _class_lookup
     cdef python.PyThread_type_lock _parser_lock
     cdef int _feed_parser_running
 
     def __init__(self, int parse_options, remove_comments, remove_pis,
-                 context_class=_ResolverContext):
-        cdef xmlParserCtxt* pctxt
+                 target):
+        cdef xmlparser.xmlParserCtxt* pctxt
         if isinstance(self, HTMLParser):
             self._parser_type = LXML_HTML_PARSER
-            pctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
         elif isinstance(self, XMLParser):
             self._parser_type = LXML_XML_PARSER
-            pctxt = xmlparser.xmlNewParserCtxt()
         elif isinstance(self, iterparse):
             self._parser_type = LXML_ITERPARSE_PARSER
-            pctxt = xmlparser.xmlNewParserCtxt()
         else:
             raise TypeError, "This class cannot be instantiated"
+
         self._parse_options = parse_options
+
+        pctxt = self._newParserCtxt()
         self._parser_ctxt = pctxt
         if pctxt is NULL:
             python.PyErr_NoMemory()
-        if pctxt.sax != NULL:
-            if remove_comments:
-                pctxt.sax.comment = NULL
-            if remove_pis:
-                pctxt.sax.processingInstruction = NULL
-            # hard switch-off for CDATA nodes => makes them plain text
-            pctxt.sax.cdataBlock = NULL
+
+        self._context = self._createContext(target)
+        self._context._initParserContext(pctxt)
+        pctxt._private = <python.PyObject*>self._context
+
+        if remove_comments:
+            pctxt.sax.comment = NULL
+        if remove_pis:
+            pctxt.sax.processingInstruction = NULL
+        # hard switch-off for CDATA nodes => makes them plain text
+        pctxt.sax.cdataBlock = NULL
 
         if not config.ENABLE_THREADING or \
                self._parser_type == LXML_ITERPARSE_PARSER:
@@ -422,10 +525,18 @@ cdef class _BaseParser:
             self._parser_lock = NULL
         else:
             self._parser_lock = python.PyThread_allocate_lock()
-        self._error_log = _ErrorLog()
-        self.resolvers  = _ResolverRegistry()
-        self._context = context_class(self.resolvers)
-        pctxt._private = <python.PyObject*>self._context
+
+    cdef _ParserContext _createContext(self, target):
+        if target is not None:
+            return _TargetParserContext(target)
+        else:
+            return _InternalParserContext()
+
+    cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
+        if self._parser_type == LXML_HTML_PARSER:
+            return htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
+        else:
+            return xmlparser.xmlNewParserCtxt()
 
     def __dealloc__(self):
         if self._parser_ctxt is not NULL:
@@ -434,7 +545,7 @@ cdef class _BaseParser:
             python.PyThread_free_lock(self._parser_lock)
 
     cdef void _cleanup(self):
-        cdef xmlParserCtxt* pctxt
+        cdef xmlparser.xmlParserCtxt* pctxt
         pctxt = self._parser_ctxt
         if pctxt is not NULL:
             if pctxt.spaceTab is not NULL: # work around bug in libxml2
@@ -458,7 +569,11 @@ cdef class _BaseParser:
 
     property error_log:
         def __get__(self):
-            return self._error_log.copy()
+            return self._context._error_log.copy()
+
+    property resolvers:
+        def __get__(self):
+            return self._context._resolvers
 
     def setElementClassLookup(self, ElementClassLookup lookup = None):
         "Deprecated, use ``parser.set_element_class_lookup(lookup)`` instead."
@@ -497,8 +612,144 @@ cdef class _BaseParser:
         def __get__(self):
             return "libxml2 %d.%d.%d" % LIBXML_VERSION
 
-    # feed parser interface
+    # internal parser methods
 
+    cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
+        """Parse unicode document, share dictionary if possible.
+        """
+        cdef python.PyThreadState* state
+        cdef xmlDoc* result
+        cdef xmlparser.xmlParserCtxt* pctxt
+        cdef int recover
+        cdef Py_ssize_t py_buffer_len
+        cdef int buffer_len
+        cdef char* c_text
+        py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
+        if py_buffer_len > python.INT_MAX or _UNICODE_ENCODING is NULL:
+            text_utf = python.PyUnicode_AsUTF8String(utext)
+            py_buffer_len = python.PyString_GET_SIZE(text_utf)
+            return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
+        buffer_len = py_buffer_len
+
+        self._lockParser()
+        self._context._error_log.connect()
+        try:
+            pctxt = self._parser_ctxt
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+
+            c_text = python.PyUnicode_AS_DATA(utext)
+            state = python.PyEval_SaveThread()
+            if self._parser_type == LXML_HTML_PARSER:
+                result = htmlparser.htmlCtxtReadMemory(
+                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                    self._parse_options)
+            else:
+                result = xmlparser.xmlCtxtReadMemory(
+                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                    self._parse_options)
+            python.PyEval_RestoreThread(state)
+
+            return self._context._handleParseResultDoc(self, result, None)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._context._error_log.disconnect()
+            self._unlockParser()
+
+    cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
+                           char* c_filename) except NULL:
+        """Parse document, share dictionary if possible.
+        """
+        cdef python.PyThreadState* state
+        cdef xmlDoc* result
+        cdef xmlparser.xmlParserCtxt* pctxt
+        cdef int recover
+        if c_len > python.INT_MAX:
+            raise ParserError, "string is too long to parse it with libxml2"
+        self._lockParser()
+        self._context._error_log.connect()
+        try:
+            pctxt = self._parser_ctxt
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+
+            state = python.PyEval_SaveThread()
+            if self._parser_type == LXML_HTML_PARSER:
+                result = htmlparser.htmlCtxtReadMemory(
+                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
+            else:
+                result = xmlparser.xmlCtxtReadMemory(
+                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
+            python.PyEval_RestoreThread(state)
+
+            return self._context._handleParseResultDoc(self, result, None)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._context._error_log.disconnect()
+            self._unlockParser()
+
+    cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
+        cdef python.PyThreadState* state
+        cdef xmlDoc* result
+        cdef xmlparser.xmlParserCtxt* pctxt
+        cdef int recover
+        cdef int orig_options
+        result = NULL
+        self._lockParser()
+        self._context._error_log.connect()
+        try:
+            pctxt = self._parser_ctxt
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+
+            orig_options = pctxt.options
+            state = python.PyEval_SaveThread()
+            if self._parser_type == LXML_HTML_PARSER:
+                result = htmlparser.htmlCtxtReadFile(
+                    pctxt, c_filename, NULL, self._parse_options)
+            else:
+                result = xmlparser.xmlCtxtReadFile(
+                    pctxt, c_filename, NULL, self._parse_options)
+            python.PyEval_RestoreThread(state)
+            pctxt.options = orig_options # work around libxml2 problem
+
+            return self._context._handleParseResultDoc(
+                self, result, c_filename)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._context._error_log.disconnect()
+            self._unlockParser()
+
+    cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename) except NULL:
+        cdef _FileReaderContext file_context
+        cdef xmlDoc* result
+        cdef xmlparser.xmlParserCtxt* pctxt
+        cdef char* c_filename
+        cdef int recover
+        if not filename:
+            filename = None
+        self._lockParser()
+        self._context._error_log.connect()
+        try:
+            pctxt = self._parser_ctxt
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+            file_context = _FileReaderContext(filelike, self._context, filename)
+            result = file_context._readDoc(
+                pctxt, self._parse_options, self._parser_type)
+
+            return self._context._handleParseResultDoc(
+                self, result, filename)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._context._error_log.disconnect()
+            self._unlockParser()
+
+############################################################
+## ET feed parser
+############################################################
+
+cdef class _FeedParser(_BaseParser):
     def feed(self, data):
         """Feeds data to the parser.  The argument should be an 8-bit string
         buffer containing encoded data, although Unicode is supported as long
@@ -512,7 +763,7 @@ cdef class _BaseParser:
         the ``feed()`` method.  The parser can only be reset by calling
         ``close()``.
         """
-        cdef xmlParserCtxt* pctxt
+        cdef xmlparser.xmlParserCtxt* pctxt
         cdef Py_ssize_t py_buffer_len
         cdef char* c_data
         cdef char* c_encoding
@@ -538,18 +789,20 @@ cdef class _BaseParser:
         if not self._feed_parser_running:
             self._lockParser()
             self._feed_parser_running = 1
-            self._error_log.connect()
+            self._context._error_log.connect()
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-            xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
 
             if py_buffer_len > python.INT_MAX:
                 buffer_len = python.INT_MAX
             else:
                 buffer_len = <int>py_buffer_len
-
-            error = xmlparser.xmlCtxtResetPush(
-                pctxt, c_data, buffer_len, NULL, c_encoding)
-
+            if self._parser_type == LXML_HTML_PARSER:
+                error = _htmlCtxtResetPush(pctxt, c_data, buffer_len,
+                                           c_encoding, self._parse_options)
+            else:
+                error = xmlparser.xmlCtxtResetPush(
+                    pctxt, c_data, buffer_len, NULL, c_encoding)
+                xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
             py_buffer_len = py_buffer_len - buffer_len
             c_data = c_data + buffer_len
 
@@ -558,24 +811,26 @@ cdef class _BaseParser:
                 buffer_len = python.INT_MAX
             else:
                 buffer_len = <int>py_buffer_len
+            if self._parser_type == LXML_HTML_PARSER:
+                error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
+            else:
+                error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
             py_buffer_len = py_buffer_len - buffer_len
-            error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
             c_data = c_data + buffer_len
 
         if error:
             self._feed_parser_running = 0
             try:
-                recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-                _handleParseResult(pctxt, pctxt.myDoc, None,
-                                   self._error_log, recover)
+                self._context._handleParseResult(
+                    self, pctxt.myDoc, None)
             finally:
                 self._cleanup()
                 self._context.clear()
-                self._error_log.disconnect()
+                self._context._error_log.disconnect()
                 self._unlockParser()
 
     def close(self):
-        """Finishes feeding of data to this parser.  This tells the parser to
+        """Terminates feeding data to this parser.  This tells the parser to
         process any remaining data in the feed buffer, and then returns the
         root Element of the tree that was parsed.
 
@@ -583,234 +838,56 @@ cdef class _BaseParser:
         the ``feed()`` method.  It should only be called when using the feed
         parser interface, all other usage is undefined.
         """
-        cdef xmlParserCtxt* pctxt
+        cdef xmlparser.xmlParserCtxt* pctxt
         cdef xmlDoc* c_doc
         cdef _Document doc
-        cdef int error
+        cdef int is_target_parser, error
         if not self._feed_parser_running:
             raise XMLSyntaxError, "no element found"
         pctxt = self._parser_ctxt
         self._feed_parser_running = 0
-        error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
-        try:
-            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            c_doc = _handleParseResult(pctxt, pctxt.myDoc, None,
-                                       self._error_log, recover)
-        finally:
-            self._cleanup()
-            self._context.clear()
-            self._error_log.disconnect()
-            self._unlockParser()
-
-        doc = _documentFactory(c_doc, self)
-        return doc.getroot()
-
-    # internal parser methods
-
-    cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
-        """Parse unicode document, share dictionary if possible.
-        """
-        cdef python.PyThreadState* state
-        cdef xmlDoc* result
-        cdef xmlParserCtxt* pctxt
-        cdef int recover
-        cdef Py_ssize_t py_buffer_len
-        cdef int buffer_len
-        cdef char* c_text
-        py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
-        if py_buffer_len > python.INT_MAX or _UNICODE_ENCODING is NULL:
-            text_utf = python.PyUnicode_AsUTF8String(utext)
-            py_buffer_len = python.PyString_GET_SIZE(text_utf)
-            return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
-        buffer_len = py_buffer_len
-
-        self._lockParser()
-        self._error_log.connect()
-        try:
-            pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
-            c_text = python.PyUnicode_AS_DATA(utext)
-            state = python.PyEval_SaveThread()
-            if self._parser_type == LXML_HTML_PARSER:
-                result = htmlparser.htmlCtxtReadMemory(
-                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
-                    self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadMemory(
-                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
-                    self._parse_options)
-            python.PyEval_RestoreThread(state)
-
-            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, None,
-                                      self._error_log, recover)
-        finally:
-            self._cleanup()
-            self._context.clear()
-            self._error_log.disconnect()
-            self._unlockParser()
-
-    cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
-                           char* c_filename) except NULL:
-        """Parse document, share dictionary if possible.
-        """
-        cdef python.PyThreadState* state
-        cdef xmlDoc* result
-        cdef xmlParserCtxt* pctxt
-        cdef int recover
-        if c_len > python.INT_MAX:
-            raise ParserError, "string is too long to parse it with libxml2"
-        self._lockParser()
-        self._error_log.connect()
-        try:
-            pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
-            state = python.PyEval_SaveThread()
-            if self._parser_type == LXML_HTML_PARSER:
-                result = htmlparser.htmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
-            python.PyEval_RestoreThread(state)
-
-            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, None,
-                                      self._error_log, recover)
-        finally:
-            self._cleanup()
-            self._context.clear()
-            self._error_log.disconnect()
-            self._unlockParser()
-
-    cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
-        cdef python.PyThreadState* state
-        cdef xmlDoc* result
-        cdef xmlParserCtxt* pctxt
-        cdef int recover
-        cdef int orig_options
-        result = NULL
-        self._lockParser()
-        self._error_log.connect()
-        try:
-            pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
-            orig_options = pctxt.options
-            state = python.PyEval_SaveThread()
-            if self._parser_type == LXML_HTML_PARSER:
-                result = htmlparser.htmlCtxtReadFile(
-                    pctxt, c_filename, NULL, self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadFile(
-                    pctxt, c_filename, NULL, self._parse_options)
-            python.PyEval_RestoreThread(state)
-            pctxt.options = orig_options # work around libxml2 problem
-
-            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, c_filename,
-                                      self._error_log, recover)
-        finally:
-            self._cleanup()
-            self._context.clear()
-            self._error_log.disconnect()
-            self._unlockParser()
-
-    cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename) except NULL:
-        cdef _FileParserContext file_context
-        cdef xmlDoc* result
-        cdef xmlParserCtxt* pctxt
-        cdef char* c_filename
-        cdef int recover
-        if not filename:
-            filename = None
-        self._lockParser()
-        self._error_log.connect()
-        try:
-            pctxt = self._parser_ctxt
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-            file_context = _FileParserContext(filelike, self._context, filename)
-            result = file_context._readDoc(
-                pctxt, self._parse_options, self._parser_type)
-
-            recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-            return _handleParseResult(pctxt, result, filename,
-                                      self._error_log, recover)
-        finally:
-            self._cleanup()
-            self._context.clear()
-            self._error_log.disconnect()
-            self._unlockParser()
-
-cdef int _raiseParseError(xmlParserCtxt* ctxt, filename,
-                          _ErrorLog error_log) except 0:
-    if filename is not None and \
-           ctxt.lastError.domain == xmlerror.XML_FROM_IO:
-        if ctxt.lastError.message is not NULL:
-            message = "Error reading file '%s': %s" % (
-                filename, (ctxt.lastError.message).strip())
+        if self._parser_type == LXML_HTML_PARSER:
+            error = htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
         else:
-            message = "Error reading file '%s'" % filename
-        raise IOError, message
-    elif error_log is not None:
-        raise XMLSyntaxError, error_log._buildExceptionMessage(
-            "Document is not well formed")
-    elif ctxt.lastError.message is not NULL:
-        message = (ctxt.lastError.message).strip()
-        if ctxt.lastError.line > 0:
-            message = "line %d: %s" % (ctxt.lastError.line, message)
-        raise XMLSyntaxError, message
-    else:
-        raise XMLSyntaxError
+            error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
+        is_target_parser = isinstance(self._context, _TargetParserContext)
+        try:
+            result = self._context._handleParseResult(
+                self, pctxt.myDoc, None)
+        finally:
+            self._cleanup()
+            self._context.clear()
+            self._context._error_log.disconnect()
+            self._unlockParser()
 
-cdef xmlDoc* _handleParseResult(xmlParserCtxt* ctxt, xmlDoc* result,
-                                filename, _ErrorLog error_log,
-                                int recover) except NULL:
-    cdef _ResolverContext context
-    cdef int well_formed
-    if ctxt.myDoc is not NULL:
-        if ctxt.myDoc != result:
-            tree.xmlFreeDoc(ctxt.myDoc)
-        ctxt.myDoc = NULL
-
-    if result is not NULL:
-        if recover or (ctxt.wellFormed and \
-                       ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
-            well_formed = 1
-        elif not ctxt.replaceEntities and not ctxt.validate:
-            # in this mode, we ignore errors about undefined entities
-            for error in error_log.filter_from_errors():
-                if error.type != ErrorTypes.WAR_UNDECLARED_ENTITY and \
-                       error.type != ErrorTypes.ERR_UNDECLARED_ENTITY:
-                    well_formed = 0
-                    break
-            else:
-                well_formed = 1
+        if isinstance(result, _Document):
+            return (<_Document>result).getroot()
         else:
-            well_formed = 0
+            return result
 
-        if well_formed:
-            __GLOBAL_PARSER_CONTEXT.initDocDict(result)
-        else:
-            # free broken document
-            tree.xmlFreeDoc(result)
-            result = NULL
+cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
+                             char* c_data, int buffer_len,
+                             char* c_encoding, int parse_options) except -1:
+    cdef xmlparser.xmlParserInput* c_input_stream
+    # libxml2 crashes if spaceTab is not initialised
+    if _LIBXML_VERSION_INT < 20629 and c_ctxt.spaceTab is NULL:
+        c_ctxt.spaceTab = <int*>tree.xmlMalloc(10 * sizeof(int))
+        c_ctxt.spaceMax = 10
 
-    if ctxt._private is not NULL:
-        context = <_ResolverContext>ctxt._private
-        if context._has_raised():
-            if result is not NULL:
-                tree.xmlFreeDoc(result)
-                result = NULL
-            context._raise_if_stored()
+    # libxml2 lacks an HTML push parser setup function
+    error = xmlparser.xmlCtxtResetPush(c_ctxt, NULL, 0, NULL, c_encoding)
+    if error:
+        return error
 
-    if result is NULL:
-        _raiseParseError(ctxt, filename, error_log)
-    elif result.URL is NULL and filename is not None:
-        result.URL = tree.xmlStrdup(_cstr(filename))
-    return result
+    # fix libxml2 setup for HTML
+    c_ctxt.progressive = 1
+    c_ctxt.html = 1
+    htmlparser.htmlCtxtUseOptions(c_ctxt, parse_options)
+
+    if c_data is not NULL and buffer_len > 0:
+        return htmlparser.htmlParseChunk(c_ctxt, c_data, buffer_len, 0)
+    return 0
+        
 
 ############################################################
 ## XML parser
@@ -824,7 +901,7 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_COMPACT
     )
 
-cdef class XMLParser(_BaseParser):
+cdef class XMLParser(_FeedParser):
     """The XML parser.  Parsers can be supplied as additional argument to
     various parse functions of the lxml API.  A default parser is always
     available and can be replaced by a call to the global function
@@ -848,6 +925,8 @@ cdef class XMLParser(_BaseParser):
     * compact            - safe memory for short text content (default: True)
     * resolve_entities   - replace entities by their text value (default: True)
 
+    You can pass a parser target as ``target`` keyword argument.
+
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
     apply to the default parser.
@@ -856,7 +935,7 @@ cdef class XMLParser(_BaseParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=False,
-                 remove_pis=False):
+                 remove_pis=False, target=None):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -880,7 +959,8 @@ cdef class XMLParser(_BaseParser):
         if not resolve_entities:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
-        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis)
+        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
+                             target)
 
 cdef class ETCompatXMLParser(XMLParser):
     """An XML parser with an ElementTree compatible default setup.  See the
@@ -893,18 +973,18 @@ cdef class ETCompatXMLParser(XMLParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=True,
-                 remove_pis=True):
+                 remove_pis=True, target=None):
         XMLParser.__init__(self,
                  attribute_defaults, dtd_validation,
                  load_dtd, no_network, ns_clean,
                  recover, remove_blank_text, compact,
                  resolve_entities, remove_comments,
-                 remove_pis)
+                 remove_pis, target)
 
 cdef xmlDoc* _internalParseDoc(char* c_text, int options,
                                _ResolverContext context) except NULL:
     # internal parser function for XSLT
-    cdef xmlParserCtxt* pctxt
+    cdef xmlparser.xmlParserCtxt* pctxt
     cdef xmlDoc* c_doc
     cdef int recover
     pctxt = xmlparser.xmlNewParserCtxt()
@@ -916,7 +996,7 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
         pctxt, c_text, NULL, NULL, options)
     try:
         recover = options & xmlparser.XML_PARSE_RECOVER
-        c_doc = _handleParseResult(pctxt, c_doc, None, None, recover)
+        c_doc = _handleParseResult(None, pctxt, c_doc, None, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -924,7 +1004,7 @@ cdef xmlDoc* _internalParseDoc(char* c_text, int options,
 cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
                                        _ResolverContext context) except NULL:
     # internal parser function for XSLT
-    cdef xmlParserCtxt* pctxt
+    cdef xmlparser.xmlParserCtxt* pctxt
     cdef xmlDoc* c_doc
     cdef int recover
     pctxt = xmlparser.xmlNewParserCtxt()
@@ -940,7 +1020,7 @@ cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
             filename = None
         else:
             filename = c_filename
-        c_doc = _handleParseResult(pctxt, c_doc, filename, None, recover)
+        c_doc = _handleParseResult(None, pctxt, c_doc, filename, recover)
     finally:
         xmlparser.xmlFreeParserCtxt(pctxt)
     return c_doc
@@ -987,7 +1067,7 @@ _HTML_DEFAULT_PARSE_OPTIONS = (
     htmlparser.HTML_PARSE_COMPACT
     )
 
-cdef class HTMLParser(_BaseParser):
+cdef class HTMLParser(_FeedParser):
     """The HTML parser.  This parser allows reading HTML into a normal XML
     tree.  By default, it can read broken (non well-formed) HTML, depending on
     the capabilities of libxml2.  Use the 'recover' option to switch this off.
@@ -1000,11 +1080,14 @@ cdef class HTMLParser(_BaseParser):
     * remove_pis         - discard processing instructions
     * compact            - safe memory for short text content (default: True)
 
+    You can pass a parser target as ``target`` keyword argument.
+
     Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
     def __init__(self, recover=True, no_network=True, remove_blank_text=False,
-                 compact=True, remove_comments=False, remove_pis=False):
+                 compact=True, remove_comments=False, remove_pis=False,
+                 target=None):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
@@ -1016,7 +1099,8 @@ cdef class HTMLParser(_BaseParser):
         if not compact:
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
-        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis)
+        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
+                             target)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()

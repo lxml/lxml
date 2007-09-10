@@ -266,7 +266,8 @@ def parsefile():
 ##     """
 ##     Test HTML parsing.
 
-##     >>> p = HTMLTreeBuilder.TreeBuilder()
+##     >>> # p = HTMLTreeBuilder.TreeBuilder()
+##     >>> p = ElementTree.HTMLParser()
 ##     >>> p.feed("<p><p>spam<b>egg</b></p>")
 ##     >>> serialize(p.close())
 ##     '<p>spam<b>egg</b></p>'

@@ -19,16 +19,24 @@ cdef extern from "libxml/parser.h":
                                           char* prefix,
                                           char* URI)
 
-    ctypedef void (*cdataBlockSAXFunc)(void* ctx,
-                                       char* value,
-                                       int len)
+    ctypedef void (*charactersSAXFunc)(void* ctx, char* ch, int len)
 
-    ctypedef void (*commentSAXFunc)(void* ctx,
-                                    char* value)
+    ctypedef void (*cdataBlockSAXFunc)(void* ctx, char* value, int len)
 
-    ctypedef void (*processingInstructionSAXFunc)(void * ctx, 
+    ctypedef void (*commentSAXFunc)(void* ctx, char* value)
+
+    ctypedef void (*processingInstructionSAXFunc)(void* ctx, 
                                                   char* target, 
                                                   char* data)
+
+    ctypedef void (*internalSubsetSAXFunc)(void* ctx, 
+                                            char* name, 
+                                            char* externalID, 
+                                            char* systemID)
+
+    ctypedef void (*endDocumentSAXFunc)(void* ctx)
+
+    cdef int XML_SAX2_MAGIC
 
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput
@@ -38,11 +46,15 @@ cdef extern from "libxml/tree.h":
         xmlInputCloseCallback closecallback
 
     ctypedef struct xmlSAXHandler:
+        internalSubsetSAXFunc           internalSubset
         startElementNsSAX2Func          startElementNs
         endElementNsSAX2Func            endElementNs
+        charactersSAXFunc               characters
         cdataBlockSAXFunc               cdataBlock
         commentSAXFunc                  comment
         processingInstructionSAXFunc	processingInstruction
+        endDocumentSAXFunc              endDocument
+        int                             initialized
 
 cdef extern from "libxml/xmlIO.h":
     cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)
@@ -54,6 +66,8 @@ cdef extern from "libxml/parser.h":
     cdef void xmlDictFree(xmlDict* sub)
     cdef int xmlDictReference(xmlDict* dict)
     
+    cdef int XML_COMPLETE_ATTRS # SAX option for adding DTD default attributes
+
     ctypedef struct xmlParserCtxt:
         xmlDoc* myDoc
         xmlDict* dict
@@ -64,11 +78,16 @@ cdef extern from "libxml/parser.h":
         int disableSAX
         int errNo
         int replaceEntities
+        int loadsubset
         int validate
         xmlError lastError
         xmlNode* node
         xmlSAXHandler* sax
         int* spaceTab
+        int spaceMax
+        int html
+        int progressive
+        int charset
         
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors

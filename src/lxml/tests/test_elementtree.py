@@ -2538,6 +2538,8 @@ class ETreeTestCaseBase(unittest.TestCase):
             # ElementTree 1.3+, cET
             self.assert_(re.match("[^ ]+ [0-9.]+", parser.version))
 
+    # feed parser interface
+
     def test_feed_parser(self):
         parser = self.etree.XMLParser()
 
@@ -2578,6 +2580,81 @@ class ETreeTestCaseBase(unittest.TestCase):
             pass
 
         self.assertRaises(Exception, parser.close)
+
+    # parser target interface
+
+    def test_parser_target_tag(self):
+        assertEquals = self.assertEquals
+        assertFalse  = self.assertFalse
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertFalse(attrib)
+                assertEquals("TAG", tag)
+            def end(self, tag):
+                events.append("end")
+                assertEquals("TAG", tag)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        parser.feed("<TAG/>")
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start", "end"], events)
+
+    def test_parser_target_attrib(self):
+        assertEquals = self.assertEquals
+        assertFalse  = self.assertFalse
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+                for name, value in attrib.iteritems():
+                    assertEquals(tag + name, value)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        parser.feed('<root a="roota" b="rootb"><sub c="subc"/></root>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start-root", "start-sub", "end-sub", "end-root"],
+                          events)
+
+    def test_parser_target_data(self):
+        assertEquals = self.assertEquals
+        assertFalse  = self.assertFalse
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        parser.feed('<root>A<sub/>B</root>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start-root", "data-A", "start-sub",
+                           "end-sub", "data-B", "end-root"],
+                          events)
 
     # helper methods
 

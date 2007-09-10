@@ -88,10 +88,10 @@ cdef class DTD(_Validator):
 
 cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     cdef _ExceptionContext exc_context
-    cdef _FileParserContext dtd_parser
+    cdef _FileReaderContext dtd_parser
     cdef tree.xmlDtd* c_dtd
     exc_context = _ExceptionContext()
-    dtd_parser = _FileParserContext(file, exc_context)
+    dtd_parser = _FileReaderContext(file, exc_context)
 
     c_dtd = dtd_parser._readDtd()
 
