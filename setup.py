@@ -41,6 +41,19 @@ versioninfo.create_version_h(svn_version)
 print "Building lxml version", svn_version
 
 
+branch_link = """
+After an official release of a new stable series, current bug fixes become
+available at http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
+Running ``easy_install lxml==%(branch_version)sbugfix`` will install this
+version from
+http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
+
+"""
+
+if versioninfo.is_pre_release():
+    branch_link = ""
+
+
 extra_options.update(setupinfo.extra_setup_args())
 
 setup(
@@ -55,7 +68,7 @@ setup(
 
     description="Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.",
 
-    long_description=(("""\
+    long_description=((("""\
 lxml is a Pythonic, mature binding for the libxml2 and libxslt libraries.  It
 provides safe and convenient access to these libraries using the ElementTree
 API.
@@ -71,13 +84,7 @@ get it from the subversion repository at http://codespeak.net/svn/lxml/trunk .
 Running ``easy_install lxml==dev`` will install it from
 http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
 
-After an official release of a new stable series, current bug fixes might
-become available at
-http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .  Running
-``easy_install lxml==%(branch_version)sbugfix`` will install this version from
-http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
-
-""" % { "branch_version" : versioninfo.branch_version() }) +
+""" + branch_link) % { "branch_version" : versioninfo.branch_version() }) +
                       versioninfo.changes()),
     classifiers = [
     versioninfo.dev_status(),

@@ -11,6 +11,10 @@ def version():
 def branch_version():
     return version()[:3]
 
+def is_pre_release():
+    version_string = version()
+    return "dev" in version_string or "alpha" in version_string or "beta" in version_string
+
 def svn_version():
     _version = version()
     src_dir = get_src_dir()
