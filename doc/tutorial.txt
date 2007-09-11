@@ -6,24 +6,32 @@ The lxml.etree Tutorial
   Stefan Behnel
 
 This tutorial briefly overviews the main concepts of the `ElementTree API`_ as
-implemented by lxml.etree, and some simple enhancements that make your life as
-a programmer easier.
+implemented by ``lxml.etree``, and some simple enhancements that make your
+life as a programmer easier.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm#documentation
 
 .. contents::
 .. 
-   1  Elements and ElementTrees
-     1.1  The Element class
-     1.2  The ElementTree class
-   2  Parsing and XML literals
-     2.1  The XML() function
-     2.2  The parse() function
-   3  Namespaces
-   4  The find*() methods
-     4.1  findall()
-     4.2  find()
-     4.3  findtext()
+   1  The Element class
+     1.1  Elements are lists
+     1.2  Elements carry attributes
+     1.3  Elements contain text
+     1.4  Tree iteration
+   2  The ElementTree class
+   3  Parsing from strings and files
+     3.1  The fromstring() function
+     3.2  The XML() function
+     3.3  The parse() function
+     3.4  Parser objects
+     3.5  Incremental parsing
+     3.6  Event-driven parsing
+   4  Namespaces
+   5  The E-factory
+   6  ElementPath
+     6.1  findall()
+     6.2  find()
+     6.3  findtext()
 
 
 A common way to import ``lxml.etree`` is as follows::
@@ -380,14 +388,207 @@ upcoming lxml 2.0.  Before, both would serialise without DTD content, which
 made lxml loose DTD information in an input-output cycle.
 
 
-Parsing files and XML literals
+Parsing from strings and files
 ==============================
+
+``lxml.etree`` supports parsing XML in a number of ways and from all important
+sources, namely strings, files and file-like objects.  The main parse
+functions are ``fromstring()`` and ``parse()``, both called with the source as
+first argument.  By default, they use the standard parser, but you can always
+pass a different parser as second argument.
+
+
+The fromstring() function
+-------------------------
+
+The ``fromstring()`` function is the easiest way to parse a string::
+
+    >>> some_xml_data = "<root>data</root>"
+
+    >>> root = etree.fromstring(some_xml_data)
+    >>> print root.tag
+    root
+    >>> print etree.tostring(root)
+    <root>data</root>
+
 
 The XML() function
 ------------------
 
+The ``XML()`` function behaves like the ``fromstring()`` function, but is
+commonly used to write XML literals right into the source::
+
+    >>> root = etree.XML("<root>data</root>")
+    >>> print root.tag
+    root
+    >>> print etree.tostring(root)
+    <root>data</root>
+
+
 The parse() function
 --------------------
+
+The ``parse()`` function is used to parse from files and file-like objects::
+
+    >>> some_file_like = StringIO("<root>data</root>")
+
+    >>> tree = etree.parse(some_file_like)
+
+    >>> print etree.tostring(tree)
+    <root>data</root>
+
+Note that ``parse()`` returns an ElementTree object, not an Element object as
+the string parser functions::
+
+    >>> root = tree.getroot()
+    >>> print root.tag
+    root
+    >>> print etree.tostring(root)
+    <root>data</root>
+
+
+Parser objects
+--------------
+
+By default, ``lxml.etree`` uses a standard parser with a default setup.  If
+you want to configure the parser, you can create a you instance::
+
+    >>> parser = etree.XMLParser(remove_blank_text=True) # lxml.etree only!
+
+This creates a parser that removes empty text between tags while parsing,
+which can reduce the size of the tree and avoid dangling tail text if you know
+that whitespace-only content is not meaningful for your data.  An example::
+
+    >>> root = etree.XML("<root>  <a/>   <b>  </b>     </root>", parser)
+
+    >>> print etree.tostring(root)
+    <root><a/><b>  </b></root>
+
+Note that the whitespace content inside the ``<b>`` tag was not removed, as
+content at leaf elements tends to be data content (even if blank).  You can
+easily remove it in an additional step by traversing the tree::
+
+    >>> for element in root.getiterator("*"):
+    ...     if element.text is not None and not element.text.strip():
+    ...         element.text = None
+
+    >>> print etree.tostring(root)
+    <root><a/><b/></root>
+
+See ``help(etree.XMLParser)`` to find out about the available parser options.
+
+
+Incremental parsing
+-------------------
+
+``lxml.etree`` provides two ways for incremental step-by-step parsing.  One is
+through file-like objects, where it calls the ``read()`` method repeatedly.
+This is best used where the data arrives from a source like ``urllib`` or any
+other file-like object that can provide data on request.  Note that the parser
+will block and wait until data becomes available in this case::
+
+    >>> class DataSource:
+    ...     data = iter(["<roo", "t><", "a/", "><", "/root>"])
+    ...     def read(self, requested_size):
+    ...         try:
+    ...             return self.data.next()
+    ...         except StopIteration:
+    ...             return ""
+
+    >>> root = etree.parse(DataSource())
+
+    >>> print etree.tostring(root)
+    <root><a/></root>
+
+The second way is through a feed parser interface, given by the ``feed(data)``
+and ``close()`` methods::
+
+    >>> parser = etree.XMLParser()
+
+    >>> parser.feed("<roo")
+    >>> parser.feed("t><")
+    >>> parser.feed("a/")
+    >>> parser.feed("><")
+    >>> parser.feed("/root>")
+
+    >>> root = parser.close()
+
+    >>> print etree.tostring(root)
+    <root><a/></root>
+
+Here, you can interrupt the parsing process at any time and continue it later
+on with another call to the ``feed()`` method.  This comes in handy if you
+want to avoid blocking calls to the parser, e.g. in frameworks like Twisted,
+or whenever data comes in slowly or in chunks and you want to do other things
+while waiting for the next chunk.
+
+You can reuse the parser by calling its ``feed()`` method again::
+
+    >>> parser.feed("<root/>")
+    >>> root = parser.close()
+    >>> print etree.tostring(root)
+    <root/>
+
+
+Event-driven parsing
+--------------------
+
+Sometimes, all you need from a document is a small fraction somewhere deep
+inside the tree, so parsing the whole tree into memory, traversing it and
+dropping it can be too much overhead.  ``lxml.etree`` supports this use case
+with two event-driven parser interfaces, one that generates parser events
+while building the tree (``iterparse``), and one that does not build the tree
+at all, and instead calls feedback methods on a target object in a SAX-like
+fashion.
+
+Here is a simple ``iterparse()`` example::
+
+    >>> some_file_like = StringIO("<root><a>data</a></root>")
+
+    >>> for event, element in etree.iterparse(some_file_like):
+    ...     print "%s, %4s, %s" % (event, element.tag, element.text)
+    end,    a, data
+    end, root, None
+
+By default, ``iterparse()`` only generates events when it is done parsing an
+element, but you can control this through the ``events`` keyword argument::
+
+    >>> some_file_like = StringIO("<root><a>data</a></root>")
+
+    >>> for event, element in etree.iterparse(some_file_like,
+    ...                                       events=("start", "end")):
+    ...     print "%5s, %4s, %s" % (event, element.tag, element.text)
+    start, root, None
+    start,    a, data
+      end,    a, data
+      end, root, None
+
+Note that the text, tail and children of an Element are not necessarily there
+yet when receiving the ``start`` event.  Only the ``end`` event guarantees
+that the Element has been parsed completely.  It also allows to ``clear()`` or
+modify the content of an Element to save memory.
+
+If memory is a real bottleneck, or if building the tree is not desired at all,
+the target parser interface of ``lxml.etree`` can be used.  It creates
+SAX-like events by calling the methods of a target object.  By implementing
+some or all of these methods, you can control which events are generated::
+
+    >>> class ParserTarget:
+    ...     events = []
+    ...     def start(self, tag, attrib):
+    ...         self.events.append(("start", tag, attrib))
+    ...     def close(self):
+    ...         return self.events
+
+    >>> parser = etree.XMLParser(target=ParserTarget())
+    >>> events = etree.fromstring('<root test="true"/>', parser)
+
+    >>> for event in events:
+    ...     print 'event: %s - tag: %s' % (event[0], event[1])
+    ...     for attr, value in event[2].iteritems():
+    ...         print ' * %s = %s' % (attr, value)
+    event: start - tag: root
+     * test = true
 
 
 Namespaces

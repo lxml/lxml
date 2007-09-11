@@ -1,0 +1,236 @@
+diff -r 43be72844df4 Compiler/Code.py
+--- a/Compiler/Code.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/Code.py	Mon Sep 10 20:13:13 2007 +0200
+@@ -284,6 +284,13 @@ class CCodeWriter:
+         #	code = "((PyObject*)%s)" % code
+         self.put_init_to_py_none(code, entry.type)
+ 
++    def put_py_gil_state_ensure(self, cname):
++        self.putln("PyGILState_STATE %s;" % cname)
++        self.putln("%s = PyGILState_Ensure();" % cname)
++
++    def put_py_gil_state_release(self, cname):
++        self.putln("PyGILState_Release(%s);" % cname)
++
+     def put_pymethoddef(self, entry, term):
+         if entry.doc:
+             doc_code = entry.doc_cname
+diff -r 43be72844df4 Compiler/ExprNodes.py
+--- a/Compiler/ExprNodes.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/ExprNodes.py	Mon Sep 10 22:47:05 2007 +0200
+@@ -473,7 +473,7 @@ class ExprNode(Node):
+         else: # neither src nor dst are py types
+             # Added the string comparison, since for c types that
+             # is enough, but SageX gets confused when the types are
+-            # in different files. 
++            # in different files.
+             if not (str(src.type) == str(dst_type) or dst_type.assignable_from(src_type)):
+                 error(self.pos, "Cannot assign type '%s' to '%s'" %
+                     (src.type, dst_type))
+diff -r 43be72844df4 Compiler/Naming.py
+--- a/Compiler/Naming.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/Naming.py	Mon Sep 10 20:13:13 2007 +0200
+@@ -53,5 +53,6 @@ stringtab_cname  = pyrex_prefix + "strin
+ stringtab_cname  = pyrex_prefix + "string_tab"
+ vtabslot_cname   = pyrex_prefix + "vtab"
+ c_api_tab_cname  = pyrex_prefix + "c_api_tab"
++gilstate_cname   = pyrex_prefix + "state"
+ 
+ extern_c_macro  = pyrex_prefix.upper() + "EXTERN_C"
+diff -r 43be72844df4 Compiler/Nodes.py
+--- a/Compiler/Nodes.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/Nodes.py	Mon Sep 10 20:13:13 2007 +0200
+@@ -282,6 +282,7 @@ class CFuncDeclaratorNode(CDeclaratorNod
+     # has_varargs      boolean
+     # exception_value  ConstNode
+     # exception_check  boolean    True if PyErr_Occurred check needed
++    # with_gil         boolean    True if GIL should be grabbed/released
+ 
+     def analyse(self, return_type, env):
+         func_type_args = []
+@@ -317,7 +318,8 @@ class CFuncDeclaratorNode(CDeclaratorNod
+             exc_check = self.exception_check
+         func_type = PyrexTypes.CFuncType(
+             return_type, func_type_args, self.has_varargs, 
+-            exception_value = exc_val, exception_check = exc_check)
++            exception_value = exc_val, exception_check = exc_check,
++            with_gil = self.with_gil)
+         return self.base.analyse(func_type, env)
+ 
+ 
+@@ -572,6 +574,8 @@ class FuncDefNode(StatNode, BlockNode):
+         self.generate_keyword_list(code)
+         # ----- Extern library function declarations
+         lenv.generate_library_function_declarations(code)
++        # ----- Grab GIL
++        self.generate_grab_gil(code)
+         # ----- Fetch arguments
+         self.generate_argument_parsing_code(code)
+         self.generate_argument_increfs(lenv, code)
+@@ -623,6 +627,9 @@ class FuncDefNode(StatNode, BlockNode):
+         code.put_var_decrefs(lenv.var_entries, used_only = 1)
+         code.put_var_decrefs(lenv.arg_entries)
+         self.put_stararg_decrefs(code)
++        # ----- Release GIL
++        self.generate_release_gil(code)
++        # ----- Return
+         if not self.return_type.is_void:
+             retval_code = Naming.retval_cname
+             #if self.return_type.is_extension_type:
+@@ -651,6 +658,12 @@ class FuncDefNode(StatNode, BlockNode):
+             code.put_var_incref(entry)
+ 
+     def generate_execution_code(self, code):
++        pass
++
++    def generate_grab_gil(self, code):
++        pass
++
++    def generate_release_gil(self, code):
+         pass
+ 
+ 
+@@ -756,7 +769,19 @@ class CFuncDefNode(FuncDefNode):
+         else:
+             error(arg.pos, "Cannot test type of extern C class "
+                 "without type object name specification")
+-    
++
++    def generate_grab_gil(self, code):
++        if self.entry.type.with_gil:
++            code.putln("")
++            code.put_py_gil_state_ensure(Naming.gilstate_cname)
++            code.putln("")
++
++    def generate_release_gil(self, code):
++        if self.entry.type.with_gil:
++            code.putln("")
++            code.put_py_gil_state_release(Naming.gilstate_cname)
++            code.putln("")
++
+     def error_value(self):
+         if self.return_type.is_pyobject:
+             return "0"
+diff -r 43be72844df4 Compiler/Parsing.py
+--- a/Compiler/Parsing.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/Parsing.py	Tue Sep 11 21:06:49 2007 +0200
+@@ -5,7 +5,7 @@ import os, re
+ import os, re
+ from string import join, replace
+ from types import ListType, TupleType
+-from Scanning import PyrexScanner
++from Scanning import PyrexScanner, function_contexts
+ import Nodes
+ import ExprNodes
+ from ModuleNode import ModuleNode
+@@ -1462,10 +1462,10 @@ def p_c_declarator(s, empty = 0, is_type
+                 args = p_c_arg_list(s, in_pyfunc = 0, cmethod_flag = cmethod_flag)
+                 ellipsis = p_optional_ellipsis(s)
+                 s.expect(')')
+-                exc_val, exc_check = p_exception_value_clause(s)
++                options = p_c_func_options(s)
+                 result = Nodes.CFuncDeclaratorNode(pos, 
+                     base = result, args = args, has_varargs = ellipsis,
+-                    exception_value = exc_val, exception_check = exc_check)
++                    **options)
+             cmethod_flag = 0
+     return result
+ 
+@@ -1483,6 +1483,37 @@ def p_exception_value_clause(s):
+                 s.next()
+             exc_val = p_simple_expr(s) #p_exception_value(s)
+     return exc_val, exc_check
++
++def p_c_with(s):
++    if s.sy == 'with':
++        s.next()
++        return p_ident_list(s)
++    return ()
++
++def p_c_func_options(s):
++    exc_val = None
++    exc_check = 0
++    contexts = []
++
++    if s.sy == 'except':
++        exc_val, exc_check = p_exception_value_clause(s)
++        contexts = p_c_with(s)
++    elif s.sy == 'with':
++        contexts = p_c_with(s)
++        exc_val, exc_check = p_exception_value_clause(s)
++
++    for context in contexts:
++        if context not in function_contexts:
++            s.error("Unknown context: " + context)
++            return None
++
++    ret = {
++        'exception_value': exc_val,
++        'exception_check': exc_check,
++        'with_gil': 'GIL' in contexts,
++        }
++
++    return ret
+ 
+ #def p_exception_value(s):
+ #	sign = ""
+diff -r 43be72844df4 Compiler/PyrexTypes.py
+--- a/Compiler/PyrexTypes.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/PyrexTypes.py	Tue Sep 11 12:07:03 2007 +0200
+@@ -488,16 +488,18 @@ class CFuncType(CType):
+     #  has_varargs      boolean
+     #  exception_value  string
+     #  exception_check  boolean  True if PyErr_Occurred check needed
++    #  with_gil         boolean  True if GIL should be grabbed/released
+     
+     is_cfunction = 1
+     
+     def __init__(self, return_type, args, has_varargs,
+-            exception_value = None, exception_check = 0):
++            exception_value = None, exception_check = 0, with_gil = False):
+         self.return_type = return_type
+         self.args = args
+         self.has_varargs = has_varargs
+         self.exception_value = exception_value
+         self.exception_check = exception_check
++        self.with_gil = with_gil
+     
+     def __repr__(self):
+         arg_reprs = map(repr, self.args)
+@@ -580,6 +582,7 @@ class CFuncType(CType):
+         if not arg_decl_code and not pyrex:
+             arg_decl_code = "void"
+         exc_clause = ""
++        with_gil_clause = ""
+         if pyrex or for_display:
+             if self.exception_value and self.exception_check:
+                 exc_clause = " except? %s" % self.exception_value
+@@ -587,8 +590,11 @@ class CFuncType(CType):
+                 exc_clause = " except %s" % self.exception_value
+             elif self.exception_check:
+                 exc_clause = " except *"
++            if self.with_gil:
++                with_gil_clause = " with GIL"
+         return self.return_type.declaration_code(
+-            "(%s(%s)%s)" % (entity_code, arg_decl_code, exc_clause),
++            "(%s(%s)%s%s)" % (entity_code, arg_decl_code,
++                              exc_clause, with_gil_clause),
+             for_display, dll_linkage, pyrex)
+ 
+ 
+diff -r 43be72844df4 Compiler/Scanning.py
+--- a/Compiler/Scanning.py	Mon Sep 03 20:07:01 2007 +0200
++++ b/Compiler/Scanning.py	Tue Sep 11 21:05:33 2007 +0200
+@@ -138,7 +138,11 @@ reserved_words = [
+     "raise", "import", "exec", "try", "except", "finally",
+     "while", "if", "elif", "else", "for", "in", "assert",
+     "and", "or", "not", "is", "in", "lambda", "from",
+-    "NULL", "cimport", "by"
++    "NULL", "cimport", "by", "with"
++]
++
++function_contexts = [ # allowed arguments to the "with" option
++    "GIL"
+ ]
+ 
+ class Method:

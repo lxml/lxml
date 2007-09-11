@@ -261,10 +261,8 @@ cdef class _FileReaderContext:
     cdef int copyToBuffer(self, char* c_buffer, int c_size):
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
-        cdef python.PyGILState_STATE gil_state
         if self._bytes_read < 0:
             return 0
-        gil_state = python.PyGILState_Ensure()
         try:
             byte_count = python.PyString_GET_SIZE(self._bytes)
             remaining = byte_count - self._bytes_read
@@ -276,21 +274,18 @@ cdef class _FileReaderContext:
                 self._bytes_read = 0
                 if remaining == 0:
                     self._bytes_read = -1
-                    python.PyGILState_Release(gil_state)
                     return 0
             if c_size > remaining:
                 c_size = remaining
             c_start = _cstr(self._bytes) + self._bytes_read
-            python.PyGILState_Release(gil_state)
             self._bytes_read = self._bytes_read + c_size
             cstd.memcpy(c_buffer, c_start, c_size)
             return c_size
         except:
             self._exc_context._store_raised()
-            python.PyGILState_Release(gil_state)
             return -1
 
-cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size):
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with GIL:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 ############################################################
@@ -298,7 +293,8 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size):
 ############################################################
 
 cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
-    char* c_url, char* c_pubid, xmlparser.xmlParserCtxt* c_context, int* error):
+    char* c_url, char* c_pubid, xmlparser.xmlParserCtxt* c_context,
+    int* error) with GIL:
     # call the Python document loaders
     cdef xmlparser.xmlParserInput* c_input
     cdef _ResolverContext context
@@ -351,16 +347,13 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
     cdef xmlparser.xmlParserInput* c_input
-    cdef python.PyGILState_STATE gil_state
     cdef int error
     if c_context._private is NULL:
         if __DEFAULT_ENTITY_LOADER is NULL:
             return NULL
         return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
 
-    gil_state = python.PyGILState_Ensure()
     c_input = _parser_resolve_from_python(c_url, c_pubid, c_context, &error)
-    python.PyGILState_Release(gil_state)
 
     if c_input is not NULL:
         return c_input
@@ -404,10 +397,7 @@ cdef class _ParserContext(_ResolverContext):
         recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
         return _handleParseResult(self, self._c_ctxt, result,
                                    filename, recover)
-
-cdef class _InternalParserContext(_ParserContext):
-    """Parser context for internal single-shot parsing
-    """
+    
 
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
@@ -530,7 +520,7 @@ cdef class _BaseParser:
         if target is not None:
             return _TargetParserContext(target)
         else:
-            return _InternalParserContext()
+            return _ParserContext()
 
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
         if self._parser_type == LXML_HTML_PARSER:
@@ -841,16 +831,14 @@ cdef class _FeedParser(_BaseParser):
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef xmlDoc* c_doc
         cdef _Document doc
-        cdef int is_target_parser, error
         if not self._feed_parser_running:
             raise XMLSyntaxError, "no element found"
         pctxt = self._parser_ctxt
         self._feed_parser_running = 0
         if self._parser_type == LXML_HTML_PARSER:
-            error = htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
+            htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
         else:
-            error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
-        is_target_parser = isinstance(self._context, _TargetParserContext)
+            xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
         try:
             result = self._context._handleParseResult(
                 self, pctxt.myDoc, None)
@@ -1150,7 +1138,6 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
     if recursive:
         state = python.PyEval_SaveThread()
     result = tree.xmlCopyDoc(c_doc, recursive)
-    _bugFixURL(c_doc, result)
     if recursive:
         python.PyEval_RestoreThread(state)
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
@@ -1162,7 +1149,6 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
-    _bugFixURL(c_doc, result)
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     state = python.PyEval_SaveThread()
     c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
@@ -1177,14 +1163,6 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc):
     c_root = tree.xmlDocCopyNode(c_node, c_doc, 1) # recursive
     _copyTail(c_node.next, c_root)
     return c_root
-
-cdef void _bugFixURL(xmlDoc* c_source_doc, xmlDoc* c_target_doc):
-    """libxml2 <= 2.6.17 had a bug that prevented it from copying the document
-    URL in xmlDocCopy()"""
-    if c_source_doc.URL is not NULL and _LIBXML_VERSION_INT < 20618:
-        if c_target_doc.URL is not NULL:
-            tree.xmlFree(c_target_doc.URL)
-        c_target_doc.URL = tree.xmlStrdup(c_source_doc.URL)
 
 
 ############################################################

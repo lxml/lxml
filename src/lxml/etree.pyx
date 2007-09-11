@@ -1992,7 +1992,10 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
     if element is not None:
         doc  = element._doc
     elif file is not None:
-        doc = _parseDocument(file, parser)
+        try:
+            doc = _parseDocument(file, parser)
+        except _TargetParserResult, result_container:
+            return result_container.result
     else:
         c_doc = _newDoc()
         doc = _documentFactory(c_doc, parser)
@@ -2015,8 +2018,11 @@ def HTML(text, _BaseParser parser=None, base_url=None):
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
         if not isinstance(parser, HTMLParser):
             parser = __DEFAULT_HTML_PARSER
-    doc = _parseMemoryDocument(text, base_url, parser)
-    return doc.getroot()
+    try:
+        doc = _parseMemoryDocument(text, base_url, parser)
+        return doc.getroot()
+    except _TargetParserResult, result_container:
+        return result_container.result
 
 def XML(text, _BaseParser parser=None, base_url=None):
     """Parses an XML document from a string constant. This function can be used
@@ -2036,8 +2042,11 @@ def XML(text, _BaseParser parser=None, base_url=None):
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
         if not isinstance(parser, XMLParser):
             parser = __DEFAULT_XML_PARSER
-    doc = _parseMemoryDocument(text, base_url, parser)
-    return doc.getroot()
+    try:
+        doc = _parseMemoryDocument(text, base_url, parser)
+        return doc.getroot()
+    except _TargetParserResult, result_container:
+        return result_container.result
 
 def fromstring(text, _BaseParser parser=None, base_url=None):
     """Parses an XML document from a string.
@@ -2052,8 +2061,11 @@ def fromstring(text, _BaseParser parser=None, base_url=None):
     cdef _Document doc
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-    doc = _parseMemoryDocument(text, base_url, parser)
-    return doc.getroot()
+    try:
+        doc = _parseMemoryDocument(text, base_url, parser)
+        return doc.getroot()
+    except _TargetParserResult, result_container:
+        return result_container.result
 
 def iselement(element):
     """Checks if an object appears to be a valid element object.
@@ -2124,8 +2136,11 @@ def parse(source, _BaseParser parser=None):
     is provided as second argument, the default parser is used.
     """
     cdef _Document doc
-    doc = _parseDocument(source, parser)
-    return ElementTree(doc.getroot())
+    try:
+        doc = _parseDocument(source, parser)
+        return ElementTree(doc.getroot())
+    except _TargetParserResult, result_container:
+        return result_container.result
 
 
 ################################################################################

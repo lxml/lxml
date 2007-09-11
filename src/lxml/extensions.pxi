@@ -578,14 +578,8 @@ cdef void _extension_function_call(_BaseContext context, function,
 
 # lookup the function by name and call it
 
-cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt, int nargs):
-    cdef python.PyGILState_STATE gil_state
-    gil_state = python.PyGILState_Ensure()
-    _call_python_xpath_function(ctxt, nargs)
-    python.PyGILState_Release(gil_state)
-
-cdef void _call_python_xpath_function(xpath.xmlXPathParserContext* ctxt,
-                                      int nargs):
+cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
+                               int nargs) with GIL:
     cdef xpath.xmlXPathContext* rctxt
     cdef _BaseContext context
     rctxt = ctxt.context
