@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Setting a QName object as value of the .text property or as an attribute
+  will resolve its prefix in the respective context
+
 * ElementTree-like parser target interface as described in
   http://effbot.org/elementtree/elementtree-xmlparser.htm
 

@@ -244,7 +244,10 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     ns, tag = _getNsTag(key)
     _attributeValidOrRaise(tag)
     c_tag = _cstr(tag)
-    value = _utf8(value)
+    if isinstance(value, QName):
+        value = _resolveQNameText(element, value)
+    else:
+        value = _utf8(value)
     c_value = _cstr(value)
     if ns is None:
         tree.xmlSetProp(element._c_node, c_tag, c_value)
@@ -412,6 +415,16 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     # XXX what if we're the top element?
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
+
+cdef _resolveQNameText(_Element element, value):
+    cdef xmlNs* c_ns
+    ns, tag = _getNsTag(value)
+    if ns is None:
+        return tag
+    else:
+        c_ns = element._doc._findOrBuildNodeNs(
+            element._c_node, _cstr(ns), NULL)
+        return '%s:%s' % (c_ns.prefix, tag)
 
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:

@@ -217,7 +217,8 @@ cdef class QName:
         else:
             if not _isString(text_or_uri):
                 text_or_uri = str(text_or_uri)
-            _tagValidOrRaise(_utf8(text_or_uri))
+            tag = _getNsTag(text_or_uri)[1]
+            _tagValidOrRaise(tag)
         self.text = text_or_uri
     def __str__(self):
         return self.text
@@ -739,10 +740,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         def __get__(self):
             return _collectText(self._c_node.children)
-        
+
         def __set__(self, value):
+            if isinstance(value, QName):
+                value = python.PyUnicode_FromEncodedObject(
+                    _resolveQNameText(self, value), 'UTF-8', 'strict')
             _setNodeText(self._c_node, value)
-        
+
     property tail:
         """Text after this element's end tag, but before the next sibling
         element's start tag. This is either a string or the value None, if

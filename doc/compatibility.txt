@@ -155,6 +155,15 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   ElementTree, you cannot pass it as a keyword argument to the Element and
   SubElement factories directly.
 
+* ElementTree allows QName objects as attribute values and resolves their
+  prefix on serialisation (e.g. an attribute value ``QName("{myns}myname")``
+  becomes "p:myname" if "p" is the namespace prefix of "myns").  lxml.etree
+  also allows you to set attribute values from QName instances (and also .text
+  values), but it resolves their prefix immediately and stores the plain text
+  value.  So, if prefixes are modified later on, e.g. by moving a subtree to a
+  different tree (which reassigns the prefix mappings), the text values will
+  not be updated and you might end up with an undefined prefix.
+
 * etree elements can be copied using ``copy.deepcopy()`` and ``copy.copy()``,
   just like ElementTree's.  However, ``copy.copy()`` does *not* create a
   shallow copy where elements are shared between trees, as this makes no sense

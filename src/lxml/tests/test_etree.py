@@ -124,6 +124,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, QName, 'na me')
         self.assertRaises(ValueError, QName, 'test', ' name')
 
+    def test_qname_text_resolve(self):
+        # ET doesn't resove QNames as text values
+        etree = self.etree
+        qname = etree.QName('http://myns', 'a')
+        a = etree.Element(qname, nsmap={'p' : 'http://myns'})
+        a.text = qname
+
+        self.assertEquals("p:a", a.text)
+
     def test_attribute_set(self):
         Element = self.etree.Element
         root = Element("root")
