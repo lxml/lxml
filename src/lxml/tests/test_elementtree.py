@@ -1986,6 +1986,37 @@ class ETreeTestCaseBase(unittest.TestCase):
         del one
         self.assertEquals('{http://a.b.c}baz', baz.tag)
 
+    def test_ns_decl(self):
+        tostring = self.etree.tostring
+        root = self.etree.XML(
+            '<foo><bar xmlns:ns="http://a.b.c"><ns:baz/></bar></foo>')
+        baz = root[0][0]
+
+        nsdecl = re.findall("xmlns(?::[a-z0-9]+)?=[\"']([^\"']+)[\"']",
+                            tostring(baz))
+        self.assertEquals(["http://a.b.c"], nsdecl)
+
+    def test_ns_decl_default(self):
+        tostring = self.etree.tostring
+        root = self.etree.XML(
+            '<foo><bar xmlns="http://a.b.c"><baz/></bar></foo>')
+        baz = root[0][0]
+
+        nsdecl = re.findall("xmlns(?::[a-z0-9]+)?=[\"']([^\"']+)[\"']",
+                            tostring(baz))
+        self.assertEquals(["http://a.b.c"], nsdecl)
+        
+    def test_ns_decl_root(self):
+        tostring = self.etree.tostring
+        root = self.etree.XML(
+            '<foo xmlns:ns="http://a.b.c"><bar><ns:baz/></bar></foo>')
+        baz = root[0][0]
+
+        nsdecl = re.findall("xmlns(?::[a-z0-9]+)?=[\"']([^\"']+)[\"']",
+                            tostring(baz))
+
+        self.assertEquals(["http://a.b.c"], nsdecl)
+
     def test_attribute_xmlns_move(self):
         Element = self.etree.Element
 
