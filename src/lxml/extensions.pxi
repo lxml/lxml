@@ -22,7 +22,7 @@ class XPathResultError(XPathEvalError):
 
 # forward declarations
 
-ctypedef int _register_function(void* ctxt, name_utf, ns_uri_utf)
+ctypedef int (*_register_function)(void* ctxt, name_utf, ns_uri_utf)
 cdef class _ExsltRegExp
 
 ################################################################################
