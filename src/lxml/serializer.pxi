@@ -79,14 +79,33 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              int write_complete_document,
                              int pretty_print):
     cdef xmlDoc* c_doc
+    cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
     if write_xml_declaration:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
+    # write internal DTD subset, preceding PIs/comments, etc.
     if write_complete_document:
         _writeDtdToBuffer(c_buffer, c_doc, c_node.name, encoding)
         _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
-    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_node, 0, pretty_print, encoding)
+
+    # copy the node and add namespaces from parents to make libxml write them
+    c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
+    _copyParentNamespaces(c_node, c_nsdecl_node)
+
+    c_nsdecl_node.parent = c_node.parent
+    c_nsdecl_node.children = c_node.children
+    c_nsdecl_node.last = c_node.last
+
+    # write node
+    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_nsdecl_node, 0,
+                           pretty_print, encoding)
+
+    # clean up
+    c_nsdecl_node.children = c_nsdecl_node.last = NULL
+    tree.xmlFreeNode(c_nsdecl_node)
+
+    # write tail, trailing comments, etc.
     _writeTail(c_buffer, c_node, encoding, pretty_print)
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)

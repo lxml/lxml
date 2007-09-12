@@ -102,26 +102,6 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
         c_root.children = c_root.last = NULL
         tree.xmlFreeDoc(c_doc)
 
-cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
-    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
-
-    This is used in _fakeRootDoc() to avoid loosing namespace declarations.
-    """
-    cdef xmlNode* c_parent
-    cdef xmlNs* c_ns
-    cdef xmlNs* c_new_ns
-    cdef int prefix_known
-    c_parent = c_from_node.parent
-    while c_parent is not NULL and tree._isElementOrXInclude(c_parent):
-        c_new_ns = c_parent.nsDef
-        while c_new_ns is not NULL:
-            # check if prefix is already defined
-            c_ns = tree.xmlSearchNs(c_to_node.doc, c_to_node, c_new_ns.prefix)
-            if c_ns is NULL:
-                tree.xmlNewNs(c_to_node, c_new_ns.href, c_new_ns.prefix)
-            c_new_ns = c_new_ns.next
-        c_parent = c_parent.parent
-
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed
 
@@ -181,6 +161,25 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
+
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
+    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
+    """
+    cdef xmlNode* c_parent
+    cdef xmlNs* c_ns
+    cdef xmlNs* c_new_ns
+    cdef int prefix_known
+    c_parent = c_from_node.parent
+    while c_parent is not NULL and (tree._isElementOrXInclude(c_parent) or
+                                    c_parent.type == tree.XML_DOCUMENT_NODE):
+        c_new_ns = c_parent.nsDef
+        while c_new_ns is not NULL:
+            # check if prefix is already defined
+            c_ns = tree.xmlSearchNs(c_to_node.doc, c_to_node, c_new_ns.prefix)
+            if c_ns is NULL:
+                tree.xmlNewNs(c_to_node, c_new_ns.href, c_new_ns.prefix)
+            c_new_ns = c_new_ns.next
+        c_parent = c_parent.parent
 
 cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
     """Fix the xmlNs pointers of a node and its subtree that were moved.

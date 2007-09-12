@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* lxml failed to serialise namespace declarations of elements other than the
+  root node of a tree
+
 * Race condition in XSLT where the resolver context leaked between concurrent
   XSLT calls
 
