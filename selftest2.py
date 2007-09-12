@@ -22,7 +22,7 @@ def serialize(elem, encoding=None):
         tree.write(file, encoding)
     else:
         tree.write(file)
-    return file.getvalue()
+    return file.getvalue().replace(' />', '/>')
 
 def summarize(elem):
     return elem.tag
@@ -161,13 +161,13 @@ def encoding():
 ##     >>> elem.attrib["key"] = "<&\"\'>"
 ##     >>> elem.text = None
 ##     >>> serialize(elem)
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "utf-8")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 
     >>> elem.text = u'\xe5\xf6\xf6<>'
     >>> elem.attrib.clear()
@@ -183,13 +183,13 @@ def encoding():
 ##     >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
 ##     >>> elem.text = None
 ##     >>> serialize(elem)
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;" />'
+##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
 ##     >>> serialize(elem, "utf-8")
-##     '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;" />'
+##     '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;"/>'
 ##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;" />'
+##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
 ##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;" />'
+##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
 
     """
 
@@ -290,25 +290,28 @@ def find():
     ['{http://effbot.org/ns}tag', '{http://effbot.org/ns}tag', '{http://effbot.org/ns}tag']
     """
 
-# XXX gives a segfault
+# XXX only deep copying is supported
 
-## def copy():
-##     """
-##     Test copy handling (etc).
+def copy():
+    """
+    Test copy handling (etc).
 
-##     >>> import copy
-##     >>> e1 = unserialize("<tag>hello<foo/></tag>")
-##     >>> e2 = copy.copy(e1)
-##     >>> e3 = copy.deepcopy(e1)
-##     >>> e1.find("foo").tag = "bar"
-##     >>> serialize(e1)
-##     '<tag>hello<bar /></tag>'
-##     >>> serialize(e2)
-##     '<tag>hello<bar /></tag>'
-##     >>> serialize(e3)
-##     '<tag>hello<foo /></tag>'
+    >>> import copy
+    >>> e1 = unserialize("<tag>hello<foo/></tag>")
+    >>> # e2 = copy.copy(e1)
+    >>> e3 = copy.deepcopy(e1)
+    >>> e1.find("foo").tag = "bar"
 
-##     """
+    >>> serialize(e1).replace(' ', '')
+    '<tag>hello<bar/></tag>'
+
+##     >>> serialize(e2).replace(' ', '')
+##     '<tag>hello<bar/></tag>'
+
+    >>> serialize(e3).replace(' ', '')
+    '<tag>hello<foo/></tag>'
+
+    """
 
 def attrib():
     """

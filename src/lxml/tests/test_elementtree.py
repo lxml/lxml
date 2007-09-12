@@ -1986,7 +1986,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         del one
         self.assertEquals('{http://a.b.c}baz', baz.tag)
 
-    def test_ns_decl(self):
+    def test_ns_decl_tostring(self):
         tostring = self.etree.tostring
         root = self.etree.XML(
             '<foo><bar xmlns:ns="http://a.b.c"><ns:baz/></bar></foo>')
@@ -1996,7 +1996,7 @@ class ETreeTestCaseBase(unittest.TestCase):
                             tostring(baz))
         self.assertEquals(["http://a.b.c"], nsdecl)
 
-    def test_ns_decl_default(self):
+    def test_ns_decl_tostring_default(self):
         tostring = self.etree.tostring
         root = self.etree.XML(
             '<foo><bar xmlns="http://a.b.c"><baz/></bar></foo>')
@@ -2006,7 +2006,7 @@ class ETreeTestCaseBase(unittest.TestCase):
                             tostring(baz))
         self.assertEquals(["http://a.b.c"], nsdecl)
         
-    def test_ns_decl_root(self):
+    def test_ns_decl_tostring_root(self):
         tostring = self.etree.tostring
         root = self.etree.XML(
             '<foo xmlns:ns="http://a.b.c"><bar><ns:baz/></bar></foo>')
@@ -2014,6 +2014,19 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         nsdecl = re.findall("xmlns(?::[a-z0-9]+)?=[\"']([^\"']+)[\"']",
                             tostring(baz))
+
+        self.assertEquals(["http://a.b.c"], nsdecl)
+        
+    def test_ns_decl_tostring_element(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        root = Element("foo")
+        bar = SubElement(root, "{http://a.b.c}bar")
+        baz = SubElement(bar, "{http://a.b.c}baz")
+
+        nsdecl = re.findall("xmlns(?::[a-z0-9]+)?=[\"']([^\"']+)[\"']",
+                            self.etree.tostring(baz))
 
         self.assertEquals(["http://a.b.c"], nsdecl)
 
@@ -2561,6 +2574,59 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals("{myns}a", qname2)
         self.assertEquals(qname1, qname1)
         self.assertEquals(qname1, qname2)
+
+    def test_qname_attribute_getset(self):
+        etree = self.etree
+        qname = etree.QName('myns', 'a')
+
+        a = etree.Element(qname)
+        a.set(qname, "value")
+
+        self.assertEquals(a.get(qname), "value")
+        self.assertEquals(a.get("{myns}a"), "value")
+
+    def test_qname_attrib(self):
+        etree = self.etree
+        qname = etree.QName('myns', 'a')
+
+        a = etree.Element(qname)
+        a.attrib[qname] = "value"
+
+        self.assertEquals(a.attrib[qname], "value")
+        self.assertEquals(a.attrib.get(qname), "value")
+
+        self.assertEquals(a.attrib["{myns}a"], "value")
+        self.assertEquals(a.attrib.get("{myns}a"), "value")
+
+    def test_qname_attribute_resolve(self):
+        etree = self.etree
+        qname = etree.QName('http://myns', 'a')
+        a = etree.Element(qname)
+        a.set(qname, qname)
+
+        self.assertXML(
+            '<ns0:a xmlns:ns0="http://myns" ns0:a="ns0:a"></ns0:a>',
+            a)
+
+    def test_qname_attribute_resolve_new(self):
+        etree = self.etree
+        qname = etree.QName('http://myns', 'a')
+        a = etree.Element('a')
+        a.set('a', qname)
+
+        self.assertXML(
+            '<a xmlns:ns0="http://myns" a="ns0:a"></a>',
+            a)
+
+    def test_qname_attrib_resolve(self):
+        etree = self.etree
+        qname = etree.QName('http://myns', 'a')
+        a = etree.Element(qname)
+        a.attrib[qname] = qname
+
+        self.assertXML(
+            '<ns0:a xmlns:ns0="http://myns" ns0:a="ns0:a"></ns0:a>',
+            a)
 
     def test_parser_version(self):
         etree = self.etree

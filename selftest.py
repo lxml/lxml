@@ -23,6 +23,7 @@ from lxml import ElementInclude
 
 def fix_compatibility(xml_data):
     xml_data = re.sub('\s*xmlns:[a-z0-9]+="http://www.w3.org/2001/XInclude"', '', xml_data)
+    xml_data = xml_data.replace(' />', '/>')
     return xml_data
 
 def serialize(elem, encoding=None):
@@ -437,65 +438,65 @@ def writestring():
     '<html><body>text</body></html>'
     """
 
-## def encoding():
-##     r"""
-##     Test encoding issues.
+def encoding():
+    r"""
+    Test encoding issues.
 
-##     >>> elem = ElementTree.Element("tag")
-##     >>> elem.text = u"abc"
-##     >>> serialize(elem)
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag>abc</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>abc</tag>"
+    >>> elem = ElementTree.Element("tag")
+    >>> elem.text = u"abc"
+    >>> serialize(elem)
+    '<tag>abc</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>abc</tag>'
+    >>> serialize(elem, "us-ascii")
+    '<tag>abc</tag>'
+    >>> serialize(elem, "ISO-8859-1")
+    "<?xml version='1.0' encoding='ISO-8859-1'?>\n<tag>abc</tag>"
 
-##     >>> elem.text = "<&\"\'>"
-##     >>> serialize(elem)
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "us-ascii") # cdata characters
-##     '<tag>&lt;&amp;"\'&gt;</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> elem.text = "<&\"\'>"
+    >>> serialize(elem)
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "us-ascii") # cdata characters
+    '<tag>&lt;&amp;"\'&gt;</tag>'
+    >>> serialize(elem, "ISO-8859-1")
+    '<?xml version=\'1.0\' encoding=\'ISO-8859-1\'?>\n<tag>&lt;&amp;"\'&gt;</tag>'
 
 ##     >>> elem.attrib["key"] = "<&\"\'>"
 ##     >>> elem.text = None
 ##     >>> serialize(elem)
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "utf-8")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 ##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;" />'
+##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
 
-##     >>> elem.text = u'\xe5\xf6\xf6<>'
-##     >>> elem.attrib.clear()
-##     >>> serialize(elem)
-##     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag>\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;</tag>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
-##     >>> serialize(elem, "iso-8859-1")
-##     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
+    >>> elem.text = u'\xe5\xf6\xf6<>'
+    >>> elem.attrib.clear()
+    >>> serialize(elem)
+    '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
+    >>> serialize(elem, "utf-8")
+    '<tag>\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;</tag>'
+    >>> serialize(elem, "us-ascii")
+    '<tag>&#229;&#246;&#246;&lt;&gt;</tag>'
+    >>> serialize(elem, "ISO-8859-1")
+    "<?xml version='1.0' encoding='ISO-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
 
 ##     >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
 ##     >>> elem.text = None
 ##     >>> serialize(elem)
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;" />'
+##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
 ##     >>> serialize(elem, "utf-8")
-##     '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;" />'
+##     '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;"/>'
 ##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;" />'
-##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;" />'
+##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
+##     >>> serialize(elem, "ISO-8859-1")
+##     '<?xml version=\'1.0\' encoding=\'ISO-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
 
-##     """
+    """
 
 ENTITY_XML = """\
 <!DOCTYPE points [
@@ -532,8 +533,6 @@ def xmllang():
     >>> elem = ElementTree.XML("<tag xml:lang='en' />")
     >>> serialize(elem) # 1.1
     '<tag xml:lang="en"/>'
-
-#   '<tag xml:lang="en" />' # ElementTree produces an extra blank
     """
     
 def namespace():
@@ -560,33 +559,35 @@ def namespace():
 
     """
 
-## def qname():
-##     """
-##     Test QName handling.
+def qname():
+    """
+    Test QName handling.
 
-##     1) decorated tags
+    1) decorated tags
 
-##     >>> elem = ElementTree.Element("{uri}tag")
-##     >>> serialize(elem) # 1.1
-##     '<ns0:tag xmlns:ns0="uri" />'
-##     >>> elem = ElementTree.Element(ElementTree.QName("{uri}tag"))
-##     >>> serialize(elem) # 1.2
-##     '<ns0:tag xmlns:ns0="uri" />'
-##     >>> elem = ElementTree.Element(ElementTree.QName("uri", "tag"))
-##     >>> serialize(elem) # 1.3
-##     '<ns0:tag xmlns:ns0="uri" />'
+    >>> elem = ElementTree.Element("{uri}tag")
+    >>> serialize(elem) # 1.1
+    '<ns0:tag xmlns:ns0="uri"/>'
+    >>> elem = ElementTree.Element(ElementTree.QName("{uri}tag"))
+    >>> serialize(elem) # 1.2
+    '<ns0:tag xmlns:ns0="uri"/>'
+    >>> elem = ElementTree.Element(ElementTree.QName("uri", "tag"))
+    >>> serialize(elem) # 1.3
+    '<ns0:tag xmlns:ns0="uri"/>'
+
+# ns/attribute order ...
 
 ##     2) decorated attributes
 
 ##     >>> elem.clear()
 ##     >>> elem.attrib["{uri}key"] = "value"
 ##     >>> serialize(elem) # 2.1
-##     '<ns0:tag ns0:key="value" xmlns:ns0="uri" />'
+##     '<ns0:tag ns0:key="value" xmlns:ns0="uri"/>'
 
 ##     >>> elem.clear()
 ##     >>> elem.attrib[ElementTree.QName("{uri}key")] = "value"
 ##     >>> serialize(elem) # 2.2
-##     '<ns0:tag ns0:key="value" xmlns:ns0="uri" />'
+##     '<ns0:tag ns0:key="value" xmlns:ns0="uri"/>'
 
 ##     3) decorated values are not converted by default, but the
 ##        QName wrapper can be used for values
@@ -594,12 +595,12 @@ def namespace():
 ##     >>> elem.clear()
 ##     >>> elem.attrib["{uri}key"] = "{uri}value"
 ##     >>> serialize(elem) # 3.1
-##     '<ns0:tag ns0:key="{uri}value" xmlns:ns0="uri" />'
+##     '<ns0:tag ns0:key="{uri}value" xmlns:ns0="uri"/>'
 
 ##     >>> elem.clear()
 ##     >>> elem.attrib["{uri}key"] = ElementTree.QName("{uri}value")
 ##     >>> serialize(elem) # 3.2
-##     '<ns0:tag ns0:key="ns0:value" xmlns:ns0="uri" />'
+##     '<ns0:tag ns0:key="ns0:value" xmlns:ns0="uri"/>'
 
 ##     >>> elem.clear()
 ##     >>> subelem = ElementTree.Element("tag")
@@ -607,9 +608,9 @@ def namespace():
 ##     >>> elem.append(subelem)
 ##     >>> elem.append(subelem)
 ##     >>> serialize(elem) # 3.3
-##     '<ns0:tag xmlns:ns0="uri"><tag ns1:key="ns2:value" xmlns:ns1="uri1" xmlns:ns2="uri2" /><tag ns1:key="ns2:value" xmlns:ns1="uri1" xmlns:ns2="uri2" /></ns0:tag>'
+##     '<ns0:tag xmlns:ns0="uri"><tag ns1:key="ns2:value" xmlns:ns1="uri1" xmlns:ns2="uri2"/><tag ns1:key="ns2:value" xmlns:ns1="uri1" xmlns:ns2="uri2"/></ns0:tag>'
 
-##     """
+    """
 
 def xpath_tokenizer(p):
     """
