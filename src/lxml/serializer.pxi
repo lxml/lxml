@@ -89,21 +89,25 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeDtdToBuffer(c_buffer, c_doc, c_node.name, encoding)
         _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
 
-    # copy the node and add namespaces from parents to make libxml write them
-    c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
-    _copyParentNamespaces(c_node, c_nsdecl_node)
+    c_nsdecl_node = c_node
+    if c_node.parent is NULL or c_node.parent.type != tree.XML_DOCUMENT_NODE:
+        # copy the node and add namespaces from parents
+        # this is required to make libxml write them
+        c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
+        _copyParentNamespaces(c_node, c_nsdecl_node)
 
-    c_nsdecl_node.parent = c_node.parent
-    c_nsdecl_node.children = c_node.children
-    c_nsdecl_node.last = c_node.last
+        c_nsdecl_node.parent = c_node.parent
+        c_nsdecl_node.children = c_node.children
+        c_nsdecl_node.last = c_node.last
 
     # write node
     tree.xmlNodeDumpOutput(c_buffer, c_doc, c_nsdecl_node, 0,
                            pretty_print, encoding)
 
-    # clean up
-    c_nsdecl_node.children = c_nsdecl_node.last = NULL
-    tree.xmlFreeNode(c_nsdecl_node)
+    if c_nsdecl_node is not c_node:
+        # clean up
+        c_nsdecl_node.children = c_nsdecl_node.last = NULL
+        tree.xmlFreeNode(c_nsdecl_node)
 
     # write tail, trailing comments, etc.
     _writeTail(c_buffer, c_node, encoding, pretty_print)
