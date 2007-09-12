@@ -1568,12 +1568,15 @@ cdef _Element _makeElement(tag, text, attrib, nsmap):
 cdef object _fromstring
 _fromstring = etree.fromstring
 
-def fromstring(xml):
-    """Objectify specific version of the lxml.etree fromstring() function.
+def fromstring(xml, parser=None):
+    """Objectify specific version of the lxml.etree fromstring() function
+    that uses the objectify parser.
 
-    NOTE: requires parser based element class lookup activated in lxml.etree!
+    You can pass a different parser as second argument.
     """
-    return _fromstring(xml, objectify_parser)
+    if parser is None:
+        parser = objectify_parser
+    return _fromstring(xml, parser)
 
 XML = fromstring
 
