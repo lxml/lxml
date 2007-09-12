@@ -241,7 +241,7 @@ Schematron validator::
   ... <schema xmlns="http://www.ascc.net/xml/schematron" >
   ...   <pattern name="Sum equals 100%.">
   ...     <rule context="Total">
-  ...          <assert test="sum(//Percent) = 100">The sum is not 100%.</assert>
+  ...       <assert test="sum(//Percent)=100">Sum is not 100%.</assert>
   ...     </rule>
   ...   </pattern>
   ... </schema>
