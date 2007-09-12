@@ -382,9 +382,13 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         if node_ns_utf is not None:
             self._setNodeNs(c_node, _cstr(node_ns_utf))
 
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _Document NEW_DOCUMENT "PY_NEW" (object t)
+
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
-    result = _Document()
+    result = NEW_DOCUMENT(_Document)
     result._c_doc = c_doc
     result._ns_counter = 0
     if parser is None:
