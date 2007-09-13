@@ -6,18 +6,19 @@ import re
 from lxml import etree
 
 try:
-    from xml.etree import ElementTree # Python 2.5+
+    from elementtree import ElementTree # standard ET
+    print ElementTree.VERSION
 except ImportError:
     try:
-        from elementtree import ElementTree # standard ET
+        from xml.etree import ElementTree # Python 2.5+
     except ImportError:
         ElementTree = None
 
 try:
-    from xml.etree import cElementTree # Python 2.5+
+    import cElementTree # standard ET
 except ImportError:
     try:
-        import cElementTree # standard ET
+        from xml.etree import cElementTree # Python 2.5+
     except ImportError:
         cElementTree = None
 
@@ -30,6 +31,14 @@ try:
 except (ImportError, AttributeError):
     # we need our own version to make it work (Python 2.3?)
     import local_doctest as doctest
+
+try:
+    sorted
+except NameError:
+    def sorted(seq, **kwargs):
+        seq = list(seq)
+        seq.sort(**kwargs)
+        return seq
 
 class HelperTestCase(unittest.TestCase):
     def parse(self, text):
