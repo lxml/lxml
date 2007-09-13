@@ -56,10 +56,8 @@ lxml 2.0
 
 * clean up (and remove?) duplicated API for extension functions
 
-* remove first 'context' argument from extension functions
-
-* always use ns-prefixed type names in objectify's ``xsi:type`` attributes
-
 * follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
 
 * clean support for entities (is the Entity element class enough?)
+
+* implement 'position' property on ParseError exception
