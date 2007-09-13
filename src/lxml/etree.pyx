@@ -984,10 +984,18 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _collectAttributes(self._c_node, 3)
 
     def getchildren(self):
-        """Returns all subelements. The elements are returned in document order.
+        """Returns all direct children.  The elements are returned in document
+        order.
         """
         cdef xmlNode* c_node
         cdef int ret
+# ET 1.3 stops supporting this ...
+##         import warnings
+##         warnings.warn(
+##             "This method will be removed in future versions. "
+##             "Use 'list(elem)' or iteration over elem instead.",
+##             DeprecationWarning
+##             )
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
