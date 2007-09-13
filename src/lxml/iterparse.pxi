@@ -391,6 +391,7 @@ cdef class iterwalk:
         return self
 
     def __next__(self):
+        cdef xmlNode* c_child
         cdef _Element node
         cdef _Element next_node
         cdef int ns_count
@@ -399,13 +400,12 @@ cdef class iterwalk:
         ns_count = 0
         # find next node
         while self._index >= 0:
-            node_tuple = python.PyList_GET_ITEM(self._node_stack, self._index)
-            python.Py_INCREF(node_tuple) # fix borrowed reference for Pyrex!
-            node = python.PyTuple_GET_ITEM(node_tuple, 0)
-            python.Py_INCREF(node) # fix borrowed reference for Pyrex!
-            if node:
+            node = self._node_stack[self._index][0]
+
+            c_child = _findChildForwards(node._c_node, 0)
+            if c_child is not NULL:
                 # try children
-                next_node = node[0]
+                next_node = _elementFactory(node._doc, c_child)
             else:
                 # back off
                 next_node = None
