@@ -447,12 +447,15 @@ class ETreeTestCaseBase(unittest.TestCase):
 
     def test_attribute_str(self):
         XML = self.etree.XML
+
+        expected = "{'{http://ns.codespeak.net/test}baz': 'Baz', 'bar': 'Bar'}"
+        alternative = "{'bar': 'Bar', '{http://ns.codespeak.net/test}baz': 'Baz'}"
         
         root = XML('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />')
-        # XXX hope this is not dependent on unpredictable attribute order
-        self.assertEquals(
-            "{'{http://ns.codespeak.net/test}baz': 'Baz', 'bar': 'Bar'}",
-            str(root.attrib))
+        try:
+            self.assertEquals(expected, str(root.attrib))
+        except AssertionError:
+            self.assertEquals(alternative, str(root.attrib))
 
     def test_attribute_has_key(self):
         XML = self.etree.XML
