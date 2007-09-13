@@ -7,7 +7,6 @@ from lxml import etree
 
 try:
     from elementtree import ElementTree # standard ET
-    print ElementTree.VERSION
 except ImportError:
     try:
         from xml.etree import ElementTree # Python 2.5+
