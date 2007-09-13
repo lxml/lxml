@@ -444,6 +444,7 @@ cdef class iterwalk:
 
     cdef _Element _end_node(self):
         cdef _Element node
+        cdef int i, ns_count
         node, ns_count = self._pop_node()
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \

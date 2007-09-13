@@ -1092,6 +1092,17 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         return ElementDepthFirstIterator(self, tag)
 
+    def itertext(self, tag=None, with_tail=True):
+        """Iterates over the text content of a subtree.
+
+        You can pass the ``tag`` keyword argument to restrict text content to
+        a specific tag name.
+
+        You can set the ``with_tail`` keyword argument to ``False`` to skip
+        over tail text.
+        """
+        return ElementTextIterator(self, tag, with_tail)
+
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         """Creates a new element associated with the same document.
         """
@@ -1896,6 +1907,36 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
                 return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
+
+cdef class ElementTextIterator:
+    """Iterates over the text content of a subtree.
+
+    You can pass the ``tag`` keyword argument to restrict text content to a
+    specific tag name.
+
+    You can set the ``with_tail`` keyword argument to ``False`` to skip over
+    tail text.
+    """
+    cdef object _nextEvent
+    def __init__(self, _Element element not None, tag=None, with_tail=True):
+        if with_tail:
+            events = ("start", "end")
+        else:
+            events = ("start",)
+        self._nextEvent = iterwalk(element, events=events, tag=tag).next
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        cdef _Element element
+        while result is None:
+            event, element = self._nextEvent()
+            if event == "start":
+                result = element.text
+            else:
+                result = element.tail
+        return result
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node

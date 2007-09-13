@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* ``itertext()`` method on Elements
+
 * Setting a QName object as value of the .text property or as an attribute
   will resolve its prefix in the respective context
 
