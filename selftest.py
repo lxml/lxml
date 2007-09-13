@@ -47,11 +47,11 @@ def normalize_crlf(tree):
 
 SAMPLE_XML = ElementTree.XML("""
 <body>
-  <tag>text</tag>
-  <tag />
-  <section>
-    <tag>subtext</tag>
-  </section>
+  <tag class='a'>text</tag>
+  <tag class='b' />
+   <section>
+    <tag class='b' id='inner'>subtext</tag>
+   </section>
 </body>
 """)
 
@@ -110,15 +110,21 @@ def sanity():
     >>> from elementtree.ElementInclude import *
     >>> from elementtree.ElementPath import *
     >>> from elementtree.HTMLTreeBuilder import *
-    >>> from elementtree.SimpleXMLTreeBuilder import *
     >>> from elementtree.SimpleXMLWriter import *
-    >>> from elementtree.TidyHTMLTreeBuilder import *
     >>> from elementtree.TidyTools import *
-    >>> from elementtree.XMLTreeBuilder import *
     """
 
 # doesn't work with lxml.etree
 del sanity
+
+def version():
+    """
+    >>> ElementTree.VERSION
+    '1.3a2'
+    """
+
+# doesn't work with lxml.etree
+del version
 
 def interface():
     """
@@ -128,6 +134,28 @@ def interface():
     >>> check_element(element)
     >>> tree = ElementTree.ElementTree(element)
     >>> check_element_tree(tree)
+    """
+
+def simpleops():
+    """
+    >>> elem = ElementTree.XML("<body><tag/></body>")
+    >>> serialize(elem)
+    '<body><tag/></body>'
+    >>> e = ElementTree.Element("tag2")
+    >>> elem.append(e)
+    >>> serialize(elem)
+    '<body><tag/><tag2/></body>'
+    >>> elem.remove(e)
+    >>> serialize(elem)
+    '<body><tag/></body>'
+    >>> elem.insert(0, e)
+    >>> serialize(elem)
+    '<body><tag2/><tag/></body>'
+    >>> elem.remove(e)
+    >>> elem.extend([e])
+    >>> serialize(elem)
+    '<body><tag/><tag2/></body>'
+    >>> elem.remove(e)
     """
 
 def simplefind():
@@ -220,25 +248,24 @@ def find():
     ['tag', 'tag', 'tag']
     >>> summarize_list(elem.findall("././tag"))
     ['tag', 'tag']
-
-##     >>> summarize_list(elem.findall(".//tag[@class]"))
-##     ['tag', 'tag', 'tag']
-##     >>> summarize_list(elem.findall(".//tag[@class='a']"))
-##     ['tag']
-##     >>> summarize_list(elem.findall(".//tag[@class='b']"))
-##     ['tag', 'tag']
-##     >>> summarize_list(elem.findall(".//tag[@id]"))
-##     ['tag']
-##     >>> summarize_list(elem.findall(".//section[tag]"))
-##     ['section']
-##     >>> summarize_list(elem.findall(".//section[element]"))
-##     []
-##     >>> summarize_list(elem.findall("../tag"))
-##     []
-##     >>> summarize_list(elem.findall("section/../tag"))
-##     ['tag', 'tag']
-##     >>> summarize_list(ElementTree.ElementTree(elem).findall("./tag"))
-##     ['tag', 'tag']
+    >>> summarize_list(elem.findall(".//tag[@class]"))
+    ['tag', 'tag', 'tag']
+    >>> summarize_list(elem.findall(".//tag[@class='a']"))
+    ['tag']
+    >>> summarize_list(elem.findall(".//tag[@class='b']"))
+    ['tag', 'tag']
+    >>> summarize_list(elem.findall(".//tag[@id]"))
+    ['tag']
+    >>> summarize_list(elem.findall(".//section[tag]"))
+    ['section']
+    >>> summarize_list(elem.findall(".//section[element]"))
+    []
+    >>> summarize_list(elem.findall("../tag"))
+    []
+    >>> summarize_list(elem.findall("section/../tag"))
+    ['tag', 'tag']
+    >>> summarize_list(ElementTree.ElementTree(elem).findall("./tag"))
+    ['tag', 'tag']
 
     FIXME: ET's Path module handles this case incorrectly; this gives
     a warning in 1.3, and the behaviour will be modified in 1.4.
@@ -288,16 +315,19 @@ def parsefile():
 ##     </ns0:root>
     """
 
-## def parsehtml():
-##     """
-##     Test HTML parsing.
+def parsehtml():
+    """
+    Test HTML parsing.
 
-##     >>> # p = HTMLTreeBuilder.TreeBuilder()
-##     >>> p = ElementTree.HTMLParser()
-##     >>> p.feed("<p><p>spam<b>egg</b></p>")
-##     >>> serialize(p.close())
-##     '<p>spam<b>egg</b></p>'
-##     """
+    >>> # p = HTMLTreeBuilder.TreeBuilder()
+    >>> p = ElementTree.HTMLParser()
+    >>> p.feed("<p><p>spam<b>egg</b></p>")
+    >>> serialize(p.close())
+    '<p>spam<b>egg</b></p>'
+    """
+
+# doesn't work with lxml.etree
+del parsehtml
 
 def parseliteral():
     r"""
@@ -331,21 +361,24 @@ def parseliteral():
     'body'
     """
 
-## def simpleparsefile():
-##     """
-##     Test the xmllib-based parser.
+def simpleparsefile():
+    """
+    Test the xmllib-based parser.
 
-##     >>> from elementtree import SimpleXMLTreeBuilder
-##     >>> parser = SimpleXMLTreeBuilder.TreeBuilder()
-##     >>> tree = ElementTree.parse("samples/simple.xml", parser)
-##     >>> normalize_crlf(tree)
-##     >>> tree.write(sys.stdout)
-##     <root>
-##        <element key="value">text</element>
-##        <element>text</element>tail
-##        <empty-element />
-##     </root>
-##     """
+    >>> from elementtree import SimpleXMLTreeBuilder
+    >>> parser = SimpleXMLTreeBuilder.TreeBuilder()
+    >>> tree = ElementTree.parse("samples/simple.xml", parser)
+    >>> normalize_crlf(tree)
+    >>> tree.write(sys.stdout)
+    <root>
+       <element key="value">text</element>
+       <element>text</element>tail
+       <empty-element />
+    </root>
+    """
+
+# doesn't work with lxml.etree
+del simpleparsefile
 
 def iterparse():
     """
@@ -414,39 +447,42 @@ def iterparse():
 
     """
 
-## def fancyparsefile():
-##     """
-##     Test the "fancy" parser.
+def fancyparsefile():
+    """
+    Test the "fancy" parser.
 
-##     Sanity check.
-##     >>> from elementtree import XMLTreeBuilder
-##     >>> parser = XMLTreeBuilder.FancyTreeBuilder()
-##     >>> tree = ElementTree.parse("samples/simple.xml", parser)
-##     >>> normalize_crlf(tree)
-##     >>> tree.write(sys.stdout)
-##     <root>
-##        <element key="value">text</element>
-##        <element>text</element>tail
-##        <empty-element />
-##     </root>
+    Sanity check.
+    >>> from elementtree import XMLTreeBuilder
+    >>> parser = XMLTreeBuilder.FancyTreeBuilder()
+    >>> tree = ElementTree.parse("samples/simple.xml", parser)
+    >>> normalize_crlf(tree)
+    >>> tree.write(sys.stdout)
+    <root>
+       <element key="value">text</element>
+       <element>text</element>tail
+       <empty-element />
+    </root>
 
-##     Callback check.
-##     >>> class MyFancyParser(XMLTreeBuilder.FancyTreeBuilder):
-##     ...     def start(self, elem):
-##     ...         print "START", elem.tag
-##     ...     def end(self, elem):
-##     ...         print "END", elem.tag
-##     >>> parser = MyFancyParser()
-##     >>> tree = ElementTree.parse("samples/simple.xml", parser)
-##     START root
-##     START element
-##     END element
-##     START element
-##     END element
-##     START empty-element
-##     END empty-element
-##     END root
-##     """
+    Callback check.
+    >>> class MyFancyParser(XMLTreeBuilder.FancyTreeBuilder):
+    ...     def start(self, elem):
+    ...         print "START", elem.tag
+    ...     def end(self, elem):
+    ...         print "END", elem.tag
+    >>> parser = MyFancyParser()
+    >>> tree = ElementTree.parse("samples/simple.xml", parser)
+    START root
+    START element
+    END element
+    START element
+    END element
+    START empty-element
+    END empty-element
+    END root
+    """
+
+# doesn't work with lxml.etree
+del fancyparsefile
 
 def writefile():
     """
