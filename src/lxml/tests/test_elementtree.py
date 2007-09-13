@@ -2524,7 +2524,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assert_(btree.getroot() is atree.getroot())
         self.assertEquals('Foo', atree.getroot().text)
 
-    def test_element_boolean(self):
+    def _test_element_boolean(self):
+        # deprecated as of ET 1.3/lxml 2.0
         etree = self.etree
         e = etree.Element('foo')
         self.assertEquals(False, bool(e))

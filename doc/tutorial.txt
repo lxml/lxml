@@ -122,15 +122,14 @@ possible, elements behave like normal Python lists::
     >>> print child.tag
     child1
 
+    >>> print len(root)
+    3
+
     >>> for child in root:
     ...     print child.tag
     child1
     child2
     child3
-
-    >>> if root:
-    ...     print "root has children!"
-    root has children!
 
     >>> root.insert(0, etree.Element("child0"))
     >>> start = root[:1]
@@ -148,10 +147,17 @@ possible, elements behave like normal Python lists::
     child1
     child2
 
-Note how the last element was *moved* to a different position in the last
-example.  This is a difference from the original ElementTree (and from lists),
-where elements can sit in multiple positions of any number of trees.  In
-lxml.etree, elements can only sit in one position of one tree at a time.
+Prior to ElementTree 1.3 and lxml 2.0, you could also check the truth value of
+an Element to see if it has children, i.e. if the list of children is empty.
+This is no longer supported as people tend to find it surprising that a
+non-None reference to an existing Element can evaluate to False.  Instead, use
+``len(element)``, which is both more explicit and less error prone.
+
+Note in the examples that the last element was *moved* to a different position
+in the last example.  This is a difference from the original ElementTree (and
+from lists), where elements can sit in multiple positions of any number of
+trees.  In lxml.etree, elements can only sit in one position of one tree at a
+time.
 
 If you want to *copy* an element to a different position, consider creating an
 independent *deep copy* using the ``copy`` module from Python's standard

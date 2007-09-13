@@ -865,6 +865,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     def __nonzero__(self):
         cdef xmlNode* c_node
+        import warnings
+        warnings.warn(
+            "The behavior of this method will change in future versions. "
+            "Use specific 'len(elem)' or 'elem is not None' test instead.",
+            FutureWarning
+            )
+        # emulate old behaviour
         c_node = _findChildBackwards(self._c_node, 0)
         return c_node != NULL
 
@@ -1066,8 +1073,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementTreeFactory(self._doc, None)
 
     def getiterator(self, tag=None):
-        """Iterate over all elements in the subtree in document order (depth
-        first pre-order), starting with this element.
+        """Returns a sequence of all elements in the subtree in document order
+        (depth first pre-order), starting with this element.
 
         Can be restricted to find only elements with a specific tag or from a
         namespace.
@@ -1075,10 +1082,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Note that this method is deprecated in favour of the ``el.iter()``
-        method.  In new code, use it only for backwards compatibility.
+        Note that this method previously returned an iterator, which diverged
+        from the original ElementTree behaviour.  If you want an efficient
+        iterator, use the ``el.iter()`` method instead.
         """
-        return ElementDepthFirstIterator(self, tag)
+        return list(ElementDepthFirstIterator(self, tag))
 
     def iter(self, tag=None):
         """Iterate over all elements in the subtree in document order (depth
