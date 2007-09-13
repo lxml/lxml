@@ -1130,6 +1130,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             path = (<QName>path).text
         return _elementpath.findall(self, path)
 
+    def iterfind(self, path):
+        """Iterates over all matching subelements, by tag name or path.
+        """
+        if isinstance(path, QName):
+            path = (<QName>path).text
+        return _elementpath.iterfind(self, path)
+
     def xpath(self, _path, namespaces=None, extensions=None, **_variables):
         """Evaluate an xpath expression using the element as context node.
         """
@@ -1423,8 +1430,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.iter(tag)
 
     def iter(self, tag=None):
-        """Creates an iterator for the root element. The iterator loops over all elements
-        in this tree, in document order.
+        """Creates an iterator for the root element.  The iterator loops over
+        all elements in this tree, in document order.
         """
         root = self.getroot()
         if root is None:
@@ -1432,7 +1439,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.iter(tag)
 
     def find(self, path):
-        """Finds the first toplevel element with given tag. Same as getroot().find(path).
+        """Finds the first toplevel element with given tag.  Same as
+        getroot().find(path).
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1441,7 +1449,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.find(path)
 
     def findtext(self, path, default=None):
-        """Finds the element text for the first toplevel element with given tag. Same as getroot().findtext(path)
+        """Finds the text for the first element matching the ElementPath
+        expression.  Same as getroot().findtext(path)
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1450,14 +1459,25 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return root.findtext(path, default)
 
     def findall(self, path):
-        """Finds all toplevel elements with the given tag. Same as getroot().findall(path).
+        """Finds all elements matching the ElementPath expression.  Same as
+        getroot().findall(path).
         """
         self._assertHasRoot()
         root = self.getroot()
         if path[:1] == "/":
             path = "." + path
         return root.findall(path)
-    
+
+    def iterfind(self, path):
+        """Iterates over all elements matching the ElementPath expression.
+        Same as getroot().finditer(path).
+        """
+        self._assertHasRoot()
+        root = self.getroot()
+        if path[:1] == "/":
+            path = "." + path
+        return root.iterfind(path)
+
     def xpath(self, _path, namespaces=None, extensions=None, **_variables):
         """XPath evaluate in context of document.
 
@@ -1918,11 +1938,13 @@ cdef class ElementTextIterator:
     tail text.
     """
     cdef object _nextEvent
+    cdef _Element _start_element
     def __init__(self, _Element element not None, tag=None, with_tail=True):
         if with_tail:
             events = ("start", "end")
         else:
             events = ("start",)
+        self._start_element = element
         self._nextEvent = iterwalk(element, events=events, tag=tag).next
 
     def __iter__(self):
@@ -1931,10 +1953,10 @@ cdef class ElementTextIterator:
     def __next__(self):
         cdef _Element element
         while result is None:
-            event, element = self._nextEvent()
+            event, element = self._nextEvent() # raises StopIteration
             if event == "start":
                 result = element.text
-            else:
+            elif element is not self._start_element:
                 result = element.tail
         return result
 

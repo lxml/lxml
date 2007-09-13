@@ -1429,6 +1429,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(["RTEXT", "ATAIL", "CTEXT", "CTAIL"],
                           text)
 
+    def test_itertext_child(self):
+        # ET 1.3+
+        XML = self.etree.XML
+        root = XML("<root>RTEXT<a></a>ATAIL<b/><c>CTEXT</c>CTAIL</root>")
+
+        text = list(root[2].itertext())
+        self.assertEquals(["CTEXT"],
+                          text)
+
     def test_findall_ns(self):
         XML = self.etree.XML
         root = XML('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')

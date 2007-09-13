@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ``iterfind()`` method on Elements returns an iterator equivalent to
+  ``findall()``
+
 * ``itertext()`` method on Elements
 
 * Setting a QName object as value of the .text property or as an attribute
