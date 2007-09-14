@@ -463,6 +463,10 @@ possible approaches to solve your specific problem:
 
       PythonInterpreter main_interpreter
 
+  There was a discussion on the mailing list about this problem:
+
+      http://comments.gmane.org/gmane.comp.python.lxml.devel/2942
+
 * compile lxml without threading support by running ``setup.py`` with the
   ``--without-threading`` option.  While this might be slower in certain
   scenarios on multi-processor systems, it *might* also keep your application
