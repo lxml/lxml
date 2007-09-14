@@ -18,9 +18,14 @@ cdef class _TargetParserContext(_ParserContext):
     cdef object _target_pi
     cdef object _target_comment
 
-    def __init__(self, target):
-        _ParserContext.__init__(self)
+    cdef void _setTarget(self, target):
         self._target = target
+
+    cdef _ParserContext _copy(self):
+        cdef _TargetParserContext context
+        context = _ParserContext._copy(self)
+        context._setTarget(self._target)
+        return context
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
         "wrap original SAX2 callbacks"

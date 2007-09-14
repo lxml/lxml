@@ -372,12 +372,25 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 ## Parsers
 ############################################################
 
+cdef class _ParserContext(_ResolverContext)
+cdef class _TargetParserContext(_ParserContext)
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _ParserContext NEW_PARSER_CONTEXT "PY_NEW" (object t)
+
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     def __init__(self):
         _ResolverContext.__init__(self, _ResolverRegistry())
         self._error_log = _ErrorLog()
+
+    cdef _ParserContext _copy(self):
+        cdef _ParserContext context
+        context = self.__class__()
+        context._resolvers = self._resolvers._copy()
+        return context
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
         self._c_ctxt = c_ctxt
@@ -517,10 +530,12 @@ cdef class _BaseParser:
             self._parser_lock = python.PyThread_allocate_lock()
 
     cdef _ParserContext _createContext(self, target):
-        if target is not None:
-            return _TargetParserContext(target)
-        else:
+        cdef _TargetParserContext context
+        if target is None:
             return _ParserContext()
+        context = _TargetParserContext()
+        context._setTarget(target)
+        return context
 
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
         if self._parser_type == LXML_HTML_PARSER:
@@ -582,8 +597,7 @@ cdef class _BaseParser:
         parser = self.__class__()
         parser._parse_options = self._parse_options
         parser._class_lookup  = self._class_lookup
-        parser.resolvers = self.resolvers._copy()
-        parser._context = _ResolverContext(parser.resolvers)
+        parser._context = self._context._copy()
         parser._parser_ctxt._private = <python.PyObject*>parser._context
         return parser
 
