@@ -459,6 +459,10 @@ possible approaches to solve your specific problem:
   case.  This is especially a problem under MacOS-X when newer library
   versions were installed in addition to the outdated system libraries.
 
+* if you use ``mod_python``, try setting this option:
+
+      PythonInterpreter main_interpreter
+
 * compile lxml without threading support by running ``setup.py`` with the
   ``--without-threading`` option.  While this might be slower in certain
   scenarios on multi-processor systems, it *might* also keep your application
