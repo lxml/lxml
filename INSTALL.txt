@@ -11,7 +11,7 @@ You need libxml2 and libxslt, in particular:
 * libxml 2.6.20 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-  If you want to use XPath reliably, try to avoid libxml2 2.6.27.
+  If you want to use XPath, do not use libxml2 2.6.27.
 
 * libxslt 1.1.15 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
