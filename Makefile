@@ -21,7 +21,7 @@ test_inplace: inplace
 	PYTHONPATH=src $(PYTHON) selftest2.py
 
 valgrind_test_inplace: inplace
-	valgrind --tool=memcheck --leak-check=full --suppressions=valgrind-python.supp \
+	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
 		$(PYTHON) test.py
 
 bench_inplace: inplace
