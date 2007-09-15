@@ -192,14 +192,14 @@ cdef class ObjectifiedElement(ElementBase):
         """Returns a sequence of all direct children.  The elements are
         returned in document order.
         """
-        cdef xmlNode* c_node
+        cdef tree.xmlNode* c_node
         cdef int ret
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
-            if _isElement(c_node):
+            if tree._isElement(c_node):
                 ret = python.PyList_Append(
-                    result, _elementFactory(self._doc, c_node))
+                    result, cetree.elementFactory(self._doc, c_node))
                 if ret:
                     raise
             c_node = c_node.next
