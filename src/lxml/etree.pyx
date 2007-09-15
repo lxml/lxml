@@ -1,31 +1,19 @@
 cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
-from python cimport isinstance, issubclass, hasattr, getattr, callable
-from python cimport iter, repr, str, _cstr, _isString, Py_ssize_t
+from python cimport issubclass, callable
+from python cimport _cstr, _isString
 cimport xpath
 cimport xinclude
 cimport c14n
 cimport cstd
 
 import __builtin__
-cdef object True
-cdef object False
-True  = __builtin__.True
-False = __builtin__.False
 
 cdef object set
 try:
     set = __builtin__.set
 except AttributeError:
     from sets import Set as set
-
-cdef object id
-id = __builtin__.id
-cdef object super
-super = __builtin__.super
-
-cdef object StopIteration
-StopIteration = __builtin__.StopIteration
 
 del __builtin__
 

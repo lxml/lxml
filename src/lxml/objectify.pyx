@@ -1,8 +1,7 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport _ElementIterator, ElementClassLookup
 from etreepublic cimport elementFactory, import_etree, textOf
-from python cimport str, repr, isinstance, issubclass, callable, getattr
-from python cimport _cstr, Py_ssize_t
+from python cimport callable, issubclass, _cstr
 cimport etreepublic as cetree
 cimport python
 cimport tree
@@ -17,49 +16,18 @@ __version__ = etree.__version__
 
 cdef object re
 import re
+
 cdef object __builtin__
 import __builtin__
-cdef object int
-int = __builtin__.int
-cdef object long
-long = __builtin__.long
-cdef object float
-float = __builtin__.float
-cdef object bool
-bool = __builtin__.bool
-cdef object pow
-pow = __builtin__.pow
-cdef object abs
-abs = __builtin__.abs
-cdef object len
-len = __builtin__.len
 
-cdef object True
-True = __builtin__.True
-cdef object False
-False = __builtin__.False
-
-cdef object AttributeError
-AttributeError = __builtin__.AttributeError
-cdef object TypeError
-TypeError = __builtin__.TypeError
-cdef object ValueError
-ValueError = __builtin__.ValueError
-cdef object IndexError
-IndexError = __builtin__.IndexError
-cdef object StopIteration
-StopIteration = __builtin__.StopIteration
-
-cdef object IGNORABLE_ERRORS
-IGNORABLE_ERRORS = (ValueError, TypeError)
-
-cdef object list
-list = __builtin__.list
 cdef object set
 try:
     set = __builtin__.set
 except AttributeError:
     from sets import Set as set
+
+cdef object IGNORABLE_ERRORS
+IGNORABLE_ERRORS = (ValueError, TypeError)
 
 cdef object islice
 from itertools import islice
