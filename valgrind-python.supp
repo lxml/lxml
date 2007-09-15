@@ -222,3 +222,19 @@
    sigaction(act)
    fun:__libc_sigaction
 }
+
+{
+   ld
+   Memcheck:Cond
+   obj:/lib/ld-2.6.so
+   obj:/lib/ld-2.6.so
+   obj:*
+}
+
+{
+   ld
+   Memcheck:Addr4
+   obj:/lib/ld-2.6.so
+   obj:/lib/ld-2.6.so
+   obj:*
+}
