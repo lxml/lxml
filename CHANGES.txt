@@ -36,6 +36,11 @@ Bugs fixed
 Other changes
 -------------
 
+* ``element.getchildren()`` deprecated (ElementTree 1.3 compatible behaviour)
+
+* ``element.getiterator()`` returns a list, use ``element.iter()`` to retrieve
+  an iterator (ElementTree 1.3 compatible behaviour)
+
 
 2.0alpha1 (2007-09-02)
 ======================
