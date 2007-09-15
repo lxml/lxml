@@ -378,14 +378,11 @@ cdef class _TargetParserContext(_ParserContext)
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef xmlparser.xmlParserCtxt* _c_ctxt
-    def __init__(self):
-        _ResolverContext.__init__(self, None)
-        self._error_log = _ErrorLog()
 
     cdef _ParserContext _copy(self):
         cdef _ParserContext context
         context = self.__class__()
-        context._resolvers = self._resolvers._copy()
+        _initParserContext(context, self._resolvers._copy(), NULL)
         return context
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
@@ -407,7 +404,15 @@ cdef class _ParserContext(_ResolverContext):
         recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
         return _handleParseResult(self, self._c_ctxt, result,
                                    filename, recover)
-    
+
+cdef _initParserContext(_ParserContext context,
+                        _ResolverRegistry resolvers,
+                        xmlparser.xmlParserCtxt* c_ctxt):
+    _initResolverContext(context, resolvers)
+    if c_ctxt is not NULL:
+        context._initParserContext(c_ctxt)
+    context._error_log = _ErrorLog()
+
 
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
@@ -509,7 +514,7 @@ cdef class _BaseParser:
             python.PyErr_NoMemory()
 
         self._context = self._createContext(target)
-        self._context._initParserContext(pctxt)
+        _initParserContext(self._context, None, pctxt)
 
         if remove_comments:
             pctxt.sax.comment = NULL
@@ -594,7 +599,7 @@ cdef class _BaseParser:
         parser._parse_options = self._parse_options
         parser._class_lookup  = self._class_lookup
         parser._context = self._context._copy()
-        parser._parser_ctxt._private = <python.PyObject*>parser._context
+        parser._context._initParserContext(parser._parser_ctxt)
         return parser
 
     def copy(self):

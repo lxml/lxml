@@ -50,16 +50,19 @@ LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
-    def __init__(self, _BaseParser parser not None):
-        _ResolverContext.__init__(self, parser.resolvers)
-        self._parser = parser
-        self._c_style_doc = NULL
 
     cdef _XSLTResolverContext _copy(self):
         cdef _XSLTResolverContext context
-        context = _XSLTResolverContext(self._parser)
+        context = _XSLTResolverContext()
+        _initXSLTResolverContext(context, self._parser)
         context._c_style_doc = self._c_style_doc
         return context
+
+cdef _initXSLTResolverContext(_XSLTResolverContext context,
+                              _BaseParser parser):
+    _initResolverContext(context, parser.resolvers)
+    context._parser = parser
+    context._c_style_doc = NULL
 
 cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
     cdef xmlDoc* c_doc
@@ -300,7 +303,8 @@ cdef class XSLT:
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
-        self._xslt_resolver_context = _XSLTResolverContext(doc._parser)
+        self._xslt_resolver_context = _XSLTResolverContext()
+        _initXSLTResolverContext(self._xslt_resolver_context, doc._parser)
         # keep a copy in case we need to access the stylesheet via 'document()'
         self._xslt_resolver_context._c_style_doc = _copyDoc(c_doc, 1)
         c_doc._private = <python.PyObject*>self._xslt_resolver_context

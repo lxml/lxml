@@ -94,14 +94,15 @@ cdef class _ResolverRegistry:
 cdef class _ResolverContext(_ExceptionContext):
     cdef _ResolverRegistry _resolvers
     cdef _TempStore _storage
-    def __init__(self, _ResolverRegistry resolvers):
-        _ExceptionContext.__init__(self)
-        if resolvers is None:
-            self._resolvers = _ResolverRegistry()
-        else:
-            self._resolvers = resolvers
-        self._storage = _TempStore()
 
     cdef void clear(self):
         _ExceptionContext.clear(self)
         self._storage.clear()
+
+cdef _initResolverContext(_ResolverContext context,
+                          _ResolverRegistry resolvers):
+    if resolvers is None:
+        context._resolvers = _ResolverRegistry()
+    else:
+        context._resolvers = resolvers
+    context._storage = _TempStore()

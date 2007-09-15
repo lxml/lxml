@@ -65,7 +65,6 @@ cdef class _IterparseContext(_ParserContext):
     cdef char*  _tag_name
 
     def __init__(self):
-        _ParserContext.__init__(self)
         self._ns_stack = []
         self._pop_ns = self._ns_stack.pop
         self._node_stack = []
