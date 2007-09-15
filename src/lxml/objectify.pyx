@@ -1,7 +1,7 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport _ElementIterator, ElementClassLookup
 from etreepublic cimport elementFactory, import_etree, textOf
-from python cimport callable, issubclass, _cstr
+from python cimport callable, _cstr
 cimport etreepublic as cetree
 cimport python
 cimport tree
@@ -806,7 +806,7 @@ cdef class PyType:
         self._type = type_class
         self.type_check = type_check
         if stringify is None:
-            self._add_text = _StringValueSetter(__builtin__.str)
+            self._add_text = _StringValueSetter(str)
         else:
             self._add_text = _StringValueSetter(stringify)
         self._schema_types = []
