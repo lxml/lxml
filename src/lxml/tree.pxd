@@ -234,6 +234,11 @@ cdef extern from "libxml/tree.h":
     cdef char* xmlBuildURI(char* href, char* base)
     cdef int xmlValidateNCName(char* value, int space)
 
+cdef extern from "libxml/HTMLtree.h":
+    cdef void htmlNodeDumpFormatOutput(xmlOutputBuffer* buf,
+                                       xmlDoc* doc, xmlNode* cur,
+                                       char* encoding, int format)
+
 cdef extern from "libxml/valid.h":
     cdef xmlAttr* xmlGetID(xmlDoc* doc, char* ID)
     cdef void xmlDumpNotationTable(xmlBuffer* buffer, xmlNotationTable* table)

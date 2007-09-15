@@ -1374,11 +1374,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 return self._doc._parser
             return None
 
-    def write(self, file, encoding=None,
+    def write(self, file, encoding=None, method="xml",
               pretty_print=False, xml_declaration=None):
         """Write the tree to a file or file-like object.
-        
+
         Defaults to ASCII encoding and writing a declaration as needed.
+
+        The keyword argument 'method' selects the output method: 'xml' or
+        'html'.
         """
         cdef int c_write_declaration
         self._assertHasRoot()
@@ -1394,7 +1397,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             encoding = encoding.upper()
             c_write_declaration = encoding not in \
                                   ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
-        _tofilelike(file, self._context_node, encoding,
+        _tofilelike(file, self._context_node, encoding, method,
                     c_write_declaration, 1, bool(pretty_print))
 
     def getpath(self, _Element element not None):
@@ -2148,7 +2151,7 @@ def dump(_Element elem not None, pretty_print=True):
     """
     _dumpToFile(sys.stdout, elem._c_node, bool(pretty_print))
 
-def tostring(element_or_tree, encoding=None,
+def tostring(element_or_tree, encoding=None, method="xml",
              xml_declaration=None, pretty_print=False):
     """Serialize an element to an encoded string representation of its XML
     tree.
@@ -2159,6 +2162,8 @@ def tostring(element_or_tree, encoding=None,
     compatible encoding will enable a declaration by default.
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
+
+    The keyword argument 'method' selects the output method: 'xml' or 'html'.
     """
     cdef int write_declaration
     cdef int c_pretty_print
@@ -2173,15 +2178,15 @@ def tostring(element_or_tree, encoding=None,
         encoding = 'ASCII'
 
     if isinstance(element_or_tree, _Element):
-        return _tostring(<_Element>element_or_tree,
-                         encoding, write_declaration, 0, c_pretty_print)
+        return _tostring(<_Element>element_or_tree, encoding, method,
+                         write_declaration, 0, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         encoding, write_declaration, 1, c_pretty_print)
+                         encoding, method, write_declaration, 1, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
-def tounicode(element_or_tree, pretty_print=False):
+def tounicode(element_or_tree, method="xml", pretty_print=False):
     """Serialize an element to the Python unicode representation of its XML
     tree.
 
@@ -2190,14 +2195,16 @@ def tounicode(element_or_tree, pretty_print=False):
     further treatment.
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
+
+    The keyword argument 'method' selects the output method: 'xml' or 'html'.
     """
     cdef int c_pretty_print
     c_pretty_print = bool(pretty_print)
     if isinstance(element_or_tree, _Element):
-        return _tounicode(<_Element>element_or_tree, 0, c_pretty_print)
+        return _tounicode(<_Element>element_or_tree, method, 0, c_pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tounicode((<_ElementTree>element_or_tree)._context_node,
-                          1, c_pretty_print)
+                          method, 1, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 

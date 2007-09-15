@@ -716,6 +716,47 @@ class ETreeTestCaseBase(unittest.TestCase):
             self.assertEquals(
                 '<doc%s>This is a test.</doc%s>' % (i, i),
                 canonicalize(data))
+
+    def test_write_method_html(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        html = Element('html')
+        body = SubElement(html, 'body')
+        p = SubElement(body, 'p')
+        p.text = "html"
+        SubElement(p, 'br').tail = "test"
+
+        tree = ElementTree(element=html)
+        f = StringIO() 
+        tree.write(f, method="html")
+        data = f.getvalue()
+
+        self.assertEquals('<html><body><p>html<br>test</p></body></html>',
+                          data)
+
+    def test_write_method_text(self):
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        a.text = "A"
+        a.tail = "tail"
+        b = SubElement(a, 'b')
+        b.text = "B"
+        b.tail = "TAIL"
+        c = SubElement(a, 'c')
+        c.text = "C"
+        
+        tree = ElementTree(element=a)
+        f = StringIO() 
+        tree.write(f, method="text")
+        data = f.getvalue()
+
+        self.assertEquals('ABTAILCtail',
+                          data)
         
     def test_write_fail(self):
         ElementTree = self.etree.ElementTree
@@ -2098,6 +2139,37 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         self.assert_(tostring(b) == '<b/>Foo' or
                      tostring(b) == '<b />Foo')
+
+    def test_tostring_method_html(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        html = Element('html')
+        body = SubElement(html, 'body')
+        p = SubElement(body, 'p')
+        p.text = "html"
+        SubElement(p, 'br').tail = "test"
+
+        self.assertEquals('<html><body><p>html<br>test</p></body></html>',
+                          tostring(html, method="html"))
+
+    def test_tostring_method_text(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        a.text = "A"
+        a.tail = "tail"
+        b = SubElement(a, 'b')
+        b.text = "B"
+        b.tail = "TAIL"
+        c = SubElement(a, 'c')
+        c.text = "C"
+        
+        self.assertEquals('ABTAILCtail',
+                          tostring(a, method="text"))
 
     def test_iterparse(self):
         iterparse = self.etree.iterparse

@@ -1761,6 +1761,25 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(a, pretty_print=True)
         self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>")
 
+    def test_tostring_method_text_encoding(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        
+        a = Element('a')
+        a.text = "A"
+        a.tail = "tail"
+        b = SubElement(a, 'b')
+        b.text = "B"
+        b.tail = u"Søk på nettet"
+        c = SubElement(a, 'c')
+        c.text = "C"
+
+        result = tostring(a, method="text", encoding="UTF-16")
+
+        self.assertEquals(u'ABSøk på nettetCtail'.encode("UTF-16"),
+                          result)
+
     def test_tounicode(self):
         tounicode = self.etree.tounicode
         Element = self.etree.Element

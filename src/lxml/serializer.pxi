@@ -1,21 +1,75 @@
 # XML serialization and output functions
 
-cdef _tostring(_Element element, encoding,
+cdef enum _OutputMethods:
+    OUTPUT_METHOD_XML
+    OUTPUT_METHOD_HTML
+    OUTPUT_METHOD_TEXT
+
+cdef int _findOutputMethod(method) except -1:
+    if method is None:
+        return OUTPUT_METHOD_XML
+    method = method.lower()
+    if method == "xml":
+        return OUTPUT_METHOD_XML
+    if method == "html":
+        return OUTPUT_METHOD_HTML
+    if method == "text":
+        return OUTPUT_METHOD_TEXT
+    raise ValueError, "unknown output method %r" % method
+
+cdef _textToString(xmlNode* c_node, encoding):
+    cdef python.PyThreadState* state
+    cdef char* c_text
+    state = python.PyEval_SaveThread()
+    c_text = tree.xmlNodeGetContent(c_node)
+    python.PyEval_RestoreThread(state)
+    if c_text is NULL:
+        python.PyErr_NoMemory()
+
+    try:
+        if _hasTail(c_node):
+            tail = _collectText(c_node.next)
+            if tail:
+                text = c_text + tail
+            else:
+                text = c_text
+        else:
+            text = c_text
+    finally:
+        tree.xmlFree(c_text)
+
+    if encoding is None:
+        return text
+    encoding = encoding.upper()
+    if encoding == 'UTF-8' or encoding == 'ASCII':
+        return text
+
+    text = python.PyUnicode_FromEncodedObject(text, 'utf-8', 'strict')
+    return python.PyUnicode_AsEncodedString(text, encoding, 'strict')
+
+cdef _tostring(_Element element, encoding, method,
                int write_xml_declaration, int write_complete_document,
                int pretty_print):
-    "Serialize an element to an encoded string representation of its XML tree."
+    """Serialize an element to an encoded string representation of its XML
+    tree.
+    """
     cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* c_enc
     cdef char* c_version
+    cdef int c_method
     if element is None:
         return None
     if encoding is None:
         c_enc = NULL
     else:
-        c_enc = encoding
+        encoding = _utf8(encoding)
+        c_enc = _cstr(encoding)
+    c_method = _findOutputMethod(method)
+    if c_method == OUTPUT_METHOD_TEXT:
+        return _textToString(element._c_node, encoding)
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
@@ -29,7 +83,7 @@ cdef _tostring(_Element element, encoding,
 
     try:
         state = python.PyEval_SaveThread()
-        _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
+        _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                            write_xml_declaration, write_complete_document,
                            pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
@@ -45,19 +99,27 @@ cdef _tostring(_Element element, encoding,
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
-cdef _tounicode(_Element element, int write_complete_document, int pretty_print):
-    "Serialize an element to the Python unicode representation of its XML tree."
+cdef _tounicode(_Element element, method,
+                int write_complete_document, int pretty_print):
+    """Serialize an element to the Python unicode representation of its XML
+    tree.
+    """
     cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
+    cdef int c_method
     if element is None:
         return None
+    c_method = _findOutputMethod(method)
+    if c_method == OUTPUT_METHOD_TEXT:
+        text = _textToString(element._c_node, None)
+        return python.PyUnicode_FromEncodedObject(text, 'utf-8', 'strict')
     c_buffer = tree.xmlAllocOutputBuffer(NULL)
     if c_buffer is NULL:
         raise LxmlError, "Failed to create output buffer"
     try:
         state = python.PyEval_SaveThread()
-        _writeNodeToBuffer(c_buffer, element._c_node, NULL, 0,
+        _writeNodeToBuffer(c_buffer, element._c_node, NULL, c_method, 0,
                            write_complete_document, pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
         python.PyEval_RestoreThread(state)
@@ -74,14 +136,14 @@ cdef _tounicode(_Element element, int write_complete_document, int pretty_print)
     return result
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
-                             xmlNode* c_node, char* encoding,
+                             xmlNode* c_node, char* encoding, int c_method,
                              int write_xml_declaration,
                              int write_complete_document,
                              int pretty_print):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
-    if write_xml_declaration:
+    if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
 
     # write internal DTD subset, preceding PIs/comments, etc.
@@ -101,8 +163,12 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         c_nsdecl_node.last = c_node.last
 
     # write node
-    tree.xmlNodeDumpOutput(c_buffer, c_doc, c_nsdecl_node, 0,
-                           pretty_print, encoding)
+    if c_method == OUTPUT_METHOD_XML:
+        tree.xmlNodeDumpOutput(
+            c_buffer, c_doc, c_nsdecl_node, 0, pretty_print, encoding)
+    else:
+        tree.htmlNodeDumpFormatOutput(
+            c_buffer, c_doc, c_nsdecl_node, encoding, pretty_print)
 
     if c_nsdecl_node is not c_node:
         # clean up
@@ -244,7 +310,7 @@ cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int len):
 cdef int _closeFilelikeWriter(void* ctxt):
     return (<_FilelikeWriter>ctxt).close()
 
-cdef _tofilelike(f, _Element element, encoding,
+cdef _tofilelike(f, _Element element, encoding, method,
                  int write_xml_declaration, int write_doctype,
                  int pretty_print):
     cdef python.PyThreadState* state
@@ -255,7 +321,17 @@ cdef _tofilelike(f, _Element element, encoding,
     if encoding is None:
         c_enc = NULL
     else:
-        c_enc = encoding
+        encoding = _utf8(encoding)
+        c_enc = _cstr(encoding)
+    c_method = _findOutputMethod(method)
+    if c_method == OUTPUT_METHOD_TEXT:
+        if _isString(f):
+            f = open(f, 'wb')
+            f.write(_textToString(element._c_node, encoding))
+            f.close()
+        else:
+            f.write(_textToString(element._c_node, encoding))
+        return
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
         raise LookupError, python.PyString_FromFormat(
@@ -275,7 +351,7 @@ cdef _tofilelike(f, _Element element, encoding,
         tree.xmlCharEncCloseFunc(enchandler)
         raise TypeError, "File or filename expected, got '%s'" % type(f)
 
-    _writeNodeToBuffer(c_buffer, element._c_node, c_enc,
+    _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                        write_xml_declaration, write_doctype, pretty_print)
     tree.xmlOutputBufferClose(c_buffer)
     tree.xmlCharEncCloseFunc(enchandler)

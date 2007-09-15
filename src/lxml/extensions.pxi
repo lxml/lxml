@@ -363,8 +363,12 @@ cdef class _ExsltRegExp:
                 return firstnode
             elif isinstance(firstnode, _Element):
                 c_text = tree.xmlNodeGetContent((<_Element>firstnode)._c_node)
-                s = funicode(c_text)
-                tree.xmlFree(c_text)
+                if c_text is NULL:
+                    python.PyErr_NoMemory()
+                try:
+                    s = funicode(c_text)
+                finally:
+                    tree.xmlFree(c_text)
                 return s
             else:
                 return str(firstnode)

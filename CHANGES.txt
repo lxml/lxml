@@ -8,6 +8,10 @@ lxml changelog
 Features added
 --------------
 
+* ``ET.write()``, ``tostring()`` and ``tounicode()`` now accept a keyword
+  argument ``method`` that can be one of 'xml' (or None), 'html' or 'text' to
+  serialise as XML, HTML or plain text content.
+
 * ``iterfind()`` method on Elements returns an iterator equivalent to
   ``findall()``
 
