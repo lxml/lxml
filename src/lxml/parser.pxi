@@ -375,15 +375,11 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 cdef class _ParserContext(_ResolverContext)
 cdef class _TargetParserContext(_ParserContext)
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _ParserContext NEW_PARSER_CONTEXT "PY_NEW" (object t)
-
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     def __init__(self):
-        _ResolverContext.__init__(self, _ResolverRegistry())
+        _ResolverContext.__init__(self, None)
         self._error_log = _ErrorLog()
 
     cdef _ParserContext _copy(self):
@@ -394,6 +390,7 @@ cdef class _ParserContext(_ResolverContext):
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
         self._c_ctxt = c_ctxt
+        c_ctxt._private = <void*>self
 
     cdef object _handleParseResult(self, _BaseParser parser,
                                    xmlDoc* result, filename):
@@ -513,7 +510,6 @@ cdef class _BaseParser:
 
         self._context = self._createContext(target)
         self._context._initParserContext(pctxt)
-        pctxt._private = <python.PyObject*>self._context
 
         if remove_comments:
             pctxt.sax.comment = NULL
@@ -982,50 +978,6 @@ cdef class ETCompatXMLParser(XMLParser):
                  recover, remove_blank_text, compact,
                  resolve_entities, remove_comments,
                  remove_pis, target)
-
-cdef xmlDoc* _internalParseDoc(char* c_text, int options,
-                               _ResolverContext context) except NULL:
-    # internal parser function for XSLT
-    cdef xmlparser.xmlParserCtxt* pctxt
-    cdef xmlDoc* c_doc
-    cdef int recover
-    pctxt = xmlparser.xmlNewParserCtxt()
-    if pctxt is NULL:
-        return NULL
-    __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-    pctxt._private = <python.PyObject*>context
-    c_doc = xmlparser.xmlCtxtReadDoc(
-        pctxt, c_text, NULL, NULL, options)
-    try:
-        recover = options & xmlparser.XML_PARSE_RECOVER
-        c_doc = _handleParseResult(None, pctxt, c_doc, None, recover)
-    finally:
-        xmlparser.xmlFreeParserCtxt(pctxt)
-    return c_doc
-
-cdef xmlDoc* _internalParseDocFromFile(char* c_filename, int options,
-                                       _ResolverContext context) except NULL:
-    # internal parser function for XSLT
-    cdef xmlparser.xmlParserCtxt* pctxt
-    cdef xmlDoc* c_doc
-    cdef int recover
-    pctxt = xmlparser.xmlNewParserCtxt()
-    if pctxt is NULL:
-        return NULL
-    __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-    pctxt._private = <python.PyObject*>context
-    c_doc = xmlparser.xmlCtxtReadFile(
-        pctxt, c_filename, NULL, options)
-    try:
-        recover = options & xmlparser.XML_PARSE_RECOVER
-        if c_filename is NULL:
-            filename = None
-        else:
-            filename = c_filename
-        c_doc = _handleParseResult(None, pctxt, c_doc, filename, recover)
-    finally:
-        xmlparser.xmlFreeParserCtxt(pctxt)
-    return c_doc
 
 
 cdef XMLParser __DEFAULT_XML_PARSER

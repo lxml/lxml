@@ -69,43 +69,44 @@ cdef xmlDoc* _xslt_resolve_stylesheet(char* c_uri, void* context):
             return _copyDoc(c_doc, 1)
     return NULL
 
-cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* context,
+cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
                                        int parse_options, int* error):
     # call the Python document loaders
-    cdef _XSLTResolverContext resolver_context
+    cdef _XSLTResolverContext context
     cdef _ResolverRegistry resolvers
     cdef _InputDocument doc_ref
     cdef xmlDoc* c_doc
 
     error[0] = 0
-    resolver_context = <_XSLTResolverContext>context
-    resolvers = resolver_context._resolvers
+    context = <_XSLTResolverContext>c_context
     try:
+        resolvers = context._resolvers
         uri = funicode(c_uri)
-        doc_ref = resolvers.resolve(uri, None, resolver_context)
+        doc_ref = resolvers.resolve(uri, None, context)
 
         c_doc = NULL
         if doc_ref is not None:
             if doc_ref._type == PARSER_DATA_STRING:
-                c_doc = _internalParseDoc(
-                    _cstr(doc_ref._data_bytes), parse_options,
-                    resolver_context)
+                c_doc = _parseDoc(
+                    doc_ref._data_bytes, None, context._parser)
             elif doc_ref._type == PARSER_DATA_FILENAME:
-                c_doc = _internalParseDocFromFile(
-                    _cstr(doc_ref._data_bytes), parse_options,
-                    resolver_context)
+                if python.PyUnicode_Check(doc_ref._data_bytes):
+                    filename = _utf8(doc_ref._data_bytes)
+                else:
+                    filename = doc_ref._data_bytes
+                c_doc = _parseDocFromFile(filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILE:
+                filename = _getFilenameForFile(doc_ref._file)
                 data = doc_ref._file.read()
-                c_doc = _internalParseDoc(
-                    _cstr(data), parse_options,
-                    resolver_context)
+                c_doc = _parseDoc(
+                    data, filename, context._parser)
             elif doc_ref._type == PARSER_DATA_EMPTY:
                 c_doc = _newDoc()
             if c_doc is not NULL and c_doc.URL is NULL:
                 c_doc.URL = tree.xmlStrdup(c_uri)
         return c_doc
     except:
-        resolver_context._store_raised()
+        context._store_raised()
         error[0] = 1
         return NULL
 
