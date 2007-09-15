@@ -2156,7 +2156,7 @@ class ETreeTestCaseBase(unittest.TestCase):
     def test_iterparse_large(self):
         iterparse = self.etree.iterparse
         CHILD_COUNT = 12345
-        f = StringIO('<a>' + ('<b>test</b>'*CHILD_COUNT) + '</a>')
+        f = StringIO('<a>%s</a>' % ('<b>test</b>'*CHILD_COUNT))
 
         i = 0
         for key in iterparse(f):
