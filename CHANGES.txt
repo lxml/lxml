@@ -25,6 +25,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in Schematron
+
 * lxml failed to serialise namespace declarations of elements other than the
   root node of a tree
 
