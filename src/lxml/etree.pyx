@@ -976,12 +976,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         cdef int ret
-        import warnings
-        warnings.warn(
-            "This method will be removed in future versions. "
-            "Use 'list(elem)' or iteration over elem instead.",
-            DeprecationWarning
-            )
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
