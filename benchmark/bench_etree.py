@@ -195,6 +195,9 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_root_getchildren(self, root):
         root.getchildren()
 
+    def bench_root_list_children(self, root):
+        list(root)
+
     @children
     def bench_getchildren(self, children):
         for child in children:
