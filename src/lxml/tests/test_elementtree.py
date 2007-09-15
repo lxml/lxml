@@ -1970,9 +1970,14 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             'Bar',
             a.get('{%s}bar' % ns2))
-        self.assertXML(
-            '<a xmlns:ns0="%s" xmlns:ns1="%s" ns0:foo="Foo" ns1:bar="Bar"></a>' % (ns, ns2),
-            a)
+        try:
+            self.assertXML(
+                '<a xmlns:ns0="%s" xmlns:ns1="%s" ns0:foo="Foo" ns1:bar="Bar"></a>' % (ns, ns2),
+                a)
+        except AssertionError:
+            self.assertXML(
+                '<a xmlns:ns0="%s" xmlns:ns1="%s" ns1:foo="Foo" ns0:bar="Bar"></a>' % (ns2, ns),
+                a)
         
     def test_ns_move(self):
         Element = self.etree.Element
