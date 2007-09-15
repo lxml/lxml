@@ -1978,7 +1978,7 @@ class ETreeTestCaseBase(unittest.TestCase):
             self.assertXML(
                 '<a xmlns:ns0="%s" xmlns:ns1="%s" ns1:foo="Foo" ns0:bar="Bar"></a>' % (ns2, ns),
                 a)
-        
+
     def test_ns_move(self):
         Element = self.etree.Element
         ElementTree = self.etree.ElementTree
