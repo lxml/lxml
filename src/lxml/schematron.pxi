@@ -107,8 +107,6 @@ cdef class Schematron(_Validator):
         self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
-        if c_doc is not NULL:
-            tree.xmlFreeDoc(c_doc)
         if self._c_schema is NULL:
             raise SchematronParseError, "Document is not a valid Schematron schema"
         _Validator.__init__(self)
