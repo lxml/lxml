@@ -26,17 +26,13 @@ cdef _textToString(xmlNode* c_node, encoding):
     if c_text is NULL:
         python.PyErr_NoMemory()
 
-    try:
-        if _hasTail(c_node):
-            tail = _collectText(c_node.next)
-            if tail:
-                text = c_text + tail
-            else:
-                text = c_text
-        else:
-            text = c_text
-    finally:
-        tree.xmlFree(c_text)
+    text = c_text
+    tree.xmlFree(c_text)
+
+    if _hasTail(c_node):
+        tail = _collectText(c_node.next)
+        if tail:
+            text = text + tail
 
     if encoding is None:
         return text
@@ -326,7 +322,8 @@ cdef _tofilelike(f, _Element element, encoding, method,
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         if _isString(f):
-            f = open(f, 'wb')
+            filename8 = _encodeFilename(f)
+            f = open(filename8, 'wb')
             f.write(_textToString(element._c_node, encoding))
             f.close()
         else:
