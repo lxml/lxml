@@ -17,6 +17,7 @@ XML_SCHEMA_NS = "http://www.w3.org/2001/XMLSchema"
 XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"
 XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
 XML_SCHEMA_NIL_ATTR = "{%s}nil" % XML_SCHEMA_INSTANCE_NS
+TREE_PYTYPE = "TREE"
 DEFAULT_NSMAP = { "py" : PYTYPE_NAMESPACE,
                   "xsi" : XML_SCHEMA_INSTANCE_NS,
                   "xsd" : XML_SCHEMA_NS}
@@ -1069,9 +1070,9 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:boolean", child_types[ 4])
         self.assertEquals(None,          child_types[ 5])
         self.assertEquals(None,          child_types[ 6])
-        self.assertEquals("xsd:int",     child_types[ 7])
-        self.assertEquals("xsd:int",     child_types[ 8])
-        self.assertEquals("xsd:int",     child_types[ 9])
+        self.assertEquals("xsd:double",  child_types[ 7])
+        self.assertEquals("xsd:float",   child_types[ 8])
+        self.assertEquals("xsd:string",  child_types[ 9])
         self.assertEquals("xsd:string",  child_types[10])
         self.assertEquals("xsd:double",  child_types[11])
         self.assertEquals("xsd:integer", child_types[12])
