@@ -2,8 +2,8 @@ This is a test of CSS selectors.  We setup a document we'll use for
 all our selections, and a function make querying simpler:
 
     >>> from lxml.cssselect import CSSSelector
-    >>> from lxml.html import document_fromstring
-    >>> doc = document_fromstring('''
+    >>> from lxml.etree import HTML
+    >>> doc = HTML('''
     ... <html><head></head><body>
     ... <div id="outer-div">
     ...  <a id="name-anchor" name="foo"></a>
