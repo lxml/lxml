@@ -2,6 +2,27 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* New C-API function ``hasChild()`` to test for children
+
+* ``annotate()`` function in objectify can annotate with Python types and XSI
+  types in one step.  Accompanied by ``xsiannotate()`` and ``pyannotate()``.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* Type annotation in objectify now preserves the already annotated type be
+  default to prevent loosing type information that is already there.
+
+
 2.0alpha2 (2007-09-15)
 ======================
 
