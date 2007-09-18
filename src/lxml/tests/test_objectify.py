@@ -1039,7 +1039,7 @@ class ObjectifyTestCase(HelperTestCase):
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
-    def test_xsitype_annotation(self):
+    def test_pytype_xsitype_annotation(self):
         XML = self.XML
         root = XML(u'''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -1059,8 +1059,32 @@ class ObjectifyTestCase(HelperTestCase):
           <l py:pytype="long">2</l>
         </a>
         ''')
-        objectify.xsiannotate(root)
+        objectify.annotate(root, ignore_old=False, ignore_xsi=False,
+                           annotate_xsi=1, annotate_pytype=1)
+        
+        # check py annotations
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals("int",   child_types[ 0])
+        self.assertEquals("str",   child_types[ 1])
+        self.assertEquals("float", child_types[ 2])
+        self.assertEquals("str",   child_types[ 3])
+        self.assertEquals("bool",  child_types[ 4])
+        self.assertEquals("NoneType",  child_types[ 5])
+        self.assertEquals(None,    child_types[ 6])
+        self.assertEquals("float", child_types[ 7])
+        self.assertEquals("float", child_types[ 8])
+        self.assertEquals("str",   child_types[ 9])
+        self.assertEquals("str",   child_types[10])
+        self.assertEquals("float",   child_types[11])
+        self.assertEquals("long",   child_types[12])
+        
+        self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
+        child_xsitypes = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
+                        for c in root.iterchildren() ]
+
+        # check xsi annotations
         child_types = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
                         for c in root.iterchildren() ]
         self.assertEquals("xsd:int",     child_types[ 0])
@@ -1079,7 +1103,7 @@ class ObjectifyTestCase(HelperTestCase):
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
-    def test_xsitype_annotation_use_old(self):
+    def test_xsiannotate_use_old(self):
         XML = self.XML
         root = XML(u'''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -1113,6 +1137,144 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:double",  child_types[ 7])
         self.assertEquals("xsd:float",   child_types[ 8])
         self.assertEquals("xsd:string",  child_types[ 9])
+        self.assertEquals("xsd:string",  child_types[10])
+        self.assertEquals("xsd:double",  child_types[11])
+        self.assertEquals("xsd:integer", child_types[12])
+
+    def test_pyannotate_ignore_old(self):
+        XML = self.XML
+        root = XML(u'''\
+        <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+          <b>5</b>
+          <b>test</b>
+          <c>1.1</c>
+          <c>\uF8D2</c>
+          <x>true</x>
+          <n xsi:nil="true" />
+          <n></n>
+          <b xsi:type="double">5</b>
+          <b xsi:type="float">5</b>
+          <s xsi:type="string">23</s>
+          <s py:pytype="str">42</s>
+          <f py:pytype="float">300</f>
+          <l py:pytype="long">2</l>
+        </a>
+        ''')
+        objectify.pyannotate(root, ignore_old=True)
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals("int",   child_types[ 0])
+        self.assertEquals("str",   child_types[ 1])
+        self.assertEquals("float", child_types[ 2])
+        self.assertEquals("str",   child_types[ 3])
+        self.assertEquals("bool",  child_types[ 4])
+        self.assertEquals("NoneType",  child_types[ 5])
+        self.assertEquals(None,    child_types[ 6])
+        self.assertEquals("float", child_types[ 7])
+        self.assertEquals("float", child_types[ 8])
+        self.assertEquals("str",   child_types[ 9])
+        self.assertEquals("int",   child_types[10])
+        self.assertEquals("int",   child_types[11])
+        self.assertEquals("int",   child_types[12])
+        
+        self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
+
+    def test_pyannotate_empty(self):
+        XML = self.XML
+        root = XML(u'''\
+        <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+          <n></n>
+        </a>
+        ''')
+        objectify.pyannotate(root)
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals(None,    child_types[0])
+
+        objectify.annotate(root, empty_pytype="str")
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals("str",    child_types[0])
+
+    def test_pyannotate_use_old(self):
+        XML = self.XML
+        root = XML(u'''\
+        <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+          <b>5</b>
+          <b>test</b>
+          <c>1.1</c>
+          <c>\uF8D2</c>
+          <x>true</x>
+          <n xsi:nil="true" />
+          <n></n>
+          <b xsi:type="double">5</b>
+          <b xsi:type="float">5</b>
+          <s xsi:type="string">23</s>
+          <s py:pytype="str">42</s>
+          <f py:pytype="float">300</f>
+          <l py:pytype="long">2</l>
+        </a>
+        ''')
+        objectify.pyannotate(root)
+
+        child_types = [ c.get(objectify.PYTYPE_ATTRIBUTE)
+                        for c in root.iterchildren() ]
+        self.assertEquals("int",   child_types[ 0])
+        self.assertEquals("str",   child_types[ 1])
+        self.assertEquals("float", child_types[ 2])
+        self.assertEquals("str",   child_types[ 3])
+        self.assertEquals("bool",  child_types[ 4])
+        self.assertEquals("NoneType",  child_types[ 5])
+        self.assertEquals(None,    child_types[ 6])
+        self.assertEquals("float", child_types[ 7])
+        self.assertEquals("float", child_types[ 8])
+        self.assertEquals("str",   child_types[ 9])
+        self.assertEquals("str",   child_types[10])
+        self.assertEquals("float", child_types[11])
+        self.assertEquals("long",  child_types[12])
+        
+        self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
+        
+    def test_xsiannotate_ignore_old(self):
+        XML = self.XML
+        root = XML(u'''\
+        <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns:py="http://codespeak.net/lxml/objectify/pytype">
+          <b>5</b>
+          <b>test</b>
+          <c>1.1</c>
+          <c>\uF8D2</c>
+          <x>true</x>
+          <n xsi:nil="true" />
+          <n></n>
+          <b xsi:type="double">5</b>
+          <b xsi:type="float">5</b>
+          <s xsi:type="string">23</s>
+          <s py:pytype="str">42</s>
+          <f py:pytype="float">300</f>
+          <l py:pytype="long">2</l>
+        </a>
+        ''')
+        objectify.xsiannotate(root, ignore_old=True)
+
+        child_types = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
+                        for c in root.iterchildren() ]
+        self.assertEquals("xsd:int",     child_types[ 0])
+        self.assertEquals("xsd:string",  child_types[ 1])
+        self.assertEquals("xsd:double",  child_types[ 2])
+        self.assertEquals("xsd:string",  child_types[ 3])
+        self.assertEquals("xsd:boolean", child_types[ 4])
+        self.assertEquals(None,          child_types[ 5])
+        self.assertEquals(None,          child_types[ 6])
+        self.assertEquals("xsd:int",     child_types[ 7])
+        self.assertEquals("xsd:int",     child_types[ 8])
+        self.assertEquals("xsd:int",     child_types[ 9])
         self.assertEquals("xsd:string",  child_types[10])
         self.assertEquals("xsd:double",  child_types[11])
         self.assertEquals("xsd:integer", child_types[12])
