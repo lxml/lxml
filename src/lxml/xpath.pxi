@@ -91,6 +91,12 @@ cdef class _XPathContext(_BaseContext):
     cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
 
+cdef int _XPATH_VERSION_WARNING_REQUIRED
+if _LIBXML_VERSION_INT == 20627:
+    _XPATH_VERSION_WARNING_REQUIRED = 1
+else:
+    _XPATH_VERSION_WARNING_REQUIRED = 0
+
 cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
@@ -98,6 +104,12 @@ cdef class _XPathEvaluatorBase:
     cdef _ErrorLog _error_log
 
     def __init__(self, namespaces, extensions, enable_regexp):
+        global _XPATH_VERSION_WARNING_REQUIRED
+        if _XPATH_VERSION_WARNING_REQUIRED:
+            _XPATH_VERSION_WARNING_REQUIRED = 0
+            import warnings
+            warnings.warn("This version of libxml2 has a known XPath bug. " + \
+                          "Use it at your own risk.")
         self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None)
