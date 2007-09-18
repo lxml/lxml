@@ -598,10 +598,16 @@ _FIND_PI_HREF = _RE_PI_HREF.findall
 cdef object _REPLACE_PI_HREF
 _REPLACE_PI_HREF = _RE_PI_HREF.sub
 
-cdef XPath _findStylesheetByID
-_findStylesheetByID = XPath(
-    "//xsl:stylesheet[@xml:id = $id]",
-    {"xsl":"http://www.w3.org/1999/XSL/Transform"})
+cdef XPath __findStylesheetByID
+__findStylesheetByID = None
+
+cdef _findStylesheetByID(_Document doc, id):
+    global __findStylesheetByID
+    if __findStylesheetByID is None:
+        __findStylesheetByID = XPath(
+            "//xsl:stylesheet[@xml:id = $id]",
+            {"xsl" : "http://www.w3.org/1999/XSL/Transform"})
+    return __findStylesheetByID(doc, id=id)
 
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
@@ -647,7 +653,7 @@ cdef class _XSLTProcessingInstruction(PIBase):
             return _elementTreeFactory(result_node._doc, result_node)
 
         # try XPath search
-        root = _findStylesheetByID(self._doc, id=funicode(c_href))
+        root = _findStylesheetByID(self._doc, funicode(c_href))
         if not root:
             raise ValueError, "reference to non-existing embedded stylesheet"
         elif len(root) > 1:
