@@ -859,8 +859,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             FutureWarning
             )
         # emulate old behaviour
-        c_node = _findChildBackwards(self._c_node, 0)
-        return c_node != NULL
+        return bool(_hasChild(self._c_node))
 
     def __contains__(self, element):
         cdef xmlNode* c_node

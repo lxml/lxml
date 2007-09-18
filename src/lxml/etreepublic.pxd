@@ -128,6 +128,9 @@ cdef extern from "etree.h":
     ##########################################################################
     # XML node helper functions
 
+    # check if the element has at least one child
+    cdef int hasChild(tree.xmlNode* c_node)
+
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
                                  python.Py_ssize_t index)

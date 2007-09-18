@@ -106,6 +106,9 @@ cdef public int delAttributeFromNsName(tree.xmlNode* c_element,
                                        char* c_href, char* c_name):
     return _delAttributeFromNsName(c_element, c_href, c_name)
 
+cdef public int hasChild(xmlNode* c_node):
+    return _hasChild(c_node)
+
 cdef public xmlNode* findChild(xmlNode* c_node, Py_ssize_t index):
     return _findChild(c_node, index)
 

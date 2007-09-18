@@ -1238,7 +1238,7 @@ cdef object _lookupElementClass(state, _Document doc, tree.xmlNode* c_node):
     cdef python.PyObject* dict_result
     lookup = <ObjectifyElementClassLookup>state
     # if element has children => no data class
-    if cetree.findChildForwards(c_node, 0) is not NULL:
+    if cetree.hasChild(c_node):
         return lookup.tree_class
 
     # if element is defined as xsi:nil, return NoneElement class
@@ -1448,7 +1448,7 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
                 c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
             if old_pytypename is not None:
                 if old_pytypename == TREE_PYTYPE_NAME:
-                    if cetree.findChild(c_node, 0) is NULL:
+                    if not cetree.hasChild(c_node):
                         # only case where we should keep it,
                         # everything else is clear enough
                         pytype = TREE_PYTYPE
@@ -1468,7 +1468,7 @@ cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
 
         if pytype is None:
             # try to guess type
-            if cetree.findChildForwards(c_node, 0) is NULL:
+            if not cetree.hasChild(c_node):
                 # element has no children => data class
                 pytype = _guessPyType(textOf(c_node), StrType)
             else:

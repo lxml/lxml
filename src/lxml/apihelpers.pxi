@@ -426,6 +426,9 @@ cdef _resolveQNameText(_Element element, value):
             element._c_node, _cstr(ns), NULL)
         return '%s:%s' % (c_ns.prefix, tag)
 
+cdef int _hasChild(xmlNode* c_node):
+    return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
+
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
         return _findChildBackwards(c_node, -index - 1)
