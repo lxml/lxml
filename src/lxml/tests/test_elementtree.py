@@ -2473,6 +2473,15 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree = self.etree.XML(isoxml)
         self.assertEquals(utext, tree.text)
 
+    def test_encoding_utf8_bom(self):
+        utext = u'Søk på nettet'
+        uxml = u'<?xml version="1.0" encoding="UTF-8"?>' + \
+               u'<p>%s</p>' % utext
+        bom = '\xEF\xBB\xBF'
+        xml = bom + uxml.encode("utf-8")
+        tree = etree.XML(xml)
+        self.assertEquals(utext, tree.text)
+
     def test_encoding_8bit_parse_stringio(self):
         utext = u'Søk på nettet'
         uxml = u'<p>%s</p>' % utext
