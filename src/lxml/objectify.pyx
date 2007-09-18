@@ -363,6 +363,12 @@ cdef class ObjectifiedElement(ElementBase):
         sibling = self.__getitem__(key)
         parent.remove(sibling)
 
+    def iterfind(self, path):
+        # Reimplementation of Element.iterfind() to make it work without child
+        # iteration.
+        xpath = etree.ETXPath(path)
+        return iter(xpath(self))
+
     def findall(self, path):
         # Reimplementation of Element.findall() to make it work without child
         # iteration.
