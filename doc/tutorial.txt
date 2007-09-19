@@ -310,7 +310,7 @@ serialised the tree to XML::
       <another>Child 3</another>
     </root>
 
-    >>> for element in root.getiterator():
+    >>> for element in root.iter():
     ...     print element.tag, '-', element.text
     root - None
     child - Child 1
@@ -318,9 +318,9 @@ serialised the tree to XML::
     another - Child 3
 
 If you know you are only interested in a single tag, you can pass its name to
-``getiterator()`` to have it filter for you::
+``iter()`` to have it filter for you::
 
-    >>> for element in root.getiterator("child"):
+    >>> for element in root.iter("child"):
     ...     print element.tag, '-', element.text
     child - Child 1
     child - Child 2
@@ -462,7 +462,7 @@ Note that the whitespace content inside the ``<b>`` tag was not removed, as
 content at leaf elements tends to be data content (even if blank).  You can
 easily remove it in an additional step by traversing the tree::
 
-    >>> for element in root.getiterator("*"):
+    >>> for element in root.iter("*"):
     ...     if element.text is not None and not element.text.strip():
     ...         element.text = None
 

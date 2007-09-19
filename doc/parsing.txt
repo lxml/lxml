@@ -269,7 +269,7 @@ Selective tag events
 --------------------
 
 As an extension over ElementTree, lxml.etree accepts a ``tag`` keyword
-argument just like ``element.getiterator(tag)``.  This restricts events to a
+argument just like ``element.iter(tag)``.  This restricts events to a
 specific tag or namespace::
 
   >>> context = etree.iterparse(StringIO(xml), tag="element")
