@@ -16,6 +16,8 @@ Features added
 Bugs fixed
 ----------
 
+* Type annotation for unicode strings in DataElement
+
 Other changes
 -------------
 
