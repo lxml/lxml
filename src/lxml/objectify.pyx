@@ -925,14 +925,11 @@ cdef _lower_bool(b):
 def __lower_bool(b):
     return _lower_bool(b)
 
-cdef _get_pytypename(obj):
+cdef _pytypename(obj):
     if python.PyUnicode_Check(obj):
         return "str"
     else:
         return _typename(obj)
-
-def __get_pytypename(obj):
-    return _get_pytypename(obj)
 
 cdef _registerPyTypes():
     pytype = PyType('int', int, IntElement)
@@ -1751,8 +1748,8 @@ def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
         strval = str(_value)
 
     if _pytype is None:
-        _pytype = _typename(_value)
-        
+        _pytype = _pytypename(_value)
+    
     if _pytype is not None: 
         if _pytype == "NoneType" or _pytype == "none":
             strval = None
