@@ -614,6 +614,64 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(isinstance(value, objectify.StringElement))
         self.assertEquals(value, "3.20")
 
+    def test_type_ustr(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = u"test"
+        self.assert_(isinstance(root.s, objectify.StringElement))
+
+    def test_type_ustr_intliteral(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = u"3"
+        self.assert_(isinstance(root.s, objectify.StringElement))
+
+    def test_type_ustr_floatliteral(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = u"3.72"
+        self.assert_(isinstance(root.s, objectify.StringElement))
+
+    def test_type_ustr_mul(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = u"test"
+
+        self.assertEquals(u"test" * 5, root.s * 5)
+        self.assertEquals(5 * u"test", 5 * root.s)
+
+        self.assertRaises(TypeError, operator.mul, root.s, u"honk")
+        self.assertRaises(TypeError, operator.mul, u"honk", root.s)
+
+    def test_type_ustr_add(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("{objectified}root")
+        root.s = u"test"
+
+        s = u"toast"
+        self.assertEquals(u"test" + s, root.s + s)
+        self.assertEquals(s + u"test", s + root.s)
+
+    def test_data_element_ustr(self):
+        value = objectify.DataElement(u"test")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, u"test")
+
+    def test_data_element_ustr_intliteral(self):
+        value = objectify.DataElement("3")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, u"3")
+
+    def test_data_element_ustr_floatliteral(self):
+        value = objectify.DataElement(u"3.20")
+        self.assert_(isinstance(value, objectify.StringElement))
+        self.assertEquals(value, u"3.20")
+
     def test_type_int(self):
         Element = self.Element
         SubElement = self.etree.SubElement
@@ -957,6 +1015,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.annotate(root)
@@ -976,6 +1035,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("int",   child_types[10])
         self.assertEquals("int",   child_types[11])
         self.assertEquals("int",   child_types[12])
+        self.assertEquals(None,    child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1017,6 +1077,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.annotate(root, ignore_old=False)
@@ -1036,6 +1097,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("str",   child_types[10])
         self.assertEquals("float", child_types[11])
         self.assertEquals("long",  child_types[12])
+        self.assertEquals(TREE_PYTYPE,  child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1057,6 +1119,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.annotate(root, ignore_old=False, ignore_xsi=False,
@@ -1078,6 +1141,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("str",   child_types[10])
         self.assertEquals("float",   child_types[11])
         self.assertEquals("long",   child_types[12])
+        self.assertEquals(TREE_PYTYPE,  child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1100,6 +1164,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:string",  child_types[10])
         self.assertEquals("xsd:double",  child_types[11])
         self.assertEquals("xsd:integer", child_types[12])
+        self.assertEquals(None,  child_types[13])
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1121,6 +1186,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.xsiannotate(root, ignore_old=False)
@@ -1140,6 +1206,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:string",  child_types[10])
         self.assertEquals("xsd:double",  child_types[11])
         self.assertEquals("xsd:integer", child_types[12])
+        self.assertEquals(None,          child_types[13])
 
     def test_pyannotate_ignore_old(self):
         XML = self.XML
@@ -1159,6 +1226,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.pyannotate(root, ignore_old=True)
@@ -1178,6 +1246,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("int",   child_types[10])
         self.assertEquals("int",   child_types[11])
         self.assertEquals("int",   child_types[12])
+        self.assertEquals(None,    child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1219,6 +1288,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.pyannotate(root)
@@ -1238,6 +1308,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("str",   child_types[10])
         self.assertEquals("float", child_types[11])
         self.assertEquals("long",  child_types[12])
+        self.assertEquals(TREE_PYTYPE, child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
         
@@ -1259,6 +1330,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.xsiannotate(root, ignore_old=True)
@@ -1278,6 +1350,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:string",  child_types[10])
         self.assertEquals("xsd:double",  child_types[11])
         self.assertEquals("xsd:integer", child_types[12])
+        self.assertEquals(None,          child_types[13])
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1299,6 +1372,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.deannotate(root)
@@ -1327,6 +1401,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.xsiannotate(root)
@@ -1347,6 +1422,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:string",   child_types[10])
         self.assertEquals("xsd:double",   child_types[11])
         self.assertEquals("xsd:integer",  child_types[12])
+        self.assertEquals(None,           child_types[13])
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1372,6 +1448,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s py:pytype="str">42</s>
           <f py:pytype="float">300</f>
           <l py:pytype="long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.annotate(root)
@@ -1392,6 +1469,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("int",   child_types[10])
         self.assertEquals("int",   child_types[11])
         self.assertEquals("int",   child_types[12])
+        self.assertEquals(None,    child_types[13])
         
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
@@ -1417,6 +1495,7 @@ class ObjectifyTestCase(HelperTestCase):
           <s xsi:type="xsd:string">42</s>
           <f xsi:type="xsd:float">300</f>
           <l xsi:type="xsd:long">2</l>
+          <t py:pytype="TREE"></t>
         </a>
         ''')
         objectify.annotate(root)
@@ -1437,6 +1516,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals("xsd:string",   child_types[10])
         self.assertEquals("xsd:float",    child_types[11])
         self.assertEquals("xsd:long",     child_types[12])
+        self.assertEquals(None,           child_types[13])
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
