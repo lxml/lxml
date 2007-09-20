@@ -206,14 +206,16 @@ _setupPythonUnicode()
 
 cdef class _FileReaderContext:
     cdef object _filelike
+    cdef object _encoding
     cdef object _url
     cdef object _bytes
     cdef _ExceptionContext _exc_context
     cdef cstd.size_t _bytes_read
     cdef char* _c_url
-    def __init__(self, filelike, exc_context, url=None):
+    def __init__(self, filelike, exc_context, url, encoding):
         self._exc_context = exc_context
         self._filelike = filelike
+        self._encoding = encoding
         self._url = url
         if url is None:
             self._c_url = NULL
@@ -234,15 +236,22 @@ cdef class _FileReaderContext:
                           LxmlParserType parser_type):
         cdef python.PyThreadState* state
         cdef xmlDoc* result
+        cdef char* c_encoding
+
+        if self._encoding is None:
+            c_encoding = NULL
+        else:
+            c_encoding = _cstr(self._encoding)
+
         state = python.PyEval_SaveThread()
         if parser_type == LXML_XML_PARSER:
             result = xmlparser.xmlCtxtReadIO(
                 ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
-                self._c_url, NULL, options)
+                self._c_url, c_encoding, options)
         else:
             result = htmlparser.htmlCtxtReadIO(
                 ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
-                self._c_url, NULL, options)
+                self._c_url, c_encoding, options)
         python.PyEval_RestoreThread(state)
         return result
 
@@ -493,9 +502,11 @@ cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
     cdef python.PyThread_type_lock _parser_lock
     cdef int _feed_parser_running
+    cdef object _default_encoding
 
     def __init__(self, int parse_options, remove_comments, remove_pis,
-                 target):
+                 target, encoding):
+        cdef int c_encoding
         cdef xmlparser.xmlParserCtxt* pctxt
         if isinstance(self, HTMLParser):
             self._parser_type = LXML_HTML_PARSER
@@ -515,6 +526,16 @@ cdef class _BaseParser:
 
         self._context = self._createContext(target)
         _initParserContext(self._context, None, pctxt)
+
+        if encoding is None:
+            self._default_encoding = None
+        else:
+            encoding = _utf8(encoding)
+            c_encoding = tree.xmlParseCharEncoding(_cstr(encoding))
+            if c_encoding == tree.XML_CHAR_ENCODING_ERROR or \
+                   c_encoding == tree.XML_CHAR_ENCODING_NONE:
+                raise LookupError, "unknown encoding: '%s'" % encoding
+            self._default_encoding = encoding
 
         if remove_comments:
             pctxt.sax.comment = NULL
@@ -669,6 +690,7 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef int recover
+        cdef char* c_encoding
         if c_len > python.INT_MAX:
             raise ParserError, "string is too long to parse it with libxml2"
         self._lockParser()
@@ -677,13 +699,20 @@ cdef class _BaseParser:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
+            if self._default_encoding is None:
+                c_encoding = NULL
+            else:
+                c_encoding = _cstr(self._default_encoding)
+
             state = python.PyEval_SaveThread()
             if self._parser_type == LXML_HTML_PARSER:
                 result = htmlparser.htmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
+                    pctxt, c_text, c_len, c_filename,
+                    c_encoding, self._parse_options)
             else:
                 result = xmlparser.xmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename, NULL, self._parse_options)
+                    pctxt, c_text, c_len, c_filename,
+                    c_encoding, self._parse_options)
             python.PyEval_RestoreThread(state)
 
             return self._context._handleParseResultDoc(self, result, None)
@@ -699,6 +728,7 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef int recover
         cdef int orig_options
+        cdef char* c_encoding
         result = NULL
         self._lockParser()
         self._context._error_log.connect()
@@ -706,14 +736,19 @@ cdef class _BaseParser:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
+            if self._default_encoding is None:
+                c_encoding = NULL
+            else:
+                c_encoding = _cstr(self._default_encoding)
+
             orig_options = pctxt.options
             state = python.PyEval_SaveThread()
             if self._parser_type == LXML_HTML_PARSER:
                 result = htmlparser.htmlCtxtReadFile(
-                    pctxt, c_filename, NULL, self._parse_options)
+                    pctxt, c_filename, c_encoding, self._parse_options)
             else:
                 result = xmlparser.xmlCtxtReadFile(
-                    pctxt, c_filename, NULL, self._parse_options)
+                    pctxt, c_filename, c_encoding, self._parse_options)
             python.PyEval_RestoreThread(state)
             pctxt.options = orig_options # work around libxml2 problem
 
@@ -738,7 +773,8 @@ cdef class _BaseParser:
         try:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-            file_context = _FileReaderContext(filelike, self._context, filename)
+            file_context = _FileReaderContext(filelike, self._context,
+                                              filename, self._default_encoding)
             result = file_context._readDoc(
                 pctxt, self._parse_options, self._parser_type)
 
@@ -928,7 +964,9 @@ cdef class XMLParser(_FeedParser):
     * compact            - safe memory for short text content (default: True)
     * resolve_entities   - replace entities by their text value (default: True)
 
-    You can pass a parser target as ``target`` keyword argument.
+    Other keyword arguments:
+    * encoding - override the document encoding
+    * target   - a parser target object that will receive the parse events
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -938,7 +976,7 @@ cdef class XMLParser(_FeedParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=False,
-                 remove_pis=False, target=None):
+                 remove_pis=False, target=None, encoding=None):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -963,26 +1001,34 @@ cdef class XMLParser(_FeedParser):
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
         _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
-                             target)
+                             target, encoding)
 
 cdef class ETCompatXMLParser(XMLParser):
     """An XML parser with an ElementTree compatible default setup.  See the
     XMLParser class for details.
 
-    This parser defaults to removing processing instructions and comments from
-    the tree.
+    This parser has ``remove_comments`` and ``remove_pis`` enabled by default
+    and thus ignores comments and processing instructions.
     """
     def __init__(self, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=True,
-                 remove_pis=True, target=None):
+                 remove_pis=True, target=None, encoding=None):
         XMLParser.__init__(self,
-                 attribute_defaults, dtd_validation,
-                 load_dtd, no_network, ns_clean,
-                 recover, remove_blank_text, compact,
-                 resolve_entities, remove_comments,
-                 remove_pis, target)
+                           attribute_defaults=attribute_defaults,
+                           dtd_validation=dtd_validation,
+                           load_dtd=load_dtd,
+                           no_network=no_network,
+                           ns_clean=ns_clean,
+                           recover=recover,
+                           remove_blank_text=remove_blank_text,
+                           compact=compact,
+                           resolve_entities=resolve_entities,
+                           remove_comments=remove_comments,
+                           remove_pis=remove_pis,
+                           target=target,
+                           encoding=encoding)
 
 
 cdef XMLParser __DEFAULT_XML_PARSER
@@ -1039,14 +1085,16 @@ cdef class HTMLParser(_FeedParser):
     * remove_pis         - discard processing instructions
     * compact            - safe memory for short text content (default: True)
 
-    You can pass a parser target as ``target`` keyword argument.
+    Other keyword arguments:
+    * encoding - override the document encoding
+    * target   - a parser target object that will receive the parse events
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
     def __init__(self, recover=True, no_network=True, remove_blank_text=False,
                  compact=True, remove_comments=False, remove_pis=False,
-                 target=None):
+                 target=None, encoding=None):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
@@ -1059,7 +1107,7 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
         _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
-                             target)
+                             target, encoding)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()

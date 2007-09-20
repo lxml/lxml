@@ -40,6 +40,7 @@ cdef extern from "libxml/encoding.h":
     cdef int xmlCharEncCloseFunc(xmlCharEncodingHandler* handler)
     cdef xmlCharEncoding xmlDetectCharEncoding(char* text, int len)
     cdef char* xmlGetCharEncodingName(xmlCharEncoding enc)
+    cdef xmlCharEncoding xmlParseCharEncoding(char* name)
 
 cdef extern from "libxml/chvalid.h":
     cdef int xmlIsChar_ch(char c)

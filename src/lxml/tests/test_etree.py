@@ -368,6 +368,26 @@ class ETreeOnlyTestCase(HelperTestCase):
             8,
             len(events))
 
+    def test_iterparse_encoding_8bit_override(self):
+        text = u'Søk på nettet'
+        wrong_declaration = "<?xml version='1.0' encoding='UTF-8'?>"
+        xml_latin1 = (u'%s<a>%s</a>' % (wrong_declaration, text)
+                      ).encode('iso-8859-1')
+
+        self.assertRaises(self.etree.ParseError,
+                          list, self.etree.iterparse(StringIO(xml_latin1)))
+
+        iterator = self.etree.iterparse(StringIO(xml_latin1),
+                                        encoding="iso-8859-1")
+        self.assertEquals(1, len(list(iterator)))
+
+        a = iterator.root
+        self.assertEquals(a.text, text)
+
+    def test_parser_encoding_unknown(self):
+        self.assertRaises(
+            LookupError, self.etree.XMLParser, encoding="hopefully unknown")
+
     def test_iterwalk_tag(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML('<a><b><d/></b><c/></a>')

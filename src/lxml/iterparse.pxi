@@ -239,6 +239,9 @@ cdef class iterparse(_BaseParser):
     * remove_blank_text  - discard blank text nodes
     * remove_comments    - discard comments
     * remove_pis         - discard processing instructions
+
+    Other keyword arguments:
+    * encoding           - override the document encoding
     """
     cdef object _source
     cdef object _filename
@@ -246,9 +249,10 @@ cdef class iterparse(_BaseParser):
     def __init__(self, source, events=("end",), tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 remove_comments=False, remove_pis=False):
+                 remove_comments=False, remove_pis=False, encoding=None):
         cdef _IterparseContext context
         cdef char* c_filename
+        cdef char* c_encoding
         cdef int parse_options
         if not hasattr(source, 'read'):
             self._filename = _encodeFilename(source)
@@ -279,12 +283,18 @@ cdef class iterparse(_BaseParser):
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
 
         _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
-                             None)
+                             None, encoding)
+
+        if self._default_encoding is None:
+            c_encoding = NULL
+        else:
+            c_encoding = _cstr(self._default_encoding)
 
         context = <_IterparseContext>self._context
         context._setEventFilter(events, tag)
         xmlparser.xmlCtxtUseOptions(self._parser_ctxt, parse_options)
-        xmlparser.xmlCtxtResetPush(self._parser_ctxt, NULL, 0, c_filename, NULL)
+        xmlparser.xmlCtxtResetPush(self._parser_ctxt, NULL, 0,
+                                   c_filename, c_encoding)
         self._lockParser() # will not be unlocked - no other methods supported
 
     cdef _ParserContext _createContext(self, target):

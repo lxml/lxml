@@ -46,6 +46,37 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
+    def test_parse_encoding_8bit_explicit(self):
+        text = u'Søk på nettet'
+        html_latin1 = (u'<p>%s</p>' % text).encode('iso-8859-1')
+
+        tree = self.etree.parse(
+            StringIO(html_latin1),
+            self.etree.HTMLParser(encoding="iso-8859-1"))
+        p = tree.find("//p")
+        self.assertEquals(p.text, text)
+
+    def test_parse_encoding_8bit_override(self):
+        text = u'Søk på nettet'
+        wrong_head = '''
+        <head>
+          <meta http-equiv="Content-Type"
+                content="text/html; charset=UTF-8" />
+        </head>'''
+        html_latin1 = (u'<html>%s<body><p>%s</p></body></html>' % (wrong_head,
+                                                                   text)
+                      ).encode('iso-8859-1')
+
+        self.assertRaises(self.etree.ParseError,
+                          self.etree.parse,
+                          StringIO(html_latin1))
+
+        tree = self.etree.parse(
+            StringIO(html_latin1),
+            self.etree.HTMLParser(encoding="iso-8859-1"))
+        p = tree.find("//p")
+        self.assertEquals(p.text, text)
+
     def test_module_HTML_broken(self):
         element = self.etree.HTML(self.broken_html_str)
         self.assertEqual(self.etree.tostring(element),

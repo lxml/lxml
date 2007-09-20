@@ -2377,10 +2377,43 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('iso-8859-1'),
                           result)
 
-    # raise error on wrong (left-over?) encoding declaration in unicode strings
+    def test_parse_encoding_8bit_explicit(self):
+        XMLParser = self.etree.XMLParser
+
+        text = u'Søk på nettet'
+        xml_latin1 = (u'<a>%s</a>' % text).encode('iso-8859-1')
+
+        self.assertRaises(self.etree.ParseError,
+                          self.etree.parse,
+                          StringIO(xml_latin1))
+
+        tree = self.etree.parse(StringIO(xml_latin1),
+                                XMLParser(encoding="iso-8859-1"))
+        a = tree.getroot()
+        self.assertEquals(a.text, text)
+
+    def test_parse_encoding_8bit_override(self):
+        XMLParser = self.etree.XMLParser
+
+        text = u'Søk på nettet'
+        wrong_declaration = "<?xml version='1.0' encoding='UTF-8'?>"
+        xml_latin1 = (u'%s<a>%s</a>' % (wrong_declaration, text)
+                      ).encode('iso-8859-1')
+
+        self.assertRaises(self.etree.ParseError,
+                          self.etree.parse,
+                          StringIO(xml_latin1))
+
+        tree = self.etree.parse(StringIO(xml_latin1),
+                                XMLParser(encoding="iso-8859-1"))
+        a = tree.getroot()
+        self.assertEquals(a.text, text)
+
     def _test_wrong_unicode_encoding(self):
+        # raise error on wrong encoding declaration in unicode strings
         XML = self.etree.XML
-        test_utf = u'<?xml version=\'1.0\' encoding=\'iso-8859-1\'?><a>Søk på nettet</a>'
+        test_utf = (u'<?xml version="1.0" encoding="iso-8859-1"?>' + \
+                                        u'<a>Søk på nettet</a>')
         self.assertRaises(SyntaxError, XML, test_utf)
 
     def test_encoding_write_default_encoding(self):

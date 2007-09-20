@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Parsers accept an ``encoding`` keyword argument that overrides the encoding
+  of the parsed documents.
+
 * New C-API function ``hasChild()`` to test for children
 
 * ``annotate()`` function in objectify can annotate with Python types and XSI

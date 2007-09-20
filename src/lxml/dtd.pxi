@@ -91,7 +91,7 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     cdef _FileReaderContext dtd_parser
     cdef tree.xmlDtd* c_dtd
     exc_context = _ExceptionContext()
-    dtd_parser = _FileReaderContext(file, exc_context)
+    dtd_parser = _FileReaderContext(file, exc_context, None, None)
 
     c_dtd = dtd_parser._readDtd()
 
