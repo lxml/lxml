@@ -926,10 +926,15 @@ def __lower_bool(b):
     return _lower_bool(b)
 
 cdef _pytypename(obj):
-    if python.PyUnicode_Check(obj):
+    if python._isString(obj):
         return "str"
     else:
         return _typename(obj)
+
+def pytypename(obj):
+    """Find the name of the corresponding PyType for a Python object.
+    """
+    return _pytypename(obj)
 
 cdef _registerPyTypes():
     pytype = PyType('int', int, IntElement)
