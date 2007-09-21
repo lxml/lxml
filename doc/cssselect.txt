@@ -27,8 +27,9 @@ The most important class in the ``cssselect`` module is ``CSSSelector``.  It
 provides the same interface as the XPath_ class, but accepts a CSS selector
 expression as input::
 
+    >>> from lxml.cssselect import CSSSelector
     >>> sel = CSSSelector('div.content')
-    >>> sel
+    >>> sel  #doctest: +ELLIPSIS
     <CSSSelector ... for 'div.content'>
     >>> sel.css
     'div.content'
@@ -42,8 +43,8 @@ expression by inspecting the object::
 To use the selector, simply call it with a document or element
 object::
 
-    >>> from lxml.etree import HTML
-    >>> h = HTML('''<div id="outer">
+    >>> from lxml.etree import fromstring
+    >>> h = fromstring('''<div id="outer">
     ...   <div id="inner" class="content body">
     ...       text
     ...   </div></div>''')
