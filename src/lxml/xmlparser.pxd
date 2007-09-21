@@ -19,6 +19,10 @@ cdef extern from "libxml/parser.h":
                                           char* prefix,
                                           char* URI)
 
+    ctypedef void (*startElementSAXFunc)(void* ctx, char* name, char** atts)
+
+    ctypedef void (*endElementSAXFunc)(void* ctx, char* name)
+
     ctypedef void (*charactersSAXFunc)(void* ctx, char* ch, int len)
 
     ctypedef void (*cdataBlockSAXFunc)(void* ctx, char* value, int len)
@@ -49,6 +53,8 @@ cdef extern from "libxml/tree.h":
         internalSubsetSAXFunc           internalSubset
         startElementNsSAX2Func          startElementNs
         endElementNsSAX2Func            endElementNs
+        startElementSAXFunc             startElement
+        endElementSAXFunc               endElement
         charactersSAXFunc               characters
         cdataBlockSAXFunc               cdataBlock
         commentSAXFunc                  comment
@@ -170,3 +176,4 @@ cdef extern from "libxml/parserInternals.h":
     cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 
                                              char* filename)
     cdef void xmlFreeInputStream(xmlParserInput* input)
+    cdef int xmlSwitchEncoding(xmlParserCtxt* ctxt, int enc)

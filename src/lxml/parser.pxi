@@ -503,6 +503,7 @@ cdef class _BaseParser:
     cdef python.PyThread_type_lock _parser_lock
     cdef int _feed_parser_running
     cdef object _default_encoding
+    cdef int _default_encoding_int
 
     def __init__(self, int parse_options, remove_comments, remove_pis,
                  target, encoding):
@@ -519,6 +520,18 @@ cdef class _BaseParser:
 
         self._parse_options = parse_options
 
+        if encoding is None:
+            self._default_encoding = None
+            self._default_encoding_int = tree.XML_CHAR_ENCODING_NONE
+        else:
+            encoding = _utf8(encoding)
+            c_encoding = tree.xmlParseCharEncoding(_cstr(encoding))
+            if c_encoding == tree.XML_CHAR_ENCODING_ERROR or \
+                   c_encoding == tree.XML_CHAR_ENCODING_NONE:
+                raise LookupError, "unknown encoding: '%s'" % encoding
+            self._default_encoding = encoding
+            self._default_encoding_int = c_encoding
+
         pctxt = self._newParserCtxt()
         self._parser_ctxt = pctxt
         if pctxt is NULL:
@@ -527,16 +540,6 @@ cdef class _BaseParser:
         self._context = self._createContext(target)
         _initParserContext(self._context, None, pctxt)
 
-        if encoding is None:
-            self._default_encoding = None
-        else:
-            encoding = _utf8(encoding)
-            c_encoding = tree.xmlParseCharEncoding(_cstr(encoding))
-            if c_encoding == tree.XML_CHAR_ENCODING_ERROR or \
-                   c_encoding == tree.XML_CHAR_ENCODING_NONE:
-                raise LookupError, "unknown encoding: '%s'" % encoding
-            self._default_encoding = encoding
-
         if remove_comments:
             pctxt.sax.comment = NULL
         if remove_pis:
@@ -544,9 +547,7 @@ cdef class _BaseParser:
         # hard switch-off for CDATA nodes => makes them plain text
         pctxt.sax.cdataBlock = NULL
 
-        if not config.ENABLE_THREADING or \
-               self._parser_type == LXML_ITERPARSE_PARSER:
-            # no threading
+        if not config.ENABLE_THREADING:
             self._parser_lock = NULL
         else:
             self._parser_lock = python.PyThread_allocate_lock()
@@ -955,7 +956,7 @@ cdef class XMLParser(_FeedParser):
     * attribute_defaults - read default attributes from DTD
     * dtd_validation     - validate (if DTD is available)
     * load_dtd           - use DTD for parsing
-    * no_network         - prevent network access (default: True)
+    * no_network         - prevent network access for related files (default: True)
     * ns_clean           - clean up redundant namespace declarations
     * recover            - try hard to parse through broken XML
     * remove_blank_text  - discard blank text nodes
@@ -1079,7 +1080,7 @@ cdef class HTMLParser(_FeedParser):
 
     Available boolean keyword arguments:
     * recover            - try hard to parse through broken HTML (default: True)
-    * no_network         - prevent network access (default: True)
+    * no_network         - prevent network access for related files (default: True)
     * remove_blank_text  - discard empty text nodes
     * remove_comments    - discard comments
     * remove_pis         - discard processing instructions

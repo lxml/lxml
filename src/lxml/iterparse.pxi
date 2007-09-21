@@ -51,6 +51,8 @@ cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
 cdef class _IterparseContext(_ParserContext):
     cdef xmlparser.startElementNsSAX2Func _origSaxStart
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
+    cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
+    cdef xmlparser.endElementSAXFunc      _origSaxEndNoNs
     cdef _Element  _root
     cdef _Document _doc
     cdef int _event_filter
@@ -78,19 +80,23 @@ cdef class _IterparseContext(_ParserContext):
         _ParserContext._initParserContext(self, c_ctxt)
         sax = c_ctxt.sax
         self._origSaxStart = sax.startElementNs
+        self._origSaxStartNoNs = sax.startElement
         # only override start event handler if needed
         if self._event_filter == 0 or \
                self._event_filter & (ITERPARSE_FILTER_START | \
                                      ITERPARSE_FILTER_START_NS | \
                                      ITERPARSE_FILTER_END_NS):
-           sax.startElementNs = _iterparseSaxStart
+            sax.startElementNs = _iterparseSaxStart
+            sax.startElement = _iterparseSaxStartNoNs
 
         self._origSaxEnd = sax.endElementNs
+        self._origSaxEndNoNs = sax.endElement
         # only override end event handler if needed
         if self._event_filter == 0 or \
                self._event_filter & (ITERPARSE_FILTER_END | \
                                      ITERPARSE_FILTER_END_NS):
             sax.endElementNs = _iterparseSaxEnd
+            sax.endElement = _iterparseSaxEndNoNs
 
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildIterparseEventFilter(events)
@@ -183,8 +189,14 @@ cdef void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
 cdef xmlparser.startElementNsSAX2Func _getOrigStart(xmlparser.xmlParserCtxt* c_ctxt):
     return (<_IterparseContext>c_ctxt._private)._origSaxStart
 
+cdef xmlparser.startElementSAXFunc _getOrigStartNoNs(xmlparser.xmlParserCtxt* c_ctxt):
+    return (<_IterparseContext>c_ctxt._private)._origSaxStartNoNs
+
 cdef xmlparser.endElementNsSAX2Func _getOrigEnd(xmlparser.xmlParserCtxt* c_ctxt):
     return (<_IterparseContext>c_ctxt._private)._origSaxEnd
+
+cdef xmlparser.endElementSAXFunc _getOrigEndNoNs(xmlparser.xmlParserCtxt* c_ctxt):
+    return (<_IterparseContext>c_ctxt._private)._origSaxEndNoNs
 
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,
@@ -207,6 +219,24 @@ cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI)
     _pushSaxEndEvent(c_ctxt, c_ctxt.node)
     origEnd = _getOrigEnd(c_ctxt)
     origEnd(ctxt, localname, prefix, URI)
+
+cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
+    # no Python in here!
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef xmlparser.startElementSAXFunc origStart
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    origStart = _getOrigStartNoNs(c_ctxt)
+    origStart(ctxt, name, attributes)
+    _pushSaxStartEvent(c_ctxt, c_ctxt.node)
+
+cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
+    # no Python in here!
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef xmlparser.endElementSAXFunc origEnd
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    _pushSaxEndEvent(c_ctxt, c_ctxt.node)
+    origEnd = _getOrigEndNoNs(c_ctxt)
+    origEnd(ctxt, name)
 
 cdef class iterparse(_BaseParser):
     """Incremental parser.  Parses XML into a tree and generates tuples
@@ -235,7 +265,7 @@ cdef class iterparse(_BaseParser):
     * attribute_defaults - read default attributes from DTD
     * dtd_validation     - validate (if DTD is available)
     * load_dtd           - use DTD for parsing
-    * no_network         - prevent network access
+    * no_network         - prevent network access for related files
     * remove_blank_text  - discard blank text nodes
     * remove_comments    - discard comments
     * remove_pis         - discard processing instructions
@@ -246,10 +276,12 @@ cdef class iterparse(_BaseParser):
     cdef object _source
     cdef object _filename
     cdef readonly object root
+    cdef int _html
     def __init__(self, source, events=("end",), tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 remove_comments=False, remove_pis=False, encoding=None):
+                 remove_comments=False, remove_pis=False, encoding=None,
+                 html=False):
         cdef _IterparseContext context
         cdef char* c_filename
         cdef char* c_encoding
@@ -267,6 +299,19 @@ cdef class iterparse(_BaseParser):
             c_filename = NULL
 
         self._source = source
+        if html:
+            self._html = 1
+            if 'start' in events:
+                if 'end' in events:
+                    events = ('start', 'end')
+                else:
+                    events = ('start',)
+            elif 'end' in events:
+                events = ('end',)
+            else:
+                events = ()
+        else:
+            self._html = 0
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -284,21 +329,38 @@ cdef class iterparse(_BaseParser):
 
         _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
                              None, encoding)
-
-        if self._default_encoding is None:
-            c_encoding = NULL
-        else:
-            c_encoding = _cstr(self._default_encoding)
-
+            
         context = <_IterparseContext>self._context
         context._setEventFilter(events, tag)
-        xmlparser.xmlCtxtUseOptions(self._parser_ctxt, parse_options)
-        xmlparser.xmlCtxtResetPush(self._parser_ctxt, NULL, 0,
-                                   c_filename, c_encoding)
         self._lockParser() # will not be unlocked - no other methods supported
 
     cdef _ParserContext _createContext(self, target):
         return _IterparseContext()
+
+    cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
+        cdef xmlparser.xmlParserCtxt* c_ctxt
+        cdef char* c_filename
+        if self._filename is not None:
+            c_filename = _cstr(self._filename)
+        else:
+            c_filename = NULL
+        if self._html:
+            c_ctxt = htmlparser.htmlCreatePushParserCtxt(
+                NULL, NULL, NULL, 0, c_filename, self._default_encoding_int)
+            if c_ctxt is not NULL:
+                htmlparser.htmlCtxtUseOptions(c_ctxt, self._parse_options)
+        else:
+            c_ctxt = xmlparser.xmlCreatePushParserCtxt(
+                NULL, NULL, NULL, 0, c_filename)
+            if c_ctxt is not NULL:
+                xmlparser.xmlCtxtUseOptions(c_ctxt, self._parse_options)
+                if self._default_encoding_int != tree.XML_CHAR_ENCODING_NONE:
+                    xmlparser.xmlSwitchEncoding(
+                        c_ctxt, self._default_encoding_int)
+        return c_ctxt
+
+    def copy(self):
+        raise TypeError, "iterparse parsers cannot be copied"
 
     def __iter__(self):
         return self
@@ -324,11 +386,21 @@ cdef class iterparse(_BaseParser):
                 self._source = None
                 raise TypeError, "reading file objects must return plain strings"
             elif data:
-                error = xmlparser.xmlParseChunk(
-                    self._parser_ctxt, _cstr(data),
-                    python.PyString_GET_SIZE(data), 0)
+                if self._html:
+                    error = htmlparser.htmlParseChunk(
+                        self._parser_ctxt, _cstr(data),
+                        python.PyString_GET_SIZE(data), 0)
+                else:
+                    error = xmlparser.xmlParseChunk(
+                        self._parser_ctxt, _cstr(data),
+                        python.PyString_GET_SIZE(data), 0)
             else:
-                error = xmlparser.xmlParseChunk(self._parser_ctxt, NULL, 0, 1)
+                if self._html:
+                    error = htmlparser.htmlParseChunk(
+                        self._parser_ctxt, NULL, 0, 1)
+                else:
+                    error = xmlparser.xmlParseChunk(
+                        self._parser_ctxt, NULL, 0, 1)
                 self._source = None
                 break
         if error != 0:

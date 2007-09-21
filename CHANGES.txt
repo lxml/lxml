@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* ``iterparse()`` accepts an ``html`` boolean keyword argument for
+  parsing with the HTML parser (note that this interface may be
+  subject to change)
+
 * Parsers accept an ``encoding`` keyword argument that overrides the encoding
   of the parsed documents.
 

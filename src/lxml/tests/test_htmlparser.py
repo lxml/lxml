@@ -140,6 +140,36 @@ class HtmlParserTestCaseBase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           self.etree.parse, StringIO(self.broken_html_str))
 
+    def test_html_iterparse(self):
+        iterparse = self.etree.iterparse
+        f = StringIO(
+            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+
+        iterator = iterparse(f, html=True)
+        self.assertEquals(None, iterator.root)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assert_(root is not None)
+        self.assertEquals(
+            [('end', root[0][0]), ('end', root[0]), ('end', root[1][0]),
+             ('end', root[1]), ('end', root)],
+            events)
+
+    def test_html_iterparse_file(self):
+        iterparse = self.etree.iterparse
+        iterator = iterparse(fileInTestDir("css_shakespear.html"),
+                             html=True)
+
+        self.assertEquals(None, iterator.root)
+        events = list(iterator)
+        root = iterator.root
+        self.assert_(root is not None)
+        self.assertEquals(249, len(events))
+        self.assertEquals(
+            [],
+            [ event for (event, element) in events if event != 'end' ])
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(HtmlParserTestCaseBase)])

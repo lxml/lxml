@@ -1,6 +1,6 @@
 from tree cimport xmlDoc, xmlDict
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from xmlparser cimport xmlParserCtxt
+from xmlparser cimport xmlParserCtxt, xmlSAXHandler
 from xmlerror cimport xmlError
 
 cdef extern from "libxml/HTMLparser.h":
@@ -16,6 +16,10 @@ cdef extern from "libxml/HTMLparser.h":
 
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(char* buffer, int size)
     cdef xmlParserCtxt* htmlCreateFileParserCtxt(char* filename, char* encoding)
+    cdef xmlParserCtxt* htmlCreatePushParserCtxt(xmlSAXHandler* sax,
+                                                 void* user_data,
+                                                 char* chunk, int size,
+                                                 char* filename, int enc)
     cdef void htmlFreeParserCtxt(xmlParserCtxt* ctxt)
     cdef void htmlCtxtReset(xmlParserCtxt* ctxt)
     cdef int htmlCtxtUseOptions(xmlParserCtxt* ctxt, int options)
