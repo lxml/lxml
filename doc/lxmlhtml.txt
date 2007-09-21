@@ -590,6 +590,50 @@ only text.
 ``word_break_html(html)`` parses the HTML document and returns a
 string.
 
+HTML Diff
+=========
+
+The module ``lxml.html.diff`` offers some ways to visualize
+differences in HTML documents.  These differences are *content*
+oriented.  That is, changes in markup are largely ignored; only
+changes in the content itself are highlighted.
+
+There are two ways to view differences: ``htmldiff`` and
+``html_annotate``.  One shows differences with ``<ins>`` and
+``<del>``, while the other annotates a set of changes similar to ``svn
+blame``.  Both these functions operate on text, and work best with
+content fragments (only what goes in ``<body>``), not complete
+documents.
+
+Example of ``htmldiff``:
+
+    >>> from lxml.html.diff import htmldiff, html_annotate
+    >>> doc1 = '''<p>Here is some text.</p>'''
+    >>> doc2 = '''<p>Here is <b>a lot</b> of <i>text</i>.</p>'''
+    >>> doc3 = '''<p>Here is <b>a little</b> <i>text</i>.</p>'''
+    >>> print htmldiff(doc1, doc2)
+    <p>Here is <ins><b>a lot</b> of <i>text</i>.</ins> <del>some text.</del> </p>
+    >>> print html_annotate([(doc1, 'author1'), (doc2, 'author2'),
+    ...                      (doc3, 'author3')])
+    <p><span title="author1">Here is</span>
+       <b><span title="author2">a</span>
+       <span title="author3">little</span></b>
+       <i><span title="author2">text</span></i>
+       <span title="author2">.</span></p>
+
+As you can see, it is imperfect as such things tend to be.  On larger
+tracts of text with larger edits it will generally do better.
+
+The ``html_annotate`` function can also take an optional second
+argument, ``markup``.  This is a function like ``markup(text,
+version)`` that returns the given text marked up with the given
+version.  The default version, the output of which you see in the
+example, looks like::
+
+    def default_markup(text, version):
+        return '<span title="%s">%s</span>' % (
+            cgi.escape(unicode(version), 1), text)
+
 Examples
 ========
 
