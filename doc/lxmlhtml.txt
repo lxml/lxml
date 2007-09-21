@@ -29,6 +29,35 @@ Parsing HTML
 Parsing HTML fragments
 ----------------------
 
+There are several functions available to parse HTML:
+
+``parse(filename_url_or_file)``:
+    Parses the named file or url, or if the object has a ``.read()``
+    method, parses from that.
+
+    If you give a URL, or if the object has a ``.geturl()`` method (as
+    file-like objects from ``urllib.urlopen()`` have), then that URL
+    is used as the base URL.
+
+``document_fromstring(string)``:
+    Parses a document from the given string.  This always creates a
+    correct HTML document, which means the parent node is ``<html>``,
+    and there is a body and possibly a head.
+
+``fragment_fromstring(string, create_parent=False)``:
+    Returns an HTML fragment from a string.  The fragment must contain
+    just a single element, unless ``create_parent`` is given;
+    e.g,. ``fragment_fromstring(string, create_parent='div')`` will
+    wrap the element in a ``<div>``.
+
+``fragments_fromstring(string)``:
+    Returns a list of the elements found in the fragment.
+
+``fromstring(string)``:
+    Returns ``document_fromstring`` or ``fragment_fromstring``, based
+    on whether the string looks like a full document, or just a
+    fragment.
+
 HTML Element Methods
 ====================
 
@@ -71,6 +100,16 @@ also include some extra methods:
     selector expression.  (Note that ``.xpath(expr)`` is also
     available as on all lxml elements.)
 
+``.label``:
+    Returns the corresponding ``<label>`` element for this element, if
+    any exists (None if there is none).  Label elements have a
+    ``label.for_element`` attribute that points back to the element.
+
+``.base_url``:
+    The base URL for this element, if one was saved from the parsing.
+    This attribute is not settable.  Is None when no base URL was
+    saved.
+
 Running HTML doctests
 =====================
 
@@ -94,7 +133,7 @@ Now, if you have a HTML document and want to compare it to an expected result
 document in a doctest, you can do the following::
 
     >>> import lxml.html
-    >>> html = lxml.html.HTML('''\
+    >>> html = lxml.html.fromstring('''\
     ...    <html><body onload="" color="white">
     ...      <p>Hi  !</p>
     ...    </body></html>
@@ -133,18 +172,18 @@ lxml.html comes with a predefined HTML vocabulary for the `E-factory`_,
 originally written by Fredrik Lundh.  This allows you to quickly generate HTML
 pages and fragments::
 
-    >>> from lxml.html import builder as h
-
-    >>> html = h.HTML(
-    ...   h.HEAD(
-    ...     h.LINK(rel="stylesheet", href="great.css", type="text/css"),
-    ...     h.TITLE("Best Page Ever")
+    >>> from lxml.html import builder as E
+    >>> from lxml.html import usedoctest
+    >>> html = E.HTML(
+    ...   E.HEAD(
+    ...     E.LINK(rel="stylesheet", href="great.css", type="text/css"),
+    ...     E.TITLE("Best Page Ever")
     ...   ),
-    ...   h.BODY(
-    ...     h.H1(h.CLASS("heading"), "Top News"),
-    ...     h.P("World News only on this page", style="font-size: 200%"),
+    ...   E.BODY(
+    ...     E.H1(E.CLASS("heading"), "Top News"),
+    ...     E.P("World News only on this page", style="font-size: 200%"),
     ...     "Ah, and here's some more text, by the way.",
-    ...     lxml.html.HTML("<p>... and this is a parsed fragment ...</p>")
+    ...     lxml.html.fromstring("<p>... and this is a parsed fragment ...</p>")
     ...   )
     ... )
 
@@ -169,6 +208,13 @@ particular, things like ``<script src="..."></script>`` will be
 serialized as ``<script src="..." />``, which completely confuses
 browsers.
 
+Viewing your HTML
+-----------------
+
+A handy method for viewing your HTML:
+``lxml.html.open_in_browser(lxml_doc)`` will write the document to
+disk and open it in a browser (with the `webbrowser module
+<http://python.org/doc/current/lib/module-webbrowser.html>`_).
 
 Working with links
 ==================
@@ -220,7 +266,6 @@ the links in a document.
     If you want access to the context of the link, you should use
     ``.iterlinks()`` instead.
 
-
 Functions
 ---------
 
@@ -236,6 +281,149 @@ HTML as a string.  If you pass in a document, the document will be copied
 (except for ``iterlinks()``), the method performed, and the new document
 returned.
 
+Forms
+=====
+
+Any ``<form>`` elements in a document are available through
+the list ``doc.forms`` (e.g., ``doc.forms[0]``).  Form, input, select,
+and textarea elements each have special methods.
+
+Input elements (including ``<select>`` and ``<textarea>``) have these
+attributes:
+
+``.name``:
+    The name of the element.
+
+``.value``:
+    The value of an input, the content of a textarea, the selected
+    option(s) of a select.  This attribute can be set.  
+
+    In the case of a select that takes multiple options (``<select
+    multiple>``) this will be a set of the selected options; you can
+    add or remove items to select and unselect the options.
+
+Select attributes:
+
+``.value_options``:
+    For select elements, this is all the *possible* values (the values
+    of all the options).
+
+``.multiple``:
+    For select elements, true if this is a ``<select multiple>``
+    element.
+
+Input attributes:
+
+``.type``:
+    The type attribute in ``<input>`` elements.
+
+``.checkable``:
+    True if this can be checked (i.e., true for type=radio and
+    type=checkbox).
+
+``.checked``:
+    If this element is checkable, the checked state.  Raises
+    AttributeError on non-checkable inputs.
+
+The form itself has these attributes:
+
+``.inputs``:
+    A dictionary-like object that can be used to access input elements
+    by name.  When there are multiple input elements with the same
+    name, this returns list-like structures that can also be used to
+    access the options and their values as a group.
+
+``.fields``:
+    A dictionary-like object used to access *values* by their name.
+    ``form.inputs`` returns elements, this only returns values.
+    Setting values in this dictionary will effect the form inputs.
+    Basically ``form.fields[x]`` is equivalent to
+    ``form.inputs[x].value`` and ``form.fields[x] = y`` is equivalent
+    to ``form.inputs[x].value = y``.  (Note that sometimes
+    ``form.inputs[x]`` returns a compound object, but these objects
+    also have ``.value`` attributes.)
+
+    If you set this attribute, it is equivalent to
+    ``form.fields.clear(); form.fields.update(new_value)``
+
+``.form_values()``:
+    Returns a list of ``[(name, value), ...]``, suitable to be passed
+    to ``urllib.urlencode()`` for form submission.
+
+``.action``:
+    The ``action`` attribute.  This is resolved to an absolute URL if
+    possible.
+
+``.method``:
+    The ``method`` attribute, which defaults to ``GET``.
+
+Form Filling Example
+--------------------
+
+Note that you can change any of these attributes (values, method,
+action, etc) and then serialize the form to see the updated values.
+You can, for instance, do::
+
+    >>> from lxml.html import fromstring, tostring
+    >>> form_page = fromstring('''<html><body><form>
+    ...   Your name: <input type="text" name="name"> <br>
+    ...   Your phone: <input type="text" name="phone"> <br>
+    ...   Your favorite pets: <br>
+    ...   Dogs: <input type="checkbox" name="interest" value="dogs"> <br>
+    ...   Cats: <input type="checkbox" name="interest" value="cats"> <br>
+    ...   Llamas: <input type="checkbox" name="interest" value="llamas"> <br>
+    ...   <input type="submit"></form></body></html>''')
+    >>> form = form_page.forms[0]
+    >>> form.fields = dict(
+    ...     name='John Smith',
+    ...     phone='555-555-3949',
+    ...     interest=set(['cats', 'llamas']))
+    >>> print tostring(form)
+    <html>
+      <body>
+        <form>
+        Your name:
+          <input name="name" type="text" value="John Smith">
+          <br>Your phone:
+          <input name="phone" type="text" value="555-555-3949">
+          <br>Your favorite pets:
+          <br>Dogs:
+          <input name="interest" type="checkbox" value="dogs">
+          <br>Cats:
+          <input checked name="interest" type="checkbox" value="cats">
+          <br>Llamas:
+          <input checked name="interest" type="checkbox" value="llamas">
+          <br>
+          <input type="submit">
+        </form>
+      </body>
+    </html>
+
+
+Form Submission
+---------------
+
+You can submit a form with ``lxml.html.submit_form(form_element)``.
+This will return a file-like object (the result of
+``urllib.urlopen()``).
+
+If you have extra input values you want to pass you can use the
+keyword argument ``extra_values``, like ``extra_values={'submit':
+'Yes!'}``.  This is the only way to get submit values into the form,
+as there is no state of "submitted" for these elements.
+
+You can pass in an alternate opener with the ``open_http`` keyword
+argument, which is a function with the signature ``open_http(method,
+url, values)``.
+
+Example::
+
+    >>> from lxml.html import parse, submit_form
+    >>> page = parse('http://tinyurl.com').getroot()
+    >>> page.forms[1].fields['url'] = 'http://codespeak.net/lxml/'
+    >>> result = parse(submit_form(page.forms[1])).getroot()
+    >>> [a.attrib['href'] for a in result.xpath("//a[@target='_blank']")]
+    ['http://tinyurl.com/2xae8s', 'http://preview.tinyurl.com/2xae8s']
 
 Cleaning up HTML
 ================
@@ -414,10 +602,10 @@ microformat.
 First we get the page::
 
     >>> import urllib
-    >>> from lxml.html import HTML
+    >>> from lxml.html import fromstring
     >>> url = 'http://microformats.org/'
     >>> content = urllib.urlopen(url).read()
-    >>> doc = HTML(content)
+    >>> doc = fromstring(content)
     >>> doc.make_links_absolute(url)
 
 Then we create some objects to put the information in::
