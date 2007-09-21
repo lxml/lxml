@@ -5,7 +5,10 @@ class SetMixin(object):
     """
 
     def __len__(self):
-        return len(list(self))
+        length = 0
+        for item in self:
+            length += 1
+        return length
 
     def __contains__(self, item):
         for has_item in self:
