@@ -16,7 +16,7 @@ try:
     except pkg_resources.VersionConflict:
         from ez_setup import use_setuptools
         use_setuptools(version="0.6c5")
-    #pkg_resources.require("Cython==0.9.6.5")
+    #pkg_resources.require("Cython==0.9.6.6")
     from setuptools import setup
     extra_options["zip_safe"] = False
 except ImportError:
