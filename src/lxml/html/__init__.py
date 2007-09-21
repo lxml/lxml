@@ -13,9 +13,11 @@ except ImportError:
     from lxml.html._dictmixin import DictMixin
 import sets
 
-__all__ = ['document_fromstring', 'tostring', 'Element', 'defs',
-           'find_rel_links', 'find_class', 'make_links_absolute',
-           'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser']
+__all__ = [
+    'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
+    'tostring', 'Element', 'defs', 'open_in_browser', 'submit_form',
+    'find_rel_links', 'find_class', 'make_links_absolute',
+    'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser']
 
 _rel_links_xpath = etree.XPath("descendant-or-self::a[@rel]")
 #_class_xpath = etree.XPath(r"descendant-or-self::*[regexp:match(@class, concat('\b', $class_name, '\b'))]", {'regexp': 'http://exslt.org/regular-expressions'})
@@ -583,10 +585,11 @@ class FormElement(HtmlElement):
                 prev_keys.remove(key)
             self.fields[key] = value
         for key in prev_keys:
-            # FIXME: but right now I don't even allow
-            # deleting, and I'm not sure what it would
-            # mean if I did.
-            del self.fields[key]
+            if key is None:
+                # Case of an unnamed input; these aren't really
+                # expressed in form_values() anyway.
+                continue
+            self.fields[key] = None
 
     fields = property(fields__get, fields__set, doc=fields__get.__doc__)
 
@@ -1040,7 +1043,11 @@ class CheckboxGroup(list):
         return CheckboxValues(self)
     def value__set(self, value):
         self.value.clear()
-        self.value |= value
+        if not hasattr(value, '__iter__'):
+            raise ValueError(
+                "A CheckboxGroup (name=%r) must be set to a sequence (not %r)"
+                % (self[0].name, value))
+        self.value.update(value)
     def value__del(self):
         self.value.clear()
     value = property(value__get, value__set, value__del, doc=value__get.__doc__)
