@@ -1220,34 +1220,12 @@ HtmlElementClassLookup._default_element_classes['label'] = LabelElement
 ## Serialization
 ############################################################
 
-_html_xsl = """\
-<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output method="html" encoding="UTF-8" />
-  <xsl:template match="/">
-    <xsl:copy-of select="."/>
-  </xsl:template>
-</xsl:transform>
-"""
-
-_pretty_html_xsl = """\
-<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output method="html" encoding="UTF-8" indent="yes" />
-  <xsl:template match="/">
-    <xsl:copy-of select="."/>
-  </xsl:template>
-</xsl:transform>
-"""
-
-_local_transforms = threading.local()
-# FIXME: should we just lazily compile these?
-_local_transforms.html_transform = etree.XSLT(etree.XML(_html_xsl))
-_local_transforms.pretty_html_transform = etree.XSLT(etree.XML(_pretty_html_xsl))
-
-# This isn't a general match, but it's a match for what XSLT specifically creates:
+# This isn't a general match, but it's a match for what libxml2
+# specifically serialises:
 __replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type".*?>').sub
 
-def tostring(doc, pretty=False, include_meta_content_type=False):
+def tostring(doc, pretty_print=False, include_meta_content_type=False):
     """
     return HTML string representation of the document given 
  
@@ -1255,18 +1233,7 @@ def tostring(doc, pretty=False, include_meta_content_type=False):
     and may replace any that are present 
     """
     assert doc is not None
-    if pretty:
-        try:
-            pretty_html_transform = _local_transforms.pretty_html_transform
-        except AttributeError:
-            pretty_html_transform = _local_transforms.pretty_html_transform = etree.XSLT(etree.XML(_pretty_html_xsl))
-        html = str(pretty_html_transform(doc))
-    else:
-        try:
-            html_transform = _local_transforms.html_transform
-        except AttributeError:
-            html_transform = _local_transforms.html_transform = etree.XSLT(etree.XML(_html_xsl))
-        html = str(html_transform(doc))
+    html = etree.tostring(doc, method="html", pretty_print=pretty_print)
     if not include_meta_content_type:
         html = __replace_meta_content_type('', html)
     return html
@@ -1278,10 +1245,12 @@ def open_in_browser(doc):
     """
     import os
     import webbrowser
+    try:
+        write_doc = doc.write
+    except AttributeError:
+        write_doc = etree.ElementTree(element=doc).write
     fn = os.tempnam() + '.html'
-    f = open(fn, 'wb')
-    f.write(tostring(doc, include_meta_content_type=True))
-    f.close()
+    write_doc(fn, method="html")
     url = 'file://' + fn.replace(os.path.sep, '/')
     print url
     webbrowser.open(url)
