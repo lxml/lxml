@@ -135,7 +135,7 @@ def flags(cmd):
     errors = ef.read()
     if errors:
         print "ERROR:", errors
-        print "** make sure the development package of libxml2 and libxslt are installed **"
+        print "** make sure the development packages of libxml2 and libxslt are installed **"
         print
     return rf.read().split()
 
