@@ -77,10 +77,11 @@ or, in Unix-like environments::
 
   make
 
-If you get errors about missing header files (e.g., ``libxml/xmlversion.h``)
-then you need to make sure the development packages of libxml2 and libxslt are
-properly installed.  If this doesn't help, you may have to add the location of
-the header files to the include path like::
+If you get errors about missing header files (e.g. ``libxml/xmlversion.h``)
+then you need to make sure the development packages of both libxml2
+and libxslt are properly installed.  If this doesn't help, you may
+have to add the location of the header files to the include path
+like::
 
   python setup.py build_ext -i  -I /usr/include/libxml2
 

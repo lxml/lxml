@@ -132,6 +132,11 @@ def define_macros():
     
 def flags(cmd):
     wf, rf, ef = os.popen3(cmd)
+    errors = ef.read()
+    if errors:
+        print "ERROR:", errors
+        print "** make sure the development package of libxml2 and libxslt are installed **"
+        print
     return rf.read().split()
 
 def has_option(name):
