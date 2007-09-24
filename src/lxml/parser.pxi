@@ -842,9 +842,9 @@ cdef class _FeedParser(_BaseParser):
                 error = _htmlCtxtResetPush(pctxt, c_data, buffer_len,
                                            c_encoding, self._parse_options)
             else:
+                xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
                     pctxt, c_data, buffer_len, NULL, c_encoding)
-                xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
             py_buffer_len = py_buffer_len - buffer_len
             c_data = c_data + buffer_len
 

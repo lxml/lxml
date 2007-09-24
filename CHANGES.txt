@@ -23,6 +23,8 @@ Features added
 Bugs fixed
 ----------
 
+* XML feed parser setup problem
+
 * Type annotation for unicode strings in ``DataElement()``
 
 Other changes
