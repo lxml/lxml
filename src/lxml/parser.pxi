@@ -572,12 +572,21 @@ cdef class _BaseParser:
         if self._parser_lock is not NULL:
             python.PyThread_free_lock(self._parser_lock)
 
+    cdef int _lockAndPrepare(self) except -1:
+        self._lockParser()
+        self._context._error_log.connect()
+        return 0
+
     cdef void _cleanup(self):
-        cdef xmlparser.xmlParserCtxt* pctxt
-        pctxt = self._parser_ctxt
-        if pctxt is not NULL:
-            if pctxt.spaceTab is not NULL: # work around bug in libxml2
-                xmlparser.xmlClearParserCtxt(pctxt)
+        if self._parser_ctxt is not NULL:
+            if self._parser_type == LXML_HTML_PARSER:
+                htmlparser.htmlCtxtReset(self._parser_ctxt)
+            elif self._parser_ctxt.spaceTab is not NULL or \
+                    _LIBXML_VERSION_INT >= 20629: # work around bug in libxml2
+                xmlparser.xmlClearParserCtxt(self._parser_ctxt)
+        self._context.clear()
+        self._context._error_log.disconnect()
+        self._unlockParser()
 
     cdef int _lockParser(self) except -1:
         cdef python.PyThreadState* state
@@ -658,8 +667,7 @@ cdef class _BaseParser:
             return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
         buffer_len = py_buffer_len
 
-        self._lockParser()
-        self._context._error_log.connect()
+        self._lockAndPrepare()
         try:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -679,9 +687,6 @@ cdef class _BaseParser:
             return self._context._handleParseResultDoc(self, result, None)
         finally:
             self._cleanup()
-            self._context.clear()
-            self._context._error_log.disconnect()
-            self._unlockParser()
 
     cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
                            char* c_filename) except NULL:
@@ -694,8 +699,7 @@ cdef class _BaseParser:
         cdef char* c_encoding
         if c_len > python.INT_MAX:
             raise ParserError, "string is too long to parse it with libxml2"
-        self._lockParser()
-        self._context._error_log.connect()
+        self._lockAndPrepare()
         try:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -719,9 +723,6 @@ cdef class _BaseParser:
             return self._context._handleParseResultDoc(self, result, None)
         finally:
             self._cleanup()
-            self._context.clear()
-            self._context._error_log.disconnect()
-            self._unlockParser()
 
     cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef python.PyThreadState* state
@@ -731,8 +732,7 @@ cdef class _BaseParser:
         cdef int orig_options
         cdef char* c_encoding
         result = NULL
-        self._lockParser()
-        self._context._error_log.connect()
+        self._lockAndPrepare()
         try:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -757,9 +757,6 @@ cdef class _BaseParser:
                 self, result, c_filename)
         finally:
             self._cleanup()
-            self._context.clear()
-            self._context._error_log.disconnect()
-            self._unlockParser()
 
     cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename) except NULL:
         cdef _FileReaderContext file_context
@@ -769,8 +766,7 @@ cdef class _BaseParser:
         cdef int recover
         if not filename:
             filename = None
-        self._lockParser()
-        self._context._error_log.connect()
+        self._lockAndPrepare()
         try:
             pctxt = self._parser_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -783,9 +779,6 @@ cdef class _BaseParser:
                 self, result, filename)
         finally:
             self._cleanup()
-            self._context.clear()
-            self._context._error_log.disconnect()
-            self._unlockParser()
 
 ############################################################
 ## ET feed parser
@@ -829,9 +822,8 @@ cdef class _FeedParser(_BaseParser):
         pctxt = self._parser_ctxt
         error = 0
         if not self._feed_parser_running:
-            self._lockParser()
+            self._lockAndPrepare()
             self._feed_parser_running = 1
-            self._context._error_log.connect()
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             if py_buffer_len > python.INT_MAX:
@@ -867,9 +859,6 @@ cdef class _FeedParser(_BaseParser):
                     self, pctxt.myDoc, None)
             finally:
                 self._cleanup()
-                self._context.clear()
-                self._context._error_log.disconnect()
-                self._unlockParser()
 
     def close(self):
         """Terminates feeding data to this parser.  This tells the parser to
@@ -896,9 +885,6 @@ cdef class _FeedParser(_BaseParser):
                 self, pctxt.myDoc, None)
         finally:
             self._cleanup()
-            self._context.clear()
-            self._context._error_log.disconnect()
-            self._unlockParser()
 
         if isinstance(result, _Document):
             return (<_Document>result).getroot()

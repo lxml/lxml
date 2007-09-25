@@ -332,7 +332,8 @@ cdef class iterparse(_BaseParser):
             
         context = <_IterparseContext>self._context
         context._setEventFilter(events, tag)
-        self._lockParser() # will not be unlocked - no other methods supported
+        self._lockAndPrepare()
+        # parser will not be unlocked - no other methods supported
 
     cdef _ParserContext _createContext(self, target):
         return _IterparseContext()
