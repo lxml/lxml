@@ -2881,11 +2881,9 @@ class ETreeTestCaseBase(unittest.TestCase):
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.
         """
-        ElementTree = self.etree.ElementTree
-        f = StringIO()
-        tree = ElementTree(element=element)
-        tree.write(f, encoding)
-        data = unicode(f.getvalue(), encoding)
+        data = self.etree.tostring(element, encoding=encoding)
+        if encoding != 'us-ascii':
+            data = unicode(data, encoding)
         return canonicalize(data)
 
     def _writeElementFile(self, element, encoding='us-ascii'):
@@ -2899,11 +2897,13 @@ class ETreeTestCaseBase(unittest.TestCase):
             tree.write(f, encoding)
             f.close()
             f = open(filename, 'rb')
-            data = unicode(f.read(), encoding)
+            data = f.read()
             f.close()
         finally:
             os.close(handle)
             os.remove(filename)
+        if encoding != 'us-ascii':
+            data = unicode(data, encoding)
         return canonicalize(data)
 
     def assertXML(self, expected, element, encoding='us-ascii'):
