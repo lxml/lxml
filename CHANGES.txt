@@ -43,7 +43,7 @@ Other changes
 * lxml.etree now emits a warning if you use XPath with libxml2 2.6.27
   (which can crash on certain XPath errors)
 
-* Type annotation in objectify now preserves the already annotated type be
+* Type annotation in objectify now preserves the already annotated type by
   default to prevent loosing type information that is already there.
 
 
