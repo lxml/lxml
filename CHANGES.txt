@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* AttributeError in feed parser on parse errors
+
+Other changes
+-------------
+
+
 2.0alpha3 (2007-09-26)
 ======================
 

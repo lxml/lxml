@@ -2799,29 +2799,32 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(root[0].get("test"), "works")
 
     def test_feed_parser_error_close_empty(self):
+        ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
-        self.assertRaises(Exception, parser.close)
+        self.assertRaises(ParseError, parser.close)
 
     def test_feed_parser_error_close_incomplete(self):
+        ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
 
         parser.feed('<?xml version=')
         parser.feed('"1.0"?><ro')
 
-        self.assertRaises(Exception, parser.close)
+        self.assertRaises(ParseError, parser.close)
 
     def test_feed_parser_error_broken(self):
+        ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
 
         parser.feed('<?xml version=')
         parser.feed('"1.0"?><ro')
         try:
-            parser.feed('<ro<ro<ro<ro')
-        except:
+            parser.feed('<><><><><><><')
+        except ParseError:
             # can raise, but not required before close()
             pass
 
-        self.assertRaises(Exception, parser.close)
+        self.assertRaises(ParseError, parser.close)
 
     # parser target interface
 

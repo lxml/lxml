@@ -935,7 +935,7 @@ cdef class _FeedParser(_BaseParser):
             try:
                 context._handleParseResult(self, pctxt.myDoc, None)
             finally:
-                context._cleanup()
+                context.cleanup()
 
     def close(self):
         """Terminates feeding data to this parser.  This tells the parser to
