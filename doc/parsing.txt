@@ -101,6 +101,31 @@ Available boolean keyword arguments:
 * compact - use compact storage for short text content (on by default)
 
 
+Error log
+---------
+
+Parsers have an ``error_log`` property that lists the errors of the
+last parser run::
+
+  >>> parser = etree.XMLParser()
+  >>> print len(parser.error_log)
+  0
+
+  >>> tree = etree.XML("<root></b>", parser)
+  Traceback (most recent call last):
+    ...
+  XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 1, column 11
+
+  >>> print len(parser.error_log)
+  1
+
+  >>> error = parser.error_log[0]
+  >>> print error.message
+  Opening and ending tag mismatch: root line 1 and b
+  >>> print error.line, error.column
+  1 11
+
+
 Parsing HTML
 ------------
 
@@ -176,6 +201,42 @@ original encoding::
   ascii
 
 
+The target parser interface
+===========================
+
+.. _`As in ElementTree`: http://effbot.org/elementtree/elementtree-xmlparser.htm
+
+`As in ElementTree`_, and similar to a SAX event handler, you can pass
+a target object to the parser::
+
+  >>> class EchoTarget:
+  ...     def start(self, tag, attrib):
+  ...         print "start", tag, attrib
+  ...     def end(self, tag):
+  ...         print "end", tag
+  ...     def data(self, data):
+  ...         print "data", repr(data)
+  ...     def close(self):
+  ...         print "close"
+  ...         return "closed!"
+
+  >>> parser = etree.XMLParser(target = EchoTarget())
+
+  >>> result = etree.XML("<element>some text</element>", parser)
+  start element {}
+  data u'some text'
+  end element
+  close
+
+  >>> print result
+  closed!
+
+Note that the parser does *not* build a tree in this case.  The result
+of the parser run is what the target object returns from its
+``close()`` method.  If you want to return an XML tree here, you have
+to create it programmatically in the target object.
+
+
 The feed parser interface
 =========================
 
@@ -214,6 +275,31 @@ file-like object that returns a chunk of data on each ``read()`` call.  Where
 the feed parser interface allows you to actively pass data chunks into the
 parser, a file-like object passively responds to ``read()`` requests of the
 parser itself.  Depending on the data source, either way may be more natural.
+
+Note that the feed parser has its own error log called
+``feed_error_log``.  Errors in the feed parser do not show up in the
+normal ``error_log`` and vice versa.
+
+You can also combine the feed parser interface with the target parser::
+
+  >>> parser = etree.XMLParser(target = EchoTarget())
+
+  >>> parser.feed("<eleme")
+  >>> parser.feed("nt>some text</elem")
+  start element {}
+  data u'some text'
+  >>> parser.feed("ent>")
+  end element
+
+  >>> result = parser.close()
+  close
+  >>> print result
+  closed!
+
+Again, this prevents the automatic creating of an XML tree and leaves
+all the event handling to the target object.  The ``close()`` method
+of the parser forwards the return value of the target's ``close()``
+method.
 
 
 iterparse and iterwalk
