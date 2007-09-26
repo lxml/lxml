@@ -78,21 +78,21 @@ cdef extern from "libxml/parser.h":
         xmlDoc* myDoc
         xmlDict* dict
         void* _private
-        int wellFormed
-        int recovery
+        bint wellFormed
+        bint recovery
         int options
-        int disableSAX
+        bint disableSAX
         int errNo
-        int replaceEntities
-        int loadsubset
-        int validate
+        bint replaceEntities
+        bint loadsubset
+        bint validate
         xmlError lastError
         xmlNode* node
         xmlSAXHandler* sax
         int* spaceTab
         int spaceMax
-        int html
-        int progressive
+        bint html
+        bint progressive
         int charset
         
     ctypedef enum xmlParserOption:

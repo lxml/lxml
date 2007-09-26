@@ -274,33 +274,27 @@ cdef class iterparse(_BaseParser):
     * encoding           - override the document encoding
     """
     cdef object _source
-    cdef object _filename
     cdef readonly object root
-    cdef int _html
     def __init__(self, source, events=("end",), tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  remove_comments=False, remove_pis=False, encoding=None,
                  html=False):
         cdef _IterparseContext context
-        cdef char* c_filename
         cdef char* c_encoding
         cdef int parse_options
         if not hasattr(source, 'read'):
-            self._filename = _encodeFilename(source)
-            source = open(self._filename, 'rb')
+            filename = _encodeFilename(source)
+            source = open(filename, 'rb')
         else:
-            self._filename = _getFilenameForFile(source)
-            if self._filename is not None:
-                self._filename = _encodeFilename(self._filename)
-        if self._filename is not None:
-            c_filename = self._filename
-        else:
-            c_filename = NULL
+            filename = _getFilenameForFile(source)
+            if filename is not None:
+                filename = _encodeFilename(filename)
 
         self._source = source
+        html = bool(html)
         if html:
-            self._html = 1
+            # make sure we're not looking for namespaces
             if 'start' in events:
                 if 'end' in events:
                     events = ('start', 'end')
@@ -310,8 +304,6 @@ cdef class iterparse(_BaseParser):
                 events = ('end',)
             else:
                 events = ()
-        else:
-            self._html = 0
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -327,38 +319,17 @@ cdef class iterparse(_BaseParser):
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
 
-        _BaseParser.__init__(self, parse_options, remove_comments, remove_pis,
-                             None, encoding)
-            
-        context = <_IterparseContext>self._context
+        _BaseParser.__init__(self, parse_options, html,
+                             remove_comments, remove_pis,
+                             None, filename, encoding)
+
+        context = <_IterparseContext>self._getPushParserContext()
         context._setEventFilter(events, tag)
-        self._lockAndPrepare()
+        context.prepare()
         # parser will not be unlocked - no other methods supported
 
     cdef _ParserContext _createContext(self, target):
         return _IterparseContext()
-
-    cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
-        cdef xmlparser.xmlParserCtxt* c_ctxt
-        cdef char* c_filename
-        if self._filename is not None:
-            c_filename = _cstr(self._filename)
-        else:
-            c_filename = NULL
-        if self._html:
-            c_ctxt = htmlparser.htmlCreatePushParserCtxt(
-                NULL, NULL, NULL, 0, c_filename, self._default_encoding_int)
-            if c_ctxt is not NULL:
-                htmlparser.htmlCtxtUseOptions(c_ctxt, self._parse_options)
-        else:
-            c_ctxt = xmlparser.xmlCreatePushParserCtxt(
-                NULL, NULL, NULL, 0, c_filename)
-            if c_ctxt is not NULL:
-                xmlparser.xmlCtxtUseOptions(c_ctxt, self._parse_options)
-                if self._default_encoding_int != tree.XML_CHAR_ENCODING_NONE:
-                    xmlparser.xmlSwitchEncoding(
-                        c_ctxt, self._default_encoding_int)
-        return c_ctxt
 
     def copy(self):
         raise TypeError, "iterparse parsers cannot be copied"
@@ -368,11 +339,13 @@ cdef class iterparse(_BaseParser):
 
     def __next__(self):
         cdef _IterparseContext context
+        cdef xmlparser.xmlParserCtxt* pctxt
         cdef int error
         cdef char* c_filename
         if self._source is None:
             raise StopIteration
-        context = <_IterparseContext>self._context
+
+        context = <_IterparseContext>self._getPushParserContext()
         if python.PyList_GET_SIZE(context._events) > context._event_index:
             item = python.PyList_GET_ITEM(context._events, context._event_index)
             python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
@@ -380,6 +353,7 @@ cdef class iterparse(_BaseParser):
             return item
 
         del context._events[:]
+        pctxt = context._c_ctxt
         error = 0
         while python.PyList_GET_SIZE(context._events) == 0 and error == 0:
             data = self._source.read(__ITERPARSE_CHUNK_SIZE)
@@ -387,27 +361,22 @@ cdef class iterparse(_BaseParser):
                 self._source = None
                 raise TypeError, "reading file objects must return plain strings"
             elif data:
-                if self._html:
+                if self._for_html:
                     error = htmlparser.htmlParseChunk(
-                        self._parser_ctxt, _cstr(data),
-                        python.PyString_GET_SIZE(data), 0)
+                        pctxt, _cstr(data), python.PyString_GET_SIZE(data), 0)
                 else:
                     error = xmlparser.xmlParseChunk(
-                        self._parser_ctxt, _cstr(data),
-                        python.PyString_GET_SIZE(data), 0)
+                        pctxt, _cstr(data), python.PyString_GET_SIZE(data), 0)
             else:
-                if self._html:
-                    error = htmlparser.htmlParseChunk(
-                        self._parser_ctxt, NULL, 0, 1)
+                if self._for_html:
+                    error = htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
                 else:
-                    error = xmlparser.xmlParseChunk(
-                        self._parser_ctxt, NULL, 0, 1)
+                    error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
                 self._source = None
                 break
         if error != 0:
             self._source = None
-            _raiseParseError(self._parser_ctxt, self._filename,
-                             self._context._error_log)
+            _raiseParseError(pctxt, self._filename, context._error_log)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
             self._source = None
