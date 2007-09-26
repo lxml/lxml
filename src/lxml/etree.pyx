@@ -2139,6 +2139,20 @@ def fromstring(text, _BaseParser parser=None, base_url=None):
     except _TargetParserResult, result_container:
         return result_container.result
 
+def fromstringlist(strings, _BaseParser parser=None):
+    """Parses an XML document from a sequence of strings.
+
+    To override the default parser with a different parser you can pass it to
+    the ``parser`` keyword argument.
+    """
+    cdef _Document doc
+    if parser is None:
+        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
+    feed = parser.feed
+    for data in strings:
+        feed(data)
+    return parser.close()
+
 def iselement(element):
     """Checks if an object appears to be a valid element object.
     """
@@ -2184,6 +2198,15 @@ def tostring(element_or_tree, encoding=None, method="xml",
                          encoding, method, write_declaration, 1, c_pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
+
+def tostringlist(element_or_tree, *args, **kwargs):
+    """Serialize an element to an encoded string representation of its XML
+    tree, stored in a list of partial strings.
+
+    This is purely for ElementTree 1.3 compatibility.  The result is a
+    single string wrapped in a list.
+    """
+    return [tostring(element_or_tree, *args, **kwargs)]
 
 def tounicode(element_or_tree, method="xml", pretty_print=False):
     """Serialize an element to the Python unicode representation of its XML

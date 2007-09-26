@@ -530,6 +530,28 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    def test_fromstringlist(self):
+        fromstringlist = self.etree.fromstringlist
+
+        root = fromstringlist(["<do", "c>T", "hi", "s is",
+                               " a text.<", "/doc", ">"])
+        self.assertEquals(0, len(root))
+        self.assertEquals('This is a text.', root.text)
+
+    def test_fromstringlist_characters(self):
+        fromstringlist = self.etree.fromstringlist
+
+        root = fromstringlist(list('<doc>This is a text.</doc>'))
+        self.assertEquals(0, len(root))
+        self.assertEquals('This is a text.', root.text)
+
+    def test_fromstringlist_single(self):
+        fromstringlist = self.etree.fromstringlist
+
+        root = fromstringlist(['<doc>This is a text.</doc>'])
+        self.assertEquals(0, len(root))
+        self.assertEquals('This is a text.', root.text)
+
     def test_iselement(self):
         iselement = self.etree.iselement
         Element = self.etree.Element
