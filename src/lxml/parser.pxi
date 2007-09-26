@@ -531,14 +531,14 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
 cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
     cdef _ResolverRegistry _resolvers
-    cdef int _parse_options
-    cdef object _filename
     cdef _ParserContext _parser_context
     cdef _ParserContext _push_parser_context
-    cdef object _target
+    cdef int _parse_options
     cdef bint _for_html
     cdef bint _remove_comments
     cdef bint _remove_pis
+    cdef object _filename
+    cdef object _target
     cdef object _default_encoding
     cdef int _default_encoding_int
 
