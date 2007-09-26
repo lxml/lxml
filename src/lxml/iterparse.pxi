@@ -328,6 +328,14 @@ cdef class iterparse(_BaseParser):
         context.prepare()
         # parser will not be unlocked - no other methods supported
 
+    property error_log:
+        """The error log of the last (or current) parser run.
+        """
+        def __get__(self):
+            cdef _ParserContext context
+            context = self._getPushParserContext()
+            return context._error_log.copy()
+
     cdef _ParserContext _createContext(self, target):
         return _IterparseContext()
 

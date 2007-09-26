@@ -652,13 +652,21 @@ cdef class _BaseParser:
         pass
 
     property error_log:
+        """The error log of the last parser run.
+        """
         def __get__(self):
-            # FIXME !!!!!!!
-            return self._parser_context._error_log.copy()
+            cdef _ParserContext context
+            context = self._getParserContext()
+            return context._error_log.copy()
 
     property resolvers:
         def __get__(self):
             return self._resolvers
+
+    property version:
+        "The version of the underlying XML parser."
+        def __get__(self):
+            return "libxml2 %d.%d.%d" % LIBXML_VERSION
 
     def setElementClassLookup(self, ElementClassLookup lookup = None):
         "Deprecated, use ``parser.set_element_class_lookup(lookup)`` instead."
@@ -693,11 +701,6 @@ cdef class _BaseParser:
         """
         return _makeElement(_tag, NULL, None, self, None, None,
                             attrib, nsmap, _extra)
-
-    property version:
-        "The version of the underlying XML parser."
-        def __get__(self):
-            return "libxml2 %d.%d.%d" % LIBXML_VERSION
 
     # internal parser methods
 
@@ -846,6 +849,17 @@ cdef class _BaseParser:
 
 cdef class _FeedParser(_BaseParser):
     cdef bint _feed_parser_running
+
+    property feed_error_log:
+        """The error log of the last (or current) run of the feed parser.
+
+        Note that this is local to the feed parser and thus is
+        different from what the ``error_log`` property returns.
+        """
+        def __get__(self):
+            cdef _ParserContext context
+            context = self._getPushParserContext()
+            return context._error_log.copy()
 
     def feed(self, data):
         """Feeds data to the parser.  The argument should be an 8-bit string

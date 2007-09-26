@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* Separate ``feed_error_log`` property for the feed parser interface.
+  The the normal parser interface and ``iterparse`` still use
+  ``error_log``.
+
 * ``fromstringlist()`` and ``tostringlist()`` functions as in
   ElementTree 1.3
 
