@@ -125,6 +125,9 @@ possible, elements behave like normal Python lists::
     >>> print len(root)
     3
 
+    >>> root.index(root[1]) # lxml.etree only!
+    1
+
     >>> children = list(root)
 
     >>> for child in root:
