@@ -5,6 +5,9 @@ from StringIO import StringIO
 import benchbase
 from benchbase import with_attributes, with_text, onlylib, serialized, children
 
+TEXT  = "some ASCII text"
+UTEXT = u"some klingon: \F8D2"
+
 ############################################################
 # Benchmarks
 ############################################################
@@ -298,6 +301,18 @@ class BenchMark(benchbase.BenchMarkBase):
 
     def bench_findall_tag(self, root):
         root.findall(".//" + self.SEARCH_TAG)
+
+    @onlylib('lxe')
+    def bench_iterfind(self, root):
+        list(root.iterfind(".//*"))
+
+    @onlylib('lxe')
+    def bench_iterfind_tag(self, root):
+        list(root.iterfind(".//" + self.SEARCH_TAG))
+
+    @onlylib('lxe')
+    def bench_iterfind_islice(self, root):
+        list(islice(root.iterfind(".//*"), 10, 110))
 
 if __name__ == '__main__':
     benchbase.main(BenchMark)
