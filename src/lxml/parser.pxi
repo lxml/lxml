@@ -866,13 +866,16 @@ cdef class _FeedParser(_BaseParser):
         buffer containing encoded data, although Unicode is supported as long
         as both string types are not mixed.
 
-        This is the main entry point to the consumer interface of a parser.
-        The parser will parse as much of the XML stream as it can on each
-        call.  To finish parsing, call the ``close()`` method.
+        This is the main entry point to the consumer interface of a
+        parser.  The parser will parse as much of the XML stream as it
+        can on each call.  To finish parsing or to reset the parser,
+        call the ``close()`` method.  Both methods may raise
+        ParseError if errors occur in the input data.  If an error is
+        raised, there is no longer a need to call ``close()``.
 
-        It is not possible to use the parser in any other way after calling
-        the ``feed()`` method.  The parser can only be reset by calling
-        ``close()``.
+        The feed parser interface is independent of the normal parser
+        usage.  You can use the same parser as a feed parser and in
+        the ``parse()`` function concurrently.
         """
         cdef _ParserContext context
         cdef xmlparser.xmlParserCtxt* pctxt
@@ -933,7 +936,7 @@ cdef class _FeedParser(_BaseParser):
         if error:
             self._feed_parser_running = 0
             try:
-                context._handleParseResult(self, pctxt.myDoc, None)
+                context._handleParseResult(self, NULL, None)
             finally:
                 context.cleanup()
 
