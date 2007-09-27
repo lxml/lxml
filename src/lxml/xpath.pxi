@@ -91,7 +91,7 @@ cdef class _XPathContext(_BaseContext):
     cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
 
-cdef int _XPATH_VERSION_WARNING_REQUIRED
+cdef bint _XPATH_VERSION_WARNING_REQUIRED
 if _LIBXML_VERSION_INT == 20627:
     _XPATH_VERSION_WARNING_REQUIRED = 1
 else:
@@ -137,7 +137,7 @@ cdef class _XPathEvaluatorBase:
         """
         return self(_eval_arg, **_variables)
 
-    cdef int _checkAbsolutePath(self, char* path):
+    cdef bint _checkAbsolutePath(self, char* path):
         cdef char c
         if path is NULL:
             return 0
