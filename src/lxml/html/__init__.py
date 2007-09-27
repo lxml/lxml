@@ -404,9 +404,10 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
             return HtmlEntity
         # Otherwise normal lookup
         return None
-    
 
-html_parser = etree.HTMLParser()
+################################################################################
+# parsing
+################################################################################
 
 def document_fromstring(html, **kw):
     value = etree.HTML(html, html_parser, **kw)
@@ -528,14 +529,16 @@ def fromstring(html, **kw):
         body.tag = 'span'
     return body
 
-def parse(filename, **kw):
+def parse(filename, parser=None, **kw):
     """
     Parse a filename, URL, or file-like object into an HTML document.
 
     You may pass the keyword argument ``base_url='http://...'`` to set
     the base URL.
     """
-    return etree.parse(filename, html_parser, **kw)
+    if parser is None:
+        parser = html_parser
+    return etree.parse(filename, parser, **kw)
 
 def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be
@@ -553,9 +556,9 @@ def _element_name(el):
     else:
         return el.tag
 
-def Element(*args, **kw):
-    v = html_parser.makeelement(*args, **kw)
-    return v
+################################################################################
+# form handling
+################################################################################
 
 class FormElement(HtmlElement):
     """
@@ -1257,5 +1260,15 @@ def open_in_browser(doc):
     
 ################################################################################
 # configure Element class lookup
+################################################################################
 
-html_parser.setElementClassLookup(HtmlElementClassLookup())
+class HTMLParser(etree.HTMLParser):
+    def __init__(self, **kwargs):
+        super(HTMLParser, self).__init__(**kwargs)
+        self.setElementClassLookup(HtmlElementClassLookup())
+
+def Element(*args, **kw):
+    v = html_parser.makeelement(*args, **kw)
+    return v
+
+html_parser = HTMLParser()
