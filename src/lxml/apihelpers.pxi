@@ -791,7 +791,23 @@ cdef int _pyXmlNameIsValid(name_utf8):
     return _xmlNameIsValid(_cstr(name_utf8))
 
 cdef int _xmlNameIsValid(char* c_name):
-    return tree.xmlValidateNCName(c_name, 0) == 0
+    #return tree.xmlValidateNCName(c_name, 0) == 0
+    if c_name is NULL or c_name[0] == c'\0':
+        return 0
+    while c_name[0] != c'\0':
+        if c_name[0] == c':' or \
+                c_name[0] == c'&' or \
+                c_name[0] == c'<' or \
+                c_name[0] == c'>' or \
+                c_name[0] == c'/' or \
+                c_name[0] == c'\x09' or \
+                c_name[0] == c'\x0A' or \
+                c_name[0] == c'\x0B' or \
+                c_name[0] == c'\x0C' or \
+                c_name[0] == c'\x20':
+            return 0
+        c_name = c_name + 1
+    return 1
 
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):

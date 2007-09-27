@@ -5,7 +5,9 @@ from common_imports import StringIO, etree, SillyFileLike
 
 ascii_uni = u'a'
 
-klingon = u"\uF8D2" # not valid for XML names
+# klingon = u"\uF8D2" # not valid for XML names
+
+invalid_tag = "\u0680:\u3120"
 
 uni = u'Ã\u0680\u3120' # some non-ASCII characters
 
@@ -27,7 +29,7 @@ class UnicodeTestCase(unittest.TestCase):
 
     def test_unicode_tag_invalid(self):
         # sadly, Klingon is not well-formed
-        self.assertRaises(ValueError, etree.Element, klingon)
+        self.assertRaises(ValueError, etree.Element, invalid_tag)
 
     def test_unicode_nstag(self):
         tag = u"{%s}%s" % (uni, uni)
@@ -36,8 +38,8 @@ class UnicodeTestCase(unittest.TestCase):
 
     def test_unicode_nstag_invalid(self):
         # sadly, Klingon is not well-formed
-        tag = u"{%s}%s" % (uni, klingon)
-        self.assertRaises(ValueError, etree.Element, klingon)
+        tag = u"{%s}%s" % (uni, invalid_tag)
+        self.assertRaises(ValueError, etree.Element, tag)
 
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
@@ -46,7 +48,7 @@ class UnicodeTestCase(unittest.TestCase):
         self.assertEquals(unicode(qname), tag)
 
     def test_unicode_qname_invalid(self):
-        self.assertRaises(ValueError, etree.QName, klingon)
+        self.assertRaises(ValueError, etree.QName, invalid_tag)
 
     def test_unicode_attr(self):
         el = etree.Element('foo', {'bar': uni})
