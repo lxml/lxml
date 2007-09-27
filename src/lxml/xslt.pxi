@@ -508,6 +508,7 @@ cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
     cdef _Document _profile
     cdef _saveToStringAndSize(self, char** s, int* l):
+        cdef python.PyThreadState* state
         cdef _Document doc
         cdef int r
         if self._context_node is not None:
@@ -517,7 +518,9 @@ cdef class _XSLTResultTree(_ElementTree):
             if doc is None:
                 s[0] = NULL
                 return
+        state = python.PyEval_SaveThread()
         r = xslt.xsltSaveResultToString(s, l, doc._c_doc, self._xslt._c_style)
+        python.PyEval_RestoreThread(state)
         if r == -1:
             raise XSLTSaveError, "Error saving XSLT result to string"
 
