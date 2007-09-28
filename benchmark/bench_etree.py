@@ -299,6 +299,9 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_findall(self, root):
         root.findall(".//*")
 
+    def bench_findall_child(self, root):
+        root.findall(".//*/" + self.SEARCH_TAG)
+
     def bench_findall_tag(self, root):
         root.findall(".//" + self.SEARCH_TAG)
 
