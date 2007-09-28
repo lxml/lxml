@@ -305,6 +305,9 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_findall_tag(self, root):
         root.findall(".//" + self.SEARCH_TAG)
 
+    def bench_findall_path(self, root):
+        root.findall(".//*[%s]/./%s/./*" % (self.SEARCH_TAG, self.SEARCH_TAG))
+
     @onlylib('lxe')
     def bench_iterfind(self, root):
         list(root.iterfind(".//*"))
