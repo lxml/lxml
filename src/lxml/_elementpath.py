@@ -65,24 +65,22 @@ xpath_tokenizer = re.compile(
 
 def prepare_tag(next, token):
     tag = token[1]
-    def select(context, result):
+    def select(result):
         for elem in result:
-            for e in elem:
-                if e.tag == tag:
-                    yield e
+            for e in elem.iterchildren(tag=tag):
+                yield e
     return select
 
 def prepare_star(next, token):
-    def select(context, result):
+    def select(result):
         for elem in result:
             for e in elem:
                 yield e
     return select
 
 def prepare_dot(next, token):
-    def select(context, result):
-        for elem in result:
-            yield elem
+    def select(result):
+        return result
     return select
 
 def prepare_iter(next, token):
@@ -93,24 +91,18 @@ def prepare_iter(next, token):
         tag = token[1]
     else:
         raise SyntaxError
-    def select(context, result):
+    def select(result):
         for elem in result:
-            for e in elem.iter(tag):
-                if e is not elem:
-                    yield e
+            for e in elem.iterdescendants(tag=tag):
+                yield e
     return select
 
 def prepare_dot_dot(next, token):
-    def select(context, result):
-        parent_map = context.parent_map
-        if parent_map is None:
-            context.parent_map = parent_map = {}
-            for p in context.root.iter():
-                for e in p:
-                    parent_map[e] = p
+    def select(result):
         for elem in result:
-            if elem in parent_map:
-                yield parent_map[elem]
+            parent = elem.getparent()
+            if parent is not None:
+                yield parent
     return select
 
 def prepare_predicate(next, token):
@@ -124,7 +116,7 @@ def prepare_predicate(next, token):
         key = token[1]
         token = next()
         if token[0] == "]":
-            def select(context, result):
+            def select(result):
                 for elem in result:
                     if elem.get(key) is not None:
                         yield elem
@@ -135,7 +127,7 @@ def prepare_predicate(next, token):
             else:
                 raise SyntaxError("invalid comparision target")
             token = next()
-            def select(context, result):
+            def select(result):
                 for elem in result:
                     if elem.get(key) == value:
                         yield elem
@@ -146,10 +138,13 @@ def prepare_predicate(next, token):
         token = next()
         if token[0] != "]":
             raise SyntaxError("invalid node predicate")
-        def select(context, result):
+        def select(result):
             for elem in result:
-                if elem.find(tag) is not None:
+                try:
+                    elem.iterdescendants(tag).next()
                     yield elem
+                except StopIteration:
+                    pass
     else:
         raise SyntaxError("invalid predicate")
     return select
@@ -165,12 +160,45 @@ ops = {
 
 _cache = {}
 
-class _SelectorContext:
-    parent_map = None
-    def __init__(self, root):
-        self.root = root
-
 # --------------------------------------------------------------------
+
+def _build_path_iterator(path):
+    # compile selector pattern
+    try:
+        return _cache[path]
+    except KeyError:
+        pass
+    if len(_cache) > 100:
+        _cache.clear()
+
+    if path[:1] == "/":
+        raise SyntaxError("cannot use absolute path on element")
+    stream = iter(xpath_tokenizer(path))
+    next = stream.next; token = next()
+    selector = []
+    while 1:
+        try:
+            selector.append(ops[token[0]](next, token))
+        except StopIteration:
+            raise SyntaxError("invalid path")
+        try:
+            token = next()
+            if token[0] == "/":
+                token = next()
+        except StopIteration:
+            break
+    return selector
+
+##
+# Iterate over the matching nodes
+
+def iterfind(elem, path):
+    # execute selector pattern
+    selector = _build_path_iterator(path)
+    result = iter((elem,))
+    for select in selector:
+        result = select(result)
+    return result
 
 ##
 # Find first matching object.
@@ -186,37 +214,6 @@ def find(elem, path):
 
 def findall(elem, path):
     return list(iterfind(elem, path))
-
-def iterfind(elem, path):
-    # compile selector pattern
-    try:
-        selector = _cache[path]
-    except KeyError:
-        if len(_cache) > 100:
-            _cache.clear()
-        if path[:1] == "/":
-            raise SyntaxError("cannot use absolute path on element")
-        stream = iter(xpath_tokenizer(path))
-        next = stream.next; token = next()
-        selector = []
-        while 1:
-            try:
-                selector.append(ops[token[0]](next, token))
-            except StopIteration:
-                raise SyntaxError("invalid path")
-            try:
-                token = next()
-                if token[0] == "/":
-                    token = next()
-            except StopIteration:
-                break
-        _cache[path] = selector
-    # execute selector pattern
-    result = [elem]
-    context = _SelectorContext(elem)
-    for select in selector:
-        result = select(context, result)
-    return result
 
 ##
 # Find text for first matching object.
