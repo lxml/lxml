@@ -71,21 +71,27 @@ class SetMixin(object):
         for item in other:
             self.add(item)
 
-    __ior__ = update
+    def __ior__(self, other):
+        self.update(other)
+        return self
 
     def intersection_update(self, other):
         for item in self:
             if item not in other:
                 self.remove(item)
 
-    __iand__ = intersection_update
+    def __iand__(self, other):
+        self.intersection_update(other)
+        return self
 
     def difference_update(self, other):
         for item in other:
             if item in self:
                 self.remove(item)
 
-    __isub__ = difference_update
+    def __isub__(self, other):
+        self.difference_update(other)
+        return self
 
     def symmetric_difference_update(self, other):
         for item in other:
@@ -94,7 +100,9 @@ class SetMixin(object):
             else:
                 self.add(item)
 
-    __ixor__ = symmetric_difference_update
+    def __ixor__(self, other):
+        self.symmetric_difference_update(other)
+        return self
 
     def discard(self, item):
         try:
