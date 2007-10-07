@@ -78,7 +78,7 @@ Incompatible changes
   type annotation on serialisation, you can use the ``deannotate()`` function.
 
 * The C-API function ``findOrBuildNodeNs()`` was replaced by the more generic
-  ``findOrBuildNodeNsPrefix()``
+  ``findOrBuildNodeNsPrefix()`` that accepts an additional default prefix.
 
 
 Enhancements
