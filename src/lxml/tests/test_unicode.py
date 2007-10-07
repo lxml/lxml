@@ -5,9 +5,9 @@ from common_imports import StringIO, etree, SillyFileLike
 
 ascii_uni = u'a'
 
-# klingon = u"\uF8D2" # not valid for XML names
+klingon = u"\uF8D2" # not valid for XML names
 
-invalid_tag = "\u0680:\u3120"
+invalid_tag = "test" + klingon
 
 uni = u'Ã\u0680\u3120' # some non-ASCII characters
 

@@ -16,9 +16,11 @@ Bugs fixed
 Other changes
 -------------
 
-* lxml.etree no longer validates unicode characters in tag names to
-  avoid rejecting HTML tags.  Only special characters like ':' and '>'
-  are rejected.
+* Tag name validation in lxml.etree (and lxml.html) now distinguishes
+  between HTML tags and XML tags based on the parser that was used to
+  parse or create them.  HTML tags no longer reject any non-ASCII
+  characters in tag names but only spaces and the special characters
+  '<>&/'.
 
 
 2.0alpha3 (2007-09-26)

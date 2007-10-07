@@ -707,8 +707,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return self._tag
     
         def __set__(self, value):
+            cdef _BaseParser parser
             ns, name = _getNsTag(value)
-            _tagValidOrRaise(name)
+            parser = self._doc._parser
+            if parser is not None and parser._for_html:
+                _htmlTagValidOrRaise(name)
+            else:
+                _tagValidOrRaise(name)
             self._tag = value
             tree.xmlNodeSetName(self._c_node, _cstr(name))
             if ns is None:

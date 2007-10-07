@@ -99,7 +99,10 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     """
     cdef xmlNode* c_node
     ns_utf, name_utf = _getNsTag(tag)
-    _tagValidOrRaise(name_utf)
+    if parser is not None and parser._for_html:
+        _htmlTagValidOrRaise(name_utf)
+    else:
+        _tagValidOrRaise(name_utf)
     if doc is not None:
         c_doc = doc._c_doc
     elif c_doc is NULL:
@@ -147,15 +150,21 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
 
     If 'c_doc' is also NULL, a new xmlDoc will be created.
     """
+    cdef _BaseParser parser
     cdef _Document doc
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc
     if parent is None or parent._doc is None:
         return None
     ns_utf, name_utf = _getNsTag(tag)
-    _tagValidOrRaise(name_utf)
     doc = parent._doc
     c_doc = doc._c_doc
+
+    parser = doc._parser
+    if parser is not None and parser._for_html:
+        _htmlTagValidOrRaise(name_utf)
+    else:
+        _tagValidOrRaise(name_utf)
 
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
@@ -175,6 +184,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     """Initialise the attributes of an element node.
     """
+    cdef bint is_html
     cdef xmlNs* c_ns
     # 'extra' is not checked here (expected to be a keyword dict)
     if attrib is not None and not hasattr(attrib, 'items'):
@@ -185,9 +195,11 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
         else:
             attrib.update(extra)
     if attrib:
+        is_html = doc._parser._for_html
         for name, value in attrib.items():
             attr_ns_utf, attr_name_utf = _getNsTag(name)
-            _attributeValidOrRaise(attr_name_utf)
+            if not is_html:
+                _attributeValidOrRaise(attr_name_utf)
             value_utf = _utf8(value)
             if attr_ns_utf is None:
                 tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
@@ -242,7 +254,8 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef char* c_value
     cdef char* c_tag
     ns, tag = _getNsTag(key)
-    _attributeValidOrRaise(tag)
+    if not element._doc._parser._for_html:
+        _attributeValidOrRaise(tag)
     c_tag = _cstr(tag)
     if isinstance(value, QName):
         value = _resolveQNameText(element, value)
@@ -790,13 +803,17 @@ cdef _getNsTag(tag):
 cdef int _pyXmlNameIsValid(name_utf8):
     return _xmlNameIsValid(_cstr(name_utf8))
 
+cdef int _pyHtmlNameIsValid(name_utf8):
+    return _htmlNameIsValid(_cstr(name_utf8))
+
 cdef int _xmlNameIsValid(char* c_name):
-    #return tree.xmlValidateNCName(c_name, 0) == 0
+    return tree.xmlValidateNCName(c_name, 0) == 0
+
+cdef int _htmlNameIsValid(char* c_name):
     if c_name is NULL or c_name[0] == c'\0':
         return 0
     while c_name[0] != c'\0':
-        if c_name[0] == c':' or \
-                c_name[0] == c'&' or \
+        if c_name[0] == c'&' or \
                 c_name[0] == c'<' or \
                 c_name[0] == c'>' or \
                 c_name[0] == c'/' or \
@@ -812,6 +829,12 @@ cdef int _xmlNameIsValid(char* c_name):
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
         raise ValueError, "Invalid tag name %r" % \
+              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+    return 0
+
+cdef int _htmlTagValidOrRaise(tag_utf) except -1:
+    if not _pyHtmlNameIsValid(tag_utf):
+        raise ValueError, "Invalid HTML tag name %r" % \
               python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
     return 0
 
