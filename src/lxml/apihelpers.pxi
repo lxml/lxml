@@ -817,6 +817,8 @@ cdef int _htmlNameIsValid(char* c_name):
                 c_name[0] == c'<' or \
                 c_name[0] == c'>' or \
                 c_name[0] == c'/' or \
+                c_name[0] == c'"' or \
+                c_name[0] == c"'" or \
                 c_name[0] == c'\x09' or \
                 c_name[0] == c'\x0A' or \
                 c_name[0] == c'\x0B' or \

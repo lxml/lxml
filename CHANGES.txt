@@ -21,7 +21,7 @@ Other changes
   between HTML tags and XML tags based on the parser that was used to
   parse or create them.  HTML tags no longer reject any non-ASCII
   characters in tag names but only spaces and the special characters
-  '<>&/'.
+  ``<>&/"'``.
 
 
 2.0alpha3 (2007-09-26)

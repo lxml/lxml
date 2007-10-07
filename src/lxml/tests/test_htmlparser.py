@@ -64,6 +64,20 @@ class HtmlParserTestCaseBase(HelperTestCase):
         pname.tag = 'p:name'
         self.assertEquals(pname.tag, 'p:name')
 
+    def test_html_element_name_quote(self):
+        parser = self.etree.HTMLParser()
+        Element = parser.makeelement
+
+        self.assertRaises(ValueError, Element, 'p"name')
+        self.assertRaises(ValueError, Element, "na'me")
+        self.assertRaises(ValueError, Element, '{test}"name')
+        self.assertRaises(ValueError, Element, "{test}name'")
+
+        el = Element('name')
+        self.assertRaises(ValueError, setattr, el, 'tag', "pname'")
+        self.assertRaises(ValueError, setattr, el, 'tag', '"pname')
+        self.assertEquals(el.tag, "name")
+
     def test_html_element_name_space(self):
         parser = self.etree.HTMLParser()
         Element = parser.makeelement
@@ -74,6 +88,7 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', ' name ')
+        self.assertEquals(el.tag, "name")
 
     def test_html_subelement_name_empty(self):
         parser = self.etree.HTMLParser()
@@ -96,6 +111,17 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
         pname = SubElement(el, '{test}p:name')
         self.assertEquals(pname.tag, '{test}p:name')
+
+    def test_html_subelement_name_quote(self):
+        parser = self.etree.HTMLParser()
+        Element = parser.makeelement
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, "name'")
+        self.assertRaises(ValueError, SubElement, el, 'na"me')
+        self.assertRaises(ValueError, SubElement, el, "{test}na'me")
+        self.assertRaises(ValueError, SubElement, el, '{test}"name')
 
     def test_html_subelement_name_space(self):
         parser = self.etree.HTMLParser()

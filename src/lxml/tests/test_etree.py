@@ -74,6 +74,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', 'p:name')
 
+    def test_element_name_quote(self):
+        Element = self.etree.Element
+        self.assertRaises(ValueError, Element, "p'name")
+        self.assertRaises(ValueError, Element, 'p"name')
+
+        self.assertRaises(ValueError, Element, "{test}p'name")
+        self.assertRaises(ValueError, Element, '{test}p"name')
+
+        el = Element('name')
+        self.assertRaises(ValueError, setattr, el, 'tag', "p'name")
+        self.assertRaises(ValueError, setattr, el, 'tag', 'p"name')
+
     def test_element_name_space(self):
         Element = self.etree.Element
         self.assertRaises(ValueError, Element, ' name ')
@@ -98,6 +110,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         el = Element('name')
         self.assertRaises(ValueError, SubElement, el, 'p:name')
         self.assertRaises(ValueError, SubElement, el, '{test}p:name')
+
+    def test_subelement_name_quote(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, "p'name")
+        self.assertRaises(ValueError, SubElement, el, "{test}p'name")
+
+        self.assertRaises(ValueError, SubElement, el, 'p"name')
+        self.assertRaises(ValueError, SubElement, el, '{test}p"name')
 
     def test_subelement_name_space(self):
         Element = self.etree.Element
