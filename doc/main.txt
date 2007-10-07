@@ -138,8 +138,8 @@ The source distribution is signed with `this key`_.
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
-The latest version is `lxml 2.0alpha3`_, released 2007-09-26
-(`changes for 2.0alpha3`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.0alpha4`_, released 2007-10-07
+(`changes for 2.0alpha4`_).  `Older versions`_ are listed below.
 
 .. _`Older versions`: #old-versions
 
@@ -198,6 +198,8 @@ obstacle to using lxml in your codebase.
 
 Old Versions
 ------------
+
+* `lxml 2.0alpha3`_, released 2007-09-26 (`changes for 2.0alpha3`_)
 
 * `lxml 2.0alpha2`_, released 2007-09-15 (`changes for 2.0alpha2`_)
 
