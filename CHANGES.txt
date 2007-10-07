@@ -3,7 +3,7 @@ lxml changelog
 ==============
 
 
-2.0alpha3 (2007-10-07)
+2.0alpha4 (2007-10-07)
 ======================
 
 Features added
