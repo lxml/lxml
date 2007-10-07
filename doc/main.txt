@@ -251,6 +251,7 @@ Old Versions
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.0alpha4`: lxml-2.0alpha4.tgz
 .. _`lxml 2.0alpha3`: lxml-2.0alpha3.tgz
 .. _`lxml 2.0alpha2`: lxml-2.0alpha2.tgz
 .. _`lxml 2.0alpha1`: lxml-2.0alpha1.tgz
@@ -277,6 +278,7 @@ Old Versions
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.0alpha4`: changes-2.0alpha4.html
 .. _`changes for 2.0alpha3`: changes-2.0alpha3.html
 .. _`changes for 2.0alpha2`: changes-2.0alpha2.html
 .. _`changes for 2.0alpha1`: changes-2.0alpha1.html
