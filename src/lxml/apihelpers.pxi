@@ -171,15 +171,24 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         python.PyErr_NoMemory()
     tree.xmlAddChild(parent._c_node, c_node)
 
-    if text is not None:
-        _setNodeText(c_node, text)
-    if tail is not None:
-        _setTailText(c_node, tail)
+    try:
+        if text is not None:
+            _setNodeText(c_node, text)
+        if tail is not None:
+            _setTailText(c_node, tail)
 
-    # add namespaces to node if necessary
-    doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
-    return _elementFactory(doc, c_node)
+        # add namespaces to node if necessary
+        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+        _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+        return _elementFactory(doc, c_node)
+    except:
+        # free allocated c_node/c_doc unless Python does it for us
+        if c_node.doc is not c_doc:
+            # node not yet in document => will not be freed by document
+            if tail is not None:
+                _removeText(c_node.next) # tail
+            tree.xmlFreeNode(c_node)
+        raise
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     """Initialise the attributes of an element node.
