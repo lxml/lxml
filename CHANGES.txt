@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* lxml.etree could crash when adding more than 10000 namespaces to a
+  document
+
+Other changes
+-------------
+
 
 2.0alpha4 (2007-10-07)
 ======================

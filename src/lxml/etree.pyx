@@ -229,7 +229,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
     """
-    cdef int _ns_counter
+    cdef object _ns_counter
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
     
@@ -295,7 +295,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return self._c_doc.URL
 
     cdef buildNewPrefix(self):
-        ns = python.PyString_FromFormat("ns%d", self._ns_counter)
+        ns = "ns%d" % self._ns_counter
         self._ns_counter = self._ns_counter + 1
         return ns
 
@@ -304,7 +304,6 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         """Get or create namespace structure for a node.  Reuses the prefix if
         possible.
         """
-        cdef int i
         cdef xmlNs* c_ns
         cdef xmlNs* c_doc_ns
         # look for existing ns
@@ -315,15 +314,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         if c_prefix is NULL or \
                tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:
             # try to simulate ElementTree's namespace prefix creation
-            for i from 0 <= i < 10000:
+            while 1:
                 prefix = self.buildNewPrefix()
                 c_prefix = _cstr(prefix)
                 # make sure it's not used already
                 if tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is NULL:
                     break
-            if i >= 10000:
-                # XXX too many prefixes in use - this is pretty bad!
-                return NULL
 
         return tree.xmlNewNs(c_node, c_href, c_prefix)
 
@@ -333,8 +329,8 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         c_ns = self._findOrBuildNodeNs(c_node, href, NULL)
         tree.xmlSetNs(c_node, c_ns)
 
-    cdef void _setNodeNamespaces(self, xmlNode* c_node,
-                                 object node_ns_utf, object nsmap):
+    cdef int _setNodeNamespaces(self, xmlNode* c_node,
+                                object node_ns_utf, object nsmap) except -1:
         """Lookup current namespace prefixes, then set namespace structure for
         node and register new ns-prefix mappings.
 
@@ -347,7 +343,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         if not nsmap:
             if node_ns_utf is not None:
                 self._setNodeNs(c_node, _cstr(node_ns_utf))
-            return
+            return 0
 
         c_doc  = self._c_doc
         for prefix, href in nsmap.items():
@@ -368,6 +364,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
         if node_ns_utf is not None:
             self._setNodeNs(c_node, _cstr(node_ns_utf))
+        return 0
 
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
@@ -377,7 +374,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
     result = NEW_DOCUMENT(_Document)
     result._c_doc = c_doc
-    result._ns_counter = 0
+    result._ns_counter = 0L
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     result._parser = parser
