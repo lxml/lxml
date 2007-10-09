@@ -223,7 +223,7 @@ Change this section to something like this, but take care to use the correct
 version numbers::
 
   STATIC_INCLUDE_DIRS = [
-         "..\\libxml2-2.6.23.win32\\include ",
+         "..\\libxml2-2.6.23.win32\\include",
          "..\\libxslt-1.1.15.win32\\include",
          "..\\zlib-1.2.3.win32\\include",
          "..\\iconv-1.9.1.win32\\include"
