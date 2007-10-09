@@ -232,7 +232,6 @@ version numbers::
   STATIC_LIBRARY_DIRS = [
          "..\\libxml2-2.6.23.win32\\lib",
          "..\\libxslt-1.1.15.win32\\lib",
-         "..\\libxslt-1.1.15.win32\\lib",
          "..\\zlib-1.2.3.win32\\lib",
          "..\\iconv-1.9.1.win32\\lib"
          ]
