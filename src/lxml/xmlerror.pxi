@@ -98,7 +98,7 @@ cdef class _BaseErrorLog:
         return ''
 
     cdef void _receive(self, xmlerror.xmlError* error):
-        cdef int is_error
+        cdef bint is_error
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._setError(error)
@@ -114,6 +114,7 @@ cdef class _BaseErrorLog:
 
     cdef void _receiveGeneric(self, int domain, int type, int level, int line,
                               message, filename):
+        cdef bint is_error
         cdef _LogEntry entry
         entry = _LogEntry()
         entry._setGeneric(domain, type, level, line, message, filename)
@@ -184,7 +185,9 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return False
 
     def __nonzero__(self):
-        return bool(self._entries)
+        cdef bint result
+        result = self._entries
+        return result
 
     def filter_domains(self, domains):
         """Filter the errors by the given domains and return a new error log

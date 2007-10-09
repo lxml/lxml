@@ -44,8 +44,8 @@ cdef _textToString(xmlNode* c_node, encoding):
     return python.PyUnicode_AsEncodedString(text, encoding, 'strict')
 
 cdef _tostring(_Element element, encoding, method,
-               int write_xml_declaration, int write_complete_document,
-               int pretty_print):
+               bint write_xml_declaration, bint write_complete_document,
+               bint pretty_print):
     """Serialize an element to an encoded string representation of its XML
     tree.
     """
@@ -96,7 +96,7 @@ cdef _tostring(_Element element, encoding, method,
     return result
 
 cdef _tounicode(_Element element, method,
-                int write_complete_document, int pretty_print):
+                bint write_complete_document, bint pretty_print):
     """Serialize an element to the Python unicode representation of its XML
     tree.
     """
@@ -133,9 +133,9 @@ cdef _tounicode(_Element element, method,
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding, int c_method,
-                             int write_xml_declaration,
-                             int write_complete_document,
-                             int pretty_print):
+                             bint write_xml_declaration,
+                             bint write_complete_document,
+                             bint pretty_print):
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
@@ -222,7 +222,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     char* encoding, int pretty_print):
+                     char* encoding, bint pretty_print):
     "Write the element tail."
     c_node = c_node.next
     while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
@@ -231,7 +231,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, int pretty_print):
+                             char* encoding, bint pretty_print):
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -247,7 +247,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, int pretty_print):
+                             char* encoding, bint pretty_print):
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -307,8 +307,8 @@ cdef int _closeFilelikeWriter(void* ctxt):
     return (<_FilelikeWriter>ctxt).close()
 
 cdef _tofilelike(f, _Element element, encoding, method,
-                 int write_xml_declaration, int write_doctype,
-                 int pretty_print):
+                 bint write_xml_declaration, bint write_doctype,
+                 bint pretty_print):
     cdef python.PyThreadState* state
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
@@ -400,7 +400,7 @@ cdef _tofilelikeC14N(f, _Element element):
 
 # dump node to file (mainly for debug)
 
-cdef _dumpToFile(f, xmlNode* c_node, int pretty_print):
+cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print):
     cdef tree.xmlOutputBuffer* c_buffer
     if not python.PyFile_Check(f):
         raise ValueError, "Not a file"

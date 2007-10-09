@@ -292,7 +292,6 @@ cdef class iterparse(_BaseParser):
                 filename = _encodeFilename(filename)
 
         self._source = source
-        html = bool(html)
         if html:
             # make sure we're not looking for namespaces
             if 'start' in events:

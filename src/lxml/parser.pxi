@@ -431,7 +431,7 @@ cdef class _ParserContext(_ResolverContext):
     cdef object _handleParseResult(self, _BaseParser parser,
                                    xmlDoc* result, filename):
         cdef xmlDoc* c_doc
-        cdef int recover
+        cdef bint recover
         recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
         c_doc = _handleParseResult(self, self._c_ctxt, result,
                                    filename, recover)
@@ -439,7 +439,7 @@ cdef class _ParserContext(_ResolverContext):
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
                                        xmlDoc* result, filename) except NULL:
-        cdef int recover
+        cdef bint recover
         recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
         return _handleParseResult(self, self._c_ctxt, result,
                                    filename, recover)
@@ -481,8 +481,8 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
 cdef xmlDoc* _handleParseResult(_ParserContext context,
                                 xmlparser.xmlParserCtxt* c_ctxt,
                                 xmlDoc* result, filename,
-                                int recover) except NULL:
-    cdef int well_formed
+                                bint recover) except NULL:
+    cdef bint well_formed
     if c_ctxt.myDoc is not NULL:
         if c_ctxt.myDoc != result:
             tree.xmlFreeDoc(c_ctxt.myDoc)
@@ -556,8 +556,8 @@ cdef class _BaseParser:
         self._filename = filename
         self._target = target
         self._for_html = for_html
-        self._remove_comments = bool(remove_comments)
-        self._remove_pis = bool(remove_pis)
+        self._remove_comments = remove_comments
+        self._remove_pis = remove_pis
 
         self._resolvers = _ResolverRegistry()
 
@@ -711,7 +711,6 @@ cdef class _BaseParser:
         cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
-        cdef int recover
         cdef Py_ssize_t py_buffer_len
         cdef int buffer_len
         cdef char* c_text
@@ -752,7 +751,6 @@ cdef class _BaseParser:
         cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
-        cdef int recover
         cdef char* c_encoding
         if c_len > python.INT_MAX:
             raise ParserError, "string is too long to parse it with libxml2"
@@ -788,7 +786,6 @@ cdef class _BaseParser:
         cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
-        cdef int recover
         cdef int orig_options
         cdef char* c_encoding
         result = NULL
@@ -825,7 +822,6 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_filename
-        cdef int recover
         if not filename:
             filename = None
 
@@ -884,7 +880,6 @@ cdef class _FeedParser(_BaseParser):
         cdef char* c_encoding
         cdef int buffer_len
         cdef int error
-        cdef int recover
         if python.PyString_Check(data):
             c_encoding = NULL
             c_data = _cstr(data)

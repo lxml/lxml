@@ -5,7 +5,7 @@ cimport python
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)
-    cdef int _isElement(tree.xmlNode* c_node)
+    cdef bint _isElement(tree.xmlNode* c_node)
 
     # return the namespace URI of the node or NULL
     cdef char* _getNs(tree.xmlNode* node)
@@ -129,7 +129,7 @@ cdef extern from "etree.h":
     # XML node helper functions
 
     # check if the element has at least one child
-    cdef int hasChild(tree.xmlNode* c_node)
+    cdef bint hasChild(tree.xmlNode* c_node)
 
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
@@ -191,10 +191,10 @@ cdef extern from "etree.h":
     cdef object namespacedNameFromNsName(char* c_ns, char* c_tag)
 
     # check if the node has a text value (which may be '')
-    cdef int hasText(tree.xmlNode* c_node)
+    cdef bint hasText(tree.xmlNode* c_node)
 
     # check if the node has a tail value (which may be '')
-    cdef int hasTail(tree.xmlNode* c_node)
+    cdef bint hasTail(tree.xmlNode* c_node)
 
     # get the text content of an element (or None)
     cdef object textOf(tree.xmlNode* c_node)

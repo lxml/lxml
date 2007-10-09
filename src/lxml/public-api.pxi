@@ -54,10 +54,10 @@ cdef public _Document documentOrRaise(object input):
 cdef public _Element rootNodeOrRaise(object input):
     return _rootNodeOrRaise(input)
 
-cdef public int hasText(xmlNode* c_node):
+cdef public bint hasText(xmlNode* c_node):
     return _hasText(c_node)
 
-cdef public int hasTail(xmlNode* c_node):
+cdef public bint hasTail(xmlNode* c_node):
     return _hasTail(c_node)
 
 cdef public object textOf(xmlNode* c_node):
@@ -106,7 +106,7 @@ cdef public int delAttributeFromNsName(tree.xmlNode* c_element,
                                        char* c_href, char* c_name):
     return _delAttributeFromNsName(c_element, c_href, c_name)
 
-cdef public int hasChild(xmlNode* c_node):
+cdef public bint hasChild(xmlNode* c_node):
     return _hasChild(c_node)
 
 cdef public xmlNode* findChild(xmlNode* c_node, Py_ssize_t index):

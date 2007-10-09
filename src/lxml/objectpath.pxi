@@ -86,7 +86,7 @@ cdef _parseObjectPathString(path):
     """Parse object path string into a 'hrefOnameOhrefOnameOOO' string and an
     index list.  The index list is None if no index was used in the path.
     """
-    cdef int has_dot
+    cdef bint has_dot
     new_path = []
     path = cetree.utf8(path.strip())
     if path == '.':

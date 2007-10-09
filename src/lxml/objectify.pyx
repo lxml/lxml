@@ -1045,7 +1045,7 @@ cdef class ElementMaker:
     cdef object _makeelement
     cdef object _namespace
     cdef object _nsmap
-    cdef int _annotate
+    cdef bint _annotate
     def __init__(self, namespace=None, nsmap=None, annotate=True,
                  makeelement=None):
         if nsmap is None:
@@ -1055,7 +1055,7 @@ cdef class ElementMaker:
             self._namespace = None
         else:
             self._namespace = "{%s}" % namespace
-        self._annotate = bool(annotate)
+        self._annotate = annotate
         if makeelement is not None:
             assert callable(makeelement)
             self._makeelement = makeelement
@@ -1077,15 +1077,15 @@ cdef class _ObjectifyElementMakerCaller:
     cdef object _tag
     cdef object _nsmap
     cdef object _element_factory
-    cdef int _annotate
+    cdef bint _annotate
 
     def __call__(self, *children, **attrib):
         cdef _ObjectifyElementMakerCaller elementMaker
         cdef python.PyObject* pytype
         cdef _Element element
         cdef _Element childElement
-        cdef int has_children
-        cdef int has_string_value
+        cdef bint has_children
+        cdef bint has_string_value
         if self._element_factory is None:
             element = _makeElement(self._tag, None, attrib, self._nsmap)
         else:
@@ -1153,7 +1153,7 @@ cdef _add_text(_Element elem, text):
 ################################################################################
 # Recursive element dumping
 
-cdef int __RECURSIVE_STR
+cdef bint __RECURSIVE_STR
 __RECURSIVE_STR = 0 # default: off
 
 def enableRecursiveStr(on=True):
@@ -1161,7 +1161,7 @@ def enableRecursiveStr(on=True):
     based on objectify.dump(element).
     """
     global __RECURSIVE_STR
-    __RECURSIVE_STR = bool(on)
+    __RECURSIVE_STR = on
 
 def dump(_Element element not None):
     """Return a recursively generated string representation of an element.
@@ -1323,8 +1323,7 @@ def pyannotate(element_or_tree, ignore_old=False, ignore_xsi=False,
     """
     cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, 0, 1, bool(ignore_xsi), bool(ignore_old),
-              None, empty_pytype)
+    _annotate(element, 0, 1, ignore_xsi, ignore_old, None, empty_pytype)
 
 def xsiannotate(element_or_tree, ignore_old=False, ignore_pytype=False,
                 empty_type=None):
@@ -1350,8 +1349,7 @@ def xsiannotate(element_or_tree, ignore_old=False, ignore_pytype=False,
     """
     cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, 1, 0, bool(ignore_old), bool(ignore_pytype),
-              empty_type, None)
+    _annotate(element, 1, 0, ignore_old, ignore_pytype, empty_type, None)
 
 def annotate(element_or_tree, ignore_old=True, ignore_xsi=False,
              empty_pytype=None, empty_type=None, annotate_xsi=0,
@@ -1386,12 +1384,12 @@ def annotate(element_or_tree, ignore_old=True, ignore_xsi=False,
     """
     cdef _Element  element
     element = cetree.rootNodeOrRaise(element_or_tree)
-    _annotate(element, annotate_xsi, annotate_pytype, bool(ignore_xsi),
-              bool(ignore_old), empty_type, empty_pytype)
+    _annotate(element, annotate_xsi, annotate_pytype, ignore_xsi,
+              ignore_old, empty_type, empty_pytype)
 
 
-cdef _annotate(_Element element, int annotate_xsi, int annotate_pytype,
-               int ignore_xsi, int ignore_pytype,
+cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
+               bint ignore_xsi, bint ignore_pytype,
                empty_type_name, empty_pytype_name):
     cdef _Document doc
     cdef tree.xmlNode* c_node

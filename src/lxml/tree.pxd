@@ -300,9 +300,9 @@ cdef extern from "libxml/xmlmemory.h":
     cdef void* xmlMalloc(size_t size)
 
 cdef extern from "etree_defs.h":
-    cdef int _isElement(xmlNode* node)
-    cdef int _isElementOrXInclude(xmlNode* node)
+    cdef bint _isElement(xmlNode* node)
+    cdef bint _isElementOrXInclude(xmlNode* node)
     cdef char* _getNs(xmlNode* node)
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(xmlNode* tree_top,
-                                          xmlNode* start_node, int inclusive)
+                                          xmlNode* start_node, bint inclusive)
     cdef void END_FOR_EACH_ELEMENT_FROM(xmlNode* start_node)

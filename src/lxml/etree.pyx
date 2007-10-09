@@ -853,7 +853,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return c
 
     def __nonzero__(self):
-        cdef xmlNode* c_node
         import warnings
         warnings.warn(
             "The behavior of this method will change in future versions. "
@@ -861,7 +860,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             FutureWarning
             )
         # emulate old behaviour
-        return bool(_hasChild(self._c_node))
+        return _hasChild(self._c_node)
 
     def __contains__(self, element):
         cdef xmlNode* c_node
@@ -1384,22 +1383,22 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         The keyword argument 'method' selects the output method: 'xml' or
         'html'.
         """
-        cdef int c_write_declaration
+        cdef bint write_declaration
         self._assertHasRoot()
         # suppress decl. in default case (purely for ElementTree compatibility)
         if xml_declaration is not None:
-            c_write_declaration = bool(xml_declaration)
+            write_declaration = xml_declaration
             if encoding is None:
                 encoding = 'ASCII'
         elif encoding is None:
             encoding = 'ASCII'
-            c_write_declaration = 0
+            write_declaration = 0
         else:
             encoding = encoding.upper()
-            c_write_declaration = encoding not in \
+            write_declaration = encoding not in \
                                   ('US-ASCII', 'ASCII', 'UTF8', 'UTF-8')
         _tofilelike(file, self._context_node, encoding, method,
-                    c_write_declaration, 1, bool(pretty_print))
+                    write_declaration, 1, pretty_print)
 
     def getpath(self, _Element element not None):
         """Returns a structural, absolute XPath expression to find that element.
@@ -2164,7 +2163,7 @@ def dump(_Element elem not None, pretty_print=True):
     """Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
     """
-    _dumpToFile(sys.stdout, elem._c_node, bool(pretty_print))
+    _dumpToFile(sys.stdout, elem._c_node, pretty_print)
 
 def tostring(element_or_tree, encoding=None, method="xml",
              xml_declaration=None, pretty_print=False):
@@ -2178,26 +2177,25 @@ def tostring(element_or_tree, encoding=None, method="xml",
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
-    The keyword argument 'method' selects the output method: 'xml' or 'html'.
+    The keyword argument 'method' selects the output method: 'xml',
+    'html' or plain 'text'.
     """
-    cdef int write_declaration
-    cdef int c_pretty_print
-    c_pretty_print = bool(pretty_print)
+    cdef bint write_declaration
     if xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = encoding is not None and encoding.upper() not in \
                             ('ASCII', 'UTF-8', 'UTF8', 'US-ASCII')
     else:
-        write_declaration = bool(xml_declaration)
+        write_declaration = xml_declaration
     if encoding is None:
         encoding = 'ASCII'
 
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree, encoding, method,
-                         write_declaration, 0, c_pretty_print)
+                         write_declaration, 0, pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         encoding, method, write_declaration, 1, c_pretty_print)
+                         encoding, method, write_declaration, 1, pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 
@@ -2218,17 +2216,16 @@ def tounicode(element_or_tree, method="xml", pretty_print=False):
     therefore not necessarily suited for serialization to byte streams without
     further treatment.
 
-    The keyword argument 'pretty_print' (bool) enables formatted XML.
+    The boolean keyword argument 'pretty_print' enables formatted XML.
 
-    The keyword argument 'method' selects the output method: 'xml' or 'html'.
+    The keyword argument 'method' selects the output method: 'xml',
+    'html' or plain 'text'.
     """
-    cdef int c_pretty_print
-    c_pretty_print = bool(pretty_print)
     if isinstance(element_or_tree, _Element):
-        return _tounicode(<_Element>element_or_tree, method, 0, c_pretty_print)
+        return _tounicode(<_Element>element_or_tree, method, 0, pretty_print)
     elif isinstance(element_or_tree, _ElementTree):
         return _tounicode((<_ElementTree>element_or_tree)._context_node,
-                          method, 1, c_pretty_print)
+                          method, 1, pretty_print)
     else:
         raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
 

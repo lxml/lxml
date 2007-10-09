@@ -448,7 +448,7 @@ cdef _resolveQNameText(_Element element, value):
             element._c_node, _cstr(ns), NULL)
         return '%s:%s' % (c_ns.prefix, tag)
 
-cdef int _hasChild(xmlNode* c_node):
+cdef bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
 
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
@@ -534,7 +534,7 @@ cdef xmlNode* _parentElement(xmlNode* c_node):
         return NULL
     return c_node
 
-cdef int _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+cdef bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     """Tests if the node matches namespace URI and tag name.
 
     A node matches if it matches both c_href and c_name.
@@ -697,7 +697,7 @@ cdef int isutf8py(pystring):
     cdef char* s
     cdef char* c_end
     cdef char c
-    cdef int is_non_ascii
+    cdef bint is_non_ascii
     s = _cstr(pystring)
     c_end = s + python.PyString_GET_SIZE(pystring)
     is_non_ascii = 0
