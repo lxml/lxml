@@ -35,7 +35,7 @@ def svn_version():
 
         if data.startswith('8'):
             # SVN >= 1.4
-            data = map(str.splitlines, data.split('\n\x0c\n'))
+            data = [ d.splitlines() for d in data.split('\n\x0c\n') ]
             del data[0][0] # get rid of the '8'
             dirurl = data[0][3]
             try:

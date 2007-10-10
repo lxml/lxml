@@ -3,7 +3,7 @@ from distutils.core import Extension
 
 try:
     from Cython.Distutils import build_ext as build_pyx
-    print "Building with Cython."
+    print("Building with Cython.")
     CYTHON_INSTALLED = True
 except ImportError:
     CYTHON_INSTALLED = False
@@ -131,13 +131,21 @@ def define_macros():
     return macros
     
 def flags(cmd):
-    wf, rf, ef = os.popen3(cmd)
+    try:
+        import subprocess
+    except ImportError:
+        # Python 2.3
+        _, rf, ef = os.popen3(cmd)
+    else:
+        # Python 2.4+
+        p = subprocess.Popen(cmd, shell=True, close_fds=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        rf, ef = p.stdout, p.stderr
     errors = ef.read()
     if errors:
-        print "ERROR:", errors
-        print "** make sure the development packages of libxml2 and libxslt are installed **"
-        print
-    return rf.read().split()
+        print("ERROR: %s" % errors)
+        print("** make sure the development packages of libxml2 and libxslt are installed **\n")
+    return str(rf.read()).split()
 
 def has_option(name):
     try:

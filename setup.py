@@ -38,7 +38,7 @@ STATIC_CFLAGS = []
 # create lxml-version.h file
 svn_version = versioninfo.svn_version()
 versioninfo.create_version_h(svn_version)
-print "Building lxml version", svn_version
+print("Building lxml version %s." % svn_version)
 
 
 branch_link = """
