@@ -37,7 +37,8 @@ There are several functions available to parse HTML:
 
     If you give a URL, or if the object has a ``.geturl()`` method (as
     file-like objects from ``urllib.urlopen()`` have), then that URL
-    is used as the base URL.
+    is used as the base URL.  You can also provide an explicit
+    ``base_url`` keyword argument.
 
 ``document_fromstring(string)``:
     Parses a document from the given string.  This always creates a
