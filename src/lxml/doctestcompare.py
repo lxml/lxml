@@ -23,6 +23,8 @@ When a match fails, the reformatted example and gotten text is
 displayed (indented), and a rough diff-like output is given.  Anything
 marked with ``-`` is in the output but wasn't supposed to be, and
 similarly ``+`` means its in the example but wasn't in the output.
+
+You can disable parsing on one line with ``# doctest:+NOPARSE_MARKUP``
 """
 
 from lxml import etree
@@ -36,6 +38,7 @@ __all__ = ['PARSE_HTML', 'PARSE_XML', 'LXMLOutputChecker',
 
 PARSE_HTML = doctest.register_optionflag('PARSE_HTML')
 PARSE_XML = doctest.register_optionflag('PARSE_XML')
+NOPARSE_MARKUP = doctest.register_optionflag('NOPARSE_MARKUP')
 
 OutputChecker = doctest.OutputChecker
 
@@ -84,6 +87,8 @@ class LXMLOutputChecker(OutputChecker):
 
     def get_parser(self, want, got, optionflags):
         parser = None
+        if NOPARSE_MARKUP & optionflags:
+            return None
         if PARSE_HTML & optionflags:
             parser = document_fromstring
         elif PARSE_XML & optionflags:
@@ -102,7 +107,7 @@ class LXMLOutputChecker(OutputChecker):
                 and not _repr_re.search(s))
 
     def compare_docs(self, want, got):
-        if want.tag != got.tag and want.tag != 'any':
+        if not self.tag_compare(want.tag, got.tag):
             return False
         if not self.text_compare(want.text, got.text, True):
             return False
@@ -142,6 +147,17 @@ class LXMLOutputChecker(OutputChecker):
             return True
         else:
             return False
+
+    def tag_compare(self, want, got):
+        if want == 'any':
+            return True
+        want = want or ''
+        got = got or ''
+        if want.startswith('{...}'):
+            # Ellipsis on the namespace
+            return want.split('}')[-1] == got.split('}')[-1]
+        else:
+            return want == got
 
     def output_difference(self, example, got, optionflags):
         want = example.want
@@ -282,7 +298,7 @@ class LXMLOutputChecker(OutputChecker):
         return ''.join(parts)
 
     def collect_diff_tag(self, want, got):
-        if want.tag != got.tag and want.tag != 'any':
+        if not self.tag_compare(want.tag, got.tag):
             tag = '%s (got: %s)' % (want.tag, got.tag)
         else:
             tag = got.tag
@@ -430,4 +446,22 @@ def _find_doctest_frame():
         frame = frame.f_back
     raise LookupError(
         "Could not find doctest (only use this function *inside* a doctest)")
+    
+__test__ = {
+    'basic': '''
+    >>> temp_install()
+    >>> print """<xml a="1" b="2">stuff</xml>"""
+    <xml b="2" a="1">...</xml>
+    >>> print """<xml xmlns="http://example.com"><tag   attr="bar"   /></xml>"""
+    <xml xmlns="...">
+      <tag attr="..." />
+    </xml>
+    >>> print """<xml>blahblahblah<foo /></xml>""" # doctest: +NOPARSE_MARKUP, +ELLIPSIS
+    <xml>...foo /></xml>
+    '''}
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
+    
     

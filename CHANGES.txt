@@ -8,11 +8,19 @@ Under development
 Features added
 --------------
 
+* When using ``lxml.doctestcompare`` you can give the doctest option
+  ``NOPARSE_MARKUP`` (like ``# doctest: +NOPARSE_MARKUP``) to suppress
+  the special checking for one test.
+
 Bugs fixed
 ----------
 
 * lxml.etree could crash when adding more than 10000 namespaces to a
   document
+
+* With ``lxml.doctestcompare`` if you do ``<tag xmlns="...">`` in your
+  output, it will then be namespace-neutral (before the ellipsis was
+  treated as a real namespace).
 
 Other changes
 -------------
