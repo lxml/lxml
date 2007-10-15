@@ -307,9 +307,21 @@ cdef object _collectAttributes(xmlNode* c_node, int collecttype):
     """Collect all attributes of a node in a list.  Depending on collecttype,
     it collects either the name (1), the value (2) or the name-value tuples.
     """
+    cdef Py_ssize_t count
     cdef xmlAttr* c_attr
     c_attr = c_node.properties
-    attributes = []
+    count = 0
+    while c_attr is not NULL:
+        if c_attr.type == tree.XML_ATTRIBUTE_NODE:
+            count = count + 1
+        c_attr = c_attr.next
+
+    if count == 0:
+        return []
+
+    attributes = python.PyList_New(count)
+    c_attr = c_node.properties
+    count = 0
     while c_attr is not NULL:
         if c_attr.type == tree.XML_ATTRIBUTE_NODE:
             if collecttype == 1:
@@ -320,9 +332,9 @@ cdef object _collectAttributes(xmlNode* c_node, int collecttype):
                 item = (_namespacedName(<xmlNode*>c_attr),
                         _attributeValue(c_node, c_attr))
 
-            ret = python.PyList_Append(attributes, item)
-            if ret:
-                raise
+            python.Py_INCREF(item)
+            python.PyList_SET_ITEM(attributes, count, item)
+            count = count + 1
         c_attr = c_attr.next
     return attributes
 
@@ -450,6 +462,16 @@ cdef _resolveQNameText(_Element element, value):
 
 cdef bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
+
+cdef Py_ssize_t _countElements(xmlNode* c_node):
+    "Counts the elements within the following siblings and the node itself."
+    cdef Py_ssize_t count
+    count = 0
+    while c_node is not NULL:
+        if _isElement(c_node):
+            count = count + 1
+        c_node = c_node.next
+    return count
 
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
