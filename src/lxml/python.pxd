@@ -41,8 +41,10 @@ cdef extern from "Python.h":
     cdef Py_ssize_t PyTuple_GET_SIZE(object t)
     cdef object PyTuple_GET_ITEM(object o, Py_ssize_t pos)
 
+    cdef object PyList_New(Py_ssize_t index)
     cdef Py_ssize_t PyList_GET_SIZE(object l)
     cdef object PyList_GET_ITEM(object l, Py_ssize_t index)
+    cdef void PyList_SET_ITEM(object l, Py_ssize_t index, object value)
     cdef int PyList_Append(object l, object obj) except -1
     cdef int PyList_Reverse(object l) except -1
     cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
@@ -61,14 +63,15 @@ cdef extern from "Python.h":
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
 
-    cdef int PyDict_Check(object instance)
-    cdef int PyList_Check(object instance)
-    cdef int PyTuple_Check(object instance)
-    cdef int PyNumber_Check(object instance)
-    cdef int PyBool_Check(object instance)
-    cdef int PySequence_Check(object instance)
-    cdef int PyType_Check(object instance)
-    cdef int PyTuple_CheckExact(object instance)
+    cdef bint PyDict_Check(object instance)
+    cdef bint PyList_Check(object instance)
+    cdef bint PyTuple_Check(object instance)
+    cdef bint PyNumber_Check(object instance)
+    cdef bint PyBool_Check(object instance)
+    cdef bint PySequence_Check(object instance)
+    cdef bint PyType_Check(object instance)
+    cdef bint PyTuple_CheckExact(object instance)
+    cdef bint PySlice_Check(object instance)
 
     cdef int PyObject_SetAttr(object o, object name, object value)
     cdef object PyObject_RichCompare(object o1, object o2, int op)
