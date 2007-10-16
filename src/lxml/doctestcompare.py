@@ -151,6 +151,9 @@ class LXMLOutputChecker(OutputChecker):
     def tag_compare(self, want, got):
         if want == 'any':
             return True
+        if (not isinstance(want, basestring)
+            or not isinstance(got, basestring)):
+            return want == got
         want = want or ''
         got = got or ''
         if want.startswith('{...}'):
