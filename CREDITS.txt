@@ -7,6 +7,8 @@ Martijn Faassen - creator of lxml and initial main developer
 
 Ian Bicking - lxml.html
 
+Holger Joukl - bug reports, feedback and development on lxml.objectify
+
 Marc-Antoine Parent - XPath extension function help and patches
 
 Olivier Grisel - improved (c)ElementTree compatibility patches, 
