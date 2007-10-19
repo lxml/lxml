@@ -229,8 +229,8 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     When instances of this class are garbage collected, the libxml
     document is cleaned up.
     """
-    cdef unsigned int _ns_counter
-    cdef object _prefix_format
+    cdef int _ns_counter
+    cdef object _prefix_tail
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
     
@@ -296,12 +296,17 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return self._c_doc.URL
 
     cdef buildNewPrefix(self):
-        ns = python.PyString_FromFormat(
-            _cstr(self._prefix_format), self._ns_counter)
+        ns = python.PyString_FromFormat("ns%d", self._ns_counter)
+        if self._prefix_tail is not None:
+            ns = ns + self._prefix_tail
         self._ns_counter = self._ns_counter + 1
-        if self._ns_counter == 0:
+        if self._ns_counter < 0:
             # overflow!
-            self._prefix_format = self._prefix_format + "A"
+            self._ns_counter = 0
+            if self._prefix_tail is None:
+                self._prefix_tail = "A"
+            else:
+                self._prefix_tail = self._prefix_tail + "A"
         return ns
 
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
@@ -380,7 +385,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     result = NEW_DOCUMENT(_Document)
     result._c_doc = c_doc
     result._ns_counter = 0
-    result._prefix_format = "ns%lu"
+    result._prefix_tail = None
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     result._parser = parser
