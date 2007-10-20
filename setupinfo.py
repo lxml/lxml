@@ -3,7 +3,8 @@ from distutils.core import Extension
 
 try:
     from Cython.Distutils import build_ext as build_pyx
-    print("Building with Cython.")
+    import Cython.Compiler.Version
+    print("Building with Cython %s." % Cython.Compiler.Version.version)
     CYTHON_INSTALLED = True
 except ImportError:
     CYTHON_INSTALLED = False
