@@ -193,15 +193,12 @@ cdef class ObjectifiedElement(ElementBase):
         returned in document order.
         """
         cdef tree.xmlNode* c_node
-        cdef int ret
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
             if tree._isElement(c_node):
-                ret = python.PyList_Append(
+                python.PyList_Append(
                     result, cetree.elementFactory(self._doc, c_node))
-                if ret:
-                    raise
             c_node = c_node.next
         return result
 

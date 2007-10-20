@@ -845,10 +845,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         result = []
         while c_node is not NULL and c < stop:
             if _isElement(c_node):
-                ret = python.PyList_Append(
+                python.PyList_Append(
                     result, _elementFactory(self._doc, c_node))
-                if ret:
-                    raise
                 c = c + 1
             c_node = c_node.next
         return result
@@ -992,15 +990,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         code should use ``list(element)`` or simply iterate over elements.
         """
         cdef xmlNode* c_node
-        cdef int ret
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
             if _isElement(c_node):
-                ret = python.PyList_Append(
+                python.PyList_Append(
                     result, _elementFactory(self._doc, c_node))
-                if ret:
-                    raise
             c_node = c_node.next
         return result
 
