@@ -84,25 +84,26 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
     context = <_XSLTResolverContext>c_context
     try:
         resolvers = context._resolvers
-        uri = funicode(c_uri)
+        if cstd.strncmp('string://', c_uri, 9) == 0:
+            uri = funicode(c_uri + 9)
+            if cstd.strncmp('string://', context._c_style_doc.URL, 9) != 0 and \
+                    cstd.strcmp('<string>', context._c_style_doc.URL) != 0:
+                # stylesheet URL known => make the target URL absolute
+                uri = os_path_join(context._c_style_doc.URL, uri)
+        else:
+            uri = funicode(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
 
         c_doc = NULL
         if doc_ref is not None:
             if doc_ref._type == PARSER_DATA_STRING:
                 c_doc = _parseDoc(
-                    doc_ref._data_bytes, None, context._parser)
+                    doc_ref._data_bytes, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILENAME:
-                if python.PyUnicode_Check(doc_ref._data_bytes):
-                    filename = _utf8(doc_ref._data_bytes)
-                else:
-                    filename = doc_ref._data_bytes
-                c_doc = _parseDocFromFile(filename, context._parser)
+                c_doc = _parseDocFromFile(doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILE:
-                filename = _getFilenameForFile(doc_ref._file)
-                data = doc_ref._file.read()
-                c_doc = _parseDoc(
-                    data, filename, context._parser)
+                c_doc = _parseDocFromFilelike(
+                    doc_ref._file, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_EMPTY:
                 c_doc = _newDoc()
             if c_doc is not NULL and c_doc.URL is NULL:
@@ -115,7 +116,7 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
 
 cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
                                          xslt.xsltLoadType c_type):
-    message = "Cannot resolve URI %s" % funicode(c_uri)
+    message = "Cannot resolve URI %s" % c_uri
     if c_type == xslt.XSLT_LOAD_DOCUMENT:
         exception = XSLTApplyError(message)
     else:
@@ -299,7 +300,7 @@ cdef class XSLT:
 
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
-            doc_url_utf = "XSLT:__STRING__XSLT__%s" % id(self)
+            doc_url_utf = "string://__STRING__XSLT__%s" % id(self)
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._error_log = _ErrorLog()

@@ -9,43 +9,69 @@ ctypedef enum _InputDocumentDataType:
 cdef class _InputDocument:
     cdef _InputDocumentDataType _type
     cdef object _data_bytes
+    cdef object _filename
     cdef object _file
 
 cdef class Resolver:
     "This is the base class of all resolvers."
     def resolve(self, system_url, public_id, context):
+        """Override this method to resolve an external source by
+        ``system_url`` and ``public_id``.  The third argument is an
+        opaque context object.
+
+        Return the result of one of the ``resolve_*()`` methods.
+        """
         return None
 
     def resolve_empty(self, context):
-        "Return an empty input document."
+        """Return an empty input document.
+
+        Pass context as parameter.
+        """
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_EMPTY
         return doc_ref
 
-    def resolve_string(self, string, context):
-        "Return a parsable string as input document."
+    def resolve_string(self, string, context, base_url=None):
+        """Return a parsable string as input document.
+
+        Pass data string and context as parameters.
+
+        You can pass the source URL as 'base_url' keyword.
+        """
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_STRING
         doc_ref._data_bytes = _utf8(string)
+        if base_url is not None:
+            doc_ref._filename = _encodeFilename(base_url)
         return doc_ref
 
     def resolve_filename(self, filename, context):
-        "Return the name of a parsable file as input document."
+        """Return the name of a parsable file as input document.
+
+        Pass filename and context as parameters.
+        """
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILENAME
-        doc_ref._data_bytes = _encodeFilename(filename)
+        doc_ref._filename = _encodeFilename(filename)
         return doc_ref
 
     def resolve_file(self, f, context):
-        "Return an open file-like object as input document."
+        """Return an open file-like object as input document.
+
+        Pass open file and context as parameters.
+        """
         cdef _InputDocument doc_ref
-        if not hasattr(f, 'read'):
+        try:
+            f.read
+        except AttributeError:
             raise TypeError, "Argument is not a file-like object"
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILE
+        doc_ref._filename = _getFilenameForFile(f)
         doc_ref._file = f
         return doc_ref
 

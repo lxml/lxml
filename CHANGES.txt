@@ -8,12 +8,18 @@ Under development
 Features added
 --------------
 
+* Resolvers can now provide a ``base_url`` keyword argument when
+  resolving a document as string data.
+
 * When using ``lxml.doctestcompare`` you can give the doctest option
   ``NOPARSE_MARKUP`` (like ``# doctest: +NOPARSE_MARKUP``) to suppress
   the special checking for one test.
 
 Bugs fixed
 ----------
+
+* Using custom resolvers on XSLT stylesheets parsed from a string
+  could request ill-formed URLs.
 
 * lxml.etree could crash when adding more than 10000 namespaces to a
   document
