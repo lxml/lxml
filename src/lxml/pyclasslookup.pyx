@@ -103,10 +103,8 @@ cdef class _ElementProxy:
         result = []
         while c_node is not NULL and c < stop:
             if tree._isElement(c_node):
-                ret = python.PyList_Append(
+                python.PyList_Append(
                     result, _newProxy(self._source_proxy, c_node))
-                if ret:
-                    raise
                 c = c + 1
             c_node = c_node.next
         return result
@@ -163,16 +161,13 @@ cdef class _ElementProxy:
         order.
         """
         cdef tree.xmlNode* c_node
-        cdef int ret
         self._assertNode()
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
             if tree._isElement(c_node):
-                ret = python.PyList_Append(
+                python.PyList_Append(
                     result, _newProxy(self._source_proxy, c_node))
-                if ret:
-                    raise
             c_node = c_node.next
         return result
 
