@@ -334,13 +334,74 @@ tree: children, parents (or rather ancestors) and siblings.
 .. _`further iterators`: api.html#iteration
 
 
+Serialisation
+-------------
+
+Serialisation commonly uses with the ``tostring()`` function that
+returns a string, or the ``ElementTree.write()`` method that writes to
+a file or file-like object.  Both accept the same keyword arguments
+like ``pretty_print`` for formatted output or ``encoding`` to select a
+specific output encoding other than plain ASCII::
+
+   >>> root = etree.XML('<root><a><b/></a></root>')
+
+   >>> print etree.tostring(root)
+   <root><a><b/></a></root>
+
+   >>> print etree.tostring(root, xml_declaration=True)
+   <?xml version='1.0' encoding='ASCII'?>
+   <root><a><b/></a></root>
+
+   >>> print etree.tostring(root, encoding='iso-8859-1')
+   <?xml version='1.0' encoding='iso-8859-1'?>
+   <root><a><b/></a></root>
+
+   >>> print etree.tostring(root, pretty_print=True)
+   <root>
+     <a>
+       <b/>
+     </a>
+   </root>
+
+
+Since lxml 2.0 (and ElementTree 1.3), the serialisation functions can
+do more than XML serialisation and optional pretty printing.  You can
+serialise to HTML or extract the text content by passing the
+``method`` keyword::
+
+   >>> root = etree.XML('<html><head/><body><p>Hello<br/>World</p></body></html>')
+
+   >>> print etree.tostring(root) # default: method = 'xml'
+   <html><head/><body><p>Hello<br/>World</p></body></html>
+
+   >>> print etree.tostring(root, method='xml') # same as above
+   <html><head/><body><p>Hello<br/>World</p></body></html>
+
+   >>> print etree.tostring(root, method='html')
+   <html><head></head><body><p>Hello<br>World</p></body></html>
+
+   >>> print etree.tostring(root, method='html', pretty_print=True)
+   <html>
+   <head></head>
+   <body><p>Hello<br>World</p></body>
+   </html>
+
+   >>> print etree.tostring(root, method='text')
+   HelloWorld
+
+For the plain text output, the ``tounicode()`` function might become handy::
+
+   >>> etree.tounicode(root, method='text')
+   u'HelloWorld'
+
+
 The ElementTree class
 =====================
 
 An ``ElementTree`` is mainly a document wrapper around a tree with a root
 node.  It provides a couple of methods for parsing, serialisation and general
 document handling.  One of the bigger differences is that it serialises as a
-complete document, as opposed to a single Element.  This includes top-level
+complete document, as opposed to a single ``Element``.  This includes top-level
 processing instructions and comments, as well as a DOCTYPE and other DTD
 content in the document::
 
