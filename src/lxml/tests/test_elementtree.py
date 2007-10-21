@@ -43,13 +43,13 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
         f = open(self.getTestFilePath('testdump.xml'), 'w')
-        tree.write(f, 'UTF-8')
+        tree.write(f, encoding='UTF-8')
         f.close()
         f = open(self.getTestFilePath('testdump.xml'), 'r')
         tree = ElementTree(file=f)
         f.close()
         f = open(self.getTestFilePath('testdump2.xml'), 'w')
-        tree.write(f, 'UTF-8')
+        tree.write(f, encoding='UTF-8')
         f.close()
         f = open(self.getTestFilePath('testdump.xml'), 'r')
         data1 = f.read()
@@ -2358,7 +2358,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         f = StringIO()
         tree = ElementTree(element=a)
-        tree.write(f, 'utf-8')
+        tree.write(f, encoding='utf-8')
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
                           f.getvalue())
 
@@ -2389,7 +2389,7 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         f = StringIO()
         tree = ElementTree(element=a)
-        tree.write(f, 'iso-8859-1')
+        tree.write(f, encoding='iso-8859-1')
         result = f.getvalue()
         declaration = "<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>"
         self.assertEncodingDeclaration(result,'iso-8859-1')
@@ -2460,7 +2460,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         a = Element('a')
         a.text = u'Søk på nettet'
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
-                         tostring(a, 'utf-8'))
+                         tostring(a, encoding='utf-8'))
 
     def test_encoding_tostring_unknown(self):
         Element = self.etree.Element
@@ -2468,7 +2468,8 @@ class ETreeTestCaseBase(unittest.TestCase):
         
         a = Element('a')
         a.text = u'Søk på nettet'
-        self.assertRaises(LookupError, tostring, a, 'Invalid Encoding')
+        self.assertRaises(LookupError, tostring, a,
+                          encoding='Invalid Encoding')
 
     def test_encoding_tostring_sub(self):
         Element = self.etree.Element
@@ -2479,7 +2480,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         b = SubElement(a, 'b')
         b.text = u'Søk på nettet'
         self.assertEquals(u'<b>Søk på nettet</b>'.encode('UTF-8'),
-                         tostring(b, 'utf-8'))
+                         tostring(b, encoding='utf-8'))
 
     def test_encoding_tostring_sub_tail(self):
         Element = self.etree.Element
@@ -2491,7 +2492,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         b.text = u'Søk på nettet'
         b.tail = u'Søk'
         self.assertEquals(u'<b>Søk på nettet</b>Søk'.encode('UTF-8'),
-                         tostring(b, 'utf-8'))
+                         tostring(b, encoding='utf-8'))
         
     def test_encoding_tostring_default_encoding(self):
         Element = self.etree.Element
@@ -2919,7 +2920,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         try:
             f = open(filename, 'wb')
             tree = ElementTree(element=element)
-            tree.write(f, encoding)
+            tree.write(f, encoding=encoding)
             f.close()
             f = open(filename, 'rb')
             data = f.read()

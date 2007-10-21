@@ -1043,7 +1043,7 @@ cdef class ElementMaker:
     cdef object _namespace
     cdef object _nsmap
     cdef bint _annotate
-    def __init__(self, namespace=None, nsmap=None, annotate=True,
+    def __init__(self, *, namespace=None, nsmap=None, annotate=True,
                  makeelement=None):
         if nsmap is None:
             nsmap = _DEFAULT_NSMAP
@@ -1301,7 +1301,7 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
         pass
     return None
 
-def pyannotate(element_or_tree, ignore_old=False, ignore_xsi=False,
+def pyannotate(element_or_tree, *, ignore_old=False, ignore_xsi=False,
              empty_pytype=None):
     """Recursively annotates the elements of an XML tree with 'pytype'
     attributes.
@@ -1322,7 +1322,7 @@ def pyannotate(element_or_tree, ignore_old=False, ignore_xsi=False,
     element = cetree.rootNodeOrRaise(element_or_tree)
     _annotate(element, 0, 1, ignore_xsi, ignore_old, None, empty_pytype)
 
-def xsiannotate(element_or_tree, ignore_old=False, ignore_pytype=False,
+def xsiannotate(element_or_tree, *, ignore_old=False, ignore_pytype=False,
                 empty_type=None):
     """Recursively annotates the elements of an XML tree with 'xsi:type'
     attributes.
@@ -1348,7 +1348,7 @@ def xsiannotate(element_or_tree, ignore_old=False, ignore_pytype=False,
     element = cetree.rootNodeOrRaise(element_or_tree)
     _annotate(element, 1, 0, ignore_old, ignore_pytype, empty_type, None)
 
-def annotate(element_or_tree, ignore_old=True, ignore_xsi=False,
+def annotate(element_or_tree, *, ignore_old=True, ignore_xsi=False,
              empty_pytype=None, empty_type=None, annotate_xsi=0,
              annotate_pytype=1):
     """Recursively annotates the elements of an XML tree with 'xsi:type'
@@ -1536,7 +1536,7 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                     tree.xmlSetNsProp(c_node, c_ns, "nil", "true")
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-def deannotate(element_or_tree, pytype=True, xsi=True):
+def deannotate(element_or_tree, *, pytype=True, xsi=True):
     """Recursively de-annotate the elements of an XML tree by removing 'pytype'
     and/or 'type' attributes.
 
@@ -1640,7 +1640,7 @@ _DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,
 
 E = ElementMaker()
 
-def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
+def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
     """Objectify specific version of the lxml.etree Element() factory that
     always creates a structural (tree) element.
 
@@ -1657,7 +1657,7 @@ def Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes):
     _attributes[PYTYPE_ATTRIBUTE] = _pytype
     return _makeElement(_tag, None, _attributes, nsmap)
 
-def DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None,
+def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
                 **_attributes):
     """Create a new element from a Python value and XML attributes taken from
     keyword arguments or a dictionary passed as second argument.

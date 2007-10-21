@@ -33,7 +33,7 @@ cdef class Resolver:
         doc_ref._type = PARSER_DATA_EMPTY
         return doc_ref
 
-    def resolve_string(self, string, context, base_url=None):
+    def resolve_string(self, string, context, *, base_url=None):
         """Return a parsable string as input document.
 
         Pass data string and context as parameters.

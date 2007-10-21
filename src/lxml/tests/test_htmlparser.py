@@ -16,6 +16,11 @@ class HtmlParserTestCaseBase(HelperTestCase):
     etree = etree
 
     html_str = "<html><head><title>test</title></head><body><h1>page title</h1></body></html>"
+    html_str_pretty = """\
+<html>
+<head><title>test</title></head>
+<body><h1>page title</h1></body>
+</html>"""
     broken_html_str = "<html><head><title>test<body><h1>page title</h3></p></html>"
     uhtml_str = u"<html><head><title>test Ã¡\uF8D2</title></head><body><h1>page Ã¡\uF8D2 title</h1></body></html>"
 
@@ -29,8 +34,13 @@ class HtmlParserTestCaseBase(HelperTestCase):
 
     def test_module_HTML_unicode(self):
         element = self.etree.HTML(self.uhtml_str)
-        self.assertEqual(unicode(self.etree.tostring(element, 'UTF8'), 'UTF8'),
+        self.assertEqual(unicode(self.etree.tostring(element, encoding='UTF8'), 'UTF8'),
                          unicode(self.uhtml_str.encode('UTF8'), 'UTF8'))
+
+    def test_module_HTML_pretty_print(self):
+        element = self.etree.HTML(self.html_str)
+        self.assertEqual(self.etree.tostring(element, method="html", pretty_print=True),
+                         self.html_str_pretty)
 
     def test_module_parse_html_error(self):
         parser = self.etree.HTMLParser(recover=False)
@@ -202,14 +212,14 @@ class HtmlParserTestCaseBase(HelperTestCase):
         parser = self.etree.HTMLParser()
         f = SillyFileLike(self.html_str)
         tree = self.etree.parse(f, parser)
-        html = self.etree.tostring(tree.getroot(), 'UTF-8')
+        html = self.etree.tostring(tree.getroot(), encoding='UTF-8')
         self.assertEqual(html, self.html_str)
 
 ##     def test_module_parse_html_filelike_unicode(self):
 ##         parser = self.etree.HTMLParser()
 ##         f = SillyFileLike(self.uhtml_str)
 ##         tree = self.etree.parse(f, parser)
-##         html = self.etree.tostring(tree.getroot(), 'UTF-8')
+##         html = self.etree.tostring(tree.getroot(), encoding='UTF-8')
 ##         self.assertEqual(unicode(html, 'UTF-8'), self.uhtml_str)
 
     def test_html_file_error(self):

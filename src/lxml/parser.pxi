@@ -1037,7 +1037,7 @@ cdef class XMLParser(_FeedParser):
     not harmful, it is more efficient to use separate parsers.  This does not
     apply to the default parser.
     """
-    def __init__(self, attribute_defaults=False, dtd_validation=False,
+    def __init__(self, *, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=False,
@@ -1076,7 +1076,7 @@ cdef class ETCompatXMLParser(XMLParser):
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
     """
-    def __init__(self, attribute_defaults=False, dtd_validation=False,
+    def __init__(self, *, attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=True,

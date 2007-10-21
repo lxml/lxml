@@ -495,7 +495,7 @@ encodings if asked for::
   >>> etree.tostring(root)
   '<test> &#63697; + &#63698; </test>'
 
-  >>> etree.tostring(root, 'UTF-8', xml_declaration=False)
+  >>> etree.tostring(root, encoding='UTF-8', xml_declaration=False)
   '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
 As an extension, lxml.etree has a new ``tounicode()`` function that you can

@@ -1777,7 +1777,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
 
-        result = unicode(tostring(a, 'UTF-16'), 'UTF-16')
+        result = unicode(tostring(a, encoding='UTF-16'), 'UTF-16')
         self.assertEquals('<a><b></b><c></c></a>',
                           canonicalize(result))
 

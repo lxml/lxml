@@ -1383,7 +1383,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 return self._doc._parser
             return None
 
-    def write(self, file, encoding=None, method="xml",
+    def write(self, file, *, encoding=None, method="xml",
               pretty_print=False, xml_declaration=None):
         """Write the tree to a file or file-like object.
 
@@ -2061,7 +2061,7 @@ def SubElement(_Element _parent not None, _tag,
     """
     return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
 
-def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
+def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
     """ElementTree wrapper class.
     """
     cdef xmlNode* c_next
@@ -2084,7 +2084,7 @@ def ElementTree(_Element element=None, file=None, _BaseParser parser=None):
 
     return _elementTreeFactory(doc, element)
 
-def HTML(text, _BaseParser parser=None, base_url=None):
+def HTML(text, _BaseParser parser=None, *, base_url=None):
     """Parses an HTML document from a string constant. This function can be used
     to embed "HTML literals" in Python code.
 
@@ -2106,7 +2106,7 @@ def HTML(text, _BaseParser parser=None, base_url=None):
     except _TargetParserResult, result_container:
         return result_container.result
 
-def XML(text, _BaseParser parser=None, base_url=None):
+def XML(text, _BaseParser parser=None, *, base_url=None):
     """Parses an XML document from a string constant. This function can be used
     to embed "XML literals" in Python code, like in
 
@@ -2130,7 +2130,7 @@ def XML(text, _BaseParser parser=None, base_url=None):
     except _TargetParserResult, result_container:
         return result_container.result
 
-def fromstring(text, _BaseParser parser=None, base_url=None):
+def fromstring(text, _BaseParser parser=None, *, base_url=None):
     """Parses an XML document from a string.
 
     To override the default parser with a different parser you can pass it to
@@ -2168,13 +2168,13 @@ def iselement(element):
     """
     return isinstance(element, _Element)
 
-def dump(_Element elem not None, pretty_print=True):
+def dump(_Element elem not None, *, pretty_print=True):
     """Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
     """
     _dumpToFile(sys.stdout, elem._c_node, pretty_print)
 
-def tostring(element_or_tree, encoding=None, method="xml",
+def tostring(element_or_tree, *, encoding=None, method="xml",
              xml_declaration=None, pretty_print=False):
     """Serialize an element to an encoded string representation of its XML
     tree.
@@ -2217,7 +2217,7 @@ def tostringlist(element_or_tree, *args, **kwargs):
     """
     return [tostring(element_or_tree, *args, **kwargs)]
 
-def tounicode(element_or_tree, method="xml", pretty_print=False):
+def tounicode(element_or_tree, *, method="xml", pretty_print=False):
     """Serialize an element to the Python unicode representation of its XML
     tree.
 
