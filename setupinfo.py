@@ -9,11 +9,7 @@ try:
 except ImportError:
     CYTHON_INSTALLED = False
 
-EXT_MODULES = [
-    ("lxml.etree",         "lxml.etree"),
-    ("lxml.objectify",     "lxml.objectify"),
-    ("lxml.pyclasslookup", "lxml.pyclasslookup")
-    ]
+EXT_MODULES = ["lxml.etree", "lxml.objectify","lxml.pyclasslookup"]
 
 def env_var(name):
     value = os.getenv(name, '')
@@ -44,10 +40,10 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         runtime_library_dirs = []
     
     result = []
-    for module, package in modules:
+    for module in modules:
         result.append(
             Extension(
-            package,
+            module,
             sources = ["src/lxml/" + module + source_extension],
             extra_compile_args = ['-w'] + _cflags,
             define_macros = _define_macros,

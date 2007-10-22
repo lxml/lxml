@@ -31,9 +31,11 @@ Bugs fixed
 Other changes
 -------------
 
-* The module source files are now called "lxml.*.pyx", such as
+* The module source files were renamed to "lxml.*.pyx", such as
   "lxml.etree.pyx".  This was changed for consistency with the way
-  Pyrex commonly handles package imports.
+  Pyrex commonly handles package imports.  The main effect is that
+  classes now know about their fully qualified class name, including
+  the package name of their module.
 
 
 2.0alpha4 (2007-10-07)
