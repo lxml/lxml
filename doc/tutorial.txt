@@ -363,11 +363,9 @@ specific output encoding other than plain ASCII::
      </a>
    </root>
 
-
 Since lxml 2.0 (and ElementTree 1.3), the serialisation functions can
-do more than XML serialisation and optional pretty printing.  You can
-serialise to HTML or extract the text content by passing the
-``method`` keyword::
+do more than XML serialisation.  You can serialise to HTML or extract
+the text content by passing the ``method`` keyword::
 
    >>> root = etree.XML('<html><head/><body><p>Hello<br/>World</p></body></html>')
 

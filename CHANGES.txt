@@ -31,6 +31,10 @@ Bugs fixed
 Other changes
 -------------
 
+* The module source files are now called "lxml.*.pyx", such as
+  "lxml.etree.pyx".  This was changed for consistency with the way
+  Pyrex commonly handles package imports.
+
 
 2.0alpha4 (2007-10-07)
 ======================
