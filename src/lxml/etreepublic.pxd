@@ -16,7 +16,7 @@ cdef extern from "etree_defs.h":
                                           int start_node_inclusive)
     cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node)
 
-cdef extern from "etree.h":
+cdef extern from "lxml.etree.h":
 
     # first function to call!
     cdef int import_etree(etree_module) except -1
