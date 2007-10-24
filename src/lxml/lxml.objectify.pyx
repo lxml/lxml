@@ -686,13 +686,6 @@ cdef class StringElement(ObjectifiedDataElement):
             raise TypeError, "invalid types for * operator"
 
     def __mod__(self, other):
-        if python.PyTuple_Check(other):
-            l = []
-            for item in other:
-                python.PyList_Append(l, _strValueOf(item))
-            other = tuple(l)
-        else:
-            other = _strValueOf(other)
         return _strValueOf(self) % other
 
 cdef class NoneElement(ObjectifiedDataElement):
@@ -775,7 +768,7 @@ cdef object _strValueOf(obj):
     if python._isString(obj):
         return obj
     if isinstance(obj, _Element):
-        return textOf((<_Element>obj)._c_node)
+        return textOf((<_Element>obj)._c_node) or ''
     if obj is None:
         return ''
     return str(obj)

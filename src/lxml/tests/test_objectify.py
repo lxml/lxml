@@ -916,7 +916,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_type_str_cmp(self):
         XML = self.XML
-        root = XML(u'<root><b>test</b><b>taste</b></root>')
+        root = XML(u'<root><b>test</b><b>taste</b><b></b><b/></root>')
         self.assertFalse(root.b[0] <  root.b[1])
         self.assertFalse(root.b[0] <= root.b[1])
         self.assertFalse(root.b[0] == root.b[1])
@@ -930,10 +930,18 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(root.b[0] >  5)
         self.assert_(5 < root.b[0])
 
+        self.assertEquals("", root.b[2])
+        self.assertEquals(root.b[2], "")
+        self.assertEquals("", root.b[3])
+        self.assertEquals(root.b[3], "")
+        self.assertEquals(root.b[2], root.b[3])
+        
         root.b = "test"
         self.assert_(root.b)
         root.b = ""
         self.assertFalse(root.b)
+        self.assertEquals(root.b, "")
+        self.assertEquals("", root.b)
 
     def test_type_int_cmp(self):
         XML = self.XML
@@ -955,6 +963,8 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(root.b)
         root.b = 0
         self.assertFalse(root.b)
+        
+    # float + long share the NumberElement implementation with int
 
     def test_type_bool_cmp(self):
         XML = self.XML
@@ -979,6 +989,45 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(root.b)
         root.b = False
         self.assertFalse(root.b)
+
+    def test_type_none_cmp(self):
+        XML = self.XML
+        root = XML(u"""
+        <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <b xsi:nil="true"></b><b xsi:nil="true"/>
+        </root>""")
+        self.assert_(root.b[0] == root.b[1])
+        self.assertFalse(root.b[0])
+        self.assertEquals(root.b[0], None)
+        self.assertEquals(None, root.b[0])
+
+        for comparison in ["abc", 5, 7.3, True, [], ()]:
+            none = root.b[1]
+            self.assert_(none < comparison, "%s (%s) should be < %s" %
+                         (none, type(none), comparison) )
+            self.assert_(comparison > none, "%s should be > %s (%s)" %
+                         (comparison, none, type(none)) )
+            
+    def test_type_str_mod(self):
+        s = "%d %f %s %r"
+        el = objectify.DataElement(s)
+        values = (1, 7.0, "abcd", None)
+        self.assertEquals(s % values, el % values)
+
+        s = "%d"
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertEquals(s % val, el % val)
+
+        s = "%d %s"
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertRaises(TypeError, el.__mod__, val)
+
+        s = ""
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertRaises(TypeError, el.__mod__, val)
 
     def test_dataelement_xsi(self):
         el = objectify.DataElement(1, _xsi="string")
