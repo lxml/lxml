@@ -598,6 +598,36 @@ class ObjectifyTestCase(HelperTestCase):
         s = "toast"
         self.assertEquals("test" + s, root.s + s)
         self.assertEquals(s + "test", s + root.s)
+            
+    def test_type_str_mod(self):
+        s = "%d %f %s %r"
+        el = objectify.DataElement(s)
+        values = (1, 7.0, "abcd", None)
+        self.assertEquals(s % values, el % values)
+
+        s = "%d"
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertEquals(s % val, el % val)
+
+        s = "%d %s"
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertRaises(TypeError, el.__mod__, val)
+
+        s = ""
+        el = objectify.DataElement(s)
+        val = 5
+        self.assertRaises(TypeError, el.__mod__, val)
+            
+    def test_type_str_mod_data_elements(self):
+        s = "%d %f %s %r"
+        el = objectify.DataElement(s)
+        values = (objectify.DataElement(1),
+                  objectify.DataElement(7.0),
+                  objectify.DataElement("abcd"),
+                  objectify.DataElement(None))
+        self.assertEquals(s % values, el % values)
 
     def test_data_element_str(self):
         value = objectify.DataElement("test")
@@ -1007,27 +1037,6 @@ class ObjectifyTestCase(HelperTestCase):
                          (none, type(none), comparison) )
             self.assert_(comparison > none, "%s should be > %s (%s)" %
                          (comparison, none, type(none)) )
-            
-    def test_type_str_mod(self):
-        s = "%d %f %s %r"
-        el = objectify.DataElement(s)
-        values = (1, 7.0, "abcd", None)
-        self.assertEquals(s % values, el % values)
-
-        s = "%d"
-        el = objectify.DataElement(s)
-        val = 5
-        self.assertEquals(s % val, el % val)
-
-        s = "%d %s"
-        el = objectify.DataElement(s)
-        val = 5
-        self.assertRaises(TypeError, el.__mod__, val)
-
-        s = ""
-        el = objectify.DataElement(s)
-        val = 5
-        self.assertRaises(TypeError, el.__mod__, val)
 
     def test_dataelement_xsi(self):
         el = objectify.DataElement(1, _xsi="string")
