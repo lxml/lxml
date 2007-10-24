@@ -4,7 +4,7 @@ from lxml.tests.common_imports import doctest
 try:
     import BeautifulSoup
     BS_INSTALLED = True
-except:
+except ImportError:
     BS_INSTALLED = False
 
 
