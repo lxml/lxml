@@ -150,7 +150,7 @@ class BenchMarkBase(object):
         return getattr(self, name)
 
     def _serialize_tree(self, root):
-        return self.etree.tostring(root, 'UTF-8')
+        return self.etree.tostring(root, encoding='UTF-8')
 
     def et_make_clone_factory(self, elem):
         def generate_elem(append, elem, level):
