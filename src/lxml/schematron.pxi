@@ -101,9 +101,8 @@ cdef class Schematron(_Validator):
             raise SchematronParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
-            if c_doc is not NULL:
-                tree.xmlFreeDoc(c_doc)
-            raise SchematronParseError, "Document is not parsable as Schematron"
+            python.PyErr_NoMemory()
+
         self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
