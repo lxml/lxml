@@ -94,7 +94,7 @@ form_tags = [
     ]
 
 special_inline_tags = [
-    'a', 'applet', 'basefont', 'bdo', 'br', 'font', 'iframe',
+    'a', 'applet', 'basefont', 'bdo', 'br', 'embed', 'font', 'iframe',
     'img', 'map', 'area', 'object', 'param', 'q', 'script',
     'span', 'sub', 'sup',
     ]
