@@ -133,15 +133,15 @@ cdef extern from "lxml.etree.h":
 
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
-                                 python.Py_ssize_t index)
+                                 Py_ssize_t index)
 
     # find child element number 'index' starting at first one
     cdef tree.xmlNode* findChildForwards(tree.xmlNode* c_node,
-                                         python.Py_ssize_t index)
+                                         Py_ssize_t index)
 
     # find child element number 'index' starting at last one
     cdef tree.xmlNode* findChildBackwards(tree.xmlNode* c_node,
-                                          python.Py_ssize_t index)
+                                          Py_ssize_t index)
 
     # return next/previous sibling element of the node
     cdef tree.xmlNode* nextElement(tree.xmlNode* c_node)
