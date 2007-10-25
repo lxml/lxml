@@ -150,28 +150,7 @@ cdef class ObjectifiedElement(ElementBase):
     def __len__(self):
         """Count self and siblings with the same tag.
         """
-        cdef tree.xmlNode* c_self_node
-        cdef tree.xmlNode* c_node
-        cdef char* c_href
-        cdef char* c_tag
-        cdef Py_ssize_t count
-        c_self_node = self._c_node
-        c_tag  = c_self_node.name
-        c_href = tree._getNs(c_self_node)
-        count = 1
-        c_node = c_self_node.next
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE and \
-                   cetree.tagMatches(c_node, c_href, c_tag):
-                count = count + 1
-            c_node = c_node.next
-        c_node = c_self_node.prev
-        while c_node is not NULL:
-            if c_node.type == tree.XML_ELEMENT_NODE and \
-                   cetree.tagMatches(c_node, c_href, c_tag):
-                count = count + 1
-            c_node = c_node.prev
-        return count
+        return _countSiblings(self._c_node)
 
     def countchildren(self):
         """Return the number of children of this element, regardless of their
@@ -253,12 +232,24 @@ cdef class ObjectifiedElement(ElementBase):
         * If argument is a string, does the same as getattr().  This can be
           used to provide namespaces for element lookup, or to look up
           children with special names (``text`` etc.).
+
+        * If argument is a slice object, returns the matching slice.
         """
         cdef tree.xmlNode* c_self_node
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
+        cdef Py_ssize_t start, stop, step, slicelength
         if python._isString(key):
             return _lookupChildOrRaise(self, key)
+        elif python.PySlice_Check(key):
+            python.PySlice_GetIndicesEx(
+                key, _countSiblings(self._c_node),
+                &start, &stop, &step, &slicelength)
+            if step < 0:
+                return list(self)[start:stop:step]
+            else:
+                return list(islice(self, start, stop, step))
+        # normal item access
         c_self_node = self._c_node
         c_parent = c_self_node.parent
         if c_parent is NULL:
@@ -289,10 +280,12 @@ cdef class ObjectifiedElement(ElementBase):
           items to the siblings.
         """
         cdef _Element element
+        cdef _Element parent
         cdef _Element new_element
         cdef tree.xmlNode* c_self_node
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
+        cdef Py_ssize_t start, stop, step, slicelength
         if python._isString(key):
             key = _buildChildTag(self, key)
             element = _lookupChild(self, key)
@@ -306,59 +299,73 @@ cdef class ObjectifiedElement(ElementBase):
         c_parent = c_self_node.parent
         if c_parent is NULL:
             # the 'root[i] = ...' case
-            raise TypeError, "index assignment to root element is invalid"
-        if key < 0:
-            c_node = c_parent.last
-        else:
-            c_node = c_parent.children
-        c_node = _findFollowingSibling(
-            c_node, tree._getNs(c_self_node), c_self_node.name, key)
-        if c_node is NULL:
-            raise IndexError, key
-        element = elementFactory(self._doc, c_node)
-        _replaceElement(element, value)
+            raise TypeError, "assignment to root element is invalid"
 
-    def __getslice__(self, Py_ssize_t start, Py_ssize_t end):
-        return list(islice(self, start, end))
-
-    def __setslice__(self, Py_ssize_t start, Py_ssize_t end, values):
-        cdef _Element el
-        parent = self.getparent()
-        if parent is None:
-            raise TypeError, "deleting slices of root element not supported"
-        # replace existing items
-        new_items = iter(values)
-        del_items = iter(list(islice(self, start, end)))
-        try:
-            for el in del_items:
-                item = new_items.next()
-                _replaceElement(el, item)
-        except StopIteration:
-            remove = parent.remove
-            remove(el)
-            for el in del_items:
+        if python.PySlice_Check(key):
+            # slice assignment
+            python.PySlice_GetIndicesEx(
+                key, _countSiblings(self._c_node),
+                &start, &stop, &step, &slicelength)
+            # replace existing items
+            new_items = iter(value)
+            if step < 0:
+                del_items = list(self)[start:stop:step]
+            else:
+                del_items = list(islice(self, start, stop, step))
+            del_items = iter(del_items)
+            parent = self.getparent()
+            try:
+                for el in del_items:
+                    item = new_items.next()
+                    _replaceElement(el, item)
+            except StopIteration:
+                remove = parent.remove
                 remove(el)
-            return
-
-        # append remaining new items
-        tag = self.tag
-        for item in new_items:
-            _appendValue(parent, tag, item)
-
-    def __delslice__(self, Py_ssize_t start, Py_ssize_t end):
-        parent = self.getparent()
-        if parent is None:
-            raise TypeError, "deleting slices of root element not supported"
-        remove = parent.remove
-        for el in list(islice(self, start, end)):
-            remove(el)
+                for el in del_items:
+                    remove(el)
+                return
+            else:
+                # append remaining new items
+                tag = self.tag
+                for item in new_items:
+                    _appendValue(parent, tag, item)
+        else:
+            # normal index assignment
+            if key < 0:
+                c_node = c_parent.last
+            else:
+                c_node = c_parent.children
+            c_node = _findFollowingSibling(
+                c_node, tree._getNs(c_self_node), c_self_node.name, key)
+            if c_node is NULL:
+                raise IndexError, key
+            element = elementFactory(self._doc, c_node)
+            _replaceElement(element, value)
 
     def __delitem__(self, key):
-        parent = self.getparent()
-        if parent is None:
-            raise TypeError, "deleting items not supported by root element"
-        sibling = self.__getitem__(key)
-        parent.remove(sibling)
+        cdef Py_ssize_t start, stop, step, slicelength
+        if python.PySlice_Check(key):
+            # slice deletion
+            python.PySlice_GetIndicesEx(
+                key, _countSiblings(self._c_node),
+                &start, &stop, &step, &slicelength)
+            parent = self.getparent()
+            if parent is None:
+                raise TypeError, "deleting slices of root element not supported"
+            if step < 0:
+                del_items = list(self)[start:stop:step]
+            else:
+                del_items = list(islice(self, start, stop, step))
+            remove = parent.remove
+            for el in del_items:
+                remove(el)
+        else:
+            # normal index deletion
+            parent = self.getparent()
+            if parent is None:
+                raise TypeError, "deleting items not supported by root element"
+            sibling = self.__getitem__(key)
+            parent.remove(sibling)
 
     def iterfind(self, path):
         # Reimplementation of Element.iterfind() to make it work without child
@@ -398,6 +405,28 @@ cdef class ObjectifiedElement(ElementBase):
         if prefix is not None and not python._isString(prefix):
             prefix = '.'.join(prefix)
         return _buildDescendantPaths(self._c_node, prefix)
+
+cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
+    cdef tree.xmlNode* c_node
+    cdef char* c_href
+    cdef char* c_tag
+    cdef Py_ssize_t count
+    c_tag  = c_start_node.name
+    c_href = tree._getNs(c_start_node)
+    count = 1
+    c_node = c_start_node.next
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE and \
+               cetree.tagMatches(c_node, c_href, c_tag):
+            count = count + 1
+        c_node = c_node.next
+    c_node = c_start_node.prev
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE and \
+               cetree.tagMatches(c_node, c_href, c_tag):
+            count = count + 1
+        c_node = c_node.prev
+    return count
 
 cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
                                          char* href, char* name,
@@ -460,7 +489,7 @@ cdef object _replaceElement(_Element element, value):
             element._doc, (<_Element>value)._c_node)
         new_element.tag = element.tag
     elif python.PyList_Check(value) or python.PyTuple_Check(value):
-        element.__setslice__(0, python.PY_SSIZE_T_MAX, value)
+        element[:] = value
         return
     else:
         new_element = element.makeelement(element.tag)

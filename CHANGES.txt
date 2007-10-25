@@ -8,7 +8,8 @@ Under development
 Features added
 --------------
 
-* Extended slicing of Elements  as in ``element[1:-1:2]``
+* Extended slicing of Elements as in ``element[1:-1:2]``, both in
+  etree and in objectify
 
 * Resolvers can now provide a ``base_url`` keyword argument when
   resolving a document as string data.
