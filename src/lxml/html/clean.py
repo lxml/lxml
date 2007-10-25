@@ -1,4 +1,5 @@
 import re
+import urlparse
 from lxml import etree
 from lxml.html import defs
 from lxml.html import fromstring, tostring
@@ -124,6 +125,25 @@ class Cleaner(object):
     ``add_nofollow``:
         If true, then any <a> tags will have ``rel="nofollow"`` added to them.
 
+    ``host_whitelist``:
+        A list or set of hosts that you can use for embedded content
+        (for content like ``<object>``, ``<link rel="stylesheet">``, etc).
+        You can also implement/override the method
+        ``allow_embedded_url(el, url)`` or ``allow_element(el)`` to
+        implement more complex rules for what can be embedded.
+        Anything that passes this test will be shown, regardless of
+        the value of (for instance) ``embedded``.
+
+        Note that this parameter might not work as intended if you do not
+        make the links absolute before doing the cleaning.
+
+    ``whitelist_tags``:
+        A set of tags that can be included with ``host_whitelist``.
+        The default is ``iframe`` and ``embed``; you may wish to
+        include other tags like ``script``, or you may want to
+        implement ``allow_embedded_url`` for more control.  Set to None to
+        include all tags.
+
     This modifies the document *in place*.
     """
 
@@ -144,6 +164,8 @@ class Cleaner(object):
     remove_unknown_tags = True
     safe_attrs_only = True
     add_nofollow = False
+    host_whitelist = ()
+    whitelist_tags = set(['iframe', 'embed'])
 
     def __init__(self, **kw):
         for name, value in kw.items():
@@ -152,12 +174,34 @@ class Cleaner(object):
                     "Unknown parameter: %s=%r" % (name, value))
             setattr(self, name, value)
 
+    # Used to lookup the primary URL for a given tag that is up for
+    # removal:
+    _tag_link_attrs = dict(
+        script='src',
+        link='href',
+        # From: http://java.sun.com/j2se/1.4.2/docs/guide/misc/applet.html
+        # From what I can tell, both attributes can contain a link:
+        applet=['code', 'object'],
+        iframe='src',
+        embed='src',
+        layer='src',
+        # FIXME: there doesn't really seem like a general way to figure out what
+        # links an <object> tag uses; links often go in <param> tags with values
+        # that we don't really know.  You'd have to have knowledge about specific
+        # kinds of plugins (probably keyed off classid), and match against those.
+        ##object=?,
+        # FIXME: not looking at the action currently, because it is more complex
+        # than than -- if you keep the form, you should keep the form controls.
+        ##form='action',
+        a='href',
+        )
+
     def __call__(self, doc):
         """
         Cleans the document.
         """
         if hasattr(doc, 'getroot'):
-            # ElementTree
+            # ElementTree instance, instead of an element
             doc = doc.getroot()
         # Normalize a case that IE treats <image> like <img>, and that
         # can confuse either this step or later steps.
@@ -243,12 +287,22 @@ class Cleaner(object):
             remove_tags.update(('head', 'html', 'title'))
         if self.embedded:
             # FIXME: is <layer> really embedded?
-            kill_tags.update(('applet', 'param'))
+            # We should get rid of any <param> tags not inside <applet>;
+            # These are not really valid anyway.
+            for el in list(doc.getiterator('param')):
+                found_parent = False
+                parent = el.getparent()
+                while parent is not None and parent.tag not in ('applet', 'object'):
+                    parent = parent.getparent()
+                if parent is None:
+                    el.drop_tree()
+            kill_tags.update(('applet',))
             # The alternate contents that are in an iframe are a good fallback:
-            # FIXME: somehow embed seems to be getting data, but from what I
-            # can tell the embed tag is supposed to always be empty
-            remove_tags.update(('iframe', 'object', 'embed', 'layer'))
+            remove_tags.update(('iframe', 'embed', 'layer', 'object', 'param'))
         if self.frames:
+            # FIXME: ideally we should look at the frame links, but
+            # generally frames don't mix properly with an HTML
+            # fragment anyway.
             kill_tags.update(defs.frame_tags)
         if self.forms:
             remove_tags.add('form')
@@ -260,8 +314,12 @@ class Cleaner(object):
         _kill = []
         for el in doc.getiterator():
             if el.tag in kill_tags:
+                if self.allow_element(el):
+                    continue
                 _kill.append(el)
             elif el.tag in remove_tags:
+                if self.allow_element(el):
+                    continue
                 _remove.append(el)
 
         if _remove and _remove[0] == doc:
@@ -298,7 +356,34 @@ class Cleaner(object):
                 el.drop_tag()
         if self.add_nofollow:
             for el in _find_external_links(doc):
-                el.set('rel', 'nofollow')
+                if not self.allow_follow(el):
+                    el.set('rel', 'nofollow')
+
+    def allow_follow(self, anchor):
+        """
+        Override to suppress rel="nofollow" on some anchors.
+        """
+        return False
+
+    def allow_element(self, el):
+        if el.tag not in self._tag_link_attrs:
+            return False
+        url = el.get(self._tag_link_attrs[el.tag])
+        if not url:
+            return False
+        return self.allow_embedded_url(el, url)
+
+    def allow_embedded_url(self, el, url):
+        if (self.whitelist_tags is not None
+            and el.tag not in self.whitelist_tags):
+            return False
+        scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+        netloc = netloc.lower().split(':', 1)[0]
+        if scheme not in ('http', 'https'):
+            return False
+        if netloc in self.host_whitelist:
+            return True
+        return False
 
     def kill_conditional_comments(self, doc):
         """

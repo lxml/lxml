@@ -5,6 +5,3 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([doctest.DocFileSuite('test_clean.txt')])
     return suite
-
-if __name__ == '__main__':
-    unittest.main()

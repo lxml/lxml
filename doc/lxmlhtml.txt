@@ -531,6 +531,11 @@ which content is removed::
       </body>
     </html>
 
+You can also whitelist some otherwise dangerous content with
+``Cleaner(host_whitelist=['www.youtube.com'])``, which would allow
+embedded media from YouTube, while still filtering out embedded media
+from other sites.
+
 See the docstring of ``Cleaner`` for the details of what can be
 cleaned.
 

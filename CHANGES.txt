@@ -17,6 +17,10 @@ Features added
   ``NOPARSE_MARKUP`` (like ``# doctest: +NOPARSE_MARKUP``) to suppress
   the special checking for one test.
 
+* ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
+  two overridable methods: ``allow_embedded_url(el, url)`` and the
+  more general ``allow_element(el)``.
+
 Bugs fixed
 ----------
 
