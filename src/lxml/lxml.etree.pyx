@@ -225,6 +225,8 @@ cdef class QName:
 # forward declaration of _BaseParser, see parser.pxi
 cdef class _BaseParser
 
+ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
+
 
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     """Internal base class to reference a libxml document.
@@ -495,71 +497,67 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
     # MANIPULATORS
 
-    def __setitem__(self, Py_ssize_t index, _Element element not None):
-        """Replaces the given subelement.
-        """
-        cdef xmlNode* c_node
-        cdef xmlNode* c_next
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError, index
-        c_next = element._c_node.next
-        _removeText(c_node.next)
-        tree.xmlReplaceNode(c_node, element._c_node)
-        _moveTail(c_next, element._c_node)
-        moveNodeToDocument(self._doc, element._c_node)
-        if not attemptDeallocation(c_node):
-            moveNodeToDocument(self._doc, c_node)
-
-    def __delitem__(self, Py_ssize_t index):
-        """Deletes the given subelement.
-        """
-        cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError, index
-        _removeText(c_node.next)
-        _removeNode(self._doc, c_node)
-
-    def __delslice__(self, Py_ssize_t start, Py_ssize_t stop):
-        """Deletes a number of subelements.
-        """
-        cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, start)
-        _deleteSlice(self._doc, c_node, start, stop)
-        
-    def __setslice__(self, Py_ssize_t start, Py_ssize_t stop, value):
-        """Replaces a number of subelements with elements
-        from a sequence.
+    def __setitem__(self, x, value):
+        """Replaces the given subelement index or slice.
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef _Element element
-        # first, find start of slice
-        if start == python.PY_SSIZE_T_MAX:
-            c_node = NULL
-        else:
-            c_node = _findChild(self._c_node, start)
-            # now delete the slice
-            if c_node is not NULL and start != stop:
-                c_node = _deleteSlice(self._doc, c_node, start, stop)
-        # if the insertion point is at the end, append there
-        if c_node is NULL:
-            for element in value:
-                _appendChild(self, element)
+        cdef bint left_to_right
+        cdef Py_ssize_t slicelength, step
+        if value is None:
+            raise ValueError("cannot assign None")
+        if python.PySlice_Check(x):
+            # slice assignment
+            _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+            if step > 0:
+                left_to_right = 1
+            else:
+                left_to_right = 0
+                step = -step
+            _replaceSlice(self, c_node, slicelength, step, left_to_right, value)
             return
-        # if the next element is in the list, insert before it
-        for element in value:
-            if element is None:
-                raise TypeError, "Node must not be None."
-            # store possible text tail
+        else:
+            # otherwise: normal item assignment
+            element = value
+            c_node = _findChild(self._c_node, x)
+            if c_node is NULL:
+                raise IndexError, "list index out of range"
             c_next = element._c_node.next
-            # now move node previous to insertion point
-            tree.xmlAddPrevSibling(c_node, element._c_node)
-            # and move tail just behind his node
+            _removeText(c_node.next)
+            tree.xmlReplaceNode(c_node, element._c_node)
             _moveTail(c_next, element._c_node)
-            # move it into a new document
             moveNodeToDocument(self._doc, element._c_node)
+            if not attemptDeallocation(c_node):
+                moveNodeToDocument(self._doc, c_node)
+
+    def __delitem__(self, x):
+        """Deletes the given subelement or a slice.
+        """
+        cdef xmlNode* c_node
+        cdef xmlNode* c_next
+        cdef Py_ssize_t index, step, slicelength
+        if python.PySlice_Check(x):
+            # slice deletion
+            if _isFullSlice(<python.slice>x):
+                c_node = self._c_node.children
+                if c_node is not NULL:
+                    if not _isElement(c_node):
+                        c_node = _nextElement(c_node)
+                    while c_node is not NULL:
+                        c_next = _nextElement(c_node)
+                        _removeNode(self._doc, c_node)
+                        c_node = c_next
+            else:
+                _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+                _deleteSlice(self._doc, c_node, slicelength, step)
+        else:
+            # item deletion
+            c_node = _findChild(self._c_node, x)
+            if c_node is NULL:
+                raise IndexError, index
+            _removeText(c_node.next)
+            _removeNode(self._doc, c_node)
 
     def __deepcopy__(self, memo):
         return self.__copy__()
@@ -648,14 +646,14 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_attr = c_attr_next
         # remove all subelements
         c_node = c_node.children
-        while c_node is not NULL:
-            c_node_next = c_node.next
-            if _isElement(c_node):
-                while c_node_next is not NULL and not _isElement(c_node_next):
-                    c_node_next = c_node_next.next
+        if c_node is not NULL:
+            if not _isElement(c_node):
+                c_node = _nextElement(c_node)
+            while c_node is not NULL:
+                c_node_next = _nextElement(c_node)
                 _removeNode(self._doc, c_node)
-            c_node = c_node_next
-    
+                c_node = c_node_next
+
     def insert(self, index, _Element element not None):
         """Inserts a subelement at the given position in this element
         """
@@ -820,49 +818,46 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def __repr__(self):
         return "<Element %s at %x>" % (self.tag, id(self))
     
-    def __getitem__(self, Py_ssize_t index):
-        """Returns the subelement at the given position.
+    def __getitem__(self, x):
+        """Returns the subelement at the given position or the requested
+        slice.
         """
         cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError, "list index out of range"
-        return _elementFactory(self._doc, c_node)
-
-    def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
-        """Returns a list containing subelements in the given range.
-        """
-        cdef xmlNode* c_node
-        cdef _Document doc
-        cdef Py_ssize_t c
-        # this does not work for negative start, stop, however,
-        # python seems to convert these to positive start, stop before
-        # calling, so this all works perfectly (at the cost of a len() call)
-        c_node = _findChild(self._c_node, start)
-        if c_node is NULL:
-            return []
-        c = start
-        result = []
-        while c_node is not NULL and c < stop:
-            if _isElement(c_node):
+        cdef Py_ssize_t step, slicelength
+        cdef Py_ssize_t c, i
+        cdef _node_to_node_function next_element
+        if python.PySlice_Check(x):
+            # slicing
+            if _isFullSlice(<python.slice>x):
+                return _collectChildren(self)
+            _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+            if c_node is NULL:
+                return []
+            if step > 0:
+                next_element = _nextElement
+            else:
+                step = -step
+                next_element = _previousElement
+            result = []
+            c = 0
+            while c_node is not NULL and c < slicelength:
                 python.PyList_Append(
                     result, _elementFactory(self._doc, c_node))
                 c = c + 1
-            c_node = c_node.next
-        return result
+                for i from 0 <= i < step:
+                    c_node = next_element(c_node)
+            return result
+        else:
+            # indexing
+            c_node = _findChild(self._c_node, x)
+            if c_node is NULL:
+                raise IndexError, "list index out of range"
+            return _elementFactory(self._doc, c_node)
             
     def __len__(self):
         """Returns the number of subelements.
         """
-        cdef Py_ssize_t c
-        cdef xmlNode* c_node
-        c = 0
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            if _isElement(c_node):
-                c = c + 1
-            c_node = c_node.next
-        return c
+        return _countElements(self._c_node.children)
 
     def __nonzero__(self):
         import warnings
@@ -989,15 +984,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Note that this method has been deprecated as of ElementTree 1.3.  New
         code should use ``list(element)`` or simply iterate over elements.
         """
-        cdef xmlNode* c_node
-        result = []
-        c_node = self._c_node.children
-        while c_node is not NULL:
-            if _isElement(c_node):
-                python.PyList_Append(
-                    result, _elementFactory(self._doc, c_node))
-            c_node = c_node.next
-        return result
+        return _collectChildren(self)
 
     def getparent(self):
         """Returns the parent of this element or None for the root element.
@@ -1205,7 +1192,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 
 cdef class __ContentOnlyElement(_Element):
     cdef int _raiseImmutable(self) except -1:
-        raise TypeError, "this element does not have children or attributes"
+        raise TypeError("this element does not have children or attributes")
 
     def set(self, key, value):
         self._raiseImmutable()
@@ -1244,8 +1231,11 @@ cdef class __ContentOnlyElement(_Element):
             tree.xmlNodeSetContent(self._c_node, c_text)
 
     # ACCESSORS
-    def __getitem__(self, n):
-        raise IndexError
+    def __getitem__(self, x):
+        if python.PySlice_Check(x):
+            return []
+        else:
+            raise IndexError("list index out of range")
 
     def __len__(self):
         return 0
@@ -1768,8 +1758,6 @@ cdef object _attributeIteratorFactory(_Element element, int keysvalues):
     attribs._keysvalues = keysvalues
     return attribs
 
-
-ctypedef xmlNode* (*_node_to_node_function)(xmlNode*)
 
 cdef public class _ElementTagMatcher [ object LxmlElementTagMatcher,
                                        type LxmlElementTagMatcherType ]:

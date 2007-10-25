@@ -473,6 +473,60 @@ cdef Py_ssize_t _countElements(xmlNode* c_node):
         c_node = c_node.next
     return count
 
+cdef int _findChildSlice(
+    python.slice sliceobject, xmlNode* c_parent,
+    xmlNode** c_start_node, Py_ssize_t* c_step, Py_ssize_t* c_length) except -1:
+    """Resolve a children slice.
+
+    Returns the start node, step size and the slice length in the
+    pointer arguments.
+    """
+    cdef Py_ssize_t start, stop, childcount
+    childcount = _countElements(c_parent.children)
+    if childcount == 0:
+        c_start_node[0] = NULL
+        c_length[0] = 0
+        if sliceobject.step is None:
+            c_step[0] = 1
+        else:
+            python._PyEval_SliceIndex(sliceobject.step, c_step)
+        return 0
+    python.PySlice_GetIndicesEx(
+        sliceobject, childcount, &start, &stop, c_step, c_length)
+    if start > childcount / 2:
+        c_start_node[0] = _findChildBackwards(c_parent, childcount - start - 1)
+    else:
+        c_start_node[0] = _findChild(c_parent, start)
+    return 0
+
+cdef bint _isFullSlice(python.slice sliceobject):
+    """Conservative guess if this slice is a full slice as in ``s[:]``.
+    """
+    cdef Py_ssize_t step
+    if sliceobject is None:
+        return 0
+    if sliceobject.start is None and \
+            sliceobject.stop is None:
+        if sliceobject.step is None:
+            return 1
+        python._PyEval_SliceIndex(sliceobject.step, &step)
+        if step == 1:
+            return 1
+        return 0
+    return 0
+
+cdef _collectChildren(_Element element):
+    cdef xmlNode* c_node
+    result = []
+    c_node = element._c_node.children
+    if c_node is not NULL:
+        if not _isElement(c_node):
+            c_node = _nextElement(c_node)
+        while c_node is not NULL:
+            python.PyList_Append(result, _elementFactory(element._doc, c_node))
+            c_node = _nextElement(c_node)
+    return result
+
 cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
         return _findChildBackwards(c_node, -index - 1)
@@ -530,6 +584,8 @@ cdef xmlNode* _textNodeOrSkip(xmlNode* c_node):
 cdef xmlNode* _nextElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
     """
+    if c_node is NULL:
+        return NULL
     c_node = c_node.next
     while c_node is not NULL:
         if _isElement(c_node):
@@ -540,6 +596,8 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
 cdef xmlNode* _previousElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
     """
+    if c_node is NULL:
+        return NULL
     c_node = c_node.prev
     while c_node is not NULL:
         if _isElement(c_node):
@@ -599,7 +657,7 @@ cdef bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     else:
         return 0
 
-cdef void _removeNode(_Document doc, xmlNode* c_node):
+cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     """Unlink and free a node and subnodes if possible.  Otherwise, make sure
     it's self-contained.
     """
@@ -610,6 +668,7 @@ cdef void _removeNode(_Document doc, xmlNode* c_node):
     if not attemptDeallocation(c_node):
         # make namespaces absolute
         moveNodeToDocument(doc, c_node)
+    return 0
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     cdef xmlNode* c_next
@@ -637,27 +696,169 @@ cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_new_tail
         c_tail = _textNodeOrSkip(c_tail.next)
 
-cdef xmlNode* _deleteSlice(_Document doc, xmlNode* c_node,
-                           Py_ssize_t start, Py_ssize_t stop):
-    """Delete slice, starting with c_node, start counting at start, end at stop.
+cdef int _deleteSlice(_Document doc, xmlNode* c_node,
+                      Py_ssize_t count, Py_ssize_t step) except -1:
+    """Delete slice, ``count`` items starting with ``c_node`` with a step
+    width of ``step``.
     """
     cdef xmlNode* c_next
-    cdef Py_ssize_t c
+    cdef Py_ssize_t c, i
+    cdef _node_to_node_function next_element
     if c_node is NULL:
-        return NULL
+        return 0
+    if step > 0:
+        next_element = _nextElement
+    else:
+        step = -step
+        next_element = _previousElement
     # now start deleting nodes
-    c = start
-    while c_node is not NULL and c < stop:
-        c_next = c_node.next
-        if _isElement(c_node):
-            while c_next is not NULL and not _isElement(c_next):
-                c_next = c_next.next
-            _removeNode(doc, c_node)
-            c = c + 1
+    c = 0
+    c_next = c_node
+    while c_node is not NULL and c < count:
+        for i from 0 <= i < step:
+            c_next = next_element(c_next)
+        _removeNode(doc, c_node)
+        c = c + 1
         c_node = c_next
-    return c_node
+    return 0
 
-cdef void _appendChild(_Element parent, _Element child):
+cdef int _replaceSlice(_Element parent, xmlNode* c_node,
+                       Py_ssize_t slicelength, Py_ssize_t step,
+                       bint left_to_right, elements) except -1:
+    """Replace the slice of ``count`` elements starting at ``c_node`` with
+    positive step width ``step`` by the Elements in ``elements``.  The
+    direction is given by the boolean argument ``left_to_right``.
+
+    ``c_node`` may be NULL to indicate the end of the children list.
+    """
+    cdef xmlNode* c_orig_neighbour
+    cdef xmlNode* c_next
+    cdef _Element element
+    cdef Py_ssize_t seqlength, i, c
+    cdef _node_to_node_function next_element
+    assert step > 0
+    if left_to_right:
+        next_element = _nextElement
+    else:
+        next_element = _previousElement
+
+    if not python.PyList_Check(elements) and \
+            not python.PyTuple_Check(elements):
+        elements = list(elements)
+
+    if step > 1:
+        # *replacing* children stepwise with list => check size!
+        seqlength = len(elements)
+        if seqlength != slicelength:
+            raise ValueError(
+                "attempt to assign sequence of size %d "
+                "to extended slice of size %d" % (seqlength, c))
+
+    if c_node is NULL:
+        # no children yet => add all elements straight away
+        if left_to_right:
+            for element in elements:
+                assert element is not None, "Node must not be None"
+                _appendChild(parent, element)
+        else:
+            for element in elements:
+                assert element is not None, "Node must not be None"
+                _prependChild(parent, element)
+        return 0
+
+    # remove the elements first as some might be re-added
+    if left_to_right:
+        # L->R, remember left neighbour
+        c_orig_neighbour = _previousElement(c_node)
+    else:
+        # R->L, remember right neighbour
+        c_orig_neighbour = _nextElement(c_node)
+
+    c = 0
+    c_next = c_node
+    while c_node is not NULL and c < slicelength:
+        for i from 0 <= i < step:
+            c_next = next_element(c_next)
+        _removeNode(parent._doc, c_node)
+        c = c + 1
+        c_node = c_next
+
+    # make sure each element is inserted only once
+    elements = iter(elements)
+
+    # find the first node right of the new insertion point
+    if left_to_right:
+        if c_orig_neighbour is not NULL:
+            c_node = next_element(c_orig_neighbour)
+        else:
+            # before the first element
+            c_node = _findChildForwards(parent._c_node, 0)
+    elif c_orig_neighbour is NULL:
+        # at the end, but reversed stepping
+        # append one element and go to the next insertion point
+        for element in elements:
+            assert element is not None, "Node must not be None"
+            _appendChild(parent, element)
+            c_node = element._c_node
+            if slicelength > 0:
+                slicelength = slicelength - 1
+                for i from 1 <= i < step:
+                    c_node = next_element(c_node)
+            break
+
+    if left_to_right:
+        # adjust step size after removing slice as we are not stepping
+        # over the newly inserted elements
+        step = step - 1
+
+    # now insert elements where we removed them
+    if c_node is not NULL:
+        for element in elements:
+            assert element is not None, "Node must not be None"
+
+            # move element and tail over
+            c_next = element._c_node.next
+            tree.xmlAddPrevSibling(c_node, element._c_node)
+            _moveTail(c_next, element._c_node)
+
+            # integrate element into new document
+            moveNodeToDocument(parent._doc, element._c_node)
+
+            # stop at the end of the slice
+            if slicelength > 0:
+                slicelength = slicelength - 1
+                for i from 0 <= i < step:
+                    c_node = next_element(c_node)
+                if c_node is NULL:
+                    break
+        else:
+            # everything inserted
+            return 0
+
+    # append the remaining elements at the respective end
+    if left_to_right:
+        for element in elements:
+            _appendChild(parent, element)
+    else:
+        for element in elements:
+            _prependChild(parent, element)
+
+    return 0
+
+cdef _fillUpChildrenSlice(_Element sibling, elements, bint append_right):
+    cdef _Element element
+    if append_right:
+        for element in elements:
+            assert element is not None, "Node must not be None"
+            _appendSibling(sibling, element)
+            sibling = element
+    else:
+        for element in elements:
+            assert element is not None, "Node must not be None"
+            _prependSibling(sibling, element)
+            sibling = element
+
+cdef int _appendChild(_Element parent, _Element child) except -1:
     """Append a new child to a parent element.
     """
     cdef xmlNode* c_next
@@ -665,15 +866,36 @@ cdef void _appendChild(_Element parent, _Element child):
     c_node = child._c_node
     # store possible text node
     c_next = c_node.next
-    tree.xmlUnlinkNode(c_node)
     # move node itself
+    tree.xmlUnlinkNode(c_node)
     tree.xmlAddChild(parent._c_node, c_node)
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(parent._doc, c_node)
 
-cdef void _appendSibling(_Element element, _Element sibling):
+cdef int _prependChild(_Element parent, _Element child) except -1:
+    """Prepend a new child to a parent element.
+    """
+    cdef xmlNode* c_next
+    cdef xmlNode* c_child
+    cdef xmlNode* c_node
+    c_node = child._c_node
+    # store possible text node
+    c_next = c_node.next
+    # move node itself
+    c_child = _findChildForwards(parent._c_node, 0)
+    if c_child is NULL:
+        tree.xmlUnlinkNode(c_node)
+        tree.xmlAddChild(parent._c_node, c_node)
+    else:
+        tree.xmlAddPrevSibling(c_child, c_node)
+    _moveTail(c_next, c_node)
+    # uh oh, elements may be pointing to different doc when
+    # parent element has moved; change them too..
+    moveNodeToDocument(parent._doc, c_node)
+
+cdef int _appendSibling(_Element element, _Element sibling) except -1:
     """Append a new child to a parent element.
     """
     cdef xmlNode* c_next
@@ -681,7 +903,6 @@ cdef void _appendSibling(_Element element, _Element sibling):
     c_node = sibling._c_node
     # store possible text node
     c_next = c_node.next
-    tree.xmlUnlinkNode(c_node)
     # move node itself
     tree.xmlAddNextSibling(element._c_node, c_node)
     _moveTail(c_next, c_node)
@@ -689,7 +910,7 @@ cdef void _appendSibling(_Element element, _Element sibling):
     # parent element has moved; change them too..
     moveNodeToDocument(element._doc, c_node)
 
-cdef void _prependSibling(_Element element, _Element sibling):
+cdef int _prependSibling(_Element element, _Element sibling) except -1:
     """Append a new child to a parent element.
     """
     cdef xmlNode* c_next
@@ -697,7 +918,6 @@ cdef void _prependSibling(_Element element, _Element sibling):
     c_node = sibling._c_node
     # store possible text node
     c_next = c_node.next
-    tree.xmlUnlinkNode(c_node)
     # move node itself
     tree.xmlAddPrevSibling(element._c_node, c_node)
     _moveTail(c_next, c_node)

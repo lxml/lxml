@@ -8,7 +8,7 @@ test_elementtree
 """
 
 
-import unittest, copy, sys
+import unittest, copy, sys, operator
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
@@ -1571,6 +1571,103 @@ class ETreeOnlyTestCase(HelperTestCase):
             e[0].tail)
         self.assertEquals(
             child1, e[1])
+
+    def test_setslice_all_empty_reversed(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+
+        e = Element('e')
+        f = Element('f')
+        g = Element('g')
+
+        s = [e, f, g]
+        a[::-1] = s
+        self.assertEquals(
+            [g, f, e],
+            list(a))
+
+    def test_setslice_step(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        x = Element('x')
+        y = Element('y')
+
+        a[1::2] = [x, y]
+        self.assertEquals(
+            [b, x, d, y],
+            list(a))
+
+    def test_setslice_step_negative(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        x = Element('x')
+        y = Element('y')
+
+        a[1::-1] = [x, y]
+        self.assertEquals(
+            [y, x, d, e],
+            list(a))
+
+    def test_setslice_step_negative2(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        x = Element('x')
+        y = Element('y')
+
+        a[::-2] = [x, y]
+        self.assertEquals(
+            [b, y, d, x],
+            list(a))
+
+    def test_setslice_step_overrun(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        try:
+            slice
+        except NameError:
+            print "slice() not found"
+            return
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+        e = SubElement(a, 'e')
+
+        x = Element('x')
+        y = Element('y')
+        z = Element('z')
+
+        self.assertRaises(
+            ValueError,
+            operator.setitem, a, slice(1,None,2), [x, y, z])
+
+        self.assertEquals(
+            [b, c, d, e],
+            list(a))
 
     def test_extend(self):
         etree = self.etree

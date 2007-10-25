@@ -4,13 +4,17 @@ cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef struct PyThreadState
     ctypedef int size_t
-    ctypedef int Py_ssize_t
     cdef int INT_MAX
     cdef int PY_SSIZE_T_MAX
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
     cdef void Py_XDECREF(PyObject* o)
+
+    ctypedef class __builtin__.slice [object PySliceObject]:
+        cdef object start
+        cdef object stop
+        cdef object step
 
     cdef FILE* PyFile_AsFile(object p)
     cdef int PyFile_Check(object p)
@@ -72,6 +76,11 @@ cdef extern from "Python.h":
     cdef bint PyType_Check(object instance)
     cdef bint PyTuple_CheckExact(object instance)
     cdef bint PySlice_Check(object instance)
+
+    cdef int _PyEval_SliceIndex(object value, Py_ssize_t* index) except 0
+    cdef int PySlice_GetIndicesEx(object slice, Py_ssize_t length,
+                                  Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
+                                  Py_ssize_t *slicelength) except -1
 
     cdef int PyObject_SetAttr(object o, object name, object value)
     cdef object PyObject_RichCompare(object o1, object o2, int op)
