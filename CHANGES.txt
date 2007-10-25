@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
+  two overridable methods: ``allow_embedded_url(el, url)`` and the
+  more general ``allow_element(el)``.
+
 * Extended slicing of Elements as in ``element[1:-1:2]``, both in
   etree and in objectify
 
@@ -18,28 +22,21 @@ Features added
   ``NOPARSE_MARKUP`` (like ``# doctest: +NOPARSE_MARKUP``) to suppress
   the special checking for one test.
 
-* ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
-  two overridable methods: ``allow_embedded_url(el, url)`` and the
-  more general ``allow_element(el)``.
-
 Bugs fixed
 ----------
-
-* Using custom resolvers on XSLT stylesheets parsed from a string
-  could request ill-formed URLs.
-
-* lxml.etree could crash when adding more than 10000 namespaces to a
-  document
-
-* With ``lxml.doctestcompare`` if you do ``<tag xmlns="...">`` in your
-  output, it will then be namespace-neutral (before the ellipsis was
-  treated as a real namespace).
 
 * In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
   tags weren't recognized.  (Note: plugin-specific link parameters
   still aren't recognized.)  Also, the ``<embed>`` tag, though not
   standard, is now included in
   ``lxml.html.defs.special_inline_tags``.
+
+* Using custom resolvers on XSLT stylesheets parsed from a string
+  could request ill-formed URLs.
+
+* With ``lxml.doctestcompare`` if you do ``<tag xmlns="...">`` in your
+  output, it will then be namespace-neutral (before the ellipsis was
+  treated as a real namespace).
 
 Other changes
 -------------
@@ -49,6 +46,22 @@ Other changes
   Pyrex commonly handles package imports.  The main effect is that
   classes now know about their fully qualified class name, including
   the package name of their module.
+
+
+1.3.5 (2007-10-22)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* lxml.etree could crash when adding more than 10000 namespaces to a
+  document
+
+* lxml failed to serialise namespace declarations of elements other
+  than the root node of a tree
 
 
 2.0alpha4 (2007-10-07)
