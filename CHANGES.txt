@@ -28,8 +28,7 @@ Bugs fixed
 * In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
   tags weren't recognized.  (Note: plugin-specific link parameters
   still aren't recognized.)  Also, the ``<embed>`` tag, though not
-  standard, is now included in
-  ``lxml.html.defs.special_inline_tags``.
+  standard, is now included in ``lxml.html.defs.special_inline_tags``.
 
 * Using custom resolvers on XSLT stylesheets parsed from a string
   could request ill-formed URLs.
