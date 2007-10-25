@@ -181,7 +181,7 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
             c_new_ns = c_new_ns.next
         c_parent = c_parent.parent
 
-cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
+cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
     """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
@@ -200,7 +200,7 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
     cdef cstd.size_t i, c_cache_size, c_cache_last
 
     if not tree._isElementOrXInclude(c_element):
-        return
+        return 0
 
     c_doc = c_element.doc
     c_start_node = c_element
@@ -347,3 +347,5 @@ cdef void moveNodeToDocument(_Document doc, xmlNode* c_element):
         python.PyMem_Free(c_ns_new_cache)
     if c_ns_old_cache is not NULL:
         python.PyMem_Free(c_ns_old_cache)
+
+    return 0
