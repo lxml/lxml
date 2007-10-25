@@ -30,6 +30,10 @@ Bugs fixed
   output, it will then be namespace-neutral (before the ellipsis was
   treated as a real namespace).
 
+* In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
+  tags weren't recognized.  (Note: plugin-specific link parameters
+  still aren't recognized.)
+
 Other changes
 -------------
 

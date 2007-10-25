@@ -27,6 +27,7 @@ _collect_string_content = etree.XPath("string()")
 _css_url_re = re.compile(r'url\((.*?)\)', re.I)
 _css_import_re = re.compile(r'@import "(.*?)"')
 _label_xpath = etree.XPath("//label[@for=$id]")
+_archive_re = re.compile(r'[^ ]+')
 
 class HtmlMixin(object):
 
@@ -245,9 +246,39 @@ class HtmlMixin(object):
         link_attrs = defs.link_attrs
         for el in self.getiterator():
             attribs = el.attrib
-            for attrib in link_attrs:
-                if attrib in attribs:
-                    yield (el, attrib, attribs[attrib], 0)
+            if el.tag != 'object':
+                for attrib in link_attrs:
+                    if attrib in attribs:
+                        yield (el, attrib, attribs[attrib], 0)
+            elif el.tag == 'object':
+                codebase = None
+                ## <object> tags have attributes that are relative to
+                ## codebase
+                if 'codebase' in attribs:
+                    codebase = el.get('codebase')
+                    yield (el, 'codebase', codebase, 0)
+                for attrib in 'classid', 'data':
+                    if attrib in attribs:
+                        value = el.get(attrib)
+                        if codebase is not None:
+                            value = urlparse.urljoin(codebase, value)
+                        yield (el, attrib, value, 0)
+                if 'archive' in attribs:
+                    for match in _archive_re.finditer(el.get('archive')):
+                        value = match.group(0)
+                        if codebase is not None:
+                            value = urlparse.urljoin(codebase, value)
+                        yield (el, 'archive', value, match.start())
+            if el.tag == 'param':
+                valuetype = el.get('valuetype') or ''
+                if valuetype.lower() == 'ref':
+                    ## FIXME: while it's fine we *find* this link,
+                    ## according to the spec we aren't supposed to
+                    ## actually change the value, including resolving
+                    ## it.  It can also still be a link, even if it
+                    ## doesn't have a valuetype="ref" (which seems to be the norm)
+                    ## http://www.w3.org/TR/html401/struct/objects.html#adef-valuetype
+                    yield (el, 'value', el.get('value'), 0)
             if el.tag == 'style' and el.text:
                 for match in _css_url_re.finditer(el.text):
                     yield (el, None, match.group(1), match.start(1))
