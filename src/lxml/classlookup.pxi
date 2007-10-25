@@ -48,7 +48,7 @@ cdef class EntityBase(_Entity):
 ################################################################################
 # Element class lookup
 
-ctypedef object (*_element_class_lookup_function)(object, _Document, xmlNode*)
+ctypedef public object (*_element_class_lookup_function)(object, _Document, xmlNode*)
 
 # class to store element class lookup functions
 cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
