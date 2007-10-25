@@ -845,19 +845,6 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
     return 0
 
-cdef _fillUpChildrenSlice(_Element sibling, elements, bint append_right):
-    cdef _Element element
-    if append_right:
-        for element in elements:
-            assert element is not None, "Node must not be None"
-            _appendSibling(sibling, element)
-            sibling = element
-    else:
-        for element in elements:
-            assert element is not None, "Node must not be None"
-            _prependSibling(sibling, element)
-            sibling = element
-
 cdef int _appendChild(_Element parent, _Element child) except -1:
     """Append a new child to a parent element.
     """
