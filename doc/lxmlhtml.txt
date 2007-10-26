@@ -8,13 +8,24 @@ elements, as well as a number of utilities for common tasks.
 
 .. contents::
 .. 
-   1  Running HTML doctests
-   2  Parsing HTML
-     2.1  Parsing HTML fragments
-   3  Creating HTML with the E-factory
-   4  Working with links
-   5  Cleaning up HTML
-
+   1  Parsing HTML
+     1.1  Parsing HTML fragments
+     1.2  Really broken pages
+   2  HTML Element Methods
+   3  Running HTML doctests
+   4  Creating HTML with the E-factory
+     4.1  Viewing your HTML
+   5  Working with links
+     5.1  Functions
+   6  Forms
+     6.1  Form Filling Example
+     6.2  Form Submission
+   7  Cleaning up HTML
+     7.1  autolink
+     7.2  wordwrap
+   8  HTML Diff
+   9  Examples
+     9.1  Microformat Example
 
 The main API is based on the `lxml.etree`_ API, and thus, on the ElementTree_
 API.
@@ -58,6 +69,19 @@ There are several functions available to parse HTML:
     Returns ``document_fromstring`` or ``fragment_fromstring``, based
     on whether the string looks like a full document, or just a
     fragment.
+
+Really broken pages
+-------------------
+
+The normal HTML parser is capable of handling broken HTML, but for
+pages that are far enough from HTML to call them 'tag soup', it may
+still fail to parse the page.  A way to deal with this is
+ElementSoup_, which deploys the well-known BeautifulSoup_ parser to
+build an lxml HTML tree.
+
+.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
+.. _ElementSoup: elementsoup.html
+
 
 HTML Element Methods
 ====================
