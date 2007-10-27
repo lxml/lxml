@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tests specific to the extended etree API
-
-Tests that apply to the general ElementTree API should go into
-test_elementtree
+Tests for different Element class lookup mechanisms.
 """
 
 
@@ -23,7 +20,7 @@ xml_str = '''\
 </root>'''
 
 class ClassLookupTestCase(HelperTestCase):
-    """Test cases for lxml.elementlib.classlookup
+    """Test cases for different Element class lookup mechanisms.
     """
     etree = etree
 
