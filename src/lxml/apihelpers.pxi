@@ -815,7 +815,6 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     if c_node is not NULL:
         for element in elements:
             assert element is not None, "Node must not be None"
-
             # move element and tail over
             c_next = element._c_node.next
             tree.xmlAddPrevSibling(c_node, element._c_node)
@@ -838,9 +837,11 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     # append the remaining elements at the respective end
     if left_to_right:
         for element in elements:
+            assert element is not None, "Node must not be None"
             _appendChild(parent, element)
     else:
         for element in elements:
+            assert element is not None, "Node must not be None"
             _prependChild(parent, element)
 
     return 0
