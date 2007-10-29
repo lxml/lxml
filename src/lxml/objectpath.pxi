@@ -140,7 +140,7 @@ cdef _parseObjectPathList(path):
             if index_pos is NULL:
                 index = 0
             else:
-                name = python.PyString_FromStringAndSize(
+                new_name = python.PyString_FromStringAndSize(
                     c_name, <Py_ssize_t>(index_pos - c_name))
                 index_pos = index_pos + 1
                 index_end = cstd.strchr(index_pos, c']')
@@ -151,6 +151,7 @@ cdef _parseObjectPathList(path):
                     index_pos, <Py_ssize_t>(index_end - index_pos)))
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, "index not allowed on root node"
+                name = new_name
         python.PyList_Append(new_path, (ns, name, index))
     if python.PyList_GET_SIZE(new_path) == 0:
         raise ValueError, "invalid path"

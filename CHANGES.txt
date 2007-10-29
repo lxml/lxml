@@ -25,6 +25,8 @@ Features added
 Bugs fixed
 ----------
 
+* Well hidden free-while-in-use crash bug in ObjectPath
+
 * In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
   tags weren't recognized.  (Note: plugin-specific link parameters
   still aren't recognized.)  Also, the ``<embed>`` tag, though not
