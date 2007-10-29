@@ -48,7 +48,13 @@ class ETreeOnlyTestCase(HelperTestCase):
             str(etree.LXML_VERSION[0])))
 
     def test_c_api(self):
-        self.assert_(hasattr(self.etree, '_import_c_api'))
+        if hasattr(self.etree, '__pyx_capi__'):
+            # newer Pyrex compatible C-API
+            self.assert_(isinstance(self.etree.__pyx_capi__, dict))
+            self.assert_(len(self.etree.__pyx_capi__) > 0)
+        else:
+            # older C-API mechanism
+            self.assert_(hasattr(self.etree, '_import_c_api'))
 
     def test_element_names(self):
         Element = self.etree.Element
