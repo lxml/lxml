@@ -83,8 +83,7 @@ cdef object _RELATIVE_PATH_SEGMENT
 _RELATIVE_PATH_SEGMENT = (None, None, 0)
 
 cdef _parseObjectPathString(path):
-    """Parse object path string into a 'hrefOnameOhrefOnameOOO' string and an
-    index list.  The index list is None if no index was used in the path.
+    """Parse object path string into a (ns, name, index) list.
     """
     cdef bint has_dot
     new_path = []
@@ -120,8 +119,7 @@ cdef _parseObjectPathString(path):
     return new_path
 
 cdef _parseObjectPathList(path):
-    """Parse object path sequence into a 'hrefOnameOhrefOnameOOO' string and
-    an index list.  The index list is None if no index was used in the path.
+    """Parse object path sequence into a (ns, name, index) list.
     """
     cdef char* index_pos
     cdef char* index_end
@@ -140,18 +138,16 @@ cdef _parseObjectPathList(path):
             if index_pos is NULL:
                 index = 0
             else:
-                new_name = python.PyString_FromStringAndSize(
-                    c_name, <Py_ssize_t>(index_pos - c_name))
-                index_pos = index_pos + 1
-                index_end = cstd.strchr(index_pos, c']')
+                index_end = cstd.strchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, "index must be enclosed in []"
                 index = python.PyNumber_Int(
                     python.PyString_FromStringAndSize(
-                    index_pos, <Py_ssize_t>(index_end - index_pos)))
+                        index_pos + 1, <Py_ssize_t>(index_end - index_pos - 1)))
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, "index not allowed on root node"
-                name = new_name
+                name = python.PyString_FromStringAndSize(
+                    c_name, <Py_ssize_t>(index_pos - c_name))
         python.PyList_Append(new_path, (ns, name, index))
     if python.PyList_GET_SIZE(new_path) == 0:
         raise ValueError, "invalid path"
@@ -160,13 +156,10 @@ cdef _parseObjectPathList(path):
 cdef _ObjectPath* _buildObjectPathSegments(path_list) except NULL:
     cdef _ObjectPath* c_path
     cdef _ObjectPath* c_path_segments
-    cdef Py_ssize_t c_len
-    c_len = python.PyList_GET_SIZE(path_list)
-    c_path_segments = <_ObjectPath*>python.PyMem_Malloc(sizeof(_ObjectPath) *
-                                                        c_len)
+    c_path_segments = <_ObjectPath*>python.PyMem_Malloc(
+        sizeof(_ObjectPath) * python.PyList_GET_SIZE(path_list))
     if c_path_segments is NULL:
         python.PyErr_NoMemory()
-        return NULL
     c_path = c_path_segments
     for href, name, index in path_list:
         if href is None:
@@ -201,7 +194,7 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
     while c_node is not NULL:
         c_path_len = c_path_len - 1
         if c_path_len <= 0:
-            return cetree.elementFactory(root._doc, c_node)
+            break
 
         c_path = c_path + 1
         if c_path[0].href is not NULL:
@@ -215,7 +208,9 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
             c_node = c_node.children
         c_node = _findFollowingSibling(c_node, c_href, c_name, c_index)
 
-    if use_default:
+    if c_node is not NULL:
+        return cetree.elementFactory(root._doc, c_node)
+    elif use_default:
         return default_value
     else:
         tag = cetree.namespacedNameFromNsName(c_href, c_name)
