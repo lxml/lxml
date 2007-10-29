@@ -38,8 +38,9 @@ cdef int _unregisterProxy(_Element proxy) except -1:
     c_node = proxy._c_node
     assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
     c_node._private = NULL
+    return 0
 
-cdef _releaseProxy(_Element proxy):
+cdef void _releaseProxy(_Element proxy):
     """An additional DECREF for the document.
     """
     python.Py_XDECREF(proxy._gc_doc)
