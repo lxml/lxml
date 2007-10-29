@@ -24,7 +24,6 @@ class ETreeTestCaseBase(unittest.TestCase):
     
     def setUp(self):
         self._temp_dir = tempfile.mkdtemp()
-        gc.collect()
         
     def tearDown(self):
         gc.collect()

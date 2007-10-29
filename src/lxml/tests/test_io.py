@@ -18,7 +18,6 @@ class IOTestCaseBase(unittest.TestCase):
     def setUp(self):
         """Setting up a minimal tree
         """
-        gc.collect()
         self.root = self.etree.Element('a')
         self.root_str = self.etree.tostring(self.root)
         self.tree = self.etree.ElementTree(self.root)

@@ -40,9 +40,6 @@ except NameError:
         return seq
 
 class HelperTestCase(unittest.TestCase):
-    def setUp(self):
-        gc.collect()
-
     def tearDown(self):
         gc.collect()
 
