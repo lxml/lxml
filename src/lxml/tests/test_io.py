@@ -5,7 +5,7 @@ IO test cases that apply to both etree and ElementTree
 """
 
 import unittest
-import tempfile, gzip, os
+import tempfile, gzip, os, gc
 
 from common_imports import etree, ElementTree, fileInTestDir
 from common_imports import SillyFileLike, LargeFileLike
@@ -18,9 +18,13 @@ class IOTestCaseBase(unittest.TestCase):
     def setUp(self):
         """Setting up a minimal tree
         """
+        gc.collect()
         self.root = self.etree.Element('a')
         self.root_str = self.etree.tostring(self.root)
         self.tree = self.etree.ElementTree(self.root)
+
+    def tearDown(self):
+        gc.collect()
 
     def test_write_filename(self):
         # (c)ElementTree  supports filename strings as write argument

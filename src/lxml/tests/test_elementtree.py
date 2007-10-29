@@ -9,7 +9,7 @@ for IO related test cases.
 """
 
 import unittest, doctest
-import os, re, shutil, tempfile, copy, operator
+import os, re, shutil, tempfile, copy, operator, gc
 
 from common_imports import StringIO, etree, ElementTree, cElementTree
 from common_imports import fileInTestDir, canonicalize
@@ -24,8 +24,10 @@ class ETreeTestCaseBase(unittest.TestCase):
     
     def setUp(self):
         self._temp_dir = tempfile.mkdtemp()
+        gc.collect()
         
     def tearDown(self):
+        gc.collect()
         shutil.rmtree(self._temp_dir)
 
     def getTestFilePath(self, name):

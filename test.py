@@ -63,8 +63,6 @@ Options:
 # and cleaner though, at the expense of more limited functionality.
 #
 
-import gc
-
 import re
 import os
 import sys
@@ -418,7 +416,6 @@ class CustomTestRunner(unittest.TextTestRunner):
         test(result)
         stopTime = time.time()
         timeTaken = float(stopTime - startTime)
-        gc.collect()
         result.printErrors()
         run = result.testsRun
         if not self.cfg.quiet:

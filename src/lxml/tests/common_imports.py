@@ -1,7 +1,7 @@
 import unittest
 import os.path
 from StringIO import StringIO
-import re
+import re, gc
 
 from lxml import etree
 
@@ -40,6 +40,12 @@ except NameError:
         return seq
 
 class HelperTestCase(unittest.TestCase):
+    def setUp(self):
+        gc.collect()
+
+    def tearDown(self):
+        gc.collect()
+
     def parse(self, text):
         f = StringIO(text)
         return etree.parse(f)

@@ -72,6 +72,7 @@ class ObjectifyTestCase(HelperTestCase):
         return self.etree.XML(xml, self.parser)
 
     def setUp(self):
+        super(ObjectifyTestCase, self).setUp()
         self.parser = self.etree.XMLParser(remove_blank_text=True)
         self.lookup = etree.ElementNamespaceClassLookup(
             objectify.ObjectifyElementClassLookup() )
@@ -87,6 +88,7 @@ class ObjectifyTestCase(HelperTestCase):
         objectify.setPytypeAttributeTag()
         del self.lookup
         del self.parser
+        super(ObjectifyTestCase, self).tearDown()
 
     def test_element_nsmap_default(self):
         elt = objectify.Element("test")

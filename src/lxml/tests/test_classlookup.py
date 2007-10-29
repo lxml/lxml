@@ -26,6 +26,7 @@ class ClassLookupTestCase(HelperTestCase):
 
     def tearDown(self):
         etree.setElementClassLookup()
+        super(ClassLookupTestCase, self).tearDown()
 
     def test_namespace_lookup(self):
         class TestElement(etree.ElementBase):
