@@ -49,6 +49,25 @@ Other changes
   the package name of their module.
 
 
+1.3.6 (2007-10-29)
+==================
+
+Bugs fixed
+----------
+
+* Backported decref crash fix from 2.0
+
+* Well hidden free-while-in-use crash bug in ObjectPath
+
+Other changes
+-------------
+
+* The test suites now run ``gc.collect()`` in the ``tearDown()``
+  methods.  While this makes them take a lot longer to run, it also
+  makes it easier to link a specific test to garbage collection
+  problems that would otherwise appear in later tests.
+
+
 1.3.5 (2007-10-22)
 ==================
 
