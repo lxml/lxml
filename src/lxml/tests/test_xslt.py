@@ -143,7 +143,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <foo>\uF8D2</foo>"""
 
         f = StringIO()
-        res.write(f, 'UTF-16')
+        res.write(f, encoding='UTF-16')
         result = unicode(f.getvalue(), 'UTF-16')
         self.assertEquals(expected,
                           result)
