@@ -1992,7 +1992,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         ElementTree = self.etree.ElementTree
         f = StringIO()
         tree = ElementTree(element=element)
-        tree.write(f, encoding)
+        tree.write(f, encoding=encoding)
         data = f.getvalue()
         return canonicalize(data)
 
