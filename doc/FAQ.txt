@@ -468,10 +468,12 @@ prepare them in advance if you:
   templates (be careful with the order here) to the XSL tree, and then
   create the ``XSLT`` objects and store them in a read-only
   dictionary.  That way, you can access and use them in any thread.
-  Note that passing the same XSL tree into multiple ``XSLT()``
-  instances will create independent stylesheets, so later
-  modifications of the tree will not be reflected in the already
-  created stylesheets.
+
+Note that passing the same XSL tree into multiple ``XSLT()`` instances
+will create independent stylesheets, so later modifications of the
+tree will not be reflected in the already created stylesheets.  Also,
+since lxml 2.0, you can deep copy XSLT objects using the ``copy``
+module from the standard library.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
