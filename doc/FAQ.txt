@@ -35,7 +35,8 @@ ElementTree_.
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
      5.3  Would my single-threaded program run faster if I turned off threading?
-     5.4  My program crashes when run with mod_python/Pyro/Zope/Plone/...
+     5.4  Why can't I reuse XSLT stylesheets in other threads?
+     5.5  My program crashes when run with mod_python/Pyro/Zope/Plone/...
    6  Parsing and Serialisation
      6.1  Why doesn't the ``pretty_print`` option reformat my XML output?
      6.2  Why can't lxml parse my XML from unicode strings?
@@ -263,7 +264,8 @@ used in the lxml code is just for performance optimisations.  If you want to
 contribute, don't bother with the details, a Python implementation of your
 contribution is better than none.  And keep in mind that lxml's flexible API
 often favours an implementation of features in pure Python, without bothering
-with C-code at all.
+with C-code at all.  For example, the ``lxml.html`` package is entirely written
+in Python.
 
 Please contact the `mailing list`_ if you need any help.
 
@@ -438,6 +440,36 @@ Would my single-threaded program run faster if I turned off threading?
 Can be.  You can see for yourself by compiling lxml entirely without threading
 support.  Pass the ``--without-threading`` option to setup.py when building
 lxml from source.
+
+
+Why can't I reuse XSLT stylesheets in other threads?
+----------------------------------------------------
+
+lxml currently has the restriction that an XSLT object can only be
+used in a thread if it was created either in the thread itself or in
+the main thread.  This is due to some interfering optimisations in
+libxslt and lxml.etree.  To work around this, you can do a couple of
+things:
+
+* create all XSLT objects in the main program and reuse them wherever
+  you want.
+
+* create them in the thread where you use them and maybe cache them in
+  thread local storage (see the threading module).
+
+If your stylesheets are diverse and status specific, you can still
+prepare them in advance if you:
+
+* use XSLT parameters that you pass at call time to configure the
+  stylesheets
+
+* create the stylesheets (partially) programmatically in the main
+  program, e.g. by adding ``xsl:output`` tags, ``xsl:include`` tags or
+  Templates (be careful with the order here) to the XSL tree, and then
+  create the ``XSLT`` objects and store them in a read-only
+  dictionary.  That way, you can access and use them in any thread.
+  Note that passing the same XSL tree into multiple ``XSLT()``
+  instances will create independent stylesheets.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
