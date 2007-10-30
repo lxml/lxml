@@ -465,7 +465,7 @@ prepare them in advance if you:
 
 * create the stylesheets (partially) programmatically in the main
   program, e.g. by adding ``xsl:output`` tags, ``xsl:include`` tags or
-  Templates (be careful with the order here) to the XSL tree, and then
+  templates (be careful with the order here) to the XSL tree, and then
   create the ``XSLT`` objects and store them in a read-only
   dictionary.  That way, you can access and use them in any thread.
   Note that passing the same XSL tree into multiple ``XSLT()``
