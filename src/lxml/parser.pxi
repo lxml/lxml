@@ -1212,13 +1212,15 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename,
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
 
-cdef xmlDoc* _newDoc():
+cdef xmlDoc* _newDoc() except NULL:
     cdef xmlDoc* result
     result = tree.xmlNewDoc("1.0")
+    if result is NULL:
+        python.PyErr_NoMemory()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
-cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
+cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
     cdef python.PyThreadState* state
     cdef xmlDoc* result
     if recursive:
@@ -1226,10 +1228,12 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive):
     result = tree.xmlCopyDoc(c_doc, recursive)
     if recursive:
         python.PyEval_RestoreThread(state)
+    if result is NULL:
+        python.PyErr_NoMemory()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
-cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
+cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     "Recursively copy the document and make c_new_root the new root node."
     cdef python.PyThreadState* state
     cdef xmlDoc* result
@@ -1238,15 +1242,19 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root):
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     state = python.PyEval_SaveThread()
     c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
+    python.PyEval_RestoreThread(state)
+    if c_node is NULL:
+        python.PyErr_NoMemory()
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)
-    python.PyEval_RestoreThread(state)
     return result
 
-cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc):
+cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
     "Recursively copy the element into the document. c_doc is not modified."
     cdef xmlNode* c_root
     c_root = tree.xmlDocCopyNode(c_node, c_doc, 1) # recursive
+    if c_root is NULL:
+        python.PyErr_NoMemory()
     _copyTail(c_node.next, c_root)
     return c_root
 

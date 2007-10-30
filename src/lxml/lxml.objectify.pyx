@@ -1224,7 +1224,7 @@ cdef object _dump(_Element element, int indent):
 ################################################################################
 # Pickle support
 
-cdef void _setupPickle(reduceFunction):
+cdef _setupPickle(reduceFunction):
     import copy_reg
     copy_reg.constructor(fromstring)
     copy_reg.pickle(ObjectifiedElement, reduceFunction, fromstring)

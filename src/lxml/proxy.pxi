@@ -49,7 +49,7 @@ cdef void _releaseProxy(_Element proxy):
 ################################################################################
 # temporarily make a node the root node of its document
 
-cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node):
+cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
     # build a temporary document that has the given node as root node
     # note that copy and original must not be modified during its lifetime!!
     # always call _destroyFakeDoc() after use!

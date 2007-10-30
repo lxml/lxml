@@ -164,11 +164,13 @@ cdef class _TempStore:
     def __init__(self):
         self._storage = []
 
-    cdef void add(self, obj):
+    cdef int add(self, obj) except -1:
         python.PyList_Append(self._storage, obj)
+        return 0
 
-    cdef void clear(self):
+    cdef int clear(self) except -1:
         del self._storage[:]
+        return 0
 
 # class for temporarily storing exceptions raised in extensions
 cdef class _ExceptionContext:
@@ -182,12 +184,12 @@ cdef class _ExceptionContext:
     cdef void _store_exception(self, exception):
         self._exc_info = (exception, None, None)
 
-    cdef int _has_raised(self):
+    cdef bint _has_raised(self):
         return self._exc_info is not None
 
-    cdef _raise_if_stored(self):
+    cdef int _raise_if_stored(self) except -1:
         if self._exc_info is None:
-            return
+            return 0
         type, value, traceback = self._exc_info
         self._exc_info = None
         if value is None and traceback is None:
@@ -315,7 +317,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return ns
 
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
-                                   char* c_href, char* c_prefix):
+                                   char* c_href, char* c_prefix) except NULL:
         """Get or create namespace structure for a node.  Reuses the prefix if
         possible.
         """
@@ -336,9 +338,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
                 if tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is NULL:
                     break
 
-        return tree.xmlNewNs(c_node, c_href, c_prefix)
+        c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+        if c_ns is NULL:
+            python.PyErr_NoMemory()
+        return c_ns
 
-    cdef void _setNodeNs(self, xmlNode* c_node, char* href):
+    cdef int _setNodeNs(self, xmlNode* c_node, char* href) except -1:
         "Lookup namespace structure and set it for the node."
         cdef xmlNs* c_ns
         c_ns = self._findOrBuildNodeNs(c_node, href, NULL)
