@@ -481,9 +481,9 @@ ensure lxml's threading support is used in a reliable way.  Sadly, if problems
 arise, they are as diverse as the applications, so it is difficult to provide
 any generally applicable solution.  Also, these environments are so complex
 that problems become hard to debug and even harder to reproduce in a
-predictable way.  If you encounter crashes in one these systems, but your code
-runs perfectly when started by hand, the following gives you a few hints for
-possible approaches to solve your specific problem:
+predictable way.  If you encounter crashes in one of these systems, but your
+code runs perfectly when started by hand, the following gives you a few hints
+for possible approaches to solve your specific problem:
 
 * make sure you use recent versions of libxml2, libxslt and lxml.  The libxml2
   developers keep fixing bugs in each release, and lxml also tries to become
@@ -519,14 +519,15 @@ possible approaches to solve your specific problem:
   XSLT or the stylesheet itself.
 
 * try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
-  instead of sharing one.
+  instead of sharing one.  Also see the question above.
 
 * you can try to serialise suspicious parts of your code with explicit thread
   locks, thus disabling the concurrency of the runtime system.
 
 * report back on the mailing list to see if there are other ways to work
   around your specific problems.  Do not forget to report the version numbers
-  of lxml, libxml2 and libxslt you are using.
+  of lxml, libxml2 and libxslt you are using (see the question on reporting
+  a bug).
 
 
 Parsing and Serialisation
