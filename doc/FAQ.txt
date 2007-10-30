@@ -469,7 +469,9 @@ prepare them in advance if you:
   create the ``XSLT`` objects and store them in a read-only
   dictionary.  That way, you can access and use them in any thread.
   Note that passing the same XSL tree into multiple ``XSLT()``
-  instances will create independent stylesheets.
+  instances will create independent stylesheets, so later
+  modifications of the tree will not be reflected in the already
+  created stylesheets.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
