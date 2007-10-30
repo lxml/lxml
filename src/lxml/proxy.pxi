@@ -258,7 +258,7 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
 
                 if c_ns is not NULL:
                     # not in cache, must find a replacement from this document
-                    c_new_ns = doc._findOrBuildNodeNs(c_node,
+                    c_new_ns = doc._findOrBuildNodeNs(c_element,
                                                       c_ns.href, c_ns.prefix)
                     if c_cache_last >= c_cache_size:
                         # must resize cache
