@@ -323,6 +323,10 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         """
         cdef xmlNs* c_ns
         cdef xmlNs* c_doc_ns
+        if c_node.type != tree.XML_ELEMENT_NODE:
+            assert c_node.type == tree.XML_ELEMENT_NODE, \
+                "invalid node type %d, expected %d" % (
+                c_node.type, tree.XML_ELEMENT_NODE)
         # look for existing ns
         c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, c_href)
         if c_ns is not NULL:
