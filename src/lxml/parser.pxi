@@ -288,7 +288,7 @@ cdef class _FileReaderContext:
             self._exc_context._store_raised()
             return -1
 
-cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with GIL:
+cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 ############################################################
@@ -297,7 +297,7 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with GIL:
 
 cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
     char* c_url, char* c_pubid, xmlparser.xmlParserCtxt* c_context,
-    int* error) with GIL:
+    int* error) with gil:
     # call the Python document loaders
     cdef xmlparser.xmlParserInput* c_input
     cdef _ResolverContext context

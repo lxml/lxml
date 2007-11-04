@@ -1,6 +1,6 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport _ElementIterator, ElementClassLookup
-from etreepublic cimport elementFactory, import_etree, textOf
+from etreepublic cimport elementFactory, import_lxml__etree, textOf
 from python cimport callable, _cstr
 cimport etreepublic as cetree
 cimport python
@@ -10,7 +10,7 @@ cimport cstd
 cdef object etree
 from lxml import etree
 # initialize C-API of lxml.etree
-import_etree(etree)
+import_lxml__etree()
 
 __version__ = etree.__version__
 

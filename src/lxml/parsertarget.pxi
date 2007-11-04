@@ -87,7 +87,7 @@ cdef void _targetSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                           char* c_namespace, int c_nb_namespaces,
                           char** c_namespaces,
                           int c_nb_attributes, int c_nb_defaulted,
-                          char** c_attributes) with GIL:
+                          char** c_attributes) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef int i
@@ -118,7 +118,7 @@ cdef void _targetSaxStart(void* ctxt, char* c_localname, char* c_prefix,
         _handleSaxTargetException(context, c_ctxt)
 
 cdef void _targetSaxEnd(void* ctxt, char* c_localname, char* c_prefix,
-                        char* c_namespace) with GIL:
+                        char* c_namespace) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -131,7 +131,7 @@ cdef void _targetSaxEnd(void* ctxt, char* c_localname, char* c_prefix,
     except:
         _handleSaxTargetException(context, c_ctxt)
 
-cdef void _targetSaxData(void* ctxt, char* c_data, int data_len) with GIL:
+cdef void _targetSaxData(void* ctxt, char* c_data, int data_len) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -145,7 +145,7 @@ cdef void _targetSaxData(void* ctxt, char* c_data, int data_len) with GIL:
         _handleSaxTargetException(context, c_ctxt)
 
 cdef void _targetSaxDoctype(void* ctxt, char* c_name, char* c_public,
-                       char* c_system) with GIL:
+                       char* c_system) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -162,7 +162,7 @@ cdef void _targetSaxDoctype(void* ctxt, char* c_name, char* c_public,
     except:
         _handleSaxTargetException(context, c_ctxt)
 
-cdef void _targetSaxPI(void* ctxt, char* c_target, char* c_data) with GIL:
+cdef void _targetSaxPI(void* ctxt, char* c_target, char* c_data) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -176,7 +176,7 @@ cdef void _targetSaxPI(void* ctxt, char* c_target, char* c_data) with GIL:
     except:
         _handleSaxTargetException(context, c_ctxt)
 
-cdef void _targetSaxComment(void* ctxt, char* c_data, int data_len) with GIL:
+cdef void _targetSaxComment(void* ctxt, char* c_data, int data_len) with gil:
     cdef _TargetParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt

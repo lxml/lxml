@@ -33,12 +33,12 @@ If you are interested in building lxml from a Subversion checkout or want to
 be an lxml developer, you do need a working Cython installation.  You can use
 EasyInstall_ to install it::
 
-    easy_install Cython==0.9.6.7
+    easy_install Cython==0.9.6.8
 
 .. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-lxml currently requires Cython 0.9.6.7, but it should work with later
-versions.
+lxml currently requires at least Cython 0.9.6.8, but later versions
+should work.
 
 
 Subversion

@@ -583,7 +583,7 @@ cdef void _extension_function_call(_BaseContext context, function,
 # lookup the function by name and call it
 
 cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
-                               int nargs) with GIL:
+                               int nargs) with gil:
     cdef xpath.xmlXPathContext* rctxt
     cdef _BaseContext context
     rctxt = ctxt.context
