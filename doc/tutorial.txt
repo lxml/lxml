@@ -658,9 +658,9 @@ the real namespaces instead::
     >>> body.text = "Hello World"
 
     >>> print etree.tostring(xhtml, pretty_print=True)
-    <ns0:html xmlns:ns0="http://www.w3.org/1999/xhtml">
-      <ns0:body>Hello World</ns0:body>
-    </ns0:html>
+    <html:html xmlns:html="http://www.w3.org/1999/xhtml">
+      <html:body>Hello World</html:body>
+    </html:html>
 
 .. _`namespace prefixes`: http://www.w3.org/TR/xml-names/#ns-qualnames
 

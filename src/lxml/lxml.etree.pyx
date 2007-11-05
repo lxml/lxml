@@ -68,6 +68,17 @@ if _FILENAME_ENCODING is None:
 cdef char* _C_FILENAME_ENCODING
 _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
+# set up some default namespace prefixes
+_DEFAULT_NAMESPACE_PREFIXES = {
+    "http://www.w3.org/1999/xhtml": "html",
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
+    "http://schemas.xmlsoap.org/wsdl/": "wsdl",
+    # xml schema
+    "http://www.w3.org/2001/XMLSchema": "xs",
+    "http://www.w3.org/2001/XMLSchema-instance": "xsi",
+    # dublic core
+    "http://purl.org/dc/elements/1.1/": "dc",
+}
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):
@@ -323,6 +334,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         """
         cdef xmlNs* c_ns
         cdef xmlNs* c_doc_ns
+        cdef python.PyObject* dict_result
         if c_node.type != tree.XML_ELEMENT_NODE:
             assert c_node.type == tree.XML_ELEMENT_NODE, \
                 "invalid node type %d, expected %d" % (
@@ -331,6 +343,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, c_href)
         if c_ns is not NULL:
             return c_ns
+
+        if c_prefix is NULL:
+            dict_result = python.PyDict_GetItemString(
+                _DEFAULT_NAMESPACE_PREFIXES, c_href)
+            if dict_result is not NULL:
+                c_prefix = _cstr(<object>dict_result)
 
         if c_prefix is NULL or \
                tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:

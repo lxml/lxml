@@ -956,11 +956,14 @@ namespace information if you choose to do so::
     >>> for prefix, namespace in el.nsmap.items():
     ...     print prefix, '-', namespace
     ns0 - http://codespeak.net/lxml/objectify/pytype
-    ns1 - http://www.w3.org/2001/XMLSchema-instance
     foo - http://www.w3.org/2001/XMLSchema
+    xsi - http://www.w3.org/2001/XMLSchema-instance
 
     >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
     foo:string
+
+Note how lxml chose a default prefix for the XML Schema Instance
+namespace.  We can override it as in the following example::
 
     >>> el = objectify.DataElement('5', _xsi='foo:string',
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema',

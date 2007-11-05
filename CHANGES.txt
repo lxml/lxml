@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Use default prefixes for some common XML namespaces
+
 * ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
   two overridable methods: ``allow_embedded_url(el, url)`` and the
   more general ``allow_element(el)``.
