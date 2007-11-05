@@ -69,6 +69,7 @@ cdef char* _C_FILENAME_ENCODING
 _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
 # set up some default namespace prefixes
+cdef object _DEFAULT_NAMESPACE_PREFIXES
 _DEFAULT_NAMESPACE_PREFIXES = {
     "http://www.w3.org/1999/xhtml": "html",
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
