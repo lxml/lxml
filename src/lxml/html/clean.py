@@ -368,10 +368,20 @@ class Cleaner(object):
     def allow_element(self, el):
         if el.tag not in self._tag_link_attrs:
             return False
-        url = el.get(self._tag_link_attrs[el.tag])
-        if not url:
-            return False
-        return self.allow_embedded_url(el, url)
+        attr = self._tag_link_attrs[el.tag]
+        if isinstance(attr, (list, tuple)):
+            for one_attr in attr:
+                url = el.get(one_attr)
+                if not url:
+                    return False
+                if not self.allow_embedded_url(el, url):
+                    return False
+            return True
+        else:
+            url = el.get(attr)
+            if not url:
+                return False
+            return self.allow_embedded_url(el, url)
 
     def allow_embedded_url(self, el, url):
         if (self.whitelist_tags is not None
