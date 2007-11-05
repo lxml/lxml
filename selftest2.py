@@ -19,7 +19,7 @@ def serialize(elem, encoding=None):
     file = StringIO.StringIO()
     tree = ElementTree.ElementTree(elem)
     if encoding:
-        tree.write(file, encoding)
+        tree.write(file, encoding=encoding)
     else:
         tree.write(file)
     return file.getvalue().replace(' />', '/>')
