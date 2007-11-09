@@ -26,6 +26,16 @@ class BenchMark(benchbase.BenchMarkBase):
         for i in self.repeat3000:
             root.zzzzz
 
+    def bench_attribute_assign_int(self, root):
+        "1 2 4"
+        for i in self.repeat3000:
+            root.XYZ = 5
+
+    def bench_attribute_assign_string(self, root):
+        "1 2 4"
+        for i in self.repeat3000:
+            root.XYZ = "5"
+
     def bench_attribute_cached(self, root):
         "1 2 4"
         cache = root.zzzzz
