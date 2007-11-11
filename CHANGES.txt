@@ -50,6 +50,9 @@ Other changes
   classes now know about their fully qualified class name, including
   the package name of their module.
 
+* Keyword-only arguments in some API functions, especially in the
+  parsers and serialisers.
+
 
 1.3.6 (2007-10-29)
 ==================
