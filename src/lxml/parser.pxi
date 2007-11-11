@@ -648,9 +648,6 @@ cdef class _BaseParser:
                         c_ctxt, self._default_encoding_int)
         return c_ctxt
 
-    def __dealloc__(self):
-        pass
-
     property error_log:
         """The error log of the last parser run.
         """
