@@ -686,6 +686,7 @@ cdef class _BaseParser:
         parser._remove_pis = self._remove_pis
         parser._filename = self._filename
         parser._resolvers = self._resolvers
+        parser._target = self._target
         parser._class_lookup  = self._class_lookup
         return parser
 
@@ -878,7 +879,10 @@ cdef class _FeedParser(_BaseParser):
         cdef int buffer_len
         cdef int error
         if python.PyString_Check(data):
-            c_encoding = NULL
+            if self._default_encoding is None:
+                c_encoding = NULL
+            else:
+                c_encoding = self._default_encoding
             c_data = _cstr(data)
             py_buffer_len = python.PyString_GET_SIZE(data)
         elif python.PyUnicode_Check(data):
