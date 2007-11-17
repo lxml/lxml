@@ -348,7 +348,6 @@ cdef class iterparse(_BaseParser):
         cdef _IterparseContext context
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef int error
-        cdef char* c_filename
         if self._source is None:
             raise StopIteration
 
@@ -383,6 +382,7 @@ cdef class iterparse(_BaseParser):
                 break
         if error != 0:
             self._source = None
+            del context._events[:]
             _raiseParseError(pctxt, self._filename, context._error_log)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
