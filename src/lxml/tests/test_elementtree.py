@@ -317,6 +317,24 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(None, root.get('one'))
         self.assertEquals(None, root.get('two'))
 
+    def test_attrib_ns_clear(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        attribNS = '{http://foo/bar}x'
+
+        parent = Element('parent')
+        parent.set(attribNS, 'a')
+        child = SubElement(parent, 'child')
+        child.set(attribNS, 'b')
+
+        self.assertEquals('a', parent.get(attribNS))
+        self.assertEquals('b', child.get(attribNS))
+
+        parent.clear()
+        self.assertEquals(None, parent.get(attribNS))
+        self.assertEquals('b', child.get(attribNS))
+
     def test_attribute_update_dict(self):
         XML = self.etree.XML
         
