@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* ElementTree compatible TreeBuilder class.
+
 * Use default prefixes for some common XML namespaces
 
 * ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
@@ -27,7 +29,7 @@ Features added
 Bugs fixed
 ----------
 
-* Well hidden free-while-in-use crash bug in ObjectPath
+* Target parser failed to report comments.
 
 * In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
   tags weren't recognized.  (Note: plugin-specific link parameters

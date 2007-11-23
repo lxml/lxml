@@ -43,7 +43,9 @@ cdef extern from "libxml/parser.h":
     cdef int XML_SAX2_MAGIC
 
 cdef extern from "libxml/tree.h":
-    ctypedef struct xmlParserInput
+    ctypedef struct xmlParserInput:
+        int line
+
     ctypedef struct xmlParserInputBuffer:
         void* context
         xmlInputReadCallback  readcallback
@@ -94,7 +96,8 @@ cdef extern from "libxml/parser.h":
         bint html
         bint progressive
         int charset
-        
+        xmlParserInput* input
+
     ctypedef enum xmlParserOption:
         XML_PARSE_RECOVER = 1 # recover on errors
         XML_PARSE_NOENT = 2 # substitute entities

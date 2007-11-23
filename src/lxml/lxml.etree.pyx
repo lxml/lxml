@@ -31,6 +31,9 @@ import re
 cdef object ITER_EMPTY
 ITER_EMPTY = iter(())
 
+cdef object EMPTY_READ_ONLY_DICT
+EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
+
 # the rules
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
