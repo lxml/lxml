@@ -8,9 +8,11 @@ Under development
 Features added
 --------------
 
+* Rich comparison of ``element.attrib`` proxies.
+
 * ElementTree compatible TreeBuilder class.
 
-* Use default prefixes for some common XML namespaces
+* Use default prefixes for some common XML namespaces.
 
 * ``lxml.html.clean.Cleaner`` now allows for a ``host_whitelist``, and
   two overridable methods: ``allow_embedded_url(el, url)`` and the
