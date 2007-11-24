@@ -1345,7 +1345,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         "Opens a new element."
         if nsmap is None:
             nsmap = EMPTY_READ_ONLY_DICT
-        self._handleSaxStart(tag, attrs, nsmap)
+        return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):
         "Closes the current element."
