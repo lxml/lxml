@@ -3036,7 +3036,6 @@ class ETreeTestCaseBase(unittest.TestCase):
 
     def test_parser_target_attrib(self):
         assertEquals = self.assertEquals
-        assertFalse  = self.assertFalse
 
         events = []
         class Target(object):
@@ -3059,9 +3058,6 @@ class ETreeTestCaseBase(unittest.TestCase):
                           events)
 
     def test_parser_target_data(self):
-        assertEquals = self.assertEquals
-        assertFalse  = self.assertFalse
-
         events = []
         class Target(object):
             def start(self, tag, attrib):
@@ -3082,6 +3078,39 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(["start-root", "data-A", "start-sub",
                            "end-sub", "data-B", "end-root"],
                           events)
+
+    def test_treebuilder(self):
+        builder = self.etree.TreeBuilder()
+        el = builder.start("root", {'a':'A', 'b':'B'})
+        self.assertEquals("root", el.tag)
+        self.assertEquals({'a':'A', 'b':'B'}, el.attrib)
+        builder.data("ROOTTEXT")
+        el = builder.start("child", {'x':'X', 'y':'Y'})
+        self.assertEquals("child", el.tag)
+        self.assertEquals({'x':'X', 'y':'Y'}, el.attrib)
+        builder.data("CHILDTEXT")
+        el = builder.end("child")
+        self.assertEquals("child", el.tag)
+        self.assertEquals({'x':'X', 'y':'Y'}, el.attrib)
+        self.assertEquals("CHILDTEXT", el.text)
+        self.assertEquals(None, el.tail)
+        builder.data("CHILDTAIL")
+        root = builder.end("root")
+
+        self.assertEquals("root", root.tag)
+        self.assertEquals("ROOTTEXT", root.text)
+        self.assertEquals("CHILDTEXT", root[0].text)
+        self.assertEquals("CHILDTAIL", root[0].tail)
+
+    def test_treebuilder_target(self):
+        parser = self.etree.XMLParser(target=self.etree.TreeBuilder())
+        parser.feed('<root>ROOTTEXT<child>CHILDTEXT</child>CHILDTAIL</root>')
+        root = parser.close()
+
+        self.assertEquals("root", root.tag)
+        self.assertEquals("ROOTTEXT", root.text)
+        self.assertEquals("CHILDTEXT", root[0].text)
+        self.assertEquals("CHILDTAIL", root[0].tail)
 
     # helper methods
 
