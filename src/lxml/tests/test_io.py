@@ -5,7 +5,7 @@ IO test cases that apply to both etree and ElementTree
 """
 
 import unittest
-import tempfile, gzip, os, gc
+import tempfile, gzip, os, gc, shutil
 
 from common_imports import etree, ElementTree, fileInTestDir
 from common_imports import SillyFileLike, LargeFileLike
@@ -21,10 +21,49 @@ class IOTestCaseBase(unittest.TestCase):
         self.root = self.etree.Element('a')
         self.root_str = self.etree.tostring(self.root)
         self.tree = self.etree.ElementTree(self.root)
-
+        self._temp_dir = tempfile.mkdtemp()
+        
     def tearDown(self):
         gc.collect()
+        shutil.rmtree(self._temp_dir)
 
+    def getTestFilePath(self, name):
+        return os.path.join(self._temp_dir, name)
+
+    def buildNodes(self, element, children, depth):
+        Element = self.etree.Element
+        
+        if depth == 0:
+            return
+        for i in range(children):
+            new_element = Element('element_%s_%s' % (depth, i))
+            self.buildNodes(new_element, children, depth - 1)
+            element.append(new_element)
+
+    def test_tree_io(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+    
+        element = Element('top')
+        tree = ElementTree(element)
+        self.buildNodes(element, 10, 3)
+        f = open(self.getTestFilePath('testdump.xml'), 'w')
+        tree.write(f, encoding='UTF-8')
+        f.close()
+        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        tree = ElementTree(file=f)
+        f.close()
+        f = open(self.getTestFilePath('testdump2.xml'), 'w')
+        tree.write(f, encoding='UTF-8')
+        f.close()
+        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        data1 = f.read()
+        f.close()
+        f = open(self.getTestFilePath('testdump2.xml'), 'r')
+        data2 = f.read()
+        f.close()
+        self.assertEquals(data1, data2)
+        
     def test_write_filename(self):
         # (c)ElementTree  supports filename strings as write argument
         

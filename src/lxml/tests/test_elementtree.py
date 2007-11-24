@@ -9,7 +9,7 @@ for IO related test cases.
 """
 
 import unittest, doctest
-import os, re, shutil, tempfile, copy, operator, gc
+import os, re, tempfile, copy, operator, gc
 
 from common_imports import StringIO, etree, ElementTree, cElementTree
 from common_imports import fileInTestDir, canonicalize
@@ -21,54 +21,16 @@ if cElementTree is not None:
 
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
-    
-    def setUp(self):
-        self._temp_dir = tempfile.mkdtemp()
-        
+
     def tearDown(self):
         gc.collect()
-        shutil.rmtree(self._temp_dir)
 
-    def getTestFilePath(self, name):
-        return os.path.join(self._temp_dir, name)
-    
     def test_element(self):
         for i in range(10):
             e = self.etree.Element('foo')
-
-    def test_tree(self):
-        Element = self.etree.Element
-        ElementTree = self.etree.ElementTree
-    
-        element = Element('top')
-        tree = ElementTree(element)
-        self.buildNodes(element, 10, 3)
-        f = open(self.getTestFilePath('testdump.xml'), 'w')
-        tree.write(f, encoding='UTF-8')
-        f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
-        tree = ElementTree(file=f)
-        f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'w')
-        tree.write(f, encoding='UTF-8')
-        f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
-        data1 = f.read()
-        f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'r')
-        data2 = f.read()
-        f.close()
-        self.assertEquals(data1, data2)
-        
-    def buildNodes(self, element, children, depth):
-        Element = self.etree.Element
-        
-        if depth == 0:
-            return
-        for i in range(children):
-            new_element = Element('element_%s_%s' % (depth, i))
-            self.buildNodes(new_element, children, depth - 1)
-            element.append(new_element)
+            self.assertEquals(e.tag, 'foo')
+            self.assertEquals(e.text, None)
+            self.assertEquals(e.tail, None)
 
     def test_simple(self):
         Element = self.etree.Element
