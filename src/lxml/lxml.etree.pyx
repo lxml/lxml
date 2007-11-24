@@ -1750,7 +1750,7 @@ cdef class _Attrib:
             return 1
 
     def __richcmp__(self, other, int op):
-        return python.PyObject_RichCompare(dict(self), other_items, op)
+        return python.PyObject_RichCompare(dict(self), other, op)
 
 cdef class _AttribIterator:
     """Attribute iterator - for internal use only!
