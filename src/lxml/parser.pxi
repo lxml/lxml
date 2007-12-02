@@ -409,13 +409,11 @@ cdef class _ParserContext(_ResolverContext):
                 xmlparser.xmlClearParserCtxt(self._c_ctxt)
 
     cdef int prepare(self) except -1:
-        cdef python.PyThreadState* state
         cdef int result
         if config.ENABLE_THREADING and self._lock is not NULL:
-            state = python.PyEval_SaveThread()
-            result = python.PyThread_acquire_lock(
-                self._lock, python.WAIT_LOCK)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                result = python.PyThread_acquire_lock(
+                    self._lock, python.WAIT_LOCK)
             if result == 0:
                 raise ParserError, "parser locking failed"
         self._error_log.connect()

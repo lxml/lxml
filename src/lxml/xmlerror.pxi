@@ -370,7 +370,7 @@ def useGlobalPythonLog(PyErrorLog log not None):
 
 
 # local log functions: forward error to logger object
-cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error):
+cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
     cdef _BaseErrorLog log_handler
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
@@ -378,19 +378,15 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error):
         log_handler = __GLOBAL_ERROR_LOG
     log_handler._receive(error)
 
-cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error):
+cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
-    cdef python.PyGILState_STATE gil_state
     if __DEBUG != 0:
-        gil_state = python.PyGILState_Ensure()
         _forwardError(c_log_handler, error)
-        python.PyGILState_Release(gil_state)
 
-cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
+cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
-    cdef python.PyGILState_STATE gil_state
     cdef xmlerror.xmlError c_error
     cdef cstd.va_list args
     cdef char* c_text
@@ -422,7 +418,6 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
         c_element = NULL
     cstd.va_end(args)
 
-    gil_state = python.PyGILState_Ensure()
     c_message = NULL
     if c_text is NULL:
         c_error.message = ''
@@ -431,7 +426,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     else:
         text_size    = cstd.strlen(c_text)
         element_size = cstd.strlen(c_element)
-        c_message = <char*>python.PyMem_Malloc(
+        c_message = <char*>cstd.malloc(
             (text_size + 12 + element_size + 1) * sizeof(char))
         cstd.sprintf(c_message, "%s, element '%s'", c_text, c_element)
         c_error.message = c_message
@@ -444,8 +439,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...):
     _forwardError(c_log_handler, &c_error)
 
     if c_message is not NULL:
-        python.PyMem_Free(c_error.message)
-    python.PyGILState_Release(gil_state)
+        cstd.free(c_error.message)
 
 
 ################################################################################

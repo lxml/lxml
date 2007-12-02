@@ -95,12 +95,6 @@ cdef extern from "Python.h":
     cdef object PyErr_NoMemory()
     cdef object PyErr_SetFromErrno(object type)
 
-    ctypedef enum PyGILState_STATE:
-        PyGILState_LOCKED
-        PyGILState_UNLOCKED
-
-    cdef PyGILState_STATE PyGILState_Ensure()
-    cdef void PyGILState_Release(PyGILState_STATE state)
     cdef PyThreadState* PyEval_SaveThread()
     cdef void PyEval_RestoreThread(PyThreadState* state)
     cdef PyObject* PyThreadState_GetDict()
@@ -109,7 +103,7 @@ cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
     cdef PyThread_type_lock PyThread_allocate_lock()
     cdef void PyThread_free_lock(PyThread_type_lock lock)
-    cdef int  PyThread_acquire_lock(PyThread_type_lock lock, int mode)
+    cdef int  PyThread_acquire_lock(PyThread_type_lock lock, int mode) nogil
     cdef void PyThread_release_lock(PyThread_type_lock lock)
     cdef long PyThread_get_thread_ident()
 

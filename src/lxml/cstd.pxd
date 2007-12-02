@@ -15,6 +15,10 @@ cdef extern from "string.h":
     cdef void* memcpy(void* dest, void* src, size_t len)
     cdef void* memset(void* s, int c, size_t len)
 
+cdef extern from "stdlib.h":
+    cdef void* malloc(size_t size)
+    cdef void  free(void* ptr)
+
 cdef extern from "stdarg.h":
     ctypedef void *va_list
     void va_start(va_list ap, void *last)

@@ -148,13 +148,11 @@ cdef class _XPathEvaluatorBase:
         return c == c'/'
 
     cdef int _lock(self) except -1:
-        cdef python.PyThreadState* state
         cdef int result
         if config.ENABLE_THREADING and self._eval_lock != NULL:
-            state = python.PyEval_SaveThread()
-            result = python.PyThread_acquire_lock(
-                self._eval_lock, python.WAIT_LOCK)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                result = python.PyThread_acquire_lock(
+                    self._eval_lock, python.WAIT_LOCK)
             if result == 0:
                 raise ParserError, "parser locking failed"
         return 0

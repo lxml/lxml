@@ -1181,7 +1181,6 @@ cdef extern from "etree_defs.h":
     cdef _Element NEW_ELEMENT "PY_NEW" (object t)
 
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
-    cdef python.PyThreadState* state
     cdef _Element result
     result = getProxy(c_node)
     if result is not None:
@@ -1190,9 +1189,9 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         return None
 
     if config.ENABLE_THREADING:
-        state = python.PyEval_SaveThread()
-        python.PyThread_acquire_lock(ELEMENT_CREATION_LOCK, python.WAIT_LOCK)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            python.PyThread_acquire_lock(
+                ELEMENT_CREATION_LOCK, python.WAIT_LOCK)
         result = getProxy(c_node)
         if result is not None:
             python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
