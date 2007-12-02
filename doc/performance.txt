@@ -598,7 +598,7 @@ A way to improve the normal attribute access time is static instantiation of
 the Python objects, thus trading memory for speed.  Just create a cache
 dictionary and run::
 
-    cache[root] = list(root.getiterator())
+    cache[root] = list(root.iter())
 
 after parsing and::
 
