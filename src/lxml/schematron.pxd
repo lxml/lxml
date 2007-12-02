@@ -14,15 +14,17 @@ cdef extern from "libxml/schematron.h":
         XML_SCHEMATRON_OUT_BUFFER          =  512 # output to a buffer
         XML_SCHEMATRON_OUT_IO              = 1024 # output to I/O mechanism
 
-    cdef xmlSchematronParserCtxt* xmlSchematronNewDocParserCtxt(xmlDoc* doc)
-    cdef xmlSchematronParserCtxt* xmlSchematronNewParserCtxt(char* filename)
-    cdef xmlSchematronValidCtxt* xmlSchematronNewValidCtxt(xmlSchematron* schema,
-                                                           int options)
+    cdef xmlSchematronParserCtxt* xmlSchematronNewDocParserCtxt(
+        xmlDoc* doc) nogil
+    cdef xmlSchematronParserCtxt* xmlSchematronNewParserCtxt(
+        char* filename) nogil
+    cdef xmlSchematronValidCtxt* xmlSchematronNewValidCtxt(
+        xmlSchematron* schema, int options) nogil
 
-    cdef xmlSchematron* xmlSchematronParse(xmlSchematronParserCtxt* ctxt)
+    cdef xmlSchematron* xmlSchematronParse(xmlSchematronParserCtxt* ctxt) nogil
     cdef int xmlSchematronValidateDoc(xmlSchematronValidCtxt* ctxt,
-                                      xmlDoc* instance)
+                                      xmlDoc* instance) nogil
 
-    cdef void xmlSchematronFreeParserCtxt(xmlSchematronParserCtxt* ctxt)
-    cdef void xmlSchematronFreeValidCtxt(xmlSchematronValidCtxt* ctxt)
-    cdef void xmlSchematronFree(xmlSchematron* schema)
+    cdef void xmlSchematronFreeParserCtxt(xmlSchematronParserCtxt* ctxt) nogil
+    cdef void xmlSchematronFreeValidCtxt(xmlSchematronValidCtxt* ctxt) nogil
+    cdef void xmlSchematronFree(xmlSchematron* schema) nogil

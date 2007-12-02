@@ -23,20 +23,21 @@ cdef extern from "libxslt/xsltInternals.h":
         xmlDict* dict
         int profile
 
-    cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc)
-    cdef void xsltFreeStylesheet(xsltStylesheet* sheet)
+    cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc) nogil
+    cdef void xsltFreeStylesheet(xsltStylesheet* sheet) nogil
 
 cdef extern from "libxslt/extensions.h":
     cdef int xsltRegisterExtFunction(xsltTransformContext* ctxt,
                                      char* name,
                                      char* URI,
-                                     xmlXPathFunction function)
+                                     xmlXPathFunction function) nogil
     cdef int xsltRegisterExtModuleFunction(char* name, char* URI,
-                                           xmlXPathFunction function)
+                                           xmlXPathFunction function) nogil
     cdef int xsltUnregisterExtModuleFunction(char* name, char* URI)
-    cdef xmlXPathFunction xsltExtModuleFunctionLookup(char* name, char* URI)
+    cdef xmlXPathFunction xsltExtModuleFunctionLookup(
+        char* name, char* URI) nogil
     cdef int xsltRegisterExtPrefix(xsltStylesheet* style, 
-                                   char* prefix, char* URI)
+                                   char* prefix, char* URI) nogil
 
 cdef extern from "libxslt/documents.h":
     ctypedef enum xsltLoadType:
@@ -49,30 +50,30 @@ cdef extern from "libxslt/documents.h":
                                           void* ctxt,
                                           xsltLoadType type)
     cdef xsltDocLoaderFunc xsltDocDefaultLoader
-    cdef void xsltSetLoaderFunc(xsltDocLoaderFunc f)
+    cdef void xsltSetLoaderFunc(xsltDocLoaderFunc f) nogil
 
 cdef extern from "libxslt/transform.h":
     cdef xmlDoc* xsltApplyStylesheet(xsltStylesheet* style, xmlDoc* doc,
-                                     char** params)
+                                     char** params) nogil
     cdef xmlDoc* xsltApplyStylesheetUser(xsltStylesheet* style, xmlDoc* doc,
                                          char** params, char* output,
                                          void* profile,
-                                         xsltTransformContext* context)
+                                         xsltTransformContext* context) nogil
     cdef xsltTransformContext* xsltNewTransformContext(xsltStylesheet* style,
-                                                       xmlDoc* doc)
-    cdef void xsltFreeTransformContext(xsltTransformContext* context)
+                                                       xmlDoc* doc) nogil
+    cdef void xsltFreeTransformContext(xsltTransformContext* context) nogil
 
 cdef extern from "libxslt/xsltutils.h":
     cdef int xsltSaveResultToString(char** doc_txt_ptr,
                                     int* doc_txt_len,
                                     xmlDoc* result,
-                                    xsltStylesheet* style)
+                                    xsltStylesheet* style) nogil
     
-    cdef void xsltSetGenericErrorFunc(void* ctxt,
-                                      void (*handler)(void* ctxt, char* msg, ...))
-    cdef void xsltSetTransformErrorFunc(xsltTransformContext*,
-                                        void* ctxt,
-                                        void (*handler)(void* ctxt, char* msg, ...))
+    cdef void xsltSetGenericErrorFunc(
+        void* ctxt, void (*handler)(void* ctxt, char* msg, ...)) nogil
+    cdef void xsltSetTransformErrorFunc(
+        xsltTransformContext*, void* ctxt,
+        void (*handler)(void* ctxt, char* msg, ...)) nogil
 
 cdef extern from "libxslt/security.h":
     ctypedef struct xsltSecurityPrefs
@@ -87,20 +88,20 @@ cdef extern from "libxslt/security.h":
                                       xsltTransformContext* ctxt,
                                       char* value)
 
-    cdef xsltSecurityPrefs* xsltNewSecurityPrefs()
-    cdef void xsltFreeSecurityPrefs(xsltSecurityPrefs* sec)
+    cdef xsltSecurityPrefs* xsltNewSecurityPrefs() nogil
+    cdef void xsltFreeSecurityPrefs(xsltSecurityPrefs* sec) nogil
     cdef int xsltSecurityForbid(xsltSecurityPrefs* sec,
                                 xsltTransformContext* ctxt,
-                                char* value)
+                                char* value) nogil
     cdef int xsltSecurityAllow(xsltSecurityPrefs* sec,
                                 xsltTransformContext* ctxt,
-                                char* value)
+                                char* value) nogil
     cdef int xsltSetSecurityPrefs(xsltSecurityPrefs* sec,
                                   xsltSecurityOption option,
-                                  xsltSecurityCheck func)
+                                  xsltSecurityCheck func) nogil
     cdef int xsltSetCtxtSecurityPrefs(xsltSecurityPrefs* sec,
-                                      xsltTransformContext* ctxt)
-    cdef xmlDoc* xsltGetProfileInformation(xsltTransformContext* ctxt)
+                                      xsltTransformContext* ctxt) nogil
+    cdef xmlDoc* xsltGetProfileInformation(xsltTransformContext* ctxt) nogil
 
 cdef extern from "libxslt/extra.h":
     cdef char* XSLT_LIBXSLT_NAMESPACE
@@ -109,7 +110,7 @@ cdef extern from "libxslt/extra.h":
     cdef char* XSLT_XT_NAMESPACE
 
     cdef xmlXPathFunction xsltFunctionNodeSet
-    cdef void xsltRegisterAllExtras()
+    cdef void xsltRegisterAllExtras() nogil
 
 cdef extern from "libexslt/exslt.h":
-    cdef void exsltRegisterAll()
+    cdef void exsltRegisterAll() nogil

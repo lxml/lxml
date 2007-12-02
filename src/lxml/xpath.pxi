@@ -248,7 +248,6 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         Absolute XPath expressions (starting with '/') will be evaluated
         against the ElementTree as returned by getroottree().
         """
-        cdef python.PyThreadState* state
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
         cdef char* c_path
@@ -261,10 +260,10 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         try:
             self._context.register_context(doc)
             self._context.registerVariables(_variables)
-            state = python.PyEval_SaveThread()
-            xpathObj = xpath.xmlXPathEvalExpression(
-                _cstr(path), self._xpathCtxt)
-            python.PyEval_RestoreThread(state)
+            c_path = _cstr(path)
+            with nogil:
+                xpathObj = xpath.xmlXPathEvalExpression(
+                    c_path, self._xpathCtxt)
             result = self._handle_result(xpathObj, doc)
         finally:
             self._error_log.disconnect()
@@ -292,10 +291,10 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         Variables may be provided as keyword arguments.  Note that namespaces
         are currently not supported for variables.
         """
-        cdef python.PyThreadState* state
         cdef xpath.xmlXPathObject*  xpathObj
         cdef xmlDoc* c_doc
         cdef _Document doc
+        cdef char* c_path
         path = _utf8(_path)
         doc = self._element._doc
 
@@ -306,12 +305,12 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)
             try:
                 self._context.registerVariables(_variables)
-                state = python.PyEval_SaveThread()
-                self._xpathCtxt.doc  = c_doc
-                self._xpathCtxt.node = tree.xmlDocGetRootElement(c_doc)
-                xpathObj = xpath.xmlXPathEvalExpression(
-                    _cstr(path), self._xpathCtxt)
-                python.PyEval_RestoreThread(state)
+                c_path = _cstr(path)
+                with nogil:
+                    self._xpathCtxt.doc  = c_doc
+                    self._xpathCtxt.node = tree.xmlDocGetRootElement(c_doc)
+                    xpathObj = xpath.xmlXPathEvalExpression(
+                        c_path, self._xpathCtxt)
                 result = self._handle_result(xpathObj, doc)
             finally:
                 _destroyFakeDoc(doc._c_doc, c_doc)
@@ -370,7 +369,6 @@ cdef class XPath(_XPathEvaluatorBase):
             self._raise_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
-        cdef python.PyThreadState* state
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
@@ -387,10 +385,9 @@ cdef class XPath(_XPathEvaluatorBase):
         try:
             self._context.register_context(document)
             self._context.registerVariables(_variables)
-            state = python.PyEval_SaveThread()
-            xpathObj = xpath.xmlXPathCompiledEval(
-                self._xpath, self._xpathCtxt)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                xpathObj = xpath.xmlXPathCompiledEval(
+                    self._xpath, self._xpathCtxt)
             result = self._handle_result(xpathObj, document)
         finally:
             self._error_log.disconnect()

@@ -49,12 +49,11 @@ cdef extern from "libxml/relaxng.h":
         XML_RELAXNG_ERR_ELEMWRONG = 38
         XML_RELAXNG_ERR_TEXTWRONG = 39
         
-    cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema)
-    cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc)
-    cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt)
-    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewParserCtxt(char* URL)
-    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewDocParserCtxt(xmlDoc* doc)
-    cdef void xmlRelaxNGFree(xmlRelaxNG* schema)
-    cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt)
-    cdef void xmlRelaxNGFreeValidCtxt(xmlRelaxNGValidCtxt* ctxt)
-    
+    cdef xmlRelaxNGValidCtxt* xmlRelaxNGNewValidCtxt(xmlRelaxNG* schema) nogil
+    cdef int xmlRelaxNGValidateDoc(xmlRelaxNGValidCtxt* ctxt, xmlDoc* doc) nogil
+    cdef xmlRelaxNG* xmlRelaxNGParse(xmlRelaxNGParserCtxt* ctxt) nogil
+    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewParserCtxt(char* URL) nogil
+    cdef xmlRelaxNGParserCtxt* xmlRelaxNGNewDocParserCtxt(xmlDoc* doc) nogil
+    cdef void xmlRelaxNGFree(xmlRelaxNG* schema) nogil
+    cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt) nogil
+    cdef void xmlRelaxNGFreeValidCtxt(xmlRelaxNGValidCtxt* ctxt) nogil

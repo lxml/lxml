@@ -53,7 +53,6 @@ cdef class DTD(_Validator):
 
         Returns true if the document is valid, false if not.
         """
-        cdef python.PyThreadState* state
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
@@ -70,9 +69,8 @@ cdef class DTD(_Validator):
             raise DTDError, "Failed to create validation context"
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        state = python.PyEval_SaveThread()
-        ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         dtdvalid.xmlFreeValidCtxt(valid_ctxt)

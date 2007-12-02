@@ -86,7 +86,6 @@ cdef class RelaxNG(_Validator):
         """Validate doc using Relax NG.
 
         Returns true if document is valid, false if not."""
-        cdef python.PyThreadState* state
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
@@ -103,9 +102,8 @@ cdef class RelaxNG(_Validator):
             python.PyErr_NoMemory()
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        state = python.PyEval_SaveThread()
-        ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)

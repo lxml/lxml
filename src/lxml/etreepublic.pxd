@@ -5,16 +5,16 @@ cimport python
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)
-    cdef bint _isElement(tree.xmlNode* c_node)
+    cdef bint _isElement(tree.xmlNode* c_node) nogil
 
     # return the namespace URI of the node or NULL
-    cdef char* _getNs(tree.xmlNode* node)
+    cdef char* _getNs(tree.xmlNode* node) nogil
 
     # pair of macros for tree traversal
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(tree.xmlNode* tree_top,
                                           tree.xmlNode* start_node,
-                                          int start_node_inclusive)
-    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node)
+                                          int start_node_inclusive) nogil
+    cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) nogil
 
 cdef extern from "lxml.etree_api.h":
 
@@ -129,23 +129,23 @@ cdef extern from "lxml.etree_api.h":
     # XML node helper functions
 
     # check if the element has at least one child
-    cdef bint hasChild(tree.xmlNode* c_node)
+    cdef bint hasChild(tree.xmlNode* c_node) nogil
 
     # find child element number 'index' (supports negative indexes)
     cdef tree.xmlNode* findChild(tree.xmlNode* c_node,
-                                 Py_ssize_t index)
+                                 Py_ssize_t index) nogil
 
     # find child element number 'index' starting at first one
     cdef tree.xmlNode* findChildForwards(tree.xmlNode* c_node,
-                                         Py_ssize_t index)
+                                         Py_ssize_t index) nogil
 
     # find child element number 'index' starting at last one
     cdef tree.xmlNode* findChildBackwards(tree.xmlNode* c_node,
-                                          Py_ssize_t index)
+                                          Py_ssize_t index) nogil
 
     # return next/previous sibling element of the node
-    cdef tree.xmlNode* nextElement(tree.xmlNode* c_node)
-    cdef tree.xmlNode* previousElement(tree.xmlNode* c_node)
+    cdef tree.xmlNode* nextElement(tree.xmlNode* c_node) nogil
+    cdef tree.xmlNode* previousElement(tree.xmlNode* c_node) nogil
 
     ##########################################################################
     # iterators
@@ -191,10 +191,10 @@ cdef extern from "lxml.etree_api.h":
     cdef object namespacedNameFromNsName(char* c_ns, char* c_tag)
 
     # check if the node has a text value (which may be '')
-    cdef bint hasText(tree.xmlNode* c_node)
+    cdef bint hasText(tree.xmlNode* c_node) nogil
 
     # check if the node has a tail value (which may be '')
-    cdef bint hasTail(tree.xmlNode* c_node)
+    cdef bint hasTail(tree.xmlNode* c_node) nogil
 
     # get the text content of an element (or None)
     cdef object textOf(tree.xmlNode* c_node)

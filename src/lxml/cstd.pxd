@@ -1,29 +1,29 @@
 
 cdef extern from "stdio.h":
     ctypedef struct FILE
-    cdef int sprintf(char* str, char* format, ...)
-    cdef int printf(char* str)
+    cdef int sprintf(char* str, char* format, ...) nogil
+    cdef int printf(char* str) nogil
 
 cdef extern from "string.h":
     ctypedef int size_t
-    cdef int strlen(char* s)
-    cdef char* strstr(char* haystack, char* needle)
-    cdef char* strchr(char* haystack, int needle)
-    cdef char* strrchr(char* haystack, int needle)
-    cdef int strcmp(char* s1, char* s2)
-    cdef int strncmp(char* s1, char* s2, size_t len)
-    cdef void* memcpy(void* dest, void* src, size_t len)
-    cdef void* memset(void* s, int c, size_t len)
+    cdef int strlen(char* s) nogil
+    cdef char* strstr(char* haystack, char* needle) nogil
+    cdef char* strchr(char* haystack, int needle) nogil
+    cdef char* strrchr(char* haystack, int needle) nogil
+    cdef int strcmp(char* s1, char* s2) nogil
+    cdef int strncmp(char* s1, char* s2, size_t len) nogil
+    cdef void* memcpy(void* dest, void* src, size_t len) nogil
+    cdef void* memset(void* s, int c, size_t len) nogil
 
 cdef extern from "stdlib.h":
-    cdef void* malloc(size_t size)
-    cdef void  free(void* ptr)
+    cdef void* malloc(size_t size) nogil
+    cdef void  free(void* ptr) nogil
 
 cdef extern from "stdarg.h":
     ctypedef void *va_list
-    void va_start(va_list ap, void *last)
-    void va_end(va_list ap)
+    void va_start(va_list ap, void *last) nogil
+    void va_end(va_list ap) nogil
 
 cdef extern from "etree_defs.h":
-    cdef int va_int(va_list ap)
-    cdef char *va_charptr(va_list ap)
+    cdef int va_int(va_list ap) nogil
+    cdef char *va_charptr(va_list ap) nogil

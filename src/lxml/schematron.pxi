@@ -117,7 +117,6 @@ cdef class Schematron(_Validator):
         """Validate doc using Schematron.
 
         Returns true if document is valid, false if not."""
-        cdef python.PyThreadState* state
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* c_doc
@@ -140,9 +139,8 @@ cdef class Schematron(_Validator):
             raise SchematronError, "Failed to create validation context"
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        state = python.PyEval_SaveThread()
-        ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         schematron.xmlSchematronFreeValidCtxt(valid_ctxt)

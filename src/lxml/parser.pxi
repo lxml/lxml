@@ -228,7 +228,6 @@ cdef class _FileReaderContext:
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
 
     cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
-        cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef char* c_encoding
 
@@ -237,29 +236,24 @@ cdef class _FileReaderContext:
         else:
             c_encoding = _cstr(self._encoding)
 
-        state = python.PyEval_SaveThread()
-        if ctxt.html:
-            result = htmlparser.htmlCtxtReadIO(
-                ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
-                self._c_url, c_encoding, options)
-        else:
-            result = xmlparser.xmlCtxtReadIO(
-                ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
-                self._c_url, c_encoding, options)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            if ctxt.html:
+                result = htmlparser.htmlCtxtReadIO(
+                    ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
+                    self._c_url, c_encoding, options)
+            else:
+                result = xmlparser.xmlCtxtReadIO(
+                    ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
+                    self._c_url, c_encoding, options)
         return result
 
     cdef tree.xmlDtd* _readDtd(self):
-        cdef python.PyThreadState* state
-        cdef tree.xmlDtd* result
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
         c_buffer.context = <python.PyObject*>self
         c_buffer.readcallback = _readFilelikeParser
-        state = python.PyEval_SaveThread()
-        result = xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
-        python.PyEval_RestoreThread(state)
-        return result
+        with nogil:
+            return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
 
     cdef int copyToBuffer(self, char* c_buffer, int c_size):
         cdef char* c_start
@@ -699,7 +693,6 @@ cdef class _BaseParser:
         """Parse unicode document, share dictionary if possible.
         """
         cdef _ParserContext context
-        cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef Py_ssize_t py_buffer_len
@@ -719,16 +712,15 @@ cdef class _BaseParser:
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             c_text = python.PyUnicode_AS_DATA(utext)
-            state = python.PyEval_SaveThread()
-            if self._for_html:
-                result = htmlparser.htmlCtxtReadMemory(
-                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
-                    self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadMemory(
-                    pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
-                    self._parse_options)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                if self._for_html:
+                    result = htmlparser.htmlCtxtReadMemory(
+                        pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                        self._parse_options)
+                else:
+                    result = xmlparser.xmlCtxtReadMemory(
+                        pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                        self._parse_options)
 
             return context._handleParseResultDoc(self, result, None)
         finally:
@@ -739,7 +731,6 @@ cdef class _BaseParser:
         """Parse document, share dictionary if possible.
         """
         cdef _ParserContext context
-        cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_encoding
@@ -757,16 +748,15 @@ cdef class _BaseParser:
             else:
                 c_encoding = _cstr(self._default_encoding)
 
-            state = python.PyEval_SaveThread()
-            if self._for_html:
-                result = htmlparser.htmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename,
-                    c_encoding, self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadMemory(
-                    pctxt, c_text, c_len, c_filename,
-                    c_encoding, self._parse_options)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                if self._for_html:
+                    result = htmlparser.htmlCtxtReadMemory(
+                        pctxt, c_text, c_len, c_filename,
+                        c_encoding, self._parse_options)
+                else:
+                    result = xmlparser.xmlCtxtReadMemory(
+                        pctxt, c_text, c_len, c_filename,
+                        c_encoding, self._parse_options)
 
             return context._handleParseResultDoc(self, result, None)
         finally:
@@ -774,7 +764,6 @@ cdef class _BaseParser:
 
     cdef xmlDoc* _parseDocFromFile(self, char* c_filename) except NULL:
         cdef _ParserContext context
-        cdef python.PyThreadState* state
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef int orig_options
@@ -793,14 +782,13 @@ cdef class _BaseParser:
                 c_encoding = _cstr(self._default_encoding)
 
             orig_options = pctxt.options
-            state = python.PyEval_SaveThread()
-            if self._for_html:
-                result = htmlparser.htmlCtxtReadFile(
-                    pctxt, c_filename, c_encoding, self._parse_options)
-            else:
-                result = xmlparser.xmlCtxtReadFile(
-                    pctxt, c_filename, c_encoding, self._parse_options)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                if self._for_html:
+                    result = htmlparser.htmlCtxtReadFile(
+                        pctxt, c_filename, c_encoding, self._parse_options)
+                else:
+                    result = xmlparser.xmlCtxtReadFile(
+                        pctxt, c_filename, c_encoding, self._parse_options)
             pctxt.options = orig_options # work around libxml2 problem
 
             return context._handleParseResultDoc(self, result, c_filename)
@@ -1630,13 +1618,12 @@ cdef xmlDoc* _newDoc() except NULL:
     return result
 
 cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
-    cdef python.PyThreadState* state
     cdef xmlDoc* result
     if recursive:
-        state = python.PyEval_SaveThread()
-    result = tree.xmlCopyDoc(c_doc, recursive)
-    if recursive:
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            result = tree.xmlCopyDoc(c_doc, recursive)
+    else:
+        result = tree.xmlCopyDoc(c_doc, 0)
     if result is NULL:
         python.PyErr_NoMemory()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
@@ -1644,14 +1631,12 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
 
 cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     "Recursively copy the document and make c_new_root the new root node."
-    cdef python.PyThreadState* state
     cdef xmlDoc* result
     cdef xmlNode* c_node
     result = tree.xmlCopyDoc(c_doc, 0) # non recursive
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
-    state = python.PyEval_SaveThread()
-    c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
-    python.PyEval_RestoreThread(state)
+    with nogil:
+        c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     if c_node is NULL:
         python.PyErr_NoMemory()
     tree.xmlDocSetRootElement(result, c_node)

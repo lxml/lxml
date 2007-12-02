@@ -271,7 +271,6 @@ cdef class XSLT:
 
     def __init__(self, xslt_input, extensions=None, regexp=True,
                  access_control=None):
-        cdef python.PyThreadState* state
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
         cdef xmlDoc* fake_c_doc
@@ -301,9 +300,8 @@ cdef class XSLT:
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
         self._error_log.connect()
-        state = python.PyEval_SaveThread()
-        c_style = xslt.xsltParseStylesheetDoc(c_doc)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            c_style = xslt.xsltParseStylesheetDoc(c_doc)
         self._error_log.disconnect()
 
         if c_style is NULL:
@@ -443,7 +441,6 @@ cdef class XSLT:
     cdef xmlDoc* _run_transform(self, _Document input_doc, xmlDoc* c_input_doc,
                                 parameters, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt):
-        cdef python.PyThreadState* state
         cdef xmlDoc* c_result
         cdef char** params
         cdef Py_ssize_t i, parameter_count
@@ -480,10 +477,9 @@ cdef class XSLT:
         else:
             params = NULL
 
-        state = python.PyEval_SaveThread()
-        c_result = xslt.xsltApplyStylesheetUser(
-            self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            c_result = xslt.xsltApplyStylesheetUser(
+                self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
 
         if params is not NULL:
             # deallocate space for parameters
@@ -499,7 +495,6 @@ cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
     cdef _Document _profile
     cdef _saveToStringAndSize(self, char** s, int* l):
-        cdef python.PyThreadState* state
         cdef _Document doc
         cdef int r
         if self._context_node is not None:
@@ -509,9 +504,9 @@ cdef class _XSLTResultTree(_ElementTree):
             if doc is None:
                 s[0] = NULL
                 return
-        state = python.PyEval_SaveThread()
-        r = xslt.xsltSaveResultToString(s, l, doc._c_doc, self._xslt._c_style)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            r = xslt.xsltSaveResultToString(s, l, doc._c_doc,
+                                            self._xslt._c_style)
         if r == -1:
             raise XSLTSaveError, "Error saving XSLT result to string"
 

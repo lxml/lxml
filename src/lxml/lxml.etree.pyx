@@ -1588,8 +1588,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Note that XInclude does not support custom resolvers in Python space
         due to restrictions of libxml2 <= 2.6.29.
         """
-        cdef python.PyThreadState* state
         cdef int result
+        self._assertHasRoot()
         # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
         # the XInclude nodes - there may still be Python references to them!
         # Therefore, we allow XInclude nodes to be converted to
@@ -1597,16 +1597,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         # siblings.  Tree traversal will simply ignore them as they are not
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
-        self._assertHasRoot()
-        state = python.PyEval_SaveThread()
-        if self._context_node._doc._parser is not None:
-            result = xinclude.xmlXIncludeProcessTreeFlags(
-                self._context_node._c_node,
-                self._context_node._doc._parser._parse_options)
-        else:
-            result = xinclude.xmlXIncludeProcessTree(
-                self._context_node._c_node)
-        python.PyEval_RestoreThread(state)
+        with nogil:
+            if self._context_node._doc._parser is not None:
+                result = xinclude.xmlXIncludeProcessTreeFlags(
+                    self._context_node._c_node,
+                    self._context_node._doc._parser._parse_options)
+            else:
+                result = xinclude.xmlXIncludeProcessTree(
+                    self._context_node._c_node)
         if result == -1:
             raise XIncludeError, "XInclude processing failed"
 

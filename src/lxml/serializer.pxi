@@ -18,11 +18,9 @@ cdef int _findOutputMethod(method) except -1:
     raise ValueError, "unknown output method %r" % method
 
 cdef _textToString(xmlNode* c_node, encoding):
-    cdef python.PyThreadState* state
     cdef char* c_text
-    state = python.PyEval_SaveThread()
-    c_text = tree.xmlNodeGetContent(c_node)
-    python.PyEval_RestoreThread(state)
+    with nogil:
+        c_text = tree.xmlNodeGetContent(c_node)
     if c_text is NULL:
         python.PyErr_NoMemory()
 
@@ -49,7 +47,6 @@ cdef _tostring(_Element element, encoding, method,
     """Serialize an element to an encoded string representation of its XML
     tree.
     """
-    cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
@@ -77,17 +74,17 @@ cdef _tostring(_Element element, encoding, method,
         tree.xmlCharEncCloseFunc(enchandler)
         raise LxmlError, "Failed to create output buffer"
 
-    try:
-        state = python.PyEval_SaveThread()
+    with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                            write_xml_declaration, write_complete_document,
                            pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
-        python.PyEval_RestoreThread(state)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
         else:
             c_result_buffer = c_buffer.buffer
+
+    try:
         result = python.PyString_FromStringAndSize(
             tree.xmlBufferContent(c_result_buffer),
             tree.xmlBufferLength(c_result_buffer))
@@ -100,7 +97,6 @@ cdef _tounicode(_Element element, method,
     """Serialize an element to the Python unicode representation of its XML
     tree.
     """
-    cdef python.PyThreadState* state
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     cdef int c_method
@@ -113,16 +109,17 @@ cdef _tounicode(_Element element, method,
     c_buffer = tree.xmlAllocOutputBuffer(NULL)
     if c_buffer is NULL:
         raise LxmlError, "Failed to create output buffer"
-    try:
-        state = python.PyEval_SaveThread()
+
+    with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, NULL, c_method, 0,
                            write_complete_document, pretty_print)
         tree.xmlOutputBufferFlush(c_buffer)
-        python.PyEval_RestoreThread(state)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
         else:
             c_result_buffer = c_buffer.buffer
+
+    try:
         result = python.PyUnicode_DecodeUTF8(
             tree.xmlBufferContent(c_result_buffer),
             tree.xmlBufferLength(c_result_buffer),
@@ -135,7 +132,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding, int c_method,
                              bint write_xml_declaration,
                              bint write_complete_document,
-                             bint pretty_print):
+                             bint pretty_print) nogil:
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
@@ -177,7 +174,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
-                                    char* version, char* encoding):
+                                    char* version, char* encoding) nogil:
     if version is NULL:
         version = "1.0"
     tree.xmlOutputBufferWriteString(c_buffer, "<?xml version='")
@@ -187,7 +184,8 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWriteString(c_buffer, "'?>\n")
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
-                            xmlDoc* c_doc, char* c_root_name, char* encoding):
+                            xmlDoc* c_doc, char* c_root_name,
+                            char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     c_dtd = c_doc.intSubset
@@ -222,7 +220,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     char* encoding, bint pretty_print):
+                     char* encoding, bint pretty_print) nogil:
     "Write the element tail."
     c_node = c_node.next
     while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
@@ -231,7 +229,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, bint pretty_print):
+                             char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -247,7 +245,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, bint pretty_print):
+                             char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -358,7 +356,6 @@ cdef _tofilelike(f, _Element element, encoding, method,
         writer._exc_context._raise_if_stored()
 
 cdef _tofilelikeC14N(f, _Element element):
-    cdef python.PyThreadState* state
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef char* c_filename
@@ -372,9 +369,9 @@ cdef _tofilelikeC14N(f, _Element element):
         if _isString(f):
             filename8 = _encodeFilename(f)
             c_filename = _cstr(filename8)
-            state = python.PyEval_SaveThread()
-            bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1, c_filename, 0)
-            python.PyEval_RestoreThread(state)
+            with nogil:
+                bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1,
+                                            c_filename, 0)
         elif hasattr(f, 'write'):
             writer   = _FilelikeWriter(f)
             c_buffer = writer._createOutputBuffer(NULL)
