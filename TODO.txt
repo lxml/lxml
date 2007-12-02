@@ -22,12 +22,6 @@ In general
   e.g. missing namespace mappings in XPath
 
 
-ElementTree
------------
-
-* _setroot(), even though this is not strictly a public method.
-
-
 QName
 -----
 
