@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* New properties ``position`` and ``code`` on ParseError exception (as
+  in ET 1.3)
+
+Bugs fixed
+----------
+
+* Minor bugs in XSLT error message formatting.
+
+* Result document memory leak in target parser.
+
+
 2.0alpha5 (2007-11-24)
 ======================
 
