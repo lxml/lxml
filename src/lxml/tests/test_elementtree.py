@@ -3008,6 +3008,17 @@ class ETreeTestCaseBase(unittest.TestCase):
 
         self.assertRaises(ParseError, parser.close)
 
+    def test_feed_parser_error_position(self):
+        ParseError = self.etree.ParseError
+        parser = self.etree.XMLParser()
+        try:
+            parser.close()
+        except ParseError, e:
+            self.assertNotEquals(None, e.code)
+            self.assertNotEquals(0, e.code)
+            self.assert_(isinstance(e.position, tuple))
+            self.assert_(e.position >= (0, 0))
+
     # parser target interface
 
     def test_parser_target_tag(self):

@@ -13,7 +13,10 @@ class ParseError(LxmlSyntaxError):
 class XMLSyntaxError(ParseError):
     """Syntax error while parsing an XML document.
     """
-    pass
+    def __init__(self, message, code, line, column):
+        ParseError.__init__(self, message)        
+        self.position = (line, column)
+        self.code = code
 
 class ParserError(LxmlError):
     """Internal lxml parser error.
@@ -449,7 +452,6 @@ cdef _initParserContext(_ParserContext context,
         context._initParserContext(c_ctxt)
     context._error_log = _ErrorLog()
 
-
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
     if filename is not None and \
@@ -458,18 +460,21 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
             message = "Error reading file '%s': %s" % (
                 filename, (ctxt.lastError.message).strip())
         else:
-            message = "Error reading file '%s'" % filename
-        raise IOError, message
+            message = "Error reading '%s'" % filename
+        raise IOError(message)
     elif error_log:
-        raise XMLSyntaxError, error_log._buildExceptionMessage(
-            "Document is not well formed")
+        raise error_log._buildParseException(
+            XMLSyntaxError, "Document is not well formed")
     elif ctxt.lastError.message is not NULL:
         message = (ctxt.lastError.message).strip()
+        code = ctxt.lastError.code
+        line = ctxt.lastError.line
+        column = ctxt.lastError.int2
         if ctxt.lastError.line > 0:
-            message = "line %d: %s" % (ctxt.lastError.line, message)
-        raise XMLSyntaxError, message
+            message = "line %d: %s" % (line, message)
+        raise XMLSyntaxError(message, code, line, column)
     else:
-        raise XMLSyntaxError
+        raise XMLSyntaxError(None, xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0)
 
 cdef xmlDoc* _handleParseResult(_ParserContext context,
                                 xmlparser.xmlParserCtxt* c_ctxt,
@@ -931,7 +936,8 @@ cdef class _FeedParser(_BaseParser):
         cdef xmlDoc* c_doc
         cdef _Document doc
         if not self._feed_parser_running:
-            raise XMLSyntaxError, "no element found"
+            raise XMLSyntaxError("no element found",
+                                 xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0)
 
         context = self._getPushParserContext()
         pctxt = context._c_ctxt

@@ -273,10 +273,8 @@ cdef class XSLT:
                  access_control=None):
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
-        cdef xmlDoc* fake_c_doc
         cdef _Document doc
         cdef _Element root_node
-        cdef _ExsltRegExp _regexp 
 
         doc = _documentOrRaise(xslt_input)
         root_node = _rootNodeOrRaise(xslt_input)
@@ -308,10 +306,13 @@ cdef class XSLT:
             tree.xmlFreeDoc(c_doc)
             self._xslt_resolver_context._raise_if_stored()
             # last error seems to be the most accurate here
-            if self._error_log.last_error is not None:
-                raise XSLTParseError, self._error_log.last_error.message
+            if self._error_log.last_error is not None and \
+                    self._error_log.last_error.message:
+                raise XSLTParseError(self._error_log.last_error.message)
             else:
-                raise XSLTParseError, "Cannot parse stylesheet"
+                raise XSLTParseError(
+                    self._error_log._buildExceptionMessage(
+                        "Cannot parse stylesheet"))
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style

@@ -54,6 +54,6 @@ lxml 2.0
 
 * clean support for entities (is the Entity element class enough?)
 
-* implement 'position' property on ParseError exception
-
-* rewrite iterparse() to accept a parser as argument instead of being one
+* rewrite iterparse() to accept a parser as argument instead of being
+  one (or maybe not: iterparse() can't deal with all parser options
+  anyway).

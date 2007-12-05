@@ -653,7 +653,7 @@ def error(xml):
     except ET.ParseError:
         return sys.exc_value
 
-# doesn't work with lxml.etree
+# doesn't work with lxml.etree -> different positions
 del error
 
 def namespace():

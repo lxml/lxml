@@ -128,6 +128,28 @@ cdef class _BaseErrorLog:
         if is_error:
             self.last_error = entry
 
+    cdef _buildParseException(self, exctype, default_message):
+        code = xmlerror.XML_ERR_INTERNAL_ERROR
+        if self._first_error is None:
+            return exctype(default_message, code, 0, 0)
+        if self._first_error is None or \
+                self._first_error.message is None or \
+                not self._first_error.message:
+            message = default_message
+            line = 0
+            column = 0
+        else:
+            message = self._first_error.message
+            code = self._first_error.type
+            line = self._first_error.line
+            column = self._first_error.column
+            if line > 0:
+                if column > 0:
+                    message = "%s, line %d, column %d" % (message, line, column)
+                else:
+                    message = "%s, line %d" % (message, line)
+        return exctype(message, code, line, column)
+
     cdef _buildExceptionMessage(self, default_message):
         if self._first_error is None:
             return default_message
@@ -393,7 +415,9 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     cdef char* c_message
     cdef char* c_element
     cdef int i, text_size, element_size
-    if __DEBUG == 0 or msg is NULL or msg[0] == c'\n':
+    if __DEBUG == 0 or msg is NULL:
+        return
+    if msg[0] == c'\n' or msg[0] == c'\0':
         return
 
     cstd.va_start(args, msg)
@@ -401,18 +425,19 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
         c_text = cstd.va_charptr(args)
     else:
         c_text = NULL
-    if cstd.strstr(msg, 'file %s') is not NULL:
+    if cstd.strstr(msg, 'file %s'):
         c_error.file = cstd.va_charptr(args)
-        if c_error.file is not NULL and cstd.strlen(c_error.file) > 0:
-            if cstd.strncmp(c_error.file, 'XSLT:', 5) == 0:
-                c_error.file = '<xslt>'
+        if c_error.file and \
+                cstd.strncmp(c_error.file,
+                            'string://__STRING__XSLT', 23) == 0:
+            c_error.file = '<xslt>'
     else:
         c_error.file = NULL
-    if cstd.strstr(msg, 'line %d') is not NULL:
+    if cstd.strstr(msg, 'line %d'):
         c_error.line = cstd.va_int(args)
     else:
         c_error.line = -1
-    if cstd.strstr(msg, 'element %s') is not NULL:
+    if cstd.strstr(msg, 'element %s'):
         c_element = cstd.va_charptr(args)
     else:
         c_element = NULL
@@ -420,7 +445,17 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 
     c_message = NULL
     if c_text is NULL:
-        c_error.message = ''
+        if c_element is not NULL and \
+                cstd.strchr(msg, c'%') == cstd.strrchr(msg, c'%'):
+            # special case: a single occurrence of 'element %s'
+            text_size    = cstd.strlen(msg)
+            element_size = cstd.strlen(c_element)
+            c_message = <char*>cstd.malloc(
+                (text_size + element_size + 1) * sizeof(char))
+            cstd.sprintf(c_message, msg, c_element)
+            c_error.message = c_message
+        else:
+            c_error.message = ''
     elif c_element is NULL:
         c_error.message = c_text
     else:
@@ -439,8 +474,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     _forwardError(c_log_handler, &c_error)
 
     if c_message is not NULL:
-        cstd.free(c_error.message)
-
+        cstd.free(c_message)
 
 ################################################################################
 ## CONSTANTS FROM "xmlerror.h" (or rather libxml-xmlerror.html)
