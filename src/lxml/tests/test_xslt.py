@@ -622,7 +622,6 @@ class ETreeXSLTTestCase(HelperTestCase):
                           '{http://www.w3.org/1999/XSL/Transform}stylesheet')
 
     def test_xslt_document_error(self):
-        # make sure document('') works from parsed strings
         xslt = etree.XSLT(etree.XML("""\
 <xsl:stylesheet version="1.0"
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -632,6 +631,68 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>
 """))
         self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
+
+    def test_xslt_document_XML_resolver(self):
+        # make sure document('') works when custom resolvers are in use
+        assertEquals = self.assertEquals
+        called = {'count' : 0}
+        class TestResolver(etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEquals(url, 'file://ANYTHING')
+                called['count'] += 1
+                return self.resolve_string('<CALLED/>', context)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(TestResolver())
+
+        xslt = etree.XSLT(etree.XML("""\
+<xsl:stylesheet version="1.0"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+   xmlns:l="local">
+  <xsl:template match="/">
+    <test>
+      <xsl:for-each select="document('')//l:data/l:entry">
+        <xsl:copy-of select="document('file://ANYTHING')"/>
+        <xsl:copy>
+          <xsl:attribute name="value">
+            <xsl:value-of select="."/>
+          </xsl:attribute>
+        </xsl:copy>
+      </xsl:for-each>
+    </test>
+  </xsl:template>
+  <l:data>
+    <l:entry>A</l:entry>
+    <l:entry>B</l:entry>
+  </l:data>
+</xsl:stylesheet>
+""", parser))
+
+        self.assertEquals(called['count'], 0)
+        result = xslt(etree.XML('<a/>'))
+        self.assertEquals(called['count'], 1)
+
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(len(root), 4)
+
+        self.assertEquals(root[0].tag,
+                          'CALLED')
+        self.assertEquals(root[1].tag,
+                          '{local}entry')
+        self.assertEquals(root[1].text,
+                          None)
+        self.assertEquals(root[1].get("value"),
+                          'A')
+        self.assertEquals(root[2].tag,
+                          'CALLED')
+        self.assertEquals(root[3].tag,
+                          '{local}entry')
+        self.assertEquals(root[3].text,
+                          None)
+        self.assertEquals(root[3].get("value"),
+                          'B')
 
     def test_xslt_move_result(self):
         root = etree.XML('''\
