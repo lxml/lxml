@@ -81,8 +81,8 @@ cdef class Schematron(_Validator):
         cdef char* c_href
         cdef schematron.xmlSchematronParserCtxt* parser_ctxt
         if not config.ENABLE_SCHEMATRON:
-            raise SchematronError, \
-                  "lxml.etree was compiled without Schematron support."
+            raise SchematronError(
+                "lxml.etree was compiled without Schematron support.")
         self._c_schema = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
@@ -98,7 +98,7 @@ cdef class Schematron(_Validator):
             parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
             c_doc = NULL
         else:
-            raise SchematronParseError, "No tree or file given"
+            raise SchematronParseError("No tree or file given")
 
         if parser_ctxt is NULL:
             python.PyErr_NoMemory()
@@ -107,7 +107,8 @@ cdef class Schematron(_Validator):
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
-            raise SchematronParseError, "Document is not a valid Schematron schema"
+            raise SchematronParseError(
+                "Document is not a valid Schematron schema")
         _Validator.__init__(self)
 
     def __dealloc__(self):
@@ -127,27 +128,28 @@ cdef class Schematron(_Validator):
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
-        self._error_log.connect()
         options = schematron.XML_SCHEMATRON_OUT_QUIET
-        if tree.LIBXML_VERSION <= 20629:
-            # hack to switch off stderr output
-            options = options | schematron.XML_SCHEMATRON_OUT_XML
+        #if tree.LIBXML_VERSION <= 20630: # ... and later?
+        # hack to switch off stderr output
+        options = options | schematron.XML_SCHEMATRON_OUT_XML
+
         valid_ctxt = schematron.xmlSchematronNewValidCtxt(
             self._c_schema, options)
         if valid_ctxt is NULL:
-            self._error_log.disconnect()
-            raise SchematronError, "Failed to create validation context"
+            raise SchematronError("Failed to create validation context")
 
+        self._error_log.connect()
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
         _destroyFakeDoc(doc._c_doc, c_doc)
+        self._error_log.disconnect()
 
         schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
-        self._error_log.disconnect()
         if ret == -1:
-            raise SchematronValidateError, "Internal error in Schematron validation"
+            raise SchematronValidateError(
+                "Internal error in Schematron validation")
         if ret == 0:
             return True
         else:
