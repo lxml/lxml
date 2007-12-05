@@ -115,5 +115,14 @@ cdef class _TargetParserContext(_SaxParserContext):
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
                                        xmlDoc* result, filename) except NULL:
+        if result is not NULL and result._private is NULL:
+            # no _Document proxy => orphen
+            tree.xmlFreeDoc(result)
+        if self._c_ctxt.myDoc is not NULL and \
+                self._c_ctxt.myDoc is not result and \
+                self._c_ctxt.myDoc._private is NULL:
+            # no _Document proxy => orphen
+            tree.xmlFreeDoc(self._c_ctxt.myDoc)
+            self._c_ctxt.myDoc = NULL
         self._raise_if_stored()
         raise _TargetParserResult(self._python_target.close())
