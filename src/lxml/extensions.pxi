@@ -81,12 +81,14 @@ cdef class _BaseContext:
                     ns_uri_utf = self._to_utf(ns_uri)
                     python.PyList_Append(ns, (prefix_utf, ns_uri_utf))
                 namespaces = ns
+            else:
+                namespaces = None
 
         self._doc        = None
         self._exc        = _ExceptionContext()
         self._extensions = extensions
         self._namespaces = namespaces
-        self._temp_refs = _TempStore()
+        self._temp_refs  = _TempStore()
 
         if enable_regexp:
             _regexp = _ExsltRegExp()
