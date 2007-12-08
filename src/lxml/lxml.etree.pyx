@@ -215,6 +215,14 @@ cdef class _ExceptionContext:
 
 cdef class QName:
     """QName wrapper.
+
+    Pass a tag name by itself or a namespace URI and a tag name to
+    create a qualified name.  The ``text`` property holds the
+    qualified name in ``{namespace}tagname`` notation.
+
+    You can pass QName objects wherever a tag name is expected.  Also,
+    setting Element text from a QName will resolve the namespace
+    prefix and set a qualified text value.
     """
     cdef readonly object text
     def __init__(self, text_or_uri, tag=None):
