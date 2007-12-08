@@ -18,6 +18,12 @@ Bugs fixed
 
 * Result document memory leak in target parser.
 
+Other changes
+-------------
+
+* Second argument to ``lxml.etree.Extension()`` helper is no longer
+  required, third argument is now a keyword-only argument ``ns``.
+
 
 2.0alpha5 (2007-11-24)
 ======================

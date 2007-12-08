@@ -323,8 +323,17 @@ cdef class _BaseContext:
                 #print "Holding document:", <int>element._doc._c_doc
                 self._temp_refs.add((<_Element>o)._doc)
 
+def Extension(module, function_mapping=None, *, ns=None):
+    """Build a dictionary of extension functions from the functions
+    defined in a module or the methods of an object.
 
-def Extension(module, function_mapping, ns=None):
+    As second argument, you can pass an additional mapping of
+    attribute names to XPath function names, or a list of function
+    names that should be taken.
+
+    The ``ns`` keyword argument accepts a namespace URI for the XPath
+    functions.
+    """
     functions = {}
     if python.PyDict_Check(function_mapping):
         for function_name, xpath_name in function_mapping.items():
@@ -332,15 +341,12 @@ def Extension(module, function_mapping, ns=None):
                                   getattr(module, function_name))
     else:
         if function_mapping is None:
-            function_mapping = []
-            for name in dir(module):
-                if not name.startswith('_'):
-                    python.PyList_Append(function_mapping, name)
+            function_mapping = [ name for name in dir(module)
+                                 if not name.startswith('_') ]
         for function_name in function_mapping:
             python.PyDict_SetItem(functions, (ns, function_name),
                                   getattr(module, function_name))
     return functions
-
 
 ################################################################################
 # EXSLT regexp implementation
