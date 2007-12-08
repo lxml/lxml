@@ -3,10 +3,10 @@ lxml.etree versus ElementTree
 =============================
 
 A lot of care has been taken to ensure compatibility between etree and
-ElementTree.  Nonetheless some differences and incompatibilities exist:
+ElementTree.  Nonetheless, some differences and incompatibilities exist:
 
-* Importing etree is obviously different; etree uses a lower case
-  package name, while ElementTree a combination of upper-case and
+* Importing etree is obviously different; etree uses a lower-case
+  package name, while ElementTree uses a combination of upper-case and
   lower case in imports::
 
     # etree
@@ -89,9 +89,10 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   API.  In general, etree tries to avoid AssertionErrors in favour of being
   more specific about the reason for the exception.
 
-* When parsing fails in ``iterparse()``, ElementTree raises a low-level
-  ExpatError instead of a SyntaxError as the other parsers.  lxml.etree
-  follows the other parts of the parser API and raises an (XML)SyntaxError.
+* When parsing fails in ``iterparse()``, ElementTree up to version
+  1.2.x raises a low-level ``ExpatError`` instead of a ``SyntaxError``
+  as the other parsers.  Both lxml and ElementTree 1.3 raise a
+  ``ParseError`` for parser errors.
 
 * The ``iterparse()`` function in lxml is implemented based on the libxml2
   parser and tree generator.  This means that modifications of the document
@@ -115,8 +116,17 @@ ElementTree.  Nonetheless some differences and incompatibilities exist:
   tries to provide a default setup that is as close to the ElementTree parser
   as possible.
 
-* ElementTree has a bug when serializing an empty Comment (no text argument
-  given) to XML, etree serializes this successfully.
+* The ``TreeBuilder`` class of ``lxml.etree`` uses a different
+  signature for the ``start()`` method.  It accepts an additional
+  argument ``nsmap`` to propagate the namespace declarations of an
+  element in addition to its own namespace.  To assure compatibility
+  with ElementTree (which does not support this argument), lxml checks
+  if the method accepts 3 arguments before calling it, and otherwise
+  drops the namespace mapping.  This should work with most existing
+  ElementTree code, although there may still be conflicting cases.
+
+* ElementTree 1.2 has a bug when serializing an empty Comment (no text
+  argument given) to XML, etree serializes this successfully.
 
 * ElementTree adds whitespace around comments on serialization, lxml does
   not.  This means that a comment text "text" that ElementTree serializes as
