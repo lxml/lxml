@@ -1746,8 +1746,12 @@ cdef class _Attrib:
             tree.xmlFree(c_result)
             return 1
 
-    def __richcmp__(self, other, int op):
-        return python.PyObject_RichCompare(dict(self), other, op)
+    def __richcmp__(one, other, int op):
+        if not python.PyDict_Check(one):
+            one = dict(one)
+        if not python.PyDict_Check(other):
+            other = dict(other)
+        return python.PyObject_RichCompare(one, other, op)
 
 cdef class _AttribIterator:
     """Attribute iterator - for internal use only!
