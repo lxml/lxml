@@ -316,7 +316,6 @@ cdef class XSLT:
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
-
         self._context = _XSLTContext(None, extensions, regexp)
 
     def __dealloc__(self):
