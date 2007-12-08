@@ -34,7 +34,7 @@ administrator)::
 
 This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
 libxml2 and libxslt are properly installed (including development packages,
-i.e. header files etc.).
+i.e. header files, etc.).
 
 
 Building lxml from sources
@@ -84,3 +84,5 @@ libraries (e.g. using fink_), but needed to set the environment variable
 ``DYLD_LIBRARY_PATH`` to the directory where fink keeps the libraries.
 
 .. _fink: http://finkproject.org/
+
+A MacPort of lxml is available.  Try ``port install py25-lxml``.
