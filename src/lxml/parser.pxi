@@ -1284,6 +1284,10 @@ cdef void _handleSaxComment(void* ctxt, char* c_data) with gil:
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
+    """Parser target that builds a tree.
+
+    The final tree is returned by the ``close()`` method.
+    """
     cdef _BaseParser _parser
     cdef object _factory
     cdef object _data
