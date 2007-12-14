@@ -2172,8 +2172,6 @@ def fromstring(text, _BaseParser parser=None, *, base_url=None):
     (DTD, XInclude, ...).
     """
     cdef _Document doc
-    if parser is None:
-        parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     try:
         doc = _parseMemoryDocument(text, base_url, parser)
         return doc.getroot()
