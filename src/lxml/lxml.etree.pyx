@@ -2276,7 +2276,7 @@ def parse(source, _BaseParser parser=None):
     cdef _Document doc
     try:
         doc = _parseDocument(source, parser)
-        return ElementTree(doc.getroot())
+        return _elementTreeFactory(doc, None)
     except _TargetParserResult, result_container:
         return result_container.result
 
