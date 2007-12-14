@@ -172,7 +172,8 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     _writeTail(c_buffer, c_node, encoding, pretty_print)
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
-        tree.xmlOutputBufferWriteString(c_buffer, "\n")
+        if pretty_print:
+            tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding) nogil:
@@ -243,7 +244,8 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
     while c_sibling != c_node:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
                                pretty_print, encoding)
-        tree.xmlOutputBufferWriteString(c_buffer, "\n")
+        if pretty_print:
+            tree.xmlOutputBufferWriteString(c_buffer, "\n")
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
@@ -256,7 +258,8 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
     while c_sibling != NULL and \
             (c_sibling.type == tree.XML_PI_NODE or \
                  c_sibling.type == tree.XML_COMMENT_NODE):
-        tree.xmlOutputBufferWriteString(c_buffer, "\n")
+        if pretty_print:
+            tree.xmlOutputBufferWriteString(c_buffer, "\n")
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
                                pretty_print, encoding)
         c_sibling = c_sibling.next
@@ -407,5 +410,7 @@ cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print):
     c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(f), NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, pretty_print, NULL)
     _writeTail(c_buffer, c_node, NULL, 0)
-    tree.xmlOutputBufferWriteString(c_buffer, '\n')
+    if not pretty_print:
+        # not written yet
+        tree.xmlOutputBufferWriteString(c_buffer, '\n')
     tree.xmlOutputBufferFlush(c_buffer)
