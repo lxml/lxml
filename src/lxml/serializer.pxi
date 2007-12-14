@@ -236,12 +236,13 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
     # we are at a root node, so add PI and comment siblings
     c_sibling = c_node
     while c_sibling.prev != NULL and \
-              (c_sibling.prev.type == tree.XML_PI_NODE or \
-               c_sibling.prev.type == tree.XML_COMMENT_NODE):
+            (c_sibling.prev.type == tree.XML_PI_NODE or \
+                 c_sibling.prev.type == tree.XML_COMMENT_NODE):
         c_sibling = c_sibling.prev
     while c_sibling != c_node:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
                                pretty_print, encoding)
+        tree.xmlOutputBufferWriteString(c_buffer, "\n")
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
@@ -252,8 +253,9 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
     # we are at a root node, so add PI and comment siblings
     c_sibling = c_node.next
     while c_sibling != NULL and \
-              (c_sibling.type == tree.XML_PI_NODE or \
-               c_sibling.type == tree.XML_COMMENT_NODE):
+            (c_sibling.type == tree.XML_PI_NODE or \
+                 c_sibling.type == tree.XML_COMMENT_NODE):
+        tree.xmlOutputBufferWriteString(c_buffer, "\n")
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
                                pretty_print, encoding)
         c_sibling = c_sibling.next

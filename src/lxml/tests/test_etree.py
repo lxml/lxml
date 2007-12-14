@@ -284,7 +284,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        xml = '<?test?><a><?A?><b><?B?><c/></b><?C?></a><?tail?>'
+        xml = '<?test?>\n<a><?A?><b><?B?><c/></b><?C?></a>\n<?tail?>'
 
         f = StringIO(xml)
         tree = parse(f)
