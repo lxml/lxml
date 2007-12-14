@@ -639,7 +639,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type != tree.XML_PI_NODE:
                 if element._c_node.type != tree.XML_COMMENT_NODE:
-                    raise TypeError, "Only processing instructions and comments can be siblings of the root element"
+                    raise TypeError("Only processing instructions and comments can be siblings of the root element")
             element.tail = None
         _appendSibling(self, element)
 
@@ -654,7 +654,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type != tree.XML_PI_NODE:
                 if element._c_node.type != tree.XML_COMMENT_NODE:
-                    raise TypeError, "Only processing instructions and comments can be siblings of the root element"
+                    raise TypeError("Only processing instructions and comments can be siblings of the root element")
             element.tail = None
         _prependSibling(self, element)
 
