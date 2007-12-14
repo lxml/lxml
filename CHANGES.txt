@@ -21,6 +21,10 @@ Bugs fixed
 Other changes
 -------------
 
+* The serialisation of ElementTree objects now appends a newline at
+  the end of the document and also inserts newlines between the
+  top-level processing instructions and comments
+
 * Second argument to ``lxml.etree.Extension()`` helper is no longer
   required, third argument is now a keyword-only argument ``ns``.
 

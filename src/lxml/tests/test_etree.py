@@ -268,23 +268,23 @@ class ETreeOnlyTestCase(HelperTestCase):
         f.close()
 
     def test_parse_remove_comments(self):
-        parse = self.etree.parse
+        fromstring = self.etree.fromstring
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        xml = '<a><!--A--><b><!-- B --><c/></b><!--C--></a>'
         parser = XMLParser(remove_comments=True)
-        tree = parse(f, parser)
+        root = fromstring(xml, parser)
         self.assertEquals(
             '<a><b><c/></b></a>',
-            tostring(tree))
+            tostring(root))
 
     def test_parse_remove_pis(self):
         parse = self.etree.parse
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        xml = '<?test?>\n<a><?A?><b><?B?><c/></b><?C?></a>\n<?tail?>'
+        xml = '<?test?>\n<a><?A?><b><?B?><c/></b><?C?></a>\n<?tail?>\n'
 
         f = StringIO(xml)
         tree = parse(f)
@@ -292,11 +292,10 @@ class ETreeOnlyTestCase(HelperTestCase):
             xml,
             tostring(tree))
 
-        f = StringIO(xml)
         parser = XMLParser(remove_pis=True)
         tree = parse(f, parser)
         self.assertEquals(
-            '<a><b><c/></b></a>',
+            '<a><b><c/></b></a>\n',
             tostring(tree))
 
     def test_parse_parser_type_error(self):
@@ -1325,13 +1324,13 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_namespaces_reuse_after_move(self):
         ns_href = "http://a.b.c"
-        one = self.etree.parse(
-            StringIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
-        baz = one.getroot()[0][0]
+        one = self.etree.fromstring(
+            '<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href)
+        baz = one[0][0]
 
-        two = self.etree.parse(
-            StringIO('<root xmlns:ns="%s"/>' % ns_href))
-        two.getroot().append(baz)
+        two = self.etree.fromstring(
+            '<root xmlns:ns="%s"/>' % ns_href)
+        two.append(baz)
         del one # make sure the source document is deallocated
 
         self.assertEquals('{%s}baz' % ns_href, baz.tag)
@@ -1811,7 +1810,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.system_url,  None)
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
-        
+
     def test_dtd_io(self):
         # check that DTDs that go in also go back out
         xml = '''\
@@ -1820,10 +1819,10 @@ class ETreeOnlyTestCase(HelperTestCase):
           <!ELEMENT test (a)>
           <!ELEMENT a (#PCDATA)>
         ]>
-        <test><a>test-test</a></test>\
+        <test><a>test-test</a></test>
         '''
-        root = self.etree.parse(StringIO(xml))
-        self.assertEqual(self.etree.tostring(root).replace(" ", ""),
+        tree = self.etree.parse(StringIO(xml))
+        self.assertEqual(self.etree.tostring(tree).replace(" ", ""),
                          xml.replace(" ", ""))
 
     def test_byte_zero(self):

@@ -25,6 +25,8 @@ ET = ElementTree
 def fix_compatibility(xml_data):
     xml_data = re.sub('\s*xmlns:[a-z0-9]+="http://www.w3.org/2001/XInclude"', '', xml_data)
     xml_data = xml_data.replace(' />', '/>')
+    if xml_data[-1:] == '\n':
+        xml_data = xml_data[:-1]
     return xml_data
 
 def serialize(elem, **options):

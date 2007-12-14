@@ -112,6 +112,11 @@ can use ElementTrees to create XML trees with an explicit root node::
   d
   >>> print etree.tostring(tree)
   <d><e/></d>
+  <BLANKLINE>
+
+ElementTree objects are serialised as complete documents, including
+preceding or trailing processing instructions and comments.  Mind also
+the additional line break at the end.
 
 All operations that you run on such an ElementTree (like XPath, XSLT, etc.)
 will understand the explicitly chosen root as root node of a document.  They

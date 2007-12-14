@@ -44,9 +44,9 @@ class ETreeSaxTestCase(HelperTestCase):
                           xml_out)
 
     def test_etree_sax_pi_root(self):
-        tree = self.parse('<?this and that?>\n<a>ab</a>')
+        tree = self.parse('<?this and that?><a>ab</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<?this and that?>\n<a>ab</a>',
+        self.assertEquals('<?this and that?><a>ab</a>',
                           xml_out)
 
     def test_etree_sax_attributes(self):
@@ -211,7 +211,7 @@ class ETreeSaxTestCase(HelperTestCase):
         new_tree = self._saxify_unsaxify(tree)
         f = StringIO()
         new_tree.write(f)
-        return f.getvalue()
+        return f.getvalue().replace('\n', '')
 
     
 def test_suite():

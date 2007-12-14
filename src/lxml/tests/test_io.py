@@ -70,7 +70,8 @@ class IOTestCaseBase(unittest.TestCase):
         handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
-            self.assertEqual(open(filename).read(), self.root_str)
+            self.assertEqual(open(filename).read().replace('\n', ''),
+                             self.root_str)
         finally:
             os.close(handle)
             os.remove(filename)

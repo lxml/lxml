@@ -139,12 +139,12 @@ class ETreeXSLTTestCase(HelperTestCase):
         st = etree.XSLT(style)
         res = st.apply(tree)
         expected = u"""\
-<?xml version='1.0' encoding='UTF-16'?>
+<?xml version='1.0' encoding='UTF-16'?>\
 <foo>\uF8D2</foo>"""
 
         f = StringIO()
         res.write(f, encoding='UTF-16')
-        result = unicode(f.getvalue(), 'UTF-16')
+        result = unicode(f.getvalue(), 'UTF-16').replace('\n', '')
         self.assertEquals(expected,
                           result)
 

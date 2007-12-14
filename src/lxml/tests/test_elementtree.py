@@ -734,7 +734,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree = ElementTree(element=html)
         f = StringIO() 
         tree.write(f, method="html")
-        data = f.getvalue()
+        data = f.getvalue().replace('\n','')
 
         self.assertEquals('<html><body><p>html<br>test</p></body></html>',
                           data)
@@ -2541,7 +2541,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         tree = ElementTree(element=a)
         tree.write(f, encoding='utf-8')
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('UTF-8'),
-                          f.getvalue())
+                          f.getvalue().replace('\n',''))
 
     def test_parse_file_encoding(self):
         parse = self.etree.parse
@@ -2574,9 +2574,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         result = f.getvalue()
         declaration = "<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>"
         self.assertEncodingDeclaration(result,'iso-8859-1')
-        result = result.split('?>', 1)[-1]
-        if result[0] == '\n':
-            result = result[1:]
+        result = result.split('?>', 1)[-1].replace('\n','')
         self.assertEquals(u'<a>Søk på nettet</a>'.encode('iso-8859-1'),
                           result)
 
@@ -2629,7 +2627,7 @@ class ETreeTestCaseBase(unittest.TestCase):
         f = StringIO()
         tree = ElementTree(element=a)
         tree.write(f)
-        data = f.getvalue()
+        data = f.getvalue().replace('\n','')
         self.assertEquals(
             u'<a>Søk på nettet</a>'.encode('ASCII', 'xmlcharrefreplace'),
             data)

@@ -22,7 +22,11 @@ def serialize(elem, encoding=None):
         tree.write(file, encoding=encoding)
     else:
         tree.write(file)
-    return file.getvalue().replace(' />', '/>')
+    result = file.getvalue()
+    result = result.replace(' />', '/>')
+    if result[-1:] == '\n':
+        result = result[:-1]
+    return result
 
 def summarize(elem):
     return elem.tag
