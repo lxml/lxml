@@ -1109,15 +1109,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Note that this method is deprecated as of ElementTree 1.3 and
-        lxml 2.0.  It returns an iterator in lxml, which diverges from
-        the original ElementTree behaviour.  If you want an efficient
-        iterator, use the ``element.iter()`` method instead.  You
-        should only use this method in new code if you require
-        backwards compatibility with older versions of lxml or
-        ElementTree.
-
-        @deprecated
+        @deprecated: Note that this method is deprecated as of
+        ElementTree 1.3 and lxml 2.0.  It returns an iterator in lxml,
+        which diverges from the original ElementTree behaviour.  If
+        you want an efficient iterator, use the ``element.iter()``
+        method instead.  You should only use this method in new code
+        if you require backwards compatibility with older versions of
+        lxml or ElementTree.
         """
         return ElementDepthFirstIterator(self, tag)
 
@@ -1473,14 +1471,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Note that this method is deprecated as of ElementTree 1.3 and
-        lxml 2.0.  It returns an iterator in lxml, which diverges from
-        the original ElementTree behaviour.  If you want an efficient
-        iterator, use the ``tree.iter()`` method instead.  You should
-        only use this method in new code if you require backwards
-        compatibility with older versions of lxml or ElementTree.
-
-        @deprecated
+        @deprecated: Note that this method is deprecated as of
+        ElementTree 1.3 and lxml 2.0.  It returns an iterator in lxml,
+        which diverges from the original ElementTree behaviour.  If
+        you want an efficient iterator, use the ``tree.iter()`` method
+        instead.  You should only use this method in new code if you
+        require backwards compatibility with older versions of lxml or
+        ElementTree.
         """
         root = self.getroot()
         if root is None:
