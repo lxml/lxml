@@ -141,45 +141,48 @@ Iteration
 The ElementTree API makes Elements iterable to supports iteration over their
 children.  Using the tree defined above, we get::
 
-  >>> [ el.tag for el in root ]
+  >>> [ child.tag for child in root ]
   ['a', 'b', 'c', 'd']
 
-Tree traversal is commonly based on the ``element.getiterator()`` method::
+To iterate in the opposite direction, use the ``reversed()`` function
+that exists in Python 2.4 and later.
 
-  >>> [ el.tag for el in root.getiterator() ]
+Tree traversal should use the ``element.iter()`` method::
+
+  >>> [ el.tag for el in root.iter() ]
   ['root', 'a', 'b', 'c', 'd', 'e']
 
 lxml.etree also supports this, but additionally features an extended API for
 iteration over the children, following/preceding siblings, ancestors and
 descendants of an element, as defined by the respective XPath axis::
 
-  >>> [ el.tag for el in root.iterchildren() ]
+  >>> [ child.tag for child in root.iterchildren() ]
   ['a', 'b', 'c', 'd']
-  >>> [ el.tag for el in root.iterchildren(reversed=True) ]
+  >>> [ child.tag for child in root.iterchildren(reversed=True) ]
   ['d', 'c', 'b', 'a']
-  >>> [ el.tag for el in b.itersiblings() ]
+  >>> [ sibling.tag for sibling in b.itersiblings() ]
   ['c', 'd']
-  >>> [ el.tag for el in c.itersiblings(preceding=True) ]
+  >>> [ sibling.tag for sibling in c.itersiblings(preceding=True) ]
   ['b', 'a']
-  >>> [ el.tag for el in e.iterancestors() ]
+  >>> [ ancestor.tag for ancestor in e.iterancestors() ]
   ['d', 'root']
   >>> [ el.tag for el in root.iterdescendants() ]
   ['a', 'b', 'c', 'd', 'e']
 
-Note how ``element.iterdescendants()`` does not include the element itself, as
-opposed to ``element.getiterator()``.  The latter effectively implements the
-'descendant-or-self' axis in XPath.
+Note how ``element.iterdescendants()`` does not include the element
+itself, as opposed to ``element.iter()``.  The latter effectively
+implements the 'descendant-or-self' axis in XPath.
 
 All of these iterators support an additional ``tag`` keyword argument that
 filters the generated elements by tag name::
 
-  >>> [ el.tag for el in root.iterchildren(tag='a') ]
+  >>> [ child.tag for child in root.iterchildren(tag='a') ]
   ['a']
-  >>> [ el.tag for el in d.iterchildren(tag='a') ]
+  >>> [ child.tag for child in d.iterchildren(tag='a') ]
   []
   >>> [ el.tag for el in root.iterdescendants(tag='d') ]
   ['d']
-  >>> [ el.tag for el in root.getiterator(tag='d') ]
+  >>> [ el.tag for el in root.iter(tag='d') ]
   ['d']
 
 See also the section on the utility functions ``iterparse()`` and
