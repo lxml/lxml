@@ -934,6 +934,17 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if c_child.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
 
+        # handle the unbounded search straight away (normal case)
+        if stop is None and (start is None or start == 0):
+            k = 0
+            c_child = c_child.prev
+            while c_child is not NULL:
+                if _isElement(c_child):
+                    k = k + 1
+                c_child = c_child.prev
+            return k
+
+        # check indices
         if start is None:
             c_start = 0
         else:
