@@ -232,10 +232,10 @@ method to do XML Schema validation::
 Schematron
 ----------
 
-Since version 2.0, lxml.etree features Schematron_ support, using the class
-lxml.etree.Schematron.  It requires libxml2 2.6.21.  The API is the same as
-for the other validators.  Pass an ElementTree object to construct a
-Schematron validator::
+Since version 2.0, lxml.etree features Schematron_ support, using the
+class lxml.etree.Schematron.  It requires at least libxml2 2.6.21 to
+work.  The API is the same as for the other validators.  Pass an
+ElementTree object to construct a Schematron validator::
 
   >>> f = StringIO('''\
   ... <schema xmlns="http://www.ascc.net/xml/schematron" >
