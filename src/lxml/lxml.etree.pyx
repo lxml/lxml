@@ -1020,8 +1020,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """Returns all direct children.  The elements are returned in document
         order.
 
-        Note that this method has been deprecated as of ElementTree 1.3.  New
-        code should use ``list(element)`` or simply iterate over elements.
+        @deprecated: Note that this method has been deprecated as of
+        ElementTree 1.3 and lxml 2.0.  New code should use
+        ``list(element)`` or simply iterate over elements.
         """
         return _collectChildren(self)
 
