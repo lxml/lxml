@@ -1259,15 +1259,18 @@ HtmlElementClassLookup._default_element_classes['label'] = LabelElement
 __replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type".*?>').sub
 
-def tostring(doc, pretty_print=False, include_meta_content_type=False):
+def tostring(doc, pretty_print=False, include_meta_content_type=False,
+             encoding=None):
     """
-    return HTML string representation of the document given 
+    return HTML string representation of the document given
  
-    note: this will create a meta http-equiv="Content" tag in the head
-    and may replace any that are present 
+    note: if include_meta_content_type is true this will create a meta
+    http-equiv="Content" tag in the head; regardless of the value of include_meta_content_type
+    any existing meta http-equiv="Content" tag will be removed
     """
     assert doc is not None
-    html = etree.tostring(doc, method="html", pretty_print=pretty_print)
+    html = etree.tostring(doc, method="html", pretty_print=pretty_print,
+                          encoding=encoding)
     if not include_meta_content_type:
         html = __replace_meta_content_type('', html)
     return html
