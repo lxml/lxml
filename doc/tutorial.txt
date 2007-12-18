@@ -401,8 +401,7 @@ root node.  It provides a couple of methods for parsing, serialisation
 and general document handling.  One of the bigger differences is that
 it serialises as a complete document, as opposed to a single
 ``Element``.  This includes top-level processing instructions and
-comments, an additional line break at the end, as well as a DOCTYPE
-and other DTD content in the document::
+comments, as well as a DOCTYPE and other DTD content in the document::
 
     >>> from StringIO import StringIO
     >>> tree = etree.parse(StringIO('''\
@@ -424,7 +423,6 @@ and other DTD content in the document::
     <root>
       <a>eggs</a>
     </root>
-    <BLANKLINE>
 
     >>> # lxml 1.3.4 and later
     >>> print etree.tostring(etree.ElementTree(tree.getroot()))
@@ -434,7 +432,6 @@ and other DTD content in the document::
     <root>
       <a>eggs</a>
     </root>
-    <BLANKLINE>
 
     >>> # ElementTree and lxml <= 1.3.3
     >>> print etree.tostring(tree.getroot())
@@ -495,7 +492,6 @@ The ``parse()`` function is used to parse from files and file-like objects::
 
     >>> print etree.tostring(tree)
     <root>data</root>
-    <BLANKLINE>
 
 Note that ``parse()`` returns an ElementTree object, not an Element object as
 the string parser functions::
@@ -559,7 +555,6 @@ will block and wait until data becomes available in this case::
 
     >>> print etree.tostring(tree)
     <root><a/></root>
-    <BLANKLINE>
 
 The second way is through a feed parser interface, given by the ``feed(data)``
 and ``close()`` methods::

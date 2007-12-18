@@ -284,7 +284,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         tostring = self.etree.tostring
         XMLParser = self.etree.XMLParser
 
-        xml = '<?test?>\n<a><?A?><b><?B?><c/></b><?C?></a>\n<?tail?>\n'
+        xml = '<?test?><a><?A?><b><?B?><c/></b><?C?></a><?tail?>'
 
         f = StringIO(xml)
         tree = parse(f)
@@ -295,7 +295,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parser = XMLParser(remove_pis=True)
         tree = parse(f, parser)
         self.assertEquals(
-            '<a><b><c/></b></a>\n',
+            '<a><b><c/></b></a>',
             tostring(tree))
 
     def test_parse_parser_type_error(self):
@@ -1819,7 +1819,7 @@ class ETreeOnlyTestCase(HelperTestCase):
           <!ELEMENT test (a)>
           <!ELEMENT a (#PCDATA)>
         ]>
-        <test><a>test-test</a></test>
+        <test><a>test-test</a></test>\
         '''
         tree = self.etree.parse(StringIO(xml))
         self.assertEqual(self.etree.tostring(tree).replace(" ", ""),

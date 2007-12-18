@@ -514,7 +514,7 @@ call on XML tree objects to retrieve a Python unicode representation::
 
   >>> tree = etree.ElementTree(el)
   >>> etree.tounicode(tree)
-  u'<test><subtest/></test>\n'
+  u'<test><subtest/></test>'
 
 The result of ``tounicode()`` can be treated like any other Python unicode
 string and then passed back into the parsers.  However, if you want to save
