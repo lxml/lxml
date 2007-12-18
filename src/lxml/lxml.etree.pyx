@@ -1135,8 +1135,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """Iterate over all elements in the subtree in document order (depth
         first pre-order), starting with this element.
 
-        Can be restricted to find only elements with a specific tag or from a
-        namespace.
+        Can be restricted to find only elements with a specific tag
+        (pass ``tag="xyz"``) or from a namespace (pass ``tag="{ns}*"``).
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
