@@ -139,7 +139,7 @@ version 2.6.21 or newer to take advantage of this feature::
   >>> parser = etree.HTMLParser()
   >>> tree   = etree.parse(StringIO(broken_html), parser)
 
-  >>> print etree.tostring(tree.getroot(), pretty_print=True)
+  >>> print etree.tostring(tree.getroot(), pretty_print=True),
   <html>
     <head>
       <title>test</title>
@@ -153,7 +153,7 @@ Lxml has an HTML function, similar to the XML shortcut known from
 ElementTree::
 
   >>> html = etree.HTML(broken_html)
-  >>> print etree.tostring(html, pretty_print=True)
+  >>> print etree.tostring(html, pretty_print=True),
   <html>
     <head>
       <title>test</title>

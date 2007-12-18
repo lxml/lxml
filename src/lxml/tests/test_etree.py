@@ -1904,7 +1904,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(result, "<a><b/><c/></a>")
 
         result = tostring(a, pretty_print=True)
-        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>")
+        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
     def test_tostring_method_text_encoding(self):
         tostring = self.etree.tostring
@@ -1989,7 +1989,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(result, "<a><b/><c/></a>")
 
         result = tounicode(a, pretty_print=True)
-        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>")
+        self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
     def _writeElement(self, element, encoding='us-ascii'):
         """Write out element for comparison.

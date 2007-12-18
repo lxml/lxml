@@ -266,10 +266,13 @@ argument::
   >>> print etree.tostring(root)
   <root><test/></root>
 
-  >>> print etree.tostring(root, pretty_print=True)
+  >>> print etree.tostring(root, pretty_print=True),
   <root>
     <test/>
   </root>
+
+Note the newline that is appended at the end when pretty printing the
+output.  It was added in lxml 2.0.
 
 By default, lxml (just as ElementTree) outputs the XML declaration only if it
 is required by the standard::

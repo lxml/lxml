@@ -20,7 +20,8 @@ class HtmlParserTestCase(HelperTestCase):
 <html>
 <head><title>test</title></head>
 <body><h1>page title</h1></body>
-</html>"""
+</html>
+"""
     broken_html_str = "<html><head><title>test<body><h1>page title</h3></p></html>"
     uhtml_str = u"<html><head><title>test Ã¡\uF8D2</title></head><body><h1>page Ã¡\uF8D2 title</h1></body></html>"
 

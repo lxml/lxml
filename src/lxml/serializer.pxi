@@ -172,8 +172,8 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     _writeTail(c_buffer, c_node, encoding, pretty_print)
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
-        if pretty_print:
-            tree.xmlOutputBufferWriteString(c_buffer, "\n")
+    if pretty_print:
+        tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding) nogil:

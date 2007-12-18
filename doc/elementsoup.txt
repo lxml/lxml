@@ -30,7 +30,7 @@ all you need to do is pass it to the `parse()` function::
 To see what we have here, you can serialise it::
 
     >>> from lxml.etree import tostring
-    >>> print tostring(root, pretty_print=True)
+    >>> print tostring(root, pretty_print=True),
     <html>
       <meta/>
       <head>

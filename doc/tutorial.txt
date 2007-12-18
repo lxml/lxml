@@ -104,7 +104,7 @@ to do this: the ``SubElement`` factory.  It accepts the same arguments as the
 
 To see that this is really XML, you can serialise the tree you have created::
 
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print etree.tostring(root, pretty_print=True),
     <root>
       <child1/>
       <child2/>
@@ -306,7 +306,7 @@ serialised the tree to XML::
     >>> etree.SubElement(root, "child").text = "Child 2"
     >>> etree.SubElement(root, "another").text = "Child 3"
 
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print etree.tostring(root, pretty_print=True),
     <root>
       <child>Child 1</child>
       <child>Child 2</child>
@@ -337,10 +337,10 @@ tree: children, parents (or rather ancestors) and siblings.
 Serialisation
 -------------
 
-Serialisation commonly uses with the ``tostring()`` function that
-returns a string, or the ``ElementTree.write()`` method that writes to
-a file or file-like object.  Both accept the same keyword arguments
-like ``pretty_print`` for formatted output or ``encoding`` to select a
+Serialisation commonly uses the ``tostring()`` function that returns a
+string, or the ``ElementTree.write()`` method that writes to a file or
+file-like object.  Both accept the same keyword arguments like
+``pretty_print`` for formatted output or ``encoding`` to select a
 specific output encoding other than plain ASCII::
 
    >>> root = etree.XML('<root><a><b/></a></root>')
@@ -356,12 +356,15 @@ specific output encoding other than plain ASCII::
    <?xml version='1.0' encoding='iso-8859-1'?>
    <root><a><b/></a></root>
 
-   >>> print etree.tostring(root, pretty_print=True)
+   >>> print etree.tostring(root, pretty_print=True),
    <root>
      <a>
        <b/>
      </a>
    </root>
+
+Note the newline that is appended at the end when pretty printing the
+output.
 
 Since lxml 2.0 (and ElementTree 1.3), the serialisation functions can
 do more than XML serialisation.  You can serialise to HTML or extract
@@ -378,7 +381,7 @@ the text content by passing the ``method`` keyword::
    >>> print etree.tostring(root, method='html')
    <html><head></head><body><p>Hello<br>World</p></body></html>
 
-   >>> print etree.tostring(root, method='html', pretty_print=True)
+   >>> print etree.tostring(root, method='html', pretty_print=True),
    <html>
    <head></head>
    <body><p>Hello<br>World</p></body>
@@ -657,7 +660,7 @@ the real namespaces instead::
     >>> body = etree.SubElement(xhtml, "{http://www.w3.org/1999/xhtml}body")
     >>> body.text = "Hello World"
 
-    >>> print etree.tostring(xhtml, pretty_print=True)
+    >>> print etree.tostring(xhtml, pretty_print=True),
     <html:html xmlns:html="http://www.w3.org/1999/xhtml">
       <html:body>Hello World</html:body>
     </html:html>
@@ -680,7 +683,7 @@ to the Element factory, e.g. to define the default namespace::
     >>> body = etree.SubElement(xhtml, XHTML + "body")
     >>> body.text = "Hello World"
 
-    >>> print etree.tostring(xhtml, pretty_print=True)
+    >>> print etree.tostring(xhtml, pretty_print=True),
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body>Hello World</body>
     </html>
@@ -689,7 +692,7 @@ Namespaces on attributes work alike::
 
     >>> body.set(XHTML + "bgcolor", "#CCFFAA")
 
-    >>> print etree.tostring(xhtml, pretty_print=True)
+    >>> print etree.tostring(xhtml, pretty_print=True),
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body bgcolor="#CCFFAA">Hello World</body>
     </html>
@@ -736,7 +739,7 @@ HTML::
     ...   )
     ... )
 
-    >>> print etree.tostring(page, pretty_print=True)
+    >>> print etree.tostring(page, pretty_print=True),
     <html>
       <head>
         <title>This is a sample document</title>
@@ -777,7 +780,7 @@ simple vocabulary for an XML language::
     ...   )
     ... )
 
-    >>> print etree.tostring(my_doc, pretty_print=True)
+    >>> print etree.tostring(my_doc, pretty_print=True),
     <p:doc xmlns:p="http://my.de/fault/namespace">
       <p:title>The dog and the hog</p:title>
       <p:section>
