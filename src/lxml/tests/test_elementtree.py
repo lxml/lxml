@@ -19,6 +19,14 @@ if cElementTree is not None:
               getattr(cElementTree, "VERSION", "0.0").split(".")]) <= (1,0,6):
         cElementTree = None
 
+try:
+    reversed
+except NameError:
+    # Python 2.3
+    def reversed(seq):
+        seq = list(seq)[::-1]
+        return seq
+
 class ETreeTestCaseBase(unittest.TestCase):
     etree = None
 
@@ -593,13 +601,6 @@ class ETreeTestCaseBase(unittest.TestCase):
 
     def test_iteration_reversed(self):
         XML = self.etree.XML
-
-        try:
-            reversed(())
-        except NameError:
-            # before Python 2.4
-            return
-
         root = XML('<doc><one/><two>Two</two>Hm<three/></doc>')
         result = []
         for el in reversed(root):
@@ -1450,6 +1451,23 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML(
             '<c hoi="dag"></c>',
             b)
+
+    def test_iter(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+
+        self.assertEquals(
+            [a, b, d, c, e],
+            list(a.iter()))
+        self.assertEquals(
+            [d],
+            list(d.iter()))
 
     def test_getiterator(self):
         Element = self.etree.Element
