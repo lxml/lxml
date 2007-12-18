@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.0beta1 (2007-12-18)
+=====================
 
 Features added
 --------------
