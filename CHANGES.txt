@@ -23,6 +23,13 @@ Bugs fixed
 Other changes
 -------------
 
+* The ``getiterator()`` method on Elements and ElementTrees was
+  reverted to return an iterator as it did in lxml 1.x.  The ET API
+  specification allows it to return either a sequence or an iterator,
+  and it traditionally returned a sequence in ET and an iterator in
+  lxml.  However, it is now deprecated in favour of the ``iter()``
+  method, which should be used in new code wherever possible.
+
 * The 'pretty printed' serialisation of ElementTree objects now
   appends a newline at the end of the document and also inserts
   newlines between the top-level processing instructions and comments

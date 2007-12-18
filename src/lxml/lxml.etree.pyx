@@ -1099,20 +1099,27 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _elementTreeFactory(self._doc, None)
 
     def getiterator(self, tag=None):
-        """Returns a sequence of all elements in the subtree in document order
-        (depth first pre-order), starting with this element.
+        """Returns a sequence or iterator of all elements in the subtree in
+        document order (depth first pre-order), starting with this
+        element.
 
-        Can be restricted to find only elements with a specific tag or from a
-        namespace.
+        Can be restricted to find only elements with a specific tag
+        (pass ``tag="xyz"``) or from a namespace (pass ``tag="{ns}*"``).
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Note that this method previously returned an iterator, which diverged
-        from the original ElementTree behaviour.  If you want an efficient
-        iterator, use the ``el.iter()`` method instead.
+        Note that this method is deprecated as of ElementTree 1.3 and
+        lxml 2.0.  It returns an iterator in lxml, which diverges from
+        the original ElementTree behaviour.  If you want an efficient
+        iterator, use the ``element.iter()`` method instead.  You
+        should only use this method in new code if you require
+        backwards compatibility with older versions of lxml or
+        ElementTree.
+
+        @deprecated
         """
-        return list(ElementDepthFirstIterator(self, tag))
+        return ElementDepthFirstIterator(self, tag)
 
     def iter(self, tag=None):
         """Iterate over all elements in the subtree in document order (depth
@@ -1456,17 +1463,29 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return path
 
     def getiterator(self, tag=None):
-        """Creates an iterator for the root element. The iterator loops over all elements
-        in this tree, in document order.
+        """Returns a sequence or iterator of all elements in document order
+        (depth first pre-order), starting with the root element.
 
-        Note that this method is deprecated in favour of the ``el.iter()``
-        method.  In new code, use it only if you require backwards
-        compatibility.
+        Can be restricted to find only elements with a specific tag
+        (pass ``tag="xyz"`` or ``tag="{ns}xyz"``) or from a namespace
+        (pass ``tag="{ns}*"``).
+
+        You can also pass the Element, Comment, ProcessingInstruction and
+        Entity factory functions to look only for the specific element type.
+
+        Note that this method is deprecated as of ElementTree 1.3 and
+        lxml 2.0.  It returns an iterator in lxml, which diverges from
+        the original ElementTree behaviour.  If you want an efficient
+        iterator, use the ``tree.iter()`` method instead.  You should
+        only use this method in new code if you require backwards
+        compatibility with older versions of lxml or ElementTree.
+
+        @deprecated
         """
         root = self.getroot()
         if root is None:
             return ()
-        return root.iter(tag)
+        return root.getiterator(tag)
 
     def iter(self, tag=None):
         """Creates an iterator for the root element.  The iterator loops over
@@ -1479,7 +1498,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def find(self, path):
         """Finds the first toplevel element with given tag.  Same as
-        getroot().find(path).
+        ``tree.getroot().find(path)``.
         """
         self._assertHasRoot()
         root = self.getroot()
