@@ -71,7 +71,7 @@ allows you to do this::
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myfunctions')
   >>> ns['hello'] = hello
   >>> prefixmap = {'f' : 'http://mydomain.org/myfunctions'}
-  >>> print root.xpath('f:hello(local-name(*))', prefixmap)
+  >>> print root.xpath('f:hello(local-name(*))', namespaces=prefixmap)
   Hello b
 
 
@@ -324,7 +324,7 @@ XPath node-sets::
 
   >>> ns['new-node-set'] = returnsNodeSet
 
-  >>> e = etree.XPathEvaluator(doc, None)
+  >>> e = etree.XPathEvaluator(doc)
 
   >>> r = e.evaluate("new-node-set()/result")
   >>> print [ t.text for t in r ]
