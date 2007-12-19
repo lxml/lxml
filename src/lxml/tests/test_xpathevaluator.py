@@ -97,27 +97,27 @@ class ETreeXPathTestCase(HelperTestCase):
         root = tree.getroot()
         self.assertEquals(
             [root[0]],
-            tree.xpath('//foo:b', {'foo': 'uri:a'}))
+            tree.xpath('//foo:b', namespaces={'foo': 'uri:a'}))
         self.assertEquals(
             [],
-            tree.xpath('//foo:b', {'foo': 'uri:c'}))
+            tree.xpath('//foo:b', namespaces={'foo': 'uri:c'}))
         self.assertEquals(
             [root[0]],
-            root.xpath('//baz:b', {'baz': 'uri:a'}))
+            root.xpath('//baz:b', namespaces={'baz': 'uri:a'}))
 
     def test_xpath_ns_none(self):
         tree = self.parse('<a xmlns="uri:a"><b></b></a>')
         root = tree.getroot()
         self.assertRaises(
             TypeError,
-            root.xpath, '//b', {None: 'uri:a'})
+            root.xpath, '//b', namespaces={None: 'uri:a'})
 
     def test_xpath_ns_empty(self):
         tree = self.parse('<a xmlns="uri:a"><b></b></a>')
         root = tree.getroot()
         self.assertRaises(
             TypeError,
-            root.xpath, '//b', {'': 'uri:a'})
+            root.xpath, '//b', namespaces={'': 'uri:a'})
 
     def test_xpath_error(self):
         tree = self.parse('<a/>')
@@ -195,7 +195,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return 'hello %s' % a
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
-        e = etree.XPathEvaluator(tree, None, [extension])
+        e = etree.XPathEvaluator(tree, extensions=[extension])
         self.assertEquals(
             "hello you", e.evaluate("foo('you')"))
 
@@ -212,7 +212,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return 1/0
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a/>')
-        e = etree.XPathEvaluator(tree, None, [extension])
+        e = etree.XPathEvaluator(tree, extensions=[extension])
         self.assertRaises(ZeroDivisionError, e.evaluate, "foo('test')")
 
     def test_xpath_extensions_nodes(self):
@@ -225,7 +225,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return r
 
         x = self.parse('<a/>')
-        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e.evaluate("foo('World')/result")
         self.assertEquals(2, len(r))
         self.assertEquals('Hoi', r[0].text)
@@ -241,7 +241,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return r
 
         x = self.parse('<a/>')
-        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e.evaluate("foo(/*)/result")
         self.assertEquals(2, len(r))
         self.assertEquals('Hoi', r[0].text)
@@ -258,7 +258,7 @@ class ETreeXPathTestCase(HelperTestCase):
             return r
 
         x = self.parse('<result>Honk</result>')
-        e = etree.XPathEvaluator(x, None, [{(None, 'foo'): f}])
+        e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e.evaluate("foo(/*)/result")
         self.assertEquals(3, len(r))
         self.assertEquals('Hoi',  r[0].text)
@@ -555,7 +555,7 @@ def xpath():
     Test xpath extension functions.
     
     >>> root = SAMPLE_XML
-    >>> e = etree.XPathEvaluator(root, None, [extension])
+    >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e.evaluate("stringTest('you')")
     'Hello you'
     >>> e.evaluate(u"stringTest('\xe9lan')")
