@@ -1605,9 +1605,11 @@ class ObjectifyTestCase(HelperTestCase):
         root = XML(xml)
         objectify.annotate(root)
 
-        attribs = root.xpath("//@py:%s" % pytype_name, {"py" : pytype_ns})
+        attribs = root.xpath("//@py:%s" % pytype_name,
+                             namespaces={"py" : pytype_ns})
         self.assertEquals(0, len(attribs))
-        attribs = root.xpath("//@py:test", {"py" : "TEST"})
+        attribs = root.xpath("//@py:test",
+                             namespaces={"py" : "TEST"})
         self.assertEquals(7, len(attribs))
 
         objectify.setPytypeAttributeTag()
@@ -1617,11 +1619,13 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertNotEqual("test", pytype_name.lower())
 
         root = XML(xml)
-        attribs = root.xpath("//@py:%s" % pytype_name, {"py" : pytype_ns})
+        attribs = root.xpath("//@py:%s" % pytype_name,
+                             namespaces={"py" : pytype_ns})
         self.assertEquals(0, len(attribs))
 
         objectify.annotate(root)
-        attribs = root.xpath("//@py:%s" % pytype_name, {"py" : pytype_ns})
+        attribs = root.xpath("//@py:%s" % pytype_name,
+                             namespaces={"py" : pytype_ns})
         self.assertEquals(7, len(attribs))
 
     def test_registered_types(self):
