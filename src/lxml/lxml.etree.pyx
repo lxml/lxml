@@ -1400,13 +1400,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         return self._context_node
 
     def __copy__(self):
-        return ElementTree(self._context_node)
+        return _elementTreeFactory(self._doc, self._context_node)
 
     def __deepcopy__(self, memo):
-        if self._context_node is None:
-            return ElementTree()
-        else:
-            return ElementTree( self._context_node.__copy__() )
+        cdef _Element root
+        if self._context_node is not None:
+            root = self._context_node.__copy__()
+        return _elementTreeFactory(None, root)
 
     property docinfo:
         """Information about the document provided by parser and DTD.  This

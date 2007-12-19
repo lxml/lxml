@@ -1,3 +1,5 @@
+cdef object _find_id_attributes
+
 def XMLID(text):
     """Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -5,10 +7,14 @@ def XMLID(text):
     attributes.  The elements referenced by the ID are stored as dictionary
     values.
     """
+    global _find_id_attributes
+    if _find_id_attributes is None:
+        _find_id_attributes = XPath('//*[string(@id)]')
+
+    # ElementTree compatible implementation: parse and look for 'id' attributes
     root = XML(text)
-    # ElementTree compatible implementation: look for 'id' attributes
     dic = {}
-    for elem in ElementTree(root).xpath('//*[string(@id)]'):
+    for elem in _find_id_attributes(root):
         python.PyDict_SetItem(dic, elem.get('id'), elem)
     return (root, dic)
 
@@ -40,7 +46,7 @@ def parseid(source, parser=None):
     """
     cdef _Document doc
     doc = _parseDocument(source, parser)
-    return (ElementTree(doc.getroot()), _IDDict(doc))
+    return (_elementTreeFactory(doc, None), _IDDict(doc))
 
 cdef class _IDDict:
     """A dictionary-like proxy class that mapps ID attributes to elements.
