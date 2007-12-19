@@ -179,7 +179,7 @@ cdef class XSLTAccessControl:
     * write_network
     """
     cdef xslt.xsltSecurityPrefs* _prefs
-    def __init__(self, read_file=True, write_file=True, create_dir=True,
+    def __init__(self, *, read_file=True, write_file=True, create_dir=True,
                  read_network=True, write_network=True):
         self._prefs = xslt.xsltNewSecurityPrefs()
         if self._prefs is NULL:
@@ -269,7 +269,7 @@ cdef class XSLT:
     cdef XSLTAccessControl _access_control
     cdef _ErrorLog _error_log
 
-    def __init__(self, xslt_input, extensions=None, regexp=True,
+    def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
         cdef xslt.xsltStylesheet* c_style
         cdef xmlDoc* c_doc
@@ -329,8 +329,8 @@ cdef class XSLT:
         def __get__(self):
             return self._error_log.copy()
 
-    def apply(self, _input, profile_run=False, **_kw):
-        return self(_input, profile_run, **_kw)
+    def apply(self, _input, *, profile_run=False, **_kw):
+        return self(_input, profile_run=profile_run, **_kw)
 
     def tostring(self, _ElementTree result_tree):
         """Save result doc to string based on stylesheet output method.
@@ -360,7 +360,7 @@ cdef class XSLT:
 
         return new_xslt
 
-    def __call__(self, _input, profile_run=False, **_kw):
+    def __call__(self, _input, *, profile_run=False, **_kw):
         cdef _XSLTContext context
         cdef _XSLTResolverContext resolver_context
         cdef _Document input_doc
@@ -595,7 +595,7 @@ cdef _findStylesheetByID(_Document doc, id):
     if __findStylesheetByID is None:
         __findStylesheetByID = XPath(
             "//xsl:stylesheet[@xml:id = $id]",
-            {"xsl" : "http://www.w3.org/1999/XSL/Transform"})
+            namespaces={"xsl" : "http://www.w3.org/1999/XSL/Transform"})
     return __findStylesheetByID(doc, id=id)
 
 cdef class _XSLTProcessingInstruction(PIBase):
