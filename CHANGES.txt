@@ -23,6 +23,8 @@ Bugs fixed
 Other changes
 -------------
 
+* The XSLT API now requires keyword-only arguments.
+
 * The ``getiterator()`` method on Elements and ElementTrees was
   reverted to return an iterator as it did in lxml 1.x.  The ET API
   specification allows it to return either a sequence or an iterator,
