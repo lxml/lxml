@@ -23,7 +23,12 @@ Bugs fixed
 Other changes
 -------------
 
-* Parts of the XSLT API now require keyword-only arguments.
+* Various places in the XPath, XSLT and iteration APIs now require
+  keyword-only arguments.
+
+* The argument order in ``element.itersiblings()`` was changed to
+  match the order used in all other iteration methods.  The second
+  argument ('preceding') is now a keyword-only argument.
 
 * The ``getiterator()`` method on Elements and ElementTrees was
   reverted to return an iterator as it did in lxml 1.x.  The ET API

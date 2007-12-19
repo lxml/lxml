@@ -1065,7 +1065,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return _elementFactory(self._doc, c_node)
         return None
 
-    def itersiblings(self, preceding=False, tag=None):
+    def itersiblings(self, tag=None, *, preceding=False):
         """Iterate over the following or preceding siblings of this element.
 
         The direction is determined by the 'preceding' keyword which defaults
@@ -1073,7 +1073,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         generated elements can be restricted to a specific tag name with the
         'tag' keyword.
         """
-        return SiblingsIterator(self, preceding, tag)
+        return SiblingsIterator(self, tag, preceding=preceding)
 
     def iterancestors(self, tag=None):
         """Iterate over the ancestors of this element (from parent to parent).
@@ -1090,16 +1090,16 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         itself.  The generated elements can be restricted to a specific tag
         name with the 'tag' keyword.
         """
-        return ElementDepthFirstIterator(self, tag, False)
+        return ElementDepthFirstIterator(self, tag, inclusive=False)
 
-    def iterchildren(self, reversed=False, tag=None):
+    def iterchildren(self, tag=None, *, reversed=False):
         """Iterate over the children of this element.
 
         As opposed to using normal iteration on this element, the generated
         elements can be restricted to a specific tag name with the 'tag'
         keyword and reversed with the 'reversed' keyword.
         """
-        return ElementChildIterator(self, reversed, tag)
+        return ElementChildIterator(self, tag, reversed=reversed)
 
     def getroottree(self):
         """Return an ElementTree for the root node of the document that
@@ -1143,7 +1143,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         return ElementDepthFirstIterator(self, tag)
 
-    def itertext(self, tag=None, with_tail=True):
+    def itertext(self, tag=None, *, with_tail=True):
         """Iterates over the text content of a subtree.
 
         You can pass the ``tag`` keyword argument to restrict text content to
@@ -1152,7 +1152,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         You can set the ``with_tail`` keyword argument to ``False`` to skip
         over tail text.
         """
-        return ElementTextIterator(self, tag, with_tail)
+        return ElementTextIterator(self, tag, with_tail=with_tail)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         """Creates a new element associated with the same document.
@@ -1188,10 +1188,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             path = (<QName>path).text
         return _elementpath.iterfind(self, path)
 
-    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
+    def xpath(self, _path, *, namespaces=None, extensions=None, **_variables):
         """Evaluate an xpath expression using the element as context node.
         """
-        evaluator = XPathElementEvaluator(self, namespaces, extensions)
+        evaluator = XPathElementEvaluator(self, namespaces=namespaces,
+                                          extensions=extensions)
         return evaluator.evaluate(_path, **_variables)
 
 
@@ -1545,7 +1546,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             path = "." + path
         return root.iterfind(path)
 
-    def xpath(self, _path, namespaces=None, extensions=None, **_variables):
+    def xpath(self, _path, *, namespaces=None, extensions=None, **_variables):
         """XPath evaluate in context of document.
 
         ``namespaces`` is an optional dictionary with prefix to namespace URI
@@ -1562,7 +1563,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         XPathEvaluator directly.
         """
         self._assertHasRoot()
-        evaluator = XPathDocumentEvaluator(self, namespaces, extensions)
+        evaluator = XPathDocumentEvaluator(self, namespaces=namespaces,
+                                           extensions=extensions)
         return evaluator.evaluate(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
@@ -1892,7 +1894,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
 
 cdef class ElementChildIterator(_ElementIterator):
     "Iterates over the children of an element."
-    def __init__(self, _Element node not None, reversed=False, tag=None):
+    def __init__(self, _Element node not None, tag=None, *, reversed=False):
         cdef xmlNode* c_node
         self._initTagMatch(tag)
         if reversed:
@@ -1916,7 +1918,7 @@ cdef class SiblingsIterator(_ElementIterator):
 
     You can pass the boolean keyword ``preceding`` to specify the direction.
     """
-    def __init__(self, _Element node not None, preceding=False, tag=None):
+    def __init__(self, _Element node not None, tag=None, *, preceding=False):
         self._initTagMatch(tag)
         if preceding:
             self._next_element = _previousElement
@@ -1951,7 +1953,7 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     # keep next node to return and a depth counter in the tree
     cdef _Element _next_node
     cdef _Element _top_node
-    def __init__(self, _Element node not None, tag=None, inclusive=True):
+    def __init__(self, _Element node not None, tag=None, *, inclusive=True):
         self._top_node  = node
         self._next_node = node
         self._initTagMatch(tag)
@@ -2009,7 +2011,7 @@ cdef class ElementTextIterator:
     """
     cdef object _nextEvent
     cdef _Element _start_element
-    def __init__(self, _Element element not None, tag=None, with_tail=True):
+    def __init__(self, _Element element not None, tag=None, *, with_tail=True):
         if with_tail:
             events = ("start", "end")
         else:

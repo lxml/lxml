@@ -215,7 +215,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     the 'regexp' boolean keyword (defaults to True).
     """
     cdef _Element _element
-    def __init__(self, _Element element not None, namespaces=None,
+    def __init__(self, _Element element not None, *, namespaces=None,
                  extensions=None, regexp=True):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
@@ -280,10 +280,11 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
     keyword argument.  EXSLT regular expression support can be disabled with
     the 'regexp' boolean keyword (defaults to True).
     """
-    def __init__(self, _ElementTree etree not None, namespaces=None,
+    def __init__(self, _ElementTree etree not None, *, namespaces=None,
                  extensions=None, regexp=True):
         XPathElementEvaluator.__init__(
-            self, etree._context_node, namespaces, extensions, regexp)
+            self, etree._context_node, namespaces=namespaces, 
+            extensions=extensions, regexp=regexp)
 
     def __call__(self, _path, **_variables):
         """Evaluate an XPath expression on the document.
@@ -322,7 +323,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         return result
 
 
-def XPathEvaluator(etree_or_element, namespaces=None, extensions=None,
+def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
                    regexp=True):
     """Creates an XPath evaluator for an ElementTree or an Element.
 
@@ -334,11 +335,13 @@ def XPathEvaluator(etree_or_element, namespaces=None, extensions=None,
     the 'regexp' boolean keyword (defaults to True).
     """
     if isinstance(etree_or_element, _ElementTree):
-        return XPathDocumentEvaluator(etree_or_element, namespaces,
-                                      extensions, regexp)
+        return XPathDocumentEvaluator(
+            etree_or_element, namespaces=namespaces,
+            extensions=extensions, regexp=regexp)
     else:
-        return XPathElementEvaluator(etree_or_element, namespaces,
-                                     extensions, regexp)
+        return XPathElementEvaluator(
+            etree_or_element, namespaces=namespaces,
+            extensions=extensions, regexp=regexp)
 
 
 cdef class XPath(_XPathEvaluatorBase):
@@ -353,7 +356,7 @@ cdef class XPath(_XPathEvaluatorBase):
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef readonly object path
 
-    def __init__(self, path, namespaces=None, extensions=None, regexp=True):
+    def __init__(self, path, *, namespaces=None, extensions=None, regexp=True):
         cdef xpath.xmlXPathContext* xpathCtxt
         _XPathEvaluatorBase.__init__(self, namespaces, extensions, regexp)
         self.path = path
@@ -415,9 +418,10 @@ cdef class ETXPath(XPath):
     Note that this class does not accept the ``namespace`` keyword
     argument. All namespaces must be passed as part of the path string.
     """
-    def __init__(self, path, extensions=None, regexp=True):
+    def __init__(self, path, *, extensions=None, regexp=True):
         path, namespaces = self._nsextract_path(path)
-        XPath.__init__(self, path, namespaces, extensions, regexp)
+        XPath.__init__(self, path, namespaces=namespaces,
+                       extensions=extensions, regexp=regexp)
 
     cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
