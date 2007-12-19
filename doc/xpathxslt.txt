@@ -112,8 +112,9 @@ namespace URIs::
   ... ''')
   >>> doc = etree.parse(f)
 
-  >>> r = doc.xpath('/t:foo/b:bar', {'t': 'http://codespeak.net/ns/test1', 
-  ...                                'b': 'http://codespeak.net/ns/test2'})
+  >>> r = doc.xpath('/t:foo/b:bar',
+  ...               namespaces={'t': 'http://codespeak.net/ns/test1', 
+  ...                           'b': 'http://codespeak.net/ns/test2'})
   >>> len(r)
   1
   >>> r[0].tag
@@ -195,7 +196,7 @@ Prefix-to-namespace mappings can be passed as second parameter::
 
   >>> root = etree.XML("<root xmlns='NS'><a><b/></a><b/></root>")
 
-  >>> find = etree.XPath("//n:b", {'n':'NS'})
+  >>> find = etree.XPath("//n:b", namespaces={'n':'NS'})
   >>> print find(root)[0].tag
   {NS}b
 
@@ -203,7 +204,7 @@ By default, ``XPath`` supports regular expressions in the EXSLT_ namespace::
 
   >>> regexpNS = "http://exslt.org/regular-expressions"
   >>> find = etree.XPath("//*[re:test(., '^abc$', 'i')]",
-  ...                    {'re':regexpNS})
+  ...                    namespaces={'re':regexpNS})
 
   >>> root = etree.XML("<root><a>aB</a><b>aBc</b></root>")
   >>> print find(root)[0].text
@@ -257,7 +258,7 @@ write::
 
   >>> root = etree.XML("<root xmlns='ns'><a><b/></a><b/></root>")
 
-  >>> find = etree.XPath("//p:b", {'p' : 'ns'})
+  >>> find = etree.XPath("//p:b", namespaces={'p' : 'ns'})
   >>> print find(root)[0].tag
   {ns}b
 
