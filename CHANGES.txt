@@ -41,6 +41,7 @@ Other changes
 
 * ``lxml.html.tostring`` takes an ``encoding`` argument.
 
+
 2.0alpha5 (2007-11-24)
 ======================
 
