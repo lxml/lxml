@@ -61,7 +61,7 @@ class XPathBenchMark(benchbase.BenchMarkBase):
         self.etree.FunctionNamespace("testns")["t"] = return_child
 
         try:
-            xpath = self.etree.XPath("test:t(.)", {"test":"testns"})
+            xpath = self.etree.XPath("test:t(.)", namespaces={"test":"testns"})
             for child in children:
                 xpath(child)
         finally:
