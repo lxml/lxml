@@ -240,11 +240,11 @@ Python object for each child and collect them in a list::
 
 This handicap is also visible when accessing single children::
 
-  lxe: first_child               (--TR T2)    0.3228 msec/pass
+  lxe: first_child               (--TR T2)    0.2470 msec/pass
   cET: first_child               (--TR T2)    0.2170 msec/pass
   ET : first_child               (--TR T2)    0.9968 msec/pass
 
-  lxe: last_child                (--TR T1)    0.3269 msec/pass
+  lxe: last_child                (--TR T1)    0.2482 msec/pass
   cET: last_child                (--TR T1)    0.2291 msec/pass
   ET : last_child                (--TR T1)    0.9830 msec/pass
 
@@ -253,11 +253,11 @@ list.  ET and cET use Python lists here, which are based on arrays.
 The data structure used by libxml2 is a linked tree, and thus, a
 linked list of children::
 
-  lxe: middle_child              (--TR T1)    0.3638 msec/pass
+  lxe: middle_child              (--TR T1)    0.2789 msec/pass
   cET: middle_child              (--TR T1)    0.2229 msec/pass
   ET : middle_child              (--TR T1)    1.0030 msec/pass
 
-  lxe: middle_child              (--TR T2)    2.1780 msec/pass
+  lxe: middle_child              (--TR T2)    1.9610 msec/pass
   cET: middle_child              (--TR T2)    0.2229 msec/pass
   ET : middle_child              (--TR T2)    0.9930 msec/pass
 
@@ -277,11 +277,11 @@ Therefore, it is always preferable to create Elements for the document they
 are supposed to end up in, either as SubElements of an Element or using the
 explicit ``Element.makeelement()`` call::
 
-  lxe: makeelement               (--TC T2)    2.2941 msec/pass
+  lxe: makeelement               (--TC T2)    2.2650 msec/pass
   cET: makeelement               (--TC T2)    0.3211 msec/pass
   ET : makeelement               (--TC T2)    1.6358 msec/pass
 
-  lxe: create_subelements        (--TC T2)    2.1169 msec/pass
+  lxe: create_subelements        (--TC T2)    1.9531 msec/pass
   cET: create_subelements        (--TC T2)    0.2351 msec/pass
   ET : create_subelements        (--TC T2)    3.2270 msec/pass
 
@@ -323,7 +323,7 @@ API, like inserting newly created elements::
 
 or replacing the child slice by a newly created element::
 
-  lxe: replace_children_element  (--TC T1)    0.2520 msec/pass
+  lxe: replace_children_element  (--TC T1)    0.2480 msec/pass
   cET: replace_children_element  (--TC T1)    0.0238 msec/pass
   ET : replace_children_element  (--TC T1)    0.1600 msec/pass
 
