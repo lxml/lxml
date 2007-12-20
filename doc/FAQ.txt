@@ -394,12 +394,11 @@ lxml frees the GIL (Python's global interpreter lock) internally when parsing
 from disk and memory, as long as you use either the default parser (which is
 replicated for each thread) or create a parser for each thread yourself.  lxml
 also allows concurrency during validation (RelaxNG and XMLSchema) and XSL
-transformation.  You can share RelaxNG, XMLSchema and XSLT objects between
-threads.  While you can also share parsers between threads, this will
-serialize the access to each of them, so it is better to copy() parsers or to
-use the default parser.  Note that access to the XML() and HTML() functions is
-always serialized.  If you need to parse concurrently from strings, use
-``parse()`` with ``StringIO`` or pass a separate parser to these functions.
+transformation.  You can share RelaxNG, XMLSchema and (with restrictions) XSLT
+objects between threads.  While you can also share parsers between threads,
+this will serialize the access to each of them, so it is better to ``copy()``
+parsers or to just use the default parser (which is automatically copied for
+each thread).
 
 Due to the way libxslt handles threading, concurrent access to stylesheets is
 currently only possible if it was parsed in the main thread.  Parsing and
