@@ -203,7 +203,7 @@ restructuring.  This can be seen from the tree setup times of the benchmark
        T1: 0.0914 0.0875 0.0872 0.0892 0.0882 0.0900
        T2: 0.0894 0.0897 0.0892 0.0988 0.0978 0.0974
        T3: 0.0219 0.0194 0.0189 0.0570 0.0570 0.0573
-       T4: 0.0004 0.0004 0.0004 0.0012 0.0013 0.0012
+       T4: 0.0004 0.0003 0.0003 0.0012 0.0012 0.0012
   cET:       --     S-     U-     -A     SA     UA  
        T1: 0.0272 0.0264 0.0267 0.0268 0.0261 0.0265
        T2: 0.0280 0.0274 0.0273 0.0273 0.0276 0.0275
@@ -367,19 +367,19 @@ algorithms can benefit from step-by-step traversal of the XML tree and
 especially if few elements are of interest or the target element tag name is
 known, lxml is a good choice::
 
-  lxe: getiterator_all      (--TR T1)    6.0360 msec/pass
+  lxe: getiterator_all      (--TR T1)    5.8582 msec/pass
   cET: getiterator_all      (--TR T1)   39.9489 msec/pass
   ET : getiterator_all      (--TR T1)   23.0000 msec/pass
 
-  lxe: getiterator_islice   (--TR T2)    0.0851 msec/pass
+  lxe: getiterator_islice   (--TR T2)    0.0780 msec/pass
   cET: getiterator_islice   (--TR T2)    0.3440 msec/pass
   ET : getiterator_islice   (--TR T2)    0.2429 msec/pass
 
-  lxe: getiterator_tag      (--TR T2)    0.3290 msec/pass
+  lxe: getiterator_tag      (--TR T2)    0.3119 msec/pass
   cET: getiterator_tag      (--TR T2)   14.1001 msec/pass
   ET : getiterator_tag      (--TR T2)    7.4241 msec/pass
 
-  lxe: getiterator_tag_all  (--TR T2)    0.7281 msec/pass
+  lxe: getiterator_tag_all  (--TR T2)    0.6540 msec/pass
   cET: getiterator_tag_all  (--TR T2)   40.7901 msec/pass
   ET : getiterator_tag_all  (--TR T2)   21.0390 msec/pass
 

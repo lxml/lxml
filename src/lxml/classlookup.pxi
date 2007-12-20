@@ -102,49 +102,50 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
     def __init__(self, element=None, comment=None, pi=None, entity=None):
         self._lookup_function = _lookupDefaultElementClass
         if element is None:
-            self.element_class = None
+            self.element_class = _Element
         elif issubclass(element, ElementBase):
             self.element_class = element
         else:
             raise TypeError, "element class must be subclass of ElementBase"
 
         if comment is None:
-            self.comment_class = None
+            self.comment_class = _Comment
         elif issubclass(comment, CommentBase):
             self.comment_class = comment
         else:
             raise TypeError, "comment class must be subclass of CommentBase"
 
-        if pi is None:
-            self.pi_class = None
-        elif issubclass(pi, PIBase):
-            self.pi_class = pi
-        else:
-            raise TypeError, "PI class must be subclass of PIBase"
-
         if entity is None:
-            self.entity_class = None
+            self.entity_class = _Entity
         elif issubclass(entity, EntityBase):
             self.entity_class = entity
         else:
             raise TypeError, "Entity class must be subclass of EntityBase"
 
+        if pi is None:
+            self.pi_class = None # special case, see below
+        elif issubclass(pi, PIBase):
+            self.pi_class = pi
+        else:
+            raise TypeError, "PI class must be subclass of PIBase"
+
 cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     "Trivial class lookup function that always returns the default class."
     if c_node.type == tree.XML_ELEMENT_NODE:
         if state is not None:
-            cls =  (<ElementDefaultClassLookup>state).element_class
-        if cls is None:
-            return _Element
+            return (<ElementDefaultClassLookup>state).element_class
         else:
-            return cls
+            return _Element
     elif c_node.type == tree.XML_COMMENT_NODE:
         if state is not None:
-            cls = (<ElementDefaultClassLookup>state).comment_class
-        if cls is None:
-            return _Comment
+            return (<ElementDefaultClassLookup>state).comment_class
         else:
-            return cls
+            return _Comment
+    elif c_node.type == tree.XML_ENTITY_REF_NODE:
+        if state is not None:
+            return (<ElementDefaultClassLookup>state).entity_class
+        else:
+            return _Entity
     elif c_node.type == tree.XML_PI_NODE:
         if state is not None:
             cls = (<ElementDefaultClassLookup>state).pi_class
@@ -156,13 +157,6 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
                            cstd.strstr(c_node.content, "text/xml") is not NULL:
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
-        else:
-            return cls
-    elif c_node.type == tree.XML_ENTITY_REF_NODE:
-        if state is not None:
-            cls = (<ElementDefaultClassLookup>state).entity_class
-        if cls is None:
-            return _Entity
         else:
             return cls
     else:
@@ -220,12 +214,10 @@ cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
         self._lookup_function = _parser_class_lookup
 
 cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
-    cdef FallbackElementClassLookup lookup
-    lookup = <FallbackElementClassLookup>state
     if doc._parser._class_lookup is not None:
         return doc._parser._class_lookup._lookup_function(
             doc._parser._class_lookup, doc, c_node)
-    return lookup._callFallback(doc, c_node)
+    return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)
 
 
 cdef class CustomElementClassLookup(FallbackElementClassLookup):
