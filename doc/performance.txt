@@ -385,19 +385,19 @@ known, lxml is a good choice::
 
 This translates directly into similar timings for ``Element.findall()``::
 
-  lxe: findall              (--TR T2)    8.2440 msec/pass
+  lxe: findall              (--TR T2)    8.1239 msec/pass
   cET: findall              (--TR T2)   44.5340 msec/pass
   ET : findall              (--TR T2)   27.1149 msec/pass
 
-  lxe: findall              (--TR T3)    1.7269 msec/pass
+  lxe: findall              (--TR T3)    1.6870 msec/pass
   cET: findall              (--TR T3)   12.9611 msec/pass
   ET : findall              (--TR T3)    8.6131 msec/pass
 
-  lxe: findall_tag          (--TR T2)    0.8020 msec/pass
+  lxe: findall_tag          (--TR T2)    0.7660 msec/pass
   cET: findall_tag          (--TR T2)   40.6358 msec/pass
   ET : findall_tag          (--TR T2)   21.4581 msec/pass
 
-  lxe: findall_tag          (--TR T3)    0.2341 msec/pass
+  lxe: findall_tag          (--TR T3)    0.2160 msec/pass
   cET: findall_tag          (--TR T3)    9.6831 msec/pass
   ET : findall_tag          (--TR T3)    5.2109 msec/pass
 
