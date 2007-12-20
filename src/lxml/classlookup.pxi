@@ -299,7 +299,7 @@ cdef void _setElementClassLookupFunction(
     LOOKUP_ELEMENT_CLASS = function
 
 def setElementClassLookup(ElementClassLookup lookup = None):
-    "Deprecated, use ``set_element_class_lookup(lookup)`` instead"
+    "@deprecated: use ``set_element_class_lookup(lookup)`` instead"
     set_element_class_lookup(lookup)
 
 def set_element_class_lookup(ElementClassLookup lookup = None):
@@ -313,4 +313,4 @@ def set_element_class_lookup(ElementClassLookup lookup = None):
 cdef ParserBasedElementClassLookup DEFAULT_ELEMENT_CLASS_LOOKUP
 DEFAULT_ELEMENT_CLASS_LOOKUP = ParserBasedElementClassLookup()
 
-setElementClassLookup(DEFAULT_ELEMENT_CLASS_LOOKUP)
+set_element_class_lookup(DEFAULT_ELEMENT_CLASS_LOOKUP)
