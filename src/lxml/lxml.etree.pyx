@@ -1950,7 +1950,7 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     tree it traverses is modified during iteration.
     """
     # we keep Python references here to control GC
-    # keep next node to return and a depth counter in the tree
+    # keep next node to return and the (s)top node
     cdef _Element _next_node
     cdef _Element _top_node
     def __init__(self, _Element node not None, tag=None, *, inclusive=True):
