@@ -240,7 +240,7 @@ this is used on the majority of platforms.  Sadly, both are not compatible, so
 the eggs can only support the one they were compiled with.
 
 This means that you have to compile lxml from sources for your system.  Note
-that you do not need Pyrex for this, the lxml source distribution is directly
+that you do not need Cython for this, the lxml source distribution is directly
 compilable on both platform types.  See the `build instructions`_ on how to do
 this.
 
@@ -257,9 +257,9 @@ lxml interfaces with two C libraries: libxml2 and libxslt.  Accessing them at
 the C-level is required for performance reasons.
 
 To avoid writing plain C-code and caring too much about the details of
-built-in types and reference counting, lxml is written in Pyrex_, a
+built-in types and reference counting, lxml is written in Cython_, a
 Python-like language that is translated into C-code.  Chances are that if you
-know Python, you can write `code that Pyrex accepts`_.  Again, the C-ish style
+know Python, you can write `code that Cython accepts`_.  Again, the C-ish style
 used in the lxml code is just for performance optimisations.  If you want to
 contribute, don't bother with the details, a Python implementation of your
 contribution is better than none.  And keep in mind that lxml's flexible API
@@ -269,8 +269,8 @@ in Python.
 
 Please contact the `mailing list`_ if you need any help.
 
-.. _Pyrex: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/
-.. _`code that Pyrex accepts`: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/version/Doc/overview.html
+.. _Cython: http://www.cython.org/
+.. _`code that Cython accepts`: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/version/Doc/overview.html
 
 
 How can I contribute?
