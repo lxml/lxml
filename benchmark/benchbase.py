@@ -458,11 +458,11 @@ def main(benchmark_class):
             except ValueError:
                 pass
             try:
-                import xml.etree.cElementTree as cET
+                import cElementTree as cET
                 _etrees.append(cET)
             except ImportError:
                 try:
-                    import cElementTree as cET
+                    import xml.etree.cElementTree as cET
                     _etrees.append(cET)
                 except ImportError:
                     pass
@@ -474,11 +474,11 @@ def main(benchmark_class):
             pass
         else:
             try:
-                from xml.etree import ElementTree as ET
+                from elementtree import ElementTree as ET
                 _etrees.append(ET)
             except ImportError:
                 try:
-                    from elementtree import ElementTree as ET
+                    from xml.etree import ElementTree as ET
                     _etrees.append(ET)
                 except ImportError:
                     pass
