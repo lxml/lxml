@@ -37,24 +37,24 @@ class BenchMark(benchbase.BenchMarkBase):
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8(self, root):
-        self.etree.tostring(root, 'UTF-8')
+        self.etree.tostring(root, encoding='UTF-8')
 
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf16(self, root):
-        self.etree.tostring(root, 'UTF-16')
+        self.etree.tostring(root, encoding='UTF-16')
 
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8_unicode_XML(self, root):
-        xml = unicode(self.etree.tostring(root, 'UTF-8'), 'UTF-8')
+        xml = unicode(self.etree.tostring(root, encoding='UTF-8'), 'UTF-8')
         self.etree.XML(xml)
 
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_write_utf8_parse_stringIO(self, root):
         f = StringIO()
-        self.etree.ElementTree(root).write(f, 'UTF-8')
+        self.etree.ElementTree(root).write(f, encoding='UTF-8')
         f.seek(0)
         self.etree.parse(f)
 
