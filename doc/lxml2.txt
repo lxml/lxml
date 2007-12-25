@@ -47,6 +47,18 @@ Incompatible changes
 
   .. _`namespace implementation`: element_classes.html#implementing-namespaces
 
+* Some API functions now require passing options as keyword arguments,
+  as opposed to positional arguments.  This restriction was introduced
+  to make the API usage independent of future extensions such as the
+  addition of new positional arguments.  Users should not rely on the
+  position of an optional argument in function signatures and instead
+  pass it explicitly named.  This also improves code readability - it
+  is common good practice to pass options in a consistent way
+  independent of their position, so many people may not even notice
+  the change in their code.  Another important reason is compatibility
+  with cElementTree, which also enforces keyword-only arguments in a
+  couple of places.
+
 * XPath now raises exceptions specific to the part of the execution that
   failed: ``XPathSyntaxError`` for parser errors and ``XPathEvalError`` for
   errors that occurred during the evaluation.  Note that the distinction only
