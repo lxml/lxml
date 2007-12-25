@@ -125,7 +125,7 @@ def prepare_predicate(next, token):
             if value[:1] == "'" or value[:1] == '"':
                 value = value[1:-1]
             else:
-                raise SyntaxError("invalid comparision target")
+                raise SyntaxError("invalid comparison target")
             token = next()
             def select(result):
                 for elem in result:
