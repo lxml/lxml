@@ -78,10 +78,10 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         """
         self.fallback = lookup
         self._fallback_function = lookup._lookup_function
-
-    cdef object _callFallback(self, doc, xmlNode* c_node):
         if self._fallback_function is NULL:
             self._fallback_function = _lookupDefaultElementClass
+
+    cdef object _callFallback(self, _Document doc, xmlNode* c_node):
         return self._fallback_function(self.fallback, doc, c_node)
 
 
