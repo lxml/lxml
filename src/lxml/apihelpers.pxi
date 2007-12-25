@@ -138,30 +138,15 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
                               attrib, nsmap, extra_attrs):
     """Create a new child element and initialize text content, namespaces and
     attributes.
-
-    This helper function will reuse as much of the existing document as
-    possible:
-
-    If 'parser' is None, the parser will be inherited from 'doc' or the
-    default parser will be used.
-
-    If 'doc' is None, 'c_doc' is used to create a new _Document and the new
-    element is made its root node.
-
-    If 'c_doc' is also NULL, a new xmlDoc will be created.
     """
-    cdef _BaseParser parser
-    cdef _Document doc
     cdef xmlNode* c_node
     cdef xmlDoc* c_doc
     if parent is None or parent._doc is None:
         return None
     ns_utf, name_utf = _getNsTag(tag)
-    doc = parent._doc
-    c_doc = doc._c_doc
+    c_doc = parent._doc._c_doc
 
-    parser = doc._parser
-    if parser is not None and parser._for_html:
+    if parent._doc._parser is not None and parent._doc._parser._for_html:
         _htmlTagValidOrRaise(name_utf)
     else:
         _tagValidOrRaise(name_utf)
@@ -171,24 +156,15 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         python.PyErr_NoMemory()
     tree.xmlAddChild(parent._c_node, c_node)
 
-    try:
-        if text is not None:
-            _setNodeText(c_node, text)
-        if tail is not None:
-            _setTailText(c_node, tail)
+    if text is not None:
+        _setNodeText(c_node, text)
+    if tail is not None:
+        _setTailText(c_node, tail)
 
-        # add namespaces to node if necessary
-        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
-        _initNodeAttributes(c_node, doc, attrib, extra_attrs)
-        return _elementFactory(doc, c_node)
-    except:
-        # free allocated c_node/c_doc unless Python does it for us
-        if c_node.doc is not c_doc:
-            # node not yet in document => will not be freed by document
-            if tail is not None:
-                _removeText(c_node.next) # tail
-            tree.xmlFreeNode(c_node)
-        raise
+    # add namespaces to node if necessary
+    parent._doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+    _initNodeAttributes(c_node, parent._doc, attrib, extra_attrs)
+    return _elementFactory(parent._doc, c_node)
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     """Initialise the attributes of an element node.

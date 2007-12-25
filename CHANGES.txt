@@ -14,7 +14,8 @@ Bugs fixed
 Other changes
 -------------
 
-* Minor performance tweaks
+* Minor performance tweaks for Element instantiation and subelement
+  creation
 
 
 2.0alpha6 (2007-12-19)
