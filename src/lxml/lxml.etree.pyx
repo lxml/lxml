@@ -1965,7 +1965,7 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
                (self._node_type != node._c_node.type or
                 not _tagMatches(node._c_node, self._href, self._name)):
             # this cannot raise StopIteration, self._next_node != None
-            self.next()
+            self.__next__()
 
     def __iter__(self):
         return self
