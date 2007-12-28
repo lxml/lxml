@@ -13,12 +13,22 @@ except ImportError:
     except ImportError:
         ElementTree = None
 
+if hasattr(ElementTree, 'VERSION'):
+    if tuple(ElementTree.VERSION.split('.')) < (1,3):
+        # compatibility tests require ET 1.3+
+        ElementTree = None
+
 try:
     import cElementTree # standard ET
 except ImportError:
     try:
         from xml.etree import cElementTree # Python 2.5+
     except ImportError:
+        cElementTree = None
+
+if hasattr(cElementTree, 'VERSION'):
+    if tuple(cElementTree.VERSION.split('.')) < (1,0,7):
+        # compatibility tests require cET 1.0.7+
         cElementTree = None
 
 try:
