@@ -328,6 +328,37 @@ If you know you are only interested in a single tag, you can pass its name to
     child - Child 1
     child - Child 2
 
+By default, iteration yields all nodes in the tree, including
+ProcessingInstructions, Comments and Entity instances.  If you want to
+make sure only Element objects are returned, you can pass the
+``Element`` factory as tag parameter::
+
+    >>> root.append(etree.Entity("#234"))
+    >>> root.append(etree.Comment("some comment"))
+
+    >>> for element in root.iter():
+    ...     if isinstance(element.tag, basestring):
+    ...         print element.tag, '-', element.text
+    ...     else:
+    ...         print 'SPECIAL:', element, '-', element.text
+    root - None
+    child - Child 1
+    child - Child 2
+    another - Child 3
+    SPECIAL: &#234; - &#234;
+    SPECIAL: <!--some comment--> - some comment
+
+    >>> for element in root.iter(tag=etree.Element):
+    ...     print element.tag, '-', element.text
+    root - None
+    child - Child 1
+    child - Child 2
+    another - Child 3
+
+    >>> for element in root.iter(tag=etree.Entity):
+    ...     print element.text
+    &#234;
+
 In lxml.etree, elements provide `further iterators`_ for all directions in the
 tree: children, parents (or rather ancestors) and siblings.
 
