@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ``entity.text`` now returns the textual representation of the
+  entity, e.g. ``&amp;``.
+
 Bugs fixed
 ----------
 

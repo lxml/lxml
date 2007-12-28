@@ -1352,8 +1352,16 @@ cdef class _Entity(__ContentOnlyElement):
 
         def __set__(self, value):
             value = _utf8(value)
+            assert '&' not in value and ';' not in value, \
+                "Invalid entity name '%s'" % value
             c_text = _cstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
+
+    property text:
+        # FIXME: should this be None or '&[VALUE];' or the resolved
+        # entity value ?
+        def __get__(self):
+            return '&%s;' % funicode(self._c_node.name)
 
     def __repr__(self):
         return "&%s;" % self.name
@@ -1940,10 +1948,10 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     first pre-order).  Note that this also includes comments, entities and
     processing instructions.  To filter them out, check if the ``tag``
     property of the returned element is a string (i.e. not None and not a
-    factory function).
+    factory function), or pass the ``Element`` factory for the ``tag`` keyword.
 
-    If the optional 'tag' argument is not None, the iterator returns only the
-    elements that match the respective name and namespace.
+    If the optional ``tag`` argument is not None, the iterator returns only
+    the elements that match the respective name and namespace.
 
     The optional boolean argument 'inclusive' defaults to True and can be set
     to False to exclude the start element itself.

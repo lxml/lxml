@@ -582,7 +582,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             tree = parse(StringIO(xml), parser)
             root = tree.getroot()
             self.assertEquals(root[0].tag, Entity)
-            self.assertFalse(root[0].text)
+            self.assertEquals(root[0].text, "&myentity;")
             self.assertEquals(root[0].tail, None)
             self.assertEquals(root[0].name, "myentity")
 
@@ -598,7 +598,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         root.append( Entity("test") )
 
         self.assertEquals(root[0].tag, Entity)
-        self.assertFalse(root[0].text)
+        self.assertEquals(root[0].text, "&test;")
         self.assertEquals(root[0].tail, None)
         self.assertEquals(root[0].name, "test")
 
