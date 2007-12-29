@@ -461,15 +461,15 @@ cdef class XSLT:
             try:
                 i = 0
                 keep_ref = []
-                for key, value in parameters.iteritems():
+                for key, value in parameters.items():
                     k = _utf8(key)
                     python.PyList_Append(keep_ref, k)
                     v = _utf8(value)
                     python.PyList_Append(keep_ref, v)
                     params[i] = _cstr(k)
-                    i = i + 1
+                    i += 1
                     params[i] = _cstr(v)
-                    i = i + 1
+                    i += 1
             except:
                 python.PyMem_Free(params)
                 raise
