@@ -28,6 +28,10 @@
 #  define PyEval_RestoreThread(state)
 #  define PyGILState_Ensure() (PyGILState_UNLOCKED)
 #  define PyGILState_Release(state)
+#  undef  Py_UNBLOCK_THREADS
+#  define Py_UNBLOCK_THREADS
+#  undef  Py_BLOCK_THREADS
+#  define Py_BLOCK_THREADS
 #endif
 
 #ifdef WITHOUT_THREADING
