@@ -343,7 +343,7 @@ cdef class XSLT:
     def __copy__(self):
         cdef XSLT new_xslt
         cdef xmlDoc* c_doc
-        new_xslt = NEW_XSLT(XSLT)
+        new_xslt = NEW_XSLT(XSLT) # without calling __init__()
         new_xslt._access_control = self._access_control
         new_xslt._error_log = _ErrorLog()
         new_xslt._context = self._context._copy()
@@ -399,7 +399,7 @@ cdef class XSLT:
             transform_ctxt._private = <python.PyObject*>resolver_context
 
             c_result = self._run_transform(
-                input_doc, c_doc, _kw, context, transform_ctxt)
+                c_doc, _kw, context, transform_ctxt)
 
             if transform_ctxt.profile:
                 c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
@@ -438,7 +438,7 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
-    cdef xmlDoc* _run_transform(self, _Document input_doc, xmlDoc* c_input_doc,
+    cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
                                 parameters, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt):
         cdef xmlDoc* c_result
