@@ -293,6 +293,9 @@ class BenchMark(benchbase.BenchMarkBase):
     def bench_getiterator_tag_all(self, root):
         list(root.getiterator(self.SEARCH_TAG))
 
+    def bench_getiterator_tag_none(self, root):
+        list(root.getiterator("{ThisShould}NeverExist"))
+
     def bench_getiterator_tag_text(self, root):
         [ e.text for e in root.getiterator(self.SEARCH_TAG) ]
 
