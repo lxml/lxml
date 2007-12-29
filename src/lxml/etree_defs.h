@@ -101,12 +101,23 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _cstr(s)        PyString_AS_STRING(s)
 #define _fqtypename(o)  (((PyTypeObject*)o)->ob_type->tp_name)
 
+#ifdef __GNUC__
+/* Test for GCC > 2.95 */
+#if __GNUC__ > 2 || (__GNUC__ == 2 && (__GNUC_MINOR__ > 95)) 
+#define unlikely_condition(x) __builtin_expect((x), 0)
+#else /* __GNUC__ > 2 ... */
+#define unlikely_condition(x) (x)
+#endif /* __GNUC__ > 2 ... */
+#else /* __GNUC__ */
+#define unlikely_condition(x) (x)
+#endif /* __GNUC__ */
+
 static PyObject* __PY_NEW_GLOBAL_EMPTY_TUPLE = NULL;
 
 #define PY_NEW(T) \
      (((PyTypeObject*)(T))->tp_new( \
          (PyTypeObject*)(T), \
-         ((__PY_NEW_GLOBAL_EMPTY_TUPLE == NULL) ? \
+         (unlikely_condition(__PY_NEW_GLOBAL_EMPTY_TUPLE == NULL) ? \
              (__PY_NEW_GLOBAL_EMPTY_TUPLE = PyTuple_New(0)) : \
              (__PY_NEW_GLOBAL_EMPTY_TUPLE)), \
          NULL))
