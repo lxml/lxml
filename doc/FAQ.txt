@@ -42,6 +42,7 @@ ElementTree_.
      6.2  Why can't lxml parse my XML from unicode strings?
      6.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
      6.4  Why can't I just delete parents or clear the root node in iterparse()?
+     6.5  How do I output null bytes in XML text?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -606,6 +607,15 @@ refer to the `iterparse section`_ of the lxml API documentation to find out
 what you can do and what you can't do.
 
 .. _`iterparse section`: api.html#iterparse-and-iterwalk
+
+
+How do I output null bytes in XML text?
+---------------------------------------
+
+Don't.  What you would produce is not well-formed XML.  XML parsers
+will refuse to parse a document that contains null bytes.  The right
+way to embed binary data in XML is using a text encoding such as
+uuencode or base64.
 
 
 XPath and Document Traversal
