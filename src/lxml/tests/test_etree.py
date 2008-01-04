@@ -605,6 +605,21 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals('<root>&test;</root>',
                           tostring(root))
 
+    def test_entity_values(self):
+        Entity = self.etree.Entity
+        self.assertEquals(Entity("test").text, '&test;')
+        self.assertEquals(Entity("#17683").text, '&#17683;')
+        self.assertEquals(Entity("#x1768").text, '&#x1768;')
+        self.assertEquals(Entity("#x98AF").text, '&#x98AF;')
+
+    def test_entity_error(self):
+        Entity = self.etree.Entity
+        self.assertRaises(ValueError, Entity, 'a b c')
+        self.assertRaises(ValueError, Entity, 'a,b')
+        self.assertRaises(AssertionError, Entity, 'a\0b')
+        self.assertRaises(ValueError, Entity, '#abc')
+        self.assertRaises(ValueError, Entity, '#xxyz')
+
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):
         Element = self.etree.Element

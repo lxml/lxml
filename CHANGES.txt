@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Invalid entity names and character references will now be rejected
+  by the ``Entity()`` factory.
+
 * ``entity.text`` now returns the textual representation of the
   entity, e.g. ``&amp;``.
 

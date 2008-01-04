@@ -1043,22 +1043,41 @@ cdef int _htmlNameIsValid(char* c_name):
         c_name = c_name + 1
     return 1
 
+cdef bint _characterReferenceIsValid(char* c_name):
+    cdef bint is_hex
+    if c_name[0] == c'x':
+        c_name += 1
+        is_hex = 1
+    else:
+        is_hex = 0
+    if c_name[0] == c'\0':
+        return 0
+    while c_name[0] != c'\0':
+        if c_name[0] < c'0' or c_name[0] > c'9':
+            if not is_hex:
+                return 0
+            if not (c_name[0] >= c'a' and c_name[0] <= c'f'):
+                if not (c_name[0] >= c'A' and c_name[0] <= c'F'):
+                    return 0
+        c_name += 1
+    return 1
+
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError, "Invalid tag name %r" % \
-              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+        raise ValueError("Invalid tag name %r" % \
+              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError, "Invalid HTML tag name %r" % \
-              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+        raise ValueError("Invalid HTML tag name %r" % \
+              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
-        raise ValueError, "Invalid attribute name %r" % \
-              python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict')
+        raise ValueError("Invalid attribute name %r" % \
+              python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict'))
     return 0
 
 cdef object _namespacedName(xmlNode* c_node):

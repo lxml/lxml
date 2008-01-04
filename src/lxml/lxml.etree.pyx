@@ -2110,18 +2110,26 @@ def ProcessingInstruction(target, text=None):
 PI = ProcessingInstruction
 
 def Entity(name):
-    """Entity factory.  This factory function creates a special element that
-    will be serialized as an XML entity.  Note, however, that the entity will
-    not be automatically declared in the document.  A document that uses
-    entities requires a DTD.
+    """Entity factory.  This factory function creates a special element
+    that will be serialized as an XML entity reference or character
+    reference.  Note, however, that entities will not be automatically
+    declared in the document.  A document that uses entity references
+    requires a DTD to define the entities.
     """
     cdef _Document doc
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
-    name = _utf8(name)
+    cdef char* c_name
+    name_utf = _utf8(name)
+    c_name = _cstr(name_utf)
+    if c_name[0] == c'#':
+        if not _characterReferenceIsValid(c_name + 1):
+            raise ValueError("Invalid character reference: '%s'" % name)
+    elif not _xmlNameIsValid(c_name):
+        raise ValueError("Invalid entity reference: '%s'" % name)
     c_doc = _newDoc()
     doc = _documentFactory(c_doc, None)
-    c_node = _createEntity(c_doc, _cstr(name))
+    c_node = _createEntity(c_doc, c_name)
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
 
