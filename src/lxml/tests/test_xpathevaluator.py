@@ -72,6 +72,13 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(['B'],
                           tree.xpath('/a/@b'))
 
+    def test_xpath_list_attribute_parent(self):
+        tree = self.parse('<a b="B" c="C"/>')
+        results = tree.xpath('/a/@c')
+        self.assertEquals(1, len(results))
+        self.assertEquals('C', results[0])
+        self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
+
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')
         self.assertEquals(['<!-- Foo -->'],
@@ -181,6 +188,21 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(
             [root[0]],
             e.evaluate('c'))
+
+    def test_xpath_evaluator_tree_absolute(self):
+        tree = self.parse('<a><b><c></c></b></a>')
+        child_tree = etree.ElementTree(tree.getroot()[0])
+        e = etree.XPathEvaluator(child_tree)
+        self.assertEquals(
+            [],
+            e.evaluate('/a'))
+        root = child_tree.getroot()
+        self.assertEquals(
+            [root],
+            e.evaluate('/b'))
+        self.assertEquals(
+            [],
+            e.evaluate('/c'))
 
     def test_xpath_evaluator_element(self):
         tree = self.parse('<a><b><c></c></b></a>')

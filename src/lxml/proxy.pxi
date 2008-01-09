@@ -66,11 +66,10 @@ cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
     c_new_root = tree.xmlDocCopyNode(c_node, c_doc, 2) # non recursive!
     tree.xmlDocSetRootElement(c_doc, c_new_root)
     _copyParentNamespaces(c_node, c_new_root)
-    _copyParentNamespaces(c_node, c_root)
 
     c_new_root.children = c_node.children
     c_new_root.last = c_node.last
-    c_new_root.next = c_new_root.prev = c_new_root.parent = NULL
+    c_new_root.next = c_new_root.prev = NULL
 
     # store original node
     c_doc._private = c_node
@@ -89,19 +88,35 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
     cdef xmlNode* c_child
     cdef xmlNode* c_parent
     cdef xmlNode* c_root
-    if c_doc != c_base_doc:
-        c_root = tree.xmlDocGetRootElement(c_doc)
+    if c_doc is c_base_doc:
+        return
+    c_root = tree.xmlDocGetRootElement(c_doc)
 
-        # restore parent pointers of children
-        c_parent = <xmlNode*>c_doc._private
-        c_child = c_root.children
-        while c_child is not NULL:
-            c_child.parent = c_parent
-            c_child = c_child.next
+    # restore parent pointers of children
+    c_parent = <xmlNode*>c_doc._private
+    c_child = c_root.children
+    while c_child is not NULL:
+        c_child.parent = c_parent
+        c_child = c_child.next
 
-        # prevent recursive removal of children
-        c_root.children = c_root.last = NULL
-        tree.xmlFreeDoc(c_doc)
+    # prevent recursive removal of children
+    c_root.children = c_root.last = NULL
+    tree.xmlFreeDoc(c_doc)
+
+cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
+    """Special element factory for cases where we need to create a fake
+    root document, but still need to instantiate arbitrary nodes from
+    it.  If we instantiate the fake root node, things will turn bad
+    when it's destroyed.
+
+    Instead, if we are asked to instantiate the fake root node, we
+    instantiate the original node instead.
+    """
+    if c_element.doc is not doc._c_doc:
+        if c_element.doc._private is not NULL:
+            if c_element is c_element.doc.children:
+                c_element = <xmlNode*>c_element.doc._private
+    return _elementFactory(doc, c_element)
 
 ################################################################################
 # support for freeing tree elements when proxy objects are destroyed

@@ -515,16 +515,16 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
         if _isElement(c_node):
-            if c_node.doc != doc._c_doc:
+            if c_node.doc != doc._c_doc and c_node.doc._private is NULL:
                 # XXX: works, but maybe not always the right thing to do?
                 # XPath: only runs when extensions create or copy trees
                 #        -> we store Python refs to these, so that is OK
                 # XSLT: can it leak when merging trees from multiple sources?
                 c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
-            value = _elementFactory(doc, c_node)
+            value = _fakeDocElementFactory(doc, c_node)
         elif c_node.type == tree.XML_TEXT_NODE or \
                 c_node.type == tree.XML_ATTRIBUTE_NODE:
-            value = _newElementStringResult(c_node, doc)
+            value = _newElementStringResult(doc, c_node)
         elif c_node.type == tree.XML_NAMESPACE_DECL:
             s = (<xmlNs*>c_node).href
             if s is NULL:
@@ -569,7 +569,7 @@ cdef class _ElementStringResult(python.unicode):
     def getparent(self):
         return self.parent
 
-cdef object _newElementStringResult(xmlNode* c_node, _Document doc):
+cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
     cdef _ElementStringResult element_string
     cdef xmlNode* c_element
     cdef char* s
@@ -579,8 +579,10 @@ cdef object _newElementStringResult(xmlNode* c_node, _Document doc):
         is_attribute = 1
         is_tail = 0
         s = tree.xmlNodeGetContent(c_node)
-        value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
-        tree.xmlFree(s)
+        try:
+            value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
+        finally:
+            tree.xmlFree(s)
         c_element = NULL
     else:
         #assert c_node.type == tree.XML_TEXT_NODE, "invalid node type"
@@ -601,7 +603,7 @@ cdef object _newElementStringResult(xmlNode* c_node, _Document doc):
         return value
 
     element_string = _ElementStringResult(value)
-    element_string.parent = _elementFactory(doc, c_element)
+    element_string.parent = _fakeDocElementFactory(doc, c_element)
     element_string.is_attribute = is_attribute
     element_string.is_tail = is_tail
     element_string.is_text = not (is_tail or is_attribute)
