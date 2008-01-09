@@ -599,8 +599,8 @@ cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
         while c_element is not NULL and not _isElement(c_element):
             c_element = c_element.parent
 
-    if c_element is NULL:
-        return value
+    #if c_element is NULL:
+    return value
 
     element_string = _ElementStringResult(value)
     element_string.parent = _fakeDocElementFactory(doc, c_element)
