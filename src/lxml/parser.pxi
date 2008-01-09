@@ -132,8 +132,8 @@ cdef int _checkThreadDict(tree.xmlDict* c_dict):
     """Check that c_dict is either the local thread dictionary or the global
     parent dictionary.
     """
-    if __GLOBAL_PARSER_CONTEXT._c_dict is c_dict:
-        return 1 # main thread
+    #if __GLOBAL_PARSER_CONTEXT._c_dict is c_dict:
+    #    return 1 # main thread
     if __GLOBAL_PARSER_CONTEXT._getThreadDict(NULL) is c_dict:
         return 1 # local thread dict
     return 0

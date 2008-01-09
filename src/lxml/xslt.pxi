@@ -356,7 +356,8 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
 
         if not _checkThreadDict(self._c_style.doc.dict):
-            raise RuntimeError, "stylesheet is not usable in this thread"
+            _kw['profile_run'] = profile_run
+            return _copyXSLT(self)(_input, **_kw)
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
