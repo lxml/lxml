@@ -16,6 +16,9 @@ cdef extern from "Python.h":
         cdef object stop
         cdef object step
 
+    ctypedef class __builtin__.unicode [object PyUnicodeObject]:
+        pass
+
     cdef FILE* PyFile_AsFile(object p)
     cdef int PyFile_Check(object p)
     cdef object PyFile_Name(object p)

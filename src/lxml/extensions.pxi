@@ -522,12 +522,9 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
                 # XSLT: can it leak when merging trees from multiple sources?
                 c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
             value = _elementFactory(doc, c_node)
-        elif c_node.type == tree.XML_TEXT_NODE:
-            value = funicode(c_node.content)
-        elif c_node.type == tree.XML_ATTRIBUTE_NODE:
-            s = tree.xmlNodeGetContent(c_node)
-            value = funicode(s)
-            tree.xmlFree(s)
+        elif c_node.type == tree.XML_TEXT_NODE or \
+                c_node.type == tree.XML_ATTRIBUTE_NODE:
+            value = _newElementStringResult(c_node, doc)
         elif c_node.type == tree.XML_NAMESPACE_DECL:
             s = (<xmlNs*>c_node).href
             if s is NULL:
@@ -559,6 +556,56 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
         xpath.xmlXPathFreeNodeSet(xpathObj.nodesetval)
         xpathObj.nodesetval = NULL
     xpath.xmlXPathFreeObject(xpathObj)
+
+################################################################################
+# special str/unicode subclasses
+
+cdef class _ElementStringResult(python.unicode):
+    cdef _Element parent
+    cdef readonly object is_tail
+    cdef readonly object is_text
+    cdef readonly object is_attribute
+
+    def getparent(self):
+        return self.parent
+
+cdef object _newElementStringResult(xmlNode* c_node, _Document doc):
+    cdef _ElementStringResult element_string
+    cdef xmlNode* c_element
+    cdef char* s
+    cdef bint is_attribute, is_tail
+
+    if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        is_attribute = 1
+        is_tail = 0
+        s = tree.xmlNodeGetContent(c_node)
+        value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
+        tree.xmlFree(s)
+        c_element = NULL
+    else:
+        #assert c_node.type == tree.XML_TEXT_NODE, "invalid node type"
+        is_attribute = 0
+        # tail text?
+        value = python.PyUnicode_DecodeUTF8(
+            c_node.content, cstd.strlen(c_node.content), NULL)
+        c_element = _previousElement(c_node)
+        is_tail = c_element is not NULL
+
+    if c_element is NULL:
+        # non-tail text or attribute text
+        c_element = c_node.parent
+        while c_element is not NULL and not _isElement(c_element):
+            c_element = c_element.parent
+
+    if c_element is NULL:
+        return value
+
+    element_string = _ElementStringResult(value)
+    element_string.parent = _elementFactory(doc, c_element)
+    element_string.is_attribute = is_attribute
+    element_string.is_tail = is_tail
+    element_string.is_text = not (is_tail or is_attribute)
+    return element_string
 
 ################################################################################
 # callbacks for XPath/XSLT extension functions
