@@ -356,7 +356,8 @@ cdef class XSLT:
         cdef xmlDoc* c_doc
 
         if not _checkThreadDict(self._c_style.doc.dict):
-            _kw['profile_run'] = profile_run
+            if profile_run is not False:
+                _kw['profile_run'] = profile_run
             return _copyXSLT(self)(_input, **_kw)
 
         input_doc = _documentOrRaise(_input)
