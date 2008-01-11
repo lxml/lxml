@@ -65,7 +65,8 @@ def parse_enums(html_file):
     PARSE_ENUM_NAME  = re.compile('\s*enum\s+(\w+)\s*{', re.I).match
     PARSE_ENUM_VALUE = re.compile('\s*=\s+([0-9]+)\s*(?::\s*(.*))?').match
     tree = etree.parse(html_file)
-    xpath = etree.XPathEvaluator(tree, {'html' : 'http://www.w3.org/1999/xhtml'})
+    xpath = etree.XPathEvaluator(
+        tree, namespaces={'html' : 'http://www.w3.org/1999/xhtml'})
 
     enum_dict = {}
     enums = xpath.evaluate("//html:pre[@class = 'programlisting' and contains(text(), 'Enum') and html:a[@name]]")
