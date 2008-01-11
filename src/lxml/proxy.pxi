@@ -116,6 +116,7 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
         if c_element.doc._private is not NULL:
             if c_element is c_element.doc.children:
                 c_element = <xmlNode*>c_element.doc._private
+                #assert c_element.type == tree.XML_ELEMENT_NODE
     return _elementFactory(doc, c_element)
 
 ################################################################################
