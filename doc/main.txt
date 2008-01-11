@@ -131,9 +131,11 @@ including custom element class support.
 Download
 --------
 
-The best way to download binary versions is to visit `lxml at the Python
-Package Index`_.  It has the source, eggs and installers for various platforms.
-The source distribution is signed with `this key`_.
+The best way to download lxml is to visit `lxml at the Python Package
+Index`_ (PyPI).  It has the source that compiles on various platforms.
+The source distribution is signed with `this key`_.  Binary builds for
+MS Windows usually become available through PyPI a few days after a
+source release.
 
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
