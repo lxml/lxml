@@ -26,6 +26,13 @@ class ETreeDtdTestCase(HelperTestCase):
         dtd = etree.DTD(StringIO("<!ELEMENT b EMPTY>"))
         self.assert_(dtd.validate(root))
 
+    def test_dtd_parse_invalid(self):
+        fromstring = etree.fromstring
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % fileInTestDir("test.dtd")
+        self.assertRaises(etree.XMLSyntaxError,
+                          fromstring, xml, parser=parser)
+
     def test_dtd_invalid(self):
         root = etree.XML("<b><a/></b>")
         dtd = etree.DTD(StringIO("<!ELEMENT b EMPTY>"))

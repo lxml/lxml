@@ -13,16 +13,17 @@ names.
 
 There is also initial support for Schematron_.  However, it does not currently
 support error reporting in the validation phase due to insufficiencies in the
-implementation as of libxml2 2.6.29.
+implementation as of libxml2 2.6.30.
 
 .. _Schematron:   http://www.ascc.net/xml/schematron
 
 .. contents::
 .. 
-   1  DTD
-   2  RelaxNG
-   3  XMLSchema
-   4  Schematron
+   1  Validation at parse time
+   2  DTD
+   3  RelaxNG
+   4  XMLSchema
+   5  Schematron
 
 The usual setup procedure::
 
@@ -30,20 +31,59 @@ The usual setup procedure::
   >>> from StringIO import StringIO
 
 
+Validation at parse time
+------------------------
+
+The parser in lxml can do on-the-fly validation of a document against
+a DTD or an XML schema.  The DTD is retrieved automatically based on
+the DOCTYPE of the parsed document.  All you have to do is use a
+parser that has DTD validation enabled::
+
+  >>> parser = etree.XMLParser(dtd_validation=True)
+
+Obviously, a request for validation enables the DTD loading feature.
+There are two other options that enable loading the DTD, but that do
+not perform any validation.  The first is the ``load_dtd`` keyword
+option, which simply loads the DTD into the parser and makes it
+available to the document as external subset.  You can retrieve the
+DTD from the parsed document using the ``docinfo`` property of the
+result ElementTree object.  The internal subset is available as
+``internalDTD``, the external subset is provided as ``externalDTD``.
+
+The third way way to activate DTD loading is with the
+``attribute_defaults`` option, which loads the DTD and weaves
+attribute default values into the document.  Again, no validation is
+performed unless explicitly requested.
+
+XML schema is supported in a similar way, but requires an explicit
+schema to be provided::
+
+  >>> schema_root = etree.XML('''\
+  ...   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  ...     <xsd:element name="a" type="xsd:integer"/>
+  ...   </xsd:schema>
+  ... ''')
+  >>> schema = etree.XMLSchema(schema_root)
+
+  >>> parser = etree.XMLParser(schema = schema)
+  >>> root = etree.fromstring("<a>5</a>", parser)
+
+If the validation fails (be it for a DTD or an XML schema), the parser
+will raise an exception::
+
+  >>> root = etree.fromstring("<a>not int</a>", parser)
+  Traceback (most recent call last):
+  XMLSyntaxError: Element 'a': 'not int' is not a valid value of the atomic type 'xs:integer'.
+
+
 DTD
 ---
 
-There are two places in lxml where DTDs are supported: parsers and the DTD
-class.  If you pass a keyword option to a parser that requires DTD loading,
-lxml will automatically include the DTD in the parsing process.  If you pass
-the keyword for DTD validation, lxml (or rather libxml2) will use this DTD
-right inside the parser and report failure or success when parsing terminates.
-
-The parser support for DTDs depends on internal or external subsets of the XML
-file.  This means that the XML file itself must either contain a DTD or must
-reference a DTD to make this work.  If you want to validate an XML document
-against a DTD that is not referenced by the document itself, you can use the
-``DTD`` class.
+As described above, the parser support for DTDs depends on internal or
+external subsets of the XML file.  This means that the XML file itself
+must either contain a DTD or must reference a DTD to make this work.
+If you want to validate an XML document against a DTD that is not
+referenced by the document itself, you can use the ``DTD`` class.
 
 To use the ``DTD`` class, you must first pass a filename or file-like object
 into the constructor to parse a DTD::

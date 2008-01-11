@@ -105,8 +105,53 @@ cdef class XMLSchema(_Validator):
 
         self._error_log.disconnect()
         if ret == -1:
-            raise XMLSchemaValidateError, "Internal error in XML Schema validation."
+            raise XMLSchemaValidateError(
+                "Internal error in XML Schema validation.")
         if ret == 0:
             return True
         else:
             return False
+
+    cdef _ParserSchemaValidationContext _newSaxValidator(self):
+        cdef _ParserSchemaValidationContext context
+        context = NEW_SCHEMA_CONTEXT(_ParserSchemaValidationContext)
+        context._schema = self
+        context._valid_ctxt = NULL
+        context._sax_plug = NULL
+        return context
+
+cdef class _ParserSchemaValidationContext:
+    cdef XMLSchema _schema
+    cdef xmlschema.xmlSchemaValidCtxt* _valid_ctxt
+    cdef xmlschema.xmlSchemaSAXPlugStruct* _sax_plug
+
+    def __dealloc__(self):
+        if self._sax_plug:
+            self.disconnect()
+        if self._valid_ctxt:
+            xmlschema.xmlSchemaFreeValidCtxt(self._valid_ctxt)
+
+    cdef _ParserSchemaValidationContext copy(self):
+        return self._schema._newSaxValidator()
+
+    cdef int connect(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
+        if self._valid_ctxt is NULL:
+            self._valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(
+                self._schema._c_schema)
+            if self._valid_ctxt is NULL:
+                raise XMLSchemaError, "Failed to create validation context"
+        self._sax_plug = xmlschema.xmlSchemaSAXPlug(
+            self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
+
+    cdef void disconnect(self):
+        xmlschema.xmlSchemaSAXUnplug(self._sax_plug)
+        self._sax_plug = NULL
+
+    cdef bint isvalid(self):
+        if self._valid_ctxt is NULL:
+            return 1 # valid
+        return xmlschema.xmlSchemaIsValid(self._valid_ctxt)
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _ParserSchemaValidationContext NEW_SCHEMA_CONTEXT "PY_NEW" (object t)

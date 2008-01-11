@@ -53,9 +53,9 @@ class HelperTestCase(unittest.TestCase):
     def tearDown(self):
         gc.collect()
 
-    def parse(self, text):
+    def parse(self, text, parser=None):
         f = StringIO(text)
-        return etree.parse(f)
+        return etree.parse(f, parser=parser)
     
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(' ', '').replace('\n', '')

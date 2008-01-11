@@ -375,9 +375,13 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 cdef class _ParserContext(_ResolverContext)
 cdef class _SaxParserContext(_ParserContext)
 cdef class _TargetParserContext(_SaxParserContext)
+cdef class _ParserSchemaValidationContext
+cdef class _Validator
+cdef class XMLSchema(_Validator)
 
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
+    cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef python.PyThread_type_lock _lock
 
@@ -390,6 +394,7 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ParserContext _copy(self):
         cdef _ParserContext context
         context = self.__class__()
+        context._validator = self._validator.copy()
         _initParserContext(context, self._resolvers._copy(), NULL)
         return context
 
@@ -414,11 +419,15 @@ cdef class _ParserContext(_ResolverContext):
             if result == 0:
                 raise ParserError, "parser locking failed"
         self._error_log.connect()
+        if self._validator is not None:
+            self._validator.connect(self._c_ctxt)
         return 0
 
     cdef int cleanup(self) except -1:
         self._resetParserContext()
         self.clear()
+        if self._validator is not None:
+            self._validator.disconnect()
         self._error_log.disconnect()
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_release_lock(self._lock)
@@ -487,7 +496,10 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         c_ctxt.myDoc = NULL
 
     if result is not NULL:
-        if recover or (c_ctxt.wellFormed and \
+        if context._validator is not None and \
+                not context._validator.isvalid():
+            well_formed = 0 # actually not 'valid', but anyway ...
+        elif recover or (c_ctxt.wellFormed and \
                        c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
             well_formed = 1
         elif not c_ctxt.replaceEntities and not c_ctxt.validate \
@@ -535,16 +547,15 @@ cdef class _BaseParser:
     cdef bint _for_html
     cdef bint _remove_comments
     cdef bint _remove_pis
+    cdef XMLSchema _schema
     cdef object _filename
     cdef object _target
     cdef object _default_encoding
     cdef int _default_encoding_int
 
-    def __init__(self, int parse_options, bint for_html,
-                 remove_comments, remove_pis,
-                 target, filename, encoding):
+    def __init__(self, int parse_options, bint for_html, XMLSchema schema,
+                 remove_comments, remove_pis, target, filename, encoding):
         cdef int c_encoding
-        cdef xmlparser.xmlParserCtxt* pctxt
         if not isinstance(self, HTMLParser) and \
                 not isinstance(self, XMLParser) and \
                 not isinstance(self, iterparse):
@@ -556,6 +567,7 @@ cdef class _BaseParser:
         self._for_html = for_html
         self._remove_comments = remove_comments
         self._remove_pis = remove_pis
+        self._schema = schema
 
         self._resolvers = _ResolverRegistry()
 
@@ -575,6 +587,9 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self._target)
+            if self._schema is not None:
+                self._parser_context._validator = \
+                    self._schema._newSaxValidator()
             pctxt = self._newParserCtxt()
             if pctxt is NULL:
                 python.PyErr_NoMemory()
@@ -591,6 +606,9 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._push_parser_context is None:
             self._push_parser_context = self._createContext(self._target)
+            if self._schema is not None:
+                self._push_parser_context._validator = \
+                    self._schema._newSaxValidator()
             pctxt = self._newPushParserCtxt()
             if pctxt is NULL:
                 python.PyErr_NoMemory()
@@ -1439,6 +1457,7 @@ cdef class XMLParser(_FeedParser):
     Other keyword arguments:
     * encoding - override the document encoding
     * target   - a parser target object that will receive the parse events
+    * schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -1448,7 +1467,8 @@ cdef class XMLParser(_FeedParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=False,
-                 remove_pis=False, target=None, encoding=None):
+                 remove_pis=False, target=None, encoding=None,
+                 XMLSchema schema=None):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -1472,7 +1492,7 @@ cdef class XMLParser(_FeedParser):
         if not resolve_entities:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
-        _BaseParser.__init__(self, parse_options, 0,
+        _BaseParser.__init__(self, parse_options, 0, schema,
                              remove_comments, remove_pis,
                              target, None, encoding)
 
@@ -1487,7 +1507,7 @@ cdef class ETCompatXMLParser(XMLParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=True,
-                 remove_pis=True, target=None, encoding=None):
+                 remove_pis=True, target=None, encoding=None, schema=None):
         XMLParser.__init__(self,
                            attribute_defaults=attribute_defaults,
                            dtd_validation=dtd_validation,
@@ -1501,7 +1521,8 @@ cdef class ETCompatXMLParser(XMLParser):
                            remove_comments=remove_comments,
                            remove_pis=remove_pis,
                            target=target,
-                           encoding=encoding)
+                           encoding=encoding,
+                           schema=schema)
 
 
 cdef XMLParser __DEFAULT_XML_PARSER
@@ -1561,13 +1582,15 @@ cdef class HTMLParser(_FeedParser):
     Other keyword arguments:
     * encoding - override the document encoding
     * target   - a parser target object that will receive the parse events
+    * schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
-    def __init__(self, recover=True, no_network=True, remove_blank_text=False,
-                 compact=True, remove_comments=False, remove_pis=False,
-                 target=None, encoding=None):
+    def __init__(self, *, recover=True, no_network=True,
+                 remove_blank_text=False, compact=True, remove_comments=False,
+                 remove_pis=False, target=None, encoding=None,
+                 XMLSchema schema=None):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
@@ -1579,7 +1602,7 @@ cdef class HTMLParser(_FeedParser):
         if not compact:
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
-        _BaseParser.__init__(self, parse_options, 1,
+        _BaseParser.__init__(self, parse_options, 1, schema,
                              remove_comments, remove_pis,
                              target, None, encoding)
 

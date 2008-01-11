@@ -91,6 +91,7 @@ cdef extern from "libxml/parser.h":
         xmlError lastError
         xmlNode* node
         xmlSAXHandler* sax
+        void* userData
         int* spaceTab
         int spaceMax
         bint html

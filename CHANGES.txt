@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Parse-time XML schema validation (``schema`` parser keyword).
+
 * XPath string results of the ``text()`` function and attribute
   selection make their Element container accessible through a
   ``getparent()`` method.

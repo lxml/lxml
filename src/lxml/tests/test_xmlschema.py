@@ -26,6 +26,26 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 
+    def test_xmlschema_parse(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        parser = etree.XMLParser(schema=schema)
+
+        tree_valid = self.parse('<a><b></b></a>', parser=parser)
+        self.assertEquals('a', tree_valid.getroot().tag)
+
+        self.assertRaises(etree.XMLSyntaxError,
+                          self.parse, '<a><c></c></a>', parser=parser)
+
     def test_xmlschema_elementtree_error(self):
         self.assertRaises(ValueError, etree.XMLSchema, etree.ElementTree())
 
