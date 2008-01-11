@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.0beta1 (2008-01-11)
+=====================
 
 Features added
 --------------
@@ -14,14 +14,14 @@ Features added
   selection make their Element container accessible through a
   ``getparent()`` method.
 
-* ``XSLT`` objects are now usable in any thread - at the cost of a
-  deep copy if they were not created in that thread.
+* ``XSLT`` objects are usable in any thread - at the cost of a deep
+  copy if they were not created in that thread.
 
-* Invalid entity names and character references will now be rejected
-  by the ``Entity()`` factory.
+* Invalid entity names and character references will be rejected by
+  the ``Entity()`` factory.
 
-* ``entity.text`` now returns the textual representation of the
-  entity, e.g. ``&amp;``.
+* ``entity.text`` returns the textual representation of the entity,
+  e.g. ``&amp;``.
 
 Bugs fixed
 ----------
