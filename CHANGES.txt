@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* XPath string results of the ``text()`` function and attribute
+  selection make their Element container accessible through a
+  ``getparent()`` method.
+
 * ``XSLT`` objects are now usable in any thread - at the cost of a
   deep copy if they were not created in that thread.
 
@@ -19,6 +23,11 @@ Features added
 
 Bugs fixed
 ----------
+
+* XPath on ElementTrees could crash when selecting the virtual root
+  node of the ElementTree.
+
+* Compilation ``--without-threading`` was buggy in alpha5/6.
 
 Other changes
 -------------
