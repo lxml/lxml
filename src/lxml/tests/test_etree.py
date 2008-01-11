@@ -1353,8 +1353,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<root xmlns:ns="%s"><ns:baz/></root>' % ns_href,
             self.etree.tostring(two))
 
-    def _test_namespaces_after_serialize(self):
-        # FIXME: this currently fails - fix serializer.pxi!
+    def test_namespaces_after_serialize(self):
         parse = self.etree.parse
         tostring = self.etree.tostring
 
@@ -1363,9 +1362,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             StringIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
         baz = one.getroot()[0][0]
 
-        print tostring(baz)
         parsed = parse(StringIO( tostring(baz) )).getroot()
-
         self.assertEquals('{%s}baz' % ns_href, parsed.tag)
 
     def test_element_nsmap(self):
