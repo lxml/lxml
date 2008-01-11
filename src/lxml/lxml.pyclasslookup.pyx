@@ -1,7 +1,6 @@
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport ElementClassLookup, FallbackElementClassLookup
 from etreepublic cimport elementFactory, import_lxml__etree
-from python cimport str, repr, isinstance, issubclass, iter
 from python cimport _cstr
 cimport etreepublic as cetree
 cimport python

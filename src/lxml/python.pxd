@@ -116,14 +116,7 @@ cdef extern from "pythread.h":
 
 cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef int _isString(object obj)
-    cdef int isinstance(object instance, object classes)
-    cdef int issubclass(object derived,  object superclasses)
     cdef char* _fqtypename(object t)
-    cdef int hasattr(object obj, object attr)
-    cdef object getattr(object obj, object attr)
     cdef int callable(object obj)
-    cdef object str(object obj)
-    cdef object repr(object obj)
-    cdef object iter(object obj)
     cdef char* _cstr(object s)
     cdef object PY_NEW(object t)
