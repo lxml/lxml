@@ -560,16 +560,7 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 ################################################################################
 # special str/unicode subclasses
 
-cdef class _ElementUnicodeResult(python.unicode):
-    cdef _Element parent
-    cdef readonly object is_tail
-    cdef readonly object is_text
-    cdef readonly object is_attribute
-
-    def getparent(self):
-        return self.parent
-
-cdef class _ElementStringResult(python.str):
+cdef class _ElementStringResult(python.unicode):
     cdef _Element parent
     cdef readonly object is_tail
     cdef readonly object is_text
@@ -579,22 +570,17 @@ cdef class _ElementStringResult(python.str):
         return self.parent
 
 cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
-    cdef _ElementUnicodeResult element_unicode
-    cdef _ElementStringResult element_str
+    cdef _ElementStringResult result
     cdef xmlNode* c_element
     cdef char* s
-    cdef bint is_attribute, is_tail, is_utf8
+    cdef bint is_attribute, is_tail
 
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
         is_attribute = 1
         is_tail = 0
         s = tree.xmlNodeGetContent(c_node)
-        is_utf8 = isutf8(s)
         try:
-            if is_utf8:
-                value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
-            else:
-                value = s
+            value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
         finally:
             tree.xmlFree(s)
         c_element = NULL
@@ -602,12 +588,8 @@ cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
         #assert c_node.type == tree.XML_TEXT_NODE, "invalid node type"
         is_attribute = 0
         # tail text?
-        is_utf8 = isutf8(c_node.content)
-        if is_utf8:
-            value = python.PyUnicode_DecodeUTF8(
-                c_node.content, cstd.strlen(c_node.content), NULL)
-        else:
-            value = c_node.content
+        value = python.PyUnicode_DecodeUTF8(
+            c_node.content, cstd.strlen(c_node.content), NULL)
         c_element = _previousElement(c_node)
         is_tail = c_element is not NULL
 
@@ -620,20 +602,12 @@ cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
     if c_element is NULL:
         return value
 
-    if is_utf8:
-        element_unicode = _ElementUnicodeResult(value)
-        element_unicode.parent = _fakeDocElementFactory(doc, c_element)
-        element_unicode.is_attribute = is_attribute
-        element_unicode.is_tail = is_tail
-        element_unicode.is_text = not (is_tail or is_attribute)
-        return element_unicode
-    else:
-        element_str = _ElementStringResult(value)
-        element_str.parent = _fakeDocElementFactory(doc, c_element)
-        element_str.is_attribute = is_attribute
-        element_str.is_tail = is_tail
-        element_str.is_text = not (is_tail or is_attribute)
-        return element_str
+    result = _ElementStringResult(value)
+    result.parent = _fakeDocElementFactory(doc, c_element)
+    result.is_attribute = is_attribute
+    result.is_tail = is_tail
+    result.is_text = not (is_tail or is_attribute)
+    return result
 
 ################################################################################
 # callbacks for XPath/XSLT extension functions

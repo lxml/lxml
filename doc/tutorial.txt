@@ -281,13 +281,39 @@ attributes in the correct order.  A simpler way to do this is XPath_::
     >>> print html.xpath("string()") # lxml.etree only!
     TEXTTAIL
     >>> print html.xpath("//text()") # lxml.etree only!
-    ['TEXT', 'TAIL']
+    [u'TEXT', u'TAIL']
 
 If you want to use this more often, you can wrap it in a function::
 
     >>> build_text_list = etree.XPath("//text()") # lxml.etree only!
     >>> print build_text_list(html)
-    ['TEXT', 'TAIL']
+    [u'TEXT', u'TAIL']
+
+Note that the ``text()`` function in XPath always returns unicode
+strings.  This is because it is actually a special object that knows
+about its origins.  You can ask it where it came from through its
+``getparent()`` method, just as you would with Elements::
+
+    >>> texts = build_text_list(html)
+    >>> print texts[0]
+    TEXT
+    >>> parent = texts[0].getparent()
+    >>> print parent.tag
+    body
+
+    >>> print texts[1]
+    TAIL
+    >>> print texts[1].getparent().tag
+    br
+
+You can also find out if it's normal text content or tail text::
+
+    >>> print texts[0].is_text
+    True
+    >>> print texts[1].is_text
+    False
+    >>> print texts[1].is_tail
+    True
 
 .. _XPath: xpathxslt.html#xpath
 

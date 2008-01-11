@@ -12,7 +12,8 @@ Features added
 
 * XPath string results of the ``text()`` function and attribute
   selection make their Element container accessible through a
-  ``getparent()`` method.
+  ``getparent()`` method.  As a side-effect, they are now always
+  unicode objects (even ASCII strings).
 
 * ``XSLT`` objects are usable in any thread - at the cost of a deep
   copy if they were not created in that thread.
