@@ -308,10 +308,10 @@ underlying transport protocol::
 
   >>> notxml = etree.tostring(unicode_root, encoding="UTF-16LE",
   ...                                       xml_declaration=False)
-  >>> root = etree.XML(notxml)
+  >>> root = etree.XML(notxml)        #doctest: +ELLIPSIS
   Traceback (most recent call last):
     ...
-  XMLSyntaxError: StartTag: invalid element name, line 1, column 2
+  XMLSyntaxError: ...
 
 
 XInclude and ElementInclude
