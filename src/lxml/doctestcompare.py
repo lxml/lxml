@@ -28,7 +28,6 @@ You can disable parsing on one line with ``# doctest:+NOPARSE_MARKUP``
 """
 
 from lxml import etree
-from lxml.html import document_fromstring
 import re
 import doctest
 import cgi
@@ -50,6 +49,11 @@ def strip(v):
 
 def norm_whitespace(v):
     return _norm_whitespace_re.sub(' ', v)
+
+_html_parser = etree.HTMLParser(recover=False)
+
+def html_fromstring(html):
+    return etree.fromstring(html, _html_parser)
 
 # We use this to distinguish repr()s from elements:
 _repr_re = re.compile(r'^<[^>]+ (at|object) ')
@@ -90,12 +94,12 @@ class LXMLOutputChecker(OutputChecker):
         if NOPARSE_MARKUP & optionflags:
             return None
         if PARSE_HTML & optionflags:
-            parser = document_fromstring
+            parser = html_fromstring
         elif PARSE_XML & optionflags:
             parser = etree.XML
         elif (want.strip().lower().startswith('<html')
               and got.strip().startswith('<html')):
-            parser = document_fromstring
+            parser = html_fromstring
         elif (self._looks_like_markup(want)
               and self._looks_like_markup(got)):
             parser = self.get_default_parser()
@@ -183,7 +187,7 @@ class LXMLOutputChecker(OutputChecker):
                 return '\n'.join(errors)
             else:
                 return value
-        html = parser is document_fromstring
+        html = parser is html_fromstring
         diff_parts = []
         diff_parts.append('Expected:')
         diff_parts.append(self.format_doc(want_doc, html, 2))
@@ -344,7 +348,7 @@ class LXMLOutputChecker(OutputChecker):
 
 class LHTMLOutputChecker(LXMLOutputChecker):
     def get_default_parser(self):
-        return document_fromstring
+        return html_fromstring
     
 def install(html=False):
     """
