@@ -50,7 +50,7 @@ def strip(v):
 def norm_whitespace(v):
     return _norm_whitespace_re.sub(' ', v)
 
-_html_parser = etree.HTMLParser(recover=False)
+_html_parser = etree.HTMLParser(recover=False, remove_blank_text=True)
 
 def html_fromstring(html):
     return etree.fromstring(html, _html_parser)
