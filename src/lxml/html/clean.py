@@ -44,7 +44,7 @@ _css_import_re = re.compile(
 # execution:
 _javascript_scheme_re = re.compile(
     r'\s*(?:javascript|jscript|livescript|vbscript|about|mocha):', re.I)
-_whitespace_re = re.compile(r'\s+')
+_substitute_whitespace = re.compile(r'\s+').sub
 # FIXME: should data: be blocked?
 
 # FIXME: check against: http://msdn2.microsoft.com/en-us/library/ms537512.aspx
@@ -56,15 +56,6 @@ _find_styled_elements = etree.XPath(
 
 _find_external_links = etree.XPath(
     "descendant-or-self::a[normalize-space(@href) and substring(normalize-space(@href),1,1) != '#']")
-
-def clean_html(html, **kw):
-    """
-    Like clean(), but takes a text input document, and returns a text
-    document.
-    """
-    doc = fromstring(html)
-    clean(doc, **kw)
-    return tostring(doc)
 
 class Cleaner(object):
     """
@@ -205,7 +196,7 @@ class Cleaner(object):
             doc = doc.getroot()
         # Normalize a case that IE treats <image> like <img>, and that
         # can confuse either this step or later steps.
-        for el in doc.getiterator('image'):
+        for el in doc.iter('image'):
             el.tag = 'img'
         if not self.comments:
             # Of course, if we were going to kill comments anyway, we don't
@@ -221,7 +212,7 @@ class Cleaner(object):
             kill_tags.add('script')
         if self.safe_attrs_only:
             safe_attrs = set(defs.safe_attrs)
-            for el in doc.getiterator():
+            for el in doc.iter():
                 attrib = el.attrib
                 for aname in attrib.keys():
                     if aname not in safe_attrs:
@@ -229,7 +220,7 @@ class Cleaner(object):
         if self.javascript:
             if not self.safe_attrs_only:
                 # safe_attrs handles events attributes itself
-                for el in doc.getiterator():
+                for el in doc.iter():
                     attrib = el.attrib
                     for aname in attrib.keys():
                         if aname.startswith('on'):
@@ -248,7 +239,7 @@ class Cleaner(object):
                         del el.attrib['style']
                     elif new != old:
                         el.set('style', new)
-                for el in list(doc.getiterator('style')):
+                for el in list(doc.iter('style')):
                     if el.get('type', '').lower().strip() == 'text/javascript':
                         el.drop_tree()
                         continue
@@ -277,7 +268,7 @@ class Cleaner(object):
         elif self.style or self.javascript:
             # We must get rid of included stylesheets if Javascript is not
             # allowed, as you can put Javascript in them
-            for el in list(doc.getiterator('link')):
+            for el in list(doc.iter('link')):
                 if 'stylesheet' in el.get('rel', '').lower():
                     # Note this kills alternate stylesheets as well
                     el.drop_tree()
@@ -289,7 +280,7 @@ class Cleaner(object):
             # FIXME: is <layer> really embedded?
             # We should get rid of any <param> tags not inside <applet>;
             # These are not really valid anyway.
-            for el in list(doc.getiterator('param')):
+            for el in list(doc.iter('param')):
                 found_parent = False
                 parent = el.getparent()
                 while parent is not None and parent.tag not in ('applet', 'object'):
@@ -312,7 +303,7 @@ class Cleaner(object):
 
         _remove = []
         _kill = []
-        for el in doc.getiterator():
+        for el in doc.iter():
             if el.tag in kill_tags:
                 if self.allow_element(el):
                     continue
@@ -349,7 +340,7 @@ class Cleaner(object):
             allow_tags = set(defs.tags)
         if allow_tags:
             bad = []
-            for el in doc.getiterator():
+            for el in doc.iter():
                 if el.tag not in allow_tags:
                     bad.append(el)
             for el in bad:
@@ -408,7 +399,7 @@ class Cleaner(object):
 
     def _kill_elements(self, doc, condition, iterate=None):
         bad = []
-        for el in doc.getiterator(iterate):
+        for el in doc.iter(iterate):
             if condition(el):
                 bad.append(el)
         for el in bad:
@@ -416,13 +407,13 @@ class Cleaner(object):
 
     def _remove_javascript_link(self, link):
         # links like "j a v a s c r i p t:" might be interpreted in IE
-        new = _whitespace_re.sub('', link)
+        new = _substitute_whitespace('', link)
         if _javascript_scheme_re.search(new):
             # FIXME: should this be None to delete?
             return ''
         return link
 
-    _decomment_re = re.compile(r'/\*.*?\*/', re.S)
+    _substitute_comments = re.compile(r'/\*.*?\*/', re.S).sub
 
     def _has_sneaky_javascript(self, style):
         """
@@ -435,9 +426,9 @@ class Cleaner(object):
         that and remove only the Javascript from the style; this catches
         more sneaky attempts.
         """
-        style = self._decomment_re.sub('', style)
+        style = self._substitute_comments('', style)
         style = style.replace('\\', '')
-        style = _whitespace_re.sub('', style)
+        style = _substitute_whitespace('', style)
         style = style.lower()
         if 'javascript:' in style:
             return True
