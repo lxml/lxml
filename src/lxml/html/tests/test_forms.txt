@@ -39,7 +39,7 @@
 'http://example.org/test'
 >>> f.method
 'GET'
->>> f.inputs
+>>> f.inputs # doctest:+NOPARSE_MARKUP
 <InputGetter for form 0>
 >>> hidden = f.inputs['hidden_field']
 >>> hidden.checkable
@@ -68,10 +68,10 @@ None
 >>> checkbox2.value
 'good'
 >>> group = f.inputs['check_group']
->>> group.value
+>>> group.value # doctest:+NOPARSE_MARKUP
 <CheckboxValues {'2', '3'} for checkboxes name='check_group'>
 >>> group.value.add('1')
->>> group.value
+>>> group.value # doctest:+NOPARSE_MARKUP
 <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 >>> print tostring(group[0])
 <input type="checkbox" name="check_group" value="1" checked>
@@ -110,7 +110,7 @@ ValueError: There is no option with the value of 'asdf'
 >>> select.value_options
 [None, '', '1']
 >>> select = f.inputs['select2']
->>> select.value
+>>> select.value # doctest:+NOPARSE_MARKUP
 <MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
 >>> select.value.update(['2', '3'])
 >>> select.value.remove('3')
@@ -124,7 +124,7 @@ ValueError: There is no option with the value 'asdf'
 >>> print urllib.urlencode(f.form_values())
 hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=&select2=1&select2=2&select2=3
 >>> fields = f.fields
->>> fields
+>>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
 >>> for name, value in fields.items():
 ...     print '%s: %r' % (name, value)
