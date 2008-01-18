@@ -21,6 +21,17 @@ towards a simpler, more consistent and more powerful API - with some major
 extensions.  Wherever possible, lxml 1.3 comes close to the semantics of lxml
 2.0, so that migrating should be easier for code that currently runs with 1.3.
 
+One of the important internal changes was the switch from the Pyrex_
+compiler to Cython_, which provides better optimisation and improved
+support for newer Python language features.  This allows the code of
+lxml to become more Python-like again, while the performance improves
+as Cython continues its own development.  The code simplification,
+which will continue throughout the 2.x series, will hopefully make it
+even easier for users to contribute.
+
+.. _Cython: http://www.cython.org/
+.. _Pyrex:  http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+
 
 Changes in etree and objectify
 ==============================
