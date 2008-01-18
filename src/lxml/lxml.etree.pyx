@@ -575,7 +575,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
-        cdef Py_ssize_t index, step, slicelength
+        cdef Py_ssize_t step, slicelength
         if python.PySlice_Check(x):
             # slice deletion
             if _isFullSlice(<python.slice>x):
@@ -594,7 +594,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # item deletion
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, index
+                raise IndexError("index out of range: %d" % x)
             _removeText(c_node.next)
             _removeNode(self._doc, c_node)
 

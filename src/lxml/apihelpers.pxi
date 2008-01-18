@@ -728,7 +728,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         if seqlength != slicelength:
             raise ValueError(
                 "attempt to assign sequence of size %d "
-                "to extended slice of size %d" % (seqlength, c))
+                "to extended slice of size %d" % (seqlength, slicelength))
 
     if c_node is NULL:
         # no children yet => add all elements straight away
