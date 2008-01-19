@@ -135,7 +135,7 @@ def flags(cmd):
         _, rf, ef = os.popen3(cmd)
     else:
         # Python 2.4+
-        p = subprocess.Popen(cmd, shell=True, close_fds=True,
+        p = subprocess.Popen(cmd, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         rf, ef = p.stdout, p.stderr
     errors = ef.read()
