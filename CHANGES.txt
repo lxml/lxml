@@ -8,6 +8,22 @@ lxml changelog
 Features added
 --------------
 
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* ``make clean`` no longer removes the .c files (use ``make
+  realclean`` instead)
+
+
+2.0beta1 (2008-01-11)
+=====================
+
+Features added
+--------------
+
 * Parse-time XML schema validation (``schema`` parser keyword).
 
 * XPath string results of the ``text()`` function and attribute
