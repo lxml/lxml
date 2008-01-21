@@ -320,7 +320,7 @@ def split_unbalanced(chunks):
                 name, pos, tag = tag_stack.pop()
                 balanced[pos] = tag
             elif tag_stack:
-                start.extend(tag for name, pos, tag in tag_stack)
+                start.extend([tag for name, pos, tag in tag_stack])
                 tag_stack = []
                 end.append(chunk)
             else:
@@ -702,8 +702,8 @@ def start_tag(el):
     The text representation of the start tag for a tag.
     """
     return '<%s%s>' % (
-        el.tag, ''.join(' %s="%s"' % (name, cgi.escape(value, True))
-                        for name, value in el.attrib.items()))
+        el.tag, ''.join([' %s="%s"' % (name, cgi.escape(value, True))
+                         for name, value in el.attrib.items())])
 
 def end_tag(el):
     """ The text representation of an end tag for a tag.  Includes
