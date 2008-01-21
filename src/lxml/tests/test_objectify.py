@@ -37,8 +37,8 @@ objectclass2xsitype = {
     # None: xsi:nil="true"
     }
 
-xsitype2objclass = dict(( (v, k) for k in objectclass2xsitype
-                          for v in objectclass2xsitype[k] ))
+xsitype2objclass = dict([ (v, k) for k in objectclass2xsitype
+                          for v in objectclass2xsitype[k] ])
 
 objectclass2pytype = {
     # objectify built-in
@@ -50,7 +50,8 @@ objectclass2pytype = {
     # None: xsi:nil="true"
     }
 
-pytype2objclass = dict(( (objectclass2pytype[k], k) for k in objectclass2pytype))
+pytype2objclass = dict([ (objectclass2pytype[k], k)
+                         for k in objectclass2pytype])
 
 xml_str = '''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">

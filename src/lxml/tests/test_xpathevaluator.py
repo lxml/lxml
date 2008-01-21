@@ -4,10 +4,10 @@
 Test cases related to XPath evaluation and the XPath class
 """
 
-import unittest, doctest
+import unittest
 from StringIO import StringIO
 
-from common_imports import etree, HelperTestCase
+from common_imports import etree, HelperTestCase, doctest
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""

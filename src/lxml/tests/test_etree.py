@@ -1736,9 +1736,8 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_sourceline_iterparse_end(self):
         iterparse = self.etree.iterparse
-        lines = list(
-            el.sourceline for (event, el) in 
-            iterparse(fileInTestDir('include/test_xinclude.xml')))
+        lines = [ el.sourceline for (event, el) in 
+                  iterparse(fileInTestDir('include/test_xinclude.xml')) ]
 
         self.assertEquals(
             [2, 3, 1],
@@ -1746,10 +1745,9 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_sourceline_iterparse_start(self):
         iterparse = self.etree.iterparse
-        lines = list(
-            el.sourceline for (event, el) in 
-            iterparse(fileInTestDir('include/test_xinclude.xml'),
-                      events=("start",)))
+        lines = [ el.sourceline for (event, el) in 
+                  iterparse(fileInTestDir('include/test_xinclude.xml'),
+                            events=("start",)) ]
 
         self.assertEquals(
             [1, 2, 3],

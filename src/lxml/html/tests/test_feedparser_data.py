@@ -1,9 +1,11 @@
+import sys
 import os
 import re
 import rfc822
 import unittest
 from lxml.tests.common_imports import doctest
-from lxml.doctestcompare import LHTMLOutputChecker
+if sys.version_info >= (2,4):
+    from lxml.doctestcompare import LHTMLOutputChecker
 
 from lxml.html.clean import clean, Cleaner
 
@@ -75,15 +77,16 @@ class FeedTestCase(unittest.TestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    for dir in feed_dirs:
-        for fn in os.listdir(dir):
-            fn = os.path.join(dir, fn)
-            if fn.endswith('.data'):
-                case = FeedTestCase(fn)
-                suite.addTests([case])
-                # This is my lazy way of stopping on first error:
-                try:
-                    case.runTest()
-                except:
-                    break
+    if sys.version_info >= (2,4):
+        for dir in feed_dirs:
+            for fn in os.listdir(dir):
+                fn = os.path.join(dir, fn)
+                if fn.endswith('.data'):
+                    case = FeedTestCase(fn)
+                    suite.addTests([case])
+                    # This is my lazy way of stopping on first error:
+                    try:
+                        case.runTest()
+                    except:
+                        break
     return suite

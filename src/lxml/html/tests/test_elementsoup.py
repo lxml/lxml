@@ -1,4 +1,4 @@
-import unittest
+import unittest, sys
 from lxml.tests.common_imports import doctest
 
 try:
@@ -10,8 +10,9 @@ except ImportError:
 
 def test_suite():
     suite = unittest.TestSuite()
-    if BS_INSTALLED:
-        suite.addTests([doctest.DocFileSuite('../../../../doc/elementsoup.txt')])
+    if sys.version_info >= (2,4):
+        if BS_INSTALLED:
+            suite.addTests([doctest.DocFileSuite('../../../../doc/elementsoup.txt')])
     return suite
 
 if __name__ == '__main__':

@@ -703,7 +703,7 @@ def start_tag(el):
     """
     return '<%s%s>' % (
         el.tag, ''.join([' %s="%s"' % (name, cgi.escape(value, True))
-                         for name, value in el.attrib.items())])
+                         for name, value in el.attrib.items()]))
 
 def end_tag(el):
     """ The text representation of an end tag for a tag.  Includes

@@ -1,4 +1,4 @@
-import unittest
+import unittest, sys
 from lxml.tests.common_imports import doctest
 from lxml import html
 from lxml import cssselect
@@ -61,10 +61,10 @@ class CSSTestCase(unittest.TestCase):
         self.index = index
         unittest.TestCase.__init__(self)
 
-    @classmethod
     def all(cls):
         for i in range(len(cls.selectors)):
             yield cls(i)
+    all = classmethod(all)
 
     def runTest(self):
         f = open(doc_fn, 'rb')
