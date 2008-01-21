@@ -66,7 +66,7 @@ cdef extern from "Python.h":
     cdef void PyDict_Clear(object d)
     cdef object PyDict_Copy(object d)
     cdef object PyDictProxy_New(object d)
-    cdef int PyDict_Contains(object d, object key) except -1
+    # cdef int PyDict_Contains(object d, object key) except -1 # Python 2.4+
     cdef Py_ssize_t PyDict_Size(object d)
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)

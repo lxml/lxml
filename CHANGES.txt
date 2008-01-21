@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Some Python 2.4-isms slipped through in beta1.
+
 Other changes
 -------------
 

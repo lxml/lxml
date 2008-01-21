@@ -846,7 +846,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                         prefix = None
                     else:
                         prefix = funicode(c_ns.prefix)
-                    if not python.PyDict_Contains(nsmap, prefix):
+                    if not python.PyDict_GetItem(nsmap, prefix):
                         python.PyDict_SetItem(
                             nsmap, prefix, funicode(c_ns.href))
                     c_ns = c_ns.next
