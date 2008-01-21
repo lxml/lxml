@@ -5,7 +5,7 @@ Tests specific to the lxml.objectify API
 """
 
 
-import unittest, operator
+import unittest, operator, sys
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
@@ -2071,8 +2071,9 @@ class ObjectifyTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
-    suite.addTests(
-        [doctest.DocFileSuite('../../../doc/objectify.txt')])
+    if sys.version_info >= (2,4):
+        suite.addTests(
+            [doctest.DocFileSuite('../../../doc/objectify.txt')])
     return suite
 
 if __name__ == '__main__':

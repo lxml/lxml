@@ -11,13 +11,16 @@ Features added
 Bugs fixed
 ----------
 
-* Some Python 2.4-isms slipped through in beta1.
+* Some Python 2.4-isms prevented lxml from building/running under
+  Python 2.3.
 
 Other changes
 -------------
 
 * ``make clean`` no longer removes the .c files (use ``make
   realclean`` instead)
+
+* The test suite now skips most doctests under Python 2.3.
 
 
 2.0beta1 (2008-01-11)

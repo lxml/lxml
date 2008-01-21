@@ -112,7 +112,8 @@ def unique(s):
         
 def test_suite():
     suite = unittest.TestSuite()
-    for fn in 'test_css.txt', 'test_css_select.txt':
-        suite.addTests([doctest.DocFileSuite(fn)])
+    if sys.version_info >= (2,4):
+        suite.addTests([doctest.DocFileSuite('test_css_select.txt')])
+    suite.addTests([doctest.DocFileSuite('test_css.txt')])
     suite.addTests(list(CSSTestCase.all()))
     return suite
