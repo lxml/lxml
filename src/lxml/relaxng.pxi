@@ -76,8 +76,10 @@ cdef class RelaxNG(_Validator):
                 if _LIBXML_VERSION_INT < 20624:
                     relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
-            raise RelaxNGParseError, self._error_log._buildExceptionMessage(
-                "Document is not valid Relax NG")
+            raise RelaxNGParseError(
+                self._error_log._buildExceptionMessage(
+                    "Document is not valid Relax NG"),
+                error_log=self._error_log)
         if fake_c_doc is not NULL:
             _destroyFakeDoc(doc._c_doc, fake_c_doc)
 

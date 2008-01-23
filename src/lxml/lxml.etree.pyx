@@ -93,9 +93,12 @@ class LxmlError(Error):
     """Main exception base class for lxml.  All other exceptions inherit from
     this one.
     """
-    def __init__(self, *args):
+    def __init__(self, *args, error_log=None):
         _initError(self, *args)
-        self.error_log = __copyGlobalErrorLog()
+        if error_log is None:
+            self.error_log = __copyGlobalErrorLog()
+        else:
+            self.error_log = error_log.copy()
 
 cdef object _LxmlError
 _LxmlError = LxmlError
@@ -2370,14 +2373,14 @@ cdef class _Validator:
     def assertValid(self, etree):
         "Raises DocumentInvalid if the document does not comply with the schema."
         if not self(etree):
-            raise DocumentInvalid, self._error_log._buildExceptionMessage(
-                "Document does not comply with schema")
+            raise DocumentInvalid(self._error_log._buildExceptionMessage(
+                "Document does not comply with schema"))
 
     def assert_(self, etree):
         "Raises AssertionError if the document does not comply with the schema."
         if not self(etree):
-            raise AssertionError, self._error_log._buildExceptionMessage(
-                "Document does not comply with schema")
+            raise AssertionError(self._error_log._buildExceptionMessage(
+                "Document does not comply with schema"))
 
     property error_log:
         def __get__(self):

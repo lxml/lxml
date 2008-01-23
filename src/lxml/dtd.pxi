@@ -29,21 +29,27 @@ cdef class DTD(_Validator):
     cdef tree.xmlDtd* _c_dtd
     def __init__(self, file=None, *, external_id=None):
         self._c_dtd = NULL
+        _Validator.__init__(self)
         if file is not None:
             if python._isString(file):
+                self._error_log.connect()
                 self._c_dtd = xmlparser.xmlParseDTD(NULL, _cstr(file))
+                self._error_log.disconnect()
             elif hasattr(file, 'read'):
                 self._c_dtd = _parseDtdFromFilelike(file)
             else:
-                raise DTDParseError, "parsing from file objects is not supported"
+                raise DTDParseError("file must be a filename or file-like object")
         elif external_id is not None:
+            self._error_log.connect()
             self._c_dtd = xmlparser.xmlParseDTD(external_id, NULL)
+            self._error_log.disconnect()
         else:
-            raise DTDParseError, "either filename or external ID required"
+            raise DTDParseError("either filename or external ID required")
 
         if self._c_dtd is NULL:
-            raise DTDParseError, "error parsing DTD"
-        _Validator.__init__(self)
+            raise DTDParseError(
+                self._error_log._buildExceptionMessage("error parsing DTD"),
+                error_log=self._error_log)
 
     def __dealloc__(self):
         tree.xmlFreeDtd(self._c_dtd)
@@ -77,7 +83,7 @@ cdef class DTD(_Validator):
 
         self._error_log.disconnect()
         if ret == -1:
-            raise DTDValidateError, "Internal error in DTD validation"
+            raise DTDValidateError("Internal error in DTD validation")
         if ret == 1:
             return True
         else:
@@ -87,15 +93,19 @@ cdef class DTD(_Validator):
 cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     cdef _ExceptionContext exc_context
     cdef _FileReaderContext dtd_parser
+    cdef _ErrorLog error_log
     cdef tree.xmlDtd* c_dtd
     exc_context = _ExceptionContext()
     dtd_parser = _FileReaderContext(file, exc_context, None, None)
+    error_log = _ErrorLog()
 
+    error_log.connect()
     c_dtd = dtd_parser._readDtd()
+    error_log.disconnect()
 
     exc_context._raise_if_stored()
     if c_dtd is NULL:
-        raise DTDParseError, "error parsing DTD"
+        raise DTDParseError("error parsing DTD", error_log=error_log)
     return c_dtd
 
 cdef extern from "etree_defs.h":
