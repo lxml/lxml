@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* More accurate exception messages in validator creation.
+
 Bugs fixed
 ----------
 
@@ -18,6 +20,9 @@ Bugs fixed
 
 Other changes
 -------------
+
+* ``XMLSchema()`` and ``RelaxNG()`` now enforce passing the source
+  file/filename through the ``file`` keyyword argument.
 
 * The test suite now skips most doctests under Python 2.3.
 
