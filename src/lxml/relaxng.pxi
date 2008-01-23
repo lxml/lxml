@@ -21,10 +21,12 @@ class RelaxNGValidateError(RelaxNGError):
 
 cdef class RelaxNG(_Validator):
     """Turn a document into a Relax NG validator.
-    Can also load from filesystem directly given file object or filename.
+
+    Either pass a schema as Element or ElementTree, or pass a file or
+    filename through the ``file`` keyword argument.
     """
     cdef relaxng.xmlRelaxNG* _c_schema
-    def __init__(self, etree=None, file=None):
+    def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlNode* c_node

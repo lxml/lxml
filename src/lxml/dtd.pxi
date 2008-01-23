@@ -27,7 +27,7 @@ cdef class DTD(_Validator):
     catalog.
     """
     cdef tree.xmlDtd* _c_dtd
-    def __init__(self, file=None, external_id=None):
+    def __init__(self, file=None, *, external_id=None):
         self._c_dtd = NULL
         if file is not None:
             if python._isString(file):

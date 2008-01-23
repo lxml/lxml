@@ -21,9 +21,12 @@ class XMLSchemaValidateError(XMLSchemaError):
 
 cdef class XMLSchema(_Validator):
     """Turn a document into an XML Schema validator.
+
+    Either pass a schema as Element or ElementTree, or pass a file or
+    filename through the ``file`` keyword argument.
     """
     cdef xmlschema.xmlSchema* _c_schema
-    def __init__(self, etree=None, file=None):
+    def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* fake_c_doc
