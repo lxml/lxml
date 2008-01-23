@@ -1,4 +1,5 @@
 import re
+import copy
 import urlparse
 from lxml import etree
 from lxml.html import defs
