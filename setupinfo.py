@@ -24,7 +24,8 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         source_extension = ".c"
 
     if OPTION_WITHOUT_OBJECTIFY:
-        modules = [ entry for entry in EXT_MODULES if entry[0] != 'objectify' ]
+        modules = [ entry for entry in EXT_MODULES
+                    if 'objectify' not in entry[0] ]
     else:
         modules = EXT_MODULES
 
