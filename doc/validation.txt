@@ -106,6 +106,17 @@ The reason for the validation failure can be found in the error log::
   >>> print dtd.error_log.filter_from_errors()[0]
   <string>:1:0:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
 
+As an alternative to parsing from a file, you can use the
+``external_id`` keyword argument to parse from a catalog::
+
+  >>> docbook_doctype = "-//OASIS//DTD DocBook XML V4.2//EN"
+  >>> dtd = etree.DTD(external_id = docbook_doctype) # requires catalog support
+
+  >>> root = etree.XML("<article></article>")
+  >>> dtd.assertValid(root) # doctest: +ELLIPSIS
+  Traceback (most recent call last):
+  DocumentInvalid: Element article content does not follow the DTD ...
+
 
 RelaxNG
 -------
