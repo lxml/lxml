@@ -11,16 +11,18 @@ Features added
 Bugs fixed
 ----------
 
+* Missing import in ``lxml.html.clean``.
+
 * Some Python 2.4-isms prevented lxml from building/running under
   Python 2.3.
 
 Other changes
 -------------
 
+* The test suite now skips most doctests under Python 2.3.
+
 * ``make clean`` no longer removes the .c files (use ``make
   realclean`` instead)
-
-* The test suite now skips most doctests under Python 2.3.
 
 
 2.0beta1 (2008-01-11)
