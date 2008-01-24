@@ -157,10 +157,30 @@ serialise an Element, you will get all parts of that Element::
     >>> print etree.tostring(root[0])
     <tag>text<child/></tag>tail
 
-This is a huge simplification for the tree model as it avoids text nodes to
-appear in the list of children and makes access to them quick and simple.  So
-this is a benefit in most applications and simplifies many, many XML tree
-algorithms.
+Here is an example that shows why the opposite behaviour would be even
+more unexpected::
+
+    >>> root = et.Element("test")
+
+    >>> root.text = "TEXT"
+    >>> et.tostring(root)
+    <test>TEXT</test>
+
+    >>> et.tail = "TAIL"
+    >>> et.tostring(root)
+    <test>TEXT</test>TAIL
+
+    >>> et.tail = None
+    >>> et.tostring(root)
+    <test>TEXT</test>
+
+Just imagine a Python list where you append an item and it doesn't
+show up when you look at the list.
+
+The ``.tail`` property is a huge simplification for the tree model as
+it avoids text nodes to appear in the list of children and makes
+access to them quick and simple.  So this is a benefit in most
+applications and simplifies many, many XML tree algorithms.
 
 However, in document-like XML (and especially HTML), the above result can be
 unexpected to new users and can sometimes require a bit more overhead.  A good
