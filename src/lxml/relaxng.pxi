@@ -46,7 +46,7 @@ cdef class RelaxNG(_Validator):
                 if c_href is NULL or \
                        cstd.strcmp(c_href,
                                    'http://relaxng.org/ns/structure/1.0') != 0:
-                    raise RelaxNGParseError, "Document is not Relax NG"
+                    raise RelaxNGParseError("Document is not Relax NG")
             self._error_log.connect()
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
@@ -59,13 +59,16 @@ cdef class RelaxNG(_Validator):
             self._error_log.connect()
             parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
         else:
-            raise RelaxNGParseError, "No tree or file given"
+            raise RelaxNGParseError("No tree or file given")
 
         if parser_ctxt is NULL:
             self._error_log.disconnect()
             if fake_c_doc is not NULL:
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
-            raise RelaxNGParseError, "Document is not parsable as Relax NG"
+            raise RelaxNGParseError(
+                self._error_log._buildExceptionMessage(
+                    "Document is not parsable as Relax NG"),
+                self._error_log)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
         self._error_log.disconnect()
 
@@ -79,7 +82,7 @@ cdef class RelaxNG(_Validator):
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
                     "Document is not valid Relax NG"),
-                error_log=self._error_log)
+                self._error_log)
         if fake_c_doc is not NULL:
             _destroyFakeDoc(doc._c_doc, fake_c_doc)
 
@@ -114,7 +117,9 @@ cdef class RelaxNG(_Validator):
 
         self._error_log.disconnect()
         if ret == -1:
-            raise RelaxNGValidateError, "Internal error in Relax NG validation"
+            raise RelaxNGValidateError(
+                "Internal error in Relax NG validation",
+                self._error_log)
         if ret == 0:
             return True
         else:

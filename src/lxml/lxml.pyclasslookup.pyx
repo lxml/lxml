@@ -87,7 +87,7 @@ cdef class _ElementProxy:
         cdef tree.xmlNode* c_node
         c_node = cetree.findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError, "list index out of range"
+            raise IndexError("list index out of range")
         return _newProxy(self._source_proxy, c_node)
 
     def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):

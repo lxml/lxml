@@ -154,7 +154,7 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise ParserError, "parser locking failed"
+                raise ParserError("parser locking failed")
         return 0
 
     cdef void _unlock(self):
@@ -167,9 +167,10 @@ cdef class _XPathEvaluatorBase:
         if entries:
             message = entries._buildExceptionMessage(None)
             if message is not None:
-                raise XPathSyntaxError, message
-        raise XPathSyntaxError, self._error_log._buildExceptionMessage(
-            "Error in xpath expression")
+                raise XPathSyntaxError(message, self._error_log)
+        raise XPathSyntaxError(self._error_log._buildExceptionMessage(
+                "Error in xpath expression"),
+                               self._error_log)
 
     cdef _raise_eval_error(self):
         cdef _BaseErrorLog entries
@@ -179,9 +180,10 @@ cdef class _XPathEvaluatorBase:
         if entries:
             message = entries._buildExceptionMessage(None)
             if message is not None:
-                raise XPathEvalError, message
-        raise XPathEvalError, self._error_log._buildExceptionMessage(
-            "Error in xpath expression")
+                raise XPathEvalError(message, self._error_log)
+        raise XPathEvalError(self._error_log._buildExceptionMessage(
+                "Error in xpath expression"),
+                             self._error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():

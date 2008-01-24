@@ -2,7 +2,6 @@ cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
 cimport xpath
-cimport xinclude
 cimport c14n
 cimport cstd
 
@@ -93,18 +92,17 @@ class LxmlError(Error):
     """Main exception base class for lxml.  All other exceptions inherit from
     this one.
     """
-    def __init__(self, *args, error_log=None):
-        _initError(self, *args)
+    def __init__(self, message, error_log=None):
+        _initError(self, message)
         if error_log is None:
-            self.error_log = __copyGlobalErrorLog()
-        else:
-            self.error_log = error_log.copy()
+            error_log = __copyGlobalErrorLog()
+        self.error_log = error_log.copy()
 
 cdef object _LxmlError
 _LxmlError = LxmlError
 
-def _superError(obj, *args):
-    super(_LxmlError, obj).__init__(*args)
+def _superError(obj, message):
+    super(_LxmlError, obj).__init__(message)
 
 cdef object _initError
 if isinstance(_LxmlError, type):
@@ -118,11 +116,6 @@ del _superError
 # superclass for all syntax errors
 class LxmlSyntaxError(LxmlError, SyntaxError):
     """Base class for all syntax errors.
-    """
-    pass
-
-class XIncludeError(LxmlError):
-    """Error during XInclude processing.
     """
     pass
 
@@ -447,7 +440,7 @@ cdef class DocInfo:
         self._doc = _documentOrRaise(tree)
         root_name, public_id, system_url = self._doc.getdoctype()
         if not root_name and (public_id or system_url):
-            raise ValueError, "Could not find root node"
+            raise ValueError("Could not find root node")
 
     property root_name:
         "Returns the name of the root node as defined by the DOCTYPE."
@@ -564,7 +557,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             element = value
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, "list index out of range"
+                raise IndexError("list index out of range")
             c_next = element._c_node.next
             _removeText(c_node.next)
             tree.xmlReplaceNode(c_node, element._c_node)
@@ -719,7 +712,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_next
         c_node = element._c_node
         if c_node.parent is not self._c_node:
-            raise ValueError, "Element is not a child of this node."
+            raise ValueError("Element is not a child of this node.")
         c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
@@ -736,7 +729,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_new_next
         c_old_node = old_element._c_node
         if c_old_node.parent is not self._c_node:
-            raise ValueError, "Element is not a child of this node."
+            raise ValueError("Element is not a child of this node.")
         c_old_next = c_old_node.next
         c_new_node = new_element._c_node
         c_new_next = c_new_node.next
@@ -893,7 +886,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # indexing
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError, "list index out of range"
+                raise IndexError("list index out of range")
             return _elementFactory(self._doc, c_node)
             
     def __len__(self):
@@ -935,7 +928,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_start_node
         c_child = x._c_node
         if c_child.parent is not self._c_node:
-            raise ValueError, "Element is not a child of this node."
+            raise ValueError("Element is not a child of this node.")
 
         # handle the unbounded search straight away (normal case)
         if stop is None and (start is None or start == 0):
@@ -958,7 +951,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_stop = stop
             if c_stop == 0 or \
                    c_start >= c_stop and (c_stop > 0 or c_start < 0):
-                raise ValueError, "list.index(x): x not in slice"
+                raise ValueError("list.index(x): x not in slice")
 
         # for negative slice indices, check slice before searching index
         if c_start < 0 or c_stop < 0:
@@ -976,9 +969,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_start_node == c_child:
                 # found! before slice end?
                 if c_stop < 0 and l <= -c_stop:
-                    raise ValueError, "list.index(x): x not in slice"
+                    raise ValueError("list.index(x): x not in slice")
             elif c_start < 0:
-                raise ValueError, "list.index(x): x not in slice"
+                raise ValueError("list.index(x): x not in slice")
 
         # now determine the index backwards from child
         c_child = c_child.prev
@@ -1003,9 +996,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 return k
         if c_start != 0 or c_stop != 0:
-            raise ValueError, "list.index(x): x not in slice"
+            raise ValueError("list.index(x): x not in slice")
         else:
-            raise ValueError, "list.index(x): x not in list"
+            raise ValueError("list.index(x): x not in list")
 
     def get(self, key, default=None):
         """Gets an element attribute.
@@ -1404,7 +1397,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """Relocate the ElementTree to a new root node.
         """
         if root._c_node.type != tree.XML_ELEMENT_NODE:
-            raise TypeError, "Only elements can be the root of an ElementTree"
+            raise TypeError("Only elements can be the root of an ElementTree")
         self._context_node = root
         self._doc = None
 
@@ -1476,12 +1469,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef char* c_path
         doc = self._context_node._doc
         if element._doc is not doc:
-            raise ValueError, "Element is not in this tree."
+            raise ValueError("Element is not in this tree.")
         c_doc = _fakeRootDoc(doc._c_doc, self._context_node._c_node)
         c_path = tree.xmlGetNodePath(element._c_node)
         _destroyFakeDoc(doc._c_doc, c_doc)
         if c_path is NULL:
-            raise LxmlError, "Error creating node path."
+            python.PyErr_NoMemory()
         path = c_path
         tree.xmlFree(c_path)
         return path
@@ -1641,23 +1634,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         cdef int result
         self._assertHasRoot()
-        # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
-        # the XInclude nodes - there may still be Python references to them!
-        # Therefore, we allow XInclude nodes to be converted to
-        # XML_XINCLUDE_START nodes.  XML_XINCLUDE_END nodes are added as
-        # siblings.  Tree traversal will simply ignore them as they are not
-        # typed as elements.  The included fragment is added between the two,
-        # i.e. as a sibling, which does not conflict with traversal.
-        with nogil:
-            if self._context_node._doc._parser is not None:
-                result = xinclude.xmlXIncludeProcessTreeFlags(
-                    self._context_node._c_node,
-                    self._context_node._doc._parser._parse_options)
-            else:
-                result = xinclude.xmlXIncludeProcessTree(
-                    self._context_node._c_node)
-        if result == -1:
-            raise XIncludeError, "XInclude processing failed"
+        XInclude()(self._context_node)
 
     def write_c14n(self, file):
         """C14N write of document. Always writes UTF-8.
@@ -1700,12 +1677,12 @@ cdef class _Attrib:
 
     def pop(self, key, *default):
         if python.PyTuple_GET_SIZE(default) > 1:
-            raise TypeError, "pop expected at most 2 arguments, got %d" % \
-                  (python.PyTuple_GET_SIZE(default)+1)
+            raise TypeError("pop expected at most 2 arguments, got %d" % (
+                    python.PyTuple_GET_SIZE(default)+1))
         result = _getAttributeValue(self._element, key, None)
         if result is None:
             if python.PyTuple_GET_SIZE(default) == 0:
-                raise KeyError, key
+                raise KeyError(key)
             else:
                 result = python.PyTuple_GET_ITEM(default, 0)
                 python.Py_INCREF(result)
@@ -1726,7 +1703,7 @@ cdef class _Attrib:
     def __getitem__(self, key):
         result = _getAttributeValue(self._element, key, None)
         if result is None:
-            raise KeyError, key
+            raise KeyError(key)
         else:
             return result
 
@@ -2286,7 +2263,8 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
         return _tostring((<_ElementTree>element_or_tree)._context_node,
                          encoding, method, write_declaration, 1, pretty_print)
     else:
-        raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
+        raise TypeError("Type '%s' cannot be serialized." %
+                        type(element_or_tree))
 
 def tostringlist(element_or_tree, *args, **kwargs):
     """Serialize an element to an encoded string representation of its XML
@@ -2316,7 +2294,8 @@ def tounicode(element_or_tree, *, method="xml", pretty_print=False):
         return _tounicode((<_ElementTree>element_or_tree)._context_node,
                           method, 1, pretty_print)
     else:
-        raise TypeError, "Type '%s' cannot be serialized." % type(element_or_tree)
+        raise TypeError("Type '%s' cannot be serialized." %
+                        type(element_or_tree))
 
 def parse(source, _BaseParser parser=None):
     """Return an ElementTree object loaded with source elements.  If no parser
@@ -2344,6 +2323,7 @@ include "parsertarget.pxi" # ET Parser target
 include "serializer.pxi"   # XML output functions
 include "iterparse.pxi"    # incremental XML parsing
 include "xmlid.pxi"        # XMLID and IDDict
+include "xinclude.pxi"     # XInclude
 include "extensions.pxi"   # XPath/XSLT extension functions
 include "xpath.pxi"        # XPath evaluation
 include "xslt.pxi"         # XSL transformations
@@ -2374,7 +2354,8 @@ cdef class _Validator:
         "Raises DocumentInvalid if the document does not comply with the schema."
         if not self(etree):
             raise DocumentInvalid(self._error_log._buildExceptionMessage(
-                "Document does not comply with schema"))
+                    "Document does not comply with schema"),
+                                  self._error_log)
 
     def assert_(self, etree):
         "Raises AssertionError if the document does not comply with the schema."

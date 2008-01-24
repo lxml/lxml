@@ -183,7 +183,7 @@ cdef class XSLTAccessControl:
                  read_network=True, write_network=True):
         self._prefs = xslt.xsltNewSecurityPrefs()
         if self._prefs is NULL:
-            raise XSLTError, "Error preparing access control context"
+            python.PyErr_NoMemory()
         self._setAccess(xslt.XSLT_SECPREF_READ_FILE, read_file)
         self._setAccess(xslt.XSLT_SECPREF_WRITE_FILE, write_file)
         self._setAccess(xslt.XSLT_SECPREF_CREATE_DIRECTORY, create_dir)
@@ -230,8 +230,8 @@ cdef class _XSLTContext(_BaseContext):
         if extensions is not None:
             for ns, prefix in extensions:
                 if ns is None:
-                    raise XSLTExtensionError, \
-                          "extensions must not have empty namespaces"
+                    raise XSLTExtensionError(
+                        "extensions must not have empty namespaces")
         _BaseContext.__init__(self, namespaces, extensions, enable_regexp)
 
     cdef register_context(self, xslt.xsltTransformContext* xsltCtxt,
@@ -308,11 +308,13 @@ cdef class XSLT:
             # last error seems to be the most accurate here
             if self._error_log.last_error is not None and \
                     self._error_log.last_error.message:
-                raise XSLTParseError(self._error_log.last_error.message)
+                raise XSLTParseError(self._error_log.last_error.message,
+                                     self._error_log)
             else:
                 raise XSLTParseError(
                     self._error_log._buildExceptionMessage(
-                        "Cannot parse stylesheet"))
+                        "Cannot parse stylesheet"),
+                    self._error_log)
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
@@ -415,7 +417,7 @@ cdef class XSLT:
                     message = "Error applying stylesheet, line %d" % error.line
                 else:
                     message = "Error applying stylesheet"
-                raise XSLTApplyError, message
+                raise XSLTApplyError(message, self._error_log)
         finally:
             if resolver_context is not None:
                 resolver_context.clear()
@@ -513,7 +515,7 @@ cdef class _XSLTResultTree(_ElementTree):
             r = xslt.xsltSaveResultToString(s, l, doc._c_doc,
                                             self._xslt._c_style)
         if r == -1:
-            raise XSLTSaveError, "Error saving XSLT result to string"
+            python.PyErr_NoMemory()
 
     def __str__(self):
         cdef char* s
@@ -618,10 +620,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef char* c_href
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
-            raise ValueError, "PI lacks content"
+            raise ValueError("PI lacks content")
         hrefs_utf = _FIND_PI_HREF(' ' + self._c_node.content)
         if len(hrefs_utf) != 1:
-            raise ValueError, "malformed PI attributes"
+            raise ValueError("malformed PI attributes")
         href_utf = hrefs_utf[0]
         c_href = _cstr(href_utf)
 
@@ -649,19 +651,20 @@ cdef class _XSLTProcessingInstruction(PIBase):
         # try XPath search
         root = _findStylesheetByID(self._doc, funicode(c_href))
         if not root:
-            raise ValueError, "reference to non-existing embedded stylesheet"
+            raise ValueError("reference to non-existing embedded stylesheet")
         elif len(root) > 1:
-            raise ValueError, "ambiguous reference to embedded stylesheet"
+            raise ValueError("ambiguous reference to embedded stylesheet")
         result_node = root[0]
         return _elementTreeFactory(result_node._doc, result_node)
 
     def set(self, key, value):
         if key != "href":
-            raise AttributeError, "only setting the 'href' attribute is supported on XSLT-PIs"
+            raise AttributeError(
+                "only setting the 'href' attribute is supported on XSLT-PIs")
         if value is None:
             attrib = ""
         elif '"' in value or '>' in value:
-            raise ValueError, "Invalid URL, must not contain '\"' or '>'"
+            raise ValueError("Invalid URL, must not contain '\"' or '>'")
         else:
             attrib = ' href="%s"' % value
         text = ' ' + self.text

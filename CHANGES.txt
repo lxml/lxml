@@ -21,6 +21,9 @@ Bugs fixed
 Other changes
 -------------
 
+* Exceptions carry only the part of the error log that is related to
+  the operation that caused the error.
+
 * ``XMLSchema()`` and ``RelaxNG()`` now enforce passing the source
   file/filename through the ``file`` keyyword argument.
 

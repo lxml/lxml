@@ -196,8 +196,8 @@ cdef class ObjectifiedElement(ElementBase):
         # properties are looked up /after/ __setattr__, so we must emulate them
         if tag == 'text' or tag == 'pyval':
             # read-only !
-            raise TypeError, "attribute '%s' of '%s' objects is not writable"% \
-                  (tag, _typename(self))
+            raise TypeError("attribute '%s' of '%s' objects is not writable" %
+                            (tag, _typename(self)))
         elif tag == 'tail':
             cetree.setTailText(self._c_node, value)
             return
@@ -256,7 +256,7 @@ cdef class ObjectifiedElement(ElementBase):
             if key == 0:
                 return self
             else:
-                raise IndexError, key
+                raise IndexError(key)
         if key < 0:
             c_node = c_parent.last
         else:
@@ -264,7 +264,7 @@ cdef class ObjectifiedElement(ElementBase):
         c_node = _findFollowingSibling(
             c_node, tree._getNs(c_self_node), c_self_node.name, key)
         if c_node is NULL:
-            raise IndexError, key
+            raise IndexError(key)
         return elementFactory(self._doc, c_node)
 
     def __setitem__(self, key, value):
@@ -299,7 +299,7 @@ cdef class ObjectifiedElement(ElementBase):
         c_parent = c_self_node.parent
         if c_parent is NULL:
             # the 'root[i] = ...' case
-            raise TypeError, "assignment to root element is invalid"
+            raise TypeError("assignment to root element is invalid")
 
         if python.PySlice_Check(key):
             # slice assignment
@@ -338,7 +338,7 @@ cdef class ObjectifiedElement(ElementBase):
             c_node = _findFollowingSibling(
                 c_node, tree._getNs(c_self_node), c_self_node.name, key)
             if c_node is NULL:
-                raise IndexError, key
+                raise IndexError(key)
             element = elementFactory(self._doc, c_node)
             _replaceElement(element, value)
 
@@ -351,7 +351,7 @@ cdef class ObjectifiedElement(ElementBase):
                 &start, &stop, &step, &slicelength)
             parent = self.getparent()
             if parent is None:
-                raise TypeError, "deleting slices of root element not supported"
+                raise TypeError("deleting slices of root element not supported")
             if step < 0:
                 del_items = list(self)[start:stop:step]
             else:
@@ -363,7 +363,7 @@ cdef class ObjectifiedElement(ElementBase):
             # normal index deletion
             parent = self.getparent()
             if parent is None:
-                raise TypeError, "deleting items not supported by root element"
+                raise TypeError("deleting items not supported by root element")
             sibling = self.__getitem__(key)
             parent.remove(sibling)
 
@@ -466,8 +466,8 @@ cdef object _lookupChild(_Element parent, tag):
 cdef object _lookupChildOrRaise(_Element parent, tag):
     element = _lookupChild(parent, tag)
     if element is None:
-        raise AttributeError, "no such child: " + \
-              _buildChildTag(parent, tag)
+        raise AttributeError("no such child: " +
+                             _buildChildTag(parent, tag))
     return element
 
 cdef object _buildChildTag(_Element parent, tag):
@@ -712,7 +712,7 @@ cdef class StringElement(ObjectifiedDataElement):
         elif isinstance(other, StringElement):
             return _numericValueOf(self) * textOf((<StringElement>other)._c_node)
         else:
-            raise TypeError, "invalid types for * operator"
+            raise TypeError("invalid types for * operator")
 
     def __mod__(self, other):
         return _strValueOf(self) % other
@@ -756,7 +756,7 @@ cdef class BoolElement(ObjectifiedDataElement):
             if c_str[1] == c'\0' or text == "true" or text.lower() == "true":
                 # '1' or 't' or 'true'
                 return 1
-        raise ValueError, "Invalid boolean value: '%s'" % text
+        raise ValueError("Invalid boolean value: '%s'" % text)
 
     def __nonzero__(self):
         if self._boolval():
@@ -836,13 +836,13 @@ cdef class PyType:
     cdef object _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
         if not python._isString(name):
-            raise TypeError, "Type name must be a string"
+            raise TypeError("Type name must be a string")
         if type_check is not None and not callable(type_check):
-            raise TypeError, "Type check function must be callable (or None)"
+            raise TypeError("Type check function must be callable (or None)")
         if name != TREE_PYTYPE_NAME and \
                not issubclass(type_class, ObjectifiedDataElement):
-            raise TypeError, \
-                  "Data classes must inherit from ObjectifiedDataElement"
+            raise TypeError(
+                "Data classes must inherit from ObjectifiedDataElement")
         self.name  = name
         self._type = type_class
         self.type_check = type_check
@@ -864,7 +864,7 @@ cdef class PyType:
         ignored.  Raises ValueError if the dependencies cannot be fulfilled.
         """
         if self.name == TREE_PYTYPE_NAME:
-            raise ValueError, "Cannot register tree type"
+            raise ValueError("Cannot register tree type")
         if self.type_check is not None:
             for item in _TYPE_CHECKS:
                 if item[0] is self.type_check:
@@ -886,7 +886,7 @@ cdef class PyType:
             if last_pos == -1:
                 _TYPE_CHECKS.append(entry)
             elif first_pos > last_pos:
-                raise ValueError, "inconsistent before/after dependencies"
+                raise ValueError("inconsistent before/after dependencies")
             else:
                 _TYPE_CHECKS.insert(last_pos, entry)
 
@@ -1620,7 +1620,7 @@ def set_default_parser(new_parser = None):
     elif isinstance(new_parser, etree.XMLParser):
         objectify_parser = new_parser
     else:
-        raise TypeError, "parser must inherit from lxml.etree.XMLParser"
+        raise TypeError("parser must inherit from lxml.etree.XMLParser")
 
 cdef _Element _makeElement(tag, text, attrib, nsmap):
     return cetree.makeElement(tag, None, objectify_parser, text, None, attrib, nsmap)
@@ -1734,7 +1734,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
             prefix, name = _xsi.split(':', 1)
             ns = nsmap.get(prefix)
             if ns != XML_SCHEMA_NS:
-                raise ValueError, "XSD types require the XSD namespace"
+                raise ValueError("XSD types require the XSD namespace")
         elif nsmap is _DEFAULT_NSMAP:
             name = _xsi
             _xsi = 'xsd:' + _xsi
@@ -1746,7 +1746,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
                         _xsi = prefix + ':' + _xsi
                     break
             else:
-                raise ValueError, "XSD types require the XSD namespace"
+                raise ValueError("XSD types require the XSD namespace")
         python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
         if _pytype is None:
             # allow using unregistered or even wrong xsi:type names

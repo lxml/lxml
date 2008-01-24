@@ -618,7 +618,7 @@ def xpath():
     >>> e.evaluate("resultTypesTest()")
     Traceback (most recent call last):
     ...
-    XPathResultError: This is not a node: x
+    XPathResultError: This is not a node: 'x'
     >>> try:
     ...     e.evaluate("resultTypesTest2()")
     ... except etree.XPathResultError:

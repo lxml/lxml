@@ -52,14 +52,14 @@ cdef class _NamespaceRegistry:
         cdef python.PyObject* dict_result
         dict_result = python.PyDict_GetItem(self._entries, name)
         if dict_result is NULL:
-            raise KeyError, "Name not registered."
+            raise KeyError("Name not registered.")
         return <object>dict_result
 
     cdef object _getForString(self, char* name):
         cdef python.PyObject* dict_result
         dict_result = python.PyDict_GetItemString(self._entries, name)
         if dict_result is NULL:
-            raise KeyError, "Name not registered."
+            raise KeyError("Name not registered.")
         return <object>dict_result
 
     def __iter__(self):
@@ -78,8 +78,8 @@ cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     "Dictionary-like registry for namespace implementation classes"
     def __setitem__(self, name, item):
         if not python.PyType_Check(item) or not issubclass(item, ElementBase):
-            raise NamespaceRegistryError, \
-                  "Registered element classes must be subtypes of ElementBase"
+            raise NamespaceRegistryError(
+                "Registered element classes must be subtypes of ElementBase")
         if name is not None:
             name = _utf8(name)
         self._entries[name] = item
@@ -173,11 +173,11 @@ def FunctionNamespace(ns_uri):
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
         if not callable(item):
-            raise NamespaceRegistryError, \
-                  "Registered functions must be callable."
+            raise NamespaceRegistryError(
+                "Registered functions must be callable.")
         if not name:
-            raise ValueError, \
-                  "extensions must have non empty names"
+            raise ValueError(
+                "extensions must have non empty names")
         self._entries[_utf8(name)] = item
 
     def __repr__(self):

@@ -80,6 +80,7 @@ cdef class Schematron(_Validator):
         cdef xmlDoc* c_doc
         cdef char* c_href
         cdef schematron.xmlSchematronParserCtxt* parser_ctxt
+        _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError(
                 "lxml.etree was compiled without Schematron support.")
@@ -88,6 +89,7 @@ cdef class Schematron(_Validator):
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
             c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            self._error_log.connect()
             parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(c_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
@@ -95,21 +97,24 @@ cdef class Schematron(_Validator):
                 # XXX assume a string object
                 filename = file
             filename = _encodeFilename(filename)
+            self._error_log.connect()
             parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
             c_doc = NULL
         else:
             raise SchematronParseError("No tree or file given")
 
         if parser_ctxt is NULL:
+            self._error_log.disconnect()
             python.PyErr_NoMemory()
 
         self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
+        self._error_log.disconnect()
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
             raise SchematronParseError(
-                "Document is not a valid Schematron schema")
-        _Validator.__init__(self)
+                "Document is not a valid Schematron schema",
+                self._error_log)
 
     def __dealloc__(self):
         schematron.xmlSchematronFree(self._c_schema)
@@ -136,7 +141,7 @@ cdef class Schematron(_Validator):
         valid_ctxt = schematron.xmlSchematronNewValidCtxt(
             self._c_schema, options)
         if valid_ctxt is NULL:
-            raise SchematronError("Failed to create validation context")
+            return python.PyErr_NoMemory()
 
         self._error_log.connect()
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
@@ -149,7 +154,8 @@ cdef class Schematron(_Validator):
 
         if ret == -1:
             raise SchematronValidateError(
-                "Internal error in Schematron validation")
+                "Internal error in Schematron validation",
+                self._error_log)
         if ret == 0:
             return True
         else:

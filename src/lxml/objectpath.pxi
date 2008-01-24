@@ -49,7 +49,7 @@ cdef class ObjectPath:
             python.Py_INCREF(default)
             use_default = 1
         elif use_default > 1:
-            raise TypeError, "invalid number of arguments: needs one or two"
+            raise TypeError("invalid number of arguments: needs one or two")
         return _findObjectPath(root, self._c_path, self._path_len,
                                default, use_default)
 
@@ -107,15 +107,15 @@ cdef _parseObjectPathString(path):
                 # path '.child' => ignore root
                 python.PyList_Append(new_path, _RELATIVE_PATH_SEGMENT)
             elif index != 0:
-                raise ValueError, "index not allowed on root node"
+                raise ValueError("index not allowed on root node")
         elif not has_dot:
-            raise ValueError, "invalid path"
+            raise ValueError("invalid path")
         python.PyList_Append(new_path, (ns, name, index))
         
         path_pos = match.end()
     if python.PyList_GET_SIZE(new_path) == 0 or \
            python.PyString_GET_SIZE(path) > path_pos:
-        raise ValueError, "invalid path"
+        raise ValueError("invalid path")
     return new_path
 
 cdef _parseObjectPathList(path):
@@ -140,17 +140,17 @@ cdef _parseObjectPathList(path):
             else:
                 index_end = cstd.strchr(index_pos + 1, c']')
                 if index_end is NULL:
-                    raise ValueError, "index must be enclosed in []"
+                    raise ValueError("index must be enclosed in []")
                 index = python.PyNumber_Int(
                     python.PyString_FromStringAndSize(
                         index_pos + 1, <Py_ssize_t>(index_end - index_pos - 1)))
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
-                    raise ValueError, "index not allowed on root node"
+                    raise ValueError("index not allowed on root node")
                 name = python.PyString_FromStringAndSize(
                     c_name, <Py_ssize_t>(index_pos - c_name))
         python.PyList_Append(new_path, (ns, name, index))
     if python.PyList_GET_SIZE(new_path) == 0:
-        raise ValueError, "invalid path"
+        raise ValueError("invalid path")
     return new_path
 
 cdef _ObjectPath* _buildObjectPathSegments(path_list) except NULL:
@@ -188,8 +188,9 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
     if c_href is NULL or c_href[0] == c'\0':
         c_href = tree._getNs(c_node)
     if not cetree.tagMatches(c_node, c_href, c_name):
-        raise ValueError, "root element does not match: need %s, got %s" % \
-              (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
+        raise ValueError(
+            "root element does not match: need %s, got %s" %
+            (cetree.namespacedNameFromNsName(c_href, c_name), root.tag))
 
     while c_node is not NULL:
         c_path_len = c_path_len - 1
@@ -214,7 +215,7 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
         return default_value
     else:
         tag = cetree.namespacedNameFromNsName(c_href, c_name)
-        raise AttributeError, "no such child: " + tag
+        raise AttributeError("no such child: " + tag)
 
 cdef _createObjectPath(_Element root, _ObjectPath* c_path,
                        Py_ssize_t c_path_len, int replace, value):
@@ -229,7 +230,7 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
     cdef char* c_name
     cdef Py_ssize_t c_index
     if c_path_len == 1:
-        raise TypeError, "cannot update root node"
+        raise TypeError("cannot update root node")
 
     c_node = root._c_node
     c_name = c_path[0].name
@@ -237,8 +238,9 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
     if c_href is NULL or c_href[0] == c'\0':
         c_href = tree._getNs(c_node)
     if not cetree.tagMatches(c_node, c_href, c_name):
-        raise ValueError, "root element does not match: need %s, got %s" % \
-              (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
+        raise ValueError(
+            "root element does not match: need %s, got %s" %
+            (cetree.namespacedNameFromNsName(c_href, c_name), root.tag))
 
     while c_path_len > 1:
         c_path_len = c_path_len - 1
@@ -257,8 +259,8 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
         if c_child is not NULL:
             c_node = c_child
         elif c_index != 0:
-            raise TypeError, \
-                  "creating indexed path attributes is not supported"
+            raise TypeError(
+                "creating indexed path attributes is not supported")
         elif c_path_len == 1:
             _appendValue(cetree.elementFactory(root._doc, c_node),
                          cetree.namespacedNameFromNsName(c_href, c_name),

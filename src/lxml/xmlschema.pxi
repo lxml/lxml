@@ -76,7 +76,7 @@ cdef class XMLSchema(_Validator):
             raise XMLSchemaParseError(
                 self._error_log._buildExceptionMessage(
                     "Document is not valid XML Schema"),
-                error_log=self._error_log)
+                self._error_log)
 
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)
@@ -99,7 +99,7 @@ cdef class XMLSchema(_Validator):
         valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(self._c_schema)
         if valid_ctxt is NULL:
             self._error_log.disconnect()
-            raise XMLSchemaError, "Failed to create validation context"
+            return python.PyErr_NoMemory()
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
@@ -111,7 +111,8 @@ cdef class XMLSchema(_Validator):
         self._error_log.disconnect()
         if ret == -1:
             raise XMLSchemaValidateError(
-                "Internal error in XML Schema validation.")
+                "Internal error in XML Schema validation.",
+                self._error_log)
         if ret == 0:
             return True
         else:
@@ -144,7 +145,7 @@ cdef class _ParserSchemaValidationContext:
             self._valid_ctxt = xmlschema.xmlSchemaNewValidCtxt(
                 self._schema._c_schema)
             if self._valid_ctxt is NULL:
-                raise XMLSchemaError, "Failed to create validation context"
+                return python.PyErr_NoMemory()
         self._sax_plug = xmlschema.xmlSchemaSAXPlug(
             self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
 

@@ -49,7 +49,7 @@ cdef class DTD(_Validator):
         if self._c_dtd is NULL:
             raise DTDParseError(
                 self._error_log._buildExceptionMessage("error parsing DTD"),
-                error_log=self._error_log)
+                self._error_log)
 
     def __dealloc__(self):
         tree.xmlFreeDtd(self._c_dtd)
@@ -72,7 +72,8 @@ cdef class DTD(_Validator):
         valid_ctxt = dtdvalid.xmlNewValidCtxt()
         if valid_ctxt is NULL:
             self._error_log.disconnect()
-            raise DTDError, "Failed to create validation context"
+            raise DTDError("Failed to create validation context",
+                           self._error_log)
 
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
@@ -83,7 +84,8 @@ cdef class DTD(_Validator):
 
         self._error_log.disconnect()
         if ret == -1:
-            raise DTDValidateError("Internal error in DTD validation")
+            raise DTDValidateError("Internal error in DTD validation",
+                                   self._error_log)
         if ret == 1:
             return True
         else:
@@ -105,7 +107,7 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
 
     exc_context._raise_if_stored()
     if c_dtd is NULL:
-        raise DTDParseError("error parsing DTD", error_log=error_log)
+        raise DTDParseError("error parsing DTD", error_log)
     return c_dtd
 
 cdef extern from "etree_defs.h":
