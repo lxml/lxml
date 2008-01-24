@@ -630,7 +630,7 @@ what you can do and what you can't do.
 
 
 How do I output null characters in XML text?
----------------------------------------
+--------------------------------------------
 
 Don't.  What you would produce is not well-formed XML.  XML parsers
 will refuse to parse a document that contains null characters.  The
