@@ -787,6 +787,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                     _resolveQNameText(self, value), 'UTF-8', 'strict')
             _setNodeText(self._c_node, value)
 
+        # using 'del el.text' is the wrong thing to do
+        #def __del__(self):
+        #    _setNodeText(self._c_node, None)
+
     property tail:
         """Text after this element's end tag, but before the next sibling
         element's start tag. This is either a string or the value None, if
@@ -797,6 +801,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
            
         def __set__(self, value):
             _setTailText(self._c_node, value)
+
+        # using 'del el.tail' is the wrong thing to do
+        #def __del__(self):
+        #    _setTailText(self._c_node, None)
 
     # not in ElementTree, read-only
     property prefix:

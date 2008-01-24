@@ -224,6 +224,33 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertXML('<a><t></t>tail</a>',
                        a)
 
+    def _test_del_tail(self):
+        # this is discouraged for ET compat, should not be tested...
+        XML = self.etree.XML
+        
+        root = XML('<doc>This is <i>mixed</i> content.</doc>')
+        self.assertEquals(1, len(root))
+        self.assertEquals('This is ', root.text)
+        self.assertEquals(None, root.tail)
+        self.assertEquals('mixed', root[0].text)
+        self.assertEquals(' content.', root[0].tail)
+
+        del root[0].tail
+
+        self.assertEquals(1, len(root))
+        self.assertEquals('This is ', root.text)
+        self.assertEquals(None, root.tail)
+        self.assertEquals('mixed', root[0].text)
+        self.assertEquals(None, root[0].tail)
+
+        root[0].tail = "TAIL"
+
+        self.assertEquals(1, len(root))
+        self.assertEquals('This is ', root.text)
+        self.assertEquals(None, root.tail)
+        self.assertEquals('mixed', root[0].text)
+        self.assertEquals('TAIL', root[0].tail)
+
     def test_ElementTree(self):
         Element = self.etree.Element
         ElementTree = self.etree.ElementTree
