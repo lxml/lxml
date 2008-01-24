@@ -157,21 +157,21 @@ serialise an Element, you will get all parts of that Element::
     >>> print etree.tostring(root[0])
     <tag>text<child/></tag>tail
 
-Here is an example that shows why the opposite behaviour would be even
-more unexpected::
+Here is an example that shows why not serialising the tail would be
+even more surprising from an object point of view::
 
-    >>> root = et.Element("test")
+    >>> root = etree.Element("test")
 
     >>> root.text = "TEXT"
-    >>> et.tostring(root)
+    >>> etree.tostring(root)
     <test>TEXT</test>
 
-    >>> et.tail = "TAIL"
-    >>> et.tostring(root)
+    >>> etree.tail = "TAIL"
+    >>> etree.tostring(root)
     <test>TEXT</test>TAIL
 
-    >>> et.tail = None
-    >>> et.tostring(root)
+    >>> etree.tail = None
+    >>> etree.tostring(root)
     <test>TEXT</test>
 
 Just imagine a Python list where you append an item and it doesn't
