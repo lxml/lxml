@@ -17,7 +17,9 @@ life as a programmer easier.
      1.1  Elements are lists
      1.2  Elements carry attributes
      1.3  Elements contain text
-     1.4  Tree iteration
+     1.4  Using XPath to find text
+     1.5  Tree iteration
+     1.6  Serialisation
    2  The ElementTree class
    3  Parsing from strings and files
      3.1  The fromstring() function
@@ -29,9 +31,6 @@ life as a programmer easier.
    4  Namespaces
    5  The E-factory
    6  ElementPath
-     6.1  findall()
-     6.2  find()
-     6.3  findtext()
 
 
 A common way to import ``lxml.etree`` is as follows::
@@ -273,10 +272,42 @@ to the next element in the XML tree::
     >>> print etree.tostring(html)
     <html><body>TEXT<br/>TAIL</body></html>
 
-These two properties are enough to represent any text content in an XML
-document.  If you want to read the text without the intermediate tags,
-however, you have to recursively concatenate all ``text`` and ``tail``
-attributes in the correct order.  A simpler way to do this is XPath_::
+The two properties ``.text`` and ``.tail`` are enough to represent any
+text content in an XML document.  This way, the ElementTree API does
+not require any `special text nodes`_ in addition to the Element
+class, that tend to get in the way fairly often (as you might know
+from classic DOM_ APIs).
+
+However, there are cases where the tail text also gets in the way.
+For example, when you serialise an Element from within the tree, you
+do not always want its tail text in the result (although you would
+still want the tail text of its children).  For this purpose, the
+``tostring()`` function accepts the keyword argument ``with_tail``::
+
+    >>> print etree.tostring(br)
+    <br/>TAIL
+    >>> print etree.tostring(br, with_tail=False) # lxml.etree only!
+    <br/>
+
+.. _`special text nodes`: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-1312295772
+.. _DOM: http://www.w3.org/TR/DOM-Level-3-Core/core.html
+
+If you want to read *only* the text, i.e. without any intermediate
+tags, you have to recursively concatenate all ``text`` and ``tail``
+attributes in the correct order.  Again, the ``tostring()`` function
+comes to the rescue, this time using the ``method`` keyword::
+
+    >>> print etree.tostring(html, method="text")
+    TEXTTAIL
+
+
+Using XPath to find text
+------------------------
+
+.. _XPath: xpathxslt.html#xpath
+
+Another way to extract the text content of a tree is XPath_, which
+also allows you to extract the separate text chunks into a list::
 
     >>> print html.xpath("string()") # lxml.etree only!
     TEXTTAIL
@@ -314,8 +345,6 @@ You can also find out if it's normal text content or tail text::
     False
     >>> print texts[1].is_tail
     True
-
-.. _XPath: xpathxslt.html#xpath
 
 
 Tree iteration
@@ -638,7 +667,9 @@ want to avoid blocking calls to the parser, e.g. in frameworks like Twisted,
 or whenever data comes in slowly or in chunks and you want to do other things
 while waiting for the next chunk.
 
-You can reuse the parser by calling its ``feed()`` method again::
+After calling the ``close()`` method (or when an exception was raised
+by the parser), you can reuse the parser by calling its ``feed()``
+method again::
 
     >>> parser.feed("<root/>")
     >>> root = parser.close()
@@ -814,7 +845,7 @@ HTML::
 The Element creation based on attribute access makes it easy to build up a
 simple vocabulary for an XML language::
 
-    >>> from lxml.builder import ElementMaker
+    >>> from lxml.builder import ElementMaker # lxml only !
 
     >>> E = ElementMaker(namespace="http://my.de/fault/namespace",
     ...                  nsmap={'p' : "http://my.de/fault/namespace"})
@@ -858,11 +889,50 @@ vocabulary for HTML.
 ElementPath
 ===========
 
-findall()
----------
+The ElementTree library comes with a simple XPath-like path language
+called ElementPath_.  The main difference is that you can use the
+``{namespace}tag`` notation in ElementPath expressions.  However,
+advanced features like value comparison and functions are not
+available.
 
-find()
-------
+.. _ElementPath: http://effbot.org/zone/element-xpath.htm
+.. _`full XPath implementation`: xpathxslt.html#xpath
 
-findtext()
-----------
+In addition to a `full XPath implementation`_, lxml.etree supports the
+ElementPath language in the same way ElementTree does, even using
+(almost) the same implementation.  The API provides four methods here
+that you can find on Elements and ElementTrees:
+
+* ``iterfind()`` iterates over all Elements that match the path
+  expression
+
+* ``findall()`` returns a list of matching Elements
+
+* ``find()`` efficiently returns only the first match
+
+* ``findtext()`` returns the ``.text`` content of the first match
+
+Here are some examples::
+
+    >>> root = etree.XML("<root><a x='123'>aText<b/><c/><b/></a></root>")
+
+Find a child of an Element::
+
+    >>> print root.find("b")
+    None
+    >>> print root.find("a").tag
+    a
+
+Find an Element anywhere in the tree::
+
+    >>> print root.find(".//b").tag
+    b
+    >>> [ b.tag for b in root.iterfind(".//b") ]
+    ['b', 'b']
+
+Find Elements with a certain attribute::
+
+    >>> print root.findall(".//a[@x]")[0].tag
+    a
+    >>> print root.findall(".//a[@y]")
+    []
