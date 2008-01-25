@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* ``with_tail`` option in serialiser functions.
+
 * More accurate exception messages in validator creation.
 
 Bugs fixed

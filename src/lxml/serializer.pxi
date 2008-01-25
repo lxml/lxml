@@ -17,7 +17,7 @@ cdef int _findOutputMethod(method) except -1:
         return OUTPUT_METHOD_TEXT
     raise ValueError("unknown output method %r" % method)
 
-cdef _textToString(xmlNode* c_node, encoding):
+cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef char* c_text
     with nogil:
         c_text = tree.xmlNodeGetContent(c_node)
@@ -27,7 +27,7 @@ cdef _textToString(xmlNode* c_node, encoding):
     text = c_text
     tree.xmlFree(c_text)
 
-    if _hasTail(c_node):
+    if with_tail and _hasTail(c_node):
         tail = _collectText(c_node.next)
         if tail:
             text = text + tail
@@ -43,7 +43,7 @@ cdef _textToString(xmlNode* c_node, encoding):
 
 cdef _tostring(_Element element, encoding, method,
                bint write_xml_declaration, bint write_complete_document,
-               bint pretty_print):
+               bint pretty_print, bint with_tail):
     """Serialize an element to an encoded string representation of its XML
     tree.
     """
@@ -62,7 +62,7 @@ cdef _tostring(_Element element, encoding, method,
         c_enc = _cstr(encoding)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        return _textToString(element._c_node, encoding)
+        return _textToString(element._c_node, encoding, with_tail)
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
@@ -77,7 +77,7 @@ cdef _tostring(_Element element, encoding, method,
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                            write_xml_declaration, write_complete_document,
-                           pretty_print)
+                           pretty_print, with_tail)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
@@ -92,8 +92,8 @@ cdef _tostring(_Element element, encoding, method,
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
-cdef _tounicode(_Element element, method,
-                bint write_complete_document, bint pretty_print):
+cdef _tounicode(_Element element, method, bint write_complete_document,
+                bint pretty_print, bint with_tail):
     """Serialize an element to the Python unicode representation of its XML
     tree.
     """
@@ -104,7 +104,7 @@ cdef _tounicode(_Element element, method,
         return None
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
-        text = _textToString(element._c_node, None)
+        text = _textToString(element._c_node, None, with_tail)
         return python.PyUnicode_FromEncodedObject(text, 'utf-8', 'strict')
     c_buffer = tree.xmlAllocOutputBuffer(NULL)
     if c_buffer is NULL:
@@ -112,7 +112,7 @@ cdef _tounicode(_Element element, method,
 
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, NULL, c_method, 0,
-                           write_complete_document, pretty_print)
+                           write_complete_document, pretty_print, with_tail)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
@@ -132,7 +132,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding, int c_method,
                              bint write_xml_declaration,
                              bint write_complete_document,
-                             bint pretty_print) nogil:
+                             bint pretty_print, bint with_tail) nogil:
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
@@ -169,7 +169,8 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlFreeNode(c_nsdecl_node)
 
     # write tail, trailing comments, etc.
-    _writeTail(c_buffer, c_node, encoding, pretty_print)
+    if with_tail:
+        _writeTail(c_buffer, c_node, encoding, pretty_print)
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
     if pretty_print:
@@ -312,7 +313,7 @@ cdef int _closeFilelikeWriter(void* ctxt):
 
 cdef _tofilelike(f, _Element element, encoding, method,
                  bint write_xml_declaration, bint write_doctype,
-                 bint pretty_print):
+                 bint pretty_print, bint with_tail):
     cdef python.PyThreadState* state
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
@@ -328,10 +329,10 @@ cdef _tofilelike(f, _Element element, encoding, method,
         if _isString(f):
             filename8 = _encodeFilename(f)
             f = open(filename8, 'wb')
-            f.write(_textToString(element._c_node, encoding))
+            f.write(_textToString(element._c_node, encoding, with_tail))
             f.close()
         else:
-            f.write(_textToString(element._c_node, encoding))
+            f.write(_textToString(element._c_node, encoding, with_tail))
         return
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
@@ -353,7 +354,8 @@ cdef _tofilelike(f, _Element element, encoding, method,
         raise TypeError("File or filename expected, got '%s'" % type(f))
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
-                       write_xml_declaration, write_doctype, pretty_print)
+                       write_xml_declaration, write_doctype,
+                       pretty_print, with_tail)
     tree.xmlOutputBufferClose(c_buffer)
     tree.xmlCharEncCloseFunc(enchandler)
     if writer is None:
@@ -403,13 +405,14 @@ cdef _tofilelikeC14N(f, _Element element):
 
 # dump node to file (mainly for debug)
 
-cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print):
+cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print, bint with_tail):
     cdef tree.xmlOutputBuffer* c_buffer
     if not python.PyFile_Check(f):
         raise ValueError("not a file")
     c_buffer = tree.xmlOutputBufferCreateFile(python.PyFile_AsFile(f), NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, pretty_print, NULL)
-    _writeTail(c_buffer, c_node, NULL, 0)
+    if with_tail:
+        _writeTail(c_buffer, c_node, NULL, 0)
     if not pretty_print:
         # not written yet
         tree.xmlOutputBufferWriteString(c_buffer, '\n')

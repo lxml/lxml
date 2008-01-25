@@ -1916,6 +1916,26 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(a, pretty_print=True)
         self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
 
+    def test_tostring_with_tail(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.tail = "aTAIL"
+        b = SubElement(a, 'b')
+        b.tail = "bTAIL"
+        c = SubElement(a, 'c')
+
+        result = tostring(a)
+        self.assertEquals(result, "<a><b/>bTAIL<c/></a>aTAIL")
+
+        result = tostring(a, with_tail=False)
+        self.assertEquals(result, "<a><b/>bTAIL<c/></a>")
+
+        result = tostring(a, with_tail=True)
+        self.assertEquals(result, "<a><b/>bTAIL<c/></a>aTAIL")
+
     def test_tostring_method_text_encoding(self):
         tostring = self.etree.tostring
         Element = self.etree.Element
