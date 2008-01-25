@@ -312,6 +312,12 @@ class BenchMark(benchbase.BenchMarkBase):
         root.findall(".//*[%s]/./%s/./*" % (self.SEARCH_TAG, self.SEARCH_TAG))
 
     @onlylib('lxe')
+    def bench_xpath_path(self, root):
+        ns, tag = self.SEARCH_TAG[1:].split('}')
+        root.xpath(".//*[p:%s]/./p:%s/./*" % (tag,tag),
+                   namespaces = {'p':ns})
+
+    @onlylib('lxe')
     def bench_iterfind(self, root):
         list(root.iterfind(".//*"))
 
