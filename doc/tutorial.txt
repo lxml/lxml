@@ -312,18 +312,18 @@ also allows you to extract the separate text chunks into a list::
     >>> print html.xpath("string()") # lxml.etree only!
     TEXTTAIL
     >>> print html.xpath("//text()") # lxml.etree only!
-    [u'TEXT', u'TAIL']
+    ['TEXT', 'TAIL']
 
 If you want to use this more often, you can wrap it in a function::
 
     >>> build_text_list = etree.XPath("//text()") # lxml.etree only!
     >>> print build_text_list(html)
-    [u'TEXT', u'TAIL']
+    ['TEXT', 'TAIL']
 
-Note that the ``text()`` function in XPath always returns unicode
-strings.  This is because it is actually a special object that knows
-about its origins.  You can ask it where it came from through its
-``getparent()`` method, just as you would with Elements::
+Note that a string result returned by XPath is a special 'smart'
+object that knows about its origins.  You can ask it where it came
+from through its ``getparent()`` method, just as you would with
+Elements::
 
     >>> texts = build_text_list(html)
     >>> print texts[0]
@@ -345,6 +345,16 @@ You can also find out if it's normal text content or tail text::
     False
     >>> print texts[1].is_tail
     True
+
+While this works for the results of the ``text()`` function, lxml will
+not to tell you the origin of a string value that was constructed by
+the XPath functions ``string()`` or ``concat()``::
+
+    >>> stringify = etree.XPath("string()")
+    >>> print stringify(html)
+    TEXTTAIL
+    >>> print stringify(html).getparent()
+    None
 
 
 Tree iteration

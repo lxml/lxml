@@ -491,7 +491,8 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_NUMBER:
         return xpathObj.floatval
     elif xpathObj.type == xpath.XPATH_STRING:
-        return funicode(xpathObj.stringval)
+        return _elementStringResultFactory(
+            funicode(xpathObj.stringval), None, 0, 0)
     elif xpathObj.type == xpath.XPATH_POINT:
         raise NotImplementedError
     elif xpathObj.type == xpath.XPATH_RANGE:
@@ -524,7 +525,7 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
             value = _fakeDocElementFactory(doc, c_node)
         elif c_node.type == tree.XML_TEXT_NODE or \
                 c_node.type == tree.XML_ATTRIBUTE_NODE:
-            value = _newElementStringResult(doc, c_node)
+            value = _buildElementStringResult(doc, c_node)
         elif c_node.type == tree.XML_NAMESPACE_DECL:
             s = (<xmlNs*>c_node).href
             if s is NULL:
@@ -560,7 +561,7 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 ################################################################################
 # special str/unicode subclasses
 
-cdef class _ElementStringResult(python.unicode):
+cdef class _ElementUnicodeResult(python.unicode):
     cdef _Element parent
     cdef readonly object is_tail
     cdef readonly object is_text
@@ -569,27 +570,56 @@ cdef class _ElementStringResult(python.unicode):
     def getparent(self):
         return self.parent
 
-cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
-    cdef _ElementStringResult result
+class _ElementStringResult(str):
+    # we need to use a Python class here, str cannot be C-subclassed
+    # in Pyrex/Cython
+    def getparent(self):
+        return self._parent
+
+cdef object _elementStringResultFactory(string_value, _Element parent,
+                                        bint is_attribute, bint is_tail):
+    cdef _ElementUnicodeResult uresult
+    cdef bint is_text
+    if parent is None:
+        is_text = 0
+    else:
+        is_text = not (is_tail or is_attribute)
+
+    if python.PyString_CheckExact(string_value):
+        result = _ElementStringResult(string_value)
+        result._parent = parent
+        result.is_attribute = is_attribute
+        result.is_tail = is_tail
+        result.is_text = is_text
+        return result
+    else:
+        uresult = _ElementUnicodeResult(string_value)
+        uresult.parent = parent
+        uresult.is_attribute = is_attribute
+        uresult.is_tail = is_tail
+        uresult.is_text = is_text
+        return uresult
+
+cdef object _buildElementStringResult(_Document doc, xmlNode* c_node):
+    cdef _Element parent
     cdef xmlNode* c_element
     cdef char* s
-    cdef bint is_attribute, is_tail
+    cdef bint is_attribute, is_text, is_tail
 
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
         is_attribute = 1
         is_tail = 0
         s = tree.xmlNodeGetContent(c_node)
         try:
-            value = python.PyUnicode_DecodeUTF8(s, cstd.strlen(s), NULL)
+            value = funicode(s)
         finally:
             tree.xmlFree(s)
         c_element = NULL
     else:
         #assert c_node.type == tree.XML_TEXT_NODE, "invalid node type"
         is_attribute = 0
-        # tail text?
-        value = python.PyUnicode_DecodeUTF8(
-            c_node.content, cstd.strlen(c_node.content), NULL)
+        # may be tail text or normal text
+        value = funicode(c_node.content)
         c_element = _previousElement(c_node)
         is_tail = c_element is not NULL
 
@@ -599,15 +629,12 @@ cdef object _newElementStringResult(_Document doc, xmlNode* c_node):
         while c_element is not NULL and not _isElement(c_element):
             c_element = c_element.parent
 
-    if c_element is NULL:
-        return value
+    if c_element is not NULL:
+        parent = _fakeDocElementFactory(doc, c_element)
 
-    result = _ElementStringResult(value)
-    result.parent = _fakeDocElementFactory(doc, c_element)
-    result.is_attribute = is_attribute
-    result.is_tail = is_tail
-    result.is_text = not (is_tail or is_attribute)
-    return result
+    return _elementStringResultFactory(
+        value, parent, is_attribute, is_tail)
+
 
 ################################################################################
 # callbacks for XPath/XSLT extension functions

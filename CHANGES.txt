@@ -8,6 +8,12 @@ Under development
 Features added
 --------------
 
+* Plain ASCII XPath string results are no longer forced into unicode
+  objects (as in 2.0beta1).
+
+* All XPath string results are 'smart' objects that have a
+  ``getparent()`` method to retrieve their parent Element.
+
 * ``with_tail`` option in serialiser functions.
 
 * More accurate exception messages in validator creation.

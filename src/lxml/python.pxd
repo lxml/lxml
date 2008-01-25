@@ -25,6 +25,7 @@ cdef extern from "Python.h":
 
     cdef int PyUnicode_Check(object obj)
     cdef int PyString_Check(object obj)
+    cdef int PyString_CheckExact(object obj)
 
     cdef object PyUnicode_FromEncodedObject(object s, char* encoding,
                                             char* errors)

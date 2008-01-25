@@ -136,13 +136,32 @@ used:
 
 * a float, when the XPath expression has a numeric result (integer or float)
 
-* a (unicode) string, when the XPath expression has a string result.
+* a 'smart' string (as described below), when the XPath expression has
+  a string result.
 
-* a list of items, when the XPath expression has a list as result.  The items
-  may include elements (also comments and processing instructions), strings
-  and tuples.  Text nodes and attributes in the result are returned as strings
-  (the text node content or attribute value).  Namespace declarations are
-  returned as tuples of strings: ``(prefix, URI)``.
+* a list of items, when the XPath expression has a list as result.
+  The items may include Elements (also comments and processing
+  instructions), strings and tuples.  Text nodes and attributes in the
+  result are returned as 'smart' string values.  Namespace
+  declarations are returned as tuples of strings: ``(prefix, URI)``.
+
+XPath string results are 'smart' in that they provide a
+``getparent()`` method that knows their origin::
+
+* for attribute values, ``result.getparent()`` returns the Element
+  that carries them.  An example is ``//foo/@attribute``, where the
+  parent would be a ``foo`` Element.
+
+* for the ``text()`` function (as in ``//text()``), it returns the
+  Element that contains the text or tail that was returned.
+
+You can distinguish between different text origins with the boolean
+properties ``is_text``, ``is_tail`` and ``is_attribute``.
+
+Note that ``getparent()`` may not always return an Element.  For
+example, the XPath functions ``string()`` and ``concat()`` will
+construct strings that do not have an origin.  For them,
+``getparent()`` will return None.
 
 
 Generating XPath expressions
