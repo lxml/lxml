@@ -9,7 +9,7 @@ Features added
 --------------
 
 * Plain ASCII XPath string results are no longer forced into unicode
-  objects but are returned as plain strings as before 2.0beta1.
+  objects as in 2.0beta1, but are returned as plain strings as before.
 
 * All XPath string results are 'smart' objects that have a
   ``getparent()`` method to retrieve their parent Element.
