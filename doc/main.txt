@@ -46,7 +46,7 @@ Documentation
 
 * ElementTree:
 
-  * ElementTree_ API
+  * `ElementTree API`_
 
   * compatibility_ and differences of lxml.etree
 
@@ -104,6 +104,7 @@ that can be used to efficiently extend lxml.etree in external C modules,
 including custom element class support.
 
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
+.. _`ElementTree API`:  http://effbot.org/zone/element-index.htm#documentation
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
 .. _`lxml.etree Tutorial`: tutorial.html
