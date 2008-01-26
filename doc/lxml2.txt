@@ -127,7 +127,17 @@ features.
   bigger overlap with the XSLT code.  The main benefits are improved thread
   safety in the XPath evaluators and Python RegExp support in standard XPath.
 
+* The string results of an XPath evaluation have become 'smart' string
+  subclasses.  Formerly, there was no easy way to find out where a
+  string originated from.  In lxml 2.0, you can call its
+  ``getparent()`` method to `find the Element that carries it`_.  This
+  works for attributes (``//@attribute``) and for ``text()`` nodes,
+  i.e. Element text and tails.  Strings that were constructed in the
+  path expression, e.g. by the ``string()`` function or extension
+  functions, will return None as their parent.
+
 .. _`E factory`: objectify.html#tree-generation-with-the-e-factory
+.. _`find the Element that carries it`: tutorial.html#using-xpath-to-find-text
 
 
 New modules
@@ -140,16 +150,15 @@ lxml.usedoctest
 ---------------
 
 A very useful module for doctests based on XML or HTML is
-``lxml.doctestcompare``.  It provides a relaxed comparison mechanism for XML
-and HTML in doctests.  Using it is as simple as::
+``lxml.doctestcompare``.  It provides a relaxed comparison mechanism
+for XML and HTML in doctests.  Using it for XML comparisons is as
+simple as::
 
     >>> import lxml.usedoctest
 
-for XML comparisons and::
+and for HTML comparisons::
 
     >>> import lxml.html.usedoctest
-
-for HTML comparisons.
 
 
 lxml.html

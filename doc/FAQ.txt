@@ -1,6 +1,6 @@
-=======================================
-lxml - Frequently Asked Questions (FAQ)
-=======================================
+=====================================
+lxml FAQ - Frequently Asked Questions
+=====================================
 
 .. meta::
   :description: Frequently Asked Questions about lxml (FAQ)
