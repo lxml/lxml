@@ -146,7 +146,7 @@ used:
   declarations are returned as tuples of strings: ``(prefix, URI)``.
 
 XPath string results are 'smart' in that they provide a
-``getparent()`` method that knows their origin::
+``getparent()`` method that knows their origin:
 
 * for attribute values, ``result.getparent()`` returns the Element
   that carries them.  An example is ``//foo/@attribute``, where the
