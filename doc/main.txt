@@ -142,7 +142,7 @@ version first.
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
-The latest version is `lxml 2.0beta2`_, released 2008-01-25
+The latest version is `lxml 2.0beta2`_, released 2008-01-26
 (`changes for 2.0beta2`_).  `Older versions`_ are listed below.
 
 .. _`Older versions`: #old-versions
