@@ -33,7 +33,7 @@ Other changes
   the operation that caused the error.
 
 * ``XMLSchema()`` and ``RelaxNG()`` now enforce passing the source
-  file/filename through the ``file`` keyyword argument.
+  file/filename through the ``file`` keyword argument.
 
 * The test suite now skips most doctests under Python 2.3.
 
