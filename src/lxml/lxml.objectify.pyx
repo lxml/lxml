@@ -1627,8 +1627,12 @@ def makeparser(**kw):
     """Create a new XML parser for objectify trees.
 
     You can pass all keyword arguments that are supported by
-    ``etree.XMLParser()``.
+    ``etree.XMLParser()``.  Note that this parser defaults to removing
+    blank text.  You can disable this by passing the
+    ``remove_blank_text`` boolean keyword option yourself.
     """
+    if 'remove_blank_text' not in kw:
+        kw['remove_blank_text'] = True
     parser = etree.XMLParser(**kw)
     parser.set_element_class_lookup( ObjectifyElementClassLookup() )
     return parser
