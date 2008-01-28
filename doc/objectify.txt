@@ -16,71 +16,19 @@ there are multiple children with the same name, slicing and indexing can be
 used.  Python data types are extracted from XML content automatically and made
 available to the normal Python operators.
 
-This API is very different from the ElementTree API.  If it is used, it should
-not be mixed with other element implementations, to avoid non-obvious
-behaviour.
-
-The `benchmark page`_ has some hints on performance optimisation of code using
-lxml.objectify.
-
-.. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
-.. _gnosis.xml.objectify: http://gnosis.cx/download/
-.. _`benchmark page`: performance.html#lxml-objectify
-
-.. contents::
-..
-   1  Setting up lxml.objectify
-   2  The lxml.objectify API
-     2.1  Creating objectify trees
-     2.2  Element access through object attributes
-     2.3  Namespace handling
-   3  ObjectPath
-   4  Python data types
-   5  Recursive tree dump
-     5.1  Recursive string representation of elements
-   6  How data types are matched
-     6.1  Type annotations
-     6.2  XML Schema datatype annotation
-     6.3  The DataElement factory
-     6.4  Defining additional data classes
-   7  What is different from lxml.etree?
-
-
-Setting up lxml.objectify
-=========================
-
 To set up and use ``objectify``, you need both the ``lxml.etree`` module and
 ``lxml.objectify``::
 
     >>> from lxml import etree
     >>> from lxml import objectify
 
-The next step is to create a parser that builds objectify documents.  The
-objectify API is meant for data-centric XML (as opposed to document XML with
-mixed content).  Therefore, we configure the parser to let it remove
-whitespace-only text from the parsed document if it is not enclosed by an XML
-element.  Note that this alters the document infoset, so if you consider the
-removed spaces as data in your specific use case, you should go with a normal
-parser and just set the element class lookup.  Most applications, however,
-will work fine with the following setup::
+The objectify API is very different from the ElementTree API.  If it
+is used, it should not be mixed with other element implementations
+(such as trees parsed with ``lxml.etree``), to avoid non-obvious
+behaviour.
 
-    >>> parser = etree.XMLParser(remove_blank_text=True)
-
-    >>> lookup = objectify.ObjectifyElementClassLookup()
-    >>> parser.setElementClassLookup(lookup)
-
-If you want additional support for `namespace specific classes`_, you can
-register the objectify lookup as a fallback of the namespace lookup.  Note,
-however, that you have to take care in this case, that the namespace classes
-inherit from ``objectify.ObjectifiedElement``, not only from the normal
-``lxml.etree.ElementBase``, so that they support the ``objectify`` API.  The
-above setup code then becomes::
-
-    >>> lookup = etree.ElementNamespaceClassLookup(
-    ...                   objectify.ObjectifyElementClassLookup() )
-    >>> parser.setElementClassLookup(lookup)
-
-.. _`namespace specific classes`: element_classes.html#namespace-class-lookup
+The `benchmark page`_ has some hints on performance optimisation of code using
+lxml.objectify.
 
 To make the doctests in this document look a little nicer, we also use this:
 
@@ -88,6 +36,29 @@ To make the doctests in this document look a little nicer, we also use this:
 
 Imported from within a doctest, this relieves us from caring about the exact
 formatting of XML output.
+
+.. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
+.. _gnosis.xml.objectify: http://gnosis.cx/download/
+.. _`benchmark page`: performance.html#lxml-objectify
+
+.. contents::
+..
+   1  The lxml.objectify API
+     1.1  Creating objectify trees
+     1.2  Element access through object attributes
+     1.3  Tree generation with the E-factory
+     1.4  Namespace handling
+   2  ObjectPath
+   3  Python data types
+     3.1  Recursive tree dump
+     3.2  Recursive string representation of elements
+   4  How data types are matched
+     4.1  Type annotations
+     4.2  XML Schema datatype annotation
+     4.3  The DataElement factory
+     4.4  Defining additional data classes
+     4.5  Advanced element class lookup
+   5  What is different from lxml.etree?
 
 
 The lxml.objectify API
@@ -100,25 +71,40 @@ of normal Python object trees as closely as possible.
 Creating objectify trees
 ------------------------
 
-To create an ``objectify`` tree, you can either parse a document with the
-parser you created::
+As with ``lxml.etree``, you can either create an ``objectify`` tree by
+parsing an XML document or by building one from scratch.  To parse a
+document, just use the ``parse()`` or ``fromstring()`` functions of
+the module::
 
     >>> from StringIO import StringIO
-    >>> xml = StringIO('<test/>')
-    >>> tree = etree.parse(xml, parser)
+    >>> fileobject = StringIO('<test/>')
+
+    >>> tree = objectify.parse(fileobject)
     >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
     True
 
-or you can call the ``makeelement()`` method of the parser to create a new
-root element from scratch::
+    >>> tree = objectify.fromstring('<test/>')
+    >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
+    True
 
-    >>> obj_el = parser.makeelement("test")
+To build a new tree in memory, ``objectify`` replicates the standard
+factory function ``Element()`` from ``lxml.etree``::
+
+    >>> obj_el = objectify.Element("new")
     >>> print isinstance(obj_el, objectify.ObjectifiedElement)
     True
 
-New subelements will automatically inherit the setup.  However, all
-independent elements that you create through the normal etree API will not be
-associated with the parser and therefore not support the ``objectify`` API::
+After creating such an Element, you can use the `usual API`_ of
+lxml.etree to add SubElements to the tree::
+
+    >>> child = etree.SubElement(obj_el, "newchild", attr="value")
+
+.. _`usual API`: tutorial.html#the-element-class
+
+New subelements will automatically inherit the objectify behaviour
+from their tree.  However, all independent elements that you create
+through the ``Element()`` factory of lxml.etree (instead of objectify)
+will not support the ``objectify`` API by themselves::
 
     >>> subel = etree.SubElement(obj_el, "sub")
     >>> print isinstance(subel, objectify.ObjectifiedElement)
@@ -127,28 +113,6 @@ associated with the parser and therefore not support the ``objectify`` API::
     >>> independent_el = etree.Element("new")
     >>> print isinstance(independent_el, objectify.ObjectifiedElement)
     False
-
-The ``makeelement()`` method of the parser has the same signature as the
-normal ``Element()`` factory known from lxml.etree and can therefore easily
-replace the respective calls.
-
-For convenience, ``objectify`` also replicates the standard factory
-``Element()`` and the ``fromstring()`` function from ``lxml.etree`` using a
-parser that is local to the ``objectify`` module.  So, after setting up the
-parser based element lookup above, you can keep using the same API as in
-``lxml.etree``, except that you have to import these functions from a
-different module::
-
-    >>> obj_el = objectify.Element("new")
-    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
-    True
-
-    >>> obj_el = objectify.fromstring("<test/>")
-    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
-    True
-
-You can change this parser with ``objectify.setDefaultParser(parser)``, which
-also allows to add the above support for namespace specific element classes.
 
 
 Element access through object attributes
@@ -1024,7 +988,7 @@ call should be placed into the element ``_init()`` method.
 The registration of data classes uses the ``PyType`` class::
 
     >>> class ChristmasDate(objectify.ObjectifiedDataElement):
-    ...     def callSanta(self):
+    ...     def call_santa(self):
     ...         print "Ho ho ho!"
 
     >>> def checkChristmasDate(date_string):
@@ -1056,12 +1020,12 @@ the next step, which is to register the type.  Then you can use it::
 
     >>> root = objectify.fromstring(
     ...             "<root><a>24.12.2000</a><b>12.24.2000</b></root>")
-    >>> root.a.callSanta()
+    >>> root.a.call_santa()
     Ho ho ho!
-    >>> root.b.callSanta()
+    >>> root.b.call_santa()
     Traceback (most recent call last):
       ...
-    AttributeError: no such child: callSanta
+    AttributeError: no such child: call_santa
 
 If you need to specify dependencies between the type check functions, you can
 pass a sequence of type names through the ``before`` and ``after`` keyword
@@ -1081,22 +1045,69 @@ function defined above::
     ...    ''')
     >>> print root.a
     12.24.2000
-    >>> root.a.callSanta()
+    >>> root.a.call_santa()
     Ho ho ho!
 
 To unregister a type, call its ``unregister()`` method::
 
-    >>> root.a.callSanta()
+    >>> root.a.call_santa()
     Ho ho ho!
     >>> xmas_type.unregister()
-    >>> root.a.callSanta()
+    >>> root.a.call_santa()
     Traceback (most recent call last):
       ...
-    AttributeError: no such child: callSanta
+    AttributeError: no such child: call_santa
 
 Be aware, though, that this does not immediately apply to elements to which
 there already is a Python reference.  Their Python class will only be changed
 after all references are gone and the Python object is garbage collected.
+
+
+Advanced element class lookup
+-----------------------------
+
+In some cases, the normal data class setup is not enough.  Being based
+on ``lxml.etree``, however, ``lxml.objectify`` supports very
+fine-grained control over the Element classes used in a tree.  All you
+have to do is configure a different `class lookup`_ mechanism (or
+write one yourself).
+
+.. _`class lookup`: element-classes.html
+
+The first step for the setup is to create a new parser that builds
+objectify documents.  The objectify API is meant for data-centric XML
+(as opposed to document XML with mixed content).  Therefore, we
+configure the parser to let it remove whitespace-only text from the
+parsed document if it is not enclosed by an XML element.  Note that
+this alters the document infoset, so if you consider the removed
+spaces as data in your specific use case, you should go with a normal
+parser and just set the element class lookup.  Most applications,
+however, will work fine with the following setup::
+
+    >>> parser = objectify.makeparser(remove_blank_text=True)
+
+What this does internally, is::
+
+    >>> parser = etree.XMLParser(remove_blank_text=True)
+
+    >>> lookup = objectify.ObjectifyElementClassLookup()
+    >>> parser.set_element_class_lookup(lookup)
+
+If you want to change the lookup scheme, say, to get additional
+support for `namespace specific classes`_, you can register the
+objectify lookup as a fallback of the namespace lookup.  In this case,
+however, you have to take care that the namespace classes inherit from
+``objectify.ObjectifiedElement``, not only from the normal
+``lxml.etree.ElementBase``, so that they support the ``objectify``
+API.  The above setup code then becomes::
+
+    >>> lookup = etree.ElementNamespaceClassLookup(
+    ...                   objectify.ObjectifyElementClassLookup() )
+    >>> parser.set_element_class_lookup(lookup)
+
+.. _`namespace specific classes`: element_classes.html#namespace-class-lookup
+
+See the documentation on `class lookup` schemes for more information.
 
 
 What is different from lxml.etree?
