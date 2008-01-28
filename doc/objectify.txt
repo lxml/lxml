@@ -48,17 +48,18 @@ formatting of XML output.
      1.2  Element access through object attributes
      1.3  Tree generation with the E-factory
      1.4  Namespace handling
-   2  ObjectPath
-   3  Python data types
-     3.1  Recursive tree dump
-     3.2  Recursive string representation of elements
-   4  How data types are matched
-     4.1  Type annotations
-     4.2  XML Schema datatype annotation
-     4.3  The DataElement factory
-     4.4  Defining additional data classes
-     4.5  Advanced element class lookup
-   5  What is different from lxml.etree?
+   2  Asserting a Schema
+   3  ObjectPath
+   4  Python data types
+     4.1  Recursive tree dump
+     4.2  Recursive string representation of elements
+   5  How data types are matched
+     5.1  Type annotations
+     5.2  XML Schema datatype annotation
+     5.3  The DataElement factory
+     5.4  Defining additional data classes
+     5.5  Advanced element class lookup
+   6  What is different from lxml.etree?
 
 
 The lxml.objectify API
@@ -83,8 +84,8 @@ the module::
     >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
     True
 
-    >>> tree = objectify.fromstring('<test/>')
-    >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
+    >>> root = objectify.fromstring('<test/>')
+    >>> print isinstance(root, objectify.ObjectifiedElement)
     True
 
 To build a new tree in memory, ``objectify`` replicates the standard
@@ -356,6 +357,61 @@ or for names that have a special meaning in lxml.objectify::
 
     >>> print root["text"].text
     TEXT
+
+
+Asserting a Schema
+==================
+
+When dealing with XML documents from different sources, it can often
+be interesting to assure that they follow a common schema.  See the
+`documentation on validation`_ on this topic.
+
+In lxml.objectify, this directly translates to enforcing a specific
+object tree, i.e. expected object attributes are ensured to be there
+and to have the expected type.  This can easily be achieved through
+XML Schema validation at parse time.
+
+.. _`documentation on validation`: validation.html
+
+First of all, we need a parser that knows our schema, so let's say we
+parse the schema from a file (or filename or file-like object)::
+
+    >>> from StringIO import StringIO
+    >>> f = StringIO('''\
+    ...   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    ...     <xsd:element name="a" type="AType"/>
+    ...     <xsd:complexType name="AType">
+    ...       <xsd:sequence>
+    ...         <xsd:element name="b" type="xsd:string" />
+    ...       </xsd:sequence>
+    ...     </xsd:complexType>
+    ...   </xsd:schema>
+    ... ''')
+    >>> schema = etree.XMLSchema(file=f)
+
+When creating the validating parser, we must make sure it returns
+objectify trees.  This is best done with the ``makeparser()``
+function::
+
+    >>> parser = objectify.makeparser(schema = schema)
+
+Now we can use it to parse a valid document::
+
+    >>> xml = "<a><b>test</b></a>"
+    >>> a = objectify.fromstring(xml, parser)
+
+    >>> print a.b
+    test
+
+Or an invalid document::
+
+    >>> xml = "<a><b>test</b><c/></a>"
+    >>> a = objectify.fromstring(xml, parser)
+    Traceback (most recent call last):
+    XMLSyntaxError: Element 'c': This element is not expected.
+
+Note that the same works for parse-time DTD validation, except that it
+does not support any data types by design.
 
 
 ObjectPath
