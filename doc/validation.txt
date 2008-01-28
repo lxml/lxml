@@ -75,6 +75,10 @@ will raise an exception::
   Traceback (most recent call last):
   XMLSyntaxError: Element 'a': 'not int' is not a valid value of the atomic type 'xs:integer'.
 
+If you want the parser to succeed regardless of the outcome of the
+validation, you should use a non validating parser and run the
+validation separately after parsing the document.
+
 
 DTD
 ---

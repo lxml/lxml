@@ -362,18 +362,18 @@ or for names that have a special meaning in lxml.objectify::
 Asserting a Schema
 ==================
 
-When dealing with XML documents from different sources, it can often
-be interesting to assure that they follow a common schema.  In
-lxml.objectify, this directly translates to enforcing a specific
-object tree, i.e. expected object attributes are ensured to be there
-and to have the expected type.  This can easily be achieved through
-XML Schema validation at parse time.  Also see the `documentation on
-validation`_ on this topic.
+When dealing with XML documents from different sources, you will often
+require them to follow a common schema.  In lxml.objectify, this
+directly translates to enforcing a specific object tree, i.e. expected
+object attributes are ensured to be there and to have the expected
+type.  This can easily be achieved through XML Schema validation at
+parse time.  Also see the `documentation on validation`_ on this
+topic.
 
 .. _`documentation on validation`: validation.html
 
 First of all, we need a parser that knows our schema, so let's say we
-parse the schema from a file (or filename or file-like object)::
+parse the schema from a file-like object (or file or filename)::
 
     >>> from StringIO import StringIO
     >>> f = StringIO('''\
@@ -388,11 +388,13 @@ parse the schema from a file (or filename or file-like object)::
     ... ''')
     >>> schema = etree.XMLSchema(file=f)
 
-When creating the validating parser, we must make sure it returns
-objectify trees.  This is best done with the ``makeparser()``
+When creating the validating parser, we must make sure it `returns
+objectify trees`_.  This is best done with the ``makeparser()``
 function::
 
     >>> parser = objectify.makeparser(schema = schema)
+
+.. _`returns objectify trees`: #advance-element-class-lookup
 
 Now we can use it to parse a valid document::
 
@@ -409,8 +411,8 @@ Or an invalid document::
     Traceback (most recent call last):
     XMLSyntaxError: Element 'c': This element is not expected.
 
-Note that the same works for parse-time DTD validation, except that it
-does not support any data types by design.
+Note that the same works for parse-time DTD validation, except that
+DTDs do not support any data types by design.
 
 
 ObjectPath
