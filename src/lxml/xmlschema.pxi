@@ -52,13 +52,14 @@ cdef class XMLSchema(_Validator):
             self._error_log.connect()
             parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(fake_c_doc)
         elif file is not None:
-            filename = _getFilenameForFile(file)
-            if filename is None:
-                # XXX assume a string object
-                filename = file
-            filename = _encodeFilename(filename)
-            self._error_log.connect()
-            parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
+            if _isString(file):
+                filename = _encodeFilename(file)
+                self._error_log.connect()
+                parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
+            else:
+                doc = _parseDocument(file, None)
+                self._error_log.connect()
+                parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(doc._c_doc)
         else:
             raise XMLSchemaParseError("No tree or file given")
 

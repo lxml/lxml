@@ -51,13 +51,14 @@ cdef class RelaxNG(_Validator):
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
-            filename = _getFilenameForFile(file)
-            if filename is None:
-                # XXX assume a string object
-                filename = file
-            filename = _encodeFilename(filename)
-            self._error_log.connect()
-            parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+            if _isString(file):
+                filename = _encodeFilename(file)
+                self._error_log.connect()
+                parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+            else:
+                doc = _parseDocument(file, None)
+                self._error_log.connect()
+                parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
             raise RelaxNGParseError("No tree or file given")
 

@@ -6,7 +6,7 @@ Test cases related to XML Schema parsing and validation
 
 import unittest
 
-from common_imports import etree, doctest, HelperTestCase, fileInTestDir
+from common_imports import etree, doctest, StringIO, HelperTestCase, fileInTestDir
 
 class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema(self):
@@ -38,6 +38,26 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         schema = etree.XMLSchema(schema)
+        parser = etree.XMLParser(schema=schema)
+
+        tree_valid = self.parse('<a><b></b></a>', parser=parser)
+        self.assertEquals('a', tree_valid.getroot().tag)
+
+        self.assertRaises(etree.XMLSyntaxError,
+                          self.parse, '<a><c></c></a>', parser=parser)
+
+    def test_xmlschema_stringio(self):
+        schema_file = StringIO('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(file=schema_file)
         parser = etree.XMLParser(schema=schema)
 
         tree_valid = self.parse('<a><b></b></a>', parser=parser)

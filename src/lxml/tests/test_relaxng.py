@@ -6,7 +6,7 @@ Test cases related to RelaxNG parsing and validation
 
 import unittest
 
-from common_imports import etree, doctest, HelperTestCase, fileInTestDir
+from common_imports import etree, doctest, StringIO, HelperTestCase, fileInTestDir
 
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):
@@ -22,6 +22,22 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 </element>
 ''')
         schema = etree.RelaxNG(schema)
+        self.assert_(schema.validate(tree_valid))
+        self.assert_(not schema.validate(tree_invalid))
+
+    def test_relaxng_stringio(self):
+        tree_valid = self.parse('<a><b></b></a>')
+        tree_invalid = self.parse('<a><c></c></a>')
+        schema_file = StringIO('''\
+<element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
+  <zeroOrMore>
+     <element name="b">
+       <text />
+     </element>
+  </zeroOrMore>
+</element>
+''')
+        schema = etree.RelaxNG(file=schema_file)
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 

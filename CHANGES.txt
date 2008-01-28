@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* ``XMLSchema()`` and ``RelaxNG()`` can parse from StringIO.
+
 * ``makeparser()`` function in ``lxml.objectify`` to create a new
   parser with the usual objectify setup.
 
