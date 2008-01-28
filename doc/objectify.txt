@@ -363,13 +363,12 @@ Asserting a Schema
 ==================
 
 When dealing with XML documents from different sources, it can often
-be interesting to assure that they follow a common schema.  See the
-`documentation on validation`_ on this topic.
-
-In lxml.objectify, this directly translates to enforcing a specific
+be interesting to assure that they follow a common schema.  In
+lxml.objectify, this directly translates to enforcing a specific
 object tree, i.e. expected object attributes are ensured to be there
 and to have the expected type.  This can easily be achieved through
-XML Schema validation at parse time.
+XML Schema validation at parse time.  Also see the `documentation on
+validation`_ on this topic.
 
 .. _`documentation on validation`: validation.html
 
