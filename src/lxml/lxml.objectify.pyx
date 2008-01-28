@@ -1598,12 +1598,13 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True):
 
 cdef object __DEFAULT_PARSER
 __DEFAULT_PARSER = etree.XMLParser(remove_blank_text=True)
-__DEFAULT_PARSER.setElementClassLookup( ObjectifyElementClassLookup() )
+__DEFAULT_PARSER.set_element_class_lookup( ObjectifyElementClassLookup() )
 
 cdef object objectify_parser
 objectify_parser = __DEFAULT_PARSER
 
 def setDefaultParser(new_parser = None):
+    "This function is deprecated, use ``set_default_parser()`` instead."
     set_default_parser(new_parser)
 
 def set_default_parser(new_parser = None):
@@ -1621,6 +1622,16 @@ def set_default_parser(new_parser = None):
         objectify_parser = new_parser
     else:
         raise TypeError("parser must inherit from lxml.etree.XMLParser")
+
+def makeparser(**kw):
+    """Create a new XML parser for objectify trees.
+
+    You can pass all keyword arguments that are supported by
+    ``etree.XMLParser()``.
+    """
+    parser = etree.XMLParser(**kw)
+    parser.set_element_class_lookup( ObjectifyElementClassLookup() )
+    return parser
 
 cdef _Element _makeElement(tag, text, attrib, nsmap):
     return cetree.makeElement(tag, None, objectify_parser, text, None, attrib, nsmap)

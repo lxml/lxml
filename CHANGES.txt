@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* ``makeparser()`` function in ``lxml.objectify`` to create a new
+  parser with the usual objectify setup.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 2.0beta2 (2008-01-26)
 =====================
 
