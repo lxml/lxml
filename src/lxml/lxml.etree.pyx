@@ -661,9 +661,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _appendChild(self, element)
 
     def clear(self):
-        """Resets an element. This function removes all subelements,
-        clears all attributes and sets the text and tail
-        attributes to None.
+        """Resets an element.  This function removes all subelements, clears
+        all attributes and sets the text and tail properties to None.
         """
         cdef xmlAttr* c_attr
         cdef xmlAttr* c_attr_next
@@ -1666,6 +1665,10 @@ cdef _ElementTree _newElementTree(_Document doc, _Element context_node,
 
 
 cdef class _Attrib:
+    """A proxy for the ``Element.attrib`` property.
+
+    Behaves as a normal Python dict.
+    """
     cdef _Element _element
     def __init__(self, _Element element not None):
         self._element = element
