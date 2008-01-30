@@ -18,9 +18,10 @@ ElementTree_.
      1.1  Is there a tutorial?
      1.2  Where can I find more documentation about lxml?
      1.3  What standards does lxml implement?
-     1.4  What is the difference between lxml.etree and lxml.objectify?
-     1.5  How can I make my application run faster?
-     1.6  What about that trailing text on serialised Elements?
+     1.4  Who uses lxml?
+     1.5  What is the difference between lxml.etree and lxml.objectify?
+     1.6  How can I make my application run faster?
+     1.7  What about that trailing text on serialised Elements?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the Windows binaries?
@@ -101,6 +102,44 @@ namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
 XML:ID.  Support for XML Schema and especially Schematron is currently
 incomplete in libxml2, but is definitely usable and actively being worked on.
 libxml2 also supports loading documents through HTTP and FTP.
+
+
+Who uses lxml?
+--------------
+
+As an XML library, lxml is often used under the hood of in-house
+server applications, such as web servers or applications that
+facilitate some kind of document management.  Therefore, it is hard to
+get an idea of who uses it, and the following list of 'users and
+projects we know of' is definitely not a complete list of lxml's
+users.
+
+Also note that the compatibility to the ElementTree library does not
+require projects to set a hard dependency on lxml - as long as they do
+not need lxml's enhanced feature set.
+
+* Deliverance_, a content theming tool
+* gocept.lxml_, Zope3 interface bindings for lxml
+* Inteproxy_, a secure HTTP proxy
+* lwebstring_, an XML template engine
+* OpenXMLlib_, a library for handling OpenXML document meta data
+* Pycoon_, a WSGI web development framework based on XML pipelines
+* rfadict_, an RDFa parser wth a simple dictionary-like interface.
+
+And a couple of generally happy_ users_, and other `sites that link to
+lxml`_.
+
+.. _Deliverance: http://www.openplans.org/projects/deliverance/project-home
+.. _gocept.lxml: http://pypi.python.org/pypi/gocept.lxml
+.. _Inteproxy: http://lists.wald.intevation.org/pipermail/inteproxy-devel/2007-February/000000.html
+.. _lwebstring: http://pypi.python.org/pypi/lwebstring
+.. _OpenXMLlib: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
+.. _Pycoon: http://pypi.python.org/pypi/pycoon
+.. _rfadict: http://pypi.python.org/pypi/rdfadict
+
+.. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
+.. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
+.. _`sites that link to lxml`: http://www.google.com/search?as_lq=http%3A%2F%2Fcodespeak.net%2Flxml
 
 
 What is the difference between lxml.etree and lxml.objectify?

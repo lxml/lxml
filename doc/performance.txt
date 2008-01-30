@@ -14,9 +14,11 @@ As an XML library, lxml.etree is very fast.  It is also slow.  As with
 all software, it depends on what you do with it.  Rest assured that
 lxml is fast enough for most applications, so lxml is probably
 somewhere between 'fast enough' and 'the best choice' for yours.  Read
-these `messages from happy users`_ to see what we mean.
+some messages_ from happy_ users_ to see what we mean.
 
-.. _`messages from happy users`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
+.. _messages: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
+.. _happy: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
+.. _users: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 
 This text describes where lxml.etree (abbreviated to 'lxe') excels, gives
 hints on some performance traps and compares the overall performance to the
