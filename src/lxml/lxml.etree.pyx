@@ -925,7 +925,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def __reversed__(self):
         return ElementChildIterator(self, reversed=True)
 
-    def index(self, _Element x not None, start=None, stop=None):
+    def index(self, _Element child not None, start=None, stop=None):
         """Find the position of the child within the parent.
 
         This method is not part of the original ElementTree API.
@@ -934,7 +934,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef Py_ssize_t c_start, c_stop
         cdef xmlNode* c_child
         cdef xmlNode* c_start_node
-        c_child = x._c_node
+        c_child = child._c_node
         if c_child.parent is not self._c_node:
             raise ValueError("Element is not a child of this node.")
 
