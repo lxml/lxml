@@ -74,6 +74,7 @@ _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 cdef object _DEFAULT_NAMESPACE_PREFIXES
 _DEFAULT_NAMESPACE_PREFIXES = {
     "http://www.w3.org/1999/xhtml": "html",
+    "http://www.w3.org/1999/XSL/Transform": "xsl",
     "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
     "http://schemas.xmlsoap.org/wsdl/": "wsdl",
     # xml schema
