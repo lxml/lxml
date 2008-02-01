@@ -70,6 +70,13 @@ Incompatible changes
   with cElementTree, which also enforces keyword-only arguments in a
   couple of places.
 
+* XML tag names are validated when creating an Element.  This does not
+  apply to HTML tags, where only HTML special characters are
+  forbidden.  The distinction is made by the ``SubElement()`` factory,
+  which tests if the tree it works on is an HTML tree, and by the
+  ``.makeelement()`` methods of parsers, which behave differently for
+  the ``XMLParser()`` and the ``HTMLParser()``.
+
 * XPath now raises exceptions specific to the part of the execution that
   failed: ``XPathSyntaxError`` for parser errors and ``XPathEvalError`` for
   errors that occurred during the evaluation.  Note that the distinction only
@@ -136,11 +143,25 @@ features.
   path expression, e.g. by the ``string()`` function or extension
   functions, will return None as their parent.
 
-* Parse time XML Schema validation is now supported by passing an
+* Setting a ``QName`` object as value of the ``.text`` property or as
+  an attribute value will resolve its prefix in the respective context
+
+* Following ElementTree 1.3, the ``iterfind()`` method supports
+  efficient iteration based on XPath-like expressions.
+
+The parsers also received some major enhancements:
+
+* ``iterparse()`` can parse HTML when passing the boolean ``html``
+  keyword.
+
+* Parse time XML Schema validation by passing an
   XMLSchema object to the ``schema`` keyword argument of a parser.
 
-* The parsers support a ``target`` object that implements
-  ElementTree's `TreeBuilder interface`_.
+* Support for a ``target`` object that implements ElementTree's
+  `TreeBuilder interface`_.
+
+* The ``encoding`` keyword allows overriding the document encoding.
+
 
 .. _`E factory`: objectify.html#tree-generation-with-the-e-factory
 .. _`find the Element that carries it`: tutorial.html#using-xpath-to-find-text
@@ -150,14 +171,14 @@ features.
 Deprecation
 -----------
 
-The following functions and methods were deprecated and will be
-removed in lxml 2.1:
+The following functions and methods are now deprecated.  They are
+still available in lxml 2.0 and will be removed in lxml 2.1:
 
 * The ``tounicode()`` function was replaced by the call
   ``tostring(encoding=unicode)``.
 
-* CamelCaseNamed module functions were renamed to their underscore
-  equivalents to follow `PEP 8`_ in naming.
+* CamelCaseNamed module functions and methods were renamed to their
+  underscore equivalents to follow `PEP 8`_ in naming.
 
   - ``etree.setDefaultParser()`` -> ``etree.set_default_parser()``
 
