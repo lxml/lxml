@@ -205,10 +205,29 @@ blockquote {
     font-style: italic;
 }
 
-div.line-block {
+div.eyecatcher {
     font-family: Times, "Times New Roman", serif;
     text-align: center;
     font-size: 140%;
+}
+
+div.pagequote {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+    padding: 10px 10px 0 0;
+    text-align: right;
+    font-size: 80%;
+    color: #990000;
+}
+
+div.pagequote .reference {
+    font-size: 140%;
+}
+
+html > .pagequote {
+    /* ignored by IE -> everyone else knows 'fixed', right?  */
+    position: fixed;
 }
 
 code {
