@@ -71,9 +71,9 @@ schema to be provided::
 If the validation fails (be it for a DTD or an XML schema), the parser
 will raise an exception::
 
-  >>> root = etree.fromstring("<a>not int</a>", parser)
+  >>> root = etree.fromstring("<a>no int</a>", parser)
   Traceback (most recent call last):
-  XMLSyntaxError: Element 'a': 'not int' is not a valid value of the atomic type 'xs:integer'.
+  XMLSyntaxError: Element 'a': 'no int' is not a valid value of the atomic type 'xs:integer'.
 
 If you want the parser to succeed regardless of the outcome of the
 validation, you should use a non validating parser and run the
@@ -111,15 +111,11 @@ The reason for the validation failure can be found in the error log::
   <string>:1:0:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
 
 As an alternative to parsing from a file, you can use the
-``external_id`` keyword argument to parse from a catalog::
+``external_id`` keyword argument to parse from a catalog.  The
+following example reads the DocBook DTD in version 4.2, if available
+in the system catalog::
 
-  >>> docbook = "-//OASIS//DTD DocBook XML V4.2//EN"
-  >>> dtd = etree.DTD(external_id = docbook) # requires catalog support
-
-  >>> root = etree.XML("<article></article>")
-  >>> dtd.assertValid(root) # doctest: +ELLIPSIS
-  Traceback (most recent call last):
-  DocumentInvalid: Element article content does not follow the DTD, ...
+  dtd = etree.DTD(external_id = "-//OASIS//DTD DocBook XML V4.2//EN")
 
 
 RelaxNG
