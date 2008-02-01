@@ -320,19 +320,23 @@ Contributing
 Why is lxml not written in Python?
 ----------------------------------
 
-lxml interfaces with two C libraries: libxml2 and libxslt.  Accessing them at
-the C-level is required for performance reasons.
+It *almost* is.
 
-To avoid writing plain C-code and caring too much about the details of
-built-in types and reference counting, lxml is written in Cython_, a
-Python-like language that is translated into C-code.  Chances are that if you
-know Python, you can write `code that Cython accepts`_.  Again, the C-ish style
-used in the lxml code is just for performance optimisations.  If you want to
-contribute, don't bother with the details, a Python implementation of your
-contribution is better than none.  And keep in mind that lxml's flexible API
-often favours an implementation of features in pure Python, without bothering
-with C-code at all.  For example, the ``lxml.html`` package is entirely written
-in Python.
+lxml is not written in plain Python, because it interfaces with two C
+libraries: libxml2 and libxslt.  Accessing them at the C-level is
+required for performance reasons.
+
+However, to avoid writing plain C-code and caring too much about the
+details of built-in types and reference counting, lxml is written in
+Cython_, a Python-like language that is translated into C-code.
+Chances are that if you know Python, you can write `code that Cython
+accepts`_.  Again, the C-ish style used in the lxml code is just for
+performance optimisations.  If you want to contribute, don't bother
+with the details, a Python implementation of your contribution is
+better than none.  And keep in mind that lxml's flexible API often
+favours an implementation of features in pure Python, without
+bothering with C-code at all.  For example, the ``lxml.html`` package
+is entirely written in Python.
 
 Please contact the `mailing list`_ if you need any help.
 
