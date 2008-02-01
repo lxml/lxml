@@ -5,17 +5,17 @@ lxml
   :description: lxml - the most feature-rich and easy-to-use library for working with XML and HTML in the Python language
   :keywords: lxml, etree, objectify, Python, XML, HTML
 
+.. class:: pagequote
+
+| `» lxml takes all the pain out of XML. « <http://thread.gmane.org/gmane.comp.python.lxml.devel/3252/focus=3258>`_
+| Stephan Richter
+
 .. class:: eyecatcher
 
 |   lxml is the most feature-rich
 |   and easy-to-use library
 |   for working with XML and HTML
 |   in the Python language.
-
-.. class:: pagequote
-
-| `» lxml takes all the pain out of XML. « <http://thread.gmane.org/gmane.comp.python.lxml.devel/3252/focus=3258>`_
-| Stephan Richter
 
 .. 
    1  Introduction
@@ -42,10 +42,6 @@ the FAQ_.
 
 .. _introduction: intro.html
 .. _FAQ:          FAQ.html
-
-
-**This page describes the current in-development version of lxml that will
-become lxml 2.0.**
 
 
 Documentation
@@ -149,8 +145,8 @@ version first.
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 
-The latest version is `lxml 2.0beta2`_, released 2008-01-26
-(`changes for 2.0beta2`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.0`_, released 2008-02-01
+(`changes for 2.0`_).  `Older versions`_ are listed below.
 
 .. _`Older versions`: #old-versions
 
@@ -209,6 +205,8 @@ obstacle to using lxml in your codebase.
 
 Old Versions
 ------------
+
+* `lxml 2.0beta2`_, released 2008-01-26 (`changes for 2.0beta2`_)
 
 * `lxml 2.0beta1`_, released 2008-01-11 (`changes for 2.0beta1`_)
 
@@ -274,6 +272,7 @@ Old Versions
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.0`: lxml-2.0.tgz
 .. _`lxml 2.0beta2`: lxml-2.0beta2.tgz
 .. _`lxml 2.0beta1`: lxml-2.0beta1.tgz
 .. _`lxml 2.0alpha6`: lxml-2.0alpha6.tgz
@@ -307,6 +306,7 @@ Old Versions
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.0`: changes-2.0.html
 .. _`changes for 2.0beta2`: changes-2.0beta2.html
 .. _`changes for 2.0beta1`: changes-2.0beta1.html
 .. _`changes for 2.0alpha6`: changes-2.0alpha6.html
