@@ -25,7 +25,10 @@ valgrind_test_inplace: inplace
 		$(PYTHON) test.py
 
 bench_inplace: inplace
-	$(PYTHON) bench.py -i
+	$(PYTHON) benchmark/bench_etree.py -i
+	$(PYTHON) benchmark/bench_xpath.py -i
+	$(PYTHON) benchmark/bench_xslt.py -i
+	$(PYTHON) benchmark/bench_objectify.py -i
 
 ftest_build: build
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
