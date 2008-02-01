@@ -602,6 +602,10 @@ the string parser functions::
     >>> print etree.tostring(root)
     <root>data</root>
 
+The reasoning behind this difference is that ``parse()`` returns a
+complete document from a file, while the string parsing functions are
+commonly used to parse XML fragments.
+
 The ``parse()`` function supports any of the following sources:
 
 * an open file object
