@@ -31,7 +31,8 @@ cdef class DTD(_Validator):
         self._c_dtd = NULL
         _Validator.__init__(self)
         if file is not None:
-            if python._isString(file):
+            if _isString(file):
+                file = _encodeFilename(file)
                 self._error_log.connect()
                 self._c_dtd = xmlparser.xmlParseDTD(NULL, _cstr(file))
                 self._error_log.disconnect()
