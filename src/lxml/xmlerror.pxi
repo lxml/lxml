@@ -4,9 +4,17 @@ cimport xmlerror
 
 # module level API functions
 
+def clear_error_log():
+    """Clear the global error log.  Note that this log is already bound to a
+    fixed size.
+    """
+    __GLOBAL_ERROR_LOG.clear()
+
 def clearErrorLog():
     """Clear the global error log.  Note that this log is already bound to a
     fixed size.
+
+    @deprecated: use ``clear_error_log()`` instead.
     """
     __GLOBAL_ERROR_LOG.clear()
 
@@ -381,6 +389,17 @@ cdef __copyGlobalErrorLog():
     return __GLOBAL_ERROR_LOG.copy()
 
 def useGlobalPythonLog(PyErrorLog log not None):
+    """Replace the global error log by an etree.PyErrorLog that uses the
+    standard Python logging package.
+
+    Note that this disables access to the global error log from exceptions.
+    Parsers, XSLT etc. will continue to provide their normal local error log.
+
+    @deprecated: use ``use_global_python_log()`` instead.
+    """
+    use_global_python_log(log)
+
+def use_global_python_log(PyErrorLog log not None):
     """Replace the global error log by an etree.PyErrorLog that uses the
     standard Python logging package.
 
