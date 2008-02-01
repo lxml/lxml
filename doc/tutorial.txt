@@ -546,11 +546,12 @@ made lxml loose DTD information in an input-output cycle.
 Parsing from strings and files
 ==============================
 
-``lxml.etree`` supports parsing XML in a number of ways and from all important
-sources, namely strings, files and file-like objects.  The main parse
-functions are ``fromstring()`` and ``parse()``, both called with the source as
-first argument.  By default, they use the standard parser, but you can always
-pass a different parser as second argument.
+``lxml.etree`` supports parsing XML in a number of ways and from all
+important sources, namely strings, files, URLs (http/ftp) and
+file-like objects.  The main parse functions are ``fromstring()`` and
+``parse()``, both called with the source as first argument.  By
+default, they use the standard parser, but you can always pass a
+different parser as second argument.
 
 
 The fromstring() function
@@ -600,6 +601,20 @@ the string parser functions::
     root
     >>> print etree.tostring(root)
     <root>data</root>
+
+The ``parse()`` function supports any of the following sources:
+
+* an open file object
+
+* a file-like object that has a ``.read(byte_count)`` method returning
+  a byte string on each call
+
+* a filename string
+
+* an HTTP or FTP URL string
+
+Note that passing a filename or URL is usually faster than passing an
+open file.
 
 
 Parser objects
