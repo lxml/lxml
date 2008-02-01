@@ -13,6 +13,9 @@ try:
 except AttributeError:
     from sets import Set as set
 
+cdef object _unicode
+_unicode = __builtin__.unicode
+
 del __builtin__
 
 cdef object os_path_join
@@ -2253,6 +2256,9 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     'xml_declaration' (bool).  Note that changing the encoding to a non UTF-8
     compatible encoding will enable a declaration by default.
 
+    You can also serialise to a Unicode string without declaration by
+    passing the ``unicode`` function as encoding.
+
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
     The keyword argument 'method' selects the output method: 'xml',
@@ -2263,7 +2269,12 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     on the tail text of children, which will always be serialised.
     """
     cdef bint write_declaration
-    if xml_declaration is None:
+    if encoding is _unicode:
+        if xml_declaration:
+            raise ValueError(
+                "Serialisation to unicode must not request an XML declaration")
+        write_declaration = 0
+    elif xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = encoding is not None and encoding.upper() not in \
                             ('ASCII', 'UTF-8', 'UTF8', 'US-ASCII')
@@ -2309,6 +2320,8 @@ def tounicode(element_or_tree, *, method="xml", pretty_print=False,
     You can prevent the tail text of the element from being serialised
     by passing the boolean ``with_tail`` option.  This has no impact
     on the tail text of children, which will always be serialised.
+
+    @deprecated: use ``tostring(el, encoding=unicode)`` instead.
     """
     if isinstance(element_or_tree, _Element):
         return _tounicode(<_Element>element_or_tree, method, 0, pretty_print,

@@ -7,7 +7,7 @@ What's new in lxml 2.0?
    1  Changes in etree and objectify
      1.1  Incompatible changes
      1.2  Enhancements
-     1.3  Other changes
+     1.3  Deprecated features
    2  New modules
      2.1  lxml.html
      2.2  lxml.cssselect
@@ -136,8 +136,23 @@ features.
   path expression, e.g. by the ``string()`` function or extension
   functions, will return None as their parent.
 
+* Parse time XML Schema validation is now supported by passing an
+  XMLSchema object to the ``schema`` keyword argument of a parser.
+
+* The parsers support a ``target`` object that implements
+  ElementTree's `TreeBuilder interface`_.
+
 .. _`E factory`: objectify.html#tree-generation-with-the-e-factory
 .. _`find the Element that carries it`: tutorial.html#using-xpath-to-find-text
+.. _`TreeBuilder interface`: http://effbot.org/elementtree/elementtree-treebuilder.htm
+
+
+Deprecated features
+-------------------
+
+The following features were deprecated and will be removed in lxml 2.1:
+
+* The ``tounicode()`` function was replaced by ``tostring(encoding=unicode)``.
 
 
 New modules

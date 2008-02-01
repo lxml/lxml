@@ -486,9 +486,10 @@ the text content by passing the ``method`` keyword::
    >>> print etree.tostring(root, method='text')
    HelloWorld
 
-For the plain text output, the ``tounicode()`` function might become handy::
+For the plain text output, serialising to a Python unicode string
+might become handy.  Just pass the ``unicode`` type as encoding::
 
-   >>> etree.tounicode(root, method='text')
+   >>> etree.tostring(root, encoding=unicode, method='text')
    u'HelloWorld'
 
 

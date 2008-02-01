@@ -57,6 +57,9 @@ cdef _tostring(_Element element, encoding, method,
         return None
     if encoding is None:
         c_enc = NULL
+    elif encoding is _unicode:
+        return _tounicode(element, method, write_complete_document,
+                          pretty_print, with_tail)
     else:
         encoding = _utf8(encoding)
         c_enc = _cstr(encoding)

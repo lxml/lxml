@@ -488,9 +488,9 @@ into the parsers.  It is both slower and error prone.
 Serialising to Unicode strings
 ------------------------------
 
-To serialize the result, you would normally use the ``tostring`` module
-function, which serializes to plain ASCII by default or a number of other
-encodings if asked for::
+To serialize the result, you would normally use the ``tostring()``
+module function, which serializes to plain ASCII by default or a
+number of other byte encodings if asked for::
 
   >>> etree.tostring(root)
   '<test> &#63697; + &#63698; </test>'
@@ -498,33 +498,36 @@ encodings if asked for::
   >>> etree.tostring(root, encoding='UTF-8', xml_declaration=False)
   '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-As an extension, lxml.etree has a new ``tounicode()`` function that you can
-call on XML tree objects to retrieve a Python unicode representation::
+As an extension, lxml.etree recognises the unicode type as encoding to
+build a Python unicode representation of a tree::
 
-  >>> etree.tounicode(root)
+  >>> etree.tostring(root, encoding=unicode)
   u'<test> \uf8d1 + \uf8d2 </test>'
 
   >>> el = etree.Element("test")
-  >>> etree.tounicode(el)
+  >>> etree.tostring(el, encoding=unicode)
   u'<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
-  >>> etree.tounicode(el)
+  >>> etree.tostring(el, encoding=unicode)
   u'<test><subtest/></test>'
 
   >>> tree = etree.ElementTree(el)
-  >>> etree.tounicode(tree)
+  >>> etree.tostring(tree, encoding=unicode)
   u'<test><subtest/></test>'
 
-The result of ``tounicode()`` can be treated like any other Python unicode
-string and then passed back into the parsers.  However, if you want to save
-the result to a file or pass it over the network, you should use ``write()``
-or ``tostring()`` with an encoding argument (typically UTF-8) to serialize the
-XML.  The main reason is that unicode strings returned by ``tounicode()``
-never have an XML declaration and therefore do not specify their encoding.
-These strings are most likely not parsable by other XML libraries.
+The result of ``tostring(encoding=unicode)`` can be treated like any
+other Python unicode string and then passed back into the parsers.
+However, if you want to save the result to a file or pass it over the
+network, you should use ``write()`` or ``tostring()`` with a byte
+encoding (typically UTF-8) to serialize the XML.  The main reason is
+that unicode strings returned by ``tostring(encoding=unicode)`` are
+not byte streams and they never have an XML declaration to specify
+their encoding.  These strings are most likely not parsable by other
+XML libraries.
 
-In contrast, the ``tostring()`` function automatically adds a declaration as
-needed that reflects the encoding of the returned string.  This makes it
-possible for other parsers to correctly parse the XML byte stream.  Note that
-using ``tostring()`` with UTF-8 is also considerably faster in most cases.
+For normal byte encodings, the ``tostring()`` function automatically
+adds a declaration as needed that reflects the encoding of the
+returned string.  This makes it possible for other parsers to
+correctly parse the XML byte stream.  Note that using ``tostring()``
+with UTF-8 is also considerably faster in most cases.
