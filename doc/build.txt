@@ -165,10 +165,11 @@ to be hard to get libraries set up for exclusive usage that Mac-OS X ships in
 an older version.  The result can be segfaults on this platform that are hard
 to track down.
 
-To make sure the newer libxml2 and libxslt versions are used (e.g. under
-fink), you should add the directory where you installed the libraries to the
-``DYLD_LIBRARY_PATH`` environment variable.  This seems to fix a lot of
-problems for users.
+To make sure the newer libxml2 and libxslt versions are used
+(e.g. those provided by fink or macports), you should add the
+directory where you installed the libraries to the
+``DYLD_LIBRARY_PATH`` environment variable *at runtime* (i.e. not just
+at build time).  This seems to fix a lot of problems for users.
 
 Alternatively, you can build lxml statically.  A way to do this on MS Windows
 is described in the next section, but it should be easy to adapt it for
