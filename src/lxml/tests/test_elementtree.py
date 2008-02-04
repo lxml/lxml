@@ -16,7 +16,7 @@ from common_imports import fileInTestDir, canonicalize
 
 if cElementTree is not None:
     if tuple([int(n) for n in
-              getattr(cElementTree, "VERSION", "0.0").split(".")]) <= (1,0,6):
+              getattr(cElementTree, "VERSION", "0.0").split(".")]) <= (1,0,7):
         cElementTree = None
 
 try:
