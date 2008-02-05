@@ -187,9 +187,11 @@ are installed (i.e. libxml2, libxslt and libexslt) to the
 only at build time).  This seems to fix a lot of problems for users.
 
 Please read this thread about `experiences with MacOS-X`_ if you
-encounter problems.
+encounter problems.  It also has a `buildout for lxml`_ that you can
+use.
 
 .. _`experiences with MacOS-X`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3290
+.. _`buildout for lxml`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3297
 
 
 Static linking on Windows
