@@ -180,10 +180,10 @@ directory where you installed the libraries to the
 ``DYLD_LIBRARY_PATH`` environment variable *at runtime* (i.e. not just
 at build time).  This seems to fix a lot of problems for users.
 
-Alternatively, you can build lxml statically.  A way to do this on MS Windows
-is described in the next section, but it should be easy to adapt it for
-Mac-OS.  That way, you can always be sure you use the versions you compiled
-lxml with, regardless of the runtime environement.
+Please read this thread about `experiences with MacOS-X`_ if you
+encounter problems.
+
+.. _`experiences with MacOS-X`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3290
 
 
 Static linking on Windows
