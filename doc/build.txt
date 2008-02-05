@@ -174,11 +174,17 @@ to be hard to get libraries set up for exclusive usage that Mac-OS X ships in
 an older version.  The result can be segfaults on this platform that are hard
 to track down.
 
-To make sure the newer libxml2 and libxslt versions are used
-(e.g. those provided by fink or macports), you should add the
-directory where you installed the libraries to the
-``DYLD_LIBRARY_PATH`` environment variable *at runtime* (i.e. not just
-at build time).  This seems to fix a lot of problems for users.
+To make sure the newer libxml2 and libxslt versions (e.g. those
+provided by fink or macports) are used at *build time*, you must take
+care that the script ``xslt-config`` is found from the newly installed
+version when running the build setup.  The system libraries also
+provide this script, but the new one must come first in the PATH.
+
+To make sure the newer libxml2 and libxslt versions are used at
+*runtime*, you should add *all* directories where the newer libraries
+are installed (i.e. libxml2, libxslt and libexslt) to the
+``DYLD_LIBRARY_PATH`` environment variable when you use lxml (i.e. not
+only at build time).  This seems to fix a lot of problems for users.
 
 Please read this thread about `experiences with MacOS-X`_ if you
 encounter problems.
