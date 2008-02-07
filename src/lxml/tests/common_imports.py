@@ -5,6 +5,15 @@ import re, gc
 
 from lxml import etree
 
+def make_version_tuple(version_string):
+    l = []
+    for part in re.findall('([0-9]+|[^0-9.]+)', version_string):
+        try:
+            l.append(int(part))
+        except ValueError:
+            l.append(part)
+    return tuple(l)
+
 try:
     from elementtree import ElementTree # standard ET
 except ImportError:
@@ -14,7 +23,7 @@ except ImportError:
         ElementTree = None
 
 if hasattr(ElementTree, 'VERSION'):
-    if tuple(ElementTree.VERSION.split('.')) < (1,3):
+    if make_version_tuple(ElementTree.VERSION)[:2] < (1,3):
         # compatibility tests require ET 1.3+
         ElementTree = None
 
@@ -27,8 +36,8 @@ except ImportError:
         cElementTree = None
 
 if hasattr(cElementTree, 'VERSION'):
-    if tuple(cElementTree.VERSION.split('.')) < (1,0,7):
-        # compatibility tests require cET 1.0.7+
+    if make_version_tuple(cElementTree.VERSION)[:2] <= (1,0):
+        # compatibility tests do not run with cET 1.0.7
         cElementTree = None
 
 try:
