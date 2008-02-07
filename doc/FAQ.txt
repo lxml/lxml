@@ -120,6 +120,7 @@ not need lxml's enhanced feature set.
 
 * cssutils_, a CSS parser and toolkit, can be used with ``lxml.cssselect``
 * Deliverance_, a content theming tool
+* `Enfold Proxy 4`_, a web server accelerator with on-the-fly XSLT processing
 * Inteproxy_, a secure HTTP proxy
 * lwebstring_, an XML template engine
 * OpenXMLlib_, a library for handling OpenXML document meta data
@@ -136,6 +137,7 @@ And don't miss the quotes by our generally happy_ users_, and other
 
 .. _cssutils: http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917
 .. _Deliverance: http://www.openplans.org/projects/deliverance/project-home
+.. _`Enfold Proxy 4`: http://www.enfoldsystems.com/Products/Proxy/4
 .. _gocept.lxml: http://pypi.python.org/pypi/gocept.lxml
 .. _Inteproxy: http://lists.wald.intevation.org/pipermail/inteproxy-devel/2007-February/000000.html
 .. _lwebstring: http://pypi.python.org/pypi/lwebstring
