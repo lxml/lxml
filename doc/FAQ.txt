@@ -116,7 +116,7 @@ users.
 
 Also note that the compatibility to the ElementTree library does not
 require projects to set a hard dependency on lxml - as long as they do
-not need lxml's enhanced feature set.
+not take advantage of lxml's enhanced feature set.
 
 * cssutils_, a CSS parser and toolkit, can be used with ``lxml.cssselect``
 * Deliverance_, a content theming tool
