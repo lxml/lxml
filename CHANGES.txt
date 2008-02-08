@@ -11,7 +11,7 @@ Features added
 Bugs fixed
 ----------
 
-* Setting an element slice in objectify could insert overlapping
+* Setting an element slice in objectify could insert slice-overlapping
   elements at the wrong position.
 
 Other changes
