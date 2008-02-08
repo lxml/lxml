@@ -17,6 +17,10 @@ Bugs fixed
 Other changes
 -------------
 
+* Passing ``--with-xslt-config=/path/to/xslt-config`` to setup.py will
+  override the ``xslt-config`` script that is used to determine the C
+  compiler options.
+
 
 2.0 (2008-02-01)
 ================
