@@ -427,7 +427,60 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertRaises(TypeError, setattr, root.c1.c2, 'text',  "test")
         self.assertRaises(TypeError, setattr, root.c1.c2, 'pyval', "test")
 
-    def test_setslice(self):
+    # slicing
+
+    def test_getslice_complete(self):
+        root = self.XML("<root><c>c1</c><c>c2</c></root>")
+        self.assertEquals(["c1", "c2"],
+                          [ c.text for c in root.c[:] ])
+
+    def test_getslice_partial(self):
+        root = self.XML("<root><c>c1</c><c>c2</c><c>c3</c><c>c4</c></root>")
+        test_list = ["c1", "c2", "c3", "c4"]
+
+        self.assertEquals(test_list,
+                          [ c.text for c in root.c[:] ])
+        self.assertEquals(test_list[1:2],
+                          [ c.text for c in root.c[1:2] ])
+        self.assertEquals(test_list[-3:-1],
+                          [ c.text for c in root.c[-3:-1] ])
+        self.assertEquals(test_list[-3:3],
+                          [ c.text for c in root.c[-3:3] ])
+        self.assertEquals(test_list[-3000:3],
+                          [ c.text for c in root.c[-3000:3] ])
+        self.assertEquals(test_list[-3:3000],
+                          [ c.text for c in root.c[-3:3000] ])
+
+    def test_getslice_partial_neg(self):
+        root = self.XML("<root><c>c1</c><c>c2</c><c>c3</c><c>c4</c></root>")
+        test_list = ["c1", "c2", "c3", "c4"]
+
+        self.assertEquals(test_list,
+                          [ c.text for c in root.c[:] ])
+        self.assertEquals(test_list[2:1:-1],
+                          [ c.text for c in root.c[2:1:-1] ])
+        self.assertEquals(test_list[-1:-3:-1],
+                          [ c.text for c in root.c[-1:-3:-1] ])
+        self.assertEquals(test_list[2:-3:-1],
+                          [ c.text for c in root.c[2:-3:-1] ])
+        self.assertEquals(test_list[2:-3000:-1],
+                          [ c.text for c in root.c[2:-3000:-1] ])
+
+
+    def test_setslice_complete(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("root")
+        root.c = ["c1", "c2"]
+
+        c1 = root.c[0]
+        c2 = root.c[1]
+
+        self.assertEquals([c1,c2], list(root.c))
+        self.assertEquals(["c1", "c2"],
+                          [ c.text for c in root.c ])
+
+    def test_setslice_elements(self):
         Element = self.Element
         SubElement = self.etree.SubElement
         root = Element("root")
@@ -454,6 +507,52 @@ class ObjectifyTestCase(HelperTestCase):
         root.c[:] = [ c1, c2, c2, c1 ]
         self.assertEquals(["c1", "c2", "c2", "c1"],
                           [ c.text for c in root.c ])
+
+    def test_setslice_partial(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB"]
+        l[1:2] = new_slice
+        root.c[1:2] = new_slice
+
+        self.assertEquals(["c1", "cA", "cB", "c3", "c4"], l)
+        self.assertEquals(["c1", "cA", "cB", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+    def test_setslice_partial_neg(self):
+        Element = self.Element
+        SubElement = self.etree.SubElement
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB"]
+        l[-1:1:-1] = new_slice
+        root.c[-1:1:-1] = new_slice
+
+        self.assertEquals(["c1", "c2", "cB", "cA", "c4"], l)
+        self.assertEquals(["c1", "c2", "cB", "cA", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+    # other stuff
 
     def test_set_string(self):
         # make sure strings are not handled as sequences
