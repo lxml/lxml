@@ -269,7 +269,8 @@ cdef class ObjectifiedElement(ElementBase):
 
     def __setitem__(self, key, value):
         """Set the value of a sibling, counting from the first child of the
-        parent.
+        parent.  Implements key assignment, item assignment and slice
+        assignment.
 
         * If argument is an integer, sets the sibling at that position.
 
@@ -280,12 +281,7 @@ cdef class ObjectifiedElement(ElementBase):
           items to the siblings.
         """
         cdef _Element element
-        cdef _Element parent
-        cdef _Element new_element
-        cdef tree.xmlNode* c_self_node
-        cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
-        cdef Py_ssize_t start, stop, step, slicelength
         if python._isString(key):
             key = _buildChildTag(self, key)
             element = _lookupChild(self, key)
@@ -295,48 +291,21 @@ cdef class ObjectifiedElement(ElementBase):
                 _replaceElement(element, value)
             return
 
-        c_self_node = self._c_node
-        c_parent = c_self_node.parent
-        if c_parent is NULL:
+        if self._c_node.parent is NULL:
             # the 'root[i] = ...' case
             raise TypeError("assignment to root element is invalid")
 
         if python.PySlice_Check(key):
             # slice assignment
-            python.PySlice_GetIndicesEx(
-                key, _countSiblings(self._c_node),
-                &start, &stop, &step, &slicelength)
-            # replace existing items
-            new_items = iter(value)
-            if step < 0:
-                del_items = list(self)[start:stop:step]
-            else:
-                del_items = list(islice(self, start, stop, step))
-            del_items = iter(del_items)
-            parent = self.getparent()
-            try:
-                for el in del_items:
-                    item = new_items.next()
-                    _replaceElement(el, item)
-            except StopIteration:
-                remove = parent.remove
-                remove(el)
-                for el in del_items:
-                    remove(el)
-                return
-            else:
-                # append remaining new items
-                tag = self.tag
-                for item in new_items:
-                    _appendValue(parent, tag, item)
+            _setSlice(key, self, value)
         else:
             # normal index assignment
             if key < 0:
-                c_node = c_parent.last
+                c_node = self._c_node.parent.last
             else:
-                c_node = c_parent.children
+                c_node = self._c_node.parent.children
             c_node = _findFollowingSibling(
-                c_node, tree._getNs(c_self_node), c_self_node.name, key)
+                c_node, tree._getNs(self._c_node), self._c_node.name, key)
             if c_node is NULL:
                 raise IndexError(key)
             element = elementFactory(self._doc, c_node)
@@ -537,6 +506,45 @@ cdef _setElementValue(_Element element, value):
             cetree.delAttributeFromNsName(element._c_node, PYTYPE_NAMESPACE,
                                           PYTYPE_ATTRIBUTE_NAME)
     cetree.setNodeText(element._c_node, value)
+
+cdef _setSlice(slice, _Element target, items):
+    cdef _Element parent
+    # collect new values
+    new_items = []
+    tag = target.tag
+    for item in items:
+        if isinstance(item, _Element):
+            # deep copy the new element
+            new_element = cetree.deepcopyNodeToDocument(
+                target._doc, (<_Element>item)._c_node)
+            new_element.tag = tag
+            python.PyList_Append(new_items, new_element)
+        else:
+            new_element = cetree.makeElement(
+                tag, target._doc, None, None, None, None, None)
+            _setElementValue(new_element, item)
+            python.PyList_Append(new_items, new_element)
+
+    # replace existing items
+    new_items = iter(new_items)
+    del_items = iter(target[slice])
+    parent = target.getparent()
+    try:
+        next_item = new_items.next
+        replace = parent.replace
+        for el in del_items:
+            item = next_item()
+            replace(el, item)
+    except StopIteration:
+        remove = parent.remove
+        remove(el)
+        for el in del_items:
+            remove(el)
+        return
+    else:
+        # append remaining new items
+        for item in new_items:
+            _appendValue(parent, tag, item)
 
 ################################################################################
 # Data type support in subclasses
