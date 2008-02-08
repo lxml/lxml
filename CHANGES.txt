@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+2.0.1 (Under development)
+=========================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Setting an element slice in objectify could insert overlapping
+  elements at the wrong position.
+
+Other changes
+-------------
+
+
 2.0 (2008-02-01)
 ================
 
