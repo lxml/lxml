@@ -1271,9 +1271,6 @@ cdef class __ContentOnlyElement(_Element):
     def __setitem__(self, index, value):
         self._raiseImmutable()
 
-    def __setslice__(self, start, end, value):
-        self._raiseImmutable()
-
     property attrib:
         def __get__(self):
             return {}
