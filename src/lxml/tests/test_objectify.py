@@ -466,6 +466,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(test_list[2:-3000:-1],
                           [ c.text for c in root.c[2:-3000:-1] ])
 
+    # slice assignment
 
     def test_setslice_complete(self):
         Element = self.Element
