@@ -503,6 +503,17 @@ cdef _setElementValue(_Element element, value):
 
 cdef _setSlice(slice, _Element target, items):
     cdef _Element parent
+    cdef tree.xmlNode* c_node
+    cdef Py_ssize_t c_step, c_start, pos
+    # collect existing slice
+    if (<python.slice>slice).step is None:
+        c_step = 1
+    else:
+        c_step = (<python.slice>slice).step
+    if c_step == 0:
+        raise ValueError("Invalid slice")
+    del_items = target[slice]
+
     # collect new values
     new_items = []
     tag = target.tag
@@ -512,33 +523,58 @@ cdef _setSlice(slice, _Element target, items):
             new_element = cetree.deepcopyNodeToDocument(
                 target._doc, (<_Element>item)._c_node)
             new_element.tag = tag
-            python.PyList_Append(new_items, new_element)
         else:
             new_element = cetree.makeElement(
                 tag, target._doc, None, None, None, None, None)
             _setElementValue(new_element, item)
-            python.PyList_Append(new_items, new_element)
+        python.PyList_Append(new_items, new_element)
+
+    # sanity check - raise what a list would raise
+    if c_step != 1 and \
+            python.PyList_GET_SIZE(del_items) != python.PyList_GET_SIZE(new_items):
+        raise ValueError(
+            "attempt to assign sequence of size %d to extended slice of size %d" % (
+                python.PyList_GET_SIZE(new_items),
+                python.PyList_GET_SIZE(del_items)))
 
     # replace existing items
-    new_items = iter(new_items)
-    del_items = iter(target[slice])
+    pos = 0
     parent = target.getparent()
-    try:
-        next_item = new_items.next
-        replace = parent.replace
-        for el in del_items:
-            item = next_item()
-            replace(el, item)
-    except StopIteration:
+    replace = parent.replace
+    while pos < python.PyList_GET_SIZE(new_items) and \
+            pos < python.PyList_GET_SIZE(del_items):
+        replace(del_items[pos], new_items[pos])
+        pos += 1
+    # remove leftover items
+    if pos < python.PyList_GET_SIZE(del_items):
         remove = parent.remove
-        remove(el)
-        for el in del_items:
-            remove(el)
-        return
-    else:
-        # append remaining new items
-        for item in new_items:
-            _appendValue(parent, tag, item)
+        while pos < python.PyList_GET_SIZE(del_items):
+            remove(del_items[pos])
+            pos += 1
+    # append remaining new items
+    if pos < python.PyList_GET_SIZE(new_items):
+        # the sanity check above guarantees (step == 1)
+        if pos > 0:
+            item = new_items[pos-1]
+        else:
+            if (<python.slice>slice).start > 0:
+                c_node = parent._c_node.children
+            else:
+                c_node = parent._c_node.last
+            c_node = _findFollowingSibling(
+                c_node, tree._getNs(target._c_node), target._c_node.name,
+                (<python.slice>slice).start - 1)
+            if c_node is NULL:
+                while pos < python.PyList_GET_SIZE(new_items):
+                    cetree.appendChild(parent, new_items[pos])
+                    pos += 1
+                return
+            item = cetree.elementFactory(parent._doc, c_node)
+        while pos < python.PyList_GET_SIZE(new_items):
+            add = item.addnext
+            item = new_items[pos]
+            add(item)
+            pos += 1
 
 ################################################################################
 # Data type support in subclasses
