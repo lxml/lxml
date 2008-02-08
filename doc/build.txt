@@ -88,9 +88,13 @@ or, in Unix-like environments::
 
 If you get errors about missing header files (e.g. ``libxml/xmlversion.h``)
 then you need to make sure the development packages of both libxml2
-and libxslt are properly installed.  If this doesn't help, you may
-have to add the location of the header files to the include path
-like::
+and libxslt are properly installed.  Try passing the following option to
+setup.py to make sure the right config is found::
+
+  python setup.py build --with-xslt-config=/path/to/xslt-config
+
+If this doesn't help, you may have to add the location of the header
+files to the include path like::
 
   python setup.py build_ext -i  -I /usr/include/libxml2
 
@@ -178,7 +182,11 @@ To make sure the newer libxml2 and libxslt versions (e.g. those
 provided by fink or macports) are used at *build time*, you must take
 care that the script ``xslt-config`` is found from the newly installed
 version when running the build setup.  The system libraries also
-provide this script, but the new one must come first in the PATH.
+provide this script, but the new one must come first in the PATH.  The
+best way to make sure the right version is used is by passing the path
+to the script as an option to setup.py::
+
+  python setup.py build --with-xslt-config=/path/to/xslt-config
 
 To make sure the newer libxml2 and libxslt versions are used at
 *runtime*, you should add *all* directories where the newer libraries
