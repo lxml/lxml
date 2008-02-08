@@ -470,7 +470,6 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_setslice_complete(self):
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         root.c = ["c1", "c2"]
 
@@ -483,7 +482,6 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_setslice_elements(self):
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         root.c = ["c1", "c2"]
 
@@ -511,7 +509,6 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_setslice_partial(self):
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         l = ["c1", "c2", "c3", "c4"]
         root.c = l
@@ -531,9 +528,77 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(l,
                           [ c.text for c in root.c ])
 
+    def test_setslice_insert(self):
+        Element = self.Element
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB"]
+        l[1:1] = new_slice
+        root.c[1:1] = new_slice
+
+        self.assertEquals(["c1", "cA", "cB", "c2", "c3", "c4"], l)
+        self.assertEquals(["c1", "cA", "cB", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+    def test_setslice_insert_neg(self):
+        Element = self.Element
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB"]
+        l[-2:-2] = new_slice
+        root.c[-2:-2] = new_slice
+
+        self.assertEquals(["c1", "c2", "cA", "cB", "c3", "c4"], l)
+        self.assertEquals(["c1", "c2", "cA", "cB", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+    def test_setslice_empty(self):
+        Element = self.Element
+        root = Element("root")
+
+        root.c = []
+        self.assertRaises(
+            AttributeError, getattr, root, 'c')
+
+    def test_setslice_partial_wrong_length(self):
+        Element = self.Element
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB", "cC"]
+        self.assertRaises(
+            ValueError, operator.setitem,
+            l, slice(1,2,-1), new_slice)
+        self.assertRaises(
+            ValueError, operator.setitem,
+            root.c, slice(1,2,-1), new_slice)
+
     def test_setslice_partial_neg(self):
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         l = ["c1", "c2", "c3", "c4"]
         root.c = l
@@ -547,8 +612,29 @@ class ObjectifyTestCase(HelperTestCase):
         l[-1:1:-1] = new_slice
         root.c[-1:1:-1] = new_slice
 
-        self.assertEquals(["c1", "c2", "cB", "cA", "c4"], l)
-        self.assertEquals(["c1", "c2", "cB", "cA", "c4"],
+        self.assertEquals(["c1", "c2", "cB", "cA"], l)
+        self.assertEquals(["c1", "c2", "cB", "cA"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+    def test_setslice_partial_allneg(self):
+        Element = self.Element
+        root = Element("root")
+        l = ["c1", "c2", "c3", "c4"]
+        root.c = l
+
+        self.assertEquals(["c1", "c2", "c3", "c4"],
+                          [ c.text for c in root.c ])
+        self.assertEquals(l,
+                          [ c.text for c in root.c ])
+
+        new_slice = ["cA", "cB"]
+        l[-1:-4:-2] = new_slice
+        root.c[-1:-4:-2] = new_slice
+
+        self.assertEquals(["c1", "cB", "c3", "cA"], l)
+        self.assertEquals(["c1", "cB", "c3", "cA"],
                           [ c.text for c in root.c ])
         self.assertEquals(l,
                           [ c.text for c in root.c ])
@@ -558,7 +644,6 @@ class ObjectifyTestCase(HelperTestCase):
     def test_set_string(self):
         # make sure strings are not handled as sequences
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         root.c = "TEST"
         self.assertEquals(["TEST"],
@@ -567,7 +652,6 @@ class ObjectifyTestCase(HelperTestCase):
     def test_setitem_string(self):
         # make sure strings are set as children
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
         root["c"] = "TEST"
         self.assertEquals(["TEST"],
@@ -576,7 +660,6 @@ class ObjectifyTestCase(HelperTestCase):
     def test_setitem_string_special(self):
         # make sure 'text' etc. are set as children
         Element = self.Element
-        SubElement = self.etree.SubElement
         root = Element("root")
 
         root["text"] = "TEST"
