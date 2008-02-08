@@ -81,7 +81,7 @@ def library_dirs(static_library_dirs):
         return static_library_dirs
     # filter them from xslt-config --libs
     result = []
-    possible_library_dirs = flags('xslt-config --libs')
+    possible_library_dirs = flags('libs')
     for possible_library_dir in possible_library_dirs:
         if possible_library_dir.startswith('-L'):
             result.append(possible_library_dir[2:])
@@ -95,7 +95,7 @@ def include_dirs(static_include_dirs):
         return static_include_dirs
     # filter them from xslt-config --cflags
     result = []
-    possible_include_dirs = flags('xslt-config --cflags')
+    possible_include_dirs = flags('cflags')
     for possible_include_dir in possible_include_dirs:
         if possible_include_dir.startswith('-I'):
             result.append(possible_include_dir[2:])
@@ -114,7 +114,7 @@ def cflags(static_cflags):
         return result
 
     # anything from xslt-config --cflags that doesn't start with -I
-    possible_cflags = flags('xslt-config --cflags')
+    possible_cflags = flags('cflags')
     for possible_cflag in possible_cflags:
         if not possible_cflag.startswith('-I'):
             result.append(possible_cflag)
@@ -127,8 +127,9 @@ def define_macros():
     if OPTION_WITHOUT_THREADING:
         macros.append(('WITHOUT_THREADING', None))
     return macros
-    
-def flags(cmd):
+
+def flags(option):
+    cmd = "%s --%s" % (find_xslt_config(), option)
     try:
         import subprocess
     except ImportError:
@@ -144,6 +145,22 @@ def flags(cmd):
         print("ERROR: %s" % errors)
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
     return str(rf.read()).split()
+
+XSLT_CONFIG = None
+
+def find_xslt_config():
+    global XSLT_CONFIG
+    if XSLT_CONFIG:
+        return XSLT_CONFIG
+    option = '--with-xslt-config='
+    for arg in sys.argv:
+        if arg.startswith(option):
+            sys.argv.remove(arg)
+            XSLT_CONFIG = arg[len(option):]
+            return XSLT_CONFIG
+    else:
+        XSLT_CONFIG = 'xslt-config'
+    return XSLT_CONFIG
 
 def has_option(name):
     try:
