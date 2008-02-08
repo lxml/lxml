@@ -242,13 +242,7 @@ cdef class ObjectifiedElement(ElementBase):
         if python._isString(key):
             return _lookupChildOrRaise(self, key)
         elif python.PySlice_Check(key):
-            python.PySlice_GetIndicesEx(
-                key, _countSiblings(self._c_node),
-                &start, &stop, &step, &slicelength)
-            if step < 0:
-                return list(self)[start:stop:step]
-            else:
-                return list(islice(self, start, stop, step))
+            return list(self)[key]
         # normal item access
         c_self_node = self._c_node
         c_parent = c_self_node.parent
