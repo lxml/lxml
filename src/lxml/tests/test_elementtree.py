@@ -2005,6 +2005,28 @@ class ETreeTestCaseBase(unittest.TestCase):
         self.assertEquals(
             [d, c, b],
             list(a))
+        
+    def test_setslice_all_replace_reversed_ns(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('{ns}a')
+        b = SubElement(a, '{ns}b', {'{ns1}a1': 'test'})
+        c = SubElement(a, '{ns}c', {'{ns2}a2': 'test'})
+        d = SubElement(a, '{ns}d', {'{ns3}a3': 'test'})
+
+        s = [d, c, b]
+        a[:] = s
+        self.assertEquals(
+            [d, c, b],
+            list(a))
+        self.assertEquals(
+            ['{ns}d', '{ns}c', '{ns}b'],
+            [ child.tag for child in a ])
+
+        self.assertEquals(
+            [['{ns3}a3'], ['{ns2}a2'], ['{ns1}a1']],
+            [ child.attrib.keys() for child in a ])
 
     def test_setslice_end(self):
         Element = self.etree.Element
