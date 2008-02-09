@@ -72,7 +72,7 @@ a specific part of the API yourself, please consider sending it to the lxml
 mailing list.
 
 The timings cited below compare lxml 2.0 final (with libxml2 2.6.31)
-to the January 2008 SVN trunk versions of ElementTree (1.3) and
+to the January 2008 SVN trunk versions of ElementTree (1.3alpha) and
 cElementTree (1.2.7).  They were run single-threaded on a 1.8GHz Intel
 Core Duo machine under Ubuntu Linux 7.10 (Gutsy).  The C libraries
 were compiled with the same platform specific optimisation flags.  The
