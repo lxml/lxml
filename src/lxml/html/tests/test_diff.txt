@@ -204,10 +204,7 @@ Some utility functions::
     <div>Some text <ins>and </ins><p><ins>more text</ins></p> </div>
     >>> pfixup('''
     ...    <ins><table><tr><td>One table</td><td>More stuff</td></tr></table></ins>''')
-    <table><tr>
-    <td><ins>One table</ins></td>
-    <td><ins>More stuff</ins></td>
-    </tr></table>
+    <table><tr><td><ins>One table</ins></td><td><ins>More stuff</ins></td></tr></table>
 
 
 Testing split_unbalanced::

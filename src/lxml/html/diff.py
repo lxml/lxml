@@ -738,29 +738,17 @@ def serialize_html_fragment(el, skip_outer=False):
 
     If skip_outer is true, then don't serialize the outermost tag
     """
-    
-    html_xsl = """\
-<xsl:transform xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:output method="html" encoding="UTF-8" />
-  <xsl:template match="/">
-    <xsl:copy-of select="."/>
-  </xsl:template>
-</xsl:transform>
-"""
-    transform = etree.XSLT(etree.XML(html_xsl))
     assert not isinstance(el, basestring), (
         "You should pass in an element, not a string like %r" % el)
-    html = str(transform(el))
+    html = etree.tostring(el, method="html", encoding="UTF-8")
     if skip_outer:
         # Get rid of the extra starting tag:
         html = html[html.find('>')+1:]
-    if skip_outer:
         # Get rid of the extra end tag:
         html = html[:html.rfind('<')]
-    if skip_outer:
         return html.strip()
     else:
-        return html.lstrip()
+        return html
 
 def _fixup_ins_del_tags(doc):
     """fixup_ins_del_tags that works on an lxml document in-place
