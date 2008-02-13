@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* Child iteration in ``lxml.pyclasslookup``.
+
 * Docstrings now reflect the signature of functions and methods to
   make them visible in API docs and ``help()``
 

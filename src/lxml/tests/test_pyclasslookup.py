@@ -245,6 +245,20 @@ class PyClassLookupTestCase(HelperTestCase):
         self.assertEquals([ c.tag for c in root.getchildren() ],
                           child_tags)
 
+    def test_lookup_iter_children(self):
+        el_class = self._buildElementClass()
+        el_class.CHILD_TAGS = None
+        def lookup(doc, el):
+            if el_class.CHILD_TAGS is None:
+                el_class.CHILD_TAGS = [ c.tag for c in el ]
+            return el_class
+        self._setClassLookup(lookup)
+        root = self.XML(xml_str)
+        child_tags = root.CHILD_TAGS
+        self.assertNotEquals(None, child_tags)
+        self.assertEquals([ c.tag for c in root.getchildren() ],
+                          child_tags)
+
     def test_lookup_getparent(self):
         el_class = self._buildElementClass()
         el_class.PARENT = None

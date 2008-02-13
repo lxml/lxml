@@ -1,3 +1,29 @@
+"""
+A whole-tree Element class lookup scheme for `lxml.etree`.
+
+This class lookup scheme allows access to the entire XML tree.  To use
+it, let a class inherit from `PythonElementClassLookup` and
+re-implement the ``lookup(self, doc, root)`` method:
+
+    >>> from lxml import etree, pyclasslookup
+    >>>
+    >>> class MyElementClass(etree.ElementBase):
+    ...     honkey = True
+    ...
+    >>> class MyLookup(pyclasslookup.PythonElementClassLookup):
+    ...     def lookup(self, doc, root):
+    ...         if root.tag == "sometag":
+    ...             return MyElementClass
+    ...         else:
+    ...             for child in root:
+    ...                 if child.tag == "someothertag":
+    ...                     return MyElementClass
+    ...         # delegate to default
+    ...         return None
+
+See http://codespeak.net/lxml/element_classes.html
+"""
+
 from etreepublic cimport _Document, _Element, ElementBase
 from etreepublic cimport ElementClassLookup, FallbackElementClassLookup
 from etreepublic cimport elementFactory, import_lxml__etree
@@ -127,6 +153,9 @@ cdef class _ElementProxy:
         self._assertNode()
         c_node = cetree.findChildBackwards(self._c_node, 0)
         return c_node != NULL
+
+    def __iter__(self):
+        return iter(self.getchildren())
 
     def get(self, key, default=None):
         """Gets an element attribute.
@@ -258,6 +287,10 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
         self._lookup_function = _lookup_class
 
     def lookup(self, doc, element):
+        """lookup(self, doc, element)
+
+        Override this method to implement your own lookup scheme.
+        """
         return None
 
 cdef object _lookup_class(state, _Document doc, tree.xmlNode* c_node):
