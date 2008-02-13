@@ -8,7 +8,7 @@ import copy
 from lxml import etree
 from lxml.html import defs
 from lxml import cssselect
-from lxml.html.setmixin import SetMixin
+from lxml.html._setmixin import SetMixin
 try:
     from UserDict import DictMixin
 except ImportError:

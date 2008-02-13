@@ -25,6 +25,11 @@ Bugs fixed
 Other changes
 -------------
 
+* The previously public module ``lxml.html.setmixin`` was renamed to
+  ``lxml.html._setmixin`` as it is not an official part of lxml.  If
+  you want to use it, feel free to copy it over to your own source
+  base.
+
 * Passing ``--with-xslt-config=/path/to/xslt-config`` to setup.py will
   override the ``xslt-config`` script that is used to determine the C
   compiler options.
