@@ -29,6 +29,9 @@ Bugs fixed
 Other changes
 -------------
 
+* The generated API documentation was cleaned up and disburdened from
+  non-public classes etc.
+
 * The previously public module ``lxml.html.setmixin`` was renamed to
   ``lxml.html._setmixin`` as it is not an official part of lxml.  If
   you want to use it, feel free to copy it over to your own source
