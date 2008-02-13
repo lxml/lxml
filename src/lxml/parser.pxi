@@ -1473,22 +1473,24 @@ cdef class XMLParser(_FeedParser):
     attribute default values are requested.
 
     Available boolean keyword arguments:
-      - attribute_defaults - read default attributes from DTD
-      - dtd_validation     - validate (if DTD is available)
-      - load_dtd           - use DTD for parsing
-      - no_network         - prevent network access for related files (default: True)
-      - ns_clean           - clean up redundant namespace declarations
-      - recover            - try hard to parse through broken XML
-      - remove_blank_text  - discard blank text nodes
-      - remove_comments    - discard comments
-      - remove_pis         - discard processing instructions
-      - compact            - safe memory for short text content (default: True)
-      - resolve_entities   - replace entities by their text value (default: True)
+
+    - attribute_defaults - read default attributes from DTD
+    - dtd_validation     - validate (if DTD is available)
+    - load_dtd           - use DTD for parsing
+    - no_network         - prevent network access for related files (default: True)
+    - ns_clean           - clean up redundant namespace declarations
+    - recover            - try hard to parse through broken XML
+    - remove_blank_text  - discard blank text nodes
+    - remove_comments    - discard comments
+    - remove_pis         - discard processing instructions
+    - compact            - safe memory for short text content (default: True)
+    - resolve_entities   - replace entities by their text value (default: True)
 
     Other keyword arguments:
-      - encoding - override the document encoding
-      - target   - a parser target object that will receive the parse events
-      - schema   - an XMLSchema to validate against
+
+    - encoding - override the document encoding
+    - target   - a parser target object that will receive the parse events
+    - schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -1612,17 +1614,19 @@ cdef class HTMLParser(_FeedParser):
     this off.
 
     Available boolean keyword arguments:
-      - recover            - try hard to parse through broken HTML (default: True)
-      - no_network         - prevent network access for related files (default: True)
-      - remove_blank_text  - discard empty text nodes
-      - remove_comments    - discard comments
-      - remove_pis         - discard processing instructions
-      - compact            - safe memory for short text content (default: True)
+
+    - recover            - try hard to parse through broken HTML (default: True)
+    - no_network         - prevent network access for related files (default: True)
+    - remove_blank_text  - discard empty text nodes
+    - remove_comments    - discard comments
+    - remove_pis         - discard processing instructions
+    - compact            - safe memory for short text content (default: True)
 
     Other keyword arguments:
-      - encoding - override the document encoding
-      - target   - a parser target object that will receive the parse events
-      - schema   - an XMLSchema to validate against
+
+    - encoding - override the document encoding
+    - target   - a parser target object that will receive the parse events
+    - schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.

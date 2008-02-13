@@ -174,11 +174,13 @@ cdef class XSLTAccessControl:
     passing any of the following boolean keyword arguments.  All of
     them default to True to allow access.
 
-      - read_file
-      - write_file
-      - create_dir
-      - read_network
-      - write_network
+    - read_file
+    - write_file
+    - create_dir
+    - read_network
+    - write_network
+
+    See `XSLT`.
     """
     cdef xslt.xsltSecurityPrefs* _prefs
     def __init__(self, *, read_file=True, write_file=True, create_dir=True,
@@ -264,15 +266,18 @@ cdef class XSLT:
       >>> result = transform(xml_tree)
 
     Keyword arguments of the constructor:
-      - regexp: enable exslt regular expression support in XPath
-        (default: True)
-      - access_control: access restrictions for network or file
-        system (see `XSLTAccessControl`)
+
+    - regexp: enable exslt regular expression support in XPath
+      (default: True)
+    - access_control: access restrictions for network or file
+      system (see `XSLTAccessControl`)
 
     Keyword arguments of the XSLT call:
-      - profile_run: enable XSLT profiling (default: False)
 
-    Other keyword arguments of the call are passed to the stylesheet.
+    - profile_run: enable XSLT profiling (default: False)
+
+    Other keyword arguments of the call are passed to the stylesheet
+    as parameters.
     """
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
