@@ -42,10 +42,11 @@ html: inplace
 	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
-			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" -o ../doc/html/api --name lxml --url http://codespeak.net/lxml/ lxml/) \
+			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" \
+			-o ../doc/html/api --no-private --exclude='[.]html[.]tests|[.]_' \
+			--name lxml --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
-# XXX What should the default be?
 test: test_inplace
 
 valtest: valgrind_test_inplace
