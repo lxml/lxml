@@ -1,7 +1,9 @@
 cdef object _find_id_attributes
 
 def XMLID(text):
-    """Parse the text and return a tuple (root node, ID dictionary).  The root
+    """XMLID(text)
+
+    Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
     contains string-element pairs.  The dictionary keys are the values of 'id'
     attributes.  The elements referenced by the ID are stored as dictionary
@@ -19,7 +21,9 @@ def XMLID(text):
     return (root, dic)
 
 def XMLDTDID(text):
-    """Parse the text and return a tuple (root node, ID dictionary).  The root
+    """XMLDTDID(text)
+
+    Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
     contains string-element pairs.  The dictionary keys are the values of ID
     attributes as defined by the DTD.  The elements referenced by the ID are
@@ -37,7 +41,9 @@ def XMLDTDID(text):
         return (root, _IDDict(root))
 
 def parseid(source, parser=None):
-    """Parses the source into a tuple containing an ElementTree object and an
+    """parseid(source, parser=None)
+
+    Parses the source into a tuple containing an ElementTree object and an
     ID dictionary.  If no parser is provided as second argument, the default
     parser is used.
 
@@ -49,7 +55,8 @@ def parseid(source, parser=None):
     return (_elementTreeFactory(doc, None), _IDDict(doc))
 
 cdef class _IDDict:
-    """A dictionary-like proxy class that mapps ID attributes to elements.
+    """IDDict(self, etree)
+    A dictionary-like proxy class that mapps ID attributes to elements.
 
     The dictionary must be instantiated with the root element of a parsed XML
     document, otherwise the behaviour is undefined.  Elements and XML trees

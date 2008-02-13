@@ -153,7 +153,9 @@ cdef class ObjectifiedElement(ElementBase):
         return _countSiblings(self._c_node)
 
     def countchildren(self):
-        """Return the number of children of this element, regardless of their
+        """countchildren(self)
+
+        Return the number of children of this element, regardless of their
         name.
         """
         # copied from etree
@@ -168,7 +170,9 @@ cdef class ObjectifiedElement(ElementBase):
         return c
 
     def getchildren(self):
-        """Returns a sequence of all direct children.  The elements are
+        """getchildren(self)
+
+        Returns a sequence of all direct children.  The elements are
         returned in document order.
         """
         cdef tree.xmlNode* c_node
@@ -217,7 +221,9 @@ cdef class ObjectifiedElement(ElementBase):
         self.remove(child)
 
     def addattr(self, tag, value):
-        """Add a child value to the element.
+        """addattr(self, tag, value)
+
+        Add a child value to the element.
 
         As opposed to append(), it sets a data value, not an element.
         """
@@ -331,18 +337,21 @@ cdef class ObjectifiedElement(ElementBase):
             parent.remove(sibling)
 
     def iterfind(self, path):
+        "iterfind(self, path)"
         # Reimplementation of Element.iterfind() to make it work without child
         # iteration.
         xpath = etree.ETXPath(path)
         return iter(xpath(self))
 
     def findall(self, path):
+        "findall(self, path)"
         # Reimplementation of Element.findall() to make it work without child
         # iteration.
         xpath = etree.ETXPath(path)
         return xpath(self)
 
     def find(self, path):
+        "find(self, path)"
         # Reimplementation of Element.find() to make it work without child
         # iteration.
         result = self.findall(path)
@@ -354,6 +363,7 @@ cdef class ObjectifiedElement(ElementBase):
             return None
 
     def findtext(self, path, default=None):
+        "findtext(self, path, default=None)"
         # Reimplementation of Element.findtext() to make it work without child
         # iteration.
         result = self.find(path)
@@ -363,7 +373,9 @@ cdef class ObjectifiedElement(ElementBase):
             return default
 
     def descendantpaths(self, prefix=None):
-        """Returns a list of object path expressions for all descendants.
+        """descendantpaths(self, prefix=None)
+
+        Returns a list of object path expressions for all descendants.
         """
         if prefix is not None and not python._isString(prefix):
             prefix = '.'.join(prefix)
@@ -853,7 +865,8 @@ cdef object _numericValueOf(obj):
 # Python type registry
 
 cdef class PyType:
-    """User defined type.
+    """PyType(self, name, type_check, type_class, stringify=None)
+    User defined type.
 
     Named type that contains a type check function and a type class that
     inherits from ObjectifiedDataElement.  The type check must take a string
@@ -862,6 +875,7 @@ cdef class PyType:
     guessing.
 
     Example::
+
         PyType('int', int, MyIntClass).register()
 
     Note that the order in which types are registered matters.  The first
@@ -894,7 +908,9 @@ cdef class PyType:
         return "PyType(%s, %s)" % (self.name, self._type.__name__)
 
     def register(self, before=None, after=None):
-        """Register the type.
+        """register(self, before=None, after=None)
+
+        Register the type.
 
         The additional keyword arguments 'before' and 'after' accept a
         sequence of type names that must appear before/after the new type in
@@ -933,6 +949,7 @@ cdef class PyType:
             _SCHEMA_TYPE_DICT[xs_type] = self
 
     def unregister(self):
+        "unregister(self)"
         if _PYTYPE_DICT.get(self.name) is self:
             del _PYTYPE_DICT[self.name]
         for xs_type, pytype in _SCHEMA_TYPE_DICT.items():
@@ -989,7 +1006,9 @@ cdef _pytypename(obj):
         return _typename(obj)
 
 def pytypename(obj):
-    """Find the name of the corresponding PyType for a Python object.
+    """pytypename(obj)
+
+    Find the name of the corresponding PyType for a Python object.
     """
     return _pytypename(obj)
 
@@ -1035,7 +1054,9 @@ TREE_PYTYPE = PyType(TREE_PYTYPE_NAME, None, ObjectifiedElement)
 _registerPyTypes()
 
 def getRegisteredTypes():
-    """Returns a list of the currently registered PyType objects.
+    """getRegisteredTypes()
+
+    Returns a list of the currently registered PyType objects.
 
     To add a new type, retrieve this list and call unregister() for all
     entries.  Then add the new type at a suitable position (possibly replacing
@@ -1099,6 +1120,8 @@ cdef extern from "etree_defs.h":
     cdef _ObjectifyElementMakerCaller NEW_ELEMENT_MAKER "PY_NEW" (object t)
 
 cdef class ElementMaker:
+    """ElementMaker(self, namespace=None, nsmap=None, annotate=True, makeelement=None)
+    """
     cdef object _makeelement
     cdef object _namespace
     cdef object _nsmap
@@ -1137,6 +1160,7 @@ cdef class _ObjectifyElementMakerCaller:
     cdef bint _annotate
 
     def __call__(self, *children, **attrib):
+        "__call__(self, *children, **attrib)"
         cdef _ObjectifyElementMakerCaller elementMaker
         cdef python.PyObject* pytype
         cdef _Element element
@@ -1214,14 +1238,18 @@ cdef bint __RECURSIVE_STR
 __RECURSIVE_STR = 0 # default: off
 
 def enableRecursiveStr(on=True):
-    """Enable a recursively generated tree representation for str(element),
+    """enableRecursiveStr(on=True)
+
+    Enable a recursively generated tree representation for str(element),
     based on objectify.dump(element).
     """
     global __RECURSIVE_STR
     __RECURSIVE_STR = on
 
 def dump(_Element element not None):
-    """Return a recursively generated string representation of an element.
+    """dump(_Element element not None)
+
+    Return a recursively generated string representation of an element.
     """
     return _dump(element, 0)
 
@@ -1268,6 +1296,7 @@ cdef _setupPickle(reduceFunction):
     copy_reg.pickle(ObjectifiedElement, reduceFunction, fromstring)
 
 def pickleReduce(obj):
+    "pickleReduce(obj)"
     return (fromstring, (etree.tostring(obj),))
 
 _setupPickle(pickleReduce)
@@ -1277,7 +1306,8 @@ del pickleReduce
 # Element class lookup
 
 cdef class ObjectifyElementClassLookup(ElementClassLookup):
-    """Element class lookup method that uses the objectify classes.
+    """ObjectifyElementClassLookup(self, tree_class=None, empty_data_class=None)
+    Element class lookup method that uses the objectify classes.
     """
     cdef object empty_data_class
     cdef object tree_class
@@ -1363,7 +1393,9 @@ cdef PyType _check_type(tree.xmlNode* c_node, PyType pytype):
 
 def pyannotate(element_or_tree, *, ignore_old=False, ignore_xsi=False,
              empty_pytype=None):
-    """Recursively annotates the elements of an XML tree with 'pytype'
+    """pyannotate(element_or_tree, ignore_old=False, ignore_xsi=False, empty_pytype=None)
+
+    Recursively annotates the elements of an XML tree with 'pytype'
     attributes.
 
     If the 'ignore_old' keyword argument is True (the default), current 'pytype'
@@ -1384,7 +1416,9 @@ def pyannotate(element_or_tree, *, ignore_old=False, ignore_xsi=False,
 
 def xsiannotate(element_or_tree, *, ignore_old=False, ignore_pytype=False,
                 empty_type=None):
-    """Recursively annotates the elements of an XML tree with 'xsi:type'
+    """xsiannotate(element_or_tree, ignore_old=False, ignore_pytype=False, empty_type=None)
+
+    Recursively annotates the elements of an XML tree with 'xsi:type'
     attributes.
 
     If the 'ignore_old' keyword argument is True (the default), current
@@ -1411,7 +1445,9 @@ def xsiannotate(element_or_tree, *, ignore_old=False, ignore_pytype=False,
 def annotate(element_or_tree, *, ignore_old=True, ignore_xsi=False,
              empty_pytype=None, empty_type=None, annotate_xsi=0,
              annotate_pytype=1):
-    """Recursively annotates the elements of an XML tree with 'xsi:type'
+    """annotate(element_or_tree, ignore_old=True, ignore_xsi=False, empty_pytype=None, empty_type=None, annotate_xsi=0, annotate_pytype=1)
+
+    Recursively annotates the elements of an XML tree with 'xsi:type'
     and/or 'py:pytype' attributes.
 
     If the 'ignore_old' keyword argument is True (the default), current
@@ -1597,7 +1633,9 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 def deannotate(element_or_tree, *, pytype=True, xsi=True):
-    """Recursively de-annotate the elements of an XML tree by removing 'pytype'
+    """deannotate(element_or_tree, pytype=True, xsi=True)
+
+    Recursively de-annotate the elements of an XML tree by removing 'pytype'
     and/or 'type' attributes.
 
     If the 'pytype' keyword argument is True (the default), 'pytype' attributes
@@ -1642,11 +1680,13 @@ cdef object objectify_parser
 objectify_parser = __DEFAULT_PARSER
 
 def setDefaultParser(new_parser = None):
-    "This function is deprecated, use ``set_default_parser()`` instead."
+    ":deprecated: use ``set_default_parser()`` instead."
     set_default_parser(new_parser)
 
 def set_default_parser(new_parser = None):
-    """Replace the default parser used by objectify's Element() and
+    """set_default_parser(new_parser = None)
+
+    Replace the default parser used by objectify's Element() and
     fromstring() functions.
 
     The new parser must be an etree.XMLParser.
@@ -1662,7 +1702,9 @@ def set_default_parser(new_parser = None):
         raise TypeError("parser must inherit from lxml.etree.XMLParser")
 
 def makeparser(**kw):
-    """Create a new XML parser for objectify trees.
+    """makeparser(remove_blank_text=True, **kw)
+
+    Create a new XML parser for objectify trees.
 
     You can pass all keyword arguments that are supported by
     ``etree.XMLParser()``.  Note that this parser defaults to removing
@@ -1685,7 +1727,9 @@ cdef object _fromstring
 _fromstring = etree.fromstring
 
 def fromstring(xml, parser=None):
-    """Objectify specific version of the lxml.etree fromstring() function
+    """fromstring(xml, parser=None)
+
+    Objectify specific version of the lxml.etree fromstring() function
     that uses the objectify parser.
 
     You can pass a different parser as second argument.
@@ -1700,7 +1744,9 @@ cdef object _parse
 _parse = etree.parse
 
 def parse(f, parser=None):
-    """Parse a file or file-like object with the objectify parser.
+    """parse(f, parser=None)
+
+    Parse a file or file-like object with the objectify parser.
 
     You can pass a different parser as second argument.
     """
@@ -1716,7 +1762,9 @@ _DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,
 E = ElementMaker()
 
 def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
-    """Objectify specific version of the lxml.etree Element() factory that
+    """Element(_tag, attrib=None, nsmap=None, _pytype=None, **_attributes)
+
+    Objectify specific version of the lxml.etree Element() factory that
     always creates a structural (tree) element.
 
     NOTE: requires parser based element class lookup activated in lxml.etree!
@@ -1734,7 +1782,9 @@ def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
 
 def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
                 **_attributes):
-    """Create a new element from a Python value and XML attributes taken from
+    """DataElement(_value, attrib=None, nsmap=None, _pytype=None, _xsi=None, **_attributes)
+
+    Create a new element from a Python value and XML attributes taken from
     keyword arguments or a dictionary passed as second argument.
 
     Automatically adds a 'pytype' attribute for the Python type of the value,

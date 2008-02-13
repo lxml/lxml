@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Docstrings now reflect the signature of functions and methods to
+  make them visible in API docs and ``help()``
+
 Bugs fixed
 ----------
 

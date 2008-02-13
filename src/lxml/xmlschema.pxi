@@ -20,7 +20,8 @@ class XMLSchemaValidateError(XMLSchemaError):
 # XMLSchema
 
 cdef class XMLSchema(_Validator):
-    """Turn a document into an XML Schema validator.
+    """XMLSchema(self, etree=None, file=None)
+    Turn a document into an XML Schema validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
     filename through the ``file`` keyword argument.
@@ -83,7 +84,9 @@ cdef class XMLSchema(_Validator):
         xmlschema.xmlSchemaFree(self._c_schema)
 
     def __call__(self, etree):
-        """Validate doc using XML Schema.
+        """__call__(self, etree)
+
+        Validate doc using XML Schema.
 
         Returns true if document is valid, false if not.
         """

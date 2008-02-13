@@ -8,7 +8,8 @@ ctypedef struct _ObjectPath:
 
 
 cdef class ObjectPath:
-    """Immutable object that represents a compiled object path.
+    """ObjectPath(path)
+    Immutable object that represents a compiled object path.
 
     Example for a path: 'root.child[1].{other}child[25]'
     """
@@ -54,6 +55,7 @@ cdef class ObjectPath:
                                default, use_default)
 
     def hasattr(self, _Element root not None):
+        "hasattr(self, root)"
         try:
             _findObjectPath(root, self._c_path, self._path_len, None, 0)
         except AttributeError:
@@ -61,14 +63,18 @@ cdef class ObjectPath:
         return True
 
     def setattr(self, _Element root not None, value):
-        """Set the value of the target element in a subtree.
+        """setattr(self, root, value)
+
+        Set the value of the target element in a subtree.
 
         If any of the children on the path does not exist, it is created.
         """
         _createObjectPath(root, self._c_path, self._path_len, 1, value)
 
     def addattr(self, _Element root not None, value):
-        """Append a value to the target element in a subtree.
+        """addattr(self, root, value)
+
+        Append a value to the target element in a subtree.
 
         If any of the children on the path does not exist, it is created.
         """

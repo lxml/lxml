@@ -167,16 +167,18 @@ xslt.xsltSetLoaderFunc(_xslt_doc_loader)
 # XSLT file/network access control
 
 cdef class XSLTAccessControl:
-    """Access control for XSLT: reading/writing files, directories and network
-    I/O.  Access to a type of resource is granted or denied by passing any of
-    the following keyword arguments.  All of them default to True to allow
-    access.
+    """XSLTAccessControl(self, read_file=True, write_file=True, create_dir=True, read_network=True, write_network=True)
 
-    * read_file
-    * write_file
-    * create_dir
-    * read_network
-    * write_network
+    Access control for XSLT: reading/writing files, directories and
+    network I/O.  Access to a type of resource is granted or denied by
+    passing any of the following boolean keyword arguments.  All of
+    them default to True to allow access.
+
+      - read_file
+      - write_file
+      - create_dir
+      - read_network
+      - write_network
     """
     cdef xslt.xsltSecurityPrefs* _prefs
     def __init__(self, *, read_file=True, write_file=True, create_dir=True,
@@ -252,16 +254,25 @@ cdef class _XSLTContext(_BaseContext):
 
 
 cdef class XSLT:
-    """Turn a document into an XSLT object.
+    """XSLT(self, xslt_input, extensions=None, regexp=True, access_control=None)
+
+    Turn an XSL document into an XSLT object.
+
+    Calling this object on a tree or Element will execute the XSLT::
+
+      >>> transform = etree.XSLT(xsl_tree)
+      >>> result = transform(xml_tree)
 
     Keyword arguments of the constructor:
-    * regexp - enable exslt regular expression support in XPath (default: True)
-    * access_control - access restrictions for network or file system
+      - regexp: enable exslt regular expression support in XPath
+        (default: True)
+      - access_control: access restrictions for network or file
+        system (see `XSLTAccessControl`)
 
-    Keyword arguments of the XSLT run:
-    * profile_run - enable XSLT profiling
+    Keyword arguments of the XSLT call:
+      - profile_run: enable XSLT profiling (default: False)
 
-    Other keyword arguments are passed to the stylesheet.
+    Other keyword arguments of the call are passed to the stylesheet.
     """
     cdef _XSLTContext _context
     cdef xslt.xsltStylesheet* _c_style
@@ -328,14 +339,22 @@ cdef class XSLT:
         xslt.xsltFreeStylesheet(self._c_style)
 
     property error_log:
+        "The log of errors and warnings of an XSLT execution."
         def __get__(self):
             return self._error_log.copy()
 
     def apply(self, _input, *, profile_run=False, **_kw):
+        """apply(self, _input,  profile_run=False, **_kw)
+        
+        :deprecated: call the object, not this method."""
         return self(_input, profile_run=profile_run, **_kw)
 
     def tostring(self, _ElementTree result_tree):
-        """Save result doc to string based on stylesheet output method.
+        """tostring(self, result_tree)
+
+        Save result doc to string based on stylesheet output method.
+
+        :deprecated: use str(result_tree) instead.
         """
         return str(result_tree)
 
@@ -346,6 +365,14 @@ cdef class XSLT:
         return _copyXSLT(self)
 
     def __call__(self, _input, *, profile_run=False, **_kw):
+        """__call__(self, _input, profile_run=False, **_kw)
+
+        Execute the XSL transformation on a tree or Element.
+
+        Pass the ``profile_run`` option to get profile information
+        about the XSLT.  The result of the XSLT will have a property
+        xslt_profile that holds an XML tree with profiling data.
+        """
         cdef _XSLTContext context
         cdef _XSLTResolverContext resolver_context
         cdef _Document input_doc

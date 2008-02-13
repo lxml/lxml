@@ -668,6 +668,7 @@ cdef class _BaseParser:
             return context._error_log.copy()
 
     property resolvers:
+        "The custom resolver registry of this parser."
         def __get__(self):
             return self._resolvers
 
@@ -681,7 +682,9 @@ cdef class _BaseParser:
         self.set_element_class_lookup(lookup)
 
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
-        """Set a lookup scheme for element classes generated from this parser.
+        """set_element_class_lookup(self, lookup = None)
+
+        Set a lookup scheme for element classes generated from this parser.
 
         Reset it by passing None or nothing.
         """
@@ -702,11 +705,16 @@ cdef class _BaseParser:
         return parser
 
     def copy(self):
-        "Create a new parser with the same configuration."
+        """copy(self)
+
+        Create a new parser with the same configuration.
+        """
         return self._copy()
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
-        """Creates a new element associated with this parser.
+        """makeelement(self, _tag, attrib=None, nsmap=None, **_extra)
+
+        Creates a new element associated with this parser.
         """
         return _makeElement(_tag, NULL, None, self, None, None,
                             attrib, nsmap, _extra)
@@ -861,7 +869,9 @@ cdef class _FeedParser(_BaseParser):
             return context._error_log.copy()
 
     def feed(self, data):
-        """Feeds data to the parser.  The argument should be an 8-bit string
+        """feed(self, data)
+
+        Feeds data to the parser.  The argument should be an 8-bit string
         buffer containing encoded data, although Unicode is supported as long
         as both string types are not mixed.
 
@@ -942,7 +952,9 @@ cdef class _FeedParser(_BaseParser):
                 context.cleanup()
 
     def close(self):
-        """Terminates feeding data to this parser.  This tells the parser to
+        """close(self)
+
+        Terminates feeding data to this parser.  This tells the parser to
         process any remaining data in the feed buffer, and then returns the
         root Element of the tree that was parsed.
 
@@ -1303,7 +1315,8 @@ cdef void _handleSaxComment(void* ctxt, char* c_data) with gil:
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
-    """Parser target that builds a tree.
+    """TreeBuilder(self, element_factory=None, parser=None)
+    Parser target that builds a tree.
 
     The final tree is returned by the ``close()`` method.
     """
@@ -1343,7 +1356,9 @@ cdef class TreeBuilder(_SaxParserTarget):
     # Python level event handlers
 
     def close(self):
-        """Flushes the builder buffers, and returns the toplevel document
+        """close(self)
+
+        Flushes the builder buffers, and returns the toplevel document
         element.
         """
         assert python.PyList_GET_SIZE(self._element_stack) == 0, "missing end tags"
@@ -1351,19 +1366,27 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._last
 
     def data(self, data):
-        """Adds text to the current element.  The value should be either an
+        """data(self, data)
+
+        Adds text to the current element.  The value should be either an
         8-bit string containing ASCII text, or a Unicode string.
         """
         self._handleSaxData(data)
 
     def start(self, tag, attrs, nsmap=None):
-        "Opens a new element."
+        """start(self, tag, attrs, nsmap=None)
+
+        Opens a new element.
+        """
         if nsmap is None:
             nsmap = EMPTY_READ_ONLY_DICT
         return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):
-        "Closes the current element."
+        """end(self, tag)
+
+        Closes the current element.
+        """
         element = self._handleSaxEnd(tag)
         assert self._last.tag == tag,\
                "end tag mismatch (expected %s, got %s)" % (
@@ -1371,9 +1394,13 @@ cdef class TreeBuilder(_SaxParserTarget):
         return element
 
     def pi(self, target, data):
+        """pi(self, target, data)
+        """
         return self._handleSaxPi(target, data)
 
     def comment(self, comment):
+        """comment(self, comment)
+        """
         return self._handleSaxComment(comment)
 
     # internal SAX event handlers
@@ -1432,33 +1459,36 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class XMLParser(_FeedParser):
-    """The XML parser.  Parsers can be supplied as additional argument to
-    various parse functions of the lxml API.  A default parser is always
-    available and can be replaced by a call to the global function
-    'set_default_parser'.  New parsers can be created at any time without a
-    major run-time overhead.
+    """XMLParser(self, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, remove_blank_text=False, compact=True, resolve_entities=True, remove_comments=False, remove_pis=False, target=None, encoding=None, schema=None)
+    The XML parser.
+
+    Parsers can be supplied as additional argument to various parse
+    functions of the lxml API.  A default parser is always available
+    and can be replaced by a call to the global function
+    'set_default_parser'.  New parsers can be created at any time
+    without a major run-time overhead.
 
     The keyword arguments in the constructor are mainly based on the libxml2
     parser configuration.  A DTD will also be loaded if validation or
     attribute default values are requested.
 
     Available boolean keyword arguments:
-    * attribute_defaults - read default attributes from DTD
-    * dtd_validation     - validate (if DTD is available)
-    * load_dtd           - use DTD for parsing
-    * no_network         - prevent network access for related files (default: True)
-    * ns_clean           - clean up redundant namespace declarations
-    * recover            - try hard to parse through broken XML
-    * remove_blank_text  - discard blank text nodes
-    * remove_comments    - discard comments
-    * remove_pis         - discard processing instructions
-    * compact            - safe memory for short text content (default: True)
-    * resolve_entities   - replace entities by their text value (default: True)
+      - attribute_defaults - read default attributes from DTD
+      - dtd_validation     - validate (if DTD is available)
+      - load_dtd           - use DTD for parsing
+      - no_network         - prevent network access for related files (default: True)
+      - ns_clean           - clean up redundant namespace declarations
+      - recover            - try hard to parse through broken XML
+      - remove_blank_text  - discard blank text nodes
+      - remove_comments    - discard comments
+      - remove_pis         - discard processing instructions
+      - compact            - safe memory for short text content (default: True)
+      - resolve_entities   - replace entities by their text value (default: True)
 
     Other keyword arguments:
-    * encoding - override the document encoding
-    * target   - a parser target object that will receive the parse events
-    * schema   - an XMLSchema to validate against
+      - encoding - override the document encoding
+      - target   - a parser target object that will receive the parse events
+      - schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads.  While this is
     not harmful, it is more efficient to use separate parsers.  This does not
@@ -1498,8 +1528,10 @@ cdef class XMLParser(_FeedParser):
                              target, None, encoding)
 
 cdef class ETCompatXMLParser(XMLParser):
-    """An XML parser with an ElementTree compatible default setup.  See the
-    XMLParser class for details.
+    """ETCompatXMLParser(self, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, remove_blank_text=False, compact=True, resolve_entities=True, remove_comments=True, remove_pis=True, target=None, encoding=None, schema=None)
+    An XML parser with an ElementTree compatible default setup.
+
+    See the XMLParser class for details.
 
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
@@ -1532,15 +1564,17 @@ __DEFAULT_XML_PARSER = XMLParser()
 __GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
 
 def setDefaultParser(parser=None):
-    "@deprecated: please use set_default_parser instead."
+    ":deprecated: please use set_default_parser instead."
     set_default_parser(parser)
 
 def getDefaultParser():
-    "@deprecated: please use get_default_parser instead."
+    ":deprecated: please use get_default_parser instead."
     return get_default_parser()
 
 def set_default_parser(_BaseParser parser=None):
-    """Set a default parser for the current thread.  This parser is used
+    """set_default_parser(parser=None)
+
+    Set a default parser for the current thread.  This parser is used
     globally whenever no parser is supplied to the various parse functions of
     the lxml API.  If this function is called without a parser (or if it is
     None), the default parser is reset to the original configuration.
@@ -1554,6 +1588,7 @@ def set_default_parser(_BaseParser parser=None):
     __GLOBAL_PARSER_CONTEXT.setDefaultParser(parser)
 
 def get_default_parser():
+    "get_default_parser()"
     return __GLOBAL_PARSER_CONTEXT.getDefaultParser()
 
 ############################################################
@@ -1568,22 +1603,26 @@ _HTML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class HTMLParser(_FeedParser):
-    """The HTML parser.  This parser allows reading HTML into a normal XML
-    tree.  By default, it can read broken (non well-formed) HTML, depending on
-    the capabilities of libxml2.  Use the 'recover' option to switch this off.
+    """HTMLParser(self, recover=True, no_network=True, remove_blank_text=False, compact=True, remove_comments=False, remove_pis=False, target=None, encoding=None, schema=None)
+    The HTML parser.
+
+    This parser allows reading HTML into a normal XML tree.  By
+    default, it can read broken (non well-formed) HTML, depending on
+    the capabilities of libxml2.  Use the 'recover' option to switch
+    this off.
 
     Available boolean keyword arguments:
-    * recover            - try hard to parse through broken HTML (default: True)
-    * no_network         - prevent network access for related files (default: True)
-    * remove_blank_text  - discard empty text nodes
-    * remove_comments    - discard comments
-    * remove_pis         - discard processing instructions
-    * compact            - safe memory for short text content (default: True)
+      - recover            - try hard to parse through broken HTML (default: True)
+      - no_network         - prevent network access for related files (default: True)
+      - remove_blank_text  - discard empty text nodes
+      - remove_comments    - discard comments
+      - remove_pis         - discard processing instructions
+      - compact            - safe memory for short text content (default: True)
 
     Other keyword arguments:
-    * encoding - override the document encoding
-    * target   - a parser target object that will receive the parse events
-    * schema   - an XMLSchema to validate against
+      - encoding - override the document encoding
+      - target   - a parser target object that will receive the parse events
+      - schema   - an XMLSchema to validate against
 
     Note that you should avoid sharing parsers between threads for performance
     reasons.

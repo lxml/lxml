@@ -20,7 +20,8 @@ class DTDValidateError(DTDError):
 # DTD
 
 cdef class DTD(_Validator):
-    """A DTD validator.
+    """DTD(self, file=None, external_id=None)
+    A DTD validator.
 
     Can load from filesystem directly given a filename or file-like object.
     Alternatively, pass the keyword parameter ``external_id`` to load from a
@@ -56,7 +57,9 @@ cdef class DTD(_Validator):
         tree.xmlFreeDtd(self._c_dtd)
 
     def __call__(self, etree):
-        """Validate doc using the DTD.
+        """__call__(self, etree)
+
+        Validate doc using the DTD.
 
         Returns true if the document is valid, false if not.
         """

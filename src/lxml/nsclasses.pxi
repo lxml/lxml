@@ -28,10 +28,14 @@ cdef class _NamespaceRegistry:
         self._entries = {}
 
     def update(self, class_dict_iterable):
-        """Forgivingly update the registry. If registered values do not match
-        the required type for this registry, or if their name starts with '_',
-        they will be silently discarded. This allows registrations at the
-        module or class level using vars(), globals() etc."""
+        """update(self, class_dict_iterable)
+
+        Forgivingly update the registry.
+
+        If registered values do not match the required type for this
+        registry, or if their name starts with '_', they will be
+        silently discarded. This allows registrations at the module or
+        class level using vars(), globals() etc."""
         if hasattr(class_dict_iterable, 'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
@@ -89,7 +93,9 @@ cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
 
 
 cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
-    """Element class lookup scheme that searches the Element class in the
+    """ElementNamespaceClassLookup(self, fallback=None)
+
+    Element class lookup scheme that searches the Element class in the
     Namespace registry.
     """
     cdef object _namespace_registries
@@ -99,8 +105,11 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
         self._lookup_function = _find_nselement_class
 
     def get_namespace(self, ns_uri):
-        """Retrieve the namespace object associated with the given URI. Creates a
-        new one if it does not yet exist."""
+        """get_namespace(self, ns_uri)
+
+        Retrieve the namespace object associated with the given URI.
+
+        Creates a new one if it does not yet exist."""
         if ns_uri:
             ns_utf = _utf8(ns_uri)
         else:
@@ -156,9 +165,13 @@ cdef object __FUNCTION_NAMESPACE_REGISTRIES
 __FUNCTION_NAMESPACE_REGISTRIES = {}
 
 def FunctionNamespace(ns_uri):
-    """Retrieve the function namespace object associated with the given
-    URI. Creates a new one if it does not yet exist. A function namespace can
-    only be used to register extension functions."""
+    """FunctionNamespace(ns_uri)
+
+    Retrieve the function namespace object associated with the given
+    URI.
+
+    Creates a new one if it does not yet exist. A function namespace
+    can only be used to register extension functions."""
     if ns_uri:
         ns_utf = _utf8(ns_uri)
     else:

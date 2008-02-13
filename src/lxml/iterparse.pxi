@@ -239,9 +239,12 @@ cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
     origEnd(ctxt, name)
 
 cdef class iterparse(_BaseParser):
-    """Incremental parser.  Parses XML into a tree and generates tuples
-    (event, element) in a SAX-like fashion. ``event`` is any of 'start',
-    'end', 'start-ns', 'end-ns'.
+    """iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
+    Incremental parser.
+
+    Parses XML into a tree and generates tuples (event, element) in a
+    SAX-like fashion. ``event`` is any of 'start', 'end', 'start-ns',
+    'end-ns'.
 
     For 'start' and 'end', ``element`` is the Element that the parser just
     found opening or closing.  For 'start-ns', it is a tuple (prefix, URI) of
@@ -262,17 +265,17 @@ cdef class iterparse(_BaseParser):
     attribute default values are requested.
 
     Available boolean keyword arguments:
-    * attribute_defaults - read default attributes from DTD
-    * dtd_validation     - validate (if DTD is available)
-    * load_dtd           - use DTD for parsing
-    * no_network         - prevent network access for related files
-    * remove_blank_text  - discard blank text nodes
-    * remove_comments    - discard comments
-    * remove_pis         - discard processing instructions
+      - attribute_defaults - read default attributes from DTD
+      - dtd_validation     - validate (if DTD is available)
+      - load_dtd           - use DTD for parsing
+      - no_network         - prevent network access for related files
+      - remove_blank_text  - discard blank text nodes
+      - remove_comments    - discard comments
+      - remove_pis         - discard processing instructions
 
     Other keyword arguments:
-    * encoding           - override the document encoding
-    * schema             - an XMLSchema to validate against
+      - encoding           - override the document encoding
+      - schema             - an XMLSchema to validate against
     """
     cdef object _source
     cdef readonly object root
@@ -397,8 +400,10 @@ cdef class iterparse(_BaseParser):
 
 
 cdef class iterwalk:
-    """A tree walker that generates events from an existing tree as if it was
-    parsing XML data with ``iterparse()``.
+    """iterwalk(self, element_or_tree, events=("end",), tag=None)
+
+    A tree walker that generates events from an existing tree as if it
+    was parsing XML data with ``iterparse()``.
     """
     cdef object _node_stack
     cdef object _pop_node

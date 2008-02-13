@@ -127,13 +127,17 @@ cdef class _XPathEvaluatorBase:
         self._context.set_context(xpathCtxt)
 
     def evaluate(self, _eval_arg, **_variables):
-        """Evaluate an XPath expression.
+        """evaluate(self, _eval_arg, **_variables)
+
+        Evaluate an XPath expression.
 
         Instead of calling this method, you can also call the evaluator object
         itself.
 
         Variables may be provided as keyword arguments.  Note that namespaces
         are currently not supported for variables.
+
+        :deprecated: call the object, not its method.
         """
         return self(_eval_arg, **_variables)
 
@@ -207,7 +211,8 @@ cdef class _XPathEvaluatorBase:
 
 
 cdef class XPathElementEvaluator(_XPathEvaluatorBase):
-    """Create an XPath evaluator for an element.
+    """XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True)
+    Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
     the ElementTree as returned by getroottree().
@@ -232,17 +237,34 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
     def registerNamespace(self, prefix, uri):
         """Register a namespace with the XPath context.
+
+        :deprecated: use ``register_namespace()`` instead
+        """
+        self._context.addNamespace(prefix, uri)
+
+    def register_namespace(self, prefix, uri):
+        """Register a namespace with the XPath context.
         """
         self._context.addNamespace(prefix, uri)
 
     def registerNamespaces(self, namespaces):
+        """Register a prefix -> uri dict.
+
+        :deprecated: use ``register_namespaces()`` instead
+        """
+        for prefix, uri in namespaces.items():
+            self._context.addNamespace(prefix, uri)
+
+    def register_namespaces(self, namespaces):
         """Register a prefix -> uri dict.
         """
         for prefix, uri in namespaces.items():
             self._context.addNamespace(prefix, uri)
 
     def __call__(self, _path, **_variables):
-        """Evaluate an XPath expression on the document.
+        """__call__(self, _path, **_variables)
+
+        Evaluate an XPath expression on the document.
 
         Variables may be provided as keyword arguments.  Note that namespaces
         are currently not supported for variables.
@@ -276,7 +298,8 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
 
 cdef class XPathDocumentEvaluator(XPathElementEvaluator):
-    """Create an XPath evaluator for an ElementTree.
+    """XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True)
+    Create an XPath evaluator for an ElementTree.
 
     Additional namespace declarations can be passed with the 'namespace'
     keyword argument.  EXSLT regular expression support can be disabled with
@@ -289,7 +312,9 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             extensions=extensions, regexp=regexp)
 
     def __call__(self, _path, **_variables):
-        """Evaluate an XPath expression on the document.
+        """__call__(self, _path, **_variables)
+
+        Evaluate an XPath expression on the document.
 
         Variables may be provided as keyword arguments.  Note that namespaces
         are currently not supported for variables.
@@ -327,7 +352,9 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
                    regexp=True):
-    """Creates an XPath evaluator for an ElementTree or an Element.
+    """XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True)
+
+    Creates an XPath evaluator for an ElementTree or an Element.
 
     The resulting object can be called with an XPath expression as argument
     and XPath variables provided as keyword arguments.
@@ -347,8 +374,8 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
 
 
 cdef class XPath(_XPathEvaluatorBase):
-    """A compiled XPath expression that can be called on Elements and
-    ElementTrees.
+    """XPath(self, path, namespaces=None, extensions=None, regexp=True)
+    A compiled XPath expression that can be called on Elements and ElementTrees.
 
     Besides the XPath expression, you can pass prefix-namespace mappings and
     extension functions to the constructor through the keyword arguments
@@ -374,6 +401,7 @@ cdef class XPath(_XPathEvaluatorBase):
             self._raise_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
+        "__call__(self, _etree_or_element, **_variables)"
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
@@ -414,8 +442,8 @@ _replace_strings = re.compile('("[^"]*")|(\'[^\']*\')').sub
 _find_namespaces = re.compile('({[^}]+})').findall
 
 cdef class ETXPath(XPath):
-    """Special XPath class that supports the ElementTree {uri} notation for
-    namespaces.
+    """ETXPath(self, path, extensions=None, regexp=True)
+    Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword
     argument. All namespaces must be passed as part of the path string.

@@ -15,7 +15,9 @@ cdef class _InputDocument:
 cdef class Resolver:
     "This is the base class of all resolvers."
     def resolve(self, system_url, public_id, context):
-        """Override this method to resolve an external source by
+        """resolve(self, system_url, public_id, context)
+
+        Override this method to resolve an external source by
         ``system_url`` and ``public_id``.  The third argument is an
         opaque context object.
 
@@ -24,7 +26,9 @@ cdef class Resolver:
         return None
 
     def resolve_empty(self, context):
-        """Return an empty input document.
+        """resolve_empty(self, context)
+
+        Return an empty input document.
 
         Pass context as parameter.
         """
@@ -34,7 +38,9 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_string(self, string, context, *, base_url=None):
-        """Return a parsable string as input document.
+        """resolve_string(self, string, context, base_url=None)
+
+        Return a parsable string as input document.
 
         Pass data string and context as parameters.
 
@@ -49,7 +55,9 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_filename(self, filename, context):
-        """Return the name of a parsable file as input document.
+        """resolve_filename(self, filename, context)
+
+        Return the name of a parsable file as input document.
 
         Pass filename and context as parameters.
         """
@@ -60,7 +68,9 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_file(self, f, context):
-        """Return an open file-like object as input document.
+        """resolve_file(self, f, context)
+
+        Return an open file-like object as input document.
 
         Pass open file and context as parameters.
         """
@@ -83,7 +93,9 @@ cdef class _ResolverRegistry:
         self._default_resolver = default_resolver
 
     def add(self, Resolver resolver not None):
-        """Register a resolver.
+        """add(self, resolver)
+
+        Register a resolver.
 
         For each requested entity, the 'resolve' method of the resolver will
         be called and the result will be passed to the parser.  If this method
@@ -94,6 +106,7 @@ cdef class _ResolverRegistry:
         self._resolvers.add(resolver)
 
     def remove(self, resolver):
+        "remove(self, resolver)"
         self._resolvers.discard(resolver)
 
     cdef _ResolverRegistry _copy(self):
@@ -103,9 +116,11 @@ cdef class _ResolverRegistry:
         return registry
 
     def copy(self):
+        "copy(self)"
         return self._copy()
 
     def resolve(self, system_url, public_id, context):
+        "resolve(self, system_url, public_id, context)"
         for resolver in self._resolvers:
             result = resolver.resolve(system_url, public_id, context)
             if result is not None:

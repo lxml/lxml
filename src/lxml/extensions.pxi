@@ -326,7 +326,9 @@ cdef class _BaseContext:
                 self._temp_refs.add((<_Element>o)._doc)
 
 def Extension(module, function_mapping=None, *, ns=None):
-    """Build a dictionary of extension functions from the functions
+    """Extension(module, function_mapping=None, ns=None)
+
+    Build a dictionary of extension functions from the functions
     defined in a module or the methods of an object.
 
     As second argument, you can pass an additional mapping of

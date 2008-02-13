@@ -66,14 +66,15 @@ class SchematronValidateError(SchematronError):
 # Schematron
 
 cdef class Schematron(_Validator):
-    """A Schematron validator.
+    """Schematron(self, etree=None, file=None)
+    A Schematron validator.
 
     Pass a root Element or an ElementTree to turn it into a validator.
     Alternatively, pass a filename as keyword argument 'file' to parse from
     the file system.
     """
     cdef schematron.xmlSchematron* _c_schema
-    def __init__(self, etree=None, file=None):
+    def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlNode* c_node
@@ -120,7 +121,9 @@ cdef class Schematron(_Validator):
         schematron.xmlSchematronFree(self._c_schema)
 
     def __call__(self, etree):
-        """Validate doc using Schematron.
+        """__call__(self, etree)
+
+        Validate doc using Schematron.
 
         Returns true if document is valid, false if not."""
         cdef _Document doc

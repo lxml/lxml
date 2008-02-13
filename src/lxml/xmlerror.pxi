@@ -5,7 +5,9 @@ cimport xmlerror
 # module level API functions
 
 def clear_error_log():
-    """Clear the global error log.  Note that this log is already bound to a
+    """clear_error_log()
+
+    Clear the global error log.  Note that this log is already bound to a
     fixed size.
     """
     __GLOBAL_ERROR_LOG.clear()
@@ -14,7 +16,7 @@ def clearErrorLog():
     """Clear the global error log.  Note that this log is already bound to a
     fixed size.
 
-    @deprecated: use ``clear_error_log()`` instead.
+    :deprecated: use ``clear_error_log()`` instead.
     """
     __GLOBAL_ERROR_LOG.clear()
 
@@ -233,8 +235,10 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
-        """Filter the errors by the given types and return a new error log
-        containing the matches.
+        """filter_types(self, types)
+
+        Filter the errors by the given types and return a new error
+        log containing the matches.
         """
         cdef _LogEntry entry
         if not python.PySequence_Check(types):
@@ -246,8 +250,10 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
-        """Filter the errors by the given error levels and return a new error
-        log containing the matches.
+        """filter_levels(self, levels)
+
+        Filter the errors by the given error levels and return a new
+        error log containing the matches.
         """
         cdef _LogEntry entry
         if not python.PySequence_Check(levels):
@@ -259,7 +265,10 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
-        "Return a log with all messages of the requested level of worse."
+        """filter_from_level(self, level)
+
+        Return a log with all messages of the requested level of worse.
+        """
         cdef _LogEntry entry
         filtered = []
         for entry in self._entries:
@@ -268,15 +277,24 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
-        "Convenience method to get all fatal error messages."
+        """filter_from_fatals(self)
+
+        Convenience method to get all fatal error messages.
+        """
         return self.filter_from_level(ErrorLevels.FATAL)
     
     def filter_from_errors(self):
-        "Convenience method to get all error messages or worse."
+        """filter_from_errors(self)
+
+        Convenience method to get all error messages or worse.
+        """
         return self.filter_from_level(ErrorLevels.ERROR)
     
     def filter_from_warnings(self):
-        "Convenience method to get all warnings or worse."
+        """filter_from_warnings(self)
+
+        Convenience method to get all warnings or worse.
+        """
         return self.filter_from_level(ErrorLevels.WARNING)
 
 cdef class _ErrorLog(_ListErrorLog):
@@ -331,7 +349,8 @@ cdef class _RotatingErrorLog(_ErrorLog):
         python.PyList_Append(entries, entry)
 
 cdef class PyErrorLog(_BaseErrorLog):
-    """A global error log that connects to the Python stdlib logging package.
+    """PyErrorLog(self, logger_name=None)
+    A global error log that connects to the Python stdlib logging package.
 
     The constructor accepts an optional logger name.
 
@@ -395,12 +414,14 @@ def useGlobalPythonLog(PyErrorLog log not None):
     Note that this disables access to the global error log from exceptions.
     Parsers, XSLT etc. will continue to provide their normal local error log.
 
-    @deprecated: use ``use_global_python_log()`` instead.
+    :deprecated: use ``use_global_python_log()`` instead.
     """
     use_global_python_log(log)
 
 def use_global_python_log(PyErrorLog log not None):
-    """Replace the global error log by an etree.PyErrorLog that uses the
+    """use_global_python_log(log)
+
+    Replace the global error log by an etree.PyErrorLog that uses the
     standard Python logging package.
 
     Note that this disables access to the global error log from exceptions.
