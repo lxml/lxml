@@ -32,7 +32,7 @@ import re
 import doctest
 import cgi
 
-__all__ = ['PARSE_HTML', 'PARSE_XML', 'LXMLOutputChecker',
+__all__ = ['PARSE_HTML', 'PARSE_XML', 'NOPARSE_MARKUP', 'LXMLOutputChecker',
            'LHTMLOutputChecker', 'install', 'temp_install']
 
 PARSE_HTML = doctest.register_optionflag('PARSE_HTML')
