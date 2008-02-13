@@ -19,6 +19,10 @@ Bugs fixed
 * The module ``lxml.html.builder`` was duplicated as
   ``lxml.htmlbuilder``
 
+* Form elements would return None for ``form.fields.keys()`` if there
+  was an unnamed input field.  Now unnamed input fields are completely
+  ignored.
+
 * Setting an element slice in objectify could insert slice-overlapping
   elements at the wrong position.
 
