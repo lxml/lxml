@@ -14,6 +14,9 @@ Features added
 Bugs fixed
 ----------
 
+* The module ``lxml.html.builder`` was duplicated as
+  ``lxml.htmlbuilder``
+
 * Setting an element slice in objectify could insert slice-overlapping
   elements at the wrong position.
 
