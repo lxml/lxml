@@ -10,8 +10,8 @@ Features added
 
 * Child iteration in ``lxml.pyclasslookup``.
 
-* Docstrings now reflect the signature of functions and methods to
-  make them visible in API docs and ``help()``
+* Loads of new docstrings reflect the signature of functions and
+  methods to make them visible in API docs and ``help()``
 
 Bugs fixed
 ----------
