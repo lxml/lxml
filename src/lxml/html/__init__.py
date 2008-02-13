@@ -818,7 +818,8 @@ class InputGetter(object):
     def keys(self):
         names = sets.Set()
         for el in self:
-            names.add(el.name)
+            if el.name is not None:
+                names.add(el.name)
         return list(names)
 
     def __iter__(self):

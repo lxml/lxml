@@ -141,3 +141,24 @@ select2: <MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
 single_checkbox2: 'good'
 check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 
+>>> import lxml.html
+>>> tree = lxml.html.fromstring('''
+... <html><body>
+...  <form>
+...   <input name="foo" value="bar"/>
+...   <input type="submit" />
+...  </form>
+... </body></html>
+... ''')
+>>> tree # doctest: +ELLIPSIS
+<Element html at ...>
+>>> tree.forms[0] # doctest: +ELLIPSIS
+<Element form at ...>
+>>> tree.forms[0].fields # doctest: +NOPARSE_MARKUP
+<FieldsDict for form 0>
+>>> tree.forms[0].fields.keys()
+['foo']
+>>> tree.forms[0].fields.items()
+[('foo', 'bar')]
+>>> tree.forms[0].fields.values()
+['bar']
