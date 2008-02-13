@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-2.0.1 (Under development)
-=========================
+2.0.1 (2008-02-13)
+==================
 
 Features added
 --------------
@@ -56,10 +56,6 @@ Features added
 
 Bugs fixed
 ----------
-
-* Form elements would return None for ``form.fields.keys()`` if there
-  was an unnamed input field.  Now unnamed input fields are completely
-  ignored.
 
 Other changes
 -------------
