@@ -238,7 +238,8 @@ cdef object _getAttributeValue(tree.xmlNode* c_node, key, default):
 
 
 cdef class PythonElementClassLookup(FallbackElementClassLookup):
-    """Element class lookup based on a subclass method.
+    """PythonElementClassLookup(self, fallback=None)
+    Element class lookup based on a subclass method.
 
     To use it, inherit from this class and override the lookup method to
     lookup the element class for a node::
