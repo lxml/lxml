@@ -33,6 +33,10 @@
 # OF THIS SOFTWARE.
 # --------------------------------------------------------------------
 
+"""
+The ``E`` Element factory for generating XML documents.
+"""
+
 import etree as ET
 
 try:

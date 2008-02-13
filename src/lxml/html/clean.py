@@ -1,3 +1,9 @@
+"""A cleanup tool for HTML.
+
+Removes unwanted tags and content.  See the `Cleaner` class for
+details.
+"""
+
 import re
 import copy
 import urlparse

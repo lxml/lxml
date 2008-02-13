@@ -1,3 +1,9 @@
+"""CSS Selectors based on XPath.
+
+This module supports selecting XML/HTML tags based on CSS selectors.
+See the `CSSSelector` class for details.
+"""
+
 import re
 from lxml import etree
 
@@ -11,7 +17,17 @@ class ExpressionError(RuntimeError):
     pass
 
 class CSSSelector(etree.XPath):
+    """A CSS selector.
 
+    Usage::
+
+        >>> from lxml import etree, cssselect
+        >>> select = cssselect.CSSSelector("a tag > child")
+
+        >>> root = etree.XML("<a><b><c/><tag><child>TEXT</child></tag></b></a>")
+        >>> [ el.tag for el in select(root) ]
+        ['child']
+    """
     def __init__(self, css):
         path = css_to_xpath(css)
         etree.XPath.__init__(self, path)
@@ -575,9 +591,8 @@ class XPathExpr(object):
         self.condition = other.condition
 
 class XPathExprOr(XPathExpr):
-
     """
-    Represents on |'d expressions.  Note that unfortunately it isn't
+    Represents |'d expressions.  Note that unfortunately it isn't
     the union, it's the sum, so duplicate elements will appear.
     """
 

@@ -1,5 +1,5 @@
-"""The lxml.etree module implements the extended ElementTree API for
-XML.
+"""The ``lxml.etree`` module implements the extended ElementTree API
+for XML.
 """
 
 __docformat__ = "restructuredtext en"

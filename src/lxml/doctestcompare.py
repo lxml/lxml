@@ -1,8 +1,16 @@
 """
 lxml-based doctest output comparison.
 
-To use this you must call ``lxmldoctest.install()``, which will cause
-doctest to use this in all subsequent calls.
+Note: normally, you should just import the `lxml.usedoctest` and
+`lxml.html.usedoctest` modules from within a doctest, instead of this
+one::
+
+    >>> import lxml.usedoctest # for XML output
+
+    >>> import lxml.html.usedoctest # for HTML output
+
+To use this module directly, you must call ``lxmldoctest.install()``,
+which will cause doctest to use this in all subsequent calls.
 
 This changes the way output is checked and comparisons are made for
 XML or HTML-like content.

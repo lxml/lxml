@@ -1,3 +1,6 @@
+"""The ``lxml.html`` tool set for HTML handling.
+"""
+
 import threading
 import re
 import urlparse

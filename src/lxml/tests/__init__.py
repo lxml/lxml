@@ -1,2 +1,4 @@
-# this is a package
+"""
+The lxml test suite for lxml, ElementTree and cElementTree.
+"""
 

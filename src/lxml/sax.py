@@ -1,3 +1,15 @@
+"""
+SAX-based adapter to copy trees from/to the Python standard library.
+
+Use the `ElementTreeContentHandler` class to build an ElementTree from
+SAX events.
+
+Use the `ElementTreeProducer` class or the `saxify()` function to fire
+the SAX events of an ElementTree against a SAX ContentHandler.
+
+See http://codespeak.net/lxml/sax.html
+"""
+
 from xml.sax.handler import ContentHandler
 import etree
 from etree import ElementTree, SubElement
@@ -220,4 +232,7 @@ class ElementTreeProducer(object):
         return prefix + ':' + local_name
 
 def saxify(element_or_tree, content_handler):
+    """One-shot helper to generate SAX events from an XML tree and fire
+    them against a SAX ContentHandler.
+    """
     return ElementTreeProducer(element_or_tree, content_handler).saxify()

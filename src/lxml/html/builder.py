@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------
 
 """
-HTML specialisation of ``builder.py`` by Fredrik Lundh
+A set of HTML generator tags for building HTML documents.
 
 Usage::
 
