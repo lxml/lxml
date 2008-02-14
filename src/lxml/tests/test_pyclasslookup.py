@@ -259,6 +259,43 @@ class PyClassLookupTestCase(HelperTestCase):
         self.assertEquals([ c.tag for c in root.getchildren() ],
                           child_tags)
 
+    def test_lookup_iterchildren(self):
+        el_class = self._buildElementClass()
+        el_class.CHILD_TAGS = None
+        def lookup(doc, el):
+            if el_class.CHILD_TAGS is None:
+                el_class.CHILD_TAGS = [ c.tag for c in el.iterchildren() ]
+            return el_class
+        self._setClassLookup(lookup)
+        root = self.XML(xml_str)
+        child_tags = root.CHILD_TAGS
+        self.assertNotEquals(None, child_tags)
+        self.assertEquals([ c.tag for c in root.getchildren() ],
+                          child_tags)
+
+    def test_lookup_iterchildren_tag(self):
+        el_class = self._buildElementClass()
+        el_class.CHILD_TAGS = None
+        def lookup(doc, el):
+            if not el_class.CHILD_TAGS:
+                el_class.CHILD_TAGS = [
+                    c.tag for c in el.iterchildren(tag='{objectified}c2') ]
+            return el_class
+        self._setClassLookup(lookup)
+
+        root = self.XML(xml_str)
+        child_tags = root.CHILD_TAGS
+        self.assertNotEquals(None, child_tags)
+        self.assertEquals([], child_tags)
+
+        c1 = root[0]
+        child_tags = root.CHILD_TAGS
+        self.assertNotEquals(None, child_tags)
+        self.assertNotEquals([], child_tags)
+        self.assertEquals(
+            [ c.tag for c in root[0].iterchildren(tag='{objectified}c2') ],
+            child_tags)
+
     def test_lookup_getparent(self):
         el_class = self._buildElementClass()
         el_class.PARENT = None
