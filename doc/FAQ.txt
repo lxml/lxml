@@ -57,19 +57,23 @@ General Questions
 Is there a tutorial?
 --------------------
 
-Read the `lxml.etree Tutorial`_.  While this is still work in progress (just
-as any good documentation), it provides an overview of the most important
-concepts in ``lxml.etree``.  If you want to help out, the tutorial is a very
-good place to start.
+Read the `lxml.etree Tutorial`_.  While this is still work in progress
+(just as any good documentation), it provides an overview of the most
+important concepts in ``lxml.etree``.  If you want to help out,
+improving the tutorial is a very good place to start.
 
 There is also a `tutorial for ElementTree`_ which works for ``lxml.etree``.
 The `API documentation`_ also contains many examples for ``lxml.etree``.  To
 learn using ``lxml.objectify``, read the `objectify documentation`_.
 
+John Shipman has written another tutorial called `Python XML
+processing with lxml`_ that contains lots of examples.
+
 .. _`lxml.etree Tutorial`:      tutorial.html
 .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
 .. _`API documentation`:        api.html
 .. _`objectify documentation`:  objectify.html
+.. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
 
 
 Where can I find more documentation about lxml?
