@@ -317,26 +317,17 @@ cdef class ObjectifiedElement(ElementBase):
 
     def __delitem__(self, key):
         cdef Py_ssize_t start, stop, step, slicelength
+        parent = self.getparent()
+        if parent is None:
+            raise TypeError("deleting items not supported by root element")
         if python.PySlice_Check(key):
             # slice deletion
-            python.PySlice_GetIndicesEx(
-                key, _countSiblings(self._c_node),
-                &start, &stop, &step, &slicelength)
-            parent = self.getparent()
-            if parent is None:
-                raise TypeError("deleting slices of root element not supported")
-            if step < 0:
-                del_items = list(self)[start:stop:step]
-            else:
-                del_items = list(islice(self, start, stop, step))
+            del_items = list(self)[key]
             remove = parent.remove
             for el in del_items:
                 remove(el)
         else:
             # normal index deletion
-            parent = self.getparent()
-            if parent is None:
-                raise TypeError("deleting items not supported by root element")
             sibling = self.__getitem__(key)
             parent.remove(sibling)
 
