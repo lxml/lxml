@@ -16,31 +16,6 @@ there are multiple children with the same name, slicing and indexing can be
 used.  Python data types are extracted from XML content automatically and made
 available to the normal Python operators.
 
-To set up and use ``objectify``, you need both the ``lxml.etree`` module and
-``lxml.objectify``::
-
-    >>> from lxml import etree
-    >>> from lxml import objectify
-
-The objectify API is very different from the ElementTree API.  If it
-is used, it should not be mixed with other element implementations
-(such as trees parsed with ``lxml.etree``), to avoid non-obvious
-behaviour.
-
-The `benchmark page`_ has some hints on performance optimisation of code using
-lxml.objectify.
-
-To make the doctests in this document look a little nicer, we also use this:
-
-    >>> import lxml.usedoctest
-
-Imported from within a doctest, this relieves us from caring about the exact
-formatting of XML output.
-
-.. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
-.. _gnosis.xml.objectify: http://gnosis.cx/download/
-.. _`benchmark page`: performance.html#lxml-objectify
-
 .. contents::
 ..
    1  The lxml.objectify API
@@ -60,6 +35,33 @@ formatting of XML output.
      5.4  Defining additional data classes
      5.5  Advanced element class lookup
    6  What is different from lxml.etree?
+
+.. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
+.. _gnosis.xml.objectify: http://gnosis.cx/download/
+.. _`benchmark page`: performance.html#lxml-objectify
+
+
+To set up and use ``objectify``, you need both the ``lxml.etree``
+module and ``lxml.objectify``::
+
+    >>> from lxml import etree
+    >>> from lxml import objectify
+
+The objectify API is very different from the ElementTree API.  If it
+is used, it should not be mixed with other element implementations
+(such as trees parsed with ``lxml.etree``), to avoid non-obvious
+behaviour.
+
+The `benchmark page`_ has some hints on performance optimisation of
+code using lxml.objectify.
+
+To make the doctests in this document look a little nicer, we also use
+this::
+
+    >>> import lxml.usedoctest
+
+Imported from within a doctest, this relieves us from caring about the exact
+formatting of XML output.
 
 
 The lxml.objectify API
