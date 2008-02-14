@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+2.0.2 (Under development)
+=========================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Slice deletion bug fixed in objectify.
+
+Other changes
+-------------
+
+
 2.0.1 (2008-02-13)
 ==================
 
