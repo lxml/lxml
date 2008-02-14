@@ -207,7 +207,7 @@ cdef class _ElementProxy:
         self._assertNode()
         return cetree.collectAttributes(self._c_node, 3)
 
-    def getchildren(self):
+    cpdef getchildren(self):
         """Returns all subelements. The elements are returned in document
         order.
         """
