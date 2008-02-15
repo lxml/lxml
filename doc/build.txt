@@ -44,10 +44,10 @@ checkout (e.g. to test a bug fix that has not been release yet) or if
 want to be an lxml developer, then you do need a working Cython
 installation.  You can use EasyInstall_ to install it::
 
-    easy_install Cython==0.9.6.11b
+    easy_install Cython==0.9.6.12
 
-lxml currently requires Cython 0.9.6.11b, later versions were not
-tested.
+lxml currently requires Cython 0.9.6.11b or 0.9.6.12, later versions
+were not tested.
 
 
 Subversion

@@ -22,4 +22,4 @@ problems persist, please report to the lxml mailing list.  Try to provide a
 clear description of what you did to run into the problems and provide the
 compiler output that shows the error.
 
-.. Pyrex_: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
