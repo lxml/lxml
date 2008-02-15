@@ -67,7 +67,7 @@ Cython modules.
 
 
 Concepts
---------
+========
 
 * proxies
 * naming conventions
@@ -75,7 +75,7 @@ Concepts
 
 
 lxml.etree
-----------
+==========
 
 The main module, ``lxml.etree``, is in the file ``lxml.etree.pyx``.
 It implements the main functions and types of the ElementTree API, and
