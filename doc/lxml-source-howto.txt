@@ -1,0 +1,174 @@
+==============================
+How to read the source of lxml
+==============================
+
+:Author:
+  Stefan Behnel
+
+.. meta::
+  :description: How to read and work on the source code of lxml
+  :keywords: lxml, XML, Cython, source code, develop, comprehend, understand
+
+This document describes how to read the source code of lxml_ and how
+to start working on it.  You might also be interested in the companion
+document that describes `how to build lxml from sources`_.
+
+.. _lxml: http://codespeak.net/lxml
+.. _`how to build lxml from sources`: build.html
+
+.. contents::
+..
+
+
+What is Cython?
+===============
+
+.. _Cython: http://cython.org/
+.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
+
+Cython_ is the language that lxml is written in.  It is a very
+Python-like language that was specifically designed for writing Python
+extension modules.  The language is so close to Python that the Cython
+compiler can actually compile many, many Python programs to C without
+major modifications.  But the real speed gains of a C compilation come
+from type annotations that were added to the language and that allow
+Cython to generate very efficient C code.
+
+The reason why Cython (or actually its predecessor Pyrex_ at the time)
+was chosen as an implementation language for lxml, is that it makes it
+very easy to interface with both the Python world and external C code.
+Cython generates all the necessary glue code for the Python API,
+including Python types and reference counting for Python objects.
+Calling into C code is not more than declaring the signature of the
+function and maybe some variables as being C types, pointers or
+structs, and then calling it.  The rest of the code is just plain
+Python code.
+
+
+Where to start?
+===============
+
+First of all, read `how to build lxml from sources` to learn how to
+retrieve the source code from the Subversion repository and how to set
+up a build environment.  The source code lives in the subdirectory
+``src`` of the checkout.  The documentation (which is written in the
+`ReStructured Text`_ format) lives in the ``doc`` directory.
+
+.. _`ReStructured Text`: 
+
+The main extension modules in lxml are ``lxml.etree`` and
+``lxml.objectify``.  All main modules have the file extension
+``.pyx``, which shows the descendence from Pyrex.  As usual in Python,
+the main files start with a short description and a couple of imports.
+Cython destinguishes between the run-time ``import`` statement (as
+known from Python) and the compile-time ``cimport`` statement, which
+imports C declarations, either from external libraries or from other
+Cython modules.
+
+
+Concepts
+--------
+
+* proxies
+* naming conventions
+* 
+
+
+lxml.etree
+----------
+
+The main module, ``lxml.etree``, is in the file ``lxml.etree.pyx``.
+It implements the main functions and types of the ElementTree API, and
+is therefore the best place to start if you want to find out how a
+specific feature is implemented.
+
+At the very end of the file, it contains a series of ``include``
+statements that merge the rest of the implementation into the
+generated C code.  Yes, you read right: no importing, no source file
+namespacing, just plain good old include and a huge C code result that
+we throw right into the C compiler.
+
+The main files are:
+
+proxy.pxi:
+
+    Very low-level functions for memory allocation/deallocation
+    and Element proxy handling.  Ignoring this for the beginning
+    will keep your head from exploding.
+
+apihelpers.pxi:
+
+    Private C helper functions.  Most of the little functions that are
+    used all over the place are defined here.  This includes things
+    like reading out the text content of a libxml2 tree node, checking
+    input from the API level, creating a new Element node or handling
+    attribute values.  If you want to work on the lxml code, you
+    should keep these functions in the back of your head, as they will
+    definitely make your life easier.
+
+xmlerror.pxi:
+
+    Error log handling.  All error messages that libxml2 generates
+    internally walk through the code in this file to end up in lxml's
+    Python level error logs.
+
+    At the end of the file, you will find a long list of named error
+    codes.  It is generated from the libxml2 HTML documentation (using
+    lxml, of course).  See the script ``update-error-constants.py``
+    for this.
+
+classlookup.pxi:
+
+    Element class lookup mechanisms.  The main API and engines for
+    those who want to define custom Element classes and inject them
+    into lxml.
+
+nsclasses.pxi:
+
+    Namespace implementation and registry.  The registry and engine
+    for Element classes that use the ElementNamespaceClassLookup
+    scheme.
+
+docloader.pxi:
+
+    Support for custom document loaders.  Base class and registry for
+    custom document resolvers.
+
+parser.pxi:
+
+    Parsers for XML and HTML.  This is the main parser engine.  It's
+    the reason why you can parse a document from various sources in
+    two lines of Python code.  It's definitely not the right place to
+    start reading lxml's soure code.
+
+parsertarget.pxi:
+
+    ET Parser target.
+
+serializer.pxi:
+
+    XML output functions
+
+iterparse.pxi:
+
+    incremental XML parsing
+
+xmlid.pxi:
+
+    XMLID and IDDict
+
+xinclude.pxi:
+
+    XInclude
+
+extensions.pxi:
+
+    XPath/XSLT extension functions
+
+xpath.pxi:
+
+    XPath evaluation
+
+xslt.pxi:
+
+    XSL transformations
