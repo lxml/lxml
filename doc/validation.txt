@@ -182,14 +182,23 @@ messages::
 
   >>> log = relaxng.error_log
   >>> print log.last_error
-  <string>:1:0:ERROR:RELAXNGV:ERR_LT_IN_ATTRIBUTE: Did not expect element c there
+  <string>:1:0:ERROR:RELAXNGV:RELAXNG_ERR_ELEMWRONG: Did not expect element c there
 
 You can see that the error (ERROR) happened during RelaxNG validation
-(RELAXNGV).  The message then tells you what went wrong.  Note that this error
-log is local to the RelaxNG object.  It will only contain log entries that
-appeared during the validation.  The DocumentInvalid exception raised by the
-``assertValid`` method above provides access to the global error log (like all
-other lxml exceptions).
+(RELAXNGV).  The message then tells you what went wrong.  You can also
+look at the error domain and its type directly::
+
+  >>> error = log.last_error
+  >>> print error.domain_name
+  RELAXNGV
+  >>> print error.type_name
+  RELAXNG_ERR_ELEMWRONG
+
+Note that this error log is local to the RelaxNG object.  It will only
+contain log entries that appeared during the validation.  The
+DocumentInvalid exception raised by the ``assertValid`` method above
+provides access to the global error log (like all other lxml
+exceptions).
 
 Similar to XSLT, there's also a less efficient but easier shortcut method to
 do one-shot RelaxNG validation::

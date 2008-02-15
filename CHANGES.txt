@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Error type names in RelaxNG were reported incorrectly.
+
 * Slice deletion bug fixed in objectify.
 
 Other changes

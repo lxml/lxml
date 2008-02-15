@@ -768,59 +768,6 @@ cdef extern from "libxml/xmlerror.h":
         XML_CHECK_                                         =    6005 # 5033
         XML_CHECK_X                                        =    6006 # 503
 
-    ctypedef enum xmlXPathError:
-        XPATH_EXPRESSION_OK                                =       0
-        XPATH_NUMBER_ERROR                                 =       1
-        XPATH_UNFINISHED_LITERAL_ERROR                     =       2
-        XPATH_START_LITERAL_ERROR                          =       3
-        XPATH_VARIABLE_REF_ERROR                           =       4
-        XPATH_UNDEF_VARIABLE_ERROR                         =       5
-        XPATH_INVALID_PREDICATE_ERROR                      =       6
-        XPATH_EXPR_ERROR                                   =       7
-        XPATH_UNCLOSED_ERROR                               =       8
-        XPATH_UNKNOWN_FUNC_ERROR                           =       9
-        XPATH_INVALID_OPERAND                              =      10
-        XPATH_INVALID_TYPE                                 =      11
-        XPATH_INVALID_ARITY                                =      12
-        XPATH_INVALID_CTXT_SIZE                            =      13
-        XPATH_INVALID_CTXT_POSITION                        =      14
-        XPATH_MEMORY_ERROR                                 =      15
-        XPTR_SYNTAX_ERROR                                  =      16
-        XPTR_RESOURCE_ERROR                                =      17
-        XPTR_SUB_RESOURCE_ERROR                            =      18
-        XPATH_UNDEF_PREFIX_ERROR                           =      19
-        XPATH_ENCODING_ERROR                               =      20
-        XPATH_INVALID_CHAR_ERROR                           =      21
-        XPATH_INVALID_CTXT                                 =      22
-
-    ctypedef enum xmlSchemaValidError:
-        XML_SCHEMAS_ERR_OK                                 =       0
-        XML_SCHEMAS_ERR_NOROOT                             =       1
-        XML_SCHEMAS_ERR_UNDECLAREDELEM                     =       2
-        XML_SCHEMAS_ERR_NOTTOPLEVEL                        =       3
-        XML_SCHEMAS_ERR_MISSING                            =       4
-        XML_SCHEMAS_ERR_WRONGELEM                          =       5
-        XML_SCHEMAS_ERR_NOTYPE                             =       6
-        XML_SCHEMAS_ERR_NOROLLBACK                         =       7
-        XML_SCHEMAS_ERR_ISABSTRACT                         =       8
-        XML_SCHEMAS_ERR_NOTEMPTY                           =       9
-        XML_SCHEMAS_ERR_ELEMCONT                           =      10
-        XML_SCHEMAS_ERR_HAVEDEFAULT                        =      11
-        XML_SCHEMAS_ERR_NOTNILLABLE                        =      12
-        XML_SCHEMAS_ERR_EXTRACONTENT                       =      13
-        XML_SCHEMAS_ERR_INVALIDATTR                        =      14
-        XML_SCHEMAS_ERR_INVALIDELEM                        =      15
-        XML_SCHEMAS_ERR_NOTDETERMINIST                     =      16
-        XML_SCHEMAS_ERR_CONSTRUCT                          =      17
-        XML_SCHEMAS_ERR_INTERNAL                           =      18
-        XML_SCHEMAS_ERR_NOTSIMPLE                          =      19
-        XML_SCHEMAS_ERR_ATTRUNKNOWN                        =      20
-        XML_SCHEMAS_ERR_ATTRINVALID                        =      21
-        XML_SCHEMAS_ERR_VALUE                              =      22
-        XML_SCHEMAS_ERR_FACET                              =      23
-        XML_SCHEMAS_ERR_                                   =      24
-        XML_SCHEMAS_ERR_XXX                                =      25
-
     ctypedef enum xmlRelaxNGValidErr:
         XML_RELAXNG_OK                                     =       0
         XML_RELAXNG_ERR_MEMORY                             =       1
