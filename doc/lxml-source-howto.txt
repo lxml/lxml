@@ -15,6 +15,7 @@ document that describes `how to build lxml from sources`_.
 
 .. _lxml: http://codespeak.net/lxml
 .. _`how to build lxml from sources`: build.html
+.. _`ReStructured Text`: http://docutils.sourceforge.net/rst.html
 
 .. contents::
 ..
@@ -54,8 +55,6 @@ up a build environment.  The source code lives in the subdirectory
 ``src`` of the checkout.  The documentation (which is written in the
 `ReStructured Text`_ format) lives in the ``doc`` directory.
 
-.. _`ReStructured Text`: 
-
 The main extension modules in lxml are ``lxml.etree`` and
 ``lxml.objectify``.  All main modules have the file extension
 ``.pyx``, which shows the descendence from Pyrex.  As usual in Python,
@@ -71,7 +70,16 @@ Concepts
 
 * proxies
 * naming conventions
-* 
+* ...
+
+
+The documentation
+=================
+
+* docs in ``doc`` directory
+* `ReStructured Text`_ format
+* generated through ``mkhtml.py`` script
+* ...
 
 
 lxml.etree
