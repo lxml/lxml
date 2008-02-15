@@ -45,15 +45,21 @@ function and maybe some variables as being C types, pointers or
 structs, and then calling it.  The rest of the code is just plain
 Python code.
 
+Even if you are not familiar with Cython, you should keep in mind that
+a slow implementation of a feature is better than none.  So, if you
+want to contribute and have an idea what code you want to write, feel
+free to start with a pure Python implementation.  Chances are, if you
+get the change officially accepted and integrated, others will take
+the time to optimise it so that it runs fast in Cython.
+
 
 Where to start?
 ===============
 
 First of all, read `how to build lxml from sources` to learn how to
-retrieve the source code from the Subversion repository and how to set
-up a build environment.  The source code lives in the subdirectory
-``src`` of the checkout.  The documentation (which is written in the
-`ReStructured Text`_ format) lives in the ``doc`` directory.
+retrieve the source code from the Subversion repository and how to
+build it.  The source code lives in the subdirectory ``src`` of the
+checkout.
 
 The main extension modules in lxml are ``lxml.etree`` and
 ``lxml.objectify``.  All main modules have the file extension
@@ -65,14 +71,6 @@ imports C declarations, either from external libraries or from other
 Cython modules.
 
 
-Concepts
---------
-
-* proxies
-* naming conventions
-* ...
-
-
 The documentation
 -----------------
 
@@ -82,10 +80,18 @@ The documentation
 * ...
 
 
+Concepts
+--------
+
+* proxies
+* naming conventions
+* ...
+
+
 lxml.etree
 ==========
 
-The main module, ``lxml.etree``, is in the file ``lxml.etree.pyx``.
+The main module, ``lxml.etree``, is in the file **lxml.etree.pyx**.
 It implements the main functions and types of the ElementTree API, and
 is therefore the best place to start if you want to find out how a
 specific feature is implemented.
@@ -93,10 +99,10 @@ specific feature is implemented.
 At the very end of the file, it contains a series of ``include``
 statements that merge the rest of the implementation into the
 generated C code.  Yes, you read right: no importing, no source file
-namespacing, just plain good old include and a huge C code result that
-we throw right into the C compiler.
+namespacing, just plain good old include and a huge C code result of
+more than 100,000 lines that we throw right into the C compiler.
 
-The main files are:
+The main include files are:
 
 proxy.pxi:
 
@@ -155,28 +161,45 @@ parsertarget.pxi:
 
 serializer.pxi:
 
-    XML output functions
+    XML output functions.  Basically everything that creates byte
+    sequences from XML trees.
 
 iterparse.pxi:
 
-    incremental XML parsing
+    Incremental XML parsing.  An iterator class that builds iterparse
+    events while parsing.
 
 xmlid.pxi:
 
-    XMLID and IDDict
+    XMLID and IDDict, a dictionary-like way to find Elements by their
+    XML-ID attribute.
 
 xinclude.pxi:
 
-    XInclude
+    XInclude implementation.
 
 extensions.pxi:
 
-    XPath/XSLT extension functions
+    Infrastructure for extension functions in XPath/XSLT, including
+    XPath value conversion and function registration.
 
 xpath.pxi:
 
-    XPath evaluation
+    XPath evaluators.
 
 xslt.pxi:
 
-    XSL transformations
+    XSL transformations, including the ``XSLT`` class, document lookup
+    handling and access control.
+
+
+lxml.objectify
+==============
+
+* ...
+
+
+lxml.html
+=========
+
+* ...
