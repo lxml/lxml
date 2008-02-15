@@ -66,7 +66,7 @@ Cython modules.
 
 
 Concepts
-========
+--------
 
 * proxies
 * naming conventions
@@ -74,7 +74,7 @@ Concepts
 
 
 The documentation
-=================
+-----------------
 
 * docs in ``doc`` directory
 * `ReStructured Text`_ format
