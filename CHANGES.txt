@@ -18,6 +18,12 @@ Bugs fixed
 Other changes
 -------------
 
+* Add a ``method`` argument to ``lxml.html.tostring``
+  (``method="xml"`` for XHTML output).
+
+* Make it clearer that methods like ``lxml.html.fromstring`` take a
+  ``base_url`` argument.
+
 
 2.0.1 (2008-02-13)
 ==================

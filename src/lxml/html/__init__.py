@@ -450,7 +450,7 @@ def document_fromstring(html, **kw):
             "Document is empty")
     return value
 
-def fragments_fromstring(html, no_leading_text=False, **kw):
+def fragments_fromstring(html, no_leading_text=False, base_url=None, **kw):
     """
     Parses several HTML elements, returning a list of elements.
 
@@ -458,12 +458,14 @@ def fragments_fromstring(html, no_leading_text=False, **kw):
     whitespace is removed).  If no_leading_text is true, then it will
     be an error if there is leading text, and it will always be a list
     of only elements.
+
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
     # FIXME: check what happens when you give html with a body, head, etc.
     start = html[:20].lstrip().lower()
     if not start.startswith('<html') and not start.startswith('<!doctype'):
         html = '<html><body>%s</body></html>' % html
-    doc = document_fromstring(html, **kw)
+    doc = document_fromstring(html, base_url=base_url, **kw)
     assert doc.tag == 'html'
     bodies = [e for e in doc if e.tag == 'body']
     assert len(bodies) == 1, ("too many bodies: %r in %r" % (bodies, html))
@@ -479,7 +481,7 @@ def fragments_fromstring(html, no_leading_text=False, **kw):
     # would be nice
     return elements
 
-def fragment_fromstring(html, create_parent=False, **kw):
+def fragment_fromstring(html, create_parent=False, base_url=None, **kw):
     """
     Parses a single HTML element; it is an error if there is more than
     one element, or if anything but whitespace precedes or follows the
@@ -487,13 +489,15 @@ def fragment_fromstring(html, create_parent=False, **kw):
 
     If create_parent is true (or is a tag name) then a parent node
     will be created to encapsulate the HTML in a single element.
+
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
     if create_parent:
         if not isinstance(create_parent, basestring):
             create_parent = 'div'
         return fragment_fromstring('<%s>%s</%s>' % (
-            create_parent, html, create_parent), **kw)
-    elements = fragments_fromstring(html, no_leading_text=True)
+            create_parent, html, create_parent), base_url=base_url, **kw)
+    elements = fragments_fromstring(html, no_leading_text=True, base_url=base_url, **kw)
     if not elements:
         raise etree.ParserError(
             "No elements found")
@@ -508,19 +512,21 @@ def fragment_fromstring(html, create_parent=False, **kw):
     el.tail = None
     return el
 
-def fromstring(html, **kw):
+def fromstring(html, base_url=None, **kw):
     """
     Parse the html, returning a single element/document.
 
     This tries to minimally parse the chunk of text, without knowing if it
     is a fragment or a document.
+
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
     start = html[:10].lstrip().lower()
     if start.startswith('<html') or start.startswith('<!doctype'):
         # Looks like a full HTML document
-        return document_fromstring(html, **kw)
+        return document_fromstring(html, base_url=base_url, **kw)
     # otherwise, lets parse it out...
-    doc = document_fromstring(html, **kw)
+    doc = document_fromstring(html, base_url=base_url, **kw)
     bodies = doc.findall('body')
     if bodies:
         body = bodies[0]
@@ -563,16 +569,20 @@ def fromstring(html, **kw):
         body.tag = 'span'
     return body
 
-def parse(filename, parser=None, **kw):
+def parse(filename_or_url, parser=None, **kw):
     """
-    Parse a filename, URL, or file-like object into an HTML document.
+    Parse a filename, URL, or file-like object into an HTML document
+    tree.  Note: this returns a tree, not an element.  Use
+    ``parse(...).getroot()`` to get the document.
 
-    You may pass the keyword argument ``base_url='http://...'`` to set
-    the base URL.
+    You cannot give a base_url, but the filename/url will serve as
+    that URL.  If you pass in a file-like object and that object has a
+    ``.geturl()`` method then that will be used as the base_url
+    (``urllib.urlopen()`` returns file-like objects with this method).
     """
     if parser is None:
         parser = html_parser
-    return etree.parse(filename, parser, **kw)
+    return etree.parse(filename_or_url, parser, **kw)
 
 def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be
@@ -1264,16 +1274,22 @@ __replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type".*?>').sub
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
-             encoding=None):
+             encoding=None, method="html"):
     """
     return HTML string representation of the document given
  
     note: if include_meta_content_type is true this will create a meta
-    http-equiv="Content" tag in the head; regardless of the value of include_meta_content_type
-    any existing meta http-equiv="Content" tag will be removed
+    http-equiv="Content-Type" tag in the head; regardless of the value of include_meta_content_type
+    any existing meta http-equiv="Content-Type" tag will be removed
+
+    encoding controls the output encoding (defauts to ASCII, with &#
+    character references for any characters outside of ASCII)
+
+    method, which defaults to 'html', can also be 'xml' for xhtml
+    output.
     """
     assert doc is not None
-    html = etree.tostring(doc, method="html", pretty_print=pretty_print,
+    html = etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding)
     if not include_meta_content_type:
         html = __replace_meta_content_type('', html)
