@@ -16,9 +16,19 @@ document that describes `how to build lxml from sources`_.
 .. _lxml: http://codespeak.net/lxml
 .. _`how to build lxml from sources`: build.html
 .. _`ReStructured Text`: http://docutils.sourceforge.net/rst.html
+.. _epydoc: http://epydoc.sourceforge.net/
+.. _docutils: http://docutils.sourceforge.net/
+.. _`C-level API`: capi.html
 
 .. contents::
 ..
+   1  What is Cython?
+   2  Where to start?
+     2.1  Concepts
+     2.2  The documentation
+   3  lxml.etree
+   4  lxml.objectify
+   5  lxml.html
 
 
 What is Cython?
@@ -29,21 +39,23 @@ What is Cython?
 
 Cython_ is the language that lxml is written in.  It is a very
 Python-like language that was specifically designed for writing Python
-extension modules.  The language is so close to Python that the Cython
-compiler can actually compile many, many Python programs to C without
-major modifications.  But the real speed gains of a C compilation come
-from type annotations that were added to the language and that allow
-Cython to generate very efficient C code.
+extension modules.
 
 The reason why Cython (or actually its predecessor Pyrex_ at the time)
 was chosen as an implementation language for lxml, is that it makes it
 very easy to interface with both the Python world and external C code.
 Cython generates all the necessary glue code for the Python API,
-including Python types and reference counting for Python objects.
-Calling into C code is not more than declaring the signature of the
-function and maybe some variables as being C types, pointers or
-structs, and then calling it.  The rest of the code is just plain
-Python code.
+including Python types, calling conventions and reference counting.
+On the other side of the table, calling into C code is not more than
+declaring the signature of the function and maybe some variables as
+being C types, pointers or structs, and then calling it.  The rest of
+the code is just plain Python code.
+
+The Cython language is so close to Python that the Cython compiler can
+actually compile many, many Python programs to C without major
+modifications.  But the real speed gains of a C compilation come from
+type annotations that were added to the language and that allow Cython
+to generate very efficient C code.
 
 Even if you are not familiar with Cython, you should keep in mind that
 a slow implementation of a feature is better than none.  So, if you
@@ -56,7 +68,7 @@ the time to optimise it so that it runs fast in Cython.
 Where to start?
 ===============
 
-First of all, read `how to build lxml from sources` to learn how to
+First of all, read `how to build lxml from sources`_ to learn how to
 retrieve the source code from the Subversion repository and how to
 build it.  The source code lives in the subdirectory ``src`` of the
 checkout.
@@ -65,19 +77,10 @@ The main extension modules in lxml are ``lxml.etree`` and
 ``lxml.objectify``.  All main modules have the file extension
 ``.pyx``, which shows the descendence from Pyrex.  As usual in Python,
 the main files start with a short description and a couple of imports.
-Cython destinguishes between the run-time ``import`` statement (as
+Cython distinguishes between the run-time ``import`` statement (as
 known from Python) and the compile-time ``cimport`` statement, which
 imports C declarations, either from external libraries or from other
 Cython modules.
-
-
-The documentation
------------------
-
-* docs in ``doc`` directory
-* `ReStructured Text`_ format
-* generated through ``mkhtml.py`` script
-* ...
 
 
 Concepts
@@ -86,6 +89,38 @@ Concepts
 * proxies
 * naming conventions
 * ...
+
+
+The documentation
+-----------------
+
+An important part of lxml is the documentation that lives in the
+``doc`` directory.  It describes a large part of the API and comprises
+a lot of example code in the form of doctests.
+
+The documentation is written in the `ReStructured Text`_ format, a
+very powerful text markup language that looks almost like plain text.
+It is part of the docutils_ package.
+
+The project web site of lxml_ is completely generated from these text
+documents.  Even the side menu is just collected from the table of
+contents that the ReST processor writes into each HTML page.
+Obviously, we use lxml for this.
+
+The easiest way to generate the HTML pages is by calling::
+
+    make html
+
+This will call the script ``doc/mkhtml.py`` to run the ReST processor
+on the files.  After generating an HTML page the script parses it back
+in to build the side menu, and injects the complete menu into each
+page at the very end.
+
+Running the ``make`` command will also generate the API documentation
+if you have epydoc_ installed.  The epydoc package will import and
+introspect the extension modules and also introspect and parse the
+Python modules of lxml.  The aggregated information will then be
+written out into an HTML documentation site.
 
 
 lxml.etree
@@ -104,14 +139,7 @@ more than 100,000 lines that we throw right into the C compiler.
 
 The main include files are:
 
-proxy.pxi:
-
-    Very low-level functions for memory allocation/deallocation
-    and Element proxy handling.  Ignoring this for the beginning
-    will keep your head from exploding.
-
-apihelpers.pxi:
-
+apihelpers.pxi
     Private C helper functions.  Most of the little functions that are
     used all over the place are defined here.  This includes things
     like reading out the text content of a libxml2 tree node, checking
@@ -120,8 +148,56 @@ apihelpers.pxi:
     should keep these functions in the back of your head, as they will
     definitely make your life easier.
 
-xmlerror.pxi:
+classlookup.pxi
+    Element class lookup mechanisms.  The main API and engines for
+    those who want to define custom Element classes and inject them
+    into lxml.
 
+docloader.pxi
+    Support for custom document loaders.  Base class and registry for
+    custom document resolvers.
+
+extensions.pxi
+    Infrastructure for extension functions in XPath/XSLT, including
+    XPath value conversion and function registration.
+
+iterparse.pxi
+    Incremental XML parsing.  An iterator class that builds iterparse
+    events while parsing.
+
+nsclasses.pxi
+    Namespace implementation and registry.  The registry and engine
+    for Element classes that use the ElementNamespaceClassLookup
+    scheme.
+
+parser.pxi
+    Parsers for XML and HTML.  This is the main parser engine.  It's
+    the reason why you can parse a document from various sources in
+    two lines of Python code.  It's definitely not the right place to
+    start reading lxml's soure code.
+
+parsertarget.pxi
+    An ElementTree compatible parser target implementation based on
+    the SAX2 interface of libxml2.
+
+proxy.pxi
+    Very low-level functions for memory allocation/deallocation
+    and Element proxy handling.  Ignoring this for the beginning
+    will safe your head from exploding.
+
+public-api.pxi
+    The set of C functions that are exported to other extension
+    modules at the C level.  For example, ``lxml.objectify`` makes use
+    of these.  See the `C-level API` documentation.
+
+serializer.pxi
+    XML output functions.  Basically everything that creates byte
+    sequences from XML trees.
+
+xinclude.pxi
+    XInclude implementation.
+
+xmlerror.pxi
     Error log handling.  All error messages that libxml2 generates
     internally walk through the code in this file to end up in lxml's
     Python level error logs.
@@ -131,66 +207,41 @@ xmlerror.pxi:
     lxml, of course).  See the script ``update-error-constants.py``
     for this.
 
-classlookup.pxi:
-
-    Element class lookup mechanisms.  The main API and engines for
-    those who want to define custom Element classes and inject them
-    into lxml.
-
-nsclasses.pxi:
-
-    Namespace implementation and registry.  The registry and engine
-    for Element classes that use the ElementNamespaceClassLookup
-    scheme.
-
-docloader.pxi:
-
-    Support for custom document loaders.  Base class and registry for
-    custom document resolvers.
-
-parser.pxi:
-
-    Parsers for XML and HTML.  This is the main parser engine.  It's
-    the reason why you can parse a document from various sources in
-    two lines of Python code.  It's definitely not the right place to
-    start reading lxml's soure code.
-
-parsertarget.pxi:
-
-    ET Parser target.
-
-serializer.pxi:
-
-    XML output functions.  Basically everything that creates byte
-    sequences from XML trees.
-
-iterparse.pxi:
-
-    Incremental XML parsing.  An iterator class that builds iterparse
-    events while parsing.
-
-xmlid.pxi:
-
+xmlid.pxi
     XMLID and IDDict, a dictionary-like way to find Elements by their
     XML-ID attribute.
 
-xinclude.pxi:
-
-    XInclude implementation.
-
-extensions.pxi:
-
-    Infrastructure for extension functions in XPath/XSLT, including
-    XPath value conversion and function registration.
-
-xpath.pxi:
-
+xpath.pxi
     XPath evaluators.
 
-xslt.pxi:
-
+xslt.pxi
     XSL transformations, including the ``XSLT`` class, document lookup
     handling and access control.
+
+The different schema languages (DTD, RelaxNG, XML Schema and
+Schematron) are implemented in the following include files:
+
+* dtd.pxi
+* relaxng.pxi
+* schematron.pxi
+* xmlschema.pxi
+
+
+Python modules
+==============
+
+The ``lxml`` package also contains a number of pure Python modules:
+
+builder.py
+    The E-factory and the ElementBuilder class.  These provide a
+    simple interface to XML tree generation.
+
+cssselect.py
+    A CSS selector implementation based on XPath.  The main class is
+    called ``CSSSelector``.
+
+doctestcompare.py
+    
 
 
 lxml.objectify
