@@ -241,7 +241,19 @@ cssselect.py
     called ``CSSSelector``.
 
 doctestcompare.py
-    
+    ...
+
+ElementInclude.py
+    ...
+
+_elementpath.py
+    ...
+
+sax.py
+    ...
+
+usedoctest.py
+    ...
 
 
 lxml.objectify
