@@ -1166,7 +1166,7 @@ API.  The above setup code then becomes::
 
 .. _`namespace specific classes`: element_classes.html#namespace-class-lookup
 
-See the documentation on `class lookup` schemes for more information.
+See the documentation on `class lookup`_ schemes for more information.
 
 
 What is different from lxml.etree?
