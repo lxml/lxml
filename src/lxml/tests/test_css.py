@@ -1,5 +1,5 @@
 import unittest, sys
-from lxml.tests.common_imports import doctest
+from lxml.tests.common_imports import doctest, HelperTestCase
 from lxml import html
 from lxml import cssselect
 import os
@@ -9,7 +9,7 @@ doc_fn = os.path.join(os.path.dirname(__file__),
 
 # Data borrowed from http://mootools.net/slickspeed/
 
-class CSSTestCase(unittest.TestCase):
+class CSSTestCase(HelperTestCase):
     
     selectors = [
         ## Changed from original; probably because I'm only searching the body
@@ -59,7 +59,7 @@ class CSSTestCase(unittest.TestCase):
 
     def __init__(self, index):
         self.index = index
-        unittest.TestCase.__init__(self)
+        super(HelperTestCase, self).__init__()
 
     def all(cls):
         for i in range(len(cls.selectors)):

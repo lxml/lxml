@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import unittest, doctest
 
-from common_imports import StringIO, etree, SillyFileLike
+from common_imports import StringIO, etree, SillyFileLike, HelperTestCase
 
 ascii_uni = u'a'
 
@@ -13,7 +13,7 @@ uni = u'Ã\u0680\u3120' # some non-ASCII characters
 
 uxml = u"<test><title>test Ã¡\u3120</title><h1>page Ã¡\u3120 title</h1></test>"
 
-class UnicodeTestCase(unittest.TestCase):
+class UnicodeTestCase(HelperTestCase):
     def test_unicode_xml(self):
         tree = etree.XML(u'<p>%s</p>' % uni)
         self.assertEquals(uni, tree.text)

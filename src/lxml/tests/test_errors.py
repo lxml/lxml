@@ -9,7 +9,9 @@ import unittest, doctest
 import sys, gc
 from lxml import etree
 
-class ErrorTestCase(unittest.TestCase):
+from common_imports import HelperTestCase
+
+class ErrorTestCase(HelperTestCase):
     etree = etree
 
     def test_bad_element(self):

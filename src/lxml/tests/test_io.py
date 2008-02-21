@@ -8,9 +8,9 @@ import unittest
 import tempfile, gzip, os, gc, shutil
 
 from common_imports import etree, ElementTree, fileInTestDir
-from common_imports import SillyFileLike, LargeFileLike
+from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 
-class IOTestCaseBase(unittest.TestCase):
+class IOTestCaseBase(HelperTestCase):
     """(c)ElementTree compatibility for IO functions/methods
     """
     etree = None

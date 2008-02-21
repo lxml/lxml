@@ -12,7 +12,7 @@ import unittest, doctest
 import os, re, tempfile, copy, operator, gc
 
 from common_imports import StringIO, etree, ElementTree, cElementTree
-from common_imports import fileInTestDir, canonicalize
+from common_imports import fileInTestDir, canonicalize, HelperTestCase
 
 if cElementTree is not None:
     if tuple([int(n) for n in
@@ -27,11 +27,8 @@ except NameError:
         seq = list(seq)[::-1]
         return seq
 
-class ETreeTestCaseBase(unittest.TestCase):
+class ETreeTestCaseBase(HelperTestCase):
     etree = None
-
-    def tearDown(self):
-        gc.collect()
 
     def test_element(self):
         for i in range(10):
@@ -3289,12 +3286,6 @@ class ETreeTestCaseBase(unittest.TestCase):
             item = mapping[key]
         mapping["key"] = "value"
         self.assertEquals("value", mapping["key"])
-
-    # assertFalse doesn't exist in Python 2.3
-    try:
-        unittest.TestCase.assertFalse
-    except AttributeError:
-        assertFalse = unittest.TestCase.failIf
 
 
 if etree:
