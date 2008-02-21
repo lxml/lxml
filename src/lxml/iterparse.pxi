@@ -291,9 +291,7 @@ cdef class iterparse(_BaseParser):
             filename = _encodeFilename(source)
             source = open(filename, 'rb')
         else:
-            filename = _getFilenameForFile(source)
-            if filename is not None:
-                filename = _encodeFilename(filename)
+            filename = _encodeFilename(_getFilenameForFile(source))
 
         self._source = source
         if html:
