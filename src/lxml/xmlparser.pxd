@@ -120,6 +120,8 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_COMPACT = 65536 # compact small text nodes
 
     cdef void xmlInitParser() nogil
+    cdef void xmlCleanupParser() nogil
+
     cdef int xmlLineNumbersDefault(int onoff) nogil
     cdef xmlParserCtxt* xmlNewParserCtxt() nogil
     cdef xmlParserInput* xmlNewIOInputStream(xmlParserCtxt* ctxt,

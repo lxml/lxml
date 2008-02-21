@@ -305,6 +305,7 @@ cdef extern from "libxml/xmlstring.h":
 
 cdef extern from "libxml/xmlmemory.h":
     cdef void* xmlMalloc(size_t size) nogil
+    cdef int xmlMemBlocks() nogil
 
 cdef extern from "etree_defs.h":
     cdef bint _isElement(xmlNode* node) nogil
