@@ -665,16 +665,14 @@ cdef class _XSLTProcessingInstruction(PIBase):
                 c_href,
                 tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
             if c_href is not NULL:
-                href = funicode(c_href)
+                href_utf = c_href
                 tree.xmlFree(c_href)
-            else:
-                href = funicode(_cstr(href_utf))
-            result_doc = _parseDocument(href, parser)
+            result_doc = _parseDocumentFromURL(href_utf, parser)
             return _elementTreeFactory(result_doc, None)
 
         # ID reference to embedded stylesheet
         # try XML:ID lookup
-        c_href = c_href+1 # skip leading '#'
+        c_href += 1 # skip leading '#'
         c_attr = tree.xmlGetID(self._c_node.doc, c_href)
         if c_attr is not NULL and c_attr.doc is self._c_node.doc:
             result_node = _elementFactory(self._doc, c_attr.parent)
