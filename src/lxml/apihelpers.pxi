@@ -915,23 +915,25 @@ cdef int isutf8py(pystring):
             return -1 # invalid!
         elif is_non_ascii == 0 and not tree.xmlIsChar_ch(c):
             return -1 # invalid!
-        s = s + 1
+        s += 1
     return is_non_ascii
 
 cdef object funicode(char* s):
     cdef Py_ssize_t slen
     cdef char* spos
-    cdef char c
+    cdef bint is_non_ascii
     spos = s
-    c = spos[0]
-    while c != c'\0':
-        if c & 0x80:
+    is_non_ascii = 0
+    while spos[0] != c'\0':
+        if spos[0] & 0x80:
+            is_non_ascii = 1
             break
-        spos = spos + 1
-        c = spos[0]
+        spos += 1
+    while spos[0] != c'\0':
+        spos += 1
     slen = spos - s
-    if c != c'\0':
-        return python.PyUnicode_DecodeUTF8(s, slen+cstd.strlen(spos), NULL)
+    if is_non_ascii:
+        return python.PyUnicode_DecodeUTF8(s, slen, NULL)
     return python.PyString_FromStringAndSize(s, slen)
 
 cdef object _utf8(object s):
@@ -948,6 +950,8 @@ cdef object _utf8(object s):
     return s
 
 cdef object _encodeFilename(object filename):
+    """Make sure a filename is 8-bit encoded (or None).
+    """
     if filename is None:
         return None
     elif python.PyString_Check(filename):
