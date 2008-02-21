@@ -33,6 +33,32 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertRaises(etree.XMLSyntaxError,
                           fromstring, xml, parser=parser)
 
+    def test_dtd_parse_file_not_found(self):
+        fromstring = etree.fromstring
+        dtd_filename = fileInTestDir("__nosuch.dtd")
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % dtd_filename
+        self.assertRaises(etree.XMLSyntaxError,
+                          fromstring, xml, parser=parser)
+        errors = None
+        try:
+            fromstring(xml, parser=parser)
+        except etree.XMLSyntaxError, e:
+            errors = [ entry.message for entry in e.error_log
+                       if dtd_filename in entry.message ]
+        self.assert_(errors)
+
+    def test_dtd_parse_valid(self):
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % fileInTestDir("test.dtd")
+        root = etree.fromstring(xml, parser=parser)
+
+    def test_dtd_parse_valid_relative(self):
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
+        root = etree.fromstring(xml, parser=parser,
+                                base_url=fileInTestDir("test.xml"))
+
     def test_dtd_invalid(self):
         root = etree.XML("<b><a/></b>")
         dtd = etree.DTD(StringIO("<!ELEMENT b EMPTY>"))
