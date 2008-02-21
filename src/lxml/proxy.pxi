@@ -281,20 +281,22 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
                         if c_cache_size == 0:
                             c_cache_size = 20
                         else:
-                            c_cache_size = c_cache_size * 2
+                            c_cache_size *= 2
                         c_ns_new_cache = <xmlNs**> python.PyMem_Realloc(
                             c_ns_new_cache, c_cache_size * sizeof(xmlNs*))
                         if c_ns_new_cache is NULL:
                             python.PyMem_Free(c_ns_old_cache)
                             python.PyErr_NoMemory()
+                            return -1
                         c_ns_old_cache = <xmlNs**> python.PyMem_Realloc(
                             c_ns_old_cache, c_cache_size * sizeof(xmlNs*))
                         if c_ns_old_cache is NULL:
                             python.PyMem_Free(c_ns_new_cache)
                             python.PyErr_NoMemory()
+                            return -1
                     c_ns_new_cache[c_cache_last] = c_new_ns
                     c_ns_old_cache[c_cache_last] = c_node.ns
-                    c_cache_last = c_cache_last + 1
+                    c_cache_last += 1
                     c_node.ns = c_new_ns
             if c_node is c_element:
                 # after the element, continue with its attributes
