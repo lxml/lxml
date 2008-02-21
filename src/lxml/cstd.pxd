@@ -17,6 +17,7 @@ cdef extern from "string.h":
 
 cdef extern from "stdlib.h":
     cdef void* malloc(size_t size) nogil
+    cdef void* realloc(void* ptr, size_t size) nogil
     cdef void  free(void* ptr) nogil
 
 cdef extern from "stdarg.h":
