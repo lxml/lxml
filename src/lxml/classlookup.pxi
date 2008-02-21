@@ -58,7 +58,7 @@ cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
     Superclass of Element class lookups.
     """
     cdef _element_class_lookup_function _lookup_function
-    def __init__(self):
+    def __cinit__(self):
         self._lookup_function = NULL # use default lookup
 
 cdef public class FallbackElementClassLookup(ElementClassLookup) \
@@ -71,7 +71,6 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
     cdef readonly ElementClassLookup fallback
     cdef _element_class_lookup_function _fallback_function
     def __init__(self, ElementClassLookup fallback=None):
-        self._lookup_function = NULL # use default lookup
         if fallback is not None:
             self._setFallback(fallback)
         else:
