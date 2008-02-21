@@ -195,10 +195,7 @@ look at the error domain and its type directly::
   RELAXNG_ERR_ELEMWRONG
 
 Note that this error log is local to the RelaxNG object.  It will only
-contain log entries that appeared during the validation.  The
-DocumentInvalid exception raised by the ``assertValid`` method above
-provides access to the global error log (like all other lxml
-exceptions).
+contain log entries that appeared during the validation.
 
 Similar to XSLT, there's also a less efficient but easier shortcut method to
 do one-shot RelaxNG validation::
@@ -207,6 +204,13 @@ do one-shot RelaxNG validation::
   True
   >>> doc2.relaxng(relaxng_doc)
   False
+
+libxml2 does not currently support the `RelaxNG Compact Syntax`_.
+However, the trang_ translator can convert the compact syntax to the
+XML syntax, which can then be used with lxml.
+
+.. _`RelaxNG Compact Syntax`: 
+.. _trang: http://www.thaiopensource.com/relaxng/trang.html
 
 
 XMLSchema
