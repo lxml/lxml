@@ -573,7 +573,7 @@ def parse(filename_or_url, parser=None, **kw):
     """
     Parse a filename, URL, or file-like object into an HTML document
     tree.  Note: this returns a tree, not an element.  Use
-    ``parse(...).getroot()`` to get the document.
+    ``parse(...).getroot()`` to get the document root.
 
     You cannot give a base_url, but the filename/url will serve as
     that URL.  If you pass in a file-like object and that object has a
