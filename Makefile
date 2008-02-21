@@ -24,6 +24,10 @@ valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
 		$(PYTHON) test.py
 
+gdb_test_inplace: inplace
+	@echo -e "file $(PYTHON)\nrun test.py" > .gdb.command
+	gdb -x .gdb.command -d src -d src/lxml
+
 bench_inplace: inplace
 	$(PYTHON) benchmark/bench_etree.py -i
 	$(PYTHON) benchmark/bench_xpath.py -i
@@ -50,6 +54,8 @@ html: inplace
 test: test_inplace
 
 valtest: valgrind_test_inplace
+
+gdbtest: gdb_test_inplace
 
 bench: bench_inplace
 
