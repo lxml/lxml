@@ -1488,13 +1488,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         assert self._context_node is not None, \
                "ElementTree not initialized, missing root"
 
-    def parse(self, source, _BaseParser parser=None):
-        """parse(self, source, parser=None)
+    def parse(self, source, _BaseParser parser=None, *, base_url=None):
+        """parse(self, source, parser=None, base_url=None)
 
         Updates self with the content of source and returns its root
         """
         cdef _Document doc
-        doc = _parseDocument(source, parser)
+        doc = _parseDocument(source, parser, base_url)
         self._context_node = doc.getroot()
         if self._context_node is None:
             self._doc = doc
@@ -2300,7 +2300,7 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
         doc  = element._doc
     elif file is not None:
         try:
-            doc = _parseDocument(file, parser)
+            doc = _parseDocument(file, parser, None)
         except _TargetParserResult, result_container:
             return result_container.result
     else:
@@ -2504,15 +2504,19 @@ def tounicode(element_or_tree, *, method="xml", pretty_print=False,
         raise TypeError("Type '%s' cannot be serialized." %
                         type(element_or_tree))
 
-def parse(source, _BaseParser parser=None):
-    """parse(source, parser=None)
+def parse(source, _BaseParser parser=None, *, base_url=None):
+    """parse(source, parser=None, base_url=None)
 
     Return an ElementTree object loaded with source elements.  If no parser
     is provided as second argument, the default parser is used.
+
+    The ``base_url`` keyword allows setting a URL for the document
+    when parsing from a file-like object.  This is needed when looking
+    up external entities (DTD, XInclude, ...) with relative paths.
     """
     cdef _Document doc
     try:
-        doc = _parseDocument(source, parser)
+        doc = _parseDocument(source, parser, base_url)
         return _elementTreeFactory(doc, None)
     except _TargetParserResult, result_container:
         return result_container.result

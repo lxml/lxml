@@ -67,8 +67,8 @@ cdef class Resolver:
         doc_ref._filename = _encodeFilename(filename)
         return doc_ref
 
-    def resolve_file(self, f, context):
-        """resolve_file(self, f, context)
+    def resolve_file(self, f, context, *, base_url=None):
+        """resolve_file(self, f, context, base_url=None)
 
         Return an open file-like object as input document.
 
@@ -81,7 +81,10 @@ cdef class Resolver:
             raise TypeError("Argument is not a file-like object")
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILE
-        doc_ref._filename = _getFilenameForFile(f)
+        if base_url is not None:
+            doc_ref._filename = _encodeFilename(base_url)
+        else:
+            doc_ref._filename = _getFilenameForFile(f)
         doc_ref._file = f
         return doc_ref
 

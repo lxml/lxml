@@ -40,7 +40,7 @@ def XMLDTDID(text):
     else:
         return (root, _IDDict(root))
 
-def parseid(source, parser=None):
+def parseid(source, parser=None, *, base_url=None):
     """parseid(source, parser=None)
 
     Parses the source into a tuple containing an ElementTree object and an
@@ -51,7 +51,7 @@ def parseid(source, parser=None):
     The results are undefined.
     """
     cdef _Document doc
-    doc = _parseDocument(source, parser)
+    doc = _parseDocument(source, parser, base_url)
     return (_elementTreeFactory(doc, None), _IDDict(doc))
 
 cdef class _IDDict:

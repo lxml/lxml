@@ -21,6 +21,9 @@ In general
 * better exception messages for XPath and schemas based on error log,
   e.g. missing namespace mappings in XPath
 
+* more testing on input/output of encoded filenames, including custom
+  resolvers, relative XSLT imports, ...
+
 
 QName
 -----

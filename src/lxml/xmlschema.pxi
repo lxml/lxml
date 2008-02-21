@@ -58,7 +58,7 @@ cdef class XMLSchema(_Validator):
                 self._error_log.connect()
                 parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
             else:
-                doc = _parseDocument(file, None)
+                doc = _parseDocument(file, None, None)
                 self._error_log.connect()
                 parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(doc._c_doc)
         else:

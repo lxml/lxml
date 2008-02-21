@@ -57,7 +57,7 @@ cdef class RelaxNG(_Validator):
                 self._error_log.connect()
                 parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
             else:
-                doc = _parseDocument(file, None)
+                doc = _parseDocument(file, None, None)
                 self._error_log.connect()
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:

@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Support passing ``base_url`` to file parser functions to override
+  the filename of the file(-like) object.
+
 Bugs fixed
 ----------
 

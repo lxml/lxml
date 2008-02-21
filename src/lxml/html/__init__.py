@@ -569,20 +569,18 @@ def fromstring(html, base_url=None, **kw):
         body.tag = 'span'
     return body
 
-def parse(filename_or_url, parser=None, **kw):
+def parse(filename_or_url, parser=None, base_url=None, **kw):
     """
     Parse a filename, URL, or file-like object into an HTML document
     tree.  Note: this returns a tree, not an element.  Use
     ``parse(...).getroot()`` to get the document root.
 
-    You cannot give a base_url, but the filename/url will serve as
-    that URL.  If you pass in a file-like object and that object has a
-    ``.geturl()`` method then that will be used as the base_url
-    (``urllib.urlopen()`` returns file-like objects with this method).
+    You can override the base URL with the ``base_url`` keyword.  This
+    is most useful when parsing from a file-like object.
     """
     if parser is None:
         parser = html_parser
-    return etree.parse(filename_or_url, parser, **kw)
+    return etree.parse(filename_or_url, parser, base_url=base_url, **kw)
 
 def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be

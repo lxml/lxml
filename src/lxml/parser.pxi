@@ -1735,24 +1735,33 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
 ## (here we convert to UTF-8)
 ############################################################
 
-cdef _Document _parseDocument(source, _BaseParser parser):
-    filename = _getFilenameForFile(source)
+cdef _Document _parseDocument(source, _BaseParser parser, base_url):
+    cdef _Document doc
+    if base_url is not None:
+        url = base_url
+    else:
+        url = _getFilenameForFile(source)
     if hasattr(source, 'getvalue') and hasattr(source, 'tell'):
         # StringIO - reading from start?
         if source.tell() == 0:
             return _parseMemoryDocument(
-                source.getvalue(), _encodeFilenameUTF8(filename), parser)
+                source.getvalue(), _encodeFilenameUTF8(url), parser)
 
     # Support for file-like objects (urlgrabber.urlopen, ...)
     if hasattr(source, 'read'):
         return _parseFilelikeDocument(
-            source, _encodeFilenameUTF8(filename), parser)
+            source, _encodeFilenameUTF8(url), parser)
 
     # Otherwise parse the file directly from the filesystem
-    if filename is None:
-        filename = _encodeFilename(source)
-    # open filename
-    return _parseDocumentFromURL(filename, parser)
+    filename = _encodeFilename(source)
+    doc = _parseDocumentFromURL(filename, parser)
+    # fix base URL if requested
+    if base_url is not None:
+        base_url = _encodeFilenameUTF8(base_url)
+        if doc._c_doc.URL is not NULL:
+            tree.xmlFree(doc._c_doc.URL)
+        doc._c_doc.URL = tree.xmlStrdup(_cstr(base_url))
+    return doc
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
     cdef xmlDoc* c_doc

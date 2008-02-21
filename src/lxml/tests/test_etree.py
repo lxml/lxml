@@ -1769,6 +1769,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         docinfo = root.getroottree().docinfo
         self.assertEquals(docinfo.URL, "http://no/such/url")
 
+    def test_parse_stringio_base_url(self):
+        etree = self.etree
+        tree = etree.parse(StringIO("<root/>"), base_url="http://no/such/url")
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+
+    def test_parse_base_url_docinfo(self):
+        etree = self.etree
+        tree = etree.parse(fileInTestDir('include/test_xinclude.xml'),
+                           base_url="http://no/such/url")
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+
     def test_HTML_base_url_docinfo(self):
         etree = self.etree
         root = etree.HTML("<html/>", base_url="http://no/such/url")
