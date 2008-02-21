@@ -107,12 +107,17 @@ cdef class Schematron(_Validator):
         if parser_ctxt is NULL:
             self._error_log.disconnect()
             python.PyErr_NoMemory()
+            return
 
         self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
         self._error_log.disconnect()
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
+            if _LIBXML_VERSION_INT >= 20631:
+                # leak in older versions instead of just crashing
+                if c_doc is not NULL:
+                    tree.xmlFreeDoc(c_doc)
             raise SchematronParseError(
                 "Document is not a valid Schematron schema",
                 self._error_log)

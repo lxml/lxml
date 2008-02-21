@@ -14,6 +14,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in Schematron (fixed only for libxml2 2.6.31+).
+
 * Error type names in RelaxNG were reported incorrectly.
 
 * Slice deletion bug fixed in objectify.
