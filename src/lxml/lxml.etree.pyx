@@ -91,6 +91,8 @@ _DEFAULT_NAMESPACE_PREFIXES = {
     "http://www.w3.org/2001/XMLSchema-instance": "xsi",
     # dublic core
     "http://purl.org/dc/elements/1.1/": "dc",
+    # objectify
+    "http://codespeak.net/lxml/objectify/pytype" : "py",
 }
 
 # Error superclass for ElementTree compatibility
