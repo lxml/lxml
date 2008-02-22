@@ -7,23 +7,25 @@ C extensions to efficiently access public functions and classes of lxml,
 without going through the Python API.
 
 The API is described in the file `etreepublic.pxd`_, which is directly
-c-importable by Pyrex modules.
+c-importable by extension modules implemented in Pyrex_ or Cython_.
 
 .. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/trunk/src/lxml/etreepublic.pxd
+.. _Cython: http://www.cython.org
+.. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
 .. contents::
 ..
-   1  Writing external modules in Pyrex
+   1  Writing external modules in Cython
    2  Writing external modules in C
 
 
-Writing external modules in Pyrex
----------------------------------
+Writing external modules in Cython
+----------------------------------
 
-This is the easiest way of extending lxml at the C level.  A Pyrex module
-should start like this::
+This is the easiest way of extending lxml at the C level.  A Cython_
+(or Pyrex_) module should start like this::
 
-    # My Pyrex extension
+    # My Cython extension
 
     # import the public functions and classes of lxml.etree
     cimport etreepublic as cetree
@@ -33,16 +35,17 @@ should start like this::
     from lxml import etree
 
     # initialize the access to the C-API of lxml.etree
-    cetree.import_etree(etree)
+    cetree.import_lxml__etree()
 
-From this line on, you can access all public functions of lxml.etree from the
-``cetree`` namespace like this::
+From this line on, you can access all public functions of lxml.etree
+from the ``cetree`` namespace like this::
 
     # build a tag name from namespace and element name
     py_tag = cetree.namespacedNameFromNsName("http://some/url", "myelement")
 
-Public lxml classes are easily subclassed.  For example, to implement and set
-a new default element class, you can write code like the following::
+Public lxml classes are easily subclassed.  For example, to implement
+and set a new default element class, you can write Cython code like
+the following::
 
     from etreepublic cimport ElementBase
     cdef class NewElementClass(ElementBase):

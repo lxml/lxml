@@ -1,10 +1,12 @@
-from lxml.etree import parse, Element, SubElement, XPath
+from lxml.etree import (parse, fromstring, ElementTree,
+                        Element, SubElement, XPath)
 import os, shutil, re, sys, copy, time
 
 SITE_STRUCTURE = [
     ('lxml', ('main.txt', 'intro.txt', 'lxml2.txt', 'FAQ.txt',
               'compatibility.txt', 'performance.txt')),
-    ('Developing with lxml', ('tutorial.txt', 'api.txt', 'parsing.txt',
+    ('Developing with lxml', ('tutorial.txt', '@API reference',
+                              'api.txt', 'parsing.txt',
                               'validation.txt', 'xpathxslt.txt',
                               'objectify.txt', 'lxmlhtml.txt',
                               'cssselect.txt', 'elementsoup.txt')),
@@ -20,18 +22,20 @@ RST2HTML_OPTIONS = " ".join([
     "--date",
     ])
 
-find_title = XPath("/h:html/h:head/h:title/text()",
-                   namespaces={"h" : "http://www.w3.org/1999/xhtml"})
-find_headings = XPath("//h:h1[not(@class)]/h:a/text()",
-                      namespaces={"h" : "http://www.w3.org/1999/xhtml"})
-find_menu = XPath("//h:ul[@id=$name]",
-                  namespaces={"h" : "http://www.w3.org/1999/xhtml"})
-find_page_end = XPath("/h:html/h:body/h:div[last()]",
-                      namespaces={"h" : "http://www.w3.org/1999/xhtml"})
+HREF_MAP = {
+    "API reference" : "api/index.html"
+}
+
+htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
+
+find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
+find_headings = XPath("//h:h1[not(@class)]/h:a/text()", namespaces=htmlnsmap)
+find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
+find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
-def build_menu(tree, basename, section, menuroot):
+def make_menu_section_head(section, menuroot):
     section_head = menuroot.xpath("//ul[@id=$section]/li", section=section)
     if not section_head:
         ul = SubElement(menuroot, "ul", id=section)
@@ -40,24 +44,31 @@ def build_menu(tree, basename, section, menuroot):
         title.text = section
     else:
         section_head = section_head[0]
+    return section_head
+
+def build_menu(tree, basename, section_head):
     page_title = find_title(tree)
     if page_title:
         page_title = page_title[0]
     else:
         page_title = replace_invalid(' ', basename.capitalize())
-    headings = find_headings(tree)
+    build_menu_entry(page_title, basename+".html", section_head,
+                     headings=find_headings(tree))
+
+def build_menu_entry(page_title, url, section_head, headings=None):
+    page_id = replace_invalid(' ', os.path.splitext(url)[0])
+    ul = SubElement(section_head, "ul", {"class":"menu foreign", "id":page_id})
+
+    title = SubElement(ul, "li", {"class":"menu title"})
+    a = SubElement(title, "a", href=url)
+    a.text = page_title
+
     if headings:
-        ul = SubElement(section_head, "ul", {"class":"menu foreign", "id":basename})
-
-        title = SubElement(ul, "li", {"class":"menu title"})
-        a = SubElement(title, "a", href=basename+".html")
-        a.text = page_title
-
         subul = SubElement(title, "ul", {"class":"submenu"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
             ref = replace_invalid('-', heading.lower())
-            a  = SubElement(li, "a", href=basename+".html#"+ref)
+            a  = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 
 def merge_menu(tree, menu, name):
@@ -95,20 +106,27 @@ def publish(dirname, lxml_path, release):
     menu = Element("div", {"class":"sidemenu"})
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
+        section_head = make_menu_section_head(section, menu)
         for filename in text_files:
-            path = os.path.join(doc_dir, filename)
-            basename = os.path.splitext(filename)[0]
-            if basename == 'main':
-                basename = 'index'
-            outname = basename + '.html'
-            outpath = os.path.join(dirname, outname)
+            if filename.startswith('@'):
+                # special menu entry
+                page_title = filename[1:]
+                url = HREF_MAP[page_title]
+                build_menu_entry(page_title, url, section_head)
+            else:
+                path = os.path.join(doc_dir, filename)
+                basename = os.path.splitext(filename)[0]
+                if basename == 'main':
+                    basename = 'index'
+                outname = basename + '.html'
+                outpath = os.path.join(dirname, outname)
 
-            rest2html(script, path, outpath, stylesheet_url)
+                rest2html(script, path, outpath, stylesheet_url)
 
-            tree = parse(outpath)
-            trees[filename] = (tree, basename, outpath)
+                tree = parse(outpath)
+                trees[filename] = (tree, basename, outpath)
 
-            build_menu(tree, basename, section, menu)
+                build_menu(tree, basename, section_head)
 
     # integrate menu
     for tree, basename, outpath in trees.itervalues():

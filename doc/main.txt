@@ -61,7 +61,7 @@ Documentation
 
   * `lxml.etree specific API`_ documentation
 
-  * the `generated API documentation`_
+  * the `generated API documentation`_ as a reference
 
   * parsing_ and validating_ XML
 

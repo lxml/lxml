@@ -7,6 +7,9 @@ however, the need to expose a feature in an easy way led to the invention of a
 new API.  This page describes the major differences and a few additions to the
 main ElementTree API.
 
+For a complete reference of the API, see the `generated API
+documentation`_.
+
 Separate pages describe the support for `parsing XML`_, executing `XPath and
 XSLT`_, `validating XML`_ and interfacing with other XML tools through the
 `SAX-API`_.
@@ -22,6 +25,7 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
 .. _`Python element classes`: element_classes.html
 .. _`at the C-level`: capi.html
 .. _`URL resolvers`: resolvers.html
+.. _`generated API documentation`: api/index.html
 
 
 .. contents::

@@ -9,7 +9,11 @@ This tutorial briefly overviews the main concepts of the `ElementTree API`_ as
 implemented by ``lxml.etree``, and some simple enhancements that make your
 life as a programmer easier.
 
+For a complete reference of the API, see the `generated API
+documentation`_.
+
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm#documentation
+.. _`generated API documentation`: api/index.html
 
 .. contents::
 .. 

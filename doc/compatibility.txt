@@ -1,6 +1,6 @@
-=============================
-lxml.etree versus ElementTree
-=============================
+=======================================
+ElementTree compatibility of lxml.etree
+=======================================
 
 A lot of care has been taken to ensure compatibility between etree and
 ElementTree.  Nonetheless, some differences and incompatibilities exist:

@@ -60,7 +60,7 @@ div.sidemenu {
     position: absolute;
     top: 0px;
     left: 0px;
-    width: 22em;
+    width: 24em;
     font-size: 11px;
     text-align: left;
     border-right: groove gray;
@@ -75,7 +75,7 @@ html > body div.sidemenu {
 }
 
 div.sidemenu span.section.title {
-    line-height: 1.5em;
+    line-height: 1.2em;
     font-size: 130%;
 }
 
