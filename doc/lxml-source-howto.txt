@@ -86,9 +86,33 @@ Cython modules.
 Concepts
 --------
 
-* proxies
-* naming conventions
-* ...
+lxml's tree API is based on proxy objects.  That means, every Element
+object (or rather ``_Element`` object) is a proxy for a libxml2 node
+structure.  The class declaration is (mainly)::
+
+    cdef class _Element:
+        cdef _Document _doc
+        cdef xmlNode* _c_node
+
+It is a naming convention that C variables and C level class members
+that are passed into libxml2 start with a prefixed ``c_`` (commonly
+libxml2 struct pointers), and that C level class members are prefixed
+with an underscore.  So you will often see names like ``c_doc`` for an
+``xmlDoc*`` variable (or ``c_node`` for an ``xmlNode*``), or the above
+``_c_node`` for a class member that points to an ``xmlNode`` struct
+(or ``_c_doc`` for an ``xmlDoc*``).
+
+It is important to know that every proxy in lxml has a factory
+function that properly sets up C level members.  Proxy objects must
+*never* be instantiated outside of that factory.  For example, to
+instantiate an _Element object or its subclasses, you must always call
+its factory function::
+
+    cdef xmlNode* c_node
+    cdef _Document doc
+    cdef _Element element
+    ...
+    element = _elementFactory(doc, c_node)
 
 
 The documentation
@@ -127,9 +151,10 @@ lxml.etree
 ==========
 
 The main module, ``lxml.etree``, is in the file **lxml.etree.pyx**.
-It implements the main functions and types of the ElementTree API, and
-is therefore the best place to start if you want to find out how a
-specific feature is implemented.
+It implements the main functions and types of the ElementTree API, as
+well as all the factory functions for proxies.  It is the best place
+to start if you want to find out how a specific feature is
+implemented.
 
 At the very end of the file, it contains a series of ``include``
 statements that merge the rest of the implementation into the
@@ -140,13 +165,14 @@ more than 100,000 lines that we throw right into the C compiler.
 The main include files are:
 
 apihelpers.pxi
-    Private C helper functions.  Most of the little functions that are
-    used all over the place are defined here.  This includes things
-    like reading out the text content of a libxml2 tree node, checking
-    input from the API level, creating a new Element node or handling
-    attribute values.  If you want to work on the lxml code, you
-    should keep these functions in the back of your head, as they will
-    definitely make your life easier.
+    Private C helper functions.  Except for the factory functions,
+    most of the little functions that are used all over the place are
+    defined here.  This includes things like reading out the text
+    content of a libxml2 tree node, checking input from the API level,
+    creating a new Element node or handling attribute values.  If you
+    want to work on the lxml code, you should keep these functions in
+    the back of your head, as they will definitely make your life
+    easier.
 
 classlookup.pxi
     Element class lookup mechanisms.  The main API and engines for
@@ -241,28 +267,41 @@ cssselect.py
     called ``CSSSelector``.
 
 doctestcompare.py
-    ...
+    A relaxed comparison scheme for XML/HTML markup in doctest.
 
 ElementInclude.py
-    ...
+    XInclude-like document inclusion, compatible with ElementTree.
 
 _elementpath.py
-    ...
+    XPath-like path language, compatible with ElementTree.
 
 sax.py
-    ...
+    SAX2 compatible interfaces to copy lxml trees from/to SAX compatible
+    tools.
 
 usedoctest.py
-    ...
+    Wrapper module for ``doctestcompare.py`` that simplifies its usage
+    from inside a doctest.
 
 
 lxml.objectify
 ==============
 
-* ...
+A Cython implemented extension module that uses the public C-API of
+lxml.etree.  It provides a Python object-like interface to XML trees.
+
+
+lxml.pyclasslookup
+==================
+
+A Cython implemented extension module that uses the public C-API of
+lxml.etree.  It provides a class lookup scheme that duplicates lxml's
+ElementTree API in a very simple way to provide Python access to the
+tree *before* instantiating the real Python proxies in lxml.etree.
 
 
 lxml.html
 =========
 
-* ...
+A specialised toolkit for HTML handling, based on lxml.etree.  This is
+implemented in pure Python.
