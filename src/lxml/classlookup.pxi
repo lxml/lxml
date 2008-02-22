@@ -7,41 +7,57 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                                           object LxmlElementBase ]:
     """All custom Element classes must inherit from this one.
 
-    Note that subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of Elements must be stored in the underlying XML.  If you
-    really need to initialize the object after creation, you can implement an
-    ``_init(self)`` method that will be called after object creation.
+    Note that you cannot (and must not) instantiate this class or its
+    subclasses.
+
+    Subclasses *must not* override __init__ or __new__ as it is
+    absolutely undefined when these objects will be created or
+    destroyed.  All persistent state of Elements must be stored in the
+    underlying XML.  If you really need to initialize the object after
+    creation, you can implement an ``_init(self)`` method that will be
+    called after object creation.
     """
 
 cdef class CommentBase(_Comment):
     """All custom Comment classes must inherit from this one.
 
-    Note that subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of Comments must be stored in the underlying XML.  If you
-    really need to initialize the object after creation, you can implement an
-    ``_init(self)`` method that will be called after object creation.
+    Note that you cannot (and must not) instantiate this class or its
+    subclasses.
+
+    Subclasses *must not* override __init__ or __new__ as it is
+    absolutely undefined when these objects will be created or
+    destroyed.  All persistent state of Comments must be stored in the
+    underlying XML.  If you really need to initialize the object after
+    creation, you can implement an ``_init(self)`` method that will be
+    called after object creation.
     """
 
 cdef class PIBase(_ProcessingInstruction):
     """All custom Processing Instruction classes must inherit from this one.
 
-    Note that subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of PIs must be stored in the underlying XML.  If you
-    really need to initialize the object after creation, you can implement an
-    ``_init(self)`` method that will be called after object creation.
+    Note that you cannot (and must not) instantiate this class or its
+    subclasses.
+
+    Subclasses *must not* override __init__ or __new__ as it is
+    absolutely undefined when these objects will be created or
+    destroyed.  All persistent state of PIs must be stored in the
+    underlying XML.  If you really need to initialize the object after
+    creation, you can implement an ``_init(self)`` method that will be
+    called after object creation.
     """
 
 cdef class EntityBase(_Entity):
     """All custom Entity classes must inherit from this one.
 
-    Note that subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or destroyed.  All
-    persistent state of Entities must be stored in the underlying XML.  If you
-    really need to initialize the object after creation, you can implement an
-    ``_init(self)`` method that will be called after object creation.
+    Note that you cannot (and must not) instantiate this class or its
+    subclasses.
+
+    Subclasses *must not* override __init__ or __new__ as it is
+    absolutely undefined when these objects will be created or
+    destroyed.  All persistent state of Entities must be stored in the
+    underlying XML.  If you really need to initialize the object after
+    creation, you can implement an ``_init(self)`` method that will be
+    called after object creation.
     """
     
 

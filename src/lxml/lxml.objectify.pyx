@@ -63,6 +63,8 @@ def set_pytype_attribute_tag(attribute_tag=None):
     Change name and namespace of the XML attribute that holds Python type
     information.
 
+    Do not use this unless you know what you are doing.
+
     Reset by calling without argument.
 
     Default: "{http://codespeak.net/lxml/objectify/pytype}pytype"
@@ -115,6 +117,9 @@ cdef class ObjectifiedElement(ElementBase):
 
        >>> root = etree.XML("<root><c1><c2>0</c2><c2>1</c2></c1></root>")
        >>> second_c2 = root.c1.c2[1]
+
+    Note that you cannot (and must not) instantiate this class or its
+    subclasses.
     """
     def __iter__(self):
         """Iterate over self and all siblings with the same tag.
