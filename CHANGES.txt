@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-2.0.2 (Under development)
-=========================
+2.0.2 (2008-02-22)
+==================
 
 Features added
 --------------
@@ -28,10 +28,10 @@ Other changes
 
 * Enabled doctests for some Python modules (especially ``lxml.html``).
 
-* Add a ``method`` argument to ``lxml.html.tostring``
+* Add a ``method`` argument to ``lxml.html.tostring()``
   (``method="xml"`` for XHTML output).
 
-* Make it clearer that methods like ``lxml.html.fromstring`` take a
+* Make it clearer that methods like ``lxml.html.fromstring()`` take a
   ``base_url`` argument.
 
 
