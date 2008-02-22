@@ -1284,7 +1284,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     ASCII, with &#...; character references for any characters outside
     of ASCII).
 
-    The ``method`` argument defines the output mehtod.  It defaults to
+    The ``method`` argument defines the output method.  It defaults to
     'html', but can also be 'xml' for xhtml output, or 'text' to
     serialise to plain text without markup.  Note that you can pass
     the builtin ``unicode`` type as ``encoding`` argument to serialise
