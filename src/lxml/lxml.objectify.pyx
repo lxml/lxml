@@ -58,8 +58,9 @@ PYTYPE_ATTRIBUTE = None
 cdef object TREE_PYTYPE_NAME
 TREE_PYTYPE_NAME = "TREE"
 
-def setPytypeAttributeTag(attribute_tag=None):
-    """Changes name and namespace of the XML attribute that holds Python type
+def set_pytype_attribute_tag(attribute_tag=None):
+    """set_pytype_attribute_tag(attribute_tag=None)
+    Change name and namespace of the XML attribute that holds Python type
     information.
 
     Reset by calling without argument.
@@ -78,7 +79,12 @@ def setPytypeAttributeTag(attribute_tag=None):
     PYTYPE_ATTRIBUTE = cetree.namespacedNameFromNsName(
         _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
 
-setPytypeAttributeTag()
+def setPytypeAttributeTag(attribute_tag=None):
+    """:deprecated: use ``set_pytype_attribute_tag()`` instead.
+    """
+    set_pytype_attribute_tag(attribute_tag)
+
+set_pytype_attribute_tag()
 
 
 # namespaces for XML Schema

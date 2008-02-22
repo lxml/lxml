@@ -817,10 +817,11 @@ string values: int, long, float, str, unicode, NoneType::
     >>> print root.c
     None
 
-Note that you can change the name and namespace used for this attribute
-through the ``setPytypeAttributeTag(tag)`` module function, in case your
-application ever needs to.  There is also a utility function ``annotate()``
-that recursively generates this attribute for the elements of a tree::
+Note that you can change the name and namespace used for this
+attribute through the ``set_pytype_attribute_tag(tag)`` module
+function, in case your application ever needs to.  There is also a
+utility function ``annotate()`` that recursively generates this
+attribute for the elements of a tree::
 
     >>> root = objectify.fromstring("<root><a>test</a><b>5</b></root>")
     >>> print objectify.dump(root)

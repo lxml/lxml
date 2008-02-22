@@ -18,7 +18,7 @@ XML_SCHEMA_INSTANCE_NS = "http://www.w3.org/2001/XMLSchema-instance"
 XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
 XML_SCHEMA_NIL_ATTR = "{%s}nil" % XML_SCHEMA_INSTANCE_NS
 TREE_PYTYPE = "TREE"
-DEFAULT_NSMAP = { "py" : PYTYPE_NAMESPACE,
+DEFAULT_NSMAP = { "py"  : PYTYPE_NAMESPACE,
                   "xsi" : XML_SCHEMA_INSTANCE_NS,
                   "xsd" : XML_SCHEMA_NS}
 
@@ -86,7 +86,7 @@ class ObjectifyTestCase(HelperTestCase):
 
     def tearDown(self):
         self.lookup.get_namespace("otherNS").clear()
-        objectify.setPytypeAttributeTag()
+        objectify.set_pytype_attribute_tag()
         del self.lookup
         del self.parser
         super(ObjectifyTestCase, self).tearDown()
@@ -1784,7 +1784,7 @@ class ObjectifyTestCase(HelperTestCase):
         '''
 
         pytype_ns, pytype_name = objectify.PYTYPE_ATTRIBUTE[1:].split('}')
-        objectify.setPytypeAttributeTag("{TEST}test")
+        objectify.set_pytype_attribute_tag("{TEST}test")
 
         root = XML(xml)
         objectify.annotate(root)
@@ -1796,7 +1796,7 @@ class ObjectifyTestCase(HelperTestCase):
                              namespaces={"py" : "TEST"})
         self.assertEquals(7, len(attribs))
 
-        objectify.setPytypeAttributeTag()
+        objectify.set_pytype_attribute_tag()
         pytype_ns, pytype_name = objectify.PYTYPE_ATTRIBUTE[1:].split('}')
 
         self.assertNotEqual("test", pytype_ns.lower())
