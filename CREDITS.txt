@@ -1,13 +1,16 @@
+=======
 Credits
--------
+=======
 
 Stefan Behnel - main developer and maintainer
 
 Martijn Faassen - creator of lxml and initial main developer
 
-Ian Bicking - lxml.html
+Ian Bicking - creator and maintainer of lxml.html
 
 Holger Joukl - bug reports, feedback and development on lxml.objectify
+
+Sidnei da Sivla - official MS Windows builds
 
 Marc-Antoine Parent - XPath extension function help and patches
 
@@ -24,13 +27,9 @@ Slou - help with index() support, bug reporting
  
 Paul Everitt - bug reporting, feedback on API design
 
-Paul Clifford - Python 2.2 compatibility fixes
-
 Victor Ng - Discussions on memory management strategies, vlibxml2
 
 Robert Kern - feedback on API design
-
-Trent Mick - setup.py patch
 
 Andreas Pakulat - rpath linking support, doc improvements
 
@@ -38,37 +37,25 @@ Steve Howe - Windows builds
 
 David Sankel - building statically on Windows
 
-Noah Slater - bug squeezing
 
-Duncan Booth - bugfixing
-
-Dean Pavlekovic - bug reporting
-
-Julien Anguenot - bug reporting
-
-Wade Leftwich - unicode bug reporting
-
-Kieran Holland - iteration crash bug report
-
-Henrik Thostrup Jensen - bug reporting
-
-dharana - bug reporting
-
-Hamish Lawson - bug reporting
-
-Gavrie Philipson - bug reporting
+... and lots of other people who contributed to lxml by reporting
+bugs, discussing its functionality or blaming the docs for the bugs in
+their code.  Thank you all, user feedback and discussions form a very
+important part of an Open Source project!
 
 
-Thanks also to:
----------------
+Special thanks goes to:
+=======================
 
-* the libxml2 project for a great XML library.
+* the libxml2 project and especially Daniel Veillard for a great XML
+  library.
 
 * Fredrik Lundh for the ElementTree API.
 
-* pyrex for the binding technology.
+* Greg Ewing (Pyrex) and Robert Bradshaw (Cython) for the binding
+  technology.
 
 * the codespeak crew, in particular Philipp von Weitershausen and
-  Holger Krekel for hosting it on codespeak.net
+  Holger Krekel for hosting lxml on codespeak.net
 
 * Infrae for initiating the project.
