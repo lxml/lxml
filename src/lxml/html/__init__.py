@@ -120,7 +120,7 @@ class HtmlMixin(object):
         Example::
 
             >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
-            >>> h.find('//b').drop_tag()
+            >>> h.find('.//b').drop_tag()
             >>> print tostring(h)
             <div>Hello World!</div>
         """
@@ -713,11 +713,11 @@ def submit_form(form, extra_values=None, open_http=None):
 
     You can use this like::
 
-        >>> form = doc.forms[0]
-        >>> form.inputs['foo'].value = 'bar' # etc
-        >>> response = form.submit()
-        >>> doc = parse(response)
-        >>> doc.make_links_absolute(response.geturl())
+        >>> form = doc.forms[0]                        # doctest: +SKIP
+        >>> form.inputs['foo'].value = 'bar' # etc     # doctest: +SKIP
+        >>> response = form.submit()                   # doctest: +SKIP
+        >>> doc = parse(response)                      # doctest: +SKIP
+        >>> doc.make_links_absolute(response.geturl()) # doctest: +SKIP
 
     To change the HTTP requester, pass a function as ``open_http`` keyword
     argument that opens the URL for you.  The function must have the following
@@ -1273,20 +1273,42 @@ __replace_meta_content_type = re.compile(
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
              encoding=None, method="html"):
-    """
-    return HTML string representation of the document given
+    """Return an HTML string representation of the document.
  
-    note: if include_meta_content_type is true this will create a meta
-    http-equiv="Content-Type" tag in the head; regardless of the value of include_meta_content_type
-    any existing meta http-equiv="Content-Type" tag will be removed
+    Note: if include_meta_content_type is true this will create a
+    ``<meta http-equiv="Content-Type" ...>`` tag in the head;
+    regardless of the value of include_meta_content_type any existing
+    ``<meta http-equiv="Content-Type" ...>`` tag will be removed
 
-    encoding controls the output encoding (defauts to ASCII, with &#
-    character references for any characters outside of ASCII)
+    The ``encoding`` argument controls the output encoding (defauts to
+    ASCII, with &#...; character references for any characters outside
+    of ASCII).
 
-    method, which defaults to 'html', can also be 'xml' for xhtml
-    output.
+    The ``method`` argument defines the output mehtod.  It defaults to
+    'html', but can also be 'xml' for xhtml output, or 'text' to
+    serialise to plain text without markup.  Note that you can pass
+    the builtin ``unicode`` type as ``encoding`` argument to serialise
+    to a unicode string.
+
+    Example::
+
+        >>> from lxml import html
+        >>> root = html.fragment_fromstring('<p>Hello<br>world!</p>')
+
+        >>> html.tostring(root)
+        '<p>Hello<br>world!</p>'
+        >>> html.tostring(root, method='html')
+        '<p>Hello<br>world!</p>'
+
+        >>> html.tostring(root, method='xml')
+        '<p>Hello<br/>world!</p>'
+
+        >>> html.tostring(root, method='text')
+        'Helloworld!'
+
+        >>> html.tostring(root, method='text', encoding=unicode)
+        u'Helloworld!'
     """
-    assert doc is not None
     html = etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding)
     if not include_meta_content_type:
