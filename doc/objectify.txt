@@ -979,7 +979,7 @@ namespace information if you choose to do so::
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema'})
     >>> for prefix, namespace in el.nsmap.items():
     ...     print prefix, '-', namespace
-    ns0 - http://codespeak.net/lxml/objectify/pytype
+    py - http://codespeak.net/lxml/objectify/pytype
     foo - http://www.w3.org/2001/XMLSchema
     xsi - http://www.w3.org/2001/XMLSchema-instance
 
@@ -994,7 +994,7 @@ namespace.  We can override it as in the following example::
     ...                 'myxsi': 'http://www.w3.org/2001/XMLSchema-instance'})
     >>> for prefix, namespace in el.nsmap.items():
     ...     print prefix, '-', namespace
-    ns0 - http://codespeak.net/lxml/objectify/pytype
+    py - http://codespeak.net/lxml/objectify/pytype
     foo - http://www.w3.org/2001/XMLSchema
     myxsi - http://www.w3.org/2001/XMLSchema-instance
 
