@@ -2,6 +2,24 @@
 lxml changelog
 ==============
 
+2.0.3 (Under development)
+=========================
+
+Features added
+--------------
+
+* ``Element.base`` property returns the xml:base or HTML base URL of
+  an Element.
+
+* ``docinfo.URL`` property is writable.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 2.0.2 (2008-02-22)
 ==================
 

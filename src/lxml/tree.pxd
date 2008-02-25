@@ -234,6 +234,7 @@ cdef extern from "libxml/tree.h":
     cdef int xmlBufferLength(xmlBuffer* buf) nogil
     cdef int xmlKeepBlanksDefault(int val) nogil
     cdef char* xmlNodeGetBase(xmlDoc* doc, xmlNode* node) nogil
+    cdef void xmlNodeSetBase(xmlNode* node, char* uri) nogil
     cdef char* xmlBuildURI(char* href, char* base) nogil
     cdef int xmlValidateNCName(char* value, int space) nogil
 

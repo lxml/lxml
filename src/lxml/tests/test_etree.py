@@ -1769,6 +1769,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         docinfo = root.getroottree().docinfo
         self.assertEquals(docinfo.URL, "http://no/such/url")
 
+    def test_XML_set_base_url_docinfo(self):
+        etree = self.etree
+        root = etree.XML("<root/>", base_url="http://no/such/url")
+        docinfo = root.getroottree().docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+        docinfo.URL = "https://secret/url"
+        self.assertEquals(docinfo.URL, "https://secret/url")
+
     def test_parse_stringio_base_url(self):
         etree = self.etree
         tree = etree.parse(StringIO("<root/>"), base_url="http://no/such/url")
@@ -1833,6 +1841,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.system_url,  None)
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
+
+    def test_XML_base(self):
+        etree = self.etree
+        root = etree.XML("<root/>", base_url="http://no/such/url")
+        self.assertEquals(root.base, "http://no/such/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
+        root.base = "https://secret/url"
+        self.assertEquals(root.base, "https://secret/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'),
+            "https://secret/url")
+
+    def test_XML_base_attribute(self):
+        etree = self.etree
+        root = etree.XML("<root/>", base_url="http://no/such/url")
+        self.assertEquals(root.base, "http://no/such/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
+        root.set('{http://www.w3.org/XML/1998/namespace}base',
+                 "https://secret/url")
+        self.assertEquals(root.base, "https://secret/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'),
+            "https://secret/url")
 
     def test_dtd_io(self):
         # check that DTDs that go in also go back out

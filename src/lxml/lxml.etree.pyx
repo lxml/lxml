@@ -329,12 +329,6 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             encoding = c_doc.encoding
         return (version, encoding)
 
-    cdef getURL(self):
-        if self._c_doc.URL is NULL:
-            return None
-        else:
-            return self._c_doc.URL
-
     cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         if self._prefix_tail is not None:
@@ -487,9 +481,21 @@ cdef class DocInfo:
             return encoding
 
     property URL:
-        "Returns the source URL of the document (or None if unknown)."
+        "The source URL of the document (or None if unknown)."
         def __get__(self):
-            return self._doc.getURL()
+            if self._doc._c_doc.URL is NULL:
+                return None
+            return self._doc._c_doc.URL
+        def __set__(self, url):
+            cdef char* c_oldurl
+            url = _encodeFilename(url)
+            c_oldurl = self._doc._c_doc.URL
+            if url is None:
+                self._doc._c_doc.URL = NULL
+            else:
+                self._doc._c_doc.URL = tree.xmlStrdup(_cstr(url))
+            if c_oldurl is not NULL:
+                tree.xmlFree(c_oldurl)
 
     property doctype:
         "Returns a DOCTYPE declaration string for the document."
@@ -897,6 +903,31 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                     c_ns = c_ns.next
                 c_node = c_node.parent
             return nsmap
+
+    # not in ElementTree, read-only
+    property base:
+        """The base URI of the Element (xml:base or HTML base URL).
+        None if the base URI is unknown.
+
+        Note that this depends on the document that holds the Element.
+        """
+        def __get__(self):
+            cdef char* c_base
+            c_base = tree.xmlNodeGetBase(self._doc._c_doc, self._c_node)
+            if c_base is NULL:
+                return None
+            # FIXME: this might be UTF-8 or any other 8-bit encoding
+            base = c_base
+            tree.xmlFree(c_base)
+            return base
+        def __set__(self, url):
+            cdef char* c_base
+            if url is None:
+                c_base = NULL
+            else:
+                url = _encodeFilename(url)
+                c_base = _cstr(url)
+            tree.xmlNodeSetBase(self._c_node, c_base)
 
     # ACCESSORS
     def __repr__(self):
@@ -1529,6 +1560,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             root = self._context_node.__copy__()
         return _elementTreeFactory(None, root)
 
+    # not in ElementTree, read-only
     property docinfo:
         """Information about the document provided by parser and DTD.  This
         value is only defined for ElementTree objects based on the root node
@@ -1538,6 +1570,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             self._assertHasRoot()
             return DocInfo(self._context_node._doc)
 
+    # not in ElementTree, read-only
     property parser:
         """The parser that was used to parse the document in this ElementTree.
         """
