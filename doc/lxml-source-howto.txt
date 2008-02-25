@@ -114,6 +114,9 @@ its factory function::
     ...
     element = _elementFactory(doc, c_node)
 
+A good place to see how this factory is used are the Element methods
+``getparent()``, ``getnext()`` and ``getprevious()``.
+
 
 The documentation
 -----------------
