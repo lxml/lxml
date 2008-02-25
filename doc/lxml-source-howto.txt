@@ -216,12 +216,15 @@ public-api.pxi
     modules at the C level.  For example, ``lxml.objectify`` makes use
     of these.  See the `C-level API` documentation.
 
+saxparser.pxi
+    SAX-like parser interfaces as known from ElementTree's TreeBuilder.
+
 serializer.pxi
     XML output functions.  Basically everything that creates byte
     sequences from XML trees.
 
 xinclude.pxi
-    XInclude implementation.
+    XInclude support.
 
 xmlerror.pxi
     Error log handling.  All error messages that libxml2 generates
