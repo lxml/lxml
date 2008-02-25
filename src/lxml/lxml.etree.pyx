@@ -1110,8 +1110,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_node = _parentElement(self._c_node)
         if c_node is NULL:
             return None
-        else:
-            return _elementFactory(self._doc, c_node)
+        return _elementFactory(self._doc, c_node)
 
     def getnext(self):
         """getnext(self)
@@ -1120,9 +1119,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         c_node = _nextElement(self._c_node)
-        if c_node is not NULL:
-            return _elementFactory(self._doc, c_node)
-        return None
+        if c_node is NULL:
+            return None
+        return _elementFactory(self._doc, c_node)
 
     def getprevious(self):
         """getprevious(self)
@@ -1131,9 +1130,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         c_node = _previousElement(self._c_node)
-        if c_node is not NULL:
-            return _elementFactory(self._doc, c_node)
-        return None
+        if c_node is NULL:
+            return None
+        return _elementFactory(self._doc, c_node)
 
     def itersiblings(self, tag=None, *, preceding=False):
         """itersiblings(self, tag=None, preceding=False)
