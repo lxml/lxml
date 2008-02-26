@@ -909,7 +909,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """The base URI of the Element (xml:base or HTML base URL).
         None if the base URI is unknown.
 
-        Note that this depends on the document that holds the Element.
+        Note that the value depends on the URL of the document that
+        holds the Element if there is no xml:base attribute on the
+        Element or its ancestors.
+
+        Setting this property will set an xml:base attribute on the
+        Element, regardless of the document type (XML or HTML).
         """
         def __get__(self):
             cdef char* c_base
