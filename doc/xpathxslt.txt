@@ -19,7 +19,8 @@ compliant way.
      2.1  XSLT result objects
      2.2  Stylesheet parameters
      2.3  The ``xslt()`` tree method
-     2.4  Profiling
+     2.4  Dealing with stylesheet diversity
+     2.5  Profiling
 
 
 The usual setup procedure::
@@ -471,6 +472,36 @@ This is a shortcut for the following code::
   >>> result = transform(doc, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
+
+
+Dealing with stylesheet complexity
+----------------------------------
+
+Some applications require a larger set of rather diverse stylesheets.
+lxml.etree allows you to deal with this in a number of ways.  Here are
+some ideas to try.
+
+The most simple way to reduce the diversity is by using XSLT
+parameters that you pass at call time to configure the stylesheets.
+The ``partial()`` function in the ``functools`` module of Python 2.5
+may come in handy here.  It allows you to bind a set of keyword
+arguments (i.e. stylesheet parameters) to a reference of a callable
+stylesheet.  The same works for instances of the ``XPath()``
+evaluator, obviously.
+
+You may also consider creating stylesheets programmatically.  Just
+create an XSL tree, e.g. from a parsed template, and then add or
+replace parts as you see fit.  Passing an XSL tree into the ``XSLT()``
+constructor multiple times will create independent stylesheets, so
+later modifications of the tree will not be reflected in the already
+created stylesheets.  This makes stylesheet generation very straight
+forward.
+
+A third thing to remember is the support for `custom extension
+functions`_.  Some things are much easier to do in XSLT than in
+Python, while for others it is the complete opposite.  Finding the
+right mixture of Python code and XSL code can help a great deal in
+keeping applications well designed and maintainable.
 
 
 Profiling
