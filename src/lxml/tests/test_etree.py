@@ -1842,7 +1842,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
-    def test_XML_base(self):
+    def test_xml_base(self):
         etree = self.etree
         root = etree.XML("<root/>", base_url="http://no/such/url")
         self.assertEquals(root.base, "http://no/such/url")
@@ -1854,7 +1854,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             root.get('{http://www.w3.org/XML/1998/namespace}base'),
             "https://secret/url")
 
-    def test_XML_base_attribute(self):
+    def test_xml_base_attribute(self):
         etree = self.etree
         root = etree.XML("<root/>", base_url="http://no/such/url")
         self.assertEquals(root.base, "http://no/such/url")
