@@ -176,7 +176,8 @@ class ETreeXSLTTestCase(HelperTestCase):
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     exclude-result-prefixes="str xsl">
   <xsl:template match="text()">
-    <xsl:value-of select="str:align(string(.), '---', 'center')" />
+    <xsl:value-of select="str:replace(
+           str:align(string(.), '---', 'center'), '-', '*')" />
   </xsl:template>
   <xsl:template match="*">
     <xsl:copy>
@@ -189,7 +190,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
-<a><b>-B-</b><c>-C-</c></a>
+<a><b>*B*</b><c>*C*</c></a>
 ''',
                           str(res))
 
