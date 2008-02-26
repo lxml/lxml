@@ -34,9 +34,8 @@ you must take care not to keep a reference to them outside of the
 See http://codespeak.net/lxml/element_classes.html
 """
 
-from etreepublic cimport _Document, _Element, ElementBase
+from etreepublic cimport _Document, elementFactory, import_lxml__etree
 from etreepublic cimport ElementClassLookup, FallbackElementClassLookup
-from etreepublic cimport elementFactory, import_lxml__etree
 from python cimport _cstr
 cimport etreepublic as cetree
 cimport python
