@@ -32,6 +32,7 @@ ElementTree_.
    4  Bugs
      4.1  My application crashes!
      4.2  I think I have found a bug in lxml. What should I do?
+     4.3  How do I know a bug is really in lxml and not in libxml2?
    5  Threading
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
@@ -576,21 +577,13 @@ Since lxml 2.0, you can.  However, it is a lot more efficient to use
 stylesheets in the thread that created them.  This is due to some
 interfering optimisations in libxslt and lxml.etree.  It is therefore
 a good idea to cache them in thread local storage (see Python's
-threading module).
-
-If your stylesheets are diverse and status specific, you may be able
-to reduce the diversity by using XSLT parameters that you pass at call
-time to configure the stylesheets.
+threading module).  lxml cannot easily do this for you, as it cannot
+know when to discard them from such a cache.
 
 If you use very complex stylesheets or create stylesheets
 programmatically, you should do so in the main thread, and then copy
 them into the thread cache using the ``copy`` module from the standard
 library.
-
-Note that passing the same XSL tree into multiple ``XSLT()`` instances
-will create independent stylesheets, so later modifications of the
-tree will not be reflected in the already created stylesheets.  This
-makes stylesheet generation very easy.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
