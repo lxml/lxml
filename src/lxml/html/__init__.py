@@ -713,11 +713,11 @@ def submit_form(form, extra_values=None, open_http=None):
 
     You can use this like::
 
-        >>> form = doc.forms[0]                        # doctest: +SKIP
-        >>> form.inputs['foo'].value = 'bar' # etc     # doctest: +SKIP
-        >>> response = form.submit()                   # doctest: +SKIP
-        >>> doc = parse(response)                      # doctest: +SKIP
-        >>> doc.make_links_absolute(response.geturl()) # doctest: +SKIP
+        form = doc.forms[0]
+        form.inputs['foo'].value = 'bar' # etc
+        response = form.submit()
+        doc = parse(response)
+        doc.make_links_absolute(response.geturl())
 
     To change the HTTP requester, pass a function as ``open_http`` keyword
     argument that opens the URL for you.  The function must have the following
