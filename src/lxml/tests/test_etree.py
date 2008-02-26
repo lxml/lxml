@@ -176,39 +176,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError, root.set, "newattr", 5)
         self.assertRaises(TypeError, root.set, "newattr", None)
 
-    def test_attrib_pop(self):
-        ElementTree = self.etree.ElementTree
-        
-        f = StringIO('<doc one="One" two="Two"/>')
-        doc = ElementTree(file=f)
-        root = doc.getroot()
-        self.assertEquals('One', root.attrib['one'])
-        self.assertEquals('Two', root.attrib['two'])
-
-        self.assertEquals('One', root.attrib.pop('one'))
-
-        self.assertEquals(None, root.attrib.get('one'))
-        self.assertEquals('Two', root.attrib['two'])
-
-    def test_attrib_pop_unknown(self):
-        root = self.etree.XML('<doc one="One" two="Two"/>')
-        self.assertRaises(KeyError, root.attrib.pop, 'NONE')
-
-        self.assertEquals('One', root.attrib['one'])
-        self.assertEquals('Two', root.attrib['two'])
-
-    def test_attrib_pop_default(self):
-        root = self.etree.XML('<doc one="One" two="Two"/>')
-        self.assertEquals('Three', root.attrib.pop('three', 'Three'))
-
-    def test_attrib_pop_empty_default(self):
-        root = self.etree.XML('<doc/>')
-        self.assertEquals('Three', root.attrib.pop('three', 'Three'))
-
-    def test_attrib_pop_invalid_args(self):
-        root = self.etree.XML('<doc one="One" two="Two"/>')
-        self.assertRaises(TypeError, root.attrib.pop, 'One', None, None)
-
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element
@@ -237,18 +204,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals('ONE',     a.text)
         self.assertEquals('ANOTHER', b.text)
 
-    def test_deepcopy_comment(self):
-        # previously caused a crash
-        # not supported by ET!
-        Comment = self.etree.Comment
-        
-        a = Comment("ONE")
-        b = copy.deepcopy(a)
-        b.text = "ANOTHER"
-
-        self.assertEquals('ONE',     a.text)
-        self.assertEquals('ANOTHER', b.text)
-
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values
         # lxml.etree allows only strings
@@ -258,14 +213,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         root.set("attr", "TEST")
         self.assertEquals("TEST", root.get("attr"))
         self.assertRaises(TypeError, root.set, "newattr", 5)
-
-    def test_parse_error(self):
-        # ET raises ExpatError
-        parse = self.etree.parse
-        # from StringIO
-        f = StringIO('<a><b></c></b></a>')
-        self.assertRaises(SyntaxError, parse, f)
-        f.close()
 
     def test_parse_remove_comments(self):
         fromstring = self.etree.fromstring
@@ -324,13 +271,6 @@ class ETreeOnlyTestCase(HelperTestCase):
                        if 1 == log.line ])
         self.assert_([ log for log in logs
                        if 15 == log.column ])
-
-    def test_parse_error_from_file(self):
-        parse = self.etree.parse
-        # from file
-        f = open(fileInTestDir('test_broken.xml'), 'r')
-        self.assertRaises(SyntaxError, parse, f)
-        f.close()
 
     def test_iterparse_comments(self):
         # ET removes comments
@@ -833,35 +773,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             ' hoi ',
             a[1].text)
 
-    # ElementTree adds whitespace around comments
-    def test_comment_text(self):
-        Element  = self.etree.Element
-        Comment  = self.etree.Comment
-        tostring = self.etree.tostring
-
-        a = Element('a')
-        a.append(Comment('foo'))
-        self.assertEquals(
-            '<a><!--foo--></a>',
-            tostring(a))
-
-        a[0].text = "TEST"
-        self.assertEquals(
-            '<a><!--TEST--></a>',
-            tostring(a))
-
-    # ElementTree adds whitespace around comments
-    def test_comment_whitespace(self):
-        Element = self.etree.Element
-        Comment = self.etree.Comment
-        tostring = self.etree.tostring
-
-        a = Element('a')
-        a.append(Comment(' foo  '))
-        self.assertEquals(
-            '<a><!-- foo  --></a>',
-            tostring(a))
-
     # does not raise an exception in ElementTree
     def test_comment_immutable(self):
         Element = self.etree.Element
@@ -874,15 +785,9 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError, c.insert, 0, el)
         self.assertRaises(TypeError, c.set, "myattr", "test")
 
-    # test weird dictionary interaction leading to segfault previously
-    def test_weird_dict_interaction(self):
-        root = self.etree.Element('root')
-        add = self.etree.ElementTree(file=StringIO('<foo>Foo</foo>'))
-        root.append(self.etree.Element('baz'))
-
     # test passing 'None' to dump
     def test_dump_none(self):
-        self.assertRaises(TypeError, etree.dump, None)
+        self.assertRaises(TypeError, self.etree.dump, None)
 
     def test_prefix(self):
         ElementTree = self.etree.ElementTree
@@ -1353,18 +1258,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<root xmlns:ns="%s"><ns:baz/></root>' % ns_href,
             self.etree.tostring(two))
 
-    def test_namespaces_after_serialize(self):
-        parse = self.etree.parse
-        tostring = self.etree.tostring
-
-        ns_href = "http://a.b.c"
-        one = parse(
-            StringIO('<foo><bar xmlns:ns="%s"><ns:baz/></bar></foo>' % ns_href))
-        baz = one.getroot()[0][0]
-
-        parsed = parse(StringIO( tostring(baz) )).getroot()
-        self.assertEquals('{%s}baz' % ns_href, parsed.tag)
-
     def test_element_nsmap(self):
         etree = self.etree
 
@@ -1479,24 +1372,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [a, b, c],
             list(a.getiterator('*')))
-
-    def test_itertext(self):
-        # ET 1.3+
-        XML = self.etree.XML
-        root = XML("<root>RTEXT<a></a>ATAIL<b/><c>CTEXT</c>CTAIL</root>")
-
-        text = list(root.itertext())
-        self.assertEquals(["RTEXT", "ATAIL", "CTEXT", "CTAIL"],
-                          text)
-
-    def test_itertext_child(self):
-        # ET 1.3+
-        XML = self.etree.XML
-        root = XML("<root>RTEXT<a></a>ATAIL<b/><c>CTEXT</c>CTAIL</root>")
-
-        text = list(root[2].itertext())
-        self.assertEquals(["CTEXT"],
-                          text)
 
     def test_findall_ns(self):
         XML = self.etree.XML
@@ -1685,33 +1560,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [b, c, d, e],
             list(a))
-
-    def test_extend(self):
-        etree = self.etree
-        root = etree.Element('foo')
-        for i in range(3):
-            element = etree.SubElement(root, 'a%s' % i)
-            element.text = "text%d" % i
-            element.tail = "tail%d" % i
-
-        elements = []
-        for i in range(3):
-            new_element = etree.Element("test%s" % i)
-            new_element.text = "TEXT%s" % i
-            new_element.tail = "TAIL%s" % i
-            elements.append(new_element)
-
-        root.extend(elements)
-
-        self.assertEquals(
-            ["a0", "a1", "a2", "test0", "test1", "test2"],
-            [ el.tag for el in root ])
-        self.assertEquals(
-            ["text0", "text1", "text2", "TEXT0", "TEXT1", "TEXT2"],
-            [ el.text for el in root ])
-        self.assertEquals(
-            ["tail0", "tail1", "tail2", "TAIL0", "TAIL1", "TAIL2"],
-            [ el.tail for el in root ])
 
     def test_sourceline_XML(self):
         XML = self.etree.XML
