@@ -522,9 +522,10 @@ this will serialize the access to each of them, so it is better to ``copy()``
 parsers or to just use the default parser (which is automatically copied for
 each thread).
 
-Due to the way libxslt handles threading, concurrent access to stylesheets is
-currently only possible if it was parsed in the main thread.  Parsing and
-applying a stylesheet inside one thread also works.
+Due to the way libxslt handles threading, applying a stylesheets is
+most efficient if it was parsed in the same thread that executes it.
+One way to achieve this is by caching stylesheets in thread-local
+storage.
 
 Warning: You should generally avoid modifying trees in other threads than the
 one it was generated in.  Although this should work in many cases, there are
@@ -558,43 +559,38 @@ multi-threading.
 Would my single-threaded program run faster if I turned off threading?
 ----------------------------------------------------------------------
 
-Can be.  You can see for yourself by compiling lxml entirely without threading
-support.  Pass the ``--without-threading`` option to setup.py when building
-lxml from source.
+Quite likely, yes.  You can see for yourself by compiling lxml
+entirely without threading support.  Pass the ``--without-threading``
+option to setup.py when building lxml from source.  You can also build
+libxml2 without pthread support (``--without-pthreads`` option), which
+may add another bit of performance.  Note that this will leave
+internal data structures entirely without thread protection, so make
+sure you really do not use lxml outside of the main application thread
+in this case.
 
 
 Why can't I reuse XSLT stylesheets in other threads?
 ----------------------------------------------------
 
-lxml currently has the restriction that an XSLT object can only be
-used in a thread if it was created either in the thread itself or in
-the main thread.  This is due to some interfering optimisations in
-libxslt and lxml.etree.  To work around this, you can do a couple of
-things:
+Since lxml 2.0, you can.  However, it is a lot more efficient to use
+stylesheets in the thread that created them.  This is due to some
+interfering optimisations in libxslt and lxml.etree.  It is therefore
+a good idea to cache them in thread local storage (see Python's
+threading module).
 
-* create all XSLT objects in the main program and reuse them wherever
-  you want.
+If your stylesheets are diverse and status specific, you may be able
+to reduce the diversity by using XSLT parameters that you pass at call
+time to configure the stylesheets.
 
-* create them in the thread where you use them and maybe cache them in
-  thread local storage (see the threading module).
-
-If your stylesheets are diverse and status specific, you can still
-prepare them in advance if you:
-
-* use XSLT parameters that you pass at call time to configure the
-  stylesheets
-
-* create the stylesheets (partially) programmatically in the main
-  program, e.g. by adding ``xsl:output`` tags, ``xsl:include`` tags or
-  templates (be careful with the order here) to the XSL tree, and then
-  create the ``XSLT`` objects and store them in a read-only
-  dictionary.  That way, you can access and use them in any thread.
+If you use very complex stylesheets or create stylesheets
+programmatically, you should do so in the main thread, and then copy
+them into the thread cache using the ``copy`` module from the standard
+library.
 
 Note that passing the same XSL tree into multiple ``XSLT()`` instances
 will create independent stylesheets, so later modifications of the
-tree will not be reflected in the already created stylesheets.  Also,
-since lxml 2.0, you can deep copy XSLT objects using the ``copy``
-module from the standard library.
+tree will not be reflected in the already created stylesheets.  This
+makes stylesheet generation very easy.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
@@ -639,9 +635,10 @@ for possible approaches to solve your specific problem:
   subtrees trough XSLT variables.  This might or might not work, depending on
   your specific usage.
 
-* try copying trees at suspicious places and working with those instead of a
-  tree shared between threads.  A good candidate might be the result of an
-  XSLT or the stylesheet itself.
+* try copying trees at suspicious places in your code and working with
+  those instead of a tree shared between threads.  A good candidate
+  might be the result of an XSLT or the stylesheet itself, if it
+  traverses thread boundaries.
 
 * try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
   instead of sharing one.  Also see the question above.
