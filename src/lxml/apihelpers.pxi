@@ -218,21 +218,24 @@ cdef object _attributeValueFromNsName(xmlNode* c_element,
     tree.xmlFree(c_result)
     return result
 
-cdef object _getAttributeValue(_Element element, key, default):
+cdef object _getNodeAttributeValue(xmlNode* c_node, key, default):
     cdef char* c_result
     cdef char* c_tag
     ns, tag = _getNsTag(key)
     c_tag = _cstr(tag)
     if ns is None:
-        c_result = tree.xmlGetNoNsProp(element._c_node, c_tag)
+        c_result = tree.xmlGetNoNsProp(c_node, c_tag)
     else:
-        c_result = tree.xmlGetNsProp(element._c_node, c_tag, _cstr(ns))
+        c_result = tree.xmlGetNsProp(c_node, c_tag, _cstr(ns))
     if c_result is NULL:
         # XXX free namespace that is not in use..?
         return default
     result = funicode(c_result)
     tree.xmlFree(c_result)
     return result
+
+cdef inline object _getAttributeValue(_Element element, key, default):
+    return _getNodeAttributeValue(element._c_node, key, default)
 
 cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef xmlNs* c_ns
