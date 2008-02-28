@@ -9,7 +9,7 @@ try:
 except ImportError:
     CYTHON_INSTALLED = False
 
-EXT_MODULES = ["lxml.etree", "lxml.objectify","lxml.pyclasslookup"]
+EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
 def env_var(name):
     value = os.getenv(name, '')
