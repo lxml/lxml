@@ -194,6 +194,28 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
+    def test_exslt_str_attribute_replace(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+  <xsl:stylesheet version = "1.0"
+      xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+      xmlns:str="http://exslt.org/strings"
+      extension-element-prefixes="str">
+
+      <xsl:template match="/">
+        <h1 class="{str:replace('abc', 'b', 'x')}">test</h1>
+      </xsl:template>
+  
+  </xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<h1 class="axc">test</h1>
+''',
+                          str(res))
+
     def test_exslt_math(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
