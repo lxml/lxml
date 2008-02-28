@@ -2567,6 +2567,7 @@ def parse(source, _BaseParser parser=None, *, base_url=None):
 include "proxy.pxi"        # Proxy handling (element backpointers/memory/etc.)
 include "apihelpers.pxi"   # Private helper functions
 include "xmlerror.pxi"     # Error and log handling
+include "readonlytree.pxi" # Read-only implementation of Element proxies
 include "classlookup.pxi"  # Element class lookup mechanisms
 include "nsclasses.pxi"    # Namespace implementation and registry
 include "docloader.pxi"    # Support for custom document loaders

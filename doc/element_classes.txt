@@ -262,12 +262,10 @@ Taking more elaborate decisions than allowed by the custom scheme is difficult
 to achieve in pure Python.  It would require access to the tree - before the
 elements in the tree have been instantiated as Python Element objects.
 
-Luckily, there is a way to do this.  The separate module
-``lxml.pyclasslookup`` provides a lookup class called
-``PythonElementClassLookup`` that works similar to the custom lookup scheme::
+Luckily, there is a way to do this.  The ``PythonElementClassLookup``
+works similar to the custom lookup scheme::
 
-  >>> from lxml.pyclasslookup import PythonElementClassLookup
-  >>> class MyLookup(PythonElementClassLookup):
+  >>> class MyLookup(etree.PythonElementClassLookup):
   ...     def lookup(self, document, element):
   ...         return MyElementClass # defined elsewhere
 
@@ -292,6 +290,9 @@ traverse the tree and collect any kind of information that its elements
 provide.  Once you have taken the decision which class to use for this
 element, you can simply return it and have lxml take care of cleaning up the
 instantiated proxy classes.
+
+Note: this lookup scheme originally lived in a separate module called
+``lxml.pyclasslookup``.
 
 
 Implementing namespaces

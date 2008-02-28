@@ -119,7 +119,7 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
 
 
 ################################################################################
-# Custom Element class lookup schemes
+# default lookup scheme
 
 cdef class ElementDefaultClassLookup(ElementClassLookup):
     """ElementDefaultClassLookup(self, element=None, comment=None, pi=None, entity=None)
@@ -196,6 +196,10 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     else:
         assert 0, "Unknown node type: %s" % c_node.type
 
+
+################################################################################
+# attribute based lookup scheme
+
 cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     """AttributeBasedElementClassLookup(self, attribute_name, class_mapping, fallback=None)
     Checks an attribute of an Element and looks up the value in a
@@ -241,6 +245,9 @@ cdef object _attribute_class_lookup(state, _Document doc, xmlNode* c_node):
     return lookup._callFallback(doc, c_node)
 
 
+################################################################################
+#  per-parser lookup scheme
+
 cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
     """ParserBasedElementClassLookup(self, fallback=None)
     Element class lookup based on the XML parser.
@@ -255,6 +262,9 @@ cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
             doc._parser._class_lookup, doc, c_node)
     return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)
 
+
+################################################################################
+#  custom class lookup based on node type, namespace, name
 
 cdef class CustomElementClassLookup(FallbackElementClassLookup):
     """CustomElementClassLookup(self, fallback=None)
@@ -311,6 +321,76 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
         return cls
     return lookup._callFallback(doc, c_node)
 
+
+################################################################################
+# read-only tree based class lookup
+
+cdef class PythonElementClassLookup(FallbackElementClassLookup):
+    """PythonElementClassLookup(self, fallback=None)
+    Element class lookup based on a subclass method.
+
+    This class lookup scheme allows access to the entire XML tree in
+    read-only mode.  To use it, re-implement the ``lookup(self, doc,
+    root)`` method in a subclass::
+
+        >>> from lxml import etree, pyclasslookup
+        >>>
+        >>> class MyElementClass(etree.ElementBase):
+        ...     honkey = True
+        ...
+        >>> class MyLookup(pyclasslookup.PythonElementClassLookup):
+        ...     def lookup(self, doc, root):
+        ...         if root.tag == "sometag":
+        ...             return MyElementClass
+        ...         else:
+        ...             for child in root:
+        ...                 if child.tag == "someothertag":
+        ...                     return MyElementClass
+        ...         # delegate to default
+        ...         return None
+
+    If you return None from this method, the fallback will be called.
+
+    The first argument is the opaque document instance that contains
+    the Element.  The second argument is a lightweight Element proxy
+    implementation that is only valid during the lookup.  Do not try
+    to keep a reference to it.  Once the lookup is done, the proxy
+    will be invalid.
+
+    Also, you cannot wrap such a read-only Element in an ElementTree,
+    and you must take care not to keep a reference to them outside of
+    the `lookup()` method.
+
+    Note that the API of the Element objects is not complete.  It is
+    purely read-only and does not support all features of the normal
+    `lxml.etree` API (such as XPath, extended slicing or some
+    iteration methods).
+
+    See http://codespeak.net/lxml/element_classes.html
+    """
+    def __init__(self, ElementClassLookup fallback=None):
+        FallbackElementClassLookup.__init__(self, fallback)
+        self._lookup_function = _python_class_lookup
+
+    def lookup(self, doc, element):
+        """lookup(self, doc, element)
+
+        Override this method to implement your own lookup scheme.
+        """
+        return None
+
+cdef object _python_class_lookup(state, _Document doc, tree.xmlNode* c_node):
+    cdef PythonElementClassLookup lookup
+    cdef _ReadOnlyElementProxy proxy
+    lookup = <PythonElementClassLookup>state
+
+    proxy = _newReadOnlyProxy(None, c_node)
+    cls = lookup.lookup(doc, proxy)
+    _freeReadOnlyProxies(proxy)
+
+    if cls is not None:
+        return cls
+    return lookup._callFallback(doc, c_node)
 
 ################################################################################
 # Global setup

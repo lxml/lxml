@@ -10,7 +10,7 @@ import unittest, operator
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest
 
-from lxml.pyclasslookup import PythonElementClassLookup
+from lxml.etree import PythonElementClassLookup
 
 xml_str = '''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
