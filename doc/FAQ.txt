@@ -408,15 +408,15 @@ a) If your application (or e.g. your web container) uses threads, please see
    the FAQ section on threading_ to check if you touch on one of the
    potential pitfalls.
 
-b) If you are on Mac-OS X, make sure lxml uses the correct libraries.  If you
-   have updated the old system libraries (e.g. through fink), this is best
-   achieved by building lxml statically to prevent the different library
-   versions from interfering.  If you choose to use a dynamically linked
-   version, make sure the ``DYLD_LIBRARY_PATH`` environment variable contains
-   the directory where you installed the libraries.  To make sure the correct
-   libraries are used, print the module level version numbers that
-   ``lxml.etree`` provides from *within* your application rather than relying
-   on what your operating system tells you.
+b) If you are on Mac-OS X, make sure lxml uses the correct libraries.
+   Since the normal system libraries are pretty much outdated, you
+   likely have installed newer versions through a package management
+   system like fink or macports.  In this case, please make sure the
+   ``DYLD_LIBRARY_PATH`` environment variable contains the directory
+   where you installed the libraries.  There are other Python packages
+   that depend on libxml2, so it is up to you to make sure that *all*
+   packages that dynamically load libxml2 load the *same* library
+   version.  Loading conflicting versions *will* lead to a crash.
 
 In any case, try to reproduce the problem with the latest versions of
 libxml2 and libxslt.  From time to time, bugs and race conditions are found
