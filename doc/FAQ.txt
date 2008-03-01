@@ -396,32 +396,52 @@ Bugs
 My application crashes!
 -----------------------
 
-One of the goals of lxml is "no segfaults", so if there is no clear warning in
-the documentation that you were doing something potentially harmful, you have
-found a bug and we would like to hear about it.  Please report this bug to the
-`mailing list`_.  See the next section on how to do that.
+One of the goals of lxml is "no segfaults", so if there is no clear
+warning in the documentation that you were doing something potentially
+harmful, you have found a bug and we would like to hear about it.
+Please report this bug to the `mailing list`_.  See the section on bug
+reporting to learn how to do that.
 
-However, there are a few things to try first, to make sure the problem is
-really within lxml (or libxml2 or libxslt):
-
-a) If your application (or e.g. your web container) uses threads, please see
-   the FAQ section on threading_ to check if you touch on one of the
-   potential pitfalls.
-
-b) If you are on Mac-OS X, make sure lxml uses the correct libraries.
-   Since the normal system libraries are pretty much outdated, you
-   likely have installed newer versions through a package management
-   system like fink or macports.  In this case, please make sure the
-   ``DYLD_LIBRARY_PATH`` environment variable contains the directory
-   where you installed the libraries.  There are other Python packages
-   that depend on libxml2, so it is up to you to make sure that *all*
-   packages that dynamically load libxml2 load the *same* library
-   version.  Loading conflicting versions *will* lead to a crash.
+If your application (or e.g. your web container) uses threads, please
+see the FAQ section on threading_ to check if you touch on one of the
+potential pitfalls.
 
 In any case, try to reproduce the problem with the latest versions of
 libxml2 and libxslt.  From time to time, bugs and race conditions are found
 in these libraries, so a more recent version might already contain a fix for
 your problem.
+
+Remember: even if you see lxml appear in a crash stack trace, it is
+not necessarily lxml that *caused* the crash.
+
+
+My application crashes on MacOS-X!
+----------------------------------
+
+Since the normal system libraries are pretty much outdated, you likely
+have installed newer versions through a package management system like
+fink or macports in addition to the system libraries.  Chances are
+high that your system is confused by the conflicting library versions.
+
+To work around this, please set the ``DYLD_LIBRARY_PATH`` environment
+variable *at runtime* to the directory where you installed the newer
+libraries.  There are other Python packages that depend on libxml2, so
+it is up to you to make sure that *all* packages that dynamically load
+libxml2 load the *same* library version.  Loading conflicting versions
+*will* lead to a crash and has confused a lot of MacOS users already.
+
+Please understand that if your system uses conflicting library
+versions, there is nothing lxml can do about it.  It is up to you as a
+user to make sure you have a sane execution environment.
+
+See `bug 197243`_ for more information.
+
+.. _`bug 197243`: https://bugs.launchpad.net/lxml/+bug/197243
+
+If you want a sane, reliable execution environment, especially for
+production systems, `using a buildout`_ might be a good idea.
+
+.. _`using a buildout`: http://comments.gmane.org/gmane.comp.python.lxml.devel/3297?set_lines=100000
 
 
 I think I have found a bug in lxml. What should I do?
@@ -604,11 +624,13 @@ for possible approaches to solve your specific problem:
   more robust against possible pitfalls.  So newer versions might already fix
   your problem in a reliable way.
 
-* make sure the library versions you installed are really used.  Do not rely
-  on what your operating system tells you!  Print the version constants in
-  ``lxml.etree`` from within your runtime environment to make sure it is the
-  case.  This is especially a problem under MacOS-X when newer library
-  versions were installed in addition to the outdated system libraries.
+* make sure the library versions you installed are really used.  Do
+  not rely on what your operating system tells you!  Print the version
+  constants in ``lxml.etree`` from within your runtime environment to
+  make sure it is the case.  This is especially a problem under
+  MacOS-X when newer library versions were installed in addition to
+  the outdated system libraries.  Please read the bugs section
+  regarding MacOS-X in this FAQ.
 
 * if you use ``mod_python``, try setting this option:
 
