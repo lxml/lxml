@@ -1,4 +1,4 @@
-from tree cimport xmlDoc, xmlDict
+from tree cimport xmlDoc, xmlNode, xmlDict
 from xpath cimport xmlXPathContext, xmlXPathFunction
 
 cdef extern from "libxslt/xslt.h":
@@ -22,6 +22,11 @@ cdef extern from "libxslt/xsltInternals.h":
         void* _private
         xmlDict* dict
         int profile
+        xmlNode* node
+        xmlDoc* output
+        xmlNode* insert
+
+    ctypedef struct xsltStackElem
 
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc) nogil
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet) nogil
@@ -59,6 +64,9 @@ cdef extern from "libxslt/transform.h":
                                          char** params, char* output,
                                          void* profile,
                                          xsltTransformContext* context) nogil
+    cdef void xsltProcessOneNode(xsltTransformContext* ctxt,
+                                 xmlNode* contextNode,
+                                 xsltStackElem* params)
     cdef xsltTransformContext* xsltNewTransformContext(xsltStylesheet* style,
                                                        xmlDoc* doc) nogil
     cdef void xsltFreeTransformContext(xsltTransformContext* context) nogil

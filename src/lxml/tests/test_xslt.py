@@ -604,6 +604,26 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           '<A>X</A>')
 
+    def test_extension_element(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:mytext>b</myns:mytext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        class mytext(etree.XSLTExtension):
+            pass
+
+        result = tree.xslt(style, extensions={})
+        self.assertEquals(self._rootstring(result),
+                          '<A><b>X</b></A>')
+
     def test_xslt_document_XML(self):
         # make sure document('') works from parsed strings
         xslt = etree.XSLT(etree.XML("""\

@@ -207,17 +207,21 @@ cdef extern from "etree_defs.h":
     cdef _ReadOnlyElementProxy NEW_RO_PROXY "PY_NEW" (object t)
 
 cdef _ReadOnlyElementProxy _newReadOnlyProxy(
-    _ReadOnlyElementProxy sourceProxy, xmlNode* c_node):
+    _ReadOnlyElementProxy source_proxy, xmlNode* c_node):
     cdef _ReadOnlyElementProxy el
     el = NEW_RO_PROXY(_ReadOnlyElementProxy)
     el._c_node = c_node
-    if sourceProxy is None:
+    _initReadOnlyProxy(el, source_proxy)
+    return el
+
+cdef inline _initReadOnlyProxy(_ReadOnlyElementProxy el,
+                               _ReadOnlyElementProxy source_proxy):
+    if source_proxy is None:
         el._source_proxy = el
         el._dependent_proxies = [el]
     else:
-        el._source_proxy = sourceProxy
-        python.PyList_Append(sourceProxy._dependent_proxies, el)
-    return el
+        el._source_proxy = source_proxy
+        python.PyList_Append(source_proxy._dependent_proxies, el)
 
 cdef _freeReadOnlyProxies(_ReadOnlyElementProxy sourceProxy):
     cdef _ReadOnlyElementProxy el
@@ -228,3 +232,71 @@ cdef _freeReadOnlyProxies(_ReadOnlyElementProxy sourceProxy):
     for el in sourceProxy._dependent_proxies:
         el._c_node = NULL
     del sourceProxy._dependent_proxies[:]
+
+
+cdef class _ReadOnlyRootElementProxy(_ReadOnlyElementProxy):
+    """A read-only element that frees the subtree on deallocation.
+    """
+    def __dealloc__(self):
+        if self._c_node is not NULL:
+            tree.xmlFreeNode(self._c_node)
+
+cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
+    """A read-only element that allows adding children and changing the
+    text content (i.e. everything that adds to the subtree).
+    """
+    cpdef append(self, other_element):
+        """Append a copy of an Element to the list of children.
+        """
+        cdef xmlNode* c_next
+        cdef xmlNode* c_node
+        self._assertNode()
+        c_node = _roNodeOf(other_element)
+        c_node = _copyNodeToDoc(c_node, self._c_node.doc)
+        c_next = c_node.next
+        tree.xmlAddChild(self._c_node, c_node)
+        _moveTail(c_next, c_node)
+            
+    def extend(self, elements):
+        """Append a copy of all Elements from a sequence to the list of
+        children.
+        """
+        self._assertNode()
+        for element in elements:
+            self.append(element)
+
+    property text:
+        """Text before the first subelement. This is either a string or the
+        value None, if there was no text.
+        """
+        def __get__(self):
+            self._assertNode()
+            return _collectText(self._c_node.children)
+
+        def __set__(self, value):
+            self._assertNode()
+            if isinstance(value, QName):
+                value = python.PyUnicode_FromEncodedObject(
+                    _resolveQNameText(self, value), 'UTF-8', 'strict')
+            _setNodeText(self._c_node, value)
+
+cdef _AppendOnlyElementProxy _newAppendOnlyProxy(
+    _ReadOnlyElementProxy source_proxy, xmlNode* c_node):
+    cdef _AppendOnlyElementProxy el
+    el = <_AppendOnlyElementProxy>NEW_RO_PROXY(_AppendOnlyElementProxy)
+    el._c_node = c_node
+    _initReadOnlyProxy(el, source_proxy)
+    return el
+
+cdef xmlNode* _roNodeOf(element) except NULL:
+    cdef xmlNode* c_node
+    if isinstance(element, _Element):
+        c_node = (<_Element>element)._c_node
+    elif isinstance(element, _ReadOnlyElementProxy):
+        c_node = (<_ReadOnlyElementProxy>element)._c_node
+    else:
+        raise TypeError("invalid value to append()")
+
+    if c_node is NULL:
+        raise TypeError("invalid element")
+    return c_node
