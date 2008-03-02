@@ -8,7 +8,7 @@ lxml changelog
 Features added
 --------------
 
-* Extension elements for XSLT
+* Extension elements for XSLT (experimental!)
 
 * ``Element.base`` property returns the xml:base or HTML base URL of
   an Element.
