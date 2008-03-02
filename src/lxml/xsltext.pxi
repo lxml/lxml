@@ -47,10 +47,16 @@ cdef class XSLTExtension:
             while c_node is not NULL:
                 c_next = c_node.next
                 tree.xmlUnlinkNode(c_node)
-                proxy = _newReadOnlyProxy(
-                    context._extension_element_proxy, c_node)
-                proxy.free_after_use()
-                python.PyList_Append(results, proxy)
+                if c_node.type == tree.XML_TEXT_NODE:
+                    python.PyList_Append(results, _collectText(c_node))
+                elif c_node.type == tree.XML_ELEMENT_NODE:
+                    proxy = _newReadOnlyProxy(
+                        context._extension_element_proxy, c_node)
+                    proxy.free_after_use()
+                    python.PyList_Append(results, proxy)
+                else:
+                    raise TypeError("unsupported XSLT result type: %d" %
+                                    c_node.type)
                 c_node = c_next
         finally:
             tree.xmlFreeNode(c_parent)
