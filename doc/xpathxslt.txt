@@ -458,8 +458,127 @@ Extension elements
 ------------------
 
 Just like `custom extension functions`_, lxml supports custom
-extension *elements*.
+extension *elements* in XSLT.  This means, you can write XSLT code
+like this::
 
+  <xsl:template match="*">
+      <my:python-extension>
+          <some-content />
+      </my:python-extension>
+  </xsl:template>
+
+And then you can implement the element in Python like this::
+
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         print "Hello from XSLT!"
+  ...         output_parent.text = "I did it!"
+  ...         # just copy own content input to output
+  ...         output_parent.extend( list(self_node) )
+
+The arguments passed to this function are
+
+context
+    The opaque evaluation context.  You need this when calling back
+    into the XSLT processor.
+
+self_node
+    A read-only Element object that represents the extension element
+    in the stylesheet.
+
+input_node
+    The current context Element in the input document (also read-only).
+
+output_parent
+    The current insertion point in the output document.  You can
+    append elements or set the text value (not the tail).  Apart from
+    that, the Element is read-only.
+
+In XSLT, extension elements can be used like any other XSLT element,
+except that they must be declared as extensions using the standard
+XSLT ``extension-element-prefixes`` option::
+
+  >>> xslt_ext_tree = etree.XML('''
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  ...     xmlns:my="testns"
+  ...     extension-element-prefixes="my">
+  ...     <xsl:template match="/">
+  ...         <foo><my:ext><child>XYZ</child></my:ext></foo>
+  ...     </xsl:template>
+  ...     <xsl:template match="child">
+  ...         <CHILD>--xyz--</CHILD>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+
+To register the extension, add its name and namespace to the extension
+mapping of the XSLT object::
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+Note how we pass an instance here, not the class of the extension.
+Now we can run the transformation and see how our extension is
+called::
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  Hello from XSLT!
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>I did it!<child>XYZ</child></foo>\n'
+
+XSLT extensions are a very powerful feature that allows you to
+interact directly with the XSLT processor.  You have full access to
+the input document and the stylesheet, and you can even call back into
+the XSLT processor to process templates.  Here is an example that
+passes an Element into the ``.apply_templates()`` method of the
+``XSLTExtension`` instance::
+
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         child = self_node[0]
+  ...         results = self.apply_templates(context, child)
+  ...         output_parent.append(results[0])
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo><CHILD>--xyz--</CHILD></foo>\n'
+
+Note how we applied the templates to a child of the extension element
+itself, i.e. to an element inside the stylesheet instead of an element
+of the input document.
+
+There is one important thing to keep in mind: all Elements that the
+``execute()`` method gets to deal with are read-only Elements, so you
+cannot modify them.  They also will not easily work in the API.  For
+example, you cannot pass them to the ``tostring()`` function or wrap
+them in an ``ElementTree``.
+
+What you can do, however, is to deepcopy them to make them normal
+Elements, and then modify them using the normal etree API.  So this
+will work::
+
+  >>> from copy import deepcopy
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         child = deepcopy(self_node[0])
+  ...         child.text = "NEW TEXT"
+  ...         output_parent.append(child)
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo><child>NEW TEXT</child></foo>\n'
 
 
 The ``xslt()`` tree method
