@@ -190,6 +190,16 @@ hr {
     background-color: transparent;
 }
 
+dt {
+    line-height: 1.5em;
+    margin-left: 1em;
+    content: "\00BB" " ";
+}
+
+dt:before {
+    content: "\00BB" " ";
+}
+
 ul {
     line-height: 1.5em;
     margin-left: 1em;
