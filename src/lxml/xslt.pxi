@@ -229,14 +229,33 @@ cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
 
 cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
+    cdef object _extension_elements
+    cdef _ReadOnlyElementProxy _extension_element_proxy
     def __init__(self, namespaces, extensions, enable_regexp):
         self._xsltCtxt = NULL
-        if extensions is not None:
-            for ns, prefix in extensions:
-                if ns is None:
+        self._extension_elements = EMPTY_READ_ONLY_DICT
+        if extensions is not None and extensions:
+            for ns_name_tuple, extension in extensions.items():
+                if ns_name_tuple[0] is None:
                     raise XSLTExtensionError(
                         "extensions must not have empty namespaces")
+                if isinstance(extension, XSLTExtension):
+                    if self._extension_elements is EMPTY_READ_ONLY_DICT:
+                        self._extension_elements = {}
+                        extensions = python.PyDict_Copy(extensions)
+                    ns_utf   = _utf8(ns_name_tuple[0])
+                    name_utf = _utf8(ns_name_tuple[1])
+                    python.PyDict_SetItem(
+                        self._extension_elements, (ns_utf, name_utf),
+                        extension)
+                    python.PyDict_DelItem(extensions, ns_name_tuple)
         _BaseContext.__init__(self, namespaces, extensions, enable_regexp)
+
+    cdef _BaseContext _copy(self):
+        cdef _XSLTContext context
+        context = <_XSLTContext>_BaseContext._copy(self)
+        context._extension_elements = self._extension_elements
+        return context
 
     cdef register_context(self, xslt.xsltTransformContext* xsltCtxt,
                                _Document doc):
@@ -245,6 +264,7 @@ cdef class _XSLTContext(_BaseContext):
         self._register_context(doc)
         self.registerLocalFunctions(xsltCtxt, _register_xslt_function)
         self.registerGlobalFunctions(xsltCtxt, _register_xslt_function)
+        _registerXSLTExtensions(xsltCtxt, self._extension_elements)
 
     cdef free_context(self):
         self._cleanup_context()
@@ -436,6 +456,11 @@ cdef class XSLT:
                 if c_result is not NULL:
                     tree.xmlFreeDoc(c_result)
                 resolver_context._raise_if_stored()
+
+            if context._exc._has_raised():
+                if c_result is not NULL:
+                    tree.xmlFreeDoc(c_result)
+                context._exc._raise_if_stored()
 
             if c_result is NULL:
                 # last error seems to be the most accurate here

@@ -454,6 +454,14 @@ Let's try a non-string XPath expression now::
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 
+Extension elements
+------------------
+
+Just like `custom extension functions`_, lxml supports custom
+extension *elements*.
+
+
+
 The ``xslt()`` tree method
 --------------------------
 

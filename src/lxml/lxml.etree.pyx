@@ -2578,9 +2578,15 @@ include "serializer.pxi"   # XML output functions
 include "iterparse.pxi"    # incremental XML parsing
 include "xmlid.pxi"        # XMLID and IDDict
 include "xinclude.pxi"     # XInclude
+
+
+################################################################################
+# Include submodules for XPath and XSLT
+
 include "extensions.pxi"   # XPath/XSLT extension functions
 include "xpath.pxi"        # XPath evaluation
 include "xslt.pxi"         # XSL transformations
+include "xsltext.pxi"      # XSL extension elements
 
 
 ################################################################################

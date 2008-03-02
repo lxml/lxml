@@ -1,15 +1,24 @@
-Extension functions for XPath and XSLT
-======================================
+Python extensions for XPath and XSLT
+====================================
 
-This document describes how to use Python extension functions in XPath and
-XSLT.  They allow you to do things like this::
+This document describes how to use Python extension functions in XPath
+and XSLT like this::
 
   <xsl:value-of select="f:myPythonFunction(.//sometag)" />
 
-Here is how such a function looks like.  As the first argument, it always
-receives a context object (see below).  The other arguments are provided by
-the respective call in the XPath expression, one in the following examples.
-Any number of arguments is allowed::
+It also describes how to use Python extension elements in XSLT like
+this::
+
+  <xsl:template match="*">
+      <my:python-extension>
+          <some-content />
+      </my:python-extension>
+  </xsl:template>
+
+Here is how an extension function looks like.  As the first argument,
+it always receives a context object (see below).  The other arguments
+are provided by the respective call in the XPath expression, one in
+the following examples.  Any number of arguments is allowed::
 
   >>> def hello(dummy, a):
   ...    return "Hello %s" % a
@@ -18,14 +27,23 @@ Any number of arguments is allowed::
   >>> def loadsofargs(dummy, *args):
   ...    return "Got %d arguments." % len(args)
 
+And here is how an extension element looks like::
+
+  >>> from lxml import etree
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         # just copy own content input to output
+  ...         output_parent.extend( list(self_node) )
+
 
 .. contents::
 .. 
    1  The FunctionNamespace
    2  Global prefix assignment
-   3  Evaluators and XSLT
-   4  Evaluator-local extensions
-   5  What to return from a function
+   3  The XPath context
+   4  Evaluators and XSLT
+   5  Evaluator-local extensions
+   6  What to return from a function
 
 
 The FunctionNamespace
@@ -36,7 +54,6 @@ by which it can be called during evaluation.  This is done using the
 FunctionNamespace class.  For simplicity, we choose the empty namespace
 (None)::
 
-  >>> from lxml import etree
   >>> ns = etree.FunctionNamespace(None)
   >>> ns['hello'] = hello
   >>> ns['countargs'] = loadsofargs

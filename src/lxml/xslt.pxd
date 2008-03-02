@@ -8,6 +8,11 @@ cdef extern from "libxslt/xsltconfig.h":
     cdef int LIBXSLT_VERSION
 
 cdef extern from "libxslt/xsltInternals.h":
+    ctypedef enum xsltTransformState:
+        XSLT_STATE_OK       # 0
+        XSLT_STATE_ERROR    # 1
+        XSLT_STATE_STOPPED  # 2
+
     ctypedef struct xsltDocument:
         xmlDoc* doc
 
@@ -25,6 +30,7 @@ cdef extern from "libxslt/xsltInternals.h":
         xmlNode* node
         xmlDoc* output
         xmlNode* insert
+        xsltTransformState state
 
     ctypedef struct xsltStackElem
 
@@ -32,6 +38,11 @@ cdef extern from "libxslt/xsltInternals.h":
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet) nogil
 
 cdef extern from "libxslt/extensions.h":
+    ctypedef void (*xsltTransformFunction)(xsltTransformContext* ctxt,
+                                           xmlNode* context_node,
+                                           xmlNode* inst,
+                                           void* precomp_unused)
+
     cdef int xsltRegisterExtFunction(xsltTransformContext* ctxt,
                                      char* name,
                                      char* URI,
@@ -43,6 +54,9 @@ cdef extern from "libxslt/extensions.h":
         char* name, char* URI) nogil
     cdef int xsltRegisterExtPrefix(xsltStylesheet* style, 
                                    char* prefix, char* URI) nogil
+    cdef int xsltRegisterExtElement(xsltTransformContext* ctxt,
+                                    char* name, char* URI,
+                                    xsltTransformFunction function) nogil
 
 cdef extern from "libxslt/documents.h":
     ctypedef enum xsltLoadType:
@@ -82,7 +96,9 @@ cdef extern from "libxslt/xsltutils.h":
     cdef void xsltSetTransformErrorFunc(
         xsltTransformContext*, void* ctxt,
         void (*handler)(void* ctxt, char* msg, ...)) nogil
-
+    cdef void xsltTransformError(xsltTransformContext* ctxt, 
+                                 xsltStylesheet* style, 
+                                 xmlNode* node, char* msg, ...)
 cdef extern from "libxslt/security.h":
     ctypedef struct xsltSecurityPrefs
     ctypedef enum xsltSecurityOption:

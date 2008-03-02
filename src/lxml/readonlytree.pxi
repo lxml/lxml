@@ -2,6 +2,7 @@
 
 cdef class _ReadOnlyElementProxy:
     "The main read-only Element proxy class (for internal use only!)."
+    cdef bint _free_after_use
     cdef xmlNode* _c_node
     cdef object _source_proxy
     cdef object _dependent_proxies
@@ -11,6 +12,11 @@ cdef class _ReadOnlyElementProxy:
         """
         assert self._c_node is not NULL, "Proxy invalidated!"
         return 0
+
+    cdef void free_after_use(self):
+        """Should the xmlNode* be freed when releasing the proxy?
+        """
+        self._free_after_use = 1
 
     property tag:
         """Element tag
@@ -216,6 +222,7 @@ cdef _ReadOnlyElementProxy _newReadOnlyProxy(
 
 cdef inline _initReadOnlyProxy(_ReadOnlyElementProxy el,
                                _ReadOnlyElementProxy source_proxy):
+    el._free_after_use = 0
     if source_proxy is None:
         el._source_proxy = el
         el._dependent_proxies = [el]
@@ -224,22 +231,18 @@ cdef inline _initReadOnlyProxy(_ReadOnlyElementProxy el,
         python.PyList_Append(source_proxy._dependent_proxies, el)
 
 cdef _freeReadOnlyProxies(_ReadOnlyElementProxy sourceProxy):
+    cdef xmlNode* c_node
     cdef _ReadOnlyElementProxy el
     if sourceProxy is None:
         return
     if sourceProxy._dependent_proxies is None:
         return
     for el in sourceProxy._dependent_proxies:
+        c_node = el._c_node
         el._c_node = NULL
+        if el._free_after_use:
+            tree.xmlFreeNode(c_node)
     del sourceProxy._dependent_proxies[:]
-
-
-cdef class _ReadOnlyRootElementProxy(_ReadOnlyElementProxy):
-    """A read-only element that frees the subtree on deallocation.
-    """
-    def __dealloc__(self):
-        if self._c_node is not NULL:
-            tree.xmlFreeNode(self._c_node)
 
 cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
     """A read-only element that allows adding children and changing the
