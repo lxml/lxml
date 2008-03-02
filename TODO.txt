@@ -45,22 +45,6 @@ Features
   by libxml2 (patch exists)
 
 
-XSLT extension elements
------------------------
-
-* implementation: one base class that represents the result parent
-
-  - .append(), .extend() and .text will add to the result tree (no .tail)
-
-  - difference: Elements should be copied, not moved?  (will break
-    later changes, but this just means that Elements in the result
-    tree are immutable, including those that were added)
-
-  - how to make input tree read-only? maybe just document?
-
-  - docs: "once in the result tree, Elements must no longer be changed"?
-
-
 lxml 2.0
 ========
 
