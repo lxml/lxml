@@ -635,8 +635,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:myns="testns"
-    extension-element-prefixes="myns"
-    exclude-result-prefixes="myns">
+    extension-element-prefixes="myns">
   <xsl:template match="a">
     <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
   </xsl:template>
@@ -658,8 +657,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:myns="testns"
-    extension-element-prefixes="myns"
-    exclude-result-prefixes="myns">
+    extension-element-prefixes="myns">
   <xsl:template match="a">
     <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
   </xsl:template>
