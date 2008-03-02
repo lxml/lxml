@@ -652,6 +652,38 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           '<A><y>Y</y><z/></A>')
 
+    def test_extension_element_apply_templates(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
+  </xsl:template>
+  <xsl:template match="x" />
+  <xsl:template match="z">XYZ</xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                for child in self_node:
+                    for result in self.apply_templates(context, child):
+                        if isinstance(result, basestring):
+                            el = etree.Element("T")
+                            el.text = result
+                        else:
+                            el = result
+                        output_parent.append(el)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(self._rootstring(result),
+                          '<A><T>Y</T><T>XYZ</T></A>')
+
     def test_extension_element_raise(self):
         tree = self.parse('<a><b>B</b></a>')
         style = self.parse('''\
