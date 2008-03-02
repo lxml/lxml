@@ -119,6 +119,28 @@ cdef class _ReadOnlyElementProxy:
         c_node = _findChildBackwards(self._c_node, 0)
         return c_node != NULL
 
+    def __deepcopy__(self, memo):
+        "__deepcopy__(self, memo)"
+        return self.__copy__()
+        
+    def __copy__(self):
+        "__copy__(self)"
+        cdef xmlDoc* c_doc
+        cdef xmlNode* c_node
+        cdef _Document new_doc
+        c_doc = _copyDocRoot(self._c_node.doc, self._c_node) # recursive
+        new_doc = _documentFactory(c_doc, None)
+        root = new_doc.getroot()
+        if root is not None:
+            return root
+        # Comment/PI
+        c_node = c_doc.children
+        while c_node is not NULL and c_node.type != self._c_node.type:
+            c_node = c_node.next
+        if c_node is NULL:
+            return None
+        return _elementFactory(new_doc, c_node)
+
     def __iter__(self):
         return iter(self.getchildren())
 
