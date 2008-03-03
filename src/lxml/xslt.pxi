@@ -387,6 +387,15 @@ cdef class XSLT:
         :deprecated: call the object, not this method."""
         return self(_input, profile_run=profile_run, **_kw)
 
+    def tostring(self, _ElementTree result_tree):
+        """tostring(self, result_tree)
+
+        Save result doc to string based on stylesheet output method.
+
+        :deprecated: use str(result_tree) instead.
+        """
+        return str(result_tree)
+
     def __deepcopy__(self, memo):
         return self.__copy__()
 
