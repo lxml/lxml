@@ -45,6 +45,13 @@ Features
   by libxml2 (patch exists)
 
 
+XSLT
+----
+
+* Support subclassing XSLTAccessControl to provide custom per-URL
+  access check methods
+
+
 lxml 2.0
 ========
 

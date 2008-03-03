@@ -819,6 +819,29 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[3].get("value"),
                           'B')
 
+    def test_xslt_document_parse_allow(self):
+        access_control = etree.XSLTAccessControl(read_file=True)
+        xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")),
+                          access_control = access_control)
+        result = xslt(etree.XML('<a/>'))
+        root = result.getroot()
+        self.assertEquals(root.tag,
+                          'test')
+        self.assertEquals(root[0].tag,
+                          '{http://www.w3.org/1999/XSL/Transform}stylesheet')
+
+    def test_xslt_document_parse_deny(self):
+        access_control = etree.XSLTAccessControl(read_file=False)
+        xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")),
+                          access_control = access_control)
+        self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
+
+    def test_xslt_document_parse_deny_all(self):
+        access_control = etree.XSLTAccessControl.DENY_ALL
+        xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")),
+                          access_control = access_control)
+        self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
+
     def test_xslt_move_result(self):
         root = etree.XML('''\
         <transform>

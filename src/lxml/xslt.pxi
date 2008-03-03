@@ -180,6 +180,11 @@ cdef class XSLTAccessControl:
     - read_network
     - write_network
 
+    For convenience, there is also a class member `DENY_ALL` that
+    provides an XSLTAccessControl instance that is readily configured
+    to deny everything, and a `DENY_WRITE` member that denies all
+    write access but allows read access.
+
     See `XSLT`.
     """
     cdef xslt.xsltSecurityPrefs* _prefs
@@ -193,6 +198,14 @@ cdef class XSLTAccessControl:
         self._setAccess(xslt.XSLT_SECPREF_CREATE_DIRECTORY, create_dir)
         self._setAccess(xslt.XSLT_SECPREF_READ_NETWORK, read_network)
         self._setAccess(xslt.XSLT_SECPREF_WRITE_NETWORK, write_network)
+
+    DENY_ALL = XSLTAccessControl(
+        read_file=False, write_file=False, create_dir=False,
+        read_network=False, write_network=False)
+
+    DENY_WRITE = XSLTAccessControl(
+        read_file=True, write_file=False, create_dir=False,
+        read_network=True, write_network=False)
 
     def __dealloc__(self):
         if self._prefs is not NULL:

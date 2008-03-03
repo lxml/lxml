@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Constant instances ``DENY_ALL`` and ``DENY_WRITE`` on
+  ``XSLTAccessControl`` class.
+
 * Extension elements for XSLT (experimental!)
 
 * ``Element.base`` property returns the xml:base or HTML base URL of
