@@ -150,7 +150,7 @@ cdef class _ReadOnlyElementProxy:
         Iterate over the children of this element.
         """
         children = self.getchildren()
-        if tag is not None:
+        if tag is not None and tag != '*':
             children = [ el for el in children if el.tag == tag ]
         if reversed:
             children = children[::-1]
