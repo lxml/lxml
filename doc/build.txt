@@ -58,11 +58,13 @@ the current developer version by calling::
 
   svn co http://codespeak.net/svn/lxml/trunk lxml
 
-This will create a directory ``lxml`` and download the source into it.  You
-can also `browse the repository through the web`_ or use your favourite SVN
-client to access it.
+This will create a directory ``lxml`` and download the source into it.
+You can also browse the `Subversion repository`_ through the web, use
+your favourite SVN client to access it, or browse the `Subversion
+history`_.
 
-.. _`browse the repository through the web`: http://codespeak.net/svn/lxml
+.. _`Subversion repository`: http://codespeak.net/svn/lxml/
+.. _`Subversion history`: https://codespeak.net/viewvc/lxml/
 
 
 Setuptools

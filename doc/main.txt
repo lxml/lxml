@@ -159,13 +159,16 @@ from svn directly, using a command like this::
 
   svn co http://codespeak.net/svn/lxml/trunk lxml
 
-You can also `browse it through the web`_.  Please read `how to build lxml
-from source`_ first.  The `latest CHANGES`_ of the developer version are also
-accessible.  You can check there if a bug you found has been fixed or a
-feature you want has been implemented in the latest trunk version.
+You can also browse the `Subversion repository`_ through the web, or
+take a look at the `Subversion history`_.  Please read `how to build lxml
+from source`_ first.  The `latest CHANGES`_ of the developer version
+are also accessible.  You can check there if a bug you found has been
+fixed or a feature you want has been implemented in the latest trunk
+version.
 
 .. _`how to build lxml from source`: build.html
-.. _`browse it through the web`: http://codespeak.net/svn/lxml
+.. _`Subversion repository`: http://codespeak.net/svn/lxml/
+.. _`Subversion history`: https://codespeak.net/viewvc/lxml/
 .. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
 
 

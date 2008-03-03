@@ -153,8 +153,9 @@ written out into an HTML documentation site.
 lxml.etree
 ==========
 
-The main module, ``lxml.etree``, is in the file **lxml.etree.pyx**.
-It implements the main functions and types of the ElementTree API, as
+The main module, ``lxml.etree``, is in the file `lxml.etree.pyx
+<http://codespeak.net/svn/lxml/trunk/src/lxml/lxml.etree.pyx>`_.  It
+implements the main functions and types of the ElementTree API, as
 well as all the factory functions for proxies.  It is the best place
 to start if you want to find out how a specific feature is
 implemented.
@@ -218,6 +219,12 @@ public-api.pxi
     The set of C functions that are exported to other extension
     modules at the C level.  For example, ``lxml.objectify`` makes use
     of these.  See the `C-level API` documentation.
+
+readonlytree.pxi
+    A separate read-only implementation of the Element API.  This is
+    used in places where non-intrusive access to a tree is required,
+    such as the ``PythonElementClassLookup`` or XSLT extension
+    elements.
 
 saxparser.pxi
     SAX-like parser interfaces as known from ElementTree's TreeBuilder.
@@ -295,15 +302,8 @@ lxml.objectify
 
 A Cython implemented extension module that uses the public C-API of
 lxml.etree.  It provides a Python object-like interface to XML trees.
-
-
-lxml.pyclasslookup
-==================
-
-A Cython implemented extension module that uses the public C-API of
-lxml.etree.  It provides a class lookup scheme that duplicates lxml's
-ElementTree API in a very simple way to provide Python access to the
-tree *before* instantiating the real Python proxies in lxml.etree.
+The implementation resides in the file `lxml.objectify.pyx
+<http://codespeak.net/svn/lxml/trunk/src/lxml/lxml.objectify.pyx>`_.
 
 
 lxml.html
