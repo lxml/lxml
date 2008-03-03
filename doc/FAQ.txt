@@ -63,16 +63,17 @@ Read the `lxml.etree Tutorial`_.  While this is still work in progress
 important concepts in ``lxml.etree``.  If you want to help out,
 improving the tutorial is a very good place to start.
 
-There is also a `tutorial for ElementTree`_ which works for ``lxml.etree``.
-The `API documentation`_ also contains many examples for ``lxml.etree``.  To
-learn using ``lxml.objectify``, read the `objectify documentation`_.
+There is also a `tutorial for ElementTree`_ which works for
+``lxml.etree``.  The documentation of the `extended etree API`_ also
+contains many examples for ``lxml.etree``.  To learn using
+``lxml.objectify``, read the `objectify documentation`_.
 
 John Shipman has written another tutorial called `Python XML
 processing with lxml`_ that contains lots of examples.
 
 .. _`lxml.etree Tutorial`:      tutorial.html
 .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
-.. _`API documentation`:        api.html
+.. _`extended etree API`:        api.html
 .. _`objectify documentation`:  objectify.html
 .. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
 
@@ -80,33 +81,56 @@ processing with lxml`_ that contains lots of examples.
 Where can I find more documentation about lxml?
 -----------------------------------------------
 
-There is a lot of documentation as lxml implements the well-known `ElementTree
-API`_ and tries to follow its documentation as closely as possible.  There are
-a couple of issues where lxml cannot keep up compatibility.  They are
-described in the compatibility_ documentation.  The lxml specific extensions
-to the API are described by individual files in the ``doc`` directory of the
-distribution and on `the web page`_.
+There is a lot of documentation on the web and also in the Python
+standard library documentation, as lxml implements the well-known
+`ElementTree API`_ and tries to follow its documentation as closely as
+possible.  There are a couple of issues where lxml cannot keep up
+compatibility.  They are described in the compatibility_
+documentation.
+
+The lxml specific extensions to the API are described by individual
+files in the ``doc`` directory of the source distribution and on `the
+web page`_.
+
+The `generated API documentation`_ is a comprehensive API reference
+for the lxml package.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
 .. _`the web page`:    http://codespeak.net/lxml/#documentation
+.. _`generated API documentation`: api/index.html
 
 
 What standards does lxml implement?
 -----------------------------------
 
 The compliance to XML Standards depends on the support in libxml2 and libxslt.
-Here is a quote from `http://xmlsoft.org/`:
+Here is a quote from `http://xmlsoft.org/ <http://xmlsoft.org/>`_:
 
   In most cases libxml2 tries to implement the specifications in a relatively
   strictly compliant way. As of release 2.4.16, libxml2 passed all 1800+ tests
   from the OASIS XML Tests Suite.
 
-lxml currently supports libxml2 2.6.20 or later, which has even better support
-for various XML standards.  Some of the more important ones are: HTML, XML
-namespaces, XPath, XInclude, XSLT, XML catalogs, canonical XML, RelaxNG,
-XML:ID.  Support for XML Schema and especially Schematron is currently
-incomplete in libxml2, but is definitely usable and actively being worked on.
-libxml2 also supports loading documents through HTTP and FTP.
+lxml currently supports libxml2 2.6.20 or later, which has even better
+support for various XML standards.  The important ones are:
+
+* XML 1.0
+* HTML 4
+* XML namespaces
+* XML Schema 1.0
+* XPath 1.0
+* XInclude 1.0
+* XSLT 1.0
+* EXSLT
+* XML catalogs
+* canonical XML
+* RelaxNG
+* xml:id
+* xml:base
+
+Support for XML Schema is currently not 100% complete in libxml2, but
+is definitely very close to compliance.  Schematron is supported,
+although not necessarily complete.  libxml2 also supports loading
+documents through HTTP and FTP.
 
 
 Who uses lxml?
