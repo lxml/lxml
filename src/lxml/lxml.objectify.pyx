@@ -1243,6 +1243,17 @@ def enableRecursiveStr(on=True):
 
     Enable a recursively generated tree representation for str(element),
     based on objectify.dump(element).
+
+    :deprecated: use enable_recursive_str() instead
+    """
+    global __RECURSIVE_STR
+    __RECURSIVE_STR = on
+
+def enable_recursive_str(on=True):
+    """enableRecursiveStr(on=True)
+
+    Enable a recursively generated tree representation for str(element),
+    based on objectify.dump(element).
     """
     global __RECURSIVE_STR
     __RECURSIVE_STR = on
