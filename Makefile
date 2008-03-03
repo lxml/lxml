@@ -41,7 +41,6 @@ ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
 html: inplace
-	mkdir -p doc/html
 	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
 	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
@@ -65,7 +64,11 @@ clean:
 	find . \( -name '*.o' -o -name '*.so' -o -name '*.py[cod]' -o -name '*.dll' \) -exec rm -f {} \;
 	rm -rf build
 
-realclean: clean
+docclean:
+	rm -f doc/html/*.html
+	rm -fr doc/html/api
+
+realclean: clean docclean
 	find . -name '*.c' -exec rm -f {} \;
 	rm -f TAGS
 	$(PYTHON) setup.py clean -a
