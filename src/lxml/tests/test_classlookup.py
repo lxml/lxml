@@ -25,7 +25,7 @@ class ClassLookupTestCase(HelperTestCase):
     etree = etree
 
     def tearDown(self):
-        etree.setElementClassLookup()
+        etree.set_element_class_lookup()
         super(ClassLookupTestCase, self).tearDown()
 
     def test_namespace_lookup(self):
@@ -33,7 +33,7 @@ class ClassLookupTestCase(HelperTestCase):
             FIND_ME = "namespace class"
 
         lookup = etree.ElementNamespaceClassLookup()
-        etree.setElementClassLookup(lookup)
+        etree.set_element_class_lookup(lookup)
 
         ns = lookup.get_namespace("myNS")
         ns[None] = TestElement
@@ -57,7 +57,7 @@ class ClassLookupTestCase(HelperTestCase):
 
         lookup = etree.ElementDefaultClassLookup(
             element=TestElement, comment=TestComment, pi=TestPI)
-        parser.setElementClassLookup(lookup)
+        parser.set_element_class_lookup(lookup)
 
         root = etree.XML("""<?xml version='1.0'?>
         <root>
@@ -78,7 +78,7 @@ class ClassLookupTestCase(HelperTestCase):
 
         lookup = etree.AttributeBasedElementClassLookup(
             "a1", class_dict)
-        etree.setElementClassLookup(lookup)
+        etree.set_element_class_lookup(lookup)
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
@@ -95,7 +95,7 @@ class ClassLookupTestCase(HelperTestCase):
                 if name == 'c1':
                     return TestElement
 
-        etree.setElementClassLookup( MyLookup() )
+        etree.set_element_class_lookup( MyLookup() )
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
@@ -116,7 +116,7 @@ class ClassLookupTestCase(HelperTestCase):
                     return TestElement1
 
         lookup = etree.ElementNamespaceClassLookup( MyLookup() )
-        etree.setElementClassLookup(lookup)
+        etree.set_element_class_lookup(lookup)
 
         ns = lookup.get_namespace("otherNS")
         ns[None] = TestElement2
@@ -134,14 +134,14 @@ class ClassLookupTestCase(HelperTestCase):
             FIND_ME = "parser_based"
 
         lookup = etree.ParserBasedElementClassLookup()
-        etree.setElementClassLookup(lookup)
+        etree.set_element_class_lookup(lookup)
 
         class MyLookup(etree.CustomElementClassLookup):
             def lookup(self, t, d, ns, name):
                 return TestElement
 
         parser = etree.XMLParser()
-        parser.setElementClassLookup( MyLookup() )
+        parser.set_element_class_lookup( MyLookup() )
 
         root = etree.parse(StringIO(xml_str), parser).getroot()
         self.assertEquals(root.FIND_ME,

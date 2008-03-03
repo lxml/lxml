@@ -254,7 +254,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         # from StringIO
         f = StringIO('<a><b></c></b></a>')
-        self.etree.clearErrorLog()
+        self.etree.clear_error_log()
         try:
             parse(f)
             logs = None

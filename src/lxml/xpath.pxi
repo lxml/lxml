@@ -235,25 +235,10 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
             python.PyErr_NoMemory()
         self.set_context(xpathCtxt)
 
-    def registerNamespace(self, prefix, uri):
-        """Register a namespace with the XPath context.
-
-        :deprecated: use ``register_namespace()`` instead
-        """
-        self._context.addNamespace(prefix, uri)
-
     def register_namespace(self, prefix, uri):
         """Register a namespace with the XPath context.
         """
         self._context.addNamespace(prefix, uri)
-
-    def registerNamespaces(self, namespaces):
-        """Register a prefix -> uri dict.
-
-        :deprecated: use ``register_namespaces()`` instead
-        """
-        for prefix, uri in namespaces.items():
-            self._context.addNamespace(prefix, uri)
 
     def register_namespaces(self, namespaces):
         """Register a prefix -> uri dict.

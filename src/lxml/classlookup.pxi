@@ -107,13 +107,6 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         """
         self._setFallback(lookup)
 
-    def setFallback(self, ElementClassLookup lookup not None):
-        """Sets the fallback scheme for this lookup method.
-
-        :deprecated: use ``set_fallback()`` instead.
-        """
-        self._setFallback(lookup)
-
     cdef object _callFallback(self, _Document doc, xmlNode* c_node):
         return self._fallback_function(self.fallback, doc, c_node)
 
@@ -407,10 +400,6 @@ cdef void _setElementClassLookupFunction(
 
     ELEMENT_CLASS_LOOKUP_STATE = state
     LOOKUP_ELEMENT_CLASS = function
-
-def setElementClassLookup(ElementClassLookup lookup = None):
-    ":deprecated: use ``set_element_class_lookup(lookup)`` instead"
-    set_element_class_lookup(lookup)
 
 def set_element_class_lookup(ElementClassLookup lookup = None):
     """set_element_class_lookup(lookup = None)

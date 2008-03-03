@@ -176,7 +176,7 @@ This returns nothing, as we did not ask for the right namespace.  When we
 register the namespace with the evaluator, however, we can access it via a
 prefix::
 
-  >>> e.registerNamespace('foo', 'http://mydomain.org/myfunctions')
+  >>> e.register_namespace('foo', 'http://mydomain.org/myfunctions')
   >>> e.evaluate('/foo:a')[0].tag
   '{http://mydomain.org/myfunctions}a'
 

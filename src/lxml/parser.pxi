@@ -678,7 +678,7 @@ cdef class _BaseParser:
             return "libxml2 %d.%d.%d" % LIBXML_VERSION
 
     def setElementClassLookup(self, ElementClassLookup lookup = None):
-        "@deprecated: use ``parser.set_element_class_lookup(lookup)`` instead."
+        ":deprecated: use ``parser.set_element_class_lookup(lookup)`` instead."
         self.set_element_class_lookup(lookup)
 
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
@@ -1129,14 +1129,6 @@ cdef XMLParser __DEFAULT_XML_PARSER
 __DEFAULT_XML_PARSER = XMLParser()
 
 __GLOBAL_PARSER_CONTEXT.setDefaultParser(__DEFAULT_XML_PARSER)
-
-def setDefaultParser(parser=None):
-    ":deprecated: please use set_default_parser instead."
-    set_default_parser(parser)
-
-def getDefaultParser():
-    ":deprecated: please use get_default_parser instead."
-    return get_default_parser()
 
 def set_default_parser(_BaseParser parser=None):
     """set_default_parser(parser=None)

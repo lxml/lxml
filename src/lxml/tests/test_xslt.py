@@ -29,7 +29,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>B</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
 
     def test_xslt_elementtree_error(self):
         self.assertRaises(ValueError, etree.XSLT, etree.ElementTree())
@@ -298,7 +298,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>Bar</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
 
     if etree.LIBXSLT_VERSION < (1,1,18):
         # later versions produce no error
@@ -335,7 +335,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>Bar</foo><foo>Baz</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
         
     def test_xslt_parameter_xpath(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -354,7 +354,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>B</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
 
         
     def test_xslt_default_parameters(self):
@@ -375,13 +375,13 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>Bar</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
         res = st.apply(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Default</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
         
     def test_xslt_html_output(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -471,7 +471,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
         result = style.apply(source)
-        self.assertEqual('', style.tostring(result))
         self.assertEqual('', str(result))
 
     def test_xslt_message(self):
@@ -488,7 +487,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
         result = style.apply(source)
-        self.assertEqual('', style.tostring(result))
         self.assertEqual('', str(result))
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
@@ -507,7 +505,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
         result = style.apply(source)
-        self.assertEqual('', style.tostring(result))
         self.assertEqual('', str(result))
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
@@ -907,7 +904,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>B</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
 
     def test_xslt_pi_embedded_id(self):
         # test XPath lookup mechanism
@@ -941,7 +938,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 <?xml version="1.0"?>
 <foo>B</foo>
 ''',
-                          st.tostring(res))
+                          str(res))
 
     def test_xslt_pi_get(self):
         tree = self.parse('''\

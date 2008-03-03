@@ -81,11 +81,6 @@ def set_pytype_attribute_tag(attribute_tag=None):
     PYTYPE_ATTRIBUTE = cetree.namespacedNameFromNsName(
         _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
 
-def setPytypeAttributeTag(attribute_tag=None):
-    """:deprecated: use ``set_pytype_attribute_tag()`` instead.
-    """
-    set_pytype_attribute_tag(attribute_tag)
-
 set_pytype_attribute_tag()
 
 
@@ -1684,10 +1679,6 @@ __DEFAULT_PARSER.set_element_class_lookup( ObjectifyElementClassLookup() )
 
 cdef object objectify_parser
 objectify_parser = __DEFAULT_PARSER
-
-def setDefaultParser(new_parser = None):
-    ":deprecated: use ``set_default_parser()`` instead."
-    set_default_parser(new_parser)
 
 def set_default_parser(new_parser = None):
     """set_default_parser(new_parser = None)

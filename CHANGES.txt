@@ -24,6 +24,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Most deprecated functions and methods were removed.
+
 
 2.0.2 (2008-02-22)
 ==================

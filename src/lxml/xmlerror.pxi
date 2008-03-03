@@ -12,14 +12,6 @@ def clear_error_log():
     """
     __GLOBAL_ERROR_LOG.clear()
 
-def clearErrorLog():
-    """Clear the global error log.  Note that this log is already bound to a
-    fixed size.
-
-    :deprecated: use ``clear_error_log()`` instead.
-    """
-    __GLOBAL_ERROR_LOG.clear()
-
 # dummy function: no debug output at all
 cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
     pass
@@ -410,17 +402,6 @@ __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 cdef __copyGlobalErrorLog():
     "Helper function for properties in exceptions."
     return __GLOBAL_ERROR_LOG.copy()
-
-def useGlobalPythonLog(PyErrorLog log not None):
-    """Replace the global error log by an etree.PyErrorLog that uses the
-    standard Python logging package.
-
-    Note that this disables access to the global error log from exceptions.
-    Parsers, XSLT etc. will continue to provide their normal local error log.
-
-    :deprecated: use ``use_global_python_log()`` instead.
-    """
-    use_global_python_log(log)
 
 def use_global_python_log(PyErrorLog log not None):
     """use_global_python_log(log)

@@ -25,11 +25,11 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         lookup = etree.ElementNamespaceClassLookup()
         self.Namespace = lookup.get_namespace
         parser = etree.XMLParser()
-        parser.setElementClassLookup(lookup)
-        etree.setDefaultParser(parser)
+        parser.set_element_class_lookup(lookup)
+        etree.set_default_parser(parser)
 
     def tearDown(self):
-        etree.setDefaultParser()
+        etree.set_default_parser()
         del self.Namespace
         super(ETreeNamespaceClassesTestCase, self).tearDown()
 
