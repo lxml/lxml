@@ -19,12 +19,16 @@ Building a tree from SAX events
 
 First of all, lxml has support for building a new tree given SAX events.  To
 do this, we use the special SAX content handler defined by lxml named
-``lxml.sax.ElementTreeContentHandler``::
+``lxml.sax.ElementTreeContentHandler``:
+
+.. sourcecode:: pycon
 
   >>> import lxml.sax
   >>> handler = lxml.sax.ElementTreeContentHandler()
 
-Now let's fire some SAX events at it::
+Now let's fire some SAX events at it:
+
+.. sourcecode:: pycon
 
   >>> handler.startElementNS((None, 'a'), 'a', {})
   >>> handler.startElementNS((None, 'b'), 'b', {(None, 'foo'): 'bar'})
@@ -33,7 +37,9 @@ Now let's fire some SAX events at it::
   >>> handler.endElementNS((None, 'a'), 'a')
 
 This constructs an equivalent tree.  You can access it through the ``etree``
-property of the handler::
+property of the handler:
+
+.. sourcecode:: pycon
 
   >>> tree = handler.etree
   >>> lxml.etree.tostring(tree.getroot())
@@ -47,14 +53,18 @@ can determine which element class lookup scheme should be used.
 Producing SAX events from an ElementTree or Element
 ---------------------------------------------------
 
-Let's make a tree we can generate SAX events for::
+Let's make a tree we can generate SAX events for:
+
+.. sourcecode:: pycon
 
   >>> from StringIO import StringIO
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> tree = lxml.etree.parse(f)
 
 To see whether the correct SAX events are produced, we'll write a custom
-content handler.::
+content handler.:
+
+.. sourcecode:: pycon
 
   >>> from xml.sax.handler import ContentHandler
   >>> class MyContentHandler(ContentHandler):
@@ -77,12 +87,16 @@ Note that it only defines the startElementNS() method and not startElement().
 The SAX event generator in lxml.sax currently only supports namespace-aware
 processing.
 
-To test the content handler, we can produce SAX events from the tree::
+To test the content handler, we can produce SAX events from the tree:
+
+.. sourcecode:: pycon
 
   >>> handler = MyContentHandler()
   >>> lxml.sax.saxify(tree, handler)
 
-This is what we expect::
+This is what we expect:
+
+.. sourcecode:: pycon
 
   >>> handler.a_amount
   1
@@ -99,13 +113,17 @@ lxml.sax is a simple way to interface with the standard XML support in the
 Python library.  Note, however, that this is a one-way solution, as Python's
 DOM implementation connot generate SAX events from a DOM tree.
 
-You can use xml.dom.pulldom to build a minidom from lxml::
+You can use xml.dom.pulldom to build a minidom from lxml:
+
+.. sourcecode:: pycon
 
   >>> from xml.dom.pulldom import SAX2DOM
   >>> handler = SAX2DOM()
   >>> lxml.sax.saxify(tree, handler)
 
-PullDOM makes the result available through the ``document`` attribute::
+PullDOM makes the result available through the ``document`` attribute:
+
+.. sourcecode:: pycon
 
   >>> dom = handler.document
   >>> print dom.firstChild.localName

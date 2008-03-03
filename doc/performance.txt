@@ -470,7 +470,9 @@ data is not of any interest.
 .. _`benchmark proposal`: http://www.onlamp.com/pub/wlg/6291
 .. _`Old Testament`: http://www.ibiblio.org/bosak/xml/eg/religion.2.00.xml.zip
 
-Now, Uche's original proposal was more or less the following::
+Now, Uche's original proposal was more or less the following:
+
+.. sourcecode:: python
 
   def bench_ET():
       tree = ElementTree.parse("ot.xml")
@@ -482,7 +484,9 @@ Now, Uche's original proposal was more or less the following::
       return len(result)
 
 which takes about one second on my machine today.  The faster ``iterparse()``
-variant looks like this::
+variant looks like this:
+
+.. sourcecode:: python
 
   def bench_ET_iterparse():
       result = []
@@ -507,7 +511,9 @@ even a little faster (which isn't the case for cElementTree).
 
 One of the many great tools in lxml is XPath, a swiss army knife for finding
 things in XML documents.  It is possible to move the whole thing to a pure
-XPath implementation, which looks like this::
+XPath implementation, which looks like this:
+
+.. sourcecode:: python
 
   def bench_lxml_xpath_all():
       tree = etree.parse("ot.xml")
@@ -518,7 +524,9 @@ This runs in about 0.13 seconds and is about the shortest possible
 implementation (in lines of Python code) that I could come up with.  Now, this
 is already a rather complex XPath expression compared to the simple "//v"
 ElementPath expression we started with.  Since this is also valid XPath, let's
-try this instead::
+try this instead:
+
+.. sourcecode:: python
 
   def bench_lxml_xpath():
       tree = etree.parse("ot.xml")
@@ -536,7 +544,9 @@ we can remove the complexity of the XPath call completely and just go with
 what we had in the beginning.  Under lxml, this runs in the same 0.12 seconds.
 
 But there is one thing left to try.  We can replace the simple ElementPath
-expression with a native tree iterator::
+expression with a native tree iterator:
+
+.. sourcecode:: python
 
   def bench_lxml_getiterator():
       tree = etree.parse("ot.xml")
@@ -633,11 +643,15 @@ Caching Elements
 
 A way to improve the normal attribute access time is static instantiation of
 the Python objects, thus trading memory for speed.  Just create a cache
-dictionary and run::
+dictionary and run:
+
+.. sourcecode:: python
 
     cache[root] = list(root.iter())
 
-after parsing and::
+after parsing and:
+
+.. sourcecode:: python
 
     del cache[root]
 

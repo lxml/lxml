@@ -25,7 +25,9 @@ implementation as of libxml2 2.6.30.
    4  XMLSchema
    5  Schematron
 
-The usual setup procedure::
+The usual setup procedure:
+
+.. sourcecode:: pycon
 
   >>> from lxml import etree
   >>> from StringIO import StringIO
@@ -37,7 +39,9 @@ Validation at parse time
 The parser in lxml can do on-the-fly validation of a document against
 a DTD or an XML schema.  The DTD is retrieved automatically based on
 the DOCTYPE of the parsed document.  All you have to do is use a
-parser that has DTD validation enabled::
+parser that has DTD validation enabled:
+
+.. sourcecode:: pycon
 
   >>> parser = etree.XMLParser(dtd_validation=True)
 
@@ -56,7 +60,9 @@ attribute default values into the document.  Again, no validation is
 performed unless explicitly requested.
 
 XML schema is supported in a similar way, but requires an explicit
-schema to be provided::
+schema to be provided:
+
+.. sourcecode:: pycon
 
   >>> schema_root = etree.XML('''\
   ...   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -69,7 +75,9 @@ schema to be provided::
   >>> root = etree.fromstring("<a>5</a>", parser)
 
 If the validation fails (be it for a DTD or an XML schema), the parser
-will raise an exception::
+will raise an exception:
+
+.. sourcecode:: pycon
 
   >>> root = etree.fromstring("<a>no int</a>", parser)
   Traceback (most recent call last):
@@ -90,12 +98,16 @@ If you want to validate an XML document against a DTD that is not
 referenced by the document itself, you can use the ``DTD`` class.
 
 To use the ``DTD`` class, you must first pass a filename or file-like object
-into the constructor to parse a DTD::
+into the constructor to parse a DTD:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO("<!ELEMENT b EMPTY>")
   >>> dtd = etree.DTD(f)
 
-Now you can use it to validate documents::
+Now you can use it to validate documents:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<b/>")
   >>> print dtd.validate(root)
@@ -105,7 +117,9 @@ Now you can use it to validate documents::
   >>> print dtd.validate(root)
   False
 
-The reason for the validation failure can be found in the error log::
+The reason for the validation failure can be found in the error log:
+
+.. sourcecode:: pycon
 
   >>> print dtd.error_log.filter_from_errors()[0]
   <string>:1:0:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
@@ -113,7 +127,9 @@ The reason for the validation failure can be found in the error log::
 As an alternative to parsing from a file, you can use the
 ``external_id`` keyword argument to parse from a catalog.  The
 following example reads the DocBook DTD in version 4.2, if available
-in the system catalog::
+in the system catalog:
+
+.. sourcecode:: python
 
   dtd = etree.DTD(external_id = "-//OASIS//DTD DocBook XML V4.2//EN")
 
@@ -122,7 +138,9 @@ RelaxNG
 -------
 
 The ``RelaxNG`` class takes an ElementTree object to construct a Relax NG
-validator::
+validator:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('''\
   ... <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
@@ -142,7 +160,9 @@ RelaxNG parser.
 
 You can then validate some ElementTree document against the schema. You'll get
 back True if the document is valid against the Relax NG schema, and False if
-not::
+not:
+
+.. sourcecode:: pycon
 
   >>> valid = StringIO('<a><b></b></a>')
   >>> doc = etree.parse(valid)
@@ -155,7 +175,9 @@ not::
   False
 
 Calling the schema object has the same effect as calling its validate
-method. This is sometimes used in conditional statements::
+method. This is sometimes used in conditional statements:
+
+.. sourcecode:: pycon
 
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
@@ -164,21 +186,25 @@ method. This is sometimes used in conditional statements::
   invalid!
 
 If you prefer getting an exception when validating, you can use the
-``assert_`` or ``assertValid`` methods::
+``assert_`` or ``assertValid`` methods:
+
+.. sourcecode:: pycon
 
   >>> relaxng.assertValid(doc2)
   Traceback (most recent call last):
-    [...]
+    ...
   DocumentInvalid: Did not expect element c there, line 1
 
   >>> relaxng.assert_(doc2)
   Traceback (most recent call last):
-    [...]
+    ...
   AssertionError: Did not expect element c there, line 1
 
 If you want to find out why the validation failed in the second case, you can
 look up the error log of the validation process and check it for relevant
-messages::
+messages:
+
+.. sourcecode:: pycon
 
   >>> log = relaxng.error_log
   >>> print log.last_error
@@ -186,7 +212,9 @@ messages::
 
 You can see that the error (ERROR) happened during RelaxNG validation
 (RELAXNGV).  The message then tells you what went wrong.  You can also
-look at the error domain and its type directly::
+look at the error domain and its type directly:
+
+.. sourcecode:: pycon
 
   >>> error = log.last_error
   >>> print error.domain_name
@@ -198,7 +226,9 @@ Note that this error log is local to the RelaxNG object.  It will only
 contain log entries that appeared during the validation.
 
 Similar to XSLT, there's also a less efficient but easier shortcut method to
-do one-shot RelaxNG validation::
+do one-shot RelaxNG validation:
+
+.. sourcecode:: pycon
 
   >>> doc.relaxng(relaxng_doc)
   True
@@ -218,7 +248,9 @@ XMLSchema
 
 lxml.etree also has XML Schema (XSD) support, using the class
 lxml.etree.XMLSchema.  The API is very similar to the Relax NG and DTD
-classes.  Pass an ElementTree object to construct a XMLSchema validator::
+classes.  Pass an ElementTree object to construct a XMLSchema validator:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('''\
   ... <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -235,7 +267,9 @@ classes.  Pass an ElementTree object to construct a XMLSchema validator::
 
 You can then validate some ElementTree document with this.  Like with RelaxNG,
 you'll get back true if the document is valid against the XML schema, and
-false if not::
+false if not:
+
+.. sourcecode:: pycon
 
   >>> valid = StringIO('<a><b></b></a>')
   >>> doc = etree.parse(valid)
@@ -248,7 +282,9 @@ false if not::
   False
 
 Calling the schema object has the same effect as calling its validate method.
-This is sometimes used in conditional statements::
+This is sometimes used in conditional statements:
+
+.. sourcecode:: pycon
 
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
@@ -257,19 +293,23 @@ This is sometimes used in conditional statements::
   invalid!
 
 If you prefer getting an exception when validating, you can use the
-``assert_`` or ``assertValid`` methods::
+``assert_`` or ``assertValid`` methods:
+
+.. sourcecode:: pycon
 
   >>> xmlschema.assertValid(doc2)
   Traceback (most recent call last):
-    [...]
+    ...
   DocumentInvalid: Element 'c': This element is not expected. Expected is ( b )., line 1
 
   >>> xmlschema.assert_(doc2)
   Traceback (most recent call last):
-    [...]
+    ...
   AssertionError: Element 'c': This element is not expected. Expected is ( b )., line 1
 
-Error reporting works as for the RelaxNG class::
+Error reporting works as for the RelaxNG class:
+
+.. sourcecode:: pycon
 
   >>> log = xmlschema.error_log
   >>> error = log.last_error
@@ -285,7 +325,9 @@ use::
   <string>:1:ERROR::SCHEMAV_ELEMENT_CONTENT: Element 'c': This element is not expected. Expected is ( b ).
 
 Similar to XSLT and RelaxNG, there's also a less efficient but easier shortcut
-method to do XML Schema validation::
+method to do XML Schema validation:
+
+.. sourcecode:: pycon
 
   >>> doc.xmlschema(xmlschema_doc)
   True
@@ -299,7 +341,9 @@ Schematron
 Since version 2.0, lxml.etree features Schematron_ support, using the
 class lxml.etree.Schematron.  It requires at least libxml2 2.6.21 to
 work.  The API is the same as for the other validators.  Pass an
-ElementTree object to construct a Schematron validator::
+ElementTree object to construct a Schematron validator:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('''\
   ... <schema xmlns="http://www.ascc.net/xml/schematron" >
@@ -316,7 +360,9 @@ ElementTree object to construct a Schematron validator::
 
 You can then validate some ElementTree document with this.  Like with RelaxNG,
 you'll get back true if the document is valid against the schema, and false if
-not::
+not:
+
+.. sourcecode:: pycon
 
   >>> valid = StringIO('''\
   ... <Total>
@@ -336,7 +382,9 @@ not::
   False
 
 Calling the schema object has the same effect as calling its validate method.
-This is sometimes used in conditional statements::
+This is sometimes used in conditional statements:
+
+.. sourcecode:: pycon
 
   >>> is_valid = etree.Schematron(sct_doc)
 

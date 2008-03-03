@@ -23,7 +23,9 @@ compliant way.
      2.5  Profiling
 
 
-The usual setup procedure::
+The usual setup procedure:
+
+.. sourcecode:: pycon
 
   >>> from lxml import etree
   >>> from StringIO import StringIO
@@ -55,7 +57,9 @@ The ``xpath()`` method
 ----------------------
 
 For ElementTree, the xpath method performs a global XPath query against the
-document (if absolute) or against the root node (if relative)::
+document (if absolute) or against the root node (if relative):
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('<foo><bar></bar></foo>')
   >>> tree = etree.parse(f)
@@ -71,7 +75,9 @@ document (if absolute) or against the root node (if relative)::
   'bar'
 
 When ``xpath()`` is used on an Element, the XPath expression is evaluated
-against the element (if relative) or against the root tree (if absolute)::
+against the element (if relative) or against the root tree (if absolute):
+
+.. sourcecode:: pycon
 
   >>> root = tree.getroot()
   >>> r = root.xpath('bar')
@@ -88,7 +94,9 @@ against the element (if relative) or against the root tree (if absolute)::
   >>> r[0].tag
   'bar'
 
-The ``xpath()`` method has support for XPath variables::
+The ``xpath()`` method has support for XPath variables:
+
+.. sourcecode:: pycon
 
   >>> expr = "//*[local-name() = $name]"
 
@@ -103,7 +111,9 @@ The ``xpath()`` method has support for XPath variables::
 
 Optionally, you can provide a ``namespaces`` keyword argument, which should be
 a dictionary mapping the namespace prefixes used in the XPath expression to
-namespace URIs::
+namespace URIs:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('''\
   ... <a:foo xmlns:a="http://codespeak.net/ns/test1" 
@@ -169,7 +179,9 @@ Generating XPath expressions
 ----------------------------
 
 ElementTree objects have a method ``getpath(element)``, which returns a
-structural, absolute XPath expression to find that element::
+structural, absolute XPath expression to find that element:
+
+.. sourcecode:: pycon
 
   >>> a  = etree.Element("a")
   >>> b  = etree.SubElement(a, "b")
@@ -187,7 +199,9 @@ structural, absolute XPath expression to find that element::
 The ``XPath`` class
 -------------------
 
-The ``XPath`` class compiles an XPath expression into a callable function::
+The ``XPath`` class compiles an XPath expression into a callable function:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<root><a><b/></a><b/></root>")
 
@@ -200,7 +214,9 @@ done only once per class instantiation.  This makes it especially efficient
 for repeated evaluation of the same XPath expression.
 
 Just like the ``xpath()`` method, the ``XPath`` class supports XPath
-variables::
+variables:
+
+.. sourcecode:: pycon
 
   >>> count_elements = etree.XPath("count(//*[local-name() = $name])")
 
@@ -212,7 +228,9 @@ variables::
 This supports very efficient evaluation of modified versions of an XPath
 expression, as compilation is still only required once.
 
-Prefix-to-namespace mappings can be passed as second parameter::
+Prefix-to-namespace mappings can be passed as second parameter:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<root xmlns='NS'><a><b/></a><b/></root>")
 
@@ -220,7 +238,9 @@ Prefix-to-namespace mappings can be passed as second parameter::
   >>> print find(root)[0].tag
   {NS}b
 
-By default, ``XPath`` supports regular expressions in the EXSLT_ namespace::
+By default, ``XPath`` supports regular expressions in the EXSLT_ namespace:
+
+.. sourcecode:: pycon
 
   >>> regexpNS = "http://exslt.org/regular-expressions"
   >>> find = etree.XPath("//*[re:test(., '^abc$', 'i')]",
@@ -242,7 +262,9 @@ The ``XPathEvaluator`` classes
 lxml.etree provides two other efficient XPath evaluators that work on
 ElementTrees or Elements respectively: ``XPathDocumentEvaluator`` and
 ``XPathElementEvaluator``.  They are automatically selected if you use the
-XPathEvaluator helper for instantiation::
+XPathEvaluator helper for instantiation:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<root><a><b/></a><b/></root>")
   >>> xpatheval = etree.XPathEvaluator(root)
@@ -274,7 +296,9 @@ handle, XPath is much more powerful and expressive.
 lxml.etree bridges this gap through the class ``ETXPath``, which accepts XPath
 expressions with namespaces in Clark notation.  It is identical to the
 ``XPath`` class, except for the namespace notation.  Normally, you would
-write::
+write:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<root xmlns='ns'><a><b/></a><b/></root>")
 
@@ -282,7 +306,9 @@ write::
   >>> print find(root)[0].tag
   {ns}b
 
-``ETXPath`` allows you to change this to::
+``ETXPath`` allows you to change this to:
+
+.. sourcecode:: pycon
 
   >>> find = etree.ETXPath("//{ns}b")
   >>> print find(root)[0].tag
@@ -293,7 +319,9 @@ Error handling
 --------------
 
 lxml.etree raises exceptions when errors occur while parsing or evaluating an
-XPath expression::
+XPath expression:
+
+.. sourcecode:: pycon
 
   >>> find = etree.XPath("\\")
   Traceback (most recent call last):
@@ -301,14 +329,18 @@ XPath expression::
   XPathSyntaxError: Invalid expression
 
 lxml will also try to give you a hint what went wrong, so if you pass a more
-complex expression, you may get a somewhat more specific error::
+complex expression, you may get a somewhat more specific error:
+
+.. sourcecode:: pycon
 
   >>> find = etree.XPath("//*[1.1.1]")
   Traceback (most recent call last):
     ...
   XPathSyntaxError: Invalid predicate
 
-During evaluation, lxml will emit an XPathEvalError on errors::
+During evaluation, lxml will emit an XPathEvalError on errors:
+
+.. sourcecode:: pycon
 
   >>> find = etree.XPath("//ns:a")
   >>> find(root)
@@ -318,7 +350,9 @@ During evaluation, lxml will emit an XPathEvalError on errors::
 
 This works for the ``XPath`` class, however, the other evaluators (including
 the ``xpath()`` method) are one-shot operations that do parsing and evaluation
-in one step.  They therefore raise evaluation exceptions in all cases::
+in one step.  They therefore raise evaluation exceptions in all cases:
+
+.. sourcecode:: pycon
 
   >>> root = etree.Element("test")
   >>> find = root.xpath("//*[1.1.1]")
@@ -345,7 +379,9 @@ XSLT
 ====
 
 lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
-given an ElementTree object to construct an XSLT transformer::
+given an ElementTree object to construct an XSLT transformer:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('''\
   ... <xsl:stylesheet version="1.0"
@@ -358,7 +394,9 @@ given an ElementTree object to construct an XSLT transformer::
   >>> transform = etree.XSLT(xslt_doc)
 
 You can then run the transformation on an ElementTree document by simply
-calling it, and this results in another ElementTree object::
+calling it, and this results in another ElementTree object:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = etree.parse(f)
@@ -379,7 +417,9 @@ XSLT result objects
 -------------------
 
 The result of an XSL transformation can be accessed like a normal ElementTree
-document::
+document:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = etree.parse(f)
@@ -389,7 +429,9 @@ document::
   'Text'
 
 but, as opposed to normal ElementTree objects, can also be turned into an (XML
-or text) string by applying the str() function::
+or text) string by applying the str() function:
+
+.. sourcecode:: pycon
 
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
@@ -398,13 +440,17 @@ The result is always a plain string, encoded as requested by the
 ``xsl:output`` element in the stylesheet.  If you want a Python unicode string
 instead, you should set this encoding to ``UTF-8`` (unless the `ASCII` default
 is sufficient).  This allows you to call the builtin ``unicode()`` function on
-the result::
+the result:
+
+.. sourcecode:: pycon
 
   >>> unicode(result)
   u'<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
 You can use other encodings at the cost of multiple recoding.  Encodings that
-are not supported by Python will result in an error::
+are not supported by Python will result in an error:
+
+.. sourcecode:: pycon
 
   >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
@@ -419,7 +465,7 @@ are not supported by Python will result in an error::
   >>> result = transform(doc)
   >>> unicode(result)
   Traceback (most recent call last):
-    [...]
+    ...
   LookupError: unknown encoding: UCS4
 
 
@@ -427,7 +473,9 @@ Stylesheet parameters
 ---------------------
 
 It is possible to pass parameters, in the form of XPath expressions, to the
-XSLT template::
+XSLT template:
+
+.. sourcecode:: pycon
 
   >>> xslt_tree = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
@@ -441,13 +489,17 @@ XSLT template::
   >>> doc = etree.parse(f)
 
 The parameters are passed as keyword parameters to the transform call. First
-let's try passing in a simple string expression::
+let's try passing in a simple string expression:
+
+.. sourcecode:: pycon
 
   >>> result = transform(doc, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
-Let's try a non-string XPath expression now::
+Let's try a non-string XPath expression now:
+
+.. sourcecode:: pycon
 
   >>> result = transform(doc, a="/a/b/text()")
   >>> str(result)
@@ -459,7 +511,9 @@ Extension elements
 
 Just like `custom extension functions`_, lxml supports custom
 extension *elements* in XSLT.  This means, you can write XSLT code
-like this::
+like this:
+
+.. sourcecode:: xml
 
   <xsl:template match="*">
       <my:python-extension>
@@ -467,7 +521,9 @@ like this::
       </my:python-extension>
   </xsl:template>
 
-And then you can implement the element in Python like this::
+And then you can implement the element in Python like this:
+
+.. sourcecode:: pycon
 
   >>> class MyExtElement(etree.XSLTExtension):
   ...     def execute(self, context, self_node, input_node, output_parent):
@@ -496,7 +552,9 @@ output_parent
 
 In XSLT, extension elements can be used like any other XSLT element,
 except that they must be declared as extensions using the standard
-XSLT ``extension-element-prefixes`` option::
+XSLT ``extension-element-prefixes`` option:
+
+.. sourcecode:: pycon
 
   >>> xslt_ext_tree = etree.XML('''
   ... <xsl:stylesheet version="1.0"
@@ -512,7 +570,9 @@ XSLT ``extension-element-prefixes`` option::
   ... </xsl:stylesheet>''')
 
 To register the extension, add its name and namespace to the extension
-mapping of the XSLT object::
+mapping of the XSLT object:
+
+.. sourcecode:: pycon
 
   >>> my_extension = MyExtElement()
   >>> extensions = { ('testns', 'ext') : my_extension }
@@ -520,7 +580,9 @@ mapping of the XSLT object::
 
 Note how we pass an instance here, not the class of the extension.
 Now we can run the transformation and see how our extension is
-called::
+called:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML('<dummy/>')
   >>> result = transform(root)
@@ -533,7 +595,9 @@ interact directly with the XSLT processor.  You have full access to
 the input document and the stylesheet, and you can even call back into
 the XSLT processor to process templates.  Here is an example that
 passes an Element into the ``.apply_templates()`` method of the
-``XSLTExtension`` instance::
+``XSLTExtension`` instance:
+
+.. sourcecode:: pycon
 
   >>> class MyExtElement(etree.XSLTExtension):
   ...     def execute(self, context, self_node, input_node, output_parent):
@@ -562,7 +626,9 @@ them in an ``ElementTree``.
 
 What you can do, however, is to deepcopy them to make them normal
 Elements, and then modify them using the normal etree API.  So this
-will work::
+will work:
+
+.. sourcecode:: pycon
 
   >>> from copy import deepcopy
   >>> class MyExtElement(etree.XSLTExtension):
@@ -587,13 +653,17 @@ The ``xslt()`` tree method
 There's also a convenience method on ElementTree objects for doing XSL
 transformations.  This is less efficient if you want to apply the same XSL
 transformation to multiple documents, but is shorter to write for one-shot
-operations, as you do not have to instantiate a stylesheet yourself::
+operations, as you do not have to instantiate a stylesheet yourself:
+
+.. sourcecode:: pycon
 
   >>> result = doc.xslt(xslt_tree, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
-This is a shortcut for the following code::
+This is a shortcut for the following code:
+
+.. sourcecode:: pycon
 
   >>> transform = etree.XSLT(xslt_tree)
   >>> result = transform(doc, a="'A'")
@@ -635,13 +705,17 @@ Profiling
 ---------
 
 If you want to know how your stylesheet performed, pass the ``profile_run``
-keyword to the transform::
+keyword to the transform:
+
+.. sourcecode:: pycon
 
   >>> result = transform(doc, a="/a/b/text()", profile_run=True)
   >>> profile = result.xslt_profile
 
 The value of the ``xslt_profile`` property is an ElementTree with profiling
-data about each template, similar to the following::
+data about each template, similar to the following:
+
+.. sourcecode:: xml
 
   <profile>
     <template rank="1" match="/" name="" mode="" calls="1" time="1" average="1"/>
@@ -649,6 +723,8 @@ data about each template, similar to the following::
 
 Note that this is a read-only document.  You must not move any of its elements
 to other documents.  Please deep-copy the document if you need to modify it.
-If you want to free it from memory, just do::
+If you want to free it from memory, just do:
+
+.. sourcecode:: pycon
 
   >>> del result.xslt_profile

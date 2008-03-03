@@ -24,6 +24,11 @@ Bugs fixed
 Other changes
 -------------
 
+* Generating the HTML documentation now requires Pygments_, which is
+  used to enable syntax highlighting for the doctest examples.
+
+.. _Pygments: http://pygments.org/
+
 Most long-time deprecated functions and methods were removed:
 
 - ``etree.clearErrorLog()``, use ``etree.clear_error_log()``

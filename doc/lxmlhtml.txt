@@ -150,12 +150,16 @@ actual differences in the doctest output.
 Luckily, lxml provides the ``lxml.doctestcompare`` module that
 supports relaxed comparison of XML and HTML pages and provides a
 readable diff in the output when a test fails.  The HTML comparison is
-most easily used by importing the ``usedoctest`` module in a doctest::
+most easily used by importing the ``usedoctest`` module in a doctest:
+
+.. sourcecode:: pycon
 
     >>> import lxml.html.usedoctest
 
 Now, if you have a HTML document and want to compare it to an expected result
-document in a doctest, you can do the following::
+document in a doctest, you can do the following:
+
+.. sourcecode:: pycon
 
     >>> import lxml.html
     >>> html = lxml.html.fromstring('''\
@@ -195,7 +199,9 @@ Creating HTML with the E-factory
 
 lxml.html comes with a predefined HTML vocabulary for the `E-factory`_,
 originally written by Fredrik Lundh.  This allows you to quickly generate HTML
-pages and fragments::
+pages and fragments:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html import builder as E
     >>> from lxml.html import usedoctest
@@ -387,7 +393,9 @@ Form Filling Example
 
 Note that you can change any of these attributes (values, method,
 action, etc) and then serialize the form to see the updated values.
-You can, for instance, do::
+You can, for instance, do:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html import fromstring, tostring
     >>> form_page = fromstring('''<html><body><form>
@@ -441,7 +449,9 @@ You can pass in an alternate opener with the ``open_http`` keyword
 argument, which is a function with the signature ``open_http(method,
 url, values)``.
 
-Example::
+Example:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html import parse, submit_form
     >>> page = parse('http://tinyurl.com').getroot()
@@ -458,7 +468,9 @@ HTML pages.  It supports removing embedded or script content, special tags,
 CSS style annotations and much more.
 
 Say, you have an evil web page from an untrusted source that contains lots of
-content that upsets browsers and tries to run evil code on the client side::
+content that upsets browsers and tries to run evil code on the client side:
+
+.. sourcecode:: pycon
 
     >>> html = '''\
     ... <html>
@@ -488,7 +500,9 @@ content that upsets browsers and tries to run evil code on the client side::
     ... </html>'''
 
 To remove the all suspicious content from this unparsed document, use the
-``clean_html`` function::
+``clean_html`` function:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html.clean import clean_html
     
@@ -511,7 +525,9 @@ To remove the all suspicious content from this unparsed document, use the
     </html>
 
 The ``Cleaner`` class supports several keyword arguments to control exactly
-which content is removed::
+which content is removed:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html.clean import Cleaner
 
@@ -637,6 +653,8 @@ documents.
 
 Example of ``htmldiff``:
 
+.. sourcecode:: pycon
+
     >>> from lxml.html.diff import htmldiff, html_annotate
     >>> doc1 = '''<p>Here is some text.</p>'''
     >>> doc2 = '''<p>Here is <b>a lot</b> of <i>text</i>.</p>'''
@@ -658,7 +676,9 @@ The ``html_annotate`` function can also take an optional second
 argument, ``markup``.  This is a function like ``markup(text,
 version)`` that returns the given text marked up with the given
 version.  The default version, the output of which you see in the
-example, looks like::
+example, looks like:
+
+.. sourcecode:: python
 
     def default_markup(text, version):
         return '<span title="%s">%s</span>' % (
@@ -673,7 +693,9 @@ Microformat Example
 This example parses the `hCard <http://microformats.org/wiki/hcard>`_
 microformat.
 
-First we get the page::
+First we get the page:
+
+.. sourcecode:: pycon
 
     >>> import urllib
     >>> from lxml.html import fromstring
@@ -682,7 +704,9 @@ First we get the page::
     >>> doc = fromstring(content)
     >>> doc.make_links_absolute(url)
 
-Then we create some objects to put the information in::
+Then we create some objects to put the information in:
+
+.. sourcecode:: pycon
 
     >>> class Card(object):
     ...     def __init__(self, **kw):
@@ -692,7 +716,9 @@ Then we create some objects to put the information in::
     ...     def __init__(self, phone, types=()):
     ...         self.phone, self.types = phone, types
 
-And some generally handy functions for microformats::
+And some generally handy functions for microformats:
+
+.. sourcecode:: pycon
 
     >>> def get_text(el, class_name):
     ...     els = el.find_class(class_name)
@@ -708,7 +734,9 @@ And some generally handy functions for microformats::
     ...     # Ideally this would parse street, etc.
     ...     return el.find_class('adr')
 
-Then the parsing::
+Then the parsing:
+
+.. sourcecode:: pycon
 
     >>> for el in doc.find_class('hcard'):
     ...     card = Card()

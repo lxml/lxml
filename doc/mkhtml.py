@@ -84,7 +84,7 @@ def merge_menu(tree, menu, name):
         tag = el.tag
         if tag[0] != '{':
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
-    current_menu = find_menu(menu_root, name=replace_invalid('', name))
+    current_menu = find_menu(menu_root, name=replace_invalid(' ', name))
     if current_menu:
         for submenu in current_menu:
             submenu.set("class", submenu.get("class", "").
@@ -137,11 +137,11 @@ def publish(dirname, lxml_path, release):
 
                 build_menu(tree, basename, section_head)
 
-    # also convert INSTALL.txt and CHANGES.txt
+    # also convert CHANGES.txt
     rest2html(script,
               os.path.join(lxml_path, 'CHANGES.txt'),
               os.path.join(dirname, 'changes-%s.html' % release),
-              stylesheet_url)
+              '')
 
     # integrate menu
     for tree, basename, outpath in trees.itervalues():

@@ -227,7 +227,9 @@ What about that trailing text on serialised Elements?
 
 The ElementTree tree model defines an Element as a container with a tag name,
 contained text, child Elements and a tail text.  This means that whenever you
-serialise an Element, you will get all parts of that Element::
+serialise an Element, you will get all parts of that Element:
+
+.. sourcecode:: pycon
 
     >>> from lxml import etree
     >>> root = etree.XML("<root><tag>text<child/></tag>tail</root>")
@@ -235,7 +237,9 @@ serialise an Element, you will get all parts of that Element::
     <tag>text<child/></tag>tail
 
 Here is an example that shows why not serialising the tail would be
-even more surprising from an object point of view::
+even more surprising from an object point of view:
+
+.. sourcecode:: pycon
 
     >>> root = etree.Element("test")
 
@@ -484,7 +488,9 @@ or even multiple library versions are installed.
 
 You should always try to reproduce the problem with the latest
 versions of libxml2 and libxslt - and make sure they are used.
-``lxml.etree`` can tell you what it runs with::
+``lxml.etree`` can tell you what it runs with:
+
+.. sourcecode:: python
 
    from lxml import etree
    print "lxml.etree:       ", etree.LXML_VERSION
@@ -705,7 +711,9 @@ whitespace and data, it will not alter your data.  Whitespace is therefore
 only added between nodes that do not contain data.  This is always the case
 for trees constructed element-by-element, so no problems should be expected
 here.  For parsed trees, a good way to assure that no conflicting whitespace
-is left in the tree is the ``remove_blank_text`` option::
+is left in the tree is the ``remove_blank_text`` option:
+
+.. sourcecode:: pycon
 
    >>> parser = etree.XMLParser(remove_blank_text=True)
    >>> tree = etree.parse(file, parser)

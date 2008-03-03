@@ -61,7 +61,9 @@ Writing external modules in C
 
 If you really feel like it, you can also interface with lxml.etree straight
 from C code.  All you have to do is include the header file for the public
-API, import the ``lxml.etree`` module and then call the import function::
+API, import the ``lxml.etree`` module and then call the import function:
+
+.. sourcecode:: c
 
     /* My C extension */
 

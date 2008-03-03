@@ -57,7 +57,9 @@ however, that it did not exist before version 1.0, so you will get an
 AttributeError in older versions.  The versions of libxml2 and libxslt are
 available through the attributes ``LIBXML_VERSION`` and ``LIBXSLT_VERSION``.
 
-The following examples usually assume this to be executed first::
+The following examples usually assume this to be executed first:
+
+.. sourcecode:: pycon
 
   >>> from lxml import etree
   >>> from StringIO import StringIO
@@ -85,7 +87,9 @@ Trees and Documents
 -------------------
 
 Compared to the original ElementTree API, lxml.etree has an extended tree
-model.  It knows about parents and siblings of elements::
+model.  It knows about parents and siblings of elements:
+
+.. sourcecode:: pycon
 
   >>> root = etree.Element("root")
   >>> a = etree.SubElement(root, "a")
@@ -102,14 +106,18 @@ model.  It knows about parents and siblings of elements::
 
 Elements always live within a document context in lxml.  This implies that
 there is also a notion of an absolute document root.  You can retrieve an
-ElementTree for the root node of a document from any of its elements::
+ElementTree for the root node of a document from any of its elements.
+
+.. sourcecode:: pycon
 
   >>> tree = d.getroottree()
   >>> print tree.getroot().tag
   root
 
 Note that this is different from wrapping an Element in an ElementTree.  You
-can use ElementTrees to create XML trees with an explicit root node::
+can use ElementTrees to create XML trees with an explicit root node:
+
+.. sourcecode:: pycon
 
   >>> tree = etree.ElementTree(d)
   >>> print tree.getroot().tag
@@ -123,7 +131,9 @@ preceding or trailing processing instructions and comments.
 All operations that you run on such an ElementTree (like XPath, XSLT, etc.)
 will understand the explicitly chosen root as root node of a document.  They
 will not see any elements outside the ElementTree.  However, ElementTrees do
-not modify their Elements::
+not modify their Elements:
+
+.. sourcecode:: pycon
 
   >>> element = tree.getroot()
   >>> print element.tag
@@ -143,7 +153,9 @@ Iteration
 ---------
 
 The ElementTree API makes Elements iterable to supports iteration over their
-children.  Using the tree defined above, we get::
+children.  Using the tree defined above, we get:
+
+.. sourcecode:: pycon
 
   >>> [ child.tag for child in root ]
   ['a', 'b', 'c', 'd']
@@ -151,14 +163,18 @@ children.  Using the tree defined above, we get::
 To iterate in the opposite direction, use the ``reversed()`` function
 that exists in Python 2.4 and later.
 
-Tree traversal should use the ``element.iter()`` method::
+Tree traversal should use the ``element.iter()`` method:
+
+.. sourcecode:: pycon
 
   >>> [ el.tag for el in root.iter() ]
   ['root', 'a', 'b', 'c', 'd', 'e']
 
 lxml.etree also supports this, but additionally features an extended API for
 iteration over the children, following/preceding siblings, ancestors and
-descendants of an element, as defined by the respective XPath axis::
+descendants of an element, as defined by the respective XPath axis:
+
+.. sourcecode:: pycon
 
   >>> [ child.tag for child in root.iterchildren() ]
   ['a', 'b', 'c', 'd']
@@ -178,7 +194,9 @@ itself, as opposed to ``element.iter()``.  The latter effectively
 implements the 'descendant-or-self' axis in XPath.
 
 All of these iterators support an additional ``tag`` keyword argument that
-filters the generated elements by tag name::
+filters the generated elements by tag name:
+
+.. sourcecode:: pycon
 
   >>> [ child.tag for child in root.iterchildren(tag='a') ]
   ['a']
@@ -206,7 +224,9 @@ transformer object.  See their documentation for details.
 However, lxml also keeps a global error log of all errors that occurred at the
 application level.  Whenever an exception is raised, you can retrieve the
 errors that occured and "might have" lead to the problem from the error log
-copy attached to the exception::
+copy attached to the exception:
+
+.. sourcecode:: pycon
 
   >>> etree.clear_error_log()
   >>> broken_xml = '''
@@ -221,7 +241,9 @@ copy attached to the exception::
 
 Once you have caught this exception, you can access its ``error_log`` property
 to retrieve the log entries or filter them by a specific type, error domain or
-error level::
+error level:
+
+.. sourcecode:: pycon
 
   >>> log = e.error_log.filter_from_level(etree.ErrorLevels.FATAL)
   >>> print log
@@ -234,14 +256,18 @@ what went wrong and you can see that the fatal errors (FATAL) happened during
 parsing (PARSER) lines 4, column 8 and line 5, column 1 of a string (<string>,
 or the filename if available).  Here, PARSER is the so-called error domain,
 see ``lxml.etree.ErrorDomains`` for that.  You can get it from a log entry
-like this::
+like this:
+
+.. sourcecode:: pycon
 
   >>> entry = log[0]
   >>> print entry.domain_name, entry.type_name, entry.filename
   PARSER ERR_TAG_NAME_MISMATCH <string>
 
 There is also a convenience attribute ``last_error`` that returns the last
-error or fatal error that occurred::
+error or fatal error that occurred:
+
+.. sourcecode:: pycon
 
   >>> entry = e.error_log.last_error
   >>> print entry.domain_name, entry.type_name, entry.filename
@@ -264,7 +290,9 @@ Serialisation
 
 lxml.etree has direct support for pretty printing XML output.  Functions like
 ``ElementTree.write()`` and ``tostring()`` support it through a keyword
-argument::
+argument:
+
+.. sourcecode:: pycon
 
   >>> root = etree.XML("<root><test/></root>")
   >>> print etree.tostring(root)
@@ -279,7 +307,9 @@ Note the newline that is appended at the end when pretty printing the
 output.  It was added in lxml 2.0.
 
 By default, lxml (just as ElementTree) outputs the XML declaration only if it
-is required by the standard::
+is required by the standard:
+
+.. sourcecode:: pycon
 
   >>> unicode_root = etree.Element(u"t\u3120st")
   >>> unicode_root.text = u"t\u0A0Ast"
@@ -295,7 +325,9 @@ Also see the general remarks on `Unicode support`_.
 .. _`Unicode support`: parsing.html#python-unicode-strings
 
 You can enable or disable the declaration explicitly by passing another
-keyword argument for the serialisation::
+keyword argument for the serialisation:
+
+.. sourcecode:: pycon
 
   >>> print etree.tostring(root, xml_declaration=True)
   <?xml version='1.0' encoding='ASCII'?>
@@ -308,7 +340,9 @@ keyword argument for the serialisation::
 
 Note that a standard compliant XML parser will not consider the last line
 well-formed XML if the encoding is not explicitly provided somehow, e.g. in an
-underlying transport protocol::
+underlying transport protocol:
+
+.. sourcecode:: pycon
 
   >>> notxml = etree.tostring(unicode_root, encoding="UTF-16LE",
   ...                                       xml_declaration=False)
@@ -322,7 +356,9 @@ XInclude and ElementInclude
 ---------------------------
 
 You can let lxml process xinclude statements in a document by calling the
-xinclude() method on a tree::
+xinclude() method on a tree:
+
+.. sourcecode:: pycon
 
   >>> data = StringIO('''\
   ... <doc xmlns:xi="http://www.w3.org/2001/XInclude">
@@ -353,7 +389,9 @@ write_c14n on ElementTree
 The lxml.etree.ElementTree class has a method write_c14n, which takes a file
 object as argument.  This file object will receive an UTF-8 representation of
 the canonicalized form of the XML, following the W3C C14N recommendation.  For
-example::
+example:
+
+.. sourcecode:: pycon
 
   >>> f = StringIO('<a><b/></a>')
   >>> tree = etree.parse(f)

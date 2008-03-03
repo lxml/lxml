@@ -208,11 +208,15 @@ lxml.usedoctest
 A very useful module for doctests based on XML or HTML is
 ``lxml.doctestcompare``.  It provides a relaxed comparison mechanism
 for XML and HTML in doctests.  Using it for XML comparisons is as
-simple as::
+simple as:
+
+.. sourcecode:: pycon
 
     >>> import lxml.usedoctest
 
-and for HTML comparisons::
+and for HTML comparisons:
+
+.. sourcecode:: pycon
 
     >>> import lxml.html.usedoctest
 

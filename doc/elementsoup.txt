@@ -17,17 +17,23 @@ lxml can benefit from the parsing capabilities of BeautifulSoup through the
 parse a file using BeautifulSoup, and `convert_tree()` to convert a
 BeautifulSoup tree into a list of top-level Elements.
 
-Here is a document full of tag soup, similar to, but not quite like, HTML::
+Here is a document full of tag soup, similar to, but not quite like, HTML:
+
+.. sourcecode:: pycon
 
     >>> tag_soup = '<meta><head><title>Hello</head<body onload=crash()>Hi all<p>'
 
-all you need to do is pass it to the `parse()` function::
+all you need to do is pass it to the `parse()` function:
+
+.. sourcecode:: pycon
 
     >>> from lxml.html.ElementSoup import parse
     >>> from StringIO import StringIO
     >>> root = parse(StringIO(tag_soup))
 
-To see what we have here, you can serialise it::
+To see what we have here, you can serialise it:
+
+.. sourcecode:: pycon
 
     >>> from lxml.etree import tostring
     >>> print tostring(root, pretty_print=True),

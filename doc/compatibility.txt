@@ -7,7 +7,9 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
 
 * Importing etree is obviously different; etree uses a lower-case
   package name, while ElementTree uses a combination of upper-case and
-  lower case in imports::
+  lower case in imports:
+
+  .. sourcecode:: python
 
     # etree
     from lxml.etree import Element
@@ -19,7 +21,9 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
     from xml.etree.ElementTree import Element
 
   When switching over code from ElementTree to lxml.etree, and you're using
-  the package name prefix 'ElementTree', you can do the following::
+  the package name prefix 'ElementTree', you can do the following:
+
+  .. sourcecode:: python
 
     # instead of
     from elementtree import ElementTree
@@ -46,18 +50,24 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
   strings.
 
 * ElementTree allows you to place an Element in two different trees at the
-  same time.  Thus, this::
+  same time.  Thus, this:
+
+  .. sourcecode:: python
 
     a = Element('a')
     b = SubElement(a, 'b')
     c = Element('c')
     c.append(b)
 
-  will result in the following tree a::
+  will result in the following tree a:
+
+  .. sourcecode:: xml
 
     <a><b /></a>
 
-  and the following tree c::
+  and the following tree c:
+
+  .. sourcecode:: xml
 
     <c><b /></c>
 
@@ -66,11 +76,15 @@ ElementTree.  Nonetheless, some differences and incompatibilities exist:
   an element can only exist in a single tree at the same time.  Adding an
   element in some tree to another tree will cause this element to be moved.
 
-  So, for tree a we will get::
+  So, for tree a we will get:
+
+  .. sourcecode:: xml
 
     <a></a>
 
-  and for tree c we will get::
+  and for tree c we will get:
+
+  .. sourcecode:: xml
 
     <c><b/></c>
 

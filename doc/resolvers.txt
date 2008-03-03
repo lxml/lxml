@@ -16,7 +16,9 @@ etree.Resolver class.
 Resolvers
 ---------
 
-Here is an example of a custom resolver::
+Here is an example of a custom resolver:
+
+.. sourcecode:: pycon
 
   >>> from lxml import etree
 
@@ -44,14 +46,18 @@ registered resolver (or the default resolver) is consulted.  Resolving always
 terminates if ``resolve()`` returns the result of any of the above
 ``resolve_*()`` methods.
 
-Resolvers are registered local to a parser::
+Resolvers are registered local to a parser:
+
+.. sourcecode:: pycon
 
   >>> parser = etree.XMLParser(load_dtd=True)
   >>> parser.resolvers.add( DTDResolver() )
 
 Note that we instantiate a parser that loads the DTD.  This is not done by the
 default parser, which does no validation.  When we use this parser to parse a
-document that requires resolving a URL, it will call our custom resolver::
+document that requires resolving a URL, it will call our custom resolver:
+
+.. sourcecode:: pycon
 
   >>> xml = u'<!DOCTYPE doc SYSTEM "MissingDTD.dtd"><doc>&myentity;</doc>'
   >>> from StringIO import StringIO
@@ -71,7 +77,9 @@ Document loading in context
 XML documents memorise their initial parser (and its resolvers) during their
 life-time.  This means that a lookup process related to a document will use
 the resolvers of the document's parser.  We can demonstrate this with a
-resolver that only responds to a specific prefix::
+resolver that only responds to a specific prefix:
+
+.. sourcecode:: pycon
 
   >>> class PrefixResolver(etree.Resolver):
   ...     def __init__(self, prefix):
@@ -87,7 +95,9 @@ resolver that only responds to a specific prefix::
   ...             print "Resolved url %s as prefix %s" % (url, self.prefix)
   ...             return self.resolve_string(self.result_xml, context)
 
-We demonstrate this in XSLT and use the following stylesheet as an example::
+We demonstrate this in XSLT and use the following stylesheet as an example:
+
+.. sourcecode:: pycon
 
   >>> xml_text = """\
   ... <xsl:stylesheet version="1.0"
@@ -105,7 +115,9 @@ Note that it needs to resolve two URIs: ``honk:test`` when compiling the XSLT
 document (i.e. when resolving ``xsl:import`` and ``xsl:include`` elements) and
 ``hoi:test`` at transformation time, when calls to the ``document`` function
 are resolved.  If we now register different resolvers with two different
-parsers, we can parse our document twice in different resolver contexts::
+parsers, we can parse our document twice in different resolver contexts:
+
+.. sourcecode:: pycon
 
   >>> hoi_parser = etree.XMLParser()
   >>> normal_doc = etree.parse(StringIO(xml_text), hoi_parser)
@@ -121,44 +133,52 @@ These contexts are important for the further behaviour of the documents.  They
 memorise their original parser so that the correct set of resolvers is used in
 subsequent lookups.  To compile the stylesheet, XSLT must resolve the
 ``honk:test`` URI in the ``xsl:include`` element.  The ``hoi`` resolver cannot
-do that::
+do that:
+
+.. sourcecode:: pycon
 
   >>> transform = etree.XSLT(normal_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTParseError: Cannot resolve URI honk:test
 
   >>> transform = etree.XSLT(hoi_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTParseError: Cannot resolve URI honk:test
 
 However, if we use the ``honk`` resolver associated with the respective
-document, everything works fine::
+document, everything works fine:
+
+.. sourcecode:: pycon
 
   >>> transform = etree.XSLT(honk_doc)
   Resolved url honk:test as prefix honk
 
 Running the transform accesses the same parser context again, but since it now
 needs to resolve the ``hoi`` URI in the call to the document function, its
-``honk`` resolver will fail to do so::
+``honk`` resolver will fail to do so:
+
+.. sourcecode:: pycon
 
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTApplyError: Cannot resolve URI hoi:test
 
   >>> result = transform(hoi_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTApplyError: Cannot resolve URI hoi:test
 
   >>> result = transform(honk_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTApplyError: Cannot resolve URI hoi:test
 
-This can only be solved by adding a ``hoi`` resolver to the original parser::
+This can only be solved by adding a ``hoi`` resolver to the original parser:
+
+.. sourcecode:: pycon
 
   >>> honk_parser.resolvers.add( PrefixResolver("hoi") )
   >>> result = transform(honk_doc)
@@ -170,7 +190,9 @@ This can only be solved by adding a ``hoi`` resolver to the original parser::
 We can see that the ``hoi`` resolver was called to generate a document that
 was then inserted into the result document by the XSLT transformation.  Note
 that this is completely independent of the XML file you transform, as the URI
-is resolved from within the stylesheet context::
+is resolved from within the stylesheet context:
+
+.. sourcecode:: pycon
 
   >>> result = transform(normal_doc)
   Resolved url hoi:test as prefix hoi
@@ -200,7 +222,9 @@ about what XSLT you execute.
 
 Access control is configured using the ``XSLTAccessControl`` class.  It can be
 called with a number of keyword arguments that allow or deny specific
-operations::
+operations:
+
+.. sourcecode:: pycon
 
   >>> transform = etree.XSLT(honk_doc)
   Resolved url honk:test as prefix honk
@@ -212,7 +236,7 @@ operations::
   Resolved url honk:test as prefix honk
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
-    [...]
+    ...
   XSLTApplyError: xsltLoadDocument: read rights for hoi:test denied
 
 There are a few things to keep in mind:

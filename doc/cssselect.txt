@@ -25,7 +25,9 @@ The CSSSelector class
 
 The most important class in the ``cssselect`` module is ``CSSSelector``.  It
 provides the same interface as the XPath_ class, but accepts a CSS selector
-expression as input::
+expression as input:
+
+.. sourcecode:: pycon
 
     >>> from lxml.cssselect import CSSSelector
     >>> sel = CSSSelector('div.content')
@@ -35,13 +37,17 @@ expression as input::
     'div.content'
 
 The selector actually compiles to XPath, and you can see the
-expression by inspecting the object::
+expression by inspecting the object:
+
+.. sourcecode:: pycon
 
     >>> sel.path
     "descendant-or-self::div[contains(concat(' ', normalize-space(@class), ' '), ' content ')]"
 
 To use the selector, simply call it with a document or element
-object::
+object:
+
+.. sourcecode:: pycon
 
     >>> from lxml.etree import fromstring
     >>> h = fromstring('''<div id="outer">
