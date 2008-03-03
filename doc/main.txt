@@ -140,19 +140,17 @@ Index`_ (PyPI).  It has the source that compiles on various platforms.
 The source distribution is signed with `this key`_.  Binary builds for
 MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
-version first.
-
-.. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
-.. _`this key`: pubkey.asc
+release version first.
 
 The latest version is `lxml 2.0.2`_, released 2008-02-22
 (`changes for 2.0.2`_).  `Older versions`_ are listed below.
 
-.. _`Older versions`: #old-versions
-
 Please take a look at the `installation instructions`_!
 
-.. _`installation instructions`: installation.html
+This complete web site (including the generated API documentation) is
+part of the source distribution, so if you want to download the
+documentation for offline use, take the source archive and copy the
+``doc/html`` directory out of the source tree.
 
 It's also possible to check out the latest development version of lxml
 from svn directly, using a command like this::
@@ -166,6 +164,10 @@ are also accessible.  You can check there if a bug you found has been
 fixed or a feature you want has been implemented in the latest trunk
 version.
 
+.. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
+.. _`this key`: pubkey.asc
+.. _`Older versions`: #old-versions
+.. _`installation instructions`: installation.html
 .. _`how to build lxml from source`: build.html
 .. _`Subversion repository`: http://codespeak.net/svn/lxml/
 .. _`Subversion history`: https://codespeak.net/viewvc/lxml/

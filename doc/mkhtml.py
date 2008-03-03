@@ -3,8 +3,8 @@ from lxml.etree import (parse, fromstring, ElementTree,
 import os, shutil, re, sys, copy, time
 
 SITE_STRUCTURE = [
-    ('lxml', ('main.txt', 'intro.txt', 'lxml2.txt', 'FAQ.txt',
-              'compatibility.txt', 'performance.txt')),
+    ('lxml', ('main.txt', 'intro.txt', '../INSTALL.txt', 'lxml2.txt',
+              'FAQ.txt', 'compatibility.txt', 'performance.txt')),
     ('Developing with lxml', ('tutorial.txt', '@API reference',
                               'api.txt', 'parsing.txt',
                               'validation.txt', 'xpathxslt.txt',
@@ -12,7 +12,8 @@ SITE_STRUCTURE = [
                               'cssselect.txt', 'elementsoup.txt')),
     ('Extending lxml', ('resolvers.txt', 'extensions.txt',
                         'element_classes.txt', 'sax.txt', 'capi.txt')),
-    ('Developing lxml', ('build.txt', 'lxml-source-howto.txt')),
+    ('Developing lxml', ('build.txt', 'lxml-source-howto.txt',
+                         '@Release Changelog')),
     ]
 
 RST2HTML_OPTIONS = " ".join([
@@ -24,6 +25,11 @@ RST2HTML_OPTIONS = " ".join([
 
 HREF_MAP = {
     "API reference" : "api/index.html"
+}
+
+BASENAME_MAP = {
+    'main' : 'index',
+    'INSTALL' : 'installation',
 }
 
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
@@ -51,7 +57,7 @@ def build_menu(tree, basename, section_head):
     if page_title:
         page_title = page_title[0]
     else:
-        page_title = replace_invalid(' ', basename.capitalize())
+        page_title = replace_invalid('', basename.capitalize())
     build_menu_entry(page_title, basename+".html", section_head,
                      headings=find_headings(tree))
 
@@ -78,7 +84,7 @@ def merge_menu(tree, menu, name):
         tag = el.tag
         if tag[0] != '{':
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
-    current_menu = find_menu(menu_root, name=name)
+    current_menu = find_menu(menu_root, name=replace_invalid('', name))
     if current_menu:
         for submenu in current_menu:
             submenu.set("class", submenu.get("class", "").
@@ -102,6 +108,10 @@ def publish(dirname, lxml_path, release):
 
     shutil.copy(pubkey, dirname)
 
+    href_map = HREF_MAP.copy()
+    changelog_basename = 'changes-%s' % release
+    href_map['Release Changelog'] = changelog_basename + '.html'
+
     trees = {}
     menu = Element("div", {"class":"sidemenu"})
     # build HTML pages and parse them back
@@ -111,13 +121,12 @@ def publish(dirname, lxml_path, release):
             if filename.startswith('@'):
                 # special menu entry
                 page_title = filename[1:]
-                url = HREF_MAP[page_title]
+                url = href_map[page_title]
                 build_menu_entry(page_title, url, section_head)
             else:
                 path = os.path.join(doc_dir, filename)
-                basename = os.path.splitext(filename)[0]
-                if basename == 'main':
-                    basename = 'index'
+                basename = os.path.splitext(os.path.basename(filename))[0]
+                basename = BASENAME_MAP.get(basename, basename)
                 outname = basename + '.html'
                 outpath = os.path.join(dirname, outname)
 
@@ -128,20 +137,16 @@ def publish(dirname, lxml_path, release):
 
                 build_menu(tree, basename, section_head)
 
-    # integrate menu
-    for tree, basename, outpath in trees.itervalues():
-        new_tree = merge_menu(tree, menu, basename)
-        new_tree.write(outpath)
-
     # also convert INSTALL.txt and CHANGES.txt
-    rest2html(script,
-              os.path.join(lxml_path, 'INSTALL.txt'),
-              os.path.join(dirname, 'installation.html'),
-              stylesheet_url)
     rest2html(script,
               os.path.join(lxml_path, 'CHANGES.txt'),
               os.path.join(dirname, 'changes-%s.html' % release),
               stylesheet_url)
+
+    # integrate menu
+    for tree, basename, outpath in trees.itervalues():
+        new_tree = merge_menu(tree, menu, basename)
+        new_tree.write(outpath)
 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
