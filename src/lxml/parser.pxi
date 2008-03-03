@@ -677,6 +677,10 @@ cdef class _BaseParser:
         def __get__(self):
             return "libxml2 %d.%d.%d" % LIBXML_VERSION
 
+    def setElementClassLookup(self, ElementClassLookup lookup = None):
+        ":deprecated: use ``parser.set_element_class_lookup(lookup)`` instead."
+        self.set_element_class_lookup(lookup)
+
     def set_element_class_lookup(self, ElementClassLookup lookup = None):
         """set_element_class_lookup(self, lookup = None)
 

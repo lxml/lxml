@@ -192,7 +192,7 @@ class ETreeXPathTestCase(HelperTestCase):
         root = tree.getroot()
         self.assertEquals(
             [root],
-            e.evaluate('//a'))
+            e('//a'))
 
     def test_xpath_evaluator_tree(self):
         tree = self.parse('<a><b><c></c></b></a>')
@@ -200,11 +200,11 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(child_tree)
         self.assertEquals(
             [],
-            e.evaluate('a'))
+            e('a'))
         root = child_tree.getroot()
         self.assertEquals(
             [root[0]],
-            e.evaluate('c'))
+            e('c'))
 
     def test_xpath_evaluator_tree_absolute(self):
         tree = self.parse('<a><b><c></c></b></a>')
@@ -212,14 +212,14 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(child_tree)
         self.assertEquals(
             [],
-            e.evaluate('/a'))
+            e('/a'))
         root = child_tree.getroot()
         self.assertEquals(
             [root],
-            e.evaluate('/b'))
+            e('/b'))
         self.assertEquals(
             [],
-            e.evaluate('/c'))
+            e('/c'))
 
     def test_xpath_evaluator_element(self):
         tree = self.parse('<a><b><c></c></b></a>')
@@ -227,7 +227,7 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(root[0])
         self.assertEquals(
             [root[0][0]],
-            e.evaluate('c'))
+            e('c'))
         
     def test_xpath_extensions(self):
         def foo(evaluator, a):
@@ -236,7 +236,7 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
         self.assertEquals(
-            "hello you", e.evaluate("foo('you')"))
+            "hello you", e("foo('you')"))
 
     def test_xpath_extensions_wrong_args(self):
         def foo(evaluator, a, b):
@@ -244,7 +244,7 @@ class ETreeXPathTestCase(HelperTestCase):
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
-        self.assertRaises(TypeError, e.evaluate, "foo('you')")
+        self.assertRaises(TypeError, e, "foo('you')")
 
     def test_xpath_extensions_error(self):
         def foo(evaluator, a):
@@ -252,7 +252,7 @@ class ETreeXPathTestCase(HelperTestCase):
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a/>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
-        self.assertRaises(ZeroDivisionError, e.evaluate, "foo('test')")
+        self.assertRaises(ZeroDivisionError, e, "foo('test')")
 
     def test_xpath_extensions_nodes(self):
         def f(evaluator, arg):
@@ -265,7 +265,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
         x = self.parse('<a/>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
-        r = e.evaluate("foo('World')/result")
+        r = e("foo('World')/result")
         self.assertEquals(2, len(r))
         self.assertEquals('Hoi', r[0].text)
         self.assertEquals('Dag', r[1].text)
@@ -281,7 +281,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
         x = self.parse('<a/>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
-        r = e.evaluate("foo(/*)/result")
+        r = e("foo(/*)/result")
         self.assertEquals(2, len(r))
         self.assertEquals('Hoi', r[0].text)
         self.assertEquals('Dag', r[1].text)
@@ -298,7 +298,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
         x = self.parse('<result>Honk</result>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
-        r = e.evaluate("foo(/*)/result")
+        r = e("foo(/*)/result")
         self.assertEquals(3, len(r))
         self.assertEquals('Hoi',  r[0].text)
         self.assertEquals('Dag',  r[1].text)
@@ -375,14 +375,14 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(x)
 
         expr = "/a[@attr=$aval]"
-        r = e.evaluate(expr, aval=1)
+        r = e(expr, aval=1)
         self.assertEquals(0, len(r))
 
-        r = e.evaluate(expr, aval="true")
+        r = e(expr, aval="true")
         self.assertEquals(1, len(r))
         self.assertEquals("true", r[0].get('attr'))
 
-        r = e.evaluate(expr, aval=True)
+        r = e(expr, aval=True)
         self.assertEquals(1, len(r))
         self.assertEquals("true", r[0].get('attr'))
 
@@ -393,7 +393,7 @@ class ETreeXPathTestCase(HelperTestCase):
         element = etree.Element("test-el")
         etree.SubElement(element, "test-sub")
         expr = "$value"
-        r = e.evaluate(expr, value=element)
+        r = e(expr, value=element)
         self.assertEquals(1, len(r))
         self.assertEquals(element.tag, r[0].tag)
         self.assertEquals(element[0].tag, r[0][0].tag)
@@ -424,41 +424,41 @@ class ETreeXPathTestCase(HelperTestCase):
         e = etree.XPathEvaluator(x, extensions=[extension])
         del x
 
-        self.assertRaises(LocalException, e.evaluate, "foo(., 0)")
-        self.assertRaises(LocalException, e.evaluate, "foo(., $value)", value=0)
+        self.assertRaises(LocalException, e, "foo(., 0)")
+        self.assertRaises(LocalException, e, "foo(., $value)", value=0)
 
-        r = e.evaluate("foo(., $value)", value=1)
+        r = e("foo(., $value)", value=1)
         self.assertEqual(len(r), 0)
 
-        r = e.evaluate("foo(.,  1)")
+        r = e("foo(.,  1)")
         self.assertEqual(len(r), 0)
 
-        r = e.evaluate("foo(., $value)", value=2)
+        r = e("foo(., $value)", value=2)
         self.assertEqual(len(r), 0)
 
-        r = e.evaluate("foo(., $value)", value=3)
+        r = e("foo(., $value)", value=3)
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0].tag, "test")
 
-        r = e.evaluate("foo(., $value)", value="false")
+        r = e("foo(., $value)", value="false")
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0].tag, "NODE")
 
-        r = e.evaluate("foo(., 'false')")
+        r = e("foo(., 'false')")
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0].tag, "NODE")
 
-        r = e.evaluate("foo(., 'true')")
+        r = e("foo(., 'true')")
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0].tag, "a")
         self.assertEqual(r[0][0].tag, "test")
 
-        r = e.evaluate("foo(., $value)", value="true")
+        r = e("foo(., $value)", value="true")
         self.assertEqual(len(r), 1)
         self.assertEqual(r[0].tag, "a")
 
-        self.assertRaises(LocalException, e.evaluate, "foo(., 0)")
-        self.assertRaises(LocalException, e.evaluate, "foo(., $value)", value=0)
+        self.assertRaises(LocalException, e, "foo(., 0)")
+        self.assertRaises(LocalException, e, "foo(., $value)", value=0)
 
 
 class ETreeXPathClassTestCase(HelperTestCase):
@@ -467,15 +467,15 @@ class ETreeXPathClassTestCase(HelperTestCase):
         x = self.parse('<a attr="true"/>')
 
         expr = etree.XPath("/a[@attr != 'true']")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(0, len(r))
 
         expr = etree.XPath("/a[@attr = 'true']")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
 
         expr = etree.XPath( expr.path )
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
 
     def test_xpath_compile_element(self):
@@ -483,22 +483,22 @@ class ETreeXPathClassTestCase(HelperTestCase):
         root = x.getroot()
 
         expr = etree.XPath("./b")
-        r = expr.evaluate(root)
+        r = expr(root)
         self.assertEquals(1, len(r))
         self.assertEquals('b', r[0].tag)
 
         expr = etree.XPath("./*")
-        r = expr.evaluate(root)
+        r = expr(root)
         self.assertEquals(2, len(r))
 
     def test_xpath_compile_vars(self):
         x = self.parse('<a attr="true"/>')
 
         expr = etree.XPath("/a[@attr=$aval]")
-        r = expr.evaluate(x, aval=False)
+        r = expr(x, aval=False)
         self.assertEquals(0, len(r))
 
-        r = expr.evaluate(x, aval=True)
+        r = expr(x, aval=True)
         self.assertEquals(1, len(r))
 
     def test_xpath_compile_error(self):
@@ -513,12 +513,12 @@ class ETreeETXPathClassTestCase(HelperTestCase):
         x = self.parse('<a><b xmlns="nsa"/><b xmlns="nsb"/></a>')
 
         expr = etree.ETXPath("/a/{nsa}b")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
         self.assertEquals('{nsa}b', r[0].tag)
 
         expr = etree.ETXPath("/a/{nsb}b")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
         self.assertEquals('{nsb}b', r[0].tag)
 
@@ -526,12 +526,12 @@ class ETreeETXPathClassTestCase(HelperTestCase):
         x = self.parse(u'<a><b xmlns="nsa\uf8d2"/><b xmlns="nsb\uf8d1"/></a>')
 
         expr = etree.ETXPath(u"/a/{nsa\uf8d2}b")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
         self.assertEquals(u'{nsa\uf8d2}b', r[0].tag)
 
         expr = etree.ETXPath(u"/a/{nsb\uf8d1}b")
-        r = expr.evaluate(x)
+        r = expr(x)
         self.assertEquals(1, len(r))
         self.assertEquals(u'{nsb\uf8d1}b', r[0].tag)
 
@@ -595,32 +595,32 @@ def xpath():
     
     >>> root = SAMPLE_XML
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
-    >>> e.evaluate("stringTest('you')")
+    >>> e("stringTest('you')")
     'Hello you'
-    >>> e.evaluate(u"stringTest('\xe9lan')")
+    >>> e(u"stringTest('\xe9lan')")
     u'Hello \\xe9lan'
-    >>> e.evaluate("stringTest('you','there')")
+    >>> e("stringTest('you','there')")
     Traceback (most recent call last):
     ...
     TypeError: stringTest() takes exactly 2 arguments (3 given)
-    >>> e.evaluate("floatTest(2)")
+    >>> e("floatTest(2)")
     6.0
-    >>> e.evaluate("booleanTest(true())")
+    >>> e("booleanTest(true())")
     False
-    >>> map(tag, e.evaluate("setTest(/body/tag)"))
+    >>> map(tag, e("setTest(/body/tag)"))
     ['tag']
-    >>> map(tag, e.evaluate("setTest2(/body/*)"))
+    >>> map(tag, e("setTest2(/body/*)"))
     ['tag', 'section']
-    >>> e.evaluate("argsTest1('a',1.5,true(),/body/tag)")
+    >>> e("argsTest1('a',1.5,true(),/body/tag)")
     "a, 1.5, True, ['tag', 'tag', 'tag']"
-    >>> map(tag, e.evaluate("argsTest2(/body/tag, /body/section)"))
+    >>> map(tag, e("argsTest2(/body/tag, /body/section)"))
     ['tag', 'section', 'tag', 'tag']
-    >>> e.evaluate("resultTypesTest()")
+    >>> e("resultTypesTest()")
     Traceback (most recent call last):
     ...
     XPathResultError: This is not a node: 'x'
     >>> try:
-    ...     e.evaluate("resultTypesTest2()")
+    ...     e("resultTypesTest2()")
     ... except etree.XPathResultError:
     ...     print "Got error"
     Got error

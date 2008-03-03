@@ -1326,7 +1326,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         evaluator = XPathElementEvaluator(self, namespaces=namespaces,
                                           extensions=extensions)
-        return evaluator.evaluate(_path, **_variables)
+        return evaluator(_path, **_variables)
 
 
 cdef python.PyThread_type_lock ELEMENT_CREATION_LOCK
@@ -1742,7 +1742,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         evaluator = XPathDocumentEvaluator(self, namespaces=namespaces,
                                            extensions=extensions)
-        return evaluator.evaluate(_path, **_variables)
+        return evaluator(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, access_control=None, **_kw):
         """xslt(self, _xslt, extensions=None, access_control=None, **_kw)

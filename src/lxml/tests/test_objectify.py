@@ -77,7 +77,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.parser = self.etree.XMLParser(remove_blank_text=True)
         self.lookup = etree.ElementNamespaceClassLookup(
             objectify.ObjectifyElementClassLookup() )
-        self.parser.setElementClassLookup(self.lookup)
+        self.parser.set_element_class_lookup(self.lookup)
 
         self.Element = self.parser.makeelement
 

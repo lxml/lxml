@@ -24,7 +24,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree)
+        res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
@@ -97,7 +97,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree)
+        res = st(tree)
         expected = u'''\
 <?xml version="1.0" encoding="UTF-8"?>
 <foo>\uF8D2</foo>
@@ -117,7 +117,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree)
+        res = st(tree)
         expected = u'''\
 <?xml version="1.0" encoding="UTF-16"?>
 <foo>\uF8D2</foo>
@@ -137,7 +137,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree)
+        res = st(tree)
         expected = u"""\
 <?xml version='1.0' encoding='UTF-16'?>\
 <foo>\uF8D2</foo>"""
@@ -160,7 +160,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree)
+        res = st(tree)
         expected = u'''\
 <?xml version="1.0"?>
 <foo>\uF8D2</foo>
@@ -293,7 +293,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree, bar="'Bar'")
+        res = st(tree, bar="'Bar'")
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo>
@@ -330,7 +330,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree, bar="'Bar'", baz="'Baz'")
+        res = st(tree, bar="'Bar'", baz="'Baz'")
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo><foo>Baz</foo>
@@ -349,7 +349,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree, bar="/a/b/text()")
+        res = st(tree, bar="/a/b/text()")
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
@@ -370,13 +370,13 @@ class ETreeXSLTTestCase(HelperTestCase):
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = st.apply(tree, bar="'Bar'")
+        res = st(tree, bar="'Bar'")
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo>
 ''',
                           str(res))
-        res = st.apply(tree)
+        res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Default</foo>
@@ -422,14 +422,14 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style.apply(source)
+        result = style(source)
 
         etree.tostring(result.getroot())
         
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style.apply(source)
+        result = style(source)
         
         etree.tostring(result.getroot())
 
@@ -445,10 +445,10 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         transform = etree.XSLT(styledoc)
-        result = transform.apply(source)
-        result = transform.apply(source)
+        result = transform(source)
+        result = transform(source)
         etree.tostring(result.getroot())
-        result = transform.apply(source)
+        result = transform(source)
         etree.tostring(result.getroot())
         str(result)
 
@@ -470,7 +470,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style.apply(source)
+        result = style(source)
         self.assertEqual('', str(result))
 
     def test_xslt_message(self):
@@ -486,7 +486,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style.apply(source)
+        result = style(source)
         self.assertEqual('', str(result))
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
@@ -504,7 +504,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style.apply(source)
+        result = style(source)
         self.assertEqual('', str(result))
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
@@ -899,7 +899,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                           style_root.tag)
 
         st = etree.XSLT(style_root)
-        res = st.apply(tree)
+        res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
@@ -933,7 +933,7 @@ class ETreeXSLTTestCase(HelperTestCase):
                           style_root.tag)
 
         st = etree.XSLT(style_root)
-        res = st.apply(tree)
+        res = st(tree)
         self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>

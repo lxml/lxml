@@ -32,14 +32,14 @@ class PyClassLookupTestCase(HelperTestCase):
     Element = parser.makeelement
 
     def tearDown(self):
-        self.parser.setElementClassLookup(None)
+        self.parser.set_element_class_lookup(None)
         super(PyClassLookupTestCase, self).tearDown()
 
     def _setClassLookup(self, lookup_function):
         class Lookup(PythonElementClassLookup):
             def lookup(self, *args):
                 return lookup_function(*args)
-        self.parser.setElementClassLookup( Lookup() )
+        self.parser.set_element_class_lookup( Lookup() )
 
     def _buildElementClass(self):
         class LocalElement(etree.ElementBase):

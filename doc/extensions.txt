@@ -141,12 +141,12 @@ Extension functions work for all ways of evaluating XPath expressions and for
 XSL transformations::
 
   >>> e = etree.XPathEvaluator(doc)
-  >>> print e.evaluate('es:hello(local-name(/a))')
+  >>> print e('es:hello(local-name(/a))')
   Ola a
 
   >>> namespaces = {'f' : 'http://mydomain.org/myfunctions'}
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces)
-  >>> print e.evaluate('f:hello(local-name(/a))')
+  >>> print e('f:hello(local-name(/a))')
   Hello a
 
   >>> xslt = etree.XSLT(etree.ElementTree(etree.XML('''
@@ -169,7 +169,7 @@ still be clear::
   >>> f = StringIO('<a xmlns="http://mydomain.org/myfunctions" />')
   >>> ns_doc = etree.parse(f)
   >>> e = etree.XPathEvaluator(ns_doc)
-  >>> e.evaluate('/a')
+  >>> e('/a')
   []
 
 This returns nothing, as we did not ask for the right namespace.  When we
@@ -177,14 +177,14 @@ register the namespace with the evaluator, however, we can access it via a
 prefix::
 
   >>> e.register_namespace('foo', 'http://mydomain.org/myfunctions')
-  >>> e.evaluate('/foo:a')[0].tag
+  >>> e('/foo:a')[0].tag
   '{http://mydomain.org/myfunctions}a'
 
 Note that this prefix mapping is only known to this evaluator, as opposed to
 the global mapping of the FunctionNamespace objects::
 
   >>> e2 = etree.XPathEvaluator(ns_doc)
-  >>> e2.evaluate('/foo:a')
+  >>> e2('/foo:a')
   Traceback (most recent call last):
   ...
   XPathEvalError: Undefined namespace prefix
@@ -202,7 +202,7 @@ The value is a dictionary mapping (namespace, name) tuples to functions::
   >>> namespaces = {'l' : 'local-ns'}
 
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
-  >>> print e.evaluate('l:local-hello(string(b))')
+  >>> print e('l:local-hello(string(b))')
   Hello Haegar
 
 For larger numbers of extension functions, you can define classes or modules
@@ -221,7 +221,7 @@ and use the ``Extension`` helper::
   >>> extensions = etree.Extension( ext_module, functions, ns='local-ns' )
 
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
-  >>> print e.evaluate('l:function1(string(b))')
+  >>> print e('l:function1(string(b))')
   1Haegar
 
 The optional second argument to ``Extension`` can either be be a
@@ -237,17 +237,17 @@ examples will therefore all do the same thing::
   >>> functions = ('function1', 'function2', 'function3')
   >>> extensions = etree.Extension( ext_module, functions )
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  >>> print e('function1(function2(function3(string(b))))')
   123Haegar
 
   >>> extensions = etree.Extension( ext_module, functions, ns=None )
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  >>> print e('function1(function2(function3(string(b))))')
   123Haegar
 
   >>> extensions = etree.Extension(ext_module)
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  >>> print e('function1(function2(function3(string(b))))')
   123Haegar
 
   >>> functions = {
@@ -257,7 +257,7 @@ examples will therefore all do the same thing::
   ...     }
   >>> extensions = etree.Extension(ext_module, functions)
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e.evaluate('function1(function2(function3(string(b))))')
+  >>> print e('function1(function2(function3(string(b))))')
   123Haegar
 
 For convenience, you can also pass a sequence of extensions::
@@ -266,7 +266,7 @@ For convenience, you can also pass a sequence of extensions::
   >>> extensions2 = etree.Extension(ext_module, ns='local-ns')
   >>> e = etree.XPathEvaluator(doc, extensions=[extensions1, extensions2],
   ...                          namespaces=namespaces)
-  >>> print e.evaluate('function1(l:function2(function3(string(b))))')
+  >>> print e('function1(l:function2(function3(string(b))))')
   123Haegar
 
 
@@ -296,15 +296,15 @@ will also be returned as floats::
   >>> ns['first'] = returnFirstNode
 
   >>> e = etree.XPathEvaluator(doc)
-  >>> e.evaluate("float()")
+  >>> e("float()")
   1.7
-  >>> e.evaluate("int()")
+  >>> e("int()")
   1.0
-  >>> int( e.evaluate("int()") )
+  >>> int( e("int()") )
   1
-  >>> e.evaluate("bool()")
+  >>> e("bool()")
   True
-  >>> e.evaluate("count(first(//b))")
+  >>> e("count(first(//b))")
   1.0
 
 As the last example shows, you can pass the results of functions back into
@@ -327,11 +327,11 @@ XPath node-sets::
 
   >>> e = etree.XPathEvaluator(doc)
 
-  >>> r = e.evaluate("new-node-set()/result")
+  >>> r = e("new-node-set()/result")
   >>> print [ t.text for t in r ]
   ['Alpha', 'Beta', 'Gamma', 'Delta']
 
-  >>> r = e.evaluate("new-node-set()")
+  >>> r = e("new-node-set()")
   >>> print [ t.tag for t in r ]
   ['results1', 'results2', 'subresult']
   >>> print [ len(t) for t in r ]

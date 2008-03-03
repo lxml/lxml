@@ -1339,7 +1339,7 @@ def open_in_browser(doc):
 class HTMLParser(etree.HTMLParser):
     def __init__(self, **kwargs):
         super(HTMLParser, self).__init__(**kwargs)
-        self.setElementClassLookup(HtmlElementClassLookup())
+        self.set_element_class_lookup(HtmlElementClassLookup())
 
 def Element(*args, **kw):
     v = html_parser.makeelement(*args, **kw)

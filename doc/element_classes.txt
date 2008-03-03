@@ -89,7 +89,7 @@ follows::
 
   >>> parser_lookup = etree.ElementDefaultClassLookup(element=HonkElement)
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(parser_lookup)
+  >>> parser.set_element_class_lookup(parser_lookup)
 
 There is one drawback of the parser based scheme: the ``Element()`` factory
 does not know about your specialised parser and creates a new document that
@@ -153,7 +153,7 @@ Usage::
 
   >>> lookup = etree.ElementDefaultClassLookup()
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
 Note that the default for new parsers is to use the global fallback, which is
 also the default lookup (if not configured otherwise).
@@ -167,7 +167,7 @@ the constructor.  While it accepts classes for ``element``, ``comment`` and
   False
 
   >>> lookup = etree.ElementDefaultClassLookup(element=HonkElement)
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
   >>> el = parser.makeelement("myelement")
   >>> print isinstance(el, HonkElement)
@@ -189,7 +189,7 @@ element classes.  You can select it by calling::
 
   >>> lookup = etree.ElementNamespaceClassLookup()
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
 See the separate section on `implementing namespaces`_ below to learn how to
 make use of it.
@@ -203,7 +203,7 @@ desired fallback lookup scheme to the constructor::
 
   >>> fallback = etree.ElementDefaultClassLookup(element=HonkElement)
   >>> lookup = etree.ElementNamespaceClassLookup(fallback)
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
 
 Attribute based lookup
@@ -217,7 +217,7 @@ value.  It is set up as follows::
   >>> lookup = etree.AttributeBasedElementClassLookup(
   ...                                      'id', id_class_mapping)
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
 Instead of a global setup of this scheme, you should consider using a
 per-parser setup.
@@ -230,7 +230,7 @@ to use the namespace lookup, for example, you can use this code::
   >>> lookup = etree.AttributeBasedElementClassLookup(
   ...                       'id', id_class_mapping, fallback)
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
 
 Custom element class lookup
@@ -244,7 +244,7 @@ basis.  It allows you to implement a custom lookup scheme in a subclass::
   ...         return MyElementClass # defined elsewhere
 
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(MyLookup())
+  >>> parser.set_element_class_lookup(MyLookup())
 
 The ``lookup()`` method must either return None (which triggers the fallback
 mechanism) or a subclass of ``lxml.etree.ElementBase``.  It can take any
@@ -270,7 +270,7 @@ works similar to the custom lookup scheme::
   ...         return MyElementClass # defined elsewhere
 
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(MyLookup())
+  >>> parser.set_element_class_lookup(MyLookup())
 
 As before, the first argument to the ``lookup()`` method is the opaque
 document instance that contains the Element.  The second arguments is a
@@ -305,7 +305,7 @@ build a new element namespace (or retrieve an existing one) by calling the
 
   >>> lookup = etree.ElementNamespaceClassLookup()
   >>> parser = etree.XMLParser()
-  >>> parser.setElementClassLookup(lookup)
+  >>> parser.set_element_class_lookup(lookup)
 
   >>> namespace = lookup.get_namespace('http://hui.de/honk')
 
