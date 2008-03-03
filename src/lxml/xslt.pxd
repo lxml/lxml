@@ -123,6 +123,9 @@ cdef extern from "libxslt/security.h":
     cdef int xsltSetSecurityPrefs(xsltSecurityPrefs* sec,
                                   xsltSecurityOption option,
                                   xsltSecurityCheck func) nogil
+    cdef xsltSecurityCheck xsltGetSecurityPrefs(
+        xsltSecurityPrefs* sec,
+        xsltSecurityOption option) nogil
     cdef int xsltSetCtxtSecurityPrefs(xsltSecurityPrefs* sec,
                                       xsltTransformContext* ctxt) nogil
     cdef xmlDoc* xsltGetProfileInformation(xsltTransformContext* ctxt) nogil

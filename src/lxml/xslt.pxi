@@ -222,6 +222,34 @@ cdef class XSLTAccessControl:
     cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
+    property options:
+        "The access control configuration as a map of options."
+        def __get__(self):
+            return {
+                'read_file': self._optval(xslt.XSLT_SECPREF_READ_FILE),
+                'write_file': self._optval(xslt.XSLT_SECPREF_WRITE_FILE),
+                'create_dir': self._optval(xslt.XSLT_SECPREF_CREATE_DIRECTORY),
+                'read_network': self._optval(xslt.XSLT_SECPREF_READ_NETWORK),
+                'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
+                }
+
+    cdef _optval(self, xslt.xsltSecurityOption option):
+        cdef xslt.xsltSecurityCheck function
+        function = xslt.xsltGetSecurityPrefs(self._prefs, option)
+        if function is <xslt.xsltSecurityCheck>xslt.xsltSecurityAllow:
+            return True
+        elif function is <xslt.xsltSecurityCheck>xslt.xsltSecurityForbid:
+            return False
+        else:
+            return None
+
+    def __repr__(self):
+        items = self.options.items()
+        items.sort()
+        return "%s(%s)" % (
+            python._fqtypename(self).split('.')[-1],
+            ', '.join(["%s=%r" % item for item in items]))
+
 ################################################################################
 # XSLT
 

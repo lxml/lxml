@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* ``XSLTAccessControl`` instances have a property ``options`` that
+  returns a dict of access configuration options.
+
 * Constant instances ``DENY_ALL`` and ``DENY_WRITE`` on
   ``XSLTAccessControl`` class.
 
