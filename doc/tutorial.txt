@@ -397,8 +397,8 @@ You can also find out if it's normal text content or tail text:
     True
 
 While this works for the results of the ``text()`` function, lxml will
-not to tell you the origin of a string value that was constructed by
-the XPath functions ``string()`` or ``concat()``:
+not tell you the origin of a string value that was constructed by the
+XPath functions ``string()`` or ``concat()``:
 
 .. sourcecode:: pycon
 
