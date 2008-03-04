@@ -520,7 +520,15 @@ specific output encoding other than plain ASCII:
    </root>
 
 Note the newline that is appended at the end when pretty printing the
-output.
+output:
+
+.. sourcecode:: pycon
+
+   >>> etree.tostring(root, pretty_print=True)
+   '<root>\n  <a>\n    <b/>\n  </a>\n</root>\n'
+
+   >>> etree.tostring(root)
+   '<root><a><b/></a></root>'
 
 Since lxml 2.0 (and ElementTree 1.3), the serialisation functions can
 do more than XML serialisation.  You can serialise to HTML or extract
@@ -528,7 +536,8 @@ the text content by passing the ``method`` keyword:
 
 .. sourcecode:: pycon
 
-   >>> root = etree.XML('<html><head/><body><p>Hello<br/>World</p></body></html>')
+   >>> root = etree.XML(
+   ...    '<html><head/><body><p>Hello<br/>World</p></body></html>')
 
    >>> print etree.tostring(root) # default: method = 'xml'
    <html><head/><body><p>Hello<br/>World</p></body></html>
@@ -548,13 +557,23 @@ the text content by passing the ``method`` keyword:
    >>> print etree.tostring(root, method='text')
    HelloWorld
 
-For the plain text output, serialising to a Python unicode string
+Note that the default encoding for plain text serialisation is UTF-8:
+
+.. sourcecode:: pycon
+
+   >>> br = root.find('.//br')
+   >>> br.tail = u'W\xf6rld'
+
+   >>> etree.tostring(root, method='text')
+   'HelloW\xc3\xb6rld'
+
+Here, serialising to a Python unicode string instead of a byte string
 might become handy.  Just pass the ``unicode`` type as encoding:
 
 .. sourcecode:: pycon
 
    >>> etree.tostring(root, encoding=unicode, method='text')
-   u'HelloWorld'
+   u'HelloW\xf6rld'
 
 
 The ElementTree class
@@ -605,8 +624,8 @@ comments, as well as a DOCTYPE and other DTD content in the document:
       <a>eggs</a>
     </root>
 
-Note that this has changed in lxml 1.3.4 to match the behaviour of the
-upcoming lxml 2.0.  Before, both would serialise without DTD content, which
+Note that this has changed in lxml 1.3.4 to match the behaviour of
+lxml 2.0.  Before, both would serialise without DTD content, which
 made lxml loose DTD information in an input-output cycle.
 
 
