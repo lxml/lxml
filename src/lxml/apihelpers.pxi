@@ -361,26 +361,26 @@ cdef _collectText(xmlNode* c_node):
     If there was no text to collect, return None
     """
     cdef Py_ssize_t scount
-    cdef char* text
+    cdef char* c_text
     cdef xmlNode* c_node_cur
     # check for multiple text nodes
     scount = 0
-    text = NULL
+    c_text = NULL
     c_node_cur = c_node = _textNodeOrSkip(c_node)
     while c_node_cur is not NULL:
         if c_node_cur.content[0] != c'\0':
-            text = c_node_cur.content
+            c_text = c_node_cur.content
         scount = scount + 1
         c_node_cur = _textNodeOrSkip(c_node_cur.next)
 
     # handle two most common cases first
-    if text is NULL:
+    if c_text is NULL:
         if scount > 0:
             return ''
         else:
             return None
     if scount == 1:
-        return funicode(text)
+        return funicode(c_text)
 
     # the rest is not performance critical anymore
     result = ''
