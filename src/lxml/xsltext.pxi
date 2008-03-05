@@ -7,11 +7,11 @@ cdef class XSLTExtension:
         """execute(self, context, self_node, input_node, output_parent)
         Execute this extension element.
 
-        Subclasses may append elements to the `output_parent` element
-        here, or set its text content.  To this end, the `input_node`
-        provides read-only access to the current node in the input
-        document, and the `self_node` points to the extension element
-        in the stylesheet.
+        Subclasses must override this method.  They may append
+        elements to the `output_parent` element here, or set its text
+        content.  To this end, the `input_node` provides read-only
+        access to the current node in the input document, and the
+        `self_node` points to the extension element in the stylesheet.
         """
         pass
 
