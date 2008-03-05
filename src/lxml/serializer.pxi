@@ -38,7 +38,9 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 
     try:
         needs_conversion = 0
-        if encoding is not None:
+        if encoding is _unicode:
+            needs_conversion = 1
+        elif encoding is not None:
             encoding = encoding.upper()
             if encoding != 'UTF-8':
                 if encoding == 'ASCII':
@@ -51,7 +53,9 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
         if needs_conversion:
             text = python.PyUnicode_DecodeUTF8(
                 c_text, tree.xmlBufferLength(c_buffer), 'strict')
-            text = python.PyUnicode_AsEncodedString(text, encoding, 'strict')
+            if encoding is not _unicode:
+                text = python.PyUnicode_AsEncodedString(
+                    text, encoding, 'strict')
         else:
             text = c_text
     finally:
@@ -73,21 +77,18 @@ cdef _tostring(_Element element, encoding, method,
     cdef int c_method
     if element is None:
         return None
-    if encoding is None:
-        c_enc = NULL
-    elif encoding is _unicode:
-        return _tounicode(element, method, write_complete_document,
-                          pretty_print, with_tail)
-    else:
-        encoding = _utf8(encoding)
-        c_enc = _cstr(encoding)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         return _textToString(element._c_node, encoding, with_tail)
+    if encoding is None or encoding is _unicode:
+        c_enc = NULL
+    else:
+        encoding = _utf8(encoding)
+        c_enc = _cstr(encoding)
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
-    if enchandler is NULL:
+    if enchandler is NULL and c_enc is not NULL:
         raise LookupError(python.PyString_FromFormat(
                 "unknown encoding: '%s'", c_enc))
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
@@ -106,45 +107,15 @@ cdef _tostring(_Element element, encoding, method,
             c_result_buffer = c_buffer.buffer
 
     try:
-        result = python.PyString_FromStringAndSize(
-            tree.xmlBufferContent(c_result_buffer),
-            tree.xmlBufferLength(c_result_buffer))
-    finally:
-        tree.xmlOutputBufferClose(c_buffer)
-    return result
-
-cdef _tounicode(_Element element, method, bint write_complete_document,
-                bint pretty_print, bint with_tail):
-    """Serialize an element to the Python unicode representation of its XML
-    tree.
-    """
-    cdef tree.xmlOutputBuffer* c_buffer
-    cdef tree.xmlBuffer* c_result_buffer
-    cdef int c_method
-    if element is None:
-        return None
-    c_method = _findOutputMethod(method)
-    if c_method == OUTPUT_METHOD_TEXT:
-        text = _textToString(element._c_node, None, with_tail)
-        return python.PyUnicode_FromEncodedObject(text, 'utf-8', 'strict')
-    c_buffer = tree.xmlAllocOutputBuffer(NULL)
-    if c_buffer is NULL:
-        return python.PyErr_NoMemory()
-
-    with nogil:
-        _writeNodeToBuffer(c_buffer, element._c_node, NULL, c_method, 0,
-                           write_complete_document, pretty_print, with_tail)
-        tree.xmlOutputBufferFlush(c_buffer)
-        if c_buffer.conv is not NULL:
-            c_result_buffer = c_buffer.conv
+        if encoding is _unicode:
+            result = python.PyUnicode_DecodeUTF8(
+                tree.xmlBufferContent(c_result_buffer),
+                tree.xmlBufferLength(c_result_buffer),
+                'strict')
         else:
-            c_result_buffer = c_buffer.buffer
-
-    try:
-        result = python.PyUnicode_DecodeUTF8(
-            tree.xmlBufferContent(c_result_buffer),
-            tree.xmlBufferLength(c_result_buffer),
-            'strict')
+            result = python.PyString_FromStringAndSize(
+                tree.xmlBufferContent(c_result_buffer),
+                tree.xmlBufferLength(c_result_buffer))
     finally:
         tree.xmlOutputBufferClose(c_buffer)
     return result

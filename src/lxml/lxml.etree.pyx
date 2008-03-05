@@ -2534,11 +2534,11 @@ def tounicode(element_or_tree, *, method="xml", pretty_print=False,
     :deprecated: use ``tostring(el, encoding=unicode)`` instead.
     """
     if isinstance(element_or_tree, _Element):
-        return _tounicode(<_Element>element_or_tree, method, 0, pretty_print,
-                           with_tail)
+        return _tostring(<_Element>element_or_tree, _unicode, method,
+                          0, 0, pretty_print, with_tail)
     elif isinstance(element_or_tree, _ElementTree):
-        return _tounicode((<_ElementTree>element_or_tree)._context_node,
-                          method, 1, pretty_print, with_tail)
+        return _tostring((<_ElementTree>element_or_tree)._context_node,
+                         _unicode, method, 0, 1, pretty_print, with_tail)
     else:
         raise TypeError("Type '%s' cannot be serialized." %
                         type(element_or_tree))
