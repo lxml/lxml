@@ -24,8 +24,14 @@ Features added
 Bugs fixed
 ----------
 
+* Default encoding for plain text serialisation was different from
+  that of XML serialisation (UTF-8 instead of ASCII).
+
 Other changes
 -------------
+
+* The benchmark suite now uses tail text in the trees, which makes the
+  absolute numbers incomparable to previous results.
 
 * Generating the HTML documentation now requires Pygments_, which is
   used to enable syntax highlighting for the doctest examples.
