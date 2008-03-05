@@ -557,14 +557,20 @@ the text content by passing the ``method`` keyword:
    >>> print etree.tostring(root, method='text')
    HelloWorld
 
-Note that the default encoding for plain text serialisation is UTF-8:
+As for XML serialisation, the default encoding for plain text
+serialisation is ASCII:
 
 .. sourcecode:: pycon
 
    >>> br = root.find('.//br')
    >>> br.tail = u'W\xf6rld'
 
-   >>> etree.tostring(root, method='text')
+   >>> etree.tostring(root, method='text')  # doctest: +ELLIPSIS
+   Traceback (most recent call last):
+     ...
+   UnicodeEncodeError: 'ascii' codec can't encode character u'\xf6' ...
+
+   >>> etree.tostring(root, method='text', encoding="UTF-8")
    'HelloW\xc3\xb6rld'
 
 Here, serialising to a Python unicode string instead of a byte string

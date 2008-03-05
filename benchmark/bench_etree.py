@@ -34,6 +34,35 @@ class BenchMark(benchbase.BenchMarkBase):
         for i in range(1000):
             child = root[pos]
 
+    @with_attributes(False)
+    @with_text(text=True)
+    @onlylib('lxe', 'ET')
+    def bench_tostring_text_ascii(self, root):
+        self.etree.tostring(root, method="text")
+
+    @with_attributes(False)
+    @with_text(text=True, utext=True)
+    @onlylib('lxe')
+    def bench_tostring_text_utf16(self, root):
+        self.etree.tostring(root, method="text", encoding='UTF-16')
+
+    @with_attributes(False)
+    @with_text(text=True, utext=True)
+    @onlylib('lxe', 'ET')
+    @children
+    def bench_tostring_text_utf8_with_tail(self, children):
+        for child in children:
+            self.etree.tostring(child, method="text",
+                                encoding='UTF-8', with_tail=True)
+
+    @with_attributes(False)
+    @with_text(text=True, utext=True)
+    @onlylib('lxe')
+    @children
+    def bench_tostring_text_unicode(self, children):
+        for child in children:
+            self.etree.tostring(child, method="text", encoding=unicode)
+
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     def bench_tostring_utf8(self, root):

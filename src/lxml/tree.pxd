@@ -212,6 +212,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlHasProp(xmlNode* node, char* name) nogil
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace) nogil
     cdef char* xmlNodeGetContent(xmlNode* cur) nogil
+    cdef char* xmlNodeBufGetContent(xmlBuffer* buffer, xmlNode* cur) nogil
     cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* prefix) nogil
     cdef xmlNs* xmlSearchNsByHref(xmlDoc* doc, xmlNode* node, char* href) nogil
     cdef int xmlIsBlankNode(xmlNode* node) nogil
@@ -229,6 +230,7 @@ cdef extern from "libxml/tree.h":
     cdef int xmlReconciliateNs(xmlDoc* doc, xmlNode* tree) nogil
     cdef xmlNs* xmlNewReconciliedNs(xmlDoc* doc, xmlNode* tree, xmlNs* ns) nogil
     cdef xmlBuffer* xmlBufferCreate() nogil
+    cdef void xmlBufferWriteChar(xmlBuffer* buf, char* string) nogil
     cdef void xmlBufferFree(xmlBuffer* buf) nogil
     cdef char* xmlBufferContent(xmlBuffer* buf) nogil
     cdef int xmlBufferLength(xmlBuffer* buf) nogil
@@ -249,7 +251,6 @@ cdef extern from "libxml/valid.h":
                                    xmlNotationTable* table) nogil
 
 cdef extern from "libxml/xmlIO.h":
-    cdef void xmlBufferWriteQuotedString(xmlOutputBuffer* out, char* str) nogil
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, char* str) nogil
     cdef int xmlOutputBufferWrite(xmlOutputBuffer* out,
                                   int len, char* str) nogil

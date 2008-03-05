@@ -18,28 +18,46 @@ cdef int _findOutputMethod(method) except -1:
     raise ValueError("unknown output method %r" % method)
 
 cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
+    cdef bint needs_conversion
     cdef char* c_text
+    cdef xmlNode* c_text_node
+    cdef tree.xmlBuffer* c_buffer
+
+    c_buffer = tree.xmlBufferCreate()
+    if c_buffer is NULL:
+        return python.PyErr_NoMemory()
+
     with nogil:
-        c_text = tree.xmlNodeGetContent(c_node)
-    if c_text is NULL:
-        python.PyErr_NoMemory()
+        tree.xmlNodeBufGetContent(c_buffer, c_node)
+        if with_tail:
+            c_text_node = _textNodeOrSkip(c_node.next)
+            while c_text_node is not NULL:
+                tree.xmlBufferWriteChar(c_buffer, c_text_node.content)
+                c_text_node = _textNodeOrSkip(c_text_node.next)
+        c_text = tree.xmlBufferContent(c_buffer)
 
-    text = c_text
-    tree.xmlFree(c_text)
+    try:
+        needs_conversion = 0
+        if encoding is not None:
+            encoding = encoding.upper()
+            if encoding != 'UTF-8':
+                if encoding == 'ASCII':
+                    if isutf8(c_text):
+                        # will raise a decode error below
+                        needs_conversion = 1
+                else:
+                    needs_conversion = 1
 
-    if with_tail and _hasTail(c_node):
-        tail = _collectText(c_node.next)
-        if tail:
-            text = text + tail
+        if needs_conversion:
+            text = python.PyUnicode_DecodeUTF8(
+                c_text, tree.xmlBufferLength(c_buffer), 'strict')
+            text = python.PyUnicode_AsEncodedString(text, encoding, 'strict')
+        else:
+            text = c_text
+    finally:
+        tree.xmlBufferFree(c_buffer);
+    return text
 
-    if encoding is None:
-        return text
-    encoding = encoding.upper()
-    if encoding == 'UTF-8' or encoding == 'ASCII':
-        return text
-
-    text = python.PyUnicode_FromEncodedObject(text, 'utf-8', 'strict')
-    return python.PyUnicode_AsEncodedString(text, encoding, 'strict')
 
 cdef _tostring(_Element element, encoding, method,
                bint write_xml_declaration, bint write_complete_document,

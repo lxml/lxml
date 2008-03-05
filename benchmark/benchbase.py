@@ -200,7 +200,7 @@ class BenchMarkBase(object):
             el.text = text
             for ch2 in atoz:
                 for i in range(20 * TREE_FACTOR):
-                    SubElement(el, "{cdefg}%s%05d" % (ch2, i))
+                    SubElement(el, "{cdefg}%s%05d" % (ch2, i)).tail = text
         t = current_time() - t
         return (root, t)
 
@@ -216,7 +216,7 @@ class BenchMarkBase(object):
                 el = SubElement(root, "{abc}"+ch1*5, attributes)
                 el.text = text
                 for ch2 in atoz:
-                    SubElement(el, "{cdefg}%s%05d" % (ch2, i))
+                    SubElement(el, "{cdefg}%s%05d" % (ch2, i)).tail = text
         t = current_time() - t
         return (root, t)
 
@@ -231,8 +231,9 @@ class BenchMarkBase(object):
             tag_no = count().next
             children = [ SubElement(c, "{cdefg}a%05d" % i, attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
-        for child in root:
+        for child in children:
             child.text = text
+            child.tail = text
         t = current_time() - t
         return (root, t)
 
@@ -246,8 +247,8 @@ class BenchMarkBase(object):
         for ch1 in self.atoz:
             el = SubElement(root, "{abc}"+ch1*5, attributes)
             el.text = text
-            SubElement(el, "{cdefg}a00001", attributes)
-            SubElement(el, "{cdefg}z00000", attributes)
+            SubElement(el, "{cdefg}a00001", attributes).tail = text
+            SubElement(el, "{cdefg}z00000", attributes).tail = text
         t = current_time() - t
         return (root, t)
 
