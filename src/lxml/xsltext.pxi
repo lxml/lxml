@@ -42,7 +42,7 @@ cdef class XSLTExtension:
             context._xsltCtxt, c_context_node, NULL)
         context._xsltCtxt.insert = c_node
 
-        results = []
+        results = [] # or maybe _collectAttributes(c_parent, 2) ?
         c_node = c_parent.children
         try:
             while c_node is not NULL:
