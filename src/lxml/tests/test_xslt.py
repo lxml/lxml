@@ -176,8 +176,7 @@ class ETreeXSLTTestCase(HelperTestCase):
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     exclude-result-prefixes="str xsl">
   <xsl:template match="text()">
-    <xsl:value-of select="str:replace(
-           str:align(string(.), '---', 'center'), '-', '*')" />
+    <xsl:value-of select="str:align(string(.), '***', 'center')" />
   </xsl:template>
   <xsl:template match="*">
     <xsl:copy>
