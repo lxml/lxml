@@ -332,15 +332,15 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef buildNewPrefix(self):
         ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         if self._prefix_tail is not None:
-            ns = ns + self._prefix_tail
-        self._ns_counter = self._ns_counter + 1
+            ns += self._prefix_tail
+        self._ns_counter += 1
         if self._ns_counter < 0:
             # overflow!
             self._ns_counter = 0
             if self._prefix_tail is None:
                 self._prefix_tail = "A"
             else:
-                self._prefix_tail = self._prefix_tail + "A"
+                self._prefix_tail += "A"
         return ns
 
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
