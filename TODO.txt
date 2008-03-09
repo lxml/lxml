@@ -5,12 +5,6 @@ ToDo's for lxml
 lxml
 ====
 
-Exposing libxml2 functionalities
---------------------------------
-
-* Test XML entities, also in an ElementTree context.
-
-
 In general
 ----------
 
@@ -24,11 +18,22 @@ In general
 * more testing on input/output of encoded filenames, including custom
   resolvers, relative XSLT imports, ...
 
+* always use '<string>' as URL when tree was parsed from string? (can libxml2
+  handle this?)
+
+* follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
+
 
 QName
 -----
 
 * expose prefix support?
+
+
+Entities
+--------
+
+* clean support for entities (is the Entity element class enough?)
 
 
 Objectify
@@ -52,17 +57,8 @@ XSLT
   access check methods
 
 
-lxml 2.0
-========
-
-* always use '<string>' as URL when tree was parsed from string? (can libxml2
-  handle this?)
-
-* clean up (and remove?) duplicated API for extension functions
-
-* follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
-
-* clean support for entities (is the Entity element class enough?)
+Maybe
+-----
 
 * rewrite iterparse() to accept a parser as argument instead of being
   one (or maybe not: iterparse() can't deal with all parser options
