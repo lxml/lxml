@@ -1002,7 +1002,8 @@ cdef _getNsTag(tag):
     cdef char* c_ns_end
     cdef Py_ssize_t taglen
     cdef Py_ssize_t nslen
-    if isinstance(tag, QName):
+    # _isString() is much faster than isinstance()
+    if not _isString(tag) and isinstance(tag, QName):
         tag = (<QName>tag).text
     tag = _utf8(tag)
     c_tag = _cstr(tag)

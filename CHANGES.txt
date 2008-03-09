@@ -30,6 +30,8 @@ Bugs fixed
 Other changes
 -------------
 
+* General API speed-ups.
+
 * The benchmark suite now uses tail text in the trees, which makes the
   absolute numbers incomparable to previous results.
 

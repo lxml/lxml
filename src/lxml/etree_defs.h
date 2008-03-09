@@ -119,7 +119,9 @@ static PyObject* __PY_NEW_GLOBAL_EMPTY_TUPLE = NULL;
              (__PY_NEW_GLOBAL_EMPTY_TUPLE)), \
          NULL))
 
-#define _isString(obj)   PyObject_TypeCheck(obj, &PyBaseString_Type)
+#define _isString(obj)   (PyString_CheckExact(obj)  || \
+                          PyUnicode_CheckExact(obj) || \
+                          PyObject_TypeCheck(obj, &PyBaseString_Type))
 
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
