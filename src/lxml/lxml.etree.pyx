@@ -330,7 +330,11 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return (version, encoding)
 
     cdef buildNewPrefix(self):
-        ns = python.PyString_FromFormat("ns%d", self._ns_counter)
+        if self._ns_counter < python.PyTuple_GET_SIZE(_PREFIX_CACHE):
+            ns = python.PyTuple_GET_ITEM(_PREFIX_CACHE, self._ns_counter)
+            python.Py_INCREF(ns)
+        else:
+            ns = python.PyString_FromFormat("ns%d", self._ns_counter)
         if self._prefix_tail is not None:
             ns += self._prefix_tail
         self._ns_counter += 1
@@ -364,17 +368,15 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             dict_result = python.PyDict_GetItemString(
                 _DEFAULT_NAMESPACE_PREFIXES, c_href)
             if dict_result is not NULL:
-                c_prefix = _cstr(<object>dict_result)
-
-        if c_prefix is NULL or \
-               tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:
-            # try to simulate ElementTree's namespace prefix creation
-            while 1:
+                prefix = <object>dict_result
+            else:
                 prefix = self.buildNewPrefix()
-                c_prefix = _cstr(prefix)
-                # make sure it's not used already
-                if tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is NULL:
-                    break
+            c_prefix = _cstr(prefix)
+
+        # make sure the prefix is not in use already
+        while tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:
+            prefix = self.buildNewPrefix()
+            c_prefix = _cstr(prefix)
 
         c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if c_ns is NULL:
@@ -423,6 +425,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         if node_ns_utf is not None:
             self._setNodeNs(c_node, _cstr(node_ns_utf))
         return 0
+
+cdef __initPrefixCache():
+    cdef int i
+    return tuple([ python.PyString_FromFormat("ns%d", i)
+                   for i from 0 <= i < 30 ])
+
+cdef object _PREFIX_CACHE
+_PREFIX_CACHE = __initPrefixCache()
 
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
