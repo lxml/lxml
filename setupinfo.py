@@ -4,7 +4,6 @@ from distutils.core import Extension
 try:
     from Cython.Distutils import build_ext as build_pyx
     import Cython.Compiler.Version
-    print("Building with Cython %s." % Cython.Compiler.Version.version)
     CYTHON_INSTALLED = True
 except ImportError:
     CYTHON_INSTALLED = False
@@ -18,6 +17,7 @@ def env_var(name):
 def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
     if CYTHON_INSTALLED:
         source_extension = ".pyx"
+        print("Building with Cython %s." % Cython.Compiler.Version.version)
     else:
         print ("NOTE: Trying to build without Cython, pre-generated "
                "'src/lxml/etree.c' needs to be available.")
