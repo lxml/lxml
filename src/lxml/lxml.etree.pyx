@@ -930,7 +930,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             cdef char* c_base
             c_base = tree.xmlNodeGetBase(self._doc._c_doc, self._c_node)
             if c_base is NULL:
-                return None
+                if self._doc._c_doc.URL is NULL:
+                    return None
+                return self._doc._c_doc.URL
             # FIXME: this might be UTF-8 or any other 8-bit encoding
             base = c_base
             tree.xmlFree(c_base)

@@ -1715,6 +1715,17 @@ class ETreeOnlyTestCase(HelperTestCase):
             root.get('{http://www.w3.org/XML/1998/namespace}base'),
             "https://secret/url")
 
+    def test_html_base(self):
+        etree = self.etree
+        root = etree.HTML("<html><body></body></html>",
+                          base_url="http://no/such/url")
+        self.assertEquals(root.base, "http://no/such/url")
+
+    def test_html_base_tag(self):
+        etree = self.etree
+        root = etree.HTML('<html><head><base href="http://no/such/url"></head></html>')
+        self.assertEquals(root.base, "http://no/such/url")
+
     def test_dtd_io(self):
         # check that DTDs that go in also go back out
         xml = '''\
