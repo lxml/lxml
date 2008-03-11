@@ -1250,7 +1250,7 @@ fine-grained control over the Element classes used in a tree.  All you
 have to do is configure a different `class lookup`_ mechanism (or
 write one yourself).
 
-.. _`class lookup`: element-classes.html
+.. _`class lookup`: element_classes.html
 
 The first step for the setup is to create a new parser that builds
 objectify documents.  The objectify API is meant for data-centric XML
