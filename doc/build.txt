@@ -188,7 +188,8 @@ provide this script, but the new one must come first in the PATH.  The
 best way to make sure the right version is used is by passing the path
 to the script as an option to setup.py::
 
-  python setup.py build --with-xslt-config=/path/to/xslt-config
+  python setup.py build --with-xslt-config=/path/to/xslt-config \
+                        --with-xml2-config=/path/to/xml2-config
 
 To make sure the newer libxml2 and libxslt versions are used at
 *runtime*, you should add *all* directories where the newer libraries

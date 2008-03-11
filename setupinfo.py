@@ -29,8 +29,9 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
     else:
         modules = EXT_MODULES
 
-    lib_version = libxslt_version()
-    print("Using build configuration of libxslt %s" % lib_version)
+    lib_versions = get_library_versions()
+    print("Using build configuration of libxml2 %s and libxslt %s" % 
+          lib_versions)
 
     _include_dirs = include_dirs(static_include_dirs)
     _library_dirs = library_dirs(static_library_dirs)
@@ -141,6 +142,8 @@ def define_macros():
         macros.append(('WITHOUT_THREADING', None))
     return macros
 
+_ERROR_PRINTED = False
+
 def run_command(cmd):
     try:
         import subprocess
@@ -153,23 +156,49 @@ def run_command(cmd):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         rf, ef = p.stdout, p.stderr
     errors = ef.read()
-    output = rf.read()
-    return output or '', errors or ''
-
-def libxslt_version():
-    cmd = "%s --version" % find_xslt_config()
-    output, errors = run_command(cmd)
-    if errors:
+    global _ERROR_PRINTED
+    if errors and not _ERROR_PRINTED:
+        _ERROR_PRINTED = True
         print("ERROR: %s" % errors)
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
-    return output.strip()
+    output = rf.read()
+    return (output or '').strip()
+
+def get_library_versions():
+    cmd = "%s --version" % find_xml2_config()
+    xml2_version = run_command(cmd)
+    cmd = "%s --version" % find_xslt_config()
+    xslt_version = run_command(cmd)
+    return xml2_version, xslt_version
 
 def flags(option):
+    cmd = "%s --%s" % (find_xml2_config(), option)
+    xml2_flags = run_command(cmd)
     cmd = "%s --%s" % (find_xslt_config(), option)
-    output, _ = run_command(cmd)
-    return output.split()
+    xslt_flags = run_command(cmd)
+
+    flag_list = xml2_flags.split()
+    for flag in xslt_flags.split():
+        if flag not in flag_list:
+            flag_list.append(flag)
+    return flag_list
 
 XSLT_CONFIG = None
+XML2_CONFIG = None
+
+def find_xml2_config():
+    global XML2_CONFIG
+    if XML2_CONFIG:
+        return XML2_CONFIG
+    option = '--with-xml2-config='
+    for arg in sys.argv:
+        if arg.startswith(option):
+            sys.argv.remove(arg)
+            XML2_CONFIG = arg[len(option):]
+            return XML2_CONFIG
+    else:
+        XML2_CONFIG = os.getenv('XML2_CONFIG', 'xml2-config')
+    return XML2_CONFIG
 
 def find_xslt_config():
     global XSLT_CONFIG
@@ -182,7 +211,7 @@ def find_xslt_config():
             XSLT_CONFIG = arg[len(option):]
             return XSLT_CONFIG
     else:
-        XSLT_CONFIG = 'xslt-config'
+        XSLT_CONFIG = os.getenv('XSLT_CONFIG', 'xslt-config')
     return XSLT_CONFIG
 
 def has_option(name):
