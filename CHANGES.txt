@@ -30,7 +30,16 @@ Bugs fixed
 Other changes
 -------------
 
-* General API speed-ups.
+* Setting the XSLT_CONFIG and XML2_CONFIG environment variables at
+  build time will let setup.py pick up the ``xml2-config`` and
+  ``xslt-config`` scripts from the supplied path name.
+
+* Passing ``--with-xml2-config=/path/to/xml2-config`` to setup.py will
+  override the ``xml2-config`` script that is used to determine the C
+  compiler options.  The same applies for the ``--with-xslt-config``
+  option.
+
+* Minor API speed-ups.
 
 * The benchmark suite now uses tail text in the trees, which makes the
   absolute numbers incomparable to previous results.
