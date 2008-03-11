@@ -29,11 +29,24 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
     else:
         modules = EXT_MODULES
 
+    lib_version = libxslt_version()
+    print("Using build configuration of libxslt %s" % lib_version)
+
     _include_dirs = include_dirs(static_include_dirs)
     _library_dirs = library_dirs(static_library_dirs)
     _cflags = cflags(static_cflags)
     _define_macros = define_macros()
     _libraries = libraries()
+
+    if _library_dirs:
+        message = "Building against libxml2/libxslt in "
+        if len(_library_dirs) > 1:
+            print(message + "one of the following directories:")
+            for dir in _library_dirs:
+                print("  " + dir)
+        else:
+            print(message + "the following directory: " +
+                  _library_dirs[0])
 
     if OPTION_AUTO_RPATH:
         runtime_library_dirs = _library_dirs
@@ -128,8 +141,7 @@ def define_macros():
         macros.append(('WITHOUT_THREADING', None))
     return macros
 
-def flags(option):
-    cmd = "%s --%s" % (find_xslt_config(), option)
+def run_command(cmd):
     try:
         import subprocess
     except ImportError:
@@ -141,10 +153,21 @@ def flags(option):
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         rf, ef = p.stdout, p.stderr
     errors = ef.read()
+    output = rf.read()
+    return output or '', errors or ''
+
+def libxslt_version():
+    cmd = "%s --version" % find_xslt_config()
+    output, errors = run_command(cmd)
     if errors:
         print("ERROR: %s" % errors)
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
-    return str(rf.read()).split()
+    return output.strip()
+
+def flags(option):
+    cmd = "%s --%s" % (find_xslt_config(), option)
+    output, _ = run_command(cmd)
+    return output.split()
 
 XSLT_CONFIG = None
 
