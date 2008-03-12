@@ -30,8 +30,12 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         modules = EXT_MODULES
 
     lib_versions = get_library_versions()
-    print("Using build configuration of libxml2 %s and libxslt %s" % 
-          lib_versions)
+    if lib_versions[0]:
+        print("Using build configuration of libxml2 %s and libxslt %s" % 
+              lib_versions)
+    else:
+        print("Using build configuration of libxslt %s" % 
+              lib_versions[1])
 
     _include_dirs = include_dirs(static_include_dirs)
     _library_dirs = library_dirs(static_library_dirs)
@@ -144,7 +148,11 @@ def define_macros():
 
 _ERROR_PRINTED = False
 
-def run_command(cmd):
+def run_command(cmd, *args):
+    if not cmd:
+        return ''
+    if args:
+        cmd = ' '.join((cmd,) + args)
     try:
         import subprocess
     except ImportError:
@@ -165,17 +173,13 @@ def run_command(cmd):
     return (output or '').strip()
 
 def get_library_versions():
-    cmd = "%s --version" % find_xml2_config()
-    xml2_version = run_command(cmd)
-    cmd = "%s --version" % find_xslt_config()
-    xslt_version = run_command(cmd)
+    xml2_version = run_command(find_xml2_config(), "--version")
+    xslt_version = run_command(find_xslt_config(), "--version")
     return xml2_version, xslt_version
 
 def flags(option):
-    cmd = "%s --%s" % (find_xml2_config(), option)
-    xml2_flags = run_command(cmd)
-    cmd = "%s --%s" % (find_xslt_config(), option)
-    xslt_flags = run_command(cmd)
+    xml2_flags = run_command(find_xml2_config(), "--%s" % option)
+    xslt_flags = run_command(find_xslt_config(), "--%s" % option)
 
     flag_list = xml2_flags.split()
     for flag in xslt_flags.split():
@@ -197,7 +201,8 @@ def find_xml2_config():
             XML2_CONFIG = arg[len(option):]
             return XML2_CONFIG
     else:
-        XML2_CONFIG = os.getenv('XML2_CONFIG', 'xml2-config')
+        # default: do nothing, rely only on xslt-config
+        XML2_CONFIG = os.getenv('XML2_CONFIG', '')
     return XML2_CONFIG
 
 def find_xslt_config():
