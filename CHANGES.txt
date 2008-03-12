@@ -24,6 +24,9 @@ Features added
 Bugs fixed
 ----------
 
+* Attribute assignment of custom PyTypes in objectify could fail to
+  correctly serialise the value to a string.
+
 * Default encoding for plain text serialisation was different from
   that of XML serialisation (UTF-8 instead of ASCII).
 
