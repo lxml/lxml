@@ -84,12 +84,22 @@ class ObjectifyTestCase(HelperTestCase):
         ns = self.lookup.get_namespace("otherNS")
         ns[None] = self.etree.ElementBase
 
+        self._orig_types = objectify.getRegisteredTypes()
+
     def tearDown(self):
         self.lookup.get_namespace("otherNS").clear()
         objectify.set_pytype_attribute_tag()
         del self.lookup
         del self.parser
+
+        for pytype in objectify.getRegisteredTypes():
+            pytype.unregister()
+        for pytype in self._orig_types:
+            pytype.register()
+        del self._orig_types
+
         super(ObjectifyTestCase, self).tearDown()
+
 
     def test_element_nsmap_default(self):
         elt = objectify.Element("test")
@@ -1814,39 +1824,80 @@ class ObjectifyTestCase(HelperTestCase):
 
     def test_registered_types(self):
         orig_types = objectify.getRegisteredTypes()
+        orig_types[0].unregister()
+        self.assertEquals(orig_types[1:], objectify.getRegisteredTypes())
 
-        try:
-            orig_types[0].unregister()
-            self.assertEquals(orig_types[1:], objectify.getRegisteredTypes())
+        class NewType(objectify.ObjectifiedDataElement):
+            pass
 
-            class NewType(objectify.ObjectifiedDataElement):
-                pass
+        def checkMyType(s):
+            return True
 
-            def checkMyType(s):
-                return True
+        pytype = objectify.PyType("mytype", checkMyType, NewType)
+        self.assert_(pytype not in objectify.getRegisteredTypes())
+        pytype.register()
+        self.assert_(pytype in objectify.getRegisteredTypes())
+        pytype.unregister()
+        self.assert_(pytype not in objectify.getRegisteredTypes())
 
-            pytype = objectify.PyType("mytype", checkMyType, NewType)
-            pytype.register()
-            self.assert_(pytype in objectify.getRegisteredTypes())
-            pytype.unregister()
+        pytype.register(before = [objectify.getRegisteredTypes()[0].name])
+        self.assertEquals(pytype, objectify.getRegisteredTypes()[0])
+        pytype.unregister()
 
-            pytype.register(before = [objectify.getRegisteredTypes()[0].name])
-            self.assertEquals(pytype, objectify.getRegisteredTypes()[0])
-            pytype.unregister()
+        pytype.register(after = [objectify.getRegisteredTypes()[0].name])
+        self.assertNotEqual(pytype, objectify.getRegisteredTypes()[0])
+        pytype.unregister()
 
-            pytype.register(after = [objectify.getRegisteredTypes()[0].name])
-            self.assertNotEqual(pytype, objectify.getRegisteredTypes()[0])
-            pytype.unregister()
+        self.assertRaises(ValueError, pytype.register,
+                          before = [objectify.getRegisteredTypes()[0].name],
+                          after  = [objectify.getRegisteredTypes()[1].name])
 
-            self.assertRaises(ValueError, pytype.register,
-                              before = [objectify.getRegisteredTypes()[0].name],
-                              after  = [objectify.getRegisteredTypes()[1].name])
+    def test_registered_type_stringify(self):
+        from datetime import datetime
+        def parse_date(value):
+            if len(value) != 14:
+                raise ValueError(value)
+            Y = int(value[0:4])
+            M = int(value[4:6])
+            D = int(value[6:8])
+            h = int(value[8:10])
+            m = int(value[10:12])
+            s = int(value[12:14])
+            return datetime(Y, M, D, h, m, s)
 
-        finally:
-            for pytype in objectify.getRegisteredTypes():
-                pytype.unregister()
-            for pytype in orig_types:
-                pytype.register()
+        def stringify_date(date):
+            return date.strftime("%Y%m%d%H%M%S")
+
+        class DatetimeElement(objectify.ObjectifiedDataElement):
+            @property
+            def pyval(self):
+                return parse_date(self.text)
+
+        datetime_type = objectify.PyType(
+            "datetime", parse_date, DatetimeElement, stringify_date)
+        datetime_type.xmlSchemaTypes = "dateTime"
+        datetime_type.register()
+
+        NAMESPACE = "http://foo.net/xmlns"
+        NAMESPACE_MAP = {'ns': NAMESPACE}
+
+        r = objectify.Element("{%s}root" % NAMESPACE, nsmap=NAMESPACE_MAP)
+        time = datetime.now()
+        r.date = time
+
+        self.assert_(isinstance(r.date, DatetimeElement))
+        self.assert_(isinstance(r.date.pyval, datetime))
+
+        self.assertEquals(r.date.pyval, parse_date(stringify_date(time)))
+        self.assertEquals(r.date.text, stringify_date(time))
+
+        r.date = objectify.E.date(time)
+
+        self.assert_(isinstance(r.date, DatetimeElement))
+        self.assert_(isinstance(r.date.pyval, datetime))
+
+        self.assertEquals(r.date.pyval, parse_date(stringify_date(time)))
+        self.assertEquals(r.date.text, stringify_date(time))
 
     def test_object_path(self):
         root = self.XML(xml_str)
