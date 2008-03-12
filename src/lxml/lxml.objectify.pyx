@@ -504,7 +504,7 @@ cdef _setElementValue(_Element element, value):
             element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
         if python._isString(value):
             pytype_name = "str"
-            _pytype = python.PyDict_GetItem(_PYTYPE_DICT, "str")
+            _pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
         else:
             pytype_name = _typename(value)
             _pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
