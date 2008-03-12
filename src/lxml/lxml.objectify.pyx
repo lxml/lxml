@@ -101,6 +101,9 @@ cdef object XML_SCHEMA_INSTANCE_TYPE_ATTR
 XML_SCHEMA_INSTANCE_TYPE_ATTR = "{%s}type" % XML_SCHEMA_INSTANCE_NS
 
 
+# Forward declaration
+cdef class PyType
+
 ################################################################################
 # Element class for the main API
 
@@ -489,25 +492,27 @@ cdef object _appendValue(_Element parent, tag, value):
         _setElementValue(new_element, value)
 
 cdef _setElementValue(_Element element, value):
-    cdef python.PyObject* dict_result
+    cdef python.PyObject* _pytype
     if value is None:
         cetree.setAttributeValue(
             element, XML_SCHEMA_INSTANCE_NIL_ATTR, "true")
     elif isinstance(value, _Element):
         _replaceElement(element, value)
+        return
     else:
         cetree.delAttributeFromNsName(
             element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
         if python._isString(value):
             pytype_name = "str"
+            _pytype = python.PyDict_GetItem(_PYTYPE_DICT, "str")
         else:
             pytype_name = _typename(value)
-            if isinstance(value, bool):
-                value = _lower_bool(value)
+            _pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
+            if _pytype is not NULL:
+                value = (<PyType>_pytype).stringify(value)
             else:
                 value = str(value)
-        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
-        if dict_result is not NULL:
+        if _pytype is not NULL:
             cetree.setAttributeValue(element, PYTYPE_ATTRIBUTE, pytype_name)
         else:
             cetree.delAttributeFromNsName(element._c_node, PYTYPE_NAMESPACE,
@@ -884,7 +889,7 @@ cdef class PyType:
     """
     cdef readonly object name
     cdef readonly object type_check
-    cdef object _add_text
+    cdef readonly object stringify
     cdef object _type
     cdef object _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
@@ -900,9 +905,8 @@ cdef class PyType:
         self._type = type_class
         self.type_check = type_check
         if stringify is None:
-            self._add_text = _StringValueSetter(str)
-        else:
-            self._add_text = _StringValueSetter(stringify)
+            stringify = str
+        self.stringify = stringify
         self._schema_types = []
 
     def __repr__(self):
@@ -972,14 +976,6 @@ cdef class PyType:
             return self._schema_types
         def __set__(self, types):
             self._schema_types = list(types)
-
-cdef class _StringValueSetter:
-    cdef object _stringify
-    def __init__(self, stringify):
-        self._stringify = stringify
-
-    def __call__(self, elem, value):
-        _add_text(elem, self._stringify(value))
 
 
 cdef object _PYTYPE_DICT
@@ -1204,7 +1200,7 @@ cdef class _ObjectifyElementMakerCaller:
                 pytype_name = _typename(child)
                 pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
                 if pytype is not NULL:
-                    (<PyType>pytype)._add_text(element, child)
+                    _add_text(element, (<PyType>pytype).stringify(child))
                 else:
                     has_string_value = 1
                     child = str(child)
