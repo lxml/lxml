@@ -12,7 +12,7 @@ UTEXT = u"some klingon: \F8D2"
 # Benchmarks
 ############################################################
 
-class BenchMark(benchbase.BenchMarkBase):
+class BenchMark(benchbase.TreeBenchMark):
     def bench_iter_children(self, root):
         for child in root:
             pass

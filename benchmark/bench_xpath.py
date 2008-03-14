@@ -9,7 +9,7 @@ from benchbase import with_attributes, with_text, onlylib, serialized, children
 # Benchmarks
 ############################################################
 
-class XPathBenchMark(benchbase.BenchMarkBase):
+class XPathBenchMark(benchbase.TreeBenchMark):
     @onlylib('lxe')
     @children
     def bench_xpath_class(self, children):

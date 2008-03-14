@@ -3,13 +3,14 @@ from itertools import *
 from StringIO import StringIO
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized
+from benchbase import with_attributes, with_text, onlylib, serialized, children
 
 ############################################################
 # Benchmarks
 ############################################################
 
-class BenchMark(benchbase.BenchMarkBase):
+class BenchMark(benchbase.TreeBenchMark):
+    repeat100  = range(100)
     repeat1000 = range(1000)
     repeat3000 = range(3000)
 
@@ -96,6 +97,17 @@ class BenchMark(benchbase.BenchMarkBase):
         for i in self.repeat1000:
             el.getchildren()
 
+    @children
+    def bench_elementmaker(self, children):
+        E = self.objectify.E
+        for child in children:
+            root = E.this(
+                "test",
+                E.will(
+                    E.do("nothing"),
+                    E.special,
+                    )
+                )
 
 if __name__ == '__main__':
     benchbase.main(BenchMark)

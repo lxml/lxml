@@ -90,7 +90,7 @@ def children(function):
 class SkippedTest(Exception):
     pass
 
-class BenchMarkBase(object):
+class TreeBenchMark(object):
     atoz = string.ascii_lowercase
 
     _LIB_NAME_MAP = {
@@ -123,8 +123,8 @@ class BenchMarkBase(object):
                 setattr(self, fname + '_xml', lambda : xml)
                 setattr(self, fname + '_children', lambda : root[:])
 
-        attribute_list = list(izip(count(), ({}, _ATTRIBUTES)))
-        text_list = list(izip(count(), (None, _TEXT, _UTEXT)))
+        attribute_list = list(enumerate( [{}, _ATTRIBUTES] ))
+        text_list = list(enumerate( [None, _TEXT, _UTEXT] ))
         build_name = self._tree_builder_name
 
         self.setup_times = []
@@ -447,9 +447,8 @@ def main(benchmark_class):
             pass
         else:
             # use fast element creation in lxml.etree
-            from lxml.elements import classlookup
-            classlookup.setElementClassLookup(
-                classlookup.ElementDefaultClassLookup())
+            etree.set_element_class_lookup(
+                etree.ElementDefaultClassLookup())
 
     if len(sys.argv) > 1:
         if '-a' in sys.argv or '-c' in sys.argv:

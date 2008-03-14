@@ -9,7 +9,7 @@ from benchbase import with_attributes, with_text, onlylib, serialized
 # Benchmarks
 ############################################################
 
-class XSLTBenchMark(benchbase.BenchMarkBase):
+class XSLTBenchMark(benchbase.TreeBenchMark):
     @onlylib('lxe')
     def bench_xslt_extensions_old(self, root):
         tree = self.etree.XML("""\
