@@ -12,4 +12,3 @@ recursive-include benchmark *.py
 recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython.png
 recursive-include fake_pyrex *.py
 include doc/mkhtml.py doc/rest2html.py
-exclude doc/pyrex.txt
