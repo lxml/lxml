@@ -1294,10 +1294,22 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
 
 cdef _Document _parseDocument(source, _BaseParser parser, base_url):
     cdef _Document doc
+    if _isString(source):
+        # parse the file directly from the filesystem
+        doc = _parseDocumentFromURL(_encodeFilename(source), parser)
+        # fix base URL if requested
+        if base_url is not None:
+            base_url = _encodeFilenameUTF8(base_url)
+            if doc._c_doc.URL is not NULL:
+                tree.xmlFree(doc._c_doc.URL)
+            doc._c_doc.URL = tree.xmlStrdup(_cstr(base_url))
+        return doc
+
     if base_url is not None:
         url = base_url
     else:
         url = _getFilenameForFile(source)
+
     if hasattr(source, 'getvalue') and hasattr(source, 'tell'):
         # StringIO - reading from start?
         if source.tell() == 0:
@@ -1309,16 +1321,7 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
         return _parseFilelikeDocument(
             source, _encodeFilenameUTF8(url), parser)
 
-    # Otherwise parse the file directly from the filesystem
-    filename = _encodeFilename(source)
-    doc = _parseDocumentFromURL(filename, parser)
-    # fix base URL if requested
-    if base_url is not None:
-        base_url = _encodeFilenameUTF8(base_url)
-        if doc._c_doc.URL is not NULL:
-            tree.xmlFree(doc._c_doc.URL)
-        doc._c_doc.URL = tree.xmlStrdup(_cstr(base_url))
-    return doc
+    raise TypeError("cannot parse from '%s'" % python._fqtypename(source))
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
     cdef xmlDoc* c_doc
