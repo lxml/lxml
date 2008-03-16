@@ -1,4 +1,4 @@
-import sys, os
+import sys, os, os.path
 from distutils.core import Extension
 
 try:
@@ -10,6 +10,8 @@ except ImportError:
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
+PACKAGE_PATH = "src/lxml/"
+
 def env_var(name):
     value = os.getenv(name, '')
     return value.split(os.pathsep)
@@ -20,12 +22,12 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         print("Building with Cython %s." % Cython.Compiler.Version.version)
     else:
         print ("NOTE: Trying to build without Cython, pre-generated "
-               "'src/lxml/etree.c' needs to be available.")
+               "'%setree.c' needs to be available." % PACKAGE_PATH)
         source_extension = ".c"
 
     if OPTION_WITHOUT_OBJECTIFY:
         modules = [ entry for entry in EXT_MODULES
-                    if 'objectify' not in entry[0] ]
+                    if 'objectify' not in entry ]
     else:
         modules = EXT_MODULES
 
@@ -60,10 +62,12 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
     
     result = []
     for module in modules:
+        main_module_source = PACKAGE_PATH + module + source_extension
+        dependencies = find_dependencies(module)
         result.append(
             Extension(
             module,
-            sources = ["src/lxml/" + module + source_extension],
+            sources = [main_module_source] + dependencies,
             extra_compile_args = ['-w'] + _cflags,
             define_macros = _define_macros,
             include_dirs = _include_dirs,
@@ -72,6 +76,31 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
             libraries = _libraries,
             ))
     return result
+
+def find_dependencies(module):
+    if CYTHON_INSTALLED:
+        from Cython.Compiler.Version import version
+        if tuple(version.split('.')) <= (0,9,6,12):
+            return []
+
+    package_dir = os.path.join(get_base_dir(), PACKAGE_PATH)
+    files = os.listdir(package_dir)
+    pxd_files = [ os.path.join(PACKAGE_PATH, filename) for filename in files
+                  if filename.endswith('.pxd') ]
+
+    if 'etree' in module:
+        pxi_files = [ os.path.join(PACKAGE_PATH, filename)
+                      for filename in files
+                      if filename.endswith('.pxi')
+                      and 'objectpath' not in filename ]
+        pxd_files = [ filename for filename in pxd_files
+                      if 'etreepublic' not in filename ]
+    elif 'objectify' in module:
+        pxi_files = [ os.path.join(PACKAGE_PATH, 'objectpath.pxi') ]
+    else:
+        pxi_files = []
+
+    return pxd_files + pxi_files
 
 def extra_setup_args():
     result = {}
@@ -225,6 +254,9 @@ def has_option(name):
         return True
     except ValueError:
         return False
+
+def get_base_dir():
+    return os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 
 # pick up any commandline options
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
