@@ -2,9 +2,6 @@
 BeautifulSoup Parser
 ====================
 
-:Author:
-  Stefan Behnel
-
 BeautifulSoup_ is a Python package that parses broken HTML.  While libxml2
 (and thus lxml) can also parse broken HTML, BeautifulSoup is much more
 forgiving and has superiour `support for encoding detection`_.
@@ -12,10 +9,15 @@ forgiving and has superiour `support for encoding detection`_.
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
 .. _`support for encoding detection`: http://www.crummy.com/software/BeautifulSoup/documentation.html#Beautiful%20Soup%20Gives%20You%20Unicode,%20Dammit
 
-lxml can benefit from the parsing capabilities of BeautifulSoup through the
-`lxml.html.ElementSoup` module.  It provides two main functions: `parse()` to
-parse a file using BeautifulSoup, and `convert_tree()` to convert a
+lxml can benefit from the parsing capabilities of BeautifulSoup
+through the ``lxml.html.soupparser`` module.  It provides three main
+functions: ``fromstring()`` and ``parse()`` to parse a string or file
+using BeautifulSoup, and `convert_tree()` to convert an existing
 BeautifulSoup tree into a list of top-level Elements.
+
+The functions ``fromstring()`` and ``parse()`` behave as known from
+ElementTree.  The first returns a root Element, the latter returns an
+ElementTree.
 
 Here is a document full of tag soup, similar to, but not quite like, HTML:
 
@@ -23,13 +25,12 @@ Here is a document full of tag soup, similar to, but not quite like, HTML:
 
     >>> tag_soup = '<meta><head><title>Hello</head<body onload=crash()>Hi all<p>'
 
-all you need to do is pass it to the `parse()` function:
+all you need to do is pass it to the ``fromstring()`` function:
 
 .. sourcecode:: pycon
 
-    >>> from lxml.html.ElementSoup import parse
-    >>> from StringIO import StringIO
-    >>> root = parse(StringIO(tag_soup))
+    >>> from lxml.html.soupparser import fromstring
+    >>> root = fromstring(tag_soup)
 
 To see what we have here, you can serialise it:
 
@@ -49,5 +50,10 @@ Not quite what you'd expect from an HTML page, but, well, it was broken
 already, right?  BeautifulSoup did its best, and so now it's a tree.
 
 To control which Element implementation is used, you can pass a
-``makeelement`` factory function to ``parse()``. By default, this is based on
-the HTML parser defined in ``lxml.html``.
+``makeelement`` factory function to ``parse()`` and ``fromstring()``.
+By default, this is based on the HTML parser defined in ``lxml.html``.
+
+There is also a legacy module called ``ElementSoup``, which mimics the
+interface provided by ElementTree's own ElementSoup_ module.
+
+.. _ElementSoup: http://effbot.org/zone/element-soup.htm
