@@ -1107,20 +1107,16 @@ cdef _getFilenameForFile(source):
     Returns None if not a file object.
     """
     # file instances have a name attribute
-    try:
-        return source.name
-    except AttributeError:
-        pass
+    filename = getattr3(source, 'name', None)
+    if filename is not None:
+        return filename
     # gzip file instances have a filename attribute
-    try:
-        return source.filename
-    except AttributeError:
-        pass
+    filename = getattr3(source, 'filename', None)
+    if filename is not None:
+        return filename
     # urllib2 provides a geturl() method
-    try:
-        geturl = source.geturl
-    except AttributeError:
-        # can't determine filename
-        return None
-    else:
+    geturl = getattr3(source, 'geturl', None)
+    if geturl is not None:
         return geturl()
+    # can't determine filename
+    return None
