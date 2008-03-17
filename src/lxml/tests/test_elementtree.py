@@ -2708,6 +2708,10 @@ class ETreeTestCaseBase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(IOError, parse, fileInTestDir('notthere.xml'))  
 
+    def test_parse_error_none(self):
+        parse = self.etree.parse
+        self.assertRaises(TypeError, parse, None)
+
     def test_parse_error(self):
         # ET < 1.3 raises ExpatError
         parse = self.etree.parse
