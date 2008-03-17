@@ -5,7 +5,7 @@ __LXML_VERSION = None
 def version():
     global __LXML_VERSION
     if __LXML_VERSION is None:
-        __LXML_VERSION = open(os.path.join(get_src_dir(), 'version.txt')).read().strip()
+        __LXML_VERSION = open(os.path.join(get_base_dir(), 'version.txt')).read().strip()
     return __LXML_VERSION
 
 def branch_version():
@@ -17,7 +17,7 @@ def is_pre_release():
 
 def svn_version():
     _version = version()
-    src_dir = get_src_dir()
+    src_dir = get_base_dir()
 
     revision = 0
     base_url = None
@@ -89,7 +89,7 @@ def changes():
     """Extract part of changelog pertaining to version.
     """
     _version = version()
-    f = open(os.path.join(get_src_dir(), "CHANGES.txt"), 'r')
+    f = open(os.path.join(get_base_dir(), "CHANGES.txt"), 'r')
     lines = []
     for line in f:
         if line.startswith('====='):
@@ -114,7 +114,7 @@ def create_version_h(svn_version):
             svn_version += '.0'
 
     version_h = open(
-        os.path.join(get_src_dir(), 'src', 'lxml', 'lxml-version.h'),
+        os.path.join(get_base_dir(), 'src', 'lxml', 'lxml-version.h'),
         'w')
     version_h.write('''\
 #ifndef LXML_VERSION_STRING
@@ -123,10 +123,23 @@ def create_version_h(svn_version):
 ''' % svn_version)
     version_h.close()
 
-def get_src_dir():
+def get_base_dir():
     return os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 
 def fix_alphabeta(version, alphabeta):
     if ('.' + alphabeta) in version:
         return version
     return version.replace(alphabeta, '.' + alphabeta)
+
+def split_version(version):
+    find_digits = re.compile('([0-9]+)(.*)').match
+    l = []
+    for part in version.split('.'):
+        try:
+            l.append( int(part) )
+        except ValueError:
+            match = find_digits(part)
+            if match:
+                l.append( int(match.group(1)) )
+                l.append( match.group(2) )
+    return tuple(l)

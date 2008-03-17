@@ -1,6 +1,8 @@
 import sys, os, os.path
 from distutils.core import Extension
 
+from versioninfo import get_base_dir, split_version
+
 try:
     from Cython.Distutils import build_ext as build_pyx
     import Cython.Compiler.Version
@@ -78,10 +80,11 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
     return result
 
 def find_dependencies(module):
-    if CYTHON_INSTALLED:
-        from Cython.Compiler.Version import version
-        if tuple(version.split('.')) <= (0,9,6,12):
-            return []
+    if not CYTHON_INSTALLED:
+        return []
+    from Cython.Compiler.Version import version
+    if split_version(version) <= (0,9,6,12):
+        return []
 
     package_dir = os.path.join(get_base_dir(), PACKAGE_PATH)
     files = os.listdir(package_dir)
@@ -254,9 +257,6 @@ def has_option(name):
         return True
     except ValueError:
         return False
-
-def get_base_dir():
-    return os.path.join(os.getcwd(), os.path.dirname(sys.argv[0]))
 
 # pick up any commandline options
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
