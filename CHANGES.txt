@@ -74,6 +74,43 @@ Most long-time deprecated functions and methods were removed:
   ``objectify.set_default_parser()``
 
 
+2.0.3 (Under development)
+=========================
+
+Features added
+--------------
+
+* soupparser.parse() allows passing keyword arguments on to
+  BeautifulSoup.
+
+* ``fromstring()`` method in ``lxml.html.soupparser``.
+
+Bugs fixed
+----------
+
+* The BeautifulSoup parser (soupparser.py) did not replace entities,
+  which made them turn up in text content.
+
+* Attribute assignment of custom PyTypes in objectify could fail to
+  correctly serialise the value to a string.
+
+Other changes
+-------------
+
+* ``lxml.html.ElementSoup`` was replaced by a new module
+  ``lxml.html.soupparser`` with a more consistent API.  The old module
+  remains for compatibility with ElementTree's own ElementSoup module.
+
+* Setting the XSLT_CONFIG and XML2_CONFIG environment variables at
+  build time will let setup.py pick up the ``xml2-config`` and
+  ``xslt-config`` scripts from the supplied path name.
+
+* Passing ``--with-xml2-config=/path/to/xml2-config`` to setup.py will
+  override the ``xml2-config`` script that is used to determine the C
+  compiler options.  The same applies for the ``--with-xslt-config``
+  option.
+
+
 2.0.2 (2008-02-22)
 ==================
 
