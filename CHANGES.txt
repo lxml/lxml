@@ -24,23 +24,11 @@ Features added
 Bugs fixed
 ----------
 
-* Attribute assignment of custom PyTypes in objectify could fail to
-  correctly serialise the value to a string.
-
 * Default encoding for plain text serialisation was different from
   that of XML serialisation (UTF-8 instead of ASCII).
 
 Other changes
 -------------
-
-* Setting the XSLT_CONFIG and XML2_CONFIG environment variables at
-  build time will let setup.py pick up the ``xml2-config`` and
-  ``xslt-config`` scripts from the supplied path name.
-
-* Passing ``--with-xml2-config=/path/to/xml2-config`` to setup.py will
-  override the ``xml2-config`` script that is used to determine the C
-  compiler options.  The same applies for the ``--with-xslt-config``
-  option.
 
 * Minor API speed-ups.
 
