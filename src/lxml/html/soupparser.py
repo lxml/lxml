@@ -8,7 +8,7 @@ from BeautifulSoup import \
      BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString
 
 
-def fromstring(data, beautifulsoup=None, makeelement=None):
+def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a string of HTML data into an Element tree using the
     BeautifulSoup parser.
 
@@ -20,9 +20,9 @@ def fromstring(data, beautifulsoup=None, makeelement=None):
     ``BeautifulSoup`` class and the default factory of `lxml.html` are
     used.
     """
-    return _parse(data, beautifulsoup, makeelement)
+    return _parse(data, beautifulsoup, makeelement, **bsargs)
 
-def parse(file, beautifulsoup=None, makeelement=None):
+def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a file into an ElemenTree using the BeautifulSoup parser.
 
     You can pass a different BeautifulSoup parser through the
@@ -33,7 +33,7 @@ def parse(file, beautifulsoup=None, makeelement=None):
     """
     if not hasattr(file, 'read'):
         file = open(file)
-    root = _parse(file, beautifulsoup, makeelement)
+    root = _parse(file, beautifulsoup, makeelement, **bsargs)
     return etree.ElementTree(root)
 
 def convert_tree(beautiful_soup_tree, makeelement=None):
@@ -56,12 +56,14 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 
 # helpers
 
-def _parse(source, beautifulsoup, makeelement):
+def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
     if makeelement is None:
         makeelement = html.html_parser.makeelement
-    tree = beautifulsoup(source)
+    if 'convertEntities' not in bsargs:
+        bsargs['convertEntities'] = 'html'
+    tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
     if len(root) == 1 and root[0].tag == "html":
@@ -84,15 +86,15 @@ def _convert_children(parent, beautiful_soup_tree, makeelement):
                 [(k, unescape(v)) for (k,v) in child.attrs]))
             _convert_children(et_child, child, makeelement)
         elif type(child) is NavigableString:
-            _append_text(parent, et_child, unescape(unicode(child)))
+            _append_text(parent, et_child, unescape(child))
         else:
             if isinstance(child, Comment):
-                parent.append(etree.Comment(child.string))
+                parent.append(etree.Comment(child))
             elif isinstance(child, ProcessingInstruction):
                 parent.append(etree.ProcessingInstruction(
-                    *child.string.split(' ', 1)))
+                    *child.split(' ', 1)))
             else: # CData
-                _append_text(parent, et_child, unescape(unicode(child)))
+                _append_text(parent, et_child, unescape(child))
 
 def _append_text(parent, element, text):
     if element is None:
@@ -103,20 +105,10 @@ def _append_text(parent, element, text):
 
 # copied from ET's ElementSoup
 
-import htmlentitydefs, re
+from htmlentitydefs import name2codepoint
+import re
 
 handle_entities = re.compile("&(\w+);").sub
-
-try:
-    name2codepoint = htmlentitydefs.name2codepoint
-except AttributeError:
-    # Emulate name2codepoint for Python 2.2 and earlier
-    name2codepoint = {}
-    for name, entity in htmlentitydefs.entitydefs.items():
-        if len(entity) == 1:
-            name2codepoint[name] = ord(entity)
-        else:
-            name2codepoint[name] = int(entity[2:-1])
 
 def unescape(string):
     # work around oddities in BeautifulSoup's entity handling

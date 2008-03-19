@@ -8,6 +8,11 @@ lxml changelog
 Features added
 --------------
 
+* ElementSoup/soupparser.parse() allows passing keyword arguments on
+  to BeautifulSoup.
+
+* ``fromstring()`` method in ``lxml.html.soupparser``.
+
 * ``XSLTAccessControl`` instances have a property ``options`` that
   returns a dict of access configuration options.
 
@@ -23,6 +28,9 @@ Features added
 
 Bugs fixed
 ----------
+
+* The BeautifulSoup parser did not replace entities, which made them
+  turn up in text content.
 
 * Attribute assignment of custom PyTypes in objectify could fail to
   correctly serialise the value to a string.

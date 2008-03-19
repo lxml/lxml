@@ -53,7 +53,46 @@ To control which Element implementation is used, you can pass a
 ``makeelement`` factory function to ``parse()`` and ``fromstring()``.
 By default, this is based on the HTML parser defined in ``lxml.html``.
 
-There is also a legacy module called ``ElementSoup``, which mimics the
-interface provided by ElementTree's own ElementSoup_ module.
+By default, the BeautifulSoup parser also replaces the entities it
+finds by their character equivalent.
+
+.. sourcecode:: pycon
+
+    >>> tag_soup = '<body>&copy;&euro;&#45;&#245;&#445;<p>'
+    >>> body = fromstring(tag_soup).find('.//body')
+    >>> body.text
+    u'\xa9\u20ac-\xf5\u01bd'
+
+If you want them back on the way out, you can serialise with the
+'html' method, which will always use escaping for safety reasons:
+
+.. sourcecode:: pycon
+
+    >>> tostring(body, method="html")
+    '<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
+
+    >>> tostring(body, method="html", encoding="utf-8")
+    '<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
+
+    >>> tostring(body, method="html", encoding=unicode)
+    u'<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
+
+Otherwise, when serialising to XML, only the plain ASCII encoding will
+escape non-ASCII characters:
+
+.. sourcecode:: pycon
+
+    >>> tostring(body)
+    '<body>&#169;&#8364;-&#245;&#445;<p/></body>'
+
+    >>> tostring(body, encoding="utf-8")
+    '<body>\xc2\xa9\xe2\x82\xac-\xc3\xb5\xc6\xbd<p/></body>'
+
+    >>> tostring(body, encoding=unicode)
+    u'<body>\xa9\u20ac-\xf5\u01bd<p/></body>'
+
+There is also a legacy module called ``lxml.html.ElementSoup``, which
+mimics the interface provided by ElementTree's own ElementSoup_
+module.
 
 .. _ElementSoup: http://effbot.org/zone/element-soup.htm
