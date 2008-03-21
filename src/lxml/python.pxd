@@ -103,6 +103,10 @@ cdef extern from "Python.h":
     cdef void PyEval_RestoreThread(PyThreadState* state)
     cdef PyObject* PyThreadState_GetDict()
 
+    # some handy functions
+    cdef int callable "PyCallable_Check" (object obj)
+    cdef char* _cstr "PyString_AS_STRING" (object s)
+
 cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
     cdef PyThread_type_lock PyThread_allocate_lock()
@@ -118,6 +122,4 @@ cdef extern from "pythread.h":
 cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef int _isString(object obj)
     cdef char* _fqtypename(object t)
-    cdef int callable(object obj)
-    cdef char* _cstr(object s)
     cdef object PY_NEW(object t)
