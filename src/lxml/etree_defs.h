@@ -108,7 +108,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
      (((PyTypeObject*)(T))->tp_new( \
              (PyTypeObject*)(T), __pyx_empty_tuple, NULL))
 
-#define _fqtypename(o)  (((PyTypeObject*)o)->ob_type->tp_name)
+#define _fqtypename(o)  (((PyTypeObject*)(o))->ob_type->tp_name)
 
 #define _isString(obj)   (PyString_CheckExact(obj)  || \
                           PyUnicode_CheckExact(obj) || \
