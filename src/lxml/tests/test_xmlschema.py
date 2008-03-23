@@ -66,6 +66,41 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertRaises(etree.XMLSyntaxError,
                           self.parse, '<a><c></c></a>', parser=parser)
 
+    def test_xmlschema_iterparse(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        xml = StringIO('<a><b></b></a>')
+        events = [ (event, el.tag)
+                   for (event, el) in etree.iterparse(xml, schema=schema) ]
+
+        self.assertEquals([('end', 'b'), ('end', 'a')],
+                          events)
+
+    def test_xmlschema_iterparse_fail(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        self.assertRaises(
+            etree.XMLSyntaxError,
+            list, etree.iterparse(StringIO('<a><c></c></a>'), schema=schema))
+
     def test_xmlschema_elementtree_error(self):
         self.assertRaises(ValueError, etree.XMLSchema, etree.ElementTree())
 

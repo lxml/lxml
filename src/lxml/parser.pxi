@@ -387,6 +387,8 @@ cdef class _ParserContext(_ResolverContext):
     cdef python.PyThread_type_lock _lock
 
     def __dealloc__(self):
+        if self._validator is not None:
+            self._validator.disconnect()
         if self._lock is not NULL:
             python.PyThread_free_lock(self._lock)
         if self._c_ctxt is not NULL:
@@ -425,10 +427,10 @@ cdef class _ParserContext(_ResolverContext):
         return 0
 
     cdef int cleanup(self) except -1:
-        self._resetParserContext()
-        self.clear()
         if self._validator is not None:
             self._validator.disconnect()
+        self._resetParserContext()
+        self.clear()
         self._error_log.disconnect()
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_release_lock(self._lock)

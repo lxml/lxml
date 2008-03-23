@@ -136,8 +136,7 @@ cdef class _ParserSchemaValidationContext:
     cdef xmlschema.xmlSchemaSAXPlugStruct* _sax_plug
 
     def __dealloc__(self):
-        if self._sax_plug:
-            self.disconnect()
+        self.disconnect()
         if self._valid_ctxt:
             xmlschema.xmlSchemaFreeValidCtxt(self._valid_ctxt)
 
@@ -154,8 +153,9 @@ cdef class _ParserSchemaValidationContext:
             self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
 
     cdef void disconnect(self):
-        xmlschema.xmlSchemaSAXUnplug(self._sax_plug)
-        self._sax_plug = NULL
+        if self._sax_plug is not NULL:
+            xmlschema.xmlSchemaSAXUnplug(self._sax_plug)
+            self._sax_plug = NULL
 
     cdef bint isvalid(self):
         if self._valid_ctxt is NULL:

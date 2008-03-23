@@ -382,7 +382,8 @@ cdef class iterparse(_BaseParser):
                     error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
                 self._source = None
                 break
-        if error != 0:
+        if error != 0 or (context._validator is not None and
+                          not context._validator.isvalid()):
             self._source = None
             del context._events[:]
             _raiseParseError(pctxt, self._filename, context._error_log)

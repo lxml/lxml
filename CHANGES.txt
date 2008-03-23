@@ -88,6 +88,8 @@ Features added
 Bugs fixed
 ----------
 
+* Crash when using ``iterparse()`` with XML Schema validation.
+
 * The BeautifulSoup parser (soupparser.py) did not replace entities,
   which made them turn up in text content.
 
