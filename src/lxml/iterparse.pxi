@@ -164,7 +164,8 @@ cdef class _IterparseContext(_ParserContext):
         return 0
                 
 
-cdef void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
+cdef inline void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt,
+                                    xmlNode* c_node):
     cdef _IterparseContext context
     context = <_IterparseContext>c_ctxt._private
     try:
@@ -175,7 +176,8 @@ cdef void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
         c_ctxt.disableSAX = 1
         context._store_raised()
 
-cdef void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
+cdef inline void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt,
+                                  xmlNode* c_node):
     cdef _IterparseContext context
     context = <_IterparseContext>c_ctxt._private
     try:
@@ -186,57 +188,35 @@ cdef void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt, xmlNode* c_node):
         c_ctxt.disableSAX = 1
         context._store_raised()
 
-cdef xmlparser.startElementNsSAX2Func _getOrigStart(xmlparser.xmlParserCtxt* c_ctxt):
-    return (<_IterparseContext>c_ctxt._private)._origSaxStart
-
-cdef xmlparser.startElementSAXFunc _getOrigStartNoNs(xmlparser.xmlParserCtxt* c_ctxt):
-    return (<_IterparseContext>c_ctxt._private)._origSaxStartNoNs
-
-cdef xmlparser.endElementNsSAX2Func _getOrigEnd(xmlparser.xmlParserCtxt* c_ctxt):
-    return (<_IterparseContext>c_ctxt._private)._origSaxEnd
-
-cdef xmlparser.endElementSAXFunc _getOrigEndNoNs(xmlparser.xmlParserCtxt* c_ctxt):
-    return (<_IterparseContext>c_ctxt._private)._origSaxEndNoNs
-
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,
                              int nb_attributes, int nb_defaulted,
                              char** attributes):
-    # no Python in here!
     cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef xmlparser.startElementNsSAX2Func origStart
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    origStart = _getOrigStart(c_ctxt)
-    origStart(ctxt, localname, prefix, URI, nb_namespaces, namespaces,
-              nb_attributes, nb_defaulted, attributes)
+    (<_IterparseContext>c_ctxt._private)._origSaxStart(
+        ctxt, localname, prefix, URI,
+        nb_namespaces, namespaces,
+        nb_attributes, nb_defaulted, attributes)
     _pushSaxStartEvent(c_ctxt, c_ctxt.node)
 
 cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI):
-    # no Python in here!
     cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef xmlparser.endElementNsSAX2Func origEnd
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     _pushSaxEndEvent(c_ctxt, c_ctxt.node)
-    origEnd = _getOrigEnd(c_ctxt)
-    origEnd(ctxt, localname, prefix, URI)
+    (<_IterparseContext>c_ctxt._private)._origSaxEnd(ctxt, localname, prefix, URI)
 
 cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
-    # no Python in here!
     cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef xmlparser.startElementSAXFunc origStart
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    origStart = _getOrigStartNoNs(c_ctxt)
-    origStart(ctxt, name, attributes)
+    (<_IterparseContext>c_ctxt._private)._origSaxStartNoNs(ctxt, name, attributes)
     _pushSaxStartEvent(c_ctxt, c_ctxt.node)
 
 cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
-    # no Python in here!
     cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef xmlparser.endElementSAXFunc origEnd
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     _pushSaxEndEvent(c_ctxt, c_ctxt.node)
-    origEnd = _getOrigEndNoNs(c_ctxt)
-    origEnd(ctxt, name)
+    (<_IterparseContext>c_ctxt._private)._origSaxEndNoNs(ctxt, name)
 
 cdef class iterparse(_BaseParser):
     """iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
