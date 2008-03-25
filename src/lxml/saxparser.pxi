@@ -11,6 +11,10 @@ ctypedef enum _SaxParserEvents:
 cdef class _SaxParserTarget:
     cdef int _sax_event_filter
     cdef int _sax_event_propagate
+    def __cinit__(self):
+        self._sax_event_filter = 0
+        self._sax_event_propagate = 0
+
     cdef _handleSaxStart(self, tag, attrib, nsmap):
         return None
     cdef _handleSaxEnd(self, tag):
@@ -77,10 +81,8 @@ cdef class _SaxParserContext(_ParserContext):
         if self._target._sax_event_filter & SAX_EVENT_DATA:
             sax.characters = _handleSaxData
 
-        if self._target._sax_event_propagate & SAX_EVENT_DOCTYPE:
-            self._origSaxDoctype = sax.internalSubset
-        else:
-            self._origSaxDoctype = sax.internalSubset = NULL
+        # doctype propagation is always required for entity replacement
+        self._origSaxDoctype = sax.internalSubset
         if self._target._sax_event_filter & SAX_EVENT_DOCTYPE:
             sax.internalSubset = _handleSaxDoctype
 
@@ -97,6 +99,10 @@ cdef class _SaxParserContext(_ParserContext):
             self._origSaxComment = sax.comment = NULL
         if self._target._sax_event_filter & SAX_EVENT_COMMENT:
             sax.comment = _handleSaxComment
+
+        # enforce entity replacement
+        sax.reference = NULL
+        c_ctxt.replaceEntities = 1
 
     cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt):
         self._store_raised()

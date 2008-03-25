@@ -40,6 +40,8 @@ cdef extern from "libxml/parser.h":
 
     ctypedef void (*endDocumentSAXFunc)(void* ctx)
 
+    ctypedef void (*referenceSAXFunc)(void * ctx, char* name)
+
     cdef int XML_SAX2_MAGIC
 
 cdef extern from "libxml/tree.h":
@@ -59,6 +61,7 @@ cdef extern from "libxml/tree.h":
         endElementSAXFunc               endElement
         charactersSAXFunc               characters
         cdataBlockSAXFunc               cdataBlock
+        referenceSAXFunc                reference
         commentSAXFunc                  comment
         processingInstructionSAXFunc	processingInstruction
         endDocumentSAXFunc              endDocument

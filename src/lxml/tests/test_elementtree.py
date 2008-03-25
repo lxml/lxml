@@ -3333,6 +3333,74 @@ class ETreeTestCaseBase(HelperTestCase):
                            "end-sub", "data-B", "end-root"],
                           events)
 
+    def test_parser_target_entity(self):
+        events = []
+        class Target(object):
+            def __init__(self):
+                self._data = []
+            def _flush_data(self):
+                if self._data:
+                    events.append("data-" + ''.join(self._data))
+                    del self._data[:]
+            def start(self, tag, attrib):
+                self._flush_data()
+                events.append("start-" + tag)
+            def end(self, tag):
+                self._flush_data()
+                events.append("end-" + tag)
+            def data(self, data):
+                self._data.append(data)
+            def close(self):
+                self._flush_data()
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        dtd = '''
+            <!DOCTYPE root [
+            <!ELEMENT root (sub*)>
+            <!ELEMENT sub (#PCDATA)>
+            <!ENTITY ent "an entity">
+        ]>
+        '''
+        parser.feed(dtd+'<root><sub/><sub>this is &ent;</sub><sub/></root>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start-root", "start-sub", "end-sub", "start-sub",
+                           "data-this is an entity",
+                           "end-sub", "start-sub", "end-sub", "end-root"],
+                          events)
+
+    def test_parser_target_entity_unknown(self):
+        events = []
+        class Target(object):
+            def __init__(self):
+                self._data = []
+            def _flush_data(self):
+                if self._data:
+                    events.append("data-" + ''.join(self._data))
+                    del self._data[:]
+            def start(self, tag, attrib):
+                self._flush_data()
+                events.append("start-" + tag)
+            def end(self, tag):
+                self._flush_data()
+                events.append("end-" + tag)
+            def data(self, data):
+                self._data.append(data)
+            def close(self):
+                self._flush_data()
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        def feed():
+            parser.feed('<root><sub/><sub>some &ent;</sub><sub/></root>')
+            parser.close()
+
+        self.assertRaises(self.etree.ParseError, feed)
+
     def test_treebuilder(self):
         builder = self.etree.TreeBuilder()
         el = builder.start("root", {'a':'A', 'b':'B'})

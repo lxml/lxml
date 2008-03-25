@@ -110,6 +110,8 @@ cdef class _TargetParserContext(_SaxParserContext):
 
     cdef object _handleParseResult(self, _BaseParser parser, xmlDoc* result,
                                    filename):
+        if not self._c_ctxt.wellFormed:
+            _raiseParseError(self._c_ctxt, filename, self._error_log)
         self._raise_if_stored()
         return self._python_target.close()
 
@@ -118,11 +120,13 @@ cdef class _TargetParserContext(_SaxParserContext):
         if result is not NULL and result._private is NULL:
             # no _Document proxy => orphen
             tree.xmlFreeDoc(result)
-        if self._c_ctxt.myDoc is not NULL and \
-                self._c_ctxt.myDoc is not result and \
-                self._c_ctxt.myDoc._private is NULL:
-            # no _Document proxy => orphen
-            tree.xmlFreeDoc(self._c_ctxt.myDoc)
+        if self._c_ctxt.myDoc is not NULL:
+            if self._c_ctxt.myDoc is not result and \
+                    self._c_ctxt.myDoc._private is NULL:
+                # no _Document proxy => orphen
+                tree.xmlFreeDoc(self._c_ctxt.myDoc)
             self._c_ctxt.myDoc = NULL
+        if not self._c_ctxt.wellFormed:
+            _raiseParseError(self._c_ctxt, filename, self._error_log)
         self._raise_if_stored()
         raise _TargetParserResult(self._python_target.close())
