@@ -503,7 +503,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
                 not context._validator.isvalid():
             well_formed = 0 # actually not 'valid', but anyway ...
         elif recover or (c_ctxt.wellFormed and \
-                       c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
+                             c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
             well_formed = 1
         elif not c_ctxt.replaceEntities and not c_ctxt.validate \
                  and context is not None:
@@ -946,7 +946,8 @@ cdef class _FeedParser(_BaseParser):
             py_buffer_len = py_buffer_len - buffer_len
             c_data = c_data + buffer_len
 
-        if error:
+        if error or (not pctxt.wellFormed and
+                     not self._parse_options & xmlparser.XML_PARSE_RECOVER):
             self._feed_parser_running = 0
             try:
                 context._handleParseResult(self, NULL, None)
