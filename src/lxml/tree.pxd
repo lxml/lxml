@@ -115,6 +115,7 @@ cdef extern from "libxml/tree.h":
         void* attributes
         void* elements
         xmlNode* children
+        xmlNode* last
         xmlDoc* doc
 
     ctypedef struct xmlDoc:

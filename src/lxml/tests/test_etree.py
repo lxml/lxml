@@ -272,7 +272,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assert_([ log for log in logs
                        if 15 == log.column ])
 
-    def test_iterparse_comments(self):
+    def test_iterparse_tree_comments(self):
         # ET removes comments
         iterparse = self.etree.iterparse
         tostring = self.etree.tostring
@@ -285,13 +285,61 @@ class ETreeOnlyTestCase(HelperTestCase):
             '<a><!--A--><b><!-- B --><c/></b><!--C--></a>',
             tostring(root))
 
+    def test_iterparse_comments(self):
+        # ET removes comments
+        iterparse = self.etree.iterparse
+        tostring = self.etree.tostring
+
+        def name(event, el):
+            if event == 'comment':
+                return el.text
+            else:
+                return el.tag
+
+        f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
+        events = list(iterparse(f, events=('end', 'comment')))
+        root = events[-1][1]
+        self.assertEquals(6, len(events))
+        self.assertEquals(['A', ' B ', 'c', 'b', 'C', 'a'],
+                          [ name(*item) for item in events ])
+        self.assertEquals(
+            '<a><!--A--><b><!-- B --><c/></b><!--C--></a>',
+            tostring(root))
+
+    def test_iterparse_pis(self):
+        # ET removes pis
+        iterparse = self.etree.iterparse
+        tostring = self.etree.tostring
+        ElementTree = self.etree.ElementTree
+
+        def name(event, el):
+            if event == 'pi':
+                return (el.target, el.text)
+            else:
+                return el.tag
+
+        f = StringIO('<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>')
+        events = list(iterparse(f, events=('end', 'pi')))
+        root = events[-2][1]
+        self.assertEquals(8, len(events))
+        self.assertEquals([('pia','a'), ('pib','b'), ('pic','c'), 'c', 'b',
+                           ('pid','d'), 'a', ('pie','e')],
+                          [ name(*item) for item in events ])
+        self.assertEquals(
+            '<?pia a?><a><?pib b?><b><?pic c?><c/></b><?pid d?></a><?pie e?>',
+            tostring(ElementTree(root)))
+
     def test_iterparse_remove_comments(self):
         iterparse = self.etree.iterparse
         tostring = self.etree.tostring
 
         f = StringIO('<a><!--A--><b><!-- B --><c/></b><!--C--></a>')
-        events = list(iterparse(f, remove_comments=True))
+        events = list(iterparse(f, remove_comments=True,
+                                events=('end', 'comment')))
         root = events[-1][1]
+        self.assertEquals(3, len(events))
+        self.assertEquals(['c', 'b', 'a'],
+                          [ el.tag for (event, el) in events ])
         self.assertEquals(
             '<a><b><c/></b></a>',
             tostring(root))
@@ -355,6 +403,55 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_parser_encoding_unknown(self):
         self.assertRaises(
             LookupError, self.etree.XMLParser, encoding="hopefully unknown")
+
+    def test_parser_target_comment(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def comment(self, text):
+                events.append("comment-" + text)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        parser.feed('<!--a--><root>A<!--b--><sub/><!--c-->B</root><!--d-->')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["comment-a", "start-root", "data-A", "comment-b",
+                           "start-sub", "end-sub", "comment-c", "data-B",
+                           "end-root", "comment-d"],
+                          events)
+
+    def test_parser_target_pi(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def pi(self, target, data):
+                events.append("pi-" + target + "-" + data)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        parser.feed('<?test a?><root>A<?test b?>B</root><?test c?>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["pi-test-a", "start-root", "data-A", "pi-test-b",
+                           "data-B", "end-root", "pi-test-c"],
+                          events)
 
     def test_iterwalk_tag(self):
         iterwalk = self.etree.iterwalk

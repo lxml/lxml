@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* New event types 'comment' and 'pi' in ``iterparse()``.
+
 * ``XSLTAccessControl`` instances have a property ``options`` that
   returns a dict of access configuration options.
 

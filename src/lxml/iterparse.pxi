@@ -4,22 +4,31 @@ cdef object __ITERPARSE_CHUNK_SIZE
 __ITERPARSE_CHUNK_SIZE = 32768
 
 ctypedef enum _IterparseEventFilter:
-    ITERPARSE_FILTER_START     = 1
-    ITERPARSE_FILTER_END       = 2
-    ITERPARSE_FILTER_START_NS  = 4
-    ITERPARSE_FILTER_END_NS    = 8
+    ITERPARSE_FILTER_START     =  1
+    ITERPARSE_FILTER_END       =  2
+    ITERPARSE_FILTER_START_NS  =  4
+    ITERPARSE_FILTER_END_NS    =  8
+    ITERPARSE_FILTER_COMMENT   = 16
+    ITERPARSE_FILTER_PI        = 32
 
-cdef int _buildIterparseEventFilter(events):
+cdef int _buildIterparseEventFilter(events) except -1:
     cdef int event_filter
     event_filter = 0
-    if 'start' in events:
-        event_filter = event_filter | ITERPARSE_FILTER_START
-    if 'end' in events:
-        event_filter = event_filter | ITERPARSE_FILTER_END
-    if 'start-ns' in events:
-        event_filter = event_filter | ITERPARSE_FILTER_START_NS
-    if 'end-ns' in events:
-        event_filter = event_filter | ITERPARSE_FILTER_END_NS
+    for event in events:
+        if event == 'start':
+            event_filter |= ITERPARSE_FILTER_START
+        elif event == 'end':
+            event_filter |= ITERPARSE_FILTER_END
+        elif event == 'start-ns':
+            event_filter |= ITERPARSE_FILTER_START_NS
+        elif event == 'end-ns':
+            event_filter |= ITERPARSE_FILTER_END_NS
+        elif event == 'comment':
+            event_filter |= ITERPARSE_FILTER_COMMENT
+        elif event == 'pi':
+            event_filter |= ITERPARSE_FILTER_PI
+        else:
+            raise ValueError("invalid event name '%s'" % event)
     return event_filter
 
 cdef int _countNsDefs(xmlNode* c_node):
@@ -53,6 +62,8 @@ cdef class _IterparseContext(_ParserContext):
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
     cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
     cdef xmlparser.endElementSAXFunc      _origSaxEndNoNs
+    cdef xmlparser.commentSAXFunc         _origSaxComment
+    cdef xmlparser.processingInstructionSAXFunc _origSaxPI
     cdef _Element  _root
     cdef _Document _doc
     cdef int _event_filter
@@ -97,6 +108,14 @@ cdef class _IterparseContext(_ParserContext):
                                      ITERPARSE_FILTER_END_NS):
             sax.endElementNs = _iterparseSaxEnd
             sax.endElement = _iterparseSaxEndNoNs
+
+        self._origSaxComment = sax.comment
+        if self._event_filter & ITERPARSE_FILTER_COMMENT:
+            sax.comment = _iterparseSaxComment
+
+        self._origSaxPI = sax.processingInstruction
+        if self._event_filter & ITERPARSE_FILTER_PI:
+            sax.processingInstruction = _iterparseSaxPI
 
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildIterparseEventFilter(events)
@@ -162,7 +181,18 @@ cdef class _IterparseContext(_ParserContext):
                 for i from 0 <= i < ns_count:
                     python.PyList_Append(self._events, event)
         return 0
-                
+
+    cdef int pushEvent(self, event, xmlNode* c_node) except -1:
+        cdef _Element root
+        if self._doc is None:
+            self._doc = _documentFactory(c_node.doc, None)
+            root = self._doc.getroot()
+            if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
+                self._root = root
+        node = _elementFactory(self._doc, c_node)
+        python.PyList_Append(self._events, (event, node))
+        return 0
+
 
 cdef inline void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt,
                                     xmlNode* c_node):
@@ -182,6 +212,18 @@ cdef inline void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt,
     context = <_IterparseContext>c_ctxt._private
     try:
         context.endNode(c_node)
+    except:
+        if c_ctxt.errNo == xmlerror.XML_ERR_OK:
+            c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        c_ctxt.disableSAX = 1
+        context._store_raised()
+
+cdef inline void _pushSaxEvent(xmlparser.xmlParserCtxt* c_ctxt,
+                               event, xmlNode* c_node):
+    cdef _IterparseContext context
+    context = <_IterparseContext>c_ctxt._private
+    try:
+        context.pushEvent(event, c_node)
     except:
         if c_ctxt.errNo == xmlerror.XML_ERR_OK:
             c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
@@ -217,6 +259,37 @@ cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     _pushSaxEndEvent(c_ctxt, c_ctxt.node)
     (<_IterparseContext>c_ctxt._private)._origSaxEndNoNs(ctxt, name)
+
+cdef void _iterparseSaxComment(void* ctxt, char* text):
+    cdef xmlNode* c_node
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    (<_IterparseContext>c_ctxt._private)._origSaxComment(ctxt, text)
+    c_node = _iterparseFindLastNode(c_ctxt)
+    if c_node is not NULL:
+        _pushSaxEvent(c_ctxt, "comment", c_node)
+
+cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
+    cdef xmlNode* c_node
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    (<_IterparseContext>c_ctxt._private)._origSaxPI(ctxt, target, data)
+    c_node = _iterparseFindLastNode(c_ctxt)
+    if c_node is not NULL:
+        _pushSaxEvent(c_ctxt, "pi", c_node)
+
+cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
+    # this mimics what libxml2 creates for comments/PIs
+    if c_ctxt.inSubset == 1:
+        return c_ctxt.myDoc.intSubset.last
+    elif c_ctxt.inSubset == 2:
+        return c_ctxt.myDoc.extSubset.last
+    elif c_ctxt.node is NULL:
+        return c_ctxt.myDoc.last
+    elif c_ctxt.node.type == tree.XML_ELEMENT_NODE:
+        return c_ctxt.node.last
+    else:
+        return c_ctxt.node.next
 
 cdef class iterparse(_BaseParser):
     """iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
@@ -258,6 +331,8 @@ cdef class iterparse(_BaseParser):
       - schema             - an XMLSchema to validate against
     """
     cdef object _source
+    cdef object _events
+    cdef object _tag
     cdef readonly object root
     def __init__(self, source, events=("end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
@@ -276,15 +351,11 @@ cdef class iterparse(_BaseParser):
         self._source = source
         if html:
             # make sure we're not looking for namespaces
-            if 'start' in events:
-                if 'end' in events:
-                    events = ('start', 'end')
-                else:
-                    events = ('start',)
-            elif 'end' in events:
-                events = ('end',)
-            else:
-                events = ()
+            events = tuple([ event for event in events
+                             if event != 'start-ns' and event != 'end-ns' ])
+
+        self._events = events
+        self._tag = tag
 
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -305,7 +376,6 @@ cdef class iterparse(_BaseParser):
                              None, filename, encoding)
 
         context = <_IterparseContext>self._getPushParserContext()
-        context._setEventFilter(events, tag)
         context.prepare()
         # parser will not be unlocked - no other methods supported
 
@@ -318,7 +388,10 @@ cdef class iterparse(_BaseParser):
             return context._error_log.copy()
 
     cdef _ParserContext _createContext(self, target):
-        return _IterparseContext()
+        cdef _IterparseContext context
+        context = _IterparseContext()
+        context._setEventFilter(self._events, self._tag)
+        return context
 
     def copy(self):
         raise TypeError("iterparse parsers cannot be copied")

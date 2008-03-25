@@ -96,6 +96,7 @@ cdef extern from "libxml/parser.h":
         int spaceMax
         bint html
         bint progressive
+        int inSubset
         int charset
         xmlParserInput* input
 
