@@ -325,6 +325,8 @@ cdef class iterparse(_BaseParser):
       - remove_blank_text  - discard blank text nodes
       - remove_comments    - discard comments
       - remove_pis         - discard processing instructions
+      - compact            - safe memory for short text content (default: True)
+      - resolve_entities   - replace entities by their text value (default: True)
 
     Other keyword arguments:
       - encoding           - override the document encoding
@@ -337,7 +339,8 @@ cdef class iterparse(_BaseParser):
     def __init__(self, source, events=("end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 remove_comments=False, remove_pis=False, encoding=None,
+                 compact=True, resolve_entities=True, remove_comments=False,
+                 remove_pis=False, encoding=None,
                  html=False, XMLSchema schema=None):
         cdef _IterparseContext context
         cdef char* c_encoding
@@ -366,10 +369,14 @@ cdef class iterparse(_BaseParser):
         if attribute_defaults:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
                             xmlparser.XML_PARSE_DTDLOAD
-        if not no_network:
-            parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        if not no_network:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
+        if not compact:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
+        if not resolve_entities:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
         _BaseParser.__init__(self, parse_options, html, schema,
                              remove_comments, remove_pis,
