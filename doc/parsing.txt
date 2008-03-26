@@ -10,15 +10,18 @@ event-driven API (currently only for XML).
 .. 
    1  Parsers
      1.1  Parser options
-     1.2  Parsing HTML
-     1.3  Doctype information
-   2  The feed parser interface
-   3  iterparse and iterwalk
-     3.1  Selective tag events
-     3.2  Modifying the tree
-     3.3  iterwalk
-   4  Python unicode strings
-     4.1  Serialising to Unicode strings
+     1.2  Error log
+     1.3  Parsing HTML
+     1.4  Doctype information
+   2  The target parser interface
+   3  The feed parser interface
+   4  iterparse and iterwalk
+     4.1  Selective tag events
+     4.2  Comments and PIs
+     4.3  Modifying the tree
+     4.4  iterwalk
+   5  Python unicode strings
+     5.1  Serialising to Unicode strings
 
 
 The usual setup procedure:
@@ -238,15 +241,19 @@ a target object to the parser:
   ...         print "end", tag
   ...     def data(self, data):
   ...         print "data", repr(data)
+  ...     def comment(self, text):
+  ...         print "comment", text
   ...     def close(self):
   ...         print "close"
   ...         return "closed!"
 
   >>> parser = etree.XMLParser(target = EchoTarget())
 
-  >>> result = etree.XML("<element>some text</element>", parser)
+  >>> result = etree.XML("<element>some<!--comment-->text</element>", parser)
   start element {}
-  data u'some text'
+  data u'some'
+  comment comment
+  data u'text'
   end element
   close
 
@@ -254,9 +261,19 @@ a target object to the parser:
   closed!
 
 Note that the parser does *not* build a tree in this case.  The result
-of the parser run is what the target object returns from its
+of the parser run is whatever the target object returns from its
 ``close()`` method.  If you want to return an XML tree here, you have
-to create it programmatically in the target object.
+to create it programmatically in the target object.  An example for a
+parser target that builds a tree is the ``TreeBuilder``.
+
+  >>> parser = etree.XMLParser(target = etree.TreeBuilder())
+
+  >>> result = etree.XML("<element>some<!--comment-->text</element>", parser)
+
+  >>> print result.tag
+  element
+  >>> print result[0].text
+  comment
 
 
 The feed parser interface
