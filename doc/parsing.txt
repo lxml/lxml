@@ -333,10 +333,12 @@ method.
 iterparse and iterwalk
 ======================
 
-As known from ElementTree, the ``iterparse()`` utility function returns an
-iterator that generates parser events for an XML file (or file-like object),
-while building the tree.  The values are tuples ``(event-type, object)``.  The
-event types are 'start', 'end', 'start-ns' and 'end-ns'.
+As known from ElementTree, the ``iterparse()`` utility function
+returns an iterator that generates parser events for an XML file (or
+file-like object), while building the tree.  The values are tuples
+``(event-type, object)``.  The event types supported by ElementTree
+and lxml.etree are the strings 'start', 'end', 'start-ns' and
+'end-ns'.
 
 The 'start' and 'end' events represent opening and closing elements and are
 accompanied by the respective element.  By default, only 'end' events are
@@ -384,6 +386,43 @@ The other event types can be activated with the ``events`` keyword argument:
   end {testns}empty-element
   end root
 
+The 'start-ns' and 'end-ns' events notify about namespace
+declarations.  They do not come with Elements.  Instead, the value of
+the 'start-ns' event is a tuple ``(prefix, namespaceURI)`` that
+designates the beginning of a prefix-namespace mapping.  The
+corresponding ``end-ns`` event does not have a value (None).  It is
+common practice to use a list as namespace stack and pop the last
+entry on the 'end-ns' event.
+
+.. sourcecode:: pycon
+
+  >>> print xml,
+  <root>
+    <element key='value'>text</element>
+    <element>text</element>tail
+    <empty-element xmlns="testns" />
+  </root>
+
+  >>> events = ("start", "end", "start-ns", "end-ns")
+  >>> context = etree.iterparse(StringIO(xml), events=events)
+  >>> for action, elem in context:
+  ...     if action in ('start', 'end'):
+  ...         print action, elem.tag
+  ...     elif action == 'start-ns':
+  ...         print action, elem
+  ...     else:
+  ...         print action
+  start root
+  start element
+  end element
+  start element
+  end element
+  start-ns ('', 'testns')
+  start {testns}empty-element
+  end {testns}empty-element
+  end-ns
+  end root
+
 
 Selective tag events
 --------------------
@@ -407,6 +446,51 @@ specific tag or namespace:
   ...     print action, elem.tag
   start {testns}empty-element
   end {testns}empty-element
+
+
+Comments and PIs
+----------------
+
+As an extension over ElementTree, the ``iterparse()`` function in
+lxml.etree also supports the event types 'comment' and 'pi' for the
+respective XML structures.
+
+.. sourcecode:: pycon
+
+  >>> commented_xml = '''\
+  ... <?some pi ?>
+  ... <!-- a comment -->
+  ... <root>
+  ...   <element key='value'>text</element>
+  ...   <!-- another comment -->
+  ...   <element>text</element>tail
+  ...   <empty-element xmlns="testns" />
+  ... </root>
+  ... '''
+
+  >>> events = ("start", "end", "comment", "pi")
+  >>> context = etree.iterparse(StringIO(commented_xml), events=events)
+  >>> for action, elem in context:
+  ...     if action in ('start', 'end'):
+  ...         print action, elem.tag
+  ...     elif action == 'pi':
+  ...         print action, "-%s=%s-" % (elem.target, elem.text)
+  ...     else: # 'comment'
+  ...         print action, "-%s-" % elem.text
+  pi -some=pi -
+  comment - a comment -
+  start root
+  start element
+  end element
+  comment - another comment -
+  start element
+  end element
+  start {testns}empty-element
+  end {testns}empty-element
+  end root
+
+  >>> print context.root.tag
+  root
 
 
 Modifying the tree
@@ -453,21 +537,6 @@ however, the more thought you will have to put into finding the right way to
 clean up the elements that were skipped.  Therefore, it is sometimes easier to
 traverse all elements and do the tag selection by hand in the event handler
 code.
-
-The 'start-ns' and 'end-ns' events notify about namespace declarations and
-generate tuples ``(prefix, URI)``:
-
-.. sourcecode:: pycon
-
-  >>> events = ("start-ns", "end-ns")
-  >>> context = etree.iterparse(StringIO(xml), events=events)
-  >>> for action, obj in context:
-  ...     print action, obj
-  start-ns ('', 'testns')
-  end-ns None
-
-It is common practice to use a list as namespace stack and pop the last entry
-on the 'end-ns' event.
 
 
 iterwalk
