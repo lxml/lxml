@@ -279,15 +279,19 @@ parser target that builds a tree is the ``TreeBuilder``.
 The feed parser interface
 =========================
 
-Since lxml 2.0, the parsers have a feed parser interface that is compatible to
-the `ElementTree parsers`_.  You can use it to feed data into the parser in a
-controlled step-by-step way.  Note that you can only use one interface at a
-time with each parser: the ``parse()`` or ``XML()`` functions, or the feed
-parser interface.
+Since lxml 2.0, the parsers have a feed parser interface that is
+compatible to the `ElementTree parsers`_.  You can use it to feed data
+into the parser in a controlled step-by-step way.
+
+In lxml.etree, you can use both interfaces to a parser at the same
+time: the ``parse()`` or ``XML()`` functions, and the feed parser
+interface.  Both are independent and will not conflict (except if used
+in conjunction with a parser target object as described above).
 
 .. _`ElementTree parsers`: http://effbot.org/elementtree/elementtree-xmlparser.htm
 
-To start parsing with a feed parser, just call its ``feed()`` method:
+To start parsing with a feed parser, just call its ``feed()`` method
+to feed it some data.
 
 .. sourcecode:: pycon
 
@@ -309,9 +313,10 @@ parser:
   >>> print root[0].tag
   a
 
-If you do not call ``close()``, the parser will stay locked and subsequent
-usages will block till the end of times.  So make sure you also close it in
-the exception case.
+If you do not call ``close()``, the parser will stay locked and
+subsequent feeds will keep appending data, usually resulting in a non
+well-formed document and an unexpected parser error.  So make sure you
+always close the parser after use, also in the exception case.
 
 Another way of achieving the same step-by-step parsing is by writing your own
 file-like object that returns a chunk of data on each ``read()`` call.  Where
@@ -341,7 +346,7 @@ You can also combine the feed parser interface with the target parser:
   >>> print result
   closed!
 
-Again, this prevents the automatic creating of an XML tree and leaves
+Again, this prevents the automatic creation of an XML tree and leaves
 all the event handling to the target object.  The ``close()`` method
 of the parser forwards the return value of the target's ``close()``
 method.
