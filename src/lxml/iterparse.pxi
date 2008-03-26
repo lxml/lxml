@@ -145,8 +145,9 @@ cdef class _IterparseContext(_ParserContext):
             ns_count = _countNsDefs(c_node)
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             python.PyList_Append(self._ns_stack, ns_count)
-        if self._doc is None:
-            self._doc = _documentFactory(c_node.doc, None)
+        if self._root is None:
+            if self._doc is None:
+                self._doc = _documentFactory(c_node.doc, None)
             self._root = self._doc.getroot()
         if self._tag_tuple is None or \
                _tagMatches(c_node, self._tag_href, self._tag_name):
@@ -168,8 +169,9 @@ cdef class _IterparseContext(_ParserContext):
                                          ITERPARSE_FILTER_END_NS):
                     node = self._pop_node()
                 else:
-                    if self._doc is None:
-                        self._doc = _documentFactory(c_node.doc, None)
+                    if self._root is None:
+                        if self._doc is None:
+                            self._doc = _documentFactory(c_node.doc, None)
                         self._root = self._doc.getroot()
                     node = _elementFactory(self._doc, c_node)
                 python.PyList_Append(self._events, ("end", node))
