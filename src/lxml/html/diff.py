@@ -139,6 +139,8 @@ def markup_serialize_tokens(tokens, markup_func):
 ############################################################
 
 def htmldiff(old_html, new_html):
+    ## FIXME: this should take parsed documents too, and use their body
+    ## or other content.
     """ Do a diff of the old and new document.  The documents are HTML
     *fragments* (str/UTF8 or unicode), they are not complete documents
     (i.e., no <html> tag).
@@ -310,8 +312,6 @@ def split_unbalanced(chunks):
         endtag = chunk[1] == '/'
         name = chunk.split()[0].strip('<>/')
         if name in empty_tags:
-            assert not endtag, (
-                "Empty tag %r should have no end tag" % chunk)
             balanced.append(chunk)
             continue
         if endtag:
@@ -669,7 +669,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
             yield ('img', el.attrib['src'], start_tag(el))
         else:
             yield start_tag(el)
-    if el.tag in empty_tags and not el.text and not len(el):
+    if el.tag in empty_tags and not el.text and not len(el) and not el.tail:
         return
     start_words = split_words(el.text)
     for word in start_words:

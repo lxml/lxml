@@ -66,6 +66,11 @@ images are treated like words:
     >>> pdiff('<a href="http://yahoo.com">search</a>', '<a href="http://yahoo.com">search</a>')
     <a href="http://yahoo.com">search</a>
 
+A test of empty elements:
+
+    >>> pdiff('some <br> text', 'some <br> test')
+    some <ins><br> test</ins> <del><br> text</del>
+
 The sixteen combinations::
 
 First "insert start" (del start/middle/end/none):
@@ -177,8 +182,8 @@ Now, a sequence of documents:
     >>> panno('<p>Hi <img src="/foo"> You</p>',
     ...       '<p>Hi You</p>',
     ...       '<p>Hi You <img src="/bar"></p>')
-    <p><span version="0">Hi</span> <span version="1">You</span> <span
-    version="2"><img src="/bar"></span></p>
+    <p><span version="0">Hi You</span> <span version="2"><img
+    src="/bar"></span></p>
     >>> panno('<p><a href="/foo">Hey</a></p>',
     ...       '<p><a href="/bar">Hey</a></p>')
     <p><a href="/bar"><span version="0">Hey</span></a></p>
