@@ -362,9 +362,9 @@ file-like object), while building the tree.  The values are tuples
 and lxml.etree are the strings 'start', 'end', 'start-ns' and
 'end-ns'.
 
-The 'start' and 'end' events represent opening and closing elements and are
-accompanied by the respective element.  By default, only 'end' events are
-generated:
+The 'start' and 'end' events represent opening and closing elements.
+They are accompanied by the respective Element instance.  By default,
+only 'end' events are generated:
 
 .. sourcecode:: pycon
 
