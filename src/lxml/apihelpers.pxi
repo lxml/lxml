@@ -439,7 +439,7 @@ cdef _resolveQNameText(_Element element, value):
             element._c_node, _cstr(ns), NULL)
         return '%s:%s' % (c_ns.prefix, tag)
 
-cdef bint _hasChild(xmlNode* c_node):
+cdef inline bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
 
 cdef inline Py_ssize_t _countElements(xmlNode* c_node):
