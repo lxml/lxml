@@ -131,7 +131,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
 
     lookup = <ElementNamespaceClassLookup>state
     if c_node.type != tree.XML_ELEMENT_NODE:
-        return lookup._callFallback(doc, c_node)
+        return _callLookupFallback(lookup, doc, c_node)
 
     c_namespace_utf = _getNs(c_node)
     if c_namespace_utf is not NULL:
@@ -155,7 +155,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
 
         if dict_result is not NULL:
             return <object>dict_result
-    return lookup._callFallback(doc, c_node)
+    return _callLookupFallback(lookup, doc, c_node)
 
 
 ################################################################################

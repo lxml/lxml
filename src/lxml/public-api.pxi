@@ -41,7 +41,7 @@ cdef public api object lookupNamespaceElementClass(state, doc, xmlNode* c_node):
 
 cdef public api object callLookupFallback(FallbackElementClassLookup lookup,
                                       _Document doc, xmlNode* c_node):
-    return lookup._callFallback(doc, c_node)
+    return _callLookupFallback(lookup, doc, c_node)
 
 cdef public api int tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     if c_node is NULL:

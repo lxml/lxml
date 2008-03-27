@@ -107,8 +107,9 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
         """
         self._setFallback(lookup)
 
-    cdef object _callFallback(self, _Document doc, xmlNode* c_node):
-        return self._fallback_function(self.fallback, doc, c_node)
+cdef inline object _callLookupFallback(FallbackElementClassLookup lookup,
+                                       _Document doc, xmlNode* c_node):
+    return lookup._fallback_function(lookup.fallback, doc, c_node)
 
 
 ################################################################################
@@ -235,7 +236,7 @@ cdef object _attribute_class_lookup(state, _Document doc, xmlNode* c_node):
         dict_result = python.PyDict_GetItem(lookup._class_mapping, value)
         if dict_result is not NULL:
             return <object>dict_result
-    return lookup._callFallback(doc, c_node)
+    return _callLookupFallback(lookup, doc, c_node)
 
 
 ################################################################################
@@ -253,7 +254,7 @@ cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
     if doc._parser._class_lookup is not None:
         return doc._parser._class_lookup._lookup_function(
             doc._parser._class_lookup, doc, c_node)
-    return (<FallbackElementClassLookup>state)._callFallback(doc, c_node)
+    return _callLookupFallback(<FallbackElementClassLookup>state, doc, c_node)
 
 
 ################################################################################
@@ -312,7 +313,7 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     cls = lookup.lookup(element_type, doc, ns, name)
     if cls is not None:
         return cls
-    return lookup._callFallback(doc, c_node)
+    return _callLookupFallback(lookup, doc, c_node)
 
 
 ################################################################################
@@ -383,7 +384,7 @@ cdef object _python_class_lookup(state, _Document doc, tree.xmlNode* c_node):
 
     if cls is not None:
         return cls
-    return lookup._callFallback(doc, c_node)
+    return _callLookupFallback(lookup, doc, c_node)
 
 ################################################################################
 # Global setup
