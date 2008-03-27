@@ -500,6 +500,7 @@ def main(benchmark_class):
 
     if callgrind_zero:
         cmd = open("callgrind.cmd", 'w')
+        cmd.write('+Instrumentation\n')
         cmd.write('Zero\n')
         cmd.close()
 
