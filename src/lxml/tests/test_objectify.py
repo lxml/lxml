@@ -1869,9 +1869,9 @@ class ObjectifyTestCase(HelperTestCase):
             return date.strftime("%Y%m%d%H%M%S")
 
         class DatetimeElement(objectify.ObjectifiedDataElement):
-            @property
             def pyval(self):
                 return parse_date(self.text)
+            pyval = property(pyval)
 
         datetime_type = objectify.PyType(
             "datetime", parse_date, DatetimeElement, stringify_date)
