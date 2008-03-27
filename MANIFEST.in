@@ -8,6 +8,7 @@ recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.c lxml.objectify.c lxml.pyclasslookup.c
 recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree_defs.h
 recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd
+recursive-include src/lxml/html/tests *.data *.txt
 recursive-include benchmark *.py
 recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython.png
 recursive-include fake_pyrex *.py
