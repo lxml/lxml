@@ -347,10 +347,10 @@ cdef object _stripDeclaration(object xml_string):
             xml_string = xml_string[i:]
     return xml_string
 
-cdef int _hasText(xmlNode* c_node):
+cdef inline int _hasText(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.children) is not NULL
 
-cdef int _hasTail(xmlNode* c_node):
+cdef inline int _hasTail(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
 
 cdef _collectText(xmlNode* c_node):
@@ -442,7 +442,7 @@ cdef _resolveQNameText(_Element element, value):
 cdef bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
 
-cdef Py_ssize_t _countElements(xmlNode* c_node):
+cdef inline Py_ssize_t _countElements(xmlNode* c_node):
     "Counts the elements within the following siblings and the node itself."
     cdef Py_ssize_t count
     count = 0
@@ -506,13 +506,13 @@ cdef _collectChildren(_Element element):
             c_node = _nextElement(c_node)
     return result
 
-cdef xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChild(xmlNode* c_node, Py_ssize_t index):
     if index < 0:
         return _findChildBackwards(c_node, -index - 1)
     else:
         return _findChildForwards(c_node, index)
     
-cdef xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
     """Return child element of c_node with index, or return NULL if not found.
     """
     cdef xmlNode* c_child
@@ -527,7 +527,7 @@ cdef xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.next
     return NULL
 
-cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
+cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
     """Return child element of c_node with index, or return NULL if not found.
     Search from the end.
     """
@@ -543,7 +543,7 @@ cdef xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.prev
     return NULL
     
-cdef xmlNode* _textNodeOrSkip(xmlNode* c_node):
+cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node):
     """Return the node if it's a text node.  Skip over ignorable nodes in a
     series of text nodes.  Return NULL if a non-ignorable node is found.
 
@@ -560,7 +560,7 @@ cdef xmlNode* _textNodeOrSkip(xmlNode* c_node):
             return NULL
     return NULL
 
-cdef xmlNode* _nextElement(xmlNode* c_node):
+cdef inline xmlNode* _nextElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -572,7 +572,7 @@ cdef xmlNode* _nextElement(xmlNode* c_node):
         c_node = c_node.next
     return NULL
 
-cdef xmlNode* _previousElement(xmlNode* c_node):
+cdef inline xmlNode* _previousElement(xmlNode* c_node):
     """Given a node, find the next sibling that is an element.
     """
     if c_node is NULL:
@@ -584,7 +584,7 @@ cdef xmlNode* _previousElement(xmlNode* c_node):
         c_node = c_node.prev
     return NULL
 
-cdef xmlNode* _parentElement(xmlNode* c_node):
+cdef inline xmlNode* _parentElement(xmlNode* c_node):
     "Given a node, find the parent element."
     if c_node is NULL or not _isElement(c_node):
         return NULL
@@ -593,7 +593,7 @@ cdef xmlNode* _parentElement(xmlNode* c_node):
         return NULL
     return c_node
 
-cdef bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     """Tests if the node matches namespace URI and tag name.
 
     A node matches if it matches both c_href and c_name.
@@ -892,7 +892,7 @@ cdef int _prependSibling(_Element element, _Element sibling) except -1:
     # parent element has moved; change them too..
     moveNodeToDocument(element._doc, c_node)
 
-cdef int isutf8(char* s):
+cdef inline int isutf8(char* s):
     cdef char c
     c = s[0]
     while c != c'\0':
