@@ -18,9 +18,10 @@ compliant way.
    2  XSLT
      2.1  XSLT result objects
      2.2  Stylesheet parameters
-     2.3  The ``xslt()`` tree method
-     2.4  Dealing with stylesheet diversity
-     2.5  Profiling
+     2.3  Extension elements
+     2.4  The ``xslt()`` tree method
+     2.5  Dealing with stylesheet complexity
+     2.6  Profiling
 
 
 The usual setup procedure:
@@ -569,7 +570,7 @@ XSLT ``extension-element-prefixes`` option:
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
 
-To register the extension, add its name and namespace to the extension
+To register the extension, add its namespace and name to the extension
 mapping of the XSLT object:
 
 .. sourcecode:: pycon
@@ -591,10 +592,10 @@ called:
   '<?xml version="1.0"?>\n<foo>I did it!<child>XYZ</child></foo>\n'
 
 XSLT extensions are a very powerful feature that allows you to
-interact directly with the XSLT processor.  You have full access to
-the input document and the stylesheet, and you can even call back into
-the XSLT processor to process templates.  Here is an example that
-passes an Element into the ``.apply_templates()`` method of the
+interact directly with the XSLT processor.  You have full read-only
+access to the input document and the stylesheet, and you can even call
+back into the XSLT processor to process templates.  Here is an example
+that passes an Element into the ``.apply_templates()`` method of the
 ``XSLTExtension`` instance:
 
 .. sourcecode:: pycon
