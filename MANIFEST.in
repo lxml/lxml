@@ -7,7 +7,7 @@ include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.c lxml.objectify.c lxml.pyclasslookup.c
 recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree_defs.h
-recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.txt
+recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.xsd *.html *.txt
 recursive-include src/lxml/html/tests *.data *.txt
 recursive-include benchmark *.py
 recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython.png
