@@ -4,7 +4,7 @@
 # structure of the respective node to avoid multiple instantiation of
 # the Python class
 
-cdef _Element getProxy(xmlNode* c_node):
+cdef inline _Element getProxy(xmlNode* c_node):
     """Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
@@ -13,10 +13,10 @@ cdef _Element getProxy(xmlNode* c_node):
     else:
         return None
 
-cdef int hasProxy(xmlNode* c_node):
+cdef inline int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef int _registerProxy(_Element proxy) except -1:
+cdef inline int _registerProxy(_Element proxy) except -1:
     """Register a proxy and type for the node it's proxying for.
     """
     cdef xmlNode* c_node
@@ -31,7 +31,7 @@ cdef int _registerProxy(_Element proxy) except -1:
     proxy._gc_doc = <python.PyObject*>proxy._doc
     python.Py_INCREF(proxy._doc)
 
-cdef int _unregisterProxy(_Element proxy) except -1:
+cdef inline int _unregisterProxy(_Element proxy) except -1:
     """Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node
@@ -40,7 +40,7 @@ cdef int _unregisterProxy(_Element proxy) except -1:
     c_node._private = NULL
     return 0
 
-cdef void _releaseProxy(_Element proxy):
+cdef inline void _releaseProxy(_Element proxy):
     """An additional DECREF for the document.
     """
     python.Py_XDECREF(proxy._gc_doc)
