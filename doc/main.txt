@@ -142,8 +142,8 @@ MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
 release version first.
 
-The latest version is `lxml 2.0.3`_, released 2008-03-26
-(`changes for 2.0.3`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.1alpha1`_, released 2008-03-27
+(`changes for 2.1alpha1`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
