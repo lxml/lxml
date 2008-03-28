@@ -98,28 +98,28 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     If 'c_doc' is also NULL, a new xmlDoc will be created.
     """
     cdef xmlNode* c_node
+    if doc is not None:
+        c_doc = doc._c_doc
     ns_utf, name_utf = _getNsTag(tag)
     if parser is not None and parser._for_html:
         _htmlTagValidOrRaise(name_utf)
     else:
         _tagValidOrRaise(name_utf)
-    if doc is not None:
-        c_doc = doc._c_doc
-    elif c_doc is NULL:
+    if c_doc is NULL:
         c_doc = _newDoc()
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
         return python.PyErr_NoMemory()
     try:
+        if doc is None:
+            tree.xmlDocSetRootElement(c_doc, c_node)
+            doc = _documentFactory(c_doc, parser)
         if text is not None:
             _setNodeText(c_node, text)
         if tail is not None:
             _setTailText(c_node, tail)
-        if doc is None:
-            tree.xmlDocSetRootElement(c_doc, c_node)
-            doc = _documentFactory(c_doc, parser)
         # add namespaces to node if necessary
-        doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+        _initNodeNamespaces(c_node, doc, ns_utf, nsmap)
         _initNodeAttributes(c_node, doc, attrib, extra_attrs)
         return _elementFactory(doc, c_node)
     except:
@@ -162,9 +162,45 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         _setTailText(c_node, tail)
 
     # add namespaces to node if necessary
-    parent._doc._setNodeNamespaces(c_node, ns_utf, nsmap)
+    _initNodeNamespaces(c_node, parent._doc, ns_utf, nsmap)
     _initNodeAttributes(c_node, parent._doc, attrib, extra_attrs)
     return _elementFactory(parent._doc, c_node)
+
+cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
+                             object node_ns_utf, object nsmap) except -1:
+    """Lookup current namespace prefixes, then set namespace structure for
+    node and register new ns-prefix mappings.
+
+    This only works for a newly created node!
+    """
+    cdef xmlNs* c_ns
+    cdef char*  c_prefix
+    cdef char*  c_href
+    if not nsmap:
+        if node_ns_utf is not None:
+            doc._setNodeNs(c_node, _cstr(node_ns_utf))
+        return 0
+
+    for prefix, href in nsmap.items():
+        href_utf = _utf8(href)
+        c_href = _cstr(href_utf)
+        if prefix is not None and prefix:
+            prefix_utf = _utf8(prefix)
+            _prefixValidOrRaise(prefix_utf)
+            c_prefix = _cstr(prefix_utf)
+        else:
+            c_prefix = NULL
+        # add namespace with prefix if ns is not already known
+        c_ns = tree.xmlSearchNsByHref(doc._c_doc, c_node, c_href)
+        if c_ns is NULL:
+            c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+        if href_utf == node_ns_utf:
+            tree.xmlSetNs(c_node, c_ns)
+            node_ns_utf = None
+
+    if node_ns_utf is not None:
+        doc._setNodeNs(c_node, _cstr(node_ns_utf))
+    return 0
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     """Initialise the attributes of an element node.

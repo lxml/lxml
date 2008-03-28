@@ -165,11 +165,11 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_nsmap_prefix_invalid(self):
         etree = self.etree
         self.assertRaises(ValueError,
-                          etree.Element, "root", nsmap={'' : 'testns'})
-        self.assertRaises(ValueError,
                           etree.Element, "root", nsmap={'"' : 'testns'})
         self.assertRaises(ValueError,
                           etree.Element, "root", nsmap={'&' : 'testns'})
+        self.assertRaises(ValueError,
+                          etree.Element, "root", nsmap={'a:b' : 'testns'})
 
     def test_attribute_set(self):
         Element = self.etree.Element

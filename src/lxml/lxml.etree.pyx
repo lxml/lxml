@@ -390,44 +390,6 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         c_ns = self._findOrBuildNodeNs(c_node, href, NULL)
         tree.xmlSetNs(c_node, c_ns)
 
-    cdef int _setNodeNamespaces(self, xmlNode* c_node,
-                                object node_ns_utf, object nsmap) except -1:
-        """Lookup current namespace prefixes, then set namespace structure for
-        node and register new ns-prefix mappings.
-
-        This only works for a newly created node!
-        """
-        cdef xmlNs*  c_ns
-        cdef xmlDoc* c_doc
-        cdef char*   c_prefix
-        cdef char*   c_href
-        if not nsmap:
-            if node_ns_utf is not None:
-                self._setNodeNs(c_node, _cstr(node_ns_utf))
-            return 0
-
-        c_doc  = self._c_doc
-        for prefix, href in nsmap.items():
-            href_utf = _utf8(href)
-            c_href = _cstr(href_utf)
-            if prefix is not None:
-                prefix_utf = _utf8(prefix)
-                _prefixValidOrRaise(prefix_utf)
-                c_prefix = _cstr(prefix_utf)
-            else:
-                c_prefix = NULL
-            # add namespace with prefix if ns is not already known
-            c_ns = tree.xmlSearchNsByHref(c_doc, c_node, c_href)
-            if c_ns is NULL:
-                c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
-            if href_utf == node_ns_utf:
-                tree.xmlSetNs(c_node, c_ns)
-                node_ns_utf = None
-
-        if node_ns_utf is not None:
-            self._setNodeNs(c_node, _cstr(node_ns_utf))
-        return 0
-
 cdef __initPrefixCache():
     cdef int i
     return tuple([ python.PyString_FromFormat("ns%d", i)
