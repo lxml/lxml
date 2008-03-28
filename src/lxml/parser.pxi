@@ -1246,9 +1246,17 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename,
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
 
-cdef xmlDoc* _newDoc() except NULL:
+cdef xmlDoc* _newXMLDoc() except NULL:
     cdef xmlDoc* result
-    result = tree.xmlNewDoc("1.0")
+    result = tree.xmlNewDoc(NULL)
+    if result is NULL:
+        python.PyErr_NoMemory()
+    __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+    return result
+
+cdef xmlDoc* _newHTMLDoc() except NULL:
+    cdef xmlDoc* result
+    result = tree.htmlNewDoc(NULL, NULL)
     if result is NULL:
         python.PyErr_NoMemory()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)

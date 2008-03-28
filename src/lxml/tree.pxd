@@ -245,6 +245,7 @@ cdef extern from "libxml/HTMLtree.h":
     cdef void htmlNodeDumpFormatOutput(xmlOutputBuffer* buf,
                                        xmlDoc* doc, xmlNode* cur,
                                        char* encoding, int format) nogil
+    cdef xmlDoc* htmlNewDoc(char* uri, char* externalID) nogil
 
 cdef extern from "libxml/valid.h":
     cdef xmlAttr* xmlGetID(xmlDoc* doc, char* ID) nogil

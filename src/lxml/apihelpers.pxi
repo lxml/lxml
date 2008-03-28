@@ -103,12 +103,16 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     ns_utf, name_utf = _getNsTag(tag)
     if parser is not None and parser._for_html:
         _htmlTagValidOrRaise(name_utf)
+        if c_doc is NULL:
+            c_doc = _newHTMLDoc()
     else:
         _tagValidOrRaise(name_utf)
-    if c_doc is NULL:
-        c_doc = _newDoc()
+        if c_doc is NULL:
+            c_doc = _newXMLDoc()
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
+        if doc is None and c_doc is not NULL:
+            tree.xmlFreeDoc(c_doc)
         return python.PyErr_NoMemory()
     try:
         if doc is None:

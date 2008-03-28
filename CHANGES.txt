@@ -16,6 +16,11 @@ Bugs fixed
 Other changes
 -------------
 
+* New Elements created through the ``makeelement()`` method of an HTML
+  parser or through lxml.html now end up in a new HTML document
+  instead of a generic XML document.  This mostly impacts the default
+  serialisation.
+
 
 2.1alpha1 (2008-03-27)
 ======================

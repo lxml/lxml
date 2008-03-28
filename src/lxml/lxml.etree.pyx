@@ -2236,7 +2236,7 @@ def Comment(text=None):
         text = ''
     else:
         text = _utf8(text)
-    c_doc = _newDoc()
+    c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createComment(c_doc, _cstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
@@ -2256,7 +2256,7 @@ def ProcessingInstruction(target, text=None):
         text = ''
     else:
         text = _utf8(text)
-    c_doc = _newDoc()
+    c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createPI(c_doc, _cstr(target), _cstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
@@ -2284,7 +2284,7 @@ def Entity(name):
             raise ValueError("Invalid character reference: '%s'" % name)
     elif not _xmlNameIsValid(c_name):
         raise ValueError("Invalid entity reference: '%s'" % name)
-    c_doc = _newDoc()
+    c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createEntity(c_doc, c_name)
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
@@ -2319,7 +2319,7 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
         except _TargetParserResult, result_container:
             return result_container.result
     else:
-        c_doc = _newDoc()
+        c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, parser)
 
     return _elementTreeFactory(doc, element)

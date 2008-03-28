@@ -3,11 +3,12 @@ BeautifulSoup Parser
 ====================
 
 BeautifulSoup_ is a Python package that parses broken HTML.  While libxml2
-(and thus lxml) can also parse broken HTML, BeautifulSoup is much more
+(and thus lxml) can also parse broken HTML, BeautifulSoup is somewhat more
 forgiving and has superiour `support for encoding detection`_.
 
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
 .. _`support for encoding detection`: http://www.crummy.com/software/BeautifulSoup/documentation.html#Beautiful%20Soup%20Gives%20You%20Unicode,%20Dammit
+.. _ElementSoup: http://effbot.org/zone/element-soup.htm
 
 lxml can benefit from the parsing capabilities of BeautifulSoup
 through the ``lxml.html.soupparser`` module.  It provides three main
@@ -18,6 +19,10 @@ BeautifulSoup tree into a list of top-level Elements.
 The functions ``fromstring()`` and ``parse()`` behave as known from
 ElementTree.  The first returns a root Element, the latter returns an
 ElementTree.
+
+There is also a legacy module called ``lxml.html.ElementSoup``, which
+mimics the interface provided by ElementTree's own ElementSoup_
+module.
 
 Here is a document full of tag soup, similar to, but not quite like, HTML:
 
@@ -63,36 +68,29 @@ finds by their character equivalent.
     >>> body.text
     u'\xa9\u20ac-\xf5\u01bd'
 
-If you want them back on the way out, you can serialise with the
-'html' method, which will always use escaping for safety reasons:
-
-.. sourcecode:: pycon
-
-    >>> tostring(body, method="html")
-    '<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
-
-    >>> tostring(body, method="html", encoding="utf-8")
-    '<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
-
-    >>> tostring(body, method="html", encoding=unicode)
-    u'<body>&#xA9;&#x20AC;-&#xF5;&#x1BD;<p></p></body>'
-
-Otherwise, when serialising to XML, only the plain ASCII encoding will
-escape non-ASCII characters:
+If you want them back on the way out, you can just serialise with the
+default encoding, which is 'US-ASCII'.  The 'html' method 
 
 .. sourcecode:: pycon
 
     >>> tostring(body)
     '<body>&#169;&#8364;-&#245;&#445;<p/></body>'
 
+    >>> tostring(body, method="html")
+    '<body>&#169;&#8364;-&#245;&#445;<p></p></body>'
+
+Any other encoding will output the respective byte sequences.
+
+.. sourcecode:: pycon
+
     >>> tostring(body, encoding="utf-8")
     '<body>\xc2\xa9\xe2\x82\xac-\xc3\xb5\xc6\xbd<p/></body>'
+
+    >>> tostring(body, method="html", encoding="utf-8")
+    '<body>\xc2\xa9\xe2\x82\xac-\xc3\xb5\xc6\xbd<p></p></body>'
 
     >>> tostring(body, encoding=unicode)
     u'<body>\xa9\u20ac-\xf5\u01bd<p/></body>'
 
-There is also a legacy module called ``lxml.html.ElementSoup``, which
-mimics the interface provided by ElementTree's own ElementSoup_
-module.
-
-.. _ElementSoup: http://effbot.org/zone/element-soup.htm
+    >>> tostring(body, method="html", encoding=unicode)
+    u'<body>\xa9\u20ac-\xf5\u01bd<p></p></body>'

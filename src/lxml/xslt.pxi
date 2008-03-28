@@ -105,7 +105,7 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
                 c_doc = _parseDocFromFilelike(
                     doc_ref._file, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_EMPTY:
-                c_doc = _newDoc()
+                c_doc = _newXMLDoc()
             if c_doc is not NULL and c_doc.URL is NULL:
                 c_doc.URL = tree.xmlStrdup(c_uri)
         return c_doc
