@@ -1088,6 +1088,12 @@ cdef int _attributeValidOrRaise(name_utf) except -1:
               python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict'))
     return 0
 
+cdef int _prefixValidOrRaise(tag_utf) except -1:
+    if not _pyXmlNameIsValid(tag_utf):
+        raise ValueError("Invalid namespace prefix %r" % \
+              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
+    return 0
+
 cdef object _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
 

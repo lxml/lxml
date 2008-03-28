@@ -409,8 +409,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         for prefix, href in nsmap.items():
             href_utf = _utf8(href)
             c_href = _cstr(href_utf)
-            if prefix is not None and prefix:
+            if prefix is not None:
                 prefix_utf = _utf8(prefix)
+                _prefixValidOrRaise(prefix_utf)
                 c_prefix = _cstr(prefix_utf)
             else:
                 c_prefix = NULL

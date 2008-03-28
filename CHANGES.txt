@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* lxml.etree accepted non well-formed namespace prefix names.
+
+Other changes
+-------------
+
+
 2.1alpha1 (2008-03-27)
 ======================
 
