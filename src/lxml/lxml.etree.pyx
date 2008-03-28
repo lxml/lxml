@@ -107,8 +107,9 @@ class LxmlError(Error):
     def __init__(self, message, error_log=None):
         _initError(self, message)
         if error_log is None:
-            error_log = __copyGlobalErrorLog()
-        self.error_log = error_log.copy()
+            self.error_log = __copyGlobalErrorLog()
+        else:
+            self.error_log = error_log.copy()
 
 cdef object _LxmlError
 _LxmlError = LxmlError
