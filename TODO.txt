@@ -23,6 +23,9 @@ In general
 
 * follow PEP 8 in API naming (avoidCamelCase in_favour_of_underscores)
 
+* use per-call or per-thread error logs in XSLT/XPath/etc. to keep the
+  messages separate, especially in exceptions
+
 
 QName
 -----
