@@ -102,6 +102,6 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.html'],
     ext_modules = setupinfo.ext_modules(
-    STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
+        STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
     **extra_options
 )
