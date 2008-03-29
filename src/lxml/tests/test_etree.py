@@ -1479,6 +1479,29 @@ class ETreeOnlyTestCase(HelperTestCase):
             [a, b, c],
             list(a.getiterator('*')))
 
+    def test_elementtree_find_qname(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        QName = self.etree.QName
+        tree = ElementTree(XML('<a><b><c/></b><b/><c><b/></c></a>'))
+        self.assertEquals(tree.find(QName("c")), tree.getroot()[2])
+
+    def test_elementtree_findall_qname(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        QName = self.etree.QName
+        tree = ElementTree(XML('<a><b><c/></b><b/><c><b/></c></a>'))
+        self.assertEquals(len(list(tree.findall(QName("c")))), 1)
+
+    def test_elementtree_findall_ns_qname(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        QName = self.etree.QName
+        tree = ElementTree(XML(
+                '<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>'))
+        self.assertEquals(len(list(tree.findall(QName("b")))), 2)
+        self.assertEquals(len(list(tree.findall(QName("X", "b")))), 1)
+
     def test_findall_ns(self):
         XML = self.etree.XML
         root = XML('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><b/></a>')
