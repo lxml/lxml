@@ -194,7 +194,7 @@ class HtmlMixin(object):
         that pre-compiling the expression can provide a substantial
         speedup.
         """
-        return cssselect.CSSSelect(expr)(self)
+        return cssselect.CSSSelector(expr)(self)
 
     ########################################
     ## Link functions
