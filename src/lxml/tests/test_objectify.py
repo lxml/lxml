@@ -815,6 +815,26 @@ class ObjectifyTestCase(HelperTestCase):
         el = objectify.DataElement(s)
         val = 5
         self.assertRaises(TypeError, el.__mod__, val)
+
+    def test_type_str_as_int(self):
+        v = "1"
+        el = objectify.DataElement(v)
+        self.assertEquals(int(el), 1)
+            
+    def test_type_str_as_long(self):
+        v = "1"
+        el = objectify.DataElement(v)
+        self.assertEquals(long(el), 1)
+            
+    def test_type_str_as_float(self):
+        v = "1"
+        el = objectify.DataElement(v)
+        self.assertEquals(float(el), 1)
+
+    def test_type_str_as_complex(self):
+        v = "1"
+        el = objectify.DataElement(v)
+        self.assertEquals(complex(el), 1)
             
     def test_type_str_mod_data_elements(self):
         s = "%d %f %s %r"

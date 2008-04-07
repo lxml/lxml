@@ -773,6 +773,18 @@ cdef class StringElement(ObjectifiedDataElement):
     def __mod__(self, other):
         return _strValueOf(self) % other
 
+    def __int__(self):
+        return int(textOf(self._c_node))
+
+    def __long__(self):
+        return long(textOf(self._c_node))
+
+    def __float__(self):
+        return float(textOf(self._c_node))
+
+    def __complex__(self):
+        return complex(textOf(self._c_node))
+
 cdef class NoneElement(ObjectifiedDataElement):
     def __str__(self):
         return "None"
