@@ -1,4 +1,4 @@
-cimport tree
+cimport tree, xmlerror
 from tree cimport xmlDoc, xmlDtd
 
 cdef extern from "libxml/schematron.h":
@@ -28,3 +28,6 @@ cdef extern from "libxml/schematron.h":
     cdef void xmlSchematronFreeParserCtxt(xmlSchematronParserCtxt* ctxt) nogil
     cdef void xmlSchematronFreeValidCtxt(xmlSchematronValidCtxt* ctxt) nogil
     cdef void xmlSchematronFree(xmlSchematron* schema) nogil
+    cdef void xmlSchematronSetValidStructuredErrors(
+        xmlSchematronValidCtxt* ctxt,
+        xmlerror.xmlStructuredErrorFunc error_func, void *data)

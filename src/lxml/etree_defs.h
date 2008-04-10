@@ -70,6 +70,10 @@
 /* schematron was added in libxml2 2.6.21 */
 #ifdef LIBXML_SCHEMATRON_ENABLED
 #  define ENABLE_SCHEMATRON 1
+#  if LIBXML_VERSION < 20632
+     /* schematron error reporting was added in libxml2 2.6.32 */
+#    define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
+#  endif
 #else
 #  define ENABLE_SCHEMATRON 0
 #  define XML_SCHEMATRON_OUT_QUIET 0
@@ -85,7 +89,9 @@
 #  define xmlSchematronNewValidCtxt(schema, options) NULL
 #  define xmlSchematronValidateDoc(ctxt, doc) 0
 #  define xmlSchematronFreeValidCtxt(ctxt)
+#  define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
 #endif
+
 
 /* work around MSDEV 6.0 */
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)
