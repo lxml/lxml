@@ -737,10 +737,20 @@ class ObjectifyTestCase(HelperTestCase):
         root = Element("{objectified}root")
         root.bool = True
         self.assertEquals(root.bool, True)
+        self.assertEquals(root.bool + root.bool, True + True)
+        self.assertEquals(True + root.bool, True + root.bool)
+        self.assertEquals(root.bool * root.bool, True * True)
+        self.assertEquals(int(root.bool), int(True))
+        self.assertEquals(complex(root.bool), complex(True))
         self.assert_(isinstance(root.bool, objectify.BoolElement))
 
         root.bool = False
         self.assertEquals(root.bool, False)
+        self.assertEquals(root.bool + root.bool, False + False)
+        self.assertEquals(False + root.bool, False + root.bool)
+        self.assertEquals(root.bool * root.bool, False * False)
+        self.assertEquals(int(root.bool), int(False))
+        self.assertEquals(complex(root.bool), complex(False))
         self.assert_(isinstance(root.bool, objectify.BoolElement))
 
     def test_data_element_bool(self):

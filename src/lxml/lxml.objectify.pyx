@@ -618,41 +618,44 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
         cetree.setNodeText(self._c_node, s)
 
 cdef class NumberElement(ObjectifiedDataElement):
-    cdef object _type
+    cdef object _parse_value
     def _setValueParser(self, function):
-        "Set the function that parses the Python value from a string."
-        self._type = function
+        """Set the function that parses the Python value from a string.
 
-    cdef _value(self):
-        return self._type(textOf(self._c_node))
+        Do not use this unless you know what you are doing.
+        """
+        self._parse_value = function
 
     property pyval:
         def __get__(self):
-            return self._value()
+            return _parseNumber(self)
 
     def __int__(self):
-        return int(textOf(self._c_node))
+        return int(_parseNumber(self))
 
     def __long__(self):
-        return long(textOf(self._c_node))
+        return long(_parseNumber(self))
 
     def __float__(self):
-        return float(textOf(self._c_node))
+        return float(_parseNumber(self))
+
+    def __complex__(self):
+        return complex(_parseNumber(self))
 
     def __str__(self):
-        return str(self._type(textOf(self._c_node)))
+        return str(_parseNumber(self))
 
     def __repr__(self):
-        return repr(self._type(textOf(self._c_node)))
+        return repr(_parseNumber(self))
 
-#    def __oct__(self):
-#    def __hex__(self):
+    def __oct__(self):
+        return oct(_parseNumber(self))
+
+    def __hex__(self):
+        return hex(_parseNumber(self))
 
     def __richcmp__(self, other, int op):
-        if hasattr(other, 'pyval'):
-            other = other.pyval
-        return python.PyObject_RichCompare(
-            _numericValueOf(self), other, op)
+        return _richcmpPyvals(self, other, op)
 
     def __add__(self, other):
         return _numericValueOf(self) + _numericValueOf(other)
@@ -710,15 +713,15 @@ cdef class NumberElement(ObjectifiedDataElement):
 
 cdef class IntElement(NumberElement):
     def _init(self):
-        self._type = int
+        self._parse_value = int
 
 cdef class LongElement(NumberElement):
     def _init(self):
-        self._type = long
+        self._parse_value = long
 
 cdef class FloatElement(NumberElement):
     def _init(self):
-        self._type = float
+        self._parse_value = float
 
 cdef class StringElement(ObjectifiedDataElement):
     """String data class.
@@ -748,10 +751,7 @@ cdef class StringElement(ObjectifiedDataElement):
         return len(text) > 0
 
     def __richcmp__(self, other, int op):
-        if hasattr(other, 'pyval'):
-            other = other.pyval
-        return python.PyObject_RichCompare(
-            _strValueOf(self), other, op)
+        return _richcmpPyvals(self, other, op)
 
     def __add__(self, other):
         text  = _strValueOf(self)
@@ -807,61 +807,64 @@ cdef class NoneElement(ObjectifiedDataElement):
         def __get__(self):
             return None
 
-cdef class BoolElement(ObjectifiedDataElement):
+cdef class BoolElement(IntElement):
     """Boolean type base on string values: 'true' or 'false'.
+
+    Note that this inherits from IntElement to mimic the behaviour of
+    Python's bool type.
     """
-    cdef int _boolval(self) except -1:
-        cdef char* c_str
-        text = textOf(self._c_node)
-        if text is None:
-            return 0
-        c_str = _cstr(text)
-        if c_str[0] == c'0' or c_str[0] == c'f' or c_str[0] == c'F':
-            if c_str[1] == c'\0' or text == "false" or text.lower() == "false":
-                # '0' or 'f' or 'false'
-                return 0
-        elif c_str[0] == c'1' or c_str[0] == c't' or c_str[0] == c'T':
-            if c_str[1] == c'\0' or text == "true" or text.lower() == "true":
-                # '1' or 't' or 'true'
-                return 1
-        raise ValueError("Invalid boolean value: '%s'" % text)
+    def _init(self):
+        self._parse_value = __parseBool
 
     def __nonzero__(self):
-        if self._boolval():
-            return True
-        else:
-            return False
+        return __parseBool(textOf(self._c_node))
 
     def __richcmp__(self, other, int op):
-        if hasattr(other, 'pyval'):
-            other = other.pyval
-        if hasattr(self, 'pyval'):
-            self_val = self.pyval
-        else:
-            self_val = bool(self)
-        return python.PyObject_RichCompare(self_val, other, op)
+        return _richcmpPyvals(self, other, op)
 
     def __str__(self):
-        if self._boolval():
-            return "True"
-        else:
-            return "False"
+        return str(__parseBool(textOf(self._c_node)))
 
     def __repr__(self):
-        if self._boolval():
-            return "True"
-        else:
-            return "False"
+        return repr(__parseBool(textOf(self._c_node)))
 
     property pyval:
         def __get__(self):
-            return self.__nonzero__()
+            return __parseBool(textOf(self._c_node))
 
 def __checkBool(s):
-    if s != 'true' and s != 'false' and s != '1' and s != '0':
+    cdef int value = -1
+    if s is not None:
+        value = __parseBoolAsInt(s)
+    if value == -1:
         raise ValueError
 
-cdef object _strValueOf(obj):
+cpdef __parseBool(s):
+    cdef int value
+    if s is None:
+        return False
+    value = __parseBoolAsInt(s)
+    if value == -1:
+        raise ValueError("Invalid boolean value: '%s'" % s)
+    return <bint>value
+
+cdef inline int __parseBoolAsInt(text):
+    cdef char* c_str
+    c_str = _cstr(text)
+    if c_str[0] == c'0' or c_str[0] == c'f' or c_str[0] == c'F':
+        if c_str[1] == c'\0' or text == "false" or text.lower() == "false":
+            # '0' or 'f' or 'false'
+            return 0
+    elif c_str[0] == c'1' or c_str[0] == c't' or c_str[0] == c'T':
+        if c_str[1] == c'\0' or text == "true" or text.lower() == "true":
+            # '1' or 't' or 'true'
+            return 1
+    return -1
+
+cdef inline _parseNumber(NumberElement element):
+    return element._parse_value(textOf(element._c_node))
+
+cdef inline object _strValueOf(obj):
     if python._isString(obj):
         return obj
     if isinstance(obj, _Element):
@@ -870,14 +873,19 @@ cdef object _strValueOf(obj):
         return ''
     return str(obj)
 
-cdef object _numericValueOf(obj):
+cdef inline object _numericValueOf(obj):
     if isinstance(obj, NumberElement):
-        return (<NumberElement>obj)._type(
-            textOf((<NumberElement>obj)._c_node))
+        return _parseNumber(<NumberElement>obj)
     elif hasattr(obj, 'pyval'):
         # not always numeric, but Python will raise the right exception
         return obj.pyval
     return obj
+
+cdef inline _richcmpPyvals(left, right, int op):
+    left  = getattr3(left,  'pyval', left)
+    right = getattr3(right, 'pyval', right)
+    return python.PyObject_RichCompare(left, right, op)
+
 
 ################################################################################
 # Python type registry
