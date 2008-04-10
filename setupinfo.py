@@ -83,8 +83,7 @@ def find_dependencies(module):
     if not CYTHON_INSTALLED:
         return []
     from Cython.Compiler.Version import version
-    # currently, no official Cython release supports this ...
-    if True or split_version(version) <= (0,9,6,12):
+    if split_version(version) < (0,9,6,13):
         return []
 
     package_dir = os.path.join(get_base_dir(), PACKAGE_PATH)
