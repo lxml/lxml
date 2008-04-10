@@ -39,6 +39,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_FROM_WRITER                                    =      25 # The xmlwriter module
         XML_FROM_MODULE                                    =      26 # The dynamically loaded module modul
         XML_FROM_I18N                                      =      27 # The module handling character conversion
+        XML_FROM_SCHEMATRONV                               =      28 # The Schematron validator module
 
     ctypedef enum xmlParserErrors:
         XML_ERR_OK                                         =       0
@@ -345,6 +346,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_TREE_INVALID_HEX                               =    1300
         XML_TREE_INVALID_DEC                               =    1301 # 1301
         XML_TREE_UNTERMINATED_ENTITY                       =    1302 # 1302
+        XML_TREE_NOT_UTF8                                  =    1303 # 1303
         XML_SAVE_NOT_UTF8                                  =    1400
         XML_SAVE_CHAR_INVALID                              =    1401 # 1401
         XML_SAVE_NO_DOCTYPE                                =    1402 # 1402
@@ -720,6 +722,8 @@ cdef extern from "libxml/xmlerror.h":
         XML_SCHEMAP_AU_PROPS_CORRECT                       =    3089 # 3088
         XML_SCHEMAP_A_PROPS_CORRECT_3                      =    3090 # 3089
         XML_SCHEMAP_COS_ALL_LIMITED                        =    3091 # 3090
+        XML_SCHEMATRONV_ASSERT                             =    4000 # 4000
+        XML_SCHEMATRONV_REPORT                             =    4001
         XML_MODULE_OPEN                                    =    4900 # 4900
         XML_MODULE_CLOSE                                   =    4901 # 4901
         XML_CHECK_FOUND_ELEMENT                            =    5000
