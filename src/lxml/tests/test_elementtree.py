@@ -2696,6 +2696,19 @@ class ETreeTestCaseBase(HelperTestCase):
             [1,2,1,4],
             counts)
 
+    def test_iterparse_move_elements(self):
+        iterparse = self.etree.iterparse
+        f = StringIO('<a><b><d/></b><c/></a>')
+
+        for event, node in etree.iterparse(f): pass
+
+        root = etree.Element('new_root', {})
+        root[:] = node[:]
+
+        self.assertEquals(
+            ['b', 'c'],
+            [ el.tag for el in root ])
+
     def test_parse_file(self):
         parse = self.etree.parse
         # from file

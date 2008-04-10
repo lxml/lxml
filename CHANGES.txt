@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Crash bug in iterparse when moving elements into other documents.
+
 * ``ElementTree.find*()`` didn't accept QName objects.
 
 * lxml.etree accepted non well-formed namespace prefix names.
