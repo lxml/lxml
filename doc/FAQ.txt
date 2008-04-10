@@ -154,12 +154,14 @@ not take advantage of lxml's enhanced feature set.
 * lwebstring_, an XML template engine
 * OpenXMLlib_, a library for handling OpenXML document meta data
 * Pycoon_, a WSGI web development framework based on XML pipelines
-* rfadict_, an RDFa parser with a simple dictionary-like interface.
+* Rambler_, a meta search engine that aggregates different data sources
+* rdfadict_, an RDFa parser with a simple dictionary-like interface.
 
 Zope3 and some of its extensions have good support for lxml:
 
 * gocept.lxml_, Zope3 interface bindings for lxml
 * z3c.rml_, an implementation of ReportLab's RML format
+* zif.sedna_, an XQuery based interface to the Sedna OpenSource XML database
 
 And don't miss the quotes by our generally happy_ users_, and other
 `sites that link to lxml`_.
@@ -172,8 +174,10 @@ And don't miss the quotes by our generally happy_ users_, and other
 .. _lwebstring: http://pypi.python.org/pypi/lwebstring
 .. _OpenXMLlib: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
 .. _Pycoon: http://pypi.python.org/pypi/pycoon
-.. _rfadict: http://pypi.python.org/pypi/rdfadict
+.. _Rambler: http://beta.rambler.ru/srch?query=python+lxml&searchtype=web
+.. _rdfadict: http://pypi.python.org/pypi/rdfadict
 .. _z3c.rml: http://pypi.python.org/pypi/z3c.rml
+.. _zif.sedna: http://pypi.python.org/pypi/zif.sedna
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
