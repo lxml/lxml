@@ -1,4 +1,4 @@
-from tree cimport FILE
+from cstd cimport FILE
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
