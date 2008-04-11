@@ -120,6 +120,6 @@ cdef extern from "pythread.h":
         NOWAIT_LOCK
 
 cdef extern from "etree_defs.h": # redefines some functions as macros
-    cdef int _isString(object obj)
+    cdef bint _isString(object obj)
     cdef char* _fqtypename(object t)
     cdef object PY_NEW(object t)
