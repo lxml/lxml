@@ -564,13 +564,13 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 # special str/unicode subclasses
 
 cdef class _ElementUnicodeResult(python.unicode):
-    cdef _Element parent
+    cdef _Element _parent
     cdef readonly object is_tail
     cdef readonly object is_text
     cdef readonly object is_attribute
 
     def getparent(self):
-        return self.parent
+        return self._parent
 
 class _ElementStringResult(str):
     # we need to use a Python class here, str cannot be C-subclassed
@@ -596,7 +596,7 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
         return result
     else:
         uresult = _ElementUnicodeResult(string_value)
-        uresult.parent = parent
+        uresult._parent = parent
         uresult.is_attribute = is_attribute
         uresult.is_tail = is_tail
         uresult.is_text = is_text
