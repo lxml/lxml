@@ -193,6 +193,16 @@ be between 30% and multiple times faster in total.  So, whenever the
 input documents are not considerably bigger than the output, lxml is
 the clear winner.
 
+Regarding HTML parsing, Ian Bicking has done some `benchmarking on
+lxml's HTML parser`_, comparing it to a number of other famous HTML
+parser tools for Python.  lxml wins this contest by quite a length.
+To give an idea, the numbers suggest that lxml.html can run a couple
+of parse-serialise cycles in the time that other tools need for
+parsing alone.  The comparison even shows some very favourable results
+regarding memory consumption.
+
+.. _`benchmarking on lxml's HTML parser`: http://blog.ianbicking.org/2008/03/30/python-html-parser-performance/
+
 
 The ElementTree API
 ===================
