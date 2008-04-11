@@ -30,15 +30,16 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
 
 .. contents::
 .. 
-   1  lxml.etree
-   2  Other Element APIs
-   3  Trees and Documents
-   4  Iteration
-   5  Error handling on exceptions
-   6  Error logging
-   7  Serialisation
-   8  XInclude and ElementInclude
-   9  write_c14n on ElementTree
+   1   lxml.etree
+   2   Other Element APIs
+   3   Trees and Documents
+   4   Iteration
+   5   Error handling on exceptions
+   6   Error logging
+   7   Serialisation
+   8   CDATA
+   9   XInclude and ElementInclude
+   10  write_c14n on ElementTree
 
 
 lxml.etree
@@ -350,6 +351,50 @@ underlying transport protocol:
   Traceback (most recent call last):
     ...
   XMLSyntaxError: ...
+
+
+CDATA
+-----
+
+By default, lxml's parser will strip CDATA sections from the tree and
+replace them by their plain text content.  As real applications for
+CDATA are rare, this is the best way to deal with this issue.
+
+However, in some cases, keeping CDATA sections or creating them in a
+document is required to adhere to existing XML language definitions.
+For these special cases, you can instruct the parser to leave CDATA
+sections in the document:
+
+.. sourcecode:: pycon
+
+  >>> parser = etree.XMLParser(strip_cdata=False)
+  >>> root = etree.XML('<root><![CDATA[test]]></root>', parser)
+  >>> root.text
+  'test'
+
+  >>> etree.tostring(root)
+  '<root><![CDATA[test]]></root>'
+
+Note how the ``.text`` property does not give any indication that the
+text content is wrapped by a CDATA section.  If you want to make sure
+your data is wrapped by a CDATA block, you can use the ``CDATA()``
+text wrapper:
+
+.. sourcecode:: pycon
+
+  >>> root.text = 'test'
+
+  >>> root.text
+  'test'
+  >>> etree.tostring(root)
+  '<root>test</root>'
+
+  >>> root.text = etree.CDATA(root.text)
+
+  >>> root.text
+  'test'
+  >>> etree.tostring(root)
+  '<root><![CDATA[test]]></root>'
 
 
 XInclude and ElementInclude

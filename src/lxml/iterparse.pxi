@@ -327,6 +327,7 @@ cdef class iterparse(_BaseParser):
       - remove_blank_text  - discard blank text nodes
       - remove_comments    - discard comments
       - remove_pis         - discard processing instructions
+      - strip_cdata        - replace CDATA sections by normal text content (default: True)
       - compact            - safe memory for short text content (default: True)
       - resolve_entities   - replace entities by their text value (default: True)
 
@@ -342,7 +343,7 @@ cdef class iterparse(_BaseParser):
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
-                 remove_pis=False, encoding=None,
+                 remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, XMLSchema schema=None):
         cdef _IterparseContext context
         cdef char* c_encoding
@@ -381,7 +382,7 @@ cdef class iterparse(_BaseParser):
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
 
         _BaseParser.__init__(self, parse_options, html, schema,
-                             remove_comments, remove_pis,
+                             remove_comments, remove_pis, strip_cdata,
                              None, filename, encoding)
 
         context = <_IterparseContext>self._getPushParserContext()

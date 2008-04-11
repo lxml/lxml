@@ -550,6 +550,7 @@ cdef class _BaseParser:
     cdef bint _for_html
     cdef bint _remove_comments
     cdef bint _remove_pis
+    cdef bint _strip_cdata
     cdef XMLSchema _schema
     cdef object _filename
     cdef object _target
@@ -557,7 +558,8 @@ cdef class _BaseParser:
     cdef int _default_encoding_int
 
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
-                 remove_comments, remove_pis, target, filename, encoding):
+                 remove_comments, remove_pis, strip_cdata, target,
+                 filename, encoding):
         cdef int c_encoding
         if not isinstance(self, HTMLParser) and \
                 not isinstance(self, XMLParser) and \
@@ -570,6 +572,7 @@ cdef class _BaseParser:
         self._for_html = for_html
         self._remove_comments = remove_comments
         self._remove_pis = remove_pis
+        self._strip_cdata = strip_cdata
         self._schema = schema
 
         self._resolvers = _ResolverRegistry()
@@ -601,8 +604,9 @@ cdef class _BaseParser:
                 pctxt.sax.comment = NULL
             if self._remove_pis:
                 pctxt.sax.processingInstruction = NULL
-            # hard switch-off for CDATA nodes => makes them plain text
-            pctxt.sax.cdataBlock = NULL
+            if self._strip_cdata:
+                # hard switch-off for CDATA nodes => makes them plain text
+                pctxt.sax.cdataBlock = NULL
         return self._parser_context
 
     cdef _ParserContext _getPushParserContext(self):
@@ -621,8 +625,9 @@ cdef class _BaseParser:
                 pctxt.sax.comment = NULL
             if self._remove_pis:
                 pctxt.sax.processingInstruction = NULL
-            # hard switch-off for CDATA nodes => makes them plain text
-            pctxt.sax.cdataBlock = NULL
+            if self._strip_cdata:
+                # hard switch-off for CDATA nodes => makes them plain text
+                pctxt.sax.cdataBlock = NULL
         return self._push_parser_context
 
     cdef _ParserContext _createContext(self, target):
@@ -700,6 +705,7 @@ cdef class _BaseParser:
         parser._for_html = self._for_html
         parser._remove_comments = self._remove_comments
         parser._remove_pis = self._remove_pis
+        parser._strip_cdata = self._strip_cdata
         parser._filename = self._filename
         parser._resolvers = self._resolvers
         parser._target = self._target
@@ -1051,6 +1057,7 @@ cdef class XMLParser(_FeedParser):
     - remove_blank_text  - discard blank text nodes
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
+    - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - safe memory for short text content (default: True)
     - resolve_entities   - replace entities by their text value (default: True)
 
@@ -1068,8 +1075,8 @@ cdef class XMLParser(_FeedParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=False,
-                 remove_pis=False, target=None, encoding=None,
-                 XMLSchema schema=None):
+                 remove_pis=False, strip_cdata=True, target=None,
+                 encoding=None, XMLSchema schema=None):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -1092,9 +1099,11 @@ cdef class XMLParser(_FeedParser):
             parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
         if not resolve_entities:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
+        if not strip_cdata:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
 
         _BaseParser.__init__(self, parse_options, 0, schema,
-                             remove_comments, remove_pis,
+                             remove_comments, remove_pis, strip_cdata,
                              target, None, encoding)
 
 cdef class ETCompatXMLParser(XMLParser):
@@ -1110,7 +1119,8 @@ cdef class ETCompatXMLParser(XMLParser):
                  load_dtd=False, no_network=True, ns_clean=False,
                  recover=False, remove_blank_text=False, compact=True,
                  resolve_entities=True, remove_comments=True,
-                 remove_pis=True, target=None, encoding=None, schema=None):
+                 remove_pis=True, strip_cdata=True, target=None,
+                 encoding=None, schema=None):
         XMLParser.__init__(self,
                            attribute_defaults=attribute_defaults,
                            dtd_validation=dtd_validation,
@@ -1123,6 +1133,7 @@ cdef class ETCompatXMLParser(XMLParser):
                            resolve_entities=resolve_entities,
                            remove_comments=remove_comments,
                            remove_pis=remove_pis,
+                           strip_cdata=strip_cdata,
                            target=target,
                            encoding=encoding,
                            schema=schema)
@@ -1180,6 +1191,7 @@ cdef class HTMLParser(_FeedParser):
     - remove_blank_text  - discard empty text nodes
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
+    - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - safe memory for short text content (default: True)
 
     Other keyword arguments:
@@ -1193,7 +1205,7 @@ cdef class HTMLParser(_FeedParser):
     """
     def __init__(self, *, recover=True, no_network=True,
                  remove_blank_text=False, compact=True, remove_comments=False,
-                 remove_pis=False, target=None, encoding=None,
+                 remove_pis=False, strip_cdata=True, target=None, encoding=None,
                  XMLSchema schema=None):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
@@ -1207,7 +1219,7 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
         _BaseParser.__init__(self, parse_options, 1, schema,
-                             remove_comments, remove_pis,
+                             remove_comments, remove_pis, strip_cdata,
                              target, None, encoding)
 
 cdef HTMLParser __DEFAULT_HTML_PARSER

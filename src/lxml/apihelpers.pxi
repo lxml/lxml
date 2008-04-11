@@ -449,8 +449,17 @@ cdef int _setNodeText(xmlNode* c_node, value) except -1:
     if value is None:
         return 0
     # now add new text node with value at start
-    text = _utf8(value)
-    c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+    if python._isString(value):
+        text = _utf8(value)
+        c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+    elif isinstance(value, CDATA):
+        c_text_node = tree.xmlNewCDataBlock(
+            c_node.doc, _cstr((<CDATA>value)._utf8_data),
+            python.PyString_GET_SIZE((<CDATA>value)._utf8_data))
+    else:
+        # this will raise the right error
+       _utf8(value)
+       return -1
     if c_node.children is NULL:
         tree.xmlAddChild(c_node, c_text_node)
     else:
@@ -592,6 +601,8 @@ cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node):
     """
     while c_node is not NULL:
         if c_node.type == tree.XML_TEXT_NODE:
+            return c_node
+        if c_node.type == tree.XML_CDATA_SECTION_NODE:
             return c_node
         elif c_node.type == tree.XML_XINCLUDE_START or \
                  c_node.type == tree.XML_XINCLUDE_END:

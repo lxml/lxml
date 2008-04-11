@@ -8,6 +8,12 @@ Under development
 Features added
 --------------
 
+* Parser option `strip_cdata` for normalising or keeping CDATA
+  sections.  Defaults to ``True`` as before, thus replacing CDATA
+  sections by their text content.
+
+* ``CDATA()`` factory to wrap string content as CDATA section.
+
 Bugs fixed
 ----------
 

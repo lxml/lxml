@@ -181,6 +181,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNode* xmlNewDocComment(xmlDoc* doc, char* content) nogil
     cdef xmlNode* xmlNewDocPI(xmlDoc* doc, char* name, char* content) nogil
     cdef xmlNode* xmlNewReference(xmlDoc* doc, char* name) nogil
+    cdef xmlNode* xmlNewCDataBlock(xmlDoc* doc, char* text, int len) nogil
     cdef xmlNs* xmlNewNs(xmlNode* node, char* href, char* prefix) nogil
     cdef xmlNode* xmlAddChild(xmlNode* parent, xmlNode* cur) nogil
     cdef xmlNode* xmlReplaceNode(xmlNode* old, xmlNode* cur) nogil

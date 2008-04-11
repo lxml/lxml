@@ -462,6 +462,29 @@ class ETreeOnlyTestCase(HelperTestCase):
                            "data-B", "end-root", "pi-test-c"],
                           events)
 
+    def test_parser_target_cdata(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target(),
+                                      strip_cdata=False)
+
+        parser.feed('<root>A<a><![CDATA[ca]]></a>B</root>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start-root", "data-A", "start-a",
+                           "data-ca", "end-a", "data-B", "end-root"],
+                          events)
+
     def test_iterwalk_tag(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML('<a><b><d/></b><c/></a>')
@@ -665,6 +688,55 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(AssertionError, Entity, 'a\0b')
         self.assertRaises(ValueError, Entity, '#abc')
         self.assertRaises(ValueError, Entity, '#xxyz')
+
+    def test_cdata(self):
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+
+        root = Element("root")
+        root.text = CDATA('test')
+
+        self.assertEquals('test',
+                          root.text)
+        self.assertEquals('<root><![CDATA[test]]></root>',
+                          tostring(root))
+
+    def test_cdata_type(self):
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+        root = Element("root")
+
+        root.text = CDATA("test")
+        self.assertEquals('test', root.text)
+
+        root.text = CDATA(u"test")
+        self.assertEquals('test', root.text)
+
+        self.assertRaises(TypeError, CDATA, 1)
+
+    def test_cdata_errors(self):
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+
+        root = Element("root")
+        cdata = CDATA('test')
+        
+        self.assertRaises(TypeError,
+                          setattr, root, 'tail', cdata)
+        self.assertRaises(TypeError,
+                          root.set, 'attr', cdata)
+        self.assertRaises(TypeError,
+                          operator.setitem, root.attrib, 'attr', cdata)
+
+    def test_cdata_parser(self):
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(strip_cdata=False)
+        root = self.etree.XML('<root><![CDATA[test]]></root>', parser)
+
+        self.assertEquals('test', root.text)
+        self.assertEquals('<root><![CDATA[test]]></root>',
+                          tostring(root))
 
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):

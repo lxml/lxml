@@ -2264,6 +2264,20 @@ def ProcessingInstruction(target, text=None):
 
 PI = ProcessingInstruction
 
+cdef class CDATA:
+    """CDATA(data)
+
+    CDATA factory.  This factory creates an opaque data object that
+    can be used to set Element text.  The usual way to use it is::
+
+        >>> from lxml import etree
+        >>> el = etree.Element('content')
+        >>> el.text = etree.CDATA('a string')
+    """
+    cdef object _utf8_data
+    def __init__(self, data):
+        self._utf8_data = _utf8(data)
+
 def Entity(name):
     """Entity(name)
 

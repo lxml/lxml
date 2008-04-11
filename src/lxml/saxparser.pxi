@@ -37,6 +37,7 @@ cdef class _SaxParserContext(_ParserContext):
     cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
     cdef xmlparser.endElementSAXFunc      _origSaxEndNoNs
     cdef xmlparser.charactersSAXFunc      _origSaxData
+    cdef xmlparser.cdataBlockSAXFunc      _origSaxCData
     cdef xmlparser.internalSubsetSAXFunc  _origSaxDoctype
     cdef xmlparser.commentSAXFunc         _origSaxComment
     cdef xmlparser.processingInstructionSAXFunc    _origSaxPi
@@ -76,10 +77,12 @@ cdef class _SaxParserContext(_ParserContext):
 
         if self._target._sax_event_propagate & SAX_EVENT_DATA:
             self._origSaxData = sax.characters
+            self._origSaxCData = sax.cdataBlock
         else:
-            self._origSaxData = sax.characters = NULL
+            self._origSaxData = sax.characters = sax.cdataBlock = NULL
         if self._target._sax_event_filter & SAX_EVENT_DATA:
             sax.characters = _handleSaxData
+            sax.cdataBlock = _handleSaxCData
 
         # doctype propagation is always required for entity replacement
         self._origSaxDoctype = sax.internalSubset
@@ -243,6 +246,21 @@ cdef void _handleSaxData(void* ctxt, char* c_data, int data_len) with gil:
     context = <_SaxParserContext>c_ctxt._private
     if context._origSaxData is not NULL:
         context._origSaxData(c_ctxt, c_data, data_len)
+    try:
+        context._target._handleSaxData(
+            python.PyUnicode_DecodeUTF8(c_data, data_len, NULL))
+    except:
+        context._handleSaxException(c_ctxt)
+
+cdef void _handleSaxCData(void* ctxt, char* c_data, int data_len) with gil:
+    cdef _SaxParserContext context
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    if c_ctxt._private is NULL:
+        return
+    context = <_SaxParserContext>c_ctxt._private
+    if context._origSaxCData is not NULL:
+        context._origSaxCData(c_ctxt, c_data, data_len)
     try:
         context._target._handleSaxData(
             python.PyUnicode_DecodeUTF8(c_data, data_len, NULL))
