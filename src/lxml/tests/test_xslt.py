@@ -299,6 +299,24 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
+    def _test_xslt_parameter_invalid(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = self.assertRaises(etree.XSLTApplyError,
+                                st, tree, bar="test")
+        res = self.assertRaises(etree.XSLTApplyError,
+                                st, tree, bar="<test/>")
+        res = self.assertRaises(etree.XSLTApplyError,
+                                st, tree, bar="....")
+
     if etree.LIBXSLT_VERSION < (1,1,18):
         # later versions produce no error
         def test_xslt_parameter_missing(self):
