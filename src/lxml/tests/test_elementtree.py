@@ -2709,6 +2709,16 @@ class ETreeTestCaseBase(HelperTestCase):
             ['b', 'c'],
             [ el.tag for el in root ])
 
+    def test_iterparse_cdata(self):
+        tostring = self.etree.tostring
+        f = StringIO('<root><![CDATA[test]]></root>')
+        context = self.etree.iterparse(f)
+        content = [ el.text for event,el in context ]
+
+        self.assertEquals(['test'], content)
+        self.assertEquals('<root>test</root>',
+                          tostring(context.root))
+
     def test_parse_file(self):
         parse = self.etree.parse
         # from file

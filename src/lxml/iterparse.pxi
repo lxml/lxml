@@ -380,6 +380,8 @@ cdef class iterparse(_BaseParser):
             parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
         if not resolve_entities:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
+        if not strip_cdata:
+            parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
 
         _BaseParser.__init__(self, parse_options, html, schema,
                              remove_comments, remove_pis, strip_cdata,
