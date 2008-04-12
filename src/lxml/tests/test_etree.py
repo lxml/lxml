@@ -409,16 +409,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         a = iterator.root
         self.assertEquals(a.text, text)
 
-    def test_iterparse_cdata(self):
-        tostring = self.etree.tostring
-        f = StringIO('<root><![CDATA[test]]></root>')
-        context = self.etree.iterparse(f)
-        content = [ el.text for event,el in context ]
-
-        self.assertEquals(['test'], content)
-        self.assertEquals('<root>test</root>',
-                          tostring(context.root))
-
     def test_iterparse_keep_cdata(self):
         tostring = self.etree.tostring
         f = StringIO('<root><![CDATA[test]]></root>')
