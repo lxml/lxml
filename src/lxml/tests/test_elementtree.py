@@ -2770,6 +2770,14 @@ class ETreeTestCaseBase(HelperTestCase):
             tree.getroot()
            )
 
+    def test_parse_cdata(self):
+        tostring = self.etree.tostring
+        root = self.etree.XML('<root><![CDATA[test]]></root>')
+
+        self.assertEquals('test', root.text)
+        self.assertEquals('<root>test</root>',
+                          tostring(root))
+
     def test_parse_with_encoding(self):
         # this can fail in libxml2 <= 2.6.22
         parse = self.etree.parse
