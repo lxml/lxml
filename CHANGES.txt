@@ -8,7 +8,7 @@ Under development
 Features added
 --------------
 
-* Parser option `strip_cdata` for normalising or keeping CDATA
+* Parser option ``strip_cdata`` for normalising or keeping CDATA
   sections.  Defaults to ``True`` as before, thus replacing CDATA
   sections by their text content.
 
