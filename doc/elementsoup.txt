@@ -22,7 +22,8 @@ ElementTree.
 
 There is also a legacy module called ``lxml.html.ElementSoup``, which
 mimics the interface provided by ElementTree's own ElementSoup_
-module.
+module.  Note that the ``soupparser`` module was added in lxml 2.0.3.
+Previous versions of lxml 2.0.x only have the ``ElementSoup`` module.
 
 Here is a document full of tag soup, similar to, but not quite like, HTML:
 
@@ -73,7 +74,7 @@ finds by their character equivalent.
     u'\xa9\u20ac-\xf5\u01bd'
 
 If you want them back on the way out, you can just serialise with the
-default encoding, which is 'US-ASCII'.  The 'html' method 
+default encoding, which is 'US-ASCII'.
 
 .. sourcecode:: pycon
 
