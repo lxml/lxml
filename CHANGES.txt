@@ -17,13 +17,7 @@ Features added
 Bugs fixed
 ----------
 
-* Crash bug in iterparse when moving elements into other documents.
-
-* ``ElementTree.find*()`` didn't accept QName objects.
-
 * lxml.etree accepted non well-formed namespace prefix names.
-
-* HTML elements' ``.cssselect()`` method was broken.
 
 Other changes
 -------------
@@ -33,6 +27,27 @@ Other changes
   (doctype HTML 4.01 Transitional) instead of a generic XML document.
   This mostly impacts the serialisation and the availability of a DTD
   context.
+
+
+2.0.4 (2008-04-13)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Hanging thread in conjunction with GTK threading.
+
+* Crash bug in iterparse when moving elements into other documents.
+
+* HTML elements' ``.cssselect()`` method was broken.
+
+* ``ElementTree.find*()`` didn't accept QName objects.
+
+Other changes
+-------------
 
 
 2.1alpha1 (2008-03-27)
