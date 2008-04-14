@@ -138,6 +138,3 @@ better.
     ...     ignore = tostring(root, encoding=unicode)
     ... except UnicodeDecodeError:
     ...     root = lxml.html.soupparser.fromstring(tag_soup)
-    ...     # try again, but don't catch the exception this time
-    ...     ignore = tostring(root, encoding=unicode)
-
