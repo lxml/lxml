@@ -162,7 +162,7 @@ cdef class Schematron(_Validator):
         self._error_log.connect()
         if _LIBXML_VERSION_INT >= 20632:
             schematron.xmlSchematronSetValidStructuredErrors(
-                valid_ctxt, _receiveError, <void*>self.error_log)
+                valid_ctxt, _receiveError, <void*>self._error_log)
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
