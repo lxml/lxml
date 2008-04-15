@@ -19,6 +19,8 @@ Features added
 Bugs fixed
 ----------
 
+* Resolving to a filename in custom resolvers didn't work.
+
 * lxml did not honour libxslt's second error state "STOPPED", which
   let some XSLT errors pass silently.
 

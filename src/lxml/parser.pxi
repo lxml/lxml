@@ -333,7 +333,7 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
             c_context, _cstr(data))
     elif doc_ref._type == PARSER_DATA_FILENAME:
         c_input = xmlparser.xmlNewInputFromFile(
-            c_context, _cstr(doc_ref._data_bytes))
+            c_context, _cstr(doc_ref._filename))
     elif doc_ref._type == PARSER_DATA_FILE:
         file_context = _FileReaderContext(doc_ref._file, context, url)
         c_input = file_context._createParserInput(c_context)
