@@ -74,24 +74,26 @@ cdef class Schematron(_Validator):
     the file system.
     """
     cdef schematron.xmlSchematron* _c_schema
+    cdef xmlDoc* _c_schema_doc
     def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlNode* c_node
-        cdef xmlDoc* c_doc
         cdef char* c_href
         cdef schematron.xmlSchematronParserCtxt* parser_ctxt
+        self._c_schema = NULL
+        self._c_schema_doc = NULL
         _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError(
                 "lxml.etree was compiled without Schematron support.")
-        self._c_schema = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
             self._error_log.connect()
-            parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(c_doc)
+            parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(
+                self._c_schema_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
             if filename is None:
@@ -100,12 +102,14 @@ cdef class Schematron(_Validator):
             filename = _encodeFilename(filename)
             self._error_log.connect()
             parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
-            c_doc = NULL
         else:
             raise SchematronParseError("No tree or file given")
 
         if parser_ctxt is NULL:
             self._error_log.disconnect()
+            if self._c_schema_doc is not NULL:
+                tree.xmlFreeDoc(self._c_schema_doc)
+                self._c_schema_doc = NULL
             python.PyErr_NoMemory()
             return
 
@@ -114,16 +118,17 @@ cdef class Schematron(_Validator):
 
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
-            if _LIBXML_VERSION_INT >= 20631:
-                # leak in older versions instead of just crashing
-                if c_doc is not NULL:
-                    tree.xmlFreeDoc(c_doc)
             raise SchematronParseError(
                 "Document is not a valid Schematron schema",
                 self._error_log)
 
     def __dealloc__(self):
         schematron.xmlSchematronFree(self._c_schema)
+        if _LIBXML_VERSION_INT >= 20631:
+            # earlier libxml2 versions may have freed the document in
+            # xmlSchematronFree() already, we don't know ...
+            if self._c_schema_doc is not NULL:
+                tree.xmlFreeDoc(self._c_schema_doc)
 
     def __call__(self, etree):
         """__call__(self, etree)
