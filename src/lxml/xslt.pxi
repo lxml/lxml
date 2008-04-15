@@ -496,22 +496,24 @@ cdef class XSLT:
             if resolver_context is not None and resolver_context._has_raised():
                 if c_result is not NULL:
                     tree.xmlFreeDoc(c_result)
+                    c_result = NULL
                 resolver_context._raise_if_stored()
 
             if context._exc._has_raised():
                 if c_result is not NULL:
                     tree.xmlFreeDoc(c_result)
+                    c_result = NULL
                 context._exc._raise_if_stored()
 
             if c_result is NULL:
                 # last error seems to be the most accurate here
                 error = self._error_log.last_error
                 if error is not None and error.message:
-                    if error.line >= 0:
+                    if error.line > 0:
                         message = "%s, line %d" % (error.message, error.line)
                     else:
                         message = error.message
-                elif error is not None and error.line >= 0:
+                elif error is not None and error.line > 0:
                     message = "Error applying stylesheet, line %d" % error.line
                 else:
                     message = "Error applying stylesheet"

@@ -461,7 +461,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     if cstd.strstr(msg, 'line %d'):
         c_error.line = cstd.va_int(args)
     else:
-        c_error.line = -1
+        c_error.line = 0
     if cstd.strstr(msg, 'element %s'):
         c_element = cstd.va_charptr(args)
     else:
