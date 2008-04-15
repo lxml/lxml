@@ -29,6 +29,10 @@ Bugs fixed
 Other changes
 -------------
 
+* Major cleanup in internal ``moveNodeToDocument()`` function, which
+  takes care of namespace cleanup when moving elements between
+  different namespace contexts.
+
 * New Elements created through the ``makeelement()`` method of an HTML
   parser or through lxml.html now end up in a new HTML document
   (doctype HTML 4.01 Transitional) instead of a generic XML document.
