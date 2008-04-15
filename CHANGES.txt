@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Error logging in Schematron (requires libxml2 2.6.32 or later).
+
 * Parser option ``strip_cdata`` for normalising or keeping CDATA
   sections.  Defaults to ``True`` as before, thus replacing CDATA
   sections by their text content.

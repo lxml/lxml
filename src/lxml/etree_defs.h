@@ -73,11 +73,13 @@
 #  if LIBXML_VERSION < 20632
      /* schematron error reporting was added in libxml2 2.6.32 */
 #    define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
+#    define XML_SCHEMATRON_OUT_ERROR 0
 #  endif
 #else
 #  define ENABLE_SCHEMATRON 0
 #  define XML_SCHEMATRON_OUT_QUIET 0
 #  define XML_SCHEMATRON_OUT_XML 0
+#  define XML_SCHEMATRON_OUT_ERROR 0
    typedef void xmlSchematron;
    typedef void xmlSchematronParserCtxt;
    typedef void xmlSchematronValidCtxt;

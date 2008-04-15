@@ -141,7 +141,8 @@ cdef class Schematron(_Validator):
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
-        if _LIBXML_VERSION_INT >= 20632:
+        if _LIBXML_VERSION_INT >= 20632 and \
+                schematron.XML_SCHEMATRON_OUT_ERROR != 0:
             options = schematron.XML_SCHEMATRON_OUT_ERROR
         else:
             options = schematron.XML_SCHEMATRON_OUT_QUIET
@@ -154,8 +155,9 @@ cdef class Schematron(_Validator):
             return python.PyErr_NoMemory()
 
         self._error_log.connect()
-        schematron.xmlSchematronSetValidStructuredErrors(
-            valid_ctxt, _receiveError, <void*>self.error_log)
+        if _LIBXML_VERSION_INT >= 20632:
+            schematron.xmlSchematronSetValidStructuredErrors(
+                valid_ctxt, _receiveError, <void*>self.error_log)
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
