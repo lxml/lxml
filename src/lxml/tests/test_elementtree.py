@@ -2428,18 +2428,16 @@ class ETreeTestCaseBase(HelperTestCase):
 
     def test_ns_move(self):
         Element = self.etree.Element
-        ElementTree = self.etree.ElementTree
-        
-        one = self.etree.parse(
-            StringIO('<foo><bar xmlns:ns="http://a.b.c"><ns:baz/></bar></foo>'))
-        baz = one.getroot()[0][0]
+        one = self.etree.fromstring(
+            '<foo><bar xmlns:ns="http://a.b.c"><ns:baz/></bar></foo>')
+        baz = one[0][0]
 
-        two = ElementTree(Element('root'))
-        two.getroot().append(baz)
+        two = Element('root')
+        two.append(baz)
         # removing the originating document could cause a crash/error before
         # as namespace is not moved along with it
-        del one
-        self.assertEquals('{http://a.b.c}baz', baz.tag)
+        del one, baz
+        self.assertEquals('{http://a.b.c}baz', two[0].tag)
 
     def test_ns_decl_tostring(self):
         tostring = self.etree.tostring
