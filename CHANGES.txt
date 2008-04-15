@@ -19,6 +19,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in Schematron with libxml2 >= 2.6.31.
+
 * lxml.etree accepted non well-formed namespace prefix names.
 
 Other changes
