@@ -481,6 +481,11 @@ cdef class XSLT:
             c_result = self._run_transform(
                 c_doc, _kw, context, transform_ctxt)
 
+            if transform_ctxt.state != xslt.XSLT_STATE_OK:
+                if c_result is not NULL:
+                    tree.xmlFreeDoc(c_result)
+                    c_result = NULL
+
             if transform_ctxt.profile:
                 c_profile_doc = xslt.xsltGetProfileInformation(transform_ctxt)
                 if c_profile_doc is not NULL:

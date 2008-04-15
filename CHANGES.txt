@@ -19,6 +19,9 @@ Features added
 Bugs fixed
 ----------
 
+* lxml did not honour libxslt's second error state "STOPPED", which
+  let some XSLT errors pass silently.
+
 * Memory leak in Schematron with libxml2 >= 2.6.31.
 
 * lxml.etree accepted non well-formed namespace prefix names.

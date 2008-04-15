@@ -299,19 +299,18 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
-    def _test_xslt_parameter_invalid(self):
+    def test_xslt_parameter_invalid(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:param name="bar"/>
   <xsl:template match="/">
     <foo><xsl:value-of select="$bar" /></foo>
   </xsl:template>
 </xsl:stylesheet>''')
 
         st = etree.XSLT(style)
-        res = self.assertRaises(etree.XSLTApplyError,
-                                st, tree, bar="test")
         res = self.assertRaises(etree.XSLTApplyError,
                                 st, tree, bar="<test/>")
         res = self.assertRaises(etree.XSLTApplyError,
@@ -521,8 +520,8 @@ class ETreeXSLTTestCase(HelperTestCase):
         source = self.parse(xml)
         styledoc = self.parse(xslt)
         style = etree.XSLT(styledoc)
-        result = style(source)
-        self.assertEqual('', str(result))
+
+        self.assertRaises(etree.XSLTApplyError, style, source)
         self.assert_("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
 
