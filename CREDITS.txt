@@ -2,40 +2,54 @@
 Credits
 =======
 
-Stefan Behnel - main developer and maintainer
+Main contributors
+=================
 
-Martijn Faassen - creator of lxml and initial main developer
+Stefan Behnel
+       main developer and maintainer
 
-Ian Bicking - creator and maintainer of lxml.html
+Martijn Faassen
+	creator of lxml and initial main developer
 
-Holger Joukl - bug reports, feedback and development on lxml.objectify
+Ian Bicking
+	creator and maintainer of lxml.html
 
-Sidnei da Sivla - official MS Windows builds
+Holger Joukl
+	bug reports, feedback and development on lxml.objectify
 
-Marc-Antoine Parent - XPath extension function help and patches
+Sidnei da Sivla
+	official MS Windows builds
 
-Olivier Grisel - improved (c)ElementTree compatibility patches, 
-                 website improvements.
+Marc-Antoine Parent
+	XPath extension function help and patches
 
-Kasimier Buchcik - help with specs and libxml2
+Olivier Grisel
+	improved (c)ElementTree compatibility patches, 
+	website improvements.
 
-Florian Wagner - help with copy.deepcopy support, bug reporting
+Kasimier Buchcik
+	help with specs and libxml2
+
+Florian Wagner
+	help with copy.deepcopy support, bug reporting
  
-Emil Kroymann - help with encoding support, bug reporting
-
-Slou - help with index() support, bug reporting
+Emil Kroymann
+	help with encoding support, bug reporting
  
-Paul Everitt - bug reporting, feedback on API design
+Paul Everitt
+	bug reporting, feedback on API design
 
-Victor Ng - Discussions on memory management strategies, vlibxml2
+Victor Ng
+	Discussions on memory management strategies, vlibxml2
 
-Robert Kern - feedback on API design
+Robert Kern
+	feedback on API design
 
-Andreas Pakulat - rpath linking support, doc improvements
+Andreas Pakulat
+	rpath linking support, doc improvements
 
-Steve Howe - Windows builds
-
-David Sankel - building statically on Windows
+David Sankel
+	building statically on Windows
 
 
 ... and lots of other people who contributed to lxml by reporting
@@ -47,15 +61,13 @@ important part of an Open Source project!
 Special thanks goes to:
 =======================
 
-* the libxml2 project and especially Daniel Veillard for a great XML
-  library.
+* Daniel Veillard and the libxml2 project for a great XML library.
 
-* Fredrik Lundh for the ElementTree API.
+* Fredrik Lundh for ElementTree, its API, and the competition through
+  cElementTree.
 
 * Greg Ewing (Pyrex) and Robert Bradshaw (Cython) for the binding
   technology.
 
 * the codespeak crew, in particular Philipp von Weitershausen and
   Holger Krekel for hosting lxml on codespeak.net
-
-* Infrae for initiating the project.
