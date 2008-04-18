@@ -2,6 +2,7 @@ PYTHON?=python
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
+LXMLVERSION=`cat version.txt`
 
 all: inplace
 
@@ -41,7 +42,7 @@ ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
 html: inplace
-	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . `cat version.txt`
+	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
@@ -49,6 +50,13 @@ html: inplace
 			-o ../doc/html/api --no-private --exclude='[.]html[.]tests|[.]_' \
 			--name lxml --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
+
+pdf:
+	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
+	(cd doc/pdf && pdflatex lxmldoc.tex && pdflatex lxmldoc.tex)
+	@echo "PDF available as doc/pdf/lxmldoc.pdf"
+
+# Two pdflatex runs are needed to build the correct Table of contents.
 
 test: test_inplace
 

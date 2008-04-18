@@ -71,8 +71,8 @@ very easy to add as tiny test methods, so if you write a performance test for
 a specific part of the API yourself, please consider sending it to the lxml
 mailing list.
 
-The timings cited below compare lxml 2.0 final (with libxml2 2.6.31)
-to the January 2008 SVN trunk versions of ElementTree (1.3alpha) and
+The timings cited below compare lxml 2.1 (with libxml2 2.6.32) to the
+January 2008 SVN trunk versions of ElementTree (1.3alpha) and
 cElementTree (1.2.7).  They were run single-threaded on a 1.8GHz Intel
 Core Duo machine under Ubuntu Linux 7.10 (Gutsy).  The C libraries
 were compiled with the same platform specific optimisation flags.  The
@@ -215,10 +215,10 @@ restructuring.  This can be seen from the tree setup times of the benchmark
 (given in seconds)::
 
   lxe:       --     S-     U-     -A     SA     UA  
-       T1: 0.0783 0.0777 0.0774 0.0787 0.0781 0.0783
-       T2: 0.0799 0.0796 0.0799 0.0879 0.0882 0.0886
-       T3: 0.0245 0.0216 0.0217 0.0577 0.0575 0.0572
-       T4: 0.0003 0.0003 0.0003 0.0011 0.0011 0.0011
+       T1: 0.0792 0.0821 0.0869 0.0741 0.0814 0.0865
+       T2: 0.0776 0.0830 0.0885 0.0808 0.0877 0.0933
+       T3: 0.0248 0.0231 0.0240 0.0430 0.0444 0.0451
+       T4: 0.0003 0.0003 0.0003 0.0007 0.0007 0.0007
   cET:       --     S-     U-     -A     SA     UA  
        T1: 0.0272 0.0264 0.0267 0.0268 0.0261 0.0265
        T2: 0.0280 0.0274 0.0273 0.0273 0.0276 0.0275
@@ -315,11 +315,11 @@ requires lxml to do recursive adaptations throughout the moved tree structure.
 The following benchmark appends all root children of the second tree to the
 root of the first tree::
 
-  lxe: append_from_document      (--TR T1,T2)    3.3841 msec/pass
+  lxe: append_from_document      (--TR T1,T2)    2.7261 msec/pass
   cET: append_from_document      (--TR T1,T2)    0.2699 msec/pass
   ET : append_from_document      (--TR T1,T2)    1.2650 msec/pass
 
-  lxe: append_from_document      (--TR T3,T4)    0.0441 msec/pass
+  lxe: append_from_document      (--TR T3,T4)    0.0460 msec/pass
   cET: append_from_document      (--TR T3,T4)    0.0169 msec/pass
   ET : append_from_document      (--TR T3,T4)    0.0820 msec/pass
 
