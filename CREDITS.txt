@@ -9,48 +9,50 @@ Stefan Behnel
        main developer and maintainer
 
 Martijn Faassen
-	creator of lxml and initial main developer
+       creator of lxml and initial main developer
 
 Ian Bicking
-	creator and maintainer of lxml.html
+       creator and maintainer of lxml.html
 
 Holger Joukl
-	bug reports, feedback and development on lxml.objectify
+       bug reports, feedback and development on lxml.objectify
 
 Sidnei da Sivla
-	official MS Windows builds
+       official MS Windows builds
 
 Marc-Antoine Parent
-	XPath extension function help and patches
+       XPath extension function help and patches
 
 Olivier Grisel
-	improved (c)ElementTree compatibility patches, 
-	website improvements.
+       improved (c)ElementTree compatibility patches, 
+       website improvements.
 
 Kasimier Buchcik
-	help with specs and libxml2
+       help with specs and libxml2
 
 Florian Wagner
-	help with copy.deepcopy support, bug reporting
+       help with copy.deepcopy support, bug reporting
  
 Emil Kroymann
-	help with encoding support, bug reporting
+       help with encoding support, bug reporting
  
 Paul Everitt
-	bug reporting, feedback on API design
+       bug reporting, feedback on API design
 
 Victor Ng
-	Discussions on memory management strategies, vlibxml2
+       Discussions on memory management strategies, vlibxml2
 
 Robert Kern
-	feedback on API design
+       feedback on API design
 
 Andreas Pakulat
-	rpath linking support, doc improvements
+       rpath linking support, doc improvements
 
 David Sankel
-	building statically on Windows
+       building statically on Windows
 
+Marcin Kasperski
+       PDF documentation generation
 
 ... and lots of other people who contributed to lxml by reporting
 bugs, discussing its functionality or blaming the docs for the bugs in
