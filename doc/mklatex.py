@@ -112,6 +112,21 @@ def publish(dirname, lxml_path, release):
     header = []
     titles = {}
 
+    replace_relative_hyperrefs = re.compile(
+        r'\\href\{([^/}]+)[.]([^.]+)\}\{([^}]+)\}').sub
+    def build_hyperref(match):
+        basename, extension, linktext = match.groups()
+        outname = BASENAME_MAP.get(basename, basename)
+        if '#' in basename or extension != 'html':
+            return r'\href{http://codespeak.net/lxml/%s.%s}{%s}' % (
+                outname, extension, linktext)
+        else:
+            return r"\hyperref[_part_%s.tex]{%s}" % (outname, linktext)
+    def fix_relative_hyperrefs(line):
+        if r'\href' not in line:
+            return line
+        return replace_relative_hyperrefs(build_hyperref, line)
+
     # Building pages
     for section, text_files in SITE_STRUCTURE:
         for filename in text_files:
@@ -132,7 +147,8 @@ def publish(dirname, lxml_path, release):
 
                 final_name = os.path.join(dirname, "_part_%s" % outname)
 
-                title, hd = tex_postprocess(outpath, final_name, not header)
+                title, hd = tex_postprocess(outpath, final_name, not header,
+                                            process_line=fix_relative_hyperrefs)
                 if not header:
                     header = hd
                 titles[outname] = title
@@ -171,6 +187,11 @@ def publish(dirname, lxml_path, release):
 
     master.write("\\tableofcontents\n\n")
 
+    def write_chapter(title, outname):
+        master.write(
+            "\\chapter{%s}\n\\label{_part_%s}\n\n\\input{_part_%s}\n\n" % (
+                title, outname, outname))
+
     for section, text_files in SITE_STRUCTURE:
         master.write("\\part{%s}\n\n" % section)
         for filename in text_files:
@@ -184,12 +205,9 @@ def publish(dirname, lxml_path, release):
                 basename = os.path.splitext(os.path.basename(filename))[0]
                 basename = BASENAME_MAP.get(basename, basename)
                 outname = basename + '.tex'
-                ## TODO: true title
-                master.write("\\chapter{%s}\n\n" % titles[outname])
-                master.write("\\input{_part_%s}\n\n" % outname)
+                write_chapter(titles[outname], outname)
 
-    master.write("\\chapter{Changes}\n\n")
-    master.write("\\input{_part_%s}\n\n" % chgname)
+    write_chapter("Changes", chgname)
 
     master.write("\end{document}\n")
                 
