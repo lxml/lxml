@@ -112,12 +112,17 @@ def publish(dirname, lxml_path, release):
     header = []
     titles = {}
 
-    replace_relative_hyperrefs = re.compile(
-        r'\\href\{([^/}]+)[.]([^.]+)\}\{([^}]+)\}').sub
+    replace_interdoc_hyperrefs = re.compile(
+        r'\\href\{([^/}]+)[.]([^./}]+)\}\{([^}]+)\}').sub
+    replace_docinternal_hyperrefs = re.compile(
+        r'\\href\{\\#([^}]+)\}').sub
     def build_hyperref(match):
         basename, extension, linktext = match.groups()
         outname = BASENAME_MAP.get(basename, basename)
-        if '#' in basename or extension != 'html':
+        if '#' in extension:
+            anchor = extension.split('#')[-1]
+            return r"\hyperref[%s]{%s}" % (anchor, linktext)
+        elif extension != 'html':
             return r'\href{http://codespeak.net/lxml/%s.%s}{%s}' % (
                 outname, extension, linktext)
         else:
@@ -125,7 +130,8 @@ def publish(dirname, lxml_path, release):
     def fix_relative_hyperrefs(line):
         if r'\href' not in line:
             return line
-        return replace_relative_hyperrefs(build_hyperref, line)
+        line = replace_interdoc_hyperrefs(build_hyperref, line)
+        return replace_docinternal_hyperrefs(r'\hyperref[\1]', line)
 
     # Building pages
     for section, text_files in SITE_STRUCTURE:
