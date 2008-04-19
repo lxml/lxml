@@ -20,8 +20,11 @@ provides the Element interface for subclasses:
 
 This defines a new Element class ``HonkElement`` with a property ``honking``.
 
-Note that you cannot (or rather *must not*) instantiate this class yourself.
-lxml.etree will do that for you through its normal ElementTree API.
+Note that you cannot (or rather *must not*) instantiate this class
+yourself.  lxml.etree will do that for you through its normal
+ElementTree API.  All you have to do is tell lxml which class to use
+for which kind of Element.  This is done through a class lookup
+scheme, as described below.
 
 .. contents::
 ..
