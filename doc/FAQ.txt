@@ -775,7 +775,7 @@ that breaks the parser.  Normally, this will result in a segfault.  Please
 refer to the `iterparse section`_ of the lxml API documentation to find out
 what you can do and what you can't do.
 
-.. _`iterparse section`: api.html#iterparse-and-iterwalk
+.. _`iterparse section`: parsing.html#iterparse-and-iterwalk
 
 
 How do I output null characters in XML text?
