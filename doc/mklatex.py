@@ -156,10 +156,12 @@ def publish(dirname, lxml_path, release):
     # also convert CHANGES.txt
     find_version_title = re.compile(
         r'(.*\\section\{)([0-9][^\} ]*)\s+\(([^)]+)\)(\}.*)').search
-    def change_version_title(line):
+    def fix_changelog(line):
         m = find_version_title(line)
         if m:
             line = "%sChanges in version %s, released %s%s" % m.groups()
+        else:
+            line = line.replace(r'\subsection{', r'\subsection*{')
         return line
 
     chgname = 'changes-%s.tex' % release
@@ -168,7 +170,7 @@ def publish(dirname, lxml_path, release):
                os.path.join(lxml_path, 'CHANGES.txt'),
                chgpath)
     tex_postprocess(chgpath, os.path.join(dirname, "_part_%s" % chgname),
-                    process_line=change_version_title)
+                    process_line=fix_changelog)
 
     # Writing a master file
     print "Building %s\n" % TARGET_FILE
