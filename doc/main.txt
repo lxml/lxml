@@ -47,6 +47,10 @@ the FAQ_.
 Documentation
 -------------
 
+The complete lxml documentation is available for download as `PDF
+documentation`_.  The HTML documentation from this web site is part of
+the normal `source download <#download>`_.
+
 * ElementTree:
 
   * `ElementTree API`_
@@ -210,6 +214,8 @@ obstacle to using lxml in your codebase.
 
 Old Versions
 ------------
+
+.. _`PDF documentation`: lxmldoc-2.1beta1.pdf
 
 * `lxml 2.1alpha1`_, released 2008-03-27 (`changes for 2.1alpha1`_)
 
