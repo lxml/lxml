@@ -54,7 +54,8 @@ html: inplace
 pdf:
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
 	(cd doc/pdf && pdflatex lxmldoc.tex && pdflatex lxmldoc.tex)
-	@echo "PDF available as doc/pdf/lxmldoc.pdf"
+	@mv doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
+	@echo "PDF available as doc/pdf/lxmldoc-${LXMLVERSION}.pdf"
 
 # Two pdflatex runs are needed to build the correct Table of contents.
 
@@ -75,6 +76,7 @@ clean:
 docclean:
 	rm -f doc/html/*.html
 	rm -fr doc/html/api
+	rm -fr doc/pdf
 
 realclean: clean docclean
 	find . -name '*.c' -exec rm -f {} \;
