@@ -256,7 +256,12 @@ def has_option(name):
         sys.argv.remove('--%s' % name)
         return True
     except ValueError:
-        return False
+        pass
+    # allow passing all cmd line options also as environment variables
+    env_val = os.getenv(name.upper().replace('-', '_'), 'false').upper()
+    if env_val == "true":
+        return True
+    return False
 
 # pick up any commandline options
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
