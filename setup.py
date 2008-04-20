@@ -40,6 +40,7 @@ svn_version = versioninfo.svn_version()
 versioninfo.create_version_h(svn_version)
 print("Building lxml version %s." % svn_version)
 
+OPTION_RUN_TESTS = setupinfo.has_option('run-tests')
 
 branch_link = """
 After an official release of a new stable series, current bug fixes become
@@ -105,3 +106,8 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
         STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
     **extra_options
 )
+
+if OPTION_RUN_TESTS:
+    print("Running tests.")
+    import test
+    sys.exit( test.main(sys.argv[:1]) )
