@@ -22,6 +22,30 @@ htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
+# LaTeX snippets
+
+DOCUMENT_CLASS = r"""
+\documentclass[10pt,english]{report}
+\usepackage[a4paper]{geometry}
+\parindent0pt
+\parskip1ex
+"""
+
+PYGMENTS_IMPORT = r"""
+\usepackage{fancyvrb}
+\input{_part_pygments.tex}
+"""
+
+def write_chapter(master, title, outname):
+    master.write(r"""
+\chapter{%s}
+\label{_part_%s}
+\input{_part_%s}
+""".replace('            ', '') % (title, outname, outname))
+
+
+# the program ----
+
 def rest2latex(script, source_path, dest_path):
     command = ('%s %s %s  %s > %s' %
                (sys.executable, script, RST2LATEX_OPTIONS,
@@ -182,23 +206,17 @@ def publish(dirname, lxml_path, release):
     print "Building %s\n" % TARGET_FILE
     master = file( os.path.join(dirname, TARGET_FILE), "w")
     for hln in header:
-        if hln.startswith("\\documentclass"):
+        if hln.startswith(r"\documentclass"):
             #hln = hln.replace('article', 'book')
-            hln = "\\documentclass[10pt,english]{book}\n\\usepackage[a4paper]{geometry}\n"
-        elif hln.startswith("\\begin{document}"):
+            hln = DOCUMENT_CLASS
+        elif hln.startswith(r"\begin{document}"):
             # pygments support
-            master.write("\\usepackage{fancyvrb}\n")
-            master.write("\\input{_part_pygments.tex}\n")
-        elif hln.startswith("\\title{"):
+            master.write(PYGMENTS_IMPORT)
+        elif hln.startswith(r"\title{"):
             hln = re.sub("\{[^\}]*\}", '{%s}' % book_title, hln)
         master.write(hln)
 
     master.write("\\tableofcontents\n\n")
-
-    def write_chapter(title, outname):
-        master.write(
-            "\\chapter{%s}\n\\label{_part_%s}\n\n\\input{_part_%s}\n\n" % (
-                title, outname, outname))
 
     for section, text_files in SITE_STRUCTURE:
         master.write("\\part{%s}\n\n" % section)
@@ -213,11 +231,11 @@ def publish(dirname, lxml_path, release):
                 basename = os.path.splitext(os.path.basename(filename))[0]
                 basename = BASENAME_MAP.get(basename, basename)
                 outname = basename + '.tex'
-                write_chapter(titles[outname], outname)
+                write_chapter(master, titles[outname], outname)
 
-    write_chapter("Changes", chgname)
+    write_chapter(master, "Changes", chgname)
 
-    master.write("\end{document}\n")
+    master.write("\\end{document}\n")
                 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
