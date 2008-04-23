@@ -5,22 +5,40 @@
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 import os, shutil, re, sys
 
+try:
+    set
+except NameError:
+    # Python 2.3
+    from sets import Set as set
+
 TARGET_FILE = "lxmldoc.tex"
 
 RST2LATEX_OPTIONS = " ".join([
 #    "--no-toc-backlinks",
     "--strip-comments",
     "--language en",
-#    "--date",
+    "--date",
     "--use-latex-footnotes",
     "--use-latex-citations",
     "--use-latex-toc",
-    #"--font-encoding=T1",
+    "--font-encoding=T1",
+    "--output-encoding=utf-8",
+    "--input-encoding=utf-8",
     ])
 
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
+
+replace_epydoc_macros = re.compile(r'(,\s*amssymb|dvips\s*,\s*)').sub
+replace_rst_macros = re.compile(r'(\\usepackage\{color}|\\usepackage\[[^]]*]\{hyperref})').sub
+
+FILENAME_MAP = {
+    "@API reference" : "api.tex"
+}
+
+BASENAME_MAP = BASENAME_MAP.copy()
+BASENAME_MAP.update({'api' : 'lxmlapi'})
 
 # LaTeX snippets
 
@@ -36,12 +54,18 @@ PYGMENTS_IMPORT = r"""
 \input{_part_pygments.tex}
 """
 
-def write_chapter(master, title, outname):
+EPYDOC_IMPORT = r"""
+\input{_part_epydoc.tex}
+"""
+
+def write_chapter(master, title, filename):
+    filename = os.path.join(os.path.dirname(filename),
+                            "_part_%s" % os.path.basename(filename))
     master.write(r"""
 \chapter{%s}
-\label{_part_%s}
-\input{_part_%s}
-""".replace('            ', '') % (title, outname, outname))
+\label{%s}
+\input{%s}
+""".replace('            ', '') % (title, filename, filename))
 
 
 # the program ----
@@ -57,7 +81,24 @@ def build_pygments_macros(filename):
     text = LatexFormatter().get_style_defs()
     f = file(filename, "w")
     f.write(text)
+    f.write('\n')
     f.close()
+
+def copy_epydoc_macros(src, dest, existing_header_lines):
+    doc = file(src, 'r')
+    out = file(dest, "w")
+    for line in doc:
+        if line.startswith('%% generator'):
+            break
+        if line.startswith('%') or \
+                r'\documentclass' in line or \
+                r'\makeindex' in line:
+            continue
+        if line.startswith(r'\usepackage') and line in existing_header_lines:
+            continue
+        out.write( replace_epydoc_macros('', line) )
+    out.close()
+    doc.close()
 
 def noop(input):
     return input
@@ -79,6 +120,7 @@ def tex_postprocess(src, dest, want_header = False, process_line=noop):
     """
     title = ''
     header = []
+    add_header_line = header.append
     global counter_no
     counter_no = counter_no + 1
     counter_text = "listcnt%d" % counter_no
@@ -92,8 +134,10 @@ def tex_postprocess(src, dest, want_header = False, process_line=noop):
     iter_lines = iter(src.readlines())
     for l in iter_lines:
         l = process_line(l)
+        if not l:
+            continue
         if want_header:
-            header.append(l)
+            add_header_line(replace_rst_macros('', l))
         m = search_title(l)
         if m:
             title = m.group(0)
@@ -131,6 +175,7 @@ def publish(dirname, lxml_path, release):
 
     # build pygments macros
     build_pygments_macros(os.path.join(dirname, '_part_pygments.tex'))
+    have_epydoc_macros = False
 
     # Used in postprocessing of generated LaTeX files
     header = []
@@ -160,28 +205,43 @@ def publish(dirname, lxml_path, release):
     # Building pages
     for section, text_files in SITE_STRUCTURE:
         for filename in text_files:
-            if filename.startswith('@'):
+            special = False
+            if filename in FILENAME_MAP:
+                outname = FILENAME_MAP[filename]
+                if not have_epydoc_macros:
+                    have_epydoc_macros = True
+                    copy_epydoc_macros(
+                        os.path.join(dirname, outname),
+                        os.path.join(dirname, '_part_epydoc.tex'),
+                        set(header))
+                special = True
+            elif filename.startswith('@'):
                 print "Not yet implemented: %s" % filename[1:]
+                continue
                 #page_title = filename[1:]
                 #url = href_map[page_title]
                 #build_menu_entry(page_title, url, section_head)
             else:
-                path = os.path.join(doc_dir, filename)
                 basename = os.path.splitext(os.path.basename(filename))[0]
                 basename = BASENAME_MAP.get(basename, basename)
                 outname = basename + '.tex'
-                outpath = os.path.join(dirname, outname)
+            
+            outpath = os.path.join(dirname, outname)
+            print "Creating %s" % outname
 
-                print "Creating %s" % outname
+            if not special:
+                path = os.path.join(doc_dir, filename)
                 rest2latex(script, path, outpath)
 
-                final_name = os.path.join(dirname, "_part_%s" % outname)
+            final_name = os.path.join(dirname, os.path.dirname(outname),
+                                      "_part_%s" % os.path.basename(outname))
 
-                title, hd = tex_postprocess(outpath, final_name, not header,
-                                            process_line=fix_relative_hyperrefs)
-                if not header:
-                    header = hd
-                titles[outname] = title
+            title, hd = tex_postprocess(outpath, final_name,
+                                        want_header = not header,
+                                        process_line=fix_relative_hyperrefs)
+            if not header:
+                header = hd
+            titles[outname] = title
 
     # also convert CHANGES.txt
     find_version_title = re.compile(
@@ -209,8 +269,10 @@ def publish(dirname, lxml_path, release):
         if hln.startswith(r"\documentclass"):
             #hln = hln.replace('article', 'book')
             hln = DOCUMENT_CLASS
+        elif hln.startswith("%% generator "):
+            master.write(EPYDOC_IMPORT)
         elif hln.startswith(r"\begin{document}"):
-            # pygments support
+            # pygments and epydoc support
             master.write(PYGMENTS_IMPORT)
         elif hln.startswith(r"\title{"):
             hln = re.sub("\{[^\}]*\}",
@@ -224,8 +286,10 @@ def publish(dirname, lxml_path, release):
     for section, text_files in SITE_STRUCTURE:
         master.write("\n\n\\part{%s}\n" % section)
         for filename in text_files:
-            if filename.startswith('@'):
-                pass
+            if filename in FILENAME_MAP:
+                outname = FILENAME_MAP[filename]
+            elif filename.startswith('@'):
+                continue
                 #print "Not yet implemented: %s" % filename[1:]
                 #page_title = filename[1:]
                 #url = href_map[page_title]
@@ -234,7 +298,7 @@ def publish(dirname, lxml_path, release):
                 basename = os.path.splitext(os.path.basename(filename))[0]
                 basename = BASENAME_MAP.get(basename, basename)
                 outname = basename + '.tex'
-                write_chapter(master, titles[outname], outname)
+            write_chapter(master, titles[outname], outname)
 
     write_chapter(master, "Changes", chgname)
 

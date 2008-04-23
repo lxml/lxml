@@ -41,17 +41,30 @@ ftest_build: build
 ftest_inplace: inplace
 	$(PYTHON) test.py -f $(TESTFLAGS) $(TESTOPTS)
 
-html: inplace
-	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
+apihtml: inplace
 	rm -fr doc/html/api
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
 			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" \
 			-o ../doc/html/api --no-private --exclude='[.]html[.]tests|[.]_' \
-			--name lxml --url http://codespeak.net/lxml/ lxml/) \
+			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
-pdf:
+html: inplace apihtml
+	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
+
+apipdf: inplace
+	rm -fr doc/pdf
+	mkdir -p doc/pdf
+	@[ -x "`which epydoc`" ] \
+		&& (cd src && echo "Generating API docs ..." && \
+			PYTHONPATH=. epydoc -v --latex --docformat "restructuredtext en" \
+			-o ../doc/pdf --no-private --exclude='([.]html)?[.]tests|[.]_' \
+			--exclude-introspect='html[.]clean' \
+			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
+		|| (echo "not generating epydoc API documentation")
+
+pdf: apipdf
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
 	(cd doc/pdf && pdflatex lxmldoc.tex && pdflatex lxmldoc.tex)
 	@pdfopt doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
