@@ -183,7 +183,7 @@ still available in lxml 2.0 and will be removed in lxml 2.1:
   - ``etree.clearErrorLog()``, use ``etree.clear_error_log()``
 
   - ``etree.useGlobalPythonLog()``, use
-  ``etree.use_global_python_log()``
+    ``etree.use_global_python_log()``
 
   - ``etree.ElementClassLookup.setFallback()``, use
     ``etree.ElementClassLookup.set_fallback()``
