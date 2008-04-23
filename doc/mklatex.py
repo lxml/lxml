@@ -179,7 +179,6 @@ def publish(dirname, lxml_path, release):
 
     # build pygments macros
     build_pygments_macros(os.path.join(dirname, '_part_pygments.tex'))
-    have_epydoc_macros = False
 
     # Used in postprocessing of generated LaTeX files
     header = []
@@ -207,6 +206,7 @@ def publish(dirname, lxml_path, release):
         return replace_docinternal_hyperrefs(r'\hyperref[\1]', line)
 
     # Building pages
+    have_epydoc_macros = False
     for section, text_files in SITE_STRUCTURE:
         for filename in text_files:
             special = False
@@ -280,7 +280,7 @@ def publish(dirname, lxml_path, release):
             master.write(PYGMENTS_IMPORT)
         elif hln.startswith(r"\title{"):
             hln = replace_content(
-                r'{%s\\\\\\vspace{1em}\\includegraphics{../html/tagpython.png}}' % book_title, hln)
+                r'{%s\\\\\\vspace{1cm}\\includegraphics[width=2.5cm]{../html/tagpython-big.png}}' % book_title, hln)
         elif hln.startswith(r"\date{"):
             hln = replace_content(
                 r'{%s}' % datetime.date.today().isoformat(), hln)
