@@ -213,13 +213,16 @@ def publish(dirname, lxml_path, release):
             # pygments support
             master.write(PYGMENTS_IMPORT)
         elif hln.startswith(r"\title{"):
-            hln = re.sub("\{[^\}]*\}", '{%s}' % book_title, hln)
+            hln = re.sub("\{[^\}]*\}",
+                         r'{%s\\\\\\vspace{1em}\\includegraphics{../html/tagpython.png}}' % book_title, hln)
+        elif hln.startswith("pdftitle"):
+            hln = re.sub("\{[^\}]*\}", r'{%s}' % book_title, hln)
         master.write(hln)
 
-    master.write("\\tableofcontents\n\n")
+    master.write("\\tableofcontents\n")
 
     for section, text_files in SITE_STRUCTURE:
-        master.write("\\part{%s}\n\n" % section)
+        master.write("\n\n\\part{%s}\n" % section)
         for filename in text_files:
             if filename.startswith('@'):
                 pass
