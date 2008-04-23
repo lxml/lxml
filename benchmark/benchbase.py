@@ -199,8 +199,9 @@ class TreeBenchMark(object):
             el = SubElement(root, "{abc}"+ch1*5, attributes)
             el.text = text
             for ch2 in atoz:
+                tag = "{cdefg}%s00001" % ch2
                 for i in range(20 * TREE_FACTOR):
-                    SubElement(el, "{cdefg}%s%05d" % (ch2, i)).tail = text
+                    SubElement(el, tag).tail = text
         t = current_time() - t
         return (root, t)
 
@@ -216,7 +217,7 @@ class TreeBenchMark(object):
                 el = SubElement(root, "{abc}"+ch1*5, attributes)
                 el.text = text
                 for ch2 in atoz:
-                    SubElement(el, "{cdefg}%s%05d" % (ch2, i)).tail = text
+                    SubElement(el, "{cdefg}%s00001" % ch2).tail = text
         t = current_time() - t
         return (root, t)
 
@@ -229,7 +230,7 @@ class TreeBenchMark(object):
         children = [root]
         for i in range(6 + TREE_FACTOR):
             tag_no = count().next
-            children = [ SubElement(c, "{cdefg}a%05d" % i, attributes)
+            children = [ SubElement(c, "{cdefg}a%05d" % (i%8), attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         for child in children:
             child.text = text

@@ -46,14 +46,14 @@ class BenchMark(benchbase.TreeBenchMark):
     def bench_attributes_deep(self, root):
         "1 2 4"
         for i in self.repeat3000:
-            root.zzzzz['{cdefg}z00000']
+            root.zzzzz['{cdefg}a00001']
 
     def bench_attributes_deep_cached(self, root):
         "1 2 4"
         cache1 = root.zzzzz
-        cache2 = cache1['{cdefg}z00000']
+        cache2 = cache1['{cdefg}a00001']
         for i in self.repeat3000:
-            root.zzzzz['{cdefg}z00000']
+            root.zzzzz['{cdefg}a00001']
 
     def bench_objectpath(self, root):
         "1 2 4"
@@ -63,15 +63,15 @@ class BenchMark(benchbase.TreeBenchMark):
 
     def bench_objectpath_deep(self, root):
         "1 2 4"
-        path = self.objectify.ObjectPath(".zzzzz.{cdefg}z00000")
+        path = self.objectify.ObjectPath(".zzzzz.{cdefg}a00001")
         for i in self.repeat3000:
             path(root)
 
     def bench_objectpath_deep_cached(self, root):
         "1 2 4"
         cache1 = root.zzzzz
-        cache2 = cache1['{cdefg}z00000']
-        path = self.objectify.ObjectPath(".zzzzz.{cdefg}z00000")
+        cache2 = cache1['{cdefg}a00001']
+        path = self.objectify.ObjectPath(".zzzzz.{cdefg}a00001")
         for i in self.repeat3000:
             path(root)
 
