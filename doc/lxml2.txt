@@ -180,15 +180,40 @@ still available in lxml 2.0 and will be removed in lxml 2.1:
 * CamelCaseNamed module functions and methods were renamed to their
   underscore equivalents to follow `PEP 8`_ in naming.
 
-  - ``etree.setDefaultParser()`` -> ``etree.set_default_parser()``
+  - ``etree.clearErrorLog()``, use ``etree.clear_error_log()``
 
-  - ``etree.getDefaultParser()`` -> ``etree.get_default_parser()``
+  - ``etree.useGlobalPythonLog()``, use
+  ``etree.use_global_python_log()``
 
-  - ``etree.useGlobalPythonLog()`` -> ``etree.use_global_python_log()``
+  - ``etree.ElementClassLookup.setFallback()``, use
+    ``etree.ElementClassLookup.set_fallback()``
 
-  - ``XMLParser.setElementClassLookup()`` -> ``.set_element_class_lookup()``
+  - ``etree.getDefaultParser()``, use ``etree.get_default_parser()``
 
-  - ``HTMLParser.setElementClassLookup()`` -> ``.set_element_class_lookup()``
+  - ``etree.setDefaultParser()``, use ``etree.set_default_parser()``
+
+  - ``etree.setElementClassLookup()``, use
+    ``etree.set_element_class_lookup()``
+
+  - ``XMLParser.setElementClassLookup()``, use ``.set_element_class_lookup()``
+
+  - ``HTMLParser.setElementClassLookup()``, use ``.set_element_class_lookup()``
+
+    Note that ``parser.setElementClassLookup()`` has not been removed
+    yet, although ``parser.set_element_class_lookup()`` should be used
+    instead.
+
+  - ``xpath_evaluator.registerNamespace()``, use
+    ``xpath_evaluator.register_namespace()``
+
+  - ``xpath_evaluator.registerNamespaces()``, use
+    ``xpath_evaluator.register_namespaces()``
+
+  - ``objectify.setPytypeAttributeTag``, use
+    ``objectify.set_pytype_attribute_tag``
+
+  - ``objectify.setDefaultParser()``, use
+    ``objectify.set_default_parser()``
 
 * The ``.getiterator()`` method on Elements and ElementTrees was
   renamed to ``.iter()`` to follow ElementTree 1.3.
