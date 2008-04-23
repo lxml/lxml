@@ -54,7 +54,7 @@ html: inplace
 pdf:
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
 	(cd doc/pdf && pdflatex lxmldoc.tex && pdflatex lxmldoc.tex)
-	@mv doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
+	@pdfopt doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
 	@echo "PDF available as doc/pdf/lxmldoc-${LXMLVERSION}.pdf"
 
 # Two pdflatex runs are needed to build the correct Table of contents.
