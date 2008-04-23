@@ -65,7 +65,7 @@ def write_chapter(master, title, filename):
 \chapter{%s}
 \label{%s}
 \input{%s}
-""".replace('            ', '') % (title, filename, filename))
+""" % (title, filename, filename))
 
 
 # the program ----
@@ -94,8 +94,11 @@ def copy_epydoc_macros(src, dest, existing_header_lines):
                 r'\documentclass' in line or \
                 r'\makeindex' in line:
             continue
-        if line.startswith(r'\usepackage') and line in existing_header_lines:
-            continue
+        if line.startswith(r'\usepackage'):
+            if line in existing_header_lines:
+                continue
+            if '{hyperref}' in line:
+                line = line.replace('black', 'blue')
         out.write( replace_epydoc_macros('', line) )
     out.close()
     doc.close()
