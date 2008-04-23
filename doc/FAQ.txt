@@ -831,7 +831,7 @@ implementation would not bring any performance benefits.
 How can I find out which namespace prefixes are used in a document?
 -------------------------------------------------------------------
 
-You can traverse the document (``getiterator()``) and collect the prefix
+You can traverse the document (``root.iter()``) and collect the prefix
 attributes from all Elements into a set.  However, it is unlikely that you
 really want to do that.  You do not need these prefixes, honestly.  You only
 need the namespace URIs.  All namespace comparisons use these, so feel free to

@@ -3,7 +3,7 @@
 #    python mklatex.py latex .. 1.0
 
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
-import os, shutil, re, sys
+import os, shutil, re, sys, datetime
 
 try:
     set
@@ -17,7 +17,7 @@ RST2LATEX_OPTIONS = " ".join([
 #    "--no-toc-backlinks",
     "--strip-comments",
     "--language en",
-    "--date",
+#    "--date",
     "--use-latex-footnotes",
     "--use-latex-citations",
     "--use-latex-toc",
@@ -29,6 +29,7 @@ RST2LATEX_OPTIONS = " ".join([
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
+replace_content = re.compile("\{[^\}]*\}").sub
 
 replace_epydoc_macros = re.compile(r'(,\s*amssymb|dvips\s*,\s*)').sub
 replace_rst_macros = re.compile(r'(\\usepackage\{color}|\\usepackage\[[^]]*]\{hyperref})').sub
@@ -278,10 +279,14 @@ def publish(dirname, lxml_path, release):
             # pygments and epydoc support
             master.write(PYGMENTS_IMPORT)
         elif hln.startswith(r"\title{"):
-            hln = re.sub("\{[^\}]*\}",
-                         r'{%s\\\\\\vspace{1em}\\includegraphics{../html/tagpython.png}}' % book_title, hln)
+            hln = replace_content(
+                r'{%s\\\\\\vspace{1em}\\includegraphics{../html/tagpython.png}}' % book_title, hln)
+        elif hln.startswith(r"\date{"):
+            hln = replace_content(
+                r'{%s}' % datetime.date.today().isoformat(), hln)
         elif hln.startswith("pdftitle"):
-            hln = re.sub("\{[^\}]*\}", r'{%s}' % book_title, hln)
+            hln = replace_content(
+                r'{%s}' % book_title, hln)
         master.write(hln)
 
     master.write("\\tableofcontents\n")
