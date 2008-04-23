@@ -1,6 +1,10 @@
 =======================
 The lxml.etree Tutorial
 =======================
+ 
+.. meta::
+  :description: The lxml tutorial on XML that feels like Python
+  :keywords: lxml, etree, tutorial, ElementTree, Python, XML, HTML
 
 :Author:
   Stefan Behnel

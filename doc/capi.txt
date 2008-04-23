@@ -87,11 +87,8 @@ API, import the ``lxml.etree`` module and then call the import function:
     #include "etree.h"
 
     /* setup code */
-    static PyObject* m_etree;
-    m_etree = _ADD_YOUR_WAY_TO_IMPORT_A_MODULE_("lxml.etree");
+    import_lxml__etree()
 
-    import_etree(m_etree);
-
-Note that including ``etree.h`` does not automatically include the header
-files it requires.  Note also that the above list of common imports may not be
-sufficient.
+Note that including ``etree.h`` does not automatically include the
+header files it requires.  Note also that the above list of common
+includes may not be sufficient.
