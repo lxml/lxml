@@ -69,9 +69,9 @@ cdef class XSLTExtension:
 
 cdef _registerXSLTExtensions(xslt.xsltTransformContext* c_ctxt,
                              extension_dict):
-    for ns, name in extension_dict:
+    for ns_utf, name_utf in extension_dict:
         xslt.xsltRegisterExtElement(
-            c_ctxt, _cstr(name), _cstr(ns), _callExtensionElement)
+            c_ctxt, _cstr(name_utf), _cstr(ns_utf), _callExtensionElement)
 
 cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
                                 xmlNode* c_context_node,
@@ -94,7 +94,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
         dict_result = python.PyDict_GetItem(
             context._extension_elements, (c_uri, c_inst_node.name))
         if dict_result is NULL:
-            raise KeyError("extension element %s not found",
+            raise KeyError("extension element %s not found" %
                            c_inst_node.name)
         extension = <object>dict_result
 
