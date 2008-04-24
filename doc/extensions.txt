@@ -1,6 +1,6 @@
-======================================
-Extension functions for XPath and XSLT
-======================================
+====================================
+Python extensions for XPath and XSLT
+====================================
 
 This document describes how to use Python extension functions in XPath
 and XSLT like this:
@@ -9,7 +9,7 @@ and XSLT like this:
 
   <xsl:value-of select="f:myPythonFunction(.//sometag)" />
 
-as well as extension elements in XSLT as in the following example:
+and extension elements in XSLT as in the following example:
 
 .. sourcecode:: xml
 
@@ -39,9 +39,9 @@ XPath Extension functions
 =========================
 
 Here is how an extension function looks like.  As the first argument,
-it always receives an opaque context object (see below).  The other
-arguments are provided by the respective call in the XPath expression,
-one in the following examples.  Any number of arguments is allowed:
+it always receives a context object (see below).  The other arguments
+are provided by the respective call in the XPath expression, one in
+the following examples.  Any number of arguments is allowed:
 
 .. sourcecode:: pycon
 
