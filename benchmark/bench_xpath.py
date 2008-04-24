@@ -10,6 +10,7 @@ from benchbase import with_attributes, with_text, onlylib, serialized, children
 ############################################################
 
 class XPathBenchMark(benchbase.TreeBenchMark):
+    @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_class(self, children):
@@ -17,6 +18,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
         for child in children:
             xpath(child)
 
+    @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_class_repeat(self, children):
@@ -24,18 +26,21 @@ class XPathBenchMark(benchbase.TreeBenchMark):
             xpath = self.etree.XPath("./*[0]")
             xpath(child)
 
+    @nochange
     @onlylib('lxe')
     def bench_xpath_element(self, root):
         xpath = self.etree.XPathElementEvaluator(root)
         for child in root:
             xpath.evaluate("./*[0]")
 
+    @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_method(self, children):
         for child in children:
             child.xpath("./*[0]")
 
+    @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_old_extensions(self, children):
@@ -50,6 +55,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
         for child in children:
             xpath(child)
 
+    @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_extensions(self, children):

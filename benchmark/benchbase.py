@@ -18,6 +18,7 @@ _ATTRIBUTES = {
 
 
 def initArgs(argv):
+    global TREE_FACTOR
     try:
         argv.remove('-l')
         # use large trees
@@ -83,6 +84,11 @@ def children(function):
     function.CHILDREN = True
     return function
 
+def nochange(function):
+    "Decorator for benchmarks that do not change the XML tree"
+    function.NO_CHANGE = True
+    return function
+
 ############################################################
 # benchmark baseclass
 ############################################################
@@ -92,6 +98,9 @@ class SkippedTest(Exception):
 
 class TreeBenchMark(object):
     atoz = string.ascii_lowercase
+    repeat100  = range(100)
+    repeat500  = range(500)
+    repeat1000 = range(1000)
 
     _LIB_NAME_MAP = {
         'etree'        : 'lxe',
@@ -286,12 +295,14 @@ class TreeBenchMark(object):
 
             serialized = getattr(method, 'STRING',   False)
             children   = getattr(method, 'CHILDREN', False)
+            no_change  = getattr(method, 'NO_CHANGE', False)
 
             for tree_tuple in tree_tuples:
                 for tn in sorted(getattr(method, 'TEXT', (0,))):
                     for an in sorted(getattr(method, 'ATTRIBUTES', (0,))):
                         benchmarks.append((name, method_call, tree_tuple,
-                                           tn, an, serialized, children))
+                                           tn, an, serialized, children,
+                                           no_change))
 
         return benchmarks
 
@@ -349,7 +360,8 @@ def printSetupTimes(benchmark_suites):
             print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
     print
 
-def runBench(suite, method_name, method_call, tree_set, tn, an, serial, children):
+def runBench(suite, method_name, method_call, tree_set, tn, an,
+             serial, children, no_change):
     if method_call is None:
         raise SkippedTest
 
@@ -359,14 +371,19 @@ def runBench(suite, method_name, method_call, tree_set, tn, an, serial, children
     tree_builders = [ suite.tree_builder(tree, tn, an, serial, children)
                       for tree in tree_set ]
 
+    if no_change or serial:
+        args = tuple([ build() for build in tree_builders ])
+    else:
+        args = ()
+
     times = []
-    args = ()
+    gc.collect()
     for i in range(3):
-        gc.collect()
         gc.disable()
         t = -1
         for i in call_repeat:
-            args = [ build() for build in tree_builders ]
+            if not no_change and not serial:
+                args = [ build() for build in tree_builders ]
             t_one_call = current_time()
             method_call(*args)
             t_one_call = current_time() - t_one_call
@@ -376,14 +393,16 @@ def runBench(suite, method_name, method_call, tree_set, tn, an, serial, children
                 t = min(t, t_one_call)
         times.append(1000.0 * t)
         gc.enable()
-        del args
+        gc.collect()
+        if not isinstance(args, tuple):
+            del args
     return times
 
 def runBenchmarks(benchmark_suites, benchmarks):
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
-            tree_set_name = build_treeset_name(*benchmark_setup[-5:])
+            tree_set_name = build_treeset_name(*benchmark_setup[-6:-1])
             print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
             print "(%-10s)" % tree_set_name,
             sys.stdout.flush()

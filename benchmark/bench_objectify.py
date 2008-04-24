@@ -3,7 +3,8 @@ from itertools import *
 from StringIO import StringIO
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized, children
+from benchbase import (with_attributes, with_text, onlylib,
+                       serialized, children, nochange)
 
 ############################################################
 # Benchmarks
@@ -22,6 +23,7 @@ class BenchMark(benchbase.TreeBenchMark):
         parser.setElementClassLookup(lookup)
         super(BenchMark, self).__init__(etree, parser)
 
+    @nochange
     def bench_attribute(self, root):
         "1 2 4"
         for i in self.repeat3000:
@@ -37,17 +39,20 @@ class BenchMark(benchbase.TreeBenchMark):
         for i in self.repeat3000:
             root.XYZ = "5"
 
+    @nochange
     def bench_attribute_cached(self, root):
         "1 2 4"
         cache = root.zzzzz
         for i in self.repeat3000:
             root.zzzzz
 
+    @nochange
     def bench_attributes_deep(self, root):
         "1 2 4"
         for i in self.repeat3000:
             root.zzzzz['{cdefg}a00001']
 
+    @nochange
     def bench_attributes_deep_cached(self, root):
         "1 2 4"
         cache1 = root.zzzzz
@@ -55,18 +60,21 @@ class BenchMark(benchbase.TreeBenchMark):
         for i in self.repeat3000:
             root.zzzzz['{cdefg}a00001']
 
+    @nochange
     def bench_objectpath(self, root):
         "1 2 4"
         path = self.objectify.ObjectPath(".zzzzz")
         for i in self.repeat3000:
             path(root)
 
+    @nochange
     def bench_objectpath_deep(self, root):
         "1 2 4"
         path = self.objectify.ObjectPath(".zzzzz.{cdefg}a00001")
         for i in self.repeat3000:
             path(root)
 
+    @nochange
     def bench_objectpath_deep_cached(self, root):
         "1 2 4"
         cache1 = root.zzzzz
@@ -79,9 +87,11 @@ class BenchMark(benchbase.TreeBenchMark):
     def bench_annotate(self, root):
         self.objectify.annotate(root)
 
+    @nochange
     def bench_descendantpaths(self, root):
         root.descendantpaths()
 
+    @nochange
     @with_text(text=True)
     def bench_type_inference(self, root):
         "1 2 4"
@@ -89,6 +99,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for i in self.repeat1000:
             el.getchildren()
 
+    @nochange
     @with_text(text=True)
     def bench_type_inference_annotated(self, root):
         "1 2 4"
@@ -97,6 +108,7 @@ class BenchMark(benchbase.TreeBenchMark):
         for i in self.repeat1000:
             el.getchildren()
 
+    @nochange
     @children
     def bench_elementmaker(self, children):
         E = self.objectify.E
