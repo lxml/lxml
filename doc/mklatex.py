@@ -2,7 +2,7 @@
 # Testing:
 #    python mklatex.py latex .. 1.0
 
-from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
+from docstructure import SITE_STRUCTURE, BASENAME_MAP
 import os, shutil, re, sys, datetime
 
 try:
@@ -33,10 +33,6 @@ replace_content = re.compile("\{[^\}]*\}").sub
 
 replace_epydoc_macros = re.compile(r'(,\s*amssymb|dvips\s*,\s*)').sub
 replace_rst_macros = re.compile(r'(\\usepackage\{color}|\\usepackage\[[^]]*]\{hyperref})').sub
-
-FILENAME_MAP = {
-    "@API reference" : "api.tex"
-}
 
 BASENAME_MAP = BASENAME_MAP.copy()
 BASENAME_MAP.update({'api' : 'lxmlapi'})
@@ -173,10 +169,6 @@ def publish(dirname, lxml_path, release):
 
     shutil.copy(pubkey, dirname)
 
-    href_map = HREF_MAP.copy()
-    changelog_basename = 'changes-%s' % release
-    href_map['Release Changelog'] = changelog_basename + '.tex'
-
     # build pygments macros
     build_pygments_macros(os.path.join(dirname, '_part_pygments.tex'))
 
@@ -209,33 +201,20 @@ def publish(dirname, lxml_path, release):
     have_epydoc_macros = False
     for section, text_files in SITE_STRUCTURE:
         for filename in text_files:
-            special = False
-            if filename in FILENAME_MAP:
-                outname = FILENAME_MAP[filename]
-                if not have_epydoc_macros:
-                    have_epydoc_macros = True
-                    copy_epydoc_macros(
-                        os.path.join(dirname, outname),
-                        os.path.join(dirname, '_part_epydoc.tex'),
-                        set(header))
-                special = True
-            elif filename.startswith('@'):
-                print "Not yet implemented: %s" % filename[1:]
+            if filename.startswith('@'):
                 continue
                 #page_title = filename[1:]
                 #url = href_map[page_title]
                 #build_menu_entry(page_title, url, section_head)
-            else:
-                basename = os.path.splitext(os.path.basename(filename))[0]
-                basename = BASENAME_MAP.get(basename, basename)
-                outname = basename + '.tex'
-            
-            outpath = os.path.join(dirname, outname)
-            print "Creating %s" % outname
 
-            if not special:
-                path = os.path.join(doc_dir, filename)
-                rest2latex(script, path, outpath)
+            basename = os.path.splitext(os.path.basename(filename))[0]
+            basename = BASENAME_MAP.get(basename, basename)
+            outname = basename + '.tex'
+            outpath = os.path.join(dirname, outname)
+            path = os.path.join(doc_dir, filename)
+
+            print "Creating %s" % outname
+            rest2latex(script, path, outpath)
 
             final_name = os.path.join(dirname, os.path.dirname(outname),
                                       "_part_%s" % os.path.basename(outname))
@@ -247,7 +226,19 @@ def publish(dirname, lxml_path, release):
                 header = hd
             titles[outname] = title
 
-    # also convert CHANGES.txt
+    # integrate generated API docs
+
+    print "Integrating API docs"
+    apidocsname = 'api.tex'
+    apipath = os.path.join(dirname, apidocsname)
+    tex_postprocess(apipath, os.path.join(dirname, "_part_%s" % apidocsname),
+                    process_line=fix_relative_hyperrefs)
+    copy_epydoc_macros(apipath, os.path.join(dirname, '_part_epydoc.tex'),
+                       set(header))
+
+    # convert CHANGES.txt
+
+    print "Integrating ChangeLog"
     find_version_title = re.compile(
         r'(.*\\section\{)([0-9][^\} ]*)\s+\(([^)]+)\)(\}.*)').search
     def fix_changelog(line):
@@ -294,9 +285,7 @@ def publish(dirname, lxml_path, release):
     for section, text_files in SITE_STRUCTURE:
         master.write("\n\n\\part{%s}\n" % section)
         for filename in text_files:
-            if filename in FILENAME_MAP:
-                outname = FILENAME_MAP[filename]
-            elif filename.startswith('@'):
+            if filename.startswith('@'):
                 continue
                 #print "Not yet implemented: %s" % filename[1:]
                 #page_title = filename[1:]
@@ -308,8 +297,13 @@ def publish(dirname, lxml_path, release):
                 outname = basename + '.tex'
             write_chapter(master, titles[outname], outname)
 
-    write_chapter(master, "Changes", chgname)
+    master.write("\\appendix\n")
+    master.write("\\begin{appendix}\n")
 
+    write_chapter(master, "Changes", chgname)
+    write_chapter(master, "Generated API documentation", apidocsname)
+
+    master.write("\\end{appendix}\n")
     master.write("\\end{document}\n")
                 
 if __name__ == '__main__':
