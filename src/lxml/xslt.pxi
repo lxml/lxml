@@ -328,6 +328,8 @@ cdef class XSLT:
 
     Keyword arguments of the constructor:
 
+    - extensions: a dict mapping ``(namespace, name)`` pairs to
+      extension functions or extension elements
     - regexp: enable exslt regular expression support in XPath
       (default: True)
     - access_control: access restrictions for network or file
