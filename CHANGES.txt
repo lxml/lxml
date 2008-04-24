@@ -269,19 +269,6 @@ Features added
 * ``makeparser()`` function in ``lxml.objectify`` to create a new
   parser with the usual objectify setup.
 
-Bugs fixed
-----------
-
-Other changes
--------------
-
-
-2.0beta2 (2008-01-26)
-=====================
-
-Features added
---------------
-
 * Plain ASCII XPath string results are no longer forced into unicode
   objects as in 2.0beta1, but are returned as plain strings as before.
 
@@ -291,35 +278,6 @@ Features added
 * ``with_tail`` option in serialiser functions.
 
 * More accurate exception messages in validator creation.
-
-Bugs fixed
-----------
-
-* Missing import in ``lxml.html.clean``.
-
-* Some Python 2.4-isms prevented lxml from building/running under
-  Python 2.3.
-
-Other changes
--------------
-
-* Exceptions carry only the part of the error log that is related to
-  the operation that caused the error.
-
-* ``XMLSchema()`` and ``RelaxNG()`` now enforce passing the source
-  file/filename through the ``file`` keyword argument.
-
-* The test suite now skips most doctests under Python 2.3.
-
-* ``make clean`` no longer removes the .c files (use ``make
-  realclean`` instead)
-
-
-2.0beta1 (2008-01-11)
-=====================
-
-Features added
---------------
 
 * Parse-time XML schema validation (``schema`` parser keyword).
 
@@ -337,73 +295,8 @@ Features added
 * ``entity.text`` returns the textual representation of the entity,
   e.g. ``&amp;``.
 
-Bugs fixed
-----------
-
-* XPath on ElementTrees could crash when selecting the virtual root
-  node of the ElementTree.
-
-* Compilation ``--without-threading`` was buggy in alpha5/6.
-
-Other changes
--------------
-
-* Minor performance tweaks for Element instantiation and subelement
-  creation
-
-
-2.0alpha6 (2007-12-19)
-======================
-
-Features added
---------------
-
 * New properties ``position`` and ``code`` on ParseError exception (as
   in ET 1.3)
-
-Bugs fixed
-----------
-
-* Memory leak in the ``parse()`` function.
-
-* Minor bugs in XSLT error message formatting.
-
-* Result document memory leak in target parser.
-
-Other changes
--------------
-
-* Various places in the XPath, XSLT and iteration APIs now require
-  keyword-only arguments.
-
-* The argument order in ``element.itersiblings()`` was changed to
-  match the order used in all other iteration methods.  The second
-  argument ('preceding') is now a keyword-only argument.
-
-* The ``getiterator()`` method on Elements and ElementTrees was
-  reverted to return an iterator as it did in lxml 1.x.  The ET API
-  specification allows it to return either a sequence or an iterator,
-  and it traditionally returned a sequence in ET and an iterator in
-  lxml.  However, it is now deprecated in favour of the ``iter()``
-  method, which should be used in new code wherever possible.
-
-* The 'pretty printed' serialisation of ElementTree objects now
-  inserts newlines at the root level between processing instructions,
-  comments and the root tag.
-
-* A 'pretty printed' serialisation is now terminated with a newline.
-
-* Second argument to ``lxml.etree.Extension()`` helper is no longer
-  required, third argument is now a keyword-only argument ``ns``.
-
-* ``lxml.html.tostring`` takes an ``encoding`` argument.
-
-
-2.0alpha5 (2007-11-24)
-======================
-
-Features added
---------------
 
 * Rich comparison of ``element.attrib`` proxies.
 
@@ -424,98 +317,6 @@ Features added
 * When using ``lxml.doctestcompare`` you can give the doctest option
   ``NOPARSE_MARKUP`` (like ``# doctest: +NOPARSE_MARKUP``) to suppress
   the special checking for one test.
-
-Bugs fixed
-----------
-
-* Target parser failed to report comments.
-
-* In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
-  tags weren't recognized.  (Note: plugin-specific link parameters
-  still aren't recognized.)  Also, the ``<embed>`` tag, though not
-  standard, is now included in ``lxml.html.defs.special_inline_tags``.
-
-* Using custom resolvers on XSLT stylesheets parsed from a string
-  could request ill-formed URLs.
-
-* With ``lxml.doctestcompare`` if you do ``<tag xmlns="...">`` in your
-  output, it will then be namespace-neutral (before the ellipsis was
-  treated as a real namespace).
-
-Other changes
--------------
-
-* The module source files were renamed to "lxml.*.pyx", such as
-  "lxml.etree.pyx".  This was changed for consistency with the way
-  Pyrex commonly handles package imports.  The main effect is that
-  classes now know about their fully qualified class name, including
-  the package name of their module.
-
-* Keyword-only arguments in some API functions, especially in the
-  parsers and serialisers.
-
-
-1.3.6 (2007-10-29)
-==================
-
-Bugs fixed
-----------
-
-* Backported decref crash fix from 2.0
-
-* Well hidden free-while-in-use crash bug in ObjectPath
-
-Other changes
--------------
-
-* The test suites now run ``gc.collect()`` in the ``tearDown()``
-  methods.  While this makes them take a lot longer to run, it also
-  makes it easier to link a specific test to garbage collection
-  problems that would otherwise appear in later tests.
-
-
-1.3.5 (2007-10-22)
-==================
-
-Features added
---------------
-
-Bugs fixed
-----------
-
-* lxml.etree could crash when adding more than 10000 namespaces to a
-  document
-
-* lxml failed to serialise namespace declarations of elements other
-  than the root node of a tree
-
-
-2.0alpha4 (2007-10-07)
-======================
-
-Features added
---------------
-
-Bugs fixed
-----------
-
-* AttributeError in feed parser on parse errors
-
-Other changes
--------------
-
-* Tag name validation in lxml.etree (and lxml.html) now distinguishes
-  between HTML tags and XML tags based on the parser that was used to
-  parse or create them.  HTML tags no longer reject any non-ASCII
-  characters in tag names but only spaces and the special characters
-  ``<>&/"'``.
-
-
-2.0alpha3 (2007-09-26)
-======================
-
-Features added
---------------
 
 * Separate ``feed_error_log`` property for the feed parser interface.
   The normal parser interface and ``iterparse`` continue to use
@@ -539,29 +340,6 @@ Features added
 * ``annotate()`` function in objectify can annotate with Python types and XSI
   types in one step.  Accompanied by ``xsiannotate()`` and ``pyannotate()``.
 
-Bugs fixed
-----------
-
-* XML feed parser setup problem
-
-* Type annotation for unicode strings in ``DataElement()``
-
-Other changes
--------------
-
-* lxml.etree now emits a warning if you use XPath with libxml2 2.6.27
-  (which can crash on certain XPath errors)
-
-* Type annotation in objectify now preserves the already annotated type by
-  default to prevent loosing type information that is already there.
-
-
-2.0alpha2 (2007-09-15)
-======================
-
-Features added
---------------
-
 * ``ET.write()``, ``tostring()`` and ``tounicode()`` now accept a keyword
   argument ``method`` that can be one of 'xml' (or None), 'html' or 'text' to
   serialise as XML, HTML or plain text content.
@@ -579,28 +357,6 @@ Features added
 
 * ElementTree-like feed parser interface on XMLParser and HTMLParser
   (``feed()`` and ``close()`` methods)
-
-Bugs fixed
-----------
-
-* lxml failed to serialise namespace declarations of elements other than the
-  root node of a tree
-
-* Race condition in XSLT where the resolver context leaked between concurrent
-  XSLT calls
-
-Other changes
--------------
-
-* ``element.getiterator()`` returns a list, use ``element.iter()`` to retrieve
-  an iterator (ElementTree 1.3 compatible behaviour)
-
-
-2.0alpha1 (2007-09-02)
-======================
-
-Features added
---------------
 
 * Reimplemented ``objectify.E`` for better performance and improved
   integration with objectify.  Provides extended type support based on
@@ -657,6 +413,48 @@ Features added
 Bugs fixed
 ----------
 
+* Missing import in ``lxml.html.clean``.
+
+* Some Python 2.4-isms prevented lxml from building/running under
+  Python 2.3.
+
+* XPath on ElementTrees could crash when selecting the virtual root
+  node of the ElementTree.
+
+* Compilation ``--without-threading`` was buggy in alpha5/6.
+
+* Memory leak in the ``parse()`` function.
+
+* Minor bugs in XSLT error message formatting.
+
+* Result document memory leak in target parser.
+
+* Target parser failed to report comments.
+
+* In the ``lxml.html`` ``iter_links`` method, links in ``<object>``
+  tags weren't recognized.  (Note: plugin-specific link parameters
+  still aren't recognized.)  Also, the ``<embed>`` tag, though not
+  standard, is now included in ``lxml.html.defs.special_inline_tags``.
+
+* Using custom resolvers on XSLT stylesheets parsed from a string
+  could request ill-formed URLs.
+
+* With ``lxml.doctestcompare`` if you do ``<tag xmlns="...">`` in your
+  output, it will then be namespace-neutral (before the ellipsis was
+  treated as a real namespace).
+
+* AttributeError in feed parser on parse errors
+
+* XML feed parser setup problem
+
+* Type annotation for unicode strings in ``DataElement()``
+
+* lxml failed to serialise namespace declarations of elements other than the
+  root node of a tree
+
+* Race condition in XSLT where the resolver context leaked between concurrent
+  XSLT calls
+
 * lxml.etree did not check tag/attribute names
 
 * The XML parser did not report undefined entities as error
@@ -671,6 +469,69 @@ Bugs fixed
 Other changes
 -------------
 
+* Exceptions carry only the part of the error log that is related to
+  the operation that caused the error.
+
+* ``XMLSchema()`` and ``RelaxNG()`` now enforce passing the source
+  file/filename through the ``file`` keyword argument.
+
+* The test suite now skips most doctests under Python 2.3.
+
+* ``make clean`` no longer removes the .c files (use ``make
+  realclean`` instead)
+
+* Minor performance tweaks for Element instantiation and subelement
+  creation
+
+* Various places in the XPath, XSLT and iteration APIs now require
+  keyword-only arguments.
+
+* The argument order in ``element.itersiblings()`` was changed to
+  match the order used in all other iteration methods.  The second
+  argument ('preceding') is now a keyword-only argument.
+
+* The ``getiterator()`` method on Elements and ElementTrees was
+  reverted to return an iterator as it did in lxml 1.x.  The ET API
+  specification allows it to return either a sequence or an iterator,
+  and it traditionally returned a sequence in ET and an iterator in
+  lxml.  However, it is now deprecated in favour of the ``iter()``
+  method, which should be used in new code wherever possible.
+
+* The 'pretty printed' serialisation of ElementTree objects now
+  inserts newlines at the root level between processing instructions,
+  comments and the root tag.
+
+* A 'pretty printed' serialisation is now terminated with a newline.
+
+* Second argument to ``lxml.etree.Extension()`` helper is no longer
+  required, third argument is now a keyword-only argument ``ns``.
+
+* ``lxml.html.tostring`` takes an ``encoding`` argument.
+
+* The module source files were renamed to "lxml.*.pyx", such as
+  "lxml.etree.pyx".  This was changed for consistency with the way
+  Pyrex commonly handles package imports.  The main effect is that
+  classes now know about their fully qualified class name, including
+  the package name of their module.
+
+* Keyword-only arguments in some API functions, especially in the
+  parsers and serialisers.
+
+* Tag name validation in lxml.etree (and lxml.html) now distinguishes
+  between HTML tags and XML tags based on the parser that was used to
+  parse or create them.  HTML tags no longer reject any non-ASCII
+  characters in tag names but only spaces and the special characters
+  ``<>&/"'``.
+
+* lxml.etree now emits a warning if you use XPath with libxml2 2.6.27
+  (which can crash on certain XPath errors)
+
+* Type annotation in objectify now preserves the already annotated type by
+  default to prevent loosing type information that is already there.
+
+* ``element.getiterator()`` returns a list, use ``element.iter()`` to retrieve
+  an iterator (ElementTree 1.3 compatible behaviour)
+
 * objectify.PyType for None is now called "NoneType"
 
 * ``el.getiterator()`` renamed to ``el.iter()``, following ElementTree 1.3 -
@@ -682,6 +543,41 @@ Other changes
 * Major refactoring in XPath/XSLT extension function code
 
 * Network access in parsers disabled by default
+
+
+1.3.6 (2007-10-29)
+==================
+
+Bugs fixed
+----------
+
+* Backported decref crash fix from 2.0
+
+* Well hidden free-while-in-use crash bug in ObjectPath
+
+Other changes
+-------------
+
+* The test suites now run ``gc.collect()`` in the ``tearDown()``
+  methods.  While this makes them take a lot longer to run, it also
+  makes it easier to link a specific test to garbage collection
+  problems that would otherwise appear in later tests.
+
+
+1.3.5 (2007-10-22)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* lxml.etree could crash when adding more than 10000 namespaces to a
+  document
+
+* lxml failed to serialise namespace declarations of elements other
+  than the root node of a tree
 
 
 1.3.4 (2007-08-30)
