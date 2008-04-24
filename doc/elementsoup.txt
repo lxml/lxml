@@ -16,6 +16,10 @@ functions: ``fromstring()`` and ``parse()`` to parse a string or file
 using BeautifulSoup, and ``convert_tree()`` to convert an existing
 BeautifulSoup tree into a list of top-level Elements.
 
+
+Parsing with the soupparser
+===========================
+
 The functions ``fromstring()`` and ``parse()`` behave as known from
 ElementTree.  The first returns a root Element, the latter returns an
 ElementTree.
