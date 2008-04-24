@@ -1,3 +1,4 @@
+======================================
 Extension functions for XPath and XSLT
 ======================================
 
@@ -8,10 +9,39 @@ and XSLT like this:
 
   <xsl:value-of select="f:myPythonFunction(.//sometag)" />
 
+as well as extension elements in XSLT as in the following example:
+
+.. sourcecode:: xml
+
+  <xsl:template match="*">
+      <my:python-extension>
+          <some-content />
+      </my:python-extension>
+  </xsl:template>
+
+
+.. contents::
+.. 
+   1  XPath Extension functions
+     1.1  The FunctionNamespace
+     1.2  Global prefix assignment
+     1.3  The XPath context
+     1.4  Evaluators and XSLT
+     1.5  Evaluator-local extensions
+     1.6  What to return from a function
+   2  XSLT extension elements
+     2.1  Declaring extension elements
+     2.2  Applying XSL templates
+     2.3  Working with read-only elements
+
+
+XPath Extension functions
+=========================
+
 Here is how an extension function looks like.  As the first argument,
-it always receives a context object (see below).  The other arguments
-are provided by the respective call in the XPath expression, one in
-the following examples.  Any number of arguments is allowed:
+it always receives an opaque context object (see below).  The other
+arguments are provided by the respective call in the XPath expression,
+one in the following examples.  Any number of arguments is allowed:
 
 .. sourcecode:: pycon
 
@@ -23,23 +53,13 @@ the following examples.  Any number of arguments is allowed:
   ...    return "Got %d arguments." % len(args)
 
 
-.. contents::
-.. 
-   1  The FunctionNamespace
-   2  Global prefix assignment
-   3  The XPath context
-   4  Evaluators and XSLT
-   5  Evaluator-local extensions
-   6  What to return from a function
-
-
 The FunctionNamespace
 ---------------------
 
-In order to use a function in XPath/XSLT, it needs to have a (namespaced) name
-by which it can be called during evaluation.  This is done using the
-FunctionNamespace class.  For simplicity, we choose the empty namespace
-(None):
+In order to use a function in XPath or XSLT, it needs to have a
+(namespaced) name by which it can be called during evaluation.  This
+is done using the FunctionNamespace class.  For simplicity, we choose
+the empty namespace (None):
 
 .. sourcecode:: pycon
 
@@ -407,3 +427,156 @@ This is an implementation detail that you should be aware of, but you should
 avoid relying on it in your code.  Note that elements taken from the source
 document (the most common case) do not suffer from this restriction.  They
 will always be passed unchanged.
+
+
+XSLT extension elements
+=======================
+
+Just like the XPath extension functions described above, lxml supports
+custom extension *elements* in XSLT.  This means, you can write XSLT
+code like this:
+
+.. sourcecode:: xml
+
+  <xsl:template match="*">
+      <my:python-extension>
+          <some-content />
+      </my:python-extension>
+  </xsl:template>
+
+And then you can implement the element in Python like this:
+
+.. sourcecode:: pycon
+
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         print "Hello from XSLT!"
+  ...         output_parent.text = "I did it!"
+  ...         # just copy own content input to output
+  ...         output_parent.extend( list(self_node) )
+
+The arguments passed to the ``.execute()`` method  are
+
+context
+    The opaque evaluation context.  You need this when calling back
+    into the XSLT processor.
+
+self_node
+    A read-only Element object that represents the extension element
+    in the stylesheet.
+
+input_node
+    The current context Element in the input document (also read-only).
+
+output_parent
+    The current insertion point in the output document.  You can
+    append elements or set the text value (not the tail).  Apart from
+    that, the Element is read-only.
+
+
+Declaring extension elements
+----------------------------
+
+In XSLT, extension elements can be used like any other XSLT element,
+except that they must be declared as extensions using the standard
+XSLT ``extension-element-prefixes`` option:
+
+.. sourcecode:: pycon
+
+  >>> xslt_ext_tree = etree.XML('''
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+  ...     xmlns:my="testns"
+  ...     extension-element-prefixes="my">
+  ...     <xsl:template match="/">
+  ...         <foo><my:ext><child>XYZ</child></my:ext></foo>
+  ...     </xsl:template>
+  ...     <xsl:template match="child">
+  ...         <CHILD>--xyz--</CHILD>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+
+To register the extension, add its namespace and name to the extension
+mapping of the XSLT object:
+
+.. sourcecode:: pycon
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+Note how we pass an instance here, not the class of the extension.
+Now we can run the transformation and see how our extension is
+called:
+
+.. sourcecode:: pycon
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  Hello from XSLT!
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>I did it!<child>XYZ</child></foo>\n'
+
+
+Applying XSL templates
+----------------------
+
+XSLT extensions are a very powerful feature that allows you to
+interact directly with the XSLT processor.  You have full read-only
+access to the input document and the stylesheet, and you can even call
+back into the XSLT processor to process templates.  Here is an example
+that passes an Element into the ``.apply_templates()`` method of the
+``XSLTExtension`` instance:
+
+.. sourcecode:: pycon
+
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         child = self_node[0]
+  ...         results = self.apply_templates(context, child)
+  ...         output_parent.append(results[0])
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo><CHILD>--xyz--</CHILD></foo>\n'
+
+Note how we applied the templates to a child of the extension element
+itself, i.e. to an element inside the stylesheet instead of an element
+of the input document.
+
+
+Working with read-only elements
+-------------------------------
+
+There is one important thing to keep in mind: all Elements that the
+``execute()`` method gets to deal with are read-only Elements, so you
+cannot modify them.  They also will not easily work in the API.  For
+example, you cannot pass them to the ``tostring()`` function or wrap
+them in an ``ElementTree``.
+
+What you can do, however, is to deepcopy them to make them normal
+Elements, and then modify them using the normal etree API.  So this
+will work:
+
+.. sourcecode:: pycon
+
+  >>> from copy import deepcopy
+  >>> class MyExtElement(etree.XSLTExtension):
+  ...     def execute(self, context, self_node, input_node, output_parent):
+  ...         child = deepcopy(self_node[0])
+  ...         child.text = "NEW TEXT"
+  ...         output_parent.append(child)
+
+  >>> my_extension = MyExtElement()
+  >>> extensions = { ('testns', 'ext') : my_extension }
+  >>> transform = etree.XSLT(xslt_ext_tree, extensions = extensions)
+
+  >>> root = etree.XML('<dummy/>')
+  >>> result = transform(root)
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo><child>NEW TEXT</child></foo>\n'
