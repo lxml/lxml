@@ -51,6 +51,13 @@ class BenchMark(benchbase.TreeBenchMark):
     @with_attributes(False)
     @with_text(text=True, utext=True)
     @onlylib('lxe')
+    def bench_tostring_text_unicode(self, root):
+        self.etree.tostring(root, method="text", encoding=unicode)
+
+    @nochange
+    @with_attributes(False)
+    @with_text(text=True, utext=True)
+    @onlylib('lxe', 'ET')
     def bench_tostring_text_utf16(self, root):
         self.etree.tostring(root, method="text", encoding='UTF-16')
 
@@ -63,15 +70,6 @@ class BenchMark(benchbase.TreeBenchMark):
         for child in children:
             self.etree.tostring(child, method="text",
                                 encoding='UTF-8', with_tail=True)
-
-    @nochange
-    @with_attributes(False)
-    @with_text(text=True, utext=True)
-    @onlylib('lxe')
-    @children
-    def bench_tostring_text_unicode(self, children):
-        for child in children:
-            self.etree.tostring(child, method="text", encoding=unicode)
 
     @nochange
     @with_attributes(True, False)

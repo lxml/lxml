@@ -129,8 +129,8 @@ Serialisation is an area where lxml excels.  The reason is that it
 executes entirely at the C level, without any interaction with Python
 code.  The results are rather impressive, especially for UTF-8, which
 is native to libxml2.  While 20 to 40 times faster than (c)ElementTree
-1.2, lxml is still more than 7 times as fast as the much improved
-ElementTree 1.3::
+1.2 (which is part of the standard library in Python 2.5), lxml is
+still more than 7 times as fast as the much improved ElementTree 1.3::
 
   lxe: tostring_utf16  (SATR T1)   25.7590 msec/pass
   cET: tostring_utf16  (SATR T1)  179.6291 msec/pass
@@ -155,11 +155,25 @@ ElementTree 1.3::
 The same applies to plain text serialisation.  Note that cElementTree
 does not currently support this, as it is new in ET 1.3::
 
-  lxe: tostring_text_ascii   (S-TR T1)    4.5149 msec/pass
-  ET : tostring_text_ascii   (S-TR T1)   87.6551 msec/pass
+  lxe: tostring_text_ascii     (S-TR T1)    3.8729 msec/pass
+  ET : tostring_text_ascii     (S-TR T1)   90.7841 msec/pass
 
-  lxe: tostring_text_ascii   (S-TR T3)    1.2901 msec/pass
-  ET : tostring_text_ascii   (S-TR T3)   27.5211 msec/pass
+  lxe: tostring_text_ascii     (S-TR T3)    1.1508 msec/pass
+  ET : tostring_text_ascii     (S-TR T3)   28.0581 msec/pass
+
+  lxe: tostring_text_utf16     (S-TR T1)    5.6219 msec/pass
+  ET : tostring_text_utf16     (S-TR T1)   87.4891 msec/pass
+
+  lxe: tostring_text_utf16     (U-TR T1)    7.0660 msec/pass
+  ET : tostring_text_utf16     (U-TR T1)   82.1049 msec/pass
+
+Unlike ElementTree, the ``tostring()`` function in lxml also supports
+serialisation to a Python unicode string object::
+
+  lxe: tostring_text_unicode   (S-TR T1)    4.2419 msec/pass
+  lxe: tostring_text_unicode   (U-TR T1)    5.2760 msec/pass
+  lxe: tostring_text_unicode   (S-TR T3)    1.3049 msec/pass
+  lxe: tostring_text_unicode   (U-TR T3)    1.4210 msec/pass
 
 For parsing, on the other hand, the advantage is clearly with
 cElementTree.  The (c)ET libraries use a very thin layer on top of the
