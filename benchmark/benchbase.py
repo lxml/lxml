@@ -371,18 +371,18 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
     tree_builders = [ suite.tree_builder(tree, tn, an, serial, children)
                       for tree in tree_set ]
 
-    if no_change or serial:
-        args = tuple([ build() for build in tree_builders ])
-    else:
-        args = ()
+    rebuild_trees = not no_change and not serial
+
+    args = tuple([ build() for build in tree_builders ])
+    method_call(*args) # run once to skip setup overhead
 
     times = []
-    gc.collect()
     for i in range(3):
+        gc.collect()
         gc.disable()
         t = -1
         for i in call_repeat:
-            if not no_change and not serial:
+            if rebuild_trees:
                 args = [ build() for build in tree_builders ]
             t_one_call = current_time()
             method_call(*args)
@@ -393,9 +393,10 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
                 t = min(t, t_one_call)
         times.append(1000.0 * t)
         gc.enable()
-        gc.collect()
-        if not isinstance(args, tuple):
-            del args
+        if rebuild_trees:
+            args = ()
+    args = ()
+    gc.collect()
     return times
 
 def runBenchmarks(benchmark_suites, benchmarks):
