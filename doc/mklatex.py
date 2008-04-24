@@ -24,6 +24,7 @@ RST2LATEX_OPTIONS = " ".join([
     "--font-encoding=T1",
     "--output-encoding=utf-8",
     "--input-encoding=utf-8",
+    "--graphicx-option=pdftex",
     ])
 
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
