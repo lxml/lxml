@@ -80,7 +80,7 @@ returns elements and psuedo-elements select portions of text, like
 
 
 Namespaces
-----------
+==========
 
 In CSS you can use ``namespace-prefix|element``, similar to
 ``namespace-prefix:element`` in an XPath expression.  In fact, it maps
