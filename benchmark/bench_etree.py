@@ -57,7 +57,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @nochange
     @with_attributes(False)
     @with_text(text=True, utext=True)
-    @onlylib('lxe', 'ET')
+    @onlylib('lxe')
     @children
     def bench_tostring_text_utf8_with_tail(self, children):
         for child in children:
