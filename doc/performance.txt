@@ -10,11 +10,26 @@ Benchmarks and Speed
   :keywords: lxml performance, lxml.etree, lxml.objectify, benchmarks, ElementTree
 
 
-As an XML library, lxml.etree is very fast.  It is also slow.  As with
-all software, it depends on what you do with it.  Rest assured that
-lxml is fast enough for most applications, so lxml is probably
-somewhere between 'fast enough' and 'the best choice' for yours.  Read
-some messages_ from happy_ users_ to see what we mean.
+lxml.etree is a very fast XML library.  Most of this is due to the
+speed of libxml2, e.g. the parser and serialiser, or the XPath engine.
+Other areas of lxml were specifically written for high performance in
+high-level operations, such as the tree iterators.
+
+On the other hand, the simplicity of lxml sometimes hides internal
+operations that are more costly than the API suggests.  If you are not
+aware of these cases, lxml may not always perform as you expect.  A
+common example in the Python world is the Python list type.  New users
+often expect it to be a linked list, while it actually is implemented
+as an array, which results in a completely different complexity for
+common operations.
+
+Similarly, the tree model of libxml2 is more complex than what lxml's
+ElementTree API projects into Python space, so some operations may
+show unexpected performance.  Rest assured that most lxml users will
+not notice this in real life, as lxml is very fast in absolute
+numbers.  It is definitely fast enough for most applications, so lxml
+is probably somewhere between 'fast enough' and 'the best choice' for
+yours.  Read some messages_ from happy_ users_ to see what we mean.
 
 .. _messages: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
 .. _happy: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
@@ -235,7 +250,7 @@ restructuring.  This can be seen from the tree setup times of the benchmark
        T4: 0.0001 0.0001 0.0001 0.0001 0.0001 0.0001
   ET :       --     S-     U-     -A     SA     UA
        T1: 0.1074 0.1669 0.1050 0.2054 0.2401 0.1047
-       T2: 0.2920 0.1172 0.3393 0.4021 0.1184 0.4216
+       T2: 0.2920 0.1172 0.3393 0.3830 0.1184 0.4215
        T3: 0.0347 0.0331 0.0316 0.0368 0.3944 0.0377
        T4: 0.0006 0.0005 0.0007 0.0006 0.0007 0.0006
 
