@@ -280,6 +280,7 @@ def publish(dirname, lxml_path, release):
                 r'{%s}' % book_title, hln)
         master.write(hln)
 
+    master.write("\\setcounter{page}{2}\n")
     master.write("\\tableofcontents\n")
 
     for section, text_files in SITE_STRUCTURE:

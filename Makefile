@@ -66,7 +66,9 @@ apipdf: inplace
 
 pdf: apipdf
 	$(PYTHON) doc/mklatex.py doc/pdf . ${LXMLVERSION}
-	(cd doc/pdf && pdflatex lxmldoc.tex && pdflatex lxmldoc.tex)
+	(cd doc/pdf && pdflatex lxmldoc.tex \
+		    && pdflatex lxmldoc.tex \
+		    && pdflatex lxmldoc.tex)
 	@pdfopt doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
 	@echo "PDF available as doc/pdf/lxmldoc-${LXMLVERSION}.pdf"
 
