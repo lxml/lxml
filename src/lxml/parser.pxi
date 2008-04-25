@@ -269,8 +269,8 @@ cdef class _FileReaderContext:
             if remaining <= 0:
                 self._bytes = self._filelike.read(c_size)
                 if not python.PyString_Check(self._bytes):
-                    raise TypeError(
-                        "reading file objects must return plain strings")
+                    raise TypeError, \
+                        "reading file objects must return plain strings"
                 remaining = python.PyString_GET_SIZE(self._bytes)
                 self._bytes_read = 0
                 if remaining == 0:
@@ -420,7 +420,7 @@ cdef class _ParserContext(_ResolverContext):
                 result = python.PyThread_acquire_lock(
                     self._lock, python.WAIT_LOCK)
             if result == 0:
-                raise ParserError("parser locking failed")
+                raise ParserError, "parser locking failed"
         self._error_log.connect()
         if self._validator is not None:
             self._validator.connect(self._c_ctxt)
@@ -473,7 +473,7 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                 filename, (ctxt.lastError.message).strip())
         else:
             message = "Error reading '%s'" % filename
-        raise IOError(message)
+        raise IOError, message
     elif error_log:
         raise error_log._buildParseException(
             XMLSyntaxError, "Document is not well formed")
@@ -564,7 +564,7 @@ cdef class _BaseParser:
         if not isinstance(self, HTMLParser) and \
                 not isinstance(self, XMLParser) and \
                 not isinstance(self, iterparse):
-            raise TypeError("This class cannot be instantiated")
+            raise TypeError, "This class cannot be instantiated"
 
         self._parse_options = parse_options
         self._filename = filename
@@ -585,7 +585,7 @@ cdef class _BaseParser:
             c_encoding = tree.xmlParseCharEncoding(_cstr(encoding))
             if c_encoding == tree.XML_CHAR_ENCODING_ERROR or \
                    c_encoding == tree.XML_CHAR_ENCODING_NONE:
-                raise LookupError("unknown encoding: '%s'" % encoding)
+                raise LookupError, "unknown encoding: '%s'" % encoding
             self._default_encoding = encoding
             self._default_encoding_int = c_encoding
 
@@ -775,7 +775,7 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_encoding
         if c_len > python.INT_MAX:
-            raise ParserError("string is too long to parse it with libxml2")
+            raise ParserError, "string is too long to parse it with libxml2"
 
         context = self._getParserContext()
         context.prepare()
@@ -910,13 +910,13 @@ cdef class _FeedParser(_BaseParser):
             py_buffer_len = python.PyString_GET_SIZE(data)
         elif python.PyUnicode_Check(data):
             if _UNICODE_ENCODING is NULL:
-                raise ParserError(
-                    "Unicode parsing is not supported on this platform")
+                raise ParserError, \
+                    "Unicode parsing is not supported on this platform"
             c_encoding = _UNICODE_ENCODING
             c_data = python.PyUnicode_AS_DATA(data)
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(data)
         else:
-            raise TypeError("Parsing requires string data")
+            raise TypeError, "Parsing requires string data"
 
         context = self._getPushParserContext()
         pctxt = context._c_ctxt
@@ -1344,7 +1344,7 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
         return _parseFilelikeDocument(
             source, _encodeFilenameUTF8(url), parser)
 
-    raise TypeError("cannot parse from '%s'" % python._fqtypename(source))
+    raise TypeError, "cannot parse from '%s'" % python._fqtypename(source)
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
     cdef xmlDoc* c_doc
@@ -1355,13 +1355,13 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
     cdef xmlDoc* c_doc
     if python.PyUnicode_Check(text):
         if _hasEncodingDeclaration(text):
-            raise ValueError(
-                "Unicode strings with encoding declaration are not supported.")
+            raise ValueError, \
+                "Unicode strings with encoding declaration are not supported."
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
             text = python.PyUnicode_AsUTF8String(text)
     elif not python.PyString_Check(text):
-        raise ValueError("can only parse strings")
+        raise ValueError, "can only parse strings"
     if python.PyUnicode_Check(url):
         url = python.PyUnicode_AsUTF8String(url)
     c_doc = _parseDoc(text, url, parser)

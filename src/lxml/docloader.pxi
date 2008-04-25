@@ -78,7 +78,7 @@ cdef class Resolver:
         try:
             f.read
         except AttributeError:
-            raise TypeError("Argument is not a file-like object")
+            raise TypeError, "Argument is not a file-like object"
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILE
         if base_url is not None:

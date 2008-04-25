@@ -278,8 +278,8 @@ cdef class _XSLTContext(_BaseContext):
         if extensions is not None and extensions:
             for ns_name_tuple, extension in extensions.items():
                 if ns_name_tuple[0] is None:
-                    raise XSLTExtensionError(
-                        "extensions must not have empty namespaces")
+                    raise XSLTExtensionError, \
+                        "extensions must not have empty namespaces"
                 if isinstance(extension, XSLTExtension):
                     if self._extension_elements is EMPTY_READ_ONLY_DICT:
                         self._extension_elements = {}
@@ -727,10 +727,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef char* c_href
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
-            raise ValueError("PI lacks content")
+            raise ValueError, "PI lacks content"
         hrefs_utf = _FIND_PI_HREF(' ' + self._c_node.content)
         if len(hrefs_utf) != 1:
-            raise ValueError("malformed PI attributes")
+            raise ValueError, "malformed PI attributes"
         href_utf = hrefs_utf[0]
         c_href = _cstr(href_utf)
 
@@ -756,20 +756,20 @@ cdef class _XSLTProcessingInstruction(PIBase):
         # try XPath search
         root = _findStylesheetByID(self._doc, funicode(c_href))
         if not root:
-            raise ValueError("reference to non-existing embedded stylesheet")
+            raise ValueError, "reference to non-existing embedded stylesheet"
         elif len(root) > 1:
-            raise ValueError("ambiguous reference to embedded stylesheet")
+            raise ValueError, "ambiguous reference to embedded stylesheet"
         result_node = root[0]
         return _elementTreeFactory(result_node._doc, result_node)
 
     def set(self, key, value):
         if key != "href":
-            raise AttributeError(
-                "only setting the 'href' attribute is supported on XSLT-PIs")
+            raise AttributeError, \
+                "only setting the 'href' attribute is supported on XSLT-PIs"
         if value is None:
             attrib = ""
         elif '"' in value or '>' in value:
-            raise ValueError("Invalid URL, must not contain '\"' or '>'")
+            raise ValueError, "Invalid URL, must not contain '\"' or '>'"
         else:
             attrib = ' href="%s"' % value
         text = ' ' + self.text

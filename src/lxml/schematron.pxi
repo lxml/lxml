@@ -85,8 +85,8 @@ cdef class Schematron(_Validator):
         self._c_schema_doc = NULL
         _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
-            raise SchematronError(
-                "lxml.etree was compiled without Schematron support.")
+            raise SchematronError, \
+                "lxml.etree was compiled without Schematron support."
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
@@ -103,7 +103,7 @@ cdef class Schematron(_Validator):
             self._error_log.connect()
             parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
         else:
-            raise SchematronParseError("No tree or file given")
+            raise SchematronParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             self._error_log.disconnect()

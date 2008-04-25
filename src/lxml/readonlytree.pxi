@@ -78,7 +78,7 @@ cdef class _ReadOnlyElementProxy:
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError("list index out of range")
+            raise IndexError, "list index out of range"
         return _newReadOnlyProxy(self._source_proxy, c_node)
 
     def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
@@ -320,8 +320,8 @@ cdef xmlNode* _roNodeOf(element) except NULL:
     elif isinstance(element, _ReadOnlyElementProxy):
         c_node = (<_ReadOnlyElementProxy>element)._c_node
     else:
-        raise TypeError("invalid value to append()")
+        raise TypeError, "invalid value to append()"
 
     if c_node is NULL:
-        raise TypeError("invalid element")
+        raise TypeError, "invalid element"
     return c_node

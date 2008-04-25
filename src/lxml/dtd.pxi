@@ -40,13 +40,13 @@ cdef class DTD(_Validator):
             elif hasattr(file, 'read'):
                 self._c_dtd = _parseDtdFromFilelike(file)
             else:
-                raise DTDParseError("file must be a filename or file-like object")
+                raise DTDParseError, "file must be a filename or file-like object"
         elif external_id is not None:
             self._error_log.connect()
             self._c_dtd = xmlparser.xmlParseDTD(external_id, NULL)
             self._error_log.disconnect()
         else:
-            raise DTDParseError("either filename or external ID required")
+            raise DTDParseError, "either filename or external ID required"
 
         if self._c_dtd is NULL:
             raise DTDParseError(

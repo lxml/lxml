@@ -47,7 +47,7 @@ cdef class XMLSchema(_Validator):
             c_href = _getNs(c_node)
             if c_href is NULL or \
                    cstd.strcmp(c_href, 'http://www.w3.org/2001/XMLSchema') != 0:
-                raise XMLSchemaParseError("Document is not XML Schema")
+                raise XMLSchemaParseError, "Document is not XML Schema"
 
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             self._error_log.connect()
@@ -62,7 +62,7 @@ cdef class XMLSchema(_Validator):
                 self._error_log.connect()
                 parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(doc._c_doc)
         else:
-            raise XMLSchemaParseError("No tree or file given")
+            raise XMLSchemaParseError, "No tree or file given"
 
         if parser_ctxt is not NULL:
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)

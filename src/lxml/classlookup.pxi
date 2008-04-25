@@ -134,28 +134,28 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
         elif issubclass(element, ElementBase):
             self.element_class = element
         else:
-            raise TypeError("element class must be subclass of ElementBase")
+            raise TypeError, "element class must be subclass of ElementBase"
 
         if comment is None:
             self.comment_class = _Comment
         elif issubclass(comment, CommentBase):
             self.comment_class = comment
         else:
-            raise TypeError("comment class must be subclass of CommentBase")
+            raise TypeError, "comment class must be subclass of CommentBase"
 
         if entity is None:
             self.entity_class = _Entity
         elif issubclass(entity, EntityBase):
             self.entity_class = entity
         else:
-            raise TypeError("Entity class must be subclass of EntityBase")
+            raise TypeError, "Entity class must be subclass of EntityBase"
 
         if pi is None:
             self.pi_class = None # special case, see below
         elif issubclass(pi, PIBase):
             self.pi_class = pi
         else:
-            raise TypeError("PI class must be subclass of PIBase")
+            raise TypeError, "PI class must be subclass of PIBase"
 
 cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
     "Trivial class lookup function that always returns the default class."

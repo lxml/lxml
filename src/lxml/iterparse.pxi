@@ -28,7 +28,7 @@ cdef int _buildIterparseEventFilter(events) except -1:
         elif event == 'pi':
             event_filter |= ITERPARSE_FILTER_PI
         else:
-            raise ValueError("invalid event name '%s'" % event)
+            raise ValueError, "invalid event name '%s'" % event
     return event_filter
 
 cdef int _countNsDefs(xmlNode* c_node):
@@ -407,7 +407,7 @@ cdef class iterparse(_BaseParser):
         return context
 
     def copy(self):
-        raise TypeError("iterparse parsers cannot be copied")
+        raise TypeError, "iterparse parsers cannot be copied"
 
     def __iter__(self):
         return self
@@ -433,7 +433,7 @@ cdef class iterparse(_BaseParser):
             data = self._source.read(__ITERPARSE_CHUNK_SIZE)
             if not python.PyString_Check(data):
                 self._source = None
-                raise TypeError("reading file objects must return plain strings")
+                raise TypeError, "reading file objects must return plain strings"
             elif data:
                 if self._for_html:
                     error = htmlparser.htmlParseChunk(

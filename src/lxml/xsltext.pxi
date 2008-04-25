@@ -58,8 +58,8 @@ cdef class XSLTExtension:
                     tree.xmlUnlinkNode(c_node)
                     proxy.free_after_use()
                 else:
-                    raise TypeError("unsupported XSLT result type: %d" %
-                                    c_node.type)
+                    raise TypeError, \
+                        "unsupported XSLT result type: %d" % c_node.type
                 c_node = c_next
         finally:
             # free all intermediate nodes that will not be freed by proxies
@@ -94,8 +94,8 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
         dict_result = python.PyDict_GetItem(
             context._extension_elements, (c_uri, c_inst_node.name))
         if dict_result is NULL:
-            raise KeyError("extension element %s not found" %
-                           c_inst_node.name)
+            raise KeyError, \
+                "extension element %s not found" % c_inst_node.name
         extension = <object>dict_result
 
         try:

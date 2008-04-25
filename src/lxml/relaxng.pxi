@@ -47,7 +47,7 @@ cdef class RelaxNG(_Validator):
                 if c_href is NULL or \
                        cstd.strcmp(c_href,
                                    'http://relaxng.org/ns/structure/1.0') != 0:
-                    raise RelaxNGParseError("Document is not Relax NG")
+                    raise RelaxNGParseError, "Document is not Relax NG"
             self._error_log.connect()
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
@@ -61,7 +61,7 @@ cdef class RelaxNG(_Validator):
                 self._error_log.connect()
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
-            raise RelaxNGParseError("No tree or file given")
+            raise RelaxNGParseError, "No tree or file given"
 
         if parser_ctxt is NULL:
             self._error_log.disconnect()

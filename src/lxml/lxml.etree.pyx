@@ -422,7 +422,7 @@ cdef class DocInfo:
         self._doc = _documentOrRaise(tree)
         root_name, public_id, system_url = self._doc.getdoctype()
         if not root_name and (public_id or system_url):
-            raise ValueError("Could not find root node")
+            raise ValueError, "Could not find root node"
 
     property root_name:
         "Returns the name of the root node as defined by the DOCTYPE."
@@ -541,7 +541,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef bint left_to_right
         cdef Py_ssize_t slicelength, step
         if value is None:
-            raise ValueError("cannot assign None")
+            raise ValueError, "cannot assign None"
         if python.PySlice_Check(x):
             # slice assignment
             _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
@@ -557,7 +557,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             element = value
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError("list index out of range")
+                raise IndexError, "list index out of range"
             c_next = element._c_node.next
             _removeText(c_node.next)
             tree.xmlReplaceNode(c_node, element._c_node)
@@ -592,7 +592,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # item deletion
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError("index out of range: %d" % x)
+                raise IndexError, "index out of range: %d" % x
             _removeText(c_node.next)
             _removeNode(self._doc, c_node)
 
@@ -645,7 +645,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type != tree.XML_PI_NODE:
                 if element._c_node.type != tree.XML_COMMENT_NODE:
-                    raise TypeError("Only processing instructions and comments can be siblings of the root element")
+                    raise TypeError, "Only processing instructions and comments can be siblings of the root element"
             element.tail = None
         _appendSibling(self, element)
 
@@ -662,7 +662,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node.parent != NULL and not _isElement(self._c_node.parent):
             if element._c_node.type != tree.XML_PI_NODE:
                 if element._c_node.type != tree.XML_COMMENT_NODE:
-                    raise TypeError("Only processing instructions and comments can be siblings of the root element")
+                    raise TypeError, "Only processing instructions and comments can be siblings of the root element"
             element.tail = None
         _prependSibling(self, element)
 
@@ -731,7 +731,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_next
         c_node = element._c_node
         if c_node.parent is not self._c_node:
-            raise ValueError("Element is not a child of this node.")
+            raise ValueError, "Element is not a child of this node."
         c_next = element._c_node.next
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
@@ -750,7 +750,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_new_next
         c_old_node = old_element._c_node
         if c_old_node.parent is not self._c_node:
-            raise ValueError("Element is not a child of this node.")
+            raise ValueError, "Element is not a child of this node."
         c_old_next = c_old_node.next
         c_new_node = new_element._c_node
         c_new_next = c_new_node.next
@@ -948,7 +948,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # indexing
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
-                raise IndexError("list index out of range")
+                raise IndexError, "list index out of range"
             return _elementFactory(self._doc, c_node)
             
     def __len__(self):
@@ -998,7 +998,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_start_node
         c_child = child._c_node
         if c_child.parent is not self._c_node:
-            raise ValueError("Element is not a child of this node.")
+            raise ValueError, "Element is not a child of this node."
 
         # handle the unbounded search straight away (normal case)
         if stop is None and (start is None or start == 0):
@@ -1021,7 +1021,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_stop = stop
             if c_stop == 0 or \
                    c_start >= c_stop and (c_stop > 0 or c_start < 0):
-                raise ValueError("list.index(x): x not in slice")
+                raise ValueError, "list.index(x): x not in slice"
 
         # for negative slice indices, check slice before searching index
         if c_start < 0 or c_stop < 0:
@@ -1039,9 +1039,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_start_node == c_child:
                 # found! before slice end?
                 if c_stop < 0 and l <= -c_stop:
-                    raise ValueError("list.index(x): x not in slice")
+                    raise ValueError, "list.index(x): x not in slice"
             elif c_start < 0:
-                raise ValueError("list.index(x): x not in slice")
+                raise ValueError, "list.index(x): x not in slice"
 
         # now determine the index backwards from child
         c_child = c_child.prev
@@ -1066,9 +1066,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 return k
         if c_start != 0 or c_stop != 0:
-            raise ValueError("list.index(x): x not in slice")
+            raise ValueError, "list.index(x): x not in slice"
         else:
-            raise ValueError("list.index(x): x not in list")
+            raise ValueError, "list.index(x): x not in list"
 
     def get(self, key, default=None):
         """get(self, key, default=None)
@@ -1359,7 +1359,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
 
 cdef class __ContentOnlyElement(_Element):
     cdef int _raiseImmutable(self) except -1:
-        raise TypeError("this element does not have children or attributes")
+        raise TypeError, "this element does not have children or attributes"
 
     def set(self, key, value):
         "set(self, key, value)"
@@ -1404,7 +1404,7 @@ cdef class __ContentOnlyElement(_Element):
         if python.PySlice_Check(x):
             return []
         else:
-            raise IndexError("list index out of range")
+            raise IndexError, "list index out of range"
 
     def __len__(self):
         "__len__(self)"
@@ -1521,7 +1521,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Relocate the ElementTree to a new root node.
         """
         if root._c_node.type != tree.XML_ELEMENT_NODE:
-            raise TypeError("Only elements can be the root of an ElementTree")
+            raise TypeError, "Only elements can be the root of an ElementTree"
         self._context_node = root
         self._doc = None
 
@@ -1602,7 +1602,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef char* c_path
         doc = self._context_node._doc
         if element._doc is not doc:
-            raise ValueError("Element is not in this tree.")
+            raise ValueError, "Element is not in this tree."
         c_doc = _fakeRootDoc(doc._c_doc, self._context_node._c_node)
         c_path = tree.xmlGetNodePath(element._c_node)
         _destroyFakeDoc(doc._c_doc, c_doc)
@@ -1836,12 +1836,12 @@ cdef class _Attrib:
 
     def pop(self, key, *default):
         if python.PyTuple_GET_SIZE(default) > 1:
-            raise TypeError("pop expected at most 2 arguments, got %d" % (
-                    python.PyTuple_GET_SIZE(default)+1))
+            raise TypeError, "pop expected at most 2 arguments, got %d" % (
+                python.PyTuple_GET_SIZE(default)+1)
         result = _getAttributeValue(self._element, key, None)
         if result is None:
             if python.PyTuple_GET_SIZE(default) == 0:
-                raise KeyError(key)
+                raise KeyError, key
             else:
                 result = python.PyTuple_GET_ITEM(default, 0)
                 python.Py_INCREF(result)
@@ -1862,7 +1862,7 @@ cdef class _Attrib:
     def __getitem__(self, key):
         result = _getAttributeValue(self._element, key, None)
         if result is None:
-            raise KeyError(key)
+            raise KeyError, key
         else:
             return result
 
@@ -2295,9 +2295,9 @@ def Entity(name):
     c_name = _cstr(name_utf)
     if c_name[0] == c'#':
         if not _characterReferenceIsValid(c_name + 1):
-            raise ValueError("Invalid character reference: '%s'" % name)
+            raise ValueError, "Invalid character reference: '%s'" % name
     elif not _xmlNameIsValid(c_name):
-        raise ValueError("Invalid entity reference: '%s'" % name)
+        raise ValueError, "Invalid entity reference: '%s'" % name
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createEntity(c_doc, c_name)
@@ -2466,8 +2466,8 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
     cdef bint write_declaration
     if encoding is _unicode:
         if xml_declaration:
-            raise ValueError(
-                "Serialisation to unicode must not request an XML declaration")
+            raise ValueError, \
+                "Serialisation to unicode must not request an XML declaration"
         write_declaration = 0
     elif xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
@@ -2486,8 +2486,8 @@ def tostring(element_or_tree, *, encoding=None, method="xml",
                          encoding, method, write_declaration, 1, pretty_print,
                          with_tail)
     else:
-        raise TypeError("Type '%s' cannot be serialized." %
-                        type(element_or_tree))
+        raise TypeError, "Type '%s' cannot be serialized." % \
+            python._fqtypename(element_or_tree)
 
 def tostringlist(element_or_tree, *args, **kwargs):
     """tostringlist(element_or_tree, *args, **kwargs)
@@ -2530,8 +2530,8 @@ def tounicode(element_or_tree, *, method="xml", pretty_print=False,
         return _tostring((<_ElementTree>element_or_tree)._context_node,
                          _unicode, method, 0, 1, pretty_print, with_tail)
     else:
-        raise TypeError("Type '%s' cannot be serialized." %
-                        type(element_or_tree))
+        raise TypeError, "Type '%s' cannot be serialized." % \
+            type(element_or_tree)
 
 def parse(source, _BaseParser parser=None, *, base_url=None):
     """parse(source, parser=None, base_url=None)
@@ -2622,8 +2622,8 @@ cdef class _Validator:
         Raises `AssertionError` if the document does not comply with the schema.
         """
         if not self(etree):
-            raise AssertionError(self._error_log._buildExceptionMessage(
-                "Document does not comply with schema"))
+            raise AssertionError, self._error_log._buildExceptionMessage(
+                "Document does not comply with schema")
 
     property error_log:
         "The log of validation errors and warnings."

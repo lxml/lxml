@@ -57,8 +57,7 @@ cdef class _BaseContext:
             for extension in extensions:
                 for (ns_uri, name), function in extension.items():
                     if name is None:
-                        raise ValueError(
-                            "extensions must have non empty names")
+                        raise ValueError, "extensions must have non empty names"
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
                     python.PyDict_SetItem(
@@ -72,11 +71,11 @@ cdef class _BaseContext:
                 ns = []
                 for prefix, ns_uri in namespaces:
                     if prefix is None or not prefix:
-                        raise TypeError(
-                            "empty namespace prefix is not supported in XPath")
+                        raise TypeError, \
+                            "empty namespace prefix is not supported in XPath"
                     if ns_uri is None or not ns_uri:
-                        raise TypeError(
-                            "setting default namespace is not supported in XPath")
+                        raise TypeError, \
+                            "setting default namespace is not supported in XPath"
                     prefix_utf = self._to_utf(prefix)
                     ns_uri_utf = self._to_utf(ns_uri)
                     python.PyList_Append(ns, (prefix_utf, ns_uri_utf))
@@ -139,7 +138,7 @@ cdef class _BaseContext:
 
     cdef addNamespace(self, prefix, ns_uri):
         if prefix is None:
-            raise TypeError("empty prefix is not supported in XPath")
+            raise TypeError, "empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         new_item = (prefix_utf, ns_uri_utf)
@@ -161,7 +160,7 @@ cdef class _BaseContext:
 
     cdef registerNamespace(self, prefix, ns_uri):
         if prefix is None:
-            raise TypeError("empty prefix is not supported in XPath")
+            raise TypeError, "empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         python.PyList_Append(self._global_namespaces, prefix_utf)
@@ -279,17 +278,16 @@ cdef class _BaseContext:
         def __get__(self):
             cdef xmlNode* c_node
             if self._xpathCtxt is NULL:
-                raise XPathError(
-                    "XPath context is only usable during the evaluation")
+                raise XPathError, \
+                    "XPath context is only usable during the evaluation"
             c_node = self._xpathCtxt.node
             if c_node is NULL:
-                raise XPathError("no context node")
+                raise XPathError, "no context node"
             if c_node.doc != self._xpathCtxt.doc:
-                raise XPathError(
-                    "document-external context nodes are not supported")
+                raise XPathError, \
+                    "document-external context nodes are not supported"
             if self._doc is None:
-                raise XPathError(
-                      "document context is missing")
+                raise XPathError, "document context is missing"
             return _elementFactory(self._doc, c_node)
 
     property eval_context:
@@ -477,15 +475,16 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
                 xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
             else:
                 xpath.xmlXPathFreeNodeSet(resultSet)
-                raise XPathResultError("This is not a node: %r" % element)
+                raise XPathResultError, "This is not a node: %r" % element
     else:
-        raise XPathResultError("Unknown return type: %s" % type(obj))
+        raise XPathResultError, "Unknown return type: %s" % \
+            python._fqtypename(obj)
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
                                _Document doc):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
-        raise XPathResultError("Undefined xpath result")
+        raise XPathResultError, "Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
         return _createNodeSetResult(xpathObj, doc)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
@@ -506,7 +505,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
         raise NotImplementedError
     else:
-        raise XPathResultError("Unknown xpath result %s" % str(xpathObj.type))
+        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
 
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     cdef xmlNode* c_node
@@ -546,8 +545,8 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
                  c_node.type == tree.XML_XINCLUDE_END:
             continue
         else:
-            raise NotImplementedError(
-                "Not yet implemented result node type: %d" % c_node.type)
+            raise NotImplementedError, \
+                "Not yet implemented result node type: %d" % c_node.type
         python.PyList_Append(result, value)
     return result
 

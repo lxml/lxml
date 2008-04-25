@@ -26,9 +26,11 @@ cdef _Document _documentOrRaise(object input):
     elif isinstance(input, _Document):
         doc = <_Document>input
     else:
-        raise TypeError("Invalid input object: %s" % type(input))
+        raise TypeError, "Invalid input object: %s" % \
+            python._fqtypename(input)
     if doc is None:
-        raise ValueError("Input object has no document: %s" % type(input))
+        raise ValueError, "Input object has no document: %s" % \
+            python._fqtypename(input)
     else:
         return doc
 
@@ -46,9 +48,11 @@ cdef _Element _rootNodeOrRaise(object input):
     elif isinstance(input, _Document):
         node = (<_Document>input).getroot()
     else:
-        raise TypeError("Invalid input object: %s" % type(input))
+        raise TypeError, "Invalid input object: %s" % \
+            python._fqtypename(input)
     if node is None:
-        raise ValueError("Input object has no element: %s" % type(input))
+        raise ValueError, "Input object has no element: %s" % \
+            python._fqtypename(input)
     else:
         return node
 
@@ -213,7 +217,8 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     cdef xmlNs* c_ns
     # 'extra' is not checked here (expected to be a keyword dict)
     if attrib is not None and not hasattr(attrib, 'items'):
-        raise TypeError("Invalid attribute dictionary: %s" % type(attrib))
+        raise TypeError, "Invalid attribute dictionary: %s" % \
+            python._fqtypename(attrib)
     if extra is not None and extra:
         if attrib is None:
             attrib = extra
@@ -307,7 +312,7 @@ cdef int _delAttribute(_Element element, key) except -1:
     else:
         c_href = _cstr(ns)
     if _delAttributeFromNsName(element._c_node, c_href, _cstr(tag)):
-        raise KeyError(key)
+        raise KeyError, key
     return 0
 
 cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
@@ -780,9 +785,8 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         # *replacing* children stepwise with list => check size!
         seqlength = len(elements)
         if seqlength != slicelength:
-            raise ValueError(
-                "attempt to assign sequence of size %d "
-                "to extended slice of size %d" % (seqlength, slicelength))
+            raise ValueError, "attempt to assign sequence of size %d " \
+                "to extended slice of size %d" % (seqlength, slicelength)
 
     if c_node is NULL:
         # no children yet => add all elements straight away
@@ -1000,7 +1004,7 @@ cdef object _utf8(object s):
         assert isutf8py(s) != -1, \
                "All strings must be XML compatible, either Unicode or ASCII"
     else:
-        raise TypeError("Argument must be string or unicode.")
+        raise TypeError, "Argument must be string or unicode."
     return s
 
 cdef object _encodeFilename(object filename):
@@ -1014,7 +1018,7 @@ cdef object _encodeFilename(object filename):
         return python.PyUnicode_AsEncodedString(
             filename, _C_FILENAME_ENCODING, NULL)
     else:
-        raise TypeError("Argument must be string or unicode.")
+        raise TypeError, "Argument must be string or unicode."
 
 cdef object _encodeFilenameUTF8(object filename):
     """Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
@@ -1043,7 +1047,7 @@ cdef object _encodeFilenameUTF8(object filename):
     if python.PyUnicode_Check(filename):
         return python.PyUnicode_AsUTF8String(filename)
     else:
-        raise TypeError("Argument must be string or unicode.")
+        raise TypeError, "Argument must be string or unicode."
 
 cdef _getNsTag(tag):
     """Given a tag, find namespace URI and tag name.
@@ -1062,16 +1066,16 @@ cdef _getNsTag(tag):
         c_tag = c_tag + 1
         c_ns_end = cstd.strchr(c_tag, c'}')
         if c_ns_end is NULL:
-            raise ValueError("Invalid tag name")
+            raise ValueError, "Invalid tag name"
         nslen  = c_ns_end - c_tag
         taglen = python.PyString_GET_SIZE(tag) - nslen - 2
         if taglen == 0:
-            raise ValueError("Empty tag name")
+            raise ValueError, "Empty tag name"
         if nslen > 0:
             ns = python.PyString_FromStringAndSize(c_tag,   nslen)
         tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
     elif python.PyString_GET_SIZE(tag) == 0:
-        raise ValueError("Empty tag name")
+        raise ValueError, "Empty tag name"
     return ns, tag
 
 cdef int _pyXmlNameIsValid(name_utf8):
@@ -1123,26 +1127,26 @@ cdef bint _characterReferenceIsValid(char* c_name):
 
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError("Invalid tag name %r" % \
-              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
+        raise ValueError, "Invalid tag name %r" % \
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError("Invalid HTML tag name %r" % \
-              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
+        raise ValueError, "Invalid HTML tag name %r" % \
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
-        raise ValueError("Invalid attribute name %r" % \
-              python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict'))
+        raise ValueError, "Invalid attribute name %r" % \
+            python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict')
     return 0
 
 cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError("Invalid namespace prefix %r" % \
-              python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict'))
+        raise ValueError, "Invalid namespace prefix %r" % \
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
     return 0
 
 cdef object _namespacedName(xmlNode* c_node):

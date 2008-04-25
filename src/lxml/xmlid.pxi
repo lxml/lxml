@@ -69,7 +69,7 @@ cdef class _IDDict:
         cdef _Document doc
         doc = _documentOrRaise(etree)
         if doc._c_doc.ids is NULL:
-            raise ValueError("No ID dictionary available.")
+            raise ValueError, "No ID dictionary available."
         self._doc = doc
         self._keys  = None
         self._items = None
@@ -85,10 +85,10 @@ cdef class _IDDict:
         id_utf = _utf8(id_name)
         c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _cstr(id_utf))
         if c_id is NULL:
-            raise KeyError("key not found.")
+            raise KeyError, "key not found."
         c_attr = c_id.attr
         if c_attr is NULL or c_attr.parent is NULL:
-            raise KeyError("ID attribute not found.")
+            raise KeyError, "ID attribute not found."
         return _elementFactory(self._doc, c_attr.parent)
 
     def get(self, id_name):

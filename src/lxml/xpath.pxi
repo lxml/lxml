@@ -158,7 +158,7 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise ParserError("parser locking failed")
+                raise ParserError, "parser locking failed"
         return 0
 
     cdef void _unlock(self):
