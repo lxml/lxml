@@ -7,7 +7,7 @@ BeautifulSoup_ is a Python package that parses broken HTML.  While libxml2
 forgiving and has superiour `support for encoding detection`_.
 
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
-.. _`support for encoding detection`: http://www.crummy.com/software/BeautifulSoup/documentation.html#Beautiful%20Soup%20Gives%20You%20Unicode,%20Dammit
+.. _`support for encoding detection`: http://www.crummy.com/software/BeautifulSoup/documentation.html#Beautiful%20Soup%20Gives%20You%20Unicode%2C%20Dammit
 .. _ElementSoup: http://effbot.org/zone/element-soup.htm
 
 lxml can benefit from the parsing capabilities of BeautifulSoup

@@ -187,7 +187,7 @@ You can search the archive with Gmane_ or Google_.
 
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 .. _Gmane: http://blog.gmane.org/gmane.comp.python.lxml.devel
-.. _Google: http://www.google.com/webhp?q=site:codespeak.net/mailman/listinfo/lxml-dev%20
+.. _Google: http://www.google.com/webhp?q=site:codespeak.net%2Fmailman%2Flistinfo%2Flxml-dev+
 
 
 Bug tracker

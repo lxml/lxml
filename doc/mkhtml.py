@@ -21,9 +21,10 @@ find_words = re.compile('(\w+)').findall
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
 def make_menu_section_head(section, menuroot):
-    section_head = menuroot.xpath("//ul[@id=$section]/li", section=section)
+    section_id = section + '-section'
+    section_head = menuroot.xpath("//ul[@id=$section]/li", section=section_id)
     if not section_head:
-        ul = SubElement(menuroot, "ul", id=section)
+        ul = SubElement(menuroot, "ul", id=section_id)
         section_head = SubElement(ul, "li")
         title = SubElement(section_head, "span", {"class":"section title"})
         title.text = section
@@ -41,7 +42,7 @@ def build_menu(tree, basename, section_head):
                      headings=find_headings(tree))
 
 def build_menu_entry(page_title, url, section_head, headings=None):
-    page_id = replace_invalid(' ', os.path.splitext(url)[0])
+    page_id = replace_invalid(' ', os.path.splitext(url)[0]) + '-menu'
     ul = SubElement(section_head, "ul", {"class":"menu foreign", "id":page_id})
 
     title = SubElement(ul, "li", {"class":"menu title"})
@@ -52,7 +53,7 @@ def build_menu_entry(page_title, url, section_head, headings=None):
         subul = SubElement(title, "ul", {"class":"submenu"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
-            ref = '-'.join(find_words(heading.lower()))
+            ref = '-'.join(find_words(replace_invalid(' ', heading.lower())))
             a  = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 
@@ -63,7 +64,8 @@ def merge_menu(tree, menu, name):
         tag = el.tag
         if tag[0] != '{':
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
-    current_menu = find_menu(menu_root, name=replace_invalid(' ', name))
+    current_menu = find_menu(
+        menu_root, name=replace_invalid(' ', name + '-menu'))
     if current_menu:
         for submenu in current_menu:
             submenu.set("class", submenu.get("class", "").

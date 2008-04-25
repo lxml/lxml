@@ -3,7 +3,7 @@ Document loading and URL resolving
 
 .. contents::
 ..
-   1  Resolvers
+   1  URI Resolvers
    2  Document loading in context
    3  I/O access control in XSLT
 
@@ -13,8 +13,8 @@ transformations.  These so-called resolvers are subclasses of the
 etree.Resolver class.
 
 
-Resolvers
----------
+URI Resolvers
+-------------
 
 Here is an example of a custom resolver:
 
