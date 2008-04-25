@@ -105,7 +105,11 @@ class LxmlError(Error):
     this one.
     """
     def __init__(self, message, error_log=None):
-        _initError(self, message)
+        if python.PY_VERSION_HEX >= 0x02050000:
+            # Python >= 2.5 uses new style class exceptions
+            super(_LxmlError, self).__init__(message)
+        else:
+            super_init(self, message)
         if error_log is None:
             self.error_log = __copyGlobalErrorLog()
         else:
@@ -114,16 +118,8 @@ class LxmlError(Error):
 cdef object _LxmlError
 _LxmlError = LxmlError
 
-def _superError(obj, message):
-    super(_LxmlError, obj).__init__(message)
-
-cdef object _initError
-if isinstance(_LxmlError, type):
-    _initError = _superError    # Python >= 2.5
-else:
-    _initError = Error.__init__ # Python <= 2.4
-
-del _superError
+cdef object super_init
+super_init = Error.__init__
 
 
 # superclass for all syntax errors

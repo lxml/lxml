@@ -6,6 +6,7 @@ cdef extern from "Python.h":
     ctypedef int size_t
     cdef int INT_MAX
     cdef int PY_SSIZE_T_MAX
+    cdef int PY_VERSION_HEX
 
     cdef void Py_INCREF(object o)
     cdef void Py_DECREF(object o)
