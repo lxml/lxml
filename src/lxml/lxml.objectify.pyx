@@ -1762,7 +1762,17 @@ def fromstring(xml, parser=None):
         parser = objectify_parser
     return _fromstring(xml, parser)
 
-XML = fromstring
+def XML(xml, parser=None):
+    """XML(xml, parser=None)
+
+    Objectify specific version of the lxml.etree XML() literal factory
+    that uses the objectify parser.
+
+    You can pass a different parser as second argument.
+    """
+    if parser is None:
+        parser = objectify_parser
+    return _fromstring(xml, parser)
 
 cdef object _parse
 _parse = etree.parse
