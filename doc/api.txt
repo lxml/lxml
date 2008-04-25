@@ -78,7 +78,7 @@ the `Amara bindery`_ tool.
 lxml.etree comes with a number of `different lookup schemes`_ to customize the
 mapping between libxml2 nodes and the Element classes used by lxml.etree.
 
-.. _`custom element subclasses`: namespace_extensions.html
+.. _`custom element subclasses`: element_classes.html
 .. _`objectify`: objectify.html
 .. _`different lookup schemes`: element_classes.html#setting-up-a-class-lookup-scheme
 .. _`Amara bindery`: http://uche.ogbuji.net/tech/4suite/amara/

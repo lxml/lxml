@@ -181,7 +181,7 @@ And don't miss the quotes by our generally happy_ users_, and other
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
-.. _`sites that link to lxml`: http://www.google.com/search?as_lq=http%3A%2F%2Fcodespeak.net%2Flxml
+.. _`sites that link to lxml`: http://www.google.com/search?as_lq=http:%2F%2Fcodespeak.net%2Flxml
 
 
 What is the difference between lxml.etree and lxml.objectify?

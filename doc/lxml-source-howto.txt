@@ -13,7 +13,7 @@ This document describes how to read the source code of lxml_ and how
 to start working on it.  You might also be interested in the companion
 document that describes `how to build lxml from sources`_.
 
-.. _lxml: http://codespeak.net/lxml
+.. _lxml: http://codespeak.net/lxml/
 .. _`how to build lxml from sources`: build.html
 .. _`ReStructured Text`: http://docutils.sourceforge.net/rst.html
 .. _epydoc: http://epydoc.sourceforge.net/

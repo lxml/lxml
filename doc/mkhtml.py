@@ -17,6 +17,7 @@ find_headings = XPath("//h:h1[not(@class)]/h:a/text()", namespaces=htmlnsmap)
 find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
 find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
+find_words = re.compile('(\w+)').findall
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
 def make_menu_section_head(section, menuroot):
@@ -51,7 +52,7 @@ def build_menu_entry(page_title, url, section_head, headings=None):
         subul = SubElement(title, "ul", {"class":"submenu"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
-            ref = replace_invalid('-', heading.lower())
+            ref = '-'.join(find_words(heading.lower()))
             a  = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 

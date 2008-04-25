@@ -198,7 +198,7 @@ lxml, please file a bug report there.  If you are not sure whether some
 unexpected behaviour of lxml is a bug or not, please ask on the `mailing
 list`_ first.  Do not forget to search the archive (e.g. with Gmane_)!
 
-.. _`launchpad bug tracker`: https://launchpad.net/lxml
+.. _`launchpad bug tracker`: https://launchpad.net/lxml/
 
 
 License
