@@ -1063,7 +1063,9 @@ tries to correctly prefix the xsi:type attribute value for you:
 .. sourcecode:: pycon
 
     >>> el = objectify.DataElement('5', _xsi='string')
-    >>> for prefix, namespace in el.nsmap.items():
+    >>> namespaces = el.nsmap.items()
+    >>> namespaces.sort()
+    >>> for prefix, namespace in namespaces:
     ...     print prefix, '-', namespace
     py - http://codespeak.net/lxml/objectify/pytype
     xsd - http://www.w3.org/2001/XMLSchema
@@ -1079,10 +1081,12 @@ namespace information if you choose to do so:
 
     >>> el = objectify.DataElement('5', _xsi='foo:string',
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema'})
-    >>> for prefix, namespace in el.nsmap.items():
+    >>> namespaces = el.nsmap.items()
+    >>> namespaces.sort()
+    >>> for prefix, namespace in namespaces:
     ...     print prefix, '-', namespace
-    py - http://codespeak.net/lxml/objectify/pytype
     foo - http://www.w3.org/2001/XMLSchema
+    py - http://codespeak.net/lxml/objectify/pytype
     xsi - http://www.w3.org/2001/XMLSchema-instance
 
     >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
@@ -1096,11 +1100,13 @@ namespace.  We can override it as in the following example:
     >>> el = objectify.DataElement('5', _xsi='foo:string',
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema',
     ...                 'myxsi': 'http://www.w3.org/2001/XMLSchema-instance'})
-    >>> for prefix, namespace in el.nsmap.items():
+    >>> namespaces = el.nsmap.items()
+    >>> namespaces.sort()
+    >>> for prefix, namespace in namespaces:
     ...     print prefix, '-', namespace
-    py - http://codespeak.net/lxml/objectify/pytype
     foo - http://www.w3.org/2001/XMLSchema
     myxsi - http://www.w3.org/2001/XMLSchema-instance
+    py - http://codespeak.net/lxml/objectify/pytype
 
     >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
     foo:string
