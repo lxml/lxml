@@ -189,16 +189,17 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
             doc._setNodeNs(c_node, _cstr(node_ns_utf))
         return 0
 
-    # Sort the prefixes backwards to move the default namespace to the
-    # end.  This makes sure libxml2 prefers a prefix if the ns is
-    # defined redundantly on the same element.  That way, users can
-    # work around a problem themselves where default namespace
-    # attributes on non-default namespaced elements serialise without
-    # prefix (i.e. into the non-default namespace).
     nsdefs = list(nsmap.items())
-    if python.PyList_GET_SIZE(nsdefs) > 1:
-        python.PyList_Sort(nsdefs)
-        python.PyList_Reverse(nsdefs)
+    if None in nsmap and python.PyList_GET_SIZE(nsdefs) > 1:
+        # Move the default namespace to the end.  This makes sure libxml2
+        # prefers a prefix if the ns is defined redundantly on the same
+        # element.  That way, users can work around a problem themselves
+        # where default namespace attributes on non-default namespaced
+        # elements serialise without prefix (i.e. into the non-default
+        # namespace).
+        item = (None, nsmap[None])
+        nsdefs.remove(item)
+        nsdefs.append(item)
 
     for prefix, href in nsdefs:
         href_utf = _utf8(href)
