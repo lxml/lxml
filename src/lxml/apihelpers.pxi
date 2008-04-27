@@ -189,18 +189,31 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
             doc._setNodeNs(c_node, _cstr(node_ns_utf))
         return 0
 
-    for prefix, href in nsmap.items():
+    # Sort the prefixes backwards to move the default namespace to the
+    # end.  This makes sure libxml2 prefers a prefix if the ns is
+    # defined redundantly on the same element.  That way, users can
+    # work around a problem themselves where default namespace
+    # attributes on non-default namespaced elements serialise without
+    # prefix (i.e. into the non-default namespace).
+    nsdefs = list(nsmap.items())
+    if python.PyList_GET_SIZE(nsdefs) > 1:
+        python.PyList_Sort(nsdefs)
+        python.PyList_Reverse(nsdefs)
+
+    for prefix, href in nsdefs:
         href_utf = _utf8(href)
         c_href = _cstr(href_utf)
-        if prefix is not None and prefix:
+        if prefix is not None:
             prefix_utf = _utf8(prefix)
             _prefixValidOrRaise(prefix_utf)
             c_prefix = _cstr(prefix_utf)
         else:
             c_prefix = NULL
-        # add namespace with prefix if ns is not already known
-        c_ns = tree.xmlSearchNsByHref(doc._c_doc, c_node, c_href)
-        if c_ns is NULL:
+        # add namespace with prefix if it is not already known
+        c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
+        if c_ns is NULL or \
+                c_ns.href is NULL or \
+                cstd.strcmp(c_ns.href, c_href) != 0:
             c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if href_utf == node_ns_utf:
             tree.xmlSetNs(c_node, c_ns)
