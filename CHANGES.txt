@@ -26,6 +26,26 @@ Other changes
   namespace (i.e. they would end up in the wrong namespace).
 
 
+2.0.5 (2008-05-01)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Resolving to a filename in custom resolvers didn't work.
+
+* lxml did not honour libxslt's second error state "STOPPED", which
+  let some XSLT errors pass silently.
+
+* Memory leak in Schematron with libxml2 >= 2.6.31.
+
+Other changes
+-------------
+
+
 2.1beta1 (2008-04-15)
 =====================
 
