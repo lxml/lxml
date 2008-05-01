@@ -11,6 +11,6 @@ recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.xsd *.html *.txt
 recursive-include src/lxml/html/tests *.data *.txt
 recursive-include samples *.xml
 recursive-include benchmark *.py
-recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython.png
+recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython*.png
 recursive-include fake_pyrex *.py
 include doc/mkhtml.py doc/rest2html.py
