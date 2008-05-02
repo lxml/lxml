@@ -8,7 +8,7 @@ belong here. Note that there is a second test module called test_io.py
 for IO related test cases.
 """
 
-import unittest, doctest
+import unittest
 import os, re, tempfile, copy, operator, gc
 
 from common_imports import StringIO, etree, ElementTree, cElementTree
