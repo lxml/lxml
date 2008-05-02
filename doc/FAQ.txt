@@ -565,29 +565,32 @@ Threading
 Can I use threads to concurrently access the lxml API?
 ------------------------------------------------------
 
-Yes, although not carelessly.
+Short answer: yes, if you use lxml 2.1 and later.
 
-lxml frees the GIL (Python's global interpreter lock) internally when parsing
-from disk and memory, as long as you use either the default parser (which is
-replicated for each thread) or create a parser for each thread yourself.  lxml
-also allows concurrency during validation (RelaxNG and XMLSchema) and XSL
-transformation.  You can share RelaxNG, XMLSchema and (with restrictions) XSLT
-objects between threads.  While you can also share parsers between threads,
-this will serialize the access to each of them, so it is better to ``copy()``
-parsers or to just use the default parser (which is automatically copied for
-each thread).
+Since version 1.1, lxml frees the GIL (Python's global interpreter
+lock) internally when parsing from disk and memory, as long as you use
+either the default parser (which is replicated for each thread) or
+create a parser for each thread yourself.  lxml also allows
+concurrency during validation (RelaxNG and XMLSchema) and XSL
+transformation.  You can share RelaxNG, XMLSchema and (with
+restrictions) XSLT objects between threads.  While you can also share
+parsers between threads, this will serialize the access to each of
+them, so it is better to ``.copy()`` parsers or to just use the
+default parser if you do not need any special configuration.
 
 Due to the way libxslt handles threading, applying a stylesheets is
 most efficient if it was parsed in the same thread that executes it.
 One way to achieve this is by caching stylesheets in thread-local
 storage.
 
-Warning: You should generally avoid modifying trees in other threads than the
-one it was generated in.  Although this should work in many cases, there are
-certain scenarios where the termination of a thread that parsed a tree can
-crash the application if subtrees of this tree were moved to other documents.
-You should be on the safe side when passing trees between threads if you
-either
+Warning: Before lxml 2.1, there were issues when moving subtrees
+between different threads.  If you need code to run with older
+versions, you should generally avoid modifying trees in other threads
+than the one it was generated in.  Although this should work in many
+cases, there are certain scenarios where the termination of a thread
+that parsed a tree can crash the application if subtrees of this tree
+were moved to other documents.  You should be on the safe side when
+passing trees between threads if you either
 
 a) do not modify these trees and do not move their elements to other trees, or
 b) do not terminate threads while the trees they parsed are still in use
