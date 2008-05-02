@@ -17,6 +17,10 @@ Features added
 Bugs fixed
 ----------
 
+* Moving a subtree from a document created in one thread into a
+  document of another thread could crash when the rest of the source
+  document is deleted while the subtree is still in use.
+
 * Passing an nsmap when creating an Element will no longer strip
   redundantly defined namespace URIs.  This prevented the definition
   of more than one prefix for a namespace on the same Element.
