@@ -4,34 +4,40 @@
 
 # Data taken from http://www.w3.org/TR/html401/index/elements.html
 
-empty_tags = [
-    'area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
-    'img', 'input', 'isindex', 'link', 'meta', 'param']
+try:
+    frozenset
+except NameError:
+    from sets import Set as frozenset
 
-deprecated_tags = [
+
+empty_tags = frozenset([
+    'area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
+    'img', 'input', 'isindex', 'link', 'meta', 'param'])
+
+deprecated_tags = frozenset([
     'applet', 'basefont', 'center', 'dir', 'font', 'isindex',
-    'menu', 's', 'strike', 'u']
+    'menu', 's', 'strike', 'u'])
 
 # archive actually takes a space-separated list of URIs
-link_attrs = [
+link_attrs = frozenset([
     'action', 'archive', 'background', 'cite', 'classid',
     'codebase', 'data', 'href', 'longdesc', 'profile', 'src',
     'usemap',
     # Not standard:
     'dynsrc', 'lowsrc',
-    ]
+    ])
 
 # Not in the HTML 4 spec:
 # onerror, onresize
-event_attrs = [
+event_attrs = frozenset([
     'onblur', 'onchange', 'onclick', 'ondblclick', 'onerror',
     'onfocus', 'onkeydown', 'onkeypress', 'onkeyup', 'onload',
     'onmousedown', 'onmousemove', 'onmouseout', 'onmouseover',
     'onmouseup', 'onreset', 'onresize', 'onselect', 'onsubmit',
     'onunload',
-    ]
+    ])
 
-safe_attrs = [
+safe_attrs = frozenset([
     'abbr', 'accept', 'accept-charset', 'accesskey', 'action', 'align',
     'alt', 'axis', 'border', 'cellpadding', 'cellspacing', 'char', 'charoff',
     'charset', 'checked', 'cite', 'class', 'clear', 'cols', 'colspan',
@@ -41,18 +47,18 @@ safe_attrs = [
     'multiple', 'name', 'nohref', 'noshade', 'nowrap', 'prompt', 'readonly',
     'rel', 'rev', 'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape',
     'size', 'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title',
-    'type', 'usemap', 'valign', 'value', 'vspace', 'width']
+    'type', 'usemap', 'valign', 'value', 'vspace', 'width'])
 
 # From http://htmlhelp.com/reference/html40/olist.html
-top_level_tags = [
+top_level_tags = frozenset([
     'html', 'head', 'body', 'frameset',
-    ]
+    ])
 
-head_tags = [
+head_tags = frozenset([
     'base', 'isindex', 'link', 'meta', 'script', 'style', 'title',
-    ]
+    ])
 
-general_block_tags = [
+general_block_tags = frozenset([
     'address',
     'blockquote',
     'center',
@@ -70,51 +76,51 @@ general_block_tags = [
     'noscript',
     'p',
     'pre',
-    ]
+    ])
 
-list_tags = [
+list_tags = frozenset([
     'dir', 'dl', 'dt', 'dd', 'li', 'menu', 'ol', 'ul',
-    ]
+    ])
 
-table_tags = [
+table_tags = frozenset([
     'table', 'caption', 'colgroup', 'col',
     'thead', 'tfoot', 'tbody', 'tr', 'td', 'th',
-    ]
+    ])
 
 # just this one from
 # http://www.georgehernandez.com/h/XComputers/HTML/2BlockLevel.htm
-block_tags = general_block_tags + list_tags + table_tags + [
+block_tags = general_block_tags | list_tags | table_tags | frozenset([
     # Partial form tags
     'fieldset', 'form', 'legend', 'optgroup', 'option',
-    ]
+    ])
 
-form_tags = [
+form_tags = frozenset([
     'form', 'button', 'fieldset', 'legend', 'input', 'label',
     'select', 'optgroup', 'option', 'textarea',
-    ]
+    ])
 
-special_inline_tags = [
+special_inline_tags = frozenset([
     'a', 'applet', 'basefont', 'bdo', 'br', 'embed', 'font', 'iframe',
     'img', 'map', 'area', 'object', 'param', 'q', 'script',
     'span', 'sub', 'sup',
-    ]
+    ])
 
-phrase_tags = [
+phrase_tags = frozenset([
     'abbr', 'acronym', 'cite', 'code', 'del', 'dfn', 'em',
     'ins', 'kbd', 'samp', 'strong', 'var',
-    ]
+    ])
 
-font_style_tags = [
+font_style_tags = frozenset([
     'b', 'big', 'i', 's', 'small', 'strike', 'tt', 'u',
-    ]
+    ])
 
-frame_tags = [
+frame_tags = frozenset([
     'frameset', 'frame', 'noframes',
-    ]
+    ])
 
 # These tags aren't standard
-nonstandard_tags = ['blink', 'marque']
+nonstandard_tags = frozenset(['blink', 'marque'])
 
-tags = (top_level_tags + head_tags + general_block_tags + list_tags
-        + table_tags + form_tags + special_inline_tags + phrase_tags
-        + font_style_tags + nonstandard_tags)
+tags = (top_level_tags | head_tags | general_block_tags | list_tags
+        | table_tags | form_tags | special_inline_tags | phrase_tags
+        | font_style_tags | nonstandard_tags)
