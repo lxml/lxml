@@ -22,15 +22,29 @@ __all__ = [
     'find_rel_links', 'find_class', 'make_links_absolute',
     'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser']
 
-_rel_links_xpath = etree.XPath("descendant-or-self::a[@rel]")
+XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
+
+_rel_links_xpath = etree.XPath("descendant-or-self::a[@rel]|descendant-or-self::x:a[@rel]",
+                               namespaces={'x':XHTML_NAMESPACE})
+_options_xpath = etree.XPath("descendant-or-self::option|descendant-or-self::x:option",
+                             namespaces={'x':XHTML_NAMESPACE})
+_forms_xpath = etree.XPath("descendant-or-self::form|descendant-or-self::x:form",
+                           namespaces={'x':XHTML_NAMESPACE})
 #_class_xpath = etree.XPath(r"descendant-or-self::*[regexp:match(@class, concat('\b', $class_name, '\b'))]", {'regexp': 'http://exslt.org/regular-expressions'})
 _class_xpath = etree.XPath("descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), concat(' ', $class_name, ' '))]")
 _id_xpath = etree.XPath("descendant-or-self::*[@id=$id]")
 _collect_string_content = etree.XPath("string()")
 _css_url_re = re.compile(r'url\((.*?)\)', re.I)
 _css_import_re = re.compile(r'@import "(.*?)"')
-_label_xpath = etree.XPath("//label[@for=$id]")
+_label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
+                           namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
+
+def _nons(tag):
+    if isinstance(tag, basestring):
+        if tag[0] == '{' and tag[1:len(XHTML_NAMESPACE)+1] == XHTML_NAMESPACE:
+            return tag.split('}')[-1]
+    return tag
 
 class HtmlMixin(object):
 
@@ -48,7 +62,7 @@ class HtmlMixin(object):
         """
         Return a list of all the forms
         """
-        return list(self.getiterator('form'))
+        return _forms_xpath(self)
     forms = property(forms, doc=forms.__doc__)
 
     def body(self):
@@ -56,7 +70,7 @@ class HtmlMixin(object):
         Return the <body> element.  Can be called from a child element
         to get the document's head.
         """
-        return self.xpath('//body')[0]
+        return self.xpath('//body|//x:body', namespaces={'x':XHTML_NAMESPACE})[0]
     body = property(body, doc=body.__doc__)
 
     def head(self):
@@ -64,7 +78,7 @@ class HtmlMixin(object):
         Returns the <head> element.  Can be called from a child
         element to get the document's head.
         """
-        return self.xpath('//head')[0]
+        return self.xpath('//head|//x:head', namespaces={'x':XHTML_NAMESPACE})[0]
     head = property(head, doc=head.__doc__)
 
     def _label__get(self):
@@ -85,7 +99,7 @@ class HtmlMixin(object):
             raise TypeError(
                 "You cannot set a label for an element (%r) that has no id"
                 % self)
-        if not label.tag == 'label':
+        if _nons(label.tag) != 'label':
             raise TypeError(
                 "You can only assign label to a label element (not %r)"
                 % label)
@@ -228,7 +242,7 @@ class HtmlMixin(object):
         tag once it has been applied.
         """
         base_href = None
-        basetags = self.xpath('//base[@href]')
+        basetags = self.xpath('//base[@href]|//x:base[@href]', namespaces={'x':XHTML_NAMESPACE})
         for b in basetags:
             base_href = b.get('href')
             b.drop_tree()
@@ -249,11 +263,12 @@ class HtmlMixin(object):
         link_attrs = defs.link_attrs
         for el in self.getiterator():
             attribs = el.attrib
-            if el.tag != 'object':
+            tag = _nons(el.tag)
+            if tag != 'object':
                 for attrib in link_attrs:
                     if attrib in attribs:
                         yield (el, attrib, attribs[attrib], 0)
-            elif el.tag == 'object':
+            elif tag == 'object':
                 codebase = None
                 ## <object> tags have attributes that are relative to
                 ## codebase
@@ -272,7 +287,7 @@ class HtmlMixin(object):
                         if codebase is not None:
                             value = urlparse.urljoin(codebase, value)
                         yield (el, 'archive', value, match.start())
-            if el.tag == 'param':
+            if tag == 'param':
                 valuetype = el.get('valuetype') or ''
                 if valuetype.lower() == 'ref':
                     ## FIXME: while it's fine we *find* this link,
@@ -282,7 +297,7 @@ class HtmlMixin(object):
                     ## doesn't have a valuetype="ref" (which seems to be the norm)
                     ## http://www.w3.org/TR/html401/struct/objects.html#adef-valuetype
                     yield (el, 'value', el.get('value'), 0)
-            if el.tag == 'style' and el.text:
+            if tag == 'style' and el.text:
                 for match in _css_url_re.finditer(el.text):
                     yield (el, None, match.group(1), match.start(1))
                 for match in _css_import_re.finditer(el.text):
@@ -471,8 +486,8 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     if not start.startswith('<html') and not start.startswith('<!doctype'):
         html = '<html><body>%s</body></html>' % html
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
-    assert doc.tag == 'html'
-    bodies = [e for e in doc if e.tag == 'body']
+    assert _nons(doc.tag) == 'html'
+    bodies = [e for e in doc if _nons(e.tag) == 'body']
     assert len(bodies) == 1, ("too many bodies: %r in %r" % (bodies, html))
     body = bodies[0]
     elements = []
@@ -540,6 +555,8 @@ def fromstring(html, base_url=None, parser=None, **kw):
     # otherwise, lets parse it out...
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     bodies = doc.findall('body')
+    if not bodies:
+        bodies = doc.findall('{%s}body' % XHTML_NAMESPACE)
     if bodies:
         body = bodies[0]
         if len(bodies) > 1:
@@ -558,6 +575,8 @@ def fromstring(html, base_url=None, parser=None, **kw):
     else:
         body = None
     heads = doc.findall('head')
+    if not heads:
+        heads = doc.findall('{%s}head' % XHTML_NAMESPACE)
     if heads:
         # Well, we have some sort of structure, so lets keep it all
         head = heads[0]
@@ -598,7 +617,7 @@ def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be
     # unnecessarily slow?
     for el in el.getiterator():
-        if el.tag in defs.block_tags:
+        if _nons(el.tag) in defs.block_tags:
             return True
     return False
 
@@ -608,7 +627,7 @@ def _element_name(el):
     elif isinstance(el, basestring):
         return 'string'
     else:
-        return el.tag
+        return _nons(el.tag)
 
 ################################################################################
 # form handling
@@ -655,7 +674,10 @@ class FormElement(HtmlElement):
             return self.get('name')
         elif self.get('id'):
             return '#' + self.get('id')
-        return str(self.body.findall('form').index(self))
+        forms = self.body.findall('form')
+        if not forms:
+            forms = self.body.findall('{%s}form' % XHTML_NAMESPACE)
+        return str(forms.index(self))
 
     def form_values(self):
         """
@@ -667,9 +689,10 @@ class FormElement(HtmlElement):
             name = el.name
             if not name:
                 continue
-            if el.tag == 'textarea':
+            tag = _nons(el.tag)
+            if tag == 'textarea':
                 results.append((name, el.value))
-            elif el.tag == 'select':
+            elif tag == 'select':
                 value = el.value
                 if el.multiple:
                     for v in value:
@@ -677,7 +700,7 @@ class FormElement(HtmlElement):
                 elif value is not None:
                     results.append((name, el.value))
             else:
-                assert el.tag == 'input', (
+                assert tag == 'input', (
                     "Unexpected tag: %r" % el)
                 if el.checkable and not el.checked:
                     continue
@@ -801,8 +824,8 @@ class InputGetter(object):
     checkboxes and radio elements are returned individually.
     """
 
-    _name_xpath = etree.XPath(".//*[@name = $name and (name(.) = 'select' or name(.) = 'input' or name(.) = 'textarea')]")
-    _all_xpath = etree.XPath(".//*[name() = 'select' or name() = 'input' or name() = 'textarea']")
+    _name_xpath = etree.XPath(".//*[@name = $name and (local-name(.) = 'select' or local-name(.) = 'input' or local-name(.) = 'textarea')]")
+    _all_xpath = etree.XPath(".//*[local-name() = 'select' or local-name() = 'input' or local-name() = 'textarea']")
 
     def __init__(self, form):
         self.form = form
@@ -919,7 +942,7 @@ class SelectElement(InputMixin, HtmlElement):
         """
         if self.multiple:
             return MultipleSelectOptions(self)
-        for el in self.getiterator('option'):
+        for el in _options_xpath(self):
             if 'selected' in el.attrib:
                 value = el.get('value')
                 # FIXME: If value is None, what to return?, get_text()?
@@ -935,7 +958,7 @@ class SelectElement(InputMixin, HtmlElement):
             self.value.update(value)
             return
         if value is not None:
-            for el in self.getiterator('option'):
+            for el in _options_xpath(self):
                 # FIXME: also if el.get('value') is None?
                 if el.get('value') == value:
                     checked_option = el
@@ -943,7 +966,7 @@ class SelectElement(InputMixin, HtmlElement):
             else:
                 raise ValueError(
                     "There is no option with the value of %r" % value)
-        for el in self.getiterator('option'):
+        for el in _options_xpath(self):
             if 'selected' in el.attrib:
                 del el.attrib['selected']
         if value is not None:
@@ -963,7 +986,7 @@ class SelectElement(InputMixin, HtmlElement):
         All the possible values this select can have (the ``value``
         attribute of all the ``<option>`` elements.
         """
-        return [el.get('value') for el in self.getiterator('option')]
+        return [el.get('value') for el in _options_xpath(self)]
     value_options = property(value_options, doc=value_options.__doc__)
 
     def _multiple__get(self):
@@ -995,7 +1018,7 @@ class MultipleSelectOptions(SetMixin):
         """
         Iterator of all the ``<option>`` elements.
         """
-        return self.select.getiterator('option')
+        return iter(_options_xpath(self.select))
     options = property(options)
 
     def __iter__(self):

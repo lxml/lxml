@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* Most features in lxml.html work for XHTML namespaced tag names.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 2.1beta2 (2008-05-02)
 =====================
 

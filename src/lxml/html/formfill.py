@@ -1,5 +1,6 @@
 from lxml.etree import XPath, ElementBase
-from lxml.html import fromstring, tostring
+from lxml.html import fromstring, tostring, XHTML_NAMESPACE
+from lxml.html import _forms_xpath, _options_xpath, _nons
 from lxml.html import defs
 
 __all__ = ['FormNotFound', 'fill_form', 'fill_form_html',
@@ -11,9 +12,11 @@ class FormNotFound(LookupError):
     Raised when no form can be found
     """
 
-_form_name_xpath = XPath('descendant-or-self::form[name=$name]')
-_input_xpath = XPath('descendant-or-self::input | descendant-or-self::select | descendant-or-self::textarea')
-_label_for_xpath = XPath('//label[@for=$for_id]')
+_form_name_xpath = XPath('descendant-or-self::form[name=$name]|descendant-or-self::x:form[name=$name]', namespaces={'x':XHTML_NAMESPACE})
+_input_xpath = XPath('|'.join(['descendant-or-self::'+_tag for _tag in ('input','select','textarea','x:input','x:select','x:textarea')]),
+                               namespaces={'x':XHTML_NAMESPACE})
+_label_for_xpath = XPath('//label[@for=$for_id]|//x:label[@for=$for_id]',
+                               namespaces={'x':XHTML_NAMESPACE})
 _name_xpath = XPath('descendant-or-self::*[@name=$name]')
 
 def fill_form(
@@ -69,7 +72,7 @@ def _fill_form(el, values):
             _fill_single(input, value)
 
 def _takes_multiple(input):
-    if input.tag == 'select' and input.get('multiple'):
+    if _nons(input.tag) == 'select' and input.get('multiple'):
         # FIXME: multiple="0"?
         return True
     type = input.get('type', '').lower()
@@ -96,8 +99,8 @@ def _fill_multiple(input, value):
         v = input.get('value')
         _check(input, v in value)
     else:
-        assert input.tag == 'select'
-        for option in input.findall('option'):
+        assert _nons(input.tag) == 'select'
+        for option in _options_xpath(input):
             v = option.get('value')
             if v is None:
                 # This seems to be the default, at least on IE
@@ -120,7 +123,7 @@ def _select(el, select):
             del el.attrib['selected']
 
 def _fill_single(input, value):
-    if input.tag == 'textarea':
+    if _nons(input.tag) == 'textarea':
         input.clear()
         input.text = value
     else:
@@ -128,7 +131,7 @@ def _fill_single(input, value):
 
 def _find_form(el, form_id=None, form_index=None):
     if form_id is None and form_index is None:
-        forms = el.getiterator('form')
+        forms = _forms_xpath(el)
         for form in forms:
             return form
         raise FormNotFound(
@@ -145,7 +148,7 @@ def _find_form(el, form_id=None, form_index=None):
                 "No form with the name or id of %r (forms: %s)"
                 % (id, ', '.join(_find_form_ids(el))))               
     if form_index is not None:
-        forms = el.getiterator('form')
+        forms = _forms_xpath(el)
         try:
             return forms[form_index]
         except IndexError:
@@ -154,7 +157,7 @@ def _find_form(el, form_id=None, form_index=None):
                 % (form_index, len(forms)))
 
 def _find_form_ids(el):
-    forms = el.getiterator('form')
+    forms = _forms_xpath(el)
     if not forms:
         yield '(no forms)'
         return
@@ -254,11 +257,11 @@ def insert_errors_html(html, values, **kw):
         return doc
 
 def _insert_error(el, error, error_class, error_creator):
-    if el.tag in defs.empty_tags or el.tag == 'textarea':
+    if _nons(el.tag) in defs.empty_tags or _nons(el.tag) == 'textarea':
         is_block = False
     else:
         is_block = True
-    if el.tag != 'form' and error_class:
+    if _nons(el.tag) != 'form' and error_class:
         _add_class(el, error_class)
     if el.get('id'):
         labels = _label_for_xpath(el, for_id=el.get('id'))

@@ -9,7 +9,7 @@ import copy
 import urlparse
 from lxml import etree
 from lxml.html import defs
-from lxml.html import fromstring, tostring
+from lxml.html import fromstring, tostring, XHTML_NAMESPACE, _nons
 
 try:
     set
@@ -62,7 +62,9 @@ _find_styled_elements = etree.XPath(
     "descendant-or-self::*[@style]")
 
 _find_external_links = etree.XPath(
-    "descendant-or-self::a[normalize-space(@href) and substring(normalize-space(@href),1,1) != '#']")
+    ("descendant-or-self::a  [normalize-space(@href) and substring(normalize-space(@href),1,1) != '#'] |"
+     "descendant-or-self::x:a[normalize-space(@href) and substring(normalize-space(@href),1,1) != '#']"),
+    namespaces={'x':XHTML_NAMESPACE})
 
 class Cleaner(object):
     """
@@ -201,6 +203,11 @@ class Cleaner(object):
         if hasattr(doc, 'getroot'):
             # ElementTree instance, instead of an element
             doc = doc.getroot()
+        # convert XHTML to HTML
+        for el in doc.iter():
+            tag = el.tag
+            if isinstance(tag, basestring):
+                el.tag = _nons(tag)
         # Normalize a case that IE treats <image> like <img>, and that
         # can confuse either this step or later steps.
         for el in doc.iter('image'):
