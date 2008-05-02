@@ -96,3 +96,16 @@ drop the comment.  Here, ``drop_tag()`` behaves exactly like ``drop_tree()``:
       <div>footer</div>
      </body>
     </html>
+
+lxml.html has two parsers, one for HTML, one for XHTML:
+
+    >>> from lxml.html import HTMLParser, XHTMLParser
+    >>> html = "<html><body><p>Hi!</p></body></html>"
+
+    >>> root = document_fromstring(html, parser=HTMLParser())
+    >>> print root.tag
+    html
+
+    >>> root = document_fromstring(html, parser=XHTMLParser())
+    >>> print root.tag
+    html

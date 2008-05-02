@@ -8,6 +8,12 @@ Under development
 Features added
 --------------
 
+* All parse functions in lxml.html take a ``parser`` keyword argument.
+
+* lxml.html has a new parser class ``XHTMLParser`` and a module
+  attribute ``xhtml_parser`` that provide XML parsers that are
+  pre-configured for the lxml.html package.
+
 Bugs fixed
 ----------
 

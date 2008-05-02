@@ -443,14 +443,17 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
 # parsing
 ################################################################################
 
-def document_fromstring(html, **kw):
-    value = etree.HTML(html, html_parser, **kw)
+def document_fromstring(html, parser=None, **kw):
+    if parser is None:
+        parser = html_parser
+    value = etree.fromstring(html, parser, **kw)
     if value is None:
         raise etree.ParserError(
             "Document is empty")
     return value
 
-def fragments_fromstring(html, no_leading_text=False, base_url=None, **kw):
+def fragments_fromstring(html, no_leading_text=False, base_url=None,
+                         parser=None, **kw):
     """
     Parses several HTML elements, returning a list of elements.
 
@@ -461,11 +464,13 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None, **kw):
 
     base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
+    if parser is None:
+        parser = html_parser
     # FIXME: check what happens when you give html with a body, head, etc.
     start = html[:20].lstrip().lower()
     if not start.startswith('<html') and not start.startswith('<!doctype'):
         html = '<html><body>%s</body></html>' % html
-    doc = document_fromstring(html, base_url=base_url, **kw)
+    doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert doc.tag == 'html'
     bodies = [e for e in doc if e.tag == 'body']
     assert len(bodies) == 1, ("too many bodies: %r in %r" % (bodies, html))
@@ -481,7 +486,8 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None, **kw):
     # would be nice
     return elements
 
-def fragment_fromstring(html, create_parent=False, base_url=None, **kw):
+def fragment_fromstring(html, create_parent=False, base_url=None,
+                        parser=None, **kw):
     """
     Parses a single HTML element; it is an error if there is more than
     one element, or if anything but whitespace precedes or follows the
@@ -492,12 +498,16 @@ def fragment_fromstring(html, create_parent=False, base_url=None, **kw):
 
     base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
+    if parser is None:
+        parser = html_parser
     if create_parent:
         if not isinstance(create_parent, basestring):
             create_parent = 'div'
         return fragment_fromstring('<%s>%s</%s>' % (
-            create_parent, html, create_parent), base_url=base_url, **kw)
-    elements = fragments_fromstring(html, no_leading_text=True, base_url=base_url, **kw)
+            create_parent, html, create_parent),
+                                   parser=parser, base_url=base_url, **kw)
+    elements = fragments_fromstring(html, parser=parser, no_leading_text=True,
+                                    base_url=base_url, **kw)
     if not elements:
         raise etree.ParserError(
             "No elements found")
@@ -512,7 +522,7 @@ def fragment_fromstring(html, create_parent=False, base_url=None, **kw):
     el.tail = None
     return el
 
-def fromstring(html, base_url=None, **kw):
+def fromstring(html, base_url=None, parser=None, **kw):
     """
     Parse the html, returning a single element/document.
 
@@ -521,12 +531,14 @@ def fromstring(html, base_url=None, **kw):
 
     base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
+    if parser is None:
+        parser = html_parser
     start = html[:10].lstrip().lower()
     if start.startswith('<html') or start.startswith('<!doctype'):
         # Looks like a full HTML document
-        return document_fromstring(html, base_url=base_url, **kw)
+        return document_fromstring(html, parser=parser, base_url=base_url, **kw)
     # otherwise, lets parse it out...
-    doc = document_fromstring(html, base_url=base_url, **kw)
+    doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     bodies = doc.findall('body')
     if bodies:
         body = bodies[0]
@@ -1341,8 +1353,18 @@ class HTMLParser(etree.HTMLParser):
         super(HTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
+class XHTMLParser(etree.XMLParser):
+    def __init__(self, **kwargs):
+        super(XHTMLParser, self).__init__(**kwargs)
+        self.set_element_class_lookup(HtmlElementClassLookup())
+
 def Element(*args, **kw):
+    """Create a new HTML Element.
+
+    This can also be used for XHTML documents.
+    """
     v = html_parser.makeelement(*args, **kw)
     return v
 
 html_parser = HTMLParser()
+xhtml_parser = XHTMLParser()
