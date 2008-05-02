@@ -52,12 +52,12 @@ cdef extern from "libxml/hash.h":
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, char* name) nogil
 
-cdef extern from "libxml/tree.h":
-
-    # for some reason need to define this in this section;
+cdef extern from *: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
-    
+    cdef char* xmlDictLookup(xmlDict* dict, char* name, int len)
+
+cdef extern from "libxml/tree.h":
     ctypedef struct xmlDoc
     ctypedef struct xmlAttr
     ctypedef struct xmlNotationTable

@@ -533,6 +533,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
+        cdef xmlDoc* c_source_doc
         cdef _Element element
         cdef bint left_to_right
         cdef Py_ssize_t slicelength, step
@@ -554,13 +555,14 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_node = _findChild(self._c_node, x)
             if c_node is NULL:
                 raise IndexError, "list index out of range"
+            c_source_doc = element._c_node.doc
             c_next = element._c_node.next
             _removeText(c_node.next)
             tree.xmlReplaceNode(c_node, element._c_node)
             _moveTail(c_next, element._c_node)
-            moveNodeToDocument(self._doc, element._c_node)
+            moveNodeToDocument(self._doc, c_source_doc, element._c_node)
             if not attemptDeallocation(c_node):
-                moveNodeToDocument(self._doc, c_node)
+                moveNodeToDocument(self._doc, c_node.doc, c_node)
 
     def __delitem__(self, x):
         """__delitem__(self, x)
@@ -707,14 +709,16 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         cdef xmlNode* c_node
         cdef xmlNode* c_next
+        cdef xmlDoc* c_source_doc
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
             _appendChild(self, element)
             return
+        c_source_doc = c_node.doc
         c_next = element._c_node.next
         tree.xmlAddPrevSibling(c_node, element._c_node)
         _moveTail(c_next, element._c_node)
-        moveNodeToDocument(self._doc, element._c_node)
+        moveNodeToDocument(self._doc, c_source_doc, element._c_node)
 
     def remove(self, _Element element not None):
         """remove(self, element)
@@ -732,7 +736,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
         # fix namespace declarations
-        moveNodeToDocument(self._doc, c_node)
+        moveNodeToDocument(self._doc, c_node.doc, c_node)
 
     def replace(self, _Element old_element not None,
                 _Element new_element not None):
@@ -744,18 +748,20 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_old_next
         cdef xmlNode* c_new_node
         cdef xmlNode* c_new_next
+        cdef xmlDoc* c_source_doc
         c_old_node = old_element._c_node
         if c_old_node.parent is not self._c_node:
             raise ValueError, "Element is not a child of this node."
         c_old_next = c_old_node.next
         c_new_node = new_element._c_node
         c_new_next = c_new_node.next
+        c_source_doc = c_new_next.doc
         tree.xmlReplaceNode(c_old_node, c_new_node)
         _moveTail(c_new_next, c_new_node)
         _moveTail(c_old_next, c_old_node)
-        moveNodeToDocument(self._doc, c_new_node)
+        moveNodeToDocument(self._doc, c_source_doc, c_new_node)
         # fix namespace declarations
-        moveNodeToDocument(self._doc, c_old_node)
+        moveNodeToDocument(self._doc, c_old_node.doc, c_old_node)
         
     # PROPERTIES
     property tag:

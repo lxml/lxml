@@ -276,7 +276,8 @@ cdef int _stripRedundantNamespaceDeclarations(
             c_nsdef[0] = c_ns_next
     return 0
 
-cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
+cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
+                            xmlNode* c_element) except -1:
     """Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
@@ -293,7 +294,11 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
        prefix).  If a namespace is unknown, declare a new one on the
        node.
 
-    3) Set the Document reference to the new Document (if different).
+    3) Reassign the names of tags and attribute from the dict of the
+       target document *iff* it is different from the dict used in the
+       source subtree.
+
+    4) Set the Document reference to the new Document (if different).
        This is done on backtracking to keep the original Document
        alive as long as possible, until all its elements are updated.
 
@@ -303,15 +308,25 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
     """
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
+    cdef char* c_name
     cdef _nscache c_ns_cache
     cdef xmlNs* c_ns
     cdef xmlNs* c_ns_next
     cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list
     cdef cstd.size_t i
+    cdef tree.xmlDict* c_dict
 
     if not tree._isElementOrXInclude(c_element):
         return 0
+
+    # we need to copy the names of tags and attributes iff the element
+    # is based on a different libxml2 tag name dictionary
+    if doc._c_doc.dict is not c_source_doc.dict and \
+            doc._c_doc.dict is not NULL and c_source_doc.dict is not NULL:
+        c_dict = doc._c_doc.dict
+    else:
+        c_dict = NULL
 
     c_start_node = c_element
     c_del_ns_list = NULL
@@ -343,6 +358,13 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
                         c_element, c_node.ns.href, c_node.ns.prefix)
                     _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
                     c_node.ns = c_ns
+
+            # 3) re-assign names from the target dict
+            if c_dict is not NULL:
+                c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
+                if c_name is not NULL:
+                    c_element.name = c_name
+
             if c_node is c_element:
                 # after the element, continue with its attributes
                 c_node = <xmlNode*>c_element.properties
@@ -358,7 +380,7 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
         if c_node is NULL:
             # no children => back off and continue with siblings and parents
 
-            # 3) fix _Document reference (may dealloc the original document!)
+            # 4) fix _Document reference (may dealloc the original document!)
             if c_element._private is not NULL:
                 _updateProxyDocument(c_element, doc)
 
@@ -376,7 +398,7 @@ cdef int moveNodeToDocument(_Document doc, xmlNode* c_element) except -1:
                 if c_element is NULL or not tree._isElementOrXInclude(c_element):
                     break
 
-                # 3) fix _Document reference (may dealloc the original document!)
+                # 4) fix _Document reference (may dealloc the original document!)
                 if c_element._private is not NULL:
                     _updateProxyDocument(c_element, doc)
 
