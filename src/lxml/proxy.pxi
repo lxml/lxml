@@ -322,8 +322,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
     # we need to copy the names of tags and attributes iff the element
     # is based on a different libxml2 tag name dictionary
-    if doc._c_doc.dict is not c_source_doc.dict and \
-            doc._c_doc.dict is not NULL and c_source_doc.dict is not NULL:
+    if doc._c_doc.dict is not c_source_doc.dict:
         c_dict = doc._c_doc.dict
     else:
         c_dict = NULL
@@ -362,8 +361,10 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             # 3) re-assign names from the target dict
             if c_dict is not NULL:
                 c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
+                # c_name can be NULL on memory error, but we don't
+                # handle that here
                 if c_name is not NULL:
-                    c_element.name = c_name
+                    c_node.name = c_name
 
             if c_node is c_element:
                 # after the element, continue with its attributes
