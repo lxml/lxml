@@ -755,7 +755,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         c_old_next = c_old_node.next
         c_new_node = new_element._c_node
         c_new_next = c_new_node.next
-        c_source_doc = c_new_next.doc
+        c_source_doc = c_new_node.doc
         tree.xmlReplaceNode(c_old_node, c_new_node)
         _moveTail(c_new_next, c_new_node)
         _moveTail(c_old_next, c_old_node)
