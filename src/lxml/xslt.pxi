@@ -451,11 +451,7 @@ cdef class XSLT:
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result
         cdef xmlDoc* c_doc
-
-        if not _checkThreadDict(self._c_style.doc.dict):
-            if profile_run is not False:
-                _kw['profile_run'] = profile_run
-            return _copyXSLT(self)(_input, **_kw)
+        cdef xmlNode* c_node
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
@@ -530,6 +526,14 @@ cdef class XSLT:
                 resolver_context.clear()
 
         result_doc = _documentFactory(c_result, input_doc._parser)
+
+        if not _checkThreadDict(c_result.dict):
+            # fix document dictionary
+            c_node = _findChildForwards(<xmlNode*>c_result, 0)
+            if c_node is not NULL:
+                __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&c_result.dict)
+                moveNodeToDocument(result_doc, self._c_style.doc, c_node)
+
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
