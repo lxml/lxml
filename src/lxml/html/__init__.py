@@ -1301,6 +1301,34 @@ HtmlElementClassLookup._default_element_classes['label'] = LabelElement
 ## Serialization
 ############################################################
 
+def html_to_xhtml(html):
+    """Convert all tags in an HTML tree to XHTML by moving them to the
+    XHTML namespace.
+    """
+    try:
+        html = html.getroot()
+    except AttributeError:
+        pass
+    prefix = "{%s}" % XHTML_NAMESPACE
+    for el in html.iter():
+        tag = el.tag
+        if isinstance(tag, basestring):
+            if tag[0] != '{':
+                el.tag = prefix + tag
+
+def xhtml_to_html(xhtml):
+    """Convert all tags in an XHTML tree to HTML by removing their
+    XHTML namespace.
+    """
+    try:
+        xhtml = xhtml.getroot()
+    except AttributeError:
+        pass
+    prefix = "{%s}" % XHTML_NAMESPACE
+    prefix_len = len(prefix)
+    for el in xhtml.iter(prefix + "*"):
+        el.tag = el.tag[prefix_len:]
+
 # This isn't a general match, but it's a match for what libxml2
 # specifically serialises:
 __replace_meta_content_type = re.compile(

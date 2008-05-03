@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Conversion functions ``html_to_xhtml()`` and ``xhtml_to_html()`` in
+  lxml.html.
+
 * Most features in lxml.html work for XHTML namespaced tag names.
 
 Bugs fixed
