@@ -774,12 +774,12 @@ will block and wait until data becomes available in this case:
 .. sourcecode:: pycon
 
     >>> class DataSource:
-    ...     data = iter(["<roo", "t><", "a/", "><", "/root>"])
+    ...     data = ["<roo", "t><", "a/", "><", "/root>"]
     ...     def read(self, requested_size):
     ...         try:
-    ...             return self.data.next()
-    ...         except StopIteration:
-    ...             return ""
+    ...             return self.data.pop(0)
+    ...         except IndexError:
+    ...             return ''
 
     >>> tree = etree.parse(DataSource())
 
