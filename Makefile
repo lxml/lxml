@@ -46,7 +46,7 @@ apihtml: inplace
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
 			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" \
-			-o ../doc/html/api --no-private --exclude='[.]html[.]tests|[.]_' \
+			-o ../doc/html/api --exclude='[.]html[.]tests|[.]_' \
 			--exclude-introspect='[.]usedoctest' \
 			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
@@ -60,7 +60,7 @@ apipdf: inplace
 	@[ -x "`which epydoc`" ] \
 		&& (cd src && echo "Generating API docs ..." && \
 			PYTHONPATH=. epydoc -v --latex --docformat "restructuredtext en" \
-			-o ../doc/pdf --no-private --exclude='([.]html)?[.]tests|[.]_' \
+			-o ../doc/pdf --exclude='([.]html)?[.]tests|[.]_' \
 			--exclude-introspect='html[.]clean|[.]usedoctest' \
 			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
