@@ -861,8 +861,28 @@ element, but you can control this through the ``events`` keyword argument:
 
 Note that the text, tail and children of an Element are not necessarily there
 yet when receiving the ``start`` event.  Only the ``end`` event guarantees
-that the Element has been parsed completely.  It also allows to ``clear()`` or
-modify the content of an Element to save memory.
+that the Element has been parsed completely.
+
+It also allows to ``.clear()`` or modify the content of an Element to
+save memory. So if you parse a large tree and you want to keep memory
+usage small, you should clean up parts of the tree that you no longer
+need:
+
+.. sourcecode:: pycon
+
+    >>> some_file_like = StringIO(
+    ...     "<root><a><b>data</b></a><a><b/></a></root>")
+
+    >>> for event, element in etree.iterparse(some_file_like):
+    ...     if element.tag == 'b':
+    ...         print element.text
+    ...     elif element.tag == 'a':
+    ...         print "** cleaning up the subtree"
+    ...         element.clear()
+    data
+    ** cleaning up the subtree
+    None
+    ** cleaning up the subtree
 
 If memory is a real bottleneck, or if building the tree is not desired at all,
 the target parser interface of ``lxml.etree`` can be used.  It creates
