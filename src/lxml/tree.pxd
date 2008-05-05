@@ -56,6 +56,7 @@ cdef extern from *: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C
     ctypedef struct xmlDict
     cdef char* xmlDictLookup(xmlDict* dict, char* name, int len) nogil
+    cdef char* xmlDictExists(xmlDict* dict, char* name, int len) nogil
 
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlDoc
