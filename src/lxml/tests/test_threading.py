@@ -82,6 +82,7 @@ class ThreadingTestCase(HelperTestCase):
         tostring = self.etree.tostring
         xml = '<a><b>B</b><c xmlns="test">C</c></a>'
         root = XML(xml)
+        fragment = XML("<other><tags/></other>")
 
         result = self.etree.Element("{myns}root", att = "someval")
 
@@ -95,9 +96,8 @@ class ThreadingTestCase(HelperTestCase):
             result.append(thread_root[0])
             result.append(thread_root[-1])
 
-        def run_foreign_XML():
-            thread_root = XML("<other><tags/></other>")
-            result.append(thread_root[0])
+        def run_move_main():
+            result.append(fragment[0])
 
         def run_build():
             result.append(
@@ -115,7 +115,7 @@ class ThreadingTestCase(HelperTestCase):
             st = etree.XSLT(style)
             result.append( st(root).getroot()[0] )
 
-        for test in (run_XML, run_parse, run_foreign_XML, run_xslt):
+        for test in (run_XML, run_parse, run_move_main, run_xslt):
             tostring(result)
             self._run_thread(test)
 
