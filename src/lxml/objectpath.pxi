@@ -206,7 +206,11 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
         c_path = c_path + 1
         if c_path[0].href is not NULL:
             c_href = c_path[0].href # otherwise: keep parent namespace
-        c_name = c_path[0].name
+        c_name = tree.xmlDictExists(c_node.doc.dict, c_path[0].name, -1)
+        if c_name is NULL:
+            c_name = c_path[0].name
+            c_node = NULL
+            break
         c_index = c_path[0].index
 
         if c_index < 0:
@@ -253,14 +257,17 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
         c_path = c_path + 1
         if c_path[0].href is not NULL:
             c_href = c_path[0].href # otherwise: keep parent namespace
-        c_name = c_path[0].name
         c_index = c_path[0].index
-
-        if c_index < 0:
-            c_child = c_node.last
+        c_name = tree.xmlDictExists(c_node.doc.dict, c_path[0].name, -1)
+        if c_name is NULL:
+            c_name = c_path[0].name
+            c_child = NULL
         else:
-            c_child = c_node.children
-        c_child = _findFollowingSibling(c_child, c_href, c_name, c_index)
+            if c_index < 0:
+                c_child = c_node.last
+            else:
+                c_child = c_node.children
+            c_child = _findFollowingSibling(c_child, c_href, c_name, c_index)
 
         if c_child is not NULL:
             c_node = c_child

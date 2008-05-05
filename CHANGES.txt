@@ -19,6 +19,9 @@ Bugs fixed
 Other changes
 -------------
 
+* Up to several times faster attribute access (i.e. tree traversal) in
+  lxml.objectify.
+
 
 2.1beta2 (2008-05-02)
 =====================

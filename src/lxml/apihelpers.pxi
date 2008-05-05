@@ -696,8 +696,8 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     elif c_href is NULL:
         if _getNs(c_node) is not NULL:
             return 0
-        return cstd.strcmp(c_node.name, c_name) == 0
-    elif cstd.strcmp(c_node.name, c_name) == 0:
+        return c_node.name == c_name or cstd.strcmp(c_node.name, c_name) == 0
+    elif c_node.name == c_name or cstd.strcmp(c_node.name, c_name) == 0:
         c_node_href = _getNs(c_node)
         if c_node_href is NULL:
             return c_href[0] == c'\0'

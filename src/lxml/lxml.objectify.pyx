@@ -385,6 +385,17 @@ cdef class ObjectifiedElement(ElementBase):
             prefix = '.'.join(prefix)
         return _buildDescendantPaths(self._c_node, prefix)
 
+cdef inline bint _tagMatches(tree.xmlNode* c_node, char* c_href, char* c_name):
+    cdef char* c_node_href
+    if c_node.name != c_name:
+        return 0
+    if c_href == NULL:
+        return 1
+    c_node_href = tree._getNs(c_node)
+    if c_node_href == NULL:
+        return c_href[0] == c'\0'
+    return cstd.strcmp(c_node_href, c_href) == 0
+
 cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
     cdef tree.xmlNode* c_node
     cdef char* c_href
@@ -396,13 +407,13 @@ cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
     c_node = c_start_node.next
     while c_node is not NULL:
         if c_node.type == tree.XML_ELEMENT_NODE and \
-               cetree.tagMatches(c_node, c_href, c_tag):
+               _tagMatches(c_node, c_href, c_tag):
             count = count + 1
         c_node = c_node.next
     c_node = c_start_node.prev
     while c_node is not NULL:
         if c_node.type == tree.XML_ELEMENT_NODE and \
-               cetree.tagMatches(c_node, c_href, c_tag):
+               _tagMatches(c_node, c_href, c_tag):
             count = count + 1
         c_node = c_node.prev
     return count
@@ -418,7 +429,7 @@ cdef tree.xmlNode* _findFollowingSibling(tree.xmlNode* c_node,
         next = cetree.previousElement
     while c_node is not NULL:
         if c_node.type == tree.XML_ELEMENT_NODE and \
-               cetree.tagMatches(c_node, href, name):
+               _tagMatches(c_node, href, name):
             index = index - 1
             if index < 0:
                 return c_node
@@ -430,9 +441,12 @@ cdef object _lookupChild(_Element parent, tag):
     cdef tree.xmlNode* c_node
     cdef char* c_href
     cdef char* c_tag
-    ns, tag = cetree.getNsTag(tag)
-    c_tag = _cstr(tag)
     c_node = parent._c_node
+    ns, tag = cetree.getNsTag(tag)
+    c_tag = tree.xmlDictExists(
+        c_node.doc.dict, _cstr(tag), python.PyString_GET_SIZE(tag))
+    if c_tag is NULL:
+        return None
     if ns is None:
         c_href = tree._getNs(c_node)
     else:
