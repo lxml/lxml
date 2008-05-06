@@ -520,6 +520,8 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
 
         if well_formed:
             __GLOBAL_PARSER_CONTEXT.initDocDict(result)
+            if c_ctxt.html:
+                _fixHtmlDictNames(result)
         else:
             # free broken document
             tree.xmlFreeDoc(result)
@@ -539,6 +541,31 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
     elif result.URL is NULL and filename is not None:
         result.URL = tree.xmlStrdup(_cstr(filename))
     return result
+
+cdef int _fixHtmlDictNames(xmlDoc* c_doc) except -1:
+    cdef char* c_name
+    cdef xmlNode* c_attr
+    cdef xmlNode* c_node = c_doc.children
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 0)
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        if not tree.xmlDictOwns(c_doc.dict, c_node.name):
+            c_name = tree.xmlDictLookup(c_doc.dict, c_node.name, -1)
+            if c_name is NULL:
+                python.PyErr_NoMemory()
+                return -1
+            tree.xmlFree(c_node.name)
+            c_node.name = c_name
+        c_attr = <xmlNode*>c_node.properties
+        while c_attr is not NULL:
+            if not tree.xmlDictOwns(c_doc.dict, c_attr.name):
+                c_name = tree.xmlDictLookup(c_doc.dict, c_attr.name, -1)
+                if c_name is NULL:
+                    python.PyErr_NoMemory()
+                    return -1
+                tree.xmlFree(c_attr.name)
+                c_attr.name = c_name
+            c_attr = c_attr.next
+    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 
 cdef class _BaseParser:
