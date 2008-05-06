@@ -350,7 +350,6 @@ cdef _tofilelike(f, _Element element, encoding, method,
                        write_xml_declaration, write_doctype,
                        pretty_print, with_tail)
     tree.xmlOutputBufferClose(c_buffer)
-    tree.xmlCharEncCloseFunc(enchandler)
     if writer is None:
         python.PyEval_RestoreThread(state)
     else:
