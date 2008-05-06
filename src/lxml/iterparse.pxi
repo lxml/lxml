@@ -201,6 +201,8 @@ cdef inline void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt,
     cdef _IterparseContext context
     context = <_IterparseContext>c_ctxt._private
     try:
+        if c_ctxt.html:
+            _fixHtmlDictNodeNames(c_ctxt.dict, c_node)
         context.startNode(c_node)
     except:
         if c_ctxt.errNo == xmlerror.XML_ERR_OK:
@@ -452,7 +454,8 @@ cdef class iterparse(_BaseParser):
                           not context._validator.isvalid()):
             self._source = None
             del context._events[:]
-            _raiseParseError(pctxt, self._filename, context._error_log)
+            _handleParseResult(context, pctxt, NULL,
+                               self._filename, self._for_html)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
             self._source = None
