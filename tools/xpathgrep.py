@@ -200,7 +200,7 @@ if __name__ == "__main__":
         register_builtins()
         namespaces["py"] = PYTHON_BUILTINS_NS
 
-    xpath = et.XPath(args[0], namespaces)
+    xpath = et.XPath(args[0], namespaces=namespaces)
 
     found = False
     if len(args) == 1:
