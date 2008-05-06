@@ -195,6 +195,11 @@ cdef class _IterparseContext(_ParserContext):
         python.PyList_Append(self._events, (event, node))
         return 0
 
+    cdef void _assureDocGetsFreed(self):
+        if self._c_ctxt.myDoc is not NULL and self._doc is None:
+            tree.xmlFreeDoc(self._c_ctxt.myDoc)
+            self._c_ctxt.myDoc = NULL
+
 
 cdef inline void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt,
                                     xmlNode* c_node):
@@ -454,8 +459,8 @@ cdef class iterparse(_BaseParser):
                           not context._validator.isvalid()):
             self._source = None
             del context._events[:]
-            _handleParseResult(context, pctxt, NULL,
-                               self._filename, self._for_html)
+            context._assureDocGetsFreed()
+            _raiseParseError(pctxt, self._filename, context._error_log)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
             self._source = None
