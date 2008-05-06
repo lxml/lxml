@@ -45,6 +45,7 @@ class IOTestCaseBase(HelperTestCase):
         ElementTree = self.etree.ElementTree
     
         element = Element('top')
+        element.text = u"qwrtioüöä\uAABB"
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
         f = open(self.getTestFilePath('testdump.xml'), 'w')
@@ -55,6 +56,31 @@ class IOTestCaseBase(HelperTestCase):
         f.close()
         f = open(self.getTestFilePath('testdump2.xml'), 'w')
         tree.write(f, encoding='UTF-8')
+        f.close()
+        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        data1 = f.read()
+        f.close()
+        f = open(self.getTestFilePath('testdump2.xml'), 'r')
+        data2 = f.read()
+        f.close()
+        self.assertEquals(data1, data2)
+
+    def test_tree_io_latin1(self):
+        Element = self.etree.Element
+        ElementTree = self.etree.ElementTree
+
+        element = Element('top')
+        element.text = u"qwrtioüöäßÃ¡"
+        tree = ElementTree(element)
+        self.buildNodes(element, 10, 3)
+        f = open(self.getTestFilePath('testdump.xml'), 'w')
+        tree.write(f, encoding='iso-8859-1')
+        f.close()
+        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        tree = ElementTree(file=f)
+        f.close()
+        f = open(self.getTestFilePath('testdump2.xml'), 'w')
+        tree.write(f, encoding='iso-8859-1')
         f.close()
         f = open(self.getTestFilePath('testdump.xml'), 'r')
         data1 = f.read()
