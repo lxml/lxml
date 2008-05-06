@@ -2036,10 +2036,10 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
     def __next__(self):
         cdef xmlNode* c_node
         cdef _Element current_node
+        if self._node is None:
+            raise StopIteration
         # Python ref:
         current_node = self._node
-        if current_node is None:
-            raise StopIteration
         self._storeNext(current_node)
         return current_node
 
@@ -2131,9 +2131,9 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
     def __next__(self):
         cdef xmlNode* c_node
         cdef _Element current_node
-        current_node = self._next_node
-        if current_node is None:
+        if self._next_node is None:
             raise StopIteration
+        current_node = self._next_node
         c_node = self._next_node._c_node
         if self._name is NULL and self._href is NULL:
             c_node = self._nextNodeAnyTag(c_node)
@@ -2153,9 +2153,16 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
         return NULL
 
     cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node):
+        cdef char* c_name = NULL
+        if self._name is not NULL:
+            c_name = tree.xmlDictExists(c_node.doc.dict, self._name, -1)
+            if c_name is NULL:
+                # not found in dict => not in document at all
+                return NULL
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
         if c_node.type == tree.XML_ELEMENT_NODE:
-            if _tagMatches(c_node, self._href, self._name):
+            if (c_name is NULL or c_name is c_node.name) and \
+                    _tagMatches(c_node, self._href, self._name):
                 return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
