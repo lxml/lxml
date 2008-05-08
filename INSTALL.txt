@@ -8,7 +8,7 @@ You need Python 2.3 or later.
 
 You need libxml2 and libxslt, in particular:
 
-* libxml 2.6.20 or later. It can be found here:
+* libxml 2.6.21 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
   If you want to use XPath, do not use libxml2 2.6.27.  We recommend
@@ -17,10 +17,9 @@ You need libxml2 and libxslt, in particular:
 * libxslt 1.1.15 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-Newer versions generally contain less bugs and are therefore recommended.  The
-HTML parser benefits from libxml2 version 2.6.21 or later, which support
-parsing horribly broken HTML.  XML Schema support is also still worked on in
-libxml2, so newer versions will give you better complience with the W3C spec.
+Newer versions generally contain less bugs and are therefore
+recommended.  XML Schema support is also still worked on in libxml2,
+so newer versions will give you better complience with the W3C spec.
 
 
 Installation
