@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Running ``iterparse()`` on a plain file (or filename) frees the GIL
+  on reading.
+
 * Conversion functions ``html_to_xhtml()`` and ``xhtml_to_html()`` in
   lxml.html (experimental).
 

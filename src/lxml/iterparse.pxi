@@ -235,7 +235,7 @@ cdef inline void _pushSaxEvent(_IterparseContext context,
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,
                              int nb_attributes, int nb_defaulted,
-                             char** attributes) with gil:
+                             char** attributes):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -246,7 +246,7 @@ cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
         nb_attributes, nb_defaulted, attributes)
     _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI) with gil:
+cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -254,7 +254,7 @@ cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI)
     _pushSaxEndEvent(context, c_ctxt.node)
     context._origSaxEnd(ctxt, localname, prefix, URI)
 
-cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes) with gil:
+cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -262,7 +262,7 @@ cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes) with
     context._origSaxStartNoNs(ctxt, name, attributes)
     _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEndNoNs(void* ctxt, char* name) with gil:
+cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -270,7 +270,7 @@ cdef void _iterparseSaxEndNoNs(void* ctxt, char* name) with gil:
     _pushSaxEndEvent(context, c_ctxt.node)
     context._origSaxEndNoNs(ctxt, name)
 
-cdef void _iterparseSaxComment(void* ctxt, char* text) with gil:
+cdef void _iterparseSaxComment(void* ctxt, char* text):
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
@@ -281,7 +281,7 @@ cdef void _iterparseSaxComment(void* ctxt, char* text) with gil:
     if c_node is not NULL:
         _pushSaxEvent(context, "comment", c_node)
 
-cdef void _iterparseSaxPI(void* ctxt, char* target, char* data) with gil:
+cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
@@ -351,6 +351,7 @@ cdef class iterparse(_BaseParser):
     cdef object _events
     cdef readonly object root
     cdef object _source
+    cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
                              char* chunk, int size, int terminate)
     def __init__(self, source, events=("end",), *, tag=None,
@@ -434,9 +435,10 @@ cdef class iterparse(_BaseParser):
     def __next__(self):
         cdef _IterparseContext context
         cdef xmlparser.xmlParserCtxt* pctxt
+        cdef cstd.FILE* c_stream
         cdef char* c_data
         cdef Py_ssize_t c_data_len
-        cdef int error
+        cdef int error, done
         if self._source is None:
             raise StopIteration
 
@@ -449,24 +451,41 @@ cdef class iterparse(_BaseParser):
 
         del context._events[:]
         pctxt = context._c_ctxt
-        error = 0
+        error = done = 0
+        c_stream = python.PyFile_AsFile(self._source)
         while python.PyList_GET_SIZE(context._events) == 0:
-            data = self._source.read(__ITERPARSE_CHUNK_SIZE)
-            if not python.PyString_Check(data):
-                self._source = None
-                raise TypeError, "reading file objects must return plain strings"
-            c_data_len = python.PyString_GET_SIZE(data)
-            if c_data_len == 0:
-                c_data = NULL
-            else:
+            if c_stream is NULL:
+                data = self._source.read(__ITERPARSE_CHUNK_SIZE)
+                if not python.PyString_Check(data):
+                    self._source = None
+                    raise TypeError, "reading file objects must return plain strings"
+                c_data_len = python.PyString_GET_SIZE(data)
                 c_data = _cstr(data)
-            with nogil:
-                error = self._parse_chunk(
-                    pctxt, c_data, c_data_len, (c_data_len == 0))
-            if error or c_data_len == 0:
+                done = (c_data_len == 0)
+                error = self._parse_chunk(pctxt, c_data, c_data_len, done)
+            else:
+                if self._buffer is None:
+                    self._buffer = python.PyString_FromStringAndSize(
+                        NULL, __ITERPARSE_CHUNK_SIZE)
+                c_data = _cstr(self._buffer)
+                with nogil:
+                    c_data_len = cstd.fread(
+                        c_data, 1, __ITERPARSE_CHUNK_SIZE, c_stream)
+                    if c_data_len < __ITERPARSE_CHUNK_SIZE:
+                        if cstd.ferror(c_stream):
+                            error = 1
+                        elif cstd.feof(c_stream):
+                            done = 1
+                if not error:
+                    error = self._parse_chunk(
+                        pctxt, c_data, c_data_len, done)
+            if error or done:
+                self._buffer = None
                 break
-        if error or (context._validator is not None and
-                     not context._validator.isvalid()):
+
+        if not error and context._validator is not None:
+            error = not context._validator.isvalid()
+        if error:
             self._source = None
             del context._events[:]
             context._assureDocGetsFreed()

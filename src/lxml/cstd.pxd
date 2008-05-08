@@ -1,9 +1,4 @@
 
-cdef extern from "stdio.h":
-    ctypedef struct FILE
-    cdef int sprintf(char* str, char* format, ...) nogil
-    cdef int printf(char* str) nogil
-
 cdef extern from "string.h":
     ctypedef int size_t
     cdef int strlen(char* s) nogil
@@ -14,6 +9,15 @@ cdef extern from "string.h":
     cdef int strncmp(char* s1, char* s2, size_t len) nogil
     cdef void* memcpy(void* dest, void* src, size_t len) nogil
     cdef void* memset(void* s, int c, size_t len) nogil
+
+cdef extern from "stdio.h":
+    ctypedef struct FILE
+    cdef size_t fread(void *ptr, size_t size, size_t nmemb,
+                      FILE *stream) nogil
+    cdef int feof(FILE *stream) nogil
+    cdef int ferror(FILE *stream) nogil
+    cdef int sprintf(char* str, char* format, ...) nogil
+    cdef int printf(char* str) nogil
 
 cdef extern from "stdlib.h":
     cdef void* malloc(size_t size) nogil
