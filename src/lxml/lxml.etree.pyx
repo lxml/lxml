@@ -50,12 +50,10 @@ EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
 # what to do with libxml2/libxslt error messages?
 # 0 : drop
 # 1 : use log
-cdef int __DEBUG
-__DEBUG = 1
+DEF __DEBUG = 1
 
 # maximum number of lines in the libxml2/xslt log if __DEBUG == 1
-cdef int __MAX_LOG_SIZE
-__MAX_LOG_SIZE = 100
+DEF __MAX_LOG_SIZE = 100
 
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
