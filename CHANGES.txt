@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Parsing from a plain file object frees the GIL.
+
 * Running ``iterparse()`` on a plain file (or filename) frees the GIL
   on reading.
 

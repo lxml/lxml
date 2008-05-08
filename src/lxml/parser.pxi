@@ -222,45 +222,67 @@ cdef class _FileReaderContext:
         self._bytes  = ''
         self._bytes_read = 0
 
+    cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
+        cdef cstd.FILE* c_stream
+        cdef xmlparser.xmlParserInputBuffer* c_buffer
+        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
+        c_stream = python.PyFile_AsFile(self._filelike)
+        if c_stream is NULL:
+            c_buffer.readcallback  = _readFilelikeParser
+            c_buffer.context = <python.PyObject*>self
+        else:
+            c_buffer.readcallback  = _readFileParser
+            c_buffer.context = c_stream
+        return c_buffer
+
     cdef xmlparser.xmlParserInput* _createParserInput(
             self, xmlparser.xmlParserCtxt* ctxt):
         cdef xmlparser.xmlParserInputBuffer* c_buffer
-        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
-        c_buffer.context = <python.PyObject*>self
-        c_buffer.readcallback = _readFilelikeParser
+        c_buffer = self._createParserInputBuffer()
         return xmlparser.xmlNewIOInputStream(ctxt, c_buffer, 0)
+
+    cdef tree.xmlDtd* _readDtd(self):
+        cdef xmlparser.xmlParserInputBuffer* c_buffer
+        c_buffer = self._createParserInputBuffer()
+        with nogil:
+            return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
 
     cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
         cdef xmlDoc* result
         cdef char* c_encoding
+        cdef cstd.FILE* c_stream
+        cdef xmlparser.xmlInputReadCallback c_read_callback
+        cdef xmlparser.xmlInputCloseCallback c_close_callback
+        cdef void* c_callback_context
 
         if self._encoding is None:
             c_encoding = NULL
         else:
             c_encoding = _cstr(self._encoding)
 
+        c_stream = python.PyFile_AsFile(self._filelike)
+        if c_stream is NULL:
+            c_read_callback  = _readFilelikeParser
+            c_callback_context = <python.PyObject*>self
+        else:
+            c_read_callback  = _readFileParser
+            c_callback_context = c_stream
+
         with nogil:
             if ctxt.html:
                 result = htmlparser.htmlCtxtReadIO(
-                    ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
-                    self._c_url, c_encoding, options)
+                        ctxt, c_read_callback, NULL, c_callback_context,
+                        self._c_url, c_encoding, options)
                 if result is not NULL:
                     if _fixHtmlDictNames(ctxt.dict, result) < 0:
                         tree.xmlFreeDoc(result)
                         result = NULL
             else:
                 result = xmlparser.xmlCtxtReadIO(
-                    ctxt, _readFilelikeParser, NULL, <python.PyObject*>self,
+                    ctxt, c_read_callback, NULL, c_callback_context,
                     self._c_url, c_encoding, options)
-        return result
 
-    cdef tree.xmlDtd* _readDtd(self):
-        cdef xmlparser.xmlParserInputBuffer* c_buffer
-        c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
-        c_buffer.context = <python.PyObject*>self
-        c_buffer.readcallback = _readFilelikeParser
-        with nogil:
-            return xmlparser.xmlIOParseDTD(NULL, c_buffer, 0)
+        return result
 
     cdef int copyToBuffer(self, char* c_buffer, int c_size):
         cdef char* c_start
@@ -292,6 +314,9 @@ cdef class _FileReaderContext:
 
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
+
+cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
+    return cstd.fread(c_buffer, 1,  c_size, <cstd.FILE*>ctxt)
 
 ############################################################
 ## support for custom document loaders
