@@ -1,7 +1,6 @@
-# iterparse -- incremental parsing
+# iterparse -- event-driven parsing
 
-cdef object __ITERPARSE_CHUNK_SIZE
-__ITERPARSE_CHUNK_SIZE = 32768
+DEF __ITERPARSE_CHUNK_SIZE = 32768
 
 ctypedef enum _IterparseEventFilter:
     ITERPARSE_FILTER_START     =  1
@@ -201,91 +200,97 @@ cdef class _IterparseContext(_ParserContext):
             self._c_ctxt.myDoc = NULL
 
 
-cdef inline void _pushSaxStartEvent(xmlparser.xmlParserCtxt* c_ctxt,
+cdef inline void _pushSaxStartEvent(_IterparseContext context,
                                     xmlNode* c_node):
-    cdef _IterparseContext context
-    context = <_IterparseContext>c_ctxt._private
     try:
-        if c_ctxt.html:
-            _fixHtmlDictNodeNames(c_ctxt.dict, c_node)
+        if context._c_ctxt.html:
+            _fixHtmlDictNodeNames(context._c_ctxt.dict, c_node)
         context.startNode(c_node)
     except:
-        if c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        c_ctxt.disableSAX = 1
+        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
+            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        context._c_ctxt.disableSAX = 1
         context._store_raised()
 
-cdef inline void _pushSaxEndEvent(xmlparser.xmlParserCtxt* c_ctxt,
+cdef inline void _pushSaxEndEvent(_IterparseContext context,
                                   xmlNode* c_node):
-    cdef _IterparseContext context
-    context = <_IterparseContext>c_ctxt._private
     try:
         context.endNode(c_node)
     except:
-        if c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        c_ctxt.disableSAX = 1
+        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
+            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        context._c_ctxt.disableSAX = 1
         context._store_raised()
 
-cdef inline void _pushSaxEvent(xmlparser.xmlParserCtxt* c_ctxt,
+cdef inline void _pushSaxEvent(_IterparseContext context,
                                event, xmlNode* c_node):
-    cdef _IterparseContext context
-    context = <_IterparseContext>c_ctxt._private
     try:
         context.pushEvent(event, c_node)
     except:
-        if c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        c_ctxt.disableSAX = 1
+        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
+            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        context._c_ctxt.disableSAX = 1
         context._store_raised()
 
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,
                              int nb_attributes, int nb_defaulted,
-                             char** attributes):
+                             char** attributes) with gil:
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    (<_IterparseContext>c_ctxt._private)._origSaxStart(
+    context = <_IterparseContext>c_ctxt._private
+    context._origSaxStart(
         ctxt, localname, prefix, URI,
         nb_namespaces, namespaces,
         nb_attributes, nb_defaulted, attributes)
-    _pushSaxStartEvent(c_ctxt, c_ctxt.node)
+    _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI):
+cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI) with gil:
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    _pushSaxEndEvent(c_ctxt, c_ctxt.node)
-    (<_IterparseContext>c_ctxt._private)._origSaxEnd(ctxt, localname, prefix, URI)
+    context = <_IterparseContext>c_ctxt._private
+    _pushSaxEndEvent(context, c_ctxt.node)
+    context._origSaxEnd(ctxt, localname, prefix, URI)
 
-cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
+cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes) with gil:
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    (<_IterparseContext>c_ctxt._private)._origSaxStartNoNs(ctxt, name, attributes)
-    _pushSaxStartEvent(c_ctxt, c_ctxt.node)
+    context = <_IterparseContext>c_ctxt._private
+    context._origSaxStartNoNs(ctxt, name, attributes)
+    _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
+cdef void _iterparseSaxEndNoNs(void* ctxt, char* name) with gil:
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    _pushSaxEndEvent(c_ctxt, c_ctxt.node)
-    (<_IterparseContext>c_ctxt._private)._origSaxEndNoNs(ctxt, name)
+    context = <_IterparseContext>c_ctxt._private
+    _pushSaxEndEvent(context, c_ctxt.node)
+    context._origSaxEndNoNs(ctxt, name)
 
-cdef void _iterparseSaxComment(void* ctxt, char* text):
+cdef void _iterparseSaxComment(void* ctxt, char* text) with gil:
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    (<_IterparseContext>c_ctxt._private)._origSaxComment(ctxt, text)
+    context = <_IterparseContext>c_ctxt._private
+    context._origSaxComment(ctxt, text)
     c_node = _iterparseFindLastNode(c_ctxt)
     if c_node is not NULL:
-        _pushSaxEvent(c_ctxt, "comment", c_node)
+        _pushSaxEvent(context, "comment", c_node)
 
-cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
+cdef void _iterparseSaxPI(void* ctxt, char* target, char* data) with gil:
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
+    cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    (<_IterparseContext>c_ctxt._private)._origSaxPI(ctxt, target, data)
+    context = <_IterparseContext>c_ctxt._private
+    context._origSaxPI(ctxt, target, data)
     c_node = _iterparseFindLastNode(c_ctxt)
     if c_node is not NULL:
-        _pushSaxEvent(c_ctxt, "pi", c_node)
+        _pushSaxEvent(context, "pi", c_node)
 
 cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
     # this mimics what libxml2 creates for comments/PIs
@@ -342,10 +347,12 @@ cdef class iterparse(_BaseParser):
       - encoding           - override the document encoding
       - schema             - an XMLSchema to validate against
     """
-    cdef object _source
-    cdef object _events
     cdef object _tag
+    cdef object _events
     cdef readonly object root
+    cdef object _source
+    cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
+                             char* chunk, int size, int terminate)
     def __init__(self, source, events=("end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
@@ -394,6 +401,11 @@ cdef class iterparse(_BaseParser):
                              remove_comments, remove_pis, strip_cdata,
                              None, filename, encoding)
 
+        if self._for_html:
+            self._parse_chunk = htmlparser.htmlParseChunk
+        else:
+            self._parse_chunk = xmlparser.xmlParseChunk
+
         context = <_IterparseContext>self._getPushParserContext()
         __GLOBAL_PARSER_CONTEXT.initParserDict(context._c_ctxt)
         context.prepare()
@@ -422,41 +434,39 @@ cdef class iterparse(_BaseParser):
     def __next__(self):
         cdef _IterparseContext context
         cdef xmlparser.xmlParserCtxt* pctxt
+        cdef char* c_data
+        cdef Py_ssize_t c_data_len
         cdef int error
         if self._source is None:
             raise StopIteration
 
-        context = <_IterparseContext>self._getPushParserContext()
+        context = <_IterparseContext>self._push_parser_context
         if python.PyList_GET_SIZE(context._events) > context._event_index:
             item = python.PyList_GET_ITEM(context._events, context._event_index)
             python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
-            context._event_index = context._event_index + 1
+            context._event_index += 1
             return item
 
         del context._events[:]
         pctxt = context._c_ctxt
         error = 0
-        while python.PyList_GET_SIZE(context._events) == 0 and error == 0:
+        while python.PyList_GET_SIZE(context._events) == 0:
             data = self._source.read(__ITERPARSE_CHUNK_SIZE)
             if not python.PyString_Check(data):
                 self._source = None
                 raise TypeError, "reading file objects must return plain strings"
-            elif data:
-                if self._for_html:
-                    error = htmlparser.htmlParseChunk(
-                        pctxt, _cstr(data), python.PyString_GET_SIZE(data), 0)
-                else:
-                    error = xmlparser.xmlParseChunk(
-                        pctxt, _cstr(data), python.PyString_GET_SIZE(data), 0)
+            c_data_len = python.PyString_GET_SIZE(data)
+            if c_data_len == 0:
+                c_data = NULL
             else:
-                if self._for_html:
-                    error = htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
-                else:
-                    error = xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
-                self._source = None
+                c_data = _cstr(data)
+            with nogil:
+                error = self._parse_chunk(
+                    pctxt, c_data, c_data_len, (c_data_len == 0))
+            if error or c_data_len == 0:
                 break
-        if error != 0 or (context._validator is not None and
-                          not context._validator.isvalid()):
+        if error or (context._validator is not None and
+                     not context._validator.isvalid()):
             self._source = None
             del context._events[:]
             context._assureDocGetsFreed()
