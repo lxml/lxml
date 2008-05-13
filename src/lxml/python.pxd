@@ -21,8 +21,6 @@ cdef extern from "Python.h":
         pass
 
     cdef FILE* PyFile_AsFile(object p)
-    cdef int PyFile_Check(object p)
-    cdef object PyFile_Name(object p)
 
     cdef int PyUnicode_Check(object obj)
     cdef int PyString_Check(object obj)
