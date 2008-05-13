@@ -258,7 +258,7 @@ def has_option(name):
     except ValueError:
         pass
     # allow passing all cmd line options also as environment variables
-    env_val = os.getenv(name.upper().replace('-', '_'), 'false').upper()
+    env_val = os.getenv(name.upper().replace('-', '_'), 'false').lower()
     if env_val == "true":
         return True
     return False
