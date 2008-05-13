@@ -27,7 +27,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         print("Building with Cython %s." % Cython.Compiler.Version.version)
     else:
         print ("NOTE: Trying to build without Cython, pre-generated "
-               "'%setree.c' needs to be available." % PACKAGE_PATH)
+               "'%slxml.etree.c' needs to be available." % PACKAGE_PATH)
         source_extension = ".c"
 
     if OPTION_WITHOUT_OBJECTIFY:
