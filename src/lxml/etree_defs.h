@@ -101,11 +101,15 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define unlikely_condition(x) (x)
 #endif /* __GNUC__ */
 
+#ifndef Py_TYPE
+  #define Py_TYPE(ob)   (((PyObject*)(ob))->ob_type)
+#endif
+
 #define PY_NEW(T) \
      (((PyTypeObject*)(T))->tp_new( \
              (PyTypeObject*)(T), __pyx_empty_tuple, NULL))
 
-#define _fqtypename(o)  (((PyTypeObject*)(o))->ob_type->tp_name)
+#define _fqtypename(o)  ((Py_TYPE(o))->tp_name)
 
 #define _isString(obj)   (PyString_CheckExact(obj)  || \
                           PyUnicode_CheckExact(obj) || \
