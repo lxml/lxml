@@ -15,8 +15,11 @@ EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 PACKAGE_PATH = "src/lxml/"
 
 def env_var(name):
-    value = os.getenv(name, '')
-    return value.split(os.pathsep)
+    value = os.getenv(name)
+    if value:
+        return value.split(os.pathsep)
+    else:
+        return []
 
 def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
     if CYTHON_INSTALLED:
