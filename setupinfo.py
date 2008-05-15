@@ -14,10 +14,20 @@ EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
 PACKAGE_PATH = "src/lxml/"
 
+if sys.version_info[0] >= 3:
+    _system_encoding = sys.getdefaultencoding()
+    if _system_encoding is None:
+        _system_encoding = "iso-8859-1" # :-)
+    def decode_input(data):
+        return data.decode(_system_encoding)
+else:
+    def decode_input(data):
+        return data
+
 def env_var(name):
     value = os.getenv(name)
     if value:
-        return value.split(os.pathsep)
+        return decode_input(value).split(os.pathsep)
     else:
         return []
 
@@ -204,8 +214,7 @@ def run_command(cmd, *args):
         _ERROR_PRINTED = True
         print("ERROR: %s" % errors)
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
-    output = rf.read()
-    return (output or '').strip()
+    return decode_input(rf.read()).strip()
 
 def get_library_versions():
     xml2_version = run_command(find_xml2_config(), "--version")
