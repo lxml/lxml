@@ -174,13 +174,20 @@ def cflags(static_cflags):
             static_cflags = env_var('CFLAGS')
         assert static_cflags, "Static build not configured, see doc/build.txt"
         result.extend(static_cflags)
-        return result
+    else:
+        # anything from xslt-config --cflags that doesn't start with -I
+        possible_cflags = flags('cflags')
+        for possible_cflag in possible_cflags:
+            if not possible_cflag.startswith('-I'):
+                result.append(possible_cflag)
 
-    # anything from xslt-config --cflags that doesn't start with -I
-    possible_cflags = flags('cflags')
-    for possible_cflag in possible_cflags:
-        if not possible_cflag.startswith('-I'):
-            result.append(possible_cflag)
+    if sys.platform in ('darwin',):
+        for opt in result:
+            if 'flat_namespace' in opt:
+                break
+        else:
+            result.append('-flat_namespace')
+
     return result
 
 def define_macros():
