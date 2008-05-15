@@ -174,35 +174,51 @@ lxml maintainer.
 Providing newer library versions on Mac-OS X
 --------------------------------------------
 
-The Unix environment in Mac-OS X makes it relatively easy to install
-Unix/Linux style package management tools and new software.  However, it seems
-to be hard to get libraries set up for exclusive usage that Mac-OS X ships in
-an older version.  The result can be segfaults on this platform that are hard
-to track down.
+Apple regularly ships new system releases with horribly outdated
+system libraries.  This is specifically the case for libxml2 and
+libxslt, where the system provided versions are too old to build lxml.
+
+While the Unix environment in Mac-OS X makes it relatively easy to
+install Unix/Linux style package management tools and new software, it
+actually seems to be hard to get libraries set up for exclusive usage
+that Mac-OS X ships in an older version.  Alternative distributions
+(like macports) install their libraries in addition to the system
+libraries, but the compiler and the runtime loader on Mac-OS still
+sees the system libraries before the new libraries.  This can lead to
+undebuggable crashes where the newer library seems to be loaded but
+the older system library is used.
+
+Apple discourages static building against libraries, which would help
+working around this problem.  Apple does not ship static library
+binaries with its system and several package management systems follow
+this decision.  Therefore, building static binaries would require
+building the dependencies first.  You can do this with the `buildout
+recipe for lxml`_.
 
 To make sure the newer libxml2 and libxslt versions (e.g. those
 provided by fink or macports) are used at *build time*, you must take
-care that the script ``xslt-config`` is found from the newly installed
-version when running the build setup.  The system libraries also
-provide this script, but the new one must come first in the PATH.  The
+care that the script ``xslt-config`` from the newly installed version
+is found when running the build setup.  The system libraries also
+provide this script, so the new one must come first in the PATH.  The
 best way to make sure the right version is used is by passing the path
 to the script as an option to setup.py::
 
   python setup.py build --with-xslt-config=/path/to/xslt-config \
                         --with-xml2-config=/path/to/xml2-config
 
-To make sure the newer libxml2 and libxslt versions are used at
-*runtime*, you should add *all* directories where the newer libraries
-are installed (i.e. libxml2, libxslt and libexslt) to the
-``DYLD_LIBRARY_PATH`` environment variable when you use lxml (i.e. not
-only at build time).  This seems to fix a lot of problems for users.
+Instead of ``build``, you can use any target, like ``bdist_egg`` if
+you want to use setuptools to build an installable egg.
 
-Please read this thread about `experiences with MacOS-X`_ if you
-encounter problems.  It also has a `buildout for lxml`_ that you can
-use.
+Since release 2.0.6, lxml automatically passes the option
+``-flat_namespace`` to the C compiler.  This was reported to make sure
+that the libraries that lxml was built against are also used at
+runtime.  Without this option, users needed to add all directories
+where the newer libraries are installed (i.e. libxml2, libxslt and
+libexslt) to the ``DYLD_LIBRARY_PATH`` environment variable when using
+lxml (i.e. at runtime).  This should no longer be necessary with the
+new build setup.
 
-.. _`experiences with MacOS-X`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3290
-.. _`buildout for lxml`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3297
+.. _`buildout recipe for lxml`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3297
 
 
 Static linking on Windows
@@ -267,13 +283,8 @@ version numbers::
 
   STATIC_CFLAGS = []
 
-Add any CFLAGS you might consider useful to the third list.  As `Ashish
-Kulkarni`_ notes, you might have to add the standard Windows library
-``wsock32.dll`` to the list of libraries to make ``lxml.objectify`` compile.
-
-.. _`Ashish Kulkarni`: http://codespeak.net/pipermail/lxml-dev/2006-September/001893.html
-
-Now you should be able to pass the ``--static`` option to setup.py and
+Add any CFLAGS you might consider useful to the third list.  Now you
+should be able to pass the ``--static`` option to setup.py and
 everything should work well.  Try calling::
 
   python setup.py bdist_wininst --static
