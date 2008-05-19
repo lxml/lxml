@@ -191,7 +191,7 @@ class HtmlMixin(object):
             if default:
                 return default[0]
             else:
-                raise KeyError, id
+                raise KeyError(id)
 
     def text_content(self):
         """
@@ -1392,7 +1392,7 @@ def open_in_browser(doc):
     fn = os.tempnam() + '.html'
     write_doc(fn, method="html")
     url = 'file://' + fn.replace(os.path.sep, '/')
-    print url
+    print(url)
     webbrowser.open(url)
     
 ################################################################################
