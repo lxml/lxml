@@ -17,6 +17,12 @@
 #  define PyFile_AsFile(o) (NULL)
 #endif
 
+#if PY_VERSION_HEX >= 0x03000000
+#  define IS_PYTHON3 1
+#else
+#  define IS_PYTHON3 0
+#endif
+
 #ifdef WITHOUT_THREADING
 #  define PyEval_SaveThread() (NULL)
 #  define PyEval_RestoreThread(state)

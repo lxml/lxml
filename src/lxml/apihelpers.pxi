@@ -1004,6 +1004,9 @@ cdef object funicode(char* s):
     cdef Py_ssize_t slen
     cdef char* spos
     cdef bint is_non_ascii
+    if python.IS_PYTHON3:
+        slen = cstd.strlen(s)
+        return python.PyUnicode_DecodeUTF8(s, slen, NULL)
     spos = s
     is_non_ascii = 0
     while spos[0] != c'\0':

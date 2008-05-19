@@ -122,3 +122,4 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef bint _isString(object obj)
     cdef char* _fqtypename(object t)
     cdef object PY_NEW(object t)
+    cdef bint IS_PYTHON3
