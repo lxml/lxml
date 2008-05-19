@@ -174,17 +174,23 @@ def _build_path_iterator(path):
     if path[:1] == "/":
         raise SyntaxError("cannot use absolute path on element")
     stream = iter(xpath_tokenizer(path))
-    next = stream.next; token = next()
+    try:
+        _next = stream.next
+    except AttributeError:
+        # Python 3
+        def _next():
+            return next(stream)
+    token = _next()
     selector = []
     while 1:
         try:
-            selector.append(ops[token[0]](next, token))
+            selector.append(ops[token[0]](_next, token))
         except StopIteration:
             raise SyntaxError("invalid path")
         try:
-            token = next()
+            token = _next()
             if token[0] == "/":
-                token = next()
+                token = _next()
         except StopIteration:
             break
     return selector
@@ -204,8 +210,14 @@ def iterfind(elem, path):
 # Find first matching object.
 
 def find(elem, path):
+    it = iterfind(elem, path)
     try:
-        return iterfind(elem, path).next()
+        try:
+            _next = it.next
+        except AttributeError:
+            return next(it)
+        else:
+            return _next()
     except StopIteration:
         return None
 
@@ -219,8 +231,8 @@ def findall(elem, path):
 # Find text for first matching object.
 
 def findtext(elem, path, default=None):
-    try:
-        elem = iterfind(elem, path).next()
-        return elem.text
-    except StopIteration:
+    el = find(elem, path)
+    if el is None:
         return default
+    else:
+        return el.text

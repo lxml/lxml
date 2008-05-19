@@ -50,7 +50,8 @@ Python, ElementTree compatible implementation that supports a simple
 form of custom URL resolvers.
 """
 
-import copy, etree
+from lxml import etree
+import copy
 from urlparse import urljoin
 from urllib2 import urlopen
 
