@@ -1,6 +1,5 @@
 import unittest
 import os.path
-from StringIO import StringIO
 import re, gc
 
 from lxml import etree
@@ -57,6 +56,27 @@ except NameError:
         seq = list(seq)
         seq.sort(**kwargs)
         return seq
+
+try:
+    unicode
+except NameError:
+    # Python 3
+    unicode = str
+    def unicode_literal(s, encoding="UTF-8"):
+        return s
+    def byte_literal(s, encoding="UTF-8"):
+        return s.encode(encoding)
+else:
+    # Python 2
+    unicode_literal = unicode
+    def byte_literal(s, encoding="UTF-8"):
+        return s
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    # Python 3
+    from io import StringIO
 
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):
