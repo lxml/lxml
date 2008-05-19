@@ -110,18 +110,6 @@ cdef class _IDDict:
         else:
             return cmp(dict(self), other)
 
-    def __richcmp__(self, other, int op):
-        cdef int c_cmp
-        if other is None:
-            return op == 0 or op == 1 or op == 3
-        c_cmp = cmp(dict(self), other)
-        if c_cmp == 0: # equal
-            return op == 1 or op == 2 or op == 5
-        elif c_cmp < 0:
-            return op == 0 or op == 1 or op == 3
-        else:
-            return op == 4 or op == 5 or op == 3
-
     def __repr__(self):
         return repr(dict(self))
 
