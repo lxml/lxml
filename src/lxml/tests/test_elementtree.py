@@ -3291,7 +3291,7 @@ class ETreeTestCaseBase(HelperTestCase):
         try:
             parser.close()
         except ParseError:
-            e = sys.exc_info()[0]
+            e = sys.exc_info()[1]
             self.assertNotEquals(None, e.code)
             self.assertNotEquals(0, e.code)
             self.assert_(isinstance(e.position, tuple))
