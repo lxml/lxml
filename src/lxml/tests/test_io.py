@@ -48,19 +48,19 @@ class IOTestCaseBase(HelperTestCase):
         element.text = u"qwrtioüöä\uAABB"
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
-        f = open(self.getTestFilePath('testdump.xml'), 'w')
+        f = open(self.getTestFilePath('testdump.xml'), 'wb')
         tree.write(f, encoding='UTF-8')
         f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        f = open(self.getTestFilePath('testdump.xml'), 'rb')
         tree = ElementTree(file=f)
         f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'w')
+        f = open(self.getTestFilePath('testdump2.xml'), 'wb')
         tree.write(f, encoding='UTF-8')
         f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        f = open(self.getTestFilePath('testdump.xml'), 'rb')
         data1 = f.read()
         f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'r')
+        f = open(self.getTestFilePath('testdump2.xml'), 'rb')
         data2 = f.read()
         f.close()
         self.assertEquals(data1, data2)
@@ -73,19 +73,19 @@ class IOTestCaseBase(HelperTestCase):
         element.text = u"qwrtioüöäßÃ¡"
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
-        f = open(self.getTestFilePath('testdump.xml'), 'w')
+        f = open(self.getTestFilePath('testdump.xml'), 'wb')
         tree.write(f, encoding='iso-8859-1')
         f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        f = open(self.getTestFilePath('testdump.xml'), 'rb')
         tree = ElementTree(file=f)
         f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'w')
+        f = open(self.getTestFilePath('testdump2.xml'), 'wb')
         tree.write(f, encoding='iso-8859-1')
         f.close()
-        f = open(self.getTestFilePath('testdump.xml'), 'r')
+        f = open(self.getTestFilePath('testdump.xml'), 'rb')
         data1 = f.read()
         f.close()
-        f = open(self.getTestFilePath('testdump2.xml'), 'r')
+        f = open(self.getTestFilePath('testdump2.xml'), 'rb')
         data2 = f.read()
         f.close()
         self.assertEquals(data1, data2)
@@ -96,7 +96,7 @@ class IOTestCaseBase(HelperTestCase):
         handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
-            self.assertEqual(open(filename).read().replace('\n', ''),
+            self.assertEqual(open(filename, 'rb').read().replace('\n', ''),
                              self.root_str)
         finally:
             os.close(handle)
@@ -109,7 +109,7 @@ class IOTestCaseBase(HelperTestCase):
         f.write(self.root_str)
         f.close()
         try:
-            f_gz = gzip.open(filename, 'r')
+            f_gz = gzip.open(filename, 'rb')
             tree = self.etree.parse(f_gz)
             f_gz.close()
             self.assertEqual(self.etree.tostring(tree.getroot()), self.root_str)
@@ -163,7 +163,7 @@ class IOTestCaseBase(HelperTestCase):
         handle, filename = tempfile.mkstemp(suffix=".xml")
         os.write(handle, self.root_str)
         try:
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
             tree = self.etree.ElementTree()
             root = tree.parse(f)
             f.close()
@@ -241,4 +241,4 @@ def test_suite():
     return suite
 
 if __name__ == '__main__':
-    print 'to test use test.py %s' % __file__
+    print('to test use test.py %s' % __file__)

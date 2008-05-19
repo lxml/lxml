@@ -1,6 +1,6 @@
 import unittest
 import os.path
-import re, gc
+import re, gc, sys
 
 from lxml import etree
 
@@ -56,38 +56,41 @@ except NameError:
         seq = list(seq)
         seq.sort(**kwargs)
         return seq
+else:
+    locals()['sorted'] = sorted
 
-try:
-    unicode
-except NameError:
+if sys.version_info >= (3,):
     # Python 3
     unicode = str
-    def unicode_literal(s, encoding="UTF-8"):
+    def _str(s, encoding="UTF-8"):
         return s
-    def byte_literal(s, encoding="UTF-8"):
+    def _bytes(s, encoding="UTF-8"):
         return s.encode(encoding)
+    from io import StringIO, BytesIO as _BytesIO
+    def BytesIO(*args):
+        if args and isinstance(args[0], str):
+            args = (args[0].encode("UTF-8"),)
+        return _BytesIO(*args)
 else:
     # Python 2
-    unicode_literal = unicode
-    def byte_literal(s, encoding="UTF-8"):
+    def _str(s, encoding="UTF-8"):
+        return unicode(s, encoding=encoding)
+    def _bytes(s, encoding="UTF-8"):
         return s
-
-try:
     from StringIO import StringIO
-except ImportError:
-    # Python 3
-    from io import StringIO
+    BytesIO = StringIO
 
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):
         gc.collect()
 
     def parse(self, text, parser=None):
-        f = StringIO(text)
+        f = BytesIO(text)
         return etree.parse(f, parser=parser)
     
     def _rootstring(self, tree):
-        return etree.tostring(tree.getroot()).replace(' ', '').replace('\n', '')
+        return etree.tostring(tree.getroot()).replace(
+            _bytes(' '), _bytes('')).replace(_bytes('\n'), _bytes(''))
 
     # assertFalse doesn't exist in Python 2.3
     try:
@@ -149,13 +152,13 @@ class LargeFileLike:
         return result
 
 def fileInTestDir(name):
-    _testdir = os.path.split(__file__)[0]
+    _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)
 
 def canonicalize(xml):
-    f = StringIO(xml)
+    f = BytesIO(xml)
     tree = etree.parse(f)
-    f = StringIO()
+    f = BytesIO()
     tree.write_c14n(f)
     return f.getvalue()
 
