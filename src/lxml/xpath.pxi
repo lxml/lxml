@@ -108,8 +108,8 @@ cdef class _XPathEvaluatorBase:
         if _XPATH_VERSION_WARNING_REQUIRED:
             _XPATH_VERSION_WARNING_REQUIRED = 0
             import warnings
-            warnings.warn("This version of libxml2 has a known XPath bug. " + \
-                          "Use it at your own risk.")
+            warnings.warn(u"This version of libxml2 has a known XPath bug. " + \
+                          u"Use it at your own risk.")
         self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None)
@@ -127,7 +127,7 @@ cdef class _XPathEvaluatorBase:
         self._context.set_context(xpathCtxt)
 
     def evaluate(self, _eval_arg, **_variables):
-        """evaluate(self, _eval_arg, **_variables)
+        u"""evaluate(self, _eval_arg, **_variables)
 
         Evaluate an XPath expression.
 
@@ -158,7 +158,7 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise ParserError, "parser locking failed"
+                raise ParserError, u"parser locking failed"
         return 0
 
     cdef void _unlock(self):
@@ -173,7 +173,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 raise XPathSyntaxError(message, self._error_log)
         raise XPathSyntaxError(self._error_log._buildExceptionMessage(
-                "Error in xpath expression"),
+                u"Error in xpath expression"),
                                self._error_log)
 
     cdef _raise_eval_error(self):
@@ -186,7 +186,7 @@ cdef class _XPathEvaluatorBase:
             if message is not None:
                 raise XPathEvalError(message, self._error_log)
         raise XPathEvalError(self._error_log._buildExceptionMessage(
-                "Error in xpath expression"),
+                u"Error in xpath expression"),
                              self._error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
@@ -211,7 +211,7 @@ cdef class _XPathEvaluatorBase:
 
 
 cdef class XPathElementEvaluator(_XPathEvaluatorBase):
-    """XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True)
+    u"""XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True)
     Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
@@ -236,18 +236,18 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         self.set_context(xpathCtxt)
 
     def register_namespace(self, prefix, uri):
-        """Register a namespace with the XPath context.
+        u"""Register a namespace with the XPath context.
         """
         self._context.addNamespace(prefix, uri)
 
     def register_namespaces(self, namespaces):
-        """Register a prefix -> uri dict.
+        u"""Register a prefix -> uri dict.
         """
         for prefix, uri in namespaces.items():
             self._context.addNamespace(prefix, uri)
 
     def __call__(self, _path, **_variables):
-        """__call__(self, _path, **_variables)
+        u"""__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -283,7 +283,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
 
 cdef class XPathDocumentEvaluator(XPathElementEvaluator):
-    """XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True)
+    u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True)
     Create an XPath evaluator for an ElementTree.
 
     Additional namespace declarations can be passed with the 'namespace'
@@ -297,7 +297,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             extensions=extensions, regexp=regexp)
 
     def __call__(self, _path, **_variables):
-        """__call__(self, _path, **_variables)
+        u"""__call__(self, _path, **_variables)
 
         Evaluate an XPath expression on the document.
 
@@ -337,7 +337,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
                    regexp=True):
-    """XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True)
+    u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True)
 
     Creates an XPath evaluator for an ElementTree or an Element.
 
@@ -359,7 +359,7 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
 
 
 cdef class XPath(_XPathEvaluatorBase):
-    """XPath(self, path, namespaces=None, extensions=None, regexp=True)
+    u"""XPath(self, path, namespaces=None, extensions=None, regexp=True)
     A compiled XPath expression that can be called on Elements and ElementTrees.
 
     Besides the XPath expression, you can pass prefix-namespace mappings and
@@ -386,7 +386,7 @@ cdef class XPath(_XPathEvaluatorBase):
             self._raise_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
-        "__call__(self, _etree_or_element, **_variables)"
+        u"__call__(self, _etree_or_element, **_variables)"
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
@@ -427,7 +427,7 @@ _replace_strings = re.compile('("[^"]*")|(\'[^\']*\')').sub
 _find_namespaces = re.compile('({[^}]+})').findall
 
 cdef class ETXPath(XPath):
-    """ETXPath(self, path, extensions=None, regexp=True)
+    u"""ETXPath(self, path, extensions=None, regexp=True)
     Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword
@@ -449,12 +449,15 @@ cdef class ETXPath(XPath):
         for namespace_def in _find_namespaces(stripped_path):
             if namespace_def not in namespace_defs:
                 prefix = python.PyString_FromFormat("__xpp%02d", i)
-                i = i+1
+                i += 1
                 python.PyList_Append(namespace_defs, namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'
                 namespace = python.PyUnicode_FromEncodedObject(
                     namespace, 'UTF-8', 'strict')
-                python.PyDict_SetItem(namespaces, prefix, namespace)
+                python.PyDict_SetItem(
+                    namespaces,
+                    python.PyUnicode_FromEncodedObject(prefix, 'UTF-8', 'strict'),
+                    namespace)
                 prefix_str = prefix + ':'
                 # FIXME: this also replaces {namespaces} within strings!
                 path_utf = path_utf.replace(namespace_def, prefix_str)

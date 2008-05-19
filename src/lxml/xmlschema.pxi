@@ -2,17 +2,17 @@
 cimport xmlschema
 
 class XMLSchemaError(LxmlError):
-    """Base class of all XML Schema errors
+    u"""Base class of all XML Schema errors
     """
     pass
 
 class XMLSchemaParseError(XMLSchemaError):
-    """Error while parsing an XML document as XML Schema.
+    u"""Error while parsing an XML document as XML Schema.
     """
     pass
 
 class XMLSchemaValidateError(XMLSchemaError):
-    """Error while validating an XML document with an XML Schema.
+    u"""Error while validating an XML document with an XML Schema.
     """
     pass
 
@@ -20,7 +20,7 @@ class XMLSchemaValidateError(XMLSchemaError):
 # XMLSchema
 
 cdef class XMLSchema(_Validator):
-    """XMLSchema(self, etree=None, file=None)
+    u"""XMLSchema(self, etree=None, file=None)
     Turn a document into an XML Schema validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
@@ -47,7 +47,7 @@ cdef class XMLSchema(_Validator):
             c_href = _getNs(c_node)
             if c_href is NULL or \
                    cstd.strcmp(c_href, 'http://www.w3.org/2001/XMLSchema') != 0:
-                raise XMLSchemaParseError, "Document is not XML Schema"
+                raise XMLSchemaParseError, u"Document is not XML Schema"
 
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             self._error_log.connect()
@@ -62,7 +62,7 @@ cdef class XMLSchema(_Validator):
                 self._error_log.connect()
                 parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(doc._c_doc)
         else:
-            raise XMLSchemaParseError, "No tree or file given"
+            raise XMLSchemaParseError, u"No tree or file given"
 
         if parser_ctxt is not NULL:
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
@@ -77,14 +77,14 @@ cdef class XMLSchema(_Validator):
         if self._c_schema is NULL:
             raise XMLSchemaParseError(
                 self._error_log._buildExceptionMessage(
-                    "Document is not valid XML Schema"),
+                    u"Document is not valid XML Schema"),
                 self._error_log)
 
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)
 
     def __call__(self, etree):
-        """__call__(self, etree)
+        u"""__call__(self, etree)
 
         Validate doc using XML Schema.
 
@@ -115,7 +115,7 @@ cdef class XMLSchema(_Validator):
         self._error_log.disconnect()
         if ret == -1:
             raise XMLSchemaValidateError(
-                "Internal error in XML Schema validation.",
+                u"Internal error in XML Schema validation.",
                 self._error_log)
         if ret == 0:
             return True

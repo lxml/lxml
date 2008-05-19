@@ -5,7 +5,7 @@ cimport xmlerror
 # module level API functions
 
 def clear_error_log():
-    """clear_error_log()
+    u"""clear_error_log()
 
     Clear the global error log.  Note that this log is already bound to a
     fixed size.
@@ -70,13 +70,13 @@ cdef class _LogEntry:
         self.filename = filename
 
     def __repr__(self):
-        return "%s:%d:%d:%s:%s:%s: %s" % (
+        return u"%s:%d:%d:%s:%s:%s: %s" % (
             self.filename, self.line, self.column, self.level_name,
             self.domain_name, self.type_name, self.message)
 
     property domain_name:
         def __get__(self):
-            return ErrorDomains._getName(self.domain, "unknown")
+            return ErrorDomains._getName(self.domain, u"unknown")
 
     property type_name:
         def __get__(self):
@@ -84,11 +84,11 @@ cdef class _LogEntry:
                 getName = RelaxNGErrorTypes._getName
             else:
                 getName = ErrorTypes._getName
-            return getName(self.type, "unknown")
+            return getName(self.type, u"unknown")
 
     property level_name:
         def __get__(self):
-            return ErrorLevels._getName(self.level, "unknown")
+            return ErrorLevels._getName(self.level, u"unknown")
 
 cdef class _BaseErrorLog:
     cdef _LogEntry _first_error
@@ -151,9 +151,9 @@ cdef class _BaseErrorLog:
             column = self._first_error.column
             if line > 0:
                 if column > 0:
-                    message = "%s, line %d, column %d" % (message, line, column)
+                    message = u"%s, line %d, column %d" % (message, line, column)
                 else:
-                    message = "%s, line %d" % (message, line)
+                    message = u"%s, line %d" % (message, line)
         return exctype(message, code, line, column)
 
     cdef _buildExceptionMessage(self, default_message):
@@ -167,14 +167,14 @@ cdef class _BaseErrorLog:
             message = default_message
         if self._first_error.line > 0:
             if self._first_error.column > 0:
-                message = "%s, line %d, column %d" % (
+                message = u"%s, line %d, column %d" % (
                     message, self._first_error.line, self._first_error.column)
             else:
-                message = "%s, line %d" % (message, self._first_error.line)
+                message = u"%s, line %d" % (message, self._first_error.line)
         return message
 
 cdef class _ListErrorLog(_BaseErrorLog):
-    "Immutable base version of a list based error log."
+    u"Immutable base version of a list based error log."
     cdef object _entries
     def __init__(self, entries, first_error, last_error):
         if entries:
@@ -186,7 +186,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         self._entries = entries
 
     def copy(self):
-        """Creates a shallow copy of this error log.  Reuses the list of
+        u"""Creates a shallow copy of this error log.  Reuses the list of
         entries.
         """
         return _ListErrorLog(self._entries, self._first_error, self.last_error)
@@ -218,7 +218,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return result
 
     def filter_domains(self, domains):
-        """Filter the errors by the given domains and return a new error log
+        u"""Filter the errors by the given domains and return a new error log
         containing the matches.
         """
         cdef _LogEntry entry
@@ -231,7 +231,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
-        """filter_types(self, types)
+        u"""filter_types(self, types)
 
         Filter the errors by the given types and return a new error
         log containing the matches.
@@ -246,7 +246,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
-        """filter_levels(self, levels)
+        u"""filter_levels(self, levels)
 
         Filter the errors by the given error levels and return a new
         error log containing the matches.
@@ -261,7 +261,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
-        """filter_from_level(self, level)
+        u"""filter_from_level(self, level)
 
         Return a log with all messages of the requested level of worse.
         """
@@ -273,21 +273,21 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
-        """filter_from_fatals(self)
+        u"""filter_from_fatals(self)
 
         Convenience method to get all fatal error messages.
         """
         return self.filter_from_level(ErrorLevels.FATAL)
     
     def filter_from_errors(self):
-        """filter_from_errors(self)
+        u"""filter_from_errors(self)
 
         Convenience method to get all error messages or worse.
         """
         return self.filter_from_level(ErrorLevels.ERROR)
     
     def filter_from_warnings(self):
-        """filter_from_warnings(self)
+        u"""filter_from_warnings(self)
 
         Convenience method to get all warnings or worse.
         """
@@ -310,7 +310,7 @@ cdef class _ErrorLog(_ListErrorLog):
         del self._entries[:]
 
     def copy(self):
-        """Creates a shallow copy of this error log and the list of entries.
+        u"""Creates a shallow copy of this error log and the list of entries.
         """
         return _ListErrorLog(self._entries[:], self._first_error,
                              self.last_error)
@@ -345,7 +345,7 @@ cdef class _RotatingErrorLog(_ErrorLog):
         python.PyList_Append(entries, entry)
 
 cdef class PyErrorLog(_BaseErrorLog):
-    """PyErrorLog(self, logger_name=None)
+    u"""PyErrorLog(self, logger_name=None)
     A global error log that connects to the Python stdlib logging package.
 
     The constructor accepts an optional logger name.
@@ -382,7 +382,7 @@ cdef class PyErrorLog(_BaseErrorLog):
         self._log = logger.log
 
     def copy(self):
-        """Dummy method that returns an empty error log.
+        u"""Dummy method that returns an empty error log.
         """
         return _ListErrorLog([], None, None)
 
@@ -400,11 +400,11 @@ cdef _BaseErrorLog __GLOBAL_ERROR_LOG
 __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
 cdef __copyGlobalErrorLog():
-    "Helper function for properties in exceptions."
+    u"Helper function for properties in exceptions."
     return __GLOBAL_ERROR_LOG.copy()
 
 def use_global_python_log(PyErrorLog log not None):
-    """use_global_python_log(log)
+    u"""use_global_python_log(log)
 
     Replace the global error log by an etree.PyErrorLog that uses the
     standard Python logging package.
@@ -506,8 +506,8 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 ################################################################################
 
 cdef void __initErrorConstants():
-    "Called at setup time to parse the constants and build the classes below."
-    find_constants = re.compile(r"\s*([a-zA-Z0-9_]+)\s*=\s*([0-9]+)").findall
+    u"Called at setup time to parse the constants and build the classes below."
+    find_constants = re.compile(ur"\s*([a-zA-Z0-9_]+)\s*=\s*([0-9]+)").findall
     const_defs = ((ErrorLevels,          __ERROR_LEVELS),
                   (ErrorDomains,         __ERROR_DOMAINS),
                   (ErrorTypes,           __PARSER_ERROR_TYPES),
@@ -519,22 +519,22 @@ cdef void __initErrorConstants():
         for constants in constant_tuple:
             #print len(constants) + 1
             for name, value in find_constants(constants):
-                value = python.PyNumber_Int(value)
+                value = int(value)
                 python.PyObject_SetAttr(cls, name, value)
                 python.PyDict_SetItem(reverse_dict, value, name)
 
 
 class ErrorLevels:
-    "Libxml2 error levels"
+    u"Libxml2 error levels"
 
 class ErrorDomains:
-    "Libxml2 error domains"
+    u"Libxml2 error domains"
 
 class ErrorTypes:
-    "Libxml2 error types"
+    u"Libxml2 error types"
 
 class RelaxNGErrorTypes:
-    "Libxml2 RelaxNG error types"
+    u"Libxml2 RelaxNG error types"
 
 # --- BEGIN: GENERATED CONSTANTS ---
 
@@ -547,7 +547,7 @@ class RelaxNGErrorTypes:
 # cannot handle strings that are a few thousand bytes in length.
 
 cdef object __ERROR_LEVELS
-__ERROR_LEVELS = ("""\
+__ERROR_LEVELS = (u"""\
 NONE=0
 WARNING=1
 ERROR=2
@@ -555,7 +555,7 @@ FATAL=3
 """,)
 
 cdef object __ERROR_DOMAINS
-__ERROR_DOMAINS = ("""\
+__ERROR_DOMAINS = (u"""\
 NONE=0
 PARSER=1
 TREE=2
@@ -588,7 +588,7 @@ SCHEMATRONV=28
 """,)
 
 cdef object __PARSER_ERROR_TYPES
-__PARSER_ERROR_TYPES = ("""\
+__PARSER_ERROR_TYPES = (u"""\
 ERR_OK=0
 ERR_INTERNAL_ERROR=1
 ERR_NO_MEMORY=2
@@ -669,7 +669,7 @@ ERR_TAG_NAME_MISMATCH=76
 ERR_TAG_NOT_FINISHED=77
 ERR_STANDALONE_VALUE=78
 """,
-"""\
+u"""\
 ERR_ENCODING_NAME=79
 ERR_HYPHEN_IN_COMMENT=80
 ERR_INVALID_ENCODING=81
@@ -756,7 +756,7 @@ RNGP_ATTRIBUTE_NOOP=1005
 RNGP_CHOICE_CONTENT=1006
 RNGP_CHOICE_EMPTY=1007
 """,
-"""\
+u"""\
 RNGP_CREATE_FAILURE=1008
 RNGP_DATA_CONTENT=1009
 RNGP_DEF_CHOICE_AND_INTERLEAVE=1010
@@ -829,7 +829,7 @@ RNGP_PAT_DATA_EXCEPT_REF=1076
 RNGP_PAT_DATA_EXCEPT_TEXT=1077
 RNGP_PAT_LIST_ATTR=1078
 """,
-"""\
+u"""\
 RNGP_PAT_LIST_ELEM=1079
 RNGP_PAT_LIST_INTERLEAVE=1080
 RNGP_PAT_LIST_LIST=1081
@@ -905,7 +905,7 @@ SAVE_CHAR_INVALID=1401
 SAVE_NO_DOCTYPE=1402
 SAVE_UNKNOWN_ENCODING=1403
 """,
-"""\
+u"""\
 REGEXP_COMPILE_ERROR=1450
 IO_UNKNOWN=1500
 IO_EACCES=1501
@@ -999,7 +999,7 @@ SCHEMAP_EXTENSION_NO_BASE=1707
 SCHEMAP_FACET_NO_VALUE=1708
 SCHEMAP_FAILED_BUILD_IMPORT=1709
 """,
-"""\
+u"""\
 SCHEMAP_GROUP_NONAME_NOREF=1710
 SCHEMAP_IMPORT_NAMESPACE_NOT_URI=1711
 SCHEMAP_IMPORT_REDEFINE_NSNAME=1712
@@ -1062,7 +1062,7 @@ SCHEMAP_DEF_AND_PREFIX=1768
 SCHEMAP_UNKNOWN_INCLUDE_CHILD=1769
 SCHEMAP_INCLUDE_SCHEMA_NOT_URI=1770
 """,
-"""\
+u"""\
 SCHEMAP_INCLUDE_SCHEMA_NO_URI=1771
 SCHEMAP_NOT_SCHEMA=1772
 SCHEMAP_UNKNOWN_MEMBER_TYPE=1773
@@ -1127,7 +1127,7 @@ SCHEMAV_CVC_MINLENGTH_VALID=1831
 SCHEMAV_CVC_MAXLENGTH_VALID=1832
 SCHEMAV_CVC_MININCLUSIVE_VALID=1833
 """,
-"""\
+u"""\
 SCHEMAV_CVC_MAXINCLUSIVE_VALID=1834
 SCHEMAV_CVC_MINEXCLUSIVE_VALID=1835
 SCHEMAV_CVC_MAXEXCLUSIVE_VALID=1836
@@ -1198,7 +1198,7 @@ SCHEMAP_SRC_SIMPLE_TYPE_4=3003
 SCHEMAP_SRC_RESOLVE=3004
 SCHEMAP_SRC_RESTRICTION_BASE_OR_SIMPLETYPE=3005
 """,
-"""\
+u"""\
 SCHEMAP_SRC_LIST_ITEMTYPE_OR_SIMPLETYPE=3006
 SCHEMAP_SRC_UNION_MEMBERTYPES_OR_SIMPLETYPES=3007
 SCHEMAP_ST_PROPS_CORRECT_1=3008
@@ -1259,7 +1259,7 @@ SCHEMAP_CVC_SIMPLE_TYPE=3062
 SCHEMAP_COS_CT_EXTENDS_1_1=3063
 SCHEMAP_SRC_IMPORT_1_1=3064
 """,
-"""\
+u"""\
 SCHEMAP_SRC_IMPORT_1_2=3065
 SCHEMAP_SRC_IMPORT_2=3066
 SCHEMAP_SRC_IMPORT_2_1=3067
@@ -1339,7 +1339,7 @@ CHECK_X=6006
 """,)
 
 cdef object __RELAXNG_ERROR_TYPES
-__RELAXNG_ERROR_TYPES = ("""\
+__RELAXNG_ERROR_TYPES = (u"""\
 RELAXNG_OK=0
 RELAXNG_ERR_MEMORY=1
 RELAXNG_ERR_TYPE=2

@@ -14,20 +14,20 @@ cdef int _buildIterparseEventFilter(events) except -1:
     cdef int event_filter
     event_filter = 0
     for event in events:
-        if event == 'start':
+        if event == u'start':
             event_filter |= ITERPARSE_FILTER_START
-        elif event == 'end':
+        elif event == u'end':
             event_filter |= ITERPARSE_FILTER_END
-        elif event == 'start-ns':
+        elif event == u'start-ns':
             event_filter |= ITERPARSE_FILTER_START_NS
-        elif event == 'end-ns':
+        elif event == u'end-ns':
             event_filter |= ITERPARSE_FILTER_END_NS
-        elif event == 'comment':
+        elif event == u'comment':
             event_filter |= ITERPARSE_FILTER_COMMENT
-        elif event == 'pi':
+        elif event == u'pi':
             event_filter |= ITERPARSE_FILTER_PI
         else:
-            raise ValueError, "invalid event name '%s'" % event
+            raise ValueError, u"invalid event name '%s'" % event
     return event_filter
 
 cdef int _countNsDefs(xmlNode* c_node):
@@ -51,7 +51,7 @@ cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
         else:
             prefix = funicode(c_ns.prefix)
         ns_tuple = (prefix, funicode(c_ns.href))
-        python.PyList_Append(event_list, ("start-ns", ns_tuple))
+        python.PyList_Append(event_list, (u"start-ns", ns_tuple))
         count = count + 1
         c_ns = c_ns.next
     return count
@@ -85,7 +85,7 @@ cdef class _IterparseContext(_ParserContext):
         self._event_index = 0
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
-        "wrap original SAX2 callbacks"
+        u"wrap original SAX2 callbacks"
         cdef xmlparser.xmlSAXHandler* sax
         _ParserContext._initParserContext(self, c_ctxt)
         sax = c_ctxt.sax
@@ -118,17 +118,17 @@ cdef class _IterparseContext(_ParserContext):
 
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildIterparseEventFilter(events)
-        if tag is None or tag == '*':
+        if tag is None or tag == u'*':
             self._tag_href  = NULL
             self._tag_name  = NULL
         else:
             self._tag_tuple = _getNsTag(tag)
             href, name = self._tag_tuple
-            if href is None or href == '*':
+            if href is None or href == u'*':
                 self._tag_href = NULL
             else:
                 self._tag_href = _cstr(href)
-            if name is None or name == '*':
+            if name is None or name == u'*':
                 self._tag_name = NULL
             else:
                 self._tag_name = _cstr(name)
@@ -154,7 +154,7 @@ cdef class _IterparseContext(_ParserContext):
             if self._event_filter & ITERPARSE_FILTER_END:
                 python.PyList_Append(self._node_stack, node)
             if self._event_filter & ITERPARSE_FILTER_START:
-                python.PyList_Append(self._events, ("start", node))
+                python.PyList_Append(self._events, (u"start", node))
         return 0
 
     cdef int endNode(self, xmlNode* c_node) except -1:
@@ -173,12 +173,12 @@ cdef class _IterparseContext(_ParserContext):
                             self._doc = _documentFactory(c_node.doc, None)
                         self._root = self._doc.getroot()
                     node = _elementFactory(self._doc, c_node)
-                python.PyList_Append(self._events, ("end", node))
+                python.PyList_Append(self._events, (u"end", node))
 
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             ns_count = self._pop_ns()
             if ns_count > 0:
-                event = ("end-ns", None)
+                event = (u"end-ns", None)
                 for i from 0 <= i < ns_count:
                     python.PyList_Append(self._events, event)
         return 0
@@ -279,7 +279,7 @@ cdef void _iterparseSaxComment(void* ctxt, char* text):
     context._origSaxComment(ctxt, text)
     c_node = _iterparseFindLastNode(c_ctxt)
     if c_node is not NULL:
-        _pushSaxEvent(context, "comment", c_node)
+        _pushSaxEvent(context, u"comment", c_node)
 
 cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
     cdef xmlNode* c_node
@@ -290,7 +290,7 @@ cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
     context._origSaxPI(ctxt, target, data)
     c_node = _iterparseFindLastNode(c_ctxt)
     if c_node is not NULL:
-        _pushSaxEvent(context, "pi", c_node)
+        _pushSaxEvent(context, u"pi", c_node)
 
 cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
     # this mimics what libxml2 creates for comments/PIs
@@ -306,7 +306,7 @@ cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
         return c_ctxt.node.next
 
 cdef class iterparse(_BaseParser):
-    """iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
+    u"""iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
     Incremental parser.
 
     Parses XML into a tree and generates tuples (event, element) in a
@@ -354,7 +354,7 @@ cdef class iterparse(_BaseParser):
     cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
                              char* chunk, int size, int terminate)
-    def __init__(self, source, events=("end",), *, tag=None,
+    def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
@@ -363,9 +363,9 @@ cdef class iterparse(_BaseParser):
         cdef _IterparseContext context
         cdef char* c_encoding
         cdef int parse_options
-        if not hasattr(source, 'read'):
+        if not hasattr(source, u'read'):
             filename = _encodeFilename(source)
-            source = open(filename, 'rb')
+            source = open(filename, u'rb')
         else:
             filename = _encodeFilename(_getFilenameForFile(source))
 
@@ -373,7 +373,7 @@ cdef class iterparse(_BaseParser):
         if html:
             # make sure we're not looking for namespaces
             events = tuple([ event for event in events
-                             if event != 'start-ns' and event != 'end-ns' ])
+                             if event != u'start-ns' and event != u'end-ns' ])
 
         self._events = events
         self._tag = tag
@@ -413,7 +413,7 @@ cdef class iterparse(_BaseParser):
         # parser will not be unlocked - no other methods supported
 
     property error_log:
-        """The error log of the last (or current) parser run.
+        u"""The error log of the last (or current) parser run.
         """
         def __get__(self):
             cdef _ParserContext context
@@ -427,7 +427,7 @@ cdef class iterparse(_BaseParser):
         return context
 
     def copy(self):
-        raise TypeError, "iterparse parsers cannot be copied"
+        raise TypeError, u"iterparse parsers cannot be copied"
 
     def __iter__(self):
         return self
@@ -458,7 +458,7 @@ cdef class iterparse(_BaseParser):
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
                 if not python.PyString_Check(data):
                     self._source = None
-                    raise TypeError, "reading file objects must return plain strings"
+                    raise TypeError, u"reading file objects must return plain strings"
                 c_data_len = python.PyString_GET_SIZE(data)
                 c_data = _cstr(data)
                 done = (c_data_len == 0)
@@ -502,7 +502,7 @@ cdef class iterparse(_BaseParser):
 
 
 cdef class iterwalk:
-    """iterwalk(self, element_or_tree, events=("end",), tag=None)
+    u"""iterwalk(self, element_or_tree, events=("end",), tag=None)
 
     A tree walker that generates events from an existing tree as if it
     was parsing XML data with ``iterparse()``.
@@ -517,7 +517,7 @@ cdef class iterwalk:
     cdef char*  _tag_href
     cdef char*  _tag_name
 
-    def __init__(self, element_or_tree, events=("end",), tag=None):
+    def __init__(self, element_or_tree, events=(u"end",), tag=None):
         cdef _Element root
         cdef int ns_count
         root = _rootNodeOrRaise(element_or_tree)
@@ -536,17 +536,17 @@ cdef class iterwalk:
             self._index = -1
 
     cdef void _setTagFilter(self, tag):
-        if tag is None or tag == '*':
+        if tag is None or tag == u'*':
             self._tag_href  = NULL
             self._tag_name  = NULL
         else:
             self._tag_tuple = _getNsTag(tag)
             href, name = self._tag_tuple
-            if href is None or href == '*':
+            if href is None or href == u'*':
                 self._tag_href = NULL
             else:
                 self._tag_href = _cstr(href)
-            if name is None or name == '*':
+            if name is None or name == u'*':
                 self._tag_name = NULL
             else:
                 self._tag_name = _cstr(name)
@@ -605,7 +605,7 @@ cdef class iterwalk:
         if self._event_filter & ITERPARSE_FILTER_START:
             if self._tag_tuple is None or \
                    _tagMatches(node._c_node, self._tag_href, self._tag_name):
-                python.PyList_Append(self._events, ("start", node))
+                python.PyList_Append(self._events, (u"start", node))
         return ns_count
 
     cdef _Element _end_node(self):
@@ -615,9 +615,9 @@ cdef class iterwalk:
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \
                    _tagMatches(node._c_node, self._tag_href, self._tag_name):
-                python.PyList_Append(self._events, ("end", node))
+                python.PyList_Append(self._events, (u"end", node))
         if self._event_filter & ITERPARSE_FILTER_END_NS:
-            event = ("end-ns", None)
+            event = (u"end-ns", None)
             for i from 0 <= i < ns_count:
                 python.PyList_Append(self._events, event)
         return node

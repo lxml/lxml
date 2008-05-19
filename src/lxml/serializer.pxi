@@ -9,13 +9,13 @@ cdef int _findOutputMethod(method) except -1:
     if method is None:
         return OUTPUT_METHOD_XML
     method = method.lower()
-    if method == "xml":
+    if method == u"xml":
         return OUTPUT_METHOD_XML
-    if method == "html":
+    if method == u"html":
         return OUTPUT_METHOD_HTML
-    if method == "text":
+    if method == u"text":
         return OUTPUT_METHOD_TEXT
-    raise ValueError, "unknown output method %r" % method
+    raise ValueError, u"unknown output method %r" % method
 
 cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef bint needs_conversion
@@ -42,8 +42,8 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
             needs_conversion = 1
         elif encoding is not None:
             encoding = encoding.upper()
-            if encoding != 'UTF-8':
-                if encoding == 'ASCII':
+            if encoding != u'UTF-8':
+                if encoding == u'ASCII':
                     if isutf8(c_text):
                         # will raise a decode error below
                         needs_conversion = 1
@@ -66,7 +66,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 cdef _tostring(_Element element, encoding, method,
                bint write_xml_declaration, bint write_complete_document,
                bint pretty_print, bint with_tail):
-    """Serialize an element to an encoded string representation of its XML
+    u"""Serialize an element to an encoded string representation of its XML
     tree.
     """
     cdef tree.xmlOutputBuffer* c_buffer
@@ -89,8 +89,9 @@ cdef _tostring(_Element element, encoding, method,
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL and c_enc is not NULL:
-        raise LookupError, python.PyString_FromFormat(
-            "unknown encoding: '%s'", c_enc)
+        if encoding is not None:
+            encoding = encoding.decode(u'UTF-8')
+        raise LookupError, u"unknown encoding: '%s'" % encoding
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
         tree.xmlCharEncCloseFunc(enchandler)
@@ -216,7 +217,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      char* encoding, bint pretty_print) nogil:
-    "Write the element tail."
+    u"Write the element tail."
     c_node = c_node.next
     while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0,
@@ -278,13 +279,13 @@ cdef class _FilelikeWriter:
             _writeFilelikeWriter, _closeFilelikeWriter,
             <python.PyObject*>self, enchandler)
         if c_buffer is NULL:
-            raise IOError, "Could not create I/O writer context."
+            raise IOError, u"Could not create I/O writer context."
         return c_buffer
 
     cdef int write(self, char* c_buffer, int size):
         try:
             if self._filelike is None:
-                raise IOError, "File is already closed"
+                raise IOError, u"File is already closed"
             py_buffer = python.PyString_FromStringAndSize(c_buffer, size)
             self._filelike.write(py_buffer)
             return size
@@ -320,7 +321,7 @@ cdef _tofilelike(f, _Element element, encoding, method,
     if c_method == OUTPUT_METHOD_TEXT:
         if _isString(f):
             filename8 = _encodeFilename(f)
-            f = open(filename8, 'wb')
+            f = open(filename8, u'wb')
             f.write(_textToString(element._c_node, encoding, with_tail))
             f.close()
         else:
@@ -328,8 +329,9 @@ cdef _tofilelike(f, _Element element, encoding, method,
         return
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
-        raise LookupError, python.PyString_FromFormat(
-            "unknown encoding: '%s'", c_enc)
+        if encoding is not None:
+            encoding = encoding.decode(u'UTF-8')
+        raise LookupError, u"unknown encoding: '%s'" % encoding
 
     if _isString(f):
         filename8 = _encodeFilename(f)
@@ -338,13 +340,13 @@ cdef _tofilelike(f, _Element element, encoding, method,
         if c_buffer is NULL:
             return python.PyErr_SetFromErrno(IOError)
         state = python.PyEval_SaveThread()
-    elif hasattr(f, 'write'):
+    elif hasattr(f, u'write'):
         writer   = _FilelikeWriter(f)
         c_buffer = writer._createOutputBuffer(enchandler)
     else:
         tree.xmlCharEncCloseFunc(enchandler)
         raise TypeError, \
-            "File or filename expected, got '%s'" % python._fqtypename(f)
+            u"File or filename expected, got '%s'" % funicode(python._fqtypename(f))
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                        write_xml_declaration, write_doctype,
@@ -372,7 +374,7 @@ cdef _tofilelikeC14N(f, _Element element):
             with nogil:
                 bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1,
                                             c_filename, 0)
-        elif hasattr(f, 'write'):
+        elif hasattr(f, u'write'):
             writer   = _FilelikeWriter(f)
             c_buffer = writer._createOutputBuffer(NULL)
             writer.error_log.connect()
@@ -381,7 +383,7 @@ cdef _tofilelikeC14N(f, _Element element):
             tree.xmlOutputBufferClose(c_buffer)
         else:
             raise TypeError, \
-                "File or filename expected, got '%s'" % python._fqtypename(f)
+                u"File or filename expected, got '%s'" % funicode(python._fqtypename(f))
     finally:
         _destroyFakeDoc(c_base_doc, c_doc)
 
@@ -389,7 +391,7 @@ cdef _tofilelikeC14N(f, _Element element):
         writer._exc_context._raise_if_stored()
 
     if bytes < 0:
-        message = "C14N failed"
+        message = u"C14N failed"
         if writer is not None:
             errors = writer.error_log
             if len(errors):
@@ -403,7 +405,7 @@ cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print, bint with_tail):
     cdef cstd.FILE* c_file
     c_file = python.PyFile_AsFile(f)
     if c_file is NULL:
-        raise ValueError, "not a file"
+        raise ValueError, u"not a file"
     c_buffer = tree.xmlOutputBufferCreateFile(c_file, NULL)
     tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, pretty_print, NULL)
     if with_tail:

@@ -3,27 +3,27 @@
 cimport xslt
 
 class XSLTError(LxmlError):
-    """Base class of all XSLT errors.
+    u"""Base class of all XSLT errors.
     """
     pass
 
 class XSLTParseError(XSLTError):
-    """Error parsing a stylesheet document.
+    u"""Error parsing a stylesheet document.
     """
     pass
 
 class XSLTApplyError(XSLTError):
-    """Error running an XSL transformation.
+    u"""Error running an XSL transformation.
     """
     pass
 
 class XSLTSaveError(XSLTError):
-    """Error serialising an XSLT result.
+    u"""Error serialising an XSLT result.
     """
     pass
 
 class XSLTExtensionError(XSLTError):
-    """Error registering an XSLT extension.
+    u"""Error registering an XSLT extension.
     """
     pass
 
@@ -116,7 +116,7 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
 
 cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
-    message = "Cannot resolve URI %s" % c_uri
+    message = u"Cannot resolve URI %s" % c_uri
     if c_type == xslt.XSLT_LOAD_DOCUMENT:
         exception = XSLTApplyError(message)
     else:
@@ -167,7 +167,7 @@ xslt.xsltSetLoaderFunc(_xslt_doc_loader)
 # XSLT file/network access control
 
 cdef class XSLTAccessControl:
-    """XSLTAccessControl(self, read_file=True, write_file=True, create_dir=True, read_network=True, write_network=True)
+    u"""XSLTAccessControl(self, read_file=True, write_file=True, create_dir=True, read_network=True, write_network=True)
 
     Access control for XSLT: reading/writing files, directories and
     network I/O.  Access to a type of resource is granted or denied by
@@ -223,14 +223,14 @@ cdef class XSLTAccessControl:
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
     property options:
-        "The access control configuration as a map of options."
+        u"The access control configuration as a map of options."
         def __get__(self):
             return {
-                'read_file': self._optval(xslt.XSLT_SECPREF_READ_FILE),
-                'write_file': self._optval(xslt.XSLT_SECPREF_WRITE_FILE),
-                'create_dir': self._optval(xslt.XSLT_SECPREF_CREATE_DIRECTORY),
-                'read_network': self._optval(xslt.XSLT_SECPREF_READ_NETWORK),
-                'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
+                u'read_file': self._optval(xslt.XSLT_SECPREF_READ_FILE),
+                u'write_file': self._optval(xslt.XSLT_SECPREF_WRITE_FILE),
+                u'create_dir': self._optval(xslt.XSLT_SECPREF_CREATE_DIRECTORY),
+                u'read_network': self._optval(xslt.XSLT_SECPREF_READ_NETWORK),
+                u'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
                 }
 
     cdef _optval(self, xslt.xsltSecurityOption option):
@@ -246,9 +246,9 @@ cdef class XSLTAccessControl:
     def __repr__(self):
         items = self.options.items()
         items.sort()
-        return "%s(%s)" % (
-            python._fqtypename(self).split('.')[-1],
-            ', '.join(["%s=%r" % item for item in items]))
+        return u"%s(%s)" % (
+            funicode(python._fqtypename(self)).split(u'.')[-1],
+            u', '.join([u"%s=%r" % item for item in items]))
 
 ################################################################################
 # XSLT
@@ -279,7 +279,7 @@ cdef class _XSLTContext(_BaseContext):
             for ns_name_tuple, extension in extensions.items():
                 if ns_name_tuple[0] is None:
                     raise XSLTExtensionError, \
-                        "extensions must not have empty namespaces"
+                        u"extensions must not have empty namespaces"
                 if isinstance(extension, XSLTExtension):
                     if self._extension_elements is EMPTY_READ_ONLY_DICT:
                         self._extension_elements = {}
@@ -317,7 +317,7 @@ cdef class _XSLTContext(_BaseContext):
 
 
 cdef class XSLT:
-    """XSLT(self, xslt_input, extensions=None, regexp=True, access_control=None)
+    u"""XSLT(self, xslt_input, extensions=None, regexp=True, access_control=None)
 
     Turn an XSL document into an XSLT object.
 
@@ -392,7 +392,7 @@ cdef class XSLT:
             else:
                 raise XSLTParseError(
                     self._error_log._buildExceptionMessage(
-                        "Cannot parse stylesheet"),
+                        u"Cannot parse stylesheet"),
                     self._error_log)
 
         c_doc._private = NULL # no longer used!
@@ -407,18 +407,18 @@ cdef class XSLT:
         xslt.xsltFreeStylesheet(self._c_style)
 
     property error_log:
-        "The log of errors and warnings of an XSLT execution."
+        u"The log of errors and warnings of an XSLT execution."
         def __get__(self):
             return self._error_log.copy()
 
     def apply(self, _input, *, profile_run=False, **_kw):
-        """apply(self, _input,  profile_run=False, **_kw)
+        u"""apply(self, _input,  profile_run=False, **_kw)
         
         :deprecated: call the object, not this method."""
         return self(_input, profile_run=profile_run, **_kw)
 
     def tostring(self, _ElementTree result_tree):
-        """tostring(self, result_tree)
+        u"""tostring(self, result_tree)
 
         Save result doc to string based on stylesheet output method.
 
@@ -433,7 +433,7 @@ cdef class XSLT:
         return _copyXSLT(self)
 
     def __call__(self, _input, *, profile_run=False, **_kw):
-        """__call__(self, _input, profile_run=False, **_kw)
+        u"""__call__(self, _input, profile_run=False, **_kw)
 
         Execute the XSL transformation on a tree or Element.
 
@@ -513,13 +513,13 @@ cdef class XSLT:
                 error = self._error_log.last_error
                 if error is not None and error.message:
                     if error.line > 0:
-                        message = "%s, line %d" % (error.message, error.line)
+                        message = u"%s, line %d" % (error.message, error.line)
                     else:
                         message = error.message
                 elif error is not None and error.line > 0:
-                    message = "Error applying stylesheet, line %d" % error.line
+                    message = u"Error applying stylesheet, line %d" % error.line
                 else:
-                    message = "Error applying stylesheet"
+                    message = u"Error applying stylesheet"
                 raise XSLTApplyError(message, self._error_log)
         finally:
             if resolver_context is not None:
@@ -647,7 +647,7 @@ cdef class _XSLTResultTree(_ElementTree):
         cdef int l
         self._saveToStringAndSize(&s, &l)
         if s is NULL:
-            return unicode('')
+            return u''
         encoding = self._xslt._c_style.encoding
         if encoding is NULL:
             encoding = 'ascii'
@@ -658,7 +658,7 @@ cdef class _XSLTResultTree(_ElementTree):
         return _stripEncodingDeclaration(result)
 
     property xslt_profile:
-        """Return an ElementTree with profiling data for the stylesheet run.
+        u"""Return an ElementTree with profiling data for the stylesheet run.
         """
         def __get__(self):
             cdef object root
@@ -694,10 +694,10 @@ cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
 # XSLT PI support
 
 cdef object _FIND_PI_ATTRIBUTES
-_FIND_PI_ATTRIBUTES = re.compile(r'\s+(\w+)\s*=\s*["\']([^"\']+)["\']', re.U).findall
+_FIND_PI_ATTRIBUTES = re.compile(ur'\s+(\w+)\s*=\s*["\']([^"\']+)["\']', re.U).findall
 
 cdef object _RE_PI_HREF
-_RE_PI_HREF = re.compile(r'\s+href\s*=\s*["\']([^"\']+)["\']')
+_RE_PI_HREF = re.compile(ur'\s+href\s*=\s*["\']([^"\']+)["\']')
 
 cdef object _FIND_PI_HREF
 _FIND_PI_HREF = _RE_PI_HREF.findall
@@ -712,13 +712,13 @@ cdef _findStylesheetByID(_Document doc, id):
     global __findStylesheetByID
     if __findStylesheetByID is None:
         __findStylesheetByID = XPath(
-            "//xsl:stylesheet[@xml:id = $id]",
-            namespaces={"xsl" : "http://www.w3.org/1999/XSL/Transform"})
+            u"//xsl:stylesheet[@xml:id = $id]",
+            namespaces={u"xsl" : u"http://www.w3.org/1999/XSL/Transform"})
     return __findStylesheetByID(doc, id=id)
 
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
-        """Try to parse the stylesheet referenced by this PI and return an
+        u"""Try to parse the stylesheet referenced by this PI and return an
         ElementTree for it.  If the stylesheet is embedded in the same
         document (referenced via xml:id), find and return an ElementTree for
         the stylesheet Element.
@@ -731,10 +731,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef char* c_href
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
-            raise ValueError, "PI lacks content"
+            raise ValueError, u"PI lacks content"
         hrefs_utf = _FIND_PI_HREF(' ' + self._c_node.content)
         if len(hrefs_utf) != 1:
-            raise ValueError, "malformed PI attributes"
+            raise ValueError, u"malformed PI attributes"
         href_utf = hrefs_utf[0]
         c_href = _cstr(href_utf)
 
@@ -760,30 +760,30 @@ cdef class _XSLTProcessingInstruction(PIBase):
         # try XPath search
         root = _findStylesheetByID(self._doc, funicode(c_href))
         if not root:
-            raise ValueError, "reference to non-existing embedded stylesheet"
+            raise ValueError, u"reference to non-existing embedded stylesheet"
         elif len(root) > 1:
-            raise ValueError, "ambiguous reference to embedded stylesheet"
+            raise ValueError, u"ambiguous reference to embedded stylesheet"
         result_node = root[0]
         return _elementTreeFactory(result_node._doc, result_node)
 
     def set(self, key, value):
-        if key != "href":
+        if key != u"href":
             raise AttributeError, \
-                "only setting the 'href' attribute is supported on XSLT-PIs"
+                u"only setting the 'href' attribute is supported on XSLT-PIs"
         if value is None:
-            attrib = ""
-        elif '"' in value or '>' in value:
-            raise ValueError, "Invalid URL, must not contain '\"' or '>'"
+            attrib = u""
+        elif u'"' in value or u'>' in value:
+            raise ValueError, u"Invalid URL, must not contain '\"' or '>'"
         else:
-            attrib = ' href="%s"' % value
-        text = ' ' + self.text
+            attrib = u' href="%s"' % value
+        text = u' ' + self.text
         if _FIND_PI_HREF(text):
             self.text = _REPLACE_PI_HREF(attrib, text)
         else:
             self.text = text + attrib
 
     def get(self, key, default=None):
-        for attr, value in _FIND_PI_ATTRIBUTES(' ' + self.text):
+        for attr, value in _FIND_PI_ATTRIBUTES(u' ' + self.text):
             if attr == key:
                 return value
         return default

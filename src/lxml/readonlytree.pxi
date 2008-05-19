@@ -1,32 +1,32 @@
 # read-only tree implementation
 
 cdef class _ReadOnlyElementProxy:
-    "The main read-only Element proxy class (for internal use only!)."
+    u"The main read-only Element proxy class (for internal use only!)."
     cdef bint _free_after_use
     cdef xmlNode* _c_node
     cdef object _source_proxy
     cdef object _dependent_proxies
 
     cdef int _assertNode(self) except -1:
-        """This is our way of saying: this proxy is invalid!
+        u"""This is our way of saying: this proxy is invalid!
         """
-        assert self._c_node is not NULL, "Proxy invalidated!"
+        assert self._c_node is not NULL, u"Proxy invalidated!"
         return 0
 
     cdef void free_after_use(self):
-        """Should the xmlNode* be freed when releasing the proxy?
+        u"""Should the xmlNode* be freed when releasing the proxy?
         """
         self._free_after_use = 1
 
     property tag:
-        """Element tag
+        u"""Element tag
         """
         def __get__(self):
             self._assertNode()
             return _namespacedName(self._c_node)
 
     property text:
-        """Text before the first subelement. This is either a string or 
+        u"""Text before the first subelement. This is either a string or 
         the value None, if there was no text.
         """
         def __get__(self):
@@ -34,7 +34,7 @@ cdef class _ReadOnlyElementProxy:
             return _collectText(self._c_node.children)
         
     property tail:
-        """Text after this element's end tag, but before the next sibling
+        u"""Text after this element's end tag, but before the next sibling
         element's start tag. This is either a string or the value None, if
         there was no text.
         """
@@ -48,7 +48,7 @@ cdef class _ReadOnlyElementProxy:
             return dict(_collectAttributes(self._c_node, 3))
 
     property prefix:
-        """Namespace prefix or None.
+        u"""Namespace prefix or None.
         """
         def __get__(self):
             self._assertNode()
@@ -58,7 +58,7 @@ cdef class _ReadOnlyElementProxy:
             return None
 
     property sourceline:
-        """Original line number as found by the parser or None if unknown.
+        u"""Original line number as found by the parser or None if unknown.
         """
         def __get__(self):
             cdef long line
@@ -70,19 +70,19 @@ cdef class _ReadOnlyElementProxy:
                 return None
 
     def __repr__(self):
-        return "<Element %s at %x>" % (self.tag, id(self))
+        return u"<Element %s at %x>" % (self.tag, id(self))
     
     def __getitem__(self, Py_ssize_t index):
-        """Returns the subelement at the given position.
+        u"""Returns the subelement at the given position.
         """
         cdef xmlNode* c_node
         c_node = _findChild(self._c_node, index)
         if c_node is NULL:
-            raise IndexError, "list index out of range"
+            raise IndexError, u"list index out of range"
         return _newReadOnlyProxy(self._source_proxy, c_node)
 
     def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
-        """Returns a list containing subelements in the given range.
+        u"""Returns a list containing subelements in the given range.
         """
         cdef xmlNode* c_node
         cdef Py_ssize_t c
@@ -100,7 +100,7 @@ cdef class _ReadOnlyElementProxy:
         return result
 
     def __len__(self):
-        """Returns the number of subelements.
+        u"""Returns the number of subelements.
         """
         cdef Py_ssize_t c
         cdef xmlNode* c_node
@@ -120,11 +120,11 @@ cdef class _ReadOnlyElementProxy:
         return c_node != NULL
 
     def __deepcopy__(self, memo):
-        "__deepcopy__(self, memo)"
+        u"__deepcopy__(self, memo)"
         return self.__copy__()
         
     def __copy__(self):
-        "__copy__(self)"
+        u"__copy__(self)"
         cdef xmlDoc* c_doc
         cdef xmlNode* c_node
         cdef _Document new_doc
@@ -145,7 +145,7 @@ cdef class _ReadOnlyElementProxy:
         return iter(self.getchildren())
 
     def iterchildren(self, tag=None, *, reversed=False):
-        """iterchildren(self, tag=None, reversed=False)
+        u"""iterchildren(self, tag=None, reversed=False)
 
         Iterate over the children of this element.
         """
@@ -157,34 +157,34 @@ cdef class _ReadOnlyElementProxy:
         return iter(children)
 
     def get(self, key, default=None):
-        """Gets an element attribute.
+        u"""Gets an element attribute.
         """
         self._assertNode()
         return _getNodeAttributeValue(self._c_node, key, default)
 
     def keys(self):
-        """Gets a list of attribute names. The names are returned in an
+        u"""Gets a list of attribute names. The names are returned in an
         arbitrary order (just like for an ordinary Python dictionary).
         """
         self._assertNode()
         return _collectAttributes(self._c_node, 1)
 
     def values(self):
-        """Gets element attributes, as a sequence. The attributes are returned
+        u"""Gets element attributes, as a sequence. The attributes are returned
         in an arbitrary order.
         """
         self._assertNode()
         return _collectAttributes(self._c_node, 2)
 
     def items(self):
-        """Gets element attributes, as a sequence. The attributes are returned
+        u"""Gets element attributes, as a sequence. The attributes are returned
         in an arbitrary order.
         """
         self._assertNode()
         return _collectAttributes(self._c_node, 3)
 
     cpdef getchildren(self):
-        """Returns all subelements. The elements are returned in document
+        u"""Returns all subelements. The elements are returned in document
         order.
         """
         cdef xmlNode* c_node
@@ -199,7 +199,7 @@ cdef class _ReadOnlyElementProxy:
         return result
 
     def getparent(self):
-        """Returns the parent of this element or None for the root element.
+        u"""Returns the parent of this element or None for the root element.
         """
         cdef xmlNode* c_parent
         self._assertNode()
@@ -210,7 +210,7 @@ cdef class _ReadOnlyElementProxy:
             return _newReadOnlyProxy(self._source_proxy, c_parent)
 
     def getnext(self):
-        """Returns the following sibling of this element or None.
+        u"""Returns the following sibling of this element or None.
         """
         cdef xmlNode* c_node
         self._assertNode()
@@ -220,7 +220,7 @@ cdef class _ReadOnlyElementProxy:
         return None
 
     def getprevious(self):
-        """Returns the preceding sibling of this element or None.
+        u"""Returns the preceding sibling of this element or None.
         """
         cdef xmlNode* c_node
         self._assertNode()
@@ -267,11 +267,11 @@ cdef _freeReadOnlyProxies(_ReadOnlyElementProxy sourceProxy):
     del sourceProxy._dependent_proxies[:]
 
 cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
-    """A read-only element that allows adding children and changing the
+    u"""A read-only element that allows adding children and changing the
     text content (i.e. everything that adds to the subtree).
     """
     cpdef append(self, other_element):
-        """Append a copy of an Element to the list of children.
+        u"""Append a copy of an Element to the list of children.
         """
         cdef xmlNode* c_next
         cdef xmlNode* c_node
@@ -283,7 +283,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
         _moveTail(c_next, c_node)
             
     def extend(self, elements):
-        """Append a copy of all Elements from a sequence to the list of
+        u"""Append a copy of all Elements from a sequence to the list of
         children.
         """
         self._assertNode()
@@ -291,7 +291,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
             self.append(element)
 
     property text:
-        """Text before the first subelement. This is either a string or the
+        u"""Text before the first subelement. This is either a string or the
         value None, if there was no text.
         """
         def __get__(self):
@@ -320,8 +320,8 @@ cdef xmlNode* _roNodeOf(element) except NULL:
     elif isinstance(element, _ReadOnlyElementProxy):
         c_node = (<_ReadOnlyElementProxy>element)._c_node
     else:
-        raise TypeError, "invalid value to append()"
+        raise TypeError, u"invalid value to append()"
 
     if c_node is NULL:
-        raise TypeError, "invalid element"
+        raise TypeError, u"invalid element"
     return c_node

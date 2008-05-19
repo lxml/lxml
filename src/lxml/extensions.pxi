@@ -1,22 +1,22 @@
 # support for extension functions in XPath and XSLT
 
 class XPathError(LxmlError):
-    """Base class of all XPath errors.
+    u"""Base class of all XPath errors.
     """
     pass
 
 class XPathEvalError(XPathError):
-    """Error during XPath evaluation.
+    u"""Error during XPath evaluation.
     """
     pass
 
 class XPathFunctionError(XPathEvalError):
-    """Internal error looking up an XPath extension function.
+    u"""Internal error looking up an XPath extension function.
     """
     pass
 
 class XPathResultError(XPathEvalError):
-    """Error handling an XPath result.
+    u"""Error handling an XPath result.
     """
     pass
 
@@ -57,7 +57,7 @@ cdef class _BaseContext:
             for extension in extensions:
                 for (ns_uri, name), function in extension.items():
                     if name is None:
-                        raise ValueError, "extensions must have non empty names"
+                        raise ValueError, u"extensions must have non empty names"
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
                     python.PyDict_SetItem(
@@ -72,10 +72,10 @@ cdef class _BaseContext:
                 for prefix, ns_uri in namespaces:
                     if prefix is None or not prefix:
                         raise TypeError, \
-                            "empty namespace prefix is not supported in XPath"
+                            u"empty namespace prefix is not supported in XPath"
                     if ns_uri is None or not ns_uri:
                         raise TypeError, \
-                            "setting default namespace is not supported in XPath"
+                            u"setting default namespace is not supported in XPath"
                     prefix_utf = self._to_utf(prefix)
                     ns_uri_utf = self._to_utf(ns_uri)
                     python.PyList_Append(ns, (prefix_utf, ns_uri_utf))
@@ -103,7 +103,7 @@ cdef class _BaseContext:
         return context
 
     cdef object _to_utf(self, s):
-        "Convert to UTF-8 and keep a reference to the encoded string"
+        u"Convert to UTF-8 and keep a reference to the encoded string"
         cdef python.PyObject* dict_result
         if s is None:
             return None
@@ -138,7 +138,7 @@ cdef class _BaseContext:
 
     cdef addNamespace(self, prefix, ns_uri):
         if prefix is None:
-            raise TypeError, "empty prefix is not supported in XPath"
+            raise TypeError, u"empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         new_item = (prefix_utf, ns_uri_utf)
@@ -160,7 +160,7 @@ cdef class _BaseContext:
 
     cdef registerNamespace(self, prefix, ns_uri):
         if prefix is None:
-            raise TypeError, "empty prefix is not supported in XPath"
+            raise TypeError, u"empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
         python.PyList_Append(self._global_namespaces, prefix_utf)
@@ -212,7 +212,7 @@ cdef class _BaseContext:
                 d = {}
                 python.PyDict_SetItem(
                     self._function_cache, ns_utf, d)
-            for name_utf, function in ns_functions.iteritems():
+            for name_utf, function in ns_functions.items():
                 python.PyDict_SetItem(d, name_utf, function)
                 reg_func(ctxt, name_utf, ns_utf)
 
@@ -223,7 +223,7 @@ cdef class _BaseContext:
             return # done
         last_ns = None
         d = None
-        for (ns_utf, name_utf), function in self._extensions.iteritems():
+        for (ns_utf, name_utf), function in self._extensions.items():
             if ns_utf is not last_ns or d is None:
                 last_ns = ns_utf
                 dict_result = python.PyDict_GetItem(
@@ -239,20 +239,20 @@ cdef class _BaseContext:
 
     cdef unregisterAllFunctions(self, void* ctxt,
                                       _register_function unreg_func):
-        for ns_utf, functions in self._function_cache.iteritems():
+        for ns_utf, functions in self._function_cache.items():
             for name_utf in functions:
                 unreg_func(ctxt, name_utf, ns_utf)
 
     cdef unregisterGlobalFunctions(self, void* ctxt,
                                          _register_function unreg_func):
-        for ns_utf, functions in self._function_cache.iteritems():
+        for ns_utf, functions in self._function_cache.items():
             for name_utf in functions:
                 if self._extensions is None or \
                        (ns_utf, name_utf) not in self._extensions:
                     unreg_func(ctxt, name_utf, ns_utf)
 
     cdef _find_cached_function(self, char* c_ns_uri, char* c_name):
-        """Lookup an extension function in the cache and return it.
+        u"""Lookup an extension function in the cache and return it.
 
         Parameters: c_ns_uri may be NULL, c_name must not be NULL
         """
@@ -279,15 +279,15 @@ cdef class _BaseContext:
             cdef xmlNode* c_node
             if self._xpathCtxt is NULL:
                 raise XPathError, \
-                    "XPath context is only usable during the evaluation"
+                    u"XPath context is only usable during the evaluation"
             c_node = self._xpathCtxt.node
             if c_node is NULL:
-                raise XPathError, "no context node"
+                raise XPathError, u"no context node"
             if c_node.doc != self._xpathCtxt.doc:
                 raise XPathError, \
-                    "document-external context nodes are not supported"
+                    u"document-external context nodes are not supported"
             if self._doc is None:
-                raise XPathError, "document context is missing"
+                raise XPathError, u"document context is missing"
             return _elementFactory(self._doc, c_node)
 
     property eval_context:
@@ -299,11 +299,11 @@ cdef class _BaseContext:
     # Python reference keeping during XPath function evaluation
 
     cdef _release_temp_refs(self):
-        "Free temporarily referenced objects from this context."
+        u"Free temporarily referenced objects from this context."
         self._temp_refs.clear()
         
     cdef _hold(self, obj):
-        """A way to temporarily hold references to nodes in the evaluator.
+        u"""A way to temporarily hold references to nodes in the evaluator.
 
         This is needed because otherwise nodes created in XPath extension
         functions would be reference counted too soon, during the XPath
@@ -324,7 +324,7 @@ cdef class _BaseContext:
                 self._temp_refs.add((<_Element>o)._doc)
 
 def Extension(module, function_mapping=None, *, ns=None):
-    """Extension(module, function_mapping=None, ns=None)
+    u"""Extension(module, function_mapping=None, ns=None)
 
     Build a dictionary of extension functions from the functions
     defined in a module or the methods of an object.
@@ -365,7 +365,7 @@ cdef class _ExsltRegExp:
         elif python.PyList_Check(value):
             # node set: take recursive text concatenation of first element
             if python.PyList_GET_SIZE(value) == 0:
-                return ''
+                return u''
             firstnode = value[0]
             if _isString(firstnode):
                 return firstnode
@@ -379,9 +379,9 @@ cdef class _ExsltRegExp:
                     tree.xmlFree(c_text)
                 return s
             else:
-                return str(firstnode)
+                return unicode(firstnode)
         else:
-            return str(value)
+            return unicode(value)
 
     cdef _compile(self, rexp, ignore_case):
         cdef python.PyObject* c_result
@@ -397,20 +397,20 @@ cdef class _ExsltRegExp:
         python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
         return rexp_compiled
 
-    def test(self, ctxt, s, rexp, flags=''):
+    def test(self, ctxt, s, rexp, flags=u''):
         flags = self._make_string(flags)
         s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
+        rexpc = self._compile(rexp, u'i' in flags)
         if rexpc.search(s) is None:
             return False
         else:
             return True
 
-    def match(self, ctxt, s, rexp, flags=''):
+    def match(self, ctxt, s, rexp, flags=u''):
         flags = self._make_string(flags)
         s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
-        if 'g' in flags:
+        rexpc = self._compile(rexp, u'i' in flags)
+        if u'g' in flags:
             results = rexpc.findall(s)
             if not results:
                 return ()
@@ -419,14 +419,14 @@ cdef class _ExsltRegExp:
             if not result:
                 return ()
             results = [ result.group() ]
-            results.extend( result.groups('') )
+            results.extend( result.groups(u'') )
         result_list = []
-        root = Element('matches')
-        join_groups = ''.join
+        root = Element(u'matches')
+        join_groups = u''.join
         for s_match in results:
             if python.PyTuple_CheckExact(s_match):
                 s_match = join_groups(s_match)
-            elem = SubElement(root, 'match')
+            elem = SubElement(root, u'match')
             elem.text = s_match
             python.PyList_Append(result_list, elem)
         return result_list
@@ -435,8 +435,8 @@ cdef class _ExsltRegExp:
         replacement = self._make_string(replacement)
         flags = self._make_string(flags)
         s = self._make_string(s)
-        rexpc = self._compile(rexp, 'i' in flags)
-        if 'g' in flags:
+        rexpc = self._compile(rexp, u'i' in flags)
+        if u'g' in flags:
             count = 0
         else:
             count = 1
@@ -475,16 +475,16 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
                 xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
             else:
                 xpath.xmlXPathFreeNodeSet(resultSet)
-                raise XPathResultError, "This is not a node: %r" % element
+                raise XPathResultError, u"This is not a node: %r" % element
     else:
-        raise XPathResultError, "Unknown return type: %s" % \
+        raise XPathResultError, u"Unknown return type: %s" % \
             python._fqtypename(obj)
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
                                _Document doc):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
-        raise XPathResultError, "Undefined xpath result"
+        raise XPathResultError, u"Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
         return _createNodeSetResult(xpathObj, doc)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
@@ -505,7 +505,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
         raise NotImplementedError
     else:
-        raise XPathResultError, "Unknown xpath result %s" % str(xpathObj.type)
+        raise XPathResultError, u"Unknown xpath result %s" % unicode(xpathObj.type)
 
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
     cdef xmlNode* c_node
@@ -546,12 +546,12 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
             continue
         else:
             raise NotImplementedError, \
-                "Not yet implemented result node type: %d" % c_node.type
+                u"Not yet implemented result node type: %d" % unicode(c_node.type)
         python.PyList_Append(result, value)
     return result
 
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
-    """Free the XPath object, but *never* free the *content* of node sets.
+    u"""Free the XPath object, but *never* free the *content* of node sets.
     Python dealloc will do that for us.
     """
     if xpathObj.nodesetval is not NULL:
@@ -678,9 +678,9 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
         _extension_function_call(context, function, ctxt, nargs)
     else:
         if rctxt.functionURI is not NULL:
-            fref = "{%s}%s" % (rctxt.functionURI, rctxt.function)
+            fref = u"{%s}%s" % (rctxt.functionURI, rctxt.function)
         else:
             fref = rctxt.function
         xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
-        exception = XPathFunctionError("XPath function '%s' not found" % fref)
+        exception = XPathFunctionError(u"XPath function '%s' not found" % fref)
         context._exc._store_exception(exception)

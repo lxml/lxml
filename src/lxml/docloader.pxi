@@ -13,9 +13,9 @@ cdef class _InputDocument:
     cdef object _file
 
 cdef class Resolver:
-    "This is the base class of all resolvers."
+    u"This is the base class of all resolvers."
     def resolve(self, system_url, public_id, context):
-        """resolve(self, system_url, public_id, context)
+        u"""resolve(self, system_url, public_id, context)
 
         Override this method to resolve an external source by
         ``system_url`` and ``public_id``.  The third argument is an
@@ -26,7 +26,7 @@ cdef class Resolver:
         return None
 
     def resolve_empty(self, context):
-        """resolve_empty(self, context)
+        u"""resolve_empty(self, context)
 
         Return an empty input document.
 
@@ -38,7 +38,7 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_string(self, string, context, *, base_url=None):
-        """resolve_string(self, string, context, base_url=None)
+        u"""resolve_string(self, string, context, base_url=None)
 
         Return a parsable string as input document.
 
@@ -55,7 +55,7 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_filename(self, filename, context):
-        """resolve_filename(self, filename, context)
+        u"""resolve_filename(self, filename, context)
 
         Return the name of a parsable file as input document.
 
@@ -68,7 +68,7 @@ cdef class Resolver:
         return doc_ref
 
     def resolve_file(self, f, context, *, base_url=None):
-        """resolve_file(self, f, context, base_url=None)
+        u"""resolve_file(self, f, context, base_url=None)
 
         Return an open file-like object as input document.
 
@@ -78,7 +78,7 @@ cdef class Resolver:
         try:
             f.read
         except AttributeError:
-            raise TypeError, "Argument is not a file-like object"
+            raise TypeError, u"Argument is not a file-like object"
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_FILE
         if base_url is not None:
@@ -96,7 +96,7 @@ cdef class _ResolverRegistry:
         self._default_resolver = default_resolver
 
     def add(self, Resolver resolver not None):
-        """add(self, resolver)
+        u"""add(self, resolver)
 
         Register a resolver.
 
@@ -109,7 +109,7 @@ cdef class _ResolverRegistry:
         self._resolvers.add(resolver)
 
     def remove(self, resolver):
-        "remove(self, resolver)"
+        u"remove(self, resolver)"
         self._resolvers.discard(resolver)
 
     cdef _ResolverRegistry _copy(self):
@@ -119,11 +119,11 @@ cdef class _ResolverRegistry:
         return registry
 
     def copy(self):
-        "copy(self)"
+        u"copy(self)"
         return self._copy()
 
     def resolve(self, system_url, public_id, context):
-        "resolve(self, system_url, public_id, context)"
+        u"resolve(self, system_url, public_id, context)"
         for resolver in self._resolvers:
             result = resolver.resolve(system_url, public_id, context)
             if result is not None:

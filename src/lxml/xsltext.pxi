@@ -1,10 +1,10 @@
 # XSLT extension elements
 
 cdef class XSLTExtension:
-    """Base class of an XSLT extension element.
+    u"""Base class of an XSLT extension element.
     """
     def execute(self, context, self_node, input_node, output_parent):
-        """execute(self, context, self_node, input_node, output_parent)
+        u"""execute(self, context, self_node, input_node, output_parent)
         Execute this extension element.
 
         Subclasses must override this method.  They may append
@@ -16,7 +16,7 @@ cdef class XSLTExtension:
         pass
 
     def apply_templates(self, _XSLTContext context not None, node):
-        """apply_templates(self, context, node)
+        u"""apply_templates(self, context, node)
 
         Call this method to retrieve the result of applying templates
         to an element.
@@ -59,7 +59,7 @@ cdef class XSLTExtension:
                     proxy.free_after_use()
                 else:
                     raise TypeError, \
-                        "unsupported XSLT result type: %d" % c_node.type
+                        u"unsupported XSLT result type: %d" % c_node.type
                 c_node = c_next
         finally:
             # free all intermediate nodes that will not be freed by proxies
@@ -95,7 +95,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             context._extension_elements, (c_uri, c_inst_node.name))
         if dict_result is NULL:
             raise KeyError, \
-                "extension element %s not found" % c_inst_node.name
+                u"extension element %s not found" % funicode(c_inst_node.name)
         extension = <object>dict_result
 
         try:
@@ -110,12 +110,12 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             if self_node is not None:
                 _freeReadOnlyProxies(self_node)
     except Exception, e:
-        message = "Error executing extension element '%s': %s" % (
-            c_inst_node.name, e)
+        message = u"Error executing extension element '%s': %s" % (
+            funicode(c_inst_node.name), e)
         xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
         context._exc._store_raised()
     except:
         # just in case
-        message = "Error executing extension element '%s'" % c_inst_node.name
+        message = u"Error executing extension element '%s'" % funicode(c_inst_node.name)
         xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
         context._exc._store_raised()

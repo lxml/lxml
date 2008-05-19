@@ -1,7 +1,7 @@
 # Public C API for lxml.etree
 
 cdef public api _Element deepcopyNodeToDocument(_Document doc, xmlNode* c_root):
-    "Recursively copy the element into the document. doc is not modified."
+    u"Recursively copy the element into the document. doc is not modified."
     cdef xmlNode* c_node
     c_node = _copyNodeToDoc(c_root, doc._c_doc)
     return _elementFactory(doc, c_node)

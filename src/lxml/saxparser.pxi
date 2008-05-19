@@ -29,7 +29,7 @@ cdef class _SaxParserTarget:
         return None
 
 cdef class _SaxParserContext(_ParserContext):
-    """This class maps SAX2 events to method calls.
+    u"""This class maps SAX2 events to method calls.
     """
     cdef _SaxParserTarget _target
     cdef xmlparser.startElementNsSAX2Func _origSaxStart
@@ -46,7 +46,7 @@ cdef class _SaxParserContext(_ParserContext):
         self._target = target
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
-        "wrap original SAX2 callbacks"
+        u"wrap original SAX2 callbacks"
         cdef xmlparser.xmlSAXHandler* sax
         _ParserContext._initParserContext(self, c_ctxt)
         sax = c_ctxt.sax
@@ -323,7 +323,7 @@ cdef void _handleSaxComment(void* ctxt, char* c_data) with gil:
 ############################################################
 
 cdef class TreeBuilder(_SaxParserTarget):
-    """TreeBuilder(self, element_factory=None, parser=None)
+    u"""TreeBuilder(self, element_factory=None, parser=None)
     Parser target that builds a tree.
 
     The final tree is returned by the ``close()`` method.
@@ -353,10 +353,10 @@ cdef class TreeBuilder(_SaxParserTarget):
             if self._last is not None:
                 text = "".join(self._data)
                 if self._in_tail:
-                    assert self._last.tail is None, "internal error (tail)"
+                    assert self._last.tail is None, u"internal error (tail)"
                     self._last.tail = text
                 else:
-                    assert self._last.text is None, "internal error (text)"
+                    assert self._last.text is None, u"internal error (text)"
                     self._last.text = text
             del self._data[:]
         return 0
@@ -364,17 +364,17 @@ cdef class TreeBuilder(_SaxParserTarget):
     # Python level event handlers
 
     def close(self):
-        """close(self)
+        u"""close(self)
 
         Flushes the builder buffers, and returns the toplevel document
         element.
         """
-        assert python.PyList_GET_SIZE(self._element_stack) == 0, "missing end tags"
-        assert self._last is not None, "missing toplevel element"
+        assert python.PyList_GET_SIZE(self._element_stack) == 0, u"missing end tags"
+        assert self._last is not None, u"missing toplevel element"
         return self._last
 
     def data(self, data):
-        """data(self, data)
+        u"""data(self, data)
 
         Adds text to the current element.  The value should be either an
         8-bit string containing ASCII text, or a Unicode string.
@@ -382,7 +382,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         self._handleSaxData(data)
 
     def start(self, tag, attrs, nsmap=None):
-        """start(self, tag, attrs, nsmap=None)
+        u"""start(self, tag, attrs, nsmap=None)
 
         Opens a new element.
         """
@@ -391,23 +391,23 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):
-        """end(self, tag)
+        u"""end(self, tag)
 
         Closes the current element.
         """
         element = self._handleSaxEnd(tag)
         assert self._last.tag == tag,\
-               "end tag mismatch (expected %s, got %s)" % (
+               u"end tag mismatch (expected %s, got %s)" % (
                    self._last.tag, tag)
         return element
 
     def pi(self, target, data):
-        """pi(self, target, data)
+        u"""pi(self, target, data)
         """
         return self._handleSaxPi(target, data)
 
     def comment(self, comment):
-        """comment(self, comment)
+        u"""comment(self, comment)
         """
         return self._handleSaxComment(comment)
 

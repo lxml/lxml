@@ -3,12 +3,12 @@
 cimport xinclude
 
 class XIncludeError(LxmlError):
-    """Error during XInclude processing.
+    u"""Error during XInclude processing.
     """
     pass
 
 cdef class XInclude:
-    """XInclude(self)
+    u"""XInclude(self)
     XInclude processor.
 
     Create an instance and call it on an Element to run XInclude
@@ -23,7 +23,7 @@ cdef class XInclude:
             return self._error_log.copy()
 
     def __call__(self, _Element node not None):
-        "__call__(self, node)"
+        u"__call__(self, node)"
         # We cannot pass the XML_PARSE_NOXINCNODE option as this would free
         # the XInclude nodes - there may still be Python references to them!
         # Therefore, we allow XInclude nodes to be converted to
@@ -43,5 +43,5 @@ cdef class XInclude:
         if result == -1:
             raise XIncludeError(
                 self._error_log._buildExceptionMessage(
-                    "XInclude processing failed"),
+                    u"XInclude processing failed"),
                 self._error_log)

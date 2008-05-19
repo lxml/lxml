@@ -91,13 +91,13 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
 
 
 cdef class _TargetParserContext(_SaxParserContext):
-    """This class maps SAX2 events to the ET parser target interface.
+    u"""This class maps SAX2 events to the ET parser target interface.
     """
     cdef object _python_target
     cdef int _setTarget(self, target) except -1:
         self._python_target = target
         if not isinstance(target, _SaxParserTarget) or \
-                hasattr(target, '__dict__'):
+                hasattr(target, u'__dict__'):
             target = _PythonSaxParserTarget(target)
         self._setSaxParserTarget(target)
         return 0

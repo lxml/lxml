@@ -1,64 +1,18 @@
 # support for Schematron validation
 cimport schematron
 
-'''
-Schematron
-----------
-
-Schematron is a less well known, but very powerful schema language.  The main
-idea is to use the capabilities of XPath to put restrictions on the structure
-and the content of XML documents.  Here is a simple example::
-
-  >>> schematron = etree.Schematron(etree.XML("""
-  ... <schema xmlns="http://www.ascc.net/xml/schematron" >
-  ...   <pattern name="id is the only permited attribute name">
-  ...     <rule context="*">
-  ...       <report test="@*[not(name()='id')]">Attribute
-  ...         <name path="@*[not(name()='id')]"/> is forbidden<name/>
-  ...       </report>
-  ...     </rule>
-  ...   </pattern>
-  ... </schema>
-  ... """))
-
-  >>> xml = etree.XML("""
-  ... <AAA name="aaa">
-  ...   <BBB id="bbb"/>
-  ...   <CCC color="ccc"/>
-  ... </AAA>
-  ... """)
-
-  >>> schematron.validate(xml)
-  0
-
-  >>> xml = etree.XML("""
-  ... <AAA id="aaa">
-  ...   <BBB id="bbb"/>
-  ...   <CCC/>
-  ... </AAA>
-  ... """)
-
-  >>> schematron.validate(xml)
-  1
-
-Schematron was added to libxml2 in version 2.6.21.  As of version 2.6.27,
-however, Schematron lacks support for error reporting other than to stderr.
-It is therefore not possible to retrieve validation warnings and errors in
-lxml.
-'''
-
 class SchematronError(LxmlError):
-    """Base class of all Schematron errors.
+    u"""Base class of all Schematron errors.
     """
     pass
 
 class SchematronParseError(SchematronError):
-    """Error while parsing an XML document as Schematron schema.
+    u"""Error while parsing an XML document as Schematron schema.
     """
     pass
 
 class SchematronValidateError(SchematronError):
-    """Error while validating an XML document with a Schematron schema.
+    u"""Error while validating an XML document with a Schematron schema.
     """
     pass
 
@@ -66,12 +20,53 @@ class SchematronValidateError(SchematronError):
 # Schematron
 
 cdef class Schematron(_Validator):
-    """Schematron(self, etree=None, file=None)
+    u"""Schematron(self, etree=None, file=None)
     A Schematron validator.
 
     Pass a root Element or an ElementTree to turn it into a validator.
     Alternatively, pass a filename as keyword argument 'file' to parse from
     the file system.
+
+    Schematron is a less well known, but very powerful schema language.  The main
+    idea is to use the capabilities of XPath to put restrictions on the structure
+    and the content of XML documents.  Here is a simple example::
+
+      >>> schematron = etree.Schematron(etree.XML('''
+      ... <schema xmlns="http://www.ascc.net/xml/schematron" >
+      ...   <pattern name="id is the only permited attribute name">
+      ...     <rule context="*">
+      ...       <report test="@*[not(name()='id')]">Attribute
+      ...         <name path="@*[not(name()='id')]"/> is forbidden<name/>
+      ...       </report>
+      ...     </rule>
+      ...   </pattern>
+      ... </schema>
+      ... '''))
+
+      >>> xml = etree.XML('''
+      ... <AAA name="aaa">
+      ...   <BBB id="bbb"/>
+      ...   <CCC color="ccc"/>
+      ... </AAA>
+      ... ''')
+
+      >>> schematron.validate(xml)
+      0
+
+      >>> xml = etree.XML('''
+      ... <AAA id="aaa">
+      ...   <BBB id="bbb"/>
+      ...   <CCC/>
+      ... </AAA>
+      ... ''')
+
+      >>> schematron.validate(xml)
+      1
+
+    Schematron was added to libxml2 in version 2.6.21.  Before version 2.6.32,
+    however, Schematron lacked support for error reporting other than to stderr.
+    This version is therefore required to retrieve validation warnings and
+    errors in lxml.
     """
     cdef schematron.xmlSchematron* _c_schema
     cdef xmlDoc* _c_schema_doc
@@ -86,7 +81,7 @@ cdef class Schematron(_Validator):
         _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError, \
-                "lxml.etree was compiled without Schematron support."
+                u"lxml.etree was compiled without Schematron support."
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
@@ -103,7 +98,7 @@ cdef class Schematron(_Validator):
             self._error_log.connect()
             parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
         else:
-            raise SchematronParseError, "No tree or file given"
+            raise SchematronParseError, u"No tree or file given"
 
         if parser_ctxt is NULL:
             self._error_log.disconnect()
@@ -119,7 +114,7 @@ cdef class Schematron(_Validator):
         schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
             raise SchematronParseError(
-                "Document is not a valid Schematron schema",
+                u"Document is not a valid Schematron schema",
                 self._error_log)
 
     def __dealloc__(self):
@@ -131,7 +126,7 @@ cdef class Schematron(_Validator):
                 tree.xmlFreeDoc(self._c_schema_doc)
 
     def __call__(self, etree):
-        """__call__(self, etree)
+        u"""__call__(self, etree)
 
         Validate doc using Schematron.
 
@@ -173,7 +168,7 @@ cdef class Schematron(_Validator):
 
         if ret == -1:
             raise SchematronValidateError(
-                "Internal error in Schematron validation",
+                u"Internal error in Schematron validation",
                 self._error_log)
         if ret == 0:
             return True

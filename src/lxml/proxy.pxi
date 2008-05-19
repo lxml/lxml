@@ -5,7 +5,7 @@
 # the Python class
 
 cdef inline _Element getProxy(xmlNode* c_node):
-    """Get a proxy for a given node.
+    u"""Get a proxy for a given node.
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
@@ -17,7 +17,7 @@ cdef inline int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
 cdef inline int _registerProxy(_Element proxy) except -1:
-    """Register a proxy and type for the node it's proxying for.
+    u"""Register a proxy and type for the node it's proxying for.
     """
     cdef xmlNode* c_node
     # cannot register for NULL
@@ -25,29 +25,29 @@ cdef inline int _registerProxy(_Element proxy) except -1:
     if c_node is NULL:
         return 0
     #print "registering for:", <int>proxy._c_node
-    assert c_node._private is NULL, "double registering proxy!"
+    assert c_node._private is NULL, u"double registering proxy!"
     c_node._private = <void*>proxy
     # additional INCREF to make sure _Document is GC-ed LAST!
     proxy._gc_doc = <python.PyObject*>proxy._doc
     python.Py_INCREF(proxy._doc)
 
 cdef inline int _unregisterProxy(_Element proxy) except -1:
-    """Unregister a proxy for the node it's proxying for.
+    u"""Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node
     c_node = proxy._c_node
-    assert c_node._private is <void*>proxy, "Tried to unregister unknown proxy"
+    assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
     c_node._private = NULL
     return 0
 
 cdef inline void _releaseProxy(_Element proxy):
-    """An additional DECREF for the document.
+    u"""An additional DECREF for the document.
     """
     python.Py_XDECREF(proxy._gc_doc)
     proxy._gc_doc = NULL
 
 cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
-    """Replace the document reference of a proxy.
+    u"""Replace the document reference of a proxy.
 
     This may deallocate the original document of the proxy!
     """
@@ -116,7 +116,7 @@ cdef void _destroyFakeDoc(xmlDoc* c_base_doc, xmlDoc* c_doc):
     tree.xmlFreeDoc(c_doc)
 
 cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
-    """Special element factory for cases where we need to create a fake
+    u"""Special element factory for cases where we need to create a fake
     root document, but still need to instantiate arbitrary nodes from
     it.  If we instantiate the fake root node, things will turn bad
     when it's destroyed.
@@ -192,7 +192,7 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 # fix _Document references and namespaces when a node changes documents
 
 cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
-    """Copy the namespaces of all ancestors of c_from_node to c_to_node.
+    u"""Copy the namespaces of all ancestors of c_from_node to c_to_node.
     """
     cdef xmlNode* c_parent
     cdef xmlNs* c_ns
@@ -245,7 +245,7 @@ cdef inline int _appendToNsCache(_nscache* c_ns_cache,
 
 cdef int _stripRedundantNamespaceDeclarations(
     xmlNode* c_element, _nscache* c_ns_cache, xmlNs** c_del_ns_list) except -1:
-    """Removes namespace declarations from an element that are already
+    u"""Removes namespace declarations from an element that are already
     defined in its parents.  Does not free the xmlNs's, just prepends
     them to the c_del_ns_list.
     """
@@ -276,7 +276,7 @@ cdef int _stripRedundantNamespaceDeclarations(
 
 cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
-    """Fix the xmlNs pointers of a node and its subtree that were moved.
+    u"""Fix the xmlNs pointers of a node and its subtree that were moved.
 
     Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
     pointers of node to be correct already, but fixes _Document references.
