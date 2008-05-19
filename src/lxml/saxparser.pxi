@@ -351,7 +351,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef int _flush(self) except -1:
         if python.PyList_GET_SIZE(self._data) > 0:
             if self._last is not None:
-                text = "".join(self._data)
+                text = u"".join(self._data)
                 if self._in_tail:
                     assert self._last.tail is None, u"internal error (tail)"
                     self._last.tail = text

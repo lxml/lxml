@@ -73,7 +73,7 @@ cdef class _NamespaceRegistry:
         return self._entries.items()
 
     def iteritems(self):
-        return self._entries.iteritems()
+        return iter(self._entries.items())
 
     def clear(self):
         python.PyDict_Clear(self._entries)
@@ -223,7 +223,7 @@ cdef object _find_all_extension_prefixes():
     u"Internal lookup function to find all function prefixes for XSLT/XPath."
     cdef _XPathFunctionNamespaceRegistry registry
     ns_prefixes = []
-    for registry in __FUNCTION_NAMESPACE_REGISTRIES.itervalues():
+    for registry in __FUNCTION_NAMESPACE_REGISTRIES.values():
         if registry._prefix_utf is not None:
             if registry._ns_uri_utf is not None:
                 python.PyList_Append(
@@ -231,7 +231,7 @@ cdef object _find_all_extension_prefixes():
     return ns_prefixes
 
 cdef object _iter_ns_extension_functions():
-    return __FUNCTION_NAMESPACE_REGISTRIES.iteritems()
+    return __FUNCTION_NAMESPACE_REGISTRIES.items()
 
 cdef object _find_extension(ns_uri_utf, name_utf):
     cdef python.PyObject* dict_result
