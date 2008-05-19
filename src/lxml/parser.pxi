@@ -335,12 +335,9 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
     try:
         if c_url is NULL:
             url = None
-        elif c_context.myDoc is NULL or c_context.myDoc.URL is NULL:
-            # parsing a main document, so URL was passed verbatimly by user
-            url = c_url
         else:
-            # parsing a related document (DTD etc.) => UTF-8 encoded URL
-            url = funicode(c_url)
+            # parsing a related document (DTD etc.) => UTF-8 encoded URL?
+            url = _decodeFilename(c_url)
         if c_pubid is NULL:
             pubid = None
         else:

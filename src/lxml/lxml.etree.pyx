@@ -82,6 +82,8 @@ if _FILENAME_ENCODING is None:
     _FILENAME_ENCODING = sys.getdefaultencoding()
 if _FILENAME_ENCODING is None:
     _FILENAME_ENCODING = 'ascii'
+else:
+    _FILENAME_ENCODING = _FILENAME_ENCODING.encode(u"UTF-8")
 cdef char* _C_FILENAME_ENCODING
 _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
@@ -245,7 +247,7 @@ cdef class QName:
             text_or_uri = u"{%s}%s" % (text_or_uri, tag)
         else:
             if not _isString(text_or_uri):
-                text_or_uri = str(text_or_uri)
+                text_or_uri = unicode(text_or_uri)
             tag = _getNsTag(text_or_uri)[1]
             _tagValidOrRaise(tag)
         self.text = text_or_uri
@@ -255,9 +257,9 @@ cdef class QName:
         return self.text.__hash__()
     def __richcmp__(one, other, int op):
         if not _isString(one):
-            one = str(one)
+            one = unicode(one)
         if not _isString(other):
-            other = str(other)
+            other = unicode(other)
         return python.PyObject_RichCompare(one, other, op)
 
 
@@ -326,11 +328,11 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         if c_doc.version is NULL:
             version = None
         else:
-            version = c_doc.version
+            version = funicode(c_doc.version)
         if c_doc.encoding is NULL:
             encoding = None
         else:
-            encoding = c_doc.encoding
+            encoding = funicode(c_doc.encoding)
         return (version, encoding)
 
     cdef buildNewPrefix(self):
@@ -462,7 +464,7 @@ cdef class DocInfo:
         def __get__(self):
             if self._doc._c_doc.URL is NULL:
                 return None
-            return self._doc._c_doc.URL
+            return _decodeFilename(self._doc._c_doc.URL)
         def __set__(self, url):
             cdef char* c_oldurl
             url = _encodeFilename(url)
@@ -905,9 +907,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_base is NULL:
                 if self._doc._c_doc.URL is NULL:
                     return None
-                return self._doc._c_doc.URL
-            # FIXME: this might be UTF-8 or any other 8-bit encoding
-            base = c_base
+                return _decodeFilename(self._doc._c_doc.URL)
+            base = _decodeFilename(c_base)
             tree.xmlFree(c_base)
             return base
         def __set__(self, url):
@@ -1839,7 +1840,7 @@ cdef class _Attrib:
 
     def update(self, sequence_or_dict):
         if isinstance(sequence_or_dict, dict):
-            sequence_or_dict = sequence_or_dict.iteritems()
+            sequence_or_dict = sequence_or_dict.items()
         for key, value in sequence_or_dict:
             _setAttributeValue(self._element, key, value)
 
@@ -2192,7 +2193,7 @@ cdef class ElementTextIterator:
         else:
             events = (u"start",)
         self._start_element = element
-        self._nextEvent = iterwalk(element, events=events, tag=tag).next
+        self._nextEvent = iterwalk(element, events=events, tag=tag).__next__
 
     def __iter__(self):
         return self
@@ -2454,7 +2455,7 @@ def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
     """
     _dumpToFile(sys.stdout, elem._c_node, pretty_print, with_tail)
 
-def tostring(element_or_tree, *, encoding=None, method="xml",
+def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, pretty_print=False, with_tail=True):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                 xml_declaration=None, pretty_print=False, with_tail=True)

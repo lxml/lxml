@@ -435,7 +435,10 @@ cdef _collectText(xmlNode* c_node):
     # handle two most common cases first
     if c_text is NULL:
         if scount > 0:
-            return ''
+            if python.IS_PYTHON3:
+                return u''
+            else:
+                return ''
         else:
             return None
     if scount == 1:
@@ -505,7 +508,7 @@ cdef _resolveQNameText(_Element element, value):
     else:
         c_ns = element._doc._findOrBuildNodeNs(
             element._c_node, _cstr(ns), NULL)
-        return '%s:%s' % (c_ns.prefix, tag) # UTF-8
+        return python.PyString_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
 
 cdef inline bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
@@ -1034,6 +1037,27 @@ cdef object _utf8(object s):
         raise TypeError, "Argument must be string or unicode."
     return s
 
+cdef bint _isFilePath(char* c_path):
+    u"simple heuristic to see if a path is a filename"
+    # test if it looks like an absolute Unix path or a Windows network path
+    if c_path[0] == c'/':
+        return 1
+    # test if it looks like an absolute Windows path
+    if (c_path[0] >= c'a' and c_path[0] <= c'z') or \
+            (c_path[0] >= c'A' and c_path[0] <= c'Z'):
+        if c_path[1] == c':':
+            return 1
+    # test if it looks like a relative path
+    while c_path[0] != c'\0':
+        if c_path[0] == c':':
+            return 0
+        if c_path[0] == c'/':
+            return 1
+        if c_path[0] == c'\\':
+            return 1
+        c_path += 1
+    return 1
+
 cdef object _encodeFilename(object filename):
     u"""Make sure a filename is 8-bit encoded (or None).
     """
@@ -1042,10 +1066,33 @@ cdef object _encodeFilename(object filename):
     elif python.PyString_Check(filename):
         return filename
     elif python.PyUnicode_Check(filename):
-        return python.PyUnicode_AsEncodedString(
-            filename, _C_FILENAME_ENCODING, NULL)
+        filename8 = python.PyUnicode_AsEncodedString(
+            filename, 'UTF-8', NULL)
+        if _isFilePath(filename8):
+            try:
+                return python.PyUnicode_AsEncodedString(
+                    filename, _C_FILENAME_ENCODING, NULL)
+            except UnicodeEncodeError:
+                pass
+        return filename8
     else:
         raise TypeError, u"Argument must be string or unicode."
+
+cdef object _decodeFilename(char* c_path):
+    u"""Make the filename a unicode string if we are in Py3.
+    """
+    cdef Py_ssize_t c_len = cstd.strlen(c_path)
+    if _isFilePath(c_path):
+        try:
+            return python.PyUnicode_Decode(
+                c_path, c_len, _C_FILENAME_ENCODING, NULL)
+        except UnicodeDecodeError:
+            pass
+    try:
+        return python.PyUnicode_DecodeUTF8(c_path, c_len, NULL)
+    except UnicodeDecodeError:
+        # this is a stupid fallback, but it might still work...
+        return python.PyString_FromStringAndSize(c_path, c_len)
 
 cdef object _encodeFilenameUTF8(object filename):
     u"""Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
@@ -1182,6 +1229,8 @@ cdef object _namespacedName(xmlNode* c_node):
 cdef object _namespacedNameFromNsName(char* href, char* name):
     if href is NULL:
         return funicode(name)
+    elif python.IS_PYTHON3:
+        return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyString_FromFormat("{%s}%s", href, name)
         if isutf8(href) or isutf8(name):

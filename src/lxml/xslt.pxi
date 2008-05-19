@@ -85,13 +85,13 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
     try:
         resolvers = context._resolvers
         if cstd.strncmp('string://', c_uri, 9) == 0:
-            uri = funicode(c_uri + 9)
+            uri = _decodeFilename(c_uri + 9)
             if cstd.strncmp('string://', context._c_style_doc.URL, 9) != 0 and \
                     cstd.strcmp('<string>', context._c_style_doc.URL) != 0:
                 # stylesheet URL known => make the target URL absolute
-                uri = os_path_join(context._c_style_doc.URL, uri)
+                uri = os_path_join(_decodeFilename(context._c_style_doc.URL), uri)
         else:
-            uri = funicode(c_uri)
+            uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
 
         c_doc = NULL

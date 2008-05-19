@@ -365,7 +365,9 @@ cdef class iterparse(_BaseParser):
         cdef int parse_options
         if not hasattr(source, u'read'):
             filename = _encodeFilename(source)
-            source = open(filename, u'rb')
+            if not python.IS_PYTHON3:
+                source = filename
+            source = open(source, u'rb')
         else:
             filename = _encodeFilename(_getFilenameForFile(source))
 

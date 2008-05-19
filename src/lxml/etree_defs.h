@@ -15,6 +15,8 @@
 /* Python 3 doesn't have PyFile_*() */
 #if PY_VERSION_HEX >= 0x03000000
 #  define PyFile_AsFile(o) (NULL)
+#else
+#  define PyUnicode_FromFormat(s, ...) (NULL)
 #endif
 
 #if PY_VERSION_HEX >= 0x03000000

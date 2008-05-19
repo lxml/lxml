@@ -33,10 +33,10 @@
 ... </form>
 ... </body></html>''', base_url='http://example.org/form.html')
 >>> h.base_url
-'http://example.org/form.html'
+u'http://example.org/form.html'
 >>> f = h.forms[0]
 >>> f.action
-'http://example.org/test'
+u'http://example.org/test'
 >>> f.method
 'GET'
 >>> f.inputs # doctest:+NOPARSE_MARKUP
