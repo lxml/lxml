@@ -4,7 +4,11 @@
 Test cases related to Schematron parsing and validation
 """
 
-import unittest, sys
+import unittest, sys, os.path
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, doctest, HelperTestCase, fileInTestDir
 

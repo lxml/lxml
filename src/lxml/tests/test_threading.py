@@ -4,7 +4,11 @@
 Tests for thread usage in lxml.etree.
 """
 
-import unittest, threading
+import unittest, threading, sys, os.path
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, HelperTestCase, StringIO
 

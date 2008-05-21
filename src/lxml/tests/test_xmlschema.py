@@ -4,9 +4,13 @@
 Test cases related to XML Schema parsing and validation
 """
 
-import unittest
+import unittest, sys, os.path
 
-from common_imports import etree, doctest, StringIO, HelperTestCase, fileInTestDir
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
+
+from common_imports import etree, doctest, BytesIO, HelperTestCase, fileInTestDir
 
 class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema(self):
@@ -47,7 +51,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
                           self.parse, '<a><c></c></a>', parser=parser)
 
     def test_xmlschema_stringio(self):
-        schema_file = StringIO('''
+        schema_file = BytesIO('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
   <xsd:element name="a" type="AType"/>
   <xsd:complexType name="AType">
@@ -78,7 +82,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         schema = etree.XMLSchema(schema)
-        xml = StringIO('<a><b></b></a>')
+        xml = BytesIO('<a><b></b></a>')
         events = [ (event, el.tag)
                    for (event, el) in etree.iterparse(xml, schema=schema) ]
 
@@ -99,7 +103,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema = etree.XMLSchema(schema)
         self.assertRaises(
             etree.XMLSyntaxError,
-            list, etree.iterparse(StringIO('<a><c></c></a>'), schema=schema))
+            list, etree.iterparse(BytesIO('<a><c></c></a>'), schema=schema))
 
     def test_xmlschema_elementtree_error(self):
         self.assertRaises(ValueError, etree.XMLSchema, etree.ElementTree())
@@ -126,7 +130,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema_file(self):
         # this will only work if we access the file through path or
         # file object..
-        f = open(fileInTestDir('test.xsd'), 'r')
+        f = open(fileInTestDir('test.xsd'), 'rb')
         schema = etree.XMLSchema(file=f)
         tree_valid = self.parse('<a><b></b></a>')
         self.assert_(schema.validate(tree_valid))
