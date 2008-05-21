@@ -110,12 +110,15 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             if self_node is not None:
                 _freeReadOnlyProxies(self_node)
     except Exception, e:
-        message = u"Error executing extension element '%s': %s" % (
-            funicode(c_inst_node.name), e)
+        e = unicode(e).encode("UTF-8")
+        message = python.PyString_FromFormat(
+            "Error executing extension element '%s': %s",
+            c_inst_node.name, _cstr(e))
         xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
         context._exc._store_raised()
     except:
         # just in case
-        message = u"Error executing extension element '%s'" % funicode(c_inst_node.name)
+        message = python.PyString_FromFormat(
+            "Error executing extension element '%s'", c_inst_node.name)
         xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
         context._exc._store_raised()
