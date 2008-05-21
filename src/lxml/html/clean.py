@@ -14,7 +14,15 @@ from lxml.html import fromstring, tostring, XHTML_NAMESPACE, _nons
 try:
     set
 except NameError:
+    # Python 3
     from sets import Set as set
+
+try:
+    unichr = __builtins__['unichr']
+except (NameError, KeyError):
+    # Python 3
+    unichr = chr
+
 
 __all__ = ['clean_html', 'clean', 'Cleaner', 'autolink', 'autolink_html',
            'word_break', 'word_break_html']
@@ -614,7 +622,7 @@ _avoid_word_break_classes = ['nobreak']
 def word_break(el, max_width=40,
                avoid_elements=_avoid_word_break_elements,
                avoid_classes=_avoid_word_break_classes,
-               break_character=u'\u200b'):
+               break_character=unichr(0x200b)):
     """
     Breaks any long words found in the body of the text (not attributes).
 
