@@ -6,6 +6,11 @@ import re
 
 __all__ = ['html_annotate', 'htmldiff']
 
+try:
+    _unicode = unicode
+except NameError:
+    # Python 3
+    _unicode = str
 
 ############################################################
 ## Annotation
@@ -13,7 +18,7 @@ __all__ = ['html_annotate', 'htmldiff']
 
 def default_markup(text, version):
     return '<span title="%s">%s</span>' % (
-        cgi.escape(unicode(version), 1), text)
+        cgi.escape(_unicode(version), 1), text)
 
 def html_annotate(doclist, markup=default_markup):
     """
@@ -106,7 +111,7 @@ def compress_merge_back(tokens, tok):
     if type(last) is not token or type(tok) is not token: 
         tokens.append(tok)
     else:
-        text = unicode(last)
+        text = _unicode(last)
         if last.trailing_whitespace:
             text += ' '
         text += tok
@@ -421,7 +426,7 @@ def locate_unbalanced_end(unbalanced_end, pre_delete, post_delete):
             # Found a tag that doesn't match
             break
 
-class token(unicode):
+class token(_unicode):
     """ Represents a diffable token, generally a word that is displayed to
     the user.  Opening tags are attached to this token when they are
     adjacent (pre_tags) and closing tags that follow the word
@@ -439,7 +444,7 @@ class token(unicode):
     hide_when_equal = False
 
     def __new__(cls, text, pre_tags=None, post_tags=None, trailing_whitespace=False):
-        obj = unicode.__new__(cls, text)
+        obj = _unicode.__new__(cls, text)
 
         if pre_tags is not None:
             obj.pre_tags = pre_tags
@@ -456,10 +461,10 @@ class token(unicode):
         return obj
 
     def __repr__(self):
-        return 'token(%s, %r, %r)' % (unicode.__repr__(self), self.pre_tags, self.post_tags)
+        return 'token(%s, %r, %r)' % (_unicode.__repr__(self), self.pre_tags, self.post_tags)
 
     def html(self):
-        return unicode(self)
+        return _unicode(self)
 
 class tag_token(token):
 
