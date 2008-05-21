@@ -5,7 +5,11 @@ Test cases related to namespace implementation classes and the
 namespace registry mechanism
 """
 
-import unittest
+import unittest, sys, os.path
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, HelperTestCase, doctest, _bytes
 
