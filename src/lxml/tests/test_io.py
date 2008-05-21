@@ -5,9 +5,13 @@ IO test cases that apply to both etree and ElementTree
 """
 
 import unittest
-import tempfile, gzip, os, gc, shutil
+import tempfile, gzip, os, os.path, sys, gc, shutil
 
-from common_imports import etree, ElementTree, fileInTestDir, _str
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
+
+from common_imports import etree, ElementTree, fileInTestDir, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 
 class IOTestCaseBase(HelperTestCase):
@@ -96,7 +100,7 @@ class IOTestCaseBase(HelperTestCase):
         handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
-            self.assertEqual(open(filename, 'rb').read().replace('\n', ''),
+            self.assertEqual(open(filename, 'rb').read().replace(_bytes('\n'), _bytes('')),
                              self.root_str)
         finally:
             os.close(handle)
@@ -202,7 +206,11 @@ class IOTestCaseBase(HelperTestCase):
             pass
         class TestFile:
             data = '<root>test</'
-            next_char = iter(data).next
+            try:
+                next_char = iter(data).next
+            except AttributeError:
+                # Python 3
+                next_char = iter(data).__next__
             counter = 0
             def read(self, amount=None):
                 if amount is None:
@@ -211,7 +219,7 @@ class IOTestCaseBase(HelperTestCase):
                 else:
                     try:
                         self.counter += 1
-                        return self.next_char()
+                        return _bytes(self.next_char())
                     except StopIteration:
                         raise LocalError
         f = TestFile()
