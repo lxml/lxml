@@ -1,26 +1,37 @@
 # -*- coding: utf-8 -*-
-import unittest, doctest
+import unittest, doctest, sys, os.path
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import StringIO, etree, SillyFileLike, HelperTestCase
+from common_imports import _str, _bytes
 
-ascii_uni = u'a'
+try:
+    unicode = __builtins__["unicode"]
+except (NameError, KeyError):
+    unicode = str
 
-klingon = u"\uF8D2" # not valid for XML names
+ascii_uni = _str('a')
 
-invalid_tag = "test" + klingon
+klingon = _bytes("\\uF8D2").decode("unicode_escape") # not valid for XML names
 
-uni = u'Ã\u0680\u3120' # some non-ASCII characters
+invalid_tag = _str("test") + klingon
 
-uxml = u"<test><title>test Ã¡\u3120</title><h1>page Ã¡\u3120 title</h1></test>"
+uni = _bytes('\\xc3\\u0680\\u3120').decode("unicode_escape") # some non-ASCII characters
+
+uxml = _bytes("<test><title>test \\xc3\\xa1\\u3120</title><h1>page \\xc3\\xa1\\u3120 title</h1></test>"
+              ).decode("unicode_escape")
 
 class UnicodeTestCase(HelperTestCase):
     def test_unicode_xml(self):
-        tree = etree.XML(u'<p>%s</p>' % uni)
+        tree = etree.XML(_str('<p>%s</p>') % uni)
         self.assertEquals(uni, tree.text)
 
     def test_unicode_xml_broken(self):
-        uxml = u'<?xml version="1.0" encoding="UTF-8"?>' + \
-               u'<p>%s</p>' % uni
+        uxml = _str('<?xml version="1.0" encoding="UTF-8"?>') + \
+               _str('<p>%s</p>') % uni
         self.assertRaises(ValueError, etree.XML, uxml)
 
     def test_unicode_tag(self):
@@ -32,18 +43,18 @@ class UnicodeTestCase(HelperTestCase):
         self.assertRaises(ValueError, etree.Element, invalid_tag)
 
     def test_unicode_nstag(self):
-        tag = u"{%s}%s" % (uni, uni)
+        tag = _str("{%s}%s") % (uni, uni)
         el = etree.Element(tag)
         self.assertEquals(tag, el.tag)
 
     def test_unicode_nstag_invalid(self):
         # sadly, Klingon is not well-formed
-        tag = u"{%s}%s" % (uni, invalid_tag)
+        tag = _str("{%s}%s") % (uni, invalid_tag)
         self.assertRaises(ValueError, etree.Element, tag)
 
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
-        tag = u"{%s}%s" % (uni, uni)
+        tag = _str("{%s}%s") % (uni, uni)
         self.assertEquals(qname.text, tag)
         self.assertEquals(unicode(qname), tag)
 
@@ -59,7 +70,7 @@ class UnicodeTestCase(HelperTestCase):
         self.assertEquals(uni, el.text)
 
     def test_unicode_parse_stringio(self):
-        el = etree.parse(StringIO(u'<p>%s</p>' % uni)).getroot()
+        el = etree.parse(StringIO(_str('<p>%s</p>') % uni)).getroot()
         self.assertEquals(uni, el.text)
 
 ##     def test_parse_fileobject_unicode(self):
