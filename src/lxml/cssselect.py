@@ -42,16 +42,22 @@ class CSSSelector(etree.XPath):
 ##############################
 ## Token objects:
 
-class _UniToken(unicode):
+try:
+    _unicode = unicode
+except NameError:
+    # Python 3
+    _unicode = str
+
+class _UniToken(_unicode):
     def __new__(cls, contents, pos):
-        obj = unicode.__new__(cls, contents)
+        obj = _unicode.__new__(cls, contents)
         obj.pos = pos
         return obj
         
     def __repr__(self):
         return '%s(%s, %r)' % (
             self.__class__.__name__,
-            unicode.__repr__(self),
+            _unicode.__repr__(self),
             self.pos)
 
 class Symbol(_UniToken):
@@ -623,7 +629,8 @@ def parse(string):
     stream.source = string
     try:
         return parse_selector_group(stream)
-    except SelectorSyntaxError, e:
+    except SelectorSyntaxError:
+        e = sys.exc_info()[1]
         e.args = tuple(["%s at %s -> %s" % (
             e, stream.used, list(stream))])
         raise
@@ -880,7 +887,8 @@ def tokenize_symbol(s, pos):
         pos = match.start()
     try:
         result = result.decode('unicode_escape')
-    except UnicodeDecodeError, e:
+    except UnicodeDecodeError:
+        e = sys.exc_info()[1]
         raise SelectorSyntaxError(
             "Bad symbol %r: %s" % (result, e))
     return result, pos
