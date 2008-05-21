@@ -67,6 +67,14 @@ this:
 Imported from within a doctest, this relieves us from caring about the exact
 formatting of XML output.
 
+..
+    >>> try: from StringIO import StringIO
+    ... except ImportError:
+    ...     from io import BytesIO # Python 3
+    ...     def StringIO(s):
+    ...         if isinstance(s, str): s = s.encode('UTF-8')
+    ...         return BytesIO(s)
+
 
 The lxml.objectify API
 ======================
@@ -85,15 +93,14 @@ the module:
 
 .. sourcecode:: pycon
 
-    >>> from StringIO import StringIO
     >>> fileobject = StringIO('<test/>')
 
     >>> tree = objectify.parse(fileobject)
-    >>> print isinstance(tree.getroot(), objectify.ObjectifiedElement)
+    >>> print(isinstance(tree.getroot(), objectify.ObjectifiedElement))
     True
 
     >>> root = objectify.fromstring('<test/>')
-    >>> print isinstance(root, objectify.ObjectifiedElement)
+    >>> print(isinstance(root, objectify.ObjectifiedElement))
     True
 
 To build a new tree in memory, ``objectify`` replicates the standard
@@ -102,7 +109,7 @@ factory function ``Element()`` from ``lxml.etree``:
 .. sourcecode:: pycon
 
     >>> obj_el = objectify.Element("new")
-    >>> print isinstance(obj_el, objectify.ObjectifiedElement)
+    >>> print(isinstance(obj_el, objectify.ObjectifiedElement))
     True
 
 After creating such an Element, you can use the `usual API`_ of
@@ -122,11 +129,11 @@ will not support the ``objectify`` API by themselves:
 .. sourcecode:: pycon
 
     >>> subel = etree.SubElement(obj_el, "sub")
-    >>> print isinstance(subel, objectify.ObjectifiedElement)
+    >>> print(isinstance(subel, objectify.ObjectifiedElement))
     True
 
     >>> independent_el = etree.Element("new")
-    >>> print isinstance(independent_el, objectify.ObjectifiedElement)
+    >>> print(isinstance(independent_el, objectify.ObjectifiedElement))
     False
 
 
@@ -141,14 +148,14 @@ attribute will return the sequence of children with corresponding tag names:
 
     >>> root = objectify.Element("root")
     >>> b = etree.SubElement(root, "b")
-    >>> print root.b[0].tag
+    >>> print(root.b[0].tag)
     b
     >>> root.index(root.b[0])
     0
     >>> b = etree.SubElement(root, "b")
-    >>> print root.b[0].tag
+    >>> print(root.b[0].tag)
     b
-    >>> print root.b[1].tag
+    >>> print(root.b[1].tag)
     b
     >>> root.index(root.b[1])
     1
@@ -157,7 +164,7 @@ For convenience, you can omit the index '0' to access the first child:
 
 .. sourcecode:: pycon
 
-    >>> print root.b.tag
+    >>> print(root.b.tag)
     b
     >>> root.index(root.b)
     0
@@ -204,11 +211,11 @@ XML attributes are accessed as in the normal ElementTree API:
 .. sourcecode:: pycon
 
     >>> c = etree.SubElement(root, "c", myattr="someval")
-    >>> print root.c.get("myattr")
+    >>> print(root.c.get("myattr"))
     someval
 
     >>> root.c.set("c", "oh-oh")
-    >>> print root.c.get("c")
+    >>> print(root.c.get("c"))
     oh-oh
 
 In addition to the normal ElementTree API for appending elements to trees,
@@ -220,9 +227,9 @@ updated to match the attribute name:
 
     >>> el = objectify.Element("yet_another_child")
     >>> root.new_child = el
-    >>> print root.new_child.tag
+    >>> print(root.new_child.tag)
     new_child
-    >>> print el.tag
+    >>> print(el.tag)
     yet_another_child
 
     >>> root.y = [ objectify.Element("y"), objectify.Element("y") ]
@@ -249,25 +256,25 @@ You can also replace children that way:
     >>> subel = etree.SubElement(el, "sub")
 
     >>> root.child = el
-    >>> print root.child.sub.tag
+    >>> print(root.child.sub.tag)
     sub
 
     >>> root.child[2] = el
-    >>> print root.child[2].sub.tag
+    >>> print(root.child[2].sub.tag)
     sub
 
 Note that special care must be taken when changing the tag name of an element:
 
 .. sourcecode:: pycon
 
-    >>> print root.b.tag
+    >>> print(root.b.tag)
     b
     >>> root.b.tag = "notB"
     >>> root.b
     Traceback (most recent call last):
       ...
     AttributeError: no such child: b
-    >>> print root.notB.tag
+    >>> print(root.notB.tag)
     notB
 
 
@@ -280,15 +287,15 @@ To simplify the generation of trees even further, you can use the E-factory:
 
     >>> E = objectify.E
     >>> root = E.root(
-    ...   E.a(5L),
+    ...   E.a(5),
     ...   E.b(6.1),
     ...   E.c(True),
     ...   E.d("how", tell="me")
     ... )
 
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
-      <a py:pytype="long">5</a>
+      <a py:pytype="int">5</a>
       <b py:pytype="float">6.1</b>
       <c py:pytype="bool">true</c>
       <d py:pytype="str" tell="me">how</d>
@@ -307,7 +314,7 @@ This allows you to write up a specific language in tags:
     ...   HOWMANY(5)
     ... )
 
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
       <title py:pytype="str">The title</title>
       <how-many py:pytype="int">5</how-many>
@@ -325,7 +332,7 @@ constructor.  You can also pass a default namespace and an ``nsmap``:
 
     >>> root = myE.root( myE.someint(2) )
 
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns="http://my/ns">
       <someint>2</someint>
     </root>
@@ -344,9 +351,9 @@ the parent:
     >>> b = etree.SubElement(root, "{ns}b")
     >>> c = etree.SubElement(root, "{other}c")
 
-    >>> print root.b.tag
+    >>> print(root.b.tag)
     {ns}b
-    >>> print root.c
+    >>> print(root.c)
     Traceback (most recent call last):
         ...
     AttributeError: no such child: {ns}c
@@ -355,14 +362,14 @@ You can access elements with different namespaces via ``getattr()``:
 
 .. sourcecode:: pycon
 
-    >>> print getattr(root, "{other}c").tag
+    >>> print(getattr(root, "{other}c").tag)
     {other}c
 
 For convenience, there is also a quick way through item access:
 
 .. sourcecode:: pycon
 
-    >>> print root["{other}c"].tag
+    >>> print(root["{other}c"].tag)
     {other}c
 
 The same approach must be used to access children with tag names that are not
@@ -371,7 +378,7 @@ valid Python identifiers:
 .. sourcecode:: pycon
 
     >>> el = etree.SubElement(root, "{ns}tag-name")
-    >>> print root["tag-name"].tag
+    >>> print(root["tag-name"].tag)
     {ns}tag-name
 
     >>> new_el = objectify.Element("{ns}new-element")
@@ -380,16 +387,16 @@ valid Python identifiers:
     >>> el = etree.SubElement(new_el, "{ns}child")
 
     >>> root["tag-name"] = [ new_el, new_el ]
-    >>> print len(root["tag-name"])
+    >>> print(len(root["tag-name"]))
     2
-    >>> print root["tag-name"].tag
+    >>> print(root["tag-name"].tag)
     {ns}tag-name
 
-    >>> print len(root["tag-name"].child)
+    >>> print(len(root["tag-name"].child))
     3
-    >>> print root["tag-name"].child.tag
+    >>> print(root["tag-name"].child.tag)
     {ns}child
-    >>> print root["tag-name"][1].child.tag
+    >>> print(root["tag-name"][1].child.tag)
     {ns}child
 
 or for names that have a special meaning in lxml.objectify:
@@ -398,12 +405,12 @@ or for names that have a special meaning in lxml.objectify:
 
     >>> root = objectify.XML("<root><text>TEXT</text></root>")
 
-    >>> print root.text.text
+    >>> print(root.text.text)
     Traceback (most recent call last):
       ...
     AttributeError: 'NoneType' object has no attribute 'text'
 
-    >>> print root["text"].text
+    >>> print(root["text"].text)
     TEXT
 
 
@@ -425,7 +432,6 @@ parse the schema from a file-like object (or file or filename):
 
 .. sourcecode:: pycon
 
-    >>> from StringIO import StringIO
     >>> f = StringIO('''\
     ...   <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     ...     <xsd:element name="a" type="AType"/>
@@ -455,7 +461,7 @@ Now we can use it to parse a valid document:
     >>> xml = "<a><b>test</b></a>"
     >>> a = objectify.fromstring(xml, parser)
 
-    >>> print a.b
+    >>> print(a.b)
     test
 
 Or an invalid document:
@@ -486,39 +492,39 @@ represented by the ``ObjectPath`` class:
     >>> d  = etree.SubElement(root, "{other}d")
 
     >>> path = objectify.ObjectPath("root.b.c")
-    >>> print path
+    >>> print(path)
     root.b.c
     >>> path.hasattr(root)
     True
-    >>> print path.find(root).tag
+    >>> print(path.find(root).tag)
     {ns}c
 
     >>> find = objectify.ObjectPath("root.b.c")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}c
 
     >>> find = objectify.ObjectPath("root.{other}d")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {other}d
 
     >>> find = objectify.ObjectPath("root.{not}there")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
     AttributeError: no such child: {not}there
 
     >>> find = objectify.ObjectPath("{not}there")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
     ValueError: root element does not match: need {not}there, got {ns}root
 
     >>> find = objectify.ObjectPath("root.b[1]")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}b
 
     >>> find = objectify.ObjectPath("root.{ns}b[1]")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}b
 
 Apart from strings, ObjectPath also accepts lists of path segments:
@@ -526,11 +532,11 @@ Apart from strings, ObjectPath also accepts lists of path segments:
 .. sourcecode:: pycon
 
     >>> find = objectify.ObjectPath(['root', 'b', 'c'])
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}c
 
     >>> find = objectify.ObjectPath(['root', '{ns}b[1]'])
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}b
 
 You can also use relative paths starting with a '.' to ignore the actual root
@@ -539,21 +545,21 @@ element and only inherit its namespace:
 .. sourcecode:: pycon
 
     >>> find = objectify.ObjectPath(".b[1]")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}b
 
     >>> find = objectify.ObjectPath(['', 'b[1]'])
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}b
 
     >>> find = objectify.ObjectPath(".unknown[1]")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
     AttributeError: no such child: {ns}unknown
 
     >>> find = objectify.ObjectPath(".{other}unknown[1]")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
     AttributeError: no such child: {other}unknown
@@ -563,7 +569,7 @@ For convenience, a single dot represents the empty ObjectPath (identity):
 .. sourcecode:: pycon
 
     >>> find = objectify.ObjectPath(".")
-    >>> print find(root).tag
+    >>> print(find(root).tag)
     {ns}root
 
 ObjectPath objects can be used to manipulate trees:
@@ -583,15 +589,15 @@ ObjectPath objects can be used to manipulate trees:
     >>> path.setattr(root, "my value") # creates children as necessary
     >>> path.hasattr(root)
     True
-    >>> print path.find(root).text
+    >>> print(path.find(root).text)
     my value
-    >>> print root.some.child["{other}unknown"].text
+    >>> print(root.some.child["{other}unknown"].text)
     my value
 
-    >>> print len( path.find(root) )
+    >>> print(len( path.find(root) ))
     1
     >>> path.addattr(root, "my new value")
-    >>> print len( path.find(root) )
+    >>> print(len( path.find(root) ))
     2
     >>> [ el.text for el in path.find(root) ]
     ['my value', 'my new value']
@@ -636,26 +642,26 @@ operators:
     >>> root.a + root.b
     16
     >>> root.a += root.b
-    >>> print root.a
+    >>> print(root.a)
     16
 
     >>> root.a = 2
-    >>> print root.a + 2
+    >>> print(root.a + 2)
     4
-    >>> print 1 + root.a
+    >>> print(1 + root.a)
     3
 
-    >>> print root.c
+    >>> print(root.c)
     True
     >>> root.c = False
     >>> if not root.c:
-    ...     print "false!"
+    ...     print("false!")
     false!
 
-    >>> print root.d + " test !"
+    >>> print(root.d + " test !")
     hoi test !
     >>> root.d = "%s - %s"
-    >>> print root.d % (1234, 12345)
+    >>> print(root.d % (1234, 12345))
     1234 - 12345
 
 However, data elements continue to provide the objectify API.  This means that
@@ -666,16 +672,16 @@ the normal slicing behaviour of objectify elements:
 .. sourcecode:: pycon
 
     >>> root = objectify.fromstring("<root><a>test</a><b>toast</b></root>")
-    >>> print root.a + ' me' # behaves like a string, right?
+    >>> print(root.a + ' me') # behaves like a string, right?
     test me
     >>> len(root.a) # but there's only one 'a' element!
     1
     >>> [ a.tag for a in root.a ]
     ['a']
-    >>> print root.a[0].tag
+    >>> print(root.a[0].tag)
     a
 
-    >>> print root.a
+    >>> print(root.a)
     test
     >>> [ str(a) for a in root.a[:1] ]
     ['test']
@@ -714,9 +720,9 @@ to change values, just assign them directly to the attribute:
     TypeError: attribute 'pyval' of 'StringElement' objects is not writable
 
     >>> root.a = 25
-    >>> print root.a
+    >>> print(root.a)
     25
-    >>> print root.a.pyval
+    >>> print(root.a.pyval)
     25
 
 In other words, ``objectify`` data elements behave like immutable Python
@@ -743,7 +749,7 @@ elements:
     ... </root>
     ... """)
 
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
           * attr1 = 'foo'
@@ -760,24 +766,24 @@ You can freely switch between different types for the same child:
 .. sourcecode:: pycon
 
     >>> root = objectify.fromstring("<root><a>5</a></root>")
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 5 [IntElement]
 
     >>> root.a = 'nice string!'
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 'nice string!' [StringElement]
           * py:pytype = 'str'
 
     >>> root.a = True
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = True [BoolElement]
           * py:pytype = 'bool'
 
     >>> root.a = [1, 2, 3]
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
           * py:pytype = 'int'
@@ -787,7 +793,7 @@ You can freely switch between different types for the same child:
           * py:pytype = 'int'
 
     >>> root.a = (1, 2, 3)
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
           * py:pytype = 'int'
@@ -819,7 +825,7 @@ objectify elements like this:
     ... </root>
     ... """)
 
-    >>> print str(root)
+    >>> print(str(root))
     root = None [ObjectifiedElement]
         a = 1 [IntElement]
           * attr1 = 'foo'
@@ -884,7 +890,7 @@ string values: int, long, float, str, unicode, NoneType:
 
 .. sourcecode:: pycon
 
-    >>> print objectify.PYTYPE_ATTRIBUTE
+    >>> print(objectify.PYTYPE_ATTRIBUTE)
     {http://codespeak.net/lxml/objectify/pytype}pytype
     >>> ns, name = objectify.PYTYPE_ATTRIBUTE[1:].split('}')
 
@@ -896,11 +902,11 @@ string values: int, long, float, str, unicode, NoneType:
     ... </root>
     ... """ % ns)
 
-    >>> print root.a + 10
+    >>> print(root.a + 10)
     510
-    >>> print root.b + 10
+    >>> print(root.b + 10)
     15
-    >>> print root.c
+    >>> print(root.c)
     None
 
 Note that you can change the name and namespace used for this
@@ -912,14 +918,14 @@ attribute for the elements of a tree:
 .. sourcecode:: pycon
 
     >>> root = objectify.fromstring("<root><a>test</a><b>5</b></root>")
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 'test' [StringElement]
         b = 5 [IntElement]
 
     >>> objectify.annotate(root)
 
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 'test' [StringElement]
           * py:pytype = 'str'
@@ -940,16 +946,16 @@ Python types:
     ...    <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     ...          xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     ...      <d xsi:type="xsd:double">5</d>
-    ...      <l xsi:type="xsd:long"  >5</l>
+    ...      <i xsi:type="xsd:int"   >5</i>
     ...      <s xsi:type="xsd:string">5</s>
     ...    </root>
     ...    ''')
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
           * xsi:type = 'xsd:double'
-        l = 5L [LongElement]
-          * xsi:type = 'xsd:long'
+        i = 5 [IntElement]
+          * xsi:type = 'xsd:int'
         s = '5' [StringElement]
           * xsi:type = 'xsd:string'
 
@@ -961,7 +967,7 @@ generates the "xsi:type" attribute for the elements of a tree:
     >>> root = objectify.fromstring('''\
     ...    <root><a>test</a><b>5</b><c>true</c></root>
     ...    ''')
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 'test' [StringElement]
         b = 5 [IntElement]
@@ -969,12 +975,12 @@ generates the "xsi:type" attribute for the elements of a tree:
 
     >>> objectify.xsiannotate(root)
 
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         a = 'test' [StringElement]
           * xsi:type = 'xsd:string'
         b = 5 [IntElement]
-          * xsi:type = 'xsd:int'
+          * xsi:type = 'xsd:integer'
         c = True [BoolElement]
           * xsi:type = 'xsd:boolean'
 
@@ -991,26 +997,26 @@ and/or 'xsi:type' information:
     ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     ...       xmlns:xsd="http://www.w3.org/2001/XMLSchema">
     ...   <d xsi:type="xsd:double">5</d>
-    ...   <l xsi:type="xsd:long"  >5</l>
+    ...   <i xsi:type="xsd:int"   >5</i>
     ...   <s xsi:type="xsd:string">5</s>
     ... </root>''')
     >>> objectify.annotate(root)
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         d = 5.0 [FloatElement]
           * xsi:type = 'xsd:double'
           * py:pytype = 'float'
-        l = 5L [LongElement]
-          * xsi:type = 'xsd:long'
-          * py:pytype = 'long'
+        i = 5 [IntElement]
+          * xsi:type = 'xsd:int'
+          * py:pytype = 'int'
         s = '5' [StringElement]
           * xsi:type = 'xsd:string'
           * py:pytype = 'str'
     >>> objectify.deannotate(root)
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         d = 5 [IntElement]
-        l = 5 [IntElement]
+        i = 5 [IntElement]
         s = 5 [IntElement]
 
 
@@ -1024,24 +1030,24 @@ XSI type name:
 .. sourcecode:: pycon
 
     >>> root = objectify.Element("root")
-    >>> root.x = objectify.DataElement(5, _pytype="long")
-    >>> print objectify.dump(root)
+    >>> root.x = objectify.DataElement(5, _pytype="int")
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
-        x = 5L [LongElement]
-          * py:pytype = 'long'
+        x = 5 [IntElement]
+          * py:pytype = 'int'
 
     >>> root.x = objectify.DataElement(5, _pytype="str", myattr="someval")
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         x = '5' [StringElement]
           * py:pytype = 'str'
           * myattr = 'someval'
 
     >>> root.x = objectify.DataElement(5, _xsi="integer")
-    >>> print objectify.dump(root)
+    >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
-        x = 5L [LongElement]
-          * py:pytype = 'long'
+        x = 5 [IntElement]
+          * py:pytype = 'int'
           * xsi:type = 'xsd:integer'
 
 XML Schema types reside in the XML schema namespace thus ``DataElement()`` 
@@ -1053,7 +1059,7 @@ tries to correctly prefix the xsi:type attribute value for you:
     >>> root.s = objectify.DataElement(5, _xsi="string")
 
     >>> objectify.deannotate(root, xsi=False)
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:py="http://codespeak.net/lxml/objectify/pytype" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
       <s xsi:type="xsd:string">5</s>
     </root>
@@ -1063,15 +1069,15 @@ tries to correctly prefix the xsi:type attribute value for you:
 .. sourcecode:: pycon
 
     >>> el = objectify.DataElement('5', _xsi='string')
-    >>> namespaces = el.nsmap.items()
+    >>> namespaces = list(el.nsmap.items())
     >>> namespaces.sort()
     >>> for prefix, namespace in namespaces:
-    ...     print prefix, '-', namespace
+    ...     print("%s - %s" % (prefix, namespace))
     py - http://codespeak.net/lxml/objectify/pytype
     xsd - http://www.w3.org/2001/XMLSchema
     xsi - http://www.w3.org/2001/XMLSchema-instance
 
-    >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
+    >>> print(el.get("{http://www.w3.org/2001/XMLSchema-instance}type"))
     xsd:string
 
 While you can set custom namespace prefixes, it is necessary to provide valid
@@ -1081,15 +1087,15 @@ namespace information if you choose to do so:
 
     >>> el = objectify.DataElement('5', _xsi='foo:string',
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema'})
-    >>> namespaces = el.nsmap.items()
+    >>> namespaces = list(el.nsmap.items())
     >>> namespaces.sort()
     >>> for prefix, namespace in namespaces:
-    ...     print prefix, '-', namespace
+    ...     print("%s - %s" % (prefix, namespace))
     foo - http://www.w3.org/2001/XMLSchema
     py - http://codespeak.net/lxml/objectify/pytype
     xsi - http://www.w3.org/2001/XMLSchema-instance
 
-    >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
+    >>> print(el.get("{http://www.w3.org/2001/XMLSchema-instance}type"))
     foo:string
 
 Note how lxml chose a default prefix for the XML Schema Instance
@@ -1100,15 +1106,15 @@ namespace.  We can override it as in the following example:
     >>> el = objectify.DataElement('5', _xsi='foo:string',
     ...          nsmap={'foo': 'http://www.w3.org/2001/XMLSchema',
     ...                 'myxsi': 'http://www.w3.org/2001/XMLSchema-instance'})
-    >>> namespaces = el.nsmap.items()
+    >>> namespaces = list(el.nsmap.items())
     >>> namespaces.sort()
     >>> for prefix, namespace in namespaces:
-    ...     print prefix, '-', namespace
+    ...     print("%s - %s" % (prefix, namespace))
     foo - http://www.w3.org/2001/XMLSchema
     myxsi - http://www.w3.org/2001/XMLSchema-instance
     py - http://codespeak.net/lxml/objectify/pytype
 
-    >>> print el.get("{http://www.w3.org/2001/XMLSchema-instance}type")
+    >>> print(el.get("{http://www.w3.org/2001/XMLSchema-instance}type"))
     foo:string
 
 Care must be taken if different namespace prefixes have been used for the same
@@ -1119,15 +1125,15 @@ prefixes of attribute values:
 .. sourcecode:: pycon
 
     >>> root = objectify.fromstring("""<root xmlns:schema="http://www.w3.org/2001/XMLSchema"/>""")
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:schema="http://www.w3.org/2001/XMLSchema"/>
 
     >>> s = objectify.DataElement("17", _xsi="string")
-    >>> print etree.tostring(s, pretty_print=True)
+    >>> print(etree.tostring(s, pretty_print=True))
     <value xmlns:py="http://codespeak.net/lxml/objectify/pytype" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" py:pytype="str" xsi:type="xsd:string">17</value>
 
     >>> root.s = s
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:schema="http://www.w3.org/2001/XMLSchema">
       <s xmlns:py="http://codespeak.net/lxml/objectify/pytype" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" py:pytype="str" xsi:type="xsd:string">17</s>
     </root>
@@ -1139,7 +1145,7 @@ xsi:type attributes is to use the ``xsiannotate()`` utility:
 .. sourcecode:: pycon
 
     >>> objectify.xsiannotate(root)
-    >>> print etree.tostring(root, pretty_print=True)
+    >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:schema="http://www.w3.org/2001/XMLSchema">
       <s xmlns:py="http://codespeak.net/lxml/objectify/pytype" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" py:pytype="str" xsi:type="schema:string">17</s>
     </root>
@@ -1165,7 +1171,7 @@ The registration of data classes uses the ``PyType`` class:
 
     >>> class ChristmasDate(objectify.ObjectifiedDataElement):
     ...     def call_santa(self):
-    ...         print "Ho ho ho!"
+    ...         print("Ho ho ho!")
 
     >>> def checkChristmasDate(date_string):
     ...     if not date_string.startswith('24.12.'):
@@ -1225,7 +1231,7 @@ function defined above:
     ...      <a xsi:type="date">12.24.2000</a>
     ...    </root>
     ...    ''')
-    >>> print root.a
+    >>> print(root.a)
     12.24.2000
     >>> root.a.call_santa()
     Ho ho ho!

@@ -36,10 +36,10 @@ cdef class _NamespaceRegistry:
         registry, or if their name starts with '_', they will be
         silently discarded. This allows registrations at the module or
         class level using vars(), globals() etc."""
-        if hasattr(class_dict_iterable, 'items'):
+        if hasattr(class_dict_iterable, u'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
-            if (name is None or name[:1] != '_') and callable(item):
+            if (name is None or name[:1] != u'_') and callable(item):
                 self[name] = item
 
     def __getitem__(self, name):
@@ -61,7 +61,7 @@ cdef class _NamespaceRegistry:
 
     cdef object _getForString(self, char* name):
         cdef python.PyObject* dict_result
-        dict_result = python.PyDict_GetItemString(self._entries, name)
+        dict_result = python.PyDict_GetItem(self._entries, name)
         if dict_result is NULL:
             raise KeyError, u"Name not registered."
         return <object>dict_result
@@ -70,7 +70,7 @@ cdef class _NamespaceRegistry:
         return iter(self._entries)
 
     def items(self):
-        return self._entries.items()
+        return list(self._entries.items())
 
     def iteritems(self):
         return iter(self._entries.items())
@@ -135,7 +135,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
 
     c_namespace_utf = _getNs(c_node)
     if c_namespace_utf is not NULL:
-        dict_result = python.PyDict_GetItemString(
+        dict_result = python.PyDict_GetItem(
             lookup._namespace_registries, c_namespace_utf)
     else:
         dict_result = python.PyDict_GetItem(
@@ -145,7 +145,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
         classes = registry._entries
 
         if c_node.name is not NULL:
-            dict_result = python.PyDict_GetItemString(
+            dict_result = python.PyDict_GetItem(
                 classes, c_node.name)
         else:
             dict_result = NULL

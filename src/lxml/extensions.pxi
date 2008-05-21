@@ -262,11 +262,11 @@ cdef class _BaseContext:
             c_dict = python.PyDict_GetItem(
                 self._function_cache, None)
         else:
-            c_dict = python.PyDict_GetItemString(
+            c_dict = python.PyDict_GetItem(
                 self._function_cache, c_ns_uri)
 
         if c_dict is not NULL:
-            dict_result = python.PyDict_GetItemString(
+            dict_result = python.PyDict_GetItem(
                 <object>c_dict, c_name)
             if dict_result is not NULL:
                 return <object>dict_result
