@@ -5,19 +5,23 @@ Tests for different Element class lookup mechanisms.
 """
 
 
-import unittest, doctest, operator
+import unittest, doctest, operator, os.path, sys
 
-from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
-xml_str = '''\
+from common_imports import etree, HelperTestCase, SillyFileLike, fileInTestDir
+from common_imports import canonicalize, _bytes, _str, BytesIO, StringIO
+
+xml_str = _bytes('''\
 <root xmlns="myNS" xmlns:other="otherNS">
   <c1 a1="A1" a2="A2" other:a3="A3">
     <c2 a1="C2">0</c2>
     <c2>1</c2>
     <other:c2>2</other:c2>
   </c1>
-</root>'''
+</root>''')
 
 class ClassLookupTestCase(HelperTestCase):
     """Test cases for different Element class lookup mechanisms.
@@ -59,12 +63,12 @@ class ClassLookupTestCase(HelperTestCase):
             element=TestElement, comment=TestComment, pi=TestPI)
         parser.set_element_class_lookup(lookup)
 
-        root = etree.XML("""<?xml version='1.0'?>
+        root = etree.XML(_bytes("""<?xml version='1.0'?>
         <root>
           <?myPI?>
           <!-- hi -->
         </root>
-        """, parser)
+        """), parser)
 
         self.assertEquals("default element", root.FIND_ME)
         self.assertEquals("default pi", root[0].FIND_ME)
@@ -143,13 +147,13 @@ class ClassLookupTestCase(HelperTestCase):
         parser = etree.XMLParser()
         parser.set_element_class_lookup( MyLookup() )
 
-        root = etree.parse(StringIO(xml_str), parser).getroot()
+        root = etree.parse(BytesIO(xml_str), parser).getroot()
         self.assertEquals(root.FIND_ME,
                           TestElement.FIND_ME)
         self.assertEquals(root[0].FIND_ME,
                           TestElement.FIND_ME)
 
-        root = etree.parse(StringIO(xml_str)).getroot()
+        root = etree.parse(BytesIO(xml_str)).getroot()
         self.assertFalse(hasattr(root, 'FIND_ME'))
         self.assertFalse(hasattr(root[0], 'FIND_ME'))
 
