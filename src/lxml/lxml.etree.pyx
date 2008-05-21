@@ -371,7 +371,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return c_ns
 
         if c_prefix is NULL:
-            dict_result = python.PyDict_GetItemString(
+            dict_result = python.PyDict_GetItem(
                 _DEFAULT_NAMESPACE_PREFIXES, c_href)
             if dict_result is not NULL:
                 prefix = <object>dict_result
