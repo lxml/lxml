@@ -435,7 +435,11 @@ class _RestoreChecker(object):
             self.func_globals = self.check_func.__globals__
             self.check_func.__code__ = self.clone_func.__code__
     def uninstall_clone(self):
-        self.check_func.__code__ = self.func_code
+        if hasattr(self.check_func, "func_code"):
+            self.check_func.func_code = self.func_code
+        else:
+            # Python 3
+            self.check_func.__code__ = self.func_code
     def install_dt_self(self):
         self.prev_func = self.dt_self._DocTestRunner__record_outcome
         self.dt_self._DocTestRunner__record_outcome = self
