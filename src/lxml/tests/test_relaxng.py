@@ -10,7 +10,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, doctest, StringIO, HelperTestCase, fileInTestDir
+from common_imports import etree, doctest, BytesIO, _bytes, HelperTestCase, fileInTestDir
 
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):
@@ -32,7 +32,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng_stringio(self):
         tree_valid = self.parse('<a><b></b></a>')
         tree_invalid = self.parse('<a><c></c></a>')
-        schema_file = StringIO('''\
+        schema_file = BytesIO('''\
 <element name="a" xmlns="http://relaxng.org/ns/structure/1.0">
   <zeroOrMore>
      <element name="b">
@@ -107,7 +107,7 @@ class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng_include(self):
         # this will only work if we access the file through path or
         # file object..
-        f = open(fileInTestDir('test1.rng'), 'r')
+        f = open(fileInTestDir('test1.rng'), 'rb')
         schema = etree.RelaxNG(file=f)
 
     def test_relaxng_shortcut(self):
@@ -146,11 +146,11 @@ class ETreeRelaxNGTestCase(HelperTestCase):
 </element>
 ''') )
         c_tree = etree.ElementTree(tree.getroot()[1])
-        self.assertEqual(self._rootstring(c_tree), '<c>C</c>')
+        self.assertEqual(self._rootstring(c_tree), _bytes('<c>C</c>'))
         self.assert_(not schema.validate(c_tree))
 
         b_tree = etree.ElementTree(tree.getroot()[0])
-        self.assertEqual(self._rootstring(b_tree), '<b>B</b>')
+        self.assertEqual(self._rootstring(b_tree), _bytes('<b>B</b>'))
         self.assert_(schema.validate(b_tree))
 
 

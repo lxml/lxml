@@ -426,8 +426,10 @@ subclasses for elements of this namespace:
   >>> xml = '<honk xmlns="http://hui.de/honk" honking="true"><bla/></honk>'
   >>> honk_element = etree.XML(xml, parser)
 
-  >>> print(type(honk_element), type(honk_element[0]))
-  <class 'HonkElement'> <class 'HonkNSElement'>
+  >>> print(type(honk_element))
+  <class 'HonkElement'>
+  >>> print(type(honk_element[0]))
+  <class 'HonkNSElement'>
 
   >>> print(honk_element.honking)
   True
