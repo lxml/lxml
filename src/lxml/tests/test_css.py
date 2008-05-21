@@ -77,7 +77,8 @@ class CSSTestCase(HelperTestCase):
         xpath = cssselect.css_to_xpath(cssselect.parse(selector))
         try:
             results = body.xpath(xpath)
-        except Exception, e:
+        except Exception:
+            e = sys.exc_info()[1]
             e.args = ("%s for xpath %r" % (e, xpath))
             raise
         found = {}

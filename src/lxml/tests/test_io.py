@@ -7,7 +7,7 @@ IO test cases that apply to both etree and ElementTree
 import unittest
 import tempfile, gzip, os, gc, shutil
 
-from common_imports import etree, ElementTree, fileInTestDir
+from common_imports import etree, ElementTree, fileInTestDir, _str
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 
 class IOTestCaseBase(HelperTestCase):
@@ -45,7 +45,7 @@ class IOTestCaseBase(HelperTestCase):
         ElementTree = self.etree.ElementTree
     
         element = Element('top')
-        element.text = u"qwrtioüöä\uAABB"
+        element.text = _str("qwrtioüöä\uAABB")
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
         f = open(self.getTestFilePath('testdump.xml'), 'wb')
@@ -70,7 +70,7 @@ class IOTestCaseBase(HelperTestCase):
         ElementTree = self.etree.ElementTree
 
         element = Element('top')
-        element.text = u"qwrtioüöäßÃ¡"
+        element.text = _str("qwrtioüöäßÃ¡")
         tree = ElementTree(element)
         self.buildNodes(element, 10, 3)
         f = open(self.getTestFilePath('testdump.xml'), 'wb')

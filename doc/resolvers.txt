@@ -12,6 +12,13 @@ Lxml has support for custom document loaders in both the parsers and XSL
 transformations.  These so-called resolvers are subclasses of the
 etree.Resolver class.
 
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
 
 URI Resolvers
 -------------
@@ -24,7 +31,7 @@ Here is an example of a custom resolver:
 
   >>> class DTDResolver(etree.Resolver):
   ...     def resolve(self, url, id, context):
-  ...         print "Resolving URL '%s'" % url
+  ...         print("Resolving URL '%s'" % url)
   ...         return self.resolve_string(
   ...             '<!ENTITY myentity "[resolved text: %s]">' % url, context)
 
@@ -59,12 +66,11 @@ document that requires resolving a URL, it will call our custom resolver:
 
 .. sourcecode:: pycon
 
-  >>> xml = u'<!DOCTYPE doc SYSTEM "MissingDTD.dtd"><doc>&myentity;</doc>'
-  >>> from StringIO import StringIO
+  >>> xml = '<!DOCTYPE doc SYSTEM "MissingDTD.dtd"><doc>&myentity;</doc>'
   >>> tree = etree.parse(StringIO(xml), parser)
   Resolving URL 'MissingDTD.dtd'
   >>> root = tree.getroot()
-  >>> print root.text
+  >>> print(root.text)
   [resolved text: MissingDTD.dtd]
 
 The entity in the document was correctly resolved by the generated DTD
@@ -92,7 +98,7 @@ resolver that only responds to a specific prefix:
   ...              ''' % prefix
   ...     def resolve(self, url, pubid, context):
   ...         if url.startswith(self.prefix):
-  ...             print "Resolved url %s as prefix %s" % (url, self.prefix)
+  ...             print("Resolved url %s as prefix %s" % (url, self.prefix))
   ...             return self.resolve_string(self.result_xml, context)
 
 We demonstrate this in XSLT and use the following stylesheet as an example:

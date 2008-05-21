@@ -5,9 +5,8 @@ Test cases related to SAX I/O
 """
 
 import unittest
-from StringIO import StringIO
 
-from common_imports import HelperTestCase, doctest
+from common_imports import HelperTestCase, doctest, BytesIO
 from lxml import sax
 from xml.dom import pulldom
 
@@ -209,7 +208,7 @@ class ETreeSaxTestCase(HelperTestCase):
         
     def _saxify_serialize(self, tree):
         new_tree = self._saxify_unsaxify(tree)
-        f = StringIO()
+        f = BytesIO()
         new_tree.write(f)
         return f.getvalue().replace('\n', '')
 

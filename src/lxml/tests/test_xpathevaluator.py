@@ -5,9 +5,8 @@ Test cases related to XPath evaluation and the XPath class
 """
 
 import unittest
-from StringIO import StringIO
 
-from common_imports import etree, HelperTestCase, doctest
+from common_imports import etree, HelperTestCase, doctest, _bytes, BytesIO
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -76,10 +75,11 @@ class ETreeXPathTestCase(HelperTestCase):
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
 
     def test_xpath_list_unicode_text_parent(self):
-        xml = u'<a><b>FooBar\u0680\u3120</b><b>BarFoo\u0680\u3120</b></a>'
+        xml = _bytes('<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>').decode("unicode_escape")
         tree = self.parse(xml.encode('utf-8'))
         root = tree.getroot()
-        self.assertEquals([u'FooBar\u0680\u3120', u'BarFoo\u0680\u3120'],
+        self.assertEquals([_bytes('FooBar\\u0680\\u3120').decode("unicode_escape"),
+                           _bytes('BarFoo\\u0680\\u3120').decode("unicode_escape")],
                           tree.xpath('/a/b/text()'))
         self.assertEquals([root[0], root[1]],
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
@@ -523,19 +523,20 @@ class ETreeETXPathClassTestCase(HelperTestCase):
         self.assertEquals('{nsb}b', r[0].tag)
 
     def test_xpath_compile_unicode(self):
-        x = self.parse(u'<a><b xmlns="nsa\uf8d2"/><b xmlns="nsb\uf8d1"/></a>')
+        x = self.parse(_bytes('<a><b xmlns="nsa\\uf8d2"/><b xmlns="nsb\\uf8d1"/></a>'
+                              ).decode("unicode_escape"))
 
-        expr = etree.ETXPath(u"/a/{nsa\uf8d2}b")
+        expr = etree.ETXPath(_bytes("/a/{nsa\\uf8d2}b").decode("unicode_escape"))
         r = expr(x)
         self.assertEquals(1, len(r))
-        self.assertEquals(u'{nsa\uf8d2}b', r[0].tag)
+        self.assertEquals(_bytes('{nsa\\uf8d2}b').decode("unicode_escape"), r[0].tag)
 
-        expr = etree.ETXPath(u"/a/{nsb\uf8d1}b")
+        expr = etree.ETXPath(_bytes("/a/{nsb\\uf8d1}b").decode("unicode_escape"))
         r = expr(x)
         self.assertEquals(1, len(r))
-        self.assertEquals(u'{nsb\uf8d1}b', r[0].tag)
+        self.assertEquals(_bytes('{nsb\\uf8d1}b').decode("unicode_escape"), r[0].tag)
 
-SAMPLE_XML = etree.parse(StringIO("""
+SAMPLE_XML = etree.parse(BytesIO("""
 <body>
   <tag>text</tag>
   <section>
@@ -597,7 +598,7 @@ def xpath():
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e("stringTest('you')")
     'Hello you'
-    >>> e(u"stringTest('\xe9lan')")
+    >>> e(_bytes("stringTest('\\xe9lan')").decode("unicode_escape"))
     u'Hello \\xe9lan'
     >>> e("stringTest('you','there')")
     Traceback (most recent call last):

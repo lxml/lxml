@@ -7,7 +7,7 @@ namespace registry mechanism
 
 import unittest
 
-from common_imports import etree, HelperTestCase, doctest
+from common_imports import etree, HelperTestCase, doctest, _bytes
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
     
@@ -15,10 +15,10 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         pass
     class maeh_class(etree.ElementBase):
         def maeh(self):
-            return u'maeh'
+            return 'maeh'
     class bluff_class(etree.ElementBase):
         def bluff(self):
-            return u'bluff'
+            return 'bluff'
 
     def setUp(self):
         super(ETreeNamespaceClassesTestCase, self).setUp()
@@ -34,50 +34,50 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         super(ETreeNamespaceClassesTestCase, self).tearDown()
 
     def test_registry(self):
-        ns = self.Namespace(u'ns01')
-        ns[u'maeh'] = self.maeh_class
+        ns = self.Namespace('ns01')
+        ns['maeh'] = self.maeh_class
 
-        self.Namespace(u'ns01').clear()
+        self.Namespace('ns01').clear()
 
-        self.Namespace(u'ns02').update({u'maeh'  : self.maeh_class})
-        self.Namespace(u'ns03').update({u'bluff' : self.bluff_class}.items())
-        self.Namespace(u'ns02').clear()
-        self.Namespace(u'ns03').clear()
+        self.Namespace('ns02').update({'maeh'  : self.maeh_class})
+        self.Namespace('ns03').update({'bluff' : self.bluff_class}.items())
+        self.Namespace('ns02').clear()
+        self.Namespace('ns03').clear()
 
     def test_ns_classes(self):
-        bluff_dict = {u'bluff' : self.bluff_class}
-        maeh_dict  = {u'maeh'  : self.maeh_class}
+        bluff_dict = {'bluff' : self.bluff_class}
+        maeh_dict  = {'maeh'  : self.maeh_class}
 
-        self.Namespace(u'ns10').update(bluff_dict)
+        self.Namespace('ns10').update(bluff_dict)
 
-        tree = self.parse(u'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
+        tree = self.parse(_bytes('<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>'))
 
         el = tree.getroot()
         self.assert_(isinstance(el, etree.ElementBase))
         self.assert_(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el[0], 'maeh'))
         self.assertFalse(hasattr(el[0], 'bluff'))
-        self.assertEquals(el.bluff(), u'bluff')
+        self.assertEquals(el.bluff(), 'bluff')
         del el
 
-        self.Namespace(u'ns11').update(maeh_dict)
+        self.Namespace('ns11').update(maeh_dict)
         el = tree.getroot()
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
-        self.assertEquals(el.bluff(), u'bluff')
-        self.assertEquals(el[0].maeh(), u'maeh')
+        self.assertEquals(el.bluff(), 'bluff')
+        self.assertEquals(el[0].maeh(), 'maeh')
         del el
 
-        self.Namespace(u'ns10').clear()
+        self.Namespace('ns10').clear()
 
-        tree = self.parse(u'<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>')
+        tree = self.parse(_bytes('<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>'))
         el = tree.getroot()
         self.assertFalse(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el, 'maeh'))
         self.assertFalse(hasattr(el[0], 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
 
-        self.Namespace(u'ns11').clear()
+        self.Namespace('ns11').clear()
 
     def test_default_tagname(self):
         bluff_dict = {
@@ -88,11 +88,11 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         ns = self.Namespace("uri:nsDefClass")
         ns.update(bluff_dict)
 
-        tree = self.parse(u'''
+        tree = self.parse(_bytes('''
             <test xmlns="bla" xmlns:ns1="uri:nsDefClass" xmlns:ns2="uri:nsDefClass">
               <ns2:el1/><ns1:el2/><ns1:maeh/><ns2:maeh/><maeh/>
             </test>
-            ''')
+            '''))
 
         el = tree.getroot()
         self.assertFalse(isinstance(el, etree.ElementBase))
@@ -110,11 +110,11 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         ns.clear()
 
     def test_create_element(self):
-        bluff_dict = {u'bluff' : self.bluff_class}
-        self.Namespace(u'ns20').update(bluff_dict)
+        bluff_dict = {'bluff' : self.bluff_class}
+        self.Namespace('ns20').update(bluff_dict)
 
-        maeh_dict  = {u'maeh'  : self.maeh_class}
-        self.Namespace(u'ns21').update(maeh_dict)
+        maeh_dict  = {'maeh'  : self.maeh_class}
+        self.Namespace('ns21').update(maeh_dict)
 
         el = etree.Element("{ns20}bluff")
         self.assert_(hasattr(el, 'bluff'))
@@ -132,29 +132,29 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertFalse(hasattr(el[2], 'bluff'))
         self.assertFalse(hasattr(el[2], 'maeh'))
 
-        self.assertEquals(el.bluff(), u'bluff')
-        self.assertEquals(el[0].maeh(), u'maeh')
-        self.assertEquals(el[1].bluff(), u'bluff')
+        self.assertEquals(el.bluff(), 'bluff')
+        self.assertEquals(el[0].maeh(), 'maeh')
+        self.assertEquals(el[1].bluff(), 'bluff')
 
-        self.Namespace(u'ns20').clear()
-        self.Namespace(u'ns21').clear()
+        self.Namespace('ns20').clear()
+        self.Namespace('ns21').clear()
 
     def test_create_element_default(self):
         bluff_dict = {None : self.bluff_class}
-        self.Namespace(u'ns30').update(bluff_dict)
+        self.Namespace('ns30').update(bluff_dict)
 
-        maeh_dict  = {u'maeh'  : self.maeh_class}
+        maeh_dict  = {'maeh'  : self.maeh_class}
         self.Namespace(None).update(maeh_dict)
 
         el = etree.Element("{ns30}bluff")
         etree.SubElement(el, "maeh")
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
-        self.assertEquals(el.bluff(), u'bluff')
-        self.assertEquals(el[0].maeh(), u'maeh')
+        self.assertEquals(el.bluff(), 'bluff')
+        self.assertEquals(el[0].maeh(), 'maeh')
 
         self.Namespace(None).clear()
-        self.Namespace(u'ns30').clear()
+        self.Namespace('ns30').clear()
 
 def test_suite():
     suite = unittest.TestSuite()

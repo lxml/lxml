@@ -38,7 +38,7 @@ class ETreeOnlyTestCase(HelperTestCase):
     etree = etree
 
     def test_version(self):
-        self.assert_(isinstance(etree.__version__, str))
+        self.assert_(isinstance(etree.__version__, _unicode))
         self.assert_(isinstance(etree.LXML_VERSION, tuple))
         self.assertEqual(len(etree.LXML_VERSION), 4)
         self.assert_(isinstance(etree.LXML_VERSION[0], int))
