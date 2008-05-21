@@ -184,7 +184,7 @@ LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
 LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
 LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 
-__version__ = tree.LXML_VERSION_STRING
+__version__ = (tree.LXML_VERSION_STRING).decode(u"ASCII")
 
 
 # class for temporary storage of Python references
