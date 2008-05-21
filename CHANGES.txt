@@ -25,6 +25,8 @@ Features added
 Bugs fixed
 ----------
 
+* Windows build was broken.
+
 * Rare crash when serialising to a file object with certain encodings.
 
 Other changes
