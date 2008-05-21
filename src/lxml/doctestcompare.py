@@ -398,12 +398,18 @@ def temp_install(html=False, del_module=None):
     # __record_outcome to be run, which signals the end of the __run
     # method, at which point we restore the previous check_output
     # implementation.
-    check_func = frame.f_locals['check'].im_func
+    try:
+        check_func = frame.f_locals['check'].im_func
+        checker_check_func = checker.check_output.im_func
+    except AttributeError:
+        # Python 3
+        check_func = frame.f_locals['check'].__func__
+        checker_check_func = checker.check_output.__func__
     # Because we can't patch up func_globals, this is the only global
     # in check_output that we care about:
     doctest.etree = etree
     _RestoreChecker(dt_self, old_checker, checker,
-                    check_func, checker.check_output.im_func,
+                    check_func, checker_check_func,
                     del_module)
 
 class _RestoreChecker(object):
@@ -419,11 +425,17 @@ class _RestoreChecker(object):
         self.install_clone()
         self.install_dt_self()
     def install_clone(self):
-        self.func_code = self.check_func.func_code
-        self.func_globals = self.check_func.func_globals
-        self.check_func.func_code = self.clone_func.func_code
+        try:
+            self.func_code = self.check_func.func_code
+            self.func_globals = self.check_func.func_globals
+            self.check_func.func_code = self.clone_func.func_code
+        except AttributeError:
+            # Python 3
+            self.func_code = self.check_func.__code__
+            self.func_globals = self.check_func.__globals__
+            self.check_func.__code__ = self.clone_func.__code__
     def uninstall_clone(self):
-        self.check_func.func_code = self.func_code
+        self.check_func.__code__ = self.func_code
     def install_dt_self(self):
         self.prev_func = self.dt_self._DocTestRunner__record_outcome
         self.dt_self._DocTestRunner__record_outcome = self

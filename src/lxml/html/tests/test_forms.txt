@@ -47,7 +47,7 @@ False
 >>> hidden.value
 'hidden_value'
 >>> hidden.value = 'new value'
->>> print tostring(hidden)
+>>> print(tostring(hidden))
 <input type="hidden" name="hidden_field" value="new value">
 >>> checkbox = f.inputs['single_checkbox']
 >>> checkbox.checkable
@@ -56,12 +56,12 @@ True
 'checkbox'
 >>> checkbox.checked
 False
->>> print checkbox.value
+>>> print(checkbox.value)
 None
 >>> checkbox.checked = True
 >>> checkbox.value
 'on'
->>> print tostring(checkbox)
+>>> print(tostring(checkbox))
 <input type="checkbox" name="single_checkbox" checked>
 >>> checkbox2 = f.inputs['single_checkbox2']
 >>> checkbox2.checked = True
@@ -73,7 +73,7 @@ None
 >>> group.value.add('1')
 >>> group.value # doctest:+NOPARSE_MARKUP
 <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
->>> print tostring(group[0])
+>>> print(tostring(group[0]))
 <input type="checkbox" name="check_group" value="1" checked>
 >>> group.value.add('doesnotexist')
 Traceback (most recent call last):
@@ -90,15 +90,15 @@ KeyError: "No checkbox with value 'doesnotexist'"
 >>> radios.value = 'value1'
 >>> radios.value
 'value1'
->>> print tostring(radios[0])
+>>> print(tostring(radios[0]))
 <input type="radio" name="radios" value="value1" id="value1" checked>
 >>> radios.value = None
->>> print tostring(radios[0])
+>>> print(tostring(radios[0]))
 <input type="radio" name="radios" value="value1" id="value1">
 >>> radios.value_options
 ['value1', 'value2', 'value3']
 >>> select = f.inputs['select1']
->>> print select.value
+>>> print(select.value)
 None
 >>> select.value = ""
 >>> select.value
@@ -121,13 +121,13 @@ ValueError: There is no option with the value 'asdf'
 >>> select.value_options
 ['1', '2', '3']
 >>> import urllib
->>> print urllib.urlencode(f.form_values())
+>>> print(urllib.urlencode(f.form_values()))
 hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=&select2=1&select2=2&select2=3
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
 >>> for name, value in fields.items():
-...     print '%s: %r' % (name, value)
+...     print('%s: %r' % (name, value))
 textarea_field: 'some text'
 radios: None
 submit2: 'submit'

@@ -6,7 +6,7 @@ First, a handy function for normalizing whitespace and doing word wrapping::
     >>> def pwrapped(text):
     ...     text = re.sub(r'[ \n\t\r]+', ' ', text)
     ...     text = textwrap.fill(text)
-    ...     print text
+    ...     print(text)
     >>> def pdiff(text1, text2):
     ...     pwrapped(htmldiff(text1, text2))
 
@@ -200,7 +200,7 @@ Some utility functions::
 
     >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced
     >>> def pfixup(text):
-    ...     print fixup_ins_del_tags(text).strip()
+    ...     print(fixup_ins_del_tags(text).strip())
     >>> pfixup('<ins><p>some text <b>and more text</b> and more</p></ins>')
     <p><ins>some text <b>and more text</b> and more</ins></p>
     >>> pfixup('<p><ins>Hi!</ins> you</p>')

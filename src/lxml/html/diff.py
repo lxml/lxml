@@ -11,6 +11,11 @@ try:
 except NameError:
     # Python 3
     _unicode = str
+try:
+    basestring = __builtins__["basestring"]
+except (KeyError, NameError):
+    # Python 3
+    basestring = str
 
 ############################################################
 ## Annotation
@@ -748,9 +753,9 @@ def serialize_html_fragment(el, skip_outer=False):
     html = etree.tostring(el, method="html", encoding="UTF-8")
     if skip_outer:
         # Get rid of the extra starting tag:
-        html = html[html.find('>')+1:]
+        html = html[html.find('>'.encode("ASCII"))+1:]
         # Get rid of the extra end tag:
-        html = html[:html.rfind('<')]
+        html = html[:html.rfind('<'.encode("ASCII"))]
         return html.strip()
     else:
         return html

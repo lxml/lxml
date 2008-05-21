@@ -6,8 +6,12 @@ import unittest, doctest
 # It is likely that if there are errors, instead of failing the code
 # will simply crash.
 
-import sys, gc
+import sys, gc, os.path
 from lxml import etree
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import HelperTestCase
 

@@ -2,6 +2,11 @@ from lxml.etree import XPath, ElementBase
 from lxml.html import fromstring, tostring, XHTML_NAMESPACE
 from lxml.html import _forms_xpath, _options_xpath, _nons
 from lxml.html import defs
+try:
+    basestring = __builtins__["basestring"]
+except (KeyError, NameError):
+    # Python 3
+    basestring = str
 
 __all__ = ['FormNotFound', 'fill_form', 'fill_form_html',
            'insert_errors', 'insert_errors_html',
@@ -235,7 +240,7 @@ def insert_errors(
     error_creator=default_error_creator,
     ):
     el = _find_form(el, form_id=form_id, form_index=form_index)
-    for name, error in errors.iteritems():
+    for name, error in errors.items():
         if error is None:
             continue
         for error_el, message in _find_elements_for_name(el, name, error):

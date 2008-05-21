@@ -27,7 +27,7 @@
 ...   </body>
 ... </html>'''
 
->>> print doc
+>>> print(doc)
 <html>
   <head>
     <script type="text/javascript" src="evil-site"></script>
@@ -53,7 +53,7 @@
   </body>
 </html>
 
->>> print tostring(fromstring(doc))
+>>> print(tostring(fromstring(doc)))
 <html>
   <head>
     <script type="text/javascript" src="evil-site"></script>
@@ -79,7 +79,7 @@
   </body>
 </html>
 
->>> print Cleaner(page_structure=False, safe_attrs_only=False).clean_html(doc)
+>>> print(Cleaner(page_structure=False, safe_attrs_only=False).clean_html(doc))
 <html>
   <head>
     <style>/* deleted */</style>
@@ -96,8 +96,8 @@
   </body>
 </html>
 
->>> print Cleaner(style=True, links=True, add_nofollow=True,
-...               page_structure=False, safe_attrs_only=False).clean_html(doc)
+>>> print(Cleaner(style=True, links=True, add_nofollow=True,
+...               page_structure=False, safe_attrs_only=False).clean_html(doc))
 <html>
   <head>
   </head>

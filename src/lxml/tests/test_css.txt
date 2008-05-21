@@ -3,7 +3,7 @@ A quick test of tokenizing:
     >>> from lxml.cssselect import tokenize, parse
     >>> def ptok(s):
     ...     for item in tokenize(s):
-    ...         print repr(item)
+    ...         print(repr(item))
     >>> ptok('E > f[a~="y\\"x"]')
     Symbol(u'E', 0)
     Token(u'>', 2)
@@ -48,7 +48,7 @@ Then of parsing:
 Now of translation:
 
     >>> def xpath(css):
-    ...     print parse(css).xpath()
+    ...     print(parse(css).xpath())
     >>> xpath('*')
     *
     >>> xpath('E')

@@ -5,17 +5,17 @@ Some basic imports:
 
 The simplest kind of filling is just filling an input with a value:
 
-    >>> print fill_form_html('''
-    ... <form><input type="text" name="foo"></form>''', dict(foo='bar'))
+    >>> print(fill_form_html('''
+    ... <form><input type="text" name="foo"></form>''', dict(foo='bar')))
     <form><input type="text" name="foo" value="bar"></form>
     
 You can also fill multiple inputs, like:
 
-    >>> print fill_form_html('''
+    >>> print(fill_form_html('''
     ... <form>
     ...   <input type="text" name="foo">
     ...   <input type="text" name="foo">
-    ... </form>''', dict(foo=['bar1', 'bar2']))
+    ... </form>''', dict(foo=['bar1', 'bar2'])))
     <form>
       <input type="text" name="foo" value="bar1">
       <input type="text" name="foo" value="bar2">
@@ -24,7 +24,7 @@ You can also fill multiple inputs, like:
 Checkboxes can work either as boolean true/false, or be selected based
 on their inclusion in a set of values::
 
-    >>> print fill_form_html('''
+    >>> print(fill_form_html('''
     ... <form>
     ...   Would you like to be spammed?
     ...   <input type="checkbox" name="spam_me"> <br>
@@ -36,7 +36,7 @@ on their inclusion in a set of values::
     ...   Other spam:
     ...       <input type="checkbox" name="type" value="other"><br>
     ...   <input type="submit" value="Spam!">
-    ... </form>''', dict(spam_me=True, type=['viagra', 'other']))
+    ... </form>''', dict(spam_me=True, type=['viagra', 'other'])))
     <form>
       Would you like to be spammed?
       <input type="checkbox" name="spam_me" checked> <br>
@@ -62,7 +62,7 @@ function you can provide (or the default function).
 Example::
 
     >>> from lxml.html.formfill import insert_errors_html
-    >>> print insert_errors_html('''
+    >>> print(insert_errors_html('''
     ... <form>
     ...   <fieldset id="fieldset">
     ...     <input name="v1"><br>
@@ -80,7 +80,7 @@ Example::
     ...   'v4': "err4",
     ...   None: 'general error',
     ...   '#fieldset': 'area error',
-    ... })
+    ... }))
     <form>
       <div class="error-message error-block">general error</div>
       <fieldset id="fieldset" class="error">

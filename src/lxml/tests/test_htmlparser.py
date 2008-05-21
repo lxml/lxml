@@ -5,7 +5,11 @@ HTML parser test cases for etree
 """
 
 import unittest
-import tempfile, os
+import tempfile, os, os.path, sys
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
 from common_imports import SillyFileLike, HelperTestCase

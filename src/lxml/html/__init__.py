@@ -19,6 +19,11 @@ try:
 except NameError:
     # Python 2.3
     from sets import Set as set
+try:
+    basestring = __builtins__["basestring"]
+except (KeyError, NameError):
+    # Python 3
+    basestring = str
 
 __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',

@@ -901,6 +901,11 @@ class TokenStream(object):
         self.source = source
         self.peeked = None
         self._peeking = False
+        try:
+            self.next_token = self.tokens.next
+        except AttributeError:
+            # Python 3
+            self.next_token = self.tokens.__next__
 
     def next(self):
         if self._peeking:
@@ -909,7 +914,7 @@ class TokenStream(object):
             return self.peeked
         else:
             try:
-                next = self.tokens.next()
+                next = self.next_token()
                 self.used.append(next)
                 return next
             except StopIteration:
@@ -921,7 +926,7 @@ class TokenStream(object):
     def peek(self):
         if not self._peeking:
             try:
-                self.peeked = self.tokens.next()
+                self.peeked = self.next_token()
             except StopIteration:
                 return None
             self._peeking = True
