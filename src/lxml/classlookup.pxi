@@ -303,12 +303,12 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     if c_node.name is NULL:
         name = None
     else:
-        name = c_node.name
+        name = funicode(c_node.name)
     c_str = tree._getNs(c_node)
     if c_str is NULL:
         ns = None
     else:
-        ns = c_str
+        ns = funicode(c_str)
 
     cls = lookup.lookup(element_type, doc, ns, name)
     if cls is not None:
