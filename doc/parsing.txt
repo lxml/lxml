@@ -39,7 +39,7 @@ The usual setup procedure:
   ...        return BytesIO(s)
 
   >>> try: unicode = __builtins__["unicode"]
-  ... except NameError: unicode = str
+  ... except (NameError, KeyError): unicode = str
 
 
 Parsers

@@ -41,6 +41,14 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    9   XInclude and ElementInclude
    10  write_c14n on ElementTree
 
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
+
 
 lxml.etree
 ----------
