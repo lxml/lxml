@@ -181,11 +181,13 @@ class LXMLOutputChecker(OutputChecker):
         if parser is not None:
             try:
                 want_doc = parser(want)
-            except etree.XMLSyntaxError, e:
+            except etree.XMLSyntaxError:
+                e = sys.exc_info()[1]
                 errors.append('In example: %s' % e)
             try:
                 got_doc = parser(got)
-            except etree.XMLSyntaxError, e:
+            except etree.XMLSyntaxError:
+                e = sys.exc_info()[1]
                 errors.append('In actual output: %s' % e)
         if parser is None or errors:
             value = OutputChecker.output_difference(
