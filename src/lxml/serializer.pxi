@@ -54,7 +54,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
             text = python.PyUnicode_DecodeUTF8(
                 c_text, tree.xmlBufferLength(c_buffer), 'strict')
             if encoding is not _unicode:
-                encoding = encoding.encode(u"ASCII")
+                encoding = _utf8(encoding)
                 text = python.PyUnicode_AsEncodedString(
                     text, encoding, 'strict')
         else:

@@ -366,7 +366,7 @@ cdef class XSLT:
 
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
-            doc_url_utf = "string://__STRING__XSLT__%s" % id(self)
+            doc_url_utf = "string://__STRING__XSLT__" + str(id(self))
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
