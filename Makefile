@@ -1,4 +1,5 @@
 PYTHON?=python
+PYTHON3?=python3.0
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
@@ -20,6 +21,13 @@ test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
 	PYTHONPATH=src $(PYTHON) selftest.py
 	PYTHONPATH=src $(PYTHON) selftest2.py
+
+test_inplace3: inplace
+	$(MAKE) clean
+	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i
+	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
+	PYTHONPATH=src $(PYTHON3) selftest.py
+	PYTHONPATH=src $(PYTHON3) selftest2.py
 
 valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
@@ -76,6 +84,8 @@ pdf: apipdf
 # Two pdflatex runs are needed to build the correct Table of contents.
 
 test: test_inplace
+
+test3: test_inplace3
 
 valtest: valgrind_test_inplace
 
