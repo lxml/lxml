@@ -30,7 +30,14 @@ The usual setup procedure:
 .. sourcecode:: pycon
 
   >>> from lxml import etree
-  >>> from StringIO import StringIO
+
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
 
 
 Validation at parse time
