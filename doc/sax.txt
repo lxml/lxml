@@ -13,6 +13,14 @@ uses the Python core SAX facilities.
    2  Producing SAX events from an ElementTree or Element
    3  Interfacing with pulldom/minidom
 
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
+
 
 Building a tree from SAX events
 -------------------------------
@@ -57,7 +65,6 @@ Let's make a tree we can generate SAX events for:
 
 .. sourcecode:: pycon
 
-  >>> from StringIO import StringIO
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> tree = lxml.etree.parse(f)
 
@@ -126,5 +133,5 @@ PullDOM makes the result available through the ``document`` attribute:
 .. sourcecode:: pycon
 
   >>> dom = handler.document
-  >>> print dom.firstChild.localName
+  >>> print(dom.firstChild.localName)
   a

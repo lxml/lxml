@@ -4,9 +4,13 @@
 Test cases related to SAX I/O
 """
 
-import unittest
+import unittest, sys, os.path
 
-from common_imports import HelperTestCase, doctest, BytesIO
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
+
+from common_imports import HelperTestCase, doctest, BytesIO, _bytes
 from lxml import sax
 from xml.dom import pulldom
 
@@ -15,43 +19,43 @@ class ETreeSaxTestCase(HelperTestCase):
     def test_etree_sax_simple(self):
         tree = self.parse('<a>ab<b/>ba</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a>ab<b/>ba</a>',
+        self.assertEquals(_bytes('<a>ab<b/>ba</a>'),
                           xml_out)
 
     def test_etree_sax_double(self):
         tree = self.parse('<a>ab<b>bb</b>ba</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a>ab<b>bb</b>ba</a>',
+        self.assertEquals(_bytes('<a>ab<b>bb</b>ba</a>'),
                           xml_out)
 
     def test_etree_sax_comment(self):
         tree = self.parse('<a>ab<!-- TEST -->ba</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a>abba</a>',
+        self.assertEquals(_bytes('<a>abba</a>'),
                           xml_out)
 
     def test_etree_sax_pi(self):
         tree = self.parse('<a>ab<?this and that?>ba</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a>ab<?this and that?>ba</a>',
+        self.assertEquals(_bytes('<a>ab<?this and that?>ba</a>'),
                           xml_out)
 
     def test_etree_sax_comment_root(self):
         tree = self.parse('<!-- TEST --><a>ab</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a>ab</a>',
+        self.assertEquals(_bytes('<a>ab</a>'),
                           xml_out)
 
     def test_etree_sax_pi_root(self):
         tree = self.parse('<?this and that?><a>ab</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<?this and that?><a>ab</a>',
+        self.assertEquals(_bytes('<?this and that?><a>ab</a>'),
                           xml_out)
 
     def test_etree_sax_attributes(self):
         tree = self.parse('<a aa="5">ab<b b="5"/>ba</a>')
         xml_out = self._saxify_serialize(tree)
-        self.assertEquals('<a aa="5">ab<b b="5"/>ba</a>',
+        self.assertEquals(_bytes('<a aa="5">ab<b b="5"/>ba</a>'),
                           xml_out)
 
     def test_etree_sax_ns1(self):
@@ -97,11 +101,11 @@ class ETreeSaxTestCase(HelperTestCase):
         b = a[0]
 
         xml_out = self._saxify_serialize(a)
-        self.assertEquals('<a><b/></a>',
+        self.assertEquals(_bytes('<a><b/></a>'),
                           xml_out)
 
         xml_out = self._saxify_serialize(b)
-        self.assertEquals('<b/>',
+        self.assertEquals(_bytes('<b/>'),
                           xml_out)
 
     def test_element_sax_ns(self):
@@ -210,7 +214,7 @@ class ETreeSaxTestCase(HelperTestCase):
         new_tree = self._saxify_unsaxify(tree)
         f = BytesIO()
         new_tree.write(f)
-        return f.getvalue().replace('\n', '')
+        return f.getvalue().replace(_bytes('\n'), _bytes(''))
 
     
 def test_suite():
