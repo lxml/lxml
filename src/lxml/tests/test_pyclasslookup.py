@@ -8,11 +8,11 @@ Tests specific to the Python based class lookup.
 import unittest, operator
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize, doctest
+from common_imports import SillyFileLike, canonicalize, doctest, _bytes
 
 from lxml.etree import PythonElementClassLookup
 
-xml_str = '''\
+xml_str = _bytes('''\
 <obj:root xmlns:obj="objectified" xmlns:other="otherNS">
   <obj:c1 a1="A1" a2="A2" other:a3="A3">
     <obj:c2>0</obj:c2>
@@ -21,7 +21,7 @@ xml_str = '''\
     <other:c2>3</other:c2>
     <c2>3</c2>
   </obj:c1>
-</obj:root>'''
+</obj:root>''')
 
 
 class PyClassLookupTestCase(HelperTestCase):
@@ -118,9 +118,9 @@ class PyClassLookupTestCase(HelperTestCase):
             return el_class
         self._setClassLookup(lookup)
         root = self.XML(xml_str)
-        items1 = root[0].attrib.items()
+        items1 = list(root[0].attrib.items())
         items1.sort()
-        items2 = root.ATTRIB.items()
+        items2 = list(root.ATTRIB.items())
         items2.sort()
         self.assertEquals(items1, items2)
 
