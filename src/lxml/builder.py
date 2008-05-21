@@ -143,57 +143,57 @@ class ElementMaker(object):
         else:
             self._makeelement = ET.Element
 
-	# initialize type map for this element factory
+        # initialize type map for this element factory
 
-	if typemap:
-	    typemap = typemap.copy()
-	else:
-	    typemap = {}
-	
-	def add_text(elem, item):
-	    if len(elem):
-		elem[-1].tail = (elem[-1].tail or "") + item
-	    else:
-		elem.text = (elem.text or "") + item
+        if typemap:
+            typemap = typemap.copy()
+        else:
+            typemap = {}
+        
+        def add_text(elem, item):
+            if len(elem):
+                elem[-1].tail = (elem[-1].tail or "") + item
+            else:
+                elem.text = (elem.text or "") + item
         if str not in typemap:
             typemap[str] = add_text
         if unicode not in typemap:
             typemap[unicode] = add_text
 
-	def add_dict(elem, item):
-	    attrib = elem.attrib
-	    for k, v in item.items():
-		if isinstance(v, basestring):
-		    attrib[k] = v
-		else:
-		    attrib[k] = typemap[type(v)](None, v)
+        def add_dict(elem, item):
+            attrib = elem.attrib
+            for k, v in item.items():
+                if isinstance(v, basestring):
+                    attrib[k] = v
+                else:
+                    attrib[k] = typemap[type(v)](None, v)
         if dict not in typemap:
             typemap[dict] = add_dict
 
-	self._typemap = typemap
+        self._typemap = typemap
 
     def __call__(self, tag, *children, **attrib):
-	get = self._typemap.get
+        get = self._typemap.get
 
         if self._namespace is not None and tag[0] != '{':
             tag = self._namespace + tag
         elem = self._makeelement(tag, nsmap=self._nsmap)
-	if attrib:
-	    get(dict)(elem, attrib)
+        if attrib:
+            get(dict)(elem, attrib)
 
         for item in children:
             if callable(item):
                 item = item()
-	    t = get(type(item))
-	    if t is None:
-		if ET.iselement(item):
-		    elem.append(item)
-		    continue
-		raise TypeError("bad argument type: %r" % item)
-	    else:
-		v = t(elem, item)
-		if v:
-		    get(type(v))(elem, v)
+            t = get(type(item))
+            if t is None:
+                if ET.iselement(item):
+                    elem.append(item)
+                    continue
+                raise TypeError("bad argument type: %r" % item)
+            else:
+                v = t(elem, item)
+                if v:
+                    get(type(v))(elem, v)
 
         return elem
 
