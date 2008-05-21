@@ -11,9 +11,9 @@ See http://codespeak.net/lxml/sax.html
 """
 
 from xml.sax.handler import ContentHandler
-import etree
-from etree import ElementTree, SubElement
-from etree import Comment, ProcessingInstruction
+from lxml import etree
+from lxml.etree import ElementTree, SubElement
+from lxml.etree import Comment, ProcessingInstruction
 
 class SaxError(etree.LxmlError):
     """General SAX error.
@@ -26,7 +26,7 @@ def _getNsTag(tag):
     else:
         return (None, tag)
 
-class ElementTreeContentHandler(object, ContentHandler):
+class ElementTreeContentHandler(ContentHandler):
     """Build an lxml ElementTree from SAX events.
     """
     def __init__(self, makeelement=None):
@@ -120,7 +120,7 @@ class ElementTreeContentHandler(object, ContentHandler):
     def endElementNS(self, ns_name, qname):
         element = self._element_stack.pop()
         if ns_name != _getNsTag(element.tag):
-            raise SaxError, "Unexpected element closed: {%s}%s" % ns_name
+            raise SaxError("Unexpected element closed: {%s}%s" % ns_name)
 
     def startElement(self, name, attributes=None):
         self.startElementNS((None, name), name, attributes)
@@ -227,7 +227,7 @@ class ElementTreeProducer(object):
         try:
             prefix = prefixes[ns_uri]
         except KeyError:
-            prefix = prefixes[ns_uri] = u'ns%02d' % len(prefixes)
+            prefix = prefixes[ns_uri] = 'ns%02d' % len(prefixes)
             new_prefixes.append( (prefix, ns_uri) )
         return prefix + ':' + local_name
 
