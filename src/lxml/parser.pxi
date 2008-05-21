@@ -14,9 +14,16 @@ class XMLSyntaxError(ParseError):
     u"""Syntax error while parsing an XML document.
     """
     def __init__(self, message, code, line, column):
-        ParseError.__init__(self, message)        
+        if python.PY_VERSION_HEX >= 0x02050000:
+            # Python >= 2.5 uses new style class exceptions
+            super(_XMLSyntaxError, self).__init__(message)
+        else:
+            error_super_init(self, message)
         self.position = (line, column)
         self.code = code
+
+cdef object _XMLSyntaxError
+_XMLSyntaxError = XMLSyntaxError
 
 class ParserError(LxmlError):
     u"""Internal lxml parser error.

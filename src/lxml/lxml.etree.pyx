@@ -117,7 +117,7 @@ class LxmlError(Error):
             # Python >= 2.5 uses new style class exceptions
             super(_LxmlError, self).__init__(message)
         else:
-            super_init(self, message)
+            error_super_init(self, message)
         if error_log is None:
             self.error_log = __copyGlobalErrorLog()
         else:
@@ -126,8 +126,8 @@ class LxmlError(Error):
 cdef object _LxmlError
 _LxmlError = LxmlError
 
-cdef object super_init
-super_init = Error.__init__
+cdef object error_super_init
+error_super_init = Error.__init__
 
 
 # superclass for all syntax errors
