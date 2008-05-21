@@ -14,6 +14,11 @@ if this_dir not in sys.path:
 from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
 from common_imports import SillyFileLike, HelperTestCase
 
+try:
+    unicode = __builtins__["unicode"]
+except (NameError, KeyError):
+    unicode = str
+
 class HtmlParserTestCase(HelperTestCase):
     """HTML parser test cases
     """
@@ -207,7 +212,7 @@ class HtmlParserTestCase(HelperTestCase):
         filename = tempfile.mktemp(suffix=".html")
         open(filename, 'wb').write(self.html_str)
         try:
-            f = open(filename, 'r')
+            f = open(filename, 'rb')
             tree = self.etree.parse(f, parser)
             f.close()
             self.assertEqual(self.etree.tostring(tree.getroot()), self.html_str)

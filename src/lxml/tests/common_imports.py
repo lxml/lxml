@@ -99,7 +99,7 @@ class HelperTestCase(unittest.TestCase):
         assertFalse = unittest.TestCase.failIf
         
 class SillyFileLike:
-    def __init__(self, xml_data='<foo><bar/></foo>'):
+    def __init__(self, xml_data=_bytes('<foo><bar/></foo>')):
         self.xml_data = xml_data
         
     def read(self, amount=None):
@@ -109,19 +109,19 @@ class SillyFileLike:
                 self.xml_data = self.xml_data[amount:]
             else:
                 data = self.xml_data
-                self.xml_data = ''
+                self.xml_data = _bytes('')
             return data
-        return ''
+        return _bytes('')
 
 class LargeFileLike:
     def __init__(self, charlen=100, depth=4, children=5):
-        self.data = StringIO()
-        self.chars  = 'a' * charlen
+        self.data = BytesIO()
+        self.chars  = _bytes('a') * charlen
         self.children = range(children)
         self.more = self.iterelements(depth)
 
     def iterelements(self, depth):
-        yield '<root>'
+        yield _bytes('<root>')
         depth -= 1
         if depth > 0:
             for child in self.children:
@@ -130,7 +130,7 @@ class LargeFileLike:
                 yield self.chars
         else:
             yield self.chars
-        yield '</root>'
+        yield _bytes('</root>')
 
     def read(self, amount=None):
         data = self.data
