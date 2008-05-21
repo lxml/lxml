@@ -2964,7 +2964,7 @@ class ETreeTestCaseBase(HelperTestCase):
         utext = _str('Søk på nettet')
         uxml = (_str('<?xml version="1.0" encoding="UTF-8"?>') +
                 _str('<p>%s</p>') % utext)
-        bom = _bytes('\xEF\xBB\xBF')
+        bom = _bytes('\\xEF\\xBB\\xBF').decode("unicode_escape").encode("latin1")
         xml = bom + uxml.encode("utf-8")
         tree = etree.XML(xml)
         self.assertEquals(utext, tree.text)
