@@ -117,18 +117,18 @@ Now you can use it to validate documents:
 .. sourcecode:: pycon
 
   >>> root = etree.XML("<b/>")
-  >>> print dtd.validate(root)
+  >>> print(dtd.validate(root))
   True
 
   >>> root = etree.XML("<b><a/></b>")
-  >>> print dtd.validate(root)
+  >>> print(dtd.validate(root))
   False
 
 The reason for the validation failure can be found in the error log:
 
 .. sourcecode:: pycon
 
-  >>> print dtd.error_log.filter_from_errors()[0]
+  >>> print(dtd.error_log.filter_from_errors()[0])
   <string>:1:0:ERROR:VALID:DTD_NOT_EMPTY: Element b was declared EMPTY this one has content
 
 As an alternative to parsing from a file, you can use the
@@ -189,7 +189,7 @@ method. This is sometimes used in conditional statements:
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
   >>> if not relaxng(doc2):
-  ...     print "invalid!"
+  ...     print("invalid!")
   invalid!
 
 If you prefer getting an exception when validating, you can use the
@@ -214,7 +214,7 @@ messages:
 .. sourcecode:: pycon
 
   >>> log = relaxng.error_log
-  >>> print log.last_error
+  >>> print(log.last_error)
   <string>:1:0:ERROR:RELAXNGV:RELAXNG_ERR_ELEMWRONG: Did not expect element c there
 
 You can see that the error (ERROR) happened during RelaxNG validation
@@ -224,9 +224,9 @@ look at the error domain and its type directly:
 .. sourcecode:: pycon
 
   >>> error = log.last_error
-  >>> print error.domain_name
+  >>> print(error.domain_name)
   RELAXNGV
-  >>> print error.type_name
+  >>> print(error.type_name)
   RELAXNG_ERR_ELEMWRONG
 
 Note that this error log is local to the RelaxNG object.  It will only
@@ -296,7 +296,7 @@ This is sometimes used in conditional statements:
   >>> invalid = StringIO('<a><c></c></a>')
   >>> doc2 = etree.parse(invalid)
   >>> if not xmlschema(doc2):
-  ...     print "invalid!"
+  ...     print("invalid!")
   invalid!
 
 If you prefer getting an exception when validating, you can use the
@@ -320,9 +320,9 @@ Error reporting works as for the RelaxNG class:
 
   >>> log = xmlschema.error_log
   >>> error = log.last_error
-  >>> print error.domain_name
+  >>> print(error.domain_name)
   SCHEMASV
-  >>> print error.type_name
+  >>> print(error.type_name)
   SCHEMAV_ELEMENT_CONTENT
 
 If you were to print this log entry, you would get something like the
@@ -396,7 +396,7 @@ This is sometimes used in conditional statements:
   >>> is_valid = etree.Schematron(sct_doc)
 
   >>> if not is_valid(doc):
-  ...     print "invalid!"
+  ...     print("invalid!")
   invalid!
 
 Note that libxml2 restricts error reporting to the parsing step (when creating
