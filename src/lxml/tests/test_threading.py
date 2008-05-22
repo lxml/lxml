@@ -10,7 +10,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, HelperTestCase, StringIO
+from common_imports import etree, HelperTestCase, BytesIO, _bytes
 
 class ThreadingTestCase(HelperTestCase):
     """Threading tests"""
@@ -24,8 +24,8 @@ class ThreadingTestCase(HelperTestCase):
     def test_subtree_copy_thread(self):
         tostring = self.etree.tostring
         XML = self.etree.XML
-        xml = "<root><threadtag/></root>"
-        main_root = XML("<root/>")
+        xml = _bytes("<root><threadtag/></root>")
+        main_root = XML(_bytes("<root/>"))
 
         def run_thread():
             thread_root = XML(xml)
@@ -37,19 +37,19 @@ class ThreadingTestCase(HelperTestCase):
 
     def test_main_xslt_in_thread(self):
         XML = self.etree.XML
-        style = XML('''\
+        style = XML(_bytes('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="*">
     <foo><xsl:copy><xsl:value-of select="/a/b/text()" /></xsl:copy></foo>
   </xsl:template>
-</xsl:stylesheet>''')
+</xsl:stylesheet>'''))
         st = etree.XSLT(style)
 
         result = []
 
         def run_thread():
-            root = XML('<a><b>B</b><c>C</c></a>')
+            root = XML(_bytes('<a><b>B</b><c>C</c></a>'))
             result.append( st(root) )
 
         self._run_thread(run_thread)
@@ -62,21 +62,21 @@ class ThreadingTestCase(HelperTestCase):
     def test_thread_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring
-        root = XML('<a><b>B</b><c>C</c></a>')
+        root = XML(_bytes('<a><b>B</b><c>C</c></a>'))
 
         def run_thread():
-            style = XML('''\
+            style = XML(_bytes('''\
     <xsl:stylesheet version="1.0"
         xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:template match="*">
         <foo><xsl:copy><xsl:value-of select="/a/b/text()" /></xsl:copy></foo>
       </xsl:template>
-    </xsl:stylesheet>''')
+    </xsl:stylesheet>'''))
             st = etree.XSLT(style)
             root.append( st(root).getroot() )
 
         self._run_thread(run_thread)
-        self.assertEquals('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>',
+        self.assertEquals(_bytes('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>'),
                           tostring(root))
 
     def test_thread_mix(self):
@@ -84,9 +84,9 @@ class ThreadingTestCase(HelperTestCase):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
         tostring = self.etree.tostring
-        xml = '<a><b>B</b><c xmlns="test">C</c></a>'
+        xml = _bytes('<a><b>B</b><c xmlns="test">C</c></a>')
         root = XML(xml)
-        fragment = XML("<other><tags/></other>")
+        fragment = XML(_bytes("<other><tags/></other>"))
 
         result = self.etree.Element("{myns}root", att = "someval")
 
@@ -96,7 +96,7 @@ class ThreadingTestCase(HelperTestCase):
             result.append(thread_root[-1])
 
         def run_parse():
-            thread_root = self.etree.parse(StringIO(xml)).getroot()
+            thread_root = self.etree.parse(BytesIO(xml)).getroot()
             result.append(thread_root[0])
             result.append(thread_root[-1])
 
@@ -109,13 +109,13 @@ class ThreadingTestCase(HelperTestCase):
             SubElement(result, "{otherns}tasty")
 
         def run_xslt():
-            style = XML('''\
+            style = XML(_bytes('''\
     <xsl:stylesheet version="1.0"
         xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:template match="*">
         <foo><xsl:copy><xsl:value-of select="/a/b/text()" /></xsl:copy></foo>
       </xsl:template>
-    </xsl:stylesheet>''')
+    </xsl:stylesheet>'''))
             st = etree.XSLT(style)
             result.append( st(root).getroot()[0] )
 
@@ -124,7 +124,7 @@ class ThreadingTestCase(HelperTestCase):
             self._run_thread(test)
 
         self.assertEquals(
-            '<ns0:root xmlns:ns0="myns" att="someval"><b>B</b><c xmlns="test">C</c><b>B</b><c xmlns="test">C</c><tags/><a>B</a></ns0:root>',
+            _bytes('<ns0:root xmlns:ns0="myns" att="someval"><b>B</b><c xmlns="test">C</c><b>B</b><c xmlns="test">C</c><tags/><a>B</a></ns0:root>'),
             tostring(result))
 
         def strip_first():
@@ -135,7 +135,7 @@ class ThreadingTestCase(HelperTestCase):
             self._run_thread(strip_first)
 
         self.assertEquals(
-            '<ns0:root xmlns:ns0="myns" att="someval"/>',
+            _bytes('<ns0:root xmlns:ns0="myns" att="someval"/>'),
             tostring(result))
 
 
