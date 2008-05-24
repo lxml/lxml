@@ -613,6 +613,9 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
     cdef _Document _profile
+    cdef char* _buffer
+    cdef Py_ssize_t _buffer_len
+    cdef Py_ssize_t _buffer_refcnt
     cdef _saveToStringAndSize(self, char** s, int* l):
         cdef _Document doc
         cdef int r
@@ -664,9 +667,21 @@ cdef class _XSLTResultTree(_ElementTree):
         cdef int l
         if buffer is NULL:
             return # LOCK
-        self._saveToStringAndSize(<char**>&buffer.buf, &l)
-        buffer.len = l
-        buffer.readonly = 0
+        if self._buffer is NULL or flags & python.PyBUF_WRITABLE:
+            self._saveToStringAndSize(<char**>&buffer.buf, &l)
+            buffer.len = l
+            if self._buffer is NULL and not flags & python.PyBUF_WRITABLE:
+                self._buffer = <char*>buffer.buf
+                self._buffer_len = l
+                self._buffer_refcnt = 1
+        else:
+            buffer.buf = <char*>self._buffer
+            buffer.len = self._buffer_len
+            self._buffer_refcnt += 1
+        if flags & python.PyBUF_WRITABLE:
+            buffer.readonly = 1
+        else:
+            buffer.readonly = 1
         if flags & python.PyBUF_FORMAT:
             buffer.format = "B"
         else:
@@ -679,7 +694,16 @@ cdef class _XSLTResultTree(_ElementTree):
         buffer.internal = NULL
 
     def __releasebuffer__(self, Py_buffer* buffer):
-        tree.xmlFree(<char*>buffer.buf)
+        if buffer is NULL:
+            return # UNLOCK
+        if <char*>buffer.buf is self._buffer:
+            self._buffer_refcnt -= 1
+            if self._buffer_refcnt == 0:
+                tree.xmlFree(self._buffer)
+                self._buffer = NULL
+        else:
+            tree.xmlFree(<char*>buffer.buf)
+        buffer.buf = NULL
 
     property xslt_profile:
         u"""Return an ElementTree with profiling data for the stylesheet run.
@@ -701,6 +725,9 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt, _Document profile):
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
     result._profile = profile
+    result._buffer = NULL
+    result._buffer_refcnt = 0
+    result._buffer_len = 0
     return result
 
 # functions like "output" and "write" are a potential security risk, but we
