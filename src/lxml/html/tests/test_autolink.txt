@@ -47,7 +47,7 @@ after autolink::
 
     >>> from lxml.html.clean import word_break_html
     >>> def pascii(s):
-    ...     print(s.decode('utf8').encode('ascii', 'xmlcharrefreplace').decode('ascii'))
+    ...     print(s.encode('ascii', 'xmlcharrefreplace').decode('ascii'))
     >>> pascii(word_break_html('''
     ... <div>Hey you
     ... 12345678901234567890123456789012345678901234567890</div>'''))
