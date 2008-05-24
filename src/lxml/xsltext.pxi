@@ -110,7 +110,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             if self_node is not None:
                 _freeReadOnlyProxies(self_node)
     except Exception, e:
-        e = unicode(e).encode("UTF-8")
+        e = unicode(e).encode(u"UTF-8")
         message = python.PyString_FromFormat(
             "Error executing extension element '%s': %s",
             c_inst_node.name, _cstr(e))
