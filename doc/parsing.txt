@@ -510,20 +510,20 @@ respective XML structures.
   ...     if action in ('start', 'end'):
   ...         print("%s: %s" % (action, elem.tag))
   ...     elif action == 'pi':
-  ...         print("%s -%s=%s-" % (action, elem.target, elem.text))
+  ...         print("%s: -%s=%s-" % (action, elem.target, elem.text))
   ...     else: # 'comment'
-  ...         print("%s -%s-" % (action, elem.text))
-  pi -some=pi -
-  comment - a comment -
-  start root
-  start element
-  end element
-  comment - another comment -
-  start element
-  end element
-  start {testns}empty-element
-  end {testns}empty-element
-  end root
+  ...         print("%s: -%s-" % (action, elem.text))
+  pi: -some=pi -
+  comment: - a comment -
+  start: root
+  start: element
+  end: element
+  comment: - another comment -
+  start: element
+  end: element
+  start: {testns}empty-element
+  end: {testns}empty-element
+  end: root
 
   >>> print(context.root.tag)
   root

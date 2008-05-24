@@ -189,7 +189,7 @@ This can only be solved by adding a ``hoi`` resolver to the original parser:
   >>> honk_parser.resolvers.add( PrefixResolver("hoi") )
   >>> result = transform(honk_doc)
   Resolved url hoi:test as prefix hoi
-  >>> print str(result),
+  >>> print(str(result)[:-1])
   <?xml version="1.0"?>
   <test>hoi-TEST</test>
 
@@ -202,7 +202,7 @@ is resolved from within the stylesheet context:
 
   >>> result = transform(normal_doc)
   Resolved url hoi:test as prefix hoi
-  >>> print str(result),
+  >>> print(str(result)[:-1])
   <?xml version="1.0"?>
   <test>hoi-TEST</test>
 

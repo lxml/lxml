@@ -602,7 +602,7 @@ def xpath():
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e("stringTest('you')")
     'Hello you'
-    >>> e(_bytes("stringTest('\\xe9lan')").decode("unicode_escape"))
+    >>> e(_bytes("stringTest('\\\\xe9lan')").decode("unicode_escape"))
     u'Hello \\xe9lan'
     >>> e("stringTest('you','there')")
     Traceback (most recent call last):
