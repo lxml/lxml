@@ -344,7 +344,7 @@ def Extension(module, function_mapping=None, *, ns=None):
     else:
         if function_mapping is None:
             function_mapping = [ name for name in dir(module)
-                                 if not name.startswith('_') ]
+                                 if not name.startswith(u'_') ]
         for function_name in function_mapping:
             python.PyDict_SetItem(functions, (ns, function_name),
                                   getattr(module, function_name))
