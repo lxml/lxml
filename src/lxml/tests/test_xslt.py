@@ -10,6 +10,18 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
+is_python3 = sys.version_info[0] >= 3
+
+try:
+    unicode = __builtins__["unicode"]
+except (NameError, KeyError): # Python 3
+    unicode = str
+
+try:
+    basestring = __builtins__["basestring"]
+except (NameError, KeyError): # Python 3
+    basestring = str
+
 from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
 from common_imports import doctest, _bytes, _str
 
@@ -29,10 +41,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
     def test_xslt_elementtree_error(self):
@@ -67,32 +79,33 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         transform = etree.XSLT(style)
         res = transform(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
         transform_copy = copy.deepcopy(transform)
         res = transform_copy(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
         transform = etree.XSLT(style)
         res = transform(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
-    def test_xslt_utf8(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
+    if not is_python3:
+        def test_xslt_utf8(self):
+            tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
+                                     ).decode("unicode_escape"))
+            style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output encoding="UTF-8"/>
@@ -101,19 +114,20 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:template>
 </xsl:stylesheet>''')
 
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes('''\
+            st = etree.XSLT(style)
+            res = st(tree)
+            expected = '''\
 <?xml version="1.0" encoding="UTF-8"?>
 <foo>\\uF8D2</foo>
-''').decode("unicode_escape")
-        self.assertEquals(expected,
-                          unicode(str(res), 'UTF-8'))
+'''.decode("unicode_escape")
+            self.assertEquals(expected,
+                              unicode(str(res), 'UTF-8'))
 
-    def test_xslt_encoding(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
+    if not is_python3:
+        def test_xslt_encoding(self):
+            tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
+                                     ).decode("unicode_escape"))
+            style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output encoding="UTF-16"/>
@@ -122,19 +136,20 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:template>
 </xsl:stylesheet>''')
 
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes('''\
+            st = etree.XSLT(style)
+            res = st(tree)
+            expected = _bytes('''\
 <?xml version="1.0" encoding="UTF-16"?>
 <foo>\\uF8D2</foo>
 ''').decode("unicode_escape")
-        self.assertEquals(expected,
-                          unicode(str(res), 'UTF-16'))
+            self.assertEquals(expected,
+                              unicode(str(res), 'UTF-16'))
 
-    def test_xslt_encoding_override(self):
-        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
-                                 ).decode("unicode_escape"))
-        style = self.parse('''\
+    if not is_python3:
+        def test_xslt_encoding_override(self):
+            tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
+                                     ).decode("unicode_escape"))
+            style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output encoding="UTF-8"/>
@@ -143,17 +158,17 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:template>
 </xsl:stylesheet>''')
 
-        st = etree.XSLT(style)
-        res = st(tree)
-        expected = _bytes("""\
+            st = etree.XSLT(style)
+            res = st(tree)
+            expected = """\
 <?xml version='1.0' encoding='UTF-16'?>\
-<foo>\\uF8D2</foo>""").decode("unicode_escape")
+<foo>\\uF8D2</foo>""".decode("unicode_escape")
 
-        f = BytesIO()
-        res.write(f, encoding='UTF-16')
-        result = unicode(f.getvalue(), 'UTF-16').replace('\n', '')
-        self.assertEquals(expected,
-                          result)
+            f = BytesIO()
+            res.write(f, encoding='UTF-16')
+            result = unicode(str(f.getvalue()), 'UTF-16').replace('\n', '')
+            self.assertEquals(expected,
+                              result)
 
     def test_xslt_unicode(self):
         tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
@@ -195,10 +210,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <a><b>*B*</b><c>*C*</c></a>
-'''),
+''',
                           str(res))
 
     if etree.LIBXSLT_VERSION >= (1,1,21):
@@ -218,10 +233,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
             st = etree.XSLT(style)
             res = st(tree)
-            self.assertEquals(_bytes('''\
+            self.assertEquals('''\
 <?xml version="1.0"?>
 <h1 class="axc">test</h1>
-'''),
+''',
                               str(res))
 
     def test_exslt_math(self):
@@ -243,10 +258,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <a pi="3.14"><b pi="3">B</b><c pi="3">C</c></a>
-'''),
+''',
                           str(res))
 
     def test_xslt_input(self):
@@ -301,10 +316,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree, bar="'Bar'")
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo>
-'''),
+''',
                           str(res))
 
     def test_xslt_parameter_invalid(self):
@@ -355,10 +370,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree, bar="'Bar'", baz="'Baz'")
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo><foo>Baz</foo>
-'''),
+''',
                           str(res))
         
     def test_xslt_parameter_xpath(self):
@@ -374,10 +389,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree, bar="/a/b/text()")
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
         
@@ -395,16 +410,16 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree, bar="'Bar'")
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Bar</foo>
-'''),
+''',
                           str(res))
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>Default</foo>
-'''),
+''',
                           str(res))
         
     def test_xslt_html_output(self):
@@ -421,7 +436,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style)
         res = st(tree)
-        self.assertEquals(_bytes('<html><body>B</body></html>'),
+        self.assertEquals('<html><body>B</body></html>',
                           str(res).strip())
 
     def test_xslt_include(self):
@@ -924,10 +939,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style_root)
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
     def test_xslt_pi_embedded_id(self):
@@ -958,10 +973,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         st = etree.XSLT(style_root)
         res = st(tree)
-        self.assertEquals(_bytes('''\
+        self.assertEquals('''\
 <?xml version="1.0"?>
 <foo>B</foo>
-'''),
+''',
                           str(res))
 
     def test_xslt_pi_get(self):
@@ -1187,7 +1202,7 @@ class ETreeXSLTTestCase(HelperTestCase):
 
     def test_exslt_regexp_match2(self):
         # taken from http://www.exslt.org/regexp/functions/match/index.html
-        xslt = etree.XSLT(etree.XML(_bytes("""\
+        xslt = etree.XSLT(self.parse("""\
 <xsl:stylesheet version="1.0"
    xmlns:regexp="http://exslt.org/regular-expressions"
    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -1200,7 +1215,7 @@ class ETreeXSLTTestCase(HelperTestCase):
     </test>
   </xsl:template>
 </xsl:stylesheet>
-""")))
+"""))
         result = xslt(etree.XML(_bytes('<a/>')))
         root = result.getroot()
         self.assertEquals(root.tag,  'test')
