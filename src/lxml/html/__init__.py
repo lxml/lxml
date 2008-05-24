@@ -144,7 +144,7 @@ class HtmlMixin(object):
 
             >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
             >>> h.find('.//b').drop_tag()
-            >>> print tostring(h)
+            >>> print(tostring(h))
             <div>Hello World!</div>
         """
         parent = self.getparent()
