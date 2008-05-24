@@ -366,7 +366,7 @@ cdef class XSLT:
 
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
-            doc_url_utf = "string://__STRING__XSLT__" + str(id(self))
+            doc_url_utf = "string://__STRING__XSLT__" + str(id(self)))
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
@@ -631,6 +631,8 @@ cdef class _XSLTResultTree(_ElementTree):
     def __str__(self):
         cdef char* s
         cdef int l
+        if python.IS_PYTHON3:
+            return self.__unicode__()
         self._saveToStringAndSize(&s, &l)
         if s is NULL:
             return ''
@@ -656,6 +658,27 @@ cdef class _XSLTResultTree(_ElementTree):
         finally:
             tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
+
+    def __getbuffer__(self, Py_buffer* buffer, int flags):
+        cdef int l
+        if buffer is NULL:
+            return # LOCK
+        self._saveToStringAndSize(<char**>&buffer.buf, &l)
+        buffer.len = l
+        buffer.readonly = 0
+        if flags & python.PyBUF_FORMAT:
+            buffer.format = "B"
+        else:
+            buffer.format = NULL
+        buffer.ndim = 0
+        buffer.shape = NULL
+        buffer.strides = NULL
+        buffer.suboffsets = NULL
+        buffer.itemsize = 1
+        buffer.internal = NULL
+
+    def __releasebuffer__(self, Py_buffer* buffer):
+        tree.xmlFree(<char*>buffer.buf)
 
     property xslt_profile:
         u"""Return an ElementTree with profiling data for the stylesheet run.

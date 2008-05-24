@@ -108,6 +108,18 @@ cdef extern from "Python.h":
     cdef int callable "PyCallable_Check" (object obj)
     cdef char* _cstr "PyString_AS_STRING" (object s)
 
+    # Py_buffer related flags
+    cdef int PyBUF_SIMPLE
+    cdef int PyBUF_WRITABLE
+    cdef int PyBUF_LOCK
+    cdef int PyBUF_FORMAT
+    cdef int PyBUF_ND
+    cdef int PyBUF_STRIDES
+    cdef int PyBUF_C_CONTIGUOUS
+    cdef int PyBUF_F_CONTIGUOUS
+    cdef int PyBUF_ANY_CONTIGUOUS
+    cdef int PyBUF_INDIRECT
+
 cdef extern from "pythread.h":
     ctypedef void* PyThread_type_lock
     cdef PyThread_type_lock PyThread_allocate_lock()
