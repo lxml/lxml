@@ -23,6 +23,17 @@ except (NameError, KeyError):
     # Python 3
     unichr = chr
 
+try:
+    unicode = __builtins__['unicode']
+except (NameError, KeyError):
+    # Python 3
+    unicode = str
+
+try:
+    basestring = __builtins__['basestring']
+except (NameError, KeyError):
+    basestring = (str, bytes)
+
 
 __all__ = ['clean_html', 'clean', 'Cleaner', 'autolink', 'autolink_html',
            'word_break', 'word_break_html']
@@ -467,7 +478,7 @@ class Cleaner(object):
             doc = copy.deepcopy(html)
         self(doc)
         if return_string:
-            return tostring(doc)
+            return tostring(doc, encoding=unicode)
         else:
             return doc
 
@@ -606,7 +617,7 @@ def autolink_html(html, *args, **kw):
         return_string = False
     autolink(doc, *args, **kw)
     if return_string:
-        return tostring(doc)
+        return tostring(doc, encoding=unicode)
     else:
         return doc
 
@@ -663,7 +674,7 @@ def word_break(el, max_width=40,
 def word_break_html(html, *args, **kw):
     doc = fromstring(html)
     word_break(doc, *args, **kw)
-    return tostring(doc)
+    return tostring(doc, encoding=unicode)
 
 def _break_text(text, max_width, break_character):
     words = text.split()
