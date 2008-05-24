@@ -334,7 +334,9 @@ class PyClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
+    import sys
+    if sys.version_info[0] < 3:
+        suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':
