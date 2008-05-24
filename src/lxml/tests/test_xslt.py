@@ -26,7 +26,7 @@ from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
 from common_imports import doctest, _bytes, _str
 
 class ETreeXSLTTestCase(HelperTestCase):
-    """XPath tests etree"""
+    """XSLT tests etree"""
         
     def test_xslt(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -1281,9 +1281,53 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[2].text, "a")
         self.assertEquals(root[3].text, "test")
 
+
+class Py3XSLTTestCase(HelperTestCase):
+    """XSLT tests for etree under Python 3"""
+    def test_xslt_result_bytes(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals(_bytes('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+'''),
+                          bytes(res))
+
+    def test_xslt_result_bytearray(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals(_bytes('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+'''),
+                          bytearray(res))
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
+    if is_python3:
+        suite.addTests([unittest.makeSuite(Py3XSLTTestCase)])
     suite.addTests(
         [doctest.DocFileSuite('../../../doc/extensions.txt')])
     suite.addTests(
