@@ -1618,7 +1618,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         _destroyFakeDoc(doc._c_doc, c_doc)
         if c_path is NULL:
             python.PyErr_NoMemory()
-        path = c_path
+        path = funicode(c_path)
         tree.xmlFree(c_path)
         return path
 
