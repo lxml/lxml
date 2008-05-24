@@ -144,7 +144,10 @@ cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                 name = _namespacedNameFromNsName(
                     c_attributes[2], c_attributes[0])
                 if c_attributes[3] is NULL:
-                    value = ""
+                    if python.IS_PYTHON3:
+                        value = u''
+                    else:
+                        value = ''
                 else:
                     value = python.PyUnicode_DecodeUTF8(
                         c_attributes[3], c_attributes[4] - c_attributes[3],
@@ -192,7 +195,10 @@ cdef void _handleSaxStartNoNs(void* ctxt, char* c_name,
             while c_attributes[0] is not NULL:
                 name = funicode(c_attributes[0])
                 if c_attributes[1] is NULL:
-                    value = ""
+                    if python.IS_PYTHON3:
+                        value = u''
+                    else:
+                        value = ''
                 else:
                     value = funicode(c_attributes[1])
                 c_attributes = c_attributes + 2
