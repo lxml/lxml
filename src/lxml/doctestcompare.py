@@ -43,6 +43,11 @@ import cgi
 __all__ = ['PARSE_HTML', 'PARSE_XML', 'NOPARSE_MARKUP', 'LXMLOutputChecker',
            'LHTMLOutputChecker', 'install', 'temp_install']
 
+try:
+    _basestring = basestring
+except NameError:
+    _basestring = (str, bytes)
+
 PARSE_HTML = doctest.register_optionflag('PARSE_HTML')
 PARSE_XML = doctest.register_optionflag('PARSE_XML')
 NOPARSE_MARKUP = doctest.register_optionflag('NOPARSE_MARKUP')
@@ -163,8 +168,8 @@ class LXMLOutputChecker(OutputChecker):
     def tag_compare(self, want, got):
         if want == 'any':
             return True
-        if (not isinstance(want, basestring)
-            or not isinstance(got, basestring)):
+        if (not isinstance(want, _basestring)
+            or not isinstance(got, _basestring)):
             return want == got
         want = want or ''
         got = got or ''
