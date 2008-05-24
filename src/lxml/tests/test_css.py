@@ -7,6 +7,11 @@ import os
 doc_fn = os.path.join(os.path.dirname(__file__),
                       'css_shakespear.html')
 
+try:
+    basestring = __builtins__['basestring']
+except (NameError, KeyError):
+    basestring = (str, bytes)
+
 # Data borrowed from http://mootools.net/slickspeed/
 
 class CSSTestCase(HelperTestCase):

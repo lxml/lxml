@@ -570,7 +570,7 @@ def setTest2(ctxt, st1):
     return st1[0:2]
 
 def argsTest1(ctxt, s, f, b, st):
-    return ", ".join(map(str, (s, f, b, map(tag, st))))
+    return ", ".join(map(str, (s, f, b, list(map(tag, st)))))
 
 def argsTest2(ctxt, st1, st2):
     st1.extend(st2)
@@ -612,13 +612,13 @@ def xpath():
     6.0
     >>> e("booleanTest(true())")
     False
-    >>> map(tag, e("setTest(/body/tag)"))
+    >>> list(map(tag, e("setTest(/body/tag)")))
     ['tag']
-    >>> map(tag, e("setTest2(/body/*)"))
+    >>> list(map(tag, e("setTest2(/body/*)")))
     ['tag', 'section']
     >>> e("argsTest1('a',1.5,true(),/body/tag)")
     "a, 1.5, True, ['tag', 'tag', 'tag']"
-    >>> map(tag, e("argsTest2(/body/tag, /body/section)"))
+    >>> list(map(tag, e("argsTest2(/body/tag, /body/section)")))
     ['tag', 'section', 'tag', 'tag']
     >>> e("resultTypesTest()")
     Traceback (most recent call last):

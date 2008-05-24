@@ -55,7 +55,7 @@ parsing XML from an in-memory string:
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
   >>> root = etree.fromstring(xml)
-  >>> print etree.tostring(root)
+  >>> print(etree.tostring(root))
   <a xmlns="test"><b xmlns="test"/></a>
 
 To read from a file or file-like object, you can use the ``parse()`` function,
@@ -64,7 +64,7 @@ which returns an ``ElementTree`` object:
 .. sourcecode:: pycon
 
   >>> tree = etree.parse(StringIO(xml))
-  >>> print etree.tostring(tree.getroot())
+  >>> print(etree.tostring(tree.getroot()))
   <a xmlns="test"><b xmlns="test"/></a>
 
 Note how the ``parse()`` function reads from a file-like object here.  If
@@ -97,7 +97,7 @@ example is easily extended to clean up namespaces during parsing:
 
   >>> parser = etree.XMLParser(ns_clean=True)
   >>> tree   = etree.parse(StringIO(xml), parser)
-  >>> print etree.tostring(tree.getroot())
+  >>> print(etree.tostring(tree.getroot()))
   <a xmlns="test"><b/></a>
 
 The keyword arguments in the constructor are mainly based on the libxml2
@@ -135,7 +135,7 @@ last parser run:
 .. sourcecode:: pycon
 
   >>> parser = etree.XMLParser()
-  >>> print len(parser.error_log)
+  >>> print(len(parser.error_log))
   0
 
   >>> tree = etree.XML("<root></b>", parser)
@@ -143,14 +143,16 @@ last parser run:
     ...
   XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 1, column 11
 
-  >>> print len(parser.error_log)
+  >>> print(len(parser.error_log))
   1
 
   >>> error = parser.error_log[0]
-  >>> print error.message
+  >>> print(error.message)
   Opening and ending tag mismatch: root line 1 and b
-  >>> print error.line, error.column
-  1 11
+  >>> print(error.line)
+  1
+  >>> print(error.column)
+  11
 
 
 Parsing HTML
@@ -168,7 +170,8 @@ version 2.6.21 or newer to take advantage of this feature:
   >>> parser = etree.HTMLParser()
   >>> tree   = etree.parse(StringIO(broken_html), parser)
 
-  >>> print etree.tostring(tree.getroot(), pretty_print=True),
+  >>> result = etree.tostring(tree.getroot(), pretty_print=True)
+  >>> print(result[:-1]) # strip trailing newline
   <html>
     <head>
       <title>test</title>
@@ -184,7 +187,8 @@ ElementTree:
 .. sourcecode:: pycon
 
   >>> html = etree.HTML(broken_html)
-  >>> print etree.tostring(html, pretty_print=True),
+  >>> result = etree.tostring(html, pretty_print=True)
+  >>> print(result[:-1]) # strip trailing newline
   <html>
     <head>
       <title>test</title>
@@ -221,16 +225,16 @@ original encoding:
 
   >>> tree = etree.parse(StringIO(xhtml))
   >>> docinfo = tree.docinfo
-  >>> print docinfo.public_id
+  >>> print(docinfo.public_id)
   -//W3C//DTD XHTML 1.0 Transitional//EN
-  >>> print docinfo.system_url
+  >>> print(docinfo.system_url)
   http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd
   >>> docinfo.doctype == doctype_string
   True
 
-  >>> print docinfo.xml_version
+  >>> print(docinfo.xml_version)
   1.0
-  >>> print docinfo.encoding
+  >>> print(docinfo.encoding)
   ascii
 
 
@@ -246,15 +250,15 @@ a target object to the parser:
 
   >>> class EchoTarget:
   ...     def start(self, tag, attrib):
-  ...         print "start", tag, attrib
+  ...         print("start %s %s" % (tag, attrib))
   ...     def end(self, tag):
-  ...         print "end", tag
+  ...         print("end %s" % tag)
   ...     def data(self, data):
-  ...         print "data", repr(data)
+  ...         print("data %r" % data)
   ...     def comment(self, text):
-  ...         print "comment", text
+  ...         print("comment %s" % text)
   ...     def close(self):
-  ...         print "close"
+  ...         print("close")
   ...         return "closed!"
 
   >>> parser = etree.XMLParser(target = EchoTarget())
@@ -267,7 +271,7 @@ a target object to the parser:
   end element
   close
 
-  >>> print result
+  >>> print(result)
   closed!
 
 Note that the parser does *not* build a tree in this case.  The result
@@ -280,9 +284,9 @@ parser target that builds a tree is the ``TreeBuilder``.
 
   >>> result = etree.XML("<element>some<!--comment-->text</element>", parser)
 
-  >>> print result.tag
+  >>> print(result.tag)
   element
-  >>> print result[0].text
+  >>> print(result[0].text)
   comment
 
 
@@ -318,9 +322,9 @@ parser:
 
   >>> root = parser.close()
 
-  >>> print root.tag
+  >>> print(root.tag)
   root
-  >>> print root[0].tag
+  >>> print(root[0].tag)
   a
 
 If you do not call ``close()``, the parser will stay locked and
@@ -353,7 +357,7 @@ You can also combine the feed parser interface with the target parser:
 
   >>> result = parser.close()
   close
-  >>> print result
+  >>> print(result)
   closed!
 
 Again, this prevents the automatic creation of an XML tree and leaves
@@ -388,11 +392,11 @@ only 'end' events are generated:
 
   >>> context = etree.iterparse(StringIO(xml))
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  end element
-  end element
-  end {testns}empty-element
-  end root
+  ...     print("%s: %s" % (action, elem.tag))
+  end: element
+  end: element
+  end: {testns}empty-element
+  end: root
 
 The resulting tree is available through the ``root`` property of the iterator:
 
@@ -408,15 +412,15 @@ The other event types can be activated with the ``events`` keyword argument:
   >>> events = ("start", "end")
   >>> context = etree.iterparse(StringIO(xml), events=events)
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  start root
-  start element
-  end element
-  start element
-  end element
-  start {testns}empty-element
-  end {testns}empty-element
-  end root
+  ...     print("%s: %s" % (action, elem.tag))
+  start: root
+  start: element
+  end: element
+  start: element
+  end: element
+  start: {testns}empty-element
+  end: {testns}empty-element
+  end: root
 
 The 'start-ns' and 'end-ns' events notify about namespace
 declarations.  They do not come with Elements.  Instead, the value of
@@ -428,7 +432,7 @@ entry on the 'end-ns' event.
 
 .. sourcecode:: pycon
 
-  >>> print xml,
+  >>> print(xml[:-1])
   <root>
     <element key='value'>text</element>
     <element>text</element>tail
@@ -439,21 +443,21 @@ entry on the 'end-ns' event.
   >>> context = etree.iterparse(StringIO(xml), events=events)
   >>> for action, elem in context:
   ...     if action in ('start', 'end'):
-  ...         print action, elem.tag
+  ...         print("%s: %s" % (action, elem.tag))
   ...     elif action == 'start-ns':
-  ...         print action, elem
+  ...         print("%s: %s" % (action, elem))
   ...     else:
-  ...         print action
-  start root
-  start element
-  end element
-  start element
-  end element
-  start-ns ('', 'testns')
-  start {testns}empty-element
-  end {testns}empty-element
+  ...         print(action)
+  start: root
+  start: element
+  end: element
+  start: element
+  end: element
+  start-ns: ('', 'testns')
+  start: {testns}empty-element
+  end: {testns}empty-element
   end-ns
-  end root
+  end: root
 
 
 Selective tag events
@@ -467,17 +471,17 @@ specific tag or namespace:
 
   >>> context = etree.iterparse(StringIO(xml), tag="element")
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  end element
-  end element
+  ...     print("%s: %s" % (action, elem.tag))
+  end: element
+  end: element
 
   >>> events = ("start", "end")
   >>> context = etree.iterparse(
   ...             StringIO(xml), events=events, tag="{testns}*")
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  start {testns}empty-element
-  end {testns}empty-element
+  ...     print("%s: %s" % (action, elem.tag))
+  start: {testns}empty-element
+  end: {testns}empty-element
 
 
 Comments and PIs
@@ -504,11 +508,11 @@ respective XML structures.
   >>> context = etree.iterparse(StringIO(commented_xml), events=events)
   >>> for action, elem in context:
   ...     if action in ('start', 'end'):
-  ...         print action, elem.tag
+  ...         print("%s: %s" % (action, elem.tag))
   ...     elif action == 'pi':
-  ...         print action, "-%s=%s-" % (elem.target, elem.text)
+  ...         print("%s -%s=%s-" % (action, elem.target, elem.text))
   ...     else: # 'comment'
-  ...         print action, "-%s-" % elem.text
+  ...         print("%s -%s-" % (action, elem.text))
   pi -some=pi -
   comment - a comment -
   start root
@@ -521,7 +525,7 @@ respective XML structures.
   end {testns}empty-element
   end root
 
-  >>> print context.root.tag
+  >>> print(context.root.tag)
   root
 
 
@@ -536,9 +540,12 @@ needed:
 
   >>> context = etree.iterparse(StringIO(xml))
   >>> for action, elem in context:
-  ...     print len(elem),
+  ...     print(len(elem))
   ...     elem.clear()
-  0 0 0 3
+  0
+  0
+  0
+  3
   >>> context.root.getchildren()
   []
 
@@ -584,22 +591,22 @@ behaves exactly like ``iterparse()``, but works on Elements and ElementTrees:
   >>> context = etree.iterwalk(
   ...             root, events=("start", "end"), tag="element")
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  start element
-  end element
-  start element
-  end element
+  ...     print("%s: %s" % (action, elem.tag))
+  start: element
+  end: element
+  start: element
+  end: element
 
   >>> f = StringIO(xml)
   >>> context = etree.iterparse(
   ...             f, events=("start", "end"), tag="element")
 
   >>> for action, elem in context:
-  ...     print action, elem.tag
-  start element
-  end element
-  start element
-  end element
+  ...     print("%s: %s" % (action, elem.tag))
+  start: element
+  end: element
+  start: element
+  end: element
 
 
 Python unicode strings
