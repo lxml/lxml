@@ -34,6 +34,14 @@ and extension elements in XSLT as in the following example:
      2.2  Applying XSL templates
      2.3  Working with read-only elements
 
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
+
 
 XPath Extension functions
 =========================
@@ -76,8 +84,7 @@ against:
 .. sourcecode:: pycon
 
   >>> from lxml import etree
-  >>> from StringIO import StringIO
-  >>> f = StringIO('<a><b>Haegar</b></a>')
+  >>> f = BytesIO('<a><b>Haegar</b></a>')
   >>> doc = etree.parse(f)
   >>> root = doc.getroot()
 
@@ -85,13 +92,13 @@ Done. Now we can have XPath expressions call our new function:
 
 .. sourcecode:: pycon
 
-  >>> print root.xpath("hello('world')")
+  >>> print(root.xpath("hello('world')"))
   Hello world
-  >>> print root.xpath('hello(local-name(*))')
+  >>> print(root.xpath('hello(local-name(*))'))
   Hello b
-  >>> print root.xpath('hello(string(b))')
+  >>> print(root.xpath('hello(string(b))'))
   Hello Haegar
-  >>> print root.xpath('countargs(., b, ./*)')
+  >>> print(root.xpath('countargs(., b, ./*)'))
   Got 3 arguments.
 
 Note how we call both a Python function (`hello`) and an XPath built-in
@@ -104,7 +111,7 @@ allows you to do this:
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myfunctions')
   >>> ns['hello'] = hello
   >>> prefixmap = {'f' : 'http://mydomain.org/myfunctions'}
-  >>> print root.xpath('f:hello(local-name(*))', namespaces=prefixmap)
+  >>> print(root.xpath('f:hello(local-name(*))', namespaces=prefixmap))
   Hello b
 
 
@@ -120,7 +127,7 @@ register it with the namespace:
   >>> ns = etree.FunctionNamespace('http://mydomain.org/myother/functions')
   >>> ns.prefix = 'es'
   >>> ns['hello'] = ola
-  >>> print root.xpath('es:hello(local-name(*))')
+  >>> print(root.xpath('es:hello(local-name(*))'))
   Ola b
 
 This is a global assignment, so take care not to assign the same prefix to
@@ -145,7 +152,7 @@ is called:
 .. sourcecode:: pycon
 
   >>> def print_tag(context, nodes):
-  ...     print context.context_node.tag, [ n.tag for n in nodes ]
+  ...     print("%s: %s" % (context.context_node.tag, [ n.tag for n in nodes ]))
 
   >>> ns = etree.FunctionNamespace('http://mydomain.org/printtag')
   >>> ns.prefix = "pt"
@@ -164,7 +171,7 @@ allows functions to keep state:
   ...     context.eval_context[context.context_node.tag] = "done"
   ...     entries = context.eval_context.items()
   ...     entries.sort()
-  ...     print entries
+  ...     print(entries)
   >>> ns["print_context"] = print_context
 
   >>> ignore = root.xpath("//*[pt:print_context()]")
@@ -181,12 +188,12 @@ XSL transformations:
 .. sourcecode:: pycon
 
   >>> e = etree.XPathEvaluator(doc)
-  >>> print e('es:hello(local-name(/a))')
+  >>> print(e('es:hello(local-name(/a))'))
   Ola a
 
   >>> namespaces = {'f' : 'http://mydomain.org/myfunctions'}
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces)
-  >>> print e('f:hello(local-name(/a))')
+  >>> print(e('f:hello(local-name(/a))'))
   Hello a
 
   >>> xslt = etree.XSLT(etree.ElementTree(etree.XML('''
@@ -199,7 +206,7 @@ XSL transformations:
   ...     </template>
   ...   </stylesheet>
   ... ''')))
-  >>> print xslt(doc)
+  >>> print(xslt(doc))
   Ola Haegar
 
 It is also possible to register namespaces with a single evaluator after its
@@ -208,7 +215,7 @@ still be clear:
 
 .. sourcecode:: pycon
   
-  >>> f = StringIO('<a xmlns="http://mydomain.org/myfunctions" />')
+  >>> f = BytesIO('<a xmlns="http://mydomain.org/myfunctions" />')
   >>> ns_doc = etree.parse(f)
   >>> e = etree.XPathEvaluator(ns_doc)
   >>> e('/a')
@@ -250,7 +257,7 @@ The value is a dictionary mapping (namespace, name) tuples to functions:
   >>> namespaces = {'l' : 'local-ns'}
 
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
-  >>> print e('l:local-hello(string(b))')
+  >>> print(e('l:local-hello(string(b))'))
   Hello Haegar
 
 For larger numbers of extension functions, you can define classes or modules
@@ -271,7 +278,7 @@ and use the ``Extension`` helper:
   >>> extensions = etree.Extension( ext_module, functions, ns='local-ns' )
 
   >>> e = etree.XPathEvaluator(doc, namespaces=namespaces, extensions=extensions)
-  >>> print e('l:function1(string(b))')
+  >>> print(e('l:function1(string(b))'))
   1Haegar
 
 The optional second argument to ``Extension`` can either be be a
@@ -289,17 +296,17 @@ examples will therefore all do the same thing:
   >>> functions = ('function1', 'function2', 'function3')
   >>> extensions = etree.Extension( ext_module, functions )
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e('function1(function2(function3(string(b))))')
+  >>> print(e('function1(function2(function3(string(b))))'))
   123Haegar
 
   >>> extensions = etree.Extension( ext_module, functions, ns=None )
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e('function1(function2(function3(string(b))))')
+  >>> print(e('function1(function2(function3(string(b))))'))
   123Haegar
 
   >>> extensions = etree.Extension(ext_module)
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e('function1(function2(function3(string(b))))')
+  >>> print(e('function1(function2(function3(string(b))))'))
   123Haegar
 
   >>> functions = {
@@ -309,7 +316,7 @@ examples will therefore all do the same thing:
   ...     }
   >>> extensions = etree.Extension(ext_module, functions)
   >>> e = etree.XPathEvaluator(doc, extensions=extensions)
-  >>> print e('function1(function2(function3(string(b))))')
+  >>> print(e('function1(function2(function3(string(b))))'))
   123Haegar
 
 For convenience, you can also pass a sequence of extensions:
@@ -320,7 +327,7 @@ For convenience, you can also pass a sequence of extensions:
   >>> extensions2 = etree.Extension(ext_module, ns='local-ns')
   >>> e = etree.XPathEvaluator(doc, extensions=[extensions1, extensions2],
   ...                          namespaces=namespaces)
-  >>> print e('function1(l:function2(function3(string(b))))')
+  >>> print(e('function1(l:function2(function3(string(b))))'))
   123Haegar
 
 
@@ -386,24 +393,24 @@ XPath node-sets:
   >>> e = etree.XPathEvaluator(doc)
 
   >>> r = e("new-node-set()/result")
-  >>> print [ t.text for t in r ]
+  >>> print([ t.text for t in r ])
   ['Alpha', 'Beta', 'Gamma', 'Delta']
 
   >>> r = e("new-node-set()")
-  >>> print [ t.tag for t in r ]
+  >>> print([ t.tag for t in r ])
   ['results1', 'results2', 'subresult']
-  >>> print [ len(t) for t in r ]
+  >>> print([ len(t) for t in r ])
   [2, 3, 0]
   >>> r[0][0].text
   'Alpha'
 
-  >>> print etree.tostring(r[0])
+  >>> print(etree.tostring(r[0]))
   <results1><result>Alpha</result><result>Beta</result></results1>
 
-  >>> print etree.tostring(r[1])
+  >>> print(etree.tostring(r[1]))
   <results2><result>Gamma</result><result>Delta</result><subresult/></results2>
 
-  >>> print etree.tostring(r[2])
+  >>> print(etree.tostring(r[2]))
   <subresult/>
 
 The current implementation deep-copies newly created elements in node-sets.
@@ -414,13 +421,13 @@ identical within the node-set, they belong to independent trees:
 
 .. sourcecode:: pycon
 
-  >>> print r[1][-1].tag, r[2].tag
+  >>> print(r[1][-1].tag, r[2].tag)
   subresult subresult
-  >>> print r[1][-1] == r[2]
+  >>> print(r[1][-1] == r[2])
   False
-  >>> print r[1][-1].getparent().tag
+  >>> print(r[1][-1].getparent().tag)
   results2
-  >>> print r[2].getparent()
+  >>> print(r[2].getparent())
   None
 
 This is an implementation detail that you should be aware of, but you should
@@ -450,7 +457,7 @@ And then you can implement the element in Python like this:
 
   >>> class MyExtElement(etree.XSLTExtension):
   ...     def execute(self, context, self_node, input_node, output_parent):
-  ...         print "Hello from XSLT!"
+  ...         print("Hello from XSLT!")
   ...         output_parent.text = "I did it!"
   ...         # just copy own content input to output
   ...         output_parent.extend( list(self_node) )

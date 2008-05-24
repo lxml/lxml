@@ -28,7 +28,17 @@ The usual setup procedure:
 .. sourcecode:: pycon
 
   >>> from lxml import etree
-  >>> from StringIO import StringIO
+
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
+
+  >>> try: unicode = __builtins__["unicode"]
+  ... except (NameError, KeyError): unicode = str
 
 
 XPath
@@ -101,13 +111,13 @@ The ``xpath()`` method has support for XPath variables:
 
   >>> expr = "//*[local-name() = $name]"
 
-  >>> print root.xpath(expr, name = "foo")[0].tag
+  >>> print(root.xpath(expr, name = "foo")[0].tag)
   foo
 
-  >>> print root.xpath(expr, name = "bar")[0].tag
+  >>> print(root.xpath(expr, name = "bar")[0].tag)
   bar
 
-  >>> print root.xpath("$text", text = "Hello World!")
+  >>> print(root.xpath("$text", text = "Hello World!"))
   Hello World!
 
 Optionally, you can provide a ``namespaces`` keyword argument, which should be
@@ -191,7 +201,7 @@ structural, absolute XPath expression to find that element:
   >>> d2 = etree.SubElement(c, "d")
 
   >>> tree = etree.ElementTree(c)
-  >>> print tree.getpath(d2)
+  >>> print(tree.getpath(d2))
   /c/d[2]
   >>> tree.xpath(tree.getpath(d2)) == [d2]
   True
@@ -207,7 +217,7 @@ The ``XPath`` class compiles an XPath expression into a callable function:
   >>> root = etree.XML("<root><a><b/></a><b/></root>")
 
   >>> find = etree.XPath("//b")
-  >>> print find(root)[0].tag
+  >>> print(find(root)[0].tag)
   b
 
 The compilation takes as much time as in the ``xpath()`` method, but it is
@@ -221,9 +231,9 @@ variables:
 
   >>> count_elements = etree.XPath("count(//*[local-name() = $name])")
 
-  >>> print count_elements(root, name = "a")
+  >>> print(count_elements(root, name = "a"))
   1.0
-  >>> print count_elements(root, name = "b")
+  >>> print(count_elements(root, name = "b"))
   2.0
 
 This supports very efficient evaluation of modified versions of an XPath
@@ -236,7 +246,7 @@ Prefix-to-namespace mappings can be passed as second parameter:
   >>> root = etree.XML("<root xmlns='NS'><a><b/></a><b/></root>")
 
   >>> find = etree.XPath("//n:b", namespaces={'n':'NS'})
-  >>> print find(root)[0].tag
+  >>> print(find(root)[0].tag)
   {NS}b
 
 By default, ``XPath`` supports regular expressions in the EXSLT_ namespace:
@@ -248,7 +258,7 @@ By default, ``XPath`` supports regular expressions in the EXSLT_ namespace:
   ...                    namespaces={'re':regexpNS})
 
   >>> root = etree.XML("<root><a>aB</a><b>aBc</b></root>")
-  >>> print find(root)[0].text
+  >>> print(find(root)[0].text)
   aBc
 
 .. _EXSLT: http://www.exslt.org/
@@ -270,10 +280,10 @@ XPathEvaluator helper for instantiation:
   >>> root = etree.XML("<root><a><b/></a><b/></root>")
   >>> xpatheval = etree.XPathEvaluator(root)
 
-  >>> print isinstance(xpatheval, etree.XPathElementEvaluator)
+  >>> print(isinstance(xpatheval, etree.XPathElementEvaluator))
   True
 
-  >>> print xpatheval("//b")[0].tag
+  >>> print(xpatheval("//b")[0].tag)
   b
 
 This class provides efficient support for evaluating different XPath
@@ -304,7 +314,7 @@ write:
   >>> root = etree.XML("<root xmlns='ns'><a><b/></a><b/></root>")
 
   >>> find = etree.XPath("//p:b", namespaces={'p' : 'ns'})
-  >>> print find(root)[0].tag
+  >>> print(find(root)[0].tag)
   {ns}b
 
 ``ETXPath`` allows you to change this to:
@@ -312,7 +322,7 @@ write:
 .. sourcecode:: pycon
 
   >>> find = etree.ETXPath("//{ns}b")
-  >>> print find(root)[0].tag
+  >>> print(find(root)[0].tag)
   {ns}b
 
 
