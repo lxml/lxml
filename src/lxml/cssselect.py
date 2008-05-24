@@ -10,6 +10,11 @@ from lxml import etree
 __all__ = ['SelectorSyntaxError', 'ExpressionError',
            'CSSSelector']
 
+try:
+    _basestring = basestring
+except NameError:
+    _basestring = str
+
 class SelectorSyntaxError(SyntaxError):
     pass
 
@@ -501,7 +506,7 @@ _id_re = re.compile(r'^(\w*)#(\w+)\s*$')
 _class_re = re.compile(r'^(\w*)\.(\w+)\s*$')
 
 def css_to_xpath(css_expr, prefix='descendant-or-self::'):
-    if isinstance(css_expr, basestring):
+    if isinstance(css_expr, _basestring):
         match = _el_re.search(css_expr)
         if match is not None:
             return '%s%s' % (prefix, match.group(0).strip())
