@@ -532,12 +532,12 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
             if s is NULL:
                 href = None
             else:
-                href = s
+                href = funicode(s)
             s = (<xmlNs*>c_node).prefix
             if s is NULL:
                 prefix = None
             else:
-                prefix = s
+                prefix = funicode(s)
             value = (prefix, href)
         elif c_node.type == tree.XML_DOCUMENT_NODE or \
                  c_node.type == tree.XML_HTML_DOCUMENT_NODE or \
