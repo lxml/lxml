@@ -750,12 +750,12 @@ def serialize_html_fragment(el, skip_outer=False):
     """
     assert not isinstance(el, basestring), (
         "You should pass in an element, not a string like %r" % el)
-    html = etree.tostring(el, method="html", encoding="UTF-8")
+    html = etree.tostring(el, method="html", encoding=_unicode)
     if skip_outer:
         # Get rid of the extra starting tag:
-        html = html[html.find('>'.encode("ASCII"))+1:]
+        html = html[html.find('>')+1:]
         # Get rid of the extra end tag:
-        html = html[:html.rfind('<'.encode("ASCII"))]
+        html = html[:html.rfind('<')]
         return html.strip()
     else:
         return html
