@@ -127,11 +127,11 @@ cdef class _IterparseContext(_ParserContext):
         else:
             self._tag_tuple = _getNsTag(tag)
             href, name = self._tag_tuple
-            if href is None or href == u'*':
+            if href is None or href == '*':
                 self._tag_href = NULL
             else:
                 self._tag_href = _cstr(href)
-            if name is None or name == u'*':
+            if name is None or name == '*':
                 self._tag_name = NULL
             else:
                 self._tag_name = _cstr(name)
