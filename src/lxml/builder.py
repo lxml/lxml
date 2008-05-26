@@ -37,7 +37,7 @@
 The ``E`` Element factory for generating XML documents.
 """
 
-import etree as ET
+import lxml.etree as ET
 
 try:
     from functools import partial
@@ -45,6 +45,23 @@ except ImportError:
     # fake it for pre-2.5 releases
     def partial(func, tag):
         return lambda *args, **kwargs: func(tag, *args, **kwargs)
+
+try:
+    callable
+except NameError:
+    # Python 3
+    def callable(f):
+        return hasattr(f, '__call__')
+
+try:
+    basestring = __builtins__["basestring"]
+except (NameError, KeyError):
+    basestring = str
+
+try:
+    unicode = __builtins__["unicode"]
+except (NameError, KeyError):
+    unicode = str
 
 
 class ElementMaker(object):
