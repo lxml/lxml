@@ -79,13 +79,20 @@ The following examples usually assume this to be executed first:
 
 ..
   >>> import sys
+  >>> from lxml import etree as _etree
   >>> if sys.version_info[0] >= 3:
-  ...   from lxml import etree as _etree
   ...   class etree_mock(object):
   ...     def __getattr__(self, name): return getattr(_etree, name)
   ...     def tostring(self, *args, **kwargs):
   ...       s = _etree.tostring(*args, **kwargs)
   ...       if isinstance(s, bytes): s = s.decode("utf-8")
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  ... else:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
   ...       if s[-1] == '\n': s = s[:-1]
   ...       return s
   >>> etree = etree_mock()
