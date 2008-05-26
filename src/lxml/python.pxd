@@ -34,6 +34,7 @@ cdef extern from "Python.h":
     cdef object PyUnicode_Decode(char* s, Py_ssize_t size,
                                  char* encoding, char* errors)
     cdef object PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
+    cdef object PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
     cdef object PyUnicode_AsUTF8String(object ustring)
     cdef object PyUnicode_AsASCIIString(object ustring)
     cdef char* PyUnicode_AS_DATA(object ustring)
