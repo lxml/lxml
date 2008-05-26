@@ -1092,7 +1092,7 @@ cdef object _decodeFilename(char* c_path):
         return python.PyUnicode_DecodeUTF8(c_path, c_len, NULL)
     except UnicodeDecodeError:
         # this is a stupid fallback, but it might still work...
-        return python.PyString_FromStringAndSize(c_path, c_len)
+        return python.PyUnicode_DecodeLatin1(c_path, c_len, 'replace')
 
 cdef object _encodeFilenameUTF8(object filename):
     u"""Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
