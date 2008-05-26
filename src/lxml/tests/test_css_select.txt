@@ -46,8 +46,8 @@ all our selections, and a function make querying simpler:
     ...     for selector in selectors:
     ...         sel_result = select_ids(selector)
     ...         if sel_result != result:
-    ...             print 'Selector %r returns %s' % (selector, sel_result)
-    ...     print result
+    ...             print('Selector %r returns %s' % (selector, sel_result))
+    ...     print(result)
 
 Now, the tests:
 
