@@ -53,7 +53,7 @@
   </body>
 </html>
 
->>> print(tostring(fromstring(doc)))
+>>> print(tostring(fromstring(doc)).decode("utf-8"))
 <html>
   <head>
     <script type="text/javascript" src="evil-site"></script>
