@@ -237,7 +237,7 @@ serialise an Element, you will get all parts of that Element:
 
     >>> from lxml import etree
     >>> root = etree.XML("<root><tag>text<child/></tag>tail</root>")
-    >>> print etree.tostring(root[0])
+    >>> print(etree.tostring(root[0]))
     <tag>text<child/></tag>tail
 
 Here is an example that shows why not serialising the tail would be
@@ -248,15 +248,15 @@ even more surprising from an object point of view:
     >>> root = etree.Element("test")
 
     >>> root.text = "TEXT"
-    >>> etree.tostring(root)
+    >>> print(etree.tostring(root))
     <test>TEXT</test>
 
     >>> etree.tail = "TAIL"
-    >>> etree.tostring(root)
+    >>> print(etree.tostring(root))
     <test>TEXT</test>TAIL
 
     >>> etree.tail = None
-    >>> etree.tostring(root)
+    >>> print(etree.tostring(root))
     <test>TEXT</test>
 
 Just imagine a Python list where you append an item and it doesn't
