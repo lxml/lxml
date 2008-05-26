@@ -41,6 +41,25 @@ The usual setup procedure:
   >>> try: unicode = __builtins__["unicode"]
   ... except (NameError, KeyError): unicode = str
 
+  >>> import sys
+  >>> from lxml import etree as _etree
+  >>> if sys.version_info[0] >= 3:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  ... else:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
+
 
 Parsers
 =======
@@ -55,8 +74,8 @@ parsing XML from an in-memory string:
   >>> xml = '<a xmlns="test"><b xmlns="test"/></a>'
 
   >>> root = etree.fromstring(xml)
-  >>> print(etree.tostring(root))
-  <a xmlns="test"><b xmlns="test"/></a>
+  >>> etree.tostring(root)
+  b'<a xmlns="test"><b xmlns="test"/></a>'
 
 To read from a file or file-like object, you can use the ``parse()`` function,
 which returns an ``ElementTree`` object:
@@ -64,8 +83,8 @@ which returns an ``ElementTree`` object:
 .. sourcecode:: pycon
 
   >>> tree = etree.parse(StringIO(xml))
-  >>> print(etree.tostring(tree.getroot()))
-  <a xmlns="test"><b xmlns="test"/></a>
+  >>> etree.tostring(tree.getroot())
+  b'<a xmlns="test"><b xmlns="test"/></a>'
 
 Note how the ``parse()`` function reads from a file-like object here.  If
 parsing is done from a real file, it is more common (and also somewhat more
@@ -97,8 +116,8 @@ example is easily extended to clean up namespaces during parsing:
 
   >>> parser = etree.XMLParser(ns_clean=True)
   >>> tree   = etree.parse(StringIO(xml), parser)
-  >>> print(etree.tostring(tree.getroot()))
-  <a xmlns="test"><b/></a>
+  >>> etree.tostring(tree.getroot())
+  b'<a xmlns="test"><b/></a>'
 
 The keyword arguments in the constructor are mainly based on the libxml2
 parser configuration.  A DTD will also be loaded if validation or attribute
@@ -141,7 +160,7 @@ last parser run:
   >>> tree = etree.XML("<root></b>", parser)
   Traceback (most recent call last):
     ...
-  XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 1, column 11
+  lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 1, column 11
 
   >>> print(len(parser.error_log))
   1
@@ -171,7 +190,7 @@ version 2.6.21 or newer to take advantage of this feature:
   >>> tree   = etree.parse(StringIO(broken_html), parser)
 
   >>> result = etree.tostring(tree.getroot(), pretty_print=True)
-  >>> print(result[:-1]) # strip trailing newline
+  >>> print(result)
   <html>
     <head>
       <title>test</title>
@@ -188,7 +207,7 @@ ElementTree:
 
   >>> html = etree.HTML(broken_html)
   >>> result = etree.tostring(html, pretty_print=True)
-  >>> print(result[:-1]) # strip trailing newline
+  >>> print(result)
   <html>
     <head>
       <title>test</title>
@@ -630,7 +649,7 @@ encoding themselves and thus lie about their real encoding:
 
 .. sourcecode:: pycon
 
-  >>> etree.XML(u'<?xml version="1.0" encoding="ASCII"?>\n' + uxml)
+  >>> etree.XML( u'<?xml version="1.0" encoding="ASCII"?>\n' + uxml )
   Traceback (most recent call last):
     ...
   ValueError: Unicode strings with encoding declaration are not supported.
@@ -651,10 +670,10 @@ number of other byte encodings if asked for:
 .. sourcecode:: pycon
 
   >>> etree.tostring(root)
-  '<test> &#63697; + &#63698; </test>'
+  b'<test> &#63697; + &#63698; </test>'
 
   >>> etree.tostring(root, encoding='UTF-8', xml_declaration=False)
-  '<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
+  b'<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
 As an extension, lxml.etree recognises the unicode type as encoding to
 build a Python unicode representation of a tree:

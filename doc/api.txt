@@ -54,6 +54,9 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
   ...    class deque(list):
   ...        def popleft(self): return self.pop(0)
 
+  >>> try: unicode = __builtins__["unicode"]
+  ... except (NameError, KeyError): unicode = str
+
 
 lxml.etree
 ----------
@@ -85,7 +88,7 @@ The following examples usually assume this to be executed first:
   ...     def __getattr__(self, name): return getattr(_etree, name)
   ...     def tostring(self, *args, **kwargs):
   ...       s = _etree.tostring(*args, **kwargs)
-  ...       if isinstance(s, bytes): s = s.decode("utf-8")
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
   ...       if s[-1] == '\n': s = s[:-1]
   ...       return s
   ... else:
@@ -96,6 +99,7 @@ The following examples usually assume this to be executed first:
   ...       if s[-1] == '\n': s = s[:-1]
   ...       return s
   >>> etree = etree_mock()
+
 
 Other Element APIs
 ------------------
@@ -154,8 +158,8 @@ can use ElementTrees to create XML trees with an explicit root node:
   >>> tree = etree.ElementTree(d)
   >>> print(tree.getroot().tag)
   d
-  >>> print(etree.tostring(tree))
-  <d><e/></d>
+  >>> etree.tostring(tree)
+  b'<d><e/></d>'
 
 ElementTree objects are serialised as complete documents, including
 preceding or trailing processing instructions and comments.
@@ -248,7 +252,7 @@ breadth-first traversal, it is almost as simple if you use the
 .. sourcecode:: pycon
 
     >>> root = etree.XML('<root><a><b/><c/></a><d><e/></d></root>')
-    >>> print(etree.tostring(root, pretty_print=True))
+    >>> print(etree.tostring(root, pretty_print=True, encoding=unicode))
     <root>
       <a>
         <b/>
@@ -302,6 +306,13 @@ copy attached to the exception:
   ...   etree.parse(StringIO(broken_xml))
   ... except etree.XMLSyntaxError, e:
   ...   pass # just put the exception into e
+
+..
+  >>> etree.clear_error_log()
+  >>> try:
+  ...   etree.parse(StringIO(broken_xml))
+  ... except etree.XMLSyntaxError:
+  ...   import sys; e = sys.exc_info()[1]
 
 Once you have caught this exception, you can access its ``error_log`` property
 to retrieve the log entries or filter them by a specific type, error domain or
@@ -367,8 +378,8 @@ argument:
 .. sourcecode:: pycon
 
   >>> root = etree.XML("<root><test/></root>")
-  >>> print(etree.tostring(root))
-  <root><test/></root>
+  >>> etree.tostring(root)
+  b'<root><test/></root>'
 
   >>> print(etree.tostring(root, pretty_print=True))
   <root>
@@ -383,10 +394,10 @@ is required by the standard:
 
 .. sourcecode:: pycon
 
-  >>> unicode_root = etree.Element(u"t\u3120st")
+  >>> unicode_root = etree.Element( u"t\u3120st" )
   >>> unicode_root.text = u"t\u0A0Ast"
   >>> etree.tostring(unicode_root, encoding="utf-8")
-  '<t\xe3\x84\xa0st>t\xe0\xa8\x8ast</t\xe3\x84\xa0st>'
+  b'<t\xe3\x84\xa0st>t\xe0\xa8\x8ast</t\xe3\x84\xa0st>'
 
   >>> print(etree.tostring(unicode_root, encoding="iso-8859-1"))
   <?xml version='1.0' encoding='iso-8859-1'?>
@@ -408,7 +419,7 @@ keyword argument for the serialisation:
   >>> unicode_root.clear()
   >>> etree.tostring(unicode_root, encoding="UTF-16LE",
   ...                              xml_declaration=False)
-  '<\x00t\x00 1s\x00t\x00/\x00>\x00'
+  b'<\x00t\x00 1s\x00t\x00/\x00>\x00'
 
 Note that a standard compliant XML parser will not consider the last line
 well-formed XML if the encoding is not explicitly provided somehow, e.g. in an
@@ -421,7 +432,7 @@ underlying transport protocol:
   >>> root = etree.XML(notxml)        #doctest: +ELLIPSIS
   Traceback (most recent call last):
     ...
-  XMLSyntaxError: ...
+  lxml.etree.XMLSyntaxError: ...
 
 
 CDATA
@@ -444,7 +455,7 @@ sections in the document:
   'test'
 
   >>> etree.tostring(root)
-  '<root><![CDATA[test]]></root>'
+  b'<root><![CDATA[test]]></root>'
 
 Note how the ``.text`` property does not give any indication that the
 text content is wrapped by a CDATA section.  If you want to make sure
@@ -458,14 +469,14 @@ text wrapper:
   >>> root.text
   'test'
   >>> etree.tostring(root)
-  '<root>test</root>'
+  b'<root>test</root>'
 
   >>> root.text = etree.CDATA(root.text)
 
   >>> root.text
   'test'
   >>> etree.tostring(root)
-  '<root><![CDATA[test]]></root>'
+  b'<root><![CDATA[test]]></root>'
 
 
 XInclude and ElementInclude

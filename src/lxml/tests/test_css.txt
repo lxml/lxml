@@ -3,16 +3,16 @@ A quick test of tokenizing:
     >>> from lxml.cssselect import tokenize, parse
     >>> def ptok(s):
     ...     for item in tokenize(s):
-    ...         print(repr(item))
+    ...         print(repr(item).replace("u'", "'"))
     >>> ptok('E > f[a~="y\\"x"]')
-    Symbol(u'E', 0)
-    Token(u'>', 2)
-    Symbol(u'f', 4)
-    Token(u'[', 5)
-    Symbol(u'a', 6)
-    Token(u'~=', 7)
-    String(u'y"x', 9)
-    Token(u']', 15)
+    Symbol('E', 0)
+    Token('>', 2)
+    Symbol('f', 4)
+    Token('[', 5)
+    Symbol('a', 6)
+    Token('~=', 7)
+    String('y"x', 9)
+    Token(']', 15)
 
 Then of parsing:
 
@@ -24,10 +24,10 @@ Then of parsing:
     Pseudo[Element[td]:first]
     >>> parse('a[name]')
     Attrib[Element[a][name]]
-    >>> parse('a[rel="include"]')
-    Attrib[Element[a][rel = String(u'include', 6)]]
-    >>> parse('a[hreflang |= \'en\']')
-    Attrib[Element[a][hreflang |= String(u'en', 14)]]
+    >>> repr(parse('a[rel="include"]')).replace("u'", "'")
+    "Attrib[Element[a][rel = String('include', 6)]]"
+    >>> repr(parse('a[hreflang |= \'en\']')).replace("u'", "'")
+    "Attrib[Element[a][hreflang |= String('en', 14)]]"
     >>> parse('div:nth-child(10)')
     Function[Element[div]:nth-child(10)]
     >>> parse('div:nth-of-type(10)')
@@ -36,8 +36,8 @@ Then of parsing:
     Pseudo[Element[label]:only]
     >>> parse('a:lang(fr)')
     Function[Element[a]:lang(Element[fr])]
-    >>> parse('div:contains("foo")')
-    Function[Element[div]:contains(String(u'foo', 13))]
+    >>> repr(parse('div:contains("foo")')).replace("u'", "'")
+    "Function[Element[div]:contains(String('foo', 13))]"
     >>> parse('div#foobar')
     Hash[Element[div]#foobar]
     >>> parse('div:not(div.foo)')

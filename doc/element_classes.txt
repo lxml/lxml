@@ -196,8 +196,8 @@ the constructor.  While it accepts classes for ``element``, ``comment`` and
   >>> el.honking
   False
   >>> el = parser.makeelement("myelement", honking='true')
-  >>> print(etree.tostring(el))
-  <myelement honking="true"/>
+  >>> etree.tostring(el)
+  b'<myelement honking="true"/>'
   >>> el.honking
   True
 

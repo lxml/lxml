@@ -31,9 +31,9 @@ def html_annotate(doclist, markup=default_markup):
 
         >>> version1 = 'Hello World'
         >>> version2 = 'Goodbye World'
-        >>> html_annotate([(version1, 'version 1'),
-        ...                (version2, 'version 2')])
-        u'<span title="version 2">Goodbye</span> <span title="version 1">World</span>'
+        >>> print(html_annotate([(version1, 'version 1'),
+        ...                      (version2, 'version 2')]))
+        <span title="version 2">Goodbye</span> <span title="version 1">World</span>
 
     The documents must be *fragments* (str/UTF8 or unicode), not
     complete documents
@@ -43,8 +43,8 @@ def html_annotate(doclist, markup=default_markup):
     returns HTML.  The first argument is text and never includes any
     markup.  The default uses a span with a title:
 
-        >>> default_markup('Some Text', 'by Joe')
-        u'<span title="by Joe">Some Text</span>'
+        >>> print(default_markup('Some Text', 'by Joe'))
+        <span title="by Joe">Some Text</span>
     """
     # The basic strategy we have is to split the documents up into
     # logical tokens (which are words with attached markup).  We then

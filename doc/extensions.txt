@@ -404,13 +404,13 @@ XPath node-sets:
   >>> r[0][0].text
   'Alpha'
 
-  >>> print(etree.tostring(r[0]))
+  >>> etree.tostring(r[0])
   b'<results1><result>Alpha</result><result>Beta</result></results1>'
 
-  >>> print(etree.tostring(r[1]))
+  >>> etree.tostring(r[1])
   b'<results2><result>Gamma</result><result>Delta</result><subresult/></results2>'
 
-  >>> print(etree.tostring(r[2]))
+  >>> etree.tostring(r[2])
   b'<subresult/>'
 
 The current implementation deep-copies newly created elements in node-sets.

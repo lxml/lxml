@@ -1,5 +1,5 @@
 import unittest, sys
-from lxml.tests.common_imports import doctest
+from lxml.tests.common_imports import make_doctest
 
 try:
     import BeautifulSoup
@@ -12,7 +12,7 @@ def test_suite():
     suite = unittest.TestSuite()
     if sys.version_info >= (2,4):
         if BS_INSTALLED:
-            suite.addTests([doctest.DocFileSuite('../../../../doc/elementsoup.txt')])
+            suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
     return suite
 
 if __name__ == '__main__':

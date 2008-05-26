@@ -146,12 +146,12 @@ do that:
   >>> transform = etree.XSLT(normal_doc)
   Traceback (most recent call last):
     ...
-  XSLTParseError: Cannot resolve URI honk:test
+  lxml.etree.XSLTParseError: Cannot resolve URI honk:test
 
   >>> transform = etree.XSLT(hoi_doc)
   Traceback (most recent call last):
     ...
-  XSLTParseError: Cannot resolve URI honk:test
+  lxml.etree.XSLTParseError: Cannot resolve URI honk:test
 
 However, if we use the ``honk`` resolver associated with the respective
 document, everything works fine:
@@ -170,17 +170,17 @@ needs to resolve the ``hoi`` URI in the call to the document function, its
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
     ...
-  XSLTApplyError: Cannot resolve URI hoi:test
+  lxml.etree.XSLTApplyError: Cannot resolve URI hoi:test
 
   >>> result = transform(hoi_doc)
   Traceback (most recent call last):
     ...
-  XSLTApplyError: Cannot resolve URI hoi:test
+  lxml.etree.XSLTApplyError: Cannot resolve URI hoi:test
 
   >>> result = transform(honk_doc)
   Traceback (most recent call last):
     ...
-  XSLTApplyError: Cannot resolve URI hoi:test
+  lxml.etree.XSLTApplyError: Cannot resolve URI hoi:test
 
 This can only be solved by adding a ``hoi`` resolver to the original parser:
 
@@ -243,7 +243,7 @@ operations:
   >>> result = transform(normal_doc)
   Traceback (most recent call last):
     ...
-  XSLTApplyError: xsltLoadDocument: read rights for hoi:test denied
+  lxml.etree.XSLTApplyError: xsltLoadDocument: read rights for hoi:test denied
 
 There are a few things to keep in mind:
 

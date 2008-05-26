@@ -11,7 +11,8 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, HelperTestCase, doctest, _bytes
+from common_imports import etree, HelperTestCase, _bytes
+from common_imports import doctest, make_doctest
 
 class ETreeNamespaceClassesTestCase(HelperTestCase):
     
@@ -163,11 +164,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])
-    optionflags = doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/element_classes.txt',
-                              optionflags=optionflags)],
-        )
+        [make_doctest('../../../doc/element_classes.txt')])
     return suite
 
 if __name__ == '__main__':

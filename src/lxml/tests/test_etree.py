@@ -14,7 +14,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize, doctest
+from common_imports import SillyFileLike, canonicalize, doctest, make_doctest
 from common_imports import sorted, _str, _bytes
 
 print("")
@@ -2329,13 +2329,13 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/tutorial.txt')])
+        [make_doctest('../../../doc/tutorial.txt')])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/api.txt')])
+        [make_doctest('../../../doc/api.txt')])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/parsing.txt')])
+        [make_doctest('../../../doc/parsing.txt')])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/resolvers.txt')])
+        [make_doctest('../../../doc/resolvers.txt')])
     return suite
 
 if __name__ == '__main__':

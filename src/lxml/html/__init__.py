@@ -60,7 +60,7 @@ _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
 _archive_re = re.compile(r'[^ ]+')
 
 def _transform_result(typ, result):
-    u"""Convert the result back into the input type.
+    """Convert the result back into the input type.
     """
     if issubclass(typ, bytes):
         return tostring(result, encoding='utf-8')

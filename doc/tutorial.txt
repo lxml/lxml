@@ -109,7 +109,7 @@ library`_.
   ...     def __getattr__(self, name): return getattr(_etree, name)
   ...     def tostring(self, *args, **kwargs):
   ...       s = _etree.tostring(*args, **kwargs)
-  ...       if isinstance(s, bytes): s = s.decode("utf-8")
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
   ...       if s[-1] == '\n': s = s[:-1]
   ...       return s
   ... else:
@@ -265,8 +265,8 @@ factory:
 .. sourcecode:: pycon
 
     >>> root = etree.Element("root", interesting="totally")
-    >>> print(etree.tostring(root))
-    <root interesting="totally"/>
+    >>> etree.tostring(root)
+    b'<root interesting="totally"/>'
 
 Fast and direct access to these attributes is provided by the ``set()`` and
 ``get()`` methods of elements:
@@ -313,8 +313,8 @@ Elements can contain text:
     >>> print(root.text)
     TEXT
 
-    >>> print(etree.tostring(root))
-    <root>TEXT</root>
+    >>> etree.tostring(root)
+    b'<root>TEXT</root>'
 
 In many XML documents (*data-centric* documents), this is the only place where
 text can be found.  It is encapsulated by a leaf tag at the very bottom of the
@@ -338,16 +338,16 @@ to the next element in the XML tree:
     >>> body = etree.SubElement(html, "body")
     >>> body.text = "TEXT"
 
-    >>> print(etree.tostring(html))
-    <html><body>TEXT</body></html>
+    >>> etree.tostring(html)
+    b'<html><body>TEXT</body></html>'
 
     >>> br = etree.SubElement(body, "br")
-    >>> print(etree.tostring(html))
-    <html><body>TEXT<br/></body></html>
+    >>> etree.tostring(html)
+    b'<html><body>TEXT<br/></body></html>'
 
     >>> br.tail = "TAIL"
-    >>> print(etree.tostring(html))
-    <html><body>TEXT<br/>TAIL</body></html>
+    >>> etree.tostring(html)
+    b'<html><body>TEXT<br/>TAIL</body></html>'
 
 The two properties ``.text`` and ``.tail`` are enough to represent any
 text content in an XML document.  This way, the ElementTree API does
@@ -363,10 +363,10 @@ still want the tail text of its children).  For this purpose, the
 
 .. sourcecode:: pycon
 
-    >>> print(etree.tostring(br))
-    <br/>TAIL
-    >>> print(etree.tostring(br, with_tail=False)) # lxml.etree only!
-    <br/>
+    >>> etree.tostring(br)
+    b'<br/>TAIL'
+    >>> etree.tostring(br, with_tail=False) # lxml.etree only!
+    b'<br/>'
 
 .. _`special text nodes`: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-1312295772
 .. _DOM: http://www.w3.org/TR/DOM-Level-3-Core/core.html
@@ -378,8 +378,8 @@ comes to the rescue, this time using the ``method`` keyword:
 
 .. sourcecode:: pycon
 
-    >>> print(etree.tostring(html, method="text"))
-    TEXTTAIL
+    >>> etree.tostring(html, method="text")
+    b'TEXTTAIL'
 
 
 Using XPath to find text
@@ -540,8 +540,8 @@ specific output encoding other than plain ASCII:
 
    >>> root = etree.XML('<root><a><b/></a></root>')
 
-   >>> print(etree.tostring(root))
-   <root><a><b/></a></root>
+   >>> etree.tostring(root)
+   b'<root><a><b/></a></root>'
 
    >>> print(etree.tostring(root, xml_declaration=True))
    <?xml version='1.0' encoding='ASCII'?>
@@ -569,14 +569,14 @@ the text content by passing the ``method`` keyword:
    >>> root = etree.XML(
    ...    '<html><head/><body><p>Hello<br/>World</p></body></html>')
 
-   >>> print(etree.tostring(root)) # default: method = 'xml'
-   <html><head/><body><p>Hello<br/>World</p></body></html>
+   >>> etree.tostring(root) # default: method = 'xml'
+   b'<html><head/><body><p>Hello<br/>World</p></body></html>'
 
-   >>> print(etree.tostring(root, method='xml')) # same as above
-   <html><head/><body><p>Hello<br/>World</p></body></html>
+   >>> etree.tostring(root, method='xml') # same as above
+   b'<html><head/><body><p>Hello<br/>World</p></body></html>'
 
-   >>> print(etree.tostring(root, method='html'))
-   <html><head></head><body><p>Hello<br>World</p></body></html>
+   >>> etree.tostring(root, method='html')
+   b'<html><head></head><body><p>Hello<br>World</p></body></html>'
 
    >>> print(etree.tostring(root, method='html', pretty_print=True))
    <html>
@@ -584,8 +584,8 @@ the text content by passing the ``method`` keyword:
    <body><p>Hello<br>World</p></body>
    </html>
 
-   >>> print(etree.tostring(root, method='text'))
-   HelloWorld
+   >>> etree.tostring(root, method='text')
+   b'HelloWorld'
 
 As for XML serialisation, the default encoding for plain text
 serialisation is ASCII:
@@ -601,7 +601,7 @@ serialisation is ASCII:
    UnicodeEncodeError: 'ascii' codec can't encode character u'\xf6' ...
 
    >>> etree.tostring(root, method='text', encoding="UTF-8")
-   'HelloW\xc3\xb6rld'
+   b'HelloW\xc3\xb6rld'
 
 Here, serialising to a Python unicode string instead of a byte string
 might become handy.  Just pass the ``unicode`` type as encoding:
@@ -687,8 +687,8 @@ The ``fromstring()`` function is the easiest way to parse a string:
     >>> root = etree.fromstring(some_xml_data)
     >>> print(root.tag)
     root
-    >>> print(etree.tostring(root))
-    <root>data</root>
+    >>> etree.tostring(root)
+    b'<root>data</root>'
 
 
 The XML() function
@@ -702,8 +702,8 @@ commonly used to write XML literals right into the source:
     >>> root = etree.XML("<root>data</root>")
     >>> print(root.tag)
     root
-    >>> print(etree.tostring(root))
-    <root>data</root>
+    >>> etree.tostring(root)
+    b'<root>data</root>'
 
 
 The parse() function
@@ -717,8 +717,8 @@ The ``parse()`` function is used to parse from files and file-like objects:
 
     >>> tree = etree.parse(some_file_like)
 
-    >>> print(etree.tostring(tree))
-    <root>data</root>
+    >>> etree.tostring(tree)
+    b'<root>data</root>'
 
 Note that ``parse()`` returns an ElementTree object, not an Element object as
 the string parser functions:
@@ -728,8 +728,8 @@ the string parser functions:
     >>> root = tree.getroot()
     >>> print(root.tag)
     root
-    >>> print(etree.tostring(root))
-    <root>data</root>
+    >>> etree.tostring(root)
+    b'<root>data</root>'
 
 The reasoning behind this difference is that ``parse()`` returns a
 complete document from a file, while the string parsing functions are
@@ -768,8 +768,8 @@ that whitespace-only content is not meaningful for your data.  An example:
 
     >>> root = etree.XML("<root>  <a/>   <b>  </b>     </root>", parser)
 
-    >>> print(etree.tostring(root))
-    <root><a/><b>  </b></root>
+    >>> etree.tostring(root)
+    b'<root><a/><b>  </b></root>'
 
 Note that the whitespace content inside the ``<b>`` tag was not removed, as
 content at leaf elements tends to be data content (even if blank).  You can
@@ -781,8 +781,8 @@ easily remove it in an additional step by traversing the tree:
     ...     if element.text is not None and not element.text.strip():
     ...         element.text = None
 
-    >>> print(etree.tostring(root))
-    <root><a/><b/></root>
+    >>> etree.tostring(root)
+    b'<root><a/><b/></root>'
 
 See ``help(etree.XMLParser)`` to find out about the available parser options.
 
@@ -799,17 +799,17 @@ will block and wait until data becomes available in this case:
 .. sourcecode:: pycon
 
     >>> class DataSource:
-    ...     data = ["<roo", "t><", "a/", "><", "/root>"]
+    ...     data = [ b"<roo", b"t><", b"a/", b"><", b"/root>" ]
     ...     def read(self, requested_size):
     ...         try:
     ...             return self.data.pop(0)
     ...         except IndexError:
-    ...             return ''
+    ...             return b''
 
     >>> tree = etree.parse(DataSource())
 
-    >>> print(etree.tostring(tree))
-    <root><a/></root>
+    >>> etree.tostring(tree)
+    b'<root><a/></root>'
 
 The second way is through a feed parser interface, given by the ``feed(data)``
 and ``close()`` methods:
@@ -826,8 +826,8 @@ and ``close()`` methods:
 
     >>> root = parser.close()
 
-    >>> print(etree.tostring(root))
-    <root><a/></root>
+    >>> etree.tostring(root)
+    b'<root><a/></root>'
 
 Here, you can interrupt the parsing process at any time and continue it later
 on with another call to the ``feed()`` method.  This comes in handy if you
@@ -843,8 +843,8 @@ method again:
 
     >>> parser.feed("<root/>")
     >>> root = parser.close()
-    >>> print(etree.tostring(root))
-    <root/>
+    >>> etree.tostring(root)
+    b'<root/>'
 
 
 Event-driven parsing
