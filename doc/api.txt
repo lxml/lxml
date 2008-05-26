@@ -49,6 +49,11 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
 
+  >>> try: from collections import deque
+  ... except ImportError:
+  ...    class deque(list):
+  ...        def popleft(self): return self.pop(0)
+
 
 lxml.etree
 ----------
@@ -215,6 +220,38 @@ filters the generated elements by tag name:
   ['d']
   >>> [ el.tag for el in root.iter(tag='d') ]
   ['d']
+
+The most common way to traverse an XML tree is depth-first, which
+traverses the tree in document order.  This is implemented by the
+``.iter()`` method.  While there is no dedicated method for
+breadth-first traversal, it is almost as simple if you use the
+``collections.deque`` type from Python 2.4.
+
+.. sourcecode:: pycon
+
+    >>> root = etree.XML('<root><a><b/><c/></a><d><e/></d></root>')
+    >>> print etree.tostring(root, pretty_print=True),
+    <root>
+      <a>
+        <b/>
+        <c/>
+      </a>
+      <d>
+        <e/>
+      </d>
+    </root>
+
+    >>> queue = deque([root])
+    >>> while queue:
+    ...    el = queue.popleft()  # pop next element
+    ...    queue.extend(el)      # append its children
+    ...    print(el.tag)
+    root
+    a
+    d
+    b
+    c
+    e
 
 See also the section on the utility functions ``iterparse()`` and
 ``iterwalk()`` in the `parser documentation`_.
