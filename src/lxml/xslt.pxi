@@ -116,12 +116,15 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
 
 cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
-    message = u"Cannot resolve URI %s" % c_uri
-    if c_type == xslt.XSLT_LOAD_DOCUMENT:
-        exception = XSLTApplyError(message)
-    else:
-        exception = XSLTParseError(message)
-    (<_XSLTResolverContext>context)._store_exception(exception)
+    try:
+        message = u"Cannot resolve URI %s" % _decodeFilename(c_uri)
+        if c_type == xslt.XSLT_LOAD_DOCUMENT:
+            exception = XSLTApplyError(message)
+        else:
+            exception = XSLTParseError(message)
+        (<_XSLTResolverContext>context)._store_exception(exception)
+    except Exception, e:
+        (<_XSLTResolverContext>context)._store_exception(e)
 
 cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
                               int parse_options, void* c_ctxt,
