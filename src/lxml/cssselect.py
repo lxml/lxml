@@ -866,7 +866,7 @@ def tokenize_escaped_string(s, pos):
                 % (quote, s[start:]))
         result = s[start:next]
         try:
-            result = result.decode('unicode_escape')
+            result = result.encode('ASCII', 'backslashreplace').decode('unicode_escape')
         except UnicodeDecodeError:
             # Probably a hanging \
             pos = next+1
@@ -891,7 +891,7 @@ def tokenize_symbol(s, pos):
         result = s[start:match.start()]
         pos = match.start()
     try:
-        result = result.decode('unicode_escape')
+        result = result.encode('ASCII', 'backslashreplace').decode('unicode_escape')
     except UnicodeDecodeError:
         e = sys.exc_info()[1]
         raise SelectorSyntaxError(
