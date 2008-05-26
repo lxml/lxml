@@ -20,10 +20,20 @@ except NameError:
     # Python 2.3
     from sets import Set as set
 try:
+    bytes = __builtins__["bytes"]
+except (KeyError, NameError):
+    # Python < 2.6
+    bytes = str
+try:
+    unicode = __builtins__["unicode"]
+except (KeyError, NameError):
+    # Python 3
+    unicode = str
+try:
     basestring = __builtins__["basestring"]
 except (KeyError, NameError):
     # Python 3
-    basestring = str
+    basestring = (str, bytes)
 
 __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
@@ -48,6 +58,16 @@ _css_import_re = re.compile(r'@import "(.*?)"')
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
+
+def _transform_result(typ, result):
+    u"""Convert the result back into the input type.
+    """
+    if issubclass(typ, bytes):
+        return tostring(result, encoding='utf-8')
+    elif issubclass(typ, unicode):
+        return tostring(result, encoding=unicode)
+    else:
+        return result
 
 def _nons(tag):
     if isinstance(tag, basestring):
@@ -376,18 +396,17 @@ class _MethodFunc(object):
         self.copy = copy
         self.__doc__ = getattr(source_class, self.name).__doc__
     def __call__(self, doc, *args, **kw):
+        result_type = type(doc)
         if isinstance(doc, basestring):
             if 'copy' in kw:
                 raise TypeError(
                     "The keyword 'copy' can only be used with element inputs to %s, not a string input" % self.name)
-            return_string = True
             doc = fromstring(doc, **kw)
         else:
             if 'copy' in kw:
                 copy = kw.pop('copy')
             else:
                 copy = self.copy
-            return_string = False
             if copy:
                 doc = copy.deepcopy(doc)
         meth = getattr(doc, self.name)
@@ -395,10 +414,7 @@ class _MethodFunc(object):
         # FIXME: this None test is a bit sloppy 
         if result is None:
             # Then return what we got in
-            if return_string:
-                return tostring(doc)
-            else:
-                return doc
+            return _transform_result(result_type, doc)
         else:
             return result
 

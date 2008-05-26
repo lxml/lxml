@@ -1,6 +1,6 @@
 from lxml.etree import XPath, ElementBase
 from lxml.html import fromstring, tostring, XHTML_NAMESPACE
-from lxml.html import _forms_xpath, _options_xpath, _nons
+from lxml.html import _forms_xpath, _options_xpath, _nons, _transform_result
 from lxml.html import defs
 try:
     basestring = __builtins__["basestring"]
@@ -34,17 +34,13 @@ def fill_form(
     _fill_form(el, values)
 
 def fill_form_html(html, values, form_id=None, form_index=None):
+    result_type = type(html)
     if isinstance(html, basestring):
         doc = fromstring(html)
-        return_string = True
     else:
         doc = copy.deepcopy(html)
-        return_string = False
     fill_form(doc, values, form_id=form_id, form_index=form_index)
-    if return_string:
-        return tostring(doc)
-    else:
-        return doc
+    return _transform_result(result_type, doc)
 
 def _fill_form(el, values):
     counts = {}
@@ -249,17 +245,13 @@ def insert_errors(
             _insert_error(error_el, message, error_class, error_creator)
 
 def insert_errors_html(html, values, **kw):
+    result_type = type(html)
     if isinstance(html, basestring):
         doc = fromstring(html)
-        return_string = True
     else:
         doc = copy.deepcopy(html)
-        return_string = False
     insert_errors(doc, values, **kw)
-    if return_string:
-        return tostring(doc)
-    else:
-        return doc
+    return _transform_result(result_type, doc)
 
 def _insert_error(el, error, error_class, error_creator):
     if _nons(el.tag) in defs.empty_tags or _nons(el.tag) == 'textarea':

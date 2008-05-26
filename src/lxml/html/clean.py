@@ -9,7 +9,8 @@ import copy
 import urlparse
 from lxml import etree
 from lxml.html import defs
-from lxml.html import fromstring, tostring, XHTML_NAMESPACE, _nons
+from lxml.html import fromstring, tostring, XHTML_NAMESPACE
+from lxml.html import _nons, _transform_result
 
 try:
     set
@@ -28,6 +29,12 @@ try:
 except (NameError, KeyError):
     # Python 3
     unicode = str
+
+try:
+    bytes = __builtins__['bytes']
+except (NameError, KeyError):
+    # Python < 2.6
+    bytes = str
 
 try:
     basestring = __builtins__['basestring']
@@ -470,17 +477,13 @@ class Cleaner(object):
         return False
 
     def clean_html(self, html):
+        result_type = type(html)
         if isinstance(html, basestring):
-            return_string = True
             doc = fromstring(html)
         else:
-            return_string = False
             doc = copy.deepcopy(html)
         self(doc)
-        if return_string:
-            return tostring(doc, encoding=unicode)
-        else:
-            return doc
+        return _transform_result(result_type, doc)
 
 clean = Cleaner()
 clean_html = clean.clean_html
@@ -609,17 +612,13 @@ def _link_text(text, link_regexes, avoid_hosts, factory):
     return leading_text, links
                 
 def autolink_html(html, *args, **kw):
+    result_type = type(html)
     if isinstance(html, basestring):
         doc = fromstring(html)
-        return_string = True
     else:
         doc = copy.deepcopy(html)
-        return_string = False
     autolink(doc, *args, **kw)
-    if return_string:
-        return tostring(doc, encoding=unicode)
-    else:
-        return doc
+    return _transform_result(result_type, doc)
 
 autolink_html.__doc__ = autolink.__doc__
 
@@ -672,9 +671,10 @@ def word_break(el, max_width=40,
             child.tail = _break_text(child.tail, max_width, break_character)
 
 def word_break_html(html, *args, **kw):
+    result_type = type(html)
     doc = fromstring(html)
     word_break(doc, *args, **kw)
-    return tostring(doc, encoding=unicode)
+    return _transform_result(result_type, doc)
 
 def _break_text(text, max_width, break_character):
     words = text.split()
