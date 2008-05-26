@@ -41,6 +41,21 @@ documentation`_.
    6  ElementPath
 
 
+..
+  >>> try: from StringIO import StringIO
+  ... except ImportError:
+  ...    from io import BytesIO
+  ...    def StringIO(s):
+  ...        if isinstance(s, str): s = s.encode("UTF-8")
+  ...        return BytesIO(s)
+
+  >>> try: unicode = __builtins__["unicode"]
+  ... except (NameError, KeyError): unicode = str
+
+  >>> try: basestring = __builtins__["basestring"]
+  ... except (NameError, KeyError): basestring = str
+
+
 A common way to import ``lxml.etree`` is as follows:
 
 .. sourcecode:: pycon
@@ -55,29 +70,29 @@ of) the following import chain as a fall-back to the original ElementTree:
 
     try:
       from lxml import etree
-      print "running with lxml.etree"
+      print("running with lxml.etree")
     except ImportError:
       try:
         # Python 2.5
         import xml.etree.cElementTree as etree
-        print "running with cElementTree on Python 2.5+"
+        print("running with cElementTree on Python 2.5+")
       except ImportError:
         try:
           # Python 2.5
           import xml.etree.ElementTree as etree
-          print "running with ElementTree on Python 2.5+"
+          print("running with ElementTree on Python 2.5+")
         except ImportError:
           try:
             # normal cElementTree install
             import cElementTree as etree
-            print "running with cElementTree"
+            print("running with cElementTree")
           except ImportError:
             try:
               # normal ElementTree install
               import elementtree.ElementTree as etree
-              print "running with ElementTree"
+              print("running with ElementTree")
             except ImportError:
-              print "Failed to import ElementTree from any known place"
+              print("Failed to import ElementTree from any known place")
 
 To aid in writing portable code, this tutorial makes it clear in the examples
 which part of the presented API is an extension of lxml.etree over the
@@ -85,6 +100,19 @@ original `ElementTree API`_, as defined by Fredrik Lundh's `ElementTree
 library`_.
 
 .. _`ElementTree library`: http://effbot.org/zone/element-index.htm
+
+..
+  >>> import sys
+  >>> if sys.version_info[0] >= 3:
+  ...   from lxml import etree as _etree
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes): s = s.decode("utf-8")
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
 
 
 The Element class
@@ -102,7 +130,7 @@ The XML tag name of elements is accessed through the ``tag`` property:
 
 .. sourcecode:: pycon
 
-    >>> print root.tag
+    >>> print(root.tag)
     root
 
 Elements are organised in an XML tree structure.  To create child elements and
@@ -125,7 +153,7 @@ To see that this is really XML, you can serialise the tree you have created:
 
 .. sourcecode:: pycon
 
-    >>> print etree.tostring(root, pretty_print=True),
+    >>> print(etree.tostring(root, pretty_print=True))
     <root>
       <child1/>
       <child2/>
@@ -142,10 +170,10 @@ possible, elements behave like normal Python lists:
 .. sourcecode:: pycon
 
     >>> child = root[0]
-    >>> print child.tag
+    >>> print(child.tag)
     child1
 
-    >>> print len(root)
+    >>> print(len(root))
     3
 
     >>> root.index(root[1]) # lxml.etree only!
@@ -154,7 +182,7 @@ possible, elements behave like normal Python lists:
     >>> children = list(root)
 
     >>> for child in root:
-    ...     print child.tag
+    ...     print(child.tag)
     child1
     child2
     child3
@@ -163,14 +191,14 @@ possible, elements behave like normal Python lists:
     >>> start = root[:1]
     >>> end   = root[-1:]
 
-    >>> print start[0].tag
+    >>> print(start[0].tag)
     child0
-    >>> print end[0].tag
+    >>> print(end[0].tag)
     child3
 
     >>> root[0] = root[-1] # this moves the element!
     >>> for child in root:
-    ...     print child.tag
+    ...     print(child.tag)
     child3
     child1
     child2
@@ -198,9 +226,9 @@ library:
     >>> element = etree.Element("neu")
     >>> element.append( deepcopy(root[1]) )
 
-    >>> print element[0].tag
+    >>> print(element[0].tag)
     child1
-    >>> print [ c.tag for c in root ]
+    >>> print([ c.tag for c in root ])
     ['child3', 'child1', 'child2']
 
 The way up in the tree is provided through the ``getparent()`` method:
@@ -230,7 +258,7 @@ factory:
 .. sourcecode:: pycon
 
     >>> root = etree.Element("root", interesting="totally")
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root interesting="totally"/>
 
 Fast and direct access to these attributes is provided by the ``set()`` and
@@ -238,11 +266,11 @@ Fast and direct access to these attributes is provided by the ``set()`` and
 
 .. sourcecode:: pycon
 
-    >>> print root.get("interesting")
+    >>> print(root.get("interesting"))
     totally
 
     >>> root.set("interesting", "somewhat")
-    >>> print root.get("interesting")
+    >>> print(root.get("interesting"))
     somewhat
 
 However, a very convenient way of dealing with them is through the dictionary
@@ -252,16 +280,16 @@ interface of the ``attrib`` property:
 
     >>> attributes = root.attrib
 
-    >>> print attributes["interesting"]
+    >>> print(attributes["interesting"])
     somewhat
 
-    >>> print attributes.get("hello")
+    >>> print(attributes.get("hello"))
     None
 
     >>> attributes["hello"] = "Guten Tag"
-    >>> print attributes.get("hello")
+    >>> print(attributes.get("hello"))
     Guten Tag
-    >>> print root.get("hello")
+    >>> print(root.get("hello"))
     Guten Tag
 
 
@@ -275,10 +303,10 @@ Elements can contain text:
     >>> root = etree.Element("root")
     >>> root.text = "TEXT"
 
-    >>> print root.text
+    >>> print(root.text)
     TEXT
 
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root>TEXT</root>
 
 In many XML documents (*data-centric* documents), this is the only place where
@@ -303,15 +331,15 @@ to the next element in the XML tree:
     >>> body = etree.SubElement(html, "body")
     >>> body.text = "TEXT"
 
-    >>> print etree.tostring(html)
+    >>> print(etree.tostring(html))
     <html><body>TEXT</body></html>
 
     >>> br = etree.SubElement(body, "br")
-    >>> print etree.tostring(html)
+    >>> print(etree.tostring(html))
     <html><body>TEXT<br/></body></html>
 
     >>> br.tail = "TAIL"
-    >>> print etree.tostring(html)
+    >>> print(etree.tostring(html))
     <html><body>TEXT<br/>TAIL</body></html>
 
 The two properties ``.text`` and ``.tail`` are enough to represent any
@@ -328,9 +356,9 @@ still want the tail text of its children).  For this purpose, the
 
 .. sourcecode:: pycon
 
-    >>> print etree.tostring(br)
+    >>> print(etree.tostring(br))
     <br/>TAIL
-    >>> print etree.tostring(br, with_tail=False) # lxml.etree only!
+    >>> print(etree.tostring(br, with_tail=False)) # lxml.etree only!
     <br/>
 
 .. _`special text nodes`: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-1312295772
@@ -343,7 +371,7 @@ comes to the rescue, this time using the ``method`` keyword:
 
 .. sourcecode:: pycon
 
-    >>> print etree.tostring(html, method="text")
+    >>> print(etree.tostring(html, method="text"))
     TEXTTAIL
 
 
@@ -357,9 +385,9 @@ also allows you to extract the separate text chunks into a list:
 
 .. sourcecode:: pycon
 
-    >>> print html.xpath("string()") # lxml.etree only!
+    >>> print(html.xpath("string()")) # lxml.etree only!
     TEXTTAIL
-    >>> print html.xpath("//text()") # lxml.etree only!
+    >>> print(html.xpath("//text()")) # lxml.etree only!
     ['TEXT', 'TAIL']
 
 If you want to use this more often, you can wrap it in a function:
@@ -367,7 +395,7 @@ If you want to use this more often, you can wrap it in a function:
 .. sourcecode:: pycon
 
     >>> build_text_list = etree.XPath("//text()") # lxml.etree only!
-    >>> print build_text_list(html)
+    >>> print(build_text_list(html))
     ['TEXT', 'TAIL']
 
 Note that a string result returned by XPath is a special 'smart'
@@ -378,26 +406,26 @@ Elements:
 .. sourcecode:: pycon
 
     >>> texts = build_text_list(html)
-    >>> print texts[0]
+    >>> print(texts[0])
     TEXT
     >>> parent = texts[0].getparent()
-    >>> print parent.tag
+    >>> print(parent.tag)
     body
 
-    >>> print texts[1]
+    >>> print(texts[1])
     TAIL
-    >>> print texts[1].getparent().tag
+    >>> print(texts[1].getparent().tag)
     br
 
 You can also find out if it's normal text content or tail text:
 
 .. sourcecode:: pycon
 
-    >>> print texts[0].is_text
+    >>> print(texts[0].is_text)
     True
-    >>> print texts[1].is_text
+    >>> print(texts[1].is_text)
     False
-    >>> print texts[1].is_tail
+    >>> print(texts[1].is_tail)
     True
 
 While this works for the results of the ``text()`` function, lxml will
@@ -407,9 +435,9 @@ XPath functions ``string()`` or ``concat()``:
 .. sourcecode:: pycon
 
     >>> stringify = etree.XPath("string()")
-    >>> print stringify(html)
+    >>> print(stringify(html))
     TEXTTAIL
-    >>> print stringify(html).getparent()
+    >>> print(stringify(html).getparent())
     None
 
 
@@ -429,7 +457,7 @@ serialised the tree to XML:
     >>> etree.SubElement(root, "child").text = "Child 2"
     >>> etree.SubElement(root, "another").text = "Child 3"
 
-    >>> print etree.tostring(root, pretty_print=True),
+    >>> print(etree.tostring(root, pretty_print=True))
     <root>
       <child>Child 1</child>
       <child>Child 2</child>
@@ -437,7 +465,7 @@ serialised the tree to XML:
     </root>
 
     >>> for element in root.iter():
-    ...     print element.tag, '-', element.text
+    ...     print("%s - %s" % (element.tag, element.text))
     root - None
     child - Child 1
     child - Child 2
@@ -449,7 +477,7 @@ If you know you are only interested in a single tag, you can pass its name to
 .. sourcecode:: pycon
 
     >>> for element in root.iter("child"):
-    ...     print element.tag, '-', element.text
+    ...     print("%s - %s" % (element.tag, element.text))
     child - Child 1
     child - Child 2
 
@@ -465,9 +493,9 @@ make sure only Element objects are returned, you can pass the
 
     >>> for element in root.iter():
     ...     if isinstance(element.tag, basestring):
-    ...         print element.tag, '-', element.text
+    ...         print("%s - %s" % (element.tag, element.text))
     ...     else:
-    ...         print 'SPECIAL:', element, '-', element.text
+    ...         print("SPECIAL: %s - %s" % (element, element.text))
     root - None
     child - Child 1
     child - Child 2
@@ -476,14 +504,14 @@ make sure only Element objects are returned, you can pass the
     SPECIAL: <!--some comment--> - some comment
 
     >>> for element in root.iter(tag=etree.Element):
-    ...     print element.tag, '-', element.text
+    ...     print("%s - %s" % (element.tag, element.text))
     root - None
     child - Child 1
     child - Child 2
     another - Child 3
 
     >>> for element in root.iter(tag=etree.Entity):
-    ...     print element.text
+    ...     print(element.text)
     &#234;
 
 In lxml.etree, elements provide `further iterators`_ for all directions in the
@@ -505,18 +533,18 @@ specific output encoding other than plain ASCII:
 
    >>> root = etree.XML('<root><a><b/></a></root>')
 
-   >>> print etree.tostring(root)
+   >>> print(etree.tostring(root))
    <root><a><b/></a></root>
 
-   >>> print etree.tostring(root, xml_declaration=True)
+   >>> print(etree.tostring(root, xml_declaration=True))
    <?xml version='1.0' encoding='ASCII'?>
    <root><a><b/></a></root>
 
-   >>> print etree.tostring(root, encoding='iso-8859-1')
+   >>> print(etree.tostring(root, encoding='iso-8859-1'))
    <?xml version='1.0' encoding='iso-8859-1'?>
    <root><a><b/></a></root>
 
-   >>> print etree.tostring(root, pretty_print=True),
+   >>> print(etree.tostring(root, pretty_print=True))
    <root>
      <a>
        <b/>
@@ -543,22 +571,22 @@ the text content by passing the ``method`` keyword:
    >>> root = etree.XML(
    ...    '<html><head/><body><p>Hello<br/>World</p></body></html>')
 
-   >>> print etree.tostring(root) # default: method = 'xml'
+   >>> print(etree.tostring(root)) # default: method = 'xml'
    <html><head/><body><p>Hello<br/>World</p></body></html>
 
-   >>> print etree.tostring(root, method='xml') # same as above
+   >>> print(etree.tostring(root, method='xml')) # same as above
    <html><head/><body><p>Hello<br/>World</p></body></html>
 
-   >>> print etree.tostring(root, method='html')
+   >>> print(etree.tostring(root, method='html'))
    <html><head></head><body><p>Hello<br>World</p></body></html>
 
-   >>> print etree.tostring(root, method='html', pretty_print=True),
+   >>> print(etree.tostring(root, method='html', pretty_print=True))
    <html>
    <head></head>
    <body><p>Hello<br>World</p></body>
    </html>
 
-   >>> print etree.tostring(root, method='text')
+   >>> print(etree.tostring(root, method='text'))
    HelloWorld
 
 As for XML serialisation, the default encoding for plain text
@@ -598,7 +626,6 @@ comments, as well as a DOCTYPE and other DTD content in the document:
 
 .. sourcecode:: pycon
 
-    >>> from StringIO import StringIO
     >>> tree = etree.parse(StringIO('''\
     ... <?xml version="1.0"?>
     ... <!DOCTYPE root SYSTEM "test" [ <!ENTITY tasty "eggs"> ]>
@@ -607,11 +634,11 @@ comments, as well as a DOCTYPE and other DTD content in the document:
     ... </root>
     ... '''))
 
-    >>> print tree.docinfo.doctype
+    >>> print(tree.docinfo.doctype)
     <!DOCTYPE root SYSTEM "test">
 
     >>> # lxml 1.3.4 and later
-    >>> print etree.tostring(tree)
+    >>> print(etree.tostring(tree))
     <!DOCTYPE root SYSTEM "test" [
     <!ENTITY tasty "eggs">
     ]>
@@ -620,7 +647,7 @@ comments, as well as a DOCTYPE and other DTD content in the document:
     </root>
 
     >>> # lxml 1.3.4 and later
-    >>> print etree.tostring(etree.ElementTree(tree.getroot()))
+    >>> print(etree.tostring(etree.ElementTree(tree.getroot())))
     <!DOCTYPE root SYSTEM "test" [
     <!ENTITY tasty "eggs">
     ]>
@@ -629,7 +656,7 @@ comments, as well as a DOCTYPE and other DTD content in the document:
     </root>
 
     >>> # ElementTree and lxml <= 1.3.3
-    >>> print etree.tostring(tree.getroot())
+    >>> print(etree.tostring(tree.getroot()))
     <root>
       <a>eggs</a>
     </root>
@@ -660,9 +687,9 @@ The ``fromstring()`` function is the easiest way to parse a string:
     >>> some_xml_data = "<root>data</root>"
 
     >>> root = etree.fromstring(some_xml_data)
-    >>> print root.tag
+    >>> print(root.tag)
     root
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root>data</root>
 
 
@@ -675,9 +702,9 @@ commonly used to write XML literals right into the source:
 .. sourcecode:: pycon
 
     >>> root = etree.XML("<root>data</root>")
-    >>> print root.tag
+    >>> print(root.tag)
     root
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root>data</root>
 
 
@@ -692,7 +719,7 @@ The ``parse()`` function is used to parse from files and file-like objects:
 
     >>> tree = etree.parse(some_file_like)
 
-    >>> print etree.tostring(tree)
+    >>> print(etree.tostring(tree))
     <root>data</root>
 
 Note that ``parse()`` returns an ElementTree object, not an Element object as
@@ -701,9 +728,9 @@ the string parser functions:
 .. sourcecode:: pycon
 
     >>> root = tree.getroot()
-    >>> print root.tag
+    >>> print(root.tag)
     root
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root>data</root>
 
 The reasoning behind this difference is that ``parse()`` returns a
@@ -743,7 +770,7 @@ that whitespace-only content is not meaningful for your data.  An example:
 
     >>> root = etree.XML("<root>  <a/>   <b>  </b>     </root>", parser)
 
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root><a/><b>  </b></root>
 
 Note that the whitespace content inside the ``<b>`` tag was not removed, as
@@ -756,7 +783,7 @@ easily remove it in an additional step by traversing the tree:
     ...     if element.text is not None and not element.text.strip():
     ...         element.text = None
 
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root><a/><b/></root>
 
 See ``help(etree.XMLParser)`` to find out about the available parser options.
@@ -783,7 +810,7 @@ will block and wait until data becomes available in this case:
 
     >>> tree = etree.parse(DataSource())
 
-    >>> print etree.tostring(tree)
+    >>> print(etree.tostring(tree))
     <root><a/></root>
 
 The second way is through a feed parser interface, given by the ``feed(data)``
@@ -801,7 +828,7 @@ and ``close()`` methods:
 
     >>> root = parser.close()
 
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root><a/></root>
 
 Here, you can interrupt the parsing process at any time and continue it later
@@ -818,7 +845,7 @@ method again:
 
     >>> parser.feed("<root/>")
     >>> root = parser.close()
-    >>> print etree.tostring(root)
+    >>> print(etree.tostring(root))
     <root/>
 
 
@@ -840,7 +867,7 @@ Here is a simple ``iterparse()`` example:
     >>> some_file_like = StringIO("<root><a>data</a></root>")
 
     >>> for event, element in etree.iterparse(some_file_like):
-    ...     print "%s, %4s, %s" % (event, element.tag, element.text)
+    ...     print("%s, %4s, %s" % (event, element.tag, element.text))
     end,    a, data
     end, root, None
 
@@ -853,7 +880,7 @@ element, but you can control this through the ``events`` keyword argument:
 
     >>> for event, element in etree.iterparse(some_file_like,
     ...                                       events=("start", "end")):
-    ...     print "%5s, %4s, %s" % (event, element.tag, element.text)
+    ...     print("%5s, %4s, %s" % (event, element.tag, element.text))
     start, root, None
     start,    a, data
       end,    a, data
@@ -875,9 +902,9 @@ need:
 
     >>> for event, element in etree.iterparse(some_file_like):
     ...     if element.tag == 'b':
-    ...         print element.text
+    ...         print(element.text)
     ...     elif element.tag == 'a':
-    ...         print "** cleaning up the subtree"
+    ...         print("** cleaning up the subtree")
     ...         element.clear()
     data
     ** cleaning up the subtree
@@ -902,9 +929,9 @@ some or all of these methods, you can control which events are generated:
     >>> events = etree.fromstring('<root test="true"/>', parser)
 
     >>> for event in events:
-    ...     print 'event: %s - tag: %s' % (event[0], event[1])
-    ...     for attr, value in event[2].iteritems():
-    ...         print ' * %s = %s' % (attr, value)
+    ...     print('event: %s - tag: %s' % (event[0], event[1]))
+    ...     for attr, value in event[2].items():
+    ...         print(' * %s = %s' % (attr, value))
     event: start - tag: root
      * test = true
 
@@ -921,7 +948,7 @@ the real namespaces instead:
     >>> body = etree.SubElement(xhtml, "{http://www.w3.org/1999/xhtml}body")
     >>> body.text = "Hello World"
 
-    >>> print etree.tostring(xhtml, pretty_print=True),
+    >>> print(etree.tostring(xhtml, pretty_print=True))
     <html:html xmlns:html="http://www.w3.org/1999/xhtml">
       <html:body>Hello World</html:body>
     </html:html>
@@ -946,7 +973,7 @@ to the Element factory, e.g. to define the default namespace:
     >>> body = etree.SubElement(xhtml, XHTML + "body")
     >>> body.text = "Hello World"
 
-    >>> print etree.tostring(xhtml, pretty_print=True),
+    >>> print(etree.tostring(xhtml, pretty_print=True))
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body>Hello World</body>
     </html>
@@ -957,12 +984,12 @@ Namespaces on attributes work alike:
 
     >>> body.set(XHTML + "bgcolor", "#CCFFAA")
 
-    >>> print etree.tostring(xhtml, pretty_print=True),
+    >>> print(etree.tostring(xhtml, pretty_print=True))
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body bgcolor="#CCFFAA">Hello World</body>
     </html>
 
-    >>> print body.get("bgcolor")
+    >>> print(body.get("bgcolor"))
     None
     >>> body.get(XHTML + "bgcolor")
     '#CCFFAA'
@@ -975,7 +1002,7 @@ You can also use XPath in this way:
     ...     "//{%s}body" % XHTML_NAMESPACE)
     >>> results = find_xhtml_body(xhtml)
 
-    >>> print results[0].tag
+    >>> print(results[0].tag)
     {http://www.w3.org/1999/xhtml}body
 
 
@@ -1008,7 +1035,7 @@ HTML:
     ...   )
     ... )
 
-    >>> print etree.tostring(page, pretty_print=True),
+    >>> print(etree.tostring(page, pretty_print=True))
     <html>
       <head>
         <title>This is a sample document</title>
@@ -1051,7 +1078,7 @@ simple vocabulary for an XML language:
     ...   )
     ... )
 
-    >>> print etree.tostring(my_doc, pretty_print=True),
+    >>> print(etree.tostring(my_doc, pretty_print=True))
     <p:doc xmlns:p="http://my.de/fault/namespace">
       <p:title>The dog and the hog</p:title>
       <p:section>
@@ -1105,16 +1132,16 @@ Find a child of an Element:
 
 .. sourcecode:: pycon
 
-    >>> print root.find("b")
+    >>> print(root.find("b"))
     None
-    >>> print root.find("a").tag
+    >>> print(root.find("a").tag)
     a
 
 Find an Element anywhere in the tree:
 
 .. sourcecode:: pycon
 
-    >>> print root.find(".//b").tag
+    >>> print(root.find(".//b").tag)
     b
     >>> [ b.tag for b in root.iterfind(".//b") ]
     ['b', 'b']
@@ -1123,7 +1150,7 @@ Find Elements with a certain attribute:
 
 .. sourcecode:: pycon
 
-    >>> print root.findall(".//a[@x]")[0].tag
+    >>> print(root.findall(".//a[@x]")[0].tag)
     a
-    >>> print root.findall(".//a[@y]")
+    >>> print(root.findall(".//a[@y]"))
     []

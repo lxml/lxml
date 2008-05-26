@@ -45,7 +45,7 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
   >>> try: from StringIO import StringIO
   ... except ImportError:
   ...    from io import BytesIO
-  ...    def StringIO(s):
+  ...    def StringIO(s=None):
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
 
@@ -76,8 +76,19 @@ The following examples usually assume this to be executed first:
 .. sourcecode:: pycon
 
   >>> from lxml import etree
-  >>> from StringIO import StringIO
 
+..
+  >>> import sys
+  >>> if sys.version_info[0] >= 3:
+  ...   from lxml import etree as _etree
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes): s = s.decode("utf-8")
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
 
 Other Element APIs
 ------------------
@@ -113,9 +124,9 @@ model.  It knows about parents and siblings of elements:
   >>> e = etree.SubElement(d,    "e")
   >>> b.getparent() == root
   True
-  >>> print b.getnext().tag
+  >>> print(b.getnext().tag)
   c
-  >>> print c.getprevious().tag
+  >>> print(c.getprevious().tag)
   b
 
 Elements always live within a document context in lxml.  This implies that
@@ -125,7 +136,7 @@ ElementTree for the root node of a document from any of its elements.
 .. sourcecode:: pycon
 
   >>> tree = d.getroottree()
-  >>> print tree.getroot().tag
+  >>> print(tree.getroot().tag)
   root
 
 Note that this is different from wrapping an Element in an ElementTree.  You
@@ -134,9 +145,9 @@ can use ElementTrees to create XML trees with an explicit root node:
 .. sourcecode:: pycon
 
   >>> tree = etree.ElementTree(d)
-  >>> print tree.getroot().tag
+  >>> print(tree.getroot().tag)
   d
-  >>> print etree.tostring(tree)
+  >>> print(etree.tostring(tree))
   <d><e/></d>
 
 ElementTree objects are serialised as complete documents, including
@@ -150,11 +161,11 @@ not modify their Elements:
 .. sourcecode:: pycon
 
   >>> element = tree.getroot()
-  >>> print element.tag
+  >>> print(element.tag)
   d
-  >>> print element.getparent().tag
+  >>> print(element.getparent().tag)
   root
-  >>> print element.getroottree().getroot().tag
+  >>> print(element.getroottree().getroot().tag)
   root
 
 The rule is that all operations that are applied to Elements use either the
@@ -230,7 +241,7 @@ breadth-first traversal, it is almost as simple if you use the
 .. sourcecode:: pycon
 
     >>> root = etree.XML('<root><a><b/><c/></a><d><e/></d></root>')
-    >>> print etree.tostring(root, pretty_print=True),
+    >>> print(etree.tostring(root, pretty_print=True))
     <root>
       <a>
         <b/>
@@ -292,7 +303,7 @@ error level:
 .. sourcecode:: pycon
 
   >>> log = e.error_log.filter_from_level(etree.ErrorLevels.FATAL)
-  >>> print log
+  >>> print(log)
   <string>:4:8:FATAL:PARSER:ERR_TAG_NAME_MISMATCH: Opening and ending tag mismatch: a line 3 and root
   <string>:5:1:FATAL:PARSER:ERR_TAG_NOT_FINISHED: Premature end of data in tag root line 2
 
@@ -307,8 +318,12 @@ like this:
 .. sourcecode:: pycon
 
   >>> entry = log[0]
-  >>> print entry.domain_name, entry.type_name, entry.filename
-  PARSER ERR_TAG_NAME_MISMATCH <string>
+  >>> print(entry.domain_name)
+  PARSER
+  >>> print(entry.type_name)
+  ERR_TAG_NAME_MISMATCH
+  >>> print(entry.filename)
+  <string>
 
 There is also a convenience attribute ``last_error`` that returns the last
 error or fatal error that occurred:
@@ -316,8 +331,12 @@ error or fatal error that occurred:
 .. sourcecode:: pycon
 
   >>> entry = e.error_log.last_error
-  >>> print entry.domain_name, entry.type_name, entry.filename
-  PARSER ERR_TAG_NOT_FINISHED <string>
+  >>> print(entry.domain_name)
+  PARSER
+  >>> print(entry.type_name)
+  ERR_TAG_NOT_FINISHED
+  >>> print(entry.filename)
+  <string>
 
 
 Error logging
@@ -341,10 +360,10 @@ argument:
 .. sourcecode:: pycon
 
   >>> root = etree.XML("<root><test/></root>")
-  >>> print etree.tostring(root)
+  >>> print(etree.tostring(root))
   <root><test/></root>
 
-  >>> print etree.tostring(root, pretty_print=True),
+  >>> print(etree.tostring(root, pretty_print=True))
   <root>
     <test/>
   </root>
@@ -362,7 +381,7 @@ is required by the standard:
   >>> etree.tostring(unicode_root, encoding="utf-8")
   '<t\xe3\x84\xa0st>t\xe0\xa8\x8ast</t\xe3\x84\xa0st>'
 
-  >>> print etree.tostring(unicode_root, encoding="iso-8859-1")
+  >>> print(etree.tostring(unicode_root, encoding="iso-8859-1"))
   <?xml version='1.0' encoding='iso-8859-1'?>
   <t&#12576;st>t&#2570;st</t&#12576;st>
 
@@ -375,7 +394,7 @@ keyword argument for the serialisation:
 
 .. sourcecode:: pycon
 
-  >>> print etree.tostring(root, xml_declaration=True)
+  >>> print(etree.tostring(root, xml_declaration=True))
   <?xml version='1.0' encoding='ASCII'?>
   <root><test/></root>
 
@@ -458,7 +477,7 @@ xinclude() method on a tree:
 
   >>> tree = etree.parse(data)
   >>> tree.xinclude()
-  >>> print etree.tostring(tree.getroot())
+  >>> print(etree.tostring(tree.getroot()))
   <doc xmlns:xi="http://www.w3.org/2001/XInclude">
   <foo/>
   <a xml:base="doc/test.xml"/>
@@ -487,5 +506,5 @@ example:
   >>> tree = etree.parse(f)
   >>> f2 = StringIO()
   >>> tree.write_c14n(f2)
-  >>> f2.getvalue()
-  '<a><b></b></a>'
+  >>> print(f2.getvalue().decode("utf-8"))
+  <a><b></b></a>
