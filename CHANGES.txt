@@ -8,13 +8,22 @@ Under development
 Features added
 --------------
 
+* XSLT results support the buffer protocol in Python 3.
+
+* Polymorphic functions in ``lxml.html`` that accept either a tree or
+  a parsable string will return either a UTF-8 encoded byte string, a
+  unicode string or a tree, based on the type of the input.
+  Previously, the result was always a byte string or a tree.
+
+* Support for Python 2.6 and 3.0 (experimental!).
+
 * File name handling now uses a heuristic to convert between byte
   strings and unicode strings.
 
-* Parsing from a plain file object frees the GIL.
+* Parsing from a plain file object frees the GIL under Python 2.x.
 
 * Running ``iterparse()`` on a plain file (or filename) frees the GIL
-  on reading.
+  on reading under Python 2.x.
 
 * Conversion functions ``html_to_xhtml()`` and ``xhtml_to_html()`` in
   lxml.html (experimental).
@@ -24,6 +33,13 @@ Features added
 
 Bugs fixed
 ----------
+
+* A number of problems related to unicode/byte string conversion of
+  filenames and error messages were fixed.
+
+* Building on MacOS-X now passes the "flat_namespace" option to the C
+  compiler, which reportedly prevents build quirks and crashes on this
+  platform.
 
 * Windows build was broken.
 
