@@ -47,7 +47,7 @@ cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
     c_ns = c_node.nsDef
     while c_ns is not NULL:
         if c_ns.prefix is NULL:
-            prefix = ''
+            prefix = u''
         else:
             prefix = funicode(c_ns.prefix)
         ns_tuple = (prefix, funicode(c_ns.href))
