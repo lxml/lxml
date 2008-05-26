@@ -101,7 +101,7 @@ cdef class _BaseErrorLog:
         return _BaseErrorLog(self._first_error, self.last_error)
 
     def __repr__(self):
-        return ''
+        return u''
 
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef bint is_error
@@ -198,7 +198,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         l = []
         for entry in self._entries:
             python.PyList_Append(l, repr(entry))
-        return '\n'.join(l)
+        return u'\n'.join(l)
 
     def __getitem__(self, index):
         return self._entries[index]
