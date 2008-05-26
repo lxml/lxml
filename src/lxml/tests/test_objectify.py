@@ -12,7 +12,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize, doctest
+from common_imports import SillyFileLike, canonicalize, doctest, make_doctest
 from common_imports import _bytes, _str, StringIO, BytesIO
 
 from lxml import objectify
@@ -2329,7 +2329,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
     if sys.version_info >= (2,4):
         suite.addTests(
-            [doctest.DocFileSuite('../../../doc/objectify.txt')])
+            [make_doctest('../../../doc/objectify.txt')])
     return suite
 
 if __name__ == '__main__':

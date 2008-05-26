@@ -23,7 +23,7 @@ except (NameError, KeyError): # Python 3
     basestring = str
 
 from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import doctest, _bytes, _str
+from common_imports import doctest, _bytes, _str, make_doctest
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XSLT tests etree"""
@@ -1355,9 +1355,9 @@ def test_suite():
     if is_python3:
         suite.addTests([unittest.makeSuite(Py3XSLTTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/extensions.txt')])
+        [make_doctest('../../../doc/extensions.txt')])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/xpathxslt.txt')])
+        [make_doctest('../../../doc/xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':

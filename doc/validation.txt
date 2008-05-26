@@ -88,7 +88,7 @@ will raise an exception:
 
   >>> root = etree.fromstring("<a>no int</a>", parser)
   Traceback (most recent call last):
-  XMLSyntaxError: Element 'a': 'no int' is not a valid value of the atomic type 'xs:integer'.
+  lxml.etree.XMLSyntaxError: Element 'a': 'no int' is not a valid value of the atomic type 'xs:integer'.
 
 If you want the parser to succeed regardless of the outcome of the
 validation, you should use a non validating parser and run the
@@ -200,7 +200,7 @@ If you prefer getting an exception when validating, you can use the
   >>> relaxng.assertValid(doc2)
   Traceback (most recent call last):
     ...
-  DocumentInvalid: Did not expect element c there, line 1
+  lxml.etree.DocumentInvalid: Did not expect element c there, line 1
 
   >>> relaxng.assert_(doc2)
   Traceback (most recent call last):
@@ -307,7 +307,7 @@ If you prefer getting an exception when validating, you can use the
   >>> xmlschema.assertValid(doc2)
   Traceback (most recent call last):
     ...
-  DocumentInvalid: Element 'c': This element is not expected. Expected is ( b )., line 1
+  lxml.etree.DocumentInvalid: Element 'c': This element is not expected. Expected is ( b )., line 1
 
   >>> xmlschema.assert_(doc2)
   Traceback (most recent call last):

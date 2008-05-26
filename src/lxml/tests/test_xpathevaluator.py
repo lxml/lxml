@@ -10,7 +10,8 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, HelperTestCase, doctest, _bytes, BytesIO
+from common_imports import etree, HelperTestCase, _bytes, BytesIO
+from common_imports import doctest, make_doctest
 
 class ETreeXPathTestCase(HelperTestCase):
     """XPath tests etree"""
@@ -630,6 +631,13 @@ def xpath():
     ...     print("Got error")
     Got error
     """
+
+if sys.version_info[0] >= 3:
+    xpath.__doc__ = xpath.__doc__.replace(" u'", " '")
+    xpath.__doc__ = xpath.__doc__.replace(" XPathResultError",
+                                          " lxml.etree.XPathResultError")
+    xpath.__doc__ = xpath.__doc__.replace(" exactly 2 arguments",
+                                          " exactly 2 positional arguments")
    
 def test_suite():
     suite = unittest.TestSuite()
@@ -638,7 +646,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/xpathxslt.txt')])
+        [make_doctest('../../../doc/xpathxslt.txt')])
     return suite
 
 if __name__ == '__main__':

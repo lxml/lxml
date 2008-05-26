@@ -337,7 +337,7 @@ XPath expression:
   >>> find = etree.XPath("\\")
   Traceback (most recent call last):
     ...
-  XPathSyntaxError: Invalid expression
+  lxml.etree.XPathSyntaxError: Invalid expression
 
 lxml will also try to give you a hint what went wrong, so if you pass a more
 complex expression, you may get a somewhat more specific error:
@@ -347,7 +347,7 @@ complex expression, you may get a somewhat more specific error:
   >>> find = etree.XPath("//*[1.1.1]")
   Traceback (most recent call last):
     ...
-  XPathSyntaxError: Invalid predicate
+  lxml.etree.XPathSyntaxError: Invalid predicate
 
 During evaluation, lxml will emit an XPathEvalError on errors:
 
@@ -357,7 +357,7 @@ During evaluation, lxml will emit an XPathEvalError on errors:
   >>> find(root)
   Traceback (most recent call last):
     ...
-  XPathEvalError: Undefined namespace prefix
+  lxml.etree.XPathEvalError: Undefined namespace prefix
 
 This works for the ``XPath`` class, however, the other evaluators (including
 the ``xpath()`` method) are one-shot operations that do parsing and evaluation
@@ -369,17 +369,17 @@ in one step.  They therefore raise evaluation exceptions in all cases:
   >>> find = root.xpath("//*[1.1.1]")
   Traceback (most recent call last):
     ...
-  XPathEvalError: Invalid predicate
+  lxml.etree.XPathEvalError: Invalid predicate
 
   >>> find = root.xpath("//ns:a")
   Traceback (most recent call last):
     ...
-  XPathEvalError: Undefined namespace prefix
+  lxml.etree.XPathEvalError: Undefined namespace prefix
 
   >>> find = root.xpath("\\")
   Traceback (most recent call last):
     ...
-  XPathEvalError: Invalid expression
+  lxml.etree.XPathEvalError: Invalid expression
 
 Note that lxml versions before 1.3 always raised an ``XPathSyntaxError`` for
 all errors, including evaluation errors.  The best way to support older

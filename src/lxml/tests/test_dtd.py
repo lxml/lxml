@@ -11,7 +11,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, _bytes, doctest
-from common_imports import HelperTestCase, fileInTestDir
+from common_imports import HelperTestCase, fileInTestDir, make_doctest
 
 class ETreeDtdTestCase(HelperTestCase):
     def test_dtd(self):
@@ -131,7 +131,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/validation.txt')])
+        [make_doctest('../../../doc/validation.txt')])
     return suite
 
 if __name__ == '__main__':

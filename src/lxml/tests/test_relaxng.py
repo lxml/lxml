@@ -10,7 +10,8 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, doctest, BytesIO, _bytes, HelperTestCase, fileInTestDir
+from common_imports import etree, BytesIO, _bytes, HelperTestCase, fileInTestDir
+from common_imports import doctest, make_doctest
 
 class ETreeRelaxNGTestCase(HelperTestCase):
     def test_relaxng(self):
@@ -158,7 +159,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeRelaxNGTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/validation.txt')])
+        [make_doctest('../../../doc/validation.txt')])
     return suite
 
 if __name__ == '__main__':

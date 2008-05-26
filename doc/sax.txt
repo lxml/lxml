@@ -51,7 +51,7 @@ property of the handler:
 
   >>> tree = handler.etree
   >>> lxml.etree.tostring(tree.getroot())
-  '<a><b foo="bar">Hello world</b></a>'
+  b'<a><b foo="bar">Hello world</b></a>'
 
 By passing a ``makeelement`` function the constructor of
 ``ElementTreeContentHandler``, e.g. the one of a parser you configured, you

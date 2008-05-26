@@ -43,6 +43,7 @@ try:
     import doctest
     # check if the system version has everything we need
     doctest.DocFileSuite
+    doctest.DocTestParser
     doctest.NORMALIZE_WHITESPACE
     doctest.ELLIPSIS
 except (ImportError, AttributeError):
@@ -59,7 +60,7 @@ except NameError:
 else:
     locals()['sorted'] = sorted
 
-if sys.version_info >= (3,):
+if sys.version_info[0] >= 3:
     # Python 3
     unicode = str
     def _str(s, encoding="UTF-8"):
@@ -71,6 +72,16 @@ if sys.version_info >= (3,):
         if args and isinstance(args[0], str):
             args = (args[0].encode("UTF-8"),)
         return _BytesIO(*args)
+
+    doctest_parser = doctest.DocTestParser()
+    _fix_unicode = re.compile(r'(\s+)u(["\'])').sub
+    def make_doctest(filename):
+        filename = os.path.normpath(os.path.join(os.path.dirname(__file__), filename))
+        doctests = open(filename).read()
+        doctests = _fix_unicode(r'\1\2', doctests)
+        return doctest.DocTestCase(
+            doctest_parser.get_doctest(
+                doctests, {}, os.path.basename(filename), filename, 0))
 else:
     # Python 2
     def _str(s, encoding="UTF-8"):
@@ -79,6 +90,18 @@ else:
         return s
     from StringIO import StringIO
     BytesIO = StringIO
+
+    doctest_parser = doctest.DocTestParser()
+    _fix_exceptions = re.compile(r'(\s+)(?:\w+\.)+([^.]*(?:Error|Exception):)').sub
+    _fix_bytes = re.compile(r'(\s+)b(["\'])').sub
+    def make_doctest(filename):
+        filename = os.path.normpath(os.path.join(os.path.dirname(__file__), filename))
+        doctests = open(filename).read()
+        doctests = _fix_exceptions(r'\1\2', doctests)
+        doctests = _fix_bytes(r'\1\2', doctests)
+        return doctest.DocTestCase(
+            doctest_parser.get_doctest(
+                doctests, {}, os.path.basename(filename), filename, 0))
 
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):

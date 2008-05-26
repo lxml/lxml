@@ -10,7 +10,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import HelperTestCase, doctest, BytesIO, _bytes
+from common_imports import HelperTestCase, doctest, make_doctest, BytesIO, _bytes
 from lxml import sax
 from xml.dom import pulldom
 
@@ -221,7 +221,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeSaxTestCase)])
     suite.addTests(
-        [doctest.DocFileSuite('../../../doc/sax.txt')])
+        [make_doctest('../../../doc/sax.txt')])
     return suite
 
 if __name__ == '__main__':
