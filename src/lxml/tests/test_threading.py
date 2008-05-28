@@ -138,6 +138,53 @@ class ThreadingTestCase(HelperTestCase):
             _bytes('<ns0:root xmlns:ns0="myns" att="someval"/>'),
             tostring(result))
 
+    def test_concurrent_proxies(self):
+        XML = self.etree.XML
+        root = XML(_bytes('<root><a>A</a><b xmlns="test">B</b><c/></root>'))
+        child_count = len(root)
+        def testrun():
+            for i in range(10000):
+                el = root[i%child_count]
+                del el
+        threads = [ threading.Thread(target=testrun)
+                    for _ in range(10) ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+    def test_concurrent_class_lookup(self):
+        XML = self.etree.XML
+
+        class TestElement(etree.ElementBase):
+            pass
+
+        class MyLookup(etree.CustomElementClassLookup):
+            repeat = range(100)
+            def lookup(self, t, d, ns, name):
+                count = 0
+                for i in self.repeat:
+                    # allow other threads to run
+                    count += 1
+                return TestElement
+
+        parser = self.etree.XMLParser()
+        parser.set_element_class_lookup(MyLookup())
+
+        root = XML(_bytes('<root><a>A</a><b xmlns="test">B</b><c/></root>'),
+                   parser)
+
+        child_count = len(root)
+        def testrun():
+            for i in range(1000):
+                el = root[i%child_count]
+                del el
+        threads = [ threading.Thread(target=testrun)
+                    for _ in range(10) ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
 
 def test_suite():
     suite = unittest.TestSuite()

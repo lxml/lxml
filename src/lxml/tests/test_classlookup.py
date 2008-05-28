@@ -157,6 +157,34 @@ class ClassLookupTestCase(HelperTestCase):
         self.assertFalse(hasattr(root, 'FIND_ME'))
         self.assertFalse(hasattr(root[0], 'FIND_ME'))
 
+    def test_class_lookup_reentry(self):
+        XML = self.etree.XML
+
+        class TestElement(etree.ElementBase):
+            FIND_ME = "here"
+
+        root = None
+        class MyLookup(etree.CustomElementClassLookup):
+            el = None
+            def lookup(self, t, d, ns, name):
+                if root is not None: # not in the parser
+                    if self.el is None and name == "a":
+                        self.el = []
+                        self.el.append(root.find(name))
+                return TestElement
+
+        parser = self.etree.XMLParser()
+        parser.set_element_class_lookup(MyLookup())
+
+        root = XML(_bytes('<root><a>A</a><b xmlns="test">B</b></root>'),
+                   parser)
+
+        a = root[0]
+        self.assertEquals(a.tag, "a")
+        self.assertEquals(root[0].tag, "a")
+        del a
+        self.assertEquals(root[0].tag, "a")
+
 
 def test_suite():
     suite = unittest.TestSuite()
