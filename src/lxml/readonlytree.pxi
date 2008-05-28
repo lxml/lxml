@@ -71,33 +71,44 @@ cdef class _ReadOnlyElementProxy:
 
     def __repr__(self):
         return u"<Element %s at %x>" % (self.tag, id(self))
-    
-    def __getitem__(self, Py_ssize_t index):
-        u"""Returns the subelement at the given position.
-        """
-        cdef xmlNode* c_node
-        c_node = _findChild(self._c_node, index)
-        if c_node is NULL:
-            raise IndexError, u"list index out of range"
-        return _newReadOnlyProxy(self._source_proxy, c_node)
 
-    def __getslice__(self, Py_ssize_t start, Py_ssize_t stop):
-        u"""Returns a list containing subelements in the given range.
+    def __getitem__(self, x):
+        u"""Returns the subelement at the given position or the requested
+        slice.
         """
         cdef xmlNode* c_node
-        cdef Py_ssize_t c
-        c_node = _findChild(self._c_node, start)
-        if c_node is NULL:
-            return []
-        c = start
-        result = []
-        while c_node is not NULL and c < stop:
-            if tree._isElement(c_node):
+        cdef Py_ssize_t step, slicelength
+        cdef Py_ssize_t c, i
+        cdef _node_to_node_function next_element
+        if python.PySlice_Check(x):
+            # slicing
+            if _isFullSlice(<python.slice>x):
+                return _collectChildren(self)
+            _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+            if c_node is NULL:
+                return []
+            if step > 0:
+                next_element = _nextElement
+            else:
+                step = -step
+                next_element = _previousElement
+            result = []
+            c = 0
+            while c_node is not NULL and c < slicelength:
                 python.PyList_Append(
                     result, _newReadOnlyProxy(self._source_proxy, c_node))
+                python.PyList_Append(
+                    result, _elementFactory(self._doc, c_node))
                 c = c + 1
-            c_node = c_node.next
-        return result
+                for i from 0 <= i < step:
+                    c_node = next_element(c_node)
+            return result
+        else:
+            # indexing
+            c_node = _findChild(self._c_node, x)
+            if c_node is NULL:
+                raise IndexError, u"list index out of range"
+            return _newReadOnlyProxy(self._source_proxy, c_node)
 
     def __len__(self):
         u"""Returns the number of subelements.

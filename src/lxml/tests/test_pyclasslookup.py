@@ -5,7 +5,11 @@ Tests specific to the Python based class lookup.
 """
 
 
-import unittest, operator
+import unittest, operator, os.path, sys
+
+this_dir = os.path.dirname(__file__)
+if this_dir not in sys.path:
+    sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, HelperTestCase, fileInTestDir
 from common_imports import SillyFileLike, canonicalize, doctest, _bytes
@@ -334,9 +338,7 @@ class PyClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
-    import sys
-    if sys.version_info[0] < 3:
-        suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
+    suite.addTests([unittest.makeSuite(PyClassLookupTestCase)])
     return suite
 
 if __name__ == '__main__':
