@@ -18,7 +18,7 @@ class XMLSyntaxError(ParseError):
             # Python >= 2.5 uses new style class exceptions
             super(_XMLSyntaxError, self).__init__(message)
         else:
-            error_super_init(self, message)
+            ParseError.__init__(self, message)
         self.position = (line, column)
         self.code = code
 
