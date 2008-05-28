@@ -154,7 +154,6 @@ def include_dirs(static_include_dirs):
     if OPTION_STATIC:
         if not static_include_dirs:
             static_include_dirs = env_var('INCLUDE')
-        assert static_include_dirs, "Static build not configured, see doc/build.txt"
         return static_include_dirs
     # filter them from xslt-config --cflags
     result = []
@@ -172,7 +171,6 @@ def cflags(static_cflags):
     if OPTION_STATIC:
         if not static_cflags:
             static_cflags = env_var('CFLAGS')
-        assert static_cflags, "Static build not configured, see doc/build.txt"
         result.extend(static_cflags)
     else:
         # anything from xslt-config --cflags that doesn't start with -I
