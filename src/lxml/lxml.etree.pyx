@@ -1315,12 +1315,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return evaluator(_path, **_variables)
 
 
-cdef python.PyThread_type_lock ELEMENT_CREATION_LOCK
-if config.ENABLE_THREADING:
-    ELEMENT_CREATION_LOCK = python.PyThread_allocate_lock()
-else:
-    ELEMENT_CREATION_LOCK = NULL
-
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
     cdef _Element NEW_ELEMENT "PY_NEW" (object t)
@@ -1333,17 +1327,11 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     if c_node is NULL:
         return None
 
-    if config.ENABLE_THREADING:
-        with nogil:
-            python.PyThread_acquire_lock(
-                ELEMENT_CREATION_LOCK, python.WAIT_LOCK)
-        result = getProxy(c_node)
-        if result is not None:
-            python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
-            return result
-
     element_class = LOOKUP_ELEMENT_CLASS(
         ELEMENT_CLASS_LOOKUP_STATE, doc, c_node)
+    if hasProxy(c_node):
+        # prevent re-entry race condition - we just called into Python
+        return getProxy(c_node)
     if element_class is _Element:
         # fast path for standard _Element class
         result = NEW_ELEMENT(_Element)
@@ -1351,16 +1339,11 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
         result = element_class()
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
-        if config.ENABLE_THREADING:
-            python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
         result._c_node = NULL
         return getProxy(c_node)
     result._doc = doc
     result._c_node = c_node
     _registerProxy(result)
-
-    if config.ENABLE_THREADING:
-        python.PyThread_release_lock(ELEMENT_CREATION_LOCK)
 
     if element_class is not _Element:
         result._init()
