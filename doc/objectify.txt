@@ -75,6 +75,26 @@ formatting of XML output.
     ...         if isinstance(s, str): s = s.encode('UTF-8')
     ...         return BytesIO(s)
 
+..
+  >>> import sys
+  >>> from lxml import etree as _etree
+  >>> if sys.version_info[0] >= 3:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  ... else:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
+
 
 The lxml.objectify API
 ======================
