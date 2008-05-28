@@ -51,12 +51,14 @@ cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
 
     This may deallocate the original document of the proxy!
     """
+    cdef _Document old_doc
     cdef _Element element = <_Element>c_node._private
     if element._doc is not doc:
-        python.Py_INCREF(doc)
-        python.Py_DECREF(element._doc)
+        old_doc = element._doc
         element._doc = doc
+        python.Py_INCREF(doc)
         element._gc_doc = <python.PyObject*>doc
+        python.Py_DECREF(old_doc)
 
 ################################################################################
 # temporarily make a node the root node of its document
