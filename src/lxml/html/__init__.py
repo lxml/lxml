@@ -35,6 +35,14 @@ except (KeyError, NameError):
     # Python 3
     basestring = (str, bytes)
 
+def __fix_docstring(s):
+    import sys
+    if sys.version_info[0] >= 3:
+        sub = re.compile(r"^(\s*)u'", re.M).sub
+    else:
+        sub = re.compile(r"^(\s*)b'", re.M).sub
+    return sub(r"\1'", s)
+
 __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
     'tostring', 'Element', 'defs', 'open_in_browser', 'submit_form',
@@ -164,7 +172,7 @@ class HtmlMixin(object):
 
             >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
             >>> h.find('.//b').drop_tag()
-            >>> print(tostring(h))
+            >>> print(tostring(h, encoding=unicode))
             <div>Hello World!</div>
         """
         parent = self.getparent()
@@ -1385,15 +1393,15 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         >>> root = html.fragment_fromstring('<p>Hello<br>world!</p>')
 
         >>> html.tostring(root)
-        '<p>Hello<br>world!</p>'
+        b'<p>Hello<br>world!</p>'
         >>> html.tostring(root, method='html')
-        '<p>Hello<br>world!</p>'
+        b'<p>Hello<br>world!</p>'
 
         >>> html.tostring(root, method='xml')
-        '<p>Hello<br/>world!</p>'
+        b'<p>Hello<br/>world!</p>'
 
         >>> html.tostring(root, method='text')
-        'Helloworld!'
+        b'Helloworld!'
 
         >>> html.tostring(root, method='text', encoding=unicode)
         u'Helloworld!'
@@ -1403,6 +1411,8 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     if not include_meta_content_type:
         html = __replace_meta_content_type('', html)
     return html
+
+tostring.__doc__ = __fix_docstring(tostring.__doc__)
 
 def open_in_browser(doc):
     """
