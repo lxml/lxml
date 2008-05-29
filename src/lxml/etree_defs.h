@@ -16,7 +16,8 @@
 #if PY_VERSION_HEX >= 0x03000000
 #  define PyFile_AsFile(o) (NULL)
 #else
-#  define PyUnicode_FromFormat(s, ...) (NULL)
+/* we currently only use three parameters - MSVC can't compile (s, ...) */
+#  define PyUnicode_FromFormat(s, a, b) (NULL)
 #endif
 
 #if PY_VERSION_HEX >= 0x03000000
