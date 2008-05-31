@@ -140,11 +140,8 @@ def prepare_predicate(next, token):
             raise SyntaxError("invalid node predicate")
         def select(result):
             for elem in result:
-                try:
-                    elem.iterdescendants(tag).next()
+                if elem.find(tag) is not None:
                     yield elem
-                except StopIteration:
-                    pass
     else:
         raise SyntaxError("invalid predicate")
     return select
