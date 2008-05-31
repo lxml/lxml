@@ -12,9 +12,15 @@
 #  endif
 #endif
 
-/* Python 3 doesn't have PyFile_*() */
+/* Python 3 doesn't have PyFile_*(), PyString_*(), ... */
 #if PY_VERSION_HEX >= 0x03000000
-#  define PyFile_AsFile(o) (NULL)
+#  define PyFile_AsFile(o)                   (NULL)
+#  define PyString_Check(o)                  PyBytes_Check(o)
+#  define PyString_CheckExact(o)             PyBytes_CheckExact(o)
+#  define PyString_FromStringAndSize(s, len) PyBytes_FromStringAndSize(s, len)
+#  define PyString_FromFormat                PyBytes_FromFormat
+#  define PyString_GET_SIZE(s)               PyBytes_GET_SIZE(s)
+#  define PyString_AS_STRING(s)              PyBytes_AS_STRING(s)
 #else
 /* we currently only use three parameters - MSVC can't compile (s, ...) */
 #  define PyUnicode_FromFormat(s, a, b) (NULL)

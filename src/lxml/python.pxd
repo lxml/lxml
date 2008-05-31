@@ -41,7 +41,6 @@ cdef extern from "Python.h":
     cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
     cdef object PyString_FromStringAndSize(char* s, Py_ssize_t size)
-    cdef object PyString_FromString(char* s)
     cdef object PyString_FromFormat(char* format, ...)
     cdef Py_ssize_t PyString_GET_SIZE(object s)
 
