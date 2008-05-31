@@ -1650,8 +1650,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path) and path[:1] == u"/":
-            path = u"." + path
+        if _isString(path):
+            start = path[:1]
+            if start == u"/":
+                path = u"." + path
+            elif start == "/":
+                path = "." + path
         return root.find(path)
 
     def findtext(self, path, default=None):
@@ -1662,8 +1666,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path) and path[:1] == "/":
-            path = "." + path
+        if _isString(path):
+            start = path[:1]
+            if start == u"/":
+                path = u"." + path
+            elif start == "/":
+                path = "." + path
         return root.findtext(path, default)
 
     def findall(self, path):
@@ -1674,8 +1682,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path) and path[:1] == u"/":
-            path = u"." + path
+        if _isString(path):
+            start = path[:1]
+            if start == u"/":
+                path = u"." + path
+            elif start == "/":
+                path = "." + path
         return root.findall(path)
 
     def iterfind(self, path):
@@ -1686,8 +1698,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         root = self.getroot()
-        if _isString(path) and path[:1] == "/":
-            path = "." + path
+        if _isString(path):
+            start = path[:1]
+            if start == u"/":
+                path = u"." + path
+            elif start == "/":
+                path = "." + path
         return root.iterfind(path)
 
     def xpath(self, _path, *, namespaces=None, extensions=None, **_variables):

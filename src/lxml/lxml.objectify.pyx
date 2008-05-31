@@ -949,7 +949,9 @@ cdef class PyType:
     cdef object _type
     cdef object _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
-        if not python._isString(name):
+        if python.PyString_Check(name):
+            name = python.PyUnicode_FromEncodedObject(name, 'ASCII', NULL)
+        elif not python.PyUnicode_Check(name):
             raise TypeError, u"Type name must be a string"
         if type_check is not None and not callable(type_check):
             raise TypeError, u"Type check function must be callable (or None)"
@@ -1031,7 +1033,7 @@ cdef class PyType:
         def __get__(self):
             return self._schema_types
         def __set__(self, types):
-            self._schema_types = list(types)
+            self._schema_types = list(map(unicode, types))
 
 
 cdef object _PYTYPE_DICT

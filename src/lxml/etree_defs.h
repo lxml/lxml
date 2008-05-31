@@ -131,9 +131,16 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 
 #define _fqtypename(o)  ((Py_TYPE(o))->tp_name)
 
+#if PY_MAJOR_VERSION < 3
 #define _isString(obj)   (PyString_CheckExact(obj)  || \
                           PyUnicode_CheckExact(obj) || \
                           PyObject_TypeCheck(obj, &PyBaseString_Type))
+#else
+#define _isString(obj)   (PyUnicode_CheckExact(obj) || \
+			  PyBytes_CheckExact(obj) || \
+			  PyUnicode_Check(obj) || \
+			  PyBytes_Check(obj))
+#endif
 
 #define _isElement(c_node) \
         (((c_node)->type == XML_ELEMENT_NODE) || \
