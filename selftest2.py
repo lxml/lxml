@@ -4,25 +4,32 @@
 # this test script uses Python's "doctest" module to check that the
 # *test script* works as expected.
 
-import sys, StringIO
+import sys
+
+try:
+    from StringIO import StringIO as BytesIO
+except ImportError:
+    from io import BytesIO
 
 from lxml import etree as ElementTree
 
 def unserialize(text):
-    import StringIO
-    file = StringIO.StringIO(text)
+    file = BytesIO(text)
     tree = ElementTree.parse(file)
     return tree.getroot()
 
 def serialize(elem, encoding=None):
-    import StringIO
-    file = StringIO.StringIO()
+    file = BytesIO()
     tree = ElementTree.ElementTree(elem)
     if encoding:
         tree.write(file, encoding=encoding)
     else:
         tree.write(file)
-    result = file.getvalue()
+    try:
+        encoding = options["encoding"]
+    except KeyError:
+        encoding = "utf-8"
+    result = file.getvalue().decode(encoding)
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
         result = result[:-1]
@@ -32,7 +39,7 @@ def summarize(elem):
     return elem.tag
 
 def summarize_list(seq):
-    return map(summarize, seq)
+    return list(map(summarize, seq))
 
 SAMPLE_XML = unserialize("""
 <body>
@@ -60,7 +67,7 @@ def check_string(string):
     len(string)
     for char in string:
         if len(char) != 1:
-            print "expected one-character string, got %r" % char
+            print("expected one-character string, got %r" % char)
     new_string = string + ""
     new_string = string + " "
     string[:0]
@@ -73,17 +80,17 @@ def check_mapping(mapping):
         item = mapping[key]
     mapping["key"] = "value"
     if mapping["key"] != "value":
-        print "expected value string, got %r" % mapping["key"]
+        print("expected value string, got %r" % mapping["key"])
 
 def check_element(element):
     if not hasattr(element, "tag"):
-        print "no tag member"
+        print("no tag member")
     if not hasattr(element, "attrib"):
-        print "no attrib member"
+        print("no attrib member")
     if not hasattr(element, "text"):
-        print "no text member"
+        print("no text member")
     if not hasattr(element, "tail"):
-        print "no tail member"
+        print("no tail member")
     check_string(element.tag)
     check_mapping(element.attrib)
     if element.text != None:
@@ -373,7 +380,7 @@ def makeelement():
 ##     Test observers.
 
 ##     >>> def observer(action, elem):
-##     ...     print action, elem.tag
+##     ...     print("%s %s" % (action, elem.tag))
 ##     >>> builder = ElementTree.TreeBuilder()
 ##     >>> builder.addobserver(observer)
 ##     >>> parser = ElementTree.XMLParser(builder)
@@ -421,4 +428,4 @@ ENTITY_XML = """\
 if __name__ == "__main__":
     import doctest, selftest2
     failed, tested = doctest.testmod(selftest2)
-    print tested - failed, "tests ok."
+    print("%d tests ok." % (tested - failed))

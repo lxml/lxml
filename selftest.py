@@ -9,7 +9,12 @@
 # TODO: add xml/html parsing tests
 # TODO: etc
 
-import re, sys, string, StringIO
+import re, sys, string
+
+try:
+    from StringIO import StringIO as BytesIO
+except ImportError:
+    from io import BytesIO
 
 from lxml import etree as ElementTree
 from lxml import _elementpath as ElementPath
@@ -30,22 +35,25 @@ def fix_compatibility(xml_data):
     return xml_data
 
 def serialize(elem, **options):
-    import StringIO
-    file = StringIO.StringIO()
+    file = BytesIO()
     tree = ElementTree.ElementTree(elem)
     tree.write(file, **options)
-    return fix_compatibility( file.getvalue() )
+    try:
+        encoding = options["encoding"]
+    except KeyError:
+        encoding = "utf-8"
+    return fix_compatibility( file.getvalue().decode(encoding) )
 
 def summarize(elem):
     return elem.tag
 
 def summarize_list(seq):
-    return map(summarize, seq)
+    return list(map(summarize, seq))
 
 def normalize_crlf(tree):
     for elem in tree.getiterator():
-        if elem.text: elem.text = string.replace(elem.text, "\r\n", "\n")
-        if elem.tail: elem.tail = string.replace(elem.tail, "\r\n", "\n")
+        if elem.text: elem.text = elem.text.replace("\r\n", "\n")
+        if elem.tail: elem.tail = elem.tail.replace("\r\n", "\n")
 
 SAMPLE_XML = ElementTree.XML("""
 <body>
@@ -64,7 +72,7 @@ def check_string(string):
     len(string)
     for char in string:
         if len(char) != 1:
-            print "expected one-character string, got %r" % char
+            print("expected one-character string, got %r" % char)
     new_string = string + ""
     new_string = string + " "
     string[:0]
@@ -82,17 +90,17 @@ def check_mapping(mapping):
         item = mapping[key]
     mapping["key"] = "value"
     if mapping["key"] != "value":
-        print "expected value string, got %r" % mapping["key"]
+        print("expected value string, got %r" % mapping["key"])
 
 def check_element(element):
     if not hasattr(element, "tag"):
-        print "no tag member"
+        print("no tag member")
     if not hasattr(element, "attrib"):
-        print "no attrib member"
+        print("no attrib member")
     if not hasattr(element, "text"):
-        print "no text member"
+        print("no text member")
     if not hasattr(element, "tail"):
-        print "no tail member"
+        print("no tail member")
     check_string(element.tag)
     check_mapping(element.attrib)
     check_string_or_none(element.text)
@@ -345,11 +353,11 @@ def parseliteral():
 ##     >>> ElementTree.ElementTree(element).write(sys.stdout)
 ##     <html><body>text</body></html>
 
-    >>> print ElementTree.tostring(element)
+    >>> print(ElementTree.tostring(element))
     <html><body>text</body></html>
 
 # looks different in lxml
-#    >>> print ElementTree.tostring(element, "ascii")
+#    >>> print(ElementTree.tostring(element, "ascii"))
 #    <?xml version='1.0' encoding='ascii'?>
 #    <html><body>text</body></html>
 
@@ -390,7 +398,7 @@ def iterparse():
 
     >>> context = iterparse("samples/simple.xml")
     >>> for action, elem in context:
-    ...   print action, elem.tag
+    ...   print("%s %s" % (action, elem.tag))
     end element
     end element
     end empty-element
@@ -400,7 +408,7 @@ def iterparse():
 
     >>> context = iterparse("samples/simple-ns.xml")
     >>> for action, elem in context:
-    ...   print action, elem.tag
+    ...   print("%s %s" % (action, elem.tag))
     end {namespace}element
     end {namespace}element
     end {namespace}empty-element
@@ -409,17 +417,17 @@ def iterparse():
     >>> events = ()
     >>> context = iterparse("samples/simple.xml", events)
     >>> for action, elem in context:
-    ...   print action, elem.tag
+    ...   print("%s %s" % (action, elem.tag))
 
     >>> events = ()
     >>> context = iterparse("samples/simple.xml", events=events)
     >>> for action, elem in context:
-    ...   print action, elem.tag
+    ...   print("%s %s" % (action, elem.tag))
 
     >>> events = ("start", "end")
     >>> context = iterparse("samples/simple.xml", events)
     >>> for action, elem in context:
-    ...   print action, elem.tag
+    ...   print("%s %s" % (action, elem.tag))
     start root
     start element
     end element
@@ -433,9 +441,9 @@ def iterparse():
     >>> context = iterparse("samples/simple-ns.xml", events)
     >>> for action, elem in context:
     ...   if action in ("start", "end"):
-    ...     print action, elem.tag
+    ...     print("%s %s" % (action, elem.tag))
     ...   else:
-    ...     print action, elem
+    ...     print("%s %s" % (action, elem))
     start-ns ('', 'namespace')
     start {namespace}root
     start {namespace}element
@@ -468,9 +476,9 @@ def fancyparsefile():
     Callback check.
     >>> class MyFancyParser(XMLTreeBuilder.FancyTreeBuilder):
     ...     def start(self, elem):
-    ...         print "START", elem.tag
+    ...         print("START %s" % elem.tag)
     ...     def end(self, elem):
-    ...         print "END", elem.tag
+    ...         print("END %s" % elem.tag)
     >>> parser = MyFancyParser()
     >>> tree = ElementTree.parse("samples/simple.xml", parser)
     START root
@@ -875,7 +883,7 @@ def xinclude():
 
     >>> document = xinclude_loader("C1.xml")
     >>> ElementInclude.include(document, xinclude_loader)
-    >>> print serialize(document) # C1
+    >>> print(serialize(document)) # C1
     <document>
       <p>120 Mz is adequate for an average home user.</p>
       <disclaimer>
@@ -889,7 +897,7 @@ def xinclude():
 
     >>> document = xinclude_loader("C2.xml")
     >>> ElementInclude.include(document, xinclude_loader)
-    >>> print serialize(document) # C2
+    >>> print(serialize(document)) # C2
     <document>
       <p>This document has been accessed
       324387 times.</p>
@@ -899,7 +907,7 @@ def xinclude():
 
     >>> document = xinclude_loader("C3.xml")
     >>> ElementInclude.include(document, xinclude_loader)
-    >>> print serialize(document) # C3
+    >>> print(serialize(document)) # C3
     <document>
       <p>The following is the source of the "data.xml" resource:</p>
       <example>&lt;?xml version='1.0'?&gt;
@@ -916,7 +924,7 @@ def xinclude():
 ##     >>> ElementInclude.include(document, xinclude_loader)
 ##     Traceback (most recent call last):
 ##     IOError: resource not found
-##     >>> # print serialize(document) # C5
+##     >>> # print(serialize(document)) # C5
 
     """
 
@@ -924,7 +932,7 @@ def xinclude_default():
     """
     >>> document = xinclude_loader("default.xml")
     >>> ElementInclude.include(document)
-    >>> print serialize(document) # default
+    >>> print(serialize(document)) # default
     <document>
       <p>Example.</p>
       <root>
@@ -940,7 +948,7 @@ def xinclude_default():
 
 def xmlwriter():
     r"""
-    >>> file = StringIO.StringIO()
+    >>> file = BytesIO()
     >>> w = SimpleXMLWriter.XMLWriter(file)
     >>> html = w.start("html")
     >>> x = w.start("head")
@@ -959,7 +967,7 @@ def xmlwriter():
     >>> w.element("p", u"detta är också ett stycke")
     >>> w.data("\n")
     >>> w.close(html)
-    >>> print file.getvalue()
+    >>> print(file.getvalue())
     <html><head><title>my document</title>
     <meta name="hello" value="goodbye" />
     </head><body><h1>this is a heading</h1>
@@ -1171,7 +1179,7 @@ def bug_200708_version():
     >>> parser.version
     'Expat 2.0.0'
     >>> parser.feed(open("samples/simple.xml").read())
-    >>> print serialize(parser.close())
+    >>> print(serialize(parser.close()))
     <root>
        <element key="value">text</element>
        <element>text</element>tail
@@ -1230,4 +1238,4 @@ del bug_200709_default_namespace
 if __name__ == "__main__":
     import doctest, selftest
     failed, tested = doctest.testmod(selftest)
-    print tested - failed, "tests ok."
+    print("%d tests ok." % (tested - failed))
