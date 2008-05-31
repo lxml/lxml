@@ -7,14 +7,15 @@
 import sys
 
 try:
-    from StringIO import StringIO as BytesIO
+    from StringIO import StringIO
+    BytesIO = StringIO
 except ImportError:
-    from io import BytesIO
+    from io import BytesIO, StringIO
 
 from lxml import etree as ElementTree
 
 def unserialize(text):
-    file = BytesIO(text)
+    file = StringIO(text)
     tree = ElementTree.parse(file)
     return tree.getroot()
 
@@ -24,11 +25,8 @@ def serialize(elem, encoding=None):
     if encoding:
         tree.write(file, encoding=encoding)
     else:
-        tree.write(file)
-    try:
-        encoding = options["encoding"]
-    except KeyError:
         encoding = "utf-8"
+        tree.write(file)
     result = file.getvalue().decode(encoding)
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
@@ -117,14 +115,14 @@ def parsefile():
     here; by default, the 'parse' function opens the file in binary
     mode, and doctest doesn't filter out carriage returns.
 
-    >>> tree = ElementTree.parse(open("samples/simple.xml", "r"))
+    >>> tree = ElementTree.parse(open("samples/simple.xml", "rb"))
     >>> tree.write(sys.stdout)
     <root>
        <element key="value">text</element>
        <element>text</element>tail
        <empty-element/>
     </root>
-    >>> tree = ElementTree.parse(open("samples/simple-ns.xml", "r"))
+    >>> tree = ElementTree.parse(open("samples/simple-ns.xml", "rb"))
     >>> tree.write(sys.stdout)
     <root xmlns="namespace">
        <element key="value">text</element>
@@ -384,7 +382,7 @@ def makeelement():
 ##     >>> builder = ElementTree.TreeBuilder()
 ##     >>> builder.addobserver(observer)
 ##     >>> parser = ElementTree.XMLParser(builder)
-##     >>> parser.feed(open("samples/simple.xml", "r").read())
+##     >>> parser.feed(open("samples/simple.xml", "rb").read())
 ##     start root
 ##     start element
 ##     end element
