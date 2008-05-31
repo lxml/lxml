@@ -140,7 +140,7 @@ def prepare_predicate(next, token):
             raise SyntaxError("invalid node predicate")
         def select(result):
             for elem in result:
-                if elem.find(tag) is not None:
+                if find(elem, tag) is not None:
                     yield elem
     else:
         raise SyntaxError("invalid predicate")
