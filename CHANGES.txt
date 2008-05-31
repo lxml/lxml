@@ -55,6 +55,31 @@ Other changes
   lxml.objectify.
 
 
+2.0.6 (2008-05-31)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Incorrect evaluation of ``el.find("tag[child]")``.
+
+* Windows build was broken.
+
+* Moving a subtree from a document created in one thread into a
+  document of another thread could crash when the rest of the source
+  document is deleted while the subtree is still in use.
+
+* Rare crash when serialising to a file object with certain encodings.
+
+Other changes
+-------------
+
+* lxml should now build without problems on MacOS-X.
+
+
 2.1beta2 (2008-05-02)
 =====================
 
