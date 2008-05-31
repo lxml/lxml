@@ -323,8 +323,10 @@ cdef _tofilelike(f, _Element element, encoding, method,
         if _isString(f):
             filename8 = _encodeFilename(f)
             f = open(filename8, u'wb')
-            f.write(_textToString(element._c_node, encoding, with_tail))
-            f.close()
+            try:
+                f.write(_textToString(element._c_node, encoding, with_tail))
+            finally:
+                f.close()
         else:
             f.write(_textToString(element._c_node, encoding, with_tail))
         return
