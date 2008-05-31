@@ -1473,6 +1473,16 @@ class ETreeOnlyTestCase(HelperTestCase):
             _bytes('<root xmlns:ns="%s"><ns:baz/></root>' % ns_href),
             self.etree.tostring(two))
 
+    def test_namespace_cleanup(self):
+        xml = _bytes('<foo xmlns="F" xmlns:x="x"><bar xmlns:ns="NS" xmlns:b="b" xmlns="B"><ns:baz/></bar></foo>')
+        root = self.etree.fromstring(xml)
+        self.assertEquals(xml,
+                          self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root)
+        self.assertEquals(
+            _bytes('<foo xmlns="F"><bar xmlns:ns="NS" xmlns="B"><ns:baz/></bar></foo>'),
+            self.etree.tostring(root))
+
     def test_element_nsmap(self):
         etree = self.etree
 

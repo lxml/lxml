@@ -252,6 +252,112 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
                 tree.xmlNewNsProp(c_node, c_ns,
                                   _cstr(attr_name_utf), _cstr(value_utf))
 
+ctypedef struct _ns_node_ref:
+    xmlNs* ns
+    xmlNode* node
+
+cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
+    u"""Remove any namespace declarations from a subtree that do not used
+    by any of its elements (or attributes).
+    """
+    cdef _ns_node_ref* c_ns_list
+    cdef _ns_node_ref* c_nsref_ptr
+    cdef xmlNs* c_nsdef
+    cdef xmlNode* c_node
+    cdef cstd.size_t c_ns_list_size
+    cdef cstd.size_t c_ns_list_len
+    cdef cstd.size_t i
+
+    c_ns_list = NULL
+    c_ns_list_size = 0
+    c_ns_list_len  = 0
+
+    if c_element.parent is not NULL and \
+            c_element.parent.type == tree.XML_DOCUMENT_NODE:
+        # include the document node
+        c_nsdef = c_element.parent.nsDef
+        while c_nsdef is not NULL:
+            if c_ns_list_len >= c_ns_list_size:
+                if c_ns_list is NULL:
+                    c_ns_list_size = 20
+                else:
+                    c_ns_list_size *= 2
+                c_nsref_ptr = <_ns_node_ref*> cstd.realloc(
+                    c_ns_list, c_ns_list_size * sizeof(_ns_node_ref))
+                if c_nsref_ptr is NULL:
+                    if c_ns_list is not NULL:
+                        cstd.free(c_ns_list)
+                    python.PyErr_NoMemory()
+                    return -1
+                c_ns_list = c_nsref_ptr
+
+            c_ns_list[c_ns_list_len].ns   = c_nsdef
+            c_ns_list[c_ns_list_len].node = c_element.parent
+            c_ns_list_len += 1
+            c_nsdef = c_nsdef.next
+
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
+    # collect all new namespace declarations into the ns list
+    c_nsdef = c_element.nsDef
+    while c_nsdef is not NULL:
+        if c_ns_list_len >= c_ns_list_size:
+            if c_ns_list is NULL:
+                c_ns_list_size = 20
+            else:
+                c_ns_list_size *= 2
+            c_nsref_ptr = <_ns_node_ref*> cstd.realloc(
+                c_ns_list, c_ns_list_size * sizeof(_ns_node_ref))
+            if c_nsref_ptr is NULL:
+                if c_ns_list is not NULL:
+                    cstd.free(c_ns_list)
+                python.PyErr_NoMemory()
+                return -1
+            c_ns_list = c_nsref_ptr
+
+        c_ns_list[c_ns_list_len].ns   = c_nsdef
+        c_ns_list[c_ns_list_len].node = c_element
+        c_ns_list_len += 1
+        c_nsdef = c_nsdef.next
+
+    # remove all namespace declarations from the list that are referenced
+    if c_element.type == tree.XML_ELEMENT_NODE:
+        c_node = c_element
+        while c_node is not NULL:
+            if c_node.ns is not NULL:
+                for i from 0 <= i < c_ns_list_len:
+                    if c_node.ns is c_ns_list[i].ns:
+                        c_ns_list_len -= 1
+                        c_ns_list[i].ns   = c_ns_list[c_ns_list_len].ns
+                        c_ns_list[i].node = c_ns_list[c_ns_list_len].node
+                        c_ns_list[c_ns_list_len].ns   = NULL
+                        c_ns_list[c_ns_list_len].node = NULL
+                        break
+            if c_node is c_element:
+                # continue with attributes
+                c_node = <xmlNode*>c_element.properties
+            else:
+                c_node = c_node.next
+    tree.END_FOR_EACH_ELEMENT_FROM(c_element)
+
+    if c_ns_list is NULL:
+        return 0
+
+    # free all namespace declarations that remained in the list
+    for i from 0 <= i < c_ns_list_len:
+        c_node = c_ns_list[i].node
+        c_nsdef = c_node.nsDef
+        if c_nsdef is c_ns_list[i].ns:
+            c_node.nsDef = c_node.nsDef.next
+        else:
+            while c_nsdef.next is not c_ns_list[i].ns:
+                c_nsdef = c_nsdef.next
+            c_nsdef.next = c_nsdef.next.next
+        tree.xmlFreeNs(c_ns_list[i].ns)
+    
+    if c_ns_list is not NULL:
+        cstd.free(c_ns_list)
+    return 0
+
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value
     cdef char* href

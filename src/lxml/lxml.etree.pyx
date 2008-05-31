@@ -2550,6 +2550,15 @@ def parse(source, _BaseParser parser=None, *, base_url=None):
     except _TargetParserResult, result_container:
         return result_container.result
 
+def cleanup_namespaces(tree_or_element):
+    u"""cleanup_namespaces(tree_or_element)
+
+    Remove all namespace declarations from a subtree that are not used
+    by any of the elements in that tree.
+    """
+    cdef _Element element
+    element = _rootNodeOrRaise(tree_or_element)
+    _removeUnusedNamespaceDeclarations(element._c_node)
 
 ################################################################################
 # Include submodules
