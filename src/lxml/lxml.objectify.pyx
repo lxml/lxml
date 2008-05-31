@@ -1354,9 +1354,12 @@ cdef object _dump(_Element element, int indent):
 # Pickle support
 
 cdef _setupPickle(reduceFunction):
-    import copy_reg
-    copy_reg.constructor(fromstring)
-    copy_reg.pickle(ObjectifiedElement, reduceFunction, fromstring)
+    if python.IS_PYTHON3:
+        import copyreg
+    else:
+        import copy_reg as copyreg
+    copyreg.constructor(fromstring)
+    copyreg.pickle(ObjectifiedElement, reduceFunction, fromstring)
 
 def pickleReduce(obj):
     u"pickleReduce(obj)"
@@ -1738,6 +1741,7 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True):
             cetree.delAttributeFromNsName(
                 c_node, _XML_SCHEMA_INSTANCE_NS, "type")
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+    etree.cleanup_namespaces(element)
 
 
 ################################################################################
