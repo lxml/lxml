@@ -1732,7 +1732,7 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True):
             cetree.delAttributeFromNsName(
                 c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    else:
+    elif xsi:
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
         if c_node.type == tree.XML_ELEMENT_NODE:
             cetree.delAttributeFromNsName(
