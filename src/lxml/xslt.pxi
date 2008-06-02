@@ -682,7 +682,7 @@ cdef class _XSLTResultTree(_ElementTree):
             buffer.len = self._buffer_len
             self._buffer_refcnt += 1
         if flags & python.PyBUF_WRITABLE:
-            buffer.readonly = 1
+            buffer.readonly = 0
         else:
             buffer.readonly = 1
         if flags & python.PyBUF_FORMAT:
