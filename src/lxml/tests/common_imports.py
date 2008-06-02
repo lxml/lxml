@@ -179,7 +179,7 @@ class LargeFileLike:
         data.seek(0)
         data.truncate()
         if amount:
-            self.data.write(result[amount:])
+            append(result[amount:])
             result = result[:amount]
         return result
 
