@@ -163,7 +163,7 @@ cdef void _setupPythonUnicode():
     cdef Py_ssize_t l
     cdef char* buffer
     cdef char* enc
-    utext = python.PyUnicode_DecodeUTF8("<test/>", 7, 'strict')
+    utext = python.PyUnicode_DecodeUTF8("<test/>", 7, NULL)
     l = python.PyUnicode_GET_DATA_SIZE(utext)
     buffer = python.PyUnicode_AS_DATA(utext)
     enc = _findEncodingName(buffer, l)
@@ -215,7 +215,8 @@ cdef class _FileReaderContext:
     cdef object _url
     cdef object _bytes
     cdef _ExceptionContext _exc_context
-    cdef cstd.size_t _bytes_read
+    cdef Py_ssize_t _bytes_read
+    cdef bint _reading_unicode
     cdef char* _c_url
     def __init__(self, filelike, exc_context, url, encoding):
         self._exc_context = exc_context
@@ -302,13 +303,14 @@ cdef class _FileReaderContext:
             if remaining <= 0:
                 self._bytes = self._filelike.read(c_size)
                 if not python.PyString_Check(self._bytes):
+                    self._bytes_read = -1
                     raise TypeError, \
                         u"reading file objects must return plain strings"
                 remaining = python.PyString_GET_SIZE(self._bytes)
-                self._bytes_read = 0
                 if remaining == 0:
                     self._bytes_read = -1
                     return 0
+                self._bytes_read = 0
             if c_size > remaining:
                 c_size = remaining
             c_start = _cstr(self._bytes) + self._bytes_read
