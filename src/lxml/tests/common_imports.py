@@ -183,6 +183,25 @@ class LargeFileLike:
             result = result[:amount]
         return result
 
+class LargeFileLikeUnicode(LargeFileLike):
+    def __init__(self, charlen=100, depth=4, children=5):
+        LargeFileLike.__init__(self, charlen, depth, children)
+        self.data = StringIO()
+        self.chars  = _str('a') * charlen
+        self.more = self.iterelements(depth)
+
+    def iterelements(self, depth):
+        yield _str('<root>')
+        depth -= 1
+        if depth > 0:
+            for child in self.children:
+                for element in self.iterelements(depth):
+                    yield element
+                yield self.chars
+        else:
+            yield self.chars
+        yield _str('</root>')
+
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)

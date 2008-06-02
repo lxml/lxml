@@ -14,8 +14,8 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import SillyFileLike, canonicalize, doctest, make_doctest
-from common_imports import sorted, _str, _bytes
+from common_imports import LargeFileLikeUnicode, doctest, make_doctest
+from common_imports import canonicalize, sorted, _str, _bytes
 
 print("")
 print("TESTED VERSION: %s" % etree.__version__)
@@ -1973,6 +1973,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         etree = self.etree
         root = etree.HTML(_bytes('<html><head><base href="http://no/such/url"></head></html>'))
         self.assertEquals(root.base, "http://no/such/url")
+
+    def test_parse_fileobject_unicode(self):
+        # parse from a file object that returns unicode strings
+        f = LargeFileLikeUnicode()
+        tree = self.etree.parse(f)
+        root = tree.getroot()
+        self.assert_(root.tag.endswith('root'))
 
     def test_dtd_io(self):
         # check that DTDs that go in also go back out

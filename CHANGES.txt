@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Support for parsing from file-like objects that return unicode
+  strings.
+
 * New function ``etree.cleanup_namespaces(el)`` that removes unused
   namespace declarations from a (sub)tree (experimental).
 

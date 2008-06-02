@@ -216,7 +216,6 @@ cdef class _FileReaderContext:
     cdef object _bytes
     cdef _ExceptionContext _exc_context
     cdef Py_ssize_t _bytes_read
-    cdef bint _reading_unicode
     cdef char* _c_url
     def __init__(self, filelike, exc_context, url, encoding):
         self._exc_context = exc_context
@@ -292,31 +291,47 @@ cdef class _FileReaderContext:
 
         return result
 
-    cdef int copyToBuffer(self, char* c_buffer, int c_size):
+    cdef int copyToBuffer(self, char* c_buffer, int c_requested):
+        cdef int c_byte_count
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
         if self._bytes_read < 0:
             return 0
         try:
+            c_byte_count = 0
             byte_count = python.PyString_GET_SIZE(self._bytes)
-            remaining = byte_count - self._bytes_read
-            if remaining <= 0:
-                self._bytes = self._filelike.read(c_size)
+            remaining  = byte_count - self._bytes_read
+            while c_requested > remaining:
+                c_start = _cstr(self._bytes) + self._bytes_read
+                cstd.memcpy(c_buffer, c_start, remaining)
+                c_byte_count += remaining
+                c_buffer += remaining
+                c_requested -= remaining
+
+                self._bytes = self._filelike.read(c_requested)
                 if not python.PyString_Check(self._bytes):
-                    self._bytes_read = -1
-                    raise TypeError, \
-                        u"reading file objects must return plain strings"
+                    if python.PyUnicode_Check(self._bytes):
+                        if self._encoding is None:
+                            self._bytes = python.PyUnicode_AsUTF8String(self._bytes)
+                        else:
+                            self._bytes = python.PyUnicode_AsEncodedString(
+                                self._bytes, _cstr(self._encoding), NULL)
+                    else:
+                        raise TypeError, \
+                            u"reading from file-like objects must return byte strings or unicode strings"
+
                 remaining = python.PyString_GET_SIZE(self._bytes)
                 if remaining == 0:
                     self._bytes_read = -1
-                    return 0
+                    return c_byte_count
                 self._bytes_read = 0
-            if c_size > remaining:
-                c_size = remaining
-            c_start = _cstr(self._bytes) + self._bytes_read
-            self._bytes_read = self._bytes_read + c_size
-            cstd.memcpy(c_buffer, c_start, c_size)
-            return c_size
+
+            if c_requested > 0:
+                c_start = _cstr(self._bytes) + self._bytes_read
+                cstd.memcpy(c_buffer, c_start, c_requested)
+                c_byte_count += c_requested
+                self._bytes_read += c_requested
+            return c_byte_count
         except:
             self._exc_context._store_raised()
             return -1
@@ -1322,10 +1337,17 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if python.PyUnicode_Check(text):
+        c_len = python.PyUnicode_GET_DATA_SIZE(text)
+        if c_len > python.INT_MAX:
+            return (<_BaseParser>parser)._parseDocFromFilelike(
+                StringIO(text), filename)
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
+        c_len = python.PyString_GET_SIZE(text)
+        if c_len > python.INT_MAX:
+            return (<_BaseParser>parser)._parseDocFromFilelike(
+                BytesIO(text), filename)
         c_text = _cstr(text)
-        c_len  = python.PyString_GET_SIZE(text)
         return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
 
 cdef xmlDoc* _parseDocFromFile(filename8, _BaseParser parser) except NULL:

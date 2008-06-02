@@ -35,6 +35,12 @@ del __builtin__
 cdef object os_path_join
 from os.path import join as os_path_join
 
+cdef object BytesIO, StringIO
+try:
+    from io import BytesIO, StringIO
+except ImportError:
+    from StringIO import StringIO, StringIO as BytesIO
+
 cdef object _elementpath
 import _elementpath
 
