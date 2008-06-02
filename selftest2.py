@@ -27,7 +27,9 @@ def serialize(elem, encoding=None):
     else:
         encoding = "utf-8"
         tree.write(file)
-    result = file.getvalue().decode(encoding)
+    result = file.getvalue()
+    if sys.version_info[0] >= 3:
+        result = result.decode(encoding)
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
         result = result[:-1]
@@ -147,7 +149,7 @@ def encoding():
     Test encoding issues.
 
     >>> elem = ElementTree.Element("tag")
-    >>> elem.text = u"abc"
+    >>> elem.text = u'abc'
     >>> serialize(elem)
     '<tag>abc</tag>'
     >>> serialize(elem, "utf-8")
@@ -201,6 +203,9 @@ def encoding():
 ##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
 
     """
+
+if sys.version_info[0] >= 3:
+    encoding.__doc__ = encoding.__doc__.replace("u'", "'")
 
 def qname():
     """

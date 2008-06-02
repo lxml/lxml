@@ -42,7 +42,10 @@ def serialize(elem, **options):
         encoding = options["encoding"]
     except KeyError:
         encoding = "utf-8"
-    return fix_compatibility( file.getvalue().decode(encoding) )
+    result = fix_compatibility(file.getvalue().decode(encoding))
+    if sys.version_info[0] < 3:
+        result = result.encode(encoding)
+    return result
 
 def summarize(elem):
     return elem.tag
@@ -525,7 +528,7 @@ def encoding():
     Test encoding issues.
 
     >>> elem = ElementTree.Element("tag")
-    >>> elem.text = u"abc"
+    >>> elem.text = u'abc'
     >>> serialize(elem)
     '<tag>abc</tag>'
     >>> serialize(elem, encoding="utf-8")
@@ -579,6 +582,9 @@ def encoding():
 ##     '<?xml version=\'1.0\' encoding=\'ISO-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
 
     """
+
+if sys.version_info[0] >= 3:
+    encoding.__doc__ = encoding.__doc__.replace("u'", "'")
 
 def methods():
     r"""
