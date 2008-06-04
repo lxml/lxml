@@ -185,6 +185,26 @@ class ClassLookupTestCase(HelperTestCase):
         del a
         self.assertEquals(root[0].tag, "a")
 
+    def test_lookup_without_fallback(self):
+        class Lookup(etree.CustomElementClassLookup):
+             def __init__(self):
+                 # no super call here, so no fallback is set
+                 pass
+
+             def lookup(self, node_type, document, namespace, name):
+                 return Foo
+
+        class Foo(etree.ElementBase):
+             def custom(self):
+                 return "test"
+
+        parser = self.etree.XMLParser()
+        parser.set_element_class_lookup( Lookup() )
+
+        root = etree.XML('<foo/>', parser)
+
+        self.assertEquals("test", root.custom())
+
 
 def test_suite():
     suite = unittest.TestSuite()

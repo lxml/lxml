@@ -70,7 +70,6 @@ ctypedef public object (*_element_class_lookup_function)(object, _Document, xmlN
 cdef public class ElementClassLookup [ type LxmlElementClassLookupType,
                                        object LxmlElementClassLookup ]:
     u"""ElementClassLookup(self)
-
     Superclass of Element class lookups.
     """
     cdef _element_class_lookup_function _lookup_function
@@ -86,6 +85,10 @@ cdef public class FallbackElementClassLookup(ElementClassLookup) \
     """
     cdef readonly ElementClassLookup fallback
     cdef _element_class_lookup_function _fallback_function
+    def __cinit__(self):
+        # fall back to default lookup
+        self._fallback_function = _lookupDefaultElementClass
+
     def __init__(self, ElementClassLookup fallback=None):
         if fallback is not None:
             self._setFallback(fallback)
@@ -127,8 +130,10 @@ cdef class ElementDefaultClassLookup(ElementClassLookup):
     cdef readonly object comment_class
     cdef readonly object pi_class
     cdef readonly object entity_class
-    def __init__(self, element=None, comment=None, pi=None, entity=None):
+    def __cinit__(self):
         self._lookup_function = _lookupDefaultElementClass
+
+    def __init__(self, element=None, comment=None, pi=None, entity=None):
         if element is None:
             self.element_class = _Element
         elif issubclass(element, ElementBase):
@@ -211,6 +216,9 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     cdef object _pytag
     cdef char* _c_ns
     cdef char* _c_name
+    def __cinit__(self):
+        self._lookup_function = _attribute_class_lookup
+
     def __init__(self, attribute_name, class_mapping,
                  ElementClassLookup fallback=None):
         self._pytag = _getNsTag(attribute_name)
@@ -223,7 +231,6 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
         self._class_mapping = dict(class_mapping)
 
         FallbackElementClassLookup.__init__(self, fallback)
-        self._lookup_function = _attribute_class_lookup
 
 cdef object _attribute_class_lookup(state, _Document doc, xmlNode* c_node):
     cdef AttributeBasedElementClassLookup lookup
@@ -246,8 +253,7 @@ cdef class ParserBasedElementClassLookup(FallbackElementClassLookup):
     u"""ParserBasedElementClassLookup(self, fallback=None)
     Element class lookup based on the XML parser.
     """
-    def __init__(self, ElementClassLookup fallback=None):
-        FallbackElementClassLookup.__init__(self, fallback)
+    def __cinit__(self):
         self._lookup_function = _parser_class_lookup
 
 cdef object _parser_class_lookup(state, _Document doc, xmlNode* c_node):
@@ -276,8 +282,7 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
 
     If you return None from this method, the fallback will be called.
     """
-    def __init__(self, ElementClassLookup fallback=None):
-        FallbackElementClassLookup.__init__(self, fallback)
+    def __cinit__(self):
         self._lookup_function = _custom_class_lookup
 
     def lookup(self, type, doc, namespace, name):
@@ -362,8 +367,7 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
 
     See http://codespeak.net/lxml/element_classes.html
     """
-    def __init__(self, ElementClassLookup fallback=None):
-        FallbackElementClassLookup.__init__(self, fallback)
+    def __cinit__(self):
         self._lookup_function = _python_class_lookup
 
     def lookup(self, doc, element):

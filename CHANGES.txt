@@ -40,6 +40,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash in Element class lookup classes when the __init__() method of
+  the super class is not called from Python subclasses.
+
 * A number of problems related to unicode/byte string conversion of
   filenames and error messages were fixed.
 
