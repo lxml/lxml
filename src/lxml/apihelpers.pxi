@@ -1258,13 +1258,13 @@ cdef _getNsTag(tag):
         raise ValueError, u"Empty tag name"
     return ns, tag
 
-cdef int _pyXmlNameIsValid(name_utf8):
+cdef inline int _pyXmlNameIsValid(name_utf8):
     return _xmlNameIsValid(_cstr(name_utf8))
 
-cdef int _pyHtmlNameIsValid(name_utf8):
+cdef inline int _pyHtmlNameIsValid(name_utf8):
     return _htmlNameIsValid(_cstr(name_utf8))
 
-cdef int _xmlNameIsValid(char* c_name):
+cdef inline int _xmlNameIsValid(char* c_name):
     return tree.xmlValidateNCName(c_name, 0) == 0
 
 cdef int _htmlNameIsValid(char* c_name):
@@ -1308,28 +1308,28 @@ cdef bint _characterReferenceIsValid(char* c_name):
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
         raise ValueError, u"Invalid tag name %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
         raise ValueError, u"Invalid HTML tag name %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
         raise ValueError, u"Invalid attribute name %r" % \
-            python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', 'strict')
+            python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', NULL)
     return 0
 
 cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
         raise ValueError, u"Invalid namespace prefix %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', 'strict')
+            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
     return 0
 
-cdef object _namespacedName(xmlNode* c_node):
+cdef inline object _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
 
 cdef object _namespacedNameFromNsName(char* href, char* name):
