@@ -1132,15 +1132,16 @@ cdef object funicode(char* s):
 
 cdef object _utf8(object s):
     if python.PyString_Check(s):
-        assert isutf8py(s) == 0, \
-            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
+        if isutf8py(s):
+            raise ValueError, \
+                u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
     elif python.PyUnicode_Check(s):
-        # FIXME: we should test these strings, too ...
         s = python.PyUnicode_AsUTF8String(s)
-        assert isutf8py(s) != -1, \
-            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
+        if isutf8py(s) == -1:
+            raise ValueError, \
+                u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
     else:
-        raise TypeError, "Argument must be string or unicode."
+        raise TypeError, u"Argument must be string or unicode."
     return s
 
 cdef bint _isFilePath(char* c_path):

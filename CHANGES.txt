@@ -57,6 +57,10 @@ Bugs fixed
 Other changes
 -------------
 
+* Passing non-ASCII byte strings or invalid unicode strings as .tag,
+  namespaces, etc. will result in a ValueError instead of an
+  AssertionError (just like the tag well-formedness check).
+
 * Up to several times faster attribute access (i.e. tree traversal) in
   lxml.objectify.
 
