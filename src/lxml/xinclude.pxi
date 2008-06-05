@@ -31,6 +31,7 @@ cdef class XInclude:
         # siblings.  Tree traversal will simply ignore them as they are not
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
+        cdef int result
         self._error_log.connect()
         with nogil:
             if node._doc._parser is not None:
