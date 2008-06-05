@@ -49,10 +49,10 @@ the following::
 
     from etreepublic cimport ElementBase
     cdef class NewElementClass(ElementBase):
-         def setValue(self, myval):
+         def set_value(self, myval):
              self.set("my_attribute", myval)
 
-    etree.setElementClassLookup(
+    etree.set_element_class_lookup(
          DefaultElementClassLookup(element=NewElementClass))
 
 
