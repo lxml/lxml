@@ -13,7 +13,7 @@ def clear_error_log():
     __GLOBAL_ERROR_LOG.clear()
 
 # dummy function: no debug output at all
-cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...):
+cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
     pass
 
 # setup for global log:

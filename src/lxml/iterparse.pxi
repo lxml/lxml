@@ -357,7 +357,7 @@ Other keyword arguments:
     cdef object _source
     cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
-                             char* chunk, int size, int terminate)
+                             char* chunk, int size, int terminate) nogil
     def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,

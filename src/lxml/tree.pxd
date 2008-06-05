@@ -48,7 +48,7 @@ cdef extern from "libxml/chvalid.h":
 
 cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
-    ctypedef void xmlHashScanner(void* payload, void* data, char* name) nogil
+    ctypedef void xmlHashScanner(void* payload, void* data, char* name) # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, char* name) nogil
 
@@ -263,12 +263,12 @@ cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out) nogil
 
     ctypedef int (*xmlInputReadCallback)(void* context,
-                                         char* buffer, int len) nogil
-    ctypedef int (*xmlInputCloseCallback)(void* context) nogil
+                                         char* buffer, int len)
+    ctypedef int (*xmlInputCloseCallback)(void* context)
 
     ctypedef int (*xmlOutputWriteCallback)(void* context,
-                                           char* buffer, int len) nogil
-    ctypedef int (*xmlOutputCloseCallback)(void* context) nogil
+                                           char* buffer, int len)
+    ctypedef int (*xmlOutputCloseCallback)(void* context)
 
     cdef xmlOutputBuffer* xmlAllocOutputBuffer(
         xmlCharEncodingHandler* encoder) nogil

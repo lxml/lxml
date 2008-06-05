@@ -70,10 +70,10 @@ cdef extern from "libxml/xpath.h":
 
     ctypedef struct xmlXPathCompExpr
 
-    ctypedef void (*xmlXPathFunction)(xmlXPathParserContext* ctxt, int nargs)
+    ctypedef void (*xmlXPathFunction)(xmlXPathParserContext* ctxt, int nargs) nogil
     ctypedef xmlXPathFunction (*xmlXPathFuncLookupFunc)(void* ctxt,
                                                         char* name,
-                                                        char* ns_uri)
+                                                        char* ns_uri) nogil
     
     cdef xmlXPathContext* xmlXPathNewContext(tree.xmlDoc* doc) nogil
     cdef xmlXPathObject* xmlXPathEvalExpression(char* str,

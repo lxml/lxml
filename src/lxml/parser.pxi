@@ -394,7 +394,7 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
     return c_input
 
 cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
-                                               xmlparser.xmlParserCtxt* c_context):
+                                               xmlparser.xmlParserCtxt* c_context) nogil:
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
     cdef xmlparser.xmlParserInput* c_input

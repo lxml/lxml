@@ -720,7 +720,7 @@ cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
         c_child = c_child.prev
     return NULL
     
-cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node):
+cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) nogil:
     u"""Return the node if it's a text node.  Skip over ignorable nodes in a
     series of text nodes.  Return NULL if a non-ignorable node is found.
 

@@ -193,7 +193,7 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
-cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
     u"""Copy the namespaces of all ancestors of c_from_node to c_to_node.
     """
     cdef xmlNode* c_parent
