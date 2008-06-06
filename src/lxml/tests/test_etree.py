@@ -1931,7 +1931,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = _bytes('<html><body></body></html>')
         tree = etree.parse(BytesIO(xml))
         docinfo = tree.docinfo
-        self.assertEquals(docinfo.encoding,    None)
+        self.assertEquals(docinfo.encoding,    "UTF-8")
         self.assertEquals(docinfo.xml_version, "1.0")
         self.assertEquals(docinfo.public_id,   None)
         self.assertEquals(docinfo.system_url,  None)

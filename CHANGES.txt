@@ -57,6 +57,9 @@ Bugs fixed
 Other changes
 -------------
 
+* Non-ASCII characters in attribute values are no longer escaped on
+  serialisation.
+
 * Passing non-ASCII byte strings or invalid unicode strings as .tag,
   namespaces, etc. will result in a ValueError instead of an
   AssertionError (just like the tag well-formedness check).

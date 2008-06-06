@@ -588,8 +588,11 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
             _raiseParseError(c_ctxt, filename, context._error_log)
         else:
             _raiseParseError(c_ctxt, filename, None)
-    elif result.URL is NULL and filename is not None:
-        result.URL = tree.xmlStrdup(_cstr(filename))
+    else:
+        if result.URL is NULL and filename is not None:
+            result.URL = tree.xmlStrdup(_cstr(filename))
+        if result.encoding is NULL:
+            result.encoding = tree.xmlStrdup("UTF-8")
     return result
 
 cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
@@ -1366,6 +1369,8 @@ cdef xmlDoc* _newXMLDoc() except NULL:
     result = tree.xmlNewDoc(NULL)
     if result is NULL:
         python.PyErr_NoMemory()
+    if result.encoding is NULL:
+        result.encoding = tree.xmlStrdup("UTF-8")
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
