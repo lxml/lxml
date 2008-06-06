@@ -169,16 +169,16 @@ def encoding():
     >>> serialize(elem, "iso-8859-1").lower()
     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag>&lt;&amp;"\'&gt;</tag>'
 
-##     >>> elem.attrib["key"] = "<&\"\'>"
-##     >>> elem.text = None
-##     >>> serialize(elem)
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
-##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;&apos;&gt;"/>'
+    >>> elem.attrib["key"] = "<&\"\'>"
+    >>> elem.text = None
+    >>> serialize(elem)
+    '<tag key="&lt;&amp;&quot;\'&gt;"/>'
+    >>> serialize(elem, "utf-8")
+    '<tag key="&lt;&amp;&quot;\'&gt;"/>'
+    >>> serialize(elem, "us-ascii")
+    '<tag key="&lt;&amp;&quot;\'&gt;"/>'
+    >>> serialize(elem, "iso-8859-1").lower()
+    '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="&lt;&amp;&quot;\'&gt;"/>'
 
     >>> elem.text = u'\xe5\xf6\xf6<>'
     >>> elem.attrib.clear()
@@ -191,16 +191,16 @@ def encoding():
     >>> serialize(elem, "iso-8859-1").lower()
     "<?xml version='1.0' encoding='iso-8859-1'?>\n<tag>\xe5\xf6\xf6&lt;&gt;</tag>"
 
-##     >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
-##     >>> elem.text = None
-##     >>> serialize(elem)
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
-##     >>> serialize(elem, "utf-8")
-##     '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;"/>'
-##     >>> serialize(elem, "us-ascii")
-##     '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
-##     >>> serialize(elem, "iso-8859-1")
-##     '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
+    >>> elem.attrib["key"] = u'\xe5\xf6\xf6<>'
+    >>> elem.text = None
+    >>> serialize(elem)
+    '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
+    >>> serialize(elem, "utf-8")
+    '<tag key="\xc3\xa5\xc3\xb6\xc3\xb6&lt;&gt;"/>'
+    >>> serialize(elem, "us-ascii")
+    '<tag key="&#229;&#246;&#246;&lt;&gt;"/>'
+    >>> serialize(elem, "iso-8859-1").lower()
+    '<?xml version=\'1.0\' encoding=\'iso-8859-1\'?>\n<tag key="\xe5\xf6\xf6&lt;&gt;"/>'
 
     """
 
