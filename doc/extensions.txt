@@ -83,10 +83,8 @@ against:
 
 .. sourcecode:: pycon
 
-  >>> from lxml import etree
-  >>> f = StringIO('<a><b>Haegar</b></a>')
-  >>> doc = etree.parse(f)
-  >>> root = doc.getroot()
+  >>> root = etree.XML('<a><b>Haegar</b></a>')
+  >>> doc = etree.ElementTree(root)
 
 Done. Now we can have XPath expressions call our new function:
 
@@ -196,7 +194,7 @@ XSL transformations:
   >>> print(e('f:hello(local-name(/a))'))
   Hello a
 
-  >>> xslt = etree.XSLT(etree.ElementTree(etree.XML('''
+  >>> xslt = etree.XSLT(etree.XML('''
   ...   <stylesheet version="1.0"
   ...          xmlns="http://www.w3.org/1999/XSL/Transform"
   ...          xmlns:es="http://mydomain.org/myother/functions">
@@ -205,7 +203,7 @@ XSL transformations:
   ...       <value-of select="es:hello(string(//b))"/>
   ...     </template>
   ...   </stylesheet>
-  ... ''')))
+  ... '''))
   >>> print(xslt(doc))
   Ola Haegar
 
