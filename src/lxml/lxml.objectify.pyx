@@ -1355,20 +1355,29 @@ cdef object _dump(_Element element, int indent):
 ################################################################################
 # Pickle support
 
-cdef _setupPickle(reduceFunction):
+def __unpickleElementTree(data):
+    return etree.ElementTree(fromstring(data))
+
+cdef _setupPickle(elementReduceFunction, elementTreeReduceFunction):
     if python.IS_PYTHON3:
         import copyreg
     else:
         import copy_reg as copyreg
     copyreg.constructor(fromstring)
-    copyreg.pickle(ObjectifiedElement, reduceFunction, fromstring)
+    copyreg.constructor(__unpickleElementTree)
+    copyreg.pickle(ObjectifiedElement,
+                   elementReduceFunction, fromstring)
+    copyreg.pickle(etree._ElementTree,
+                   elementTreeReduceFunction, __unpickleElementTree)
 
-def pickleReduce(obj):
-    u"pickleReduce(obj)"
+def pickleReduceElement(obj):
     return (fromstring, (etree.tostring(obj),))
 
-_setupPickle(pickleReduce)
-del pickleReduce
+def pickleReduceElementTree(obj):
+    return (__unpickleElementTree, (etree.tostring(obj),))
+
+_setupPickle(pickleReduceElement, pickleReduceElementTree)
+del pickleReduceElement, pickleReduceElementTree
 
 ################################################################################
 # Element class lookup

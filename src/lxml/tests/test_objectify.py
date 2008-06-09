@@ -2268,6 +2268,19 @@ class ObjectifyTestCase(HelperTestCase):
             etree.tostring(new_root),
             etree.tostring(root))
 
+    def test_pickle_elementtree(self):
+        import pickle
+
+        tree = etree.ElementTree(self.XML(xml_str + "<?my pi?>"))
+        out = BytesIO()
+        pickle.dump(tree, out)
+
+        new_tree = pickle.loads(out.getvalue())
+        self.assert_(isinstance(new_tree, etree._ElementTree))
+        self.assertEquals(
+            etree.tostring(new_tree),
+            etree.tostring(tree))
+
     # E-Factory tests, need to use sub-elements as root element is always
     # type-looked-up as ObjectifiedElement (no annotations)
     def test_efactory_int(self):

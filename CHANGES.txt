@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Pickling ``ElementTree`` objects in lxml.objectify.
+
 * Support for parsing from file-like objects that return unicode
   strings.
 
