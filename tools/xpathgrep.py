@@ -239,7 +239,7 @@ def main(options, args):
     found = False
     if len(args) == 1:
         found = find_in_file(
-            sys.stdin, xpath, print_name, options.xinclude,
+            sys.stdin, xpath, False, options.xinclude,
             options.pretty_print)
     else:
         print_name = len(args) > 2
