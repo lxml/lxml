@@ -3308,6 +3308,30 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals("DONE", done)
         self.assertEquals(["start", "end"], events)
 
+    def test_elementtree_parser_target(self):
+        assertEquals = self.assertEquals
+        assertFalse  = self.assertFalse
+        Element = self.etree.Element
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertFalse(attrib)
+                assertEquals("TAG", tag)
+            def end(self, tag):
+                events.append("end")
+                assertEquals("TAG", tag)
+            def close(self):
+                return Element("DONE")
+
+        parser = self.etree.XMLParser(target=Target())
+        tree = self.etree.ElementTree()
+        tree.parse(BytesIO("<TAG/>"), parser=parser)
+
+        self.assertEquals("DONE", tree.getroot().tag)
+        self.assertEquals(["start", "end"], events)
+
     def test_parser_target_attrib(self):
         assertEquals = self.assertEquals
 

@@ -40,6 +40,8 @@ Features added
 Bugs fixed
 ----------
 
+* ``ElementTree.parse()`` didn't handle target parser result.
+
 * Crash in Element class lookup classes when the __init__() method of
   the super class is not called from Python subclasses.
 

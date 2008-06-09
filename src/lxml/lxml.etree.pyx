@@ -1505,13 +1505,15 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
         Updates self with the content of source and returns its root
         """
-        cdef _Document doc
-        doc = _parseDocument(source, parser, base_url)
-        self._context_node = doc.getroot()
-        if self._context_node is None:
-            self._doc = doc
-        else:
-            self._doc = None
+        cdef _Document doc = None
+        try:
+            doc = _parseDocument(source, parser, base_url)
+            self._context_node = doc.getroot()
+            if self._context_node is None:
+                self._doc = doc
+        except _TargetParserResult, result_container:
+            # raises a TypeError if we don't get an _Element
+            self._context_node = result_container.result
         return self._context_node
 
     def _setroot(self, _Element root not None):

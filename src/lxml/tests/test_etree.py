@@ -430,6 +430,29 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(
             LookupError, self.etree.XMLParser, encoding="hopefully unknown")
 
+    def test_elementtree_parser_target_type_error(self):
+        assertEquals = self.assertEquals
+        assertFalse  = self.assertFalse
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertFalse(attrib)
+                assertEquals("TAG", tag)
+            def end(self, tag):
+                events.append("end")
+                assertEquals("TAG", tag)
+            def close(self):
+                return "DONE" # no Element!
+
+        parser = self.etree.XMLParser(target=Target())
+        tree = self.etree.ElementTree()
+
+        self.assertRaises(TypeError,
+                          tree.parse, BytesIO("<TAG/>"), parser=parser)
+        self.assertEquals(["start", "end"], events)
+
     def test_parser_target_comment(self):
         events = []
         class Target(object):
