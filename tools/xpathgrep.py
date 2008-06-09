@@ -71,10 +71,8 @@ Examples::
 
 By default, all Python builtins and string methods are available as
 XPath functions through the ``py`` prefix.  There is also a string
-comparison function ``py:within(x, a, b)`` that tests the string x
-for being in the lexicographical interval given by a and b as in ``a
-<= x <= b``.
-
+comparison function ``py:within(x, a, b)`` that tests the string x for
+being lexicographically within the interval ``a <= x <= b``.
 '''.replace('SCRIPT', os.path.basename(sys.argv[0]))
 
 REGEXP_NS = "http://exslt.org/regular-expressions"
@@ -82,21 +80,22 @@ PYTHON_BUILTINS_NS = "PYTHON-BUILTINS"
 
 parser = et.XMLParser(remove_blank_text=True)
 
-def print_results(results):
-    if isinstance(results, basestring) or isinstance(results, bool):
-        print results
-        return
+def print_result(result, pretty_print):
+    if et.iselement(result):
+        result = et.tostring(result, xml_declaration=False,
+                             pretty_print=pretty_print)
+        if pretty_print:
+            result = result[:-1] # strip newline at the end
+    print result
 
-    for result in results:
-        if isinstance(result, basestring) or isinstance(result, bool):
-            print result
-        else:
-            print et.tostring(
-                result,
-                xml_declaration=False,
-                pretty_print=True)
+def print_results(results, pretty_print):
+    if isinstance(results, list):
+        for result in results:
+            print_result(result, pretty_print)
+    else:
+        print_result(results, pretty_print)
 
-def find_in_file(f, xpath, print_name=True, xinclude=False):
+def find_in_file(f, xpath, print_name=True, xinclude=False, pretty_print=True):
     if hasattr(f, 'name'):
         filename = f.name
     else:
@@ -127,7 +126,7 @@ def find_in_file(f, xpath, print_name=True, xinclude=False):
         if print_name:
             print ">> %s" % f
         if options.verbose:
-            print_results(results)
+            print_results(results, pretty_print)
         return True
     except Exception, e:
         print >> sys.stderr, "ERR: %r: %s: %s" % (
@@ -145,12 +144,10 @@ def register_builtins():
                 return u''
             s = s[0]
         if not isinstance(s, unicode):
-            if isinstance(s, et._Element):
+            if et.iselement(s):
                 s = tostring(s, method="text", encoding=unicode)
-            elif isinstance(s, (str, bool)):
-                s = unicode(s)
             else:
-                s = unicode(str_xpath(s))
+                s = unicode(s)
         return s
 
     def wrap_builtin(b):
@@ -203,6 +200,9 @@ def parse_options():
     parser.add_option("-q", "--quiet",
                       action="store_false", dest="verbose", default=True,
                       help="don't print status messages to stdout")
+    parser.add_option("-p", "--plain",
+                      action="store_false", dest="pretty_print", default=True,
+                      help="do not pretty-print the output")
     parser.add_option("-N", "--ns",
                       action="append", default=[],
                       dest="namespaces",
@@ -239,12 +239,14 @@ def main(options, args):
     found = False
     if len(args) == 1:
         found = find_in_file(
-            sys.stdin, xpath, print_name, options.xinclude)
+            sys.stdin, xpath, print_name, options.xinclude,
+            options.pretty_print)
     else:
         print_name = len(args) > 2
         for filename in itertools.islice(args, 1, None):
             found |= find_in_file(
-                filename, xpath, print_name, options.xinclude)
+                filename, xpath, print_name, options.xinclude,
+                options.pretty_print)
 
     return found
 
