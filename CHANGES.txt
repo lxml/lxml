@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* Major overhaul of ``tools/xpathgrep.py`` script.
+
 * Pickling ``ElementTree`` objects in lxml.objectify.
 
 * Support for parsing from file-like objects that return unicode
