@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-import lxml.etree as et
+try:
+    import lxml.etree as et
+except ImportError, e:
+    print >> sys.stderr, "ERR: %s." % e
+    sys.exit(5)
+
 import sys, os.path, optparse, itertools
 
 SHORT_DESCRIPTION = "An XPath file finder for XML files."
@@ -17,6 +22,8 @@ Examples::
     <a num="1234" notnum="1234abc"/>
     <b text="abc"/>
     <c text="aBc"/>
+    <d xmlns="http://www.example.org/ns/example" num="2"/>
+    <d xmlns="http://www.example.org/ns/example" num="4"/>
   </root>
 
   # find all leaf elements:
@@ -57,6 +64,16 @@ Examples::
   * find out if an XML file has at most depth three:
   $ SCRIPT 'not(/*/*/*)' test.xml
   True
+
+  * find all elements that belong to a specific namespace and have @num=2
+  $ SCRIPT --ns e=http://www.example.org/ns/example '//e:*[@num="2"]' test.xml
+  <d xmlns="http://www.example.org/ns/example" num="2"/>
+
+By default, all Python builtins and string methods are available as
+XPath functions through the ``py`` prefix.  There is also a string
+comparison function ``py:within(x, a, b)`` that tests the string x
+for being in the lexicographical interval given by a and b as in ``a
+<= x <= b``.
 
 '''.replace('SCRIPT', os.path.basename(sys.argv[0]))
 
@@ -119,37 +136,47 @@ def find_in_file(f, xpath, print_name=True, xinclude=False):
 
 def register_builtins():
     ns = et.FunctionNamespace(PYTHON_BUILTINS_NS)
+    tostring = et.tostring
+
+    str_xpath = et.XPath("string()")
+    def make_string(s):
+        if isinstance(s, list):
+            if not s:
+                return u''
+            s = s[0]
+        if not isinstance(s, unicode):
+            if isinstance(s, et._Element):
+                s = tostring(s, method="text", encoding=unicode)
+            elif isinstance(s, (str, bool)):
+                s = unicode(s)
+            else:
+                s = unicode(str_xpath(s))
+        return s
+
+    def wrap_builtin(b):
+        def wrapped_builtin(_, *args):
+            return b(*args)
+        return wrapped_builtin
+
     for (name, builtin) in vars(__builtins__).iteritems():
         if callable(builtin):
             if not name.startswith('_') and name == name.lower():
-                ns[name] = builtin
+                ns[name] = wrap_builtin(builtin)
 
-    str_xpath = et.XPath("string()")
-    def lower(_, s):
-        if isinstance(s, list):
-            if not s:
-                return ''
-            s = s[0]
-        if not isinstance(s, basestring):
-            if isinstance(s, bool):
-                s = str(s)
-            else:
-                s = str_xpath(s)
-        return s.lower()
-    def upper(_, s):
-        if isinstance(s, list):
-            if not s:
-                return ''
-            s = s[0]
-        if not isinstance(s, basestring):
-            if isinstance(s, bool):
-                s = str(s)
-            else:
-                s = str_xpath(s)
-        return s.upper()
+    def wrap_str_method(b):
+        def wrapped_method(_, *args):
+            args = tuple(map(make_string, args))
+            return b(*args)
+        return wrapped_method
 
-    ns["lower"] = lower
-    ns["upper"] = upper
+    for (name, method) in vars(unicode).iteritems():
+        if callable(method):
+            if not name.startswith('_'):
+                ns[name] = wrap_str_method(method)
+
+    def within(_, s, a, b):
+        return make_string(a) <= make_string(s) <= make_string(b)
+    ns["within"] = within
 
 
 def parse_options():
@@ -169,13 +196,18 @@ def parse_options():
                       help="run XInclude on the file before XPath")
     parser.add_option("--no-python", 
                       action="store_false", dest="python", default=True,
-                      help="disable Python builtins (prefix 'py')")
+                      help="disable Python builtins and functions (prefix 'py')")
     parser.add_option("--no-regexp", 
                       action="store_false", dest="regexp", default=True,
                       help="disable regular expressions (prefix 're')")
     parser.add_option("-q", "--quiet",
                       action="store_false", dest="verbose", default=True,
                       help="don't print status messages to stdout")
+    parser.add_option("-N", "--ns",
+                      action="append", default=[],
+                      dest="namespaces",
+                      help="add a namespace declaration: --ns PREFIX=NS",)
+
 
     options, args = parser.parse_args()
 
@@ -190,15 +222,17 @@ def parse_options():
     return options, args
 
 
-if __name__ == "__main__":
-    options, args = parse_options()
-
+def main(options, args):
     namespaces = {}
     if options.regexp:
         namespaces["re"] = REGEXP_NS
     if options.python:
         register_builtins()
         namespaces["py"] = PYTHON_BUILTINS_NS
+
+    for ns in options.namespaces:
+        prefix, NS = ns.split("=", 1)
+        namespaces[prefix.strip()] = NS.strip()
 
     xpath = et.XPath(args[0], namespaces=namespaces)
 
@@ -212,7 +246,18 @@ if __name__ == "__main__":
             found |= find_in_file(
                 filename, xpath, print_name, options.xinclude)
 
-    if found:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    return found
+
+if __name__ == "__main__":
+    try:
+        options, args = parse_options()
+        found = main(options, args)
+        if found:
+            sys.exit(0)
+        else:
+            sys.exit(1)
+    except et.XPathSyntaxError, e:
+        print >> sys.stderr, "Err: %s" % e
+        sys.exit(4)
+    except KeyboardInterrupt:
+        pass
