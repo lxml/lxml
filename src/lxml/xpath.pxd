@@ -47,7 +47,7 @@ cdef extern from "libxml/xpath.h":
     ctypedef struct xmlXPathObject:
         xmlXPathObjectType type
         xmlNodeSet* nodesetval
-        int boolval
+        bint boolval
         double floatval
         char* stringval
 
