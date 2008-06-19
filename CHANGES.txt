@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.1beta3 (2008-06-19)
+=====================
 
 Features added
 --------------
@@ -25,7 +25,7 @@ Features added
   unicode string or a tree, based on the type of the input.
   Previously, the result was always a byte string or a tree.
 
-* Support for Python 2.6 and 3.0 (experimental!).
+* Support for Python 2.6 and 3.0 beta.
 
 * File name handling now uses a heuristic to convert between byte
   strings (usually filenames) and unicode strings (usually URLs).
