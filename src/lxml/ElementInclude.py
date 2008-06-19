@@ -52,12 +52,18 @@ form of custom URL resolvers.
 
 from lxml import etree
 import copy
-from urlparse import urljoin
-from urllib2 import urlopen
+try:
+    from urlparse import urljoin
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
+    from urllib.request import urlopen
 
 try:
     set
 except NameError:
+    # Python 2.3
     from sets import Set as set
 
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"

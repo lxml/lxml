@@ -6,7 +6,11 @@ details.
 
 import re
 import copy
-import urlparse
+try:
+    from urlparse import urlsplit
+except ImportError:
+    # Python 3
+    from urllib.parse import urlsplit
 from lxml import etree
 from lxml.html import defs
 from lxml.html import fromstring, tostring, XHTML_NAMESPACE
@@ -418,7 +422,7 @@ class Cleaner(object):
         if (self.whitelist_tags is not None
             and el.tag not in self.whitelist_tags):
             return False
-        scheme, netloc, path, query, fragment = urlparse.urlsplit(url)
+        scheme, netloc, path, query, fragment = urlsplit(url)
         netloc = netloc.lower().split(':', 1)[0]
         if scheme not in ('http', 'https'):
             return False

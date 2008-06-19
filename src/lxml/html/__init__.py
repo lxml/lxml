@@ -3,7 +3,11 @@
 
 import threading
 import re
-import urlparse
+try:
+    from urlparse import urljoin
+except ImportError:
+    # Python 3
+    from urllib.parse import urljoin
 import copy
 from lxml import etree
 from lxml.html import defs
@@ -269,7 +273,7 @@ class HtmlMixin(object):
         if resolve_base_href:
             self.resolve_base_href()
         def link_repl(href):
-            return urlparse.urljoin(base_url, href)
+            return urljoin(base_url, href)
         self.rewrite_links(link_repl)
 
     def resolve_base_href(self):
@@ -316,13 +320,13 @@ class HtmlMixin(object):
                     if attrib in attribs:
                         value = el.get(attrib)
                         if codebase is not None:
-                            value = urlparse.urljoin(codebase, value)
+                            value = urljoin(codebase, value)
                         yield (el, attrib, value, 0)
                 if 'archive' in attribs:
                     for match in _archive_re.finditer(el.get('archive')):
                         value = match.group(0)
                         if codebase is not None:
-                            value = urlparse.urljoin(codebase, value)
+                            value = urljoin(codebase, value)
                         yield (el, 'archive', value, match.start())
             if tag == 'param':
                 valuetype = el.get('valuetype') or ''
@@ -751,7 +755,7 @@ class FormElement(HtmlElement):
         base_url = self.base_url
         action = self.get('action')
         if base_url and action is not None:
-            return urlparse.urljoin(base_url, action)
+            return urljoin(base_url, action)
         else:
             return action
     def _action__set(self, value):

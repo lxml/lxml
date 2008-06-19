@@ -1,7 +1,8 @@
 We'll define a link translation function:
 
     >>> base_href = 'http://old/base/path.html'
-    >>> import urlparse
+    >>> try: import urlparse
+    ... except ImportError: import urllib.parse as urlparse
     >>> def relocate_href(link):
     ...     link = urlparse.urljoin(base_href, link)
     ...     if link.startswith('http://old'):

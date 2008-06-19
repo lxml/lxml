@@ -120,8 +120,9 @@ Traceback (most recent call last):
 ValueError: There is no option with the value 'asdf'
 >>> select.value_options
 ['1', '2', '3']
->>> import urllib
->>> print(urllib.urlencode(f.form_values()))
+>>> try: from urllib import urlencode
+... except ImportError: from urllib.parse import urlencode
+>>> print(urlencode(f.form_values()))
 hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=&select2=1&select2=2&select2=3
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP

@@ -1,7 +1,11 @@
 import sys
 import os
 import re
-import rfc822
+try:
+    from rfc822 import Message
+except ImportError:
+    # Python 3
+    from email import message_from_file as Message
 import unittest
 from lxml.tests.common_imports import doctest
 if sys.version_info >= (2,4):
@@ -28,7 +32,7 @@ class FeedTestCase(unittest.TestCase):
 
     def parse(self):
         f = open(self.filename, 'r')
-        headers = rfc822.Message(f)
+        headers = Message(f)
         c = f.read()
         f.close()
         if not headers.keys():
