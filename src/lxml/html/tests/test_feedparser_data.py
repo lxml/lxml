@@ -35,6 +35,8 @@ class FeedTestCase(unittest.TestCase):
         headers = Message(f)
         c = f.read()
         f.close()
+        if not c.strip():
+            c = headers.get_payload()
         if not headers.keys():
             raise Exception(
                 "File %s has no headers" % self.filename)
