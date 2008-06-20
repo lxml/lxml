@@ -178,20 +178,20 @@ def publish(dirname, lxml_path, release):
     titles = {}
 
     replace_interdoc_hyperrefs = re.compile(
-        r'\\href\{([^/}]+)[.]([^./}]+)\}\{([^}]+)\}').sub
+        r'\\href\{([^/}]+)[.]([^./}]+)\}').sub
     replace_docinternal_hyperrefs = re.compile(
         r'\\href\{\\#([^}]+)\}').sub
     def build_hyperref(match):
-        basename, extension, linktext = match.groups()
+        basename, extension = match.groups()
         outname = BASENAME_MAP.get(basename, basename)
         if '#' in extension:
             anchor = extension.split('#')[-1]
-            return r"\hyperref[%s]{%s}" % (anchor, linktext)
+            return r"\hyperref[%s]" % anchor
         elif extension != 'html':
-            return r'\href{http://codespeak.net/lxml/%s.%s}{%s}' % (
-                outname, extension, linktext)
+            return r'\href{http://codespeak.net/lxml/%s.%s}' % (
+                outname, extension)
         else:
-            return r"\hyperref[_part_%s.tex]{%s}" % (outname, linktext)
+            return r"\hyperref[_part_%s.tex]" % outname
     def fix_relative_hyperrefs(line):
         if r'\href' not in line:
             return line
