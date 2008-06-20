@@ -149,10 +149,12 @@ def tex_postprocess(src, dest, want_header = False, process_line=noop):
         l = process_line(l)
         if skipping(l):
             # To-Do minitoc instead of tableofcontents
-            pass
-        else:
+            continue
+        elif "\hypertarget{old-versions}" in l:
+            break
+        elif "listcnt0" in l:
             l = l.replace("listcnt0", counter_text)
-            dest.write(l)
+        dest.write(l)
 
     if not title:
         raise Exception("Bueee, no title")
