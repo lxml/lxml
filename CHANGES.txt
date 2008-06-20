@@ -11,7 +11,7 @@ Features added
 Bugs fixed
 ----------
 
-* Multiple dot-separated classes in CSS selectors were not resolved
+* Descending dot-separated classes in CSS selectors were not resolved
   correctly.
 
 Other changes
