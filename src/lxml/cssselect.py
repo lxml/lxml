@@ -738,6 +738,8 @@ def parse_simple_selector(stream):
                 result = Pseudo(result, type, ident)
             continue
         else:
+            if peek == ' ':
+                stream.next()
             break
         # FIXME: not sure what "negation" is
     return result
@@ -823,7 +825,10 @@ def tokenize(s):
     while 1:
         match = _whitespace_re.match(s, pos=pos)
         if match:
+            preceding_whitespace_pos = pos
             pos = match.end()
+        else:
+            preceding_whitespace_pos = 0
         if pos >= len(s):
             return
         match = _count_re.match(s, pos=pos)
@@ -839,6 +844,8 @@ def tokenize(s):
             pos += 2
             continue
         if c in '>+~,.*=[]()|:#':
+            if c in '.#' and preceding_whitespace_pos > 0:
+                yield Token(' ', preceding_whitespace_pos)
             yield Token(c, pos)
             pos += 1
             continue
