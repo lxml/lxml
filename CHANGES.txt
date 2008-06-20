@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Multiple dot-separated classes in CSS selectors were not resolved
+  correctly.
+
+Other changes
+-------------
+
+
 2.1beta3 (2008-06-19)
 =====================
 
