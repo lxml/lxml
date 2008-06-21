@@ -372,7 +372,7 @@ class HtmlMixin(object):
         elif resolve_base_href:
             self.resolve_base_href()
         for el, attrib, link, pos in self.iterlinks():
-            new_link = link_repl_func(link)
+            new_link = link_repl_func(link.strip())
             if new_link == link:
                 continue
             if new_link is None:

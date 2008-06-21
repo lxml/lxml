@@ -116,3 +116,57 @@ link)``, which is awkward to test here, so we'll make a printer::
     a href="/other.html"
     td style="/td-bg.png"@22
     img src="/logo.gif"
+
+An application of ``iterlinks()`` is ``make_links_absolute()``::
+
+    >>> from lxml.html import make_links_absolute
+    >>> print(make_links_absolute('''
+    ... <html>
+    ...  <head>
+    ...   <link rel="stylesheet" href="style.css">
+    ...   <style type="text/css">
+    ...     body {
+    ...       background-image: url(/bg.gif);
+    ...     }
+    ...     @import "/other-styles.css";
+    ...   </style>
+    ...   <script src="/js-funcs.js"></script>
+    ...  </head>
+    ...  <body>
+    ...   <table>
+    ...    <tr><td><ul>
+    ...     <li><a href=" /test.html">Test stuff</a></li>
+    ...     <li><a href="/other.html ">Other stuff</a></li>
+    ...    </td></tr>
+    ...    <tr><td style="background-image: url( /td-bg.png )">
+    ...      <img src="logo.gif">
+    ...      Hi world!
+    ...    </td></tr>
+    ...   </table>
+    ...  </body></html>''',
+    ... base_url="http://my.little.server/url/"))
+    <html>
+     <head>
+      <link rel="stylesheet" href="http://my.little.server/url/style.css">
+      <style type="text/css">
+        body {
+          background-image: url(http://my.little.server/bg.gif);
+        }
+        @import "http://my.little.server/other-styles.css";
+      </style>
+      <script src="http://my.little.server/js-funcs.js"></script>
+     </head>
+     <body>
+      <table>
+       <tr><td><ul>
+        <li><a href="http://my.little.server/test.html">Test stuff</a></li>
+        <li><a href="http://my.little.server/other.html">Other stuff</a></li>
+       </ul></td></tr>
+       <tr>
+         <td style="background-image: url(http://my.little.server/td-bg.png)">
+          <img src="http://my.little.server/url/logo.gif">
+          Hi world!
+       </td></tr>
+      </table>
+     </body>
+    </html>
