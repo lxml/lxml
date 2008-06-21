@@ -302,7 +302,7 @@ class HtmlMixin(object):
         link you get is exactly the link in the document.
         """
         link_attrs = defs.link_attrs
-        for el in self.getiterator():
+        for el in self.iter():
             attribs = el.attrib
             tag = _nons(el.tag)
             if tag != 'object':
@@ -653,7 +653,7 @@ def parse(filename_or_url, parser=None, base_url=None, **kw):
 def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be
     # unnecessarily slow?
-    for el in el.getiterator():
+    for el in el.iter():
         if _nons(el.tag) in defs.block_tags:
             return True
     return False
