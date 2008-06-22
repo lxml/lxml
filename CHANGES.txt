@@ -11,11 +11,36 @@ Features added
 Bugs fixed
 ----------
 
+Other changes
+-------------
+
+
+2.0.7 (2008-06-20)
+==================
+
+Features added
+--------------
+
+* Pickling ``ElementTree`` objects in lxml.objectify.
+
+Bugs fixed
+----------
+
 * Descending dot-separated classes in CSS selectors were not resolved
   correctly.
 
+* ``ElementTree.parse()`` didn't handle target parser result.
+
+* Potential threading problem in XInclude.
+
+* Crash in Element class lookup classes when the __init__() method of
+  the super class is not called from Python subclasses.
+
 Other changes
 -------------
+
+* Non-ASCII characters in attribute values are no longer escaped on
+  serialisation.
 
 
 2.1beta3 (2008-06-19)
