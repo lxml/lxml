@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ``lxml.html.rewrite_links()`` strips links to work around documents
+  with whitespace in URL attributes.
+
 Bugs fixed
 ----------
 
