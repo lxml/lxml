@@ -16,6 +16,8 @@ A quick test of tokenizing:
 
 Then of parsing:
 
+    >>> parse('td.foo, .bar')
+    Or([Class[Element[td].foo], CombinedSelector[Element[*] <followed> Class[Element[*].bar]]])
     >>> parse('div, td.foo, div.bar span')
     Or([Element[div], Class[Element[td].foo], CombinedSelector[Class[Element[div].bar] <followed> Element[span]]])
     >>> parse('div > p')
@@ -32,6 +34,8 @@ Then of parsing:
     Function[Element[div]:nth-child(10)]
     >>> parse('div:nth-of-type(10)')
     Function[Element[div]:nth-of-type(10)]
+    >>> parse('div div:nth-of-type(10) .aclass')
+    CombinedSelector[CombinedSelector[Element[div] <followed> Function[Element[div]:nth-of-type(10)]] <followed> Class[Element[*].aclass]]
     >>> parse('label:only')
     Pseudo[Element[label]:only]
     >>> parse('a:lang(fr)')
@@ -78,6 +82,10 @@ Now of translation:
     */e[position() = 1]
     >>> xpath('E:nth-last-of-type(1)')
     */e[position() = last() - 1]
+    >>> xpath('E:nth-last-of-type(1)')
+    */e[position() = last() - 1]
+    >>> xpath('div E:nth-last-of-type(1) .aclass')
+    div/descendant::e[position() = last() - 1]/descendant::*[contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
     >>> xpath('E:first-child')
     */*[name() = 'e' and (position() = 1)]
     >>> xpath('E:last-child')

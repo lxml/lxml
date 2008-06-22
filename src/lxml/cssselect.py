@@ -657,9 +657,9 @@ def parse_selector(stream):
     result = parse_simple_selector(stream)
     while 1:
         peek = stream.peek()
-        if peek == ',' or peek == ')' or peek is None:
+        if peek == ',' or peek is None:
             return result
-        if stream.peek() in ('+', '>', '~'):
+        elif peek in ('+', '>', '~'):
             # A combinator
             combinator = stream.next()
         else:
@@ -728,11 +728,11 @@ def parse_simple_selector(stream):
                 else:
                     # FIXME: parse_simple_selector, or selector, or...?
                     selector = parse_simple_selector(stream)
-                    next = stream.next()
-                    if not next == ')':
-                        raise SelectorSyntaxError(
-                            "Expected ), got %r and %r"
-                            % (next, selector))
+                next = stream.next()
+                if not next == ')':
+                    raise SelectorSyntaxError(
+                        "Expected ), got %r and %r"
+                        % (next, selector))
                 result = Function(result, type, ident, selector)
             else:
                 result = Pseudo(result, type, ident)
