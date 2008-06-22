@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* CSS selector parser dropped remaining expression after a function
+  with parameters.
+
 Other changes
 -------------
 
