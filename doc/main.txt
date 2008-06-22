@@ -223,6 +223,8 @@ Old Versions
 
 * `lxml 2.1alpha1`_, released 2008-03-27 (`changes for 2.1alpha1`_)
 
+* `lxml 2.0.7`_, released 2008-06-20 (`changes for 2.0.7`_)
+
 * `lxml 2.0.6`_, released 2008-05-31 (`changes for 2.0.6`_)
 
 * `lxml 2.0.5`_, released 2008-05-01 (`changes for 2.0.5`_)
@@ -291,6 +293,7 @@ Old Versions
 .. _`lxml 2.1beta2`: lxml-2.1beta2.tgz
 .. _`lxml 2.1beta1`: lxml-2.1beta1.tgz
 .. _`lxml 2.1alpha1`: lxml-2.1alpha1.tgz
+.. _`lxml 2.0.7`: lxml-2.0.7.tgz
 .. _`lxml 2.0.6`: lxml-2.0.6.tgz
 .. _`lxml 2.0.5`: lxml-2.0.5.tgz
 .. _`lxml 2.0.4`: lxml-2.0.4.tgz
@@ -327,6 +330,7 @@ Old Versions
 .. _`changes for 2.1beta2`: changes-2.1beta2.html
 .. _`changes for 2.1beta1`: changes-2.1beta1.html
 .. _`changes for 2.1alpha1`: changes-2.1alpha1.html
+.. _`changes for 2.0.7`: changes-2.0.7.html
 .. _`changes for 2.0.6`: changes-2.0.6.html
 .. _`changes for 2.0.5`: changes-2.0.5.html
 .. _`changes for 2.0.4`: changes-2.0.4.html
