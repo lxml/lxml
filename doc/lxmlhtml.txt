@@ -2,6 +2,9 @@
 lxml.html
 =========
 
+:Author:
+  Ian Bicking
+
 Since version 2.0, lxml comes with a dedicated package for dealing
 with HTML: ``lxml.html``.  It provides a special Element API for HTML
 elements, as well as a number of utilities for common tasks.
