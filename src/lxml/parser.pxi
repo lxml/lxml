@@ -3,6 +3,13 @@
 cimport xmlparser
 cimport htmlparser
 
+cdef class _ParserContext(_ResolverContext)
+cdef class _SaxParserContext(_ParserContext)
+cdef class _TargetParserContext(_SaxParserContext)
+cdef class _ParserSchemaValidationContext
+cdef class _Validator
+cdef class XMLSchema(_Validator)
+
 class ParseError(LxmlSyntaxError):
     u"""Syntax error while parsing an XML document.
 
@@ -42,6 +49,11 @@ cdef class _ParserDictionaryContext:
 
     cdef tree.xmlDict* _c_dict
     cdef _BaseParser _default_parser
+    cdef object _implied_parser_contexts
+
+    def __init__(self):
+        self._implied_parser_contexts = []
+
     def __dealloc__(self):
         if self._c_dict is not NULL:
             xmlparser.xmlDictFree(self._c_dict)
@@ -130,6 +142,45 @@ cdef class _ParserDictionaryContext:
         # This case should only occur for new documents with empty dicts,
         # otherwise we'd free data that's in use => segfault
         self.initThreadDictRef(&result.dict)
+
+    cdef _ParserContext findImpliedContext(self):
+        u"""Return any current implied xml parser context for the current
+        thread.  This is used when the resolver functions are called
+        with an xmlParserCtxt that was generated from within libxml2
+        (i.e. without a _ParserContext) - which happens when parsing
+        schema and xinclude external references."""
+        cdef _ParserDictionaryContext context
+        cdef _ParserContext implied_context
+        cdef Py_ssize_t count
+
+        # see if we have a current implied parser
+        context = self._findThreadParserContext()
+        count = python.PyList_GET_SIZE(context._implied_parser_contexts)
+        if count != 0:
+            implied_context = python.PyList_GET_ITEM(
+                context._implied_parser_contexts, count - 1)
+            python.Py_INCREF(implied_context) # borrowed reference
+            return implied_context
+        return None
+
+    cdef void pushImpliedContextFromParser(self, _BaseParser parser):
+        u"Push a new implied context object taken from the parser."
+        if parser is not None:
+            self.pushImpliedContext(parser._getParserContext())
+        else:
+            self.pushImpliedContext(None)
+
+    cdef void pushImpliedContext(self, _ParserContext parser_context):
+        u"Push a new implied context object."
+        cdef _ParserDictionaryContext context
+        context = self._findThreadParserContext()
+        python.PyList_Append(context._implied_parser_contexts, parser_context)
+
+    cdef void popImpliedContext(self):
+        u"Pop the current implied context object."
+        cdef _ParserDictionaryContext context
+        context = self._findThreadParserContext()
+        context._implied_parser_contexts.pop()
 
 cdef _ParserDictionaryContext __GLOBAL_PARSER_CONTEXT
 __GLOBAL_PARSER_CONTEXT = _ParserDictionaryContext()
@@ -346,16 +397,25 @@ cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
 ## support for custom document loaders
 ############################################################
 
-cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
-    char* c_url, char* c_pubid, xmlparser.xmlParserCtxt* c_context,
-    int* error) with gil:
-    # call the Python document loaders
-    cdef xmlparser.xmlParserInput* c_input
+cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
+                                               xmlparser.xmlParserCtxt* c_context) with gil:
     cdef _ResolverContext context
-    cdef _InputDocument   doc_ref
+    cdef xmlparser.xmlParserInput* c_input
+    cdef _InputDocument doc_ref
     cdef _FileReaderContext file_context
-    error[0] = 0
-    context = <_ResolverContext>c_context._private
+    # if there is no _ParserContext associated with the xmlParserCtxt
+    # passed, check to see if the thread state object has an implied
+    # context.
+    if c_context._private is not NULL:
+        context = <_ResolverContext>c_context._private
+    else:
+        context = __GLOBAL_PARSER_CONTEXT.findImpliedContext()
+
+    if context is None:
+        if __DEFAULT_ENTITY_LOADER is NULL:
+            return NULL
+        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+
     try:
         if c_url is NULL:
             url = None
@@ -368,48 +428,31 @@ cdef  xmlparser.xmlParserInput* _parser_resolve_from_python(
             pubid = funicode(c_pubid) # always UTF-8
 
         doc_ref = context._resolvers.resolve(url, pubid, context)
-        if doc_ref is None:
-            return NULL
     except:
         context._store_raised()
-        error[0] = 1
         return NULL
 
-    c_input = NULL
-    data = None
-    if doc_ref._type == PARSER_DATA_STRING:
-        data = doc_ref._data_bytes
-        c_input = xmlparser.xmlNewStringInputStream(
-            c_context, _cstr(data))
-    elif doc_ref._type == PARSER_DATA_FILENAME:
-        c_input = xmlparser.xmlNewInputFromFile(
-            c_context, _cstr(doc_ref._filename))
-    elif doc_ref._type == PARSER_DATA_FILE:
-        file_context = _FileReaderContext(doc_ref._file, context, url)
-        c_input = file_context._createParserInput(c_context)
-        data = file_context
+    if doc_ref is not None:
+        if doc_ref._type == PARSER_DATA_STRING:
+            data = doc_ref._data_bytes
+            c_input = xmlparser.xmlNewStringInputStream(
+                c_context, _cstr(data))
+        elif doc_ref._type == PARSER_DATA_FILENAME:
+            c_input = xmlparser.xmlNewInputFromFile(
+                c_context, _cstr(doc_ref._filename))
+        elif doc_ref._type == PARSER_DATA_FILE:
+            file_context = _FileReaderContext(doc_ref._file, context, url)
+            c_input = file_context._createParserInput(c_context)
+            data = file_context
+        else:
+            data = None
+            c_input = NULL
 
-    if data is not None:
-        context._storage.add(data)
-    return c_input
+        if data is not None:
+            context._storage.add(data)
+        if c_input is not NULL:
+            return c_input
 
-cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
-                                               xmlparser.xmlParserCtxt* c_context) nogil:
-    # no Python objects here, may be called without thread context !
-    # when we declare a Python object, Pyrex will INCREF(None) !
-    cdef xmlparser.xmlParserInput* c_input
-    cdef int error
-    if c_context._private is NULL:
-        if __DEFAULT_ENTITY_LOADER is NULL:
-            return NULL
-        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
-
-    c_input = _parser_resolve_from_python(c_url, c_pubid, c_context, &error)
-
-    if c_input is not NULL:
-        return c_input
-    if error:
-        return NULL
     if __DEFAULT_ENTITY_LOADER is NULL:
         return NULL
     return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
@@ -422,13 +465,6 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 ############################################################
 ## Parsers
 ############################################################
-
-cdef class _ParserContext(_ResolverContext)
-cdef class _SaxParserContext(_ParserContext)
-cdef class _TargetParserContext(_SaxParserContext)
-cdef class _ParserSchemaValidationContext
-cdef class _Validator
-cdef class XMLSchema(_Validator)
 
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log

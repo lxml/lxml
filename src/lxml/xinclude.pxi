@@ -33,12 +33,15 @@ cdef class XInclude:
         # i.e. as a sibling, which does not conflict with traversal.
         cdef int result
         self._error_log.connect()
+        __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(
+            node._doc._parser)
         with nogil:
             if node._doc._parser is not None:
                 result = xinclude.xmlXIncludeProcessTreeFlags(
                     node._c_node, node._doc._parser._parse_options)
             else:
                 result = xinclude.xmlXIncludeProcessTree(node._c_node)
+        __GLOBAL_PARSER_CONTEXT.popImpliedContext()
         self._error_log.disconnect()
 
         if result == -1:

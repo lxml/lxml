@@ -65,7 +65,14 @@ cdef class XMLSchema(_Validator):
             raise XMLSchemaParseError, u"No tree or file given"
 
         if parser_ctxt is not NULL:
+            # calling xmlSchemaParse on a schema with imports or
+            # includes will cause libxml2 to create an internal
+            # context for parsing, so push an implied context to route
+            # resolve requests to the document's parser
+            __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(doc._parser)
             self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+            __GLOBAL_PARSER_CONTEXT.popImpliedContext()
+
             if _LIBXML_VERSION_INT >= 20624:
                 xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
 

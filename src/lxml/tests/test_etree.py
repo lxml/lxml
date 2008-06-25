@@ -2342,6 +2342,37 @@ class XIncludeTestCase(HelperTestCase):
             'a',
             tree.getroot()[1].tag)
 
+    def test_xinclude_resolver(self):
+        class res(etree.Resolver):
+            include_text = open(fileInTestDir('test.xml')).read()
+            called = {}
+            def resolve(self, url, id, context):
+                if url.endswith(".dtd"):
+                    self.called["dtd"] = True
+                    return self.resolve_filename(
+                        fileInTestDir('test.dtd'), context)
+                elif url.endswith("test_xinclude.xml"):
+                    self.called["input"] = True
+                    return None # delegate to default resolver
+                else:
+                    self.called["include"] = True
+                    return self.resolve_string(self.include_text, context)
+
+        res_instance = res()
+        parser = etree.XMLParser(load_dtd = True)
+        parser.resolvers.add(res_instance)
+
+        tree = etree.parse(fileInTestDir('include/test_xinclude.xml'),
+                           parser = parser)
+
+        self.include(tree)
+
+        called = res_instance.called.items()
+        called.sort()
+        self.assertEquals(
+            [("dtd", True), ("include", True), ("input", True)],
+            called)
+
 class ETreeXIncludeTestCase(XIncludeTestCase):
     def include(self, tree):
         tree.xinclude()

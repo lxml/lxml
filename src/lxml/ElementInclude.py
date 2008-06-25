@@ -91,7 +91,7 @@ class FatalIncludeError(etree.LxmlSyntaxError):
 # @throws IOError If the loader fails to load the resource.
 
 def default_loader(href, parse, encoding=None):
-    file = open(href)
+    file = open(href, 'rb')
     if parse == "xml":
         data = etree.parse(file).getroot()
     else:
@@ -112,7 +112,7 @@ def _lxml_default_loader(href, parse, encoding=None, parser=None):
         if "://" in href:
             f = urlopen(href)
         else:
-            f = open(href)
+            f = open(href, 'rb')
         data = f.read()
         f.close()
         if encoding:
@@ -165,7 +165,7 @@ def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
     parser = elem.getroottree().parser
 
     include_elements = list(
-        elem.getiterator('{http://www.w3.org/2001/XInclude}*'))
+        elem.iter('{http://www.w3.org/2001/XInclude}*'))
 
     for e in include_elements:
         if e.tag == XINCLUDE_INCLUDE:

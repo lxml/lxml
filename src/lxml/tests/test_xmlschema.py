@@ -152,7 +152,110 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assert_(tree_valid.xmlschema(schema))
         self.assert_(not tree_invalid.xmlschema(schema))
 
-    
+    #
+    # schema + resolvers tests&data:
+    #
+
+    resolver_schema_int = BytesIO("""\
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:etype="http://codespeak.net/lxml/test/external"
+    targetNamespace="http://codespeak.net/lxml/test/internal">
+        <xsd:import namespace="http://codespeak.net/lxml/test/external" schemaLocation="XXX.xsd" />
+        <xsd:element name="a" type="etype:AType"/>
+</xsd:schema>""")
+
+    resolver_schema_int2 = BytesIO("""\
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    xmlns:etype="http://codespeak.net/lxml/test/external"
+    targetNamespace="http://codespeak.net/lxml/test/internal">
+        <xsd:import namespace="http://codespeak.net/lxml/test/external" schemaLocation="YYY.xsd" />
+        <xsd:element name="a" type="etype:AType"/>
+</xsd:schema>""")
+
+    resolver_schema_ext = """\
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="http://codespeak.net/lxml/test/external">
+    <xsd:complexType name="AType">
+      <xsd:sequence><xsd:element name="b" type="xsd:string" minOccurs="0" maxOccurs="unbounded" /></xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>""" 
+
+    class simple_resolver(etree.Resolver):
+        def __init__(self, schema):
+            self.schema = schema
+
+        def resolve(self, url, id, context):
+            assert url == 'XXX.xsd'
+            return self.resolve_string(self.schema, context)
+
+    def test_xmlschema_resolvers(self):
+        """Test that resolvers work with schema."""
+        parser = etree.XMLParser()
+        parser.resolvers.add(self.simple_resolver(self.resolver_schema_ext))
+        schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
+        schema = etree.XMLSchema(schema_doc)
+
+    def test_xmlschema_resolvers_root(self):
+        """Test that the default resolver will get called if there's no
+        specific parser resolver."""
+        root_resolver = self.simple_resolver(self.resolver_schema_ext)
+        etree.get_default_parser().resolvers.add(root_resolver)
+        schema_doc = etree.parse(self.resolver_schema_int)
+        schema = etree.XMLSchema(schema_doc)
+        etree.get_default_parser().resolvers.remove(root_resolver)
+
+    def test_xmlschema_resolvers_noroot(self):
+        """Test that the default resolver will not get called when a more
+        specific resolver is registered."""
+
+        class res_root(etree.Resolver):
+            def resolve(self, url, id, context):
+                assert False
+                return None
+
+        root_resolver = res_root()
+        etree.get_default_parser().resolvers.add(root_resolver)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(self.simple_resolver(self.resolver_schema_ext))
+
+        schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
+        schema = etree.XMLSchema(schema_doc)
+        etree.get_default_parser().resolvers.remove(root_resolver)
+
+    def test_xmlschema_nested_resolvers(self):
+        """Test that resolvers work in a nested fashion."""
+
+        resolver_schema = self.resolver_schema_ext
+
+        class res_nested(etree.Resolver):
+            def __init__(self, ext_schema):
+                self.ext_schema = ext_schema
+
+            def resolve(self, url, id, context):
+                assert url == 'YYY.xsd'
+                return self.resolve_string(self.ext_schema, context)
+
+        class res(etree.Resolver):
+            def __init__(self, ext_schema_1, ext_schema_2):
+                self.ext_schema_1 = ext_schema_1
+                self.ext_schema_2 = ext_schema_2
+
+            def resolve(self, url, id, context):
+                assert url == 'XXX.xsd'
+
+                new_parser = etree.XMLParser()
+                new_parser.resolvers.add(res_nested(self.ext_schema_2))
+                new_schema_doc = etree.parse(self.ext_schema_1, parser = new_parser)
+                new_schema = etree.XMLSchema(new_schema_doc)
+
+                return self.resolve_string(resolver_schema, context)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(res(self.resolver_schema_int2, self.resolver_schema_ext))
+        schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
+        schema = etree.XMLSchema(schema_doc)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
