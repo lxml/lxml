@@ -242,7 +242,10 @@ cdef class ObjectifiedElement(ElementBase):
         elif tag == u'tag':
             ElementBase.tag.__set__(self, value)
             return
-
+        elif tag == u'base':
+            c_base = _cstr(value)
+            tree.xmlNodeSetBase(self._c_node, c_base) 
+            return
         tag = _buildChildTag(self, tag)
         element = _lookupChild(self, tag)
         if element is None:
@@ -1811,43 +1814,55 @@ cdef _Element _makeElement(tag, text, attrib, nsmap):
 cdef object _fromstring
 _fromstring = etree.fromstring
 
-def fromstring(xml, parser=None):
-    u"""fromstring(xml, parser=None)
+def fromstring(xml, parser=None, *, base_url=None):
+    u"""fromstring(xml, parser=None, base_url=None)
 
     Objectify specific version of the lxml.etree fromstring() function
     that uses the objectify parser.
 
     You can pass a different parser as second argument.
+
+    The ``base_url`` keyword argument allows to set the original base URL of
+    the document to support relative Paths when looking up external entities
+    (DTD, XInclude, ...).
     """
     if parser is None:
         parser = objectify_parser
-    return _fromstring(xml, parser)
+    return _fromstring(xml, parser, base_url=base_url)
 
-def XML(xml, parser=None):
-    u"""XML(xml, parser=None)
+def XML(xml, parser=None, *, base_url=None):
+    u"""XML(xml, parser=None, base_url=None)
 
     Objectify specific version of the lxml.etree XML() literal factory
     that uses the objectify parser.
 
     You can pass a different parser as second argument.
+
+    The ``base_url`` keyword argument allows to set the original base URL of
+    the document to support relative Paths when looking up external entities
+    (DTD, XInclude, ...).
     """
     if parser is None:
         parser = objectify_parser
-    return _fromstring(xml, parser)
+    return _fromstring(xml, parser, base_url=base_url)
 
 cdef object _parse
 _parse = etree.parse
 
-def parse(f, parser=None):
-    u"""parse(f, parser=None)
+def parse(f, parser=None, *, base_url=None):
+    u"""parse(f, parser=None, base_url=None)
 
     Parse a file or file-like object with the objectify parser.
 
     You can pass a different parser as second argument.
+
+    The ``base_url`` keyword allows setting a URL for the document
+    when parsing from a file-like object.  This is needed when looking
+    up external entities (DTD, XInclude, ...) with relative paths.
     """
     if parser is None:
         parser = objectify_parser
-    return _parse(f, parser)
+    return _parse(f, parser, base_url=base_url)
 
 cdef object _DEFAULT_NSMAP
 _DEFAULT_NSMAP = { u"py"  : PYTYPE_NAMESPACE,

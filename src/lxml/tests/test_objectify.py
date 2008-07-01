@@ -2337,6 +2337,53 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(isinstance(root.value[0], objectify.IntElement))
         self.assert_(isinstance(root.value[1], objectify.FloatElement))
 
+    def test_XML_base_url_docinfo(self):
+        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        docinfo = root.getroottree().docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+ 
+    def test_XML_set_base_url_docinfo(self):
+        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        docinfo = root.getroottree().docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+        docinfo.URL = "https://secret/url"
+        self.assertEquals(docinfo.URL, "https://secret/url")
+ 
+    def test_parse_stringio_base_url(self):
+        tree = objectify.parse(BytesIO("<root/>"), base_url="http://no/such/url")
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+ 
+    def test_parse_base_url_docinfo(self):
+        tree = objectify.parse(fileInTestDir('include/test_xinclude.xml'),
+                               base_url="http://no/such/url")
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.URL, "http://no/such/url")
+
+    def test_xml_base(self):
+        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        self.assertEquals(root.base, "http://no/such/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
+        root.base = "https://secret/url"
+        self.assertEquals(root.base, "https://secret/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'),
+            "https://secret/url")
+ 
+    def test_xml_base_attribute(self):
+        root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
+        self.assertEquals(root.base, "http://no/such/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'), None)
+        root.set('{http://www.w3.org/XML/1998/namespace}base',
+                 "https://secret/url")
+        self.assertEquals(root.base, "https://secret/url")
+        self.assertEquals(
+            root.get('{http://www.w3.org/XML/1998/namespace}base'),
+            "https://secret/url")
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
