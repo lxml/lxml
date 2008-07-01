@@ -1752,7 +1752,6 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True):
             cetree.delAttributeFromNsName(
                 c_node, _XML_SCHEMA_INSTANCE_NS, "type")
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    etree.cleanup_namespaces(element)
 
 
 ################################################################################
