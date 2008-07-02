@@ -315,17 +315,9 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list
     cdef cstd.size_t i
-    cdef tree.xmlDict* c_dict
 
     if not tree._isElementOrXInclude(c_element):
         return 0
-
-    # we need to copy the names of tags and attributes iff the element
-    # is based on a different libxml2 tag name dictionary
-    if doc._c_doc.dict is not c_source_doc.dict:
-        c_dict = doc._c_doc.dict
-    else:
-        c_dict = NULL
 
     c_start_node = c_element
     c_del_ns_list = NULL
@@ -357,14 +349,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                         c_element, c_node.ns.href, c_node.ns.prefix)
                     _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
                     c_node.ns = c_ns
-
-            # 3) re-assign names from the target dict
-            if c_dict is not NULL:
-                c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
-                # c_name can be NULL on memory error, but we don't
-                # handle that here
-                if c_name is not NULL:
-                    c_node.name = c_name
 
             if c_node is c_element:
                 # after the element, continue with its attributes
@@ -414,6 +398,10 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             break # all done
         c_element = c_node
 
+    # 3) fix the names in the tree in case we moved it to a different thread
+    if doc._c_doc.dict is not c_source_doc.dict:
+        fixThreadDictNames(c_start_node, doc._c_doc.dict)
+
     # free now unused namespace declarations
     if c_del_ns_list is not NULL:
         tree.xmlFreeNsList(c_del_ns_list)
@@ -425,3 +413,28 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         cstd.free(c_ns_cache.old)
 
     return 0
+
+
+cdef void fixThreadDictNames(xmlNode* c_element, tree.xmlDict* c_dict) nogil:
+    # re-assign the names of tags and attributes
+    #
+    # this should only be called when the element is based on a
+    # different libxml2 tag name dictionary
+    cdef xmlNode* c_node
+    cdef char* c_name
+    if not tree._isElementOrXInclude(c_element):
+        return
+
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
+    c_name = tree.xmlDictLookup(c_dict, c_element.name, -1)
+    # c_name can be NULL on memory error, but we don't handle that here
+    if c_name is not NULL:
+        c_element.name = c_name
+    if c_element.type == tree.XML_ELEMENT_NODE:
+        c_node = <xmlNode*>c_element.properties
+        while c_node is not NULL:
+            c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
+            if c_name is not NULL:
+                c_node.name = c_name
+            c_node = c_node.next
+    tree.END_FOR_EACH_ELEMENT_FROM(c_element)
