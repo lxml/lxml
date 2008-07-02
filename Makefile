@@ -59,8 +59,11 @@ apihtml: inplace
 			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
-html: inplace apihtml
+html: inplace apihtml s5
 	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
+
+s5: inplace
+	$(MAKE) -C doc/s5 slides
 
 apipdf: inplace
 	rm -fr doc/pdf
@@ -100,6 +103,7 @@ clean:
 	rm -rf build
 
 docclean:
+	$(MAKE) -C doc/s5 clean
 	rm -f doc/html/*.html
 	rm -fr doc/html/api
 	rm -fr doc/pdf
