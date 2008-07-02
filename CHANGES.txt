@@ -23,6 +23,9 @@ Bugs fixed
 Other changes
 -------------
 
+* ``objectify.enableRecursiveStr()`` was removed, use
+  ``objectify.enable_recursive_str()`` instead
+
 * Speed-up when running XSLTs on documents from other threads
 
 
