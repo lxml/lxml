@@ -832,7 +832,7 @@ objectify elements like this:
 
 .. sourcecode:: pycon
 
-    >>> objectify.enableRecursiveStr()
+    >>> objectify.enable_recursive_str()
 
     >>> root = objectify.fromstring("""
     ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -861,7 +861,7 @@ This behaviour can be switched off in the same way:
 
 .. sourcecode:: pycon
 
-    >>> objectify.enableRecursiveStr(False)
+    >>> objectify.enable_recursive_str(False)
 
 
 How data types are matched

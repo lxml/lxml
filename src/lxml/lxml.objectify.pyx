@@ -1294,19 +1294,8 @@ cdef _add_text(_Element elem, text):
 cdef bint __RECURSIVE_STR
 __RECURSIVE_STR = 0 # default: off
 
-def enableRecursiveStr(on=True):
-    u"""enableRecursiveStr(on=True)
-
-    Enable a recursively generated tree representation for str(element),
-    based on objectify.dump(element).
-
-    :deprecated: use enable_recursive_str() instead
-    """
-    global __RECURSIVE_STR
-    __RECURSIVE_STR = on
-
 def enable_recursive_str(on=True):
-    u"""enableRecursiveStr(on=True)
+    u"""enable_recursive_str(on=True)
 
     Enable a recursively generated tree representation for str(element),
     based on objectify.dump(element).
