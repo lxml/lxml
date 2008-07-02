@@ -23,6 +23,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Speed-up when running XSLTs on documents from other threads
+
 
 2.0.7 (2008-06-20)
 ==================

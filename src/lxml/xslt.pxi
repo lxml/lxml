@@ -536,7 +536,8 @@ cdef class XSLT:
             c_node = _findChildForwards(<xmlNode*>c_result, 0)
             if c_node is not NULL:
                 __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&c_result.dict)
-                moveNodeToDocument(result_doc, self._c_style.doc, c_node)
+                with nogil:
+                    fixThreadDictNames(c_node, c_result.dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
