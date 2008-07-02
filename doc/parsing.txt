@@ -675,8 +675,8 @@ number of other byte encodings if asked for:
   >>> etree.tostring(root, encoding='UTF-8', xml_declaration=False)
   b'<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-As an extension, lxml.etree recognises the unicode type as encoding to
-build a Python unicode representation of a tree:
+As an extension, lxml.etree recognises the unicode type as an argument to the
+encoding parameter to build a Python unicode representation of a tree:
 
 .. sourcecode:: pycon
 
