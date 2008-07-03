@@ -134,7 +134,7 @@ h1.title, h1 a, h2 a, h3 a {
 }
 
 @media screen {
-    div.section > h1 > a:before {
+    div.section > h1:before {
         margin-left: -2ex;
         color: #CC0000;
         content: "\00BB" " ";

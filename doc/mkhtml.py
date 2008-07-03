@@ -13,7 +13,7 @@ RST2HTML_OPTIONS = " ".join([
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
-find_headings = XPath("//h:h1[not(@class)]/h:a/text()", namespaces=htmlnsmap)
+find_headings = XPath("//h:h1[not(@class)]//text()", namespaces=htmlnsmap)
 find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
 find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
@@ -66,6 +66,9 @@ def merge_menu(tree, menu, name):
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
     current_menu = find_menu(
         menu_root, name=replace_invalid(' ', name + '-menu'))
+    if not current_menu:
+        current_menu = find_menu(
+            menu_root, name=replace_invalid('-', name + '-menu'))
     if current_menu:
         for submenu in current_menu:
             submenu.set("class", submenu.get("class", "").
