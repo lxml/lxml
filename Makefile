@@ -62,7 +62,7 @@ apihtml: inplace
 html: inplace apihtml s5
 	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
-s5: inplace
+s5:
 	$(MAKE) -C doc/s5 slides
 
 apipdf: inplace
