@@ -53,6 +53,8 @@ What is an »XML language«?
 
 * aka »XML dialect«
 
+  * except that it's not a dialect
+
 * Examples:
 
   * XML Schema
@@ -245,7 +247,7 @@ What is lxml?
 
     * keep doing that, we love you all!
 
-* maintained and mostly written by myself
+* maintained (and major parts) written by myself
 
   * initial design and implementation by Martijn Faassen
 
@@ -1099,8 +1101,44 @@ lxml ...
 * makes extension and specialisation easy
 
   * write a special XML generator module in trivial code
-
+  
   * write your own XML API incrementally on-the-fly
+
+
+Conclusion
+==========
+
+    **»lxml takes all the pain out of XML«**
+
+    \... any questions?
+
+
+Some open ideas
+===============
+
+* merge generation and tree classes to support
+
+  .. sourcecode:: python
+
+    class Feed(etree.ElementBase):
+        # ...
+
+    class Entry(etree.ElementBase):
+        # ...
+
+    feed = Feed( Entry( ... ) )
+
+* use the ``with`` statement to generate XML
+
+  .. sourcecode:: python
+
+    xml = withbuilder()
+    with xml.feed(xmlns='http://www.w3.org/2005/Atom'):
+        xml.title('Example Feed')
+        with xml.author:
+            xml.name('John Doe')
+        with xml.entry:
+            xml.title('Atom-Powered Robots Run Amok')
 
 
 Conclusion
