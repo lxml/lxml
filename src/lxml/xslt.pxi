@@ -275,7 +275,8 @@ cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     cdef object _extension_elements
     cdef _ReadOnlyElementProxy _extension_element_proxy
-    def __init__(self, namespaces, extensions, enable_regexp):
+    def __init__(self, namespaces, extensions, enable_regexp,
+                 build_smart_strings):
         self._xsltCtxt = NULL
         self._extension_elements = EMPTY_READ_ONLY_DICT
         if extensions is not None and extensions:
@@ -293,7 +294,8 @@ cdef class _XSLTContext(_BaseContext):
                         self._extension_elements, (ns_utf, name_utf),
                         extension)
                     python.PyDict_DelItem(extensions, ns_name_tuple)
-        _BaseContext.__init__(self, namespaces, extensions, enable_regexp)
+        _BaseContext.__init__(self, namespaces, extensions, enable_regexp,
+                              build_smart_strings)
 
     cdef _BaseContext _copy(self):
         cdef _XSLTContext context
@@ -401,7 +403,7 @@ cdef class XSLT:
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
-        self._context = _XSLTContext(None, extensions, regexp)
+        self._context = _XSLTContext(None, extensions, regexp, True)
 
     def __dealloc__(self):
         if self._xslt_resolver_context is not None and \

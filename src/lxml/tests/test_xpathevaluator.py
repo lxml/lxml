@@ -79,6 +79,21 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals([root[0], root[1]],
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
 
+    def test_xpath_list_text_parent_no_smart_strings(self):
+        tree = self.parse('<a><b>FooBar</b><b>BarFoo</b></a>')
+        root = tree.getroot()
+        self.assertEquals(['FooBar', 'BarFoo'],
+                          tree.xpath('/a/b/text()', smart_strings=True))
+        self.assertEquals([root[0], root[1]],
+                          [r.getparent() for r in
+                           tree.xpath('/a/b/text()', smart_strings=True)])
+
+        self.assertEquals(['FooBar', 'BarFoo'],
+                          tree.xpath('/a/b/text()', smart_strings=False))
+        self.assertEquals([False, False],
+                          [hasattr(r, 'getparent') for r in
+                           tree.xpath('/a/b/text()', smart_strings=False)])
+
     def test_xpath_list_unicode_text_parent(self):
         xml = _bytes('<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>').decode("unicode_escape")
         tree = self.parse(xml.encode('utf-8'))
@@ -100,6 +115,19 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(1, len(results))
         self.assertEquals('CqWeRtZuI', results[0])
         self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
+
+    def test_xpath_list_attribute_parent_no_smart_strings(self):
+        tree = self.parse('<a b="BaSdFgHjKl" c="CqWeRtZuI"/>')
+
+        results = tree.xpath('/a/@c', smart_strings=True)
+        self.assertEquals(1, len(results))
+        self.assertEquals('CqWeRtZuI', results[0])
+        self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
+
+        results = tree.xpath('/a/@c', smart_strings=False)
+        self.assertEquals(1, len(results))
+        self.assertEquals('CqWeRtZuI', results[0])
+        self.assertEquals(False, hasattr(results[0], 'getparent'))
 
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')

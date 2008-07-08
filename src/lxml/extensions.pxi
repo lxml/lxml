@@ -37,11 +37,13 @@ cdef class _BaseContext:
     cdef object _utf_refs
     cdef object _function_cache
     cdef object _eval_context_dict
+    cdef bint _build_smart_strings
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef _ExceptionContext _exc
 
-    def __init__(self, namespaces, extensions, enable_regexp):
+    def __init__(self, namespaces, extensions, enable_regexp,
+                 build_smart_strings):
         cdef _ExsltRegExp _regexp 
         self._utf_refs = {}
         self._global_namespaces = []
@@ -88,6 +90,7 @@ cdef class _BaseContext:
         self._extensions = extensions
         self._namespaces = namespaces
         self._temp_refs  = _TempStore()
+        self._build_smart_strings = build_smart_strings
 
         if enable_regexp:
             _regexp = _ExsltRegExp()
@@ -97,7 +100,8 @@ cdef class _BaseContext:
         cdef _BaseContext context
         if self._namespaces is not None:
             namespaces = self._namespaces[:]
-        context = self.__class__(namespaces, None, False)
+        context = self.__class__(namespaces, None, False,
+                                 self._build_smart_strings)
         if self._extensions is not None:
             context._extensions = python.PyDict_Copy(self._extensions)
         return context
@@ -482,18 +486,21 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
-                               _Document doc):
+                               _Document doc, bint smart_string):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         raise XPathResultError, u"Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
-        return _createNodeSetResult(xpathObj, doc)
+        return _createNodeSetResult(xpathObj, doc, smart_string)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
         return xpathObj.boolval
     elif xpathObj.type == xpath.XPATH_NUMBER:
         return xpathObj.floatval
     elif xpathObj.type == xpath.XPATH_STRING:
-        return _elementStringResultFactory(
-            funicode(xpathObj.stringval), None, 0, 0)
+        stringval = funicode(xpathObj.stringval)
+        if smart_string:
+            stringval = _elementStringResultFactory(
+                stringval, None, 0, 0)
+        return stringval
     elif xpathObj.type == xpath.XPATH_POINT:
         raise NotImplementedError
     elif xpathObj.type == xpath.XPATH_RANGE:
@@ -507,7 +514,8 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     else:
         raise XPathResultError, u"Unknown xpath result %s" % unicode(xpathObj.type)
 
-cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
+cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj,
+                                 _Document doc, bint smart_string):
     cdef xmlNode* c_node
     cdef char* s
     cdef int i
@@ -526,7 +534,7 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc):
             value = _fakeDocElementFactory(doc, c_node)
         elif c_node.type == tree.XML_TEXT_NODE or \
                 c_node.type == tree.XML_ATTRIBUTE_NODE:
-            value = _buildElementStringResult(doc, c_node)
+            value = _buildElementStringResult(doc, c_node, smart_string)
         elif c_node.type == tree.XML_NAMESPACE_DECL:
             s = (<xmlNs*>c_node).href
             if s is NULL:
@@ -601,7 +609,8 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
         uresult.is_text = is_text
         return uresult
 
-cdef object _buildElementStringResult(_Document doc, xmlNode* c_node):
+cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
+                                      bint smart_string):
     cdef _Element parent
     cdef xmlNode* c_element
     cdef char* s
@@ -623,6 +632,9 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node):
         value = funicode(c_node.content)
         c_element = _previousElement(c_node)
         is_tail = c_element is not NULL
+
+    if not smart_string:
+        return value
 
     if c_element is NULL:
         # non-tail text or attribute text
@@ -650,7 +662,7 @@ cdef void _extension_function_call(_BaseContext context, function,
         args = []
         for i from 0 <= i < nargs:
             obj = xpath.valuePop(ctxt)
-            o = _unwrapXPathObject(obj, doc)
+            o = _unwrapXPathObject(obj, doc, context._build_smart_strings)
             _freeXPathObject(obj)
             python.PyList_Append(args, o)
         python.PyList_Reverse(args)

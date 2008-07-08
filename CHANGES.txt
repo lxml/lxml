@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Smart strings can be switched off in XPath (``smart_string`` keyword
+  option).
+
 * Custom resolvers are now used for XMLSchema includes/imports and
   XInclude processing.
 

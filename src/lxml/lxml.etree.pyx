@@ -1311,13 +1311,15 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             path = (<QName>path).text
         return _elementpath.iterfind(self, path)
 
-    def xpath(self, _path, *, namespaces=None, extensions=None, **_variables):
-        u"""xpath(self, _path, namespaces=None, extensions=None, **_variables)
+    def xpath(self, _path, *, namespaces=None, extensions=None,
+              smart_strings=True, **_variables):
+        u"""xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
 
         Evaluate an xpath expression using the element as context node.
         """
         evaluator = XPathElementEvaluator(self, namespaces=namespaces,
-                                          extensions=extensions)
+                                          extensions=extensions,
+                                          smart_strings=smart_strings)
         return evaluator(_path, **_variables)
 
 
@@ -1714,8 +1716,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = "." + path
         return root.iterfind(path)
 
-    def xpath(self, _path, *, namespaces=None, extensions=None, **_variables):
-        u"""xpath(self, _path, namespaces=None, extensions=None, **_variables)
+    def xpath(self, _path, *, namespaces=None, extensions=None,
+              smart_strings=True, **_variables):
+        u"""xpath(self, _path, namespaces=None, extensions=None, smart_strings=True, **_variables)
 
         XPath evaluate in context of document.
 
@@ -1734,7 +1737,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         self._assertHasRoot()
         evaluator = XPathDocumentEvaluator(self, namespaces=namespaces,
-                                           extensions=extensions)
+                                           extensions=extensions,
+                                           smart_strings=smart_strings)
         return evaluator(_path, **_variables)
 
     def xslt(self, _xslt, extensions=None, access_control=None, **_kw):

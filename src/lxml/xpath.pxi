@@ -49,9 +49,11 @@ cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
 
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
-    def __init__(self, namespaces, extensions, enable_regexp, variables):
+    def __init__(self, namespaces, extensions, enable_regexp, variables,
+                 build_smart_strings):
         self._variables = variables
-        _BaseContext.__init__(self, namespaces, extensions, enable_regexp)
+        _BaseContext.__init__(self, namespaces, extensions, enable_regexp,
+                              build_smart_strings)
 
     cdef set_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._set_xpath_context(xpathCtxt)
@@ -103,7 +105,8 @@ cdef class _XPathEvaluatorBase:
     cdef python.PyThread_type_lock _eval_lock
     cdef _ErrorLog _error_log
 
-    def __init__(self, namespaces, extensions, enable_regexp):
+    def __init__(self, namespaces, extensions, enable_regexp,
+                 smart_strings):
         global _XPATH_VERSION_WARNING_REQUIRED
         if _XPATH_VERSION_WARNING_REQUIRED:
             _XPATH_VERSION_WARNING_REQUIRED = 0
@@ -112,7 +115,7 @@ cdef class _XPathEvaluatorBase:
                           u"Use it at your own risk.")
         self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
-                                      enable_regexp, None)
+                                      enable_regexp, None, smart_strings)
 
     property error_log:
         def __get__(self):
@@ -202,7 +205,8 @@ cdef class _XPathEvaluatorBase:
             self._raise_eval_error()
 
         try:
-            result = _unwrapXPathObject(xpathObj, doc)
+            result = _unwrapXPathObject(xpathObj, doc,
+                                        self._context._build_smart_strings)
         finally:
             _freeXPathObject(xpathObj)
             self._context._release_temp_refs()
@@ -211,7 +215,7 @@ cdef class _XPathEvaluatorBase:
 
 
 cdef class XPathElementEvaluator(_XPathEvaluatorBase):
-    u"""XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True)
+    u"""XPathElementEvaluator(self, element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an element.
 
     Absolute XPath expressions (starting with '/') will be evaluated against
@@ -223,13 +227,14 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     """
     cdef _Element _element
     def __init__(self, _Element element not None, *, namespaces=None,
-                 extensions=None, regexp=True):
+                 extensions=None, regexp=True, smart_strings=True):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         cdef _Document doc
         self._element = element
         doc = element._doc
-        _XPathEvaluatorBase.__init__(self, namespaces, extensions, regexp)
+        _XPathEvaluatorBase.__init__(self, namespaces, extensions,
+                                     regexp, smart_strings)
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
             python.PyErr_NoMemory()
@@ -283,7 +288,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
 
 
 cdef class XPathDocumentEvaluator(XPathElementEvaluator):
-    u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True)
+    u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an ElementTree.
 
     Additional namespace declarations can be passed with the 'namespace'
@@ -291,10 +296,10 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
     the 'regexp' boolean keyword (defaults to True).
     """
     def __init__(self, _ElementTree etree not None, *, namespaces=None,
-                 extensions=None, regexp=True):
+                 extensions=None, regexp=True, smart_strings=True):
         XPathElementEvaluator.__init__(
             self, etree._context_node, namespaces=namespaces, 
-            extensions=extensions, regexp=regexp)
+            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
 
     def __call__(self, _path, **_variables):
         u"""__call__(self, _path, **_variables)
@@ -336,8 +341,8 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
-                   regexp=True):
-    u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True)
+                   regexp=True, smart_strings=True):
+    u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
 
     Creates an XPath evaluator for an ElementTree or an Element.
 
@@ -351,11 +356,11 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
     if isinstance(etree_or_element, _ElementTree):
         return XPathDocumentEvaluator(
             etree_or_element, namespaces=namespaces,
-            extensions=extensions, regexp=regexp)
+            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
     else:
         return XPathElementEvaluator(
             etree_or_element, namespaces=namespaces,
-            extensions=extensions, regexp=regexp)
+            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
 
 
 cdef class XPath(_XPathEvaluatorBase):
@@ -370,9 +375,11 @@ cdef class XPath(_XPathEvaluatorBase):
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef readonly object path
 
-    def __init__(self, path, *, namespaces=None, extensions=None, regexp=True):
+    def __init__(self, path, *, namespaces=None, extensions=None,
+                 regexp=True, smart_strings=True):
         cdef xpath.xmlXPathContext* xpathCtxt
-        _XPathEvaluatorBase.__init__(self, namespaces, extensions, regexp)
+        _XPathEvaluatorBase.__init__(self, namespaces, extensions,
+                                     regexp, smart_strings)
         self.path = path
         path = _utf8(path)
         xpathCtxt = xpath.xmlXPathNewContext(NULL)
