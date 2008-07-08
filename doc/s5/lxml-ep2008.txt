@@ -43,6 +43,8 @@ About myself
 
     * http://cython.org/
 
+    * talk in room Zeta, 16h
+
   * »lxml« XML toolkit for Python
 
 
@@ -119,6 +121,8 @@ Popular mistakes to avoid (3)
 
 * write error-prone, state-keeping SAX code to
 
+  * figure out where you are
+
   * find the sections you need
 
   * convert text content to other data types
@@ -130,6 +134,14 @@ Popular mistakes to avoid (3)
 => write confusing state-machine code
 
 => debugging into existence
+
+
+Working with XML
+================
+
+    **Getting XML work done**
+
+    (instead of getting time wasted)
 
 
 How can you work with XML?
@@ -732,7 +744,6 @@ The Atom generator module
 =========================
 
 ..
-
   >>> import sys
   >>> sys.path.insert(0, "ep2008")
 
@@ -953,8 +964,8 @@ Mapping Python classes to nodes
     * ``PythonElementClassLookup()`` + a fallback
 
 
-Designing an Atom API (1)
-=========================
+Designing an Atom API
+=====================
 
 * a feed is a container for entries
 
@@ -982,12 +993,54 @@ Designing an Atom API (1)
             return self.find("title")
 
 
-Designing an Atom API (2)
-=========================
+Consider lxml.objectify
+=======================
 
-\... do this incrementally for different Elements
+* ready-to-use, generic Python object API for XML
 
-* start with Elements that really need some API sugar
+.. sourcecode:: python
+
+    >>> from lxml import objectify
+
+    >>> feed = objectify.parse("atom-example.xml")
+    >>> print(feed.title)
+    Example Feed
+
+    >>> print([entry.title for entry in feed.entry])
+    ['Atom-Powered Robots Run Amok']
+
+    >>> print(feed.entry[0].title)
+    Atom-Powered Robots Run Amok
+
+
+Still room for more convenience
+===============================
+
+.. sourcecode:: python
+
+    from itertools import chain
+
+    class FeedElement(objectify.ObjectifiedElement):
+
+        def addIDs(self):
+            "initialise the IDs of feed and entries"
+
+	    for element in chain([self], self.entry):
+	        if element.find(_ATOM_NS + "id") is None:
+	            id = etree.SubElement(self, _ATOM_NS + "id")
+	            id.text = make_guid()
+
+
+Incremental API design
+======================
+
+* choose an XML API to start with
+
+  * lxml.etree is general purpose
+
+  * lxml.objectify is nice for document-style XML
+
+* fix Elements that really need some API sugar
 
   * dict-mappings to children with specific content/attributes
 
@@ -1018,13 +1071,15 @@ Atom has a namespace => leave the mapping to lxml
 .. sourcecode:: python
 
     # ...
-    _atom_lookup = etree.ElementNamespaceClassLookup()
+    _atom_lookup = etree.ElementNamespaceClassLookup(
+                      objectify.ObjectifyElementClassLookup())
 
     # map the classes to tag names
     ns = _atom_lookup.get_namespace(ATOM_NAMESPACE)
     ns["feed"]  = FeedElement
     ns["entry"] = EntryElement
-    # ... and so on (or use vars() if you like)
+    # ... and so on
+    # or use ns.update(vars()) with appropriate class names
 
     # create a parser that does some whitespace cleanup
     atom_parser = etree.XMLParser(remove_blank_text=True)
@@ -1045,9 +1100,9 @@ Using your new Atom API
     >>> import atom
     >>> feed = atom.parse("ep2008/atom-example.xml").getroot()
 
-    >>> print(len(feed.entries))
+    >>> print(len(feed.entry))
     1
-    >>> print([entry.title for entry in feed.entries])
+    >>> print([entry.title for entry in feed.entry])
     ['Atom-Powered Robots Run Amok']
 
     >>> link_tag = "{%s}link" % atom.ATOM_NAMESPACE
@@ -1092,7 +1147,7 @@ lxml ...
 
   * highly extensible through wrapping and subclassing
 
-  * callable objects for XPath, CSS selectors, XSLT
+  * callable objects for XPath, CSS selectors, XSLT, schemas
 
   * iteration for tree traversal (even while parsing)
 
@@ -1113,8 +1168,8 @@ Conclusion
     \... any questions?
 
 
-Some open ideas
-===============
+Unimplemented ideas
+===================
 
 * merge generation and tree classes to support
 
@@ -1132,7 +1187,7 @@ Some open ideas
 
   .. sourcecode:: python
 
-    xml = withbuilder()
+    xml = lxml.withbuilder()
     with xml.feed(xmlns='http://www.w3.org/2005/Atom'):
         xml.title('Example Feed')
         with xml.author:
