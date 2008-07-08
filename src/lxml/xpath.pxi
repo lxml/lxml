@@ -221,9 +221,11 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     Absolute XPath expressions (starting with '/') will be evaluated against
     the ElementTree as returned by getroottree().
 
-    Additional namespace declarations can be passed with the 'namespace'
-    keyword argument.  EXSLT regular expression support can be disabled with
-    the 'regexp' boolean keyword (defaults to True).
+    Additional namespace declarations can be passed with the
+    'namespace' keyword argument.  EXSLT regular expression support
+    can be disabled with the 'regexp' boolean keyword (defaults to
+    True).  Smart strings will be returned for string results unless
+    you pass ``smart_strings=False``.
     """
     cdef _Element _element
     def __init__(self, _Element element not None, *, namespaces=None,
@@ -291,9 +293,11 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
     u"""XPathDocumentEvaluator(self, etree, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     Create an XPath evaluator for an ElementTree.
 
-    Additional namespace declarations can be passed with the 'namespace'
-    keyword argument.  EXSLT regular expression support can be disabled with
-    the 'regexp' boolean keyword (defaults to True).
+    Additional namespace declarations can be passed with the
+    'namespace' keyword argument.  EXSLT regular expression support
+    can be disabled with the 'regexp' boolean keyword (defaults to
+    True).  Smart strings will be returned for string results unless
+    you pass ``smart_strings=False``.
     """
     def __init__(self, _ElementTree etree not None, *, namespaces=None,
                  extensions=None, regexp=True, smart_strings=True):
@@ -349,9 +353,11 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
     The resulting object can be called with an XPath expression as argument
     and XPath variables provided as keyword arguments.
 
-    Additional namespace declarations can be passed with the 'namespace'
-    keyword argument.  EXSLT regular expression support can be disabled with
-    the 'regexp' boolean keyword (defaults to True).
+    Additional namespace declarations can be passed with the
+    'namespace' keyword argument.  EXSLT regular expression support
+    can be disabled with the 'regexp' boolean keyword (defaults to
+    True).  Smart strings will be returned for string results unless
+    you pass ``smart_strings=False``.
     """
     if isinstance(etree_or_element, _ElementTree):
         return XPathDocumentEvaluator(
@@ -364,13 +370,16 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
 
 
 cdef class XPath(_XPathEvaluatorBase):
-    u"""XPath(self, path, namespaces=None, extensions=None, regexp=True)
+    u"""XPath(self, path, namespaces=None, extensions=None, regexp=True, smart_strings=True)
     A compiled XPath expression that can be called on Elements and ElementTrees.
 
-    Besides the XPath expression, you can pass prefix-namespace mappings and
-    extension functions to the constructor through the keyword arguments
-    ``namespaces`` and ``extensions``.  EXSLT regular expression support can
-    be disabled with the 'regexp' boolean keyword (defaults to True).
+    Besides the XPath expression, you can pass prefix-namespace
+    mappings and extension functions to the constructor through the
+    keyword arguments ``namespaces`` and ``extensions``.  EXSLT
+    regular expression support can be disabled with the 'regexp'
+    boolean keyword (defaults to True).  Smart strings will be
+    returned for string results unless you pass
+    ``smart_strings=False``.
     """
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef readonly object path
@@ -438,12 +447,15 @@ cdef class ETXPath(XPath):
     Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword
-    argument. All namespaces must be passed as part of the path string.
+    argument. All namespaces must be passed as part of the path
+    string.  Smart strings will be returned for string results unless
+    you pass ``smart_strings=False``.
     """
-    def __init__(self, path, *, extensions=None, regexp=True):
+    def __init__(self, path, *, extensions=None, regexp=True, smart_strings=True):
         path, namespaces = self._nsextract_path(path)
         XPath.__init__(self, path, namespaces=namespaces,
-                       extensions=extensions, regexp=regexp)
+                       extensions=extensions, regexp=regexp,
+                       smart_strings=smart_strings)
 
     cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
