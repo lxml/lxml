@@ -128,7 +128,7 @@ including custom element class support.
 .. _`C-level API`: capi.html
 .. _`lxml.objectify`: objectify.html
 .. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
-.. _`EuroPython 2008 talk`: s5/ep2008.html
+.. _`EuroPython 2008 talk`: s5/lxml-ep2008.html
 
 .. _XPath: http://www.w3.org/TR/xpath
 .. _`Relax NG`: http://www.relaxng.org/
