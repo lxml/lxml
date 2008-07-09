@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Encoding problem when including text with ElementInclude under
+  Python 3.
+
+Other changes
+-------------
+
+
 2.1 (2008-07-09)
 ================
 
