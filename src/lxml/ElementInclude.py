@@ -96,8 +96,9 @@ def default_loader(href, parse, encoding=None):
         data = etree.parse(file).getroot()
     else:
         data = file.read()
-        if encoding:
-            data = data.decode(encoding)
+        if not encoding:
+            encoding = 'utf-8'
+        data = data.decode(encoding)
     file.close()
     return data
 
@@ -115,8 +116,9 @@ def _lxml_default_loader(href, parse, encoding=None, parser=None):
             f = open(href, 'rb')
         data = f.read()
         f.close()
-        if encoding:
-            data = data.decode(encoding)
+        if not encoding:
+            encoding = 'utf-8'
+        data = data.decode(encoding)
     return data
 
 ##
