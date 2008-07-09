@@ -2367,7 +2367,7 @@ class XIncludeTestCase(HelperTestCase):
 
         self.include(tree)
 
-        called = res_instance.called.items()
+        called = list(res_instance.called.items())
         called.sort()
         self.assertEquals(
             [("dtd", True), ("include", True), ("input", True)],
