@@ -18,36 +18,6 @@ Dr. Stefan Behnel
 .. include:: <s5defs.txt>
 
 
-About myself
-============
-
-* Passionate Python developer since 2002
-
-  * after Basic, Logo, Pascal, Prolog, Scheme, Java, ...
-
-* CS studies in Germany, Ireland, France
-
-* PhD in distributed systems in 2007
-
-  * Language design for self-organising systems
-
-  * Darmstadt University of Technologies, Germany
-
-* Current occupations:
-
-  * Employed by Senacor Technologies AG, Germany
-
-    * IT transformations, SOA design, Java-Development, ...
-
-  * The Cython compiler for Python extensions
-
-    * http://cython.org/
-
-    * talk in room Zeta, 16h
-
-  * »lxml« XML toolkit for Python
-
-
 What is an »XML language«?
 ==========================
 
@@ -1158,47 +1128,3 @@ lxml ...
   * write a special XML generator module in trivial code
   
   * write your own XML API incrementally on-the-fly
-
-
-Conclusion
-==========
-
-    **»lxml takes all the pain out of XML«**
-
-    \... any questions?
-
-
-Unimplemented ideas
-===================
-
-* merge generation and tree classes to support
-
-  .. sourcecode:: python
-
-    class Feed(etree.ElementBase):
-        # ...
-
-    class Entry(etree.ElementBase):
-        # ...
-
-    feed = Feed( Entry( ... ) )
-
-* use the ``with`` statement to generate XML
-
-  .. sourcecode:: python
-
-    xml = lxml.withbuilder()
-    with xml.feed(xmlns='http://www.w3.org/2005/Atom'):
-        xml.title('Example Feed')
-        with xml.author:
-            xml.name('John Doe')
-        with xml.entry:
-            xml.title('Atom-Powered Robots Run Amok')
-
-
-Conclusion
-==========
-
-    **»lxml takes all the pain out of XML«**
-
-    \... any questions?
