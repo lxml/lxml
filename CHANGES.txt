@@ -11,14 +11,14 @@ Features added
 * Smart strings can be switched off in XPath (``smart_string`` keyword
   option).
 
-* Custom resolvers are now used for XMLSchema includes/imports and
-  XInclude processing.
-
 * ``lxml.html.rewrite_links()`` strips links to work around documents
   with whitespace in URL attributes.
 
 Bugs fixed
 ----------
+
+* Custom resolvers were not used for XMLSchema includes/imports and
+  XInclude processing.
 
 * CSS selector parser dropped remaining expression after a function
   with parameters.
