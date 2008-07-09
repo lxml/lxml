@@ -73,7 +73,7 @@ the normal `source download <#download>`_.
 
   * Python `extension functions`_ for XPath and XSLT
 
-  * `custom element classes`_ for custom XML APIs
+  * `custom element classes`_ for custom XML APIs (see `EuroPython 2008 talk`_)
 
   * a `SAX compliant API`_ for interfacing with other XML tools
 
@@ -128,6 +128,7 @@ including custom element class support.
 .. _`C-level API`: capi.html
 .. _`lxml.objectify`: objectify.html
 .. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
+.. _`EuroPython 2008 talk`: s5/ep2008.html
 
 .. _XPath: http://www.w3.org/TR/xpath
 .. _`Relax NG`: http://www.relaxng.org/
@@ -146,8 +147,8 @@ MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
 release version first.
 
-The latest version is `lxml 2.1beta3`_, released 2008-06-19
-(`changes for 2.1beta3`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.1`_, released 2008-07-09
+(`changes for 2.1`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
@@ -215,7 +216,9 @@ obstacle to using lxml in your codebase.
 Old Versions
 ------------
 
-.. _`PDF documentation`: lxmldoc-2.1beta3.pdf
+.. _`PDF documentation`: lxmldoc-2.1.pdf
+
+* `lxml 2.1beta3`_, released 2008-06-19 (`changes for 2.1beta3`_)
 
 * `lxml 2.1beta2`_, released 2008-05-02 (`changes for 2.1beta2`_)
 
@@ -289,6 +292,7 @@ Old Versions
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.1`: lxml-2.1.tgz
 .. _`lxml 2.1beta3`: lxml-2.1beta3.tgz
 .. _`lxml 2.1beta2`: lxml-2.1beta2.tgz
 .. _`lxml 2.1beta1`: lxml-2.1beta1.tgz
@@ -326,6 +330,7 @@ Old Versions
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.1`: changes-2.1.html
 .. _`changes for 2.1beta3`: changes-2.1beta3.html
 .. _`changes for 2.1beta2`: changes-2.1beta2.html
 .. _`changes for 2.1beta1`: changes-2.1beta1.html
