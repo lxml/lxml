@@ -19,6 +19,8 @@ if sys.version_info[0] >= 3:
     if _system_encoding is None:
         _system_encoding = "iso-8859-1" # :-)
     def decode_input(data):
+        if isinstance(data, str):
+            return data
         return data.decode(_system_encoding)
 else:
     def decode_input(data):
