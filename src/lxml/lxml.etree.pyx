@@ -2246,8 +2246,10 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
 
     Element factory.  This function returns an object implementing the
     Element interface.
+
+    Also look at the `_Element.makeelement()` and
+    `_BaseParser.makeelement()` methods.
     """
-    ### also look at _Element.makeelement() and _BaseParser.makeelement() ###
     return _makeElement(_tag, NULL, None, None, None, None,
                         attrib, nsmap, _extra)
 
