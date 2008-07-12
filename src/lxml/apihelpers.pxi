@@ -142,6 +142,38 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
             tree.xmlFreeDoc(c_doc)
         raise
 
+cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
+                         _BaseParser parser, attrib, nsmap, extra_attrs) except -1:
+    u"""Initialise a new Element object.
+
+    This is used when users instantiate a Python Element class
+    directly, without it being mapped to an existing XML node.
+    """
+    cdef _Document doc
+    cdef xmlDoc* c_doc
+    cdef xmlNode* c_node
+    if is_html:
+        _htmlTagValidOrRaise(name_utf)
+        if c_doc is NULL:
+            c_doc = _newHTMLDoc()
+    else:
+        _tagValidOrRaise(name_utf)
+        if c_doc is NULL:
+            c_doc = _newXMLDoc()
+    c_node = _createElement(c_doc, name_utf)
+    if c_node is NULL:
+        if c_doc is not NULL:
+            tree.xmlFreeDoc(c_doc)
+        return python.PyErr_NoMemory()
+    tree.xmlDocSetRootElement(c_doc, c_node)
+    doc = _documentFactory(c_doc, parser)
+    # add namespaces to node if necessary
+    _initNodeNamespaces(c_node, doc, ns_utf, nsmap)
+    _initNodeAttributes(c_node, doc, attrib, extra_attrs)
+    _registerProxy(element, doc, c_node)
+    element._init()
+    return 0
+
 cdef _Element _makeSubElement(_Element parent, tag, text, tail,
                               attrib, nsmap, extra_attrs):
     u"""Create a new child element and initialize text content, namespaces and

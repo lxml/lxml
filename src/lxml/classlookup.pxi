@@ -5,18 +5,72 @@
 
 cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                                           object LxmlElementBase ]:
-    u"""All custom Element classes must inherit from this one.
+    u"""ElementBase(*children, attrib=None, nsmap=None, **_extra)
 
-    Note that you cannot (and must not) instantiate this class or its
-    subclasses.
+    The public Element class.  All custom Element classes must inherit
+    from this one.  To create an Element, use the `Element()` factory.
 
-    Subclasses *must not* override __init__ or __new__ as it is
-    absolutely undefined when these objects will be created or
-    destroyed.  All persistent state of Elements must be stored in the
-    underlying XML.  If you really need to initialize the object after
-    creation, you can implement an ``_init(self)`` method that will be
-    called after object creation.
+    BIG FAT WARNING: Subclasses *must not* override __init__ or
+    __new__ as it is absolutely undefined when these objects will be
+    created or destroyed.  All persistent state of Elements must be
+    stored in the underlying XML.  If you really need to initialize
+    the object after creation, you can implement an ``_init(self)``
+    method that will be called directly after object creation.
+
+    Subclasses of this class can be instantiated to create a new
+    Element.  By default, the tag name will be the class name and the
+    namespace will be empty.  You can modify this with the following
+    class attributes:
+
+    * TAG - the tag name, possibly containing a namespace in Clark
+      notation
+
+    * NAMESPACE - the default namespace URI, unless provided as part
+      of the TAG attribute.
+
+    * HTML - flag if the class is an HTML tag, as opposed to an XML
+      tag.  This only applies to un-namespaced tags and defaults to
+      false (i.e. XML).
+
+    * PARSER - the parser that provides the configuration for the
+      newly created document.  Providing an HTML parser here will
+      default to creating an HTML element.
+
+    In user code, the latter three are commonly inherited in class
+    hierarchies that implement a common namespace.
     """
+    def __init__(self, *children, attrib=None, nsmap=None, **_extra):
+        u"""ElementBase(attrib=None, nsmap=None, **_extra)
+        """
+        cdef bint is_html = 0
+        cdef _BaseParser parser
+        try:
+            namespace = _utf8(self.NAMESPACE)
+        except AttributeError:
+            namespace = None
+        try:
+            tag, ns = _getNsTag(self.TAG)
+            if ns is not None:
+                namespace = ns
+        except AttributeError:
+            tag = _utf8(self.__class__.__name__)
+            if '.' in tag:
+                tag = tag.split('.')[-1]
+        try:
+            parser = self.PARSER
+            if isinstance(parser, HTMLParser):
+                is_html = 1
+        except AttributeError:
+            parser = None
+        if namespace is None:
+            try:
+                is_html = self.HTML
+            except AttributeError:
+                pass
+        _initNewElement(self, is_html, tag, namespace, parser,
+                        attrib, nsmap, _extra)
+        for child in children:
+            _appendChild(self, child)
 
 cdef class CommentBase(_Comment):
     u"""All custom Comment classes must inherit from this one.

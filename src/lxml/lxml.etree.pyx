@@ -1340,19 +1340,13 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         return getProxy(c_node)
-    if element_class is _Element:
-        # fast path for standard _Element class
-        result = NEW_ELEMENT(_Element)
-    else:
-        result = element_class()
+    result = NEW_ELEMENT(element_class)
     if hasProxy(c_node):
         # prevent re-entry race condition - we just called into Python
         result._c_node = NULL
         return getProxy(c_node)
-    result._doc = doc
-    result._c_node = c_node
-    _registerProxy(result)
 
+    _registerProxy(result, doc, c_node)
     if element_class is not _Element:
         result._init()
     return result
@@ -2247,8 +2241,9 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     Element factory.  This function returns an object implementing the
     Element interface.
 
-    Also look at the `_Element.makeelement()` and
-    `_BaseParser.makeelement()` methods.
+    Also look at the `Element.makeelement()` and
+    `_BaseParser.makeelement()` methods, which provide a faster way to
+    create an Element within a specific document or parser context.
     """
     return _makeElement(_tag, NULL, None, None, None, None,
                         attrib, nsmap, _extra)

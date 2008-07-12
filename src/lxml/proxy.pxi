@@ -16,20 +16,18 @@ cdef inline _Element getProxy(xmlNode* c_node):
 cdef inline int hasProxy(xmlNode* c_node):
     return c_node._private is not NULL
     
-cdef inline int _registerProxy(_Element proxy) except -1:
+cdef inline int _registerProxy(_Element proxy, _Document doc,
+                               xmlNode* c_node) except -1:
     u"""Register a proxy and type for the node it's proxying for.
     """
-    cdef xmlNode* c_node
-    # cannot register for NULL
-    c_node = proxy._c_node
-    if c_node is NULL:
-        return 0
     #print "registering for:", <int>proxy._c_node
     assert c_node._private is NULL, u"double registering proxy!"
+    proxy._doc = doc
+    proxy._c_node = c_node
     c_node._private = <void*>proxy
     # additional INCREF to make sure _Document is GC-ed LAST!
-    proxy._gc_doc = <python.PyObject*>proxy._doc
-    python.Py_INCREF(proxy._doc)
+    proxy._gc_doc = <python.PyObject*>doc
+    python.Py_INCREF(doc)
 
 cdef inline int _unregisterProxy(_Element proxy) except -1:
     u"""Unregister a proxy for the node it's proxying for.
