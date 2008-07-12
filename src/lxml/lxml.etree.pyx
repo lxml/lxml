@@ -2241,7 +2241,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     Element factory.  This function returns an object implementing the
     Element interface.
 
-    Also look at the `Element.makeelement()` and
+    Also look at the `_Element.makeelement()` and
     `_BaseParser.makeelement()` methods, which provide a faster way to
     create an Element within a specific document or parser context.
     """
