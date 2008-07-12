@@ -40,7 +40,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
     hierarchies that implement a common namespace.
     """
     def __init__(self, *children, attrib=None, nsmap=None, **_extra):
-        u"""ElementBase(attrib=None, nsmap=None, **_extra)
+        u"""ElementBase(*children, attrib=None, nsmap=None, **_extra)
         """
         cdef bint is_html = 0
         cdef _BaseParser parser
@@ -58,10 +58,13 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                 tag = tag.split('.')[-1]
         try:
             parser = self.PARSER
-            if isinstance(parser, HTMLParser):
-                is_html = 1
         except AttributeError:
-            parser = None
+            if python.PyTuple_GET_SIZE(children):
+                parser = (<_Element>children[0])._doc._parser
+            else:
+                parser = None
+        if isinstance(parser, HTMLParser):
+            is_html = 1
         if namespace is None:
             try:
                 is_html = self.HTML

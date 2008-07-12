@@ -149,17 +149,15 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     This is used when users instantiate a Python Element class
     directly, without it being mapped to an existing XML node.
     """
-    cdef _Document doc
     cdef xmlDoc* c_doc
     cdef xmlNode* c_node
+    cdef _Document doc
     if is_html:
         _htmlTagValidOrRaise(name_utf)
-        if c_doc is NULL:
-            c_doc = _newHTMLDoc()
+        c_doc = _newHTMLDoc()
     else:
         _tagValidOrRaise(name_utf)
-        if c_doc is NULL:
-            c_doc = _newXMLDoc()
+        c_doc = _newXMLDoc()
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
         if c_doc is not NULL:
