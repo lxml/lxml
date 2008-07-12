@@ -135,7 +135,7 @@ cdef _Element _fakeDocElementFactory(_Document doc, xmlNode* c_element):
 # support for freeing tree elements when proxy objects are destroyed
 
 cdef int attemptDeallocation(xmlNode* c_node):
-    """Attempt deallocation of c_node (or higher up in tree).
+    u"""Attempt deallocation of c_node (or higher up in tree).
     """
     cdef xmlNode* c_top
     # could be we actually aren't referring to the tree at all
@@ -151,7 +151,7 @@ cdef int attemptDeallocation(xmlNode* c_node):
     return 0
 
 cdef xmlNode* getDeallocationTop(xmlNode* c_node):
-    """Return the top of the tree that can be deallocated, or NULL.
+    u"""Return the top of the tree that can be deallocated, or NULL.
     """
     cdef xmlNode* c_current
     cdef xmlNode* c_top

@@ -614,7 +614,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return self.__copy__()
         
     def __copy__(self):
-        "__copy__(self)"
+        u"__copy__(self)"
         cdef xmlDoc* c_doc
         cdef xmlNode* c_node
         cdef _Document new_doc
