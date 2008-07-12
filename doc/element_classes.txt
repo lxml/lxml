@@ -38,6 +38,15 @@ scheme, as described below.
    3  Implementing namespaces
 
 
+Background: Element proxies
+===========================
+
+bla
+
+   .. image:: proxies.png
+
+bla
+
 Element initialization
 ======================
 
