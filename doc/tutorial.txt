@@ -531,10 +531,11 @@ Serialisation
 -------------
 
 Serialisation commonly uses the ``tostring()`` function that returns a
-string, or the ``ElementTree.write()`` method that writes to a file or
-file-like object.  Both accept the same keyword arguments like
-``pretty_print`` for formatted output or ``encoding`` to select a
-specific output encoding other than plain ASCII:
+string, or the ``ElementTree.write()`` method that writes to a file, a
+file-like object, or a URL (via FTP PUT or HTTP POST).  Both calls accept
+the same keyword arguments like ``pretty_print`` for formatted output
+or ``encoding`` to select a specific output encoding other than plain
+ASCII:
 
 .. sourcecode:: pycon
 
