@@ -41,11 +41,10 @@ scheme, as described below.
 Background: Element proxies
 ===========================
 
-bla
+lxml.etree uses Python proxy classes for XML elements.
 
    .. image:: proxies.png
 
-bla
 
 Element initialization
 ======================
