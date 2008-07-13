@@ -194,19 +194,21 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         return
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
     tree.xmlOutputBufferWriteString(c_buffer, c_dtd.name)
-    if c_dtd.ExternalID != NULL:
-        tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
-        tree.xmlOutputBufferWriteString(c_buffer, c_dtd.ExternalID)
-        tree.xmlOutputBufferWrite(c_buffer, 3, '" "')
-    else:
-        tree.xmlOutputBufferWrite(c_buffer, 9, ' SYSTEM "')
-    tree.xmlOutputBufferWriteString(c_buffer, c_dtd.SystemID)
+    if c_dtd.SystemID != NULL and c_dtd.SystemID[0] != c'\0':
+        if c_dtd.ExternalID != NULL and c_dtd.ExternalID[0] != c'\0':
+            tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
+            tree.xmlOutputBufferWriteString(c_buffer, c_dtd.ExternalID)
+            tree.xmlOutputBufferWrite(c_buffer, 3, '" "')
+        else:
+            tree.xmlOutputBufferWrite(c_buffer, 9, ' SYSTEM "')
+        tree.xmlOutputBufferWriteString(c_buffer, c_dtd.SystemID)
+        tree.xmlOutputBufferWrite(c_buffer, 1, '"')
     if c_dtd.entities == NULL and c_dtd.elements == NULL and \
            c_dtd.attributes == NULL and c_dtd.notations == NULL and \
            c_dtd.pentities == NULL:
-        tree.xmlOutputBufferWrite(c_buffer, 3, '">\n')
+        tree.xmlOutputBufferWrite(c_buffer, 2, '>\n')
         return
-    tree.xmlOutputBufferWrite(c_buffer, 4, '" [\n')
+    tree.xmlOutputBufferWrite(c_buffer, 3, ' [\n')
     if c_dtd.notations != NULL:
         tree.xmlDumpNotationTable(c_buffer.buffer,
                                   <tree.xmlNotationTable*>c_dtd.notations)
