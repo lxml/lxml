@@ -122,6 +122,9 @@ cdef _tostring(_Element element, encoding, method,
         tree.xmlOutputBufferClose(c_buffer)
     return result
 
+############################################################
+# low-level serialisation functions
+
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding, int c_method,
                              bint write_xml_declaration,
@@ -261,6 +264,7 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                                pretty_print, encoding)
         c_sibling = c_sibling.next
 
+############################################################
 # output to file-like objects
 
 cdef class _FilelikeWriter:
