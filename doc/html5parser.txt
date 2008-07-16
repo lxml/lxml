@@ -1,0 +1,80 @@
+===============
+html5lib Parser
+===============
+
+`html5lib`_ is a Python package that implements the HTML5 parsing algorithm
+which is heavily influenced by current browsers and based on the `WHATWG
+HTML5 specification`_.
+
+.. _html5lib: http://code.google.com/p/html5lib/
+.. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
+.. _WHATWG HTML5 specification: http://www.whatwg.org/specs/web-apps/current-work/
+
+lxml can benefit from the parsing capabilities of `html5lib` through
+the ``lxml.html.html5parser`` module.  It provides a similar interface
+to the ``lxml.html`` module by providing ``fromstring()``,
+``parse()``, ``document_fromstring()``, ``fragment_fromstring()`` and
+``fragments_fromstring()`` that work like the regular html parsing
+functions.
+
+
+Differences to regular HTML parsing
+===================================
+
+There are a few differences in the returned tree to the regular HTML
+parsing functions from ``lxml.html``.  html5lib normalizes some elements
+and element structures to a common format.  For example even if a tables
+does not have a `tbody` html5lib will inject one automatically:
+
+.. sourcecode:: pycon
+
+    >>> from lxml.html import tostring, html5parser
+    >>> tostring(html5parser.fromstring("<table><td>foo"))
+    '<table><tbody><tr><td>foo</td></tr></tbody></table>'
+
+Also the parameters the functions accept are different.
+
+
+Function Reference
+==================
+
+``parse(filename_url_or_file)``:
+    Parses the named file or url, or if the object has a ``.read()``
+    method, parses from that.
+
+``document_fromstring(html, guess_charset=True)``:
+    Parses a document from the given string.  This always creates a
+    correct HTML document, which means the parent node is ``<html>``,
+    and there is a body and possibly a head.
+
+    If a bytestring is passed and ``guess_charset`` is true the chardet
+    library (if installed) will guess the charset if ambiguities exist.
+
+``fragment_fromstring(string, create_parent=False, guess_charset=False)``:
+    Returns an HTML fragment from a string.  The fragment must contain
+    just a single element, unless ``create_parent`` is given;
+    e.g,. ``fragment_fromstring(string, create_parent='div')`` will
+    wrap the element in a ``<div>``.  If ``create_parent`` is true the
+    default parent tag (div) is used.
+
+    If a bytestring is passed and ``guess_charset`` is true the chardet
+    library (if installed) will guess the charset if ambiguities exist.
+
+``fragments_fromstring(string, no_leading_text=False, parser=None)``:
+    Returns a list of the elements found in the fragment.  The first item in
+    the list may be a string.  If ``no_leading_text`` is true, then it will
+    be an error if there is leading text, and it will always be a list of
+    only elements.
+
+    If a bytestring is passed and ``guess_charset`` is true the chardet
+    library (if installed) will guess the charset if ambiguities exist.
+
+``fromstring(string)``:
+    Returns ``document_fromstring`` or ``fragment_fromstring``, based
+    on whether the string looks like a full document, or just a
+    fragment.
+
+Additionally all parsing functions accept an ``parser`` keyword argument
+that can be set to a custom parser instance.  To create custom parsers
+you can subclass the ``HTMLParser`` and ``XHTMLParser`` from the same
+module.  Note that these are the parser classes provided by html5lib.
