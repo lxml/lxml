@@ -3,7 +3,7 @@ from itertools import *
 from StringIO import StringIO
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized, children
+from benchbase import with_attributes, with_text, onlylib, serialized, children, nochange
 
 ############################################################
 # Benchmarks
@@ -39,6 +39,24 @@ class XPathBenchMark(benchbase.TreeBenchMark):
     def bench_xpath_method(self, children):
         for child in children:
             child.xpath("./*[0]")
+
+    @nochange
+    @onlylib('lxe')
+    @children
+    def bench_multiple_xpath_or(self, children):
+        xpath = self.etree.XPath(".//p:a00001|.//p:b00001|.//p:c00001",
+                                 namespaces={'p':'cdefg'})
+        for child in children:
+            xpath(child)
+
+    @nochange
+    @onlylib('lxe')
+    @children
+    def bench_multiple_iter_tag(self, children):
+        for child in children:
+            list(child.iter("{cdefg}a00001"))
+            list(child.iter("{cdefg}b00001"))
+            list(child.iter("{cdefg}c00001"))
 
     @nochange
     @onlylib('lxe')
