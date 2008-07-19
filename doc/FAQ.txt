@@ -726,6 +726,14 @@ for possible approaches to solve your specific problem:
 Parsing and Serialisation
 =========================
 
+..
+    making doctest happy:
+
+    >>> try: from StringIO import StringIO
+    ... except ImportError: from io import StringIO # Py3
+    >>> filename = StringIO("<root/>")
+
+
 Why doesn't the ``pretty_print`` option reformat my XML output?
 ---------------------------------------------------------------
 
@@ -742,7 +750,7 @@ is left in the tree is the ``remove_blank_text`` option:
 .. sourcecode:: pycon
 
    >>> parser = etree.XMLParser(remove_blank_text=True)
-   >>> tree = etree.parse("test.xml", parser)
+   >>> tree = etree.parse(filename, parser)
 
 This will allow the parser to drop blank text nodes when constructing the
 tree.  If you now call a serialization function to pretty print this tree,
