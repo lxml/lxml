@@ -2404,6 +2404,8 @@ def test_suite():
     suite.addTests(
         [make_doctest('../../../doc/api.txt')])
     suite.addTests(
+        [make_doctest('../../../doc/FAQ.txt')])
+    suite.addTests(
         [make_doctest('../../../doc/parsing.txt')])
     suite.addTests(
         [make_doctest('../../../doc/resolvers.txt')])
