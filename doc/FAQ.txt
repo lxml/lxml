@@ -138,7 +138,8 @@ Who uses lxml?
 
 As an XML library, lxml is often used under the hood of in-house
 server applications, such as web servers or applications that
-facilitate some kind of document management.  Therefore, it is hard to
+facilitate some kind of document management.  Many people who deploy
+Zope_ or Plone_ use it together with lxml.  Therefore, it is hard to
 get an idea of who uses it, and the following list of 'users and
 projects we know of' is definitely not a complete list of lxml's
 users.
@@ -166,6 +167,8 @@ Zope3 and some of its extensions have good support for lxml:
 And don't miss the quotes by our generally happy_ users_, and other
 `sites that link to lxml`_.
 
+.. _Zope: http://www.zope.org/
+.. _Plone: http://www.plone.org/
 .. _cssutils: http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917
 .. _Deliverance: http://www.openplans.org/projects/deliverance/project-home
 .. _`Enfold Proxy 4`: http://www.enfoldsystems.com/Products/Proxy/4
@@ -251,11 +254,11 @@ even more surprising from an object point of view:
     >>> print(etree.tostring(root))
     <test>TEXT</test>
 
-    >>> etree.tail = "TAIL"
+    >>> root.tail = "TAIL"
     >>> print(etree.tostring(root))
     <test>TEXT</test>TAIL
 
-    >>> etree.tail = None
+    >>> root.tail = None
     >>> print(etree.tostring(root))
     <test>TEXT</test>
 
@@ -272,6 +275,22 @@ unexpected to new users and can sometimes require a bit more overhead.  A good
 way to deal with this is to use helper functions that copy the Element without
 its tail.  The ``lxml.html`` package also deals with this in a couple of
 places, as most HTML algorithms benefit from a tail-free behaviour.
+
+
+How can I find out if an Element is a comment or PI?
+----------------------------------------------------
+
+.. sourcecode:: pycon
+
+    >>> from lxml import etree
+    >>> root = etree.XML("<?my PI?><root><!-- empty --></root>")
+
+    >>> root.tag
+    'root'
+    >>> root.getprevious().tag is etree.PI
+    True
+    >>> root[0].tag is etree.Comment
+    True
 
 
 Installation
@@ -723,7 +742,7 @@ is left in the tree is the ``remove_blank_text`` option:
 .. sourcecode:: pycon
 
    >>> parser = etree.XMLParser(remove_blank_text=True)
-   >>> tree = etree.parse(file, parser)
+   >>> tree = etree.parse("test.xml", parser)
 
 This will allow the parser to drop blank text nodes when constructing the
 tree.  If you now call a serialization function to pretty print this tree,
