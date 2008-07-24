@@ -79,6 +79,35 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>'),
                           tostring(root))
 
+    def test_thread_create_xslt(self):
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        root = XML(_bytes('<a><b>B</b><c>C</c></a>'))
+
+        stylesheets = []
+
+        def run_thread():
+            style = XML(_bytes('''\
+    <xsl:stylesheet
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+        version="1.0">
+      <xsl:output method="xml" />
+      <xsl:template match="/">
+         <div id="test">
+           <xsl:apply-templates/>
+         </div>
+      </xsl:template>
+    </xsl:stylesheet>'''))
+            stylesheets.append( etree.XSLT(style) )
+
+        self._run_thread(run_thread)
+
+        st = stylesheets[0]
+        result = tostring( st(root) )
+
+        self.assertEquals(_bytes('<div id="test">BC</div>'),
+                          result)
+
     def test_thread_mix(self):
         XML = self.etree.XML
         Element = self.etree.Element
