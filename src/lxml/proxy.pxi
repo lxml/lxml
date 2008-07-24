@@ -398,7 +398,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
     # 3) fix the names in the tree in case we moved it to a different thread
     if doc._c_doc.dict is not c_source_doc.dict:
-        fixThreadDictNames(c_start_node, doc._c_doc.dict)
+        fixThreadDictNames(c_start_node, c_source_doc.dict, doc._c_doc.dict)
 
     # free now unused namespace declarations
     if c_del_ns_list is not NULL:
@@ -413,26 +413,75 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     return 0
 
 
-cdef void fixThreadDictNames(xmlNode* c_element, tree.xmlDict* c_dict) nogil:
+cdef void fixThreadDictNames(xmlNode* c_element,
+                             tree.xmlDict* c_src_dict,
+                             tree.xmlDict* c_dict) nogil:
     # re-assign the names of tags and attributes
     #
     # this should only be called when the element is based on a
     # different libxml2 tag name dictionary
-    cdef xmlNode* c_node
-    cdef char* c_name
-    if not tree._isElementOrXInclude(c_element):
+    if c_element.type == tree.XML_DOCUMENT_NODE or \
+            c_element.type == tree.XML_HTML_DOCUMENT_NODE:
+        # may define "xml" namespace
+        fixThreadDictNsForNode(c_element, c_src_dict, c_dict)
+        c_element = c_element.children
+        while c_element is not NULL:
+            fixThreadDictNames(c_element, c_src_dict, c_dict)
+            c_element = c_element.next
+        return
+    elif not tree._isElementOrXInclude(c_element):
         return
 
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
-    c_name = tree.xmlDictLookup(c_dict, c_element.name, -1)
-    # c_name can be NULL on memory error, but we don't handle that here
-    if c_name is not NULL:
-        c_element.name = c_name
+    tree.BEGIN_FOR_EACH_FROM(c_element, c_element, 1)
+    if c_element.name is not NULL:
+        fixThreadDictNameForNode(c_element, c_dict)
     if c_element.type == tree.XML_ELEMENT_NODE:
-        c_node = <xmlNode*>c_element.properties
-        while c_node is not NULL:
-            c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
-            if c_name is not NULL:
-                c_node.name = c_name
-            c_node = c_node.next
-    tree.END_FOR_EACH_ELEMENT_FROM(c_element)
+        fixThreadDictNamesForAttributes(
+            c_element.properties, c_src_dict, c_dict)
+    tree.END_FOR_EACH_FROM(c_element)
+
+cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
+                                                 tree.xmlDict* c_src_dict,
+                                                 tree.xmlDict* c_dict) nogil:
+    cdef xmlNode* c_child
+    cdef xmlNode* c_node
+    c_node = <xmlNode*>c_attr
+    while c_node is not NULL:
+        fixThreadDictNameForNode(c_node, c_dict)
+        fixThreadDictContentForNode(c_node, c_src_dict, c_dict)
+        # libxml2 keeps some (!) attribute values in the dict
+        c_child = c_node.children
+        while c_child is not NULL:
+            fixThreadDictNameForNode(c_child, c_dict)
+            fixThreadDictContentForNode(c_child, c_src_dict, c_dict)
+            c_child = c_child.next
+        c_node = c_node.next
+
+cdef inline void fixThreadDictNameForNode(xmlNode* c_node,
+                                          tree.xmlDict* c_dict) nogil:
+    cdef char* c_name
+    # c_name can be NULL on memory error, but we don't handle that here
+    c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
+    if c_name is not NULL:
+        c_node.name = c_name
+
+cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
+                                             tree.xmlDict* c_src_dict,
+                                             tree.xmlDict* c_dict) nogil:
+    if c_node.content is not NULL:
+        if tree.xmlDictOwns(c_src_dict, c_node.content):
+            # result can be NULL on memory error, but we don't handle that here
+            c_node.content = tree.xmlDictLookup(c_dict, c_node.content, -1)
+
+cdef inline void fixThreadDictNsForNode(xmlNode* c_node,
+                                        tree.xmlDict* c_src_dict,
+                                        tree.xmlDict* c_dict) nogil:
+    cdef xmlNs* c_ns = c_node.nsDef
+    while c_ns is not NULL:
+        if c_ns.href is not NULL:
+            if tree.xmlDictOwns(c_src_dict, c_ns.href):
+                c_ns.href = tree.xmlDictLookup(c_dict, c_ns.href, -1)
+        if c_ns.prefix is not NULL:
+            if tree.xmlDictOwns(c_src_dict, c_ns.prefix):
+                c_ns.prefix = tree.xmlDictLookup(c_dict, c_ns.prefix, -1)
+        c_ns = c_ns.next
