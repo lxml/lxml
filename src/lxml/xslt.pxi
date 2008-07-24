@@ -417,11 +417,11 @@ cdef class XSLT:
         def __get__(self):
             return self._error_log.copy()
 
-    def apply(self, _input, *, profile_run=False, **_kw):
-        u"""apply(self, _input,  profile_run=False, **_kw)
+    def apply(self, _input, *, profile_run=False, **kw):
+        u"""apply(self, _input,  profile_run=False, **kw)
         
         :deprecated: call the object, not this method."""
-        return self(_input, profile_run=profile_run, **_kw)
+        return self(_input, profile_run=profile_run, **kw)
 
     def tostring(self, _ElementTree result_tree):
         u"""tostring(self, result_tree)
@@ -438,8 +438,8 @@ cdef class XSLT:
     def __copy__(self):
         return _copyXSLT(self)
 
-    def __call__(self, _input, *, profile_run=False, **_kw):
-        u"""__call__(self, _input, profile_run=False, **_kw)
+    def __call__(self, _input, *, profile_run=False, **kw):
+        u"""__call__(self, _input, profile_run=False, **kw)
 
         Execute the XSL transformation on a tree or Element.
 
@@ -483,7 +483,7 @@ cdef class XSLT:
             transform_ctxt._private = <python.PyObject*>resolver_context
 
             c_result = self._run_transform(
-                c_doc, _kw, context, transform_ctxt)
+                c_doc, kw, context, transform_ctxt)
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
