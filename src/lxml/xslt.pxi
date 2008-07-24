@@ -457,7 +457,6 @@ cdef class XSLT:
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result
         cdef xmlDoc* c_doc
-        cdef xmlNode* c_node
         cdef tree.xmlDict* c_dict
 
         input_doc = _documentOrRaise(_input)
