@@ -322,3 +322,7 @@ cdef extern from "etree_defs.h":
                                           xmlNode* start_node,
                                           bint inclusive) nogil
     cdef void END_FOR_EACH_ELEMENT_FROM(xmlNode* start_node) nogil
+    cdef void BEGIN_FOR_EACH_FROM(xmlNode* tree_top,
+                                  xmlNode* start_node,
+                                  bint inclusive) nogil
+    cdef void END_FOR_EACH_FROM(xmlNode* start_node) nogil
