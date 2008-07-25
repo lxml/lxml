@@ -60,7 +60,7 @@ def build_menu_entry(page_title, url, section_head, headings=None):
 def merge_menu(tree, menu, name):
     menu_root = copy.deepcopy(menu)
     tree.getroot()[1][0].insert(0, menu_root) # html->body->div[class=document]
-    for el in menu_root.getiterator():
+    for el in menu_root.iter():
         tag = el.tag
         if tag[0] != '{':
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
