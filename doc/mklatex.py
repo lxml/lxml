@@ -183,6 +183,8 @@ def publish(dirname, lxml_path, release):
         r'\\href\{([^/}]+)[.]([^./}]+)\}').sub
     replace_docinternal_hyperrefs = re.compile(
         r'\\href\{\\#([^}]+)\}').sub
+    replace_image_paths = re.compile(
+        r'^(\\includegraphics{)').sub
     def build_hyperref(match):
         basename, extension = match.groups()
         outname = BASENAME_MAP.get(basename, basename)
@@ -195,6 +197,7 @@ def publish(dirname, lxml_path, release):
         else:
             return r"\hyperref[_part_%s.tex]" % outname
     def fix_relative_hyperrefs(line):
+        line = replace_image_paths(r'\1../html/', line)
         if r'\href' not in line:
             return line
         line = replace_interdoc_hyperrefs(build_hyperref, line)
