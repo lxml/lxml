@@ -25,6 +25,47 @@ Other changes
 -------------
 
 
+2.1.1 (2008-07-24)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Crash when parsing XSLT stylesheets in a thread and using them in
+  another.
+
+* Encoding problem when including text with ElementInclude under
+  Python 3.
+
+Other changes
+-------------
+
+
+2.0.8 (2008-07-24)
+==================
+
+Features added
+--------------
+
+* ``lxml.html.rewrite_links()`` strips links to work around documents
+  with whitespace in URL attributes.
+
+Bugs fixed
+----------
+
+* Crash when parsing XSLT stylesheets in a thread and using them in
+  another.
+
+* CSS selector parser dropped remaining expression after a function
+  with parameters.
+
+Other changes
+-------------
+
+
 2.1 (2008-07-09)
 ================
 
