@@ -366,7 +366,7 @@ cdef _tofilelike(f, _Element element, encoding, method,
     else:
         writer._exc_context._raise_if_stored()
 
-cdef _tofilelikeC14N(f, _Element element):
+cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments):
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef char* c_filename
@@ -381,13 +381,14 @@ cdef _tofilelikeC14N(f, _Element element):
             filename8 = _encodeFilename(f)
             c_filename = _cstr(filename8)
             with nogil:
-                bytes = c14n.xmlC14NDocSave(c_doc, NULL, 0, NULL, 1,
-                                            c_filename, 0)
+                bytes = c14n.xmlC14NDocSave(c_doc, NULL, exclusive, NULL,
+                                            with_comments, c_filename, 0)
         elif hasattr(f, u'write'):
             writer   = _FilelikeWriter(f)
             c_buffer = writer._createOutputBuffer(NULL)
             writer.error_log.connect()
-            bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, 0, NULL, 1, c_buffer)
+            bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, exclusive, NULL,
+                                          with_comments, c_buffer)
             writer.error_log.disconnect()
             tree.xmlOutputBufferClose(c_buffer)
         else:

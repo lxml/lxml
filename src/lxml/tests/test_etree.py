@@ -7,7 +7,7 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
-import os.path, unittest, copy, sys, operator
+import os.path, unittest, copy, sys, operator, tempfile
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -2391,6 +2391,57 @@ class ETreeC14NTestCase(HelperTestCase):
         tree.write_c14n(f)
         s = f.getvalue()
         self.assertEquals(_bytes('<a><b></b></a>'),
+                          s)
+
+    def test_c14n_file(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write_c14n(filename)
+            f = open(filename, 'rb')
+            data = f.read()
+            f.close()
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a><b></b></a>'),
+                          data)
+
+    def test_c14n_with_comments(self):
+        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        f = BytesIO()
+        tree.write_c14n(f)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        f = BytesIO()
+        tree.write_c14n(f, with_comments=True)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        f = BytesIO()
+        tree.write_c14n(f, with_comments=False)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<a><b></b></a>'),
+                          s)
+
+    def test_c14n_exclusive(self):
+        tree = self.parse(_bytes(
+                '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
+        f = BytesIO()
+        tree.write_c14n(f)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        f = BytesIO()
+        tree.write_c14n(f, exclusive=False)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        f = BytesIO()
+        tree.write_c14n(f, exclusive=True)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
                           s)
 
 def test_suite():

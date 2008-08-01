@@ -1806,13 +1806,13 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         XInclude()(self._context_node)
 
-    def write_c14n(self, file):
-        u"""write_c14n(self, file)
+    def write_c14n(self, file, *, exclusive=False, with_comments=True):
+        u"""write_c14n(self, file, exclusive=False, with_comments=True)
 
         C14N write of document. Always writes UTF-8.
         """
         self._assertHasRoot()
-        _tofilelikeC14N(file, self._context_node)
+        _tofilelikeC14N(file, self._context_node, exclusive, with_comments)
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
     return _newElementTree(doc, context_node, _ElementTree)

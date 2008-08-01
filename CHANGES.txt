@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* New options for exclusive C14N and C14N without comments.
+
 * Instantiating a custom Element classes creates a new Element.
 
 Bugs fixed
