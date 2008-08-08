@@ -375,7 +375,7 @@ cdef class XSLT:
                 u"string://__STRING__XSLT__%d" % id(self))
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
-        self._error_log = _ErrorLog()
+        self._error_log = _XSLTErrorLog()
         self._xslt_resolver_context = _XSLTResolverContext()
         _initXSLTResolverContext(self._xslt_resolver_context, doc._parser)
         # keep a copy in case we need to access the stylesheet via 'document()'
@@ -609,7 +609,7 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
     cdef xmlDoc* c_doc
     new_xslt = NEW_XSLT(XSLT) # without calling __init__()
     new_xslt._access_control = stylesheet._access_control
-    new_xslt._error_log = _ErrorLog()
+    new_xslt._error_log = _XSLTErrorLog()
     new_xslt._context = stylesheet._context._copy()
 
     new_xslt._xslt_resolver_context = stylesheet._xslt_resolver_context._copy()
