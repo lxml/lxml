@@ -282,7 +282,8 @@ a target object to the parser:
 
   >>> parser = etree.XMLParser(target = EchoTarget())
 
-  >>> result = etree.XML("<element>some<!--comment-->text</element>", parser)
+  >>> result = etree.XML("<element>some<!--comment-->text</element>",
+  ...                    parser)
   start element {}
   data u'some'
   comment comment
@@ -293,15 +294,35 @@ a target object to the parser:
   >>> print(result)
   closed!
 
-Note that the parser does *not* build a tree in this case.  The result
-of the parser run is whatever the target object returns from its
-``close()`` method.  If you want to return an XML tree here, you have
-to create it programmatically in the target object.  An example for a
-parser target that builds a tree is the ``TreeBuilder``.
+It is important for the ``.close()`` method to reset the parser target
+to a usable state, so that you can reuse the parser as often as you
+like:
+
+.. sourcecode:: pycon
+
+  >>> result = etree.XML("<element>some<!--comment-->text</element>",
+  ...                    parser)
+  start element {}
+  data u'some'
+  comment comment
+  data u'text'
+  end element
+  close
+
+  >>> print(result)
+  closed!
+
+Note that the parser does *not* build a tree when using a parser
+target.  The result of the parser run is whatever the target object
+returns from its ``.close()`` method.  If you want to return an XML
+tree here, you have to create it programmatically in the target
+object.  An example for a parser target that builds a tree is the
+``TreeBuilder``.
 
   >>> parser = etree.XMLParser(target = etree.TreeBuilder())
 
-  >>> result = etree.XML("<element>some<!--comment-->text</element>", parser)
+  >>> result = etree.XML("<element>some<!--comment-->text</element>",
+  ...                    parser)
 
   >>> print(result.tag)
   element

@@ -919,13 +919,44 @@ some or all of these methods, you can control which events are generated:
 
     >>> class ParserTarget:
     ...     events = []
+    ...     close_count = 0
     ...     def start(self, tag, attrib):
     ...         self.events.append(("start", tag, attrib))
     ...     def close(self):
-    ...         return self.events
+    ...         events, self.events = self.events, []
+    ...         self.close_count += 1
+    ...         return events
 
-    >>> parser = etree.XMLParser(target=ParserTarget())
+    >>> parser_target = ParserTarget()
+
+    >>> parser = etree.XMLParser(target=parser_target)
     >>> events = etree.fromstring('<root test="true"/>', parser)
+
+    >>> print parser_target.close_count
+    1
+
+    >>> for event in events:
+    ...     print('event: %s - tag: %s' % (event[0], event[1]))
+    ...     for attr, value in event[2].items():
+    ...         print(' * %s = %s' % (attr, value))
+    event: start - tag: root
+     * test = true
+
+You can reuse the parser and its target as often as you like, so you
+should take care that the ``.close()`` methods really resets the
+target to a usable state (also in the case of an error!).
+
+.. sourcecode:: pycon
+
+    >>> events = etree.fromstring('<root test="true"/>', parser)
+    >>> print parser_target.close_count
+    2
+    >>> events = etree.fromstring('<root test="true"/>', parser)
+    >>> print parser_target.close_count
+    3
+    >>> events = etree.fromstring('<root test="true"/>', parser)
+    >>> print parser_target.close_count
+    4
 
     >>> for event in events:
     ...     print('event: %s - tag: %s' % (event[0], event[1]))
