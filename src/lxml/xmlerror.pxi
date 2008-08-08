@@ -25,10 +25,11 @@ cdef void _initThreadLogging():
 
     # divert error messages to the global error log
     xmlerror.xmlThrDefSetStructuredErrorFunc(NULL, _receiveError)
-    xmlerror.xmlSetStructuredErrorFunc(NULL, _receiveError)
+    connectErrorLog(NULL)
 
 cdef void connectErrorLog(void* log):
     xmlerror.xmlSetStructuredErrorFunc(log, _receiveError)
+    xslt.xsltSetGenericErrorFunc(log, _receiveXSLTError)
 
 
 # Logging classes
@@ -321,15 +322,6 @@ cdef class _ErrorLog(_ListErrorLog):
         if self._first_error is None:
             self._first_error = entry
         python.PyList_Append(self._entries, entry)
-
-cdef class _XSLTErrorLog(_ErrorLog):
-    cdef void connect(self):
-        _ErrorLog.connect(self)
-        xslt.xsltSetGenericErrorFunc(<void*>self, _receiveXSLTError)
-
-    cdef void disconnect(self):
-        xslt.xsltSetGenericErrorFunc(NULL, NULL)
-        _ErrorLog.disconnect(self)
 
 cdef class _DomainErrorLog(_ErrorLog):
     def __init__(self, domains):
