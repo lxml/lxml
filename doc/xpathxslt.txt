@@ -185,6 +185,29 @@ example, the XPath functions ``string()`` and ``concat()`` will
 construct strings that do not have an origin.  For them,
 ``getparent()`` will return None.
 
+There are certain cases where the smart string behaviour is
+undesirable.  For example, it means that the tree will be kept alive
+by the string, which may have a considerable memory impact in the case
+that the string value is the only thing in the tree that is actually
+of interest.  For these cases, you can deactivate the parental
+relationship using the keyword argument ``smart_strings``.
+
+  >>> root = etree.XML("<root><a>TEXT</a></root>")
+
+  >>> find_text = etree.XPath("//text()")
+  >>> text = find_text(root)[0]
+  >>> print(text)
+  TEXT
+  >>> print(text.getparent().text)
+  TEXT
+
+  >>> find_text = etree.XPath("//text()", smart_strings=False)
+  >>> text = find_text(root)[0]
+  >>> print(text)
+  TEXT
+  >>> hasattr(text, 'getparent')
+  False
+
 
 Generating XPath expressions
 ----------------------------
