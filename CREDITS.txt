@@ -17,7 +17,7 @@ Ian Bicking
 Holger Joukl
        bug reports, feedback and development on lxml.objectify
 
-Sidnei da Sivla
+Sidnei da Silva
        official MS Windows builds
 
 Marc-Antoine Parent
