@@ -15,12 +15,6 @@ Features added
 Bugs fixed
 ----------
 
-* Crash when parsing XSLT stylesheets in a thread and using them in
-  another.
-
-* Encoding problem when including text with ElementInclude under
-  Python 3.
-
 Other changes
 -------------
 
