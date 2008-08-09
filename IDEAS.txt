@@ -1,0 +1,19 @@
+Things to try out when life permits
+===================================
+
+* generating XML using the ``with`` statement
+
+  http://comments.gmane.org/gmane.comp.python.general/579950?set_lines=100000
+
+* parse-time validation against a user provided DTD
+
+  * currently only works for XML Schema
+
+* somehow integrate RelaxNG compact notation (rnc versus rng)
+
+  * currently not supported by libxml2 (patch exists)
+
+* support subclassing XSLTAccessControl to provide custom per-URL
+  access check methods
+
+  * maybe custom resolvers are enough, or can be combined with this?

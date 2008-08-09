@@ -46,20 +46,6 @@ Objectify
   attributes, not XML children
 
 
-Features
---------
-
-* RelaxNG compact notation (rnc versus rng) support.  Currently not supported
-  by libxml2 (patch exists)
-
-
-XSLT
-----
-
-* Support subclassing XSLTAccessControl to provide custom per-URL
-  access check methods
-
-
 Maybe
 -----
 
