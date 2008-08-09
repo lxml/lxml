@@ -405,6 +405,19 @@ Please contact the `mailing list`_ if you need any help.
 How can I contribute?
 ---------------------
 
+If you find something that you would like lxml to do (or do better),
+then please tell us about it on the `mailing list`_.  Patches are
+always appreciated, especially when accompanied by unit tests and
+documentation (doctests would be great).  See the ``tests``
+subdirectories in the lxml source tree (below the ``src`` directory)
+and the ReST_ `text files`_ in the ``doc`` directory.
+
+We also have a `list of missing features`_ that we would like to
+implement but didn't due to lack if time.  If you find the time,
+patches are very welcome.
+
+.. _`list of missing features`: http://codespeak.net/svn/lxml/trunk/IDEAS.txt
+
 Besides enhancing the code, there are a lot of places where you can help the
 project and its user base.  You can
 
@@ -426,9 +439,6 @@ project and its user base.  You can
   or an idea how to make it more readable and accessible while you are reading
   it, please send a comment to the `mailing list`_.
 
-.. _ReST: http://docutils.sourceforge.net/rst.html
-.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
-
 * help with the tutorial.  A tutorial is the most important stating point for
   new users, so it is important for us to provide an easy to understand guide
   into lxml.  As allo documentation, the tutorial is work in progress, so we
@@ -439,6 +449,9 @@ project and its user base.  You can
   grasp the details of the function in question.  If you find such a place,
   you can try to write up a better description and send it to the `mailing
   list`_.
+
+.. _ReST: http://docutils.sourceforge.net/rst.html
+.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
 
 
 Bugs
