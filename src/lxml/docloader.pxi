@@ -42,9 +42,9 @@ cdef class Resolver:
 
         Return a parsable string as input document.
 
-        Pass data string and context as parameters.
-
-        You can pass the source URL as 'base_url' keyword.
+        Pass data string and context as parameters.  You can pass the
+        source URL or filename through the ``base_url`` keyword
+        argument.
         """
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
@@ -59,7 +59,8 @@ cdef class Resolver:
 
         Return the name of a parsable file as input document.
 
-        Pass filename and context as parameters.
+        Pass filename and context as parameters.  You can also pass a
+        URL with an HTTP, FTP or file target.
         """
         cdef _InputDocument doc_ref
         doc_ref = _InputDocument()
@@ -72,7 +73,12 @@ cdef class Resolver:
 
         Return an open file-like object as input document.
 
-        Pass open file and context as parameters.
+        Pass open file and context as parameters.  You can pass the
+        base URL or filename of the file through the ``base_url``
+        keyword argument.
+
+        Note that using ``.resolve_filename()`` is more efficient,
+        especially in threaded environments.
         """
         cdef _InputDocument doc_ref
         try:
