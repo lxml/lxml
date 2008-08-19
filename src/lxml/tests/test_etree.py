@@ -664,6 +664,29 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             root[0].attrib, {'default': 'valueB'})
 
+    def test_resolve_filename_dtd_relative(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(attribute_defaults=True)
+        assertEqual = self.assertEqual
+        test_url = _str("__nosuch.dtd")
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, fileInTestDir(test_url))
+                return self.resolve_filename(
+                    fileInTestDir('test.dtd'), context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
+        tree = parse(StringIO(xml), parser,
+                     base_url=fileInTestDir('__test.xml'))
+        root = tree.getroot()
+        self.assertEquals(
+            root.attrib,    {'default': 'valueA'})
+        self.assertEquals(
+            root[0].attrib, {'default': 'valueB'})
+
     def test_resolve_empty(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(load_dtd=True)

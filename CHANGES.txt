@@ -8,6 +8,11 @@ Under development
 Features added
 --------------
 
+* lxml.etree now tries to find the absolute path name of files when
+  parsing from a file-like object.  This helps custom resolvers when
+  resolving relative URLs, as lixbml2 can prepend them with the path
+  of the source document.
+
 * New options for exclusive C14N and C14N without comments.
 
 * Instantiating a custom Element classes creates a new Element.

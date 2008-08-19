@@ -32,8 +32,8 @@ except AttributeError:
 
 del __builtin__
 
-cdef object os_path_join
-from os.path import join as os_path_join
+cdef object os_path_abspath
+from os.path import abspath as os_path_abspath
 
 cdef object BytesIO, StringIO
 try:
