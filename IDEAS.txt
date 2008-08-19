@@ -1,6 +1,11 @@
 Things to try out when life permits
 ===================================
 
+* zlib-based parsing/serialising of compressed in-memory data
+
+  * requires a libxml2 I/O OutputBuffer with appropriate I/O functions
+    that handle a zlib buffer
+
 * generating XML using the ``with`` statement
 
   http://comments.gmane.org/gmane.comp.python.general/579950?set_lines=100000
