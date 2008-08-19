@@ -862,6 +862,57 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[3].get("value"),
                           'B')
 
+    def test_xslt_resolver_url_building(self):
+        assertEquals = self.assertEquals
+        called = {'count' : 0}
+        expected_url = None
+        class TestResolver(etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEquals(url, expected_url)
+                called['count'] += 1
+                return self.resolve_string('<CALLED/>', context)
+
+        stylesheet_xml = _bytes("""\
+<xsl:stylesheet version="1.0"
+   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+   xmlns:l="local">
+  <xsl:template match="/">
+    <xsl:copy-of select="document('test.xml')"/>
+  </xsl:template>
+</xsl:stylesheet>
+""")
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(TestResolver())
+
+        # test without base_url => relative path only
+        expected_url = 'test.xml'
+        xslt = etree.XSLT(etree.XML(stylesheet_xml, parser))
+
+        self.assertEquals(called['count'], 0)
+        result = xslt(etree.XML('<a/>'))
+        self.assertEquals(called['count'], 1)
+
+        # now the same thing with a stylesheet base URL on the filesystem
+        called['count'] = 0
+        expected_url = os.path.join('MY', 'BASE', 'test.xml')
+        xslt = etree.XSLT(etree.XML(stylesheet_xml, parser,
+                                    base_url=os.path.join('MY', 'BASE', 'FILE')))
+
+        self.assertEquals(called['count'], 0)
+        result = xslt(etree.XML('<a/>'))
+        self.assertEquals(called['count'], 1)
+
+        # now the same thing with a stylesheet base URL
+        called['count'] = 0
+        expected_url = 'http://server.com/BASE/DIR/test.xml'
+        xslt = etree.XSLT(etree.XML(stylesheet_xml, parser,
+                                    base_url='http://server.com/BASE/DIR/FILE'))
+
+        self.assertEquals(called['count'], 0)
+        result = xslt(etree.XML('<a/>'))
+        self.assertEquals(called['count'], 1)
+
     def test_xslt_document_parse_allow(self):
         access_control = etree.XSLTAccessControl(read_file=True)
         xslt = etree.XSLT(etree.parse(fileInTestDir("test-document.xslt")),

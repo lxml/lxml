@@ -84,14 +84,9 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
     # delegate to the Python resolvers
     try:
         resolvers = context._resolvers
-        if cstd.strncmp('string://', c_uri, 9) == 0:
-            uri = _decodeFilename(c_uri + 9)
-            if cstd.strncmp('string://', context._c_style_doc.URL, 9) != 0 and \
-                    cstd.strcmp('<string>', context._c_style_doc.URL) != 0:
-                # stylesheet URL known => make the target URL absolute
-                uri = os_path_join(_decodeFilename(context._c_style_doc.URL), uri)
-        else:
-            uri = _decodeFilename(c_uri)
+        if cstd.strncmp('string://__STRING__XSLT__/', c_uri, 26) == 0:
+            c_uri += 26
+        uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
 
         c_doc = NULL
@@ -372,7 +367,7 @@ cdef class XSLT:
         # make sure we always have a stylesheet URL
         if c_doc.URL is NULL:
             doc_url_utf = python.PyUnicode_AsASCIIString(
-                u"string://__STRING__XSLT__%d" % id(self))
+                u"string://__STRING__XSLT__/%d.xslt" % id(self))
             c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
