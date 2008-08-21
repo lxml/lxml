@@ -199,9 +199,12 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
     if c_href is NULL or c_href[0] == c'\0':
         c_href = tree._getNs(c_node)
     if not cetree.tagMatches(c_node, c_href, c_name):
-        raise ValueError, \
-            u"root element does not match: need %s, got %s" % \
-            (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
+        if use_default:
+            return default_value
+        else:
+            raise ValueError, \
+                u"root element does not match: need %s, got %s" % \
+                (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
 
     while c_node is not NULL:
         c_path_len = c_path_len - 1

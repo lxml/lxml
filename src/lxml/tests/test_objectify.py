@@ -1942,6 +1942,21 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.XML(xml_str)
         path = objectify.ObjectPath( "root.c1.c99" )
         self.assertRaises(AttributeError, path, root)
+
+    def test_object_path_default_absolute(self):
+        root = self.XML(xml_str)
+        path = objectify.ObjectPath( "root.c1.c99" )
+        self.assertEquals(None, path(root, None))
+        path = objectify.ObjectPath( "root.c99.c2" )
+        self.assertEquals(None, path(root, None))
+        path = objectify.ObjectPath( "notroot.c99.c2" )
+        self.assertEquals(None, path(root, None))
+
+    def test_object_path_default_relative(self):
+        root = self.XML(xml_str)
+        path = objectify.ObjectPath( ".c1.c99" )
+        self.assertEquals(None, path(root, None))
+        path = objectify.ObjectPath( ".c99.c2" )
         self.assertEquals(None, path(root, None))
 
     def test_object_path_syntax(self):
@@ -1951,6 +1966,12 @@ class ObjectifyTestCase(HelperTestCase):
 
         path = objectify.ObjectPath("   root.{objectified}  c1.c2  [ 0 ]   ")
         self.assertEquals(root.c1.c2.text, path(root).text)
+
+    def test_object_path_fail_parse_empty(self):
+        self.assertRaises(ValueError, objectify.ObjectPath, "")
+
+    def test_object_path_fail_parse_empty_list(self):
+        self.assertRaises(ValueError, objectify.ObjectPath, [])
 
     def test_object_path_hasattr(self):
         root = self.XML(xml_str)
