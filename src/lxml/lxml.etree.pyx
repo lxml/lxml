@@ -1542,7 +1542,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     property docinfo:
         u"""Information about the document provided by parser and DTD.  This
         value is only defined for ElementTree objects based on the root node
-        of a parsed document (e.g.  those returned by the parse functions).
+        of a parsed document (e.g.  those returned by the parse functions),
+        not for trees that were built manually.
         """
         def __get__(self):
             self._assertHasRoot()
