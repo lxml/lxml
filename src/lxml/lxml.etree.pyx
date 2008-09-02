@@ -38,7 +38,7 @@ from os.path import abspath as os_path_abspath
 cdef object BytesIO, StringIO
 try:
     from io import BytesIO, StringIO
-except ImportError:
+except (ImportError, AttributeError):
     from StringIO import StringIO, StringIO as BytesIO
 
 cdef object _elementpath
@@ -103,7 +103,7 @@ _DEFAULT_NAMESPACE_PREFIXES = {
     # xml schema
     "http://www.w3.org/2001/XMLSchema": "xs",
     "http://www.w3.org/2001/XMLSchema-instance": "xsi",
-    # dublic core
+    # dublin core
     "http://purl.org/dc/elements/1.1/": "dc",
     # objectify
     "http://codespeak.net/lxml/objectify/pytype" : "py",
