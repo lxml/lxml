@@ -555,19 +555,21 @@ class ETreeETXPathClassTestCase(HelperTestCase):
         self.assertEquals(1, len(r))
         self.assertEquals('{nsb}b', r[0].tag)
 
-    def test_xpath_compile_unicode(self):
-        x = self.parse(_bytes('<a><b xmlns="nsa\\uf8d2"/><b xmlns="nsb\\uf8d1"/></a>'
+    # disabled this test as non-ASCII characters in namespace URIs are
+    # not acceptable
+    def _test_xpath_compile_unicode(self):
+        x = self.parse(_bytes('<a><b xmlns="http://nsa/\\uf8d2"/><b xmlns="http://nsb/\\uf8d1"/></a>'
                               ).decode("unicode_escape"))
 
-        expr = etree.ETXPath(_bytes("/a/{nsa\\uf8d2}b").decode("unicode_escape"))
+        expr = etree.ETXPath(_bytes("/a/{http://nsa/\\uf8d2}b").decode("unicode_escape"))
         r = expr(x)
         self.assertEquals(1, len(r))
-        self.assertEquals(_bytes('{nsa\\uf8d2}b').decode("unicode_escape"), r[0].tag)
+        self.assertEquals(_bytes('{http://nsa/\\uf8d2}b').decode("unicode_escape"), r[0].tag)
 
-        expr = etree.ETXPath(_bytes("/a/{nsb\\uf8d1}b").decode("unicode_escape"))
+        expr = etree.ETXPath(_bytes("/a/{http://nsb/\\uf8d1}b").decode("unicode_escape"))
         r = expr(x)
         self.assertEquals(1, len(r))
-        self.assertEquals(_bytes('{nsb\\uf8d1}b').decode("unicode_escape"), r[0].tag)
+        self.assertEquals(_bytes('{http://nsb/\\uf8d1}b').decode("unicode_escape"), r[0].tag)
 
 SAMPLE_XML = etree.parse(BytesIO("""
 <body>
