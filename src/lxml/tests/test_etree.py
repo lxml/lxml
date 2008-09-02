@@ -525,6 +525,31 @@ class ETreeOnlyTestCase(HelperTestCase):
                            "data-ca", "end-a", "data-B", "end-root"],
                           events)
 
+    def test_parser_target_recover(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def close(self):
+                events.append("close")
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target(),
+                                      recover=True)
+
+        parser.feed(_bytes('<root>A<a>ca</a>B</not-root>'))
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals(["start-root", "data-A", "start-a",
+                           "data-ca", "end-a", "data-B",
+                           "end-root", "close"],
+                          events)
+
     def test_iterwalk_tag(self):
         iterwalk = self.etree.iterwalk
         root = self.etree.XML(_bytes('<a><b><d/></b><c/></a>'))
