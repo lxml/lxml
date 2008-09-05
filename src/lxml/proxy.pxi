@@ -314,7 +314,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list
     cdef cstd.size_t i
-    cdef list old_docs = []
 
     if not tree._isElementOrXInclude(c_element):
         return 0
@@ -368,8 +367,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
             # 4) fix _Document reference
             if c_element._private is not NULL:
                 old_doc = _updateProxyDocument(c_element, doc)
-                if old_doc not in old_docs:
-                    old_docs.append(old_doc)
 
             if c_element is c_start_node:
                 break # all done
@@ -388,8 +385,6 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 # 4) fix _Document reference
                 if c_element._private is not NULL:
                     old_doc = _updateProxyDocument(c_element, doc)
-                    if old_doc not in old_docs:
-                        old_docs.append(old_doc)
 
                 if c_element is c_start_node:
                     break
@@ -406,8 +401,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     if doc._c_doc.dict is not c_source_doc.dict:
         fixThreadDictNames(c_start_node, c_source_doc.dict, doc._c_doc.dict)
 
-    # *now* free all _Documents the original tree referred to
-    old_docs = None
+    # *now* allow the original _Document to be deleted
+    old_doc = None
 
     # free now unused namespace declarations
     if c_del_ns_list is not NULL:
