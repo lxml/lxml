@@ -8,14 +8,27 @@ Under development
 Features added
 --------------
 
+* New options for exclusive C14N and C14N without comments.
+
+* Instantiating a custom Element classes creates a new Element.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
+2.1.2 (2008-09-05)
+==================
+
+Features added
+--------------
+
 * lxml.etree now tries to find the absolute path name of files when
   parsing from a file-like object.  This helps custom resolvers when
   resolving relative URLs, as lixbml2 can prepend them with the path
   of the source document.
-
-* New options for exclusive C14N and C14N without comments.
-
-* Instantiating a custom Element classes creates a new Element.
 
 Bugs fixed
 ----------
@@ -27,6 +40,18 @@ Bugs fixed
 
 Other changes
 -------------
+
+
+2.0.9 (2008-09-05)
+==================
+
+Bugs fixed
+----------
+
+* Memory problem when passing documents between threads.
+
+* Target parser did not honour the ``recover`` option and raised an
+  exception instead of calling ``.close()`` on the target.
 
 
 2.1.1 (2008-07-24)
