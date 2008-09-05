@@ -20,6 +20,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory problem when passing documents between threads.
+
 * Target parser did not honour the ``recover`` option and raised an
   exception instead of calling ``.close()`` on the target.
 

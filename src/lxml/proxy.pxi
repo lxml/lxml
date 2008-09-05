@@ -44,12 +44,12 @@ cdef inline void _releaseProxy(_Element proxy):
     python.Py_XDECREF(proxy._gc_doc)
     proxy._gc_doc = NULL
 
-cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
+cdef inline _Document _updateProxyDocument(xmlNode* c_node, _Document doc):
     u"""Replace the document reference of a proxy.
 
     This may deallocate the original document of the proxy!
     """
-    cdef _Document old_doc
+    cdef _Document old_doc = None
     cdef _Element element = <_Element>c_node._private
     if element._doc is not doc:
         old_doc = element._doc
@@ -57,6 +57,7 @@ cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
         python.Py_INCREF(doc)
         element._gc_doc = <python.PyObject*>doc
         python.Py_DECREF(old_doc)
+    return old_doc
 
 ################################################################################
 # temporarily make a node the root node of its document
@@ -313,6 +314,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list
     cdef cstd.size_t i
+    cdef list old_docs = []
 
     if not tree._isElementOrXInclude(c_element):
         return 0
@@ -363,9 +365,11 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         if c_node is NULL:
             # no children => back off and continue with siblings and parents
 
-            # 4) fix _Document reference (may dealloc the original document!)
+            # 4) fix _Document reference
             if c_element._private is not NULL:
-                _updateProxyDocument(c_element, doc)
+                old_doc = _updateProxyDocument(c_element, doc)
+                if old_doc not in old_docs:
+                    old_docs.append(old_doc)
 
             if c_element is c_start_node:
                 break # all done
@@ -381,9 +385,11 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 if c_element is NULL or not tree._isElementOrXInclude(c_element):
                     break
 
-                # 4) fix _Document reference (may dealloc the original document!)
+                # 4) fix _Document reference
                 if c_element._private is not NULL:
-                    _updateProxyDocument(c_element, doc)
+                    old_doc = _updateProxyDocument(c_element, doc)
+                    if old_doc not in old_docs:
+                        old_docs.append(old_doc)
 
                 if c_element is c_start_node:
                     break
@@ -399,6 +405,9 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     # 3) fix the names in the tree in case we moved it to a different thread
     if doc._c_doc.dict is not c_source_doc.dict:
         fixThreadDictNames(c_start_node, c_source_doc.dict, doc._c_doc.dict)
+
+    # *now* free all _Documents the original tree referred to
+    old_docs = None
 
     # free now unused namespace declarations
     if c_del_ns_list is not NULL:
