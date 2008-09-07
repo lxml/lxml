@@ -15,6 +15,9 @@ Features added
 Bugs fixed
 ----------
 
+* 0-bytes could slip through the API when used inside of Unicode
+  strings.
+
 Other changes
 -------------
 

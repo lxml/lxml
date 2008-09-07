@@ -1120,7 +1120,11 @@ cdef inline int isutf8(char* s):
         c = s[0]
     return 0
 
-cdef int isutf8py(pystring):
+cdef int check_string_utf8(pystring):
+    u"""Check if a string looks like valid UTF-8 XML content.  Returns 0
+    for ASCII, 1 for UTF-8 and -1 in the case of errors, such as NULL
+    bytes or ASCII control characters.
+    """
     cdef char* s
     cdef char* c_end
     cdef char c
@@ -1130,17 +1134,15 @@ cdef int isutf8py(pystring):
     is_non_ascii = 0
     while s < c_end:
         c = s[0]
-        if not tree.xmlIsChar_ch(c):
-            return -1 # invalid!
-        elif c & 0x80:
+        if c & 0x80:
+            # skip the entire multi byte sequence
+            while c & 0x80:
+                s += 1
+                c = s[0]
             is_non_ascii = 1
-            break
+        elif not tree.xmlIsChar_ch(c):
+            return -1 # invalid!
         s += 1
-    if is_non_ascii:
-        while s < c_end:
-            if not tree.xmlIsChar_ch(s[0]):
-                return -1 # invalid!
-            s += 1
     return is_non_ascii
 
 cdef object funicode(char* s):
@@ -1165,14 +1167,14 @@ cdef object funicode(char* s):
     return python.PyString_FromStringAndSize(s, slen)
 
 cdef object _utf8(object s):
-    cdef bint invalid
+    cdef int invalid
     if python.PyString_CheckExact(s):
-        invalid = isutf8py(s)
+        invalid = check_string_utf8(s)
     elif python.PyUnicode_CheckExact(s) or python.PyUnicode_Check(s):
         s = python.PyUnicode_AsUTF8String(s)
-        invalid = isutf8py(s) == -1
+        invalid = check_string_utf8(s) == -1
     elif python.PyString_Check(s):
-        invalid = isutf8py(s)
+        invalid = check_string_utf8(s)
     else:
         raise TypeError, u"Argument must be string or unicode."
     if invalid:
@@ -1182,6 +1184,7 @@ cdef object _utf8(object s):
 
 cdef bint _isFilePath(char* c_path):
     u"simple heuristic to see if a path is a filename"
+    cdef char c
     # test if it looks like an absolute Unix path or a Windows network path
     if c_path[0] == c'/':
         return 1
@@ -1192,11 +1195,12 @@ cdef bint _isFilePath(char* c_path):
             return 1
     # test if it looks like a relative path
     while c_path[0] != c'\0':
-        if c_path[0] == c':':
+        c = c_path[0]
+        if c == c':':
             return 0
-        if c_path[0] == c'/':
+        elif c == c'/':
             return 1
-        if c_path[0] == c'\\':
+        elif c == c'\\':
             return 1
         c_path += 1
     return 1
@@ -1245,7 +1249,7 @@ cdef object _encodeFilenameUTF8(object filename):
     if filename is None:
         return None
     elif python.PyString_Check(filename):
-        if not isutf8py(filename):
+        if not check_string_utf8(filename):
             # plain ASCII!
             return filename
         c_filename = _cstr(filename)
@@ -1305,20 +1309,13 @@ cdef inline int _xmlNameIsValid(char* c_name):
     return tree.xmlValidateNCName(c_name, 0) == 0
 
 cdef int _htmlNameIsValid(char* c_name):
+    cdef char c
     if c_name is NULL or c_name[0] == c'\0':
         return 0
     while c_name[0] != c'\0':
-        if c_name[0] == c'&' or \
-                c_name[0] == c'<' or \
-                c_name[0] == c'>' or \
-                c_name[0] == c'/' or \
-                c_name[0] == c'"' or \
-                c_name[0] == c"'" or \
-                c_name[0] == c'\x09' or \
-                c_name[0] == c'\x0A' or \
-                c_name[0] == c'\x0B' or \
-                c_name[0] == c'\x0C' or \
-                c_name[0] == c'\x20':
+        c = c_name[0]
+        if c in (c'&', c'<', c'>', c'/', c'"', c"'",
+                 c'\t', c'\n', c'\x0B', c'\x0C', c'\r', c' '):
             return 0
         c_name = c_name + 1
     return 1
