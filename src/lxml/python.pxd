@@ -22,9 +22,10 @@ cdef extern from "Python.h":
 
     cdef FILE* PyFile_AsFile(object p)
 
-    cdef int PyUnicode_Check(object obj)
-    cdef int PyString_Check(object obj)
-    cdef int PyString_CheckExact(object obj)
+    cdef bint PyUnicode_Check(object obj)
+    cdef bint PyUnicode_CheckExact(object obj)
+    cdef bint PyString_Check(object obj)
+    cdef bint PyString_CheckExact(object obj)
 
     cdef object PyUnicode_FromEncodedObject(object s, char* encoding,
                                             char* errors)

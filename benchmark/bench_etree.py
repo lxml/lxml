@@ -228,6 +228,7 @@ class BenchMark(benchbase.TreeBenchMark):
 
     @with_attributes(True)
     @children
+    @nochange
     def bench_get_attributes(self, children):
         for child in children:
             child.get('bla1')

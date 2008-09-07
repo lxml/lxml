@@ -1130,13 +1130,17 @@ cdef int isutf8py(pystring):
     is_non_ascii = 0
     while s < c_end:
         c = s[0]
-        if c & 0x80:
+        if not tree.xmlIsChar_ch(c):
+            return -1 # invalid!
+        elif c & 0x80:
             is_non_ascii = 1
-        elif c == c'\0':
-            return -1 # invalid!
-        elif is_non_ascii == 0 and not tree.xmlIsChar_ch(c):
-            return -1 # invalid!
+            break
         s += 1
+    if is_non_ascii:
+        while s < c_end:
+            if not tree.xmlIsChar_ch(s[0]):
+                return -1 # invalid!
+            s += 1
     return is_non_ascii
 
 cdef object funicode(char* s):
@@ -1161,17 +1165,19 @@ cdef object funicode(char* s):
     return python.PyString_FromStringAndSize(s, slen)
 
 cdef object _utf8(object s):
-    if python.PyString_Check(s):
-        if isutf8py(s):
-            raise ValueError, \
-                u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
-    elif python.PyUnicode_Check(s):
+    cdef bint invalid
+    if python.PyString_CheckExact(s):
+        invalid = isutf8py(s)
+    elif python.PyUnicode_CheckExact(s) or python.PyUnicode_Check(s):
         s = python.PyUnicode_AsUTF8String(s)
-        if isutf8py(s) == -1:
-            raise ValueError, \
-                u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
+        invalid = isutf8py(s) == -1
+    elif python.PyString_Check(s):
+        invalid = isutf8py(s)
     else:
         raise TypeError, u"Argument must be string or unicode."
+    if invalid:
+        raise ValueError, \
+            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
     return s
 
 cdef bint _isFilePath(char* c_path):
