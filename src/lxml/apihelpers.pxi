@@ -446,11 +446,11 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
         value = _utf8(value)
     c_value = _cstr(value)
     if ns is None:
-        tree.xmlSetProp(element._c_node, c_tag, c_value)
+        c_ns = NULL
     else:
         c_ns = element._doc._findOrBuildNodeNs(element._c_node,
                                                _cstr(ns), NULL)
-        tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
+    tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
     return 0
 
 cdef int _delAttribute(_Element element, key) except -1:
