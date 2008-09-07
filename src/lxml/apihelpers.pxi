@@ -1133,14 +1133,12 @@ cdef int check_string_utf8(pystring):
     c_end = s + python.PyString_GET_SIZE(pystring)
     is_non_ascii = 0
     while s < c_end:
-        c = s[0]
-        if c & 0x80:
+        if s[0] & 0x80:
             # skip the entire multi byte sequence
-            while c & 0x80:
+            while s[0] & 0x80:
                 s += 1
-                c = s[0]
             is_non_ascii = 1
-        elif not tree.xmlIsChar_ch(c):
+        elif not tree.xmlIsChar_ch(s[0]):
             return -1 # invalid!
         s += 1
     return is_non_ascii
