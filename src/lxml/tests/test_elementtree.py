@@ -2650,15 +2650,15 @@ class ETreeTestCaseBase(HelperTestCase):
 
     def test_iterparse_attrib_ns(self):
         iterparse = self.etree.iterparse
-        f = BytesIO('<a xmlns="ns1"><b><c xmlns="ns2"/></b></a>')
+        f = BytesIO('<a xmlns="http://ns1/"><b><c xmlns="http://ns2/"/></b></a>')
 
-        attr_name = '{testns}bla'
+        attr_name = '{http://testns/}bla'
         events = []
         iterator = iterparse(f, events=('start','end','start-ns','end-ns'))
         for event, elem in iterator:
             events.append(event)
             if event == 'start':
-                if elem.tag != '{ns1}a':
+                if elem.tag != '{http://ns1/}a':
                     elem.set(attr_name, 'value')
 
         self.assertEquals(
