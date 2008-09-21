@@ -189,7 +189,8 @@ version 2.6.21 or newer to take advantage of this feature:
   >>> parser = etree.HTMLParser()
   >>> tree   = etree.parse(StringIO(broken_html), parser)
 
-  >>> result = etree.tostring(tree.getroot(), pretty_print=True)
+  >>> result = etree.tostring(tree.getroot(),
+  ...                         pretty_print=True, method="html")
   >>> print(result)
   <html>
     <head>
@@ -206,7 +207,7 @@ ElementTree:
 .. sourcecode:: pycon
 
   >>> html = etree.HTML(broken_html)
-  >>> result = etree.tostring(html, pretty_print=True)
+  >>> result = etree.tostring(html, pretty_print=True, method="html")
   >>> print(result)
   <html>
     <head>
@@ -426,7 +427,7 @@ only 'end' events are generated:
   ... <root>
   ...   <element key='value'>text</element>
   ...   <element>text</element>tail
-  ...   <empty-element xmlns="testns" />
+  ...   <empty-element xmlns="http://testns/" />
   ... </root>
   ... '''
 
@@ -435,7 +436,7 @@ only 'end' events are generated:
   ...     print("%s: %s" % (action, elem.tag))
   end: element
   end: element
-  end: {testns}empty-element
+  end: {http://testns/}empty-element
   end: root
 
 The resulting tree is available through the ``root`` property of the iterator:
@@ -458,8 +459,8 @@ The other event types can be activated with the ``events`` keyword argument:
   end: element
   start: element
   end: element
-  start: {testns}empty-element
-  end: {testns}empty-element
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
   end: root
 
 The 'start-ns' and 'end-ns' events notify about namespace
@@ -476,7 +477,7 @@ entry on the 'end-ns' event.
   <root>
     <element key='value'>text</element>
     <element>text</element>tail
-    <empty-element xmlns="testns" />
+    <empty-element xmlns="http://testns/" />
   </root>
 
   >>> events = ("start", "end", "start-ns", "end-ns")
@@ -493,9 +494,9 @@ entry on the 'end-ns' event.
   end: element
   start: element
   end: element
-  start-ns: ('', 'testns')
-  start: {testns}empty-element
-  end: {testns}empty-element
+  start-ns: ('', 'http://testns/')
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
   end-ns
   end: root
 
@@ -517,11 +518,11 @@ specific tag or namespace:
 
   >>> events = ("start", "end")
   >>> context = etree.iterparse(
-  ...             StringIO(xml), events=events, tag="{testns}*")
+  ...             StringIO(xml), events=events, tag="{http://testns/}*")
   >>> for action, elem in context:
   ...     print("%s: %s" % (action, elem.tag))
-  start: {testns}empty-element
-  end: {testns}empty-element
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
 
 
 Comments and PIs
@@ -540,7 +541,7 @@ respective XML structures.
   ...   <element key='value'>text</element>
   ...   <!-- another comment -->
   ...   <element>text</element>tail
-  ...   <empty-element xmlns="testns" />
+  ...   <empty-element xmlns="http://testns/" />
   ... </root>
   ... '''
 
@@ -561,8 +562,8 @@ respective XML structures.
   comment: - another comment -
   start: element
   end: element
-  start: {testns}empty-element
-  end: {testns}empty-element
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
   end: root
 
   >>> print(context.root.tag)
