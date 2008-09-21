@@ -1370,7 +1370,7 @@ def xhtml_to_html(xhtml):
 # This isn't a general match, but it's a match for what libxml2
 # specifically serialises:
 __replace_meta_content_type = re.compile(
-    r'<meta http-equiv="Content-Type".*?>').sub
+    r'<meta http-equiv="Content-Type"[^>]*>').sub
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
              encoding=None, method="html"):
