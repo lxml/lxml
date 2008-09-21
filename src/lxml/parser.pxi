@@ -683,6 +683,7 @@ cdef class _BaseParser:
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
                  remove_comments, remove_pis, strip_cdata, target,
                  filename, encoding):
+        cdef tree.xmlCharEncodingHandler* enchandler
         cdef int c_encoding
         if not isinstance(self, HTMLParser) and \
                 not isinstance(self, XMLParser) and \
@@ -705,10 +706,10 @@ cdef class _BaseParser:
             self._default_encoding_int = tree.XML_CHAR_ENCODING_NONE
         else:
             encoding = _utf8(encoding)
-            c_encoding = tree.xmlParseCharEncoding(_cstr(encoding))
-            if c_encoding == tree.XML_CHAR_ENCODING_ERROR or \
-                   c_encoding == tree.XML_CHAR_ENCODING_NONE:
+            enchandler = tree.xmlFindCharEncodingHandler(_cstr(encoding))
+            if enchandler is NULL:
                 raise LookupError, u"unknown encoding: '%s'" % encoding
+            tree.xmlCharEncCloseFunc(enchandler)
             self._default_encoding = encoding
             self._default_encoding_int = c_encoding
 
