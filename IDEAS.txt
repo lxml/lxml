@@ -22,3 +22,12 @@ Things to try out when life permits
   access check methods
 
   * maybe custom resolvers are enough, or can be combined with this?
+
+* reimplement iterparse() using the libxml2 xmlReader API
+
+  * Advantage: the implementation can be made safer than the current
+    SAX implementation, as the parser would not interact with the
+    Python-level tree.
+
+  * Disadvantage: the tree has to be built manually. In the current
+    SAX based implementation, libxml2 does it for us.
