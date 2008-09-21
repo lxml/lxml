@@ -415,6 +415,19 @@ Other keyword arguments:
 
         context = <_IterparseContext>self._getPushParserContext()
         __GLOBAL_PARSER_CONTEXT.initParserDict(context._c_ctxt)
+
+        if self._default_encoding is not None:
+            if self._for_html:
+                error = _htmlCtxtResetPush(
+                    context._c_ctxt, NULL, 0,
+                    _cstr(self._default_encoding), self._parse_options)
+            else:
+                xmlparser.xmlCtxtUseOptions(
+                    context._c_ctxt, self._parse_options)
+                error = xmlparser.xmlCtxtResetPush(
+                    context._c_ctxt, NULL, 0, NULL,
+                    _cstr(self._default_encoding))
+
         context.prepare()
         # parser will not be unlocked - no other methods supported
 

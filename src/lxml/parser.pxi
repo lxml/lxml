@@ -678,7 +678,6 @@ cdef class _BaseParser:
     cdef object _filename
     cdef object _target
     cdef object _default_encoding
-    cdef int _default_encoding_int
 
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
                  remove_comments, remove_pis, strip_cdata, target,
@@ -703,7 +702,6 @@ cdef class _BaseParser:
 
         if encoding is None:
             self._default_encoding = None
-            self._default_encoding_int = tree.XML_CHAR_ENCODING_NONE
         else:
             encoding = _utf8(encoding)
             enchandler = tree.xmlFindCharEncodingHandler(_cstr(encoding))
@@ -711,7 +709,6 @@ cdef class _BaseParser:
                 raise LookupError, u"unknown encoding: '%s'" % encoding
             tree.xmlCharEncCloseFunc(enchandler)
             self._default_encoding = encoding
-            self._default_encoding_int = c_encoding
 
     cdef _ParserContext _getParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
@@ -777,7 +774,7 @@ cdef class _BaseParser:
             c_filename = NULL
         if self._for_html:
             c_ctxt = htmlparser.htmlCreatePushParserCtxt(
-                NULL, NULL, NULL, 0, c_filename, self._default_encoding_int)
+                NULL, NULL, NULL, 0, c_filename, tree.XML_CHAR_ENCODING_NONE)
             if c_ctxt is not NULL:
                 htmlparser.htmlCtxtUseOptions(c_ctxt, self._parse_options)
         else:
@@ -785,9 +782,6 @@ cdef class _BaseParser:
                 NULL, NULL, NULL, 0, c_filename)
             if c_ctxt is not NULL:
                 xmlparser.xmlCtxtUseOptions(c_ctxt, self._parse_options)
-                if self._default_encoding_int != tree.XML_CHAR_ENCODING_NONE:
-                    xmlparser.xmlSwitchEncoding(
-                        c_ctxt, self._default_encoding_int)
         return c_ctxt
 
     property error_log:
