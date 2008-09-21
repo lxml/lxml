@@ -14,7 +14,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import LargeFileLikeUnicode, doctest, make_doctest
+from common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from common_imports import canonicalize, sorted, _str, _bytes
 
 print("")
@@ -667,6 +667,27 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = tree.getroot()
         self.assertEquals(root.text, test_url)
 
+    def test_resolve_filelike_dtd(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(dtd_validation=True)
+        assertEqual = self.assertEqual
+        test_url = _str("__nosuch.dtd")
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, test_url)
+                return self.resolve_file(
+                    SillyFileLike(
+                        _str('''<!ENTITY myentity "%s">
+                        <!ELEMENT doc ANY>''') % url), context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        tree = parse(StringIO(xml), parser)
+        root = tree.getroot()
+        self.assertEquals(root.text, test_url)
+
     def test_resolve_filename_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(attribute_defaults=True)
@@ -706,6 +727,28 @@ class ETreeOnlyTestCase(HelperTestCase):
         xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
         tree = parse(StringIO(xml), parser,
                      base_url=fileInTestDir('__test.xml'))
+        root = tree.getroot()
+        self.assertEquals(
+            root.attrib,    {'default': 'valueA'})
+        self.assertEquals(
+            root[0].attrib, {'default': 'valueB'})
+
+    def test_resolve_file_dtd(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(attribute_defaults=True)
+        assertEqual = self.assertEqual
+        test_url = _str("__nosuch.dtd")
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, test_url)
+                return self.resolve_file(
+                    open(fileInTestDir('test.dtd'), 'rb'), context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
+        tree = parse(StringIO(xml), parser)
         root = tree.getroot()
         self.assertEquals(
             root.attrib,    {'default': 'valueA'})

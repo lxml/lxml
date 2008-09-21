@@ -441,7 +441,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             c_input = xmlparser.xmlNewInputFromFile(
                 c_context, _cstr(doc_ref._filename))
         elif doc_ref._type == PARSER_DATA_FILE:
-            file_context = _FileReaderContext(doc_ref._file, context, url)
+            file_context = _FileReaderContext(doc_ref._file, context, url, None)
             c_input = file_context._createParserInput(c_context)
             data = file_context
         else:
