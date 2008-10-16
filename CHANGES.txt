@@ -15,6 +15,8 @@ Features added
 Bugs fixed
 ----------
 
+* Resolver.resolve_string() did not work for non-ASCII byte strings.
+
 * Overriding the parser encoding didn't work for many encodings.
 
 * 0-bytes could slip through the API when used inside of Unicode

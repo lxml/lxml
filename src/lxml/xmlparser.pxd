@@ -47,6 +47,10 @@ cdef extern from "libxml/parser.h":
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput:
         int line
+        int length
+        char* base
+        char* cur
+        char* end
 
     ctypedef struct xmlParserInputBuffer:
         void* context
@@ -183,6 +187,7 @@ cdef extern from "libxml/parser.h":
                                int enc) nogil
 
 cdef extern from "libxml/parserInternals.h":
+    cdef xmlParserInput* xmlNewInputStream(xmlParserCtxt* ctxt)
     cdef xmlParserInput* xmlNewStringInputStream(xmlParserCtxt* ctxt, 
                                                  char* buffer) nogil
     cdef xmlParserInput* xmlNewInputFromFile(xmlParserCtxt* ctxt, 

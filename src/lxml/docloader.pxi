@@ -8,7 +8,7 @@ ctypedef enum _InputDocumentDataType:
 
 cdef class _InputDocument:
     cdef _InputDocumentDataType _type
-    cdef object _data_bytes
+    cdef object _data
     cdef object _filename
     cdef object _file
 
@@ -47,9 +47,12 @@ cdef class Resolver:
         argument.
         """
         cdef _InputDocument doc_ref
+        if not python.PyString_Check(string) and \
+                not python.PyUnicode_Check(string):
+            raise TypeError, "argument must be a byte string or unicode string"
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_STRING
-        doc_ref._data_bytes = _utf8(string)
+        doc_ref._data = string
         if base_url is not None:
             doc_ref._filename = _encodeFilename(base_url)
         return doc_ref

@@ -672,6 +672,27 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = tree.getroot()
         self.assertEquals(root.text, test_url)
 
+    def test_resolve_bytes_dtd(self):
+        parse = self.etree.parse
+        parser = self.etree.XMLParser(dtd_validation=True)
+        assertEqual = self.assertEqual
+        test_url = _str("__nosuch.dtd")
+
+        class MyResolver(self.etree.Resolver):
+            def resolve(self, url, id, context):
+                assertEqual(url, test_url)
+                return self.resolve_string(
+                    (_str('''<!ENTITY myentity "%s">
+                             <!ELEMENT doc ANY>''') % url).encode('utf-8'),
+                    context)
+
+        parser.resolvers.add(MyResolver())
+
+        xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
+        tree = parse(StringIO(xml), parser)
+        root = tree.getroot()
+        self.assertEquals(root.text, test_url)
+
     def test_resolve_filelike_dtd(self):
         parse = self.etree.parse
         parser = self.etree.XMLParser(dtd_validation=True)

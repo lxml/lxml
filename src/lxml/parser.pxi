@@ -428,15 +428,23 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             pubid = funicode(c_pubid) # always UTF-8
 
         doc_ref = context._resolvers.resolve(url, pubid, context)
+
+        if doc_ref is not None and doc_ref._type == PARSER_DATA_STRING:
+            if python.PyUnicode_Check(doc_ref._data):
+                doc_ref._data = python.PyUnicode_AsUTF8String(doc_ref._data)
     except:
         context._store_raised()
         return NULL
 
     if doc_ref is not None:
         if doc_ref._type == PARSER_DATA_STRING:
-            data = doc_ref._data_bytes
-            c_input = xmlparser.xmlNewStringInputStream(
-                c_context, _cstr(data))
+            data = doc_ref._data
+            c_input = xmlparser.xmlNewInputStream(c_context)
+            if c_input is not NULL:
+                c_input.base = _cstr(data)
+                c_input.length = python.PyString_GET_SIZE(data)
+                c_input.cur = c_input.base
+                c_input.end = &c_input.base[c_input.length]
         elif doc_ref._type == PARSER_DATA_FILENAME:
             c_input = xmlparser.xmlNewInputFromFile(
                 c_context, _cstr(doc_ref._filename))
