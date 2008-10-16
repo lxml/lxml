@@ -430,6 +430,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(
             LookupError, self.etree.XMLParser, encoding="hopefully unknown")
 
+    def test_parser_encoding(self):
+        self.etree.XMLParser(encoding="ascii")
+        self.etree.XMLParser(encoding="utf-8")
+        self.etree.XMLParser(encoding="iso-8859-1")
+
     def test_elementtree_parser_target_type_error(self):
         assertEquals = self.assertEquals
         assertFalse  = self.assertFalse
