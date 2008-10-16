@@ -40,12 +40,13 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_module_HTML(self):
         element = self.etree.HTML(self.html_str)
-        self.assertEqual(self.etree.tostring(element),
+        self.assertEqual(self.etree.tostring(element, method="html"),
                          self.html_str)
 
     def test_module_HTML_unicode(self):
         element = self.etree.HTML(self.uhtml_str)
-        self.assertEqual(unicode(self.etree.tostring(element, encoding='UTF8'), 'UTF8'),
+        self.assertEqual(unicode(self.etree.tostring(element, method="html",
+                                                     encoding='UTF8'), 'UTF8'),
                          unicode(self.uhtml_str.encode('UTF8'), 'UTF8'))
 
     def test_module_HTML_pretty_print(self):
@@ -194,7 +195,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_module_HTML_broken(self):
         element = self.etree.HTML(self.broken_html_str)
-        self.assertEqual(self.etree.tostring(element),
+        self.assertEqual(self.etree.tostring(element, method="html"),
                          self.html_str)
 
     def test_module_HTML_cdata(self):
@@ -215,7 +216,8 @@ class HtmlParserTestCase(HelperTestCase):
             f = open(filename, 'rb')
             tree = self.etree.parse(f, parser)
             f.close()
-            self.assertEqual(self.etree.tostring(tree.getroot()), self.html_str)
+            self.assertEqual(self.etree.tostring(tree.getroot(), method="html"),
+                             self.html_str)
         finally:
             os.remove(filename)
 
@@ -223,7 +225,8 @@ class HtmlParserTestCase(HelperTestCase):
         parser = self.etree.HTMLParser()
         f = SillyFileLike(self.html_str)
         tree = self.etree.parse(f, parser)
-        html = self.etree.tostring(tree.getroot(), encoding='UTF-8')
+        html = self.etree.tostring(tree.getroot(),
+                                   method="html", encoding='UTF-8')
         self.assertEqual(html, self.html_str)
 
 ##     def test_module_parse_html_filelike_unicode(self):
@@ -247,7 +250,7 @@ class HtmlParserTestCase(HelperTestCase):
         self.etree.set_default_parser( self.etree.HTMLParser() )
 
         tree = self.etree.parse(BytesIO(self.broken_html_str))
-        self.assertEqual(self.etree.tostring(tree.getroot()),
+        self.assertEqual(self.etree.tostring(tree.getroot(), method="html"),
                          self.html_str)
 
         self.etree.set_default_parser()
