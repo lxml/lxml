@@ -93,7 +93,7 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
         if doc_ref is not None:
             if doc_ref._type == PARSER_DATA_STRING:
                 c_doc = _parseDoc(
-                    doc_ref._data, doc_ref._filename, context._parser)
+                    doc_ref._data_bytes, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILENAME:
                 c_doc = _parseDocFromFile(doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILE:
