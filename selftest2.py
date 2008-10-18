@@ -126,7 +126,7 @@ def parsefile():
     </root>
     >>> tree = ElementTree.parse(open("samples/simple-ns.xml", "rb"))
     >>> tree.write(sys.stdout)
-    <root xmlns="namespace">
+    <root xmlns="http://namespace/">
        <element key="value">text</element>
        <element>text</element>tail
        <empty-element/>

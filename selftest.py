@@ -315,13 +315,13 @@ def parsefile():
     >>> tree = ElementTree.parse("samples/simple-ns.xml")
     >>> normalize_crlf(tree)
     >>> tree.write(sys.stdout)
-    <root xmlns="namespace">
+    <root xmlns="http://namespace/">
        <element key="value">text</element>
        <element>text</element>tail
        <empty-element/>
     </root>
 
-##     <ns0:root xmlns:ns0="namespace">
+##     <ns0:root xmlns:ns0="http://namespace/">
 ##        <ns0:element key="value">text</ns0:element>
 ##        <ns0:element>text</ns0:element>tail
 ##        <ns0:empty-element/>
@@ -412,10 +412,10 @@ def iterparse():
     >>> context = iterparse("samples/simple-ns.xml")
     >>> for action, elem in context:
     ...   print("%s %s" % (action, elem.tag))
-    end {namespace}element
-    end {namespace}element
-    end {namespace}empty-element
-    end {namespace}root
+    end {http://namespace/}element
+    end {http://namespace/}element
+    end {http://namespace/}empty-element
+    end {http://namespace/}root
 
     >>> events = ()
     >>> context = iterparse("samples/simple.xml", events)
@@ -447,15 +447,15 @@ def iterparse():
     ...     print("%s %s" % (action, elem.tag))
     ...   else:
     ...     print("%s %s" % (action, elem))
-    start-ns ('', 'namespace')
-    start {namespace}root
-    start {namespace}element
-    end {namespace}element
-    start {namespace}element
-    end {namespace}element
-    start {namespace}empty-element
-    end {namespace}empty-element
-    end {namespace}root
+    start-ns ('', 'http://namespace/')
+    start {http://namespace/}root
+    start {http://namespace/}element
+    end {http://namespace/}element
+    start {http://namespace/}element
+    end {http://namespace/}element
+    start {http://namespace/}empty-element
+    end {http://namespace/}empty-element
+    end {http://namespace/}root
     end-ns None
 
     """

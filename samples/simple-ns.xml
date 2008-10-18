@@ -1,4 +1,4 @@
-<root xmlns='namespace'>
+<root xmlns='http://namespace/'>
    <element key='value'>text</element>
    <element>text</element>tail
    <empty-element/>
