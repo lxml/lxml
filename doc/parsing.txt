@@ -31,6 +31,8 @@ The usual setup procedure:
   >>> from lxml import etree
 
 ..
+  >>> from lxml import usedoctest
+
   >>> try: from StringIO import StringIO
   ... except ImportError:
   ...    from io import BytesIO
