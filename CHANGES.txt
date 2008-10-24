@@ -8,12 +8,18 @@ Under development
 Features added
 --------------
 
+* QName objects have new properties ``namespace`` and ``localname``.
+
 * New options for exclusive C14N and C14N without comments.
 
 * Instantiating a custom Element classes creates a new Element.
 
 Bugs fixed
 ----------
+
+* Fix a pre-Py3k warning when parsing from a gzip file in Py2.6.
+
+* Test suite fixes for libxml2 2.7.
 
 * Resolver.resolve_string() did not work for non-ASCII byte strings.
 
