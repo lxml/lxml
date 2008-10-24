@@ -154,6 +154,25 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, QName, 'na me')
         self.assertRaises(ValueError, QName, 'test', ' name')
 
+    def test_qname_namespace_localname(self):
+        # ET doesn't have namespace/localname properties on QNames
+        QName = self.etree.QName
+        namespace, localname = 'http://myns', 'a'
+        qname = QName(namespace, localname)
+        self.assertEquals(namespace, qname.namespace)
+        self.assertEquals(localname, qname.localname)
+
+    def test_qname_element(self):
+        # ET doesn't have namespace/localname properties on QNames
+        QName = self.etree.QName
+        qname1 = QName('http://myns', 'a')
+        a = self.etree.Element(qname1, nsmap={'p' : 'http://myns'})
+
+        qname2 = QName(a)
+        self.assertEquals(a.tag, qname1.text)
+        self.assertEquals(qname1.text, qname2.text)
+        self.assertEquals(qname1, qname2)
+
     def test_qname_text_resolve(self):
         # ET doesn't resove QNames as text values
         etree = self.etree
