@@ -2097,6 +2097,24 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(docinfo.root_name,   'html')
         self.assertEquals(docinfo.doctype, '')
 
+    def test_docinfo_name_only(self):
+        etree = self.etree
+        xml = _bytes('<!DOCTYPE root><root></root>')
+        tree = etree.parse(BytesIO(xml))
+        docinfo = tree.docinfo
+        self.assertEquals(docinfo.encoding,    "UTF-8")
+        self.assertEquals(docinfo.xml_version, "1.0")
+        self.assertEquals(docinfo.public_id,   None)
+        self.assertEquals(docinfo.system_url,  None)
+        self.assertEquals(docinfo.root_name,   'root')
+        self.assertEquals(docinfo.doctype, '<!DOCTYPE root>')
+
+    def test_doctype_name_only_roundtrip(self):
+        etree = self.etree
+        xml = _bytes('<!DOCTYPE root>\n<root/>')
+        tree = etree.parse(BytesIO(xml))
+        self.assertEquals(xml, etree.tostring(tree))
+
     def test_xml_base(self):
         etree = self.etree
         root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")

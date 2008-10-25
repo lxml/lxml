@@ -17,6 +17,10 @@ Features added
 Bugs fixed
 ----------
 
+* Internal DTD subsets that did not specify a system or public ID were
+  not serialised and did not appear in the docinfo property of
+  ElementTrees.
+
 * Fix a pre-Py3k warning when parsing from a gzip file in Py2.6.
 
 * Test suite fixes for libxml2 2.7.

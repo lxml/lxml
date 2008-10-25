@@ -328,6 +328,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return None
         return _elementFactory(self, c_node)
 
+    cdef bint hasdoctype(self):
+        return self._c_doc.intSubset is not NULL
+
     cdef getdoctype(self):
         cdef tree.xmlDtd* c_dtd
         cdef xmlNode* c_root_node
@@ -520,6 +523,8 @@ cdef class DocInfo:
             elif system_url:
                 return u'<!DOCTYPE %s SYSTEM "%s">' % (
                     root_name, system_url)
+            elif self._doc.hasdoctype():
+                return u'<!DOCTYPE %s>' % root_name
             else:
                 return u""
 

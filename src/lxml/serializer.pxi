@@ -189,9 +189,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     c_dtd = c_doc.intSubset
-    if c_dtd == NULL or c_dtd.name == NULL:
-        return
-    if c_dtd.ExternalID == NULL and c_dtd.SystemID == NULL:
+    if c_dtd is NULL or c_dtd.name is NULL:
         return
     if cstd.strcmp(c_root_name, c_dtd.name) != 0:
         return
