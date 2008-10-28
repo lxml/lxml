@@ -605,10 +605,14 @@ either the default parser (which is replicated for each thread) or
 create a parser for each thread yourself.  lxml also allows
 concurrency during validation (RelaxNG and XMLSchema) and XSL
 transformation.  You can share RelaxNG, XMLSchema and (with
-restrictions) XSLT objects between threads.  While you can also share
-parsers between threads, this will serialize the access to each of
-them, so it is better to ``.copy()`` parsers or to just use the
-default parser if you do not need any special configuration.
+restrictions) XSLT objects between threads.
+
+While you can also share parsers between threads, this will serialize
+the access to each of them, so it is better to ``.copy()`` parsers or
+to just use the default parser if you do not need any special
+configuration.  The same applies to the XPath evaluators, which use an
+internal lock to protect their prepared evaluation contexts.  It is
+therefore best to use separate evaluator instances in threads.
 
 Due to the way libxslt handles threading, applying a stylesheets is
 most efficient if it was parsed in the same thread that executes it.
