@@ -32,6 +32,10 @@ Bugs fixed
 * 0-bytes could slip through the API when used inside of Unicode
   strings.
 
+* With ``lxml.html.clean.autolink``, links with balanced parenthesis,
+  that end in a parenthesis, will be linked in their entirety (typical
+  with Wikipedia links).
+
 Other changes
 -------------
 

@@ -497,7 +497,7 @@ clean_html = clean.clean_html
 ############################################################
 
 _link_regexes = [
-    re.compile(r'(?P<body>https?://(?P<host>[a-z0-9._-]+)(?:/[/\-_.,a-z0-9%&?;=~]*)?)', re.I),
+    re.compile(r'(?P<body>https?://(?P<host>[a-z0-9._-]+)(?:/[/\-_.,a-z0-9%&?;=~]*)?(?:\([/\-_.,a-z0-9%&?;=~]*\))?)', re.I),
     # This is conservative, but autolinking can be a bit conservative:
     re.compile(r'mailto:(?P<body>[a-z0-9._-]+@(?P<host>[a-z0-9_._]+[a-z]))', re.I),
     ]
@@ -527,7 +527,7 @@ def autolink(el, link_regexes=_link_regexes,
     host that matches one of the regular expressions in avoid_hosts
     (default localhost and 127.0.0.1).
 
-    If you pass in an element, the elements tail will not be
+    If you pass in an element, the element's tail will not be
     substituted, only the contents of the element.
     """
     if el.tag in avoid_elements:

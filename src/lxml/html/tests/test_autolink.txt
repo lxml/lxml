@@ -23,6 +23,17 @@ This tests autolink::
     ... <div>Link: (http://foobar.com)</div>'''))
     <div>Link: (<a href="http://foobar.com">http://foobar.com</a>)</div>
 
+Parenthesis are tricky, we'll do our best::
+
+    >>> print autolink_html('''
+    ... <div>(Link: http://en.wikipedia.org/wiki/PC_Tools_(Central_Point_Software))</div>
+    ... ''')
+    <div>(Link: <a href="http://en.wikipedia.org/wiki/PC_Tools_(Central_Point_Software)">http://en.wikipedia.org/wiki/PC_Tools_(Central_Point_Software)</a>)</div>
+    >>> print autolink_html('''
+    ... <div>... a link: http://foo.com)</div>
+    ... ''')
+    <div>... a link: <a href="http://foo.com">http://foo.com</a>)</div>
+
 Some cases that won't be caught (on purpose)::
 
     >>> print(autolink_html('''
