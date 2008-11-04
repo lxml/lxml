@@ -53,7 +53,11 @@ cdef class _LogEntry:
         size = cstd.strlen(error.message)
         if size > 0 and error.message[size-1] == c'\n':
             size = size - 1 # strip EOL
-        self.message  = python.PyUnicode_DecodeUTF8(error.message, size, NULL)
+        try:
+            self.message = python.PyUnicode_DecodeUTF8(
+                error.message, size, NULL)
+        except:
+            self.message = repr(error.message)
         if error.file is NULL:
             self.filename = u'<string>'
         else:
