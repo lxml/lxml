@@ -1,7 +1,8 @@
 import sys, os, os.path
 from distutils.core import Extension
-
+from distutils.errors import DistutilsOptionError
 from versioninfo import get_base_dir, split_version
+from buildlibxml import build_libxml2xslt
 
 try:
     from Cython.Distutils import build_ext as build_pyx
@@ -26,14 +27,23 @@ else:
     def decode_input(data):
         return data
 
-def env_var(name):
+def env_var(name, sep=None):
     value = os.getenv(name)
     if value:
-        return decode_input(value).split(os.pathsep)
+        return decode_input(value).split(sep)
     else:
         return []
 
-def ext_modules(static_include_dirs, static_library_dirs, static_cflags): 
+def ext_modules(static_include_dirs, static_library_dirs,
+                static_cflags, static_binaries): 
+    global XML2_CONFIG, XSLT_CONFIG
+    if OPTION_BUILD_LIBXML2XSLT:
+        XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
+            'libs', 'build/tmp',
+            static_include_dirs, static_library_dirs,
+            static_cflags, static_binaries,
+            libxml2_version=OPTION_LIBXML2_VERSION,
+            libxslt_version=OPTION_LIBXSLT_VERSION)
     if CYTHON_INSTALLED:
         source_extension = ".pyx"
         print("Building with Cython %s." % Cython.Compiler.Version.version)
@@ -76,7 +86,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
         runtime_library_dirs = _library_dirs
     else:
         runtime_library_dirs = []
-    
+
     result = []
     for module in modules:
         main_module_source = PACKAGE_PATH + module + source_extension
@@ -86,6 +96,7 @@ def ext_modules(static_include_dirs, static_library_dirs, static_cflags):
             module,
             sources = [main_module_source] + dependencies,
             extra_compile_args = ['-w'] + _cflags,
+            extra_objects = static_binaries,
             define_macros = _define_macros,
             include_dirs = _include_dirs,
             library_dirs = _library_dirs,
@@ -128,14 +139,13 @@ def extra_setup_args():
 
 def libraries():
     if sys.platform in ('win32',):
-        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
+        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv', 'zlib', 'WS2_32']
+        if OPTION_STATIC:
+            libs = ['%s_a' % lib for lib in libs]
+    elif OPTION_STATIC:
+        libs = ['z', 'm']
     else:
         libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
-    if OPTION_STATIC:
-        if sys.platform in ('win32',):
-            libs = ['%s_a' % lib for lib in libs]
-    if sys.platform in ('win32',):
-        libs.extend(['zlib', 'WS2_32'])
     return libs
 
 def library_dirs(static_library_dirs):
@@ -270,6 +280,8 @@ def find_xslt_config():
         XSLT_CONFIG = os.getenv('XSLT_CONFIG', 'xslt-config')
     return XSLT_CONFIG
 
+## Option handling:
+
 def has_option(name):
     try:
         sys.argv.remove('--%s' % name)
@@ -282,6 +294,22 @@ def has_option(name):
         return True
     return False
 
+def option_value(name):
+    for index, option in enumerate(sys.argv):
+        if option == '--' + name:
+            if index+1 >= len(sys.argv):
+                raise DistutilsOptionError(
+                    'The option %s requires a value' % option)
+            value = sys.argv[index+1]
+            sys.argv[index:index+2] = []
+            return value
+        if option.startswith('--' + name + '='):
+            value = option[len(name)+3:]
+            sys.argv[index:index+1] = []
+            return value
+    env_val = os.getenv(name.upper().replace('-', '_'))
+    return env_val
+
 # pick up any commandline options
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
@@ -289,3 +317,8 @@ OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
+OPTION_BUILD_LIBXML2XSLT = has_option('static-deps')
+if OPTION_BUILD_LIBXML2XSLT:
+    OPTION_STATIC = True
+OPTION_LIBXML2_VERSION = option_value('libxml2-version')
+OPTION_LIBXSLT_VERSION = option_value('libxslt-version')

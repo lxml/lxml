@@ -33,7 +33,7 @@ import setupinfo
 STATIC_INCLUDE_DIRS = []
 STATIC_LIBRARY_DIRS = []
 STATIC_CFLAGS = []
-
+STATIC_BINARIES = []
 
 # create lxml-version.h file
 svn_version = versioninfo.svn_version()
@@ -103,7 +103,8 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.html'],
     ext_modules = setupinfo.ext_modules(
-        STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS, STATIC_CFLAGS),
+        STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS,
+        STATIC_CFLAGS, STATIC_BINARIES),
     **extra_options
 )
 
