@@ -174,7 +174,7 @@ def build_libxml2xslt(download_dir, build_dir,
     call_subprocess(
         ['make', 'install'], cwd=libxml2_dir)
 
-    libxslt_configure_cmd = configure_cmd + ['--with-libxml2-src=%s' % libxml2_dir]
+    libxslt_configure_cmd = configure_cmd + ['--with-libxml-prefix=%s' % prefix]
     call_subprocess(libxslt_configure_cmd, cwd=libxslt_dir)
     call_subprocess(
         ['make'], cwd=libxslt_dir)
