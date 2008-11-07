@@ -233,68 +233,9 @@ cdef class _ExceptionContext:
             raise type, value, traceback
 
 
-cdef class QName:
-    u"""QName(text_or_uri, tag=None)
-
-    QName wrapper for qualified XML names.
-
-    Pass a tag name by itself or a namespace URI and a tag name to
-    create a qualified name.
-
-    The ``text`` property holds the qualified name in
-    ``{namespace}tagname`` notation.  The ``namespace`` and
-    ``localname`` properties hold the respective parts of the tag
-    name.
-
-    You can pass QName objects wherever a tag name is expected.  Also,
-    setting Element text from a QName will resolve the namespace
-    prefix and set a qualified text value.
-    """
-    cdef readonly object text
-    cdef readonly object localname
-    cdef readonly object namespace
-    def __init__(self, text_or_uri_or_element, tag=None):
-        if not _isString(text_or_uri_or_element):
-            if isinstance(text_or_uri_or_element, _Element):
-                text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
-                if not _isString(text_or_uri_or_element):
-                    raise ValueError, ("Invalid input tag of type %r" %
-                                       type(text_or_uri_or_element))
-            elif isinstance(text_or_uri_or_element, QName):
-                text_or_uri_or_element = (<QName>text_or_uri_or_element).text
-            else:
-                text_or_uri_or_element = unicode(text_or_uri_or_element)
-
-        ns_utf, tag_utf = _getNsTag(text_or_uri_or_element)
-        if tag is not None:
-            # either ('ns', 'tag') or ('{ns}oldtag', 'newtag')
-            if ns_utf is None:
-                ns_utf = tag_utf # case 1: namespace ended up as tag name
-            tag_utf = _utf8(tag)
-        _tagValidOrRaise(tag_utf)
-        self.localname = python.PyUnicode_FromEncodedObject(
-            tag_utf, 'UTF-8', NULL)
-        if ns_utf is None:
-            self.namespace = None
-            self.text = self.localname
-        else:
-            self.namespace = python.PyUnicode_FromEncodedObject(
-                ns_utf, 'UTF-8', NULL)
-            self.text = u"{%s}%s" % (self.namespace, self.localname)
-    def __str__(self):
-        return self.text
-    def __hash__(self):
-        return self.text.__hash__()
-    def __richcmp__(one, other, int op):
-        if not _isString(one):
-            one = unicode(one)
-        if not _isString(other):
-            other = unicode(other)
-        return python.PyObject_RichCompare(one, other, op)
-
-
 # forward declaration of _BaseParser, see parser.pxi
 cdef class _BaseParser
+cdef class QName
 
 ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
 
@@ -1505,6 +1446,66 @@ cdef class _Entity(__ContentOnlyElement):
 
     def __repr__(self):
         return u"&%s;" % self.name
+
+
+cdef class QName:
+    u"""QName(text_or_uri, tag=None)
+
+    QName wrapper for qualified XML names.
+
+    Pass a tag name by itself or a namespace URI and a tag name to
+    create a qualified name.
+
+    The ``text`` property holds the qualified name in
+    ``{namespace}tagname`` notation.  The ``namespace`` and
+    ``localname`` properties hold the respective parts of the tag
+    name.
+
+    You can pass QName objects wherever a tag name is expected.  Also,
+    setting Element text from a QName will resolve the namespace
+    prefix and set a qualified text value.
+    """
+    cdef readonly object text
+    cdef readonly object localname
+    cdef readonly object namespace
+    def __init__(self, text_or_uri_or_element, tag=None):
+        if not _isString(text_or_uri_or_element):
+            if isinstance(text_or_uri_or_element, _Element):
+                text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
+                if not _isString(text_or_uri_or_element):
+                    raise ValueError, ("Invalid input tag of type %r" %
+                                       type(text_or_uri_or_element))
+            elif isinstance(text_or_uri_or_element, QName):
+                text_or_uri_or_element = (<QName>text_or_uri_or_element).text
+            else:
+                text_or_uri_or_element = unicode(text_or_uri_or_element)
+
+        ns_utf, tag_utf = _getNsTag(text_or_uri_or_element)
+        if tag is not None:
+            # either ('ns', 'tag') or ('{ns}oldtag', 'newtag')
+            if ns_utf is None:
+                ns_utf = tag_utf # case 1: namespace ended up as tag name
+            tag_utf = _utf8(tag)
+        _tagValidOrRaise(tag_utf)
+        self.localname = python.PyUnicode_FromEncodedObject(
+            tag_utf, 'UTF-8', NULL)
+        if ns_utf is None:
+            self.namespace = None
+            self.text = self.localname
+        else:
+            self.namespace = python.PyUnicode_FromEncodedObject(
+                ns_utf, 'UTF-8', NULL)
+            self.text = u"{%s}%s" % (self.namespace, self.localname)
+    def __str__(self):
+        return self.text
+    def __hash__(self):
+        return self.text.__hash__()
+    def __richcmp__(one, other, int op):
+        if not _isString(one):
+            one = unicode(one)
+        if not _isString(other):
+            other = unicode(other)
+        return python.PyObject_RichCompare(one, other, op)
 
 
 cdef public class _ElementTree [ type LxmlElementTreeType,
