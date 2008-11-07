@@ -143,7 +143,7 @@ def libraries():
         if OPTION_STATIC:
             libs = ['%s_a' % lib for lib in libs]
     elif OPTION_STATIC:
-        libs = ['iconv', 'z', 'm']
+        libs = ['z', 'm']
     else:
         libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
     return libs
