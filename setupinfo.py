@@ -2,7 +2,6 @@ import sys, os, os.path
 from distutils.core import Extension
 from distutils.errors import DistutilsOptionError
 from versioninfo import get_base_dir, split_version
-from buildlibxml import build_libxml2xslt
 
 try:
     from Cython.Distutils import build_ext as build_pyx
@@ -38,6 +37,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries): 
     global XML2_CONFIG, XSLT_CONFIG
     if OPTION_BUILD_LIBXML2XSLT:
+        from buildlibxml import build_libxml2xslt
         XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
             'libs', 'build/tmp',
             static_include_dirs, static_library_dirs,
@@ -143,7 +143,7 @@ def libraries():
         if OPTION_STATIC:
             libs = ['%s_a' % lib for lib in libs]
     elif OPTION_STATIC:
-        libs = ['z', 'm']
+        libs = ['iconv', 'z', 'm']
     else:
         libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
     return libs
