@@ -21,21 +21,6 @@ __version__ = etree.__version__
 cdef object re
 import re
 
-try:
-    import __builtin__
-except ImportError:
-    # Python 3
-    import builtins as __builtin__
-
-cdef object set
-try:
-    set = __builtin__.set
-except AttributeError:
-    # Python 2.3
-    from sets import Set as set
-
-del __builtin__
-
 cdef object IGNORABLE_ERRORS
 IGNORABLE_ERRORS = (ValueError, TypeError)
 

@@ -17,12 +17,6 @@ except ImportError:
     # Python 3
     import builtins as __builtin__
 
-cdef object set
-try:
-    set = __builtin__.set
-except AttributeError:
-    from sets import Set as set
-
 cdef object _unicode
 try:
     _unicode = __builtin__.unicode
