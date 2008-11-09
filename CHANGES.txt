@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* Support for XSLT result tree fragments in XPath/XSLT extension
+  functions.
+
 * QName objects have new properties ``namespace`` and ``localname``.
 
 * New options for exclusive C14N and C14N without comments.

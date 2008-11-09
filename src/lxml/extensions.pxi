@@ -490,7 +490,7 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         raise XPathResultError, u"Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
-        return _createNodeSetResult(xpathObj, doc, smart_string)
+        return _createNodeSetResult(xpathObj, doc, smart_string, 0)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
         return xpathObj.boolval
     elif xpathObj.type == xpath.XPATH_NUMBER:
@@ -502,61 +502,76 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
                 stringval, None, 0, 0)
         return stringval
     elif xpathObj.type == xpath.XPATH_POINT:
-        raise NotImplementedError
+        raise NotImplementedError, u"XPATH_POINT"
     elif xpathObj.type == xpath.XPATH_RANGE:
-        raise NotImplementedError
+        raise NotImplementedError, u"XPATH_RANGE"
     elif xpathObj.type == xpath.XPATH_LOCATIONSET:
-        raise NotImplementedError
+        raise NotImplementedError, u"XPATH_LOCATIONSET"
     elif xpathObj.type == xpath.XPATH_USERS:
-        raise NotImplementedError
+        raise NotImplementedError, u"XPATH_USERS"
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
-        raise NotImplementedError
+        return _createNodeSetResult(xpathObj, doc, smart_string, 1)
     else:
         raise XPathResultError, u"Unknown xpath result %s" % unicode(xpathObj.type)
 
-cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj,
-                                 _Document doc, bint smart_string):
+cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
+                                 bint smart_string, bint is_fragment):
     cdef xmlNode* c_node
-    cdef char* s
     cdef int i
+    cdef list result
     result = []
     if xpathObj.nodesetval is NULL:
         return result
     for i from 0 <= i < xpathObj.nodesetval.nodeNr:
         c_node = xpathObj.nodesetval.nodeTab[i]
-        if _isElement(c_node):
-            if c_node.doc != doc._c_doc and c_node.doc._private is NULL:
-                # XXX: works, but maybe not always the right thing to do?
-                # XPath: only runs when extensions create or copy trees
-                #        -> we store Python refs to these, so that is OK
-                # XSLT: can it leak when merging trees from multiple sources?
-                c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
-            value = _fakeDocElementFactory(doc, c_node)
-        elif c_node.type == tree.XML_TEXT_NODE or \
-                c_node.type == tree.XML_ATTRIBUTE_NODE:
-            value = _buildElementStringResult(doc, c_node, smart_string)
-        elif c_node.type == tree.XML_NAMESPACE_DECL:
-            s = (<xmlNs*>c_node).href
-            if s is NULL:
-                href = None
-            else:
-                href = funicode(s)
-            s = (<xmlNs*>c_node).prefix
-            if s is NULL:
-                prefix = None
-            else:
-                prefix = funicode(s)
-            value = (prefix, href)
-        elif c_node.type == tree.XML_DOCUMENT_NODE or \
-                 c_node.type == tree.XML_HTML_DOCUMENT_NODE or \
-                 c_node.type == tree.XML_XINCLUDE_START or \
-                 c_node.type == tree.XML_XINCLUDE_END:
-            continue
-        else:
-            raise NotImplementedError, \
-                u"Not yet implemented result node type: %d" % unicode(c_node.type)
-        python.PyList_Append(result, value)
+        _unpackNodeSetEntry(result, c_node, doc,
+                            smart_string, is_fragment)
     return result
+
+cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
+                         bint smart_string, bint is_fragment):
+    cdef xmlNode* c_child
+    cdef char* s
+    if _isElement(c_node):
+        if c_node.doc != doc._c_doc and c_node.doc._private is NULL:
+            # XXX: works, but maybe not always the right thing to do?
+            # XPath: only runs when extensions create or copy trees
+            #        -> we store Python refs to these, so that is OK
+            # XSLT: can it leak when merging trees from multiple sources?
+            c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+        results.append(
+            _fakeDocElementFactory(doc, c_node))
+    elif c_node.type == tree.XML_TEXT_NODE or \
+            c_node.type == tree.XML_ATTRIBUTE_NODE:
+        results.append(
+            _buildElementStringResult(doc, c_node, smart_string))
+    elif c_node.type == tree.XML_NAMESPACE_DECL:
+        s = (<xmlNs*>c_node).href
+        if s is NULL:
+            href = None
+        else:
+            href = funicode(s)
+        s = (<xmlNs*>c_node).prefix
+        if s is NULL:
+            prefix = None
+        else:
+            prefix = funicode(s)
+        results.append( (prefix, href) )
+    elif c_node.type == tree.XML_DOCUMENT_NODE or \
+            c_node.type == tree.XML_HTML_DOCUMENT_NODE:
+        # ignored for everything but result tree fragments
+        if is_fragment:
+            c_child = c_node.children
+            while c_child is not NULL:
+                _unpackNodeSetEntry(results, c_child, doc,
+                                    smart_string, is_fragment)
+                c_child = c_child.next
+    elif c_node.type == tree.XML_XINCLUDE_START or \
+            c_node.type == tree.XML_XINCLUDE_END:
+        pass
+    else:
+        raise NotImplementedError, \
+            u"Not yet implemented result node type: %d" % unicode(c_node.type)
 
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
     u"""Free the XPath object, but *never* free the *content* of node sets.

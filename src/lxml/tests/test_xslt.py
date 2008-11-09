@@ -647,6 +647,37 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           _bytes('<A>X</A>'))
 
+    def test_extensions3(self):
+        tree = self.parse('<a><b>B</b><b/></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <xsl:variable name="content">
+       <xsl:apply-templates/>
+    </xsl:variable>
+    <A><xsl:value-of select="myns:mytext($content)"/></A>
+  </xsl:template>
+  <xsl:template match="b"><xsl:copy>BBB</xsl:copy></xsl:template>
+</xsl:stylesheet>''')
+
+        def mytext(ctxt, values):
+            for value in values:
+                self.assert_(hasattr(value, 'tag'),
+                             "%s is not an Element" % type(value))
+                self.assertEquals(value.tag, 'b')
+                self.assertEquals(value.text, 'BBB')
+            return 'X'.join([el.tag for el in values])
+
+        namespace = etree.FunctionNamespace('testns')
+        namespace['mytext'] = mytext
+
+        result = tree.xslt(style)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A>bXb</A>'))
+
     def test_extension_element(self):
         tree = self.parse('<a><b>B</b></a>')
         style = self.parse('''\
