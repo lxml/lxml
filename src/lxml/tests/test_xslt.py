@@ -647,7 +647,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           _bytes('<A>X</A>'))
 
-    def test_extensions3(self):
+    def test_variable_result_tree_fragment(self):
         tree = self.parse('<a><b>B</b><b/></a>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
