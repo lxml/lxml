@@ -1,6 +1,5 @@
 import os, re
-from distutils import log
-
+from distutils import log, sysconfig
 ## Routines to download and build libxml2/xslt:
 
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
@@ -167,6 +166,7 @@ def build_libxml2xslt(download_dir, build_dir,
     safe_mkdir(prefix)
 
     configure_cmd = ['./configure', '--without-python',
+                     '--disable-dependency-tracking',
                      '--disable-shared', '--prefix=%s' % prefix]
     call_subprocess(configure_cmd, cwd=libxml2_dir)
     call_subprocess(
@@ -190,6 +190,11 @@ def build_libxml2xslt(download_dir, build_dir,
             os.path.join(prefix, 'include', 'libxslt'),
             os.path.join(prefix, 'include', 'libexslt')])
     static_library_dirs.append(lib_dir)
+
+    unisdk_dir = sysconfig.get_config_var('UNIVERSALSDK')
+    if unisdk_dir:
+        static_cflags.extend(['-isysroot', unisdk_dir,
+                              '-arch', '-i386', '-arch', 'ppc'])
 
     for filename in os.listdir(lib_dir):
         if [l for l in ['libxml2', 'libxslt', 'libexslt'] if l in filename]:
