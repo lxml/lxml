@@ -99,7 +99,7 @@ def fragment_fromstring(html, create_parent=False,
 
     result = children[0]
     if result.tail and result.tail.strip():
-        raise etree.ParserError('Element followed by text: %r' % el.tail)
+        raise etree.ParserError('Element followed by text: %r' % result.tail)
     result.tail = None
     return result
 
@@ -157,7 +157,7 @@ def parse(filename_url_or_file, guess_charset=True, parser=None):
         fp = urllib.urlopen(filename_url_or_file)
     else:
         fp = filename_url_or_file
-    return parser.parse(html, useChardet=guess_charset)
+    return parser.parse(fp, useChardet=guess_charset)
 
 
 html_parser = HTMLParser()

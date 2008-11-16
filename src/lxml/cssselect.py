@@ -635,6 +635,7 @@ def parse(string):
     try:
         return parse_selector_group(stream)
     except SelectorSyntaxError:
+        import sys
         e = sys.exc_info()[1]
         e.args = tuple(["%s at %s -> %s" % (
             e, stream.used, list(stream))])
@@ -900,6 +901,7 @@ def tokenize_symbol(s, pos):
     try:
         result = result.encode('ASCII', 'backslashreplace').decode('unicode_escape')
     except UnicodeDecodeError:
+        import sys
         e = sys.exc_info()[1]
         raise SelectorSyntaxError(
             "Bad symbol %r: %s" % (result, e))

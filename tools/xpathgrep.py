@@ -3,6 +3,7 @@
 try:
     import lxml.etree as et
 except ImportError, e:
+    import sys
     print >> sys.stderr, "ERR: %s." % e
     sys.exit(5)
 
