@@ -165,17 +165,42 @@ def build_libxml2xslt(download_dir, build_dir,
     prefix = os.path.join(os.path.abspath(build_dir), 'libxml2')
     safe_mkdir(prefix)
 
-    configure_cmd = ['./configure', '--without-python',
+    call_setup = {}
+    env_setup = None
+    if sys.platform in ('darwin',):
+        # We compile Universal if we are on a machine > 10.3
+        major_version = int(os.uname()[2].split('.')[0])
+        if major_version > 7:
+            call_setup['env'] = {
+                'CFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
+                'LDFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
+                'MACOSX_DEPLOYMENT_TARGET' : "10.3"
+                }
+
+        # We may loose the link to iconv, so make sure it's there
+        static_binaries.append('-liconv')
+
+    configure_cmd = ['./configure',
+                     '--without-python',
                      '--disable-dependency-tracking',
-                     '--disable-shared', '--prefix=%s' % prefix]
-    call_subprocess(configure_cmd, cwd=libxml2_dir)
+                     '--disable-shared',
+                     '--prefix=%s' % prefix,
+                     ]
+    call_subprocess(configure_cmd, cwd=libxml2_dir, **call_setup)
     call_subprocess(
         ['make'], cwd=libxml2_dir)
     call_subprocess(
         ['make', 'install'], cwd=libxml2_dir)
 
-    libxslt_configure_cmd = configure_cmd + ['--with-libxml-prefix=%s' % prefix]
-    call_subprocess(libxslt_configure_cmd, cwd=libxslt_dir)
+    libxslt_configure_cmd = configure_cmd + [
+        '--with-libxml-prefix=%s' % prefix,
+        ]
+    if sys.platform in ('darwin',):
+        libxslt_configure_cmd += [
+            '--without-crypto',
+            ]
+
+    call_subprocess(libxslt_configure_cmd, cwd=libxslt_dir, **call_setup)
     call_subprocess(
         ['make'], cwd=libxslt_dir)
     call_subprocess(
@@ -190,11 +215,6 @@ def build_libxml2xslt(download_dir, build_dir,
             os.path.join(prefix, 'include', 'libxslt'),
             os.path.join(prefix, 'include', 'libexslt')])
     static_library_dirs.append(lib_dir)
-
-    unisdk_dir = sysconfig.get_config_var('UNIVERSALSDK')
-    if unisdk_dir:
-        static_cflags.extend(['-isysroot', unisdk_dir,
-                              '-arch', '-i386', '-arch', 'ppc'])
 
     for filename in os.listdir(lib_dir):
         if [l for l in ['libxml2', 'libxslt', 'libexslt'] if l in filename]:
