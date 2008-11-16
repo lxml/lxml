@@ -1,4 +1,4 @@
-import os, re
+import os, re, sys
 from distutils import log, sysconfig
 ## Routines to download and build libxml2/xslt:
 
