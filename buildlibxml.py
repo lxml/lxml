@@ -119,7 +119,7 @@ def _extractall(self, path=".", members=None):
             self.chown(tarinfo, dirpath)
             self.utime(tarinfo, dirpath)
             self.chmod(tarinfo, dirpath)
-        except ExtractError, e:
+        except tarfile.ExtractError, e:
             if self.errorlevel > 1:
                 raise
             else:
