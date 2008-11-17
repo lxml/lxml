@@ -188,9 +188,9 @@ def build_libxml2xslt(download_dir, build_dir,
                      ]
     call_subprocess(configure_cmd, cwd=libxml2_dir, **call_setup)
     call_subprocess(
-        ['make'], cwd=libxml2_dir)
+        ['make'], cwd=libxml2_dir, **call_setup)
     call_subprocess(
-        ['make', 'install'], cwd=libxml2_dir)
+        ['make', 'install'], cwd=libxml2_dir, **call_setup)
 
     libxslt_configure_cmd = configure_cmd + [
         '--with-libxml-prefix=%s' % prefix,
@@ -202,9 +202,9 @@ def build_libxml2xslt(download_dir, build_dir,
 
     call_subprocess(libxslt_configure_cmd, cwd=libxslt_dir, **call_setup)
     call_subprocess(
-        ['make'], cwd=libxslt_dir)
+        ['make'], cwd=libxslt_dir, **call_setup)
     call_subprocess(
-        ['make', 'install'], cwd=libxslt_dir)
+        ['make', 'install'], cwd=libxslt_dir, **call_setup)
 
     xslt_config = os.path.join(prefix, 'bin', 'xslt-config')
     xml2_config = os.path.join(prefix, 'bin', 'xml2-config')
