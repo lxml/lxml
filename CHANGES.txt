@@ -20,6 +20,35 @@ Features added
 Bugs fixed
 ----------
 
+* 0-bytes could slip through the API when used inside of Unicode
+  strings.
+
+* With ``lxml.html.clean.autolink``, links with balanced parenthesis,
+  that end in a parenthesis, will be linked in their entirety (typical
+  with Wikipedia links).
+
+Other changes
+-------------
+
+
+2.1.3 (2008-11-17)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Ref-count leaks when lxml enters a try-except statement while an
+  outside exception lives in sys.exc_*(). This was due to a problem in
+  Cython, not lxml itself.
+
+* Parser Unicode decoding errors could get swallowed by other
+  exceptions.
+
+* Name/import errors in some Python modules.
+
 * Internal DTD subsets that did not specify a system or public ID were
   not serialised and did not appear in the docinfo property of
   ElementTrees.
@@ -30,17 +59,23 @@ Bugs fixed
 
 * Resolver.resolve_string() did not work for non-ASCII byte strings.
 
+* Resolver.resolve_file() was broken.
+
 * Overriding the parser encoding didn't work for many encodings.
-
-* 0-bytes could slip through the API when used inside of Unicode
-  strings.
-
-* With ``lxml.html.clean.autolink``, links with balanced parenthesis,
-  that end in a parenthesis, will be linked in their entirety (typical
-  with Wikipedia links).
 
 Other changes
 -------------
+
+
+2.0.10 (2008-11-17)
+===================
+
+Bugs fixed
+----------
+
+* Ref-count leaks when lxml enters a try-except statement while an
+  outside exception lives in sys.exc_*(). This was due to a problem in
+  Cython, not lxml itself.
 
 
 2.1.2 (2008-09-05)

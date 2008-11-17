@@ -147,8 +147,8 @@ MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
 release version first.
 
-The latest version is `lxml 2.1.2`_, released 2008-09-05
-(`changes for 2.1.2`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.1.3`_, released 2008-11-17
+(`changes for 2.1.3`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
@@ -222,11 +222,15 @@ in-development version <http://codespeak.net/lxml/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-2.1.2.pdf
 
+* `lxml 2.1.3`_, released 2008-11-17 (`changes for 2.1.3`_)
+
 * `lxml 2.1.2`_, released 2008-09-05 (`changes for 2.1.2`_)
 
 * `lxml 2.1.1`_, released 2008-07-24 (`changes for 2.1.1`_)
 
 * `lxml 2.1`_, released 2008-07-09 (`changes for 2.1`_)
+
+* `lxml 2.0.10`_, released 2008-11-17 (`changes for 2.0.10`_)
 
 * `lxml 2.0.9`_, released 2008-09-05 (`changes for 2.0.9`_)
 
@@ -298,9 +302,11 @@ in-development version <http://codespeak.net/lxml/dev/>`_.
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.1.3`: lxml-2.1.3.tgz
 .. _`lxml 2.1.2`: lxml-2.1.2.tgz
 .. _`lxml 2.1.1`: lxml-2.1.1.tgz
 .. _`lxml 2.1`: lxml-2.1.tgz
+.. _`lxml 2.0.10`: lxml-2.0.10.tgz
 .. _`lxml 2.0.9`: lxml-2.0.9.tgz
 .. _`lxml 2.0.8`: lxml-2.0.8.tgz
 .. _`lxml 2.0.7`: lxml-2.0.7.tgz
@@ -336,9 +342,11 @@ in-development version <http://codespeak.net/lxml/dev/>`_.
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.1.3`: changes-2.1.3.html
 .. _`changes for 2.1.2`: changes-2.1.2.html
 .. _`changes for 2.1.1`: changes-2.1.1.html
 .. _`changes for 2.1`: changes-2.1.html
+.. _`changes for 2.0.10`: changes-2.0.10.html
 .. _`changes for 2.0.9`: changes-2.0.9.html
 .. _`changes for 2.0.8`: changes-2.0.8.html
 .. _`changes for 2.0.7`: changes-2.0.7.html
