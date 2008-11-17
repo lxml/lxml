@@ -150,11 +150,14 @@ cdef extern from "libxml/xmlerror.h":
         XML_ERR_NOTATION_PROCESSING                        =     105 # 105
         XML_WAR_NS_COLUMN                                  =     106 # 106
         XML_WAR_ENTITY_REDEFINED                           =     107 # 107
+        XML_ERR_UNKNOWN_VERSION                            =     108 # 108
+        XML_ERR_VERSION_MISMATCH                           =     109 # 109
         XML_NS_ERR_XML_NAMESPACE                           =     200
         XML_NS_ERR_UNDEFINED_NAMESPACE                     =     201 # 201
         XML_NS_ERR_QNAME                                   =     202 # 202
         XML_NS_ERR_ATTRIBUTE_REDEFINED                     =     203 # 203
         XML_NS_ERR_EMPTY                                   =     204 # 204
+        XML_NS_ERR_COLON                                   =     205 # 205
         XML_DTD_ATTRIBUTE_DEFAULT                          =     500
         XML_DTD_ATTRIBUTE_REDEFINED                        =     501 # 501
         XML_DTD_ATTRIBUTE_VALUE                            =     502 # 502
@@ -196,6 +199,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_DTD_STANDALONE_DEFAULTED                       =     538 # 538
         XML_DTD_XMLID_VALUE                                =     539 # 539
         XML_DTD_XMLID_TYPE                                 =     540 # 540
+        XML_DTD_DUP_TOKEN                                  =     541 # 541
         XML_HTML_STRUCURE_ERROR                            =     800
         XML_HTML_UNKNOWN_TAG                               =     801 # 801
         XML_RNGP_ANYNAME_ATTR_ANCESTOR                     =    1000
