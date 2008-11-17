@@ -31,12 +31,12 @@ cdef class _ExsltRegExp
 cdef class _BaseContext:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _Document _doc
-    cdef object _extensions
-    cdef object _namespaces
-    cdef object _global_namespaces
-    cdef object _utf_refs
-    cdef object _function_cache
-    cdef object _eval_context_dict
+    cdef dict _extensions
+    cdef list _namespaces
+    cdef list _global_namespaces
+    cdef dict _utf_refs
+    cdef dict _function_cache
+    cdef dict _eval_context_dict
     cdef bint _build_smart_strings
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
@@ -45,6 +45,7 @@ cdef class _BaseContext:
     def __init__(self, namespaces, extensions, enable_regexp,
                  build_smart_strings):
         cdef _ExsltRegExp _regexp 
+        cdef list ns
         self._utf_refs = {}
         self._global_namespaces = []
         self._function_cache = {}
@@ -80,7 +81,7 @@ cdef class _BaseContext:
                             u"setting default namespace is not supported in XPath"
                     prefix_utf = self._to_utf(prefix)
                     ns_uri_utf = self._to_utf(ns_uri)
-                    python.PyList_Append(ns, (prefix_utf, ns_uri_utf))
+                    ns.append( (prefix_utf, ns_uri_utf) )
                 namespaces = ns
             else:
                 namespaces = None
@@ -141,6 +142,7 @@ cdef class _BaseContext:
     # namespaces (internal UTF-8 methods with leading '_')
 
     cdef addNamespace(self, prefix, ns_uri):
+        cdef list namespaces
         if prefix is None:
             raise TypeError, u"empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
@@ -154,9 +156,9 @@ cdef class _BaseContext:
                 if item[0] == prefix_utf:
                     item = new_item
                     new_item = None
-                python.PyList_Append(namespaces, item)
+                namespaces.append(item)
             if new_item is not None:
-                python.PyList_Append(namespaces, new_item)
+                namespaces.append(new_item)
             self._namespaces = namespaces
         if self._xpathCtxt is not NULL:
             xpath.xmlXPathRegisterNs(
@@ -167,7 +169,7 @@ cdef class _BaseContext:
             raise TypeError, u"empty prefix is not supported in XPath"
         prefix_utf = self._to_utf(prefix)
         ns_uri_utf = self._to_utf(ns_uri)
-        python.PyList_Append(self._global_namespaces, prefix_utf)
+        self._global_namespaces.append(prefix_utf)
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                  _cstr(prefix_utf), _cstr(ns_uri_utf))
 
@@ -182,7 +184,7 @@ cdef class _BaseContext:
         ns_prefixes = _find_all_extension_prefixes()
         if python.PyList_GET_SIZE(ns_prefixes) > 0:
             for prefix_utf, ns_uri_utf in ns_prefixes:
-                python.PyList_Append(self._global_namespaces, prefix_utf)
+                self._global_namespaces.append(prefix_utf)
                 xpath.xmlXPathRegisterNs(
                     self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
 
@@ -411,6 +413,7 @@ cdef class _ExsltRegExp:
             return True
 
     def match(self, ctxt, s, rexp, flags=u''):
+        cdef list result_list
         flags = self._make_string(flags)
         s = self._make_string(s)
         rexpc = self._compile(rexp, u'i' in flags)
@@ -432,7 +435,7 @@ cdef class _ExsltRegExp:
                 s_match = join_groups(s_match)
             elem = SubElement(root, u'match')
             elem.text = s_match
-            python.PyList_Append(result_list, elem)
+            result_list.append(elem)
         return result_list
 
     def replace(self, ctxt, s, rexp, flags, replacement):
@@ -672,6 +675,7 @@ cdef void _extension_function_call(_BaseContext context, function,
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
     cdef int i
+    cdef list args
     doc = context._doc
     try:
         args = []
@@ -679,8 +683,8 @@ cdef void _extension_function_call(_BaseContext context, function,
             obj = xpath.valuePop(ctxt)
             o = _unwrapXPathObject(obj, doc, context._build_smart_strings)
             _freeXPathObject(obj)
-            python.PyList_Append(args, o)
-        python.PyList_Reverse(args)
+            args.append(o)
+        args.reverse()
 
         res = function(context, *args)
         # wrap result for XPath consumption

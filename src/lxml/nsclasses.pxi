@@ -222,12 +222,12 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
 cdef object _find_all_extension_prefixes():
     u"Internal lookup function to find all function prefixes for XSLT/XPath."
     cdef _XPathFunctionNamespaceRegistry registry
-    ns_prefixes = []
+    cdef list ns_prefixes = []
     for registry in __FUNCTION_NAMESPACE_REGISTRIES.values():
         if registry._prefix_utf is not None:
             if registry._ns_uri_utf is not None:
-                python.PyList_Append(
-                    ns_prefixes, (registry._prefix_utf, registry._ns_uri_utf))
+                ns_prefixes.append(
+                    (registry._prefix_utf, registry._ns_uri_utf))
     return ns_prefixes
 
 cdef object _iter_ns_extension_functions():

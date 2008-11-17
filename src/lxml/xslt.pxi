@@ -552,6 +552,7 @@ cdef class XSLT:
         cdef xmlDoc* c_result
         cdef char** params
         cdef Py_ssize_t i, parameter_count
+        cdef list keep_ref
 
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveXSLTError)
@@ -571,9 +572,9 @@ cdef class XSLT:
                 keep_ref = []
                 for key, value in parameters.items():
                     k = _utf8(key)
-                    python.PyList_Append(keep_ref, k)
+                    keep_ref.append(k)
                     v = _utf8(value)
-                    python.PyList_Append(keep_ref, v)
+                    keep_ref.append(v)
                     params[i] = _cstr(k)
                     i += 1
                     params[i] = _cstr(v)

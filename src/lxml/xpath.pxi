@@ -459,17 +459,17 @@ cdef class ETXPath(XPath):
 
     cdef _nsextract_path(self, path):
         # replace {namespaces} by new prefixes
+        cdef dict namespaces = {}
+        cdef list namespace_defs = []
         cdef int i
         path_utf = _utf8(path)
         stripped_path = _replace_strings('', path_utf) # remove string literals
-        namespaces = {}
-        namespace_defs = []
         i = 1
         for namespace_def in _find_namespaces(stripped_path):
             if namespace_def not in namespace_defs:
                 prefix = python.PyString_FromFormat("__xpp%02d", i)
                 i += 1
-                python.PyList_Append(namespace_defs, namespace_def)
+                namespace_defs.append(namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'
                 namespace = python.PyUnicode_FromEncodedObject(
                     namespace, 'UTF-8', 'strict')

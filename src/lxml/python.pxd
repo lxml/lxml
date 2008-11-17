@@ -55,8 +55,6 @@ cdef extern from "Python.h":
     cdef Py_ssize_t PyList_GET_SIZE(object l)
     cdef object PyList_GET_ITEM(object l, Py_ssize_t index)
     cdef void PyList_SET_ITEM(object l, Py_ssize_t index, object value)
-    cdef int PyList_Append(object l, object obj) except -1
-    cdef int PyList_Reverse(object l) except -1
     cdef int PyList_Insert(object l, Py_ssize_t index, object o) except -1
     cdef object PyList_AsTuple(object l)
     cdef void PyList_Clear(object l)

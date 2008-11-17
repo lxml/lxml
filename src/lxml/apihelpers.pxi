@@ -214,6 +214,7 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
     cdef xmlNs* c_ns
     cdef char*  c_prefix
     cdef char*  c_href
+    cdef list nsdefs
     if not nsmap:
         if node_ns_utf is not None:
             doc._setNodeNs(c_node, _cstr(node_ns_utf))
@@ -703,13 +704,13 @@ cdef bint _isFullSlice(python.slice sliceobject):
 
 cdef _collectChildren(_Element element):
     cdef xmlNode* c_node
-    result = []
+    cdef list result = []
     c_node = element._c_node.children
     if c_node is not NULL:
         if not _isElement(c_node):
             c_node = _nextElement(c_node)
         while c_node is not NULL:
-            python.PyList_Append(result, _elementFactory(element._doc, c_node))
+            result.append(_elementFactory(element._doc, c_node))
             c_node = _nextElement(c_node)
     return result
 

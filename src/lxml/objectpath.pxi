@@ -92,7 +92,7 @@ cdef _parseObjectPathString(path):
     u"""Parse object path string into a (ns, name, index) list.
     """
     cdef bint has_dot
-    new_path = []
+    cdef list new_path = []
     if python.PyString_Check(path):
         path = python.PyUnicode_FromEncodedObject(path, 'ASCII', NULL)
     path = path.strip()
@@ -113,7 +113,7 @@ cdef _parseObjectPathString(path):
         if python.PyList_GET_SIZE(new_path) == 0:
             if has_dot:
                 # path '.child' => ignore root
-                python.PyList_Append(new_path, _RELATIVE_PATH_SEGMENT)
+                new_path.append(_RELATIVE_PATH_SEGMENT)
             elif index != 0:
                 raise ValueError, u"index not allowed on root node"
         elif not has_dot:
@@ -121,7 +121,7 @@ cdef _parseObjectPathString(path):
         if ns is not None:
             ns = python.PyUnicode_AsUTF8String(ns)
         name = python.PyUnicode_AsUTF8String(name)
-        python.PyList_Append(new_path, (ns, name, index))
+        new_path.append( (ns, name, index) )
 
         path_pos = match.end()
     if python.PyList_GET_SIZE(new_path) == 0 or \
@@ -135,7 +135,7 @@ cdef _parseObjectPathList(path):
     cdef char* index_pos
     cdef char* index_end
     cdef char* c_name
-    new_path = []
+    cdef list new_path = []
     for item in path:
         item = item.strip()
         if python.PyList_GET_SIZE(new_path) == 0 and item == u'':
@@ -159,7 +159,7 @@ cdef _parseObjectPathList(path):
                     raise ValueError, u"index not allowed on root node"
                 name = python.PyString_FromStringAndSize(
                     c_name, <Py_ssize_t>(index_pos - c_name))
-        python.PyList_Append(new_path, (ns, name, index))
+        new_path.append( (ns, name, index) )
     if python.PyList_GET_SIZE(new_path) == 0:
         raise ValueError, u"invalid path"
     return new_path
@@ -302,9 +302,10 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
         _appendValue(cetree.elementFactory(root._doc, c_node.parent),
                      cetree.namespacedName(c_node), value)
 
-cdef _buildDescendantPaths(tree.xmlNode* c_node, prefix_string):
+cdef list _buildDescendantPaths(tree.xmlNode* c_node, prefix_string):
     u"""Returns a list of all descendant paths.
     """
+    cdef list path, path_list
     tag = cetree.namespacedName(c_node)
     if prefix_string:
         if prefix_string[-1] != u'.':
@@ -317,14 +318,15 @@ cdef _buildDescendantPaths(tree.xmlNode* c_node, prefix_string):
     _recursiveBuildDescendantPaths(c_node, path, path_list)
     return path_list
 
-cdef _recursiveBuildDescendantPaths(tree.xmlNode* c_node, path, path_list):
+cdef int _recursiveBuildDescendantPaths(tree.xmlNode* c_node,
+                                        list path, list path_list) except -1:
     u"""Fills the list 'path_list' with all descendant paths, initial prefix
     being in the list 'path'.
     """
     cdef python.PyObject* dict_result
     cdef tree.xmlNode* c_child
     cdef char* c_href
-    python.PyList_Append(path_list, u'.'.join(path))
+    path_list.append( u'.'.join(path) )
     tags = {}
     c_href = tree._getNs(c_node)
     c_child = c_node.children
@@ -332,7 +334,7 @@ cdef _recursiveBuildDescendantPaths(tree.xmlNode* c_node, path, path_list):
         while c_child.type != tree.XML_ELEMENT_NODE:
             c_child = c_child.next
             if c_child is NULL:
-                return
+                return 0
         if c_href is tree._getNs(c_child):
             tag = pyunicode(c_child.name)
         elif c_href is not NULL and tree._getNs(c_child) is NULL:
@@ -348,7 +350,8 @@ cdef _recursiveBuildDescendantPaths(tree.xmlNode* c_node, path, path_list):
         python.PyDict_SetItem(tags, tag, count)
         if count > 0:
             tag += u'[%d]' % count
-        python.PyList_Append(path, tag)
+        path.append(tag)
         _recursiveBuildDescendantPaths(c_child, path, path_list)
         del path[-1]
         c_child = c_child.next
+    return 0

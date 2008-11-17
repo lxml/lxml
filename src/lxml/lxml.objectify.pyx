@@ -195,12 +195,11 @@ cdef class ObjectifiedElement(ElementBase):
         returned in document order.
         """
         cdef tree.xmlNode* c_node
-        result = []
+        cdef list result = []
         c_node = self._c_node.children
         while c_node is not NULL:
             if tree._isElement(c_node):
-                python.PyList_Append(
-                    result, cetree.elementFactory(self._doc, c_node))
+                result.append(cetree.elementFactory(self._doc, c_node))
             c_node = c_node.next
         return result
 
@@ -546,6 +545,7 @@ cdef _setSlice(slice, _Element target, items):
     cdef _Element parent
     cdef tree.xmlNode* c_node
     cdef Py_ssize_t c_step, c_start, pos
+    cdef list new_items
     # collect existing slice
     if (<python.slice>slice).step is None:
         c_step = 1
@@ -568,7 +568,7 @@ cdef _setSlice(slice, _Element target, items):
             new_element = cetree.makeElement(
                 tag, target._doc, None, None, None, None, None)
             _setElementValue(new_element, item)
-        python.PyList_Append(new_items, new_element)
+        new_items.append(new_element)
 
     # sanity check - raise what a list would raise
     if c_step != 1 and \
@@ -1110,19 +1110,18 @@ def getRegisteredTypes():
     check functions, you can simply register() it, which will append it to the
     end of the type list.
     """
-    types = []
-    known = set()
-    add_to_known = known.add
+    cdef list types = []
+    cdef set known = set()
     for check, pytype in _TYPE_CHECKS:
         name = pytype.name
         if name not in known:
-            add_to_known(name)
-            python.PyList_Append(types, pytype)
+            known.add(name)
+            types.append(pytype)
     for pytype in _PYTYPE_DICT.values():
         name = pytype.name
         if name not in known:
-            add_to_known(name)
-            python.PyList_Append(types, pytype)
+            known.add(name)
+            types.append(pytype)
     return types
 
 cdef PyType _guessPyType(value, PyType defaulttype):

@@ -179,7 +179,7 @@ cdef class _BaseErrorLog:
 
 cdef class _ListErrorLog(_BaseErrorLog):
     u"Immutable base version of a list based error log."
-    cdef object _entries
+    cdef list _entries
     def __init__(self, entries, first_error, last_error):
         if entries:
             if first_error is None:
@@ -199,9 +199,9 @@ cdef class _ListErrorLog(_BaseErrorLog):
         return iter(self._entries)
 
     def __repr__(self):
-        l = []
+        cdef list l = []
         for entry in self._entries:
-            python.PyList_Append(l, repr(entry))
+            l.append(repr(entry))
         return u'\n'.join(l)
 
     def __getitem__(self, index):
@@ -226,12 +226,12 @@ cdef class _ListErrorLog(_BaseErrorLog):
         containing the matches.
         """
         cdef _LogEntry entry
-        filtered = []
+        cdef list filtered = []
         if not python.PySequence_Check(domains):
             domains = (domains,)
         for entry in self._entries:
             if entry.domain in domains:
-                python.PyList_Append(filtered, entry)
+                filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
@@ -241,12 +241,12 @@ cdef class _ListErrorLog(_BaseErrorLog):
         log containing the matches.
         """
         cdef _LogEntry entry
+        cdef list filtered = []
         if not python.PySequence_Check(types):
             types = (types,)
-        filtered = []
         for entry in self._entries:
             if entry.type in types:
-                python.PyList_Append(filtered, entry)
+                filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
@@ -256,12 +256,12 @@ cdef class _ListErrorLog(_BaseErrorLog):
         error log containing the matches.
         """
         cdef _LogEntry entry
+        cdef list filtered = []
         if not python.PySequence_Check(levels):
             levels = (levels,)
-        filtered = []
         for entry in self._entries:
             if entry.level in levels:
-                python.PyList_Append(filtered, entry)
+                filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
@@ -270,10 +270,10 @@ cdef class _ListErrorLog(_BaseErrorLog):
         Return a log with all messages of the requested level of worse.
         """
         cdef _LogEntry entry
-        filtered = []
+        cdef list filtered = []
         for entry in self._entries:
             if entry.level >= level:
-                python.PyList_Append(filtered, entry)
+                filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
@@ -325,7 +325,7 @@ cdef class _ErrorLog(_ListErrorLog):
     def receive(self, entry):
         if self._first_error is None:
             self._first_error = entry
-        python.PyList_Append(self._entries, entry)
+        self._entries.append(entry)
 
 cdef class _DomainErrorLog(_ErrorLog):
     def __init__(self, domains):
@@ -343,10 +343,9 @@ cdef class _RotatingErrorLog(_ErrorLog):
         self._max_len = max_len
 
     def receive(self, entry):
-        entries = self._entries
-        if python.PyList_GET_SIZE(entries) > self._max_len:
-            del entries[0]
-        python.PyList_Append(entries, entry)
+        if python.PyList_GET_SIZE(self._entries) > self._max_len:
+            del self._entries[0]
+        self._entries.append(entry)
 
 cdef class PyErrorLog(_BaseErrorLog):
     u"""PyErrorLog(self, logger_name=None)

@@ -49,7 +49,7 @@ cdef class _ParserDictionaryContext:
 
     cdef tree.xmlDict* _c_dict
     cdef _BaseParser _default_parser
-    cdef object _implied_parser_contexts
+    cdef list _implied_parser_contexts
 
     def __init__(self):
         self._implied_parser_contexts = []
@@ -174,7 +174,7 @@ cdef class _ParserDictionaryContext:
         u"Push a new implied context object."
         cdef _ParserDictionaryContext context
         context = self._findThreadParserContext()
-        python.PyList_Append(context._implied_parser_contexts, parser_context)
+        context._implied_parser_contexts.append(parser_context)
 
     cdef void popImpliedContext(self):
         u"Pop the current implied context object."

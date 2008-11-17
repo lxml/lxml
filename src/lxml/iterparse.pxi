@@ -40,7 +40,7 @@ cdef int _countNsDefs(xmlNode* c_node):
         c_ns = c_ns.next
     return count
 
-cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
+cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
     cdef xmlNs* c_ns
     cdef int count
     count = 0
@@ -54,7 +54,7 @@ cdef int _appendStartNsEvents(xmlNode* c_node, event_list):
         else:
             prefix = funicode(c_ns.prefix)
         ns_tuple = (prefix, funicode(c_ns.href))
-        python.PyList_Append(event_list, (u"start-ns", ns_tuple))
+        event_list.append( (u"start-ns", ns_tuple) )
         count = count + 1
         c_ns = c_ns.next
     return count
@@ -69,13 +69,13 @@ cdef class _IterparseContext(_ParserContext):
     cdef _Element  _root
     cdef _Document _doc
     cdef int _event_filter
-    cdef object _events
+    cdef list _events
     cdef int _event_index
-    cdef object _ns_stack
+    cdef list _ns_stack
     cdef object _pop_ns
-    cdef object _node_stack
+    cdef list _node_stack
     cdef object _pop_node
-    cdef object _tag_tuple
+    cdef tuple _tag_tuple
     cdef char*  _tag_href
     cdef char*  _tag_name
 
@@ -146,7 +146,7 @@ cdef class _IterparseContext(_ParserContext):
         elif self._event_filter & ITERPARSE_FILTER_END_NS:
             ns_count = _countNsDefs(c_node)
         if self._event_filter & ITERPARSE_FILTER_END_NS:
-            python.PyList_Append(self._ns_stack, ns_count)
+            self._ns_stack.append(ns_count)
         if self._root is None:
             if self._doc is None:
                 self._doc = _documentFactory(c_node.doc, None)
@@ -155,9 +155,9 @@ cdef class _IterparseContext(_ParserContext):
                _tagMatches(c_node, self._tag_href, self._tag_name):
             node = _elementFactory(self._doc, c_node)
             if self._event_filter & ITERPARSE_FILTER_END:
-                python.PyList_Append(self._node_stack, node)
+                self._node_stack.append(node)
             if self._event_filter & ITERPARSE_FILTER_START:
-                python.PyList_Append(self._events, (u"start", node))
+                self._events.append( (u"start", node) )
         return 0
 
     cdef int endNode(self, xmlNode* c_node) except -1:
@@ -176,14 +176,14 @@ cdef class _IterparseContext(_ParserContext):
                             self._doc = _documentFactory(c_node.doc, None)
                         self._root = self._doc.getroot()
                     node = _elementFactory(self._doc, c_node)
-                python.PyList_Append(self._events, (u"end", node))
+                self._events.append( (u"end", node) )
 
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             ns_count = self._pop_ns()
             if ns_count > 0:
                 event = (u"end-ns", None)
                 for i from 0 <= i < ns_count:
-                    python.PyList_Append(self._events, event)
+                    self._events.append(event)
         return 0
 
     cdef int pushEvent(self, event, xmlNode* c_node) except -1:
@@ -194,7 +194,7 @@ cdef class _IterparseContext(_ParserContext):
             if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
                 self._root = root
         node = _elementFactory(self._doc, c_node)
-        python.PyList_Append(self._events, (event, node))
+        self._events.append( (event, node) )
         return 0
 
     cdef void _assureDocGetsFreed(self):
@@ -526,13 +526,13 @@ cdef class iterwalk:
     A tree walker that generates events from an existing tree as if it
     was parsing XML data with ``iterparse()``.
     """
-    cdef object _node_stack
+    cdef list   _node_stack
     cdef object _pop_node
     cdef int    _index
-    cdef object _events
+    cdef list   _events
     cdef object _pop_event
     cdef int    _event_filter
-    cdef object _tag_tuple
+    cdef tuple  _tag_tuple
     cdef char*  _tag_href
     cdef char*  _tag_name
 
@@ -550,7 +550,7 @@ cdef class iterwalk:
         if self._event_filter != 0:
             self._index = 0
             ns_count = self._start_node(root)
-            python.PyList_Append(self._node_stack, (root, ns_count))
+            self._node_stack.append( (root, ns_count) )
         else:
             self._index = -1
 
@@ -607,7 +607,7 @@ cdef class iterwalk:
                     ns_count = self._start_node(next_node)
                 elif self._event_filter & ITERPARSE_FILTER_END_NS:
                     ns_count = _countNsDefs(next_node._c_node)
-                python.PyList_Append(self._node_stack, (next_node, ns_count))
+                self._node_stack.append( (next_node, ns_count) )
                 self._index = self._index + 1
             if python.PyList_GET_SIZE(self._events):
                 return self._pop_event(0)
@@ -624,7 +624,7 @@ cdef class iterwalk:
         if self._event_filter & ITERPARSE_FILTER_START:
             if self._tag_tuple is None or \
                    _tagMatches(node._c_node, self._tag_href, self._tag_name):
-                python.PyList_Append(self._events, (u"start", node))
+                self._events.append( (u"start", node) )
         return ns_count
 
     cdef _Element _end_node(self):
@@ -634,9 +634,9 @@ cdef class iterwalk:
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \
                    _tagMatches(node._c_node, self._tag_href, self._tag_name):
-                python.PyList_Append(self._events, (u"end", node))
+                self._events.append( (u"end", node) )
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             event = (u"end-ns", None)
             for i from 0 <= i < ns_count:
-                python.PyList_Append(self._events, event)
+                self._events.append(event)
         return node

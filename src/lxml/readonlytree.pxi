@@ -5,7 +5,7 @@ cdef class _ReadOnlyElementProxy:
     cdef bint _free_after_use
     cdef xmlNode* _c_node
     cdef object _source_proxy
-    cdef object _dependent_proxies
+    cdef list _dependent_proxies
 
     cdef int _assertNode(self) except -1:
         u"""This is our way of saying: this proxy is invalid!
@@ -80,6 +80,7 @@ cdef class _ReadOnlyElementProxy:
         cdef Py_ssize_t step, slicelength
         cdef Py_ssize_t c, i
         cdef _node_to_node_function next_element
+        cdef list result
         if python.PySlice_Check(x):
             # slicing
             if _isFullSlice(<python.slice>x):
@@ -95,10 +96,8 @@ cdef class _ReadOnlyElementProxy:
             result = []
             c = 0
             while c_node is not NULL and c < slicelength:
-                python.PyList_Append(
-                    result, _newReadOnlyProxy(self._source_proxy, c_node))
-                python.PyList_Append(
-                    result, _elementFactory(self._doc, c_node))
+                result.append(_newReadOnlyProxy(self._source_proxy, c_node))
+                result.append(_elementFactory(self._doc, c_node))
                 c = c + 1
                 for i from 0 <= i < step:
                     c_node = next_element(c_node)
@@ -199,13 +198,13 @@ cdef class _ReadOnlyElementProxy:
         order.
         """
         cdef xmlNode* c_node
+        cdef list result
         self._assertNode()
         result = []
         c_node = self._c_node.children
         while c_node is not NULL:
             if tree._isElement(c_node):
-                python.PyList_Append(
-                    result, _newReadOnlyProxy(self._source_proxy, c_node))
+                result.append(_newReadOnlyProxy(self._source_proxy, c_node))
             c_node = c_node.next
         return result
 
@@ -261,7 +260,7 @@ cdef inline _initReadOnlyProxy(_ReadOnlyElementProxy el,
         el._dependent_proxies = [el]
     else:
         el._source_proxy = source_proxy
-        python.PyList_Append(source_proxy._dependent_proxies, el)
+        source_proxy._dependent_proxies.append(el)
 
 cdef _freeReadOnlyProxies(_ReadOnlyElementProxy sourceProxy):
     cdef xmlNode* c_node

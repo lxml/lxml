@@ -142,13 +142,13 @@ cdef class _IDDict:
         return iter(self._items)
 
     def values(self):
+        cdef list values = []
         if self._items is None:
             self._items = self._build_items()
-        values = []
         for item in self._items:
             value = python.PyTuple_GET_ITEM(item, 1)
             python.Py_INCREF(value)
-            python.PyList_Append(values, value)
+            values.append(value)
         return values
 
     def itervalues(self):
@@ -173,23 +173,24 @@ cdef void _collectIdHashItemDict(void* payload, void* context, char* name):
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return
-    dic, doc = <object>context
+    dic, doc = <tuple>context
     element = _elementFactory(doc, c_id.attr.parent)
     python.PyDict_SetItem(dic, funicode(name), element)
 
 cdef void _collectIdHashItemList(void* payload, void* context, char* name):
     # collect elements from ID attribute hash table
     cdef tree.xmlID* c_id
+    cdef list lst
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return
-    lst, doc = <object>context
+    lst, doc = <tuple>context
     element = _elementFactory(doc, c_id.attr.parent)
-    python.PyList_Append(lst, (funicode(name), element))
+    lst.append( (funicode(name), element) )
 
 cdef void _collectIdHashKeys(void* payload, void* collect_list, char* name):
     cdef tree.xmlID* c_id
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return
-    python.PyList_Append(<object>collect_list, funicode(name))
+    (<list>collect_list).append(funicode(name))

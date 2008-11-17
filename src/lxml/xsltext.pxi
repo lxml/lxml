@@ -29,6 +29,7 @@ cdef class XSLTExtension:
         cdef xmlNode* c_next
         cdef xmlNode* c_context_node
         cdef _ReadOnlyElementProxy proxy
+        cdef list results
         c_context_node = _roNodeOf(node)
         #assert c_context_node.doc is context._xsltContext.node.doc, \
         #    "switching input documents during transformation is not currently supported"
@@ -48,12 +49,11 @@ cdef class XSLTExtension:
             while c_node is not NULL:
                 c_next = c_node.next
                 if c_node.type == tree.XML_TEXT_NODE:
-                    python.PyList_Append(
-                        results, funicode(c_node.content))
+                    results.append(funicode(c_node.content))
                 elif c_node.type == tree.XML_ELEMENT_NODE:
                     proxy = _newReadOnlyProxy(
                         context._extension_element_proxy, c_node)
-                    python.PyList_Append(results, proxy)
+                    results.append(proxy)
                     # unlink node and make sure it will be freed later on
                     tree.xmlUnlinkNode(c_node)
                     proxy.free_after_use()

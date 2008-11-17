@@ -143,7 +143,7 @@ class C14NError(LxmlError):
 
 # version information
 cdef __unpackDottedVersion(version):
-    version_list = []
+    cdef list version_list = []
     l = (version.decode(u"ASCII").replace(u'-', u'.').split(u'.') + [0]*4)[:4]
     for item in l:
         try:
@@ -189,12 +189,12 @@ __version__ = (tree.LXML_VERSION_STRING).decode(u"ASCII")
 
 # class for temporary storage of Python references
 cdef class _TempStore:
-    cdef object _storage
+    cdef list _storage
     def __init__(self):
         self._storage = []
 
     cdef int add(self, obj) except -1:
-        python.PyList_Append(self._storage, obj)
+        self._storage.append(obj)
         return 0
 
     cdef int clear(self) except -1:
@@ -903,6 +903,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef Py_ssize_t step, slicelength
         cdef Py_ssize_t c, i
         cdef _node_to_node_function next_element
+        cdef list result
         if python.PySlice_Check(x):
             # slicing
             if _isFullSlice(<python.slice>x):
@@ -918,8 +919,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             result = []
             c = 0
             while c_node is not NULL and c < slicelength:
-                python.PyList_Append(
-                    result, _elementFactory(self._doc, c_node))
+                result.append(_elementFactory(self._doc, c_node))
                 c = c + 1
                 for i from 0 <= i < step:
                     c_node = next_element(c_node)

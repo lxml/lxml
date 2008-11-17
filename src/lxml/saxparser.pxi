@@ -336,8 +336,8 @@ cdef class TreeBuilder(_SaxParserTarget):
     """
     cdef _BaseParser _parser
     cdef object _factory
-    cdef object _data
-    cdef object _element_stack
+    cdef list _data
+    cdef list _element_stack
     cdef object _element_stack_pop
     cdef _Element _last
     cdef bint _in_tail
@@ -431,7 +431,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         else:
             self._last = _makeElement(
                 tag, NULL, None, self._parser, None, None, attrib, nsmap, None)
-        python.PyList_Append(self._element_stack, self._last)
+        self._element_stack.append(self._last)
         self._in_tail = 0
         return self._last
 
@@ -442,7 +442,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         return self._last
 
     cdef int _handleSaxData(self, data) except -1:
-        python.PyList_Append(self._data, data)
+        self._data.append(data)
 
     cdef _handleSaxPi(self, target, data):
         self._flush()
