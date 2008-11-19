@@ -57,7 +57,11 @@ cdef class _LogEntry:
             self.message = python.PyUnicode_DecodeUTF8(
                 error.message, size, NULL)
         except:
-            self.message = repr(error.message)
+            try:
+                self.message = python.PyUnicode_DecodeASCII(
+                    error.message, size, 'backslashreplace')
+            except:
+                self.message = u'<undecodable error message>'
         if error.file is NULL:
             self.filename = u'<string>'
         else:
@@ -510,6 +514,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 
 cdef void __initErrorConstants():
     u"Called at setup time to parse the constants and build the classes below."
+    cdef dict reverse_dict
     find_constants = re.compile(ur"\s*([a-zA-Z0-9_]+)\s*=\s*([0-9]+)").findall
     const_defs = ((ErrorLevels,          __ERROR_LEVELS),
                   (ErrorDomains,         __ERROR_DOMAINS),
@@ -524,7 +529,7 @@ cdef void __initErrorConstants():
             for name, value in find_constants(constants):
                 value = int(value)
                 python.PyObject_SetAttr(cls, name, value)
-                python.PyDict_SetItem(reverse_dict, value, name)
+                reverse_dict[value] = name
 
 
 class ErrorLevels:
