@@ -9,6 +9,7 @@ def XMLID(text):
     attributes.  The elements referenced by the ID are stored as dictionary
     values.
     """
+    cdef dict dic
     global _find_id_attributes
     if _find_id_attributes is None:
         _find_id_attributes = XPath(u'//*[string(@id)]')
@@ -17,7 +18,7 @@ def XMLID(text):
     root = XML(text)
     dic = {}
     for elem in _find_id_attributes(root):
-        python.PyDict_SetItem(dic, elem.get(u'id'), elem)
+        dic[elem.get(u'id')] = elem
     return (root, dic)
 
 def XMLDTDID(text):
@@ -175,7 +176,7 @@ cdef void _collectIdHashItemDict(void* payload, void* context, char* name):
         return
     dic, doc = <tuple>context
     element = _elementFactory(doc, c_id.attr.parent)
-    python.PyDict_SetItem(dic, funicode(name), element)
+    dic[funicode(name)] = element
 
 cdef void _collectIdHashItemList(void* payload, void* context, char* name):
     # collect elements from ID attribute hash table

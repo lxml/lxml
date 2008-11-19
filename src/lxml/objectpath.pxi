@@ -326,8 +326,8 @@ cdef int _recursiveBuildDescendantPaths(tree.xmlNode* c_node,
     cdef python.PyObject* dict_result
     cdef tree.xmlNode* c_child
     cdef char* c_href
+    cdef dict tags = {}
     path_list.append( u'.'.join(path) )
-    tags = {}
     c_href = tree._getNs(c_node)
     c_child = c_node.children
     while c_child is not NULL:
@@ -347,7 +347,7 @@ cdef int _recursiveBuildDescendantPaths(tree.xmlNode* c_node,
             count = 0
         else:
             count = (<object>dict_result) + 1
-        python.PyDict_SetItem(tags, tag, count)
+        tags[tag] = count
         if count > 0:
             tag += u'[%d]' % count
         path.append(tag)

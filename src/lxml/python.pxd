@@ -59,11 +59,11 @@ cdef extern from "Python.h":
     cdef object PyList_AsTuple(object l)
     cdef void PyList_Clear(object l)
 
-    cdef int PyDict_SetItemString(object d, char* key, object value) except -1
-    cdef int PyDict_SetItem(object d, object key, object value) except -1
+#    cdef int PyDict_SetItemString(object d, char* key, object value) except -1
+#    cdef int PyDict_SetItem(object d, object key, object value) except -1
     cdef PyObject* PyDict_GetItemString(object d, char* key)
     cdef PyObject* PyDict_GetItem(object d, object key)
-    cdef int PyDict_DelItem(object d, object key) except -1
+#    cdef int PyDict_DelItem(object d, object key) except -1
     cdef void PyDict_Clear(object d)
     cdef object PyDict_Copy(object d)
     cdef object PyDictProxy_New(object d)

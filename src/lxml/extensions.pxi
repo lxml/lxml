@@ -45,6 +45,7 @@ cdef class _BaseContext:
     def __init__(self, namespaces, extensions, enable_regexp,
                  build_smart_strings):
         cdef _ExsltRegExp _regexp 
+        cdef dict new_extensions
         cdef list ns
         self._utf_refs = {}
         self._global_namespaces = []
@@ -58,13 +59,12 @@ cdef class _BaseContext:
             # format: [ {(ns, name):function} ] -> {(ns_utf, name_utf):function}
             new_extensions = {}
             for extension in extensions:
-                for (ns_uri, name), function in extension.items():
+                for (ns_uri, name), function in extension.iteritems():
                     if name is None:
                         raise ValueError, u"extensions must have non empty names"
                     ns_utf   = self._to_utf(ns_uri)
                     name_utf = self._to_utf(name)
-                    python.PyDict_SetItem(
-                        new_extensions, (ns_utf, name_utf), function)
+                    new_extensions[(ns_utf, name_utf)] = function
             extensions = new_extensions or None
 
         if namespaces is not None:
@@ -116,7 +116,7 @@ cdef class _BaseContext:
         if dict_result is not NULL:
             return <object>dict_result
         utf = _utf8(s)
-        python.PyDict_SetItem(self._utf_refs, s, utf)
+        self._utf_refs[s] = utf
         return utf
 
     cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt):
@@ -181,7 +181,7 @@ cdef class _BaseContext:
                 self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
 
     cdef registerGlobalNamespaces(self):
-        ns_prefixes = _find_all_extension_prefixes()
+        cdef list ns_prefixes = _find_all_extension_prefixes()
         if python.PyList_GET_SIZE(ns_prefixes) > 0:
             for prefix_utf, ns_uri_utf in ns_prefixes:
                 self._global_namespaces.append(prefix_utf)
@@ -204,48 +204,48 @@ cdef class _BaseContext:
     cdef void _addLocalExtensionFunction(self, ns_utf, name_utf, function):
         if self._extensions is None:
             self._extensions = {}
-        python.PyDict_SetItem(self._extensions, (ns_utf, name_utf), function)
+        self._extensions[(ns_utf, name_utf)] = function
 
     cdef void registerGlobalFunctions(self, void* ctxt,
-                                    _register_function reg_func):
+                                      _register_function reg_func):
         cdef python.PyObject* dict_result
-        for ns_utf, ns_functions in _iter_ns_extension_functions():
+        cdef dict d
+        for ns_utf, ns_functions in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
             dict_result = python.PyDict_GetItem(
                 self._function_cache, ns_utf)
             if dict_result is not NULL:
-                d = <object>dict_result
+                d = <dict>dict_result
             else:
                 d = {}
-                python.PyDict_SetItem(
-                    self._function_cache, ns_utf, d)
-            for name_utf, function in ns_functions.items():
-                python.PyDict_SetItem(d, name_utf, function)
+                self._function_cache[ns_utf] = d
+            for name_utf, function in ns_functions.iteritems():
+                d[name_utf] = function
                 reg_func(ctxt, name_utf, ns_utf)
 
     cdef void registerLocalFunctions(self, void* ctxt,
                                       _register_function reg_func):
         cdef python.PyObject* dict_result
+        cdef dict d
         if self._extensions is None:
             return # done
         last_ns = None
         d = None
-        for (ns_utf, name_utf), function in self._extensions.items():
+        for (ns_utf, name_utf), function in self._extensions.iteritems():
             if ns_utf is not last_ns or d is None:
                 last_ns = ns_utf
                 dict_result = python.PyDict_GetItem(
                     self._function_cache, ns_utf)
                 if dict_result is not NULL:
-                    d = <object>dict_result
+                    d = <dict>dict_result
                 else:
                     d = {}
-                    python.PyDict_SetItem(self._function_cache,
-                                          ns_utf, d)
-            python.PyDict_SetItem(d, name_utf, function)
+                    self._function_cache[ns_utf] = d
+            d[name_utf] = function
             reg_func(ctxt, name_utf, ns_utf)
 
     cdef unregisterAllFunctions(self, void* ctxt,
                                       _register_function unreg_func):
-        for ns_utf, functions in self._function_cache.items():
+        for ns_utf, functions in self._function_cache.iteritems():
             for name_utf in functions:
                 unreg_func(ctxt, name_utf, ns_utf)
 
@@ -342,25 +342,23 @@ def Extension(module, function_mapping=None, *, ns=None):
     The ``ns`` keyword argument accepts a namespace URI for the XPath
     functions.
     """
-    functions = {}
+    cdef dict functions = {}
     if python.PyDict_Check(function_mapping):
         for function_name, xpath_name in function_mapping.items():
-            python.PyDict_SetItem(functions, (ns, xpath_name),
-                                  getattr(module, function_name))
+            functions[(ns, xpath_name)] = getattr(module, function_name)
     else:
         if function_mapping is None:
             function_mapping = [ name for name in dir(module)
                                  if not name.startswith(u'_') ]
         for function_name in function_mapping:
-            python.PyDict_SetItem(functions, (ns, function_name),
-                                  getattr(module, function_name))
+            functions[(ns, function_name)] = getattr(module, function_name)
     return functions
 
 ################################################################################
 # EXSLT regexp implementation
 
 cdef class _ExsltRegExp:
-    cdef object _compile_map
+    cdef dict _compile_map
     def __init__(self):
         self._compile_map = {}
 
@@ -400,7 +398,7 @@ cdef class _ExsltRegExp:
         if ignore_case:
             py_flags = py_flags | re.IGNORECASE
         rexp_compiled = re.compile(rexp, py_flags)
-        python.PyDict_SetItem(self._compile_map, key, rexp_compiled)
+        self._compile_map[key] = rexp_compiled
         return rexp_compiled
 
     def test(self, ctxt, s, rexp, flags=u''):

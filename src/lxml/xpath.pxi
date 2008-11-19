@@ -473,10 +473,9 @@ cdef class ETXPath(XPath):
                 namespace = namespace_def[1:-1] # remove '{}'
                 namespace = python.PyUnicode_FromEncodedObject(
                     namespace, 'UTF-8', 'strict')
-                python.PyDict_SetItem(
-                    namespaces,
-                    python.PyUnicode_FromEncodedObject(prefix, 'UTF-8', 'strict'),
-                    namespace)
+                namespaces[
+                    python.PyUnicode_FromEncodedObject(prefix, 'UTF-8', 'strict')
+                    ] = namespace
                 prefix_str = prefix + ':'
                 # FIXME: this also replaces {namespaces} within strings!
                 path_utf = path_utf.replace(namespace_def, prefix_str)

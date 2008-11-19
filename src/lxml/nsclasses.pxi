@@ -15,7 +15,7 @@ cdef class _NamespaceRegistry:
     u"Dictionary-like namespace registry"
     cdef object _ns_uri
     cdef object _ns_uri_utf
-    cdef object _entries
+    cdef dict _entries
     cdef char* _c_ns_uri_utf
     def __init__(self, ns_uri):
         self._ns_uri = ns_uri
@@ -50,7 +50,7 @@ cdef class _NamespaceRegistry:
     def __delitem__(self, name):
         if name is not None:
             name = _utf8(name)
-        python.PyDict_DelItem(self._entries, name)
+        del self._entries[name]
 
     cdef object _get(self, object name):
         cdef python.PyObject* dict_result
@@ -161,7 +161,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
 ################################################################################
 # XPath extension functions
 
-cdef object __FUNCTION_NAMESPACE_REGISTRIES
+cdef dict __FUNCTION_NAMESPACE_REGISTRIES
 __FUNCTION_NAMESPACE_REGISTRIES = {}
 
 def FunctionNamespace(ns_uri):
@@ -219,19 +219,16 @@ cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
                 self._prefix_utf = _utf8(prefix)
             self._prefix = prefix
 
-cdef object _find_all_extension_prefixes():
+cdef list _find_all_extension_prefixes():
     u"Internal lookup function to find all function prefixes for XSLT/XPath."
     cdef _XPathFunctionNamespaceRegistry registry
     cdef list ns_prefixes = []
-    for registry in __FUNCTION_NAMESPACE_REGISTRIES.values():
+    for registry in __FUNCTION_NAMESPACE_REGISTRIES.itervalues():
         if registry._prefix_utf is not None:
             if registry._ns_uri_utf is not None:
                 ns_prefixes.append(
                     (registry._prefix_utf, registry._ns_uri_utf))
     return ns_prefixes
-
-cdef object _iter_ns_extension_functions():
-    return __FUNCTION_NAMESPACE_REGISTRIES.items()
 
 cdef object _find_extension(ns_uri_utf, name_utf):
     cdef python.PyObject* dict_result

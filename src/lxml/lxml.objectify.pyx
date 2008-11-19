@@ -152,6 +152,7 @@ cdef class ObjectifiedElement(ElementBase):
             cdef char* c_ns
             cdef char* c_child_ns
             cdef _Element child
+            cdef dict children
             c_ns = tree._getNs(self._c_node)
             if c_ns is NULL:
                 tag = None
@@ -163,7 +164,7 @@ cdef class ObjectifiedElement(ElementBase):
                     continue
                 name = pyunicode(child._c_node.name)
                 if python.PyDict_GetItem(children, name) is NULL:
-                    python.PyDict_SetItem(children, name, child)
+                    children[name] = child
             return children
 
     def __len__(self):
@@ -1926,14 +1927,14 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
             _xsi = u'xsd:' + _xsi
         else:
             name = _xsi
-            for prefix, ns in nsmap.items():
+            for prefix, ns in nsmap.iteritems():
                 if ns == XML_SCHEMA_NS:
                     if prefix is not None and prefix:
                         _xsi = prefix + u':' + _xsi
                     break
             else:
                 raise ValueError, u"XSD types require the XSD namespace"
-        python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_TYPE_ATTR, _xsi)
+        _attributes[XML_SCHEMA_INSTANCE_TYPE_ATTR] = _xsi
         if _pytype is None:
             # allow using unregistered or even wrong xsi:type names
             dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, _xsi)
@@ -1961,7 +1962,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
     if _pytype is not None: 
         if _pytype == u"NoneType" or _pytype == u"none":
             strval = None
-            python.PyDict_SetItem(_attributes, XML_SCHEMA_INSTANCE_NIL_ATTR, u"true")
+            _attributes[XML_SCHEMA_INSTANCE_NIL_ATTR] = u"true"
         else:
             # check if type information from arguments is valid
             dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
@@ -1970,7 +1971,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
                 if type_check is not None:
                     type_check(strval)
 
-                python.PyDict_SetItem(_attributes, PYTYPE_ATTRIBUTE, _pytype)
+                _attributes[PYTYPE_ATTRIBUTE] = _pytype
 
     return _makeElement(u"value", strval, _attributes, nsmap)
 

@@ -843,7 +843,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __get__(self):
             cdef xmlNode* c_node
             cdef xmlNs* c_ns
-            nsmap = {}
+            cdef dict nsmap = {}
             c_node = self._c_node
             while c_node is not NULL and c_node.type == tree.XML_ELEMENT_NODE:
                 c_ns = c_node.nsDef
@@ -853,8 +853,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                     else:
                         prefix = funicode(c_ns.prefix)
                     if not python.PyDict_GetItem(nsmap, prefix):
-                        python.PyDict_SetItem(
-                            nsmap, prefix, funicode(c_ns.href))
+                        nsmap[prefix] = funicode(c_ns.href)
                     c_ns = c_ns.next
                 c_node = c_node.parent
             return nsmap

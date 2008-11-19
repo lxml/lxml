@@ -152,7 +152,7 @@ cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                     value = python.PyUnicode_DecodeUTF8(
                         c_attributes[3], c_attributes[4] - c_attributes[3],
                         "strict")
-                python.PyDict_SetItem(attrib, name, value)
+                attrib[name] = value
                 c_attributes += 5
         if c_nb_namespaces == 0:
             nsmap = EMPTY_READ_ONLY_DICT
@@ -163,8 +163,7 @@ cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                     prefix = None
                 else:
                     prefix = funicode(c_namespaces[0])
-                python.PyDict_SetItem(
-                    nsmap, prefix, funicode(c_namespaces[1]))
+                nsmap[prefix] = funicode(c_namespaces[1])
                 c_namespaces += 2
         element = context._target._handleSaxStart(tag, attrib, nsmap)
         if element is not None and c_ctxt.input is not NULL:
@@ -202,7 +201,7 @@ cdef void _handleSaxStartNoNs(void* ctxt, char* c_name,
                 else:
                     value = funicode(c_attributes[1])
                 c_attributes = c_attributes + 2
-                python.PyDict_SetItem(attrib, name, value)
+                attrib[name] = value
         element = context._target._handleSaxStart(
             tag, attrib, EMPTY_READ_ONLY_DICT)
         if element is not None and c_ctxt.input is not NULL:

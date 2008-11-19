@@ -265,30 +265,29 @@ cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
         <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
         NULL)
 
+cdef dict EMPTY_DICT = {}
 
 cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
-    cdef object _extension_elements
     cdef _ReadOnlyElementProxy _extension_element_proxy
+    cdef dict _extension_elements
     def __init__(self, namespaces, extensions, enable_regexp,
                  build_smart_strings):
         self._xsltCtxt = NULL
-        self._extension_elements = EMPTY_READ_ONLY_DICT
+        self._extension_elements = EMPTY_DICT
         if extensions is not None and extensions:
             for ns_name_tuple, extension in extensions.items():
                 if ns_name_tuple[0] is None:
                     raise XSLTExtensionError, \
                         u"extensions must not have empty namespaces"
                 if isinstance(extension, XSLTExtension):
-                    if self._extension_elements is EMPTY_READ_ONLY_DICT:
+                    if self._extension_elements is EMPTY_DICT:
                         self._extension_elements = {}
                         extensions = python.PyDict_Copy(extensions)
                     ns_utf   = _utf8(ns_name_tuple[0])
                     name_utf = _utf8(ns_name_tuple[1])
-                    python.PyDict_SetItem(
-                        self._extension_elements, (ns_utf, name_utf),
-                        extension)
-                    python.PyDict_DelItem(extensions, ns_name_tuple)
+                    self._extension_elements[(ns_utf, name_utf)] = extension
+                    del extensions[ns_name_tuple]
         _BaseContext.__init__(self, namespaces, extensions, enable_regexp,
                               build_smart_strings)
 
