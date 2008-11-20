@@ -50,7 +50,6 @@ def download_library(dest_dir, location, name, version_re, filename,
                 raise Exception(
                     "Could not find the most current version of the %s from the files: %s"
                     % (name, fns))
-            filename = filename % version
         except IOError:
             # network failure - maybe we have the files already?
             latest = (0,0,0)
@@ -66,6 +65,7 @@ def download_library(dest_dir, location, name, version_re, filename,
                             break
             else:
                 raise
+    filename = filename % version
     full_url = urlparse.urljoin(location, filename)
     dest_filename = os.path.join(dest_dir, filename)
     if os.path.exists(dest_filename):
