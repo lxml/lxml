@@ -282,19 +282,19 @@ def find_xslt_config():
 
 ## Option handling:
 
-def has_option(name, default='false'):
+def has_option(name):
     try:
         sys.argv.remove('--%s' % name)
         return True
     except ValueError:
         pass
     # allow passing all cmd line options also as environment variables
-    env_val = os.getenv(name.upper().replace('-', '_'), default).lower()
+    env_val = os.getenv(name.upper().replace('-', '_'), 'false').lower()
     if env_val == "true":
         return True
     return False
 
-def option_value(name, default=None):
+def option_value(name):
     for index, option in enumerate(sys.argv):
         if option == '--' + name:
             if index+1 >= len(sys.argv):
@@ -307,7 +307,7 @@ def option_value(name, default=None):
             value = option[len(name)+3:]
             sys.argv[index:index+1] = []
             return value
-    env_val = os.getenv(name.upper().replace('-', '_'), default)
+    env_val = os.getenv(name.upper().replace('-', '_'))
     return env_val
 
 # pick up any commandline options
@@ -317,7 +317,7 @@ OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
-OPTION_BUILD_LIBXML2XSLT = has_option('static-deps', 'true')
+OPTION_BUILD_LIBXML2XSLT = has_option('static-deps')
 if OPTION_BUILD_LIBXML2XSLT:
     OPTION_STATIC = True
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
