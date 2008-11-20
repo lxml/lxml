@@ -1,5 +1,5 @@
 exclude *.py
-include setup.py ez_setup.py setupinfo.py versioninfo.py
+include setup.py ez_setup.py setupinfo.py versioninfo.py buildlibxml.py
 include test.py selftest.py selftest2.py
 include update-error-constants.py
 include MANIFEST.in Makefile version.txt
