@@ -464,6 +464,8 @@ cdef class XSLT:
             python.PyErr_NoMemory()
 
         initTransformDict(transform_ctxt)
+        xslt.xsltSetCtxtParseOptions(
+            transform_ctxt, input_doc._parser._parse_options)
 
         if profile_run:
             transform_ctxt.profile = 1

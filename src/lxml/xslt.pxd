@@ -99,6 +99,9 @@ cdef extern from "libxslt/xsltutils.h":
     cdef void xsltTransformError(xsltTransformContext* ctxt, 
                                  xsltStylesheet* style, 
                                  xmlNode* node, char* msg, ...)
+    cdef void xsltSetCtxtParseOptions(
+        xsltTransformContext* ctxt, int options)
+
 cdef extern from "libxslt/security.h":
     ctypedef struct xsltSecurityPrefs
     ctypedef enum xsltSecurityOption:

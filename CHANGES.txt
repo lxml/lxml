@@ -20,6 +20,8 @@ Features added
 Bugs fixed
 ----------
 
+* XSLT didn't inherit the parse options of the input document.
+
 * 0-bytes could slip through the API when used inside of Unicode
   strings.
 
