@@ -449,7 +449,7 @@ cdef class XSLT:
         cdef _Document profile_doc
         cdef xmlDoc* c_profile_doc
         cdef xslt.xsltTransformContext* transform_ctxt
-        cdef xmlDoc* c_result
+        cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
         cdef tree.xmlDict* c_dict
 
