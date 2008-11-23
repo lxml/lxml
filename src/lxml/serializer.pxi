@@ -312,7 +312,7 @@ cdef int _closeFilelikeWriter(void* ctxt):
 cdef _tofilelike(f, _Element element, encoding, method,
                  bint write_xml_declaration, bint write_doctype,
                  bint pretty_print, bint with_tail):
-    cdef python.PyThreadState* state
+    cdef python.PyThreadState* state = NULL
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
@@ -370,7 +370,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments):
     cdef char* c_filename
     cdef xmlDoc* c_base_doc
     cdef xmlDoc* c_doc
-    cdef int bytes
+    cdef int bytes = -1
 
     c_base_doc = element._c_node.doc
     c_doc = _fakeRootDoc(c_base_doc, element._c_node)
