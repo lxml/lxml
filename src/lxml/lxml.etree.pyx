@@ -227,12 +227,23 @@ cdef class _ExceptionContext:
             raise type, value, traceback
 
 
-# forward declaration of _BaseParser, see parser.pxi
+# forward declarations
+cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]
+cdef public class _Element [ type LxmlElementType, object LxmlElement ]
 cdef class _BaseParser
 cdef class QName
-
 ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
 
+################################################################################
+# Include submodules
+
+include "proxy.pxi"        # Proxy handling (element backpointers/memory/etc.)
+include "apihelpers.pxi"   # Private helper functions
+include "xmlerror.pxi"     # Error and log handling
+
+
+################################################################################
+# Public Python API
 
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     u"""Internal base class to reference a libxml document.
@@ -520,7 +531,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             raise ValueError, u"cannot assign None"
         if python.PySlice_Check(x):
             # slice assignment
-            _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+            _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
             if step > 0:
                 left_to_right = 1
             else:
@@ -563,7 +574,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                         _removeNode(self._doc, c_node)
                         c_node = c_next
             else:
-                _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+                _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
                 _deleteSlice(self._doc, c_node, slicelength, step)
         else:
             # item deletion
@@ -907,7 +918,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # slicing
             if _isFullSlice(<python.slice>x):
                 return _collectChildren(self)
-            _findChildSlice(x, self._c_node, &c_node, &step, &slicelength)
+            _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
             if c_node is NULL:
                 return []
             if step > 0:
@@ -2609,12 +2620,10 @@ def cleanup_namespaces(tree_or_element):
     element = _rootNodeOrRaise(tree_or_element)
     _removeUnusedNamespaceDeclarations(element._c_node)
 
+
 ################################################################################
 # Include submodules
 
-include "proxy.pxi"        # Proxy handling (element backpointers/memory/etc.)
-include "apihelpers.pxi"   # Private helper functions
-include "xmlerror.pxi"     # Error and log handling
 include "readonlytree.pxi" # Read-only implementation of Element proxies
 include "classlookup.pxi"  # Element class lookup mechanisms
 include "nsclasses.pxi"    # Namespace implementation and registry

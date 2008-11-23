@@ -83,7 +83,7 @@ cdef extern from "Python.h":
     cdef bint PySlice_Check(object instance)
 
     cdef int _PyEval_SliceIndex(object value, Py_ssize_t* index) except 0
-    cdef int PySlice_GetIndicesEx(object slice, Py_ssize_t length,
+    cdef int PySlice_GetIndicesEx(slice slice, Py_ssize_t length,
                                   Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
                                   Py_ssize_t *slicelength) except -1
 
