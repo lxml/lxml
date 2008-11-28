@@ -155,6 +155,7 @@ not take advantage of lxml's enhanced feature set.
 * lwebstring_, an XML template engine
 * OpenXMLlib_, a library for handling OpenXML document meta data
 * Pycoon_, a WSGI web development framework based on XML pipelines
+* PyQuery_, a query framework for XML/HTML, similar to jQuery for JavaScript
 * Rambler_, a meta search engine that aggregates different data sources
 * rdfadict_, an RDFa parser with a simple dictionary-like interface.
 
@@ -177,6 +178,7 @@ And don't miss the quotes by our generally happy_ users_, and other
 .. _lwebstring: http://pypi.python.org/pypi/lwebstring
 .. _OpenXMLlib: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
 .. _Pycoon: http://pypi.python.org/pypi/pycoon
+.. _PyQuery: http://pypi.python.org/pypi/pyquery
 .. _Rambler: http://beta.rambler.ru/srch?query=python+lxml&searchtype=web
 .. _rdfadict: http://pypi.python.org/pypi/rdfadict
 .. _z3c.rml: http://pypi.python.org/pypi/z3c.rml
