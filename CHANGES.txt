@@ -2,8 +2,11 @@
 lxml changelog
 ==============
 
-svn trunk
-=========
+Under development
+=================
+
+Features added
+--------------
 
 Bugs fixed
 ----------
@@ -17,6 +20,7 @@ Other changes
 
 * Allow ``lxml.html.diff.htmldiff`` to accept element objects, not
   just HTML strings
+
 
 2.2alpha1 (2008-11-23)
 ======================

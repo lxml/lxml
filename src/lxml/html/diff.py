@@ -1,7 +1,6 @@
 import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
-from lxml.etree import _Element
 import cgi
 import re
 
@@ -525,7 +524,7 @@ def tokenize(html, include_hrefs=True):
 
     If include_hrefs is true, then the href attribute of <a> tags is
     included as a special kind of diffable token."""
-    if isinstance(html, _Element):
+    if etree.iselement(html):
         body_el = html
     else:
         body_el = parse_html(html, cleanup=True)
