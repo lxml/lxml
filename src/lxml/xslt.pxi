@@ -283,7 +283,7 @@ cdef class _XSLTContext(_BaseContext):
                 if isinstance(extension, XSLTExtension):
                     if self._extension_elements is EMPTY_DICT:
                         self._extension_elements = {}
-                        extensions = python.PyDict_Copy(extensions)
+                        extensions = extensions.copy()
                     ns_utf   = _utf8(ns_name_tuple[0])
                     name_utf = _utf8(ns_name_tuple[1])
                     self._extension_elements[(ns_utf, name_utf)] = extension

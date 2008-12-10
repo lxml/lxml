@@ -104,7 +104,7 @@ cdef class _BaseContext:
         context = self.__class__(namespaces, None, False,
                                  self._build_smart_strings)
         if self._extensions is not None:
-            context._extensions = python.PyDict_Copy(self._extensions)
+            context._extensions = self._extensions.copy()
         return context
 
     cdef object _to_utf(self, s):
