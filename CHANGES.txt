@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+svn trunk
+=========
+
+Bugs fixed
+----------
+
+* Fixed missing whitespace before ``Link:...`` in ``lxml.html.diff``
+
+Other changes
+-------------
+
+* Export ``lxml.html.parse``
+
+* Allow ``lxml.html.diff.htmldiff`` to accept element objects, not
+  just HTML strings
+
 2.2alpha1 (2008-11-23)
 ======================
 

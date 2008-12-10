@@ -51,7 +51,7 @@ __all__ = [
     'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
     'tostring', 'Element', 'defs', 'open_in_browser', 'submit_form',
     'find_rel_links', 'find_class', 'make_links_absolute',
-    'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser']
+    'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser', 'parse']
 
 XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
 

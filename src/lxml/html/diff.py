@@ -1,6 +1,7 @@
 import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
+from lxml.etree import _Element
 import cgi
 import re
 
@@ -507,7 +508,7 @@ class href_token(token):
     hide_when_equal = True
 
     def html(self):
-        return 'Link: %s' % self
+        return ' Link: %s' % self
 
 def tokenize(html, include_hrefs=True):
     """
@@ -524,7 +525,10 @@ def tokenize(html, include_hrefs=True):
 
     If include_hrefs is true, then the href attribute of <a> tags is
     included as a special kind of diffable token."""
-    body_el = parse_html(html, cleanup=True)
+    if isinstance(html, _Element):
+        body_el = html
+    else:
+        body_el = parse_html(html, cleanup=True)
     # Then we split the document into text chunks for each tag, word, and end tag:
     chunks = flatten_el(body_el, skip_tag=True, include_hrefs=include_hrefs)
     # Finally re-joining them into token objects:
