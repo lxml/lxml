@@ -40,6 +40,8 @@ except (KeyError, NameError):
     basestring = (str, bytes)
 
 def __fix_docstring(s):
+    if not s:
+        return s
     import sys
     if sys.version_info[0] >= 3:
         sub = re.compile(r"^(\s*)u'", re.M).sub
