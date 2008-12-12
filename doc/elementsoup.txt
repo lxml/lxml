@@ -2,21 +2,26 @@
 BeautifulSoup Parser
 ====================
 
-BeautifulSoup_ is a Python package that parses broken HTML.  While
-libxml2 (and thus lxml) can also parse broken HTML, BeautifulSoup is a
-bit more forgiving in some cases (though it is also common that
-lxml/libxml2 will parse common broken HTML better), and BeautifulSoup
-and has superiour `support for encoding detection`_.
+BeautifulSoup_ is a Python package that parses broken HTML, just like
+lxml supports it based on the parser of libxml2.  BeautifulSoup uses a
+different parsing approach.  It is not a real HTML parser but uses
+regular expressions to dive through tag soup.  It is therefore more
+forgiving in some cases and less good in others.  It is not uncommon
+that lxml/libxml2 parses and fixes broken HTML better, but
+BeautifulSoup has superiour `support for encoding detection`_.  It
+very much depends on the input which parser works better.
 
 .. _BeautifulSoup: http://www.crummy.com/software/BeautifulSoup/
 .. _`support for encoding detection`: http://www.crummy.com/software/BeautifulSoup/documentation.html#Beautiful%20Soup%20Gives%20You%20Unicode%2C%20Dammit
 .. _ElementSoup: http://effbot.org/zone/element-soup.htm
 
-lxml can benefit from the parsing capabilities of BeautifulSoup
-through the ``lxml.html.soupparser`` module.  It provides three main
-functions: ``fromstring()`` and ``parse()`` to parse a string or file
-using BeautifulSoup, and ``convert_tree()`` to convert an existing
-BeautifulSoup tree into a list of top-level Elements.
+To prevent users from having to choose their parser library in
+advance, lxml can interface to the parsing capabilities of
+BeautifulSoup through the ``lxml.html.soupparser`` module.  It
+provides three main functions: ``fromstring()`` and ``parse()`` to
+parse a string or file using BeautifulSoup into an ``lxml.html``
+document, and ``convert_tree()`` to convert an existing BeautifulSoup
+tree into a list of top-level Elements.
 
 
 Parsing with the soupparser
