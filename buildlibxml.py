@@ -171,11 +171,13 @@ def build_libxml2xslt(download_dir, build_dir,
         # We compile Universal if we are on a machine > 10.3
         major_version = int(os.uname()[2].split('.')[0])
         if major_version > 7:
-            call_setup['env'] = {
+            env = os.environ.copy()
+            env.update({
                 'CFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
                 'LDFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
                 'MACOSX_DEPLOYMENT_TARGET' : "10.3"
-                }
+                })
+            call_setup['env'] = env
 
         # We may loose the link to iconv, so make sure it's there
         static_binaries.append('-liconv')
