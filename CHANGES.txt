@@ -2,24 +2,44 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.2beta1 (2008-12-12)
+=====================
 
 Features added
 --------------
 
+* Allow ``lxml.html.diff.htmldiff`` to accept Element objects, not
+  just HTML strings.
+
 Bugs fixed
 ----------
 
-* Fixed missing whitespace before ``Link:...`` in ``lxml.html.diff``
+* Crash when using an XPath evaluator in multiple threads.
+
+* Fixed missing whitespace before ``Link:...`` in ``lxml.html.diff``.
 
 Other changes
 -------------
 
-* Export ``lxml.html.parse``
+* Export ``lxml.html.parse``.
 
-* Allow ``lxml.html.diff.htmldiff`` to accept element objects, not
-  just HTML strings
+
+2.1.4 (2008-12-12)
+==================
+
+Bugs fixed
+----------
+
+* Crash when using an XPath evaluator in multiple threads.
+
+
+2.0.11 (2008-12-12)
+===================
+
+Bugs fixed
+----------
+
+* Crash when using an XPath evaluator in multiple threads.
 
 
 2.2alpha1 (2008-11-23)
