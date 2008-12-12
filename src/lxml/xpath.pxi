@@ -116,6 +116,10 @@ cdef class _XPathEvaluatorBase:
         self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None, smart_strings)
+        if config.ENABLE_THREADING:
+            self._eval_lock = python.PyThread_allocate_lock()
+            if self._eval_lock is NULL:
+                python.PyErr_NoMemory()
 
     property error_log:
         def __get__(self):
