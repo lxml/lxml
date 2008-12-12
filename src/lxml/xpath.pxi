@@ -410,7 +410,6 @@ cdef class XPath(_XPathEvaluatorBase):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document document
         cdef _Element element
-        cdef _XPathContext context
 
         document = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOrRaise(_etree_or_element)
