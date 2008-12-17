@@ -26,10 +26,14 @@ else:
     def decode_input(data):
         return data
 
-def env_var(name, sep=None):
+def env_var(name):
     value = os.getenv(name)
     if value:
-        return decode_input(value).split(sep)
+        value = decode_input(value)
+        if os.platform == 'win32' and ';' in value:
+            return value.split(';')
+        else:
+            return value.split()
     else:
         return []
 
@@ -139,9 +143,10 @@ def extra_setup_args():
 
 def libraries():
     if sys.platform in ('win32',):
-        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv', 'zlib', 'WS2_32']
+        libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
         if OPTION_STATIC:
             libs = ['%s_a' % lib for lib in libs]
+        libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
         libs = ['z', 'm']
     else:
