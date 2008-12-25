@@ -213,6 +213,7 @@ def build_libxml2xslt(download_dir, build_dir,
 
     lib_dir = os.path.join(prefix, 'lib')
     static_include_dirs.extend([
+            os.path.join(prefix, 'include'),
             os.path.join(prefix, 'include', 'libxml2'),
             os.path.join(prefix, 'include', 'libxslt'),
             os.path.join(prefix, 'include', 'libexslt')])
