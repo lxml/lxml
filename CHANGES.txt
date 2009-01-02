@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+Under Development
+=================
+
+Bugs fixed
+----------
+
+* ``iter_links`` (and related link-rewriting functions) in
+  ``lxml.html`` would interpret CSS like ``url("link")`` incorrectly
+  (treating the quotation marks as part of the link).
+
 2.2beta1 (2008-12-12)
 =====================
 

@@ -67,7 +67,7 @@ _forms_xpath = etree.XPath("descendant-or-self::form|descendant-or-self::x:form"
 _class_xpath = etree.XPath("descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), concat(' ', $class_name, ' '))]")
 _id_xpath = etree.XPath("descendant-or-self::*[@id=$id]")
 _collect_string_content = etree.XPath("string()")
-_css_url_re = re.compile(r'url\((.*?)\)', re.I)
+_css_url_re = re.compile(r'url\([QUOTE"]?(.*?)[QUOTE"]?\)'.replace('QUOTE', "'"), re.I)
 _css_import_re = re.compile(r'@import "(.*?)"')
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})

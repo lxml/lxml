@@ -45,6 +45,15 @@ Links in CSS are also handled::
       body {background-image: url(https://new/image.gif)};
       @import "https://new/other-style.css";
     </style></head></html>
+    >>> print(rewrite_links('''
+    ... <style>
+    ...   body {background-image: url("http://old/image.gif")};
+    ...   @import "http://old/other-style.css";
+    ... </style>''', relocate_href))
+    <html><head><style>
+      body {background-image: url("https://new/image.gif")};
+      @import "https://new/other-style.css";
+    </style></head></html>
 
 Those links in style attributes are also rewritten::
 
