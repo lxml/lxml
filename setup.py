@@ -102,6 +102,7 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
 #    'Programming Language :: Python :: 3.0',
     'Programming Language :: C',
     'Operating System :: OS Independent',
+    'Topic :: Text Processing :: Markup :: HTML',
     'Topic :: Text Processing :: Markup :: XML',
     'Topic :: Software Development :: Libraries :: Python Modules'
     ],
