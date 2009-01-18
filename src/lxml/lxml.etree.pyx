@@ -31,11 +31,9 @@ from os.path import abspath as os_path_abspath
 
 cdef object BytesIO, StringIO
 try:
-    from StringIO import StringIO
-    BytesIO = StringIO
-except (ImportError, AttributeError):
-    # Python 3
     from io import BytesIO, StringIO
+except (ImportError, AttributeError):
+    from StringIO import StringIO, StringIO as BytesIO
 
 cdef object _elementpath
 import _elementpath
