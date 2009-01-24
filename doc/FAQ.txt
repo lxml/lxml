@@ -22,6 +22,8 @@ ElementTree_.
      1.5  What is the difference between lxml.etree and lxml.objectify?
      1.6  How can I make my application run faster?
      1.7  What about that trailing text on serialised Elements?
+     1.8  How can I find out if an Element is a comment or PI?
+     1.9  How can I map an XML tree into a dict of dicts?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the Windows binaries?
@@ -31,8 +33,9 @@ ElementTree_.
      3.2  How can I contribute?
    4  Bugs
      4.1  My application crashes!
-     4.2  I think I have found a bug in lxml. What should I do?
-     4.3  How do I know a bug is really in lxml and not in libxml2?
+     4.2  My application crashes on MacOS-X!
+     4.3  I think I have found a bug in lxml. What should I do?
+     4.4  How do I know a bug is really in lxml and not in libxml2?
    5  Threading
      5.1  Can I use threads to concurrently access the lxml API?
      5.2  Does my program run faster if I use threads?
@@ -293,6 +296,18 @@ How can I find out if an Element is a comment or PI?
     True
     >>> root[0].tag is etree.Comment
     True
+
+
+How can I map an XML tree into a dict of dicts?
+-----------------------------------------------
+
+I'm glad you asked.
+
+.. sourcecode:: pycon
+
+    def recursive_dict(element):
+         return element.tag, \
+                dict(map(recursive_dict, element)) or element.text
 
 
 Installation
