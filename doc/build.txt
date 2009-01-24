@@ -1,11 +1,12 @@
 How to build lxml from source
 =============================
 
-To build lxml from source, you need libxml2 and libxslt properly installed,
-*including the header files*.  These are likely shipped in separate ``-dev``
-or ``-devel`` packages like ``libxml2-dev``, which you need to install.  The
-build process also requires setuptools_.  The lxml source distribution comes
-with a script called ``ez_setup.py`` that can be used to install them.
+To build lxml from source, you need libxml2 and libxslt properly
+installed, *including the header files*.  These are likely shipped in
+separate ``-dev`` or ``-devel`` packages like ``libxml2-dev``, which
+you must install before trying to build lxml.  The build process also
+requires setuptools_.  The lxml source distribution comes with a
+script called ``ez_setup.py`` that can be used to install them.
 
 .. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
 
@@ -149,10 +150,11 @@ your operating system type (Linux, Windows, MacOs, ...).
 .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
 
 
-Contributing an egg
--------------------
+Building an egg
+---------------
 
-This is the procedure to make an lxml egg for your platform:
+This is the procedure to make an lxml egg for your platform (assuming
+that you have setuptools_ installed):
 
 * Download the lxml-x.y.tar.gz release.  This contains the pregenerated C so
   that you can be sure you build exactly from the release sources.  Unpack
@@ -164,11 +166,9 @@ This is the procedure to make an lxml egg for your platform:
   any ``.so`` file you find there.  This reduces the size of the egg
   considerably.
 
-* ``python setup.py bdist_egg upload``
+* ``python setup.py bdist_egg``
 
-The last 'upload' step only works if you have access to the lxml cheeseshop
-entry.  If not, you can just make an egg with ``bdist_egg`` and mail it to the
-lxml maintainer.
+This will put the egg into the ``dist`` directory.
 
 
 Building lxml on MacOS-X

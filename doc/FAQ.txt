@@ -414,7 +414,7 @@ is entirely written in Python.
 Please contact the `mailing list`_ if you need any help.
 
 .. _Cython: http://www.cython.org/
-.. _`code that Cython accepts`: http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/version/Doc/overview.html
+.. _`code that Cython accepts`: http://docs.cython.org/docs/tutorial.html
 
 
 How can I contribute?
@@ -428,9 +428,11 @@ subdirectories in the lxml source tree (below the ``src`` directory)
 and the ReST_ `text files`_ in the ``doc`` directory.
 
 We also have a `list of missing features`_ that we would like to
-implement but didn't due to lack if time.  If you find the time,
+implement but didn't due to lack if time.  If *you* find the time,
 patches are very welcome.
 
+.. _ReST: http://docutils.sourceforge.net/rst.html
+.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
 .. _`list of missing features`: http://codespeak.net/svn/lxml/trunk/IDEAS.txt
 
 Besides enhancing the code, there are a lot of places where you can help the
@@ -464,9 +466,6 @@ project and its user base.  You can
   grasp the details of the function in question.  If you find such a place,
   you can try to write up a better description and send it to the `mailing
   list`_.
-
-.. _ReST: http://docutils.sourceforge.net/rst.html
-.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
 
 
 Bugs
