@@ -303,7 +303,7 @@ How can I map an XML tree into a dict of dicts?
 
 I'm glad you asked.
 
-.. sourcecode:: pycon
+.. sourcecode:: python
 
     def recursive_dict(element):
          return element.tag, \
@@ -645,10 +645,12 @@ that parsed a tree can crash the application if subtrees of this tree
 were moved to other documents.  You should be on the safe side when
 passing trees between threads if you either
 
-a) do not modify these trees and do not move their elements to other trees, or
-b) do not terminate threads while the trees they parsed are still in use
-   (e.g. by using a fixed size thread-pool or long-running threads in
-   processing chains)
+- do not modify these trees and do not move their elements to other
+  trees, or
+
+- do not terminate threads while the trees they parsed are still in
+  use (e.g. by using a fixed size thread-pool or long-running threads
+  in processing chains)
 
 
 Does my program run faster if I use threads?
