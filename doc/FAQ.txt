@@ -11,6 +11,8 @@ ElementTree_.
 
 .. _compatibility: compatibility.html
 .. _ElementTree:   http://effbot.org/zone/element-index.htm
+.. _`build instructions`: build.html
+.. _`MacOS-X` : build.html#building-lxml-on-macos-x
 
 .. contents::
 ..
@@ -346,30 +348,28 @@ see when (or if) a specific bug has been fixed.
 .. _`release notes of libxslt`: http://xmlsoft.org/XSLT/news.html
 
 
-Where are the Windows binaries?
--------------------------------
+Where are the binary builds?
+----------------------------
 
-Short answer: If you want to contribute a binary build, we are happy to put it
-up on the Cheeseshop.
+Sidnei da Silva regularly contributes Windows binaries for new
+releases.  This is because two of the major problems of Microsoft
+Windows make it non-trivial for users to build lxml on this platform:
+the lack of a pre-installed standard compiler and the missing package
+management.
 
-Long answer: Two of the bigger problems with the Windows system are the lack
-of a pre-installed standard compiler and the missing package management.  Both
-make it non-trivial to build lxml on this platform.  We are trying hard to
-make lxml as platform-independent as possible and it is regularly tested on
-Windows systems.  However, we currently cannot provide Windows binary
-distributions ourselves.
+If there is not currently a binary distribution of the most recent
+lxml release for this platform available from the Python Package Index
+(PyPI), please look through the older versions to see if they provide
+a binary build.  This is done by appending the version number to the
+PyPI URL, e.g.::
 
-From time to time, users of different environments kindly contribute binary
-builds of lxml, most frequently for Windows or Mac-OS X.  We put these on the
-Cheeseshop to make it as easy as possible for others to use lxml on their
-platform.
+	  http://pypi.python.org/pypi/lxml/2.1.5
 
-If there is not currently a binary distribution of the most recent lxml
-release for your platform available from the Cheeseshop, please look through
-the older versions to see if they provide a binary build.  This is done by
-appending the version number to the cheeseshop URL, e.g.:
-
-	  http://cheeseshop.python.org/pypi/lxml/1.1.2
+Apart from that, we generally do not provide binary builds of lxml, as
+most of the other operating systems out there can build lxml without
+problems (with the exception of `MacOS-X`_), and the sheer mass of
+variations between platforms makes it futile to provide builds for
+everyone.
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
@@ -385,8 +385,6 @@ This means that you have to compile lxml from sources for your system.  Note
 that you do not need Cython for this, the lxml source distribution is directly
 compilable on both platform types.  See the `build instructions`_ on how to do
 this.
-
-.. _`build instructions`: build.html
 
 
 Contributing
@@ -499,30 +497,10 @@ not necessarily lxml that *caused* the crash.
 My application crashes on MacOS-X!
 ----------------------------------
 
-Since the normal system libraries are pretty much outdated, you likely
-have installed newer versions through a package management system like
-fink or macports in addition to the system libraries.  Chances are
-high that your system is confused by the conflicting library versions.
-
-To work around this, please set the ``DYLD_LIBRARY_PATH`` environment
-variable *at runtime* to the directory where you installed the newer
-libraries.  There are other Python packages that depend on libxml2, so
-it is up to you to make sure that *all* packages that dynamically load
-libxml2 load the *same* library version.  Loading conflicting versions
-*will* lead to a crash and has confused a lot of MacOS users already.
-
-Please understand that if your system uses conflicting library
-versions, there is nothing lxml can do about it.  It is up to you as a
-user to make sure you have a sane execution environment.
-
-See `bug 197243`_ for more information.
-
-.. _`bug 197243`: https://bugs.launchpad.net/lxml/+bug/197243
-
-If you want a sane, reliable execution environment, especially for
-production systems, `using a buildout`_ might be a good idea.
-
-.. _`using a buildout`: http://comments.gmane.org/gmane.comp.python.lxml.devel/3297?set_lines=100000
+This was a common problem up to lxml 2.1.x.  Since lxml 2.2, the only
+officially supported way to use it on this platform is through a
+static build against freshly downloaded versions of libxml2 and
+libxslt.  See the build instructions for `MacOS-X`_.
 
 
 I think I have found a bug in lxml. What should I do?

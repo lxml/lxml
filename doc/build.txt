@@ -171,54 +171,45 @@ entry.  If not, you can just make an egg with ``bdist_egg`` and mail it to the
 lxml maintainer.
 
 
-Providing newer library versions on Mac-OS X
---------------------------------------------
+Building lxml on MacOS-X
+------------------------
 
 Apple regularly ships new system releases with horribly outdated
 system libraries.  This is specifically the case for libxml2 and
 libxslt, where the system provided versions are too old to build lxml.
 
-While the Unix environment in Mac-OS X makes it relatively easy to
+While the Unix environment in MacOS-X makes it relatively easy to
 install Unix/Linux style package management tools and new software, it
 actually seems to be hard to get libraries set up for exclusive usage
-that Mac-OS X ships in an older version.  Alternative distributions
+that MacOS-X ships in an older version.  Alternative distributions
 (like macports) install their libraries in addition to the system
-libraries, but the compiler and the runtime loader on Mac-OS still
-sees the system libraries before the new libraries.  This can lead to
+libraries, but the compiler and the runtime loader on MacOS still sees
+the system libraries before the new libraries.  This can lead to
 undebuggable crashes where the newer library seems to be loaded but
 the older system library is used.
 
 Apple discourages static building against libraries, which would help
 working around this problem.  Apple does not ship static library
 binaries with its system and several package management systems follow
-this decision.  Therefore, building static binaries would require
-building the dependencies first.  You can do this with the `buildout
-recipe for lxml`_.
+this decision.  Therefore, building static binaries requires building
+the dependencies first.  The ``setup.py`` script does this
+automatically when you call it like this::
 
-To make sure the newer libxml2 and libxslt versions (e.g. those
-provided by fink or macports) are used at *build time*, you must take
-care that the script ``xslt-config`` from the newly installed version
-is found when running the build setup.  The system libraries also
-provide this script, so the new one must come first in the PATH.  The
-best way to make sure the right version is used is by passing the path
-to the script as an option to setup.py::
+  python setup.py build --static-deps
 
-  python setup.py build --with-xslt-config=/path/to/xslt-config \
-                        --with-xml2-config=/path/to/xml2-config
+This will download and build the latest versions of libxml2 and
+libxslt from the official FTP download site.  If you want to use
+specific versions, or want to prevent any online access, you can
+download both ``tar.gz`` release files yourself, place them into a
+subdirectory ``libs`` in the lxml distribution, and call ``setup.py``
+with the desired target versions like this::
+
+  python setup.py build --static-deps \
+         --libxml2-version=2.7.3 \
+         --libxslt-version=1.1.24 \
 
 Instead of ``build``, you can use any target, like ``bdist_egg`` if
 you want to use setuptools to build an installable egg.
-
-Since release 2.0.6, lxml automatically passes the option
-``-flat_namespace`` to the C compiler.  This was reported to make sure
-that the libraries that lxml was built against are also used at
-runtime.  Without this option, users needed to add all directories
-where the newer libraries are installed (i.e. libxml2, libxslt and
-libexslt) to the ``DYLD_LIBRARY_PATH`` environment variable when using
-lxml (i.e. at runtime).  This should no longer be necessary with the
-new build setup.
-
-.. _`buildout recipe for lxml`: http://thread.gmane.org/gmane.comp.python.lxml.devel/3290/focus=3297
 
 
 Static linking on Windows
