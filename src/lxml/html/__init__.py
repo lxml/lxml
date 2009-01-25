@@ -67,11 +67,17 @@ _forms_xpath = etree.XPath("descendant-or-self::form|descendant-or-self::x:form"
 _class_xpath = etree.XPath("descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), concat(' ', $class_name, ' '))]")
 _id_xpath = etree.XPath("descendant-or-self::*[@id=$id]")
 _collect_string_content = etree.XPath("string()")
-_css_url_re = re.compile(r'url\([QUOTE"]?(.*?)[QUOTE"]?\)'.replace('QUOTE', "'"), re.I)
+_css_url_re = re.compile(r'url\(('+'["][^"]*["]|'+"['][^']*[']|"+r'[^)]*)\)', re.I)
 _css_import_re = re.compile(r'@import "(.*?)"')
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
+
+def _unquote_match(s, pos):
+    if s[:1] == '"' and s[-1:] == '"' or s[:1] == "'" and s[-1:] == "'":
+        return s[1:-1], pos+1
+    else:
+        return s,pos
 
 def _transform_result(typ, result):
     """Convert the result back into the input type.
@@ -342,12 +348,14 @@ class HtmlMixin(object):
                     yield (el, 'value', el.get('value'), 0)
             if tag == 'style' and el.text:
                 for match in _css_url_re.finditer(el.text):
-                    yield (el, None, match.group(1), match.start(1))
+                    url, start = _unquote_match(match.group(1), match.start(1))
+                    yield (el, None, url, start)
                 for match in _css_import_re.finditer(el.text):
                     yield (el, None, match.group(1), match.start(1))
             if 'style' in attribs:
                 for match in _css_url_re.finditer(attribs['style']):
-                    yield (el, 'style', match.group(1), match.start(1))
+                    url, start = _unquote_match(match.group(1), match.start(1))
+                    yield (el, 'style', url, start)
 
     def rewrite_links(self, link_repl_func, resolve_base_href=True,
                       base_href=None):

@@ -4,5 +4,5 @@ Notes: The CSS is messed up here, but so it goes
 
 <div><STYLE>.XSS{background-image:url("javascript:alert('XSS')");}</STYLE><A CLASS=XSS></A></div>
 ----------
-<div><style>.XSS{background-image:url()");}</style><a class="XSS"></a></div>
+<div><style>.XSS{background-image:url("");}</style><a class="XSS"></a></div>
 
