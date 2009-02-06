@@ -105,6 +105,18 @@ class IOTestCaseBase(HelperTestCase):
         finally:
             os.close(handle)
             os.remove(filename)
+        
+    def test_write_invalid_filename(self):
+        filename = os.path.join(
+            os.path.join('hopefullynonexistingpathname'),
+            'invalid_file.xml')
+        try:
+            self.tree.write(filename)
+        except IOError, e:
+            pass
+        else:
+            self.assertTrue(
+                False, "writing to an invalid file path should fail")
 
     def test_module_parse_gzipobject(self):
         # (c)ElementTree supports gzip instance as parse argument
