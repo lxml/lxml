@@ -211,6 +211,8 @@ def define_macros():
         macros.append(('PYREX_WITHOUT_ASSERTIONS', None))
     if OPTION_WITHOUT_THREADING:
         macros.append(('WITHOUT_THREADING', None))
+    if OPTION_WITH_REFNANNY:
+        macros.append(('CYTHON_REFNANNY', None))
     return macros
 
 _ERROR_PRINTED = False
@@ -319,6 +321,10 @@ def option_value(name):
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_WITHOUT_THREADING = has_option('without-threading')
+OPTION_WITHOUT_CYTHON = has_option('without-cython')
+OPTION_WITH_REFNANNY = has_option('with-refnanny')
+if OPTION_WITHOUT_CYTHON:
+    CYTHON_INSTALLED = False
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
