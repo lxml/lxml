@@ -315,6 +315,15 @@ cdef class _XSLTContext(_BaseContext):
         self._release_temp_refs()
 
 
+cdef class _XSLTQuotedStringParam:
+    u"""A wrapper class for literal XSLT string parameters that require
+    quote escaping.
+    """
+    cdef str strval
+    def __init__(self, strval):
+        self.strval = _utf8(strval)
+
+
 cdef class XSLT:
     u"""XSLT(self, xslt_input, extensions=None, regexp=True, access_control=None)
 
@@ -410,6 +419,20 @@ cdef class XSLT:
         u"The log of errors and warnings of an XSLT execution."
         def __get__(self):
             return self._error_log.copy()
+
+    @classmethod
+    def strparam(_, strval):
+        u"""strparam(strval)
+
+        Mark an XSLT string parameter that requires quote escaping
+        before passing it into the transformation.  Use it like this::
+
+            result = transform(doc, some_strval = XSLT.strparam(
+                '''it's \"Monty Python's\" ...'''))
+
+        Escaped string parameters can be reused without restriction.
+        """
+        return _XSLTQuotedStringParam(strval)
 
     def apply(self, _input, *, profile_run=False, **kw):
         u"""apply(self, _input,  profile_run=False, **kw)
@@ -548,7 +571,7 @@ cdef class XSLT:
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
-                                parameters, _XSLTContext context,
+                                dict parameters, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt):
         cdef xmlDoc* c_result
         cdef char** params
@@ -561,7 +584,7 @@ cdef class XSLT:
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
 
-        parameter_count = python.PyDict_Size(parameters)
+        parameter_count = len(parameters)
         if parameter_count > 0:
             # allocate space for parameters
             # * 2 as we want an entry for both key and value,
@@ -571,15 +594,20 @@ cdef class XSLT:
             try:
                 i = 0
                 keep_ref = []
-                for key, value in parameters.items():
+                for key, value in parameters.iteritems():
                     k = _utf8(key)
+                    if isinstance(value, _XSLTQuotedStringParam):
+                        v = (<_XSLTQuotedStringParam>value).strval
+                        xslt.xsltQuoteOneUserParam(
+                            transform_ctxt, _cstr(k), _cstr(v))
+                    else:
+                        v = _utf8(value)
+                        params[i] = _cstr(k)
+                        i += 1
+                        params[i] = _cstr(v)
+                        i += 1
                     keep_ref.append(k)
-                    v = _utf8(value)
                     keep_ref.append(v)
-                    params[i] = _cstr(k)
-                    i += 1
-                    params[i] = _cstr(v)
-                    i += 1
             except:
                 python.PyMem_Free(params)
                 raise

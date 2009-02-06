@@ -133,6 +133,16 @@ cdef extern from "libxslt/security.h":
                                       xsltTransformContext* ctxt) nogil
     cdef xmlDoc* xsltGetProfileInformation(xsltTransformContext* ctxt) nogil
 
+cdef extern from "libxslt/variables.h":
+    cdef int xsltQuoteUserParams(xsltTransformContext* ctxt,
+                                 char** params)
+    cdef int xsltQuoteOneUserParam(xsltTransformContext* ctxt,
+                                   char* name,
+                                   char* value)
+    cdef int xsltEvalOneUserParam(xsltTransformContext* ctxt,
+                                  char* name,
+                                  char* value)
+
 cdef extern from "libxslt/extra.h":
     cdef char* XSLT_LIBXSLT_NAMESPACE
     cdef char* XSLT_XALAN_NAMESPACE

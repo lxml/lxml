@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* ``XSLT.strparam()`` class method to wrap quoted string parameters
+  that require escaping.
+
+
 2.2beta2 (2009-01-25)
 =====================
 
