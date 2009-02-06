@@ -19,15 +19,15 @@ test_build: build
 
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
-	PYTHONPATH=src $(PYTHON) selftest.py
-	PYTHONPATH=src $(PYTHON) selftest2.py
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest.py
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest2.py
 
 test_inplace3: inplace
 	$(MAKE) clean
 	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
-	PYTHONPATH=src $(PYTHON3) selftest.py
-	PYTHONPATH=src $(PYTHON3) selftest2.py
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest2.py
 
 valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
@@ -60,7 +60,7 @@ apihtml: inplace
 		|| (echo "not generating epydoc API documentation")
 
 website: inplace
-	PYTHONPATH=src $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
+	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) doc/mkhtml.py doc/html . ${LXMLVERSION}
 
 html: inplace website apihtml s5
 
