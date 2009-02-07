@@ -277,10 +277,11 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
     u"""Fix the xmlNs pointers of a node and its subtree that were moved.
 
-    Mainly copied from libxml2's xmlReconciliateNs().  Expects libxml2 doc
-    pointers of node to be correct already, but fixes _Document references.
+    Originally copied from libxml2's xmlReconciliateNs().  Expects
+    libxml2 doc pointers of node to be correct already, but fixes
+    _Document references.
 
-    For each node in the subtree, we do three things here:
+    For each node in the subtree, we do this:
 
     1) Remove redundant declarations of namespace that are already
        defined in its parents.
@@ -406,12 +407,15 @@ cdef void fixThreadDictNames(xmlNode* c_element,
         fixThreadDictNsForNode(c_element, c_src_dict, c_dict)
         c_element = c_element.children
         while c_element is not NULL:
-            fixThreadDictNames(c_element, c_src_dict, c_dict)
+            if tree._isElementOrXInclude(c_element):
+                fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
             c_element = c_element.next
-        return
-    elif not tree._isElementOrXInclude(c_element):
-        return
+    elif tree._isElementOrXInclude(c_element):
+        fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
 
+cdef void fixThreadDictNamesForNode(xmlNode* c_element,
+                                    tree.xmlDict* c_src_dict,
+                                    tree.xmlDict* c_dict) nogil:
     tree.BEGIN_FOR_EACH_FROM(c_element, c_element, 1)
     if c_element.name is not NULL:
         fixThreadDictNameForNode(c_element, c_dict)
