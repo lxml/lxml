@@ -17,7 +17,7 @@ cdef extern from "stdio.h":
     cdef int feof(FILE *stream) nogil
     cdef int ferror(FILE *stream) nogil
     cdef int sprintf(char* str, char* format, ...) nogil
-    cdef int printf(char* str) nogil
+    cdef int printf(char* str, ...) nogil
 
 cdef extern from "stdlib.h":
     cdef void* malloc(size_t size) nogil
