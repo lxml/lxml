@@ -11,6 +11,11 @@ Features added
 * ``XSLT.strparam()`` class method to wrap quoted string parameters
   that require escaping.
 
+Other changes
+-------------
+
+* More robust error handling on serialisation.
+
 
 2.2beta2 (2009-01-25)
 =====================

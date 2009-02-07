@@ -1,5 +1,9 @@
 # XML serialization and output functions
 
+class SerialisationError(LxmlError):
+    u"""A libxml2 error that occurred during serialisation.
+    """
+
 cdef enum _OutputMethods:
     OUTPUT_METHOD_XML
     OUTPUT_METHOD_HTML
@@ -22,19 +26,24 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef char* c_text
     cdef xmlNode* c_text_node
     cdef tree.xmlBuffer* c_buffer
+    cdef int error_result
 
     c_buffer = tree.xmlBufferCreate()
     if c_buffer is NULL:
         return python.PyErr_NoMemory()
 
     with nogil:
-        tree.xmlNodeBufGetContent(c_buffer, c_node)
+        error_result = tree.xmlNodeBufGetContent(c_buffer, c_node)
         if with_tail:
             c_text_node = _textNodeOrSkip(c_node.next)
             while c_text_node is not NULL:
                 tree.xmlBufferWriteChar(c_buffer, c_text_node.content)
                 c_text_node = _textNodeOrSkip(c_text_node.next)
         c_text = tree.xmlBufferContent(c_buffer)
+
+    if error_result < 0 or c_text is NULL:
+        tree.xmlBufferFree(c_buffer)
+        raise SerialisationError, u"Error during serialisation (out of memory?)"
 
     try:
         needs_conversion = 0
@@ -60,7 +69,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
         else:
             text = c_text
     finally:
-        tree.xmlBufferFree(c_buffer);
+        tree.xmlBufferFree(c_buffer)
     return text
 
 
@@ -76,6 +85,7 @@ cdef _tostring(_Element element, encoding, method,
     cdef char* c_enc
     cdef char* c_version
     cdef int c_method
+    cdef int error_result
     if element is None:
         return None
     c_method = _findOutputMethod(method)
@@ -108,6 +118,11 @@ cdef _tostring(_Element element, encoding, method,
         else:
             c_result_buffer = c_buffer.buffer
 
+    error_result = c_buffer.error
+    if error_result != xmlerror.XML_ERR_OK:
+        tree.xmlOutputBufferClose(c_buffer)
+        _raiseSerialisationError(error_result)
+
     try:
         if encoding is _unicode:
             result = python.PyUnicode_DecodeUTF8(
@@ -121,6 +136,15 @@ cdef _tostring(_Element element, encoding, method,
     finally:
         tree.xmlOutputBufferClose(c_buffer)
     return result
+
+cdef _raiseSerialisationError(int error_result):
+    if error_result == xmlerror.XML_ERR_NO_MEMORY:
+        return python.PyErr_NoMemory()
+    else:
+        message = ErrorTypes._getName(error_result)
+        if message is None:
+            message = u"unknown error %d" % error_result
+        raise SerialisationError, message
 
 ############################################################
 # low-level serialisation functions
@@ -146,6 +170,9 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         # copy the node and add namespaces from parents
         # this is required to make libxml write them
         c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
+        if c_nsdecl_node is NULL:
+            c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
+            return
         _copyParentNamespaces(c_node, c_nsdecl_node)
 
         c_nsdecl_node.parent = c_node.parent
@@ -171,17 +198,17 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
     if pretty_print:
-        tree.xmlOutputBufferWriteString(c_buffer, "\n")
+        tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     char* version, char* encoding) nogil:
     if version is NULL:
         version = "1.0"
-    tree.xmlOutputBufferWriteString(c_buffer, "<?xml version='")
+    tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
     tree.xmlOutputBufferWriteString(c_buffer, version)
-    tree.xmlOutputBufferWriteString(c_buffer, "' encoding='")
+    tree.xmlOutputBufferWrite(c_buffer, 12, "' encoding='")
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
-    tree.xmlOutputBufferWriteString(c_buffer, "'?>\n")
+    tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, char* c_root_name,
@@ -317,6 +344,7 @@ cdef _tofilelike(f, _Element element, encoding, method,
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* c_enc
+    cdef int error_result
     if encoding is None:
         c_enc = NULL
     else:
@@ -358,11 +386,14 @@ cdef _tofilelike(f, _Element element, encoding, method,
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                        write_xml_declaration, write_doctype,
                        pretty_print, with_tail)
+    error_result = c_buffer.error
     tree.xmlOutputBufferClose(c_buffer)
     if writer is None:
         python.PyEval_RestoreThread(state)
     else:
         writer._exc_context._raise_if_stored()
+    if error_result != xmlerror.XML_ERR_OK:
+        _raiseSerialisationError(error_result)
 
 cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments):
     cdef _FilelikeWriter writer
