@@ -523,8 +523,24 @@ XSLT template:
   >>> f = StringIO('<a><b>Text</b></a>')
   >>> doc = etree.parse(f)
 
-The parameters are passed as keyword parameters to the transform call. First
-let's try passing in a simple string expression:
+The parameters are passed as keyword parameters to the transform call.
+First, let's try passing in a simple integer expression:
+
+.. sourcecode:: pycon
+
+  >>> result = transform(doc, a="5")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>5</foo>\n'
+
+You can use any valid XPath expression as parameter value:
+
+.. sourcecode:: pycon
+
+  >>> result = transform(doc, a="/a/b/text()")
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+Passing a string expression looks like this:
 
 .. sourcecode:: pycon
 
@@ -532,13 +548,18 @@ let's try passing in a simple string expression:
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
-Let's try a non-string XPath expression now:
+To pass a string that (potentially) contains quotes, you can use the
+``.strparam()`` class method.  Note that it does not escape the
+string.  Instead, it returns an opaque object that keeps the string
+value.
 
 .. sourcecode:: pycon
 
-  >>> result = transform(doc, a="/a/b/text()")
+  >>> plain_string_value = etree.XSLT.strparam(
+  ...                          """ It's "Monty Python" """)
+  >>> result = transform(doc, a=plain_string_value)
   >>> str(result)
-  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+  '<?xml version="1.0"?>\n<foo> It\'s "Monty Python" </foo>\n'
 
 
 The ``xslt()`` tree method
