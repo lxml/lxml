@@ -108,6 +108,42 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEquals(_bytes('<div id="test">BC</div>'),
                           result)
 
+    def test_thread_error_log(self):
+        XML = self.etree.XML
+        ParseError = self.etree.ParseError
+        expected_error = [self.etree.ErrorTypes.ERR_TAG_NAME_MISMATCH]
+        children = "<a>test</a>" * 100
+
+        def parse_error_test(thread_no):
+            tag = "tag%d" % thread_no
+            xml = "<%s>%s</%s>" % (tag, children, tag.upper())
+            parser = self.etree.XMLParser()
+            for _ in range(10):
+                errors = None
+                try:
+                    XML(xml, parser)
+                except self.etree.ParseError, e:
+                    errors = e.error_log.filter_types(expected_error)
+                self.assertTrue(errors, "Expected error not found")
+                for error in errors:
+                    self.assertTrue(
+                        tag in error.message and tag.upper() in error.message,
+                        "%s and %s not found in '%s'" % (
+                        tag, tag.upper(), error.message))
+
+        self.etree.clear_error_log()
+        threads = []
+        for thread_no in range(1, 10):
+            t = threading.Thread(target=parse_error_test,
+                                 args=(thread_no,))
+            threads.append(t)
+            t.start()
+
+        parse_error_test(0)
+
+        for t in threads:
+            t.join()
+
     def test_thread_mix(self):
         XML = self.etree.XML
         Element = self.etree.Element

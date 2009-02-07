@@ -9,8 +9,12 @@ def clear_error_log():
 
     Clear the global error log.  Note that this log is already bound to a
     fixed size.
+
+    Note: since lxml 2.2, the global error log is local to a thread
+    and this function will only clear the global error log of the
+    current thread.
     """
-    __GLOBAL_ERROR_LOG.clear()
+    _getGlobalErrorLog().clear()
 
 # dummy function: no debug output at all
 cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
@@ -114,14 +118,16 @@ cdef class _BaseErrorLog:
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef bint is_error
         cdef _LogEntry entry
+        cdef _BaseErrorLog global_log
         entry = _LogEntry()
         entry._setError(error)
         is_error = error.level == xmlerror.XML_ERR_ERROR or \
                    error.level == xmlerror.XML_ERR_FATAL
-        if __GLOBAL_ERROR_LOG is not self:
-            __GLOBAL_ERROR_LOG.receive(entry)
+        global_log = _getGlobalErrorLog()
+        if global_log is not self:
+            global_log.receive(entry)
             if is_error:
-                __GLOBAL_ERROR_LOG.last_error = entry
+                global_log.last_error = entry
         self.receive(entry)
         if is_error:
             self.last_error = entry
@@ -130,14 +136,16 @@ cdef class _BaseErrorLog:
                               message, filename):
         cdef bint is_error
         cdef _LogEntry entry
+        cdef _BaseErrorLog global_log
         entry = _LogEntry()
         entry._setGeneric(domain, type, level, line, message, filename)
         is_error = level == xmlerror.XML_ERR_ERROR or \
                    level == xmlerror.XML_ERR_FATAL
-        if __GLOBAL_ERROR_LOG is not self:
-            __GLOBAL_ERROR_LOG.receive(entry)
+        global_log = _getGlobalErrorLog()
+        if global_log is not self:
+            global_log.receive(entry)
             if is_error:
-                __GLOBAL_ERROR_LOG.last_error = entry
+                global_log.last_error = entry
         self.receive(entry)
         if is_error:
             self.last_error = entry
@@ -402,13 +410,37 @@ cdef class PyErrorLog(_BaseErrorLog):
     def receive(self, entry):
         self.log(entry, entry)
 
-# global list log to collect error output messages from libxml2/libxslt
+# thread-local, global list log to collect error output messages from
+# libxml2/libxslt
+
 cdef _BaseErrorLog __GLOBAL_ERROR_LOG
 __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
+cdef _ErrorLog _getGlobalErrorLog():
+    u"""Retrieve the global error log of this thread."""
+    cdef python.PyObject* thread_dict
+    thread_dict = python.PyThreadState_GetDict()
+    if thread_dict is NULL:
+        return __GLOBAL_ERROR_LOG
+    try:
+        return (<object>thread_dict)[u"_GlobalErrorLog"]
+    except KeyError:
+        log = (<object>thread_dict)[u"_GlobalErrorLog"] = \
+              _RotatingErrorLog(__MAX_LOG_SIZE)
+        return log
+
+cdef _ErrorLog _setGlobalErrorLog(_BaseErrorLog log):
+    u"""Set the global error log of this thread."""
+    cdef python.PyObject* thread_dict
+    thread_dict = python.PyThreadState_GetDict()
+    if thread_dict is NULL:
+        global __GLOBAL_ERROR_LOG
+        __GLOBAL_ERROR_LOG = log
+    (<object>thread_dict)[u"_GlobalErrorLog"] = log
+
 cdef __copyGlobalErrorLog():
     u"Helper function for properties in exceptions."
-    return __GLOBAL_ERROR_LOG.copy()
+    return _getGlobalErrorLog().copy()
 
 def use_global_python_log(PyErrorLog log not None):
     u"""use_global_python_log(log)
@@ -418,9 +450,12 @@ def use_global_python_log(PyErrorLog log not None):
 
     Note that this disables access to the global error log from exceptions.
     Parsers, XSLT etc. will continue to provide their normal local error log.
+
+    Note: prior to lxml 2.2, this changed the error log globally.
+    Since lxml 2.2, the global error log is local to a thread and this
+    function will only set the global error log of the current thread.
     """
-    global __GLOBAL_ERROR_LOG
-    __GLOBAL_ERROR_LOG = log
+    _setGlobalErrorLog(log)
 
 
 # local log functions: forward error to logger object
@@ -429,7 +464,7 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
     if c_log_handler is not NULL:
         log_handler = <_BaseErrorLog>c_log_handler
     else:
-        log_handler = __GLOBAL_ERROR_LOG
+        log_handler = _getGlobalErrorLog()
     log_handler._receive(error)
 
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:

@@ -14,6 +14,9 @@ Features added
 Other changes
 -------------
 
+* The global error log (which is copied into the exception log) is now
+  local to a thread.
+
 * More robust error handling on serialisation.
 
 
