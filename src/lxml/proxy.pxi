@@ -455,7 +455,7 @@ cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
                                              tree.xmlDict* c_src_dict,
                                              tree.xmlDict* c_dict) nogil:
     if c_node.content is not NULL and \
-           c_node.content is not c_node.properties:
+           c_node.content is not <char*>c_node.properties:
         if tree.xmlDictOwns(c_src_dict, c_node.content):
             # result can be NULL on memory error, but we don't handle that here
             c_node.content = tree.xmlDictLookup(c_dict, c_node.content, -1)
