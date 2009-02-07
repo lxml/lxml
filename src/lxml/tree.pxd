@@ -170,6 +170,7 @@ cdef extern from "libxml/tree.h":
     ctypedef struct xmlOutputBuffer:
         xmlBuffer* buffer
         xmlBuffer* conv
+        int error
         
     cdef void xmlFreeDoc(xmlDoc* cur) nogil
     cdef void xmlFreeDtd(xmlDtd* cur) nogil
@@ -216,7 +217,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlAttr* xmlHasProp(xmlNode* node, char* name) nogil
     cdef xmlAttr* xmlHasNsProp(xmlNode* node, char* name, char* nameSpace) nogil
     cdef char* xmlNodeGetContent(xmlNode* cur) nogil
-    cdef char* xmlNodeBufGetContent(xmlBuffer* buffer, xmlNode* cur) nogil
+    cdef int xmlNodeBufGetContent(xmlBuffer* buffer, xmlNode* cur) nogil
     cdef xmlNs* xmlSearchNs(xmlDoc* doc, xmlNode* node, char* prefix) nogil
     cdef xmlNs* xmlSearchNsByHref(xmlDoc* doc, xmlNode* node, char* href) nogil
     cdef int xmlIsBlankNode(xmlNode* node) nogil
