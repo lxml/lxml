@@ -70,7 +70,9 @@ improving the tutorial is a very good place to start.
 
 There is also a `tutorial for ElementTree`_ which works for
 ``lxml.etree``.  The documentation of the `extended etree API`_ also
-contains many examples for ``lxml.etree``.  To learn using
+contains many examples for ``lxml.etree``.  Fredrik Lundh's `element
+library`_ contains a lot of nice recipes that show how to solve common
+tasks in ElementTree and lxml.etree.  To learn using
 ``lxml.objectify``, read the `objectify documentation`_.
 
 John Shipman has written another tutorial called `Python XML
@@ -81,7 +83,7 @@ processing with lxml`_ that contains lots of examples.
 .. _`extended etree API`:        api.html
 .. _`objectify documentation`:  objectify.html
 .. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
-
+.. _`element library`:          http://effbot.org/zone/element-lib.htm
 
 Where can I find more documentation about lxml?
 -----------------------------------------------
@@ -89,9 +91,10 @@ Where can I find more documentation about lxml?
 There is a lot of documentation on the web and also in the Python
 standard library documentation, as lxml implements the well-known
 `ElementTree API`_ and tries to follow its documentation as closely as
-possible.  There are a couple of issues where lxml cannot keep up
-compatibility.  They are described in the compatibility_
-documentation.
+possible.  The recipes in Fredrik Lundh's `element library`_ are
+generally worth taking a look at.  There are a couple of issues where
+lxml cannot keep up compatibility.  They are described in the
+compatibility_ documentation.
 
 The lxml specific extensions to the API are described by individual
 files in the ``doc`` directory of the source distribution and on `the
@@ -768,6 +771,10 @@ is left in the tree is the ``remove_blank_text`` option:
 This will allow the parser to drop blank text nodes when constructing the
 tree.  If you now call a serialization function to pretty print this tree,
 lxml can add fresh whitespace to the XML tree to indent it.
+
+Fredrik Lundh also has a Python-level function for indenting XML by
+appending whitespace to tags.  It can be found on his `element
+library`_ recipe page.
 
 
 Why can't lxml parse my XML from unicode strings?
