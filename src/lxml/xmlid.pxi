@@ -105,12 +105,6 @@ cdef class _IDDict:
     def has_key(self, id_name):
         return id_name in self
 
-    def __cmp__(self, other):
-        if other is None:
-            return 1
-        else:
-            return cmp(dict(self), other)
-
     def __repr__(self):
         return repr(dict(self))
 
