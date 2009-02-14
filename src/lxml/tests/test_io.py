@@ -112,7 +112,7 @@ class IOTestCaseBase(HelperTestCase):
             'invalid_file.xml')
         try:
             self.tree.write(filename)
-        except IOError, e:
+        except IOError:
             pass
         else:
             self.assertTrue(

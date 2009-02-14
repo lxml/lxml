@@ -11,6 +11,11 @@ Features added
 * ``XSLT.strparam()`` class method to wrap quoted string parameters
   that require escaping.
 
+Bugs fixed
+----------
+
+* Fixes following changes in Python 3.0.1.
+
 Other changes
 -------------
 

@@ -105,10 +105,10 @@ cdef _parseObjectPathString(path):
             break
 
         dot, ns, name, index = match.groups()
-        if index is None or python.PyUnicode_GET_SIZE(index) == 0:
+        if index is None or not index:
             index = 0
         else:
-            index = python.PyNumber_Int(index)
+            index = int(index)
         has_dot = dot == u'.'
         if python.PyList_GET_SIZE(new_path) == 0:
             if has_dot:
@@ -152,7 +152,7 @@ cdef _parseObjectPathList(path):
                 index_end = cstd.strchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, u"index must be enclosed in []"
-                index = python.PyNumber_Int(
+                index = int(
                     python.PyString_FromStringAndSize(
                         index_pos + 1, <Py_ssize_t>(index_end - index_pos - 1)))
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
