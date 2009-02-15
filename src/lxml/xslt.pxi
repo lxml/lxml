@@ -822,10 +822,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef xmlAttr* c_attr
         if self._c_node.content is NULL:
             raise ValueError, u"PI lacks content"
-        hrefs_utf = _FIND_PI_HREF(' ' + self._c_node.content)
-        if len(hrefs_utf) != 1:
+        hrefs = _FIND_PI_HREF(u' ' + funicode(self._c_node.content))
+        if len(hrefs) != 1:
             raise ValueError, u"malformed PI attributes"
-        href_utf = hrefs_utf[0]
+        href_utf = utf8(hrefs[0])
         c_href = _cstr(href_utf)
 
         if c_href[0] != c'#':

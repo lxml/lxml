@@ -1927,7 +1927,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
             _xsi = u'xsd:' + _xsi
         else:
             name = _xsi
-            for prefix, ns in nsmap.iteritems():
+            for prefix, ns in nsmap.items():
                 if ns == XML_SCHEMA_NS:
                     if prefix is not None and prefix:
                         _xsi = prefix + u':' + _xsi
