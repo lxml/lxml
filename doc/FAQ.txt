@@ -64,7 +64,7 @@ ElementTree_.
   ...     def __getattr__(self, name): return getattr(_etree, name)
   ...     def tostring(self, *args, **kwargs):
   ...       s = _etree.tostring(*args, **kwargs)
-  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
+  ...       if isinstance(s, bytes): s = s.decode("utf-8") # CR
   ...       if s[-1] == '\n': s = s[:-1]
   ...       return s
   ... else:
