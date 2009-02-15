@@ -3518,7 +3518,11 @@ class ETreeTestCaseBase(HelperTestCase):
 
     def assertEncodingDeclaration(self, result, encoding):
         "Checks if the result XML byte string specifies the encoding."
-        has_encoding = re.compile(r"<\?xml[^>]+ encoding=[\"']([^\"']+)[\"']").match
+        enc_re = r"<\?xml[^>]+ encoding=[\"']([^\"']+)[\"']"
+        if isinstance(result, str):
+            has_encoding = re.compile(enc_re).match
+        else:
+            has_encoding = re.compile(_bytes(enc_re)).match
         self.assert_(has_encoding(result))
         result_encoding = has_encoding(result).group(1)
         self.assertEquals(result_encoding.upper(), encoding.upper())
