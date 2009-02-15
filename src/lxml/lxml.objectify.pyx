@@ -524,7 +524,7 @@ cdef _setElementValue(_Element element, value):
         return
     else:
         cetree.delAttributeFromNsName(
-            element._c_node, _XML_SCHEMA_INSTANCE_NS, u"nil")
+            element._c_node, _XML_SCHEMA_INSTANCE_NS, "nil")
         if python._isString(value):
             pytype_name = u"str"
             _pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)

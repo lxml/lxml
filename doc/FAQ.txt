@@ -56,6 +56,26 @@ ElementTree_.
      7.3  How can I find out which namespace prefixes are used in a document?
      7.4  How can I specify a default namespace for XPath expressions?
 
+..
+  >>> import sys
+  >>> from lxml import etree as _etree
+  >>> if sys.version_info[0] >= 3:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  ... else:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
+
 
 General Questions
 =================
@@ -248,7 +268,6 @@ serialise an Element, you will get all parts of that Element:
 
 .. sourcecode:: pycon
 
-    >>> from lxml import etree
     >>> root = etree.XML("<root><tag>text<child/></tag>tail</root>")
     >>> print(etree.tostring(root[0]))
     <tag>text<child/></tag>tail
@@ -292,7 +311,6 @@ How can I find out if an Element is a comment or PI?
 
 .. sourcecode:: pycon
 
-    >>> from lxml import etree
     >>> root = etree.XML("<?my PI?><root><!-- empty --></root>")
 
     >>> root.tag

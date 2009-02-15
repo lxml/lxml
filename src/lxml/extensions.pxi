@@ -59,7 +59,7 @@ cdef class _BaseContext:
             # format: [ {(ns, name):function} ] -> {(ns_utf, name_utf):function}
             new_extensions = {}
             for extension in extensions:
-                for (ns_uri, name), function in extension.iteritems():
+                for (ns_uri, name), function in extension.items():
                     if name is None:
                         raise ValueError, u"extensions must have non empty names"
                     ns_utf   = self._to_utf(ns_uri)

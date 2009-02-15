@@ -11,21 +11,21 @@ THIS FAILS IN libxml2 2.6.29 AND 2.6.30 !!
 ... <script src="http://www.youtube.com/example.js"></script>
 ... <script src="/something-else.js"></script>
 ... </div>'''
->>> print tostring(fromstring(doc_embed))
+>>> print(tostring(fromstring(doc_embed)))
 <div>
 <embed src="http://www.youtube.com/v/183tVH1CZpA" type="application/x-shockwave-flash"></embed>
 <embed src="http://anothersite.com/v/another"></embed>
 <script src="http://www.youtube.com/example.js"></script>
 <script src="/something-else.js"></script>
 </div>
->>> print Cleaner().clean_html(doc_embed)
+>>> print(Cleaner().clean_html(doc_embed))
 <div>
 </div>
->>> print Cleaner(host_whitelist=['www.youtube.com']).clean_html(doc_embed)
+>>> print(Cleaner(host_whitelist=['www.youtube.com']).clean_html(doc_embed))
 <div>
 <embed src="http://www.youtube.com/v/183tVH1CZpA" type="application/x-shockwave-flash"></embed>
 </div>
->>> print Cleaner(host_whitelist=['www.youtube.com'], whitelist_tags=None).clean_html(doc_embed)
+>>> print(Cleaner(host_whitelist=['www.youtube.com'], whitelist_tags=None).clean_html(doc_embed))
 <div>
 <embed src="http://www.youtube.com/v/183tVH1CZpA" type="application/x-shockwave-flash"></embed>
 <script src="http://www.youtube.com/example.js"></script>

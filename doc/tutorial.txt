@@ -932,7 +932,7 @@ some or all of these methods, you can control which events are generated:
     >>> parser = etree.XMLParser(target=parser_target)
     >>> events = etree.fromstring('<root test="true"/>', parser)
 
-    >>> print parser_target.close_count
+    >>> print(parser_target.close_count)
     1
 
     >>> for event in events:
@@ -949,13 +949,13 @@ target to a usable state (also in the case of an error!).
 .. sourcecode:: pycon
 
     >>> events = etree.fromstring('<root test="true"/>', parser)
-    >>> print parser_target.close_count
+    >>> print(parser_target.close_count)
     2
     >>> events = etree.fromstring('<root test="true"/>', parser)
-    >>> print parser_target.close_count
+    >>> print(parser_target.close_count)
     3
     >>> events = etree.fromstring('<root test="true"/>', parser)
-    >>> print parser_target.close_count
+    >>> print(parser_target.close_count)
     4
 
     >>> for event in events:

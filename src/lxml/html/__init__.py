@@ -1379,8 +1379,10 @@ def xhtml_to_html(xhtml):
 
 # This isn't a general match, but it's a match for what libxml2
 # specifically serialises:
-__replace_meta_content_type = re.compile(
+__str_replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type"[^>]*>').sub
+__bytes_replace_meta_content_type = re.compile(
+    r'<meta http-equiv="Content-Type"[^>]*>'.encode('ASCII')).sub
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
              encoding=None, method="html"):
@@ -1423,7 +1425,10 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     html = etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding)
     if not include_meta_content_type:
-        html = __replace_meta_content_type('', html)
+        if isinstance(html, str):
+            html = __str_replace_meta_content_type('', html)
+        else:
+            html = __bytes_replace_meta_content_type(bytes(), html)
     return html
 
 tostring.__doc__ = __fix_docstring(tostring.__doc__)
