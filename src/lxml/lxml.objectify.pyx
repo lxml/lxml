@@ -228,8 +228,7 @@ cdef class ObjectifiedElement(ElementBase):
             ElementBase.tag.__set__(self, value)
             return
         elif tag == u'base':
-            c_base = _cstr(value)
-            tree.xmlNodeSetBase(self._c_node, c_base) 
+            ElementBase.base.__set__(self, value)
             return
         tag = _buildChildTag(self, tag)
         element = _lookupChild(self, tag)
