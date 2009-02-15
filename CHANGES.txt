@@ -14,7 +14,12 @@ Features added
 Bugs fixed
 ----------
 
+* Setting the ``base`` attribute in ``lxml.objectify`` from a unicode
+  string failed.
+
 * Fixes following changes in Python 3.0.1.
+
+* Minor fixes for Python 3.
 
 Other changes
 -------------
