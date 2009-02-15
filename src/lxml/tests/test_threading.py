@@ -122,7 +122,8 @@ class ThreadingTestCase(HelperTestCase):
                 errors = None
                 try:
                     XML(xml, parser)
-                except self.etree.ParseError, e:
+                except self.etree.ParseError:
+                    e = sys.exc_info()[1]
                     errors = e.error_log.filter_types(expected_error)
                 self.assertTrue(errors, "Expected error not found")
                 for error in errors:
