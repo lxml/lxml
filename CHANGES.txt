@@ -14,6 +14,11 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak in XPath evaluators.
+
+* Crash when parsing indented XML in one thread and merging it with
+  other documents parsed in another thread.
+
 * Setting the ``base`` attribute in ``lxml.objectify`` from a unicode
   string failed.
 
