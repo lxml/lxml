@@ -12,6 +12,11 @@ if this_dir not in sys.path:
 
 from common_imports import etree, HelperTestCase, BytesIO, _bytes
 
+try:
+    from Queue import Queue
+except ImportError:
+    from queue import Queue # Py3
+
 class ThreadingTestCase(HelperTestCase):
     """Threading tests"""
     etree = etree
@@ -252,9 +257,136 @@ class ThreadingTestCase(HelperTestCase):
         for thread in threads:
             thread.join()
 
+
+class ThreadPipelineTestCase(HelperTestCase):
+    """Threading tests based on a thread worker pipeline.
+    """
+    etree = etree
+    item_count = 20
+
+    class Worker(threading.Thread):
+        def __init__(self, in_queue, in_count, **kwargs):
+            threading.Thread.__init__(self)
+            self.in_queue = in_queue
+            self.in_count = in_count
+            self.out_queue = Queue(in_count)
+            self.__dict__.update(kwargs)
+        def run(self):
+            get, put = self.in_queue.get, self.out_queue.put
+            handle = self.handle
+            for _ in range(self.in_count):
+                put(handle(get()))
+
+    class ParseWorker(Worker):
+        XML = etree.XML
+        def handle(self, xml):
+            return self.XML(xml)
+    class RotateWorker(Worker):
+        def handle(self, element):
+            first = element[0]
+            element[:] = element[1:]
+            element.append(first)
+            return element
+    class ReverseWorker(Worker):
+        def handle(self, element):
+            element[:] = element[::-1]
+            return element
+    class ParseAndExtendWorker(Worker):
+        XML = etree.XML
+        def handle(self, element):
+            element.extend(self.XML(self.xml))
+            return element
+    class SerialiseWorker(Worker):
+        def handle(self, element):
+            return etree.tostring(element)
+
+    xml = _bytes('''\
+<xsl:stylesheet
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    version="1.0">
+  <xsl:output method="xml" />
+  <xsl:template match="/">
+     <div id="test">
+       <xsl:apply-templates/>
+     </div>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+    def _build_pipeline(self, item_count, *classes, **kwargs):
+        in_queue = Queue(item_count)
+        start = last = classes[0](in_queue, item_count, **kwargs)
+        start.setDaemon(True)
+        for worker_class in classes[1:]:
+            last = worker_class(last.out_queue, item_count, **kwargs)
+            last.setDaemon(True)
+            last.start()
+        return (in_queue, start, last)
+
+    def test_thread_pipeline_thread_parse(self):
+        item_count = self.item_count
+        # build and start the pipeline
+        in_queue, start, last = self._build_pipeline(
+            item_count,
+            self.ParseWorker,
+            self.RotateWorker,
+            self.ReverseWorker,
+            self.ParseAndExtendWorker,
+            self.SerialiseWorker,
+            xml = self.xml)
+
+        # fill the queue
+        put = start.in_queue.put
+        for _ in range(item_count):
+            put(self.xml)
+
+        # start the first thread and thus everything
+        start.start()
+        # make sure the last thread has terminated
+        last.join(60) # time out after 60 seconds
+        self.assertEquals(item_count, last.out_queue.qsize())
+        # read the results
+        get = last.out_queue.get
+        results = [ get() for _ in range(item_count) ]
+
+        comparison = results[0]
+        for i, result in enumerate(results[1:]):
+            self.assertEquals(comparison, result)
+
+    def test_thread_pipeline_global_parse(self):
+        item_count = self.item_count
+        XML = self.etree.XML
+        # build and start the pipeline
+        in_queue, start, last = self._build_pipeline(
+            item_count,
+            self.RotateWorker,
+            self.ReverseWorker,
+            self.ParseAndExtendWorker,
+            self.SerialiseWorker,
+            xml = self.xml)
+
+        # fill the queue
+        put = start.in_queue.put
+        for _ in range(item_count):
+            put(XML(self.xml))
+
+        # start the first thread and thus everything
+        start.start()
+        # make sure the last thread has terminated
+        last.join(60) # time out after 90 seconds
+        self.assertEquals(item_count, last.out_queue.qsize())
+        # read the results
+        get = last.out_queue.get
+        results = [ get() for _ in range(item_count) ]
+
+        comparison = results[0]
+        for i, result in enumerate(results[1:]):
+            self.assertEquals(comparison, result)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ThreadingTestCase)])
+    suite.addTests([unittest.makeSuite(ThreadPipelineTestCase)])
     return suite
 
 if __name__ == '__main__':
