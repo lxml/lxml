@@ -128,6 +128,9 @@ cdef class _XPathEvaluatorBase:
     def __dealloc__(self):
         if self._xpathCtxt is not NULL:
             xpath.xmlXPathFreeContext(self._xpathCtxt)
+        if config.ENABLE_THREADING:
+            if self._eval_lock is not NULL:
+                python.PyThread_free_lock(self._eval_lock)
 
     cdef set_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._xpathCtxt = xpathCtxt
