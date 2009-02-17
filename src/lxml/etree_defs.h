@@ -192,7 +192,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
  */
 
 #define _LX__ELEMENT_MATCH(c_node, only_elements)  \
-    ((only_elements) ? (_isElement(c_node)) : ((c_node)->type != XML_TEXT_NODE))
+    ((only_elements) ? (_isElement(c_node)) : 1)
 
 #define _LX__ADVANCE_TO_NEXT(c_node, only_elements)                        \
     while ((c_node != 0) && (!_LX__ELEMENT_MATCH(c_node, only_elements)))  \
