@@ -7,7 +7,7 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
-import os.path, unittest, copy, sys, operator, tempfile
+import os.path, unittest, copy, sys, operator, tempfile, gzip
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -2457,14 +2457,16 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     # helper methods
 
-    def _writeElement(self, element, encoding='us-ascii'):
+    def _writeElement(self, element, encoding='us-ascii', compression=0):
         """Write out element for comparison.
         """
         ElementTree = self.etree.ElementTree
         f = BytesIO()
         tree = ElementTree(element=element)
-        tree.write(f, encoding=encoding)
+        tree.write(f, encoding=encoding, compression=compression)
         data = f.getvalue()
+        if compression:
+            data = zlib.decompress(data)
         return canonicalize(data)
 
 
@@ -2547,6 +2549,14 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a><b></b></a>'),
                           s)
 
+    def test_c14n_gzip(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        f = BytesIO()
+        tree.write_c14n(f, compression=9)
+        s = gzip.GzipFile(fileobj=BytesIO(f.getvalue())).read()
+        self.assertEquals(_bytes('<a>'+'<b></b>'*200+'</a>'),
+                          s)
+
     def test_c14n_file(self):
         tree = self.parse(_bytes('<a><b/></a>'))
         handle, filename = tempfile.mkstemp()
@@ -2559,6 +2569,20 @@ class ETreeC14NTestCase(HelperTestCase):
             os.close(handle)
             os.remove(filename)
         self.assertEquals(_bytes('<a><b></b></a>'),
+                          data)
+
+    def test_c14n_file_gzip(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write_c14n(filename, compression=9)
+            f = gzip.open(filename, 'rb')
+            data = f.read()
+            f.close()
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           data)
 
     def test_c14n_with_comments(self):
@@ -2598,12 +2622,114 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
                           s)
 
+
+class ETreeWriteTestCase(HelperTestCase):
+    def test_write(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        f = BytesIO()
+        tree.write(f)
+        s = f.getvalue()
+        self.assertEquals(_bytes('<a><b/></a>'),
+                          s)
+
+    def test_write_gzip(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        f = BytesIO()
+        tree.write(f, compression=9)
+        s = gzip.GzipFile(fileobj=BytesIO(f.getvalue())).read()
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          s)
+
+    def test_write_gzip_level(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        f = BytesIO()
+        tree.write(f, compression=0)
+        s0 = f.getvalue()
+
+        f = BytesIO()
+        tree.write(f)
+        self.assertEquals(f.getvalue(), s0)
+
+        f = BytesIO()
+        tree.write(f, compression=1)
+        s = f.getvalue()
+        self.assert_(len(s) <= len(s0))
+        s1 = gzip.GzipFile(fileobj=BytesIO(s)).read()
+
+        f = BytesIO()
+        tree.write(f, compression=9)
+        s = f.getvalue()
+        self.assert_(len(s) <= len(s0))
+        s9 = gzip.GzipFile(fileobj=BytesIO(s)).read()
+
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          s0)
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          s1)
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          s9)
+
+    def test_write_file(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write(filename)
+            f = open(filename, 'rb')
+            data = f.read()
+            f.close()
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a><b/></a>'),
+                          data)
+
+    def test_write_file_gzip(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write(filename, compression=9)
+            f = gzip.open(filename, 'rb')
+            data = f.read()
+            f.close()
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          data)
+
+    def test_write_file_gzip_parse(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write(filename, compression=9)
+            data = etree.tostring(etree.parse(filename))
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          data)
+
+    def test_write_file_gzipfile_parse(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        handle, filename = tempfile.mkstemp()
+        try:
+            tree.write(filename, compression=9)
+            data = etree.tostring(etree.parse(
+                gzip.GzipFile(filename)))
+        finally:
+            os.close(handle)
+            os.remove(filename)
+        self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          data)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])
     suite.addTests(

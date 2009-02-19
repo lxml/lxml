@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* Zlib compression support for serialisation operations to file(-like)
+  objects.
+
+
 2.2beta3 (2009-02-17)
 =====================
 

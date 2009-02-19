@@ -44,6 +44,9 @@ import sys
 cdef object re
 import re
 
+cdef object gzip
+import gzip
+
 cdef object ITER_EMPTY
 ITER_EMPTY = iter(())
 
@@ -1596,16 +1599,20 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             return None
 
     def write(self, file, *, encoding=None, method=u"xml",
-              pretty_print=False, xml_declaration=None, with_tail=True):
+              pretty_print=False, xml_declaration=None, with_tail=True,
+              compression=0):
         u"""write(self, file, encoding=None, method="xml",
-                  pretty_print=False, xml_declaration=None, with_tail=True)
+                  pretty_print=False, xml_declaration=None, with_tail=True,
+                  compression=0)
 
-        Write the tree to a file or file-like object.
+        Write the tree to a filename, file or file-like object.
 
         Defaults to ASCII encoding and writing a declaration as needed.
 
         The keyword argument 'method' selects the output method: 'xml' or
         'html'.
+
+        The ``compression`` option enables GZip compression level 1-9.
         """
         cdef bint write_declaration
         self._assertHasRoot()
@@ -1621,8 +1628,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             encoding = encoding.upper()
             write_declaration = encoding not in \
                                   (u'US-ASCII', u'ASCII', u'UTF8', u'UTF-8')
+        if compression is None or compression < 0:
+            compression = 0
         _tofilelike(file, self._context_node, encoding, method,
-                    write_declaration, 1, pretty_print, with_tail)
+                    write_declaration, 1, pretty_print, with_tail, compression)
 
     def getpath(self, _Element element not None):
         u"""getpath(self, element)
@@ -1841,13 +1850,20 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         XInclude()(self._context_node)
 
-    def write_c14n(self, file, *, exclusive=False, with_comments=True):
-        u"""write_c14n(self, file, exclusive=False, with_comments=True)
+    def write_c14n(self, file, *, exclusive=False, with_comments=True,
+                   compression=0):
+        u"""write_c14n(self, file, exclusive=False, with_comments=True,
+                       compression=0)
 
         C14N write of document. Always writes UTF-8.
+
+        The ``compression`` option enables GZip compression level 1-9.
         """
         self._assertHasRoot()
-        _tofilelikeC14N(file, self._context_node, exclusive, with_comments)
+        if compression is None or compression < 0:
+            compression = 0
+        _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                        compression)
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
     return _newElementTree(doc, context_node, _ElementTree)

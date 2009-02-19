@@ -134,7 +134,9 @@ cdef _tostring(_Element element, encoding, method,
                 tree.xmlBufferContent(c_result_buffer),
                 tree.xmlBufferLength(c_result_buffer))
     finally:
-        tree.xmlOutputBufferClose(c_buffer)
+        error_result = tree.xmlOutputBufferClose(c_buffer)
+    if error_result < 0:
+        _raiseSerialisationError(error_result)
     return result
 
 cdef _raiseSerialisationError(int error_result):
@@ -294,9 +296,14 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 
 cdef class _FilelikeWriter:
     cdef object _filelike
+    cdef object _close_filelike
     cdef _ExceptionContext _exc_context
     cdef _ErrorLog error_log
-    def __init__(self, filelike, exc_context=None):
+    def __init__(self, filelike, exc_context=None, compression=None):
+        if compression is not None and compression > 0:
+            filelike = gzip.GzipFile(
+                fileobj=filelike, mode='wb', compresslevel=compression)
+            self._close_filelike = filelike.close
         self._filelike = filelike
         if exc_context is None:
             self._exc_context = _ExceptionContext()
@@ -326,9 +333,15 @@ cdef class _FilelikeWriter:
             return -1
 
     cdef int close(self):
-        # we should not close the file here as we didn't open it
-        self._filelike = None
-        return 0
+        try:
+            if self._close_filelike is not None:
+                self._close_filelike()
+            # we should not close the file here as we didn't open it
+            self._filelike = None
+            return 0
+        except:
+            self._exc_context._store_raised()
+            return -1
 
 cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int len):
     return (<_FilelikeWriter>ctxt).write(c_buffer, len)
@@ -338,7 +351,7 @@ cdef int _closeFilelikeWriter(void* ctxt):
 
 cdef _tofilelike(f, _Element element, encoding, method,
                  bint write_xml_declaration, bint write_doctype,
-                 bint pretty_print, bint with_tail):
+                 bint pretty_print, bint with_tail, int compression):
     cdef python.PyThreadState* state = NULL
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
@@ -352,15 +365,25 @@ cdef _tofilelike(f, _Element element, encoding, method,
         c_enc = _cstr(encoding)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
+        data = _textToString(element._c_node, encoding, with_tail)
+        if compression:
+            bytes_out = BytesIO()
+            gzip_file = gzip.GzipFile(
+                fileobj=bytes_out, mode='wb', compresslevel=compression)
+            try:
+                gzip_file.write(data)
+            finally:
+                gzip_file.close()
+            data = bytes_out
         if _isString(f):
             filename8 = _encodeFilename(f)
             f = open(filename8, u'wb')
             try:
-                f.write(_textToString(element._c_node, encoding, with_tail))
+                f.write(data)
             finally:
                 f.close()
         else:
-            f.write(_textToString(element._c_node, encoding, with_tail))
+            f.write(data)
         return
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL:
@@ -371,12 +394,12 @@ cdef _tofilelike(f, _Element element, encoding, method,
     if _isString(f):
         filename8 = _encodeFilename(f)
         c_buffer = tree.xmlOutputBufferCreateFilename(
-            _cstr(filename8), enchandler, 0)
+            _cstr(filename8), enchandler, compression)
         if c_buffer is NULL:
             return python.PyErr_SetFromErrno(IOError)
         state = python.PyEval_SaveThread()
     elif hasattr(f, u'write'):
-        writer   = _FilelikeWriter(f)
+        writer   = _FilelikeWriter(f, compression=compression)
         c_buffer = writer._createOutputBuffer(enchandler)
     else:
         tree.xmlCharEncCloseFunc(enchandler)
@@ -387,7 +410,12 @@ cdef _tofilelike(f, _Element element, encoding, method,
                        write_xml_declaration, write_doctype,
                        pretty_print, with_tail)
     error_result = c_buffer.error
-    tree.xmlOutputBufferClose(c_buffer)
+    if error_result == xmlerror.XML_ERR_OK:
+        error_result = tree.xmlOutputBufferClose(c_buffer)
+        if error_result > 0:
+            error_result = xmlerror.XML_ERR_OK
+    else:
+        tree.xmlOutputBufferClose(c_buffer)
     if writer is None:
         python.PyEval_RestoreThread(state)
     else:
@@ -395,7 +423,8 @@ cdef _tofilelike(f, _Element element, encoding, method,
     if error_result != xmlerror.XML_ERR_OK:
         _raiseSerialisationError(error_result)
 
-cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments):
+cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
+                     int compression):
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
     cdef char* c_filename
@@ -411,15 +440,18 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments):
             c_filename = _cstr(filename8)
             with nogil:
                 bytes = c14n.xmlC14NDocSave(c_doc, NULL, exclusive, NULL,
-                                            with_comments, c_filename, 0)
+                                            with_comments, c_filename, compression)
         elif hasattr(f, u'write'):
-            writer   = _FilelikeWriter(f)
+            writer   = _FilelikeWriter(f, compression=compression)
             c_buffer = writer._createOutputBuffer(NULL)
             writer.error_log.connect()
             bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, exclusive, NULL,
                                           with_comments, c_buffer)
             writer.error_log.disconnect()
-            tree.xmlOutputBufferClose(c_buffer)
+            if bytes >= 0:
+                bytes = tree.xmlOutputBufferClose(c_buffer)
+            else:
+                tree.xmlOutputBufferClose(c_buffer)
         else:
             raise TypeError, \
                 u"File or filename expected, got '%s'" % funicode(python._fqtypename(f))
