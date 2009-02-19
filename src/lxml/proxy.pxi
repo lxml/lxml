@@ -436,11 +436,9 @@ cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
     cdef xmlNode* c_node = <xmlNode*>c_attr
     while c_node is not NULL:
         fixThreadDictNameForNode(c_node, c_src_dict, c_dict)
-        fixThreadDictContentForNode(c_node, c_src_dict, c_dict)
         # libxml2 keeps some (!) attribute values in the dict
         c_child = c_node.children
         while c_child is not NULL:
-            fixThreadDictNameForNode(c_child, c_src_dict, c_dict)
             fixThreadDictContentForNode(c_child, c_src_dict, c_dict)
             c_child = c_child.next
         c_node = c_node.next
