@@ -232,4 +232,4 @@ def findtext(elem, path, default=None):
     if el is None:
         return default
     else:
-        return el.text
+        return el.text or ''
