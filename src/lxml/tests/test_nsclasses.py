@@ -161,6 +161,49 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.Namespace(None).clear()
         self.Namespace('ns30').clear()
 
+    def test_element_creation(self):
+        default, bluff, maeh = (
+            self.default_class, self.bluff_class, self.maeh_class)
+
+        class honk(etree.ElementBase):
+            TAG = 'HONK'
+            NAMESPACE = 'http://a.b/c'
+
+        el = default(
+            "test",
+            "text",
+            bluff(honk, "TaIL", maeh),
+            maeh("TeXT", bluff, honk(), "TAiL"),
+            "Tail")
+
+        self.assertEquals('default_class', el.tag)
+        self.assertEquals('testtext', el.text)
+        self.assertEquals(None, el.tail)
+        self.assertEquals(2, len(el))
+        self.assertEquals(7, len(list(el.iter())))
+
+        self.assertEquals('bluff_class', el[0].tag)
+        self.assertEquals('TaIL', el[0][0].tail)
+        self.assertEquals('TaIL', ''.join(el[0].itertext()))
+        self.assertEquals('{http://a.b/c}HONK',
+                          el[0][0].tag)
+        self.assertEquals('maeh_class',
+                          el[0][1].tag)
+
+        self.assertEquals('maeh_class', el[1].tag)
+        self.assertEquals('TeXT', el[1].text)
+        self.assertEquals('bluff_class', el[1][0].tag)
+        self.assertEquals('{http://a.b/c}HONK', el[1][1].tag)
+        self.assertEquals('TAiL', el[1][1].tail)
+
+        self.assertEquals('TeXTTAiL',
+                          ''.join(el[1].itertext()))
+        self.assertEquals('Tail', el[1].tail)
+        self.assertEquals('TAiL', el[1][1].tail)
+        self.assertEquals('bluff_class', el[1][0].tag)
+        self.assertEquals('{http://a.b/c}HONK', el[1][1].tag)
+        
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeNamespaceClassesTestCase)])

@@ -38,6 +38,26 @@ custom Element classes.
    4  Generating XML with custom classes
    5  Implementing namespaces
 
+..
+  >>> import sys
+  >>> from lxml import etree as _etree
+  >>> if sys.version_info[0] >= 3:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if isinstance(s, bytes) and bytes([10]) in s: s = s.decode("utf-8") # CR
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  ... else:
+  ...   class etree_mock(object):
+  ...     def __getattr__(self, name): return getattr(_etree, name)
+  ...     def tostring(self, *args, **kwargs):
+  ...       s = _etree.tostring(*args, **kwargs)
+  ...       if s[-1] == '\n': s = s[:-1]
+  ...       return s
+  >>> etree = etree_mock()
+
 
 Background on Element proxies
 =============================
@@ -370,6 +390,18 @@ this Element a second time after letting its reference go.  You should
 therefore always use a corresponding class lookup scheme that returns
 your Element proxy classes for the elements that they create.  The
 ``ElementNamespaceClassLookup`` is generally a good match.
+
+You can use custom Element classes to quickly create XML fragments:
+
+.. sourcecode:: pycon
+
+  >>> class hale(etree.ElementBase): pass
+  >>> class bopp(etree.ElementBase): pass
+
+  >>> el = hale( "some ", honk(honking = 'true'), bopp, " text" )
+
+  >>> print(etree.tostring(el))
+  <hale>some <honk honking="true"/><bopp/> text</hale>
 
 
 Implementing namespaces

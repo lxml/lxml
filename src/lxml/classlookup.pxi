@@ -44,12 +44,13 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
         """
         cdef bint is_html = 0
         cdef _BaseParser parser
+        cdef _Element last_child
         try:
             namespace = _utf8(self.NAMESPACE)
         except AttributeError:
             namespace = None
         try:
-            tag, ns = _getNsTag(self.TAG)
+            ns, tag = _getNsTag(self.TAG)
             if ns is not None:
                 namespace = ns
         except AttributeError:
@@ -59,10 +60,11 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
         try:
             parser = self.PARSER
         except AttributeError:
-            if python.PyTuple_GET_SIZE(children):
-                parser = (<_Element>children[0])._doc._parser
-            else:
-                parser = None
+            parser = None
+            for child in children:
+                if isinstance(child, _Element):
+                    parser = (<_Element>child)._doc._parser
+                    break
         if isinstance(parser, HTMLParser):
             is_html = 1
         if namespace is None:
@@ -72,8 +74,27 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
                 pass
         _initNewElement(self, is_html, tag, namespace, parser,
                         attrib, nsmap, _extra)
+        last_child = None
         for child in children:
-            _appendChild(self, child)
+            if _isString(child):
+                if last_child is None:
+                    if _hasText(self._c_node):
+                        self.text += child
+                    else:
+                        self.text = child
+                else:
+                    if _hasTail(last_child._c_node):
+                        last_child.tail += child
+                    else:
+                        last_child.tail = child
+            elif isinstance(child, _Element):
+                last_child = child
+                _appendChild(self, last_child)
+            elif isinstance(child, type) and issubclass(child, ElementBase):
+                last_child = child()
+                _appendChild(self, last_child)
+            else:
+                raise TypeError, "Invalid child type: %r" % type(child)
 
 cdef class CommentBase(_Comment):
     u"""All custom Comment classes must inherit from this one.
