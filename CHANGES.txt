@@ -17,6 +17,8 @@ Features added
 Bugs fixed
 ----------
 
+* ``FormElement._name()`` failed for non top-level forms.
+
 * ``TAG`` special attribute in constructor of custom Element classes
   was evaluated incorrectly.
 

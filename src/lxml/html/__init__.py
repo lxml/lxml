@@ -721,9 +721,9 @@ class FormElement(HtmlElement):
             return self.get('name')
         elif self.get('id'):
             return '#' + self.get('id')
-        forms = self.body.findall('form')
+        forms = list(self.body.iter('form'))
         if not forms:
-            forms = self.body.findall('{%s}form' % XHTML_NAMESPACE)
+            forms = list(self.body.iter('{%s}form' % XHTML_NAMESPACE))
         return str(forms.index(self))
 
     def form_values(self):
