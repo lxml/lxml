@@ -8,8 +8,23 @@ Under development
 Features added
 --------------
 
-* Zlib compression support for serialisation operations to file(-like)
+* Support strings and instantiable Element classes as child arguments
+  to the constructor of custom Element classes.
+
+* GZip compression support for serialisation to files and file-like
   objects.
+
+Bugs fixed
+----------
+
+* ``TAG`` special attribute in constructor of custom Element classes
+  was evaluated incorrectly.
+
+Other changes
+-------------
+
+* ``Element.findtext()`` now returns an empty string instead of None
+  for Elements without text content.
 
 
 2.2beta3 (2009-02-17)
