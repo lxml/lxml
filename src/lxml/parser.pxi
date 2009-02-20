@@ -272,11 +272,12 @@ cdef class _FileReaderContext:
         self._exc_context = exc_context
         self._filelike = filelike
         self._encoding = encoding
-        self._url = url
         if url is None:
             self._c_url = NULL
         else:
+            url = _encodeFilename(url)
             self._c_url = _cstr(url)
+        self._url = url
         self._bytes  = ''
         self._bytes_read = 0
 

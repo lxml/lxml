@@ -302,7 +302,7 @@ cdef class _FilelikeWriter:
     def __init__(self, filelike, exc_context=None, compression=None):
         if compression is not None and compression > 0:
             filelike = gzip.GzipFile(
-                fileobj=filelike, mode='wb', compresslevel=compression)
+                fileobj=filelike, mode=u'wb', compresslevel=compression)
             self._close_filelike = filelike.close
         self._filelike = filelike
         if exc_context is None:
@@ -369,7 +369,7 @@ cdef _tofilelike(f, _Element element, encoding, method,
         if compression:
             bytes_out = BytesIO()
             gzip_file = gzip.GzipFile(
-                fileobj=bytes_out, mode='wb', compresslevel=compression)
+                fileobj=bytes_out, mode=u'wb', compresslevel=compression)
             try:
                 gzip_file.write(data)
             finally:
