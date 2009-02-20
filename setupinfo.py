@@ -91,6 +91,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
     else:
         runtime_library_dirs = []
 
+    if not OPTION_SHOW_WARNINGS:
+        _cflags = ['-w'] + _cflags
+
     result = []
     for module in modules:
         main_module_source = PACKAGE_PATH + module + source_extension
@@ -99,7 +102,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
             Extension(
             module,
             sources = [main_module_source] + dependencies,
-            extra_compile_args = ['-w'] + _cflags,
+            extra_compile_args = _cflags,
             extra_objects = static_binaries,
             define_macros = _define_macros,
             include_dirs = _include_dirs,
@@ -327,6 +330,7 @@ if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
 OPTION_STATIC = has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
+OPTION_SHOW_WARNINGS = has_option('warnings')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
 OPTION_BUILD_LIBXML2XSLT = has_option('static-deps')
 if OPTION_BUILD_LIBXML2XSLT:
