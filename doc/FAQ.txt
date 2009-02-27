@@ -757,7 +757,9 @@ for possible approaches to solve your specific problem:
 * try copying trees at suspicious places in your code and working with
   those instead of a tree shared between threads.  Note that the
   copying must happen inside the target thread to be effective, not in
-  the thread that created the tree.
+  the thread that created the tree.  Serialising in one thread and
+  parsing in another is also a simple (and fast) way of separating
+  thread contexts.
 
 * try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
   instead of sharing one.  Also see the question above.
