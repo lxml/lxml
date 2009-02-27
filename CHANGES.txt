@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash in XSLT when overwriting an already defined attribute using
+  ``xsl:attribute``.
+
 * Crash bug in exception handling code under Python 3.  This was due
   to a problem in Cython, not lxml itself.
 

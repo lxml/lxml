@@ -84,6 +84,31 @@ class ThreadingTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>'),
                           tostring(root))
 
+    def test_thread_xslt_attr_replace(self):
+        # this is the only case in XSLT where the result tree can be
+        # modified in-place
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        style = self.etree.XSLT(XML(_bytes('''\
+    <xsl:stylesheet version="1.0"
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+      <xsl:template match="*">
+        <root class="abc">
+          <xsl:copy-of select="@class" />
+          <xsl:attribute name="class">xyz</xsl:attribute> 
+        </root>
+      </xsl:template>
+    </xsl:stylesheet>''')))
+
+        result = []
+        def run_thread():
+            root = XML(_bytes('<ROOT class="ABC" />'))
+            result.append( style(root).getroot() )
+
+        self._run_thread(run_thread)
+        self.assertEquals(_bytes('<root class="xyz"/>'),
+                          tostring(result[0]))
+
     def test_thread_create_xslt(self):
         XML = self.etree.XML
         tostring = self.etree.tostring

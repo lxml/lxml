@@ -486,7 +486,15 @@ cdef class XSLT:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
             python.PyErr_NoMemory()
 
-        initTransformDict(transform_ctxt)
+        # using the stylesheet dict is safer than using a possibly
+        # unrelated dict from the current thread.  Almost all
+        # non-input tag/attr names will come from the stylesheet
+        # anyway.
+        if transform_ctxt.dict is not NULL:
+            xmlparser.xmlDictFree(transform_ctxt.dict)
+        transform_ctxt.dict = self._c_style.doc.dict
+        xmlparser.xmlDictReference(transform_ctxt.dict)
+
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
 
@@ -775,9 +783,6 @@ xslt.xsltRegisterAllExtras()
 
 # enable EXSLT support for XSLT
 xslt.exsltRegisterAll()
-
-cdef void initTransformDict(xslt.xsltTransformContext* transform_ctxt):
-    __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&transform_ctxt.dict)
 
 
 ################################################################################
