@@ -39,7 +39,7 @@ custom Element classes.
    5  Implementing namespaces
 
 ..
-  >>> try: unicode
+  >>> try: _ = unicode
   ... except NameError: unicode = str
 
 
