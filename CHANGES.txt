@@ -17,8 +17,8 @@ Features added
 Bugs fixed
 ----------
 
-* Deep-copying an ElementTree did not copy its sibling PIs and
-  comments.
+* Deep-copying an ElementTree copied neither its sibling PIs and
+  comments nor its internal/external DTD subsets.
 
 * Soupparser failed on broken attributes without values.
 
