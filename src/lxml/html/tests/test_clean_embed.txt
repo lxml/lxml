@@ -5,6 +5,13 @@ THIS FAILS IN libxml2 2.6.29 AND 2.6.30 !!
 >>> from lxml.html.clean import clean, clean_html, Cleaner
 >>> from lxml.html import usedoctest
 
+>>> def tostring(el):  # work-around for Py3 'bytes' type
+...     from lxml.html import tostring
+...     s = tostring(el)
+...     if not isinstance(s, str):
+...         s = s.decode('UTF-8')
+...     return s
+
 >>> doc_embed = '''<div>
 ... <embed src="http://www.youtube.com/v/183tVH1CZpA" type="application/x-shockwave-flash"></embed>
 ... <embed src="http://anothersite.com/v/another"></embed>
