@@ -90,7 +90,8 @@ def copy_epydoc_macros(src, dest, existing_header_lines):
             break
         if line.startswith('%') or \
                 r'\documentclass' in line or \
-                r'\makeindex' in line:
+                r'\makeindex' in line or \
+                r'{inputenc}' in line:
             continue
         if line.startswith(r'\usepackage'):
             if line in existing_header_lines:
@@ -270,7 +271,7 @@ def publish(dirname, lxml_path, release):
         if hln.startswith(r"\documentclass"):
             #hln = hln.replace('article', 'book')
             hln = DOCUMENT_CLASS
-        elif hln.startswith("%% generator "):
+        elif hln.startswith("%% generator ") or hln.startswith("% generated "):
             master.write(EPYDOC_IMPORT)
         elif hln.startswith(r"\begin{document}"):
             # pygments and epydoc support
