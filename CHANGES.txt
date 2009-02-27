@@ -17,6 +17,8 @@ Features added
 Bugs fixed
 ----------
 
+* Soupparser failed on broken attributes without values.
+
 * Crash in XSLT when overwriting an already defined attribute using
   ``xsl:attribute``.
 

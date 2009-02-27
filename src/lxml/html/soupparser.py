@@ -109,8 +109,14 @@ from htmlentitydefs import name2codepoint
 import re
 
 handle_entities = re.compile("&(\w+);").sub
+try:
+    empty_string = unicode()
+except NameError:
+    empty_string = str()
 
 def unescape(string):
+    if not string:
+        return empty_string
     # work around oddities in BeautifulSoup's entity handling
     def unescape_entity(m):
         try:
