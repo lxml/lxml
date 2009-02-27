@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash bug in exception handling code under Python 3.  This was due
+  to a problem in Cython, not lxml itself.
+
 * ``lxml.html.FormElement._name()`` failed for non top-level forms.
 
 * ``TAG`` special attribute in constructor of custom Element classes
@@ -24,6 +27,8 @@ Bugs fixed
 
 Other changes
 -------------
+
+* Official support for Python 3.0.1.
 
 * ``Element.findtext()`` now returns an empty string instead of None
   for Elements without text content.
