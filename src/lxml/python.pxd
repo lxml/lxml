@@ -3,7 +3,6 @@ from cstd cimport FILE
 cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef struct PyThreadState
-    ctypedef int size_t
     cdef int INT_MAX
     cdef int PY_SSIZE_T_MAX
     cdef int PY_VERSION_HEX

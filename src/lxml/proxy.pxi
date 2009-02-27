@@ -210,8 +210,8 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
 ctypedef struct _nscache:
     xmlNs** new
     xmlNs** old
-    cstd.size_t size
-    cstd.size_t last
+    size_t size
+    size_t last
 
 cdef int _growNsCache(_nscache* c_ns_cache) except -1:
     cdef xmlNs** c_ns_ptr
@@ -312,7 +312,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef xmlNs* c_ns_next
     cdef xmlNs* c_nsdef
     cdef xmlNs* c_del_ns_list
-    cdef cstd.size_t i, proxy_count = 0
+    cdef size_t i, proxy_count = 0
 
     if not tree._isElementOrXInclude(c_element):
         return 0
@@ -385,7 +385,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
 
 cdef void fixElementDocument(xmlNode* c_element, _Document doc,
-                             cstd.size_t proxy_count):
+                             size_t proxy_count):
     cdef xmlNode* c_node = c_element
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
     if c_node._private is not NULL:

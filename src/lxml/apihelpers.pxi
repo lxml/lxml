@@ -295,9 +295,9 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
     cdef _ns_node_ref* c_nsref_ptr
     cdef xmlNs* c_nsdef
     cdef xmlNode* c_node
-    cdef cstd.size_t c_ns_list_size
-    cdef cstd.size_t c_ns_list_len
-    cdef cstd.size_t i
+    cdef size_t c_ns_list_size
+    cdef size_t c_ns_list_len
+    cdef size_t i
 
     c_ns_list = NULL
     c_ns_list_size = 0

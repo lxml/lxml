@@ -1,6 +1,5 @@
 
 cdef extern from "string.h":
-    ctypedef int size_t
     cdef int strlen(char* s) nogil
     cdef char* strstr(char* haystack, char* needle) nogil
     cdef char* strchr(char* haystack, int needle) nogil
