@@ -1571,9 +1571,21 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def __deepcopy__(self, memo):
         cdef _Element root
+        cdef _Document doc
+        cdef xmlDoc* c_doc
         if self._context_node is not None:
             root = self._context_node.__copy__()
-        return _elementTreeFactory(None, root)
+            _copyNonElementSiblings(self._context_node._c_node, root._c_node)
+            return _elementTreeFactory(None, root)
+        elif self._doc is not None:
+            c_doc = tree.xmlCopyDoc(self._doc._c_doc, 1)
+            if c_doc is NULL:
+                python.PyErr_NoMemory()
+            doc = _documentFactory(c_doc, self._doc._parser)
+            return _elementTreeFactory(doc, None)
+        else:
+            # so what ...
+            return self
 
     # not in ElementTree, read-only
     property docinfo:

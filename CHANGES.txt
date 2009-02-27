@@ -17,6 +17,9 @@ Features added
 Bugs fixed
 ----------
 
+* Deep-copying an ElementTree did not copy its sibling PIs and
+  comments.
+
 * Soupparser failed on broken attributes without values.
 
 * Crash in XSLT when overwriting an already defined attribute using

@@ -871,7 +871,7 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
         c_target = c_tail
         c_tail = c_next
 
-cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
+cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
     cdef xmlNode* c_new_tail
     # tail copying support: look for any text nodes trailing this node and
     # copy it to the target node
@@ -881,9 +881,34 @@ cdef void _copyTail(xmlNode* c_tail, xmlNode* c_target):
             c_new_tail = tree.xmlDocCopyNode(c_tail, c_target.doc, 0)
         else:
             c_new_tail = tree.xmlCopyNode(c_tail, 0)
+        if c_new_tail is NULL:
+            python.PyErr_NoMemory()
         tree.xmlAddNextSibling(c_target, c_new_tail)
         c_target = c_new_tail
         c_tail = _textNodeOrSkip(c_tail.next)
+    return 0
+
+cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
+    cdef xmlNode* c_copy
+    cdef xmlNode* c_sibling = c_node
+    while c_sibling.prev != NULL and \
+            (c_sibling.prev.type == tree.XML_PI_NODE or \
+                 c_sibling.prev.type == tree.XML_COMMENT_NODE):
+        c_sibling = c_sibling.prev
+    while c_sibling != c_node:
+        c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
+        if c_copy is NULL:
+            python.PyErr_NoMemory()
+        tree.xmlAddPrevSibling(c_target, c_copy)
+        c_sibling = c_sibling.next
+    while c_sibling.next != NULL and \
+            (c_sibling.next.type == tree.XML_PI_NODE or \
+                 c_sibling.next.type == tree.XML_COMMENT_NODE):
+        c_sibling = c_sibling.next
+        c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
+        if c_copy is NULL:
+            python.PyErr_NoMemory()
+        tree.xmlAddNextSibling(c_target, c_copy)
 
 cdef int _deleteSlice(_Document doc, xmlNode* c_node,
                       Py_ssize_t count, Py_ssize_t step) except -1:

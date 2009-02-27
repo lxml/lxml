@@ -233,6 +233,22 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals('ONE',     a.text)
         self.assertEquals('ANOTHER', b.text)
 
+    def test_deepcopy_elementtree_pi(self):
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        root = XML(_bytes("<?mypi my test ?><test/><!--comment -->"))
+        tree1 = self.etree.ElementTree(root)
+        self.assertEquals(_bytes("<?mypi my test ?><test/><!--comment -->"),
+                          tostring(tree1))
+
+        tree2 = copy.deepcopy(tree1)
+        self.assertEquals(_bytes("<?mypi my test ?><test/><!--comment -->"),
+                          tostring(tree2))
+
+        root2 = copy.deepcopy(tree1.getroot())
+        self.assertEquals(_bytes("<test/>"),
+                          tostring(root2))
+
     def test_attribute_set(self):
         # ElementTree accepts arbitrary attribute values
         # lxml.etree allows only strings
