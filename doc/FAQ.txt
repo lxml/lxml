@@ -96,7 +96,9 @@ tasks in ElementTree and lxml.etree.  To learn using
 ``lxml.objectify``, read the `objectify documentation`_.
 
 John Shipman has written another tutorial called `Python XML
-processing with lxml`_ that contains lots of examples.
+processing with lxml`_ that contains lots of examples.  Liza Daly
+wrote a nice article about high-performance aspects when `parsing
+large files with lxml`_.
 
 .. _`lxml.etree Tutorial`:      tutorial.html
 .. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
@@ -104,6 +106,8 @@ processing with lxml`_ that contains lots of examples.
 .. _`objectify documentation`:  objectify.html
 .. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
 .. _`element library`:          http://effbot.org/zone/element-lib.htm
+.. _`parsing large files with lxml`: http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
+
 
 Where can I find more documentation about lxml?
 -----------------------------------------------
@@ -194,7 +198,10 @@ Zope3 and some of its extensions have good support for lxml:
 * zif.sedna_, an XQuery based interface to the Sedna OpenSource XML database
 
 And don't miss the quotes by our generally happy_ users_, and other
-`sites that link to lxml`_.
+`sites that link to lxml`_.  As `Liza Daly`_ puts it: "Many software
+products come with the pick-two caveat, meaning that you must choose
+only two: speed, flexibility, or readability.  When used carefully,
+lxml can provide all three."
 
 .. _Zope: http://www.zope.org/
 .. _Plone: http://www.plone.org/
@@ -215,6 +222,7 @@ And don't miss the quotes by our generally happy_ users_, and other
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
 .. _`sites that link to lxml`: http://www.google.com/search?as_lq=http:%2F%2Fcodespeak.net%2Flxml
+.. _`Liza Daly`: http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
 
 
 What is the difference between lxml.etree and lxml.objectify?
@@ -619,8 +627,8 @@ lock) internally when parsing from disk and memory, as long as you use
 either the default parser (which is replicated for each thread) or
 create a parser for each thread yourself.  lxml also allows
 concurrency during validation (RelaxNG and XMLSchema) and XSL
-transformation.  You can share RelaxNG, XMLSchema and (with
-restrictions) XSLT objects between threads.
+transformation.  You can share RelaxNG, XMLSchema and XSLT objects
+between threads.
 
 While you can also share parsers between threads, this will serialize
 the access to each of them, so it is better to ``.copy()`` parsers or
@@ -629,19 +637,16 @@ configuration.  The same applies to the XPath evaluators, which use an
 internal lock to protect their prepared evaluation contexts.  It is
 therefore best to use separate evaluator instances in threads.
 
-Due to the way libxslt handles threading, applying a stylesheets is
-most efficient if it was parsed in the same thread that executes it.
-One way to achieve this is by caching stylesheets in thread-local
-storage.
-
-Warning: Before lxml 2.2, there were various issues when moving
-subtrees between different threads.  If you need code to run with
-older versions, you should generally avoid modifying trees in other
-threads than the one it was generated in.  Although this should work
-in many cases, there are certain scenarios where the termination of a
-thread that parsed a tree can crash the application if subtrees of
-this tree were moved to other documents.  You should be on the safe
-side when passing trees between threads if you either
+Warning: Before lxml 2.2, and especially before 2.1, there were
+various issues when moving subtrees between different threads, or when
+applying XSLT objects from one thread to trees parsed or modified in
+another.  If you need code to run with older versions, you should
+generally avoid modifying trees in other threads than the one it was
+generated in.  Although this should work in many cases, there are
+certain scenarios where the termination of a thread that parsed a tree
+can crash the application if subtrees of this tree were moved to other
+documents.  You should be on the safe side when passing trees between
+threads if you either
 
 - do not modify these trees and do not move their elements to other
   trees, or
@@ -650,6 +655,13 @@ side when passing trees between threads if you either
   use (e.g. by using a fixed size thread-pool or long-running threads
   in processing chains)
 
+Since lxml 2.2, even multi-thread pipelines are supported. However,
+note that it is more efficient to do all tree work inside one thread,
+than to let multiple threads work on a tree one after the other. This
+is because trees inherit state from the thread that created them,
+which must be maintained when the tree is modified inside another
+thread.
+
 
 Does my program run faster if I use threads?
 --------------------------------------------
@@ -657,11 +669,13 @@ Does my program run faster if I use threads?
 Depends.  The best way to answer this is timing and profiling.
 
 The global interpreter lock (GIL) in Python serializes access to the
-interpreter, so if the majority of your processing is done in Python code
-(walking trees, modifying elements, etc.), your gain will be close to 0.  The
-more of your XML processing moves into lxml, however, the higher your gain.
-If your application is bound by XML parsing and serialisation, or by complex
-XSLTs, your speedup on multi-processor machines can be substantial.
+interpreter, so if the majority of your processing is done in Python
+code (walking trees, modifying elements, etc.), your gain will be
+close to zero.  The more of your XML processing moves into lxml,
+however, the higher your gain.  If your application is bound by XML
+parsing and serialisation, or by very selective XPath expressions and
+complex XSLTs, your speedup on multi-processor machines can be
+substantial.
 
 See the question above to learn which operations free the GIL to support
 multi-threading.
@@ -670,30 +684,28 @@ multi-threading.
 Would my single-threaded program run faster if I turned off threading?
 ----------------------------------------------------------------------
 
-Quite likely, yes.  You can see for yourself by compiling lxml
-entirely without threading support.  Pass the ``--without-threading``
-option to setup.py when building lxml from source.  You can also build
-libxml2 without pthread support (``--without-pthreads`` option), which
-may add another bit of performance.  Note that this will leave
-internal data structures entirely without thread protection, so make
-sure you really do not use lxml outside of the main application thread
-in this case.
+Possibly, yes.  You can see for yourself by compiling lxml entirely
+without threading support.  Pass the ``--without-threading`` option to
+setup.py when building lxml from source.  You can also build libxml2
+without pthread support (``--without-pthreads`` option), which may add
+another bit of performance.  Note that this will leave internal data
+structures entirely without thread protection, so make sure you really
+do not use lxml outside of the main application thread in this case.
 
 
 Why can't I reuse XSLT stylesheets in other threads?
 ----------------------------------------------------
 
-Since lxml 2.0, you can.  However, it is a lot more efficient to use
-stylesheets in the thread that created them.  This is due to some
-interfering optimisations in libxslt and lxml.etree.  It is therefore
-a good idea to cache them in thread local storage (see Python's
-threading module).  lxml cannot easily do this for you, as it cannot
-know when to discard them from such a cache.
+Since later lxml 2.0 versions, you can do this.  There is some
+overhead involved as the result document needs an additional cleanup
+traversal when the input document and/or the stylesheet were created
+in other threads.  However, on a multi-processor machine, the gain of
+freeing the GIL easily covers this drawback.
 
-If you use very complex stylesheets or create stylesheets
-programmatically, you should do so in the main thread, and then copy
-them into the thread cache using the ``copy`` module from the standard
-library.
+If you need even the last bit of performance, consider keeping (a copy
+of) the stylesheet in thread-local storage, and try creating the input
+document(s) in the same thread.  And do not forget to benchmark your
+code to see if the increased code complexity is really worth it.
 
 
 My program crashes when run with mod_python/Pyro/Zope/Plone/...
@@ -709,10 +721,11 @@ predictable way.  If you encounter crashes in one of these systems, but your
 code runs perfectly when started by hand, the following gives you a few hints
 for possible approaches to solve your specific problem:
 
-* make sure you use recent versions of libxml2, libxslt and lxml.  The libxml2
-  developers keep fixing bugs in each release, and lxml also tries to become
-  more robust against possible pitfalls.  So newer versions might already fix
-  your problem in a reliable way.
+* make sure you use recent versions of libxml2, libxslt and lxml.  The
+  libxml2 developers keep fixing bugs in each release, and lxml also
+  tries to become more robust against possible pitfalls.  So newer
+  versions might already fix your problem in a reliable way.  Version
+  2.2 of lxml contains many improvements.
 
 * make sure the library versions you installed are really used.  Do
   not rely on what your operating system tells you!  Print the version
@@ -736,14 +749,15 @@ for possible approaches to solve your specific problem:
   from crashing, which should be worth more to you than peek performance.
   Remember that lxml is fast anyway, so concurrency may not even be worth it.
 
-* avoid doing fancy XSLT stuff like foreign document access or passing in
-  subtrees trough XSLT variables.  This might or might not work, depending on
-  your specific usage.
+* look out for fancy XSLT stuff like foreign document access or
+  passing in subtrees trough XSLT variables.  This might or might not
+  work, depending on your specific usage.  Again, later versions of
+  lxml and libxslt provide safer support here.
 
 * try copying trees at suspicious places in your code and working with
-  those instead of a tree shared between threads.  A good candidate
-  might be the result of an XSLT or the stylesheet itself, if it
-  traverses thread boundaries.
+  those instead of a tree shared between threads.  Note that the
+  copying must happen inside the target thread to be effective, not in
+  the thread that created the tree.
 
 * try keeping thread-local copies of XSLT stylesheets, i.e. one per thread,
   instead of sharing one.  Also see the question above.
@@ -755,6 +769,10 @@ for possible approaches to solve your specific problem:
   around your specific problems.  Do not forget to report the version numbers
   of lxml, libxml2 and libxslt you are using (see the question on reporting
   a bug).
+
+Note that most of these options will degrade performance and/or your
+code quality.  If you are unsure what to do, please ask on the mailing
+list.
 
 
 Parsing and Serialisation
