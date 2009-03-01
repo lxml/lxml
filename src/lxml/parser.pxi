@@ -1168,7 +1168,13 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class XMLParser(_FeedParser):
-    u"""XMLParser(self, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, remove_blank_text=False, compact=True, resolve_entities=True, remove_comments=False, remove_pis=False, target=None, encoding=None, schema=None)
+    u"""XMLParser(self, encoding=None, attribute_defaults=False, \
+                 dtd_validation=False, load_dtd=False, no_network=True, \
+                 ns_clean=False, recover=False, XMLSchema schema=None, \
+                 remove_blank_text=False, resolve_entities=True, \
+                 remove_comments=False, remove_pis=False, strip_cdata=True, \
+                 target=None, compact=True)
+
     The XML parser.
 
     Parsers can be supplied as additional argument to various parse
@@ -1206,12 +1212,12 @@ cdef class XMLParser(_FeedParser):
     not harmful, it is more efficient to use separate parsers.  This does not
     apply to the default parser.
     """
-    def __init__(self, *, attribute_defaults=False, dtd_validation=False,
-                 load_dtd=False, no_network=True, ns_clean=False,
-                 recover=False, remove_blank_text=False, compact=True,
-                 resolve_entities=True, remove_comments=False,
-                 remove_pis=False, strip_cdata=True, target=None,
-                 encoding=None, XMLSchema schema=None):
+    def __init__(self, *, encoding=None, attribute_defaults=False,
+                 dtd_validation=False, load_dtd=False, no_network=True,
+                 ns_clean=False, recover=False, XMLSchema schema=None,
+                 remove_blank_text=False, resolve_entities=True,
+                 remove_comments=False, remove_pis=False, strip_cdata=True,
+                 target=None, compact=True):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -1242,7 +1248,13 @@ cdef class XMLParser(_FeedParser):
                              target, None, encoding)
 
 cdef class ETCompatXMLParser(XMLParser):
-    u"""ETCompatXMLParser(self, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, remove_blank_text=False, compact=True, resolve_entities=True, remove_comments=True, remove_pis=True, target=None, encoding=None, schema=None)
+    u"""ETCompatXMLParser(self, encoding=None, attribute_defaults=False, \
+                 dtd_validation=False, load_dtd=False, no_network=True, \
+                 ns_clean=False, recover=False, schema=None, \
+                 remove_blank_text=False, resolve_entities=True, \
+                 remove_comments=True, remove_pis=True, strip_cdata=True, \
+                 target=None, compact=True)
+
     An XML parser with an ElementTree compatible default setup.
 
     See the XMLParser class for details.
@@ -1250,12 +1262,12 @@ cdef class ETCompatXMLParser(XMLParser):
     This parser has ``remove_comments`` and ``remove_pis`` enabled by default
     and thus ignores comments and processing instructions.
     """
-    def __init__(self, *, attribute_defaults=False, dtd_validation=False,
-                 load_dtd=False, no_network=True, ns_clean=False,
-                 recover=False, remove_blank_text=False, compact=True,
-                 resolve_entities=True, remove_comments=True,
-                 remove_pis=True, strip_cdata=True, target=None,
-                 encoding=None, schema=None):
+    def __init__(self, *, encoding=None, attribute_defaults=False,
+                 dtd_validation=False, load_dtd=False, no_network=True,
+                 ns_clean=False, recover=False, schema=None,
+                 remove_blank_text=False, resolve_entities=True,
+                 remove_comments=True, remove_pis=True, strip_cdata=True,
+                 target=None, compact=True):
         XMLParser.__init__(self,
                            attribute_defaults=attribute_defaults,
                            dtd_validation=dtd_validation,
@@ -1311,7 +1323,11 @@ _HTML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class HTMLParser(_FeedParser):
-    u"""HTMLParser(self, recover=True, no_network=True, remove_blank_text=False, compact=True, remove_comments=False, remove_pis=False, target=None, encoding=None, schema=None)
+    u"""HTMLParser(self, encoding=None, remove_blank_text=False, \
+                   remove_comments=False, remove_pis=False, strip_cdata=True, \
+                   no_network=True, target=None, XMLSchema schema=None, \
+                   recover=True, compact=True)
+
     The HTML parser.
 
     This parser allows reading HTML into a normal XML tree.  By
@@ -1338,10 +1354,10 @@ cdef class HTMLParser(_FeedParser):
     Note that you should avoid sharing parsers between threads for performance
     reasons.
     """
-    def __init__(self, *, recover=True, no_network=True,
-                 remove_blank_text=False, compact=True, remove_comments=False,
-                 remove_pis=False, strip_cdata=True, target=None, encoding=None,
-                 XMLSchema schema=None):
+    def __init__(self, *, encoding=None, remove_blank_text=False,
+                 remove_comments=False, remove_pis=False, strip_cdata=True,
+                 no_network=True, target=None, XMLSchema schema=None,
+                 recover=True, compact=True):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
