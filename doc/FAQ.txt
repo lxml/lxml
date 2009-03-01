@@ -558,7 +558,7 @@ versions of libxml2 and libxslt - and make sure they are used.
    print "libxslt used:     ", etree.LIBXSLT_VERSION
    print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
 
-If you can figure that a the problem is not in lxml but in the
+If you can figure that the problem is not in lxml but in the
 underlying libxml2 or libxslt, you can ask right on the respective
 mailing lists, which may considerably reduce the time to find a fix or
 work-around.  See the next question for some hints on how to do that.
