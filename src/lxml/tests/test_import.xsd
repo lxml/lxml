@@ -1,0 +1,10 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	    targetNamespace="http://codespeak.net/lxml/schema/ns1"
+	    xmlns:a="http://codespeak.net/lxml/schema/ns"
+	    >
+  <xsd:import
+	namespace="http://codespeak.net/lxml/schema/ns"
+	schemaLocation="test_inc.xsd" />
+
+  <xsd:element name="x" type="a:AType"/>
+</xsd:schema>

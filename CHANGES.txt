@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+2.2 (?)
+=======
+
+Bugs fixed
+----------
+
+* Crash when parsing an XML Schema with external imports from a
+  filename.
+
+
 2.2beta4 (2009-02-27)
 =====================
 

@@ -54,6 +54,7 @@ cdef class XMLSchema(_Validator):
             parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(fake_c_doc)
         elif file is not None:
             if _isString(file):
+                doc = None
                 filename = _encodeFilename(file)
                 self._error_log.connect()
                 parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
@@ -65,13 +66,17 @@ cdef class XMLSchema(_Validator):
             raise XMLSchemaParseError, u"No tree or file given"
 
         if parser_ctxt is not NULL:
-            # calling xmlSchemaParse on a schema with imports or
-            # includes will cause libxml2 to create an internal
-            # context for parsing, so push an implied context to route
-            # resolve requests to the document's parser
-            __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(doc._parser)
-            self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-            __GLOBAL_PARSER_CONTEXT.popImpliedContext()
+            if doc is None:
+                with nogil:
+                    self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+            else:
+                # calling xmlSchemaParse on a schema with imports or
+                # includes will cause libxml2 to create an internal
+                # context for parsing, so push an implied context to route
+                # resolve requests to the document's parser
+                __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(doc._parser)
+                self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+                __GLOBAL_PARSER_CONTEXT.popImpliedContext()
 
             if _LIBXML_VERSION_INT >= 20624:
                 xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)

@@ -132,8 +132,19 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         # this will only work if we access the file through path or
         # file object..
         f = open(fileInTestDir('test.xsd'), 'rb')
-        schema = etree.XMLSchema(file=f)
+        try:
+            schema = etree.XMLSchema(file=f)
+        finally:
+            f.close()
         tree_valid = self.parse('<a><b></b></a>')
+        self.assert_(schema.validate(tree_valid))
+
+    def test_xmlschema_import_file(self):
+        # this will only work if we access the file through path or
+        # file object..
+        schema = etree.XMLSchema(file=fileInTestDir('test_import.xsd'))
+        tree_valid = self.parse(
+            '<a:x xmlns:a="http://codespeak.net/lxml/schema/ns1"><b></b></a:x>')
         self.assert_(schema.validate(tree_valid))
 
     def test_xmlschema_shortcut(self):
@@ -152,10 +163,8 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assert_(tree_valid.xmlschema(schema))
         self.assert_(not tree_invalid.xmlschema(schema))
 
-    #
-    # schema + resolvers tests&data:
-    #
 
+class ETreeXMLSchemaResolversTestCase(HelperTestCase):
     resolver_schema_int = BytesIO("""\
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
     xmlns:etype="http://codespeak.net/lxml/test/external"
@@ -187,6 +196,8 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         def resolve(self, url, id, context):
             assert url == 'XXX.xsd'
             return self.resolve_string(self.schema, context)
+
+    # tests:
 
     def test_xmlschema_resolvers(self):
         """Test that resolvers work with schema."""
@@ -259,6 +270,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXMLSchemaResolversTestCase)])
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite
