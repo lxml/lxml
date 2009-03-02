@@ -151,15 +151,11 @@ cdef class _ParserDictionaryContext:
         schema and xinclude external references."""
         cdef _ParserDictionaryContext context
         cdef _ParserContext implied_context
-        cdef Py_ssize_t count
 
         # see if we have a current implied parser
         context = self._findThreadParserContext()
-        count = python.PyList_GET_SIZE(context._implied_parser_contexts)
-        if count != 0:
-            implied_context = python.PyList_GET_ITEM(
-                context._implied_parser_contexts, count - 1)
-            python.Py_INCREF(implied_context) # borrowed reference
+        if python.PyList_GET_SIZE(context._implied_parser_contexts):
+            implied_context = context._implied_parser_contexts[-1]
             return implied_context
         return None
 
