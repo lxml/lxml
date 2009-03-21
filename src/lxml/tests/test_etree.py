@@ -2313,6 +2313,78 @@ class ETreeOnlyTestCase(HelperTestCase):
         result = tostring(a, with_tail=True)
         self.assertEquals(result, _bytes("<a><b/>bTAIL<c/></a>aTAIL"))
 
+    def test_standalone(self):
+        tostring = self.etree.tostring
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        Element = self.etree.Element
+
+        tree = Element("root").getroottree()
+        self.assertEquals(None, tree.docinfo.standalone)
+
+        tree = XML(_bytes("<root/>")).getroottree()
+        self.assertEquals(None, tree.docinfo.standalone)
+
+        tree = XML(_bytes(
+            "<?xml version='1.0' encoding='ASCII' standalone='yes'?>\n<root/>"
+            )).getroottree()
+        self.assertEquals(True, tree.docinfo.standalone)
+
+        tree = XML(_bytes(
+            "<?xml version='1.0' encoding='ASCII' standalone='no'?>\n<root/>"
+            )).getroottree()
+        self.assertEquals(False, tree.docinfo.standalone)
+
+    def test_tostring_standalone(self):
+        tostring = self.etree.tostring
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+
+        root = XML(_bytes("<root/>"))
+
+        tree = ElementTree(root)
+        self.assertEquals(None, tree.docinfo.standalone)
+
+        result = tostring(root, xml_declaration=True, encoding="ASCII")
+        self.assertEquals(result, _bytes(
+            "<?xml version='1.0' encoding='ASCII'?>\n<root/>"))
+
+        result = tostring(root, xml_declaration=True, encoding="ASCII",
+                          standalone=True)
+        self.assertEquals(result, _bytes(
+            "<?xml version='1.0' encoding='ASCII' standalone='yes'?>\n<root/>"))
+
+        tree = ElementTree(XML(result))
+        self.assertEquals(True, tree.docinfo.standalone)
+
+        result = tostring(root, xml_declaration=True, encoding="ASCII",
+                          standalone=False)
+        self.assertEquals(result, _bytes(
+            "<?xml version='1.0' encoding='ASCII' standalone='no'?>\n<root/>"))
+
+        tree = ElementTree(XML(result))
+        self.assertEquals(False, tree.docinfo.standalone)
+
+    def test_tostring_standalone_in_out(self):
+        tostring = self.etree.tostring
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+
+        root = XML(_bytes(
+            "<?xml version='1.0' encoding='UTF-8' standalone='yes'?>\n<root/>"))
+
+        tree = ElementTree(root)
+        self.assertEquals(True, tree.docinfo.standalone)
+
+        result = tostring(root, xml_declaration=True, encoding="ASCII")
+        self.assertEquals(result, _bytes(
+            "<?xml version='1.0' encoding='ASCII'?>\n<root/>"))
+
+        result = tostring(root, xml_declaration=True, encoding="ASCII",
+                          standalone=True)
+        self.assertEquals(result, _bytes(
+            "<?xml version='1.0' encoding='ASCII' standalone='yes'?>\n<root/>"))
+
     def test_tostring_method_text_encoding(self):
         tostring = self.etree.tostring
         Element = self.etree.Element

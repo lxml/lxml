@@ -317,6 +317,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             encoding = funicode(c_doc.encoding)
         return (version, encoding)
 
+    cdef isstandalone(self):
+        if self._c_doc.standalone == -1:
+            return None
+        else:
+            return <bint>(self._c_doc.standalone == 1)
+
     cdef buildNewPrefix(self):
         if self._ns_counter < python.PyTuple_GET_SIZE(_PREFIX_CACHE):
             ns = python.PyTuple_GET_ITEM(_PREFIX_CACHE, self._ns_counter)
@@ -440,6 +446,17 @@ cdef class DocInfo:
         def __get__(self):
             xml_version, encoding = self._doc.getxmlinfo()
             return encoding
+
+    property standalone:
+        u"""Returns the standalone flag as declared by the document.  The possible
+        values are True (``standalone='yes'``), False
+        (``standalone='no'`` or flag not provided in the declaration),
+        and None (unknown or no declaration found).  Note that a
+        normal truth test on this value will always tell if the
+        ``standalone`` flag was set to ``'yes'`` or not.
+        """
+        def __get__(self):
+            return self._doc.isstandalone()
 
     property URL:
         u"The source URL of the document (or None if unknown)."
@@ -1622,10 +1639,10 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
-              compression=0):
+              standalone=None, compression=0):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
-                  compression=0)
+                  standalone=None, compression=0)
 
         Write the tree to a filename, file or file-like object.
 
@@ -1634,9 +1651,14 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         The keyword argument 'method' selects the output method: 'xml' or
         'html'.
 
+        Passing a boolean value to the ``standalone`` option will
+        output an XML declaration with the corresponding
+        ``standalone`` flag.
+
         The ``compression`` option enables GZip compression level 1-9.
         """
         cdef bint write_declaration
+        cdef int is_standalone
         self._assertHasRoot()
         # suppress decl. in default case (purely for ElementTree compatibility)
         if xml_declaration is not None:
@@ -1650,10 +1672,19 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             encoding = encoding.upper()
             write_declaration = encoding not in \
                                   (u'US-ASCII', u'ASCII', u'UTF8', u'UTF-8')
+        if standalone is None:
+            is_standalone = -1
+        elif standalone:
+            write_declaration = 1
+            is_standalone = 1
+        else:
+            write_declaration = 1
+            is_standalone = 0
         if compression is None or compression < 0:
             compression = 0
         _tofilelike(file, self._context_node, encoding, method,
-                    write_declaration, 1, pretty_print, with_tail, compression)
+                    write_declaration, 1, pretty_print, with_tail,
+                    is_standalone, compression)
 
     def getpath(self, _Element element not None):
         u"""getpath(self, element)
@@ -2537,9 +2568,11 @@ def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
     _dumpToFile(sys.stdout, elem._c_node, pretty_print, with_tail)
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
-             xml_declaration=None, pretty_print=False, with_tail=True):
+             xml_declaration=None, pretty_print=False, with_tail=True,
+             standalone=None):
     u"""tostring(element_or_tree, encoding=None, method="xml",
-                xml_declaration=None, pretty_print=False, with_tail=True)
+                 xml_declaration=None, pretty_print=False, with_tail=True,
+                 standalone=None)
 
     Serialize an element to an encoded string representation of its XML
     tree.
@@ -2557,11 +2590,15 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
     The keyword argument 'method' selects the output method: 'xml',
     'html' or plain 'text'.
 
+    Passing a boolean value to the ``standalone`` option will output
+    an XML declaration with the corresponding ``standalone`` flag.
+
     You can prevent the tail text of the element from being serialised
     by passing the boolean ``with_tail`` option.  This has no impact
     on the tail text of children, which will always be serialised.
     """
     cdef bint write_declaration
+    cdef int is_standalone
     if encoding is _unicode:
         if xml_declaration:
             raise ValueError, \
@@ -2575,14 +2612,23 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
         write_declaration = xml_declaration
     if encoding is None:
         encoding = u'ASCII'
+    if standalone is None:
+        is_standalone = -1
+    elif standalone:
+        write_declaration = 1
+        is_standalone = 1
+    else:
+        write_declaration = 1
+        is_standalone = 0
 
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree, encoding, method,
-                         write_declaration, 0, pretty_print, with_tail)
+                         write_declaration, 0, pretty_print, with_tail,
+                         is_standalone)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
                          encoding, method, write_declaration, 1, pretty_print,
-                         with_tail)
+                         with_tail, is_standalone)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
             python._fqtypename(element_or_tree)
@@ -2601,7 +2647,7 @@ def tostringlist(element_or_tree, *args, **kwargs):
 def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
               with_tail=True):
     u"""tounicode(element_or_tree, method="xml", pretty_print=False,
-                 with_tail=True)
+                  with_tail=True)
 
     Serialize an element to the Python unicode representation of its XML
     tree.
@@ -2623,10 +2669,11 @@ def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
     """
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree, _unicode, method,
-                          0, 0, pretty_print, with_tail)
+                          0, 0, pretty_print, with_tail, -1)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         _unicode, method, 0, 1, pretty_print, with_tail)
+                         _unicode, method, 0, 1, pretty_print, with_tail,
+                         -1)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
             type(element_or_tree)

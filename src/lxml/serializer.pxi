@@ -75,7 +75,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 
 cdef _tostring(_Element element, encoding, method,
                bint write_xml_declaration, bint write_complete_document,
-               bint pretty_print, bint with_tail):
+               bint pretty_print, bint with_tail, int standalone):
     u"""Serialize an element to an encoded string representation of its XML
     tree.
     """
@@ -111,7 +111,7 @@ cdef _tostring(_Element element, encoding, method,
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                            write_xml_declaration, write_complete_document,
-                           pretty_print, with_tail)
+                           pretty_print, with_tail, standalone)
         tree.xmlOutputBufferFlush(c_buffer)
         if c_buffer.conv is not NULL:
             c_result_buffer = c_buffer.conv
@@ -155,12 +155,13 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, char* encoding, int c_method,
                              bint write_xml_declaration,
                              bint write_complete_document,
-                             bint pretty_print, bint with_tail) nogil:
+                             bint pretty_print, bint with_tail,
+                             int standalone) nogil:
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
-        _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding)
+        _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
 
     # write internal DTD subset, preceding PIs/comments, etc.
     if write_complete_document:
@@ -203,14 +204,20 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
-                                    char* version, char* encoding) nogil:
+                                    char* version, char* encoding,
+                                    int standalone) nogil:
     if version is NULL:
         version = "1.0"
     tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
     tree.xmlOutputBufferWriteString(c_buffer, version)
     tree.xmlOutputBufferWrite(c_buffer, 12, "' encoding='")
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
-    tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
+    if standalone == 0:
+        tree.xmlOutputBufferWrite(c_buffer, 20, "' standalone='no'?>\n")
+    elif standalone == 1:
+        tree.xmlOutputBufferWrite(c_buffer, 21, "' standalone='yes'?>\n")
+    else:
+        tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, char* c_root_name,
@@ -351,7 +358,8 @@ cdef int _closeFilelikeWriter(void* ctxt):
 
 cdef _tofilelike(f, _Element element, encoding, method,
                  bint write_xml_declaration, bint write_doctype,
-                 bint pretty_print, bint with_tail, int compression):
+                 bint pretty_print, bint with_tail, int standalone,
+                 int compression):
     cdef python.PyThreadState* state = NULL
     cdef _FilelikeWriter writer
     cdef tree.xmlOutputBuffer* c_buffer
@@ -408,7 +416,7 @@ cdef _tofilelike(f, _Element element, encoding, method,
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_method,
                        write_xml_declaration, write_doctype,
-                       pretty_print, with_tail)
+                       pretty_print, with_tail, standalone)
     error_result = c_buffer.error
     if error_result == xmlerror.XML_ERR_OK:
         error_result = tree.xmlOutputBufferClose(c_buffer)

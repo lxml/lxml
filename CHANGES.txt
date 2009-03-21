@@ -5,6 +5,13 @@ lxml changelog
 2.2 (?)
 =======
 
+Features added
+--------------
+
+* Support for ``standalone`` flag in XML declaration through
+  ``tree.docinfo.standalone`` and by passing ``standalone=True/False``
+  on serialisation.
+
 Bugs fixed
 ----------
 
