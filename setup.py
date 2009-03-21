@@ -93,6 +93,7 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
     'Intended Audience :: Developers',
     'Intended Audience :: Information Technology',
     'License :: OSI Approved :: BSD License',
+    'Programming Language :: Cython',
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 2.3',
     'Programming Language :: Python :: 2.4',
