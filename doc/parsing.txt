@@ -179,10 +179,12 @@ last parser run:
 Parsing HTML
 ------------
 
-HTML parsing is similarly simple.  The parsers have a ``recover`` keyword
-argument that the HTMLParser sets by default.  It lets libxml2 try its best to
-return something usable without raising an exception.  You should use libxml2
-version 2.6.21 or newer to take advantage of this feature:
+HTML parsing is similarly simple.  The parsers have a ``recover``
+keyword argument that the HTMLParser sets by default.  It lets libxml2
+try its best to return a valid HTML tree with all content it can
+manage to parse.  It will not raise an exception on parser errors.
+You should use libxml2 version 2.6.21 or newer to take advantage of
+this feature.
 
 .. sourcecode:: pycon
 
@@ -227,6 +229,13 @@ that the resulting tree will contain all data from the original document.  The
 parser may have to drop seriously broken parts when struggling to keep
 parsing.  Especially misplaced meta tags can suffer from this, which may lead
 to encoding problems.
+
+Note that the result is a valid HTML tree, but it may not be a
+well-formed XML tree.  For example, XML forbids double hyphens in
+comments, which the HTML parser will happily accept in recovery mode.
+Therefore, if your goal is to serialise an HTML document as an
+XML/XHTML document after parsing, you may have to apply some manual
+preprocessing first.
 
 
 Doctype information
