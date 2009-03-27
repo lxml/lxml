@@ -256,12 +256,13 @@ quite favourably positions ``lxml.etree`` as a tool for
 The ElementTree API
 ===================
 
-Since all three libraries implement the same API, their performance is easy to
-compare in this area.  A major disadvantage for lxml's performance is the
-different tree model that underlies libxml2.  It allows lxml to provide parent
-pointers for elements, but also increases the overhead of tree building and
-restructuring.  This can be seen from the tree setup times of the benchmark
-(given in seconds)::
+Since all three libraries implement the same API, their performance is
+easy to compare in this area.  A major disadvantage for lxml's
+performance is the different tree model that underlies libxml2.  It
+allows lxml to provide parent pointers for elements and full XPath
+support, but also increases the overhead of tree building and
+restructuring.  This can be seen from the tree setup times of the
+benchmark (given in seconds)::
 
   lxe:       --     S-     U-     -A     SA     UA
        T1: 0.0502 0.0572 0.0613 0.0494 0.0575 0.0615
@@ -281,10 +282,10 @@ restructuring.  This can be seen from the tree setup times of the benchmark
 
 While lxml is still a lot faster than ET in most cases, cET can be up
 to five times faster than lxml here.  One of the reasons is that lxml
-must additionally discard the created Python elements after their use,
-when they are no longer referenced.  ET and cET represent the tree
-itself through these objects, which reduces the overhead in creating
-them.
+must encode incoming string data and tag names into UTF-8, and
+additionally discard the created Python elements after their use, when
+they are no longer referenced.  ET and cET represent the tree itself
+through these objects, which reduces the overhead in creating them.
 
 
 Child access
