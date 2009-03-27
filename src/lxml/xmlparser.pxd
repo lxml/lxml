@@ -126,6 +126,10 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
         # libxml2 2.6.21+ only:
         XML_PARSE_COMPACT = 65536 # compact small text nodes
+        # libxml2 2.7.0+ only:
+        XML_PARSE_OLD10 = 131072 # parse using XML-1.0 before update 5
+        XML_PARSE_NOBASEFIX = 262144 # do not fixup XINCLUDE xml:base uris
+        XML_PARSE_HUGE = 524288 # relax any hardcoded limit from the parser
 
     cdef void xmlInitParser() nogil
     cdef void xmlCleanupParser() nogil

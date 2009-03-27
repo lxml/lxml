@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+* Pass ``huge_tree`` parser option to disable parser security
+  restrictions imposed by libxml2 2.7.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 2.2 (2009-03-21)
 ================
 

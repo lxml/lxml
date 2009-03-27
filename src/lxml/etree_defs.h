@@ -75,6 +75,13 @@
 #  define HTML_PARSE_RECOVER XML_PARSE_RECOVER
 #endif
 
+#if LIBXML_VERSION < 20700
+/* These were added in libxml2 2.7.0 */
+#  define XML_PARSE_OLD10 0
+#  define XML_PARSE_NOBASEFIX 0
+#  define XML_PARSE_HUGE 0
+#endif
+
 /* added to xmlsave API in libxml2 2.6.23 */
 #if LIBXML_VERSION < 20623
 #  define xmlSaveToBuffer(buffer, encoding, options)

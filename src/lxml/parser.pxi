@@ -1192,6 +1192,8 @@ cdef class XMLParser(_FeedParser):
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - safe memory for short text content (default: True)
     - resolve_entities   - replace entities by their text value (default: True)
+    - huge_tree          - disable security restrictions and support very deep trees
+                           and very long text content (only affects libxml2 2.7+)
 
     Other keyword arguments:
 
@@ -1206,7 +1208,7 @@ cdef class XMLParser(_FeedParser):
     def __init__(self, *, encoding=None, attribute_defaults=False,
                  dtd_validation=False, load_dtd=False, no_network=True,
                  ns_clean=False, recover=False, XMLSchema schema=None,
-                 remove_blank_text=False, resolve_entities=True,
+                 huge_tree=False, remove_blank_text=False, resolve_entities=True,
                  remove_comments=False, remove_pis=False, strip_cdata=True,
                  target=None, compact=True):
         cdef int parse_options
@@ -1225,6 +1227,8 @@ cdef class XMLParser(_FeedParser):
             parse_options = parse_options | xmlparser.XML_PARSE_RECOVER
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        if huge_tree:
+            parse_options = parse_options | xmlparser.XML_PARSE_HUGE
         if not no_network:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
         if not compact:
@@ -1256,7 +1260,7 @@ cdef class ETCompatXMLParser(XMLParser):
     def __init__(self, *, encoding=None, attribute_defaults=False,
                  dtd_validation=False, load_dtd=False, no_network=True,
                  ns_clean=False, recover=False, schema=None,
-                 remove_blank_text=False, resolve_entities=True,
+                 huge_tree=False, remove_blank_text=False, resolve_entities=True,
                  remove_comments=True, remove_pis=True, strip_cdata=True,
                  target=None, compact=True):
         XMLParser.__init__(self,
@@ -1267,6 +1271,7 @@ cdef class ETCompatXMLParser(XMLParser):
                            ns_clean=ns_clean,
                            recover=recover,
                            remove_blank_text=remove_blank_text,
+                           huge_tree=huge_tree,
                            compact=compact,
                            resolve_entities=resolve_entities,
                            remove_comments=remove_comments,
