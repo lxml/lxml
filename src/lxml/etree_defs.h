@@ -68,8 +68,8 @@
 /* libxml2 version specific setup */
 #if LIBXML_VERSION < 20621
 /* (X|HT)ML_PARSE_COMPACT were added in libxml2 2.6.21 */
-#  define XML_PARSE_COMPACT  0
-#  define HTML_PARSE_COMPACT 0
+#  define XML_PARSE_COMPACT  1 << 16
+#  define HTML_PARSE_COMPACT XML_PARSE_COMPACT
 
 /* HTML_PARSE_RECOVER was added in libxml2 2.6.21 */
 #  define HTML_PARSE_RECOVER XML_PARSE_RECOVER
@@ -77,9 +77,9 @@
 
 #if LIBXML_VERSION < 20700
 /* These were added in libxml2 2.7.0 */
-#  define XML_PARSE_OLD10 0
-#  define XML_PARSE_NOBASEFIX 0
-#  define XML_PARSE_HUGE 0
+#  define XML_PARSE_OLD10      1 << 17
+#  define XML_PARSE_NOBASEFIX  1 << 18
+#  define XML_PARSE_HUGE       1 << 19
 #endif
 
 /* added to xmlsave API in libxml2 2.6.23 */
