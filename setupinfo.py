@@ -30,7 +30,7 @@ def env_var(name):
     value = os.getenv(name)
     if value:
         value = decode_input(value)
-        if os.platform == 'win32' and ';' in value:
+        if sys.platform == 'win32' and ';' in value:
             return value.split(';')
         else:
             return value.split()
