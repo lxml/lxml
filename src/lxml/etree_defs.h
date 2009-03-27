@@ -1,6 +1,21 @@
 #ifndef HAS_ETREE_DEFS_H
 #define HAS_ETREE_DEFS_H
 
+/* quick check for Python/libxml2/libxslt devel setup */
+#include "Python.h"
+#ifndef PY_VERSION_HEX
+#  error the development package of Python (header files etc.) is not installed correctly
+#endif
+#include "libxml/xmlversion.h"
+#ifndef LIBXML_VERSION
+#  error the development package of libxml2 (header files etc.) is not installed correctly
+#endif
+#include "libxslt/xsltconfig.h"
+#ifndef LIBXSLT_VERSION
+#  error the development package of libxslt (header files etc.) is not installed correctly
+#endif
+
+
 /* v_arg functions */
 #define va_int(ap)     va_arg(ap, int)
 #define va_charptr(ap) va_arg(ap, char *)
@@ -51,7 +66,6 @@
 #endif
 
 /* libxml2 version specific setup */
-#include "libxml/xmlversion.h"
 #if LIBXML_VERSION < 20621
 /* (X|HT)ML_PARSE_COMPACT were added in libxml2 2.6.21 */
 #  define XML_PARSE_COMPACT  0
