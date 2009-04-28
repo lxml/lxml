@@ -2470,8 +2470,9 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     u"""HTML(text, parser=None, base_url=None)
 
-    Parses an HTML document from a string constant. This function can be used
-    to embed "HTML literals" in Python code.
+    Parses an HTML document from a string constant.  Returns the root
+    node (or the result returned by a parser target).  This function
+    can be used to embed "HTML literals" in Python code.
 
     To override the parser with a different ``HTMLParser`` you can pass it to
     the ``parser`` keyword argument.
@@ -2494,8 +2495,10 @@ def HTML(text, _BaseParser parser=None, *, base_url=None):
 def XML(text, _BaseParser parser=None, *, base_url=None):
     u"""XML(text, parser=None, base_url=None)
 
-    Parses an XML document from a string constant. This function can be used
-    to embed "XML literals" in Python code, like in
+    Parses an XML document or fragment from a string constant.
+    Returns the root node (or the result returned by a parser target).
+    This function can be used to embed "XML literals" in Python code,
+    like in
 
        >>> root = etree.XML("<root><test/></root>")
 
@@ -2520,7 +2523,8 @@ def XML(text, _BaseParser parser=None, *, base_url=None):
 def fromstring(text, _BaseParser parser=None, *, base_url=None):
     u"""fromstring(text, parser=None, base_url=None)
 
-    Parses an XML document from a string.
+    Parses an XML document or fragment from a string.  Returns the
+    root node (or the result returned by a parser target).
 
     To override the default parser with a different parser you can pass it to
     the ``parser`` keyword argument.
@@ -2539,7 +2543,8 @@ def fromstring(text, _BaseParser parser=None, *, base_url=None):
 def fromstringlist(strings, _BaseParser parser=None):
     u"""fromstringlist(strings, parser=None)
 
-    Parses an XML document from a sequence of strings.
+    Parses an XML document from a sequence of strings.  Returns the
+    root node (or the result returned by a parser target).
 
     To override the default parser with a different parser you can pass it to
     the ``parser`` keyword argument.
