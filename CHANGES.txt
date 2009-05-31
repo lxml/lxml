@@ -14,6 +14,9 @@ Features added
 Bugs fixed
 ----------
 
+* ``XMLSchema()`` also passes invalid schema documents on to libxml2
+  for parsing (which could lead to a crash before release 2.6.24)
+
 Other changes
 -------------
 
