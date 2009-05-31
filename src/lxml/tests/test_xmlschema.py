@@ -31,6 +31,38 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assert_(schema.validate(tree_valid))
         self.assert_(not schema.validate(tree_invalid))
 
+    def test_xmlschema_default_attributes(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence minOccurs="4" maxOccurs="4">
+      <xsd:element name="b" type="BType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BType">
+    <xsd:attribute name="hardy" type="xsd:string" default="hey" />
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema, attribute_defaults=True)
+
+        tree = self.parse('<a><b hardy="ho"/><b/><b hardy="ho"/><b/></a>')
+
+        root = tree.getroot()
+        self.assertEquals('ho', root[0].get('hardy'))
+        self.assertEquals(None, root[1].get('hardy'))
+        self.assertEquals('ho', root[2].get('hardy'))
+        self.assertEquals(None, root[3].get('hardy'))
+
+        self.assert_(schema(tree))
+
+        root = tree.getroot()
+        self.assertEquals('ho', root[0].get('hardy'))
+        self.assertEquals('hey', root[1].get('hardy'))
+        self.assertEquals('ho', root[2].get('hardy'))
+        self.assertEquals('hey', root[3].get('hardy'))
+
     def test_xmlschema_parse(self):
         schema = self.parse('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -50,6 +82,83 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 
         self.assertRaises(etree.XMLSyntaxError,
                           self.parse, '<a><c></c></a>', parser=parser)
+
+    def test_xmlschema_parse_default_attributes(self):
+        # does not work as of libxml2 2.7.3
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence minOccurs="4" maxOccurs="4">
+      <xsd:element name="b" type="BType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BType">
+    <xsd:attribute name="hardy" type="xsd:string" default="hey" />
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        parser = etree.XMLParser(schema=schema, attribute_defaults=True)
+
+        tree_valid = self.parse('<a><b hardy="ho"/><b/><b hardy="ho"/><b/></a>',
+                                parser=parser)
+        root = tree_valid.getroot()
+        self.assertEquals('ho', root[0].get('hardy'))
+        self.assertEquals('hey', root[1].get('hardy'))
+        self.assertEquals('ho', root[2].get('hardy'))
+        self.assertEquals('hey', root[3].get('hardy'))
+
+    def test_xmlschema_parse_default_attributes_schema_config(self):
+        # does not work as of libxml2 2.7.3
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence minOccurs="4" maxOccurs="4">
+      <xsd:element name="b" type="BType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BType">
+    <xsd:attribute name="hardy" type="xsd:string" default="hey" />
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema, attribute_defaults=True)
+        parser = etree.XMLParser(schema=schema)
+
+        tree_valid = self.parse('<a><b hardy="ho"/><b/><b hardy="ho"/><b/></a>',
+                                parser=parser)
+        root = tree_valid.getroot()
+        self.assertEquals('ho', root[0].get('hardy'))
+        self.assertEquals('hey', root[1].get('hardy'))
+        self.assertEquals('ho', root[2].get('hardy'))
+        self.assertEquals('hey', root[3].get('hardy'))
+
+    def test_xmlschema_parse_fixed_attributes(self):
+        # does not work as of libxml2 2.7.3
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence minOccurs="3" maxOccurs="3">
+      <xsd:element name="b" type="BType" />
+    </xsd:sequence>
+  </xsd:complexType>
+  <xsd:complexType name="BType">
+    <xsd:attribute name="hardy" type="xsd:string" fixed="hey" />
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        parser = etree.XMLParser(schema=schema, attribute_defaults=True)
+
+        tree_valid = self.parse('<a><b/><b hardy="hey"/><b/></a>',
+                                parser=parser)
+        root = tree_valid.getroot()
+        self.assertEquals('hey', root[0].get('hardy'))
+        self.assertEquals('hey', root[1].get('hardy'))
+        self.assertEquals('hey', root[2].get('hardy'))
 
     def test_xmlschema_stringio(self):
         schema_file = BytesIO('''

@@ -630,6 +630,14 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
             result.URL = tree.xmlStrdup(_cstr(filename))
         if result.encoding is NULL:
             result.encoding = tree.xmlStrdup("UTF-8")
+
+    if context._validator is not None and \
+           context._validator._add_default_attributes:
+        # we currently need to do this here as libxml2 does not
+        # support inserting default attributes during parse-time
+        # validation
+        context._validator.inject_default_attributes(result)
+
     return result
 
 cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
@@ -717,7 +725,8 @@ cdef class _BaseParser:
             self._parser_context = self._createContext(self._target)
             if self._schema is not None:
                 self._parser_context._validator = \
-                    self._schema._newSaxValidator()
+                    self._schema._newSaxValidator(
+                        self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newParserCtxt()
             if pctxt is NULL:
                 python.PyErr_NoMemory()
@@ -737,7 +746,8 @@ cdef class _BaseParser:
             self._push_parser_context = self._createContext(self._target)
             if self._schema is not None:
                 self._push_parser_context._validator = \
-                    self._schema._newSaxValidator()
+                    self._schema._newSaxValidator(
+                        self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newPushParserCtxt()
             if pctxt is NULL:
                 python.PyErr_NoMemory()
@@ -1174,14 +1184,16 @@ cdef class XMLParser(_FeedParser):
     'set_default_parser'.  New parsers can be created at any time
     without a major run-time overhead.
 
-    The keyword arguments in the constructor are mainly based on the libxml2
-    parser configuration.  A DTD will also be loaded if validation or
-    attribute default values are requested.
+    The keyword arguments in the constructor are mainly based on the
+    libxml2 parser configuration.  A DTD will also be loaded if DTD
+    validation or attribute default values are requested (unless you
+    additionally provide an XMLSchema from which the default
+    attributes can be read).
 
     Available boolean keyword arguments:
 
-    - attribute_defaults - read default attributes from DTD
-    - dtd_validation     - validate (if DTD is available)
+    - attribute_defaults - inject default attributes from DTD or XMLSchema
+    - dtd_validation     - validate against a DTD referenced by the document
     - load_dtd           - use DTD for parsing
     - no_network         - prevent network access for related files (default: True)
     - ns_clean           - clean up redundant namespace declarations
@@ -1219,8 +1231,9 @@ cdef class XMLParser(_FeedParser):
             parse_options = parse_options | xmlparser.XML_PARSE_DTDVALID | \
                             xmlparser.XML_PARSE_DTDLOAD
         if attribute_defaults:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
-                            xmlparser.XML_PARSE_DTDLOAD
+            parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR
+            if schema is None:
+                parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
         if ns_clean:
             parse_options = parse_options | xmlparser.XML_PARSE_NSCLEAN
         if recover:

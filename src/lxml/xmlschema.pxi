@@ -19,23 +19,36 @@ class XMLSchemaValidateError(XMLSchemaError):
 ################################################################################
 # XMLSchema
 
+cdef XPath _check_for_default_attributes = XPath(
+    u"boolean(//xs:attribute[@default or @fixed][1])",
+    namespaces={u'xs': u'http://www.w3.org/2001/XMLSchema'})
+
 cdef class XMLSchema(_Validator):
     u"""XMLSchema(self, etree=None, file=None)
     Turn a document into an XML Schema validator.
 
     Either pass a schema as Element or ElementTree, or pass a file or
     filename through the ``file`` keyword argument.
+
+    Passing the ``attribute_defaults`` boolean option will make the
+    schema insert default/fixed attributes into validated documents.
     """
     cdef xmlschema.xmlSchema* _c_schema
-    def __init__(self, etree=None, *, file=None):
+    cdef bint _has_default_attributes
+    cdef bint _add_attribute_defaults
+
+    def __init__(self, etree=None, *, file=None, attribute_defaults=False):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlDoc* fake_c_doc
         cdef xmlNode* c_node
         cdef char* c_href
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
-        _Validator.__init__(self)
+
+        self._has_default_attributes = True # play safe
+        self._add_attribute_defaults = attribute_defaults
         self._c_schema = NULL
+        _Validator.__init__(self)
         fake_c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
@@ -92,6 +105,11 @@ cdef class XMLSchema(_Validator):
                     u"Document is not valid XML Schema"),
                 self._error_log)
 
+        if doc is not None:
+            self._has_default_attributes = _check_for_default_attributes(doc)
+        self._add_attribute_defaults = attribute_defaults and \
+                                       self._has_default_attributes
+
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)
 
@@ -117,6 +135,10 @@ cdef class XMLSchema(_Validator):
             self._error_log.disconnect()
             return python.PyErr_NoMemory()
 
+        if self._add_attribute_defaults:
+            xmlschema.xmlSchemaSetValidOptions(
+                valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
+
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
@@ -134,18 +156,22 @@ cdef class XMLSchema(_Validator):
         else:
             return False
 
-    cdef _ParserSchemaValidationContext _newSaxValidator(self):
+    cdef _ParserSchemaValidationContext _newSaxValidator(
+            self, bint add_default_attributes):
         cdef _ParserSchemaValidationContext context
         context = NEW_SCHEMA_CONTEXT(_ParserSchemaValidationContext)
         context._schema = self
         context._valid_ctxt = NULL
         context._sax_plug = NULL
+        context._add_default_attributes = (self._has_default_attributes and (
+            add_default_attributes or self._add_attribute_defaults))
         return context
 
 cdef class _ParserSchemaValidationContext:
     cdef XMLSchema _schema
     cdef xmlschema.xmlSchemaValidCtxt* _valid_ctxt
     cdef xmlschema.xmlSchemaSAXPlugStruct* _sax_plug
+    cdef bint _add_default_attributes
 
     def __dealloc__(self):
         self.disconnect()
@@ -153,7 +179,16 @@ cdef class _ParserSchemaValidationContext:
             xmlschema.xmlSchemaFreeValidCtxt(self._valid_ctxt)
 
     cdef _ParserSchemaValidationContext copy(self):
-        return self._schema._newSaxValidator()
+        return self._schema._newSaxValidator(
+            self._add_default_attributes)
+
+    cdef void inject_default_attributes(self, xmlDoc* c_doc):
+        # we currently need to insert default attributes manually
+        # after parsing, as libxml2 does not support this at parse
+        # time
+        if self._add_default_attributes:
+            with nogil:
+                xmlschema.xmlSchemaValidateDoc(self._valid_ctxt, c_doc)
 
     cdef int connect(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
         if self._valid_ctxt is NULL:
@@ -161,6 +196,10 @@ cdef class _ParserSchemaValidationContext:
                 self._schema._c_schema)
             if self._valid_ctxt is NULL:
                 return python.PyErr_NoMemory()
+            if self._add_default_attributes:
+                xmlschema.xmlSchemaSetValidOptions(
+                    self._valid_ctxt,
+                    xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
         self._sax_plug = xmlschema.xmlSchemaSAXPlug(
             self._valid_ctxt, &c_ctxt.sax, &c_ctxt.userData)
 

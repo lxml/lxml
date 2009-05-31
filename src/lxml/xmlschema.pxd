@@ -8,6 +8,9 @@ cdef extern from "libxml/xmlschemas.h":
     ctypedef struct xmlSchemaSAXPlugStruct
     ctypedef struct xmlSchemaValidCtxt
 
+    ctypedef enum xmlSchemaValidOption:
+        XML_SCHEMA_VAL_VC_I_CREATE = 1
+
     cdef xmlSchemaValidCtxt* xmlSchemaNewValidCtxt(xmlSchema* schema) nogil
     cdef int xmlSchemaValidateDoc(xmlSchemaValidCtxt* ctxt, xmlDoc* doc) nogil
     cdef xmlSchema* xmlSchemaParse(xmlSchemaParserCtxt* ctxt) nogil
@@ -16,6 +19,8 @@ cdef extern from "libxml/xmlschemas.h":
     cdef void xmlSchemaFree(xmlSchema* schema) nogil
     cdef void xmlSchemaFreeParserCtxt(xmlSchemaParserCtxt* ctxt) nogil
     cdef void xmlSchemaFreeValidCtxt(xmlSchemaValidCtxt* ctxt) nogil
+    cdef int xmlSchemaSetValidOptions(xmlSchemaValidCtxt* ctxt,
+                                      int options) nogil
 
     cdef xmlSchemaSAXPlugStruct* xmlSchemaSAXPlug(xmlSchemaValidCtxt* ctxt,
                                                   xmlSAXHandler** sax,
