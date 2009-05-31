@@ -309,7 +309,7 @@ cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
         return c_ctxt.node.next
 
 cdef class iterparse(_BaseParser):
-    u"""iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, schema=None)
+    u"""iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, huge_tree=False, schema=None)
 
 Incremental parser.
 
@@ -346,6 +346,8 @@ Available boolean keyword arguments:
  - strip_cdata: replace CDATA sections by normal text content (default: True)
  - compact: safe memory for short text content (default: True)
  - resolve_entities: replace entities by their text value (default: True)
+ - huge_tree: disable security restrictions and support very deep trees
+              and very long text content (only affects libxml2 2.7+)
 
 Other keyword arguments:
  - encoding: override the document encoding
@@ -363,7 +365,7 @@ Other keyword arguments:
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
-                 html=False, XMLSchema schema=None):
+                 html=False, huge_tree=False, XMLSchema schema=None):
         cdef _IterparseContext context
         cdef char* c_encoding
         cdef int parse_options
@@ -395,6 +397,8 @@ Other keyword arguments:
                             xmlparser.XML_PARSE_DTDLOAD
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
+        if huge_tree:
+            parse_options = parse_options | xmlparser.XML_PARSE_HUGE
         if not no_network:
             parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
         if not compact:
