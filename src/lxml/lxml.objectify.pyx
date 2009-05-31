@@ -21,7 +21,7 @@ __version__ = etree.__version__
 cdef object re
 import re
 
-cdef object IGNORABLE_ERRORS
+cdef tuple IGNORABLE_ERRORS
 IGNORABLE_ERRORS = (ValueError, TypeError)
 
 cdef object islice
@@ -482,7 +482,7 @@ cdef object _buildChildTag(_Element parent, tag):
         c_href = _cstr(ns)
     return cetree.namespacedNameFromNsName(c_href, c_tag)
 
-cdef object _replaceElement(_Element element, value):
+cdef _replaceElement(_Element element, value):
     cdef _Element new_element
     if isinstance(value, _Element):
         # deep copy the new element
@@ -497,7 +497,7 @@ cdef object _replaceElement(_Element element, value):
         _setElementValue(new_element, value)
     element.getparent().replace(element, new_element)
 
-cdef object _appendValue(_Element parent, tag, value):
+cdef _appendValue(_Element parent, tag, value):
     cdef _Element new_element
     if isinstance(value, _Element):
         # deep copy the new element
@@ -885,7 +885,7 @@ cdef inline int __parseBoolAsInt(text):
     else:
         return -1
 
-cdef inline _parseNumber(NumberElement element):
+cdef inline object _parseNumber(NumberElement element):
     return element._parse_value(textOf(element._c_node))
 
 cdef inline object _strValueOf(obj):
@@ -935,7 +935,7 @@ cdef class PyType:
     cdef readonly object type_check
     cdef readonly object stringify
     cdef object _type
-    cdef object _schema_types
+    cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
         if python.PyString_Check(name):
             name = python.PyUnicode_FromEncodedObject(name, 'ASCII', NULL)
@@ -1024,13 +1024,13 @@ cdef class PyType:
             self._schema_types = list(map(unicode, types))
 
 
-cdef object _PYTYPE_DICT
+cdef dict _PYTYPE_DICT
 _PYTYPE_DICT = {}
 
-cdef object _SCHEMA_TYPE_DICT
+cdef dict _SCHEMA_TYPE_DICT
 _SCHEMA_TYPE_DICT = {}
 
-cdef object _TYPE_CHECKS
+cdef list _TYPE_CHECKS
 _TYPE_CHECKS = []
 
 cdef _lower_bool(b):
@@ -1090,7 +1090,7 @@ cdef _registerPyTypes():
     pytype.register()
 
 # non-registered PyType for inner tree elements
-cdef object TREE_PYTYPE
+cdef PyType TREE_PYTYPE
 TREE_PYTYPE = PyType(TREE_PYTYPE_NAME, None, ObjectifiedElement)
 
 _registerPyTypes()
@@ -1837,7 +1837,7 @@ def parse(f, parser=None, *, base_url=None):
         parser = objectify_parser
     return _parse(f, parser, base_url=base_url)
 
-cdef object _DEFAULT_NSMAP
+cdef dict _DEFAULT_NSMAP
 _DEFAULT_NSMAP = { u"py"  : PYTYPE_NAMESPACE,
                    u"xsi" : XML_SCHEMA_INSTANCE_NS,
                    u"xsd" : XML_SCHEMA_NS}
