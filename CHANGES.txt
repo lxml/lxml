@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.2.1 (2009-06-02)
+==================
 
 Features added
 --------------
@@ -17,8 +17,11 @@ Features added
 Bugs fixed
 ----------
 
+* The script for statically building libxml2 and libxslt didn't work
+  in Py3.
+
 * ``XMLSchema()`` also passes invalid schema documents on to libxml2
-  for parsing (which could lead to a crash before release 2.6.24)
+  for parsing (which could lead to a crash before release 2.6.24).
 
 Other changes
 -------------
