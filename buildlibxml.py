@@ -1,13 +1,21 @@
 import os, re, sys
 from distutils import log, sysconfig
+
+try:
+    from urlparse import urlsplit, urljoin
+    from urllib import urlretrieve
+except ImportError:
+    from urllib.parse import urlsplit
+    from urllib.request import urlretrieve
+
 ## Routines to download and build libxml2/xslt:
 
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
 
 def ftp_listdir(url):
-    import ftplib, urlparse, posixpath
-    scheme, netloc, path, qs, fragment = urlparse.urlsplit(url)
+    import ftplib, posixpath
+    scheme, netloc, path, qs, fragment = urlsplit(url)
     assert scheme.lower() == 'ftp'
     server = ftplib.FTP(netloc)
     server.login()
@@ -36,7 +44,6 @@ def download_libxslt(dest_dir, version=None):
 
 def download_library(dest_dir, location, name, version_re, filename, 
                      version=None):
-    import urllib, urlparse
     if version is None:
         try:
             fns = ftp_listdir(location)
@@ -66,14 +73,14 @@ def download_library(dest_dir, location, name, version_re, filename,
             else:
                 raise
     filename = filename % version
-    full_url = urlparse.urljoin(location, filename)
+    full_url = urljoin(location, filename)
     dest_filename = os.path.join(dest_dir, filename)
     if os.path.exists(dest_filename):
         print('Using existing %s downloaded into %s (delete this file if you want to re-download the package)'
               % (name, dest_filename))
     else:
         print('Downloading %s into %s' % (name, dest_filename))
-        urllib.urlretrieve(full_url, dest_filename)
+        urlretrieve(full_url, dest_filename)
     return dest_filename
 
 ## Backported method of tarfile.TarFile.extractall (doesn't exist in 2.4):
@@ -105,7 +112,7 @@ def _extractall(self, path=".", members=None):
             # Extract directories with a safe mode.
             directories.append((tarinfo.name, tarinfo))
             tarinfo = copy.copy(tarinfo)
-            tarinfo.mode = 0700
+            tarinfo.mode = 448 # 0700
         self.extract(tarinfo, path)
 
     # Reverse sort directories.
@@ -119,11 +126,11 @@ def _extractall(self, path=".", members=None):
             self.chown(tarinfo, dirpath)
             self.utime(tarinfo, dirpath)
             self.chmod(tarinfo, dirpath)
-        except tarfile.ExtractError, e:
+        except tarfile.ExtractError:
             if self.errorlevel > 1:
                 raise
             else:
-                self._dbg(1, "tarfile: %s" % e)
+                self._dbg(1, "tarfile: %s" % sys.exc_info()[1])
 
 def unpack_tarball(tar_filename, dest):
     import tarfile
