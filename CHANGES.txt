@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+Under development
+==================
+
+Features added
+--------------
+
+* New helper functions ``strip_attributes()``, ``strip_elements()``,
+  ``strip_tags()`` in lxml.etree to remove attributes/subtrees/tags
+  from a subtree.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 2.2.1 (2009-06-02)
 ==================
 

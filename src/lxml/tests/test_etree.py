@@ -205,6 +205,123 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError, root.set, "newattr", 5)
         self.assertRaises(TypeError, root.set, "newattr", None)
 
+    def test_strip_attributes(self):
+        XML = self.etree.XML
+        xml = _bytes('<test a="5" b="10" c="20"><x a="4" b="2"/></test>')
+
+        root = XML(xml)
+        self.etree.strip_attributes(root, 'a')
+        self.assertEquals(_bytes('<test b="10" c="20"><x b="2"></x></test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_attributes(root, 'b', 'c')
+        self.assertEquals(_bytes('<test a="5"><x a="4"></x></test>'),
+                          self._writeElement(root))
+
+    def test_strip_attributes_ns(self):
+        XML = self.etree.XML
+        xml = _bytes('<test xmlns:n="http://test/ns" a="6" b="10" c="20" n:a="5"><x a="4" n:b="2"/></test>')
+
+        root = XML(xml)
+        self.etree.strip_attributes(root, 'a')
+        self.assertEquals(
+            _bytes('<test xmlns:n="http://test/ns" b="10" c="20" n:a="5"><x n:b="2"></x></test>'),
+            self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_attributes(root, '{http://test/ns}a', 'c')
+        self.assertEquals(
+            _bytes('<test xmlns:n="http://test/ns" a="6" b="10"><x a="4" n:b="2"></x></test>'),
+            self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_attributes(root, '{http://test/ns}*')
+        self.assertEquals(
+            _bytes('<test xmlns:n="http://test/ns" a="6" b="10" c="20"><x a="4"></x></test>'),
+            self._writeElement(root))
+
+    def test_strip_elements(self):
+        XML = self.etree.XML
+        xml = _bytes('<test><a><b><c/></b></a><x><a><b/><c/></a></x></test>')
+
+        root = XML(xml)
+        self.etree.strip_elements(root, 'a')
+        self.assertEquals(_bytes('<test><x></x></test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_elements(root, 'b', 'c', 'X', 'Y', 'Z')
+        self.assertEquals(_bytes('<test><a></a><x><a></a></x></test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_elements(root, 'c')
+        self.assertEquals(_bytes('<test><a><b></b></a><x><a><b></b></a></x></test>'),
+                          self._writeElement(root))
+
+    def test_strip_elements_ns(self):
+        XML = self.etree.XML
+        xml = _bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>C</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>')
+
+        root = XML(xml)
+        self.etree.strip_elements(root, 'a')
+        self.assertEquals(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_elements(root, '{urn:a}b', 'c')
+        self.assertEquals(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>C</b>BT</n:a>AT<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_elements(root, '{urn:a}*', 'c')
+        self.assertEquals(_bytes('<test>TEST<x>X<a>A<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_elements(root, '{urn:a}*', 'c', with_tail=False)
+        self.assertEquals(_bytes('<test>TESTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+    def test_strip_tags(self):
+        XML = self.etree.XML
+        xml = _bytes('<test>TEST<a>A<b>B<c/>CT</b>BT</a>AT<x>X<a>A<b/>BT<c/>CT</a>AT</x>XT</test>')
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'a')
+        self.assertEquals(_bytes('<test>TESTA<b>B<c></c>CT</b>BTAT<x>XA<b></b>BT<c></c>CTAT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'b', 'c', 'X', 'Y', 'Z')
+        self.assertEquals(_bytes('<test>TEST<a>ABCTBT</a>AT<x>X<a>ABTCT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'c')
+        self.assertEquals(_bytes('<test>TEST<a>A<b>BCT</b>BT</a>AT<x>X<a>A<b></b>BTCT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+    def test_strip_tags_ns(self):
+        XML = self.etree.XML
+        xml = _bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"/>CT</b>BT</n:a>AT<x>X<a>A<b xmlns="urn:a"/>BT<c xmlns="urn:x"/>CT</a>AT</x>XT</test>')
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'a')
+        self.assertEquals(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>XA<b xmlns="urn:a"></b>BT<c xmlns="urn:x"></c>CTAT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, '{urn:a}b', 'c')
+        self.assertEquals(_bytes('<test>TEST<n:a xmlns:n="urn:a">A<b>B<c xmlns="urn:c"></c>CT</b>BT</n:a>AT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, '{urn:a}*', 'c')
+        self.assertEquals(_bytes('<test>TESTA<b>B<c xmlns="urn:c"></c>CT</b>BTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element
