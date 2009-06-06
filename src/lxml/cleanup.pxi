@@ -214,6 +214,15 @@ def strip_tags(tree_or_element, *tag_names):
                                 c_merge_child.parent = c_node
                                 c_merge_child = c_merge_child.next
 
+                            # fix namespace references of children if
+                            # their parent's namespace declarations
+                            # get lost
+                            if c_child.nsDef is not NULL:
+                                c_merge_child = c_child.children
+                                while c_merge_child is not NULL:
+                                    moveNodeToDocument(doc, doc._c_doc, c_merge_child)
+                                    c_merge_child = c_merge_child.next
+
                             # fix sibling links to/from child slice
                             if c_child.prev is NULL:
                                 c_node.children = c_child.children
