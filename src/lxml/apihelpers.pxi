@@ -455,7 +455,6 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     return 0
 
 cdef int _delAttribute(_Element element, key) except -1:
-    cdef xmlAttr* c_attr
     cdef char* c_href
     ns, tag = _getNsTag(key)
     if ns is None:
