@@ -107,7 +107,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
         # we run through the children here to prevent any problems
         # with the tree iteration which would occur if we unlinked the
         # c_node itself
-        c_child = c_node.children
+        c_child = _findChildForwards(c_node, 0)
         while c_child is not NULL:
             if c_child.type == tree.XML_ELEMENT_NODE:
                 for ns, tag in ns_tags:
@@ -121,25 +121,25 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
                         c_href = _cstr(ns)
                     c_name = NULL if tag is None else _cstr(tag)
                     if _tagMatches(c_child, c_href, c_name):
-                        c_next = c_child.next
+                        c_next = _nextElement(c_child)
                         if not with_tail:
                             tree.xmlUnlinkNode(c_child)
                         _removeNode(doc, c_child)
                         c_child = c_next
                         break
                 else:
-                    c_child = c_child.next
+                    c_child = _nextElement(c_child)
             elif strip_comments and c_child.type == tree.XML_COMMENT_NODE or \
                      strip_pis and c_child.type == tree.XML_PI_NODE or \
                      strip_entities and c_child.type == tree.XML_ENTITY_REF_NODE:
-                c_next = c_child.next
+                c_next = _nextElement(c_child)
                 if with_tail:
                     _removeText(c_next)
                 tree.xmlUnlinkNode(c_child)
                 attemptDeallocation(c_child)
                 c_child = c_next
             else:
-                c_child = c_child.next
+                c_child = _nextElement(c_child)
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 def strip_tags(tree_or_element, *tag_names):
@@ -187,7 +187,7 @@ def strip_tags(tree_or_element, *tag_names):
         # we run through the children here to prevent any problems
         # with the tree iteration which would occur if we unlinked the
         # c_node itself
-        c_child = c_node.children
+        c_child = _findChildForwards(c_node, 0)
         while c_child is not NULL:
             if c_child.type == tree.XML_ELEMENT_NODE:
                 for ns, tag in ns_tags:
@@ -202,9 +202,9 @@ def strip_tags(tree_or_element, *tag_names):
                     c_name = NULL if tag is None else _cstr(tag)
                     if _tagMatches(c_child, c_href, c_name):
                         if c_child.children is not NULL:
-                            c_next = c_child.children
+                            c_next = _findChildForwards(c_child, 0)
                         else:
-                            c_next = c_child.next
+                            c_next = _nextElement(c_child)
                         _replaceNodeByChildren(doc, c_child)
                         if not attemptDeallocation(c_child):
                             if c_child.ns is not NULL:
@@ -217,12 +217,12 @@ def strip_tags(tree_or_element, *tag_names):
             elif strip_comments and c_child.type == tree.XML_COMMENT_NODE or \
                      strip_pis and c_child.type == tree.XML_PI_NODE or \
                      strip_entities and c_child.type == tree.XML_ENTITY_REF_NODE:
-                c_next = c_child.next
+                c_next = _nextElement(c_child)
                 tree.xmlUnlinkNode(c_child)
                 attemptDeallocation(c_child)
                 c_child = c_next
             else:
-                c_child = c_child.next
+                c_child = _nextElement(c_child)
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 
