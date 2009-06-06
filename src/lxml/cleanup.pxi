@@ -167,7 +167,6 @@ def strip_tags(tree_or_element, *tag_names):
     cdef xmlNode* c_node
     cdef xmlNode* c_child
     cdef xmlNode* c_next
-    cdef xmlNode* c_merge_child
     cdef char* c_href
     cdef char* c_name
     cdef _Element element
@@ -202,43 +201,11 @@ def strip_tags(tree_or_element, *tag_names):
                         c_href = _cstr(ns)
                     c_name = NULL if tag is None else _cstr(tag)
                     if _tagMatches(c_child, c_href, c_name):
-                        # replace c_child by its children
-                        if c_child.children is NULL:
-                            c_next = c_child.next
-                            tree.xmlUnlinkNode(c_child)
-                        else:
+                        if c_child.children is not NULL:
                             c_next = c_child.children
-                            # fix parent links of children
-                            c_merge_child = c_child.children
-                            while c_merge_child is not NULL:
-                                c_merge_child.parent = c_node
-                                c_merge_child = c_merge_child.next
-
-                            # fix namespace references of children if
-                            # their parent's namespace declarations
-                            # get lost
-                            if c_child.nsDef is not NULL:
-                                c_merge_child = c_child.children
-                                while c_merge_child is not NULL:
-                                    moveNodeToDocument(doc, doc._c_doc, c_merge_child)
-                                    c_merge_child = c_merge_child.next
-
-                            # fix sibling links to/from child slice
-                            if c_child.prev is NULL:
-                                c_node.children = c_child.children
-                            else:
-                                c_child.prev.next = c_child.children
-                                c_child.children.prev = c_child.prev
-                            if c_child.next is NULL:
-                                c_node.last = c_child.last
-                            else:
-                                c_child.next.prev = c_child.last
-                                c_child.last.next = c_child.next
-
-                            # unlink c_child
-                            c_child.children = c_child.last = NULL
-                            c_child.parent = c_child.next = c_child.prev = NULL
-
+                        else:
+                            c_next = c_child.next
+                        _replaceNodeByChildren(doc, c_child)
                         if not attemptDeallocation(c_child):
                             if c_child.ns is not NULL:
                                 # make namespaces absolute

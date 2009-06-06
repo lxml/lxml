@@ -389,6 +389,45 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         cstd.free(c_ns_list)
     return 0
 
+cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
+    cdef xmlNode* c_parent
+    cdef xmlNode* c_child
+    if c_node.children is NULL:
+        tree.xmlUnlinkNode(c_node)
+        return 0
+
+    c_parent = c_node.parent
+    # fix parent links of children
+    c_child = c_node.children
+    while c_child is not NULL:
+        c_child.parent = c_parent
+        c_child = c_child.next
+
+    # fix namespace references of children if their parent's namespace
+    # declarations get lost
+    if c_node.nsDef is not NULL:
+        c_child = c_node.children
+        while c_child is not NULL:
+            moveNodeToDocument(doc, doc._c_doc, c_child)
+            c_child = c_child.next
+
+    # fix sibling links to/from child slice
+    if c_node.prev is NULL:
+        c_parent.children = c_node.children
+    else:
+        c_node.prev.next = c_node.children
+        c_node.children.prev = c_node.prev
+    if c_node.next is NULL:
+        c_parent.last = c_node.last
+    else:
+        c_node.next.prev = c_node.last
+        c_node.last.next = c_node.next
+
+    # unlink c_node
+    c_node.children = c_node.last = NULL
+    c_node.parent = c_node.next = c_node.prev = NULL
+    return 0
+
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value
     cdef char* href
