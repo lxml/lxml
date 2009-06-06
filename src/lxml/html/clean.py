@@ -305,8 +305,7 @@ class Cleaner(object):
             kill_tags.add(etree.ProcessingInstruction)
         if self.style:
             kill_tags.add('style')
-            for el in _find_styled_elements(doc):
-                del el.attrib['style']
+            etree.strip_attributes(doc, 'style')
         if self.links:
             kill_tags.add('link')
         elif self.style or self.javascript:
