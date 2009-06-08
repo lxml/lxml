@@ -1039,6 +1039,43 @@ and/or 'xsi:type' information:
         i = 5 [IntElement]
         s = 5 [IntElement]
 
+You can control which type attributes should be de-annotated with the keyword
+arguments 'pytype' (default: True) and 'xsi' (default: True).
+``deannotate()`` can also remove 'xsi:nil' attributes by setting 'xsi_nil=True'
+(default: False):
+
+.. sourcecode:: pycon
+
+    >>> root = objectify.fromstring('''\
+    ... <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    ...       xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    ...   <d xsi:type="xsd:double">5</d>
+    ...   <i xsi:type="xsd:int"   >5</i>
+    ...   <s xsi:type="xsd:string">5</s>
+    ...   <n xsi:nil="true"/>
+    ... </root>''')
+    >>> objectify.annotate(root)
+    >>> print(objectify.dump(root))
+    root = None [ObjectifiedElement]
+        d = 5.0 [FloatElement]
+          * xsi:type = 'xsd:double'
+          * py:pytype = 'float'
+        i = 5 [IntElement]
+          * xsi:type = 'xsd:int'
+          * py:pytype = 'int'
+        s = '5' [StringElement]
+          * xsi:type = 'xsd:string'
+          * py:pytype = 'str'
+        n = None [NoneElement]
+          * xsi:nil = 'true'
+          * py:pytype = 'NoneType'
+    >>> objectify.deannotate(root, xsi_nil=True)
+    >>> print(objectify.dump(root))
+    root = None [ObjectifiedElement]
+        d = 5 [IntElement]
+        i = 5 [IntElement]
+        s = 5 [IntElement]
+        n = u'' [StringElement]
 
 The DataElement factory
 -----------------------

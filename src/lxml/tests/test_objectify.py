@@ -1664,7 +1664,7 @@ class ObjectifyTestCase(HelperTestCase):
 
         self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
 
-    def test_pytype_deannotate(self):
+    def test_xsinil_deannotate(self):
         XML = self.XML
         root = XML(_bytes('''\
         <a xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -1685,30 +1685,37 @@ class ObjectifyTestCase(HelperTestCase):
           <t py:pytype="TREE"></t>
         </a>
         '''))
-        objectify.xsiannotate(root)
-        objectify.deannotate(root, xsi=False)
+        objectify.annotate(
+            root, ignore_old=False, ignore_xsi=False, annotate_xsi=True,
+            empty_pytype='str', empty_type='string')
+        objectify.deannotate(root, pytype=False, xsi=False, xsi_nil=True)
 
         child_types = [ c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR)
                         for c in root.iterchildren() ]
-        self.assertEquals("xsd:int",      child_types[ 0])
+        self.assertEquals("xsd:integer",  child_types[ 0])
         self.assertEquals("xsd:string",   child_types[ 1])
         self.assertEquals("xsd:double",   child_types[ 2])
         self.assertEquals("xsd:string",   child_types[ 3])
         self.assertEquals("xsd:boolean",  child_types[ 4])
         self.assertEquals(None,           child_types[ 5])
-        self.assertEquals(None,           child_types[ 6])
-        self.assertEquals("xsd:int",      child_types[ 7])
-        self.assertEquals("xsd:int",      child_types[ 8])
-        self.assertEquals("xsd:int",      child_types[ 9])
+        self.assertEquals("xsd:string",   child_types[ 6])
+        self.assertEquals("xsd:double",   child_types[ 7])
+        self.assertEquals("xsd:float",    child_types[ 8])
+        self.assertEquals("xsd:string",   child_types[ 9])
         self.assertEquals("xsd:string",   child_types[10])
-        self.assertEquals("xsd:double",   child_types[11])
+        self.assertEquals("xsd:double",    child_types[11])
         self.assertEquals("xsd:integer",  child_types[12])
         self.assertEquals(None,           child_types[13])
 
-        self.assertEquals("true", root.n.get(XML_SCHEMA_NIL_ATTR))
+        self.assertEquals(None, root.n.get(XML_SCHEMA_NIL_ATTR))
 
-        for c in root.getiterator():
-            self.assertEquals(None, c.get(objectify.PYTYPE_ATTRIBUTE))
+        for c in root.iterchildren():
+            self.assertNotEquals(None, c.get(objectify.PYTYPE_ATTRIBUTE))
+            # these have no equivalent in xsi:type
+            if (c.get(objectify.PYTYPE_ATTRIBUTE) not in [TREE_PYTYPE, 
+                "NoneType"]):
+                self.assertNotEquals(
+                    None, c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR))
 
     def test_xsitype_deannotate(self):
         XML = self.XML

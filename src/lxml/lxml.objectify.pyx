@@ -1693,42 +1693,31 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                     tree.xmlSetNsProp(c_node, c_ns, "nil", "true")
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-def deannotate(element_or_tree, *, pytype=True, xsi=True):
-    u"""deannotate(element_or_tree, pytype=True, xsi=True)
+cdef object _strip_attributes
+_strip_attributes = etree.strip_attributes
 
-    Recursively de-annotate the elements of an XML tree by removing 'pytype'
-    and/or 'type' attributes.
+def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
+    u"""deannotate(element_or_tree, pytype=True, xsi=True, xsi_nil=False)
 
-    If the 'pytype' keyword argument is True (the default), 'pytype' attributes
-    will be removed. If the 'xsi' keyword argument is True (the default),
-    'xsi:type' attributes will be removed.
+    Recursively de-annotate the elements of an XML tree by removing 'py:pytype'
+    and/or 'xsi:type' attributes and/or 'xsi:nil' attributes.
+
+    If the 'pytype' keyword argument is True (the default), 'py:pytype'
+    attributes will be removed. If the 'xsi' keyword argument is True (the 
+    default), 'xsi:type' attributes will be removed.
+    If the 'xsi_nil' keyword argument is True (default: False), 'xsi:nil'
+    attributes will be removed.
     """
-    cdef _Element  element
-    cdef tree.xmlNode* c_node
+    cdef list attribute_names = []
 
-    element = cetree.rootNodeOrRaise(element_or_tree)
-    c_node = element._c_node
-    if pytype and xsi:
-        tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
-        if c_node.type == tree.XML_ELEMENT_NODE:
-            cetree.delAttributeFromNsName(
-                c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-            cetree.delAttributeFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, "type")
-        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    elif pytype:
-        tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
-        if c_node.type == tree.XML_ELEMENT_NODE:
-            cetree.delAttributeFromNsName(
-                c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
-    elif xsi:
-        tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
-        if c_node.type == tree.XML_ELEMENT_NODE:
-            cetree.delAttributeFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, "type")
-        tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+    if pytype:
+        attribute_names.append(PYTYPE_ATTRIBUTE)
+    if xsi:
+        attribute_names.append(XML_SCHEMA_INSTANCE_TYPE_ATTR)
+    if xsi_nil:
+        attribute_names.append(XML_SCHEMA_INSTANCE_NIL_ATTR)
 
+    _strip_attributes(element_or_tree, *attribute_names)
 
 ################################################################################
 # Module level parser setup
