@@ -4,15 +4,16 @@ from lxml.etree import (parse, fromstring, ElementTree,
 import os, shutil, re, sys, copy, time
 
 RST2HTML_OPTIONS = " ".join([
-    "--no-toc-backlinks",
-    "--strip-comments",
-    "--language en",
-    "--date",
+    '--no-toc-backlinks',
+    '--strip-comments',
+    '--language en',
+    '--date',
     ])
 
 htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
 
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
+find_title_tag = XPath("/h:html/h:head/h:title", namespaces=htmlnsmap)
 find_headings = XPath("//h:h1[not(@class)]//text()", namespaces=htmlnsmap)
 find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
 find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
@@ -130,6 +131,9 @@ def publish(dirname, lxml_path, release):
     # integrate menu
     for tree, basename, outpath in trees.itervalues():
         new_tree = merge_menu(tree, menu, basename)
+        title = find_title_tag(new_tree)
+        if title and title[0].text == 'lxml':
+            title[0].text = "lxml - Processing XML and HTML with Python"
         new_tree.write(outpath)
 
 if __name__ == '__main__':

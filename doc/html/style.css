@@ -214,10 +214,13 @@ blockquote {
     font-style: italic;
 }
 
-div.eyecatcher {
+div.eyecatcher, p.eyecatcher {
     font-family: Times, "Times New Roman", serif;
     text-align: center;
     font-size: 140%;
+    line-height: 1.2em;
+    margin-left: 9em;
+    margin-right: 9em;
 }
 
 div.pagequote {

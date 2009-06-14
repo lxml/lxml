@@ -3,7 +3,7 @@ lxml
 
 .. meta::
   :description: lxml - the most feature-rich and easy-to-use library for working with XML and HTML in the Python language
-  :keywords: lxml, etree, objectify, Python, XML, HTML
+  :keywords: Python, XML, HTML, lxml, ElementTree, etree, objectify
 
 .. class:: pagequote
 
@@ -12,10 +12,10 @@ lxml
 
 .. class:: eyecatcher
 
-|   lxml is the most feature-rich
-|   and easy-to-use library
-|   for working with XML and HTML
-|   in the Python language.
+     lxml is the most feature-rich
+     and easy-to-use library
+     for working with XML and HTML
+     in the Python language.
 
 .. 
    1  Introduction
