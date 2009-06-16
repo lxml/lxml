@@ -108,10 +108,12 @@ cdef class _SaxParserContext(_ParserContext):
         c_ctxt.replaceEntities = 1
 
     cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt):
-        self._store_raised()
         if c_ctxt.errNo == xmlerror.XML_ERR_OK:
             c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        # stop parsing immediately
+        c_ctxt.wellFormed = 0
         c_ctxt.disableSAX = 1
+        self._store_raised()
 
 cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                           char* c_namespace, int c_nb_namespaces,
@@ -246,7 +248,7 @@ cdef void _handleSaxData(void* ctxt, char* c_data, int data_len) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     if context._origSaxData is not NULL:
@@ -261,7 +263,7 @@ cdef void _handleSaxCData(void* ctxt, char* c_data, int data_len) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     if context._origSaxCData is not NULL:
@@ -277,7 +279,7 @@ cdef void _handleSaxDoctype(void* ctxt, char* c_name, char* c_public,
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     if context._origSaxDoctype is not NULL:

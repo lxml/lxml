@@ -3445,6 +3445,62 @@ class ETreeTestCaseBase(HelperTestCase):
 
         self.assertRaises(self.etree.ParseError, feed)
 
+    def test_parser_target_feed_exception(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+                if tag == 'a':
+                    raise ValueError("dead and gone")
+            def data(self, data):
+                events.append("data-" + data)
+            def close(self):
+                events.append("close")
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            parser.feed(_bytes('<root>A<a>ca</a>B</root>'))
+            done = parser.close()
+            self.fail("error expected, but parsing succeeded")
+        except ValueError:
+            done = 'value error received as expected'
+
+        self.assertEquals(["start-root", "data-A", "start-a",
+                           "data-ca", "end-a"],
+                          events)
+
+    def test_parser_target_fromstring_exception(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+                if tag == 'a':
+                    raise ValueError("dead and gone")
+            def data(self, data):
+                events.append("data-" + data)
+            def close(self):
+                events.append("close")
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            done = self.etree.fromstring(_bytes('<root>A<a>ca</a>B</root>'),
+                                         parser=parser)
+            self.fail("error expected, but parsing succeeded")
+        except ValueError:
+            done = 'value error received as expected'
+
+        self.assertEquals(["start-root", "data-A", "start-a",
+                           "data-ca", "end-a"],
+                          events)
+
     def test_treebuilder(self):
         builder = self.etree.TreeBuilder()
         el = builder.start("root", {'a':'A', 'b':'B'})

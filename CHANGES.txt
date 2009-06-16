@@ -15,6 +15,9 @@ Features added
 Bugs fixed
 ----------
 
+* Raising an exception from a parser target callback didn't always
+  terminate the parser.
+
 Other changes
 -------------
 
