@@ -28,7 +28,7 @@ ElementTree_.
      1.9  How can I map an XML tree into a dict of dicts?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
-     2.2  Where are the Windows binaries?
+     2.2  Where are the binary builds?
      2.3  Why do I get errors about missing UCS4 symbols when installing lxml?
    3  Contributing
      3.1  Why is lxml not written in Python?
