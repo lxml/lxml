@@ -485,6 +485,12 @@ project and its user base.  You can
   or an idea how to make it more readable and accessible while you are reading
   it, please send a comment to the `mailing list`_.
 
+* enhance the web site. We put some work into making the web site
+  usable, understandable and also easy to find, but there's always
+  things that can be done better.  You may notice that we are not
+  top-ranked when searching the web for "Python and XML", so maybe you
+  have an idea how to improve that.
+
 * help with the tutorial.  A tutorial is the most important stating point for
   new users, so it is important for us to provide an easy to understand guide
   into lxml.  As allo documentation, the tutorial is work in progress, so we
