@@ -18,6 +18,10 @@ Bugs fixed
 * Raising an exception from a parser target callback didn't always
   terminate the parser.
 
+* Only {true, false, 1, 0} are accepted as the lexical representation for
+  BoolElement ({True, False, T, F, t, f} not any more), restoring lxml <= 2.0
+  behaviour.
+
 Other changes
 -------------
 

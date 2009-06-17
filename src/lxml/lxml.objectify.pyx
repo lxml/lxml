@@ -872,18 +872,15 @@ cpdef __parseBool(s):
     return <bint>value
 
 cdef inline int __parseBoolAsInt(text):
-    cdef char* c_str
-    if text == u'0':
+    if text == u'false':
+        return 0
+    elif text == u'true':
+        return 1
+    elif text == u'0':
         return 0
     elif text == u'1':
         return 1
-    text = text.lower()
-    if text == u'f' or text == u'false':
-        return 0
-    elif text == u't' or text == u'true':
-        return 1
-    else:
-        return -1
+    return -1
 
 cdef inline object _parseNumber(NumberElement element):
     return element._parse_value(textOf(element._c_node))

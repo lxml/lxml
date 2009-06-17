@@ -2411,6 +2411,44 @@ class ObjectifyTestCase(HelperTestCase):
             root.get('{http://www.w3.org/XML/1998/namespace}base'),
             "https://secret/url")
 
+    def test_standard_lookup(self):
+        XML = self.XML
+
+        xml = _bytes('''\
+        <root xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+          <i>5</i>
+          <i>-5</i>
+          <l>4294967296</l>
+          <l>-4294967296</l>
+          <f>1.1</f>
+          <b>true</b>
+          <b>false</b>
+          <s>Strange things happen, where strings collide</s>
+          <s>True</s>
+          <s>False</s>
+          <s>t</s>
+          <s>f</s>
+          <s></s>
+          <s>None</s>
+          <n xsi:nil="true" />
+        </root>
+        ''')
+        root = XML(xml)
+
+        for i in root.i:
+            self.assert_(isinstance(i, objectify.IntElement))
+        for l in root.l:
+            self.assert_(isinstance(l, objectify.IntElement))
+        for f in root.f:
+            self.assert_(isinstance(f, objectify.FloatElement))  
+        for b in root.b:
+            self.assert_(isinstance(b, objectify.BoolElement))
+        self.assertEquals(True,  root.b[0])
+        self.assertEquals(False, root.b[1])
+        for s in root.s:
+            self.assert_(isinstance(s, objectify.StringElement))
+        self.assert_(isinstance(root.n, objectify.NoneElement))
+        self.assertEquals(None, root.n)
 
 def test_suite():
     suite = unittest.TestSuite()
