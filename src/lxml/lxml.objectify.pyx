@@ -11,6 +11,16 @@ cimport python
 cimport tree
 cimport cstd
 
+__all__ = [u'BoolElement', u'DataElement', u'E', u'Element', u'ElementMaker',
+           u'FloatElement', u'IntElement', u'LongElement', u'NoneElement',
+           u'NumberElement', u'ObjectPath', u'ObjectifiedDataElement',
+           u'ObjectifiedElement', u'ObjectifyElementClassLookup',
+           u'PYTYPE_ATTRIBUTE', u'PyType', u'StringElement', u'XML',
+           u'annotate', u'deannotate', u'dump', u'enable_recursive_str',
+           u'fromstring', u'getRegisteredTypes', u'makeparser', u'parse',
+           u'pyannotate', u'pytypename', u'set_default_parser',
+           u'set_pytype_attribute_tag', u'xsiannotate']
+
 cdef object etree
 from lxml import etree
 # initialize C-API of lxml.etree
