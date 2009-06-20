@@ -1368,6 +1368,20 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals("B2", b.tail)
         self.assertEquals("C2", c.tail)
 
+    def test_merge_namespaced_subtree_as_slice(self):
+        XML = self.etree.XML
+        root = XML(_bytes(
+            '<foo><bar xmlns:baz="http://huhu"><puh><baz:bump1 /><baz:bump2 /></puh></bar></foo>'))
+        root[:] = root.findall('.//puh') # delete bar from hierarchy
+
+        # previously, this lost a namespace declaration on bump2
+        result = self.etree.tostring(root)
+        foo = self.etree.fromstring(result)
+
+        self.assertEquals('puh', foo[0].tag)
+        self.assertEquals('{http://huhu}bump1', foo[0][0].tag)
+        self.assertEquals('{http://huhu}bump2', foo[0][1].tag)
+
     def test_delitem_tail(self):
         ElementTree = self.etree.ElementTree
         f = BytesIO('<a><b></b>B2<c></c>C2</a>')
