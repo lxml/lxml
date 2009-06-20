@@ -4,7 +4,17 @@ Things to try out when life permits
 * zlib-based parsing/serialising of compressed in-memory data
 
   * requires a libxml2 I/O OutputBuffer with appropriate I/O functions
-    that handle a zlib buffer
+    that call into the lzma compression routines
+
+* lzma-based parsing/serialising of compressed in-memory data
+
+  * requires a libxml2 I/O OutputBuffer with appropriate I/O functions
+    that call into the lzma compression routines
+
+  * advantage over zlib: probably faster and better compression
+
+  * maybe embed the lzma C sources in the distro
+    http://www.7-zip.org/sdk.html
 
 * generating XML using the ``with`` statement
 
