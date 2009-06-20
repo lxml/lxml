@@ -1026,6 +1026,10 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
         # R->L, remember right neighbour
         c_orig_neighbour = _nextElement(c_node)
 
+    # We remove the original slice elements one by one. Since we hold
+    # a Python reference to all elements that we will insert, it is
+    # safe to let _removeNode() try (and fail) to free them even if
+    # the element itself or one of its descendents will be reinserted.
     c = 0
     c_next = c_node
     while c_node is not NULL and c < slicelength:
