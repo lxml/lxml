@@ -348,7 +348,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 else:
                     # not in cache => find a replacement from this document
                     c_ns = doc._findOrBuildNodeNs(
-                        c_element, c_node.ns.href, c_node.ns.prefix)
+                        c_start_node, c_node.ns.href, c_node.ns.prefix)
                     _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
                     c_node.ns = c_ns
 

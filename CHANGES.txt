@@ -15,6 +15,11 @@ Features added
 Bugs fixed
 ----------
 
+* Namespace cleanup on subtree insertions could result in missing
+  namespace declarations (and potentially crashes) if the element
+  defining a namespace was deleted and the namespace was not used by
+  the top element of the inserted subtree but only in deeper subtrees.
+
 * Raising an exception from a parser target callback didn't always
   terminate the parser.
 
