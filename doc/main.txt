@@ -223,7 +223,7 @@ version <http://codespeak.net/lxml/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-2.2.2.pdf
 
-* `lxml 2.1`_, released 2009-06-02 (`changes for 2.2.1`_)
+* `lxml 2.2.1`_, released 2009-06-02 (`changes for 2.2.1`_)
 
 * `lxml 2.2`_, released 2009-03-21 (`changes for 2.2`_)
 
@@ -323,6 +323,7 @@ version <http://codespeak.net/lxml/dev/>`_.
 
 * `lxml 0.5`_,   released 2005-04-08
 
+.. _`lxml 2.2.2`: lxml-2.2.2.tgz
 .. _`lxml 2.2.1`: lxml-2.2.1.tgz
 .. _`lxml 2.2`: lxml-2.2.tgz
 .. _`lxml 2.2beta4`: lxml-2.2beta4.tgz
@@ -373,6 +374,7 @@ version <http://codespeak.net/lxml/dev/>`_.
 .. _`lxml 0.5.1`: lxml-0.5.1.tgz
 .. _`lxml 0.5`: lxml-0.5.tgz
 
+.. _`changes for 2.2.2`: changes-2.2.2.html
 .. _`changes for 2.2.1`: changes-2.2.1.html
 .. _`changes for 2.2`: changes-2.2.html
 .. _`changes for 2.2beta4`: changes-2.2beta4.html
