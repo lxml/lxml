@@ -53,7 +53,7 @@ the following::
              self.set("my_attribute", myval)
 
     etree.set_element_class_lookup(
-         DefaultElementClassLookup(element=NewElementClass))
+         etree.DefaultElementClassLookup(element=NewElementClass))
 
 
 Writing external modules in C
