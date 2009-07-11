@@ -401,14 +401,35 @@ cdef class PyErrorLog(_BaseErrorLog):
         """
         return _ListErrorLog([], None, None)
 
-    def log(self, entry, message_format_string, *args):
+    def log(self, log_entry, message, *args):
+        u"""log(self, log_entry, message, *args)
+
+        Called by the .receive() method to log a _LogEntry instance to
+        the Python logging system.  This handles the error level
+        mapping.
+
+        In the default implementation, the ``message`` argument
+        receives a complete log line, and there are no further
+        ``args``.  To change the message format, it is best to
+        override the .receive() method instead of this one.
+        """
         self._log(
-            self._map_level(entry.level, 0),
-            message_format_string, *args
+            self._map_level(log_entry.level, 0),
+            message, *args
             )
 
-    def receive(self, entry):
-        self.log(entry, entry)
+    def receive(self, _LogEntry log_entry):
+        u"""receive(self, log_entry)
+
+        Receive a _LogEntry instance from the logging system.  Calls
+        the .log() method with appropriate parameters::
+
+            self.log(log_entry, repr(log_entry))
+
+        You can override this method to provide your own log output
+        format.
+        """
+        self.log(log_entry, repr(log_entry))
 
 # thread-local, global list log to collect error output messages from
 # libxml2/libxslt
@@ -436,7 +457,8 @@ cdef _setGlobalErrorLog(_BaseErrorLog log):
     if thread_dict is NULL:
         global __GLOBAL_ERROR_LOG
         __GLOBAL_ERROR_LOG = log
-    (<object>thread_dict)[u"_GlobalErrorLog"] = log
+    else:
+        (<object>thread_dict)[u"_GlobalErrorLog"] = log
 
 cdef __copyGlobalErrorLog():
     u"Helper function for properties in exceptions."

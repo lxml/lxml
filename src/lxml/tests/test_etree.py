@@ -427,28 +427,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, 'notthere.xml', object())
 
-    def test_parse_error_logging(self):
-        parse = self.etree.parse
-        f = BytesIO('<a><b></c></b></a>')
-        self.etree.clear_error_log()
-        try:
-            parse(f)
-            logs = None
-        except SyntaxError:
-            e = sys.exc_info()[1]
-            logs = e.error_log
-        f.close()
-        self.assert_([ log for log in logs
-                       if 'mismatch' in log.message ])
-        self.assert_([ log for log in logs
-                       if 'PARSER'   in log.domain_name])
-        self.assert_([ log for log in logs
-                       if 'TAG_NAME_MISMATCH' in log.type_name ])
-        self.assert_([ log for log in logs
-                       if 1 == log.line ])
-        self.assert_([ log for log in logs
-                       if 15 == log.column ])
-
     def test_iterparse_tree_comments(self):
         # ET removes comments
         iterparse = self.etree.iterparse
@@ -2942,6 +2920,58 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
 
+class ETreeErrorLogTest(HelperTestCase):
+    etree = etree
+
+    def test_parse_error_logging(self):
+        parse = self.etree.parse
+        f = BytesIO('<a><b></c></b></a>')
+        self.etree.clear_error_log()
+        try:
+            parse(f)
+            logs = None
+        except SyntaxError:
+            e = sys.exc_info()[1]
+            logs = e.error_log
+        f.close()
+        self.assert_([ log for log in logs
+                       if 'mismatch' in log.message ])
+        self.assert_([ log for log in logs
+                       if 'PARSER'   in log.domain_name])
+        self.assert_([ log for log in logs
+                       if 'ERR_TAG_NAME_MISMATCH' in log.type_name ])
+        self.assert_([ log for log in logs
+                       if 1 == log.line ])
+        self.assert_([ log for log in logs
+                       if 15 == log.column ])
+
+    def _test_python_error_logging(self):
+        """This can't really be tested as long as there isn't a way to
+        reset the logging setup ...
+        """
+        parse = self.etree.parse
+
+        messages = []
+        class Logger(self.etree.PyErrorLog):
+            def log(self, entry, message, *args):
+                messages.append(message)
+
+        self.etree.use_global_python_log(Logger())
+        f = BytesIO('<a><b></c></b></a>')
+        try:
+            parse(f)
+        except SyntaxError:
+            pass
+        f.close()
+
+        self.assert_([ message for message in messages
+                       if 'mismatch' in message ])
+        self.assert_([ message for message in messages
+                       if ':PARSER:'   in message])
+        self.assert_([ message for message in messages
+                       if ':ERR_TAG_NAME_MISMATCH:' in message ])
+        self.assert_([ message for message in messages
+                       if ':1:15:' in message ])
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -2950,6 +2980,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ElementIncludeTestCase)])
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])
     suite.addTests(
