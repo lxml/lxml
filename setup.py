@@ -43,12 +43,13 @@ print("Building lxml version %s." % svn_version)
 OPTION_RUN_TESTS = setupinfo.has_option('run-tests')
 
 branch_link = """
-After an official release of a new stable series, current bug fixes become
-available at http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
-Running ``easy_install lxml==%(branch_version)sbugfix`` will install this
-version from
+After an official release of a new stable series, bug fixes may become
+available at
+http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
+Running ``easy_install lxml==%(branch_version)sbugfix`` will install
+the unreleased branch state from
 http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
-
+as soon as a maintenance branch has been established.
 """
 
 if versioninfo.is_pre_release():
