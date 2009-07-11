@@ -416,7 +416,7 @@ cdef class PyErrorLog(_BaseErrorLog):
 cdef _BaseErrorLog __GLOBAL_ERROR_LOG
 __GLOBAL_ERROR_LOG = _RotatingErrorLog(__MAX_LOG_SIZE)
 
-cdef _ErrorLog _getGlobalErrorLog():
+cdef _BaseErrorLog _getGlobalErrorLog():
     u"""Retrieve the global error log of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
@@ -429,7 +429,7 @@ cdef _ErrorLog _getGlobalErrorLog():
               _RotatingErrorLog(__MAX_LOG_SIZE)
         return log
 
-cdef _ErrorLog _setGlobalErrorLog(_BaseErrorLog log):
+cdef _setGlobalErrorLog(_BaseErrorLog log):
     u"""Set the global error log of this thread."""
     cdef python.PyObject* thread_dict
     thread_dict = python.PyThreadState_GetDict()
