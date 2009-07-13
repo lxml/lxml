@@ -612,6 +612,11 @@ might become handy.  Just pass the ``unicode`` type as encoding:
    >>> etree.tostring(root, encoding=unicode, method='text')
    u'HelloW\xf6rld'
 
+The W3C has a good `article about the Unicode character set and
+character encodings`_.
+
+.. _`article about the Unicode character set and character encodings`: http://www.w3.org/International/tutorials/tutorial-char-enc/
+
 
 The ElementTree class
 =====================
