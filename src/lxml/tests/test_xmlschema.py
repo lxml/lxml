@@ -309,15 +309,15 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
     # tests:
 
     def test_xmlschema_resolvers(self):
-        """Test that resolvers work with schema."""
+        # test that resolvers work with schema.
         parser = etree.XMLParser()
         parser.resolvers.add(self.simple_resolver(self.resolver_schema_ext))
         schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
         schema = etree.XMLSchema(schema_doc)
 
     def test_xmlschema_resolvers_root(self):
-        """Test that the default resolver will get called if there's no
-        specific parser resolver."""
+        # test that the default resolver will get called if there's no
+        # specific parser resolver.
         root_resolver = self.simple_resolver(self.resolver_schema_ext)
         etree.get_default_parser().resolvers.add(root_resolver)
         schema_doc = etree.parse(self.resolver_schema_int)
@@ -325,8 +325,8 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
         etree.get_default_parser().resolvers.remove(root_resolver)
 
     def test_xmlschema_resolvers_noroot(self):
-        """Test that the default resolver will not get called when a more
-        specific resolver is registered."""
+        # test that the default resolver will not get called when a
+        # more specific resolver is registered.
 
         class res_root(etree.Resolver):
             def resolve(self, url, id, context):
@@ -344,7 +344,7 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
         etree.get_default_parser().resolvers.remove(root_resolver)
 
     def test_xmlschema_nested_resolvers(self):
-        """Test that resolvers work in a nested fashion."""
+        # test that resolvers work in a nested fashion.
 
         resolver_schema = self.resolver_schema_ext
 
