@@ -3302,6 +3302,9 @@ class ETreeTestCaseBase(HelperTestCase):
         class Target(object):
             pass
 
+        parser = self.etree.XMLParser()
+        self.assertEquals(None, parser.target)
+
         target = Target()
         parser = self.etree.XMLParser(target=target)
 
