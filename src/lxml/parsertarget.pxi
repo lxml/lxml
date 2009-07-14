@@ -120,12 +120,20 @@ cdef class _TargetParserContext(_SaxParserContext):
                                    filename):
         cdef bint recover
         recover = parser._parse_options & xmlparser.XML_PARSE_RECOVER
-        if self._has_raised():
-            self._cleanupTargetParserContext(result)
-            self._raise_if_stored()
-        if not self._c_ctxt.wellFormed and not recover:
-            _raiseParseError(self._c_ctxt, filename, self._error_log)
-        return self._python_target.close()
+        try:
+            if self._has_raised():
+                self._cleanupTargetParserContext(result)
+                self._raise_if_stored()
+            if not self._c_ctxt.wellFormed and not recover:
+                _raiseParseError(self._c_ctxt, filename, self._error_log)
+        finally:
+            if python.IS_PYTHON3:
+                parse_result = self._python_target.close()
+            else:
+                # Python 2 can't chain exceptions
+                try: parse_result = self._python_target.close()
+                except: pass
+        return parse_result
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
                                        xmlDoc* result, filename) except NULL:
@@ -134,8 +142,16 @@ cdef class _TargetParserContext(_SaxParserContext):
         if result is not NULL and result._private is NULL:
             # no _Document proxy => orphen
             tree.xmlFreeDoc(result)
-        self._cleanupTargetParserContext(result)
-        self._raise_if_stored()
-        if not self._c_ctxt.wellFormed and not recover:
-            _raiseParseError(self._c_ctxt, filename, self._error_log)
-        raise _TargetParserResult(self._python_target.close())
+        try:
+            self._cleanupTargetParserContext(result)
+            self._raise_if_stored()
+            if not self._c_ctxt.wellFormed and not recover:
+                _raiseParseError(self._c_ctxt, filename, self._error_log)
+        finally:
+            if python.IS_PYTHON3:
+                parse_result = self._python_target.close()
+            else:
+                # Python 2 can't chain exceptions
+                try: parse_result = self._python_target.close()
+                except: pass
+        raise _TargetParserResult(parse_result)

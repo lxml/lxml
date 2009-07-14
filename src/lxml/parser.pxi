@@ -685,7 +685,7 @@ cdef class _BaseParser:
     cdef bint _strip_cdata
     cdef XMLSchema _schema
     cdef object _filename
-    cdef object _target
+    cdef readonly object target
     cdef object _default_encoding
 
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
@@ -700,7 +700,7 @@ cdef class _BaseParser:
 
         self._parse_options = parse_options
         self._filename = filename
-        self._target = target
+        self.target = target
         self._for_html = for_html
         self._remove_comments = remove_comments
         self._remove_pis = remove_pis
@@ -722,7 +722,7 @@ cdef class _BaseParser:
     cdef _ParserContext _getParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
-            self._parser_context = self._createContext(self._target)
+            self._parser_context = self._createContext(self.target)
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -743,7 +743,7 @@ cdef class _BaseParser:
     cdef _ParserContext _getPushParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._push_parser_context is None:
-            self._push_parser_context = self._createContext(self._target)
+            self._push_parser_context = self._createContext(self.target)
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -837,7 +837,7 @@ cdef class _BaseParser:
         parser._strip_cdata = self._strip_cdata
         parser._filename = self._filename
         parser._resolvers = self._resolvers
-        parser._target = self._target
+        parser.target = self.target
         parser._class_lookup  = self._class_lookup
         return parser
 

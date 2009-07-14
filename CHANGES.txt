@@ -8,8 +8,15 @@ Under development
 Features added
 --------------
 
+* Target parsers show their target object in the ``.target`` property
+  (compatible with ElementTree).
+
 Bugs fixed
 ----------
+
+* Target parser didn't call ``.close()`` on the target object if
+  parsing failed.  Now it is guaranteed that ``.close()`` will be
+  called after parsing, regardless of the outcome.
 
 * Diverting the error logging to Python's logging system was broken.
 

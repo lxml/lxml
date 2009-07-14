@@ -336,6 +336,42 @@ like:
   >>> print(result)
   closed!
 
+Starting with lxml 2.3, the ``.close()`` method will also be called in
+the error case.  This diverges from the behaviour of ElementTree, but
+allows target objects to clean up their state in all situations, so
+that the parser can reuse them afterwards.
+
+.. sourcecode:: pycon
+
+  >>> class CollectorTarget:
+  ...     def __init__(self):
+  ...         self.events = []
+  ...     def start(self, tag, attrib):
+  ...         self.events.append("start %s %s" % (tag, attrib))
+  ...     def end(self, tag):
+  ...         self.events.append("end %s" % tag)
+  ...     def data(self, data):
+  ...         self.events.append("data %r" % data)
+  ...     def comment(self, text):
+  ...         self.events.append("comment %s" % text)
+  ...     def close(self):
+  ...         self.events.append("close")
+  ...         return "closed!"
+
+  >>> parser = etree.XMLParser(target = CollectorTarget())
+
+  >>> result = etree.XML("<element>some</error>",
+  ...                    parser)        # doctest: +ELLIPSIS
+  Traceback (most recent call last):
+    ...
+  XMLSyntaxError: Opening and ending tag mismatch...
+
+  >>> for event in parser.target.events:
+  ...     print(event)
+  start element {}
+  data u'some'
+  close
+
 Note that the parser does *not* build a tree when using a parser
 target.  The result of the parser run is whatever the target object
 returns from its ``.close()`` method.  If you want to return an XML
