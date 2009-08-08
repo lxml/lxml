@@ -2,11 +2,14 @@
 lxml changelog
 ==============
 
-Under development
-==================
+2.3 (under development)
+=======================
 
 Features added
 --------------
+
+* Namespace URIs get validated against RFC 3986 at the API level
+  (required by the XML namespace specification).
 
 * Target parsers show their target object in the ``.target`` property
   (compatible with ElementTree).

@@ -1,5 +1,7 @@
 # Private/public helper functions for API functions
 
+cimport uri
+
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
     cdef xmlNode* c_child
@@ -217,6 +219,7 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
     cdef list nsdefs
     if not nsmap:
         if node_ns_utf is not None:
+            _uriValidOrRaise(node_ns_utf)
             doc._setNodeNs(c_node, _cstr(node_ns_utf))
         return 0
 
@@ -234,6 +237,7 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
 
     for prefix, href in nsdefs:
         href_utf = _utf8(href)
+        _uriValidOrRaise(href_utf)
         c_href = _cstr(href_utf)
         if prefix is not None:
             prefix_utf = _utf8(prefix)
@@ -279,6 +283,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
             if attr_ns_utf is None:
                 tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
             else:
+                _uriValidOrRaise(attr_ns_utf)
                 c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf), NULL)
                 tree.xmlNewNsProp(c_node, c_ns,
                                   _cstr(attr_name_utf), _cstr(value_utf))
@@ -1427,6 +1432,14 @@ cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
         raise ValueError, u"Invalid namespace prefix %r" % \
             python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
+    return 0
+
+cdef int _uriValidOrRaise(uri_utf) except -1:
+    cdef uri.xmlURI* c_uri = uri.xmlParseURI(_cstr(uri_utf))
+    if c_uri is NULL:
+        raise ValueError, u"Invalid namespace URI %r" % \
+            python.PyUnicode_FromEncodedObject(uri_utf, 'UTF-8', NULL)
+    uri.xmlFreeURI(c_uri)
     return 0
 
 cdef inline object _namespacedName(xmlNode* c_node):

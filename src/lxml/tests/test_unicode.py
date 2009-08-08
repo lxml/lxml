@@ -43,13 +43,18 @@ class UnicodeTestCase(HelperTestCase):
         self.assertRaises(ValueError, etree.Element, invalid_tag)
 
     def test_unicode_nstag(self):
-        tag = _str("{%s}%s") % (uni, uni)
+        tag = _str("{http://abc/}%s") % uni
         el = etree.Element(tag)
         self.assertEquals(tag, el.tag)
 
+    def test_unicode_ns_invalid(self):
+        # namespace URIs must conform to RFC 3986
+        tag = _str("{http://%s/}abc") % uni
+        self.assertRaises(ValueError, etree.Element, tag)
+
     def test_unicode_nstag_invalid(self):
         # sadly, Klingon is not well-formed
-        tag = _str("{%s}%s") % (uni, invalid_tag)
+        tag = _str("{http://abc/}%s") % invalid_tag
         self.assertRaises(ValueError, etree.Element, tag)
 
     def test_unicode_qname(self):
