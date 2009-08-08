@@ -221,7 +221,7 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
         return 0
 
     nsdefs = list(nsmap.items())
-    if None in nsmap and python.PyList_GET_SIZE(nsdefs) > 1:
+    if None in nsmap and len(nsdefs) > 1:
         # Move the default namespace to the end.  This makes sure libxml2
         # prefers a prefix if the ns is defined redundantly on the same
         # element.  That way, users can work around a problem themselves
