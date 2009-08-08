@@ -50,6 +50,7 @@ ElementTree_.
      6.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
      6.4  Why can't I just delete parents or clear the root node in iterparse()?
      6.5  How do I output null characters in XML text?
+     6.6  Is lxml vulnerable to XML bombs?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -879,6 +880,21 @@ Don't.  What you would produce is not well-formed XML.  XML parsers
 will refuse to parse a document that contains null characters.  The
 right way to embed binary data in XML is using a text encoding such as
 uuencode or base64.
+
+
+Is lxml vulnerable to XML bombs?
+--------------------------------
+
+This has nothing to do with lxml itself, only with the parser of
+libxml2.  Since libxml2 version 2.7, the parser imposes hard security
+limits on input documents to prevent DoS attacks with forged input
+data.  Since lxml 2.2.1, you can disable these limits with the
+``huge_tree`` parser option if you need to parse *really* large,
+trusted documents.  All lxml versions will leave these restrictions
+enabled by default.
+
+Note that libxml2 versions of the 2.6 series do not restrict their
+parser and are therefore vulnerable to DoS attacks.
 
 
 XPath and Document Traversal
