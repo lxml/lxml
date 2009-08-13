@@ -17,6 +17,8 @@ Features added
 Bugs fixed
 ----------
 
+* Feed parser failed to honout the 'recover' option on parse errors.
+
 * Target parser didn't call ``.close()`` on the target object if
   parsing failed.  Now it is guaranteed that ``.close()`` will be
   called after parsing, regardless of the outcome.

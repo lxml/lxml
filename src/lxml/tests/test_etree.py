@@ -580,6 +580,27 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.etree.XMLParser(encoding="utf-8")
         self.etree.XMLParser(encoding="iso-8859-1")
 
+    def test_feed_parser_recover(self):
+        parser = self.etree.XMLParser(recover=True)
+
+        parser.feed('<?xml version=')
+        parser.feed('"1.0"?><ro')
+        parser.feed('ot><')
+        parser.feed('a test="works"')
+        parser.feed('><othertag/></root') # <a> not closed!
+        parser.feed('>')
+
+        root = parser.close()
+
+        self.assertEquals(root.tag, "root")
+        self.assertEquals(len(root), 1)
+        self.assertEquals(root[0].tag, "a")
+        self.assertEquals(root[0].get("test"), "works")
+        self.assertEquals(len(root[0]), 1)
+        self.assertEquals(root[0][0].tag, "othertag")
+        # FIXME: would be nice to get some errors logged ...
+        #self.assert_(len(parser.error_log) > 0, "error log is empty")
+
     def test_elementtree_parser_target_type_error(self):
         assertEquals = self.assertEquals
         assertFalse  = self.assertFalse

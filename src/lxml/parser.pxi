@@ -1042,6 +1042,7 @@ cdef class _FeedParser(_BaseParser):
         cdef char* c_encoding
         cdef int buffer_len
         cdef int error
+        cdef bint recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
         if python.PyString_Check(data):
             if self._default_encoding is None:
                 c_encoding = NULL
@@ -1078,10 +1079,10 @@ cdef class _FeedParser(_BaseParser):
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
                     pctxt, c_data, buffer_len, NULL, c_encoding)
-            py_buffer_len = py_buffer_len - buffer_len
-            c_data = c_data + buffer_len
+            py_buffer_len -= buffer_len
+            c_data += buffer_len
 
-        while error == 0 and py_buffer_len > 0:
+        while (recover or error == 0) and py_buffer_len > 0:
             if py_buffer_len > python.INT_MAX:
                 buffer_len = python.INT_MAX
             else:
@@ -1090,11 +1091,10 @@ cdef class _FeedParser(_BaseParser):
                 error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
             else:
                 error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
-            py_buffer_len = py_buffer_len - buffer_len
-            c_data = c_data + buffer_len
+            py_buffer_len -= buffer_len
+            c_data += buffer_len
 
-        if error or (not pctxt.wellFormed and
-                     not self._parse_options & xmlparser.XML_PARSE_RECOVER):
+        if not recover and (error or not pctxt.wellFormed):
             self._feed_parser_running = 0
             try:
                 context._handleParseResult(self, NULL, None)
