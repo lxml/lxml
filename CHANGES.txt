@@ -28,6 +28,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Static builds include libiconv, in addition to libxml2 and libxslt.
+
 
 2.2.2 (2009-06-21)
 ==================

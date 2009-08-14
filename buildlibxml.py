@@ -11,6 +11,7 @@ except ImportError:
 ## Routines to download and build libxml2/xslt:
 
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
+LIBICONV_LOCATION = 'ftp://ftp.gnu.org/pub/gnu/libiconv/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
 
 def ftp_listdir(url):
@@ -42,17 +43,29 @@ def download_libxslt(dest_dir, version=None):
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
 
+def download_libiconv(dest_dir, version=None):
+    """Downloads libiconv, returning the filename where the library was downloaded"""
+    version_re = re.compile(r'^libiconv-([0-9.]+[0-9]).tar.gz$')
+    filename = 'libiconv-%s.tar.gz'
+    return download_library(dest_dir, LIBICONV_LOCATION, 'libiconv',
+                            version_re, filename, version=version)
+
 def download_library(dest_dir, location, name, version_re, filename, 
                      version=None):
     if version is None:
         try:
             fns = ftp_listdir(location)
+            versions = []
             for fn in fns:
                 match = version_re.search(fn)
                 if match:
-                    version = match.group(1)
-                    print('Latest version of %s is %s' % (name, version))
-                    break
+                    version_string = match.group(1)
+                    versions.append((map(tryint, version_string.split('.')),
+                                     version_string))
+            if versions:
+                versions.sort()
+                version = versions[-1][-1]
+                print('Latest version of %s is %s' % (name, version))
             else:
                 raise Exception(
                     "Could not find the most current version of the %s from the files: %s"
@@ -161,14 +174,23 @@ def safe_mkdir(dir):
     if not os.path.exists(dir):
         os.makedirs(dir)
 
+def cmmi(configure_cmd, build_dir, **call_setup):
+    print('Starting build in %s' % build_dir)
+    call_subprocess(configure_cmd, cwd=build_dir, **call_setup)
+    call_subprocess(
+        ['make'], cwd=build_dir, **call_setup)
+    call_subprocess(
+        ['make', 'install'], cwd=build_dir, **call_setup)
+
 def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
                       static_cflags, static_binaries,
-                      libxml2_version=None, libxslt_version=None):
+                      libxml2_version=None, libxslt_version=None, libiconv_version=None):
     safe_mkdir(download_dir)
     safe_mkdir(build_dir)
-    libxml2_dir = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
-    libxslt_dir = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
+    libiconv_dir = unpack_tarball(download_libiconv(download_dir, libiconv_version), build_dir)
+    libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
+    libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
     prefix = os.path.join(os.path.abspath(build_dir), 'libxml2')
     safe_mkdir(prefix)
 
@@ -186,35 +208,33 @@ def build_libxml2xslt(download_dir, build_dir,
                 })
             call_setup['env'] = env
 
-        # We may loose the link to iconv, so make sure it's there
-        static_binaries.append('-liconv')
-
     configure_cmd = ['./configure',
-                     '--without-python',
                      '--disable-dependency-tracking',
                      '--disable-shared',
                      '--prefix=%s' % prefix,
                      ]
-    call_subprocess(configure_cmd, cwd=libxml2_dir, **call_setup)
-    call_subprocess(
-        ['make'], cwd=libxml2_dir, **call_setup)
-    call_subprocess(
-        ['make', 'install'], cwd=libxml2_dir, **call_setup)
 
+    # build libiconv
+    cmmi(configure_cmd, libiconv_dir, **call_setup)
+
+    # build libxml2
+    libxml2_configure_cmd = configure_cmd + [
+        '--without-python',
+        '--with-iconv=%s' % prefix]
+    cmmi(libxml2_configure_cmd, libxml2_dir, **call_setup)
+
+    # build libxslt
     libxslt_configure_cmd = configure_cmd + [
+        '--without-python',
         '--with-libxml-prefix=%s' % prefix,
         ]
     if sys.platform in ('darwin',):
         libxslt_configure_cmd += [
             '--without-crypto',
             ]
+    cmmi(libxslt_configure_cmd, libxslt_dir, **call_setup)
 
-    call_subprocess(libxslt_configure_cmd, cwd=libxslt_dir, **call_setup)
-    call_subprocess(
-        ['make'], cwd=libxslt_dir, **call_setup)
-    call_subprocess(
-        ['make', 'install'], cwd=libxslt_dir, **call_setup)
-
+    # collect build setup for lxml
     xslt_config = os.path.join(prefix, 'bin', 'xslt-config')
     xml2_config = os.path.join(prefix, 'bin', 'xml2-config')
 
@@ -227,7 +247,7 @@ def build_libxml2xslt(download_dir, build_dir,
     static_library_dirs.append(lib_dir)
 
     for filename in os.listdir(lib_dir):
-        if [l for l in ['libxml2', 'libxslt', 'libexslt'] if l in filename]:
+        if [l for l in ['iconv', 'libxml2', 'libxslt', 'libexslt'] if l in filename]:
             if [ext for ext in ['.a'] if filename.endswith(ext)]:
                 static_binaries.append(os.path.join(lib_dir,filename))
 
