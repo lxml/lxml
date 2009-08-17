@@ -1,5 +1,8 @@
 import sys, os
 
+# for command line options and supported environment variables, please
+# see the end of 'setupinfo.py'
+
 extra_options = {}
 
 try:
