@@ -70,6 +70,25 @@ To control which Element implementation is used, you can pass a
 ``makeelement`` factory function to ``parse()`` and ``fromstring()``.
 By default, this is based on the HTML parser defined in ``lxml.html``.
 
+For a quick comparison, libxml2 2.6.32 parses the same tag soup as
+follows.  The main difference is that libxml2 tries harder to adhere
+to the structure of an HTML document and moves misplaced tags where
+they (likely) belong.  Note, however, that the result can vary between
+parser versions.
+
+.. sourcecode:: html
+
+    <html>
+      <head>
+        <meta/>
+        <title>Hello</title>
+      </head>
+      <body>
+        <p>Hi all</p>
+        <p/>
+      </body>
+    </html>
+
 
 Entity handling
 ===============

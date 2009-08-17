@@ -2,8 +2,8 @@
 XPath and XSLT with lxml
 ========================
 
-lxml supports both XPath and XSLT through libxml2 and libxslt in a standards
-compliant way.
+lxml supports XPath 1.0, XSLT 1.0 and the EXSLT extensions through
+libxml2 and libxslt in a standards compliant way.
 
 .. contents::
 ..
