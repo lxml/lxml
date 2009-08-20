@@ -87,12 +87,18 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals([root[0], root[1]],
                           [r.getparent() for r in
                            tree.xpath('/a/b/text()', smart_strings=True)])
+        self.assertEquals([None, None],
+                          [r.attrname for r in
+                           tree.xpath('/a/b/text()', smart_strings=True)])
 
         self.assertEquals(['FooBar', 'BarFoo'],
                           tree.xpath('/a/b/text()', smart_strings=False))
         self.assertEquals([False, False],
                           [hasattr(r, 'getparent') for r in
                            tree.xpath('/a/b/text()', smart_strings=False)])
+        self.assertEquals([None, None],
+                          [r.attrname for r in
+                           tree.xpath('/a/b/text()', smart_strings=True)])
 
     def test_xpath_list_unicode_text_parent(self):
         xml = _bytes('<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>').decode("unicode_escape")
@@ -122,12 +128,14 @@ class ETreeXPathTestCase(HelperTestCase):
         results = tree.xpath('/a/@c', smart_strings=True)
         self.assertEquals(1, len(results))
         self.assertEquals('CqWeRtZuI', results[0])
+        self.assertEquals('c', results[0].attrname)
         self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
 
         results = tree.xpath('/a/@c', smart_strings=False)
         self.assertEquals(1, len(results))
         self.assertEquals('CqWeRtZuI', results[0])
         self.assertEquals(False, hasattr(results[0], 'getparent'))
+        self.assertEquals(False, hasattr(results[0], 'attrname'))
 
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')
