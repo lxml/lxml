@@ -2453,6 +2453,7 @@ class ObjectifyTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ObjectifyTestCase)])
+    suite.addTests(doctest.DocTestSuite(objectify))
     if sys.version_info >= (2,4):
         suite.addTests(
             [make_doctest('../../../doc/objectify.txt')])

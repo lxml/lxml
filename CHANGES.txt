@@ -19,6 +19,11 @@ Features added
 Bugs fixed
 ----------
 
+* Calling ``help(lxml.objectify)`` didn't work at the prompt.
+
+* The ``ElementMaker`` in lxml.objectify no longer defines the default
+  namespaces when annotation is disabled.
+
 * Feed parser failed to honout the 'recover' option on parse errors.
 
 * Target parser didn't call ``.close()`` on the target object if
