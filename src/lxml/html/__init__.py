@@ -991,9 +991,12 @@ class SelectElement(InputMixin, HtmlElement):
         if self.multiple:
             return MultipleSelectOptions(self)
         for el in _options_xpath(self):
-            if 'selected' in el.attrib:
+            if el.get('selected') is not None:
                 value = el.get('value')
-                # FIXME: If value is None, what to return?, get_text()?
+                if value is None:
+                    value = el.text or ''
+                if value:
+                    value = value.strip()
                 return value
         return None
 
@@ -1006,9 +1009,14 @@ class SelectElement(InputMixin, HtmlElement):
             self.value.update(value)
             return
         if value is not None:
+            value = value.strip()
             for el in _options_xpath(self):
-                # FIXME: also if el.get('value') is None?
-                if el.get('value') == value:
+                opt_value = el.get('value')
+                if opt_value is None:
+                    opt_value = el.text or ''
+                if opt_value:
+                    opt_value = opt_value.strip()
+                if opt_value == value:
                     checked_option = el
                     break
             else:
@@ -1034,7 +1042,15 @@ class SelectElement(InputMixin, HtmlElement):
         All the possible values this select can have (the ``value``
         attribute of all the ``<option>`` elements.
         """
-        return [el.get('value') for el in _options_xpath(self)]
+        options = []
+        for el in _options_xpath(self):
+            value = el.get('value')
+            if value is None:
+                value = el.text or ''
+            if value:
+                value = value.strip()
+            options.append(value)
+        return options
     value_options = property(value_options, doc=value_options.__doc__)
 
     def _multiple__get(self):

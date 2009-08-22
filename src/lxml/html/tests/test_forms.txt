@@ -18,7 +18,7 @@
 ...   <label for="value3">value 3</label>
 ...     <input type="radio" name="radios" value="value3" id="value3" checked>
 ...   <select name="select1">
-...     <option>No value</option>
+...     <option> No value </option>
 ...     <option value="">Empty</option>
 ...     <option value="1">number 1</option>
 ...   </select>
@@ -108,7 +108,10 @@ Traceback (most recent call last):
     ...
 ValueError: There is no option with the value of 'asdf'
 >>> select.value_options
-[None, '', '1']
+['No value', '', '1']
+>>> select.value = 'No value'
+>>> select.value
+'No value'
 >>> select = f.inputs['select2']
 >>> select.value # doctest:+NOPARSE_MARKUP
 <MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
@@ -123,7 +126,7 @@ ValueError: There is no option with the value 'asdf'
 >>> try: from urllib import urlencode
 ... except ImportError: from urllib.parse import urlencode
 >>> print(urlencode(f.form_values()))
-hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=&select2=1&select2=2&select2=3
+hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=No+value&select2=1&select2=2&select2=3
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
@@ -133,7 +136,7 @@ textarea_field: 'some text'
 radios: None
 submit2: 'submit'
 submit1: 'submit'
-select1: ''
+select1: 'No value'
 hidden_field: 'new value'
 text_field: 'text_value'
 reset1: None

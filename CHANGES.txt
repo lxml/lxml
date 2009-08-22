@@ -19,6 +19,11 @@ Features added
 Bugs fixed
 ----------
 
+* Select options in HTML forms that had no explicit ``value``
+  attribute were not handled correctly.  The HTML standard dictates
+  that their value is defined by their text content.  This is now
+  supported by lxml.html.
+
 * XPath raised a TypeError when finding CDATA sections.  This is now
   fully supported.
 
