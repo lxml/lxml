@@ -543,7 +543,8 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         results.append(
             _fakeDocElementFactory(doc, c_node))
     elif c_node.type == tree.XML_TEXT_NODE or \
-            c_node.type == tree.XML_ATTRIBUTE_NODE:
+             c_node.type == tree.XML_CDATA_SECTION_NODE or \
+             c_node.type == tree.XML_ATTRIBUTE_NODE:
         results.append(
             _buildElementStringResult(doc, c_node, smart_string))
     elif c_node.type == tree.XML_NAMESPACE_DECL:
@@ -572,7 +573,7 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         pass
     else:
         raise NotImplementedError, \
-            u"Not yet implemented result node type: %d" % unicode(c_node.type)
+            u"Not yet implemented result node type: %d" % c_node.type
 
 cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
     u"""Free the XPath object, but *never* free the *content* of node sets.
@@ -647,7 +648,7 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
             tree.xmlFree(s)
         c_element = NULL
     else:
-        #assert c_node.type == tree.XML_TEXT_NODE, "invalid node type"
+        #assert c_node.type == tree.XML_TEXT_NODE or c_node.type == tree.XML_CDATA_SECTION_NODE, "invalid node type"
         # may be tail text or normal text
         value = funicode(c_node.content)
         c_element = _previousElement(c_node)

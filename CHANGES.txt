@@ -19,6 +19,9 @@ Features added
 Bugs fixed
 ----------
 
+* XPath raised a TypeError when finding CDATA sections.  This is now
+  fully supported.
+
 * Calling ``help(lxml.objectify)`` didn't work at the prompt.
 
 * The ``ElementMaker`` in lxml.objectify no longer defines the default

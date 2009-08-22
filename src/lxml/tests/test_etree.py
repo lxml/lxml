@@ -1140,6 +1140,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(_bytes('<root><![CDATA[test]]></root>'),
                           tostring(root))
 
+    def test_cdata_xpath(self):
+        tostring = self.etree.tostring
+        parser = self.etree.XMLParser(strip_cdata=False)
+        root = self.etree.XML(_bytes('<root><![CDATA[test]]></root>'), parser)
+        self.assertEquals(_bytes('<root><![CDATA[test]]></root>'),
+                          tostring(root))
+
+        self.assertEquals(['test'], root.xpath('//text()'))
+
     # TypeError in etree, AssertionError in ElementTree;
     def test_setitem_assert(self):
         Element = self.etree.Element
