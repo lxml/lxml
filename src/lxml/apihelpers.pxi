@@ -802,9 +802,8 @@ cdef inline xmlNode* _textNodeOrSkip(xmlNode* c_node) nogil:
     nodes.
     """
     while c_node is not NULL:
-        if c_node.type == tree.XML_TEXT_NODE:
-            return c_node
-        if c_node.type == tree.XML_CDATA_SECTION_NODE:
+        if c_node.type == tree.XML_TEXT_NODE or \
+               c_node.type == tree.XML_CDATA_SECTION_NODE:
             return c_node
         elif c_node.type == tree.XML_XINCLUDE_START or \
                  c_node.type == tree.XML_XINCLUDE_END:
