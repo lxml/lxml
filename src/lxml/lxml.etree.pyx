@@ -54,6 +54,7 @@ cdef object EMPTY_READ_ONLY_DICT
 EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
 
 # the rules
+# ---------
 # any libxml C argument/variable is prefixed with c_
 # any non-public function/class is prefixed with an underscore
 # instance creation is always through factories
@@ -190,7 +191,8 @@ LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 __version__ = (tree.LXML_VERSION_STRING).decode(u"ASCII")
 
 
-# class for temporary storage of Python references
+# class for temporary storage of Python references,
+# used e.g. for XPath results
 cdef class _TempStore:
     cdef list _storage
     def __init__(self):
@@ -271,6 +273,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         #_deallocDocument(self._c_doc)
 
     cdef getroot(self):
+        # return an element proxy for the document root
         cdef xmlNode* c_node
         c_node = tree.xmlDocGetRootElement(self._c_doc)
         if c_node is NULL:
@@ -278,9 +281,11 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return _elementFactory(self, c_node)
 
     cdef bint hasdoctype(self):
+        # DOCTYPE gets parsed into internal subset (xmlDTD*)
         return self._c_doc.intSubset is not NULL
 
     cdef getdoctype(self):
+        # get doctype info: root tag, public/system ID (or None if not known)
         cdef tree.xmlDtd* c_dtd
         cdef xmlNode* c_root_node
         public_id = None
@@ -305,6 +310,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return (root_name, public_id, sys_url)
 
     cdef getxmlinfo(self):
+        # return XML version and encoding (or None if not known)
         cdef xmlDoc* c_doc
         c_doc = self._c_doc
         if c_doc.version is NULL:
@@ -318,12 +324,15 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return (version, encoding)
 
     cdef isstandalone(self):
+        # returns True for "standalone=true",
+        # False for "standalone=false", None if not provided
         if self._c_doc.standalone == -1:
             return None
         else:
             return <bint>(self._c_doc.standalone == 1)
 
     cdef buildNewPrefix(self):
+        # get a new unique prefix ("nsX") for this document
         if self._ns_counter < python.PyTuple_GET_SIZE(_PREFIX_CACHE):
             ns = python.PyTuple_GET_ITEM(_PREFIX_CACHE, self._ns_counter)
             python.Py_INCREF(ns)
@@ -353,11 +362,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             assert c_node.type == tree.XML_ELEMENT_NODE, \
                 u"invalid node type %d, expected %d" % (
                 c_node.type, tree.XML_ELEMENT_NODE)
-        # look for existing ns
+        # look for existing ns declaration
         c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, c_href)
         if c_ns is not NULL:
             return c_ns
 
+        # none found => determine a suitable new prefix
         if c_prefix is NULL:
             dict_result = python.PyDict_GetItem(
                 _DEFAULT_NAMESPACE_PREFIXES, c_href)
@@ -372,6 +382,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             prefix = self.buildNewPrefix()
             c_prefix = _cstr(prefix)
 
+        # declare the namespace and return it
         c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if c_ns is NULL:
             python.PyErr_NoMemory()
@@ -883,7 +894,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                         prefix = None
                     else:
                         prefix = funicode(c_ns.prefix)
-                    if not python.PyDict_GetItem(nsmap, prefix):
+                    if prefix not in nsmap:
                         nsmap[prefix] = funicode(c_ns.href)
                     c_ns = c_ns.next
                 c_node = c_node.parent
