@@ -23,6 +23,13 @@ parse a string or file using BeautifulSoup into an ``lxml.html``
 document, and ``convert_tree()`` to convert an existing BeautifulSoup
 tree into a list of top-level Elements.
 
+.. contents::
+..
+   1  Parsing with the soupparser
+   2  Entity handling
+   3  Using soupparser as a fallback
+   4  Using only the encoding detection
+
 
 Parsing with the soupparser
 ===========================
@@ -168,3 +175,27 @@ better.
     ...     ignore = tostring(root, encoding=unicode)
     ... except UnicodeDecodeError:
     ...     root = lxml.html.soupparser.fromstring(tag_soup)
+
+
+Using only the encoding detection
+=================================
+
+If you prefer a 'real' (and fast) HTML parser instead of the regular
+expression based one in BeautifulSoup, you can still benefit from
+BeautifulSoup's _`support for encoding detection` in the
+``UnicodeDammit`` class.
+
+.. sourcecode:: pycon
+
+    >>> from BeautifulSoup import UnicodeDammit
+
+    >>> def decode_html(html_string):
+    ...     converted = UnicodeDammit(html_string, isHTML=True)
+    ...     if not converted.unicode:
+    ...         raise UnicodeDecodeError(
+    ...             "Failed to detect encoding, tried [%s]",
+    ...             ', '.join(converted.triedEncodings))
+    ...     # print converted.originalEncoding
+    ...     return converted.unicode
+
+    >>> root = lxml.html.fromstring(decode_html(tag_soup))
