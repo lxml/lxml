@@ -1471,11 +1471,26 @@ def open_in_browser(doc):
 ################################################################################
 
 class HTMLParser(etree.HTMLParser):
+    """An HTML parser that is configured to return lxml.html Element
+    objects.
+    """
     def __init__(self, **kwargs):
         super(HTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 class XHTMLParser(etree.XMLParser):
+    """An XML parser that is configured to return lxml.html Element
+    objects.
+
+    Note that this parser is not really XHTML aware unless you let it
+    load a DTD that declares the HTML entities.  To do this, make sure
+    you have the XHTML DTDs installed in your catalogs, and create the
+    parser like this::
+
+        parser = XHTMLParser(load_dtd=True)
+
+    For catalog support, see http://www.xmlsoft.org/catalog.html.
+    """
     def __init__(self, **kwargs):
         super(XHTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
