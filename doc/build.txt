@@ -16,9 +16,10 @@ script called ``ez_setup.py`` that can be used to install them.
    2  Subversion
    3  Setuptools
    4  Running the tests and reporting errors
-   5  Contributing an egg
-   6  Static linking on Windows
-   7  Building Debian packages from SVN sources
+   5  Building an egg
+   6  Building lxml on MacOS-X
+   7  Static linking on Windows
+   8  Building Debian packages from SVN sources
 
 
 Cython
@@ -210,6 +211,18 @@ with the desired target versions like this::
 
 Instead of ``build``, you can use any target, like ``bdist_egg`` if
 you want to use setuptools to build an installable egg.
+
+Note that this also works with EasyInstall_.  Since you can't pass
+command line options in this case, you have to use an environment
+variable instead::
+
+  STATIC_DEPS=true easy_install lxml
+
+Some machines may require an additional run with "sudo" to install the
+package into the Python package directory::
+
+  STATIC_DEPS=true sudo easy_install lxml
+
 
 
 Static linking on Windows
