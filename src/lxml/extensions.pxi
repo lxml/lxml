@@ -589,9 +589,9 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
 
 cdef class _ElementUnicodeResult(python.unicode):
     cdef _Element _parent
-    cdef readonly bint is_tail
-    cdef readonly bint is_text
-    cdef readonly bint is_attribute
+    cdef readonly object is_tail
+    cdef readonly object is_text
+    cdef readonly object is_attribute
     cdef readonly object attrname
 
     def getparent(self):
