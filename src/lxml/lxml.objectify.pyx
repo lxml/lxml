@@ -1260,7 +1260,7 @@ cdef class ElementMaker:
       >>> html = M.html( M.body( M.p('hello', M.br, 'objectify') ) )
 
       >>> from lxml.etree import tostring
-      >>> print(tostring(html, method='html'))
+      >>> print(tostring(html, method='html').decode('ASCII'))
       <html><body><p>hello<br>objectify</p></body></html>
 
     Note that this module has a predefined ElementMaker instance called ``E``.
