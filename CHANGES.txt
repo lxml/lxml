@@ -19,6 +19,11 @@ Features added
 Bugs fixed
 ----------
 
+* CSS special character escapes were not properly handled in
+  ``lxml.cssselect``.
+
+* CSS Unicode escapes were not properly decoded in ``lxml.cssselect``.
+
 * Select options in HTML forms that had no explicit ``value``
   attribute were not handled correctly.  The HTML standard dictates
   that their value is defined by their text content.  This is now

@@ -49,9 +49,11 @@ class CSSSelector(etree.XPath):
 
 try:
     _unicode = unicode
+    _unichr = unichr
 except NameError:
     # Python 3
     _unicode = str
+    _unichr = chr
 
 class _UniToken(_unicode):
     def __new__(cls, contents, pos):
@@ -99,7 +101,7 @@ class Class(object):
     def xpath(self):
         sel_xpath = self.selector.xpath()
         sel_xpath.add_condition(
-            "contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_repr(' '+self.class_name+' '))
+            "contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_literal(' '+self.class_name+' '))
         return sel_xpath
 
 class Function(object):
@@ -194,7 +196,7 @@ class Function(object):
         if isinstance(expr, Element):
             expr = expr._format_element()
         xpath.add_condition('contains(css:lower-case(string(.)), %s)'
-                            % xpath_repr(expr.lower()))
+                            % xpath_literal(expr.lower()))
         # FIXME: Currently case insensitive matching doesn't seem to be happening
         return xpath
 
@@ -349,34 +351,34 @@ class Attrib(object):
             path.add_condition(attrib)
         elif self.operator == '=':
             path.add_condition('%s = %s' % (attrib,
-                                            xpath_repr(value)))
+                                            xpath_literal(value)))
         elif self.operator == '!=':
             # FIXME: this seems like a weird hack...
             if value:
                 path.add_condition('not(%s) or %s != %s'
-                                   % (attrib, attrib, xpath_repr(value)))
+                                   % (attrib, attrib, xpath_literal(value)))
             else:
                 path.add_condition('%s != %s'
-                                   % (attrib, xpath_repr(value)))
-            #path.add_condition('%s != %s' % (attrib, xpath_repr(value)))
+                                   % (attrib, xpath_literal(value)))
+            #path.add_condition('%s != %s' % (attrib, xpath_literal(value)))
         elif self.operator == '~=':
-            path.add_condition("contains(concat(' ', normalize-space(%s), ' '), %s)" % (attrib, xpath_repr(' '+value+' ')))
+            path.add_condition("contains(concat(' ', normalize-space(%s), ' '), %s)" % (attrib, xpath_literal(' '+value+' ')))
         elif self.operator == '|=':
             # Weird, but true...
             path.add_condition('%s = %s or starts-with(%s, %s)' % (
-                attrib, xpath_repr(value),
-                attrib, xpath_repr(value + '-')))
+                attrib, xpath_literal(value),
+                attrib, xpath_literal(value + '-')))
         elif self.operator == '^=':
             path.add_condition('starts-with(%s, %s)' % (
-                attrib, xpath_repr(value)))
+                attrib, xpath_literal(value)))
         elif self.operator == '$=':
             # Oddly there is a starts-with in XPath 1.0, but not ends-with
             path.add_condition('substring(%s, string-length(%s)-%s) = %s'
-                               % (attrib, attrib, len(value)-1, xpath_repr(value)))
+                               % (attrib, attrib, len(value)-1, xpath_literal(value)))
         elif self.operator == '*=':
             # FIXME: case sensitive?
             path.add_condition('contains(%s, %s)' % (
-                attrib, xpath_repr(value)))
+                attrib, xpath_literal(value)))
         else:
             assert 0, ("Unknown operator: %r" % self.operator)
         return path
@@ -425,7 +427,7 @@ class Hash(object):
 
     def xpath(self):
         path = self.selector.xpath()
-        path.add_condition('@id = %s' % xpath_repr(self.id))
+        path.add_condition('@id = %s' % xpath_literal(self.id))
         return path
 
 class Or(object):
@@ -501,9 +503,9 @@ class CombinedSelector(object):
 ##############################
 ## XPathExpr objects:
 
-_el_re = re.compile(r'^\w+\s*$')
-_id_re = re.compile(r'^(\w*)#(\w+)\s*$')
-_class_re = re.compile(r'^(\w*)\.(\w+)\s*$')
+_el_re = re.compile(r'^\w+\s*$', re.UNICODE)
+_id_re = re.compile(r'^(\w*)#(\w+)\s*$', re.UNICODE)
+_class_re = re.compile(r'^(\w*)\.(\w+)\s*$', re.UNICODE)
 
 def css_to_xpath(css_expr, prefix='descendant-or-self::'):
     if isinstance(css_expr, _basestring):
@@ -524,7 +526,7 @@ def css_to_xpath(css_expr, prefix='descendant-or-self::'):
         "Got None for xpath expression from %s" % repr(css_expr))
     if prefix:
         expr.add_prefix(prefix)
-    return str(expr)
+    return _unicode(expr)
 
 class XPathExpr(object):
 
@@ -539,10 +541,10 @@ class XPathExpr(object):
     def __str__(self):
         path = ''
         if self.prefix is not None:
-            path += str(self.prefix)
+            path += _unicode(self.prefix)
         if self.path is not None:
-            path += str(self.path)
-        path += str(self.element)
+            path += _unicode(self.path)
+        path += _unicode(self.element)
         if self.condition:
             path += '[%s]' % self.condition
         return path
@@ -574,7 +576,7 @@ class XPathExpr(object):
         if self.element == '*':
             # We weren't doing a test anyway
             return
-        self.add_condition("name() = %s" % xpath_repr(self.element))
+        self.add_condition("name() = %s" % xpath_literal(self.element))
         self.element = '*'
 
     def add_star_prefix(self):
@@ -589,7 +591,7 @@ class XPathExpr(object):
         self.star_prefix = True
 
     def join(self, combiner, other):
-        prefix = str(self)
+        prefix = _unicode(self)
         prefix += combiner
         path = (other.prefix or '') + (other.path or '')
         # We don't need a star prefix if we are joining to this other
@@ -615,16 +617,26 @@ class XPathExprOr(XPathExpr):
 
     def __str__(self):
         prefix = self.prefix or ''
-        return ' | '.join([prefix + str(i) for i in self.items])
+        return ' | '.join(["%s%s" % (prefix,i) for i in self.items])
 
-def xpath_repr(s):
-    # FIXME: I don't think this is right, but lacking any reasonable
-    # specification on what XPath literals look like (which doesn't seem
-    # to be in the XPath specification) it is hard to do 'right'
+split_at_single_quotes = re.compile("('+)").split
+
+def xpath_literal(s):
     if isinstance(s, Element):
         # This is probably a symbol that looks like an expression...
         s = s._format_element()
-    return repr(str(s))
+    else:
+        s = _unicode(s)
+    if "'" not in s:
+        s = "'%s'" % s
+    elif '"' not in s:
+        s = '"%s"' % s
+    else:
+        s = "concat(%s)" % ','.join([
+            (("'" in part) and '"%s"' or "'%s'") % part
+            for part in split_at_single_quotes(s) if part
+            ])
+    return s
 
 ##############################
 ## Parsing functions
@@ -814,9 +826,9 @@ def parse_series(s):
 ## Tokenizing
 ############################################################
 
-_whitespace_re = re.compile(r'\s+')
+_whitespace_re = re.compile(r'\s+', re.UNICODE)
 
-_comment_re = re.compile(r'/\*.*?\*/', re.S)
+_comment_re = re.compile(r'/\*.*?\*/', re.DOTALL)
 
 _count_re = re.compile(r'[+-]?\d*n(?:[+-]\d+)?')
 
@@ -861,6 +873,28 @@ def tokenize(s):
         yield Symbol(sym, old_pos)
         continue
 
+split_at_string_escapes = re.compile(r'(\\(?:%s))'
+                                     % '|'.join(['[A-Fa-f0-9]{1,6}(?:\r\n|\s)?',
+                                                 '[^A-Fa-f0-9]'])).split
+
+def unescape_string_literal(literal):
+    substrings = []
+    for substring in split_at_string_escapes(literal):
+        if not substring:
+            continue
+        elif '\\' in substring:
+            if substring[0] == '\\' and len(substring) > 1:
+                substring = substring[1:]
+                if substring[0] in '0123456789ABCDEFabcdef':
+                    # int() correctly ignores the potentially trailing whitespace
+                    substring = _unichr(int(substring, 16))
+            else:
+                raise SelectorSyntaxError(
+                    "Invalid escape sequence %r in string %r"
+                    % (substring.split('\\')[1], literal))
+        substrings.append(substring)
+    return ''.join(substrings)
+
 def tokenize_escaped_string(s, pos):
     quote = s[pos]
     assert quote in ('"', "'")
@@ -873,13 +907,13 @@ def tokenize_escaped_string(s, pos):
                 "Expected closing %s for string in: %r"
                 % (quote, s[start:]))
         result = s[start:next]
-        try:
-            result = result.encode('ASCII', 'backslashreplace').decode('unicode_escape')
-        except UnicodeDecodeError:
-            # Probably a hanging \
+        if result.endswith('\\'):
+            # next quote character is escaped
             pos = next+1
-        else:
-            return result, next+1
+            continue
+        if '\\' in result:
+            result = unescape_string_literal(result)
+        return result, next+1
     
 _illegal_symbol = re.compile(r'[^\w\\-]', re.UNICODE)
 

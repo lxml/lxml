@@ -123,7 +123,44 @@ Now of translation:
         ...
     NotImplementedError: *:only-of-type is not implemented
 
-Then of parse_series:
+Now a Unicode character test:
+
+    >>> from lxml.cssselect import css_to_xpath
+    >>> import sys
+    >>> if sys.version_info[0] >= 3:
+    ...     css_expr = '.a\xc1b'
+    ... else:
+    ...     css_expr = '.a\xc1b'.decode('ISO-8859-1')
+
+    >>> xpath_expr = css_to_xpath(css_expr)
+    >>> print( css_expr[1:] in xpath_expr )
+    True
+    >>> print( xpath_expr.encode('ascii', 'xmlcharrefreplace').decode('ASCII') )
+    descendant-or-self::*[contains(concat(' ', normalize-space(@class), ' '), ' a&#193;b ')]
+
+And some special character tests:
+
+    >>> print( css_to_xpath('*[aval="\'"]') )
+    descendant-or-self::*[@aval = "'"]
+    >>> print( css_to_xpath('*[aval="\'\'\'"]') )
+    descendant-or-self::*[@aval = "'''"]
+    >>> print( css_to_xpath('*[aval=\'"\']') )
+    descendant-or-self::*[@aval = '"']
+    >>> print( css_to_xpath('*[aval=\'"""\']') )
+    descendant-or-self::*[@aval = '"""']
+
+Some Unicode escape tests (including the trailing whitespace rules):
+
+    >>> print( css_to_xpath(r'*[aval="\'\22\'"]') )    # \22 == '"'
+    descendant-or-self::*[@aval = concat("'",'"',"'")]
+    >>> print( css_to_xpath(r'*[aval="\'\22 2\'"]') )
+    descendant-or-self::*[@aval = concat("'",'"2',"'")]
+    >>> print( css_to_xpath(r'*[aval="\'\20  \'"]') )  # \20 == ' '
+    descendant-or-self::*[@aval = "'  '"]
+    >>> print( css_to_xpath('*[aval="\'\\20\r\n \'"]') )
+    descendant-or-self::*[@aval = "'  '"]
+
+Then some test for parse_series:
 
     >>> from lxml.cssselect import parse_series
     >>> parse_series('1n+3')
