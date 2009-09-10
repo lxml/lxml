@@ -49,6 +49,14 @@ Then of parsing:
     >>> parse('td ~ th')
     CombinedSelector[Element[td] ~ Element[th]]
 
+Some parse error tests:
+
+    >>> try: parse('attributes(href)/html/body/a')
+    ... except: # Py2, Py3, ...
+    ...     import sys
+    ...     print(str(sys.exc_info()[1]).replace("(u'", "('"))
+    Expected selector, got '(' at [Symbol('attributes', 0)] -> Token('(', 10)
+
 Now of translation:
 
     >>> def xpath(css):

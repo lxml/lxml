@@ -649,8 +649,12 @@ def parse(string):
     except SelectorSyntaxError:
         import sys
         e = sys.exc_info()[1]
-        e.args = tuple(["%s at %s -> %s" % (
-            e, stream.used, list(stream))])
+        message = "%s at %s -> %r" % (
+            e, stream.used, stream.peek())
+        e.msg = message
+        if sys.version_info < (2,6):
+            e.message = message
+        e.args = tuple([message])
         raise
 
 def parse_selector_group(stream):
@@ -677,7 +681,11 @@ def parse_selector(stream):
             combinator = stream.next()
         else:
             combinator = ' '
+        consumed = len(stream.used)
         next_selector = parse_simple_selector(stream)
+        if consumed == len(stream.used):
+            raise SelectorSyntaxError(
+                "Expected selector, got '%s'" % stream.peek())
         result = CombinedSelector(result, combinator, next_selector)
     return result
 
@@ -689,14 +697,14 @@ def parse_simple_selector(stream):
         next = stream.next()
         if next != '*' and not isinstance(next, Symbol):
             raise SelectorSyntaxError(
-                "Expected symbol, got %r" % next)
+                "Expected symbol, got '%s'" % next)
         if stream.peek() == '|':
             namespace = next
             stream.next()
             element = stream.next()
             if element != '*' and not isinstance(next, Symbol):
                 raise SelectorSyntaxError(
-                    "Expected symbol, got %r" % next)
+                    "Expected symbol, got '%s'" % next)
         else:
             namespace = '*'
             element = next
@@ -723,14 +731,14 @@ def parse_simple_selector(stream):
             next = stream.next()
             if not next == ']':
                 raise SelectorSyntaxError(
-                    "] expected, got %r" % next)
+                    "] expected, got '%s'" % next)
             continue
         elif peek == ':' or peek == '::':
             type = stream.next()
             ident = stream.next()
             if not isinstance(ident, Symbol):
                 raise SelectorSyntaxError(
-                    "Expected symbol, got %r" % ident)
+                    "Expected symbol, got '%s'" % ident)
             if stream.peek() == '(':
                 stream.next()
                 peek = stream.peek()
@@ -744,7 +752,7 @@ def parse_simple_selector(stream):
                 next = stream.next()
                 if not next == ')':
                     raise SelectorSyntaxError(
-                        "Expected ), got %r and %r"
+                        "Expected ')', got '%s' and '%s'"
                         % (next, selector))
                 result = Function(result, type, ident, selector)
             else:
@@ -778,11 +786,11 @@ def parse_attrib(selector, stream):
     op = stream.next()
     if not op in ('^=', '$=', '*=', '=', '~=', '|=', '!='):
         raise SelectorSyntaxError(
-            "Operator expected, got %r" % op)
+            "Operator expected, got '%s'" % op)
     value = stream.next()
     if not isinstance(value, (Symbol, String)):
         raise SelectorSyntaxError(
-            "Expected string or symbol, got %r" % value)
+            "Expected string or symbol, got '%s'" % value)
     return Attrib(selector, namespace, attrib, op, value)
 
 def parse_series(s):

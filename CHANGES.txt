@@ -19,6 +19,12 @@ Features added
 Bugs fixed
 ----------
 
+* Syntax errors in ``lxml.cssselect`` could result in misleading error
+  messages.
+
+* Invalid syntax in CSS expressions could lead to an infinite loop in
+  the parser of ``lxml.cssselect``.
+
 * CSS special character escapes were not properly handled in
   ``lxml.cssselect``.
 
