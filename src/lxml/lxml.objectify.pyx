@@ -1722,8 +1722,7 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                     tree.xmlSetNsProp(c_node, c_ns, "nil", "true")
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-cdef object _strip_attributes
-_strip_attributes = etree.strip_attributes
+cdef object _strip_attributes = etree.strip_attributes
 
 def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
     u"""deannotate(element_or_tree, pytype=True, xsi=True, xsi_nil=False)
@@ -1736,6 +1735,10 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
     default), 'xsi:type' attributes will be removed.
     If the 'xsi_nil' keyword argument is True (default: False), 'xsi:nil'
     attributes will be removed.
+
+    Note that this does not touch the namespace declarations.  If you
+    want to remove unused namespace declarations from the tree, use
+    ``lxml.etree.cleanup_namespaces()``.
     """
     cdef list attribute_names = []
 
