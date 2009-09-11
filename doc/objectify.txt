@@ -361,63 +361,74 @@ constructor.  You can also pass a default namespace and an ``nsmap``:
 Namespace handling
 ------------------
 
-Namespaces are handled mostly behind the scenes.  If you access a child of an
-Element without specifying a namespace, the lookup will use the namespace of
-the parent:
+During tag lookups, namespaces are handled mostly behind the scenes.
+If you access a child of an Element without specifying a namespace,
+the lookup will use the namespace of the parent:
 
 .. sourcecode:: pycon
 
-    >>> root = objectify.Element("{ns}root")
-    >>> b = etree.SubElement(root, "{ns}b")
-    >>> c = etree.SubElement(root, "{other}c")
+    >>> root = objectify.Element("{http://ns/}root")
+    >>> b = etree.SubElement(root, "{http://ns/}b")
+    >>> c = etree.SubElement(root, "{http://other/}c")
 
     >>> print(root.b.tag)
-    {ns}b
+    {http://ns/}b
+
+Note that the ``SubElement()`` factory of ``lxml.etree`` does not
+inherit any namespaces when creating a new subelement.  Element
+creation must be explicit about the namespace, and is simplified
+through the E-factory as described above.  Lookups, however, inherit
+namespaces implicitly.
+
+To access an element in a different namespace than its parent, you can
+use ``getattr()``:
+
+.. sourcecode:: pycon
+
+    >>> print (root.tag)
+    {http://ns/}root
+
     >>> print(root.c)
     Traceback (most recent call last):
         ...
-    AttributeError: no such child: {ns}c
+    AttributeError: no such child: {http://ns/}c
 
-You can access elements with different namespaces via ``getattr()``:
-
-.. sourcecode:: pycon
-
-    >>> print(getattr(root, "{other}c").tag)
-    {other}c
+    >>> print(getattr(root, "{http://other/}c").tag)
+    {http://other/}c
 
 For convenience, there is also a quick way through item access:
 
 .. sourcecode:: pycon
 
-    >>> print(root["{other}c"].tag)
-    {other}c
+    >>> print(root["{http://other/}c"].tag)
+    {http://other/}c
 
 The same approach must be used to access children with tag names that are not
 valid Python identifiers:
 
 .. sourcecode:: pycon
 
-    >>> el = etree.SubElement(root, "{ns}tag-name")
+    >>> el = etree.SubElement(root, "{http://ns/}tag-name")
     >>> print(root["tag-name"].tag)
-    {ns}tag-name
+    {http://ns/}tag-name
 
-    >>> new_el = objectify.Element("{ns}new-element")
-    >>> el = etree.SubElement(new_el, "{ns}child")
-    >>> el = etree.SubElement(new_el, "{ns}child")
-    >>> el = etree.SubElement(new_el, "{ns}child")
+    >>> new_el = objectify.Element("{http://ns/}new-element")
+    >>> el = etree.SubElement(new_el, "{http://ns/}child")
+    >>> el = etree.SubElement(new_el, "{http://ns/}child")
+    >>> el = etree.SubElement(new_el, "{http://ns/}child")
 
     >>> root["tag-name"] = [ new_el, new_el ]
     >>> print(len(root["tag-name"]))
     2
     >>> print(root["tag-name"].tag)
-    {ns}tag-name
+    {http://ns/}tag-name
 
     >>> print(len(root["tag-name"].child))
     3
     >>> print(root["tag-name"].child.tag)
-    {ns}child
+    {http://ns/}child
     >>> print(root["tag-name"][1].child.tag)
-    {ns}child
+    {http://ns/}child
 
 or for names that have a special meaning in lxml.objectify:
 
@@ -505,11 +516,11 @@ represented by the ``ObjectPath`` class:
 
 .. sourcecode:: pycon
 
-    >>> root = objectify.Element("{ns}root")
-    >>> b1 = etree.SubElement(root, "{ns}b")
-    >>> c  = etree.SubElement(b1,   "{ns}c")
-    >>> b2 = etree.SubElement(root, "{ns}b")
-    >>> d  = etree.SubElement(root, "{other}d")
+    >>> root = objectify.Element("{http://ns/}root")
+    >>> b1 = etree.SubElement(root, "{http://ns/}b")
+    >>> c  = etree.SubElement(b1,   "{http://ns/}c")
+    >>> b2 = etree.SubElement(root, "{http://ns/}b")
+    >>> d  = etree.SubElement(root, "{http://other/}d")
 
     >>> path = objectify.ObjectPath("root.b.c")
     >>> print(path)
@@ -517,15 +528,15 @@ represented by the ``ObjectPath`` class:
     >>> path.hasattr(root)
     True
     >>> print(path.find(root).tag)
-    {ns}c
+    {http://ns/}c
 
     >>> find = objectify.ObjectPath("root.b.c")
     >>> print(find(root).tag)
-    {ns}c
+    {http://ns/}c
 
-    >>> find = objectify.ObjectPath("root.{other}d")
+    >>> find = objectify.ObjectPath("root.{http://other/}d")
     >>> print(find(root).tag)
-    {other}d
+    {http://other/}d
 
     >>> find = objectify.ObjectPath("root.{not}there")
     >>> print(find(root).tag)
@@ -537,15 +548,15 @@ represented by the ``ObjectPath`` class:
     >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
-    ValueError: root element does not match: need {not}there, got {ns}root
+    ValueError: root element does not match: need {not}there, got {http://ns/}root
 
     >>> find = objectify.ObjectPath("root.b[1]")
     >>> print(find(root).tag)
-    {ns}b
+    {http://ns/}b
 
-    >>> find = objectify.ObjectPath("root.{ns}b[1]")
+    >>> find = objectify.ObjectPath("root.{http://ns/}b[1]")
     >>> print(find(root).tag)
-    {ns}b
+    {http://ns/}b
 
 Apart from strings, ObjectPath also accepts lists of path segments:
 
@@ -553,11 +564,11 @@ Apart from strings, ObjectPath also accepts lists of path segments:
 
     >>> find = objectify.ObjectPath(['root', 'b', 'c'])
     >>> print(find(root).tag)
-    {ns}c
+    {http://ns/}c
 
-    >>> find = objectify.ObjectPath(['root', '{ns}b[1]'])
+    >>> find = objectify.ObjectPath(['root', '{http://ns/}b[1]'])
     >>> print(find(root).tag)
-    {ns}b
+    {http://ns/}b
 
 You can also use relative paths starting with a '.' to ignore the actual root
 element and only inherit its namespace:
@@ -566,23 +577,23 @@ element and only inherit its namespace:
 
     >>> find = objectify.ObjectPath(".b[1]")
     >>> print(find(root).tag)
-    {ns}b
+    {http://ns/}b
 
     >>> find = objectify.ObjectPath(['', 'b[1]'])
     >>> print(find(root).tag)
-    {ns}b
+    {http://ns/}b
 
     >>> find = objectify.ObjectPath(".unknown[1]")
     >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
-    AttributeError: no such child: {ns}unknown
+    AttributeError: no such child: {http://ns/}unknown
 
-    >>> find = objectify.ObjectPath(".{other}unknown[1]")
+    >>> find = objectify.ObjectPath(".{http://other/}unknown[1]")
     >>> print(find(root).tag)
     Traceback (most recent call last):
       ...
-    AttributeError: no such child: {other}unknown
+    AttributeError: no such child: {http://other/}unknown
 
 For convenience, a single dot represents the empty ObjectPath (identity):
 
@@ -590,28 +601,28 @@ For convenience, a single dot represents the empty ObjectPath (identity):
 
     >>> find = objectify.ObjectPath(".")
     >>> print(find(root).tag)
-    {ns}root
+    {http://ns/}root
 
 ObjectPath objects can be used to manipulate trees:
 
 .. sourcecode:: pycon
 
-    >>> root = objectify.Element("{ns}root")
+    >>> root = objectify.Element("{http://ns/}root")
 
-    >>> path = objectify.ObjectPath(".some.child.{other}unknown")
+    >>> path = objectify.ObjectPath(".some.child.{http://other/}unknown")
     >>> path.hasattr(root)
     False
     >>> path.find(root)
     Traceback (most recent call last):
       ...
-    AttributeError: no such child: {ns}some
+    AttributeError: no such child: {http://ns/}some
 
     >>> path.setattr(root, "my value") # creates children as necessary
     >>> path.hasattr(root)
     True
     >>> print(path.find(root).text)
     my value
-    >>> print(root.some.child["{other}unknown"].text)
+    >>> print(root.some.child["{http://other/}unknown"].text)
     my value
 
     >>> print(len( path.find(root) ))
