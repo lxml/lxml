@@ -346,6 +346,25 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertRaises(AttributeError, getattr, root.c1, "NOT_THERE")
         self.assertRaises(AttributeError, getattr, root.c1, "{unknownNS}c2")
 
+    def test_setattr(self):
+        for val in [
+            2, 2**32, 1.2, "Won't get fooled again", 
+            _str("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1'), True,
+            False, None]: 
+            root = self.Element('root')
+            attrname = 'val'
+            setattr(root, attrname, val)
+            result = getattr(root, attrname)
+            self.assertEquals(val, result)
+            self.assertEquals(type(val), type(result.pyval))
+ 
+    def test_setattr_nonunicode(self):
+        root = self.Element('root')
+        attrname = 'val'
+        val = _bytes("W\xf6n't get f\xf6\xf6led \xe4g\xe4in", 'ISO-8859-1')
+        self.assertRaises(ValueError, setattr, root, attrname, val)
+        self.assertRaises(AttributeError, getattr, root, attrname) 
+ 
     def test_addattr(self):
         root = self.XML(xml_str)
         self.assertEquals(1, len(root.c1))

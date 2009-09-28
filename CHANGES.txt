@@ -51,6 +51,9 @@ Bugs fixed
 
 * Diverting the error logging to Python's logging system was broken.
 
+* ObjectifiedElement.__setattr__ created an empty-string child element when the
+  attribute value was rejected as a non-unicode/non-ascii string
+
 Other changes
 -------------
 

@@ -523,9 +523,10 @@ cdef _appendValue(_Element parent, tag, value):
         for item in value:
             _appendValue(parent, tag, item)
     else:
-        new_element = cetree.makeSubElement(
-            parent, tag, None, None, None, None)
+        new_element = cetree.makeElement(
+            tag, parent._doc, None, None, None, None, None)
         _setElementValue(new_element, value)
+        cetree.appendChild(parent, new_element)
 
 cdef _setElementValue(_Element element, value):
     cdef python.PyObject* _pytype
