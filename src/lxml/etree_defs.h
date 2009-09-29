@@ -221,8 +221,14 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _LX__TRAVERSE_TO_NEXT(c_stop_node, c_node, only_elements)   \
 {                                                                   \
     /* walk through children first */                               \
-    xmlNode* _lx__next = c_node->children;                          \
-    _LX__ADVANCE_TO_NEXT(_lx__next, only_elements)		    \
+    xmlNode* _lx__next = c_node->children;		            \
+    if (_lx__next != 0) {                                           \
+        if (c_node->type == XML_ENTITY_REF_NODE || c_node->type == XML_DTD_NODE) { \
+            _lx__next = 0;                                          \
+        } else {                                                    \
+            _LX__ADVANCE_TO_NEXT(_lx__next, only_elements)	    \
+        }                                                           \
+    }							            \
     if ((_lx__next == 0) && (c_node != c_stop_node)) {              \
         /* try siblings */                                          \
         _lx__next = c_node->next;                                   \

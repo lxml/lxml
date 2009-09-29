@@ -1049,7 +1049,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             parser = self.etree.XMLParser(resolve_entities=False)
             Entity = self.etree.Entity
 
-            xml = '<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>'
+            xml = _bytes('<!DOCTYPE doc SYSTEM "test"><doc>&myentity;</doc>')
             tree = parse(BytesIO(xml), parser)
             root = tree.getroot()
             self.assertEquals(root[0].tag, Entity)
@@ -1059,6 +1059,25 @@ class ETreeOnlyTestCase(HelperTestCase):
 
             self.assertEquals(_bytes('<doc>&myentity;</doc>'),
                               tostring(root))
+
+        def test_entity_restructure(self):
+            xml = _bytes('''<!DOCTYPE root [ <!ENTITY nbsp "&#160;"> ]>
+                <root>
+                  <child1/>
+                  <child2/>
+                  <child3>&nbsp;</child3>
+                </root>''')
+
+            parser = self.etree.XMLParser(resolve_entities=False)
+            root = etree.fromstring(xml, parser)
+            self.assertEquals([ el.tag for el in root ],
+                              ['child1', 'child2', 'child3'])
+
+            root[0] = root[-1]
+            self.assertEquals([ el.tag for el in root ],
+                              ['child3', 'child2'])
+            self.assertEquals(root[0][0].text, '&nbsp;')
+            self.assertEquals(root[0][0].name, 'nbsp')
 
     def test_entity_append(self):
         Entity = self.etree.Entity

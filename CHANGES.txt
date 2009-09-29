@@ -19,6 +19,9 @@ Features added
 Bugs fixed
 ----------
 
+* Modifying trees that contain parsed entity references could result
+  in an infinite loop.
+
 * Syntax errors in ``lxml.cssselect`` could result in misleading error
   messages.
 
