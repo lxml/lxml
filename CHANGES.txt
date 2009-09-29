@@ -19,6 +19,9 @@ Features added
 Bugs fixed
 ----------
 
+* Late errors during calls to ``SubElement()`` (e.g. attribute related
+  ones) could leave a partially initialised element in the tree.
+
 * Modifying trees that contain parsed entity references could result
   in an infinite loop.
 

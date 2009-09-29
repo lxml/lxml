@@ -138,6 +138,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, SubElement, el, 'na me')
         self.assertRaises(ValueError, SubElement, el, '{test} name')
 
+    def test_subelement_attribute_invalid(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        el = Element('name')
+        self.assertRaises(ValueError, SubElement, el, 'name', {'a b c' : 'abc'})
+        self.assertRaises(ValueError, SubElement, el, 'name', {'a' : 'a\0\n'})
+        self.assertEquals(0, len(el))
+
     def test_qname_empty(self):
         QName = self.etree.QName
         self.assertRaises(ValueError, QName, '')

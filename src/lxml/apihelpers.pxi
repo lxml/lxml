@@ -196,15 +196,20 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         return python.PyErr_NoMemory()
     tree.xmlAddChild(parent._c_node, c_node)
 
-    if text is not None:
-        _setNodeText(c_node, text)
-    if tail is not None:
-        _setTailText(c_node, tail)
+    try:
+        if text is not None:
+            _setNodeText(c_node, text)
+        if tail is not None:
+            _setTailText(c_node, tail)
 
-    # add namespaces to node if necessary
-    _initNodeNamespaces(c_node, parent._doc, ns_utf, nsmap)
-    _initNodeAttributes(c_node, parent._doc, attrib, extra_attrs)
-    return _elementFactory(parent._doc, c_node)
+        # add namespaces to node if necessary
+        _initNodeNamespaces(c_node, parent._doc, ns_utf, nsmap)
+        _initNodeAttributes(c_node, parent._doc, attrib, extra_attrs)
+        return _elementFactory(parent._doc, c_node)
+    except:
+        # make sure we clean up in case of an error
+        _removeNode(parent._doc, c_node)
+        raise
 
 cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
                              object node_ns_utf, object nsmap) except -1:
