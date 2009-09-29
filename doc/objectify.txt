@@ -377,30 +377,35 @@ the lookup will use the namespace of the parent:
 Note that the ``SubElement()`` factory of ``lxml.etree`` does not
 inherit any namespaces when creating a new subelement.  Element
 creation must be explicit about the namespace, and is simplified
-through the E-factory as described above.  Lookups, however, inherit
-namespaces implicitly.
+through the E-factory as described above.
 
-To access an element in a different namespace than its parent, you can
-use ``getattr()``:
+Lookups, however, inherit namespaces implicitly:
 
 .. sourcecode:: pycon
 
-    >>> print (root.tag)
-    {http://ns/}root
+    >>> print(root.b.tag)
+    {http://ns/}b
 
     >>> print(root.c)
     Traceback (most recent call last):
         ...
     AttributeError: no such child: {http://ns/}c
 
-    >>> print(getattr(root, "{http://other/}c").tag)
+To access an element in a different namespace than its parent, you can
+use ``getattr()``:
+
+.. sourcecode:: pycon
+
+    >>> c = getattr(root, "{http://other/}c")
+    >>> print(c.tag)
     {http://other/}c
 
 For convenience, there is also a quick way through item access:
 
 .. sourcecode:: pycon
 
-    >>> print(root["{http://other/}c"].tag)
+    >>> c = root["{http://other/}c"]
+    >>> print(c.tag)
     {http://other/}c
 
 The same approach must be used to access children with tag names that are not
