@@ -22,6 +22,9 @@ Bugs fixed
 * Modifying trees that contain parsed entity references could result
   in an infinite loop.
 
+* ObjectifiedElement.__setattr__ created an empty-string child element when the
+  attribute value was rejected as a non-unicode/non-ascii string
+
 * Syntax errors in ``lxml.cssselect`` could result in misleading error
   messages.
 
@@ -53,9 +56,6 @@ Bugs fixed
   called after parsing, regardless of the outcome.
 
 * Diverting the error logging to Python's logging system was broken.
-
-* ObjectifiedElement.__setattr__ created an empty-string child element when the
-  attribute value was rejected as a non-unicode/non-ascii string
 
 Other changes
 -------------
