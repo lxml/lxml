@@ -1254,7 +1254,7 @@ cdef object _utf8(object s):
         raise TypeError, u"Argument must be string or unicode."
     if invalid:
         raise ValueError, \
-            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes"
+            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
     return s
 
 cdef bint _isFilePath(char* c_path):
