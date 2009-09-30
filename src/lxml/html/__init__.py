@@ -818,10 +818,16 @@ def submit_form(form, extra_values=None, open_http=None):
         values.extend(extra_values)
     if open_http is None:
         open_http = open_http_urllib
-    return open_http(form.method, form.action, values)
+    if form.action:
+        url = form.action
+    else:
+        url = form.base_url
+    return open_http(form.method, url, values)
 
 def open_http_urllib(method, url, values):
     import urllib
+    if not url:
+        raise ValueError("cannot submit, no URL provided")
     ## FIXME: should test that it's not a relative URL or something
     if method == 'GET':
         if '?' in url:

@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Forms that lack an ``action`` attribute default to the base URL of
+  the document on submit.
+
 * XPath attribute result strings have an ``attrname`` property.
 
 * Namespace URIs get validated against RFC 3986 at the API level
