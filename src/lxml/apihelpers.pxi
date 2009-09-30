@@ -1345,7 +1345,7 @@ cdef object _encodeFilenameUTF8(object filename):
     else:
         raise TypeError, u"Argument must be string or unicode."
 
-cdef _getNsTag(tag):
+cdef tuple _getNsTag(tag):
     u"""Given a tag, find namespace URI and tag name.
     Return None for NS uri if no namespace URI available.
     """
