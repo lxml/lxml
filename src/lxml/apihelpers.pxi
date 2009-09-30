@@ -440,43 +440,39 @@ cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
 
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     cdef char* value
-    cdef char* href
-    href = _getNs(<xmlNode*>c_attrib_node)
-    if href is NULL:
-        value = tree.xmlGetNoNsProp(c_element, c_attrib_node.name)
-    else:
-        value = tree.xmlGetNsProp(c_element, c_attrib_node.name, href)
-    result = funicode(value)
-    tree.xmlFree(value)
+    cdef char* c_href
+    c_href = _getNs(<xmlNode*>c_attrib_node)
+    value = tree.xmlGetNsProp(c_element, c_attrib_node.name, c_href)
+    try:
+        result = funicode(value)
+    finally:
+        tree.xmlFree(value)
     return result
 
 cdef object _attributeValueFromNsName(xmlNode* c_element,
                                       char* c_href, char* c_name):
-    cdef char* c_result
-    if c_href is NULL:
-        c_result = tree.xmlGetNoNsProp(c_element, c_name)
-    else:
-        c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
+    cdef char* c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
     if c_result is NULL:
         return None
-    result = funicode(c_result)
-    tree.xmlFree(c_result)
+    try:
+        result = funicode(c_result)
+    finally:
+        tree.xmlFree(c_result)
     return result
 
 cdef object _getNodeAttributeValue(xmlNode* c_node, key, default):
     cdef char* c_result
-    cdef char* c_tag
+    cdef char* c_href
     ns, tag = _getNsTag(key)
-    c_tag = _cstr(tag)
-    if ns is None:
-        c_result = tree.xmlGetNoNsProp(c_node, c_tag)
-    else:
-        c_result = tree.xmlGetNsProp(c_node, c_tag, _cstr(ns))
+    c_href = NULL if ns is None else _cstr(ns)
+    c_result = tree.xmlGetNsProp(c_node, _cstr(tag), c_href)
     if c_result is NULL:
         # XXX free namespace that is not in use..?
         return default
-    result = funicode(c_result)
-    tree.xmlFree(c_result)
+    try:
+        result = funicode(c_result)
+    finally:
+        tree.xmlFree(c_result)
     return result
 
 cdef inline object _getAttributeValue(_Element element, key, default):
@@ -506,20 +502,14 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
 cdef int _delAttribute(_Element element, key) except -1:
     cdef char* c_href
     ns, tag = _getNsTag(key)
-    if ns is None:
-        c_href = NULL
-    else:
-        c_href = _cstr(ns)
+    c_href = NULL if ns is None else _cstr(ns)
     if _delAttributeFromNsName(element._c_node, c_href, _cstr(tag)):
         raise KeyError, key
     return 0
 
 cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
     cdef xmlAttr* c_attr
-    if c_href is NULL:
-        c_attr = tree.xmlHasProp(c_node, c_name)
-    else:
-        c_attr = tree.xmlHasNsProp(c_node, c_name, c_href)
+    c_attr = tree.xmlHasNsProp(c_node, c_name, c_href)
     if c_attr is NULL:
         # XXX free namespace that is not in use..?
         return -1

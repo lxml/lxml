@@ -574,6 +574,52 @@ class ETreeTestCaseBase(HelperTestCase):
         del a.attrib['foo']
         self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
 
+    def test_del_attribute_ns(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.attrib['{http://a/}foo'] = 'Foo'
+        a.attrib['{http://a/}bar'] = 'Bar'
+        self.assertEquals(None, a.get('foo'))
+        self.assertEquals('Foo', a.get('{http://a/}foo'))
+        self.assertEquals('Foo', a.attrib['{http://a/}foo'])
+
+        self.assertRaises(KeyError, operator.delitem, a.attrib, 'foo')
+        self.assertEquals('Foo', a.attrib['{http://a/}foo'])
+
+        del a.attrib['{http://a/}foo']
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+
+    def test_del_attribute_ns_parsed(self):
+        XML = self.etree.XML
+
+        a = XML(_bytes('<a xmlns:nsa="http://a/" nsa:foo="FooNS" foo="Foo" />'))
+
+        self.assertEquals('Foo', a.attrib['foo'])
+        self.assertEquals('FooNS', a.attrib['{http://a/}foo'])
+
+        del a.attrib['foo']
+        self.assertEquals('FooNS', a.attrib['{http://a/}foo'])
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+        self.assertRaises(KeyError, operator.delitem, a.attrib, 'foo')
+
+        del a.attrib['{http://a/}foo']
+        self.assertRaises(KeyError, operator.getitem, a.attrib, '{http://a/}foo')
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+
+        a = XML(_bytes('<a xmlns:nsa="http://a/" foo="Foo" nsa:foo="FooNS" />'))
+
+        self.assertEquals('Foo', a.attrib['foo'])
+        self.assertEquals('FooNS', a.attrib['{http://a/}foo'])
+
+        del a.attrib['foo']
+        self.assertEquals('FooNS', a.attrib['{http://a/}foo'])
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+
+        del a.attrib['{http://a/}foo']
+        self.assertRaises(KeyError, operator.getitem, a.attrib, '{http://a/}foo')
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+
     def test_XML(self):
         XML = self.etree.XML
         

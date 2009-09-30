@@ -2048,20 +2048,14 @@ cdef class _Attrib:
 
     def __contains__(self, key):
         cdef xmlNode* c_node
-        cdef char* c_result
-        cdef char* c_tag
+        cdef char* c_href
         ns, tag = _getNsTag(key)
-        c_tag = _cstr(tag)
         c_node = self._element._c_node
-        if ns is None:
-            c_result = tree.xmlGetNoNsProp(c_node, c_tag)
-        else:
-            c_result = tree.xmlGetNsProp(c_node, c_tag, _cstr(ns))
-        if c_result is NULL:
-            return 0
-        else:
-            tree.xmlFree(c_result)
+        c_href = NULL if ns is None else _cstr(ns)
+        if tree.xmlHasNsProp(c_node, _cstr(tag), c_href):
             return 1
+        else:
+            return 0
 
     def __richcmp__(one, other, int op):
         if not python.PyDict_Check(one):

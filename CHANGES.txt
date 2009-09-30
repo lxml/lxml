@@ -22,6 +22,9 @@ Features added
 Bugs fixed
 ----------
 
+* Looking up and deleting attributes without a namespace could hit a
+  namespaced attribute of the same name instead.
+
 * Late errors during calls to ``SubElement()`` (e.g. attribute related
   ones) could leave a partially initialised element in the tree.
 
