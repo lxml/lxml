@@ -554,6 +554,26 @@ class ETreeTestCaseBase(HelperTestCase):
         root.set("attr", "TEST")
         self.assertEquals("TEST", root.get("attr"))
 
+    def test_attribute_iterator(self):
+        XML = self.etree.XML
+        
+        root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma" />'))
+        result = []
+        for key in root.attrib:
+            result.append(key)
+        result.sort()
+        self.assertEquals(['alpha', 'beta', 'gamma'], result)
+
+    def test_attribute_manipulation(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        a.attrib['foo'] = 'Foo'
+        a.attrib['bar'] = 'Bar'
+        self.assertEquals('Foo', a.attrib['foo'])
+        del a.attrib['foo']
+        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
+
     def test_XML(self):
         XML = self.etree.XML
         
@@ -713,16 +733,6 @@ class ETreeTestCaseBase(HelperTestCase):
             for el1 in root:
                 result.append(el1.tag)
         self.assertEquals(['one','one', 'two', 'two', 'one', 'two'], result)
-
-    def test_attribute_iterator(self):
-        XML = self.etree.XML
-        
-        root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma" />'))
-        result = []
-        for key in root.attrib:
-            result.append(key)
-        result.sort()
-        self.assertEquals(['alpha', 'beta', 'gamma'], result)
 
     def test_itertext(self):
         # ET 1.3+
@@ -1792,16 +1802,6 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(
             [a2],
             list(e.getiterator('a')))
-
-    def test_attribute_manipulation(self):
-        Element = self.etree.Element
-
-        a = Element('a')
-        a.attrib['foo'] = 'Foo'
-        a.attrib['bar'] = 'Bar'
-        self.assertEquals('Foo', a.attrib['foo'])
-        del a.attrib['foo']
-        self.assertRaises(KeyError, operator.getitem, a.attrib, 'foo')
 
     def test_getslice(self):
         Element = self.etree.Element
@@ -3240,15 +3240,15 @@ class ETreeTestCaseBase(HelperTestCase):
 
     # feed parser interface
 
-    def test_feed_parser(self):
+    def test_feed_parser_bytes(self):
         parser = self.etree.XMLParser()
 
-        parser.feed('<?xml version=')
-        parser.feed('"1.0"?><ro')
-        parser.feed('ot><')
-        parser.feed('a test="works"/')
-        parser.feed('></root')
-        parser.feed('>')
+        parser.feed(_bytes('<?xml version='))
+        parser.feed(_bytes('"1.0"?><ro'))
+        parser.feed(_bytes('ot><'))
+        parser.feed(_bytes('a test="works"/'))
+        parser.feed(_bytes('></root'))
+        parser.feed(_bytes('>'))
 
         root = parser.close()
 
