@@ -85,7 +85,7 @@ _FILENAME_ENCODING = sys.getfilesystemencoding()
 if _FILENAME_ENCODING is None:
     _FILENAME_ENCODING = sys.getdefaultencoding()
 if _FILENAME_ENCODING is None:
-    _FILENAME_ENCODING = 'ascii'
+    _FILENAME_ENCODING = b'ascii'
 else:
     _FILENAME_ENCODING = _FILENAME_ENCODING.encode(u"UTF-8")
 cdef char* _C_FILENAME_ENCODING
@@ -94,17 +94,17 @@ _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 # set up some default namespace prefixes
 cdef object _DEFAULT_NAMESPACE_PREFIXES
 _DEFAULT_NAMESPACE_PREFIXES = {
-    "http://www.w3.org/1999/xhtml": "html",
-    "http://www.w3.org/1999/XSL/Transform": "xsl",
-    "http://www.w3.org/1999/02/22-rdf-syntax-ns#": "rdf",
-    "http://schemas.xmlsoap.org/wsdl/": "wsdl",
+    b"http://www.w3.org/1999/xhtml": b"html",
+    b"http://www.w3.org/1999/XSL/Transform": b"xsl",
+    b"http://www.w3.org/1999/02/22-rdf-syntax-ns#": b"rdf",
+    b"http://schemas.xmlsoap.org/wsdl/": b"wsdl",
     # xml schema
-    "http://www.w3.org/2001/XMLSchema": "xs",
-    "http://www.w3.org/2001/XMLSchema-instance": "xsi",
+    b"http://www.w3.org/2001/XMLSchema": b"xs",
+    b"http://www.w3.org/2001/XMLSchema-instance": b"xsi",
     # dublin core
-    "http://purl.org/dc/elements/1.1/": "dc",
+    b"http://purl.org/dc/elements/1.1/": b"dc",
     # objectify
-    "http://codespeak.net/lxml/objectify/pytype" : "py",
+    b"http://codespeak.net/lxml/objectify/pytype" : b"py",
 }
 
 # Error superclass for ElementTree compatibility
@@ -1508,7 +1508,7 @@ cdef class QName:
             if isinstance(text_or_uri_or_element, _Element):
                 text_or_uri_or_element = (<_Element>text_or_uri_or_element).tag
                 if not _isString(text_or_uri_or_element):
-                    raise ValueError, ("Invalid input tag of type %r" %
+                    raise ValueError, (u"Invalid input tag of type %r" %
                                        type(text_or_uri_or_element))
             elif isinstance(text_or_uri_or_element, QName):
                 text_or_uri_or_element = (<QName>text_or_uri_or_element).text
@@ -1766,8 +1766,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             start = path[:1]
             if start == u"/":
                 path = u"." + path
-            elif start == "/":
-                path = "." + path
+            elif start == b"/":
+                path = b"." + path
         return root.find(path)
 
     def findtext(self, path, default=None):
@@ -1782,8 +1782,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             start = path[:1]
             if start == u"/":
                 path = u"." + path
-            elif start == "/":
-                path = "." + path
+            elif start == b"/":
+                path = b"." + path
         return root.findtext(path, default)
 
     def findall(self, path):
@@ -1798,8 +1798,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             start = path[:1]
             if start == u"/":
                 path = u"." + path
-            elif start == "/":
-                path = "." + path
+            elif start == b"/":
+                path = b"." + path
         return root.findall(path)
 
     def iterfind(self, path):
@@ -1814,8 +1814,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             start = path[:1]
             if start == u"/":
                 path = u"." + path
-            elif start == "/":
-                path = "." + path
+            elif start == b"/":
+                path = b"." + path
         return root.iterfind(path)
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
@@ -2373,7 +2373,7 @@ def Comment(text=None):
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
     if text is None:
-        text = ''
+        text = b''
     else:
         text = _utf8(text)
     c_doc = _newXMLDoc()
@@ -2393,7 +2393,7 @@ def ProcessingInstruction(target, text=None):
     cdef xmlDoc*   c_doc
     target = _utf8(target)
     if text is None:
-        text = ''
+        text = b''
     else:
         text = _utf8(text)
     c_doc = _newXMLDoc()
