@@ -1487,7 +1487,11 @@ class XHTMLParser(etree.XMLParser):
     you have the XHTML DTDs installed in your catalogs, and create the
     parser like this::
 
-        parser = XHTMLParser(load_dtd=True)
+        >>> parser = XHTMLParser(load_dtd=True)
+
+    If you additionally want to validate the document, use this::
+
+        >>> parser = XHTMLParser(dtd_validation=True)
 
     For catalog support, see http://www.xmlsoft.org/catalog.html.
     """
