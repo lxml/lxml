@@ -15,14 +15,19 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import StringIO, BytesIO, etree, ElementTree, cElementTree
-from common_imports import fileInTestDir, canonicalize, HelperTestCase
+from common_imports import StringIO, BytesIO, etree
+from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
+from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
 from common_imports import _str, _bytes
 
+if cElementTree is not None and CET_VERSION <= (1,0,7):
+    cElementTree = None
+
+if ElementTree is not None:
+    print("Comparing with ElementTree %s" % getattr(ElementTree, "VERSION", "?"))
+
 if cElementTree is not None:
-    if tuple([int(n) for n in
-              getattr(cElementTree, "VERSION", "0.0").split(".")]) <= (1,0,7):
-        cElementTree = None
+    print("Comparing with cElementTree %s" % getattr(cElementTree, "VERSION", "?"))
 
 try:
     reversed
@@ -34,6 +39,8 @@ except NameError:
 
 class ETreeTestCaseBase(HelperTestCase):
     etree = None
+    required_versions_ET = {}
+    required_versions_cET = {}
 
     def test_element(self):
         for i in range(10):
@@ -658,6 +665,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    required_versions_ET['test_fromstringlist'] = (1,3)
     def test_fromstringlist(self):
         fromstringlist = self.etree.fromstringlist
 
@@ -666,6 +674,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    required_versions_ET['test_fromstringlist_characters'] = (1,3)
     def test_fromstringlist_characters(self):
         fromstringlist = self.etree.fromstringlist
 
@@ -673,6 +682,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(0, len(root))
         self.assertEquals('This is a text.', root.text)
 
+    required_versions_ET['test_fromstringlist_single'] = (1,3)
     def test_fromstringlist_single(self):
         fromstringlist = self.etree.fromstringlist
 
@@ -780,6 +790,7 @@ class ETreeTestCaseBase(HelperTestCase):
                 result.append(el1.tag)
         self.assertEquals(['one','one', 'two', 'two', 'one', 'two'], result)
 
+    required_versions_ET['test_itertext'] = (1,3)
     def test_itertext(self):
         # ET 1.3+
         XML = self.etree.XML
@@ -789,6 +800,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(["RTEXT", "ATAIL", "CTEXT", "CTAIL"],
                           text)
 
+    required_versions_ET['test_itertext_child'] = (1,3)
     def test_itertext_child(self):
         # ET 1.3+
         XML = self.etree.XML
@@ -868,6 +880,7 @@ class ETreeTestCaseBase(HelperTestCase):
                 _bytes('<doc%s>This is a test.</doc%s>' % (i, i)),
                 canonicalize(data))
 
+    required_versions_ET['test_write_method_html'] = (1,3)
     def test_write_method_html(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
@@ -887,6 +900,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(_bytes('<html><body><p>html<br>test</p></body></html>'),
                           data)
 
+    required_versions_ET['test_write_method_text'] = (1,3)
     def test_write_method_text(self):
         ElementTree = self.etree.ElementTree
         Element = self.etree.Element
@@ -1062,6 +1076,7 @@ class ETreeTestCaseBase(HelperTestCase):
             a.tail)
         self.assertXML(_bytes('<a></a>'), a)
 
+    required_versions_ET['test_extend'] = (1,3)
     def test_extend(self):
         root = self.etree.Element('foo')
         for i in range(3):
@@ -1099,6 +1114,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(a[0].text, 'foo')
 
     # ElementTree < 1.3 adds whitespace around comments
+    required_versions_ET['test_comment_text'] = (1,3)
     def test_comment_text(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -1119,8 +1135,9 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(
             _bytes('<a><!--TEST--></a>'),
             tostring(a))
-        
+
     # ElementTree < 1.3 adds whitespace around comments
+    required_versions_ET['test_comment_whitespace'] = (1,3)
     def test_comment_whitespace(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -1654,6 +1671,7 @@ class ETreeTestCaseBase(HelperTestCase):
             _bytes('<c hoi="dag"></c>'),
             b)
 
+    required_versions_ET['test_iter'] = (1,3)
     def test_iter(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -2607,6 +2625,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assert_(tostring(b) == _bytes('<b/>Foo') or
                      tostring(b) == _bytes('<b />Foo'))
 
+    required_versions_ET['test_tostring_method_html'] = (1,3)
     def test_tostring_method_html(self):
         tostring = self.etree.tostring
         Element = self.etree.Element
@@ -2621,6 +2640,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(_bytes('<html><body><p>html<br>test</p></body></html>'),
                           tostring(html, method="html"))
 
+    required_versions_ET['test_tostring_method_text'] = (1,3)
     def test_tostring_method_text(self):
         tostring = self.etree.tostring
         Element = self.etree.Element
@@ -2784,6 +2804,7 @@ class ETreeTestCaseBase(HelperTestCase):
         parse = self.etree.parse
         self.assertRaises(TypeError, parse, None)
 
+    required_versions_ET['test_parse_error'] = (1,3)
     def test_parse_error(self):
         # ET < 1.3 raises ExpatError
         parse = self.etree.parse
@@ -2791,6 +2812,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertRaises(SyntaxError, parse, f)
         f.close()
 
+    required_versions_ET['test_parse_error_from_file'] = (1,3)
     def test_parse_error_from_file(self):
         parse = self.etree.parse
         # from file
@@ -2890,6 +2912,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(_str('<a>Søk på nettet</a>').encode('iso-8859-1'),
                           result)
 
+    required_versions_ET['test_parse_encoding_8bit_explicit'] = (1,3)
     def test_parse_encoding_8bit_explicit(self):
         XMLParser = self.etree.XMLParser
 
@@ -2905,6 +2928,7 @@ class ETreeTestCaseBase(HelperTestCase):
         a = tree.getroot()
         self.assertEquals(a.text, text)
 
+    required_versions_ET['test_parse_encoding_8bit_override'] = (1,3)
     def test_parse_encoding_8bit_override(self):
         XMLParser = self.etree.XMLParser
 
@@ -3302,11 +3326,28 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals(root[0].tag, "a")
         self.assertEquals(root[0].get("test"), "works")
 
+    def test_feed_parser_unicode(self):
+        parser = self.etree.XMLParser()
+
+        parser.feed(_str('<ro'))
+        parser.feed(_str('ot><'))
+        parser.feed(_str('a test="works"/'))
+        parser.feed(_str('></root'))
+        parser.feed(_str('>'))
+
+        root = parser.close()
+
+        self.assertEquals(root.tag, "root")
+        self.assertEquals(root[0].tag, "a")
+        self.assertEquals(root[0].get("test"), "works")
+
+    required_versions_ET['test_feed_parser_error_close_empty'] = (1,3)
     def test_feed_parser_error_close_empty(self):
         ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
         self.assertRaises(ParseError, parser.close)
 
+    required_versions_ET['test_feed_parser_error_close_incomplete'] = (1,3)
     def test_feed_parser_error_close_incomplete(self):
         ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
@@ -3316,6 +3357,7 @@ class ETreeTestCaseBase(HelperTestCase):
 
         self.assertRaises(ParseError, parser.close)
 
+    required_versions_ET['test_feed_parser_error_broken'] = (1,3)
     def test_feed_parser_error_broken(self):
         ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
@@ -3330,6 +3372,7 @@ class ETreeTestCaseBase(HelperTestCase):
 
         self.assertRaises(ParseError, parser.close)
 
+    required_versions_ET['test_feed_parser_error_position'] = (1,3)
     def test_feed_parser_error_position(self):
         ParseError = self.etree.ParseError
         parser = self.etree.XMLParser()
@@ -3344,6 +3387,7 @@ class ETreeTestCaseBase(HelperTestCase):
 
     # parser target interface
 
+    required_versions_ET['test_parser_target_property'] = (1,3)
     def test_parser_target_property(self):
         class Target(object):
             pass
@@ -3488,6 +3532,7 @@ class ETreeTestCaseBase(HelperTestCase):
                            "end-sub", "start-sub", "end-sub", "end-root"],
                           events)
 
+    required_versions_ET['test_parser_target_entity_unknown'] = (1,3)
     def test_parser_target_entity_unknown(self):
         events = []
         class Target(object):
@@ -3645,9 +3690,17 @@ if ElementTree:
     class ElementTreeTestCase(ETreeTestCaseBase):
         etree = ElementTree
 
+    filter_by_version(
+        ElementTreeTestCase,
+        ElementTreeTestCase.required_versions_ET, ET_VERSION)
+
 if cElementTree:
     class CElementTreeTestCase(ETreeTestCaseBase):
         etree = cElementTree
+
+    filter_by_version(
+        CElementTreeTestCase,
+        CElementTreeTestCase.required_versions_cET, CET_VERSION)
 
 def test_suite():
     suite = unittest.TestSuite()

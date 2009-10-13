@@ -22,9 +22,9 @@ except ImportError:
         ElementTree = None
 
 if hasattr(ElementTree, 'VERSION'):
-    if make_version_tuple(ElementTree.VERSION)[:2] < (1,3):
-        # compatibility tests require ET 1.3+
-        ElementTree = None
+    ET_VERSION = make_version_tuple(ElementTree.VERSION)
+else:
+    ET_VERSION = (0,0,0)
 
 try:
     import cElementTree # standard ET
@@ -35,9 +35,18 @@ except ImportError:
         cElementTree = None
 
 if hasattr(cElementTree, 'VERSION'):
-    if make_version_tuple(cElementTree.VERSION)[:2] <= (1,0):
-        # compatibility tests do not run with cET 1.0.7
-        cElementTree = None
+    CET_VERSION = make_version_tuple(cElementTree.VERSION)
+else:
+    CET_VERSION = (0,0,0)
+
+def filter_by_version(test_class, version_dict, current_version):
+    """Remove test methods that do not work with the current lib version.
+    """
+    find_required_version = version_dict.get
+    for name in dir(test_class):
+        expected_version = find_required_version(name, (0,0,0))
+        if expected_version > current_version:
+            setattr(test_class, name, None)
 
 try:
     import doctest
