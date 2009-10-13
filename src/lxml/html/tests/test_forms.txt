@@ -166,3 +166,21 @@ check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 [('foo', 'bar')]
 >>> tree.forms[0].fields.values()
 ['bar']
+
+>>> tree = lxml.html.fromstring('''
+... <html><body>
+...  <form>
+...   <textarea name="foo">some <b>text<br>content</b> with tags</textarea>
+...  </form>
+... </body></html>
+... ''')
+>>> tree.forms[0].fields.keys()
+['foo']
+>>> ta = tree.forms[0].inputs['foo']
+>>> print(ta.value)
+some <b>text<br>content</b> with tags
+>>> ta.value = 'abc<br>def'
+>>> print(ta.value)
+abc<br>def
+>>> len(ta)
+0

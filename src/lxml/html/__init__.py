@@ -965,11 +965,21 @@ class TextareaElement(InputMixin, HtmlElement):
         """
         Get/set the value (which is the contents of this element)
         """
-        return self.text or ''
+        content = self.text or ''
+        if self.tag.startswith("{%s}" % XHTML_NAMESPACE):
+            serialisation_method = 'xml'
+        else:
+            serialisation_method = 'html'
+        for el in self:
+            # it's rare that we actually get here, so let's not use ''.join()
+            content += etree.tostring(el, method=serialisation_method)
+        return content
     def _value__set(self, value):
+        del self[:]
         self.text = value
     def _value__del(self):
         self.text = ''
+        del self[:]
     value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
 
 HtmlElementClassLookup._default_element_classes['textarea'] = TextareaElement

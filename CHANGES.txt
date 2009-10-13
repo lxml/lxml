@@ -22,6 +22,11 @@ Features added
 Bugs fixed
 ----------
 
+* The ``.value`` attribute of ``textarea`` elements in lxml.html did
+  not represent the complete raw value (including child tags etc.). It
+  now serialises the complete content on read and replaces the
+  complete content by a string on write.
+
 * Looking up and deleting attributes without a namespace could hit a
   namespaced attribute of the same name instead.
 
