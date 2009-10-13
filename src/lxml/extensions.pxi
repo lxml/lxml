@@ -677,12 +677,12 @@ cdef void _extension_function_call(_BaseContext context, function,
                                    xpath.xmlXPathParserContext* ctxt, int nargs):
     cdef _Document doc
     cdef xpath.xmlXPathObject* obj
-    cdef int i
     cdef list args
+    cdef int i
     doc = context._doc
     try:
         args = []
-        for i from 0 <= i < nargs:
+        for i in xrange(nargs):
             obj = xpath.valuePop(ctxt)
             o = _unwrapXPathObject(obj, doc, context._build_smart_strings)
             _freeXPathObject(obj)
