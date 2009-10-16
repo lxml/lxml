@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Support for strings (in addition to Elements) in node-sets returned
+  by extension functions.
+
 * Forms that lack an ``action`` attribute default to the base URL of
   the document on submit.
 
