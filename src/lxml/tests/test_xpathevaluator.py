@@ -663,7 +663,7 @@ def xpath():
     >>> list(map(tag, e("setTest2(/body/*)")))
     ['tag', 'section']
     >>> list(map(tag_or_value, e("stringListTest(/body/tag)")))
-    ['Hello', 'tag', 'tag', 'tag', '!']
+    ['Hello ', 'tag', 'tag', 'tag', '!']
     >>> e("argsTest1('a',1.5,true(),/body/tag)")
     "a, 1.5, True, ['tag', 'tag', 'tag']"
     >>> list(map(tag, e("argsTest2(/body/tag, /body/section)")))
