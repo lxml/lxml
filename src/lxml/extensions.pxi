@@ -457,12 +457,15 @@ cdef class _ExsltRegExp:
 ################################################################################
 # helper functions
 
-cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
+cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
+                                            _BaseContext context) except NULL:
     cdef xpath.xmlNodeSet* resultSet
-    cdef _Element node
+    cdef _Element fake_node = None
+    cdef xmlNode* c_node
+
     if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
-    if python.PyString_Check(obj):
+    if python.PyBytes_Check(obj):
         return xpath.xmlXPathNewCString(_cstr(obj))
     if python.PyBool_Check(obj):
         return xpath.xmlXPathNewBoolean(obj)
@@ -474,13 +477,42 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj) except NULL:
         resultSet = xpath.xmlXPathNodeSetCreate((<_Element>obj)._c_node)
     elif python.PySequence_Check(obj):
         resultSet = xpath.xmlXPathNodeSetCreate(NULL)
-        for element in obj:
-            if isinstance(element, _Element):
-                node = <_Element>element
-                xpath.xmlXPathNodeSetAdd(resultSet, node._c_node)
-            else:
-                xpath.xmlXPathFreeNodeSet(resultSet)
-                raise XPathResultError, u"This is not a node: %r" % element
+        try:
+            for value in obj:
+                if isinstance(value, _Element):
+                    if context is not None:
+                        context._hold(value)
+                    xpath.xmlXPathNodeSetAdd(resultSet, (<_Element>value)._c_node)
+                else:
+                    if context is None or doc is None:
+                        raise XPathResultError, \
+                              u"Non-Element values not supported at this point - got %r" % value
+                    # support strings by appending text nodes to an Element
+                    if python.PyUnicode_Check(value):
+                        value = _utf8(value)
+                    if python.PyBytes_Check(value):
+                        if fake_node is None:
+                            fake_node = _makeElement("text-root", NULL, doc, None,
+                                                     None, None, None, None, None)
+                            context._hold(fake_node)
+                        else:
+                            # append a comment node to keep the text nodes separate
+                            c_node = tree.xmlNewDocComment(doc._c_doc, "")
+                            if c_node is NULL:
+                                python.PyErr_NoMemory()
+                            tree.xmlAddChild(fake_node._c_node, c_node)
+                        context._hold(value)
+                        c_node = tree.xmlNewDocText(doc._c_doc, _cstr(value))
+                        if c_node is NULL:
+                            python.PyErr_NoMemory()
+                        tree.xmlAddChild(fake_node._c_node, c_node)
+                        xpath.xmlXPathNodeSetAdd(resultSet, c_node)
+                    else:
+                        raise XPathResultError, \
+                              u"This is not a supported node-set result: %r" % value
+        except:
+            xpath.xmlXPathFreeNodeSet(resultSet)
+            raise
     else:
         raise XPathResultError, u"Unknown return type: %s" % \
             python._fqtypename(obj)
@@ -613,7 +645,7 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
     else:
         is_text = not (is_tail or is_attribute)
 
-    if python.PyString_CheckExact(string_value):
+    if python.PyBytes_CheckExact(string_value):
         result = _ElementStringResult(string_value)
         result._parent = parent
         result.is_attribute = is_attribute
@@ -691,7 +723,7 @@ cdef void _extension_function_call(_BaseContext context, function,
 
         res = function(context, *args)
         # wrap result for XPath consumption
-        obj = _wrapXPathObject(res)
+        obj = _wrapXPathObject(res, doc, context)
         # prevent Python from deallocating elements handed to libxml2
         context._hold(res)
         xpath.valuePush(ctxt, obj)

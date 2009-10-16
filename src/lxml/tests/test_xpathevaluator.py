@@ -593,8 +593,14 @@ SAMPLE_XML = etree.parse(BytesIO("""
 def tag(elem):
     return elem.tag
 
+def tag_or_value(elem):
+    return getattr(elem, 'tag', elem)
+
 def stringTest(ctxt, s1):
     return "Hello "+s1
+
+def stringListTest(ctxt, s1):
+    return ["Hello "] + list(s1) +  ["!"]
     
 def floatTest(ctxt, f1):
     return f1+4
@@ -616,7 +622,7 @@ def argsTest2(ctxt, st1, st2):
     return st1
 
 def resultTypesTest(ctxt):
-    return ["x","y"]
+    return [None,None]
 
 def resultTypesTest2(ctxt):
     return resultTypesTest
@@ -624,6 +630,7 @@ def resultTypesTest2(ctxt):
 uri = "http://www.example.com/"
 
 extension = {(None, 'stringTest'): stringTest,
+             (None, 'stringListTest'): stringListTest,
              (None, 'floatTest'): floatTest,
              (None, 'booleanTest'): booleanTest,
              (None, 'setTest'): setTest,
@@ -655,6 +662,8 @@ def xpath():
     ['tag']
     >>> list(map(tag, e("setTest2(/body/*)")))
     ['tag', 'section']
+    >>> list(map(tag_or_value, e("stringListTest(/body/tag)")))
+    ['Hello', 'tag', 'tag', 'tag', '!']
     >>> e("argsTest1('a',1.5,true(),/body/tag)")
     "a, 1.5, True, ['tag', 'tag', 'tag']"
     >>> list(map(tag, e("argsTest2(/body/tag, /body/section)")))
@@ -662,7 +671,7 @@ def xpath():
     >>> e("resultTypesTest()")
     Traceback (most recent call last):
     ...
-    XPathResultError: This is not a node: 'x'
+    XPathResultError: This is not a supported node-set result: None
     >>> try:
     ...     e("resultTypesTest2()")
     ... except etree.XPathResultError:

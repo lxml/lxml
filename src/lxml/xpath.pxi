@@ -79,16 +79,16 @@ cdef class _XPathContext(_BaseContext):
         for name, value in variable_dict.items():
             name_utf = self._to_utf(name)
             xpath.xmlXPathRegisterVariable(
-                self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
+                self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef registerVariable(self, name, value):
         name_utf = self._to_utf(name)
         xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
+            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value))
+            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
