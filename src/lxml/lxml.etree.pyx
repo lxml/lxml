@@ -1606,11 +1606,11 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             _copyNonElementSiblings(self._context_node._c_node, root._c_node)
             doc = root._doc
             c_doc = self._context_node._doc._c_doc
-            if c_doc.intSubset and not doc._c_doc.intSubset:
+            if c_doc.intSubset is not NULL and doc._c_doc.intSubset is NULL:
                 doc._c_doc.intSubset = tree.xmlCopyDtd(c_doc.intSubset)
                 if doc._c_doc.intSubset is NULL:
                     python.PyErr_NoMemory()
-            if c_doc.extSubset and not doc._c_doc.extSubset:
+            if c_doc.extSubset is not NULL and not doc._c_doc.extSubset is NULL:
                 doc._c_doc.extSubset = tree.xmlCopyDtd(c_doc.extSubset)
                 if doc._c_doc.extSubset is NULL:
                     python.PyErr_NoMemory()
