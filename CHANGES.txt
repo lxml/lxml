@@ -22,6 +22,9 @@ Features added
 Bugs fixed
 ----------
 
+* The ``resolve_entities`` option did not work in the incremental feed
+  parser.
+
 * The ``.value`` attribute of ``textarea`` elements in lxml.html did
   not represent the complete raw value (including child tags etc.). It
   now serialises the complete content on read and replaces the

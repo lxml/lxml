@@ -1094,6 +1094,15 @@ cdef class _FeedParser(_BaseParser):
             py_buffer_len -= buffer_len
             c_data += buffer_len
 
+            if error and not pctxt.replaceEntities and not pctxt.validate:
+                # in this mode, we ignore errors about undefined entities
+                for entry in context._error_log.filter_from_errors():
+                    if entry.type != ErrorTypes.WAR_UNDECLARED_ENTITY and \
+                           entry.type != ErrorTypes.ERR_UNDECLARED_ENTITY:
+                        break
+                else:
+                    error = 0
+
         if not recover and (error or not pctxt.wellFormed):
             self._feed_parser_running = 0
             try:
