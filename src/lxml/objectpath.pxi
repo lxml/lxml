@@ -93,7 +93,7 @@ cdef _parseObjectPathString(path):
     """
     cdef bint has_dot
     cdef list new_path = []
-    if python.PyString_Check(path):
+    if python.PyBytes_Check(path):
         path = python.PyUnicode_FromEncodedObject(path, 'ASCII', NULL)
     path = path.strip()
     if path == u'.':

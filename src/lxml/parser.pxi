@@ -357,7 +357,7 @@ cdef class _FileReaderContext:
                 c_requested -= remaining
 
                 self._bytes = self._filelike.read(c_requested)
-                if not python.PyString_Check(self._bytes):
+                if not python.PyBytes_Check(self._bytes):
                     if python.PyUnicode_Check(self._bytes):
                         if self._encoding is None:
                             self._bytes = python.PyUnicode_AsUTF8String(self._bytes)
@@ -1043,7 +1043,7 @@ cdef class _FeedParser(_BaseParser):
         cdef int buffer_len
         cdef int error
         cdef bint recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-        if python.PyString_Check(data):
+        if python.PyBytes_Check(data):
             if self._default_encoding is None:
                 c_encoding = NULL
             else:
@@ -1538,7 +1538,7 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
             text = python.PyUnicode_AsUTF8String(text)
-    elif not python.PyString_Check(text):
+    elif not python.PyBytes_Check(text):
         raise ValueError, u"can only parse strings"
     if python.PyUnicode_Check(url):
         url = python.PyUnicode_AsUTF8String(url)

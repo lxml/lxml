@@ -23,8 +23,8 @@ cdef extern from "Python.h":
 
     cdef bint PyUnicode_Check(object obj)
     cdef bint PyUnicode_CheckExact(object obj)
-    cdef bint PyString_Check(object obj)
-    cdef bint PyString_CheckExact(object obj)
+    cdef bint PyBytes_Check(object obj)
+    cdef bint PyBytes_CheckExact(object obj)
 
     cdef object PyUnicode_FromEncodedObject(object s, char* encoding,
                                             char* errors)

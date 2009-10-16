@@ -479,7 +479,7 @@ Other keyword arguments:
         while python.PyList_GET_SIZE(context._events) == 0:
             if c_stream is NULL:
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
-                if not python.PyString_Check(data):
+                if not python.PyBytes_Check(data):
                     self._source = None
                     raise TypeError, u"reading file objects must return plain strings"
                 c_data_len = python.PyString_GET_SIZE(data)

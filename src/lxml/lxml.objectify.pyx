@@ -949,7 +949,7 @@ cdef class PyType:
     cdef object _type
     cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
-        if python.PyString_Check(name):
+        if python.PyBytes_Check(name):
             name = python.PyUnicode_FromEncodedObject(name, 'ASCII', NULL)
         elif not python.PyUnicode_Check(name):
             raise TypeError, u"Type name must be a string"
@@ -1579,12 +1579,12 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     doc = element._doc
 
     if empty_type_name is not None:
-        if python.PyString_Check(empty_type_name):
+        if python.PyBytes_Check(empty_type_name):
             empty_type_name = python.PyUnicode_FromEncodedObject(
                 empty_type_name, "ASCII", NULL)
         dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, empty_type_name)
     elif empty_pytype_name is not None:
-        if python.PyString_Check(empty_pytype_name):
+        if python.PyBytes_Check(empty_pytype_name):
             empty_pytype_name = python.PyUnicode_FromEncodedObject(
                 empty_pytype_name, "ASCII", NULL)
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, empty_pytype_name)

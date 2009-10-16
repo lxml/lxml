@@ -1233,12 +1233,12 @@ cdef object funicode(char* s):
 
 cdef object _utf8(object s):
     cdef int invalid
-    if python.PyString_CheckExact(s):
+    if python.PyBytes_CheckExact(s):
         invalid = check_string_utf8(s)
     elif python.PyUnicode_CheckExact(s) or python.PyUnicode_Check(s):
         s = python.PyUnicode_AsUTF8String(s)
         invalid = check_string_utf8(s) == -1
-    elif python.PyString_Check(s):
+    elif python.PyBytes_Check(s):
         invalid = check_string_utf8(s)
     else:
         raise TypeError, u"Argument must be string or unicode."
@@ -1275,7 +1275,7 @@ cdef object _encodeFilename(object filename):
     """
     if filename is None:
         return None
-    elif python.PyString_Check(filename):
+    elif python.PyBytes_Check(filename):
         return filename
     elif python.PyUnicode_Check(filename):
         filename8 = python.PyUnicode_AsEncodedString(
@@ -1313,7 +1313,7 @@ cdef object _encodeFilenameUTF8(object filename):
     cdef char* c_filename
     if filename is None:
         return None
-    elif python.PyString_Check(filename):
+    elif python.PyBytes_Check(filename):
         if not check_string_utf8(filename):
             # plain ASCII!
             return filename
