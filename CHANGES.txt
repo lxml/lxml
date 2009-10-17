@@ -88,6 +88,10 @@ Bugs fixed
 Other changes
 -------------
 
+* ``Element.attrib`` no longer uses a cyclic reference back to its
+  Element object.  It therefore no longer requires the garbage
+  collector to clean up.
+
 * Static builds include libiconv, in addition to libxml2 and libxslt.
 
 

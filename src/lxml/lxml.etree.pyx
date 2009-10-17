@@ -528,7 +528,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     cdef _Document _doc
     cdef xmlNode* _c_node
     cdef object _tag
-    cdef object _attrib
 
     def _init(self):
         u"""_init(self)
@@ -814,9 +813,15 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         keys(), values() and items() to access element attributes.
         """
         def __get__(self):
-            if self._attrib is None:
-                self._attrib = _Attrib(self)
-            return self._attrib
+            return _Attrib(self)
+            ## cdef python.PyObject* ref
+            ## if self._attrib is not None:
+            ##     ref = python.PyWeakref_GET_OBJECT(self._attrib)
+            ##     if ref is not <python.PyObject*>None:
+            ##         return <object>ref
+            ## attrib = _Attrib(self)
+            ## self._attrib = python.PyWeakref_NewRef(attrib, NULL)
+            ## return attrib
 
     property text:
         u"""Text before the first subelement. This is either a string or 
@@ -1948,7 +1953,7 @@ cdef class _Attrib:
     u"""A dict-like proxy for the ``Element.attrib`` property.
     """
     cdef _Element _element
-    def __init__(self, _Element element not None):
+    def __cinit__(self, _Element element not None):
         self._element = element
 
     # MANIPULATORS
@@ -2063,6 +2068,12 @@ cdef class _Attrib:
         if not python.PyDict_Check(other):
             other = dict(other)
         return python.PyObject_RichCompare(one, other, op)
+
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _Attrib NEW_ATTRIB "PY_NEW" (object t)
+
 
 cdef class _AttribIterator:
     u"""Attribute iterator - for internal use only!

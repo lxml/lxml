@@ -90,6 +90,9 @@ cdef extern from "Python.h":
     cdef object PyObject_RichCompare(object o1, object o2, int op)
     cdef int PyObject_RichCompareBool(object o1, object o2, int op)
 
+#    object PyWeakref_NewRef(object ob, PyObject* callback)
+#    PyObject* PyWeakref_GET_OBJECT(object ref)
+
     cdef void* PyMem_Malloc(size_t size)
     cdef void* PyMem_Realloc(void* p, size_t size)
     cdef void PyMem_Free(void* p)
