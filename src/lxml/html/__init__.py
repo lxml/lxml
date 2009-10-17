@@ -308,6 +308,13 @@ class HtmlMixin(object):
 
         Note: <base href> is *not* taken into account in any way.  The
         link you get is exactly the link in the document.
+
+        Note: multiple links inside of a single text string or
+        attribute value are returned in reversed order.  This makes it
+        possible to replace or delete them from the text string value
+        based on their reported text positions.  Otherwise, a
+        modification at one text position can change the positions of
+        links reported later on.
         """
         link_attrs = defs.link_attrs
         for el in self.iter():
@@ -347,15 +354,29 @@ class HtmlMixin(object):
                     ## http://www.w3.org/TR/html401/struct/objects.html#adef-valuetype
                     yield (el, 'value', el.get('value'), 0)
             if tag == 'style' and el.text:
-                for match in _css_url_re.finditer(el.text):
-                    url, start = _unquote_match(match.group(1), match.start(1))
-                    yield (el, None, url, start)
-                for match in _css_import_re.finditer(el.text):
-                    yield (el, None, match.group(1), match.start(1))
+                urls = [
+                    _unquote_match(match.group(1), match.start(1))
+                    for match in _css_url_re.finditer(el.text)
+                    ] + [
+                    (match.group(1), match.start(1))
+                    for match in _css_import_re.finditer(el.text)
+                    ]
+                if urls:
+                    # sort by start pos to bring both match sets back into order
+                    urls = [ (start, url) for (url, start) in urls ]
+                    urls.sort()
+                    # reverse the list to report correct positions despite
+                    # modifications
+                    urls.reverse()
+                    for start, url in urls:
+                        yield (el, None, url, start)
             if 'style' in attribs:
-                for match in _css_url_re.finditer(attribs['style']):
-                    url, start = _unquote_match(match.group(1), match.start(1))
-                    yield (el, 'style', url, start)
+                urls = list(_css_url_re.finditer(attribs['style']))
+                if urls:
+                    # return in reversed order to simplify in-place modifications
+                    for match in urls[::-1]:
+                        url, start = _unquote_match(match.group(1), match.start(1))
+                        yield (el, 'style', url, start)
 
     def rewrite_links(self, link_repl_func, resolve_base_href=True,
                       base_href=None):

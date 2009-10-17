@@ -1,3 +1,8 @@
+
+Setup::
+
+    >>> import lxml.html
+
 We'll define a link translation function:
 
     >>> base_href = 'http://old/base/path.html'
@@ -118,8 +123,8 @@ link)``, which is awkward to test here, so we'll make a printer::
     ...   </table>
     ...  </body></html>'''))
     link href="style.css"
-    style None="/bg.gif"@40
     style None="/other-styles.css"@69
+    style None="/bg.gif"@40
     script src="/js-funcs.js"
     a href="/test.html"
     a href="/other.html"
@@ -178,4 +183,49 @@ An application of ``iterlinks()`` is ``make_links_absolute()``::
        </td></tr>
       </table>
      </body>
+    </html>
+
+Check if we can replace multiple links inside of the same text string::
+
+    >>> html = lxml.html.fromstring ("""\
+    ... <html>
+    ...   <head>
+    ...      <title>Test</title>
+    ...      <style type='text/css'>
+    ...        .bg1 {
+    ...            background: url(images/bg1.png);
+    ...        }
+    ...        .bg2 {
+    ...            background: url(images/bg2.png);
+    ...        }
+    ...      </style>
+    ...   </head>
+    ...   <body>
+    ...      <p>Hi</p>
+    ...   </body>
+    ... </html>
+    ... """,
+    ... base_url = 'http://www.example.com/')
+
+    >>> html.make_links_absolute ()
+
+    >>> try: _unicode = unicode
+    ... except NameError: _unicode = str
+
+    >>> print(lxml.html.tostring (html, pretty_print = True, encoding=_unicode))
+    <html>
+      <head>
+        <title>Test</title>
+        <style type="text/css">
+          .bg1 {
+            background: url(http://www.example.com/images/bg1.png);
+          }
+          .bg2 {
+            background: url(http://www.example.com/images/bg2.png);
+          }
+        </style>
+      </head>
+      <body>
+        <p>Hi</p>
+      </body>
     </html>
