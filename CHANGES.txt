@@ -25,6 +25,14 @@ Features added
 Bugs fixed
 ----------
 
+* Rewriting multiple links inside of HTML text content could end up
+  replacing unrelated content as replacements could impact the
+  reported position of subsequent matches.  Modifications are now
+  simplified by letting the ``iterlinks()`` generator in ``lxml.html``
+  return links in reversed order if they appear inside the same text
+  node.  Thus, replacements and link-internal modifications no longer
+  change the position of links reported afterwards.
+
 * The ``resolve_entities`` option did not work in the incremental feed
   parser.
 
