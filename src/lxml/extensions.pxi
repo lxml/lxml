@@ -714,7 +714,7 @@ cdef void _extension_function_call(_BaseContext context, function,
     doc = context._doc
     try:
         args = []
-        for i in xrange(nargs):
+        for i in range(nargs):
             obj = xpath.valuePop(ctxt)
             o = _unwrapXPathObject(obj, doc, context._build_smart_strings)
             _freeXPathObject(obj)
