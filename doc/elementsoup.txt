@@ -182,7 +182,7 @@ Using only the encoding detection
 
 If you prefer a 'real' (and fast) HTML parser instead of the regular
 expression based one in BeautifulSoup, you can still benefit from
-BeautifulSoup's _`support for encoding detection` in the
+BeautifulSoup's `support for encoding detection`_ in the
 ``UnicodeDammit`` class.
 
 .. sourcecode:: pycon

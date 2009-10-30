@@ -33,13 +33,36 @@ Bugs fixed
   node.  Thus, replacements and link-internal modifications no longer
   change the position of links reported afterwards.
 
-* The ``resolve_entities`` option did not work in the incremental feed
-  parser.
-
 * The ``.value`` attribute of ``textarea`` elements in lxml.html did
   not represent the complete raw value (including child tags etc.). It
   now serialises the complete content on read and replaces the
   complete content by a string on write.
+
+* Target parser didn't call ``.close()`` on the target object if
+  parsing failed.  Now it is guaranteed that ``.close()`` will be
+  called after parsing, regardless of the outcome.
+
+Other changes
+-------------
+
+* ``Element.attrib`` no longer uses a cyclic reference back to its
+  Element object.  It therefore no longer requires the garbage
+  collector to clean up.
+
+* Static builds include libiconv, in addition to libxml2 and libxslt.
+
+
+2.2.3 (2009-10-30)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* The ``resolve_entities`` option did not work in the incremental feed
+  parser.
 
 * Looking up and deleting attributes without a namespace could hit a
   namespaced attribute of the same name instead.
@@ -79,20 +102,10 @@ Bugs fixed
 
 * Feed parser failed to honout the 'recover' option on parse errors.
 
-* Target parser didn't call ``.close()`` on the target object if
-  parsing failed.  Now it is guaranteed that ``.close()`` will be
-  called after parsing, regardless of the outcome.
-
 * Diverting the error logging to Python's logging system was broken.
 
 Other changes
 -------------
-
-* ``Element.attrib`` no longer uses a cyclic reference back to its
-  Element object.  It therefore no longer requires the garbage
-  collector to clean up.
-
-* Static builds include libiconv, in addition to libxml2 and libxslt.
 
 
 2.2.2 (2009-06-21)
