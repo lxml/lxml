@@ -985,7 +985,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _countElements(self._c_node.children)
 
     def __nonzero__(self):
-        u"__nonzero__(self)"
+        #u"__nonzero__(self)" # currently fails in Py3.1
         import warnings
         warnings.warn(
             u"The behavior of this method will change in future versions. "
