@@ -265,12 +265,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
         # the document
-        #print "freeing document:", <int>self._c_doc
-        #displayNode(<xmlNode*>self._c_doc, 0)
-        #print <long>self._c_doc, self._c_doc.dict is __GLOBAL_PARSER_CONTEXT._c_dict
-        #print <long>self._c_doc, canDeallocateChildNodes(<xmlNode*>self._c_doc)
         tree.xmlFreeDoc(self._c_doc)
-        #_deallocDocument(self._c_doc)
 
     cdef getroot(self):
         # return an element proxy for the document root
@@ -397,7 +392,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 cdef __initPrefixCache():
     cdef int i
     return tuple([ python.PyString_FromFormat("ns%d", i)
-                   for i from 0 <= i < 30 ])
+                   for i in range(30) ])
 
 cdef object _PREFIX_CACHE
 _PREFIX_CACHE = __initPrefixCache()
