@@ -1,12 +1,17 @@
 Installing lxml
 ===============
 
+For special installation instructions regarding MS Windows and
+MacOS-X, see below.
+
 Requirements
 ------------
 
 You need Python 2.3 or later.
 
-You need libxml2 and libxslt, in particular:
+Unless you are using a static binary distribution (e.g. a Windows
+binary egg from PyPI), you need to install libxml2 and libxslt, in
+particular:
 
 * libxml 2.6.21 or later. It can be found here:
   http://xmlsoft.org/downloads.html
@@ -25,16 +30,35 @@ so newer versions will give you better complience with the W3C spec.
 Installation
 ------------
 
-If you have easy_install_, you can run the following as super-user (or
+Get the `easy_install`_ tool and run the following as super-user (or
 administrator)::
 
   easy_install lxml
 
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
-This has been reported to work on Linux, MacOS-X 10.4 and Windows, as long as
-libxml2 and libxslt are properly installed (including development packages,
-i.e. header files, etc.).
+* On **MS Windows**, the above will install the binary builds that we
+  provide.  If there is no binary build of the latest release yet,
+  please search PyPI_ for the last release that has them and pass that
+  version to ``easy_install`` like this:
+
+    easy_install lxml==2.2.2
+
+* On **Linux** (and most other well-behaved operating systems),
+  ``easy_install`` will manage to build the source distribution as
+  long as libxml2 and libxslt are properly installed, including
+  development packages, i.e. header files, etc.  Use your package
+  management tool to look for packages like ``libxml2-dev`` or
+  ``libxslt-devel`` if the build fails, and make sure they are
+  installed.
+
+* On **MacOS-X**, use the following to build the source distribution,
+  and make sure you have a working Internet connection, as this will
+  download libxml2 and libxslt in order to build them::
+
+   STATIC_DEPS=true easy_install lxml
+
+.. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
 
 Building lxml from sources
@@ -65,9 +89,14 @@ built against the libraries, i.e. it already includes them.  There is
 no need to install the external libraries if you use an official lxml
 build from PyPI.
 
-If you want to upgrade the libraries and/or compile lxml from sources, you
-should install a `binary distribution`_ of libxml2 and libxslt.  You need both
-libxml2 and libxslt, as well as iconv and zlib.
+Unless you know what you are doing, this means: *do not install
+libxml2 or libxslt if you use a binary build of lxml*.  Just use
+``easy_install`` by following the installation instructions above.
+
+*Only* if you want to upgrade the libraries and/or compile lxml from
+sources, you should install a `binary distribution`_ of libxml2 and
+libxslt.  You need both libxml2 and libxslt, as well as iconv and
+zlib.
 
 .. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
 .. _`binary egg distribution of lxml`: http://cheeseshop.python.org/pypi/lxml
@@ -76,17 +105,25 @@ libxml2 and libxslt, as well as iconv and zlib.
 MacOS-X
 -------
 
-The system libraries of libxml2 and libxslt installed under MacOS-X
-tend to be rather outdated.  In any case, they are older than the
-required versions for lxml 2.x, so you will have a hard time getting
-lxml to work without installing newer libraries.
-
-A number of users reported success with updated libraries (e.g. using
-fink_ or macports), but needed to set the runtime environment variable
-``DYLD_LIBRARY_PATH`` to the directory where fink keeps the libraries.
-See the `FAQ entry on MacOS-X`_ for more information.
-
-.. _fink: http://finkproject.org/
-.. _`FAQ entry on MacOS-X`: FAQ.html#my-application-crashes-on-macos-x
-
 A macport of lxml is available.  Try ``port install py25-lxml``.
+
+If you want to use a more recent lxml release, you may have to build
+it yourself.  Apple doesn't help here, as the system libraries of
+libxml2 and libxslt installed under MacOS-X are horribly outdated, and
+updating them is everything but easy.  In any case, you cannot run
+lxml 2.x with the system provided libraries, so you have to use newer
+libraries.
+
+Luckily, lxml's ``setup.py`` script has built-in support for building
+and integrating these libraries statically during the build.  Please
+read the `MacOS-X build instructions`_.
+
+.. _`MacOS-X build instructions`: build.html#building-lxml-on-macos-x
+.. _fink: http://finkproject.org/
+
+A number of users also reported success with updated libraries
+(e.g. using fink_ or macports), but needed to set the runtime
+environment variable ``DYLD_LIBRARY_PATH`` to the directory where fink
+keeps the libraries.  In any case, this method is easy to get wrong
+and everything but safe.  Unless you know what you are doing, follow
+the static build instructions above.
