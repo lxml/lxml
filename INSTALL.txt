@@ -40,7 +40,7 @@ administrator)::
 * On **MS Windows**, the above will install the binary builds that we
   provide.  If there is no binary build of the latest release yet,
   please search PyPI_ for the last release that has them and pass that
-  version to ``easy_install`` like this:
+  version to ``easy_install`` like this::
 
     easy_install lxml==2.2.2
 
