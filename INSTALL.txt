@@ -4,6 +4,15 @@ Installing lxml
 For special installation instructions regarding MS Windows and
 MacOS-X, see below.
 
+.. contents::
+   1  Requirements
+   2  Installation
+   3  Installation in ActivePython
+   4  Building lxml from sources
+   5  MS Windows
+   6  MacOS-X
+
+
 Requirements
 ------------
 
@@ -59,6 +68,30 @@ administrator)::
    STATIC_DEPS=true easy_install lxml
 
 .. _PyPI: http://cheeseshop.python.org/pypi/lxml
+
+
+Installation in ActivePython
+----------------------------
+
+ActiveState_ provides ready-made lxml builds for different platforms
+in its `package repository`_ for the PyPM_ package manager.  PyPM is
+similar to apt-get in that there is a repository of automaticaly
+pre-built packages for Windows, Mac and Linux.
+
+To install lxml in ActivePython, type the following on one of these
+operating systems::
+
+  $ pypm install lxml
+
+To test the installation, try::
+
+  $ python -c "import lxml; print lxml.__file__"
+
+This should show you the directory where the package was installed.
+
+.. _ActiveState: http://www.activestate.com/
+.. _PyPM: http://docs.activestate.com/activepython/2.6/pypm.html
+.. _`package repository`: http://pypm.activestate.com/
 
 
 Building lxml from sources
