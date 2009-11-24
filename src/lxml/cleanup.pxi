@@ -114,18 +114,18 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     ns_tags = _filterSpecialTagNames(
         tag_names, &strip_comments, &strip_pis, &strip_entities)
 
-    # tag names are passes as C pointers as this allows us to take
-    # them from the doc dict and do pointer comparisons
-    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
-    if c_ns_tags is NULL:
-        python.PyErr_NoMemory()
-
     if (strip_comments or strip_pis) and isinstance(tree_or_element, _ElementTree):
         # include PIs and comments next to the root node
         if strip_comments:
             _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, with_tail)
         if strip_pis:
             _removeSiblings(element._c_node, tree.XML_PI_NODE, with_tail)
+
+    # tag names are passes as C pointers as this allows us to take
+    # them from the doc dict and do pointer comparisons
+    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
+    if c_ns_tags is NULL:
+        python.PyErr_NoMemory()
 
     try:
         c_tag_count = _mapTagsToCharArray(doc._c_doc, ns_tags, c_ns_tags)
@@ -205,18 +205,18 @@ def strip_tags(tree_or_element, *tag_names):
     ns_tags = _filterSpecialTagNames(
         tag_names, &strip_comments, &strip_pis, &strip_entities)
 
-    # tag names are passes as C pointers as this allows us to take
-    # them from the doc dict and do pointer comparisons
-    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
-    if c_ns_tags is NULL:
-        python.PyErr_NoMemory()
-
     if (strip_comments or strip_pis) and isinstance(tree_or_element, _ElementTree):
         # include PIs and comments next to the root node
         if strip_comments:
             _removeSiblings(element._c_node, tree.XML_COMMENT_NODE, 0)
         if strip_pis:
             _removeSiblings(element._c_node, tree.XML_PI_NODE, 0)
+
+    # tag names are passes as C pointers as this allows us to take
+    # them from the doc dict and do pointer comparisons
+    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
+    if c_ns_tags is NULL:
+        python.PyErr_NoMemory()
 
     try:
         c_tag_count = _mapTagsToCharArray(doc._c_doc, ns_tags, c_ns_tags)
