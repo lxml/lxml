@@ -332,7 +332,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             ns = python.PyTuple_GET_ITEM(_PREFIX_CACHE, self._ns_counter)
             python.Py_INCREF(ns)
         else:
-            ns = python.PyString_FromFormat("ns%d", self._ns_counter)
+            ns = python.PyBytes_FromFormat("ns%d", self._ns_counter)
         if self._prefix_tail is not None:
             ns += self._prefix_tail
         self._ns_counter += 1
@@ -391,7 +391,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
 cdef __initPrefixCache():
     cdef int i
-    return tuple([ python.PyString_FromFormat("ns%d", i)
+    return tuple([ python.PyBytes_FromFormat("ns%d", i)
                    for i in range(30) ])
 
 cdef object _PREFIX_CACHE
@@ -1467,11 +1467,10 @@ cdef class _Entity(__ContentOnlyElement):
             return funicode(self._c_node.name)
 
         def __set__(self, value):
-            value = _utf8(value)
+            value_utf = _utf8(value)
             assert u'&' not in value and u';' not in value, \
                 u"Invalid entity name '%s'" % value
-            c_text = _cstr(value)
-            tree.xmlNodeSetName(self._c_node, c_text)
+            tree.xmlNodeSetName(self._c_node, _cstr(value_utf))
 
     property text:
         # FIXME: should this be None or '&[VALUE];' or the resolved
