@@ -5,6 +5,7 @@ For special installation instructions regarding MS Windows and
 MacOS-X, see the specific sections below.
 
 .. contents::
+..
    1  Requirements
    2  Installation
    3  Installation in ActivePython
