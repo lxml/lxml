@@ -675,7 +675,7 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
 
-cdef _resolveQNameText(_Element element, value):
+cdef bytes _resolveQNameText(_Element element, value):
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(value)
     if ns is None:
