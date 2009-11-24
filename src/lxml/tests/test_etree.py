@@ -7,7 +7,14 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
-import os.path, unittest, copy, sys, operator, tempfile, gzip
+import os.path
+import unittest
+import copy
+import sys
+import re
+import operator
+import tempfile
+import gzip
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -310,6 +317,85 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = XML(xml)
         self.etree.strip_tags(root, 'c')
         self.assertEquals(_bytes('<test>TEST<a>A<b>BCT</b>BT</a>AT<x>X<a>A<b></b>BTCT</a>AT</x>XT</test>'),
+                          self._writeElement(root))
+
+    def test_strip_tags_pi_comment(self):
+        XML = self.etree.XML
+        PI = self.etree.ProcessingInstruction
+        Comment = self.etree.Comment
+        xml = _bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>')
+
+        root = XML(xml)
+        self.etree.strip_tags(root, PI)
+        self.assertEquals(_bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->\n<?PI1?>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, Comment)
+        self.assertEquals(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT<?PI2?></test>\n<!--comment3-->\n<?PI1?>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, PI, Comment)
+        self.assertEquals(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, Comment, PI)
+        self.assertEquals(_bytes('<!--comment1-->\n<?PI1?>\n<test>TESTXT</test>\n<!--comment3-->\n<?PI1?>'),
+                          self._writeElement(root))
+
+    def test_strip_tags_pi_comment_all(self):
+        XML = self.etree.XML
+        ElementTree = self.etree.ElementTree
+        PI = self.etree.ProcessingInstruction
+        Comment = self.etree.Comment
+        xml = _bytes('<!--comment1-->\n<?PI1?>\n<test>TEST<!--comment2-->XT<?PI2?></test>\n<!--comment3-->\n<?PI1?>')
+
+        root = XML(xml)
+        self.etree.strip_tags(ElementTree(root), PI)
+        self.assertEquals(_bytes('<!--comment1-->\n<test>TEST<!--comment2-->XT</test>\n<!--comment3-->'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(ElementTree(root), Comment)
+        self.assertEquals(_bytes('<?PI1?>\n<test>TESTXT<?PI2?></test>\n<?PI1?>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(ElementTree(root), PI, Comment)
+        self.assertEquals(_bytes('<test>TESTXT</test>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(ElementTree(root), Comment, PI)
+        self.assertEquals(_bytes('<test>TESTXT</test>'),
+                          self._writeElement(root))
+
+    def test_strip_tags_doc_style(self):
+        XML = self.etree.XML
+        xml = _bytes('''
+        <div>
+	    <div>
+		I like <strong>sheep</strong>.
+		<br/>
+		I like lots of <strong>sheep</strong>.
+		<br/>
+		Click <a href="http://www.sheep.com">here</a> for <a href="http://www.sheep.com">those</a> sheep.
+		<br/>
+	    </div>
+        </div>
+        '''.strip())
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'a')
+        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), '', xml).replace('<br/>', '<br></br>'),
+                          self._writeElement(root))
+
+        root = XML(xml)
+        self.etree.strip_tags(root, 'a', 'br')
+        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), '',
+                                 re.sub(_bytes('<br[^>]*>'), '', xml)),
                           self._writeElement(root))
 
     def test_strip_tags_ns(self):

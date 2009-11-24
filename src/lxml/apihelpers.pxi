@@ -400,6 +400,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
     return 0
 
 cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
+    # NOTE: this does not deallocate the node, just unlink it!
     cdef xmlNode* c_parent
     cdef xmlNode* c_child
     if c_node.children is NULL:
@@ -883,6 +884,35 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     else:
         return 0
 
+cdef inline bint _tagMatchesExactly(xmlNode* c_node, char* c_href, char* c_name):
+    u"""Tests if the node matches namespace URI and tag name.
+
+    This differs from _tagMatches() in that it does not consider a
+    NULL value in c_href a wildcard, and that it expects the c_name to
+    be taken from the doc dict, i.e. it only compares the names by
+    address.
+
+    A node matches if it matches both c_href and c_name.
+
+    A node matches c_href if any of the following is true:
+    * its namespace is NULL and c_href is the empty string
+    * its namespace string equals the c_href string
+
+    A node matches c_name if any of the following is true:
+    * c_name is NULL
+    * its name string points to the same address (!) as c_name
+    """
+    cdef char* c_node_href
+    if c_name is not NULL and c_name is not c_node.name:
+        return 0
+    c_node_href = _getNs(c_node)
+    if c_href is NULL:
+        return c_node_href is NULL or c_node_href[0] == '\0'
+    elif c_node_href is NULL:
+        return 0
+    else:
+        return cstd.strcmp(c_href, c_node_href) == 0
+
 cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     u"""Unlink and free a node and subnodes if possible.  Otherwise, make sure
     it's self-contained.
@@ -894,6 +924,29 @@ cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     if not attemptDeallocation(c_node):
         # make namespaces absolute
         moveNodeToDocument(doc, c_node.doc, c_node)
+    return 0
+
+cdef int _removeSiblings(xmlNode* c_element, int node_type, bint with_tail) except -1:
+    cdef xmlNode* c_node
+    cdef xmlNode* c_next
+    c_node = c_element.next
+    while c_node is not NULL:
+        c_next = _nextElement(c_node)
+        if c_node.type == node_type:
+            if with_tail:
+                _removeText(c_node.next)
+            tree.xmlUnlinkNode(c_node)
+            attemptDeallocation(c_node)
+        c_node = c_next
+    c_node = c_element.prev
+    while c_node is not NULL:
+        c_next = _previousElement(c_node)
+        if c_node.type == node_type:
+            if with_tail:
+                _removeText(c_node.next)
+            tree.xmlUnlinkNode(c_node)
+            attemptDeallocation(c_node)
+        c_node = c_next
     return 0
 
 cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
