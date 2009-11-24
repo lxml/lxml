@@ -209,6 +209,8 @@ with the desired target versions like this::
          --libxml2-version=2.7.3 \
          --libxslt-version=1.1.24 \
 
+  sudo python setup.py install
+
 Instead of ``build``, you can use any target, like ``bdist_egg`` if
 you want to use setuptools to build an installable egg.
 
