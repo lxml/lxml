@@ -28,6 +28,10 @@ Features added
 Bugs fixed
 ----------
 
+* ``lxml.cssselect`` did not distinguish between ``x[attr="val"]`` and
+  ``x [attr="val"]`` (with a space).  The latter now matches the
+  attribute independent of the element.
+
 * Rewriting multiple links inside of HTML text content could end up
   replacing unrelated content as replacements could impact the
   reported position of subsequent matches.  Modifications are now
