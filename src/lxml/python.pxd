@@ -26,23 +26,22 @@ cdef extern from "Python.h":
     cdef bint PyBytes_Check(object obj)
     cdef bint PyBytes_CheckExact(object obj)
 
-    cdef object PyUnicode_FromEncodedObject(object s, char* encoding,
+    cdef unicode PyUnicode_FromEncodedObject(object s, char* encoding,
                                             char* errors)
-    cdef object PyUnicode_AsEncodedString(object u, char* encoding,
+    cdef bytes PyUnicode_AsEncodedString(object u, char* encoding,
                                           char* errors)
-    cdef object PyUnicode_FromFormat(char* format, ...) # Python 3
-    cdef object PyUnicode_Decode(char* s, Py_ssize_t size,
-                                 char* encoding, char* errors)
-    cdef object PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
-    cdef object PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
-    cdef object PyUnicode_AsUTF8String(object ustring)
-    cdef object PyUnicode_AsASCIIString(object ustring)
+    cdef unicode PyUnicode_FromFormat(char* format, ...) # Python 3
+    cdef unicode PyUnicode_Decode(char* s, Py_ssize_t size,
+                                  char* encoding, char* errors)
+    cdef unicode PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
+    cdef unicode PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
+    cdef bytes PyUnicode_AsUTF8String(object ustring)
+    cdef bytes PyUnicode_AsASCIIString(object ustring)
     cdef char* PyUnicode_AS_DATA(object ustring)
     cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
-    cdef object PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
-    cdef object PyBytes_FromFormat(char* format, ...)
-    cdef object PyString_FromFormat(char* format, ...) # to be deleted!
+    cdef bytes PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
+    cdef bytes PyBytes_FromFormat(char* format, ...)
     cdef Py_ssize_t PyBytes_GET_SIZE(object s)
 
     cdef object PyNumber_Int(object value)

@@ -628,175 +628,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(self._rootstring(result),
                           _bytes('<C>C</C>'))
 
-    def test_extensions1(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    exclude-result-prefixes="myns">
-  <xsl:template match="a"><A><xsl:value-of select="myns:mytext(b)"/></A></xsl:template>
-</xsl:stylesheet>''')
-
-        def mytext(ctxt, values):
-            return 'X' * len(values)
-
-        result = tree.xslt(style, {('testns', 'mytext') : mytext})
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A>X</A>'))
-
-    def test_extensions2(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    exclude-result-prefixes="myns">
-  <xsl:template match="a"><A><xsl:value-of select="myns:mytext(b)"/></A></xsl:template>
-</xsl:stylesheet>''')
-
-        def mytext(ctxt, values):
-            return 'X' * len(values)
-
-        namespace = etree.FunctionNamespace('testns')
-        namespace['mytext'] = mytext
-
-        result = tree.xslt(style)
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A>X</A>'))
-
-    def test_variable_result_tree_fragment(self):
-        tree = self.parse('<a><b>B</b><b/></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    exclude-result-prefixes="myns">
-  <xsl:template match="a">
-    <xsl:variable name="content">
-       <xsl:apply-templates/>
-    </xsl:variable>
-    <A><xsl:value-of select="myns:mytext($content)"/></A>
-  </xsl:template>
-  <xsl:template match="b"><xsl:copy>BBB</xsl:copy></xsl:template>
-</xsl:stylesheet>''')
-
-        def mytext(ctxt, values):
-            for value in values:
-                self.assert_(hasattr(value, 'tag'),
-                             "%s is not an Element" % type(value))
-                self.assertEquals(value.tag, 'b')
-                self.assertEquals(value.text, 'BBB')
-            return 'X'.join([el.tag for el in values])
-
-        namespace = etree.FunctionNamespace('testns')
-        namespace['mytext'] = mytext
-
-        result = tree.xslt(style)
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A>bXb</A>'))
-
-    def test_extension_element(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    extension-element-prefixes="myns"
-    exclude-result-prefixes="myns">
-  <xsl:template match="a">
-    <A><myns:myext>b</myns:myext></A>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        class MyExt(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                child = etree.Element(self_node.text)
-                child.text = 'X'
-                output_parent.append(child)
-
-        extensions = { ('testns', 'myext') : MyExt() }
-
-        result = tree.xslt(style, extensions=extensions)
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A><b>X</b></A>'))
-
-    def test_extension_element_content(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    extension-element-prefixes="myns">
-  <xsl:template match="a">
-    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        class MyExt(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                output_parent.extend(list(self_node)[1:])
-
-        extensions = { ('testns', 'myext') : MyExt() }
-
-        result = tree.xslt(style, extensions=extensions)
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A><y>Y</y><z/></A>'))
-
-    def test_extension_element_apply_templates(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    extension-element-prefixes="myns">
-  <xsl:template match="a">
-    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
-  </xsl:template>
-  <xsl:template match="x" />
-  <xsl:template match="z">XYZ</xsl:template>
-</xsl:stylesheet>''')
-
-        class MyExt(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                for child in self_node:
-                    for result in self.apply_templates(context, child):
-                        if isinstance(result, basestring):
-                            el = etree.Element("T")
-                            el.text = result
-                        else:
-                            el = result
-                        output_parent.append(el)
-
-        extensions = { ('testns', 'myext') : MyExt() }
-
-        result = tree.xslt(style, extensions=extensions)
-        self.assertEquals(self._rootstring(result),
-                          _bytes('<A><T>Y</T><T>XYZ</T></A>'))
-
-    def test_extension_element_raise(self):
-        tree = self.parse('<a><b>B</b></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    xmlns:myns="testns"
-    extension-element-prefixes="myns"
-    exclude-result-prefixes="myns">
-  <xsl:template match="a">
-    <A><myns:myext>b</myns:myext></A>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        class MyError(Exception):
-            pass
-
-        class MyExt(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                raise MyError("expected!")
-
-        extensions = { ('testns', 'myext') : MyExt() }
-        self.assertRaises(MyError, tree.xslt, style, extensions=extensions)
-
     def test_xslt_document_XML(self):
         # make sure document('') works from parsed strings
         xslt = etree.XSLT(etree.XML("""\
@@ -1389,6 +1220,265 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(root[3].text, "test")
 
 
+class ETreeXSLTExtFuncTestCase(HelperTestCase):
+    """Tests for XPath extension functions in XSLT."""
+
+    def test_extensions1(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a"><A><xsl:value-of select="myns:mytext(b)"/></A></xsl:template>
+</xsl:stylesheet>''')
+
+        def mytext(ctxt, values):
+            return 'X' * len(values)
+
+        result = tree.xslt(style, {('testns', 'mytext') : mytext})
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A>X</A>'))
+
+    def test_extensions2(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a"><A><xsl:value-of select="myns:mytext(b)"/></A></xsl:template>
+</xsl:stylesheet>''')
+
+        def mytext(ctxt, values):
+            return 'X' * len(values)
+
+        namespace = etree.FunctionNamespace('testns')
+        namespace['mytext'] = mytext
+
+        result = tree.xslt(style)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A>X</A>'))
+
+    def test_variable_result_tree_fragment(self):
+        tree = self.parse('<a><b>B</b><b/></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <xsl:variable name="content">
+       <xsl:apply-templates/>
+    </xsl:variable>
+    <A><xsl:value-of select="myns:mytext($content)"/></A>
+  </xsl:template>
+  <xsl:template match="b"><xsl:copy>BBB</xsl:copy></xsl:template>
+</xsl:stylesheet>''')
+
+        def mytext(ctxt, values):
+            for value in values:
+                self.assert_(hasattr(value, 'tag'),
+                             "%s is not an Element" % type(value))
+                self.assertEquals(value.tag, 'b')
+                self.assertEquals(value.text, 'BBB')
+            return 'X'.join([el.tag for el in values])
+
+        namespace = etree.FunctionNamespace('testns')
+        namespace['mytext'] = mytext
+
+        result = tree.xslt(style)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A>bXb</A>'))
+
+
+class ETreeXSLTExtElementTestCase(HelperTestCase):
+    """Tests for extension elements in XSLT."""
+
+    def test_extension_element(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                child = etree.Element(self_node.text)
+                child.text = 'X'
+                output_parent.append(child)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A><b>X</b></A>'))
+
+    def test_extension_element_doc_context(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="/">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        tags = []
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                tags.append(input_node.tag)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(tags, ['a'])
+
+    def test_extension_element_comment_pi_context(self):
+        tree = self.parse('<?test toast?><a><!--a comment--><?another pi?></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="/">
+    <ROOT><xsl:apply-templates /></ROOT>
+  </xsl:template>
+  <xsl:template match="comment()">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+  <xsl:template match="processing-instruction()">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        text = []
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                text.append(input_node.text)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(text, ['toast', 'a comment', 'pi'])
+
+    def _test_extension_element_attribute_context(self):
+        # currently not supported
+        tree = self.parse('<a test="A"><b attr="B"/></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="@test">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+  <xsl:template match="@attr">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        text = []
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, attr_value, output_parent):
+                text.append(attr_value)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(text, ['A', 'B'])
+
+    def test_extension_element_content(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                output_parent.extend(list(self_node)[1:])
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A><y>Y</y><z/></A>'))
+
+    def test_extension_element_apply_templates(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
+  </xsl:template>
+  <xsl:template match="x" />
+  <xsl:template match="z">XYZ</xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                for child in self_node:
+                    for result in self.apply_templates(context, child):
+                        if isinstance(result, basestring):
+                            el = etree.Element("T")
+                            el.text = result
+                        else:
+                            el = result
+                        output_parent.append(el)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEquals(self._rootstring(result),
+                          _bytes('<A><T>Y</T><T>XYZ</T></A>'))
+
+    def test_extension_element_raise(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext>b</myns:myext></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        class MyError(Exception):
+            pass
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                raise MyError("expected!")
+
+        extensions = { ('testns', 'myext') : MyExt() }
+        self.assertRaises(MyError, tree.xslt, style, extensions=extensions)
+
+
 class Py3XSLTTestCase(HelperTestCase):
     """XSLT tests for etree under Python 3"""
     def test_xslt_result_bytes(self):
@@ -1452,6 +1542,8 @@ class Py3XSLTTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXSLTExtFuncTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeXSLTExtElementTestCase)])
     if is_python3:
         suite.addTests([unittest.makeSuite(Py3XSLTTestCase)])
     suite.addTests(

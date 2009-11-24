@@ -8,8 +8,8 @@ lxml changelog
 Features added
 --------------
 
-* Support for XSLT context nodes other than elements: document root,
-  comments, processing instructions.
+* XSLT extension elements: support for XSLT context nodes other than
+  elements: document root, comments, processing instructions.
 
 * Support for strings (in addition to Elements) in node-sets returned
   by extension functions.

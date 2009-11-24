@@ -28,7 +28,7 @@ cdef class XSLTExtension:
         cdef xmlNode* c_node
         cdef xmlNode* c_next
         cdef xmlNode* c_context_node
-        cdef _ReadOnlyElementProxy proxy
+        cdef _ReadOnlyProxy proxy
         cdef list results
         c_context_node = _roNodeOf(node)
         #assert c_context_node.doc is context._xsltContext.node.doc, \
@@ -81,7 +81,8 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
     cdef XSLTExtension extension
     cdef python.PyObject* dict_result
     cdef char* c_uri
-    cdef _ReadOnlyElementProxy context_node, self_node, output_parent
+    cdef xmlNode* c_node
+    cdef _ReadOnlyProxy context_node = None, self_node = None, output_parent
     c_uri = _getNs(c_inst_node)
     if c_uri is NULL:
         # not allowed, and should never happen
@@ -91,34 +92,60 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
         return
     context = <_XSLTContext>c_ctxt.xpathCtxt.userData
     try:
-        dict_result = python.PyDict_GetItem(
-            context._extension_elements, (c_uri, c_inst_node.name))
-        if dict_result is NULL:
-            raise KeyError, \
-                u"extension element %s not found" % funicode(c_inst_node.name)
-        extension = <object>dict_result
-
         try:
-            self_node     = _newReadOnlyProxy(None, c_inst_node)
-            context_node  = _newReadOnlyProxy(self_node, c_context_node)
-            output_parent = _newAppendOnlyProxy(self_node, c_ctxt.insert)
+            dict_result = python.PyDict_GetItem(
+                context._extension_elements, (c_uri, c_inst_node.name))
+            if dict_result is NULL:
+                raise KeyError, \
+                    u"extension element %s not found" % funicode(c_inst_node.name)
+            extension = <object>dict_result
 
-            context._extension_element_proxy = self_node
-            extension.execute(context, self_node, context_node, output_parent)
-        finally:
-            context._extension_element_proxy = None
-            if self_node is not None:
-                _freeReadOnlyProxies(self_node)
-    except Exception, e:
-        e = unicode(e).encode(u"UTF-8")
-        message = python.PyString_FromFormat(
-            "Error executing extension element '%s': %s",
-            c_inst_node.name, _cstr(e))
-        xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
-        context._exc._store_raised()
+            try:
+                # build the context proxy nodes
+                self_node = _newReadOnlyProxy(None, c_inst_node)
+                output_parent = _newAppendOnlyProxy(self_node, c_ctxt.insert)
+                if c_context_node.type in (tree.XML_DOCUMENT_NODE,
+                                           tree.XML_HTML_DOCUMENT_NODE):
+                    c_node = tree.xmlDocGetRootElement(<xmlDoc*>c_context_node)
+                    if c_node is not NULL:
+                        context_node = _newReadOnlyProxy(self_node, c_node)
+                    else:
+                        context_node = None
+                elif c_context_node.type in (tree.XML_ATTRIBUTE_NODE,
+                                             tree.XML_TEXT_NODE,
+                                             tree.XML_CDATA_SECTION_NODE):
+                    # this isn't easy to support using read-only
+                    # nodes, as the smart-string factory must
+                    # instantiate the parent proxy somehow...
+                    raise TypeError("Unsupported element type: %d" % c_context_node.type)
+                else:
+                    context_node  = _newReadOnlyProxy(self_node, c_context_node)
+
+                # run the XSLT extension
+                context._extension_element_proxy = self_node
+                extension.execute(context, self_node, context_node, output_parent)
+            finally:
+                context._extension_element_proxy = None
+                if self_node is not None:
+                    _freeReadOnlyProxies(self_node)
+        except Exception, e:
+            try:
+                e = unicode(e).encode(u"UTF-8")
+            except:
+                e = repr(e).encode(u"UTF-8")
+            message = python.PyBytes_FromFormat(
+                "Error executing extension element '%s': %s",
+                c_inst_node.name, _cstr(e))
+            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
+            context._exc._store_raised()
+        except:
+            # just in case
+            message = python.PyBytes_FromFormat(
+                "Error executing extension element '%s'", c_inst_node.name)
+            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
+            context._exc._store_raised()
     except:
-        # just in case
-        message = python.PyString_FromFormat(
-            "Error executing extension element '%s'", c_inst_node.name)
-        xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
+        # no Python functions here - everything can fail...
+        xslt.xsltTransformError(c_ctxt, NULL, c_inst_node,
+                                "Error during XSLT extension element evaluation")
         context._exc._store_raised()
