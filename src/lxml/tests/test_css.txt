@@ -26,6 +26,8 @@ Then of parsing:
     Pseudo[Element[td]:first]
     >>> parse('a[name]')
     Attrib[Element[a][name]]
+    >>> parse('a [name]')
+    CombinedSelector[Element[a] <followed> Attrib[Element[*][name]]]
     >>> repr(parse('a[rel="include"]')).replace("u'", "'")
     "Attrib[Element[a][rel = String('include', 6)]]"
     >>> repr(parse('a[hreflang |= \'en\']')).replace("u'", "'")
