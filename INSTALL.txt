@@ -2,7 +2,7 @@ Installing lxml
 ===============
 
 For special installation instructions regarding MS Windows and
-MacOS-X, see below.
+MacOS-X, see the specific sections below.
 
 .. contents::
    1  Requirements
@@ -65,7 +65,7 @@ administrator)::
   and make sure you have a working Internet connection, as this will
   download libxml2 and libxslt in order to build them::
 
-   STATIC_DEPS=true easy_install lxml
+   STATIC_DEPS=true sudo easy_install lxml
 
 .. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
