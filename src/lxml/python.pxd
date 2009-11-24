@@ -40,9 +40,10 @@ cdef extern from "Python.h":
     cdef char* PyUnicode_AS_DATA(object ustring)
     cdef Py_ssize_t PyUnicode_GET_DATA_SIZE(object ustring)
     cdef Py_ssize_t PyUnicode_GET_SIZE(object ustring)
-    cdef object PyString_FromStringAndSize(char* s, Py_ssize_t size)
-    cdef object PyString_FromFormat(char* format, ...)
-    cdef Py_ssize_t PyString_GET_SIZE(object s)
+    cdef object PyBytes_FromStringAndSize(char* s, Py_ssize_t size)
+    cdef object PyBytes_FromFormat(char* format, ...)
+    cdef object PyString_FromFormat(char* format, ...) # to be deleted!
+    cdef Py_ssize_t PyBytes_GET_SIZE(object s)
 
     cdef object PyNumber_Int(object value)
     cdef Py_ssize_t PyInt_AsSsize_t(object value)
@@ -107,7 +108,7 @@ cdef extern from "Python.h":
 
     # some handy functions
     cdef int callable "PyCallable_Check" (object obj)
-    cdef char* _cstr "PyString_AS_STRING" (object s)
+    cdef char* _cstr "PyBytes_AS_STRING" (object s)
 
     # Py_buffer related flags
     cdef int PyBUF_SIMPLE

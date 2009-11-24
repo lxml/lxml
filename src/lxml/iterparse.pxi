@@ -482,13 +482,13 @@ Other keyword arguments:
                 if not python.PyBytes_Check(data):
                     self._source = None
                     raise TypeError, u"reading file objects must return plain strings"
-                c_data_len = python.PyString_GET_SIZE(data)
+                c_data_len = python.PyBytes_GET_SIZE(data)
                 c_data = _cstr(data)
                 done = (c_data_len == 0)
                 error = self._parse_chunk(pctxt, c_data, c_data_len, done)
             else:
                 if self._buffer is None:
-                    self._buffer = python.PyString_FromStringAndSize(
+                    self._buffer = python.PyBytes_FromStringAndSize(
                         NULL, __ITERPARSE_CHUNK_SIZE)
                 c_data = _cstr(self._buffer)
                 with nogil:

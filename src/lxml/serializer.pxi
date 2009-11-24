@@ -130,7 +130,7 @@ cdef _tostring(_Element element, encoding, method,
                 tree.xmlBufferLength(c_result_buffer),
                 'strict')
         else:
-            result = python.PyString_FromStringAndSize(
+            result = python.PyBytes_FromStringAndSize(
                 tree.xmlBufferContent(c_result_buffer),
                 tree.xmlBufferLength(c_result_buffer))
     finally:
@@ -332,7 +332,7 @@ cdef class _FilelikeWriter:
         try:
             if self._filelike is None:
                 raise IOError, u"File is already closed"
-            py_buffer = python.PyString_FromStringAndSize(c_buffer, size)
+            py_buffer = python.PyBytes_FromStringAndSize(c_buffer, size)
             self._filelike.write(py_buffer)
             return size
         except:

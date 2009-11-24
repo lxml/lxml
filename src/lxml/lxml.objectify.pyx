@@ -466,7 +466,7 @@ cdef object _lookupChild(_Element parent, tag):
     c_node = parent._c_node
     ns, tag = cetree.getNsTag(tag)
     c_tag = tree.xmlDictExists(
-        c_node.doc.dict, _cstr(tag), python.PyString_GET_SIZE(tag))
+        c_node.doc.dict, _cstr(tag), python.PyBytes_GET_SIZE(tag))
     if c_tag is NULL:
         return None
     if ns is None:

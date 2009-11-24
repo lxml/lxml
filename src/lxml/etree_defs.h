@@ -36,6 +36,12 @@
 #  define PyString_GET_SIZE(s)               PyBytes_GET_SIZE(s)
 #  define PyString_AS_STRING(s)              PyBytes_AS_STRING(s)
 #else
+#  define PyBytes_CheckExact(o)              PyString_CheckExact(o)
+#  define PyBytes_Check(o)                   PyString_Check(o)
+#  define PyBytes_FromStringAndSize(s, len)  PyString_FromStringAndSize(s, len)
+#  define PyBytes_FromFormat                 PyString_FromFormat
+#  define PyBytes_GET_SIZE(s)                PyString_GET_SIZE(s)
+#  define PyBytes_AS_STRING(s)               PyString_AS_STRING(s)
 #if PY_VERSION_HEX < 0x02060000
 /* we currently only use three parameters - MSVC can't compile (s, ...) */
 #  define PyUnicode_FromFormat(s, a, b) (NULL)

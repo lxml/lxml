@@ -153,11 +153,11 @@ cdef _parseObjectPathList(path):
                 if index_end is NULL:
                     raise ValueError, u"index must be enclosed in []"
                 index = int(
-                    python.PyString_FromStringAndSize(
+                    python.PyBytes_FromStringAndSize(
                         index_pos + 1, <Py_ssize_t>(index_end - index_pos - 1)))
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, u"index not allowed on root node"
-                name = python.PyString_FromStringAndSize(
+                name = python.PyBytes_FromStringAndSize(
                     c_name, <Py_ssize_t>(index_pos - c_name))
         new_path.append( (ns, name, index) )
     if python.PyList_GET_SIZE(new_path) == 0:

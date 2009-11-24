@@ -689,7 +689,7 @@ cdef class _XSLTResultTree(_ElementTree):
             return ''
         # we must not use 'funicode' here as this is not always UTF-8
         try:
-            result = python.PyString_FromStringAndSize(s, l)
+            result = python.PyBytes_FromStringAndSize(s, l)
         finally:
             tree.xmlFree(s)
         return result

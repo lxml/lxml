@@ -347,7 +347,7 @@ cdef class _FileReaderContext:
             return 0
         try:
             c_byte_count = 0
-            byte_count = python.PyString_GET_SIZE(self._bytes)
+            byte_count = python.PyBytes_GET_SIZE(self._bytes)
             remaining  = byte_count - self._bytes_read
             while c_requested > remaining:
                 c_start = _cstr(self._bytes) + self._bytes_read
@@ -368,7 +368,7 @@ cdef class _FileReaderContext:
                         raise TypeError, \
                             u"reading from file-like objects must return byte strings or unicode strings"
 
-                remaining = python.PyString_GET_SIZE(self._bytes)
+                remaining = python.PyBytes_GET_SIZE(self._bytes)
                 if remaining == 0:
                     self._bytes_read = -1
                     return c_byte_count
@@ -435,7 +435,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             c_input = xmlparser.xmlNewInputStream(c_context)
             if c_input is not NULL:
                 c_input.base = _cstr(data)
-                c_input.length = python.PyString_GET_SIZE(data)
+                c_input.length = python.PyBytes_GET_SIZE(data)
                 c_input.cur = c_input.base
                 c_input.end = &c_input.base[c_input.length]
         elif doc_ref._type == PARSER_DATA_FILENAME:
@@ -870,7 +870,7 @@ cdef class _BaseParser:
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
         if py_buffer_len > python.INT_MAX or _UNICODE_ENCODING is NULL:
             text_utf = python.PyUnicode_AsUTF8String(utext)
-            py_buffer_len = python.PyString_GET_SIZE(text_utf)
+            py_buffer_len = python.PyBytes_GET_SIZE(text_utf)
             return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
         buffer_len = py_buffer_len
 
@@ -1049,7 +1049,7 @@ cdef class _FeedParser(_BaseParser):
             else:
                 c_encoding = self._default_encoding
             c_data = _cstr(data)
-            py_buffer_len = python.PyString_GET_SIZE(data)
+            py_buffer_len = python.PyBytes_GET_SIZE(data)
         elif python.PyUnicode_Check(data):
             if _UNICODE_ENCODING is NULL:
                 raise ParserError, \
@@ -1416,7 +1416,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
                 StringIO(text), filename)
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
-        c_len = python.PyString_GET_SIZE(text)
+        c_len = python.PyBytes_GET_SIZE(text)
         if c_len > python.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename)

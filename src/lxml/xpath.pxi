@@ -473,7 +473,7 @@ cdef class ETXPath(XPath):
         i = 1
         for namespace_def in _find_namespaces(stripped_path):
             if namespace_def not in namespace_defs:
-                prefix = python.PyString_FromFormat("__xpp%02d", i)
+                prefix = python.PyBytes_FromFormat("__xpp%02d", i)
                 i += 1
                 namespace_defs.append(namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'

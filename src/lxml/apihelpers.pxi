@@ -652,7 +652,7 @@ cdef int _setNodeText(xmlNode* c_node, value) except -1:
     elif isinstance(value, CDATA):
         c_text_node = tree.xmlNewCDataBlock(
             c_node.doc, _cstr((<CDATA>value)._utf8_data),
-            python.PyString_GET_SIZE((<CDATA>value)._utf8_data))
+            python.PyBytes_GET_SIZE((<CDATA>value)._utf8_data))
     else:
         # this will raise the right error
        _utf8(value)
@@ -683,7 +683,7 @@ cdef _resolveQNameText(_Element element, value):
     else:
         c_ns = element._doc._findOrBuildNodeNs(
             element._c_node, _cstr(ns), NULL)
-        return python.PyString_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
+        return python.PyBytes_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
 
 cdef inline bint _hasChild(xmlNode* c_node):
     return c_node is not NULL and _findChildForwards(c_node, 0) is not NULL
@@ -1197,7 +1197,7 @@ cdef int check_string_utf8(pystring):
     cdef char c
     cdef bint is_non_ascii
     s = _cstr(pystring)
-    c_end = s + python.PyString_GET_SIZE(pystring)
+    c_end = s + python.PyBytes_GET_SIZE(pystring)
     is_non_ascii = 0
     while s < c_end:
         if s[0] & 0x80:
@@ -1229,7 +1229,7 @@ cdef object funicode(char* s):
     slen = spos - s
     if is_non_ascii:
         return python.PyUnicode_DecodeUTF8(s, slen, NULL)
-    return python.PyString_FromStringAndSize(s, slen)
+    return python.PyBytes_FromStringAndSize(s, slen)
 
 cdef object _utf8(object s):
     cdef int invalid
@@ -1321,13 +1321,13 @@ cdef object _encodeFilenameUTF8(object filename):
         try:
             # try to decode with default encoding
             filename = python.PyUnicode_Decode(
-                c_filename, python.PyString_GET_SIZE(filename),
+                c_filename, python.PyBytes_GET_SIZE(filename),
                 _C_FILENAME_ENCODING, NULL)
         except UnicodeDecodeError, decode_exc:
             try:
                 # try if it's UTF-8
                 filename = python.PyUnicode_DecodeUTF8(
-                    c_filename, python.PyString_GET_SIZE(filename), NULL)
+                    c_filename, python.PyBytes_GET_SIZE(filename), NULL)
             except UnicodeDecodeError:
                 raise decode_exc # otherwise re-raise original exception
     if python.PyUnicode_Check(filename):
@@ -1354,13 +1354,13 @@ cdef tuple _getNsTag(tag):
         if c_ns_end is NULL:
             raise ValueError, u"Invalid tag name"
         nslen  = c_ns_end - c_tag
-        taglen = python.PyString_GET_SIZE(tag) - nslen - 2
+        taglen = python.PyBytes_GET_SIZE(tag) - nslen - 2
         if taglen == 0:
             raise ValueError, u"Empty tag name"
         if nslen > 0:
-            ns = python.PyString_FromStringAndSize(c_tag,   nslen)
-        tag = python.PyString_FromStringAndSize(c_ns_end+1, taglen)
-    elif python.PyString_GET_SIZE(tag) == 0:
+            ns = python.PyBytes_FromStringAndSize(c_tag,   nslen)
+        tag = python.PyBytes_FromStringAndSize(c_ns_end+1, taglen)
+    elif python.PyBytes_GET_SIZE(tag) == 0:
         raise ValueError, u"Empty tag name"
     return ns, tag
 
@@ -1445,7 +1445,7 @@ cdef object _namespacedNameFromNsName(char* href, char* name):
     elif python.IS_PYTHON3:
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
-        s = python.PyString_FromFormat("{%s}%s", href, name)
+        s = python.PyBytes_FromFormat("{%s}%s", href, name)
         if isutf8(href) or isutf8(name):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
