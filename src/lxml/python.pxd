@@ -1,4 +1,5 @@
 from cstd cimport FILE
+cimport cython
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
@@ -26,15 +27,15 @@ cdef extern from "Python.h":
     cdef bint PyBytes_Check(object obj)
     cdef bint PyBytes_CheckExact(object obj)
 
-    cdef unicode PyUnicode_FromEncodedObject(object s, char* encoding,
-                                            char* errors)
+    cdef cython.unicode PyUnicode_FromEncodedObject(object s, char* encoding,
+                                                    char* errors)
     cdef bytes PyUnicode_AsEncodedString(object u, char* encoding,
-                                          char* errors)
-    cdef unicode PyUnicode_FromFormat(char* format, ...) # Python 3
-    cdef unicode PyUnicode_Decode(char* s, Py_ssize_t size,
-                                  char* encoding, char* errors)
-    cdef unicode PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
-    cdef unicode PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
+                                         char* errors)
+    cdef cython.unicode PyUnicode_FromFormat(char* format, ...) # Python 3
+    cdef cython.unicode PyUnicode_Decode(char* s, Py_ssize_t size,
+                                         char* encoding, char* errors)
+    cdef cython.unicode PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
+    cdef cython.unicode PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
     cdef bytes PyUnicode_AsUTF8String(object ustring)
     cdef bytes PyUnicode_AsASCIIString(object ustring)
     cdef char* PyUnicode_AS_DATA(object ustring)
