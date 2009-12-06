@@ -125,14 +125,11 @@ cdef _tostring(_Element element, encoding, method,
 
     try:
         if encoding is _unicode:
-            result = python.PyUnicode_DecodeUTF8(
-                tree.xmlBufferContent(c_result_buffer),
-                tree.xmlBufferLength(c_result_buffer),
-                'strict')
+            result = tree.xmlBufferContent(
+                c_result_buffer)[:tree.xmlBufferLength(c_result_buffer)].decode('UTF-8')
         else:
-            result = python.PyBytes_FromStringAndSize(
-                tree.xmlBufferContent(c_result_buffer),
-                tree.xmlBufferLength(c_result_buffer))
+            result = <bytes>tree.xmlBufferContent(
+                c_result_buffer)[:tree.xmlBufferLength(c_result_buffer)]
     finally:
         error_result = tree.xmlOutputBufferClose(c_buffer)
     if error_result < 0:
@@ -332,7 +329,7 @@ cdef class _FilelikeWriter:
         try:
             if self._filelike is None:
                 raise IOError, u"File is already closed"
-            py_buffer = python.PyBytes_FromStringAndSize(c_buffer, size)
+            py_buffer = <bytes>c_buffer[:size]
             self._filelike.write(py_buffer)
             return size
         except:

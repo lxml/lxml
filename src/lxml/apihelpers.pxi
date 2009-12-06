@@ -1269,7 +1269,7 @@ cdef object funicode(char* s):
     cdef bint is_non_ascii
     if python.IS_PYTHON3:
         slen = cstd.strlen(s)
-        return python.PyUnicode_DecodeUTF8(s, slen, NULL)
+        return s[:slen].decode('UTF-8')
     spos = s
     is_non_ascii = 0
     while spos[0] != c'\0':
@@ -1281,8 +1281,8 @@ cdef object funicode(char* s):
         spos += 1
     slen = spos - s
     if is_non_ascii:
-        return python.PyUnicode_DecodeUTF8(s, slen, NULL)
-    return python.PyBytes_FromStringAndSize(s, slen)
+        return s[:slen].decode('UTF-8')
+    return <bytes>s[:slen]
 
 cdef object _utf8(object s):
     cdef int invalid
@@ -1396,13 +1396,14 @@ cdef tuple _getNsTag(tag):
     cdef char* c_ns_end
     cdef Py_ssize_t taglen
     cdef Py_ssize_t nslen
+    cdef bytes ns = None
     # _isString() is much faster than isinstance()
     if not _isString(tag) and isinstance(tag, QName):
         tag = (<QName>tag).text
     tag = _utf8(tag)
     c_tag = _cstr(tag)
     if c_tag[0] == c'{':
-        c_tag = c_tag + 1
+        c_tag += 1
         c_ns_end = cstd.strchr(c_tag, c'}')
         if c_ns_end is NULL:
             raise ValueError, u"Invalid tag name"
@@ -1411,8 +1412,8 @@ cdef tuple _getNsTag(tag):
         if taglen == 0:
             raise ValueError, u"Empty tag name"
         if nslen > 0:
-            ns = python.PyBytes_FromStringAndSize(c_tag,   nslen)
-        tag = python.PyBytes_FromStringAndSize(c_ns_end+1, taglen)
+            ns = <bytes>c_tag[:nslen]
+        tag = <bytes>c_ns_end[1:taglen+1]
     elif python.PyBytes_GET_SIZE(tag) == 0:
         raise ValueError, u"Empty tag name"
     return ns, tag
