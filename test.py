@@ -71,10 +71,17 @@ import types
 import getopt
 import unittest
 import traceback
+
 try:
     set
 except NameError:
     from sets import Set as set
+
+try:
+    # Python >=2.7 and >=3.2
+    from unittest.runner import _TextTestResult
+except ImportError:
+    from unittest import _TextTestResult
 
 __metaclass__ = type
 
@@ -302,14 +309,14 @@ def get_test_hooks(test_files, cfg, tracer=None):
     return results
 
 
-class CustomTestResult(unittest._TextTestResult):
+class CustomTestResult(_TextTestResult):
     """Customised TestResult.
 
     It can show a progress bar, and displays tracebacks for errors and failures
     as soon as they happen, in addition to listing them all at the end.
     """
 
-    __super = unittest._TextTestResult
+    __super = _TextTestResult
     __super_init = __super.__init__
     __super_startTest = __super.startTest
     __super_stopTest = __super.stopTest
