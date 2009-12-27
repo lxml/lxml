@@ -1159,10 +1159,8 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     u"""Append a new child to a parent element.
     """
     cdef xmlNode* c_next
-    cdef xmlNode* c_node
-    cdef xmlDoc* c_source_doc
-    c_node = child._c_node
-    c_source_doc = c_node.doc
+    cdef xmlNode* c_node = child._c_node
+    cdef xmlDoc* c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1178,10 +1176,8 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     """
     cdef xmlNode* c_next
     cdef xmlNode* c_child
-    cdef xmlNode* c_node
-    cdef xmlDoc* c_source_doc
-    c_node = child._c_node
-    c_source_doc = c_node.doc
+    cdef xmlNode* c_node = child._c_node
+    cdef xmlDoc* c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1199,11 +1195,9 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
     u"""Append a new child to a parent element.
     """
+    cdef xmlNode* c_node = sibling._c_node
+    cdef xmlDoc* c_source_doc = c_node.doc
     cdef xmlNode* c_next
-    cdef xmlNode* c_node
-    cdef xmlDoc* c_source_doc
-    c_node = sibling._c_node
-    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1216,11 +1210,9 @@ cdef int _appendSibling(_Element element, _Element sibling) except -1:
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
     u"""Append a new child to a parent element.
     """
+    cdef xmlNode* c_node = sibling._c_node
+    cdef xmlDoc* c_source_doc = c_node.doc
     cdef xmlNode* c_next
-    cdef xmlNode* c_node
-    cdef xmlDoc* c_source_doc
-    c_node = sibling._c_node
-    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1231,8 +1223,7 @@ cdef int _prependSibling(_Element element, _Element sibling) except -1:
     moveNodeToDocument(element._doc, c_source_doc, c_node)
 
 cdef inline int isutf8(char* s):
-    cdef char c
-    c = s[0]
+    cdef char c = s[0]
     while c != c'\0':
         if c & 0x80:
             return 1
@@ -1245,13 +1236,9 @@ cdef int check_string_utf8(pystring):
     for ASCII, 1 for UTF-8 and -1 in the case of errors, such as NULL
     bytes or ASCII control characters.
     """
-    cdef char* s
-    cdef char* c_end
-    cdef char c
-    cdef bint is_non_ascii
-    s = _cstr(pystring)
-    c_end = s + python.PyBytes_GET_SIZE(pystring)
-    is_non_ascii = 0
+    cdef char* s = _cstr(pystring)
+    cdef char* c_end = s + python.PyBytes_GET_SIZE(pystring)
+    cdef bint is_non_ascii = 0
     while s < c_end:
         if s[0] & 0x80:
             # skip the entire multi byte sequence
