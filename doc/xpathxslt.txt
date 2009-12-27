@@ -192,6 +192,8 @@ that the string value is the only thing in the tree that is actually
 of interest.  For these cases, you can deactivate the parental
 relationship using the keyword argument ``smart_strings``.
 
+.. sourcecode:: pycon
+
   >>> root = etree.XML("<root><a>TEXT</a></root>")
 
   >>> find_text = etree.XPath("//text()")
