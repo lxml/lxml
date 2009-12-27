@@ -1284,7 +1284,7 @@ cdef object funicode(char* s):
         return s[:slen].decode('UTF-8')
     return <bytes>s[:slen]
 
-cdef object _utf8(object s):
+cdef bytes _utf8(object s):
     cdef int invalid
     if python.PyBytes_CheckExact(s):
         invalid = check_string_utf8(s)
@@ -1354,10 +1354,10 @@ cdef object _decodeFilename(char* c_path):
         except UnicodeDecodeError:
             pass
     try:
-        return python.PyUnicode_DecodeUTF8(c_path, c_len, NULL)
+        return c_path[:c_len].decode('UTF-8')
     except UnicodeDecodeError:
         # this is a stupid fallback, but it might still work...
-        return python.PyUnicode_DecodeLatin1(c_path, c_len, 'replace')
+        return c_path[:c_len].decode('latin-1', 'replace')
 
 cdef object _encodeFilenameUTF8(object filename):
     u"""Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
