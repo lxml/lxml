@@ -1292,6 +1292,7 @@ cdef bytes _utf8(object s):
         s = python.PyUnicode_AsUTF8String(s)
         invalid = check_string_utf8(s) == -1
     elif python.PyBytes_Check(s):
+        s = bytes(s)
         invalid = check_string_utf8(s)
     else:
         raise TypeError, u"Argument must be string or unicode."
