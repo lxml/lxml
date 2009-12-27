@@ -319,7 +319,7 @@ cdef class _XSLTQuotedStringParam:
     u"""A wrapper class for literal XSLT string parameters that require
     quote escaping.
     """
-    cdef str strval
+    cdef bytes strval
     def __init__(self, strval):
         self.strval = _utf8(strval)
 
