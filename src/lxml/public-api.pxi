@@ -154,4 +154,4 @@ cdef public api tree.xmlNs* findOrBuildNodeNsPrefix(
     _Document doc, xmlNode* c_node, char* href, char* prefix) except NULL:
     if doc is None:
         raise TypeError
-    return doc._findOrBuildNodeNs(c_node, href, prefix)
+    return doc._findOrBuildNodeNs(c_node, href, prefix, 0)

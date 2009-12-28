@@ -289,7 +289,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
                 tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
             else:
                 _uriValidOrRaise(attr_ns_utf)
-                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf), NULL)
+                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf), NULL, 1)
                 tree.xmlNewNsProp(c_node, c_ns,
                                   _cstr(attr_name_utf), _cstr(value_utf))
 
@@ -399,6 +399,64 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         cstd.free(c_ns_list)
     return 0
 
+cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
+    u"""Search a namespace declaration that covers a node (element or
+    attribute).
+
+    For attributes, try to find a prefixed namespace declaration
+    instead of the default namespaces.  This helps in supporting
+    round-trips for attributes on elements with a different namespace.
+    """
+    cdef xmlNs* c_ns
+    cdef xmlNs* c_default_ns = NULL
+    cdef xmlNode* c_element
+    if c_href is NULL or c_node is NULL or c_node.type == tree.XML_ENTITY_REF_NODE:
+        return NULL
+    if cstd.strcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
+        # no special cases here, let libxml2 handle this
+        return tree.xmlSearchNsByHref(c_node.doc, c_node, c_href)
+    if c_node.type == tree.XML_ATTRIBUTE_NODE:
+        is_attribute = 1
+    while c_node is not NULL and c_node.type != tree.XML_ELEMENT_NODE:
+        c_node = c_node.parent
+    c_element = c_node
+    while c_node is not NULL:
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            c_ns = c_node.nsDef
+            while c_ns is not NULL:
+                if c_ns.href is not NULL and cstd.strcmp(c_href, c_ns.href) == 0:
+                    if c_ns.prefix is NULL and is_attribute:
+                        # for attributes, continue searching a named
+                        # prefix, but keep the first default namespace
+                        # declaration that we found
+                        if c_default_ns is NULL:
+                            c_default_ns = c_ns
+                    elif tree.xmlSearchNs(
+                        c_element.doc, c_element, c_ns.prefix) is c_ns:
+                        # start node is in namespace scope => found!
+                        return c_ns
+                c_ns = c_ns.next
+            if c_node is not c_element and c_node.ns is not NULL:
+                # optimise: the node may have the namespace itself
+                c_ns = c_node.ns
+                if c_ns.href is not NULL and cstd.strcmp(c_href, c_ns.href) == 0:
+                    if c_ns.prefix is NULL and is_attribute:
+                        # for attributes, continue searching a named
+                        # prefix, but keep the first default namespace
+                        # declaration that we found
+                        if c_default_ns is NULL:
+                            c_default_ns = c_ns
+                    elif tree.xmlSearchNs(
+                        c_element.doc, c_element, c_ns.prefix) is c_ns:
+                        # start node is in namespace scope => found!
+                        return c_ns
+        c_node = c_node.parent
+    # nothing found => use a matching default namespace or fail
+    if c_default_ns is not NULL:
+        if tree.xmlSearchNs(c_element.doc, c_element, NULL) is c_default_ns:
+            return c_default_ns
+    return NULL
+
 cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
     # NOTE: this does not deallocate the node, just unlink it!
     cdef xmlNode* c_parent
@@ -496,7 +554,7 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
         c_ns = NULL
     else:
         c_ns = element._doc._findOrBuildNodeNs(element._c_node,
-                                               _cstr(ns), NULL)
+                                               _cstr(ns), NULL, 1)
     tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
     return 0
 
@@ -683,7 +741,7 @@ cdef bytes _resolveQNameText(_Element element, value):
         return tag
     else:
         c_ns = element._doc._findOrBuildNodeNs(
-            element._c_node, _cstr(ns), NULL)
+            element._c_node, _cstr(ns), NULL, 0)
         return python.PyBytes_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
 
 cdef inline bint _hasChild(xmlNode* c_node):

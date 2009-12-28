@@ -261,11 +261,8 @@ cdef int _stripRedundantNamespaceDeclarations(
             _appendToNsCache(c_ns_cache, c_nsdef[0], c_nsdef[0])
             c_nsdef = &c_nsdef[0].next
         else:
-            # known namespace href => strip the ns
-            if c_ns is tree.xmlSearchNs(c_element.doc, c_element.parent,
-                                        c_ns.prefix):
-                # prefix is not shadowed by parents => ns is reusable
-                _appendToNsCache(c_ns_cache, c_nsdef[0], c_ns)
+            # known namespace href => cache mapping and strip old ns
+            _appendToNsCache(c_ns_cache, c_nsdef[0], c_ns)
             # cut out c_nsdef.next and prepend it to garbage chain
             c_ns_next = c_nsdef[0].next
             c_nsdef[0].next = c_del_ns_list[0]
@@ -348,7 +345,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                 else:
                     # not in cache => find a replacement from this document
                     c_ns = doc._findOrBuildNodeNs(
-                        c_start_node, c_node.ns.href, c_node.ns.prefix)
+                        c_start_node, c_node.ns.href, c_node.ns.prefix,
+                        c_node.type == tree.XML_ATTRIBUTE_NODE)
                     _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
                     c_node.ns = c_ns
 

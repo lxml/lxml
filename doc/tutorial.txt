@@ -1013,7 +1013,13 @@ to the Element factory, e.g. to define the default namespace:
       <body>Hello World</body>
     </html>
 
-Namespaces on attributes work alike:
+Namespaces on attributes work alike, but since version 2.3, lxml.etree
+will make sure that the attribute uses a prefixed namespace
+declaration.  This is because unprefixed attribute names are not
+considered being in a namespace by the XML namespace specification
+(`section 6.2`_), so they may end up loosing their namespace on a
+serialise-parse roundtrip, even if they appear in a namespaced
+element.
 
 .. sourcecode:: pycon
 
@@ -1021,7 +1027,7 @@ Namespaces on attributes work alike:
 
     >>> print(etree.tostring(xhtml, pretty_print=True))
     <html xmlns="http://www.w3.org/1999/xhtml">
-      <body bgcolor="#CCFFAA">Hello World</body>
+      <body xmlns:html="http://www.w3.org/1999/xhtml" html:bgcolor="#CCFFAA">Hello World</body>
     </html>
 
     >>> print(body.get("bgcolor"))
@@ -1029,7 +1035,9 @@ Namespaces on attributes work alike:
     >>> body.get(XHTML + "bgcolor")
     '#CCFFAA'
 
-You can also use XPath in this way:
+.. _`section 6.2`: http://www.w3.org/TR/2009/REC-xml-names-20091208/#defaulting
+
+You can also use XPath with fully qualified names:
 
 .. sourcecode:: pycon
 

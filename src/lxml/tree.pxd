@@ -172,6 +172,8 @@ cdef extern from "libxml/tree.h":
         xmlBuffer* buffer
         xmlBuffer* conv
         int error
+
+    char* XML_XML_NAMESPACE
         
     cdef void xmlFreeDoc(xmlDoc* cur) nogil
     cdef void xmlFreeDtd(xmlDtd* cur) nogil

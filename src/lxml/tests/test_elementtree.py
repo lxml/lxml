@@ -2585,6 +2585,40 @@ class ETreeTestCaseBase(HelperTestCase):
         parsed = parse(BytesIO( tostring(baz) )).getroot()
         self.assertEquals('{%s}baz' % ns_href, parsed.tag)
 
+    def test_attribute_namespace_roundtrip(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+
+        ns_href = "http://a.b.c"
+        xml = _bytes('<root xmlns="%s" xmlns:x="%s"><el x:a="test" /></root>' % (
+                ns_href,ns_href))
+        root = fromstring(xml)
+        self.assertEquals('test', root[0].get('{%s}a' % ns_href))
+
+        xml2 = tostring(root)
+        self.assertTrue(':a=' in xml2, xml2)
+
+        root2 = fromstring(xml2)
+        self.assertEquals('test', root[0].get('{%s}a' % ns_href))
+
+    def test_attribute_namespace_roundtrip_replaced(self):
+        fromstring = self.etree.fromstring
+        tostring = self.etree.tostring
+
+        ns_href = "http://a.b.c"
+        xml = _bytes('<root xmlns="%s" xmlns:x="%s"><el x:a="test" /></root>' % (
+                ns_href,ns_href))
+        root = fromstring(xml)
+        self.assertEquals('test', root[0].get('{%s}a' % ns_href))
+
+        root[0].set('{%s}a' % ns_href, 'TEST')
+
+        xml2 = tostring(root)
+        self.assertTrue(':a=' in xml2, xml2)
+
+        root2 = fromstring(xml2)
+        self.assertEquals('TEST', root[0].get('{%s}a' % ns_href))
+
     def test_tostring(self):
         tostring = self.etree.tostring
         Element = self.etree.Element

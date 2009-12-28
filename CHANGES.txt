@@ -8,6 +8,12 @@ lxml changelog
 Features added
 --------------
 
+* Setting the value of a namespaced attribute always uses a prefixed
+  namespace instead of the default namespace even if both declare the
+  same namespace URI.  This avoids serialisation problems when an
+  attribute from a default namespace is set on an element from a
+  different namespace.
+
 * XSLT extension elements: support for XSLT context nodes other than
   elements: document root, comments, processing instructions.
 

@@ -346,7 +346,8 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return ns
 
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
-                                   char* c_href, char* c_prefix) except NULL:
+                                   char* c_href, char* c_prefix,
+                                   bint is_attribute) except NULL:
         u"""Get or create namespace structure for a node.  Reuses the prefix if
         possible.
         """
@@ -358,9 +359,14 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
                 u"invalid node type %d, expected %d" % (
                 c_node.type, tree.XML_ELEMENT_NODE)
         # look for existing ns declaration
-        c_ns = tree.xmlSearchNsByHref(self._c_doc, c_node, c_href)
+        c_ns = _searchNsByHref(c_node, c_href, is_attribute)
         if c_ns is not NULL:
-            return c_ns
+            if is_attribute and c_ns.prefix is NULL:
+                # do not put namespaced attributes into the default
+                # namespace as this would break serialisation
+                pass
+            else:
+                return c_ns
 
         # none found => determine a suitable new prefix
         if c_prefix is NULL:
@@ -386,7 +392,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef int _setNodeNs(self, xmlNode* c_node, char* href) except -1:
         u"Lookup namespace structure and set it for the node."
         cdef xmlNs* c_ns
-        c_ns = self._findOrBuildNodeNs(c_node, href, NULL)
+        c_ns = self._findOrBuildNodeNs(c_node, href, NULL, 0)
         tree.xmlSetNs(c_node, c_ns)
 
 cdef __initPrefixCache():
