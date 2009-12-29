@@ -57,7 +57,7 @@ cdef _strip_attributes(xmlNode* c_node, char** c_ns_tags, Py_ssize_t c_tag_count
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
         if c_node.properties is not NULL:
-            for i in xrange(c_tag_count):
+            for i in range(c_tag_count):
                 c_href = c_ns_tags[2*i]
                 c_name = c_ns_tags[2*i+1]
                 # must compare attributes manually to make sure we
@@ -152,7 +152,7 @@ cdef _strip_elements(_Document doc, xmlNode* c_node,
         while c_child is not NULL:
             c_next = _nextElement(c_child)
             if c_child.type == tree.XML_ELEMENT_NODE:
-                for i in xrange(c_tag_count):
+                for i in range(c_tag_count):
                     if _tagMatchesExactly(c_child, c_ns_tags[2*i], c_ns_tags[2*i+1]):
                         if not with_tail:
                             tree.xmlUnlinkNode(c_child)
@@ -241,7 +241,7 @@ cdef _strip_tags(_Document doc, xmlNode* c_node,
         c_child = _findChildForwards(c_node, 0)
         while c_child is not NULL:
             if c_child.type == tree.XML_ELEMENT_NODE:
-                for i in xrange(c_tag_count):
+                for i in range(c_tag_count):
                     if _tagMatchesExactly(c_child, c_ns_tags[2*i], c_ns_tags[2*i+1]):
                         c_next = _findChildForwards(c_child, 0) or _nextElement(c_child)
                         _replaceNodeByChildren(doc, c_child)
