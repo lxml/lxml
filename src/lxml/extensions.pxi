@@ -448,10 +448,10 @@ cdef class _ExsltRegExp:
         return rexpc.sub(replacement, s, count)
 
     cdef _register_in_context(self, _BaseContext context):
-        ns = "http://exslt.org/regular-expressions"
-        context._addLocalExtensionFunction(ns, "test",    self.test)
-        context._addLocalExtensionFunction(ns, "match",   self.match)
-        context._addLocalExtensionFunction(ns, "replace", self.replace)
+        ns = b"http://exslt.org/regular-expressions"
+        context._addLocalExtensionFunction(ns, b"test",    self.test)
+        context._addLocalExtensionFunction(ns, b"match",   self.match)
+        context._addLocalExtensionFunction(ns, b"replace", self.replace)
 
 
 ################################################################################
