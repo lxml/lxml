@@ -113,7 +113,12 @@ http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
     ],
 
     package_dir = {'': 'src'},
-    packages = ['lxml', 'lxml.html'],
+    packages = ['lxml', 'lxml.html', 'lxml.isoschematron'],
+    package_data = {'lxml.isoschematron':
+                    ['resources/rng/iso-schematron.rng',
+                     'resources/xsl/*.xsl', 
+                     'resources/xsl/iso-schematron-xslt1/*.xsl',
+                     'resources/xsl/iso-schematron-xslt1/readme.txt']},
     ext_modules = setupinfo.ext_modules(
         STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS,
         STATIC_CFLAGS, STATIC_BINARIES),

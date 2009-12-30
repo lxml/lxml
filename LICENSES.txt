@@ -13,3 +13,17 @@ of the rest of the package.
 
 the doctest.py module is taken from the Python library and falls under
 the PSF Python License.
+
+The isoschematron implementation uses several XSL and RelaxNG resources:
+ * The (XML syntax) RelaxNG schema for schematron, copyright International
+   Organization for Standardization (see 
+   src/lxml/isoschematron/resources/rng/iso-schematron.rng for the license
+   text)
+ * The skeleton iso-schematron-xlt1 pure-xslt schematron implementation
+   xsl stylesheets, copyright Rick Jelliffe and Academia Sinica Computing
+   Center, Taiwan (see the xsl files here for the license text: 
+   src/lxml/isoschematron/resources/xsl/iso-schematron-xslt1/)
+ * The xsd/rng schema schematron extraction xsl transformations are unlicensed
+   and copyright the respective authors as noted (see 
+   src/lxml/isoschematron/resources/xsl/RNG2Schtrn.xsl and
+   src/lxml/isoschematron/resources/xsl/XSD2Schtrn.xsl)

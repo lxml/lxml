@@ -2789,6 +2789,14 @@ cdef class _Validator:
             raise AssertionError, self._error_log._buildExceptionMessage(
                 u"Document does not comply with schema")
 
+    cpdef _append_log_message(self, int domain, int type, int level, int line,
+                              message, filename):
+        self._error_log._receiveGeneric(domain, type, level, line, message,
+                                        filename)
+
+    cpdef _clear_error_log(self):
+        self._error_log.clear()
+        
     property error_log:
         u"The log of validation errors and warnings."
         def __get__(self):

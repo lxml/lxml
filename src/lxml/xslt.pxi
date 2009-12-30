@@ -475,6 +475,7 @@ cdef class XSLT:
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
         cdef tree.xmlDict* c_dict
+        cdef char** params
 
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
@@ -509,8 +510,13 @@ cdef class XSLT:
             resolver_context = self._xslt_resolver_context._copy()
             transform_ctxt._private = <python.PyObject*>resolver_context
 
+            live_refs = _convert_xslt_parameters(transform_ctxt, kw, &params)
             c_result = self._run_transform(
-                c_doc, kw, context, transform_ctxt)
+                c_doc, params, context, transform_ctxt)
+            if params is not NULL:
+                # deallocate space for parameters
+                python.PyMem_Free(params)
+            live_refs = None
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
@@ -579,59 +585,58 @@ cdef class XSLT:
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
-                                dict parameters, _XSLTContext context,
+                                char** params, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt):
         cdef xmlDoc* c_result
-        cdef char** params
-        cdef Py_ssize_t i, parameter_count
-        cdef list keep_ref
-
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
                                        _receiveXSLTError)
-
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
-
-        parameter_count = len(parameters)
-        if parameter_count > 0:
-            # allocate space for parameters
-            # * 2 as we want an entry for both key and value,
-            # and + 1 as array is NULL terminated
-            params = <char**>python.PyMem_Malloc(
-                sizeof(char*) * (parameter_count * 2 + 1))
-            try:
-                i = 0
-                keep_ref = []
-                for key, value in parameters.iteritems():
-                    k = _utf8(key)
-                    if isinstance(value, _XSLTQuotedStringParam):
-                        v = (<_XSLTQuotedStringParam>value).strval
-                        xslt.xsltQuoteOneUserParam(
-                            transform_ctxt, _cstr(k), _cstr(v))
-                    else:
-                        v = _utf8(value)
-                        params[i] = _cstr(k)
-                        i += 1
-                        params[i] = _cstr(v)
-                        i += 1
-                    keep_ref.append(k)
-                    keep_ref.append(v)
-            except:
-                python.PyMem_Free(params)
-                raise
-            params[i] = NULL
-        else:
-            params = NULL
-
         with nogil:
             c_result = xslt.xsltApplyStylesheetUser(
                 self._c_style, c_input_doc, params, NULL, NULL, transform_ctxt)
-
-        if params is not NULL:
-            # deallocate space for parameters
-            python.PyMem_Free(params)
-
         return c_result
+
+cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
+                              dict parameters, char*** params_ptr):
+    cdef Py_ssize_t i, parameter_count
+    cdef char** params
+    cdef list keep_ref
+    params_ptr[0] = NULL
+    parameter_count = len(parameters)
+    if parameter_count == 0:
+        return None
+    # allocate space for parameters
+    # * 2 as we want an entry for both key and value,
+    # and + 1 as array is NULL terminated
+    params = <char**>python.PyMem_Malloc(
+        sizeof(char*) * (parameter_count * 2 + 1))
+    try:
+        i = 0
+        keep_ref = []
+        for key, value in parameters.iteritems():
+            k = _utf8(key)
+            keep_ref.append(k)
+            if isinstance(value, _XSLTQuotedStringParam):
+                v = (<_XSLTQuotedStringParam>value).strval
+                xslt.xsltQuoteOneUserParam(
+                    transform_ctxt, _cstr(k), _cstr(v))
+            else:
+                if isinstance(value, XPath):
+                    v = (<XPath>value)._path
+                else:
+                    v = _utf8(value)
+                    keep_ref.append(v)
+                params[i] = _cstr(k)
+                i += 1
+                params[i] = _cstr(v)
+                i += 1
+    except:
+        python.PyMem_Free(params)
+        raise
+    params[i] = NULL
+    params_ptr[0] = params
+    return keep_ref
 
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for instantiation without calling __init__()

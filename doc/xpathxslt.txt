@@ -543,6 +543,14 @@ You can use any valid XPath expression as parameter value:
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
+It's also possible to pass an XPath object as a parameter:
+
+.. sourcecode:: pycon
+
+  >>> result = transform(doc, a=etree.XPath("/a/b/text()"))
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
 Passing a string expression looks like this:
 
 .. sourcecode:: pycon

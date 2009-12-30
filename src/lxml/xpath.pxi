@@ -389,21 +389,20 @@ cdef class XPath(_XPathEvaluatorBase):
     ``smart_strings=False``.
     """
     cdef xpath.xmlXPathCompExpr* _xpath
-    cdef readonly object path
+    cdef bytes _path
 
     def __init__(self, path, *, namespaces=None, extensions=None,
                  regexp=True, smart_strings=True):
         cdef xpath.xmlXPathContext* xpathCtxt
         _XPathEvaluatorBase.__init__(self, namespaces, extensions,
                                      regexp, smart_strings)
-        self.path = path
-        path = _utf8(path)
+        self._path = _utf8(path)
         xpathCtxt = xpath.xmlXPathNewContext(NULL)
         if xpathCtxt is NULL:
             python.PyErr_NoMemory()
         self.set_context(xpathCtxt)
         self._error_log.connect()
-        self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(path))
+        self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(self._path))
         self._error_log.disconnect()
         if self._xpath is NULL:
             self._raise_parse_error()
@@ -434,6 +433,12 @@ cdef class XPath(_XPathEvaluatorBase):
             self._context.unregister_context()
             self._unlock()
         return result
+
+    property path:
+        u"""The literal XPath expression.
+        """
+        def __get__(self):
+            return self._path.decode(u'UTF-8')
 
     def __dealloc__(self):
         if self._xpath is not NULL:

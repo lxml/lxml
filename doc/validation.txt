@@ -11,11 +11,18 @@ names.
 .. _`Relax NG`:   http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 
-There is also initial support for Schematron_.  However, it does not currently
-support error reporting in the validation phase due to insufficiencies in the
-implementation as of libxml2 2.6.30.
+lxml also provides support for ISO-`Schematron`_, based on the pure-XSLT 
+`skeleton implementation`_ of Schematron:
 
-.. _Schematron:   http://www.ascc.net/xml/schematron
+.. _Schematron: http://www.schematron.com
+.. _`skeleton implementation`: http://www.schematron.com/implementation.html
+
+There is also basic support for `pre-ISO-Schematron` through the libxml2 
+Schematron features. However, this does not currently support error reporting
+in the validation phase due to insufficiencies in the implementation as of
+libxml2 2.6.30.
+
+.. _`pre-ISO-Schematron`:   http://www.ascc.net/xml/schematron
 
 .. contents::
 .. 
@@ -24,6 +31,7 @@ implementation as of libxml2 2.6.30.
    3  RelaxNG
    4  XMLSchema
    5  Schematron
+   6  (Pre-ISO-Schematron)
 
 The usual setup procedure:
 
@@ -341,11 +349,179 @@ method to do XML Schema validation:
   >>> doc2.xmlschema(xmlschema_doc)
   False
 
-
 Schematron
 ----------
 
-Since version 2.0, lxml.etree features Schematron_ support, using the
+From version 2.3 on lxml features ISO-`Schematron`_ support built on the 
+de-facto reference implementation of Schematron, the pure-XSLT-1.0 
+`skeleton implementation`_. This is provided by the lxml.isoschematron package 
+that implements the Schematron class, with an API compatible to the other 
+validators'.  Pass an Element or ElementTree object to construct a Schematron 
+validator:
+
+.. sourcecode:: pycon
+  >>> from lxml import isoschematron
+  >>> f = StringIO('''\
+  ... <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
+  ...   <pattern id="sum_equals_100_percent">
+  ...     <title>Sum equals 100%.</title>
+  ...     <rule context="Total">
+  ...       <assert test="sum(//Percent)=100">Sum is not 100%.</assert>
+  ...     </rule>
+  ...   </pattern>
+  ... </schema>
+  ... ''')
+
+  >>> sct_doc = etree.parse(f)
+  >>> schematron = isoschematron.Schematron(sct_doc)
+
+You can then validate some ElementTree document with this. Just like with 
+XMLSchema or RelaxNG, you'll get back true if the document is valid against the
+schema, and false if not:
+
+.. sourcecode:: pycon
+
+  >>> valid = StringIO('''\
+  ... <Total>
+  ...   <Percent>20</Percent>
+  ...   <Percent>30</Percent>
+  ...   <Percent>50</Percent>
+  ... </Total>
+  ... ''')
+
+  >>> doc = etree.parse(valid)
+  >>> schematron.validate(doc)
+  True
+
+  >>> etree.SubElement(doc.getroot(), "Percent").text = "10"
+
+  >>> schematron.validate(doc)
+  False
+
+Calling the schema object has the same effect as calling its validate method.
+This can be useful for conditional statements:
+
+.. sourcecode:: pycon
+
+  >>> is_valid = isoschematron.Schematron(sct_doc)
+
+  >>> if not is_valid(doc):
+  ...     print("invalid!")
+  invalid!
+
+Built on a pure-xslt implementation, the actual validator is created as an 
+XSLT 1.0 stylesheet using these steps:
+
+0. (Extract embedded Schematron from XML Schema or RelaxNG schema)
+1. Process inclusions
+2. Process abstract patterns
+3. Compile the schematron schema to XSLT
+
+To allow more control over the individual steps, isoschematron.Schematron
+supports an extended API:
+
+The ``include`` and ``expand`` keyword arguments can be used to switch off
+steps 1) and 2).
+
+To set parameters for steps 1), 2) and 3) dictionaries containing parameters 
+for XSLT can be provided using the keyword arguments ``include_params``,
+``expand_params`` or ``compile_params``. Schematron automatically converts these
+parameters to stylesheet parameters so you need not worry to set string 
+parameters using quotes or to use XSLT.strparam(). If you ever need to pass an
+XPath as argument to the XSLT stylesheet you can pass in an etree.XPath object
+(see XPath and XSLT with lxml: Stylesheet-parameters_ for background on this).
+
+The ``phase`` parameter of the compile step is additionally exposed as a keyword
+argument. If set, it overrides occurrence in ``compile_params``. Note that 
+isoschematron.Schematron might expose more common parameters as additional keyword
+args in the future.
+
+By setting ``store_schematron`` to True, the (included-and-expanded) schematron
+document tree is stored and made available through the ``schematron`` property.
+
+Similarly, setting ``store_xslt`` to True will result in the validation XSLT 
+document tree being kept; it can be retrieved through the ``validator_xslt``
+property.
+
+Finally, with ``store_report`` set to True (default: False), the resulting 
+validation report document gets stored and can be accessed as the 
+``validation_report`` property.
+
+.. _Stylesheet-parameters: xpathxslt.html#stylesheet-parameters
+
+Using the ``phase`` parameter of isoschematron.Schematron allows for selective 
+validation of predefined pattern groups:
+
+.. sourcecode:: pycon
+
+  >>> f = StringIO('''\
+  ... <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
+  ...   <phase id="phase.sum_check">
+  ...     <active pattern="sum_equals_100_percent"/>
+  ...   </phase>
+  ...   <phase id="phase.entries_check">
+  ...     <active pattern="all_positive"/>
+  ...   </phase>
+  ...   <pattern id="sum_equals_100_percent">
+  ...     <title>Sum equals 100%.</title>
+  ...     <rule context="Total">
+  ...       <assert test="sum(//Percent)=100">Sum is not 100%.</assert>
+  ...     </rule>
+  ...   </pattern>
+  ...   <pattern id="all_positive">
+  ...     <title>All entries must be positive.</title>
+  ...     <rule context="Percent">
+  ...       <assert test="number(.)>0">Number (<value-of select="."/>) not positive</assert>
+  ...     </rule>
+  ...   </pattern>
+  ... </schema>
+  ... ''')
+
+  >>> sct_doc = etree.parse(f)
+  >>> schematron = isoschematron.Schematron(sct_doc)
+
+  >>> valid = StringIO('''\
+  ... <Total>
+  ...   <Percent>20</Percent>
+  ...   <Percent>30</Percent>
+  ...   <Percent>50</Percent>
+  ... </Total>
+  ... ''')
+
+  >>> doc = etree.parse(valid)
+  >>> schematron.validate(doc)
+  True
+
+  >>> invalid_positive = StringIO('''\
+  ... <Total>
+  ...   <Percent>0</Percent>
+  ...   <Percent>50</Percent>
+  ...   <Percent>50</Percent>
+  ... </Total>
+  ... ''')
+
+  >>> doc = etree.parse(invalid_positive)
+
+  >>> schematron.validate(doc)
+  False
+
+If the constraint of Percent entries being positive is not of interest in a 
+certain validation scenario, it can now be disabled:
+
+.. sourcecode:: pycon
+
+  >>> selective = isoschematron.Schematron(sct_doc, phase="phase.sum_check")
+  >>> selective.validate(doc)
+  True
+
+The usage of validation phases is a unique feature of ISO-Schematron and can be
+a very powerful tool e.g. for establishing validation stages or to provide 
+different validators for different "validation audiences".
+
+(Pre-ISO-Schematron)
+--------------------
+
+Since version 2.0, lxml.etree features `pre-ISO-Schematron`_ support, using the
 class lxml.etree.Schematron.  It requires at least libxml2 2.6.21 to
 work.  The API is the same as for the other validators.  Pass an
 ElementTree object to construct a Schematron validator:

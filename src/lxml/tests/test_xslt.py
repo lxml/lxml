@@ -420,6 +420,24 @@ class ETreeXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
+    def test_xslt_parameter_xpath_object(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:template match="*" />
+  <xsl:template match="/">
+    <foo><xsl:value-of select="$bar" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree, bar=etree.XPath("/a/b/text()"))
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<foo>B</foo>
+''',
+                          str(res))
         
     def test_xslt_default_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
