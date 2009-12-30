@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Enable path caching in ElementPath (``el.find*()``) to avoid parsing
+  overhead.
+
 * Setting the value of a namespaced attribute always uses a prefixed
   namespace instead of the default namespace even if both declare the
   same namespace URI.  This avoids serialisation problems when an

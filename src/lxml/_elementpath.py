@@ -190,6 +190,7 @@ def _build_path_iterator(path):
                 token = _next()
         except StopIteration:
             break
+    _cache[path] = selector
     return selector
 
 ##
