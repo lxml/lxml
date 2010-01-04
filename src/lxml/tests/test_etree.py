@@ -2553,6 +2553,25 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError, Element,
                           _str('ha\x02ho'))
 
+    def test_unicode_byte_invalid_sequence(self):
+        Element = self.etree.Element
+
+        a = Element('a')
+        self.assertRaises(ValueError, setattr, a, "text",
+                          _str('ha\u1234\x07ho'))
+        self.assertRaises(ValueError, setattr, a, "text",
+                          _str('ha\u1234\x02ho'))
+
+        self.assertRaises(ValueError, setattr, a, "tail",
+                          _str('ha\u1234\x07ho'))
+        self.assertRaises(ValueError, setattr, a, "tail",
+                          _str('ha\u1234\x02ho'))
+
+        self.assertRaises(ValueError, Element,
+                          _str('ha\u1234\x07ho'))
+        self.assertRaises(ValueError, Element,
+                          _str('ha\u1234\x02ho'))
+
     def test_encoding_tostring_utf16(self):
         # ElementTree fails to serialize this
         tostring = self.etree.tostring

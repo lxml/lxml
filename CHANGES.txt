@@ -42,6 +42,9 @@ Features added
 Bugs fixed
 ----------
 
+* Invalid XML text characters were not rejected by the API when they
+  appeared in unicode strings directly after non-ASCII characters.
+
 * ``lxml.cssselect`` did not distinguish between ``x[attr="val"]`` and
   ``x [attr="val"]`` (with a space).  The latter now matches the
   attribute independent of the element.

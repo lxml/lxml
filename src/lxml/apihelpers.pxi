@@ -1299,11 +1299,11 @@ cdef int check_string_utf8(pystring):
     cdef bint is_non_ascii = 0
     while s < c_end:
         if s[0] & 0x80:
-            # skip the entire multi byte sequence
-            while s[0] & 0x80:
+            # skip over multi byte sequences
+            while s < c_end and s[0] & 0x80:
                 s += 1
             is_non_ascii = 1
-        elif not tree.xmlIsChar_ch(s[0]):
+        if  s < c_end and not tree.xmlIsChar_ch(s[0]):
             return -1 # invalid!
         s += 1
     return is_non_ascii
