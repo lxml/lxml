@@ -817,6 +817,22 @@ This will allow the parser to drop blank text nodes when constructing the
 tree.  If you now call a serialization function to pretty print this tree,
 lxml can add fresh whitespace to the XML tree to indent it.
 
+Note that the ``remove_blank_text`` option also uses a heuristic if it
+has no definite knowledge about the document's ignorable whitespace.
+It will keep blank text nodes that appear after non-blank text nodes
+at the same level.  This is to prevent document-style XML from
+breaking.
+
+If you want to be sure all blank text is removed, you have to use
+either a DTD to tell the parser which whitespace it can safely ignore,
+or remove the ignorable whitespace manually after parsing, e.g. by
+setting all tail text to None::
+
+.. sourcecode:: python
+
+   for element in root.iter():
+       element.tail = None
+
 Fredrik Lundh also has a Python-level function for indenting XML by
 appending whitespace to tags.  It can be found on his `element
 library`_ recipe page.
