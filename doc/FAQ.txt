@@ -189,6 +189,7 @@ not take advantage of lxml's enhanced feature set.
 * OpenXMLlib_, a library for handling OpenXML document meta data
 * Pycoon_, a WSGI web development framework based on XML pipelines
 * PyQuery_, a query framework for XML/HTML, similar to jQuery for JavaScript
+* `python-docx`_, a package for handling Microsoft's Word OpenXML format
 * Rambler_, a meta search engine that aggregates different data sources
 * rdfadict_, an RDFa parser with a simple dictionary-like interface.
 
@@ -219,6 +220,7 @@ lxml can provide all three."
 .. _rdfadict: http://pypi.python.org/pypi/rdfadict
 .. _z3c.rml: http://pypi.python.org/pypi/z3c.rml
 .. _zif.sedna: http://pypi.python.org/pypi/zif.sedna
+.. _`python-docx`: http://github.com/mikemaccana/python-docx
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
