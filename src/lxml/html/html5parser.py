@@ -3,7 +3,7 @@ An interface to html5lib.
 """
 
 import urllib
-from html5lib import HTMLParser as _HTMLParser, XHTMLParser as _XHTMLParser
+from html5lib import HTMLParser as _HTMLParser
 from lxml import etree
 from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE
 from lxml.html._html5builder import TreeBuilder
@@ -22,11 +22,18 @@ class HTMLParser(_HTMLParser):
         _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder)
 
 
-class XHTMLParser(_XHTMLParser):
-    """An html5lib XHTML Parser with lxml as tree."""
+try:
+    from html5lib import XHTMLParser as _XHTMLParser
+except ImportError:
+    pass
+else:
+    class XHTMLParser(_XHTMLParser):
+        """An html5lib XHTML Parser with lxml as tree."""
 
-    def __init__(self, strict=False):
-        _XHTMLParser.__init__(self, strict=strict, tree=TreeBuilder)
+        def __init__(self, strict=False):
+            _XHTMLParser.__init__(self, strict=strict, tree=TreeBuilder)
+
+    xhtml_parser = XHTMLParser()
 
 
 def _find_tag(tree, tag):
@@ -161,4 +168,3 @@ def parse(filename_url_or_file, guess_charset=True, parser=None):
 
 
 html_parser = HTMLParser()
-xhtml_parser = XHTMLParser()

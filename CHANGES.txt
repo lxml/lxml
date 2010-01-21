@@ -42,6 +42,9 @@ Features added
 Bugs fixed
 ----------
 
+* Support recent versions of html5lib by not requiring its
+  ``XHTMLParser`` in ``htmlparser.py`` anymore.
+
 * Invalid XML text characters were not rejected by the API when they
   appeared in unicode strings directly after non-ASCII characters.
 
