@@ -8,6 +8,12 @@ lxml changelog
 Features added
 --------------
 
+* New parameter ``output_parent`` to ``XSLTExtension.apply_templates()``
+  to append the resulting content directly to an output element.
+
+* ``XSLTExtension.process_children()`` to process the content of the
+  XSLT extension element itself.
+
 * Enable path caching in ElementPath (``el.find*()``) to avoid parsing
   overhead.
 
@@ -41,6 +47,9 @@ Features added
 
 Bugs fixed
 ----------
+
+* Using XSLT extension elements around the root of the output document
+  crashed.
 
 * Support recent versions of html5lib by not requiring its
   ``XHTMLParser`` in ``htmlparser.py`` anymore.

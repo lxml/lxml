@@ -307,7 +307,6 @@ cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
         self._assertNode()
         return _collectAttributes(self._c_node, 3)
 
-
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
     cdef _ReadOnlyProxy NEW_RO_PROXY "PY_NEW" (object t)
@@ -352,6 +351,62 @@ cdef _freeReadOnlyProxies(_ReadOnlyProxy sourceProxy):
             tree.xmlFreeNode(c_node)
     del sourceProxy._dependent_proxies[:]
 
+# opaque wrapper around non-element nodes, e.g. the document node
+#
+# This class does not imply any restrictions on modifiability or
+# read-only status of the node, so use with caution.
+
+cdef class _OpaqueNodeWrapper:
+    cdef tree.xmlNode* _c_node
+    def __init__(self):
+        raise TypeError, u"This type cannot be instatiated from Python"
+
+cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
+    cdef int _assertNode(self) except -1:
+        u"""This is our way of saying: this proxy is invalid!
+        """
+        assert self._c_node is not NULL, u"Proxy invalidated!"
+        return 0
+
+    cpdef append(self, other_element):
+        u"""Append a copy of an Element to the list of children.
+        """
+        cdef xmlNode* c_next
+        cdef xmlNode* c_node
+        self._assertNode()
+        c_node = _roNodeOf(other_element)
+        if c_node.type == tree.XML_ELEMENT_NODE:
+            if tree.xmlDocGetRootElement(<tree.xmlDoc*>self._c_node) is not NULL:
+                raise ValueError, u"cannot append, document already has a root element"
+        elif c_node.type not in (tree.XML_PI_NODE, tree.XML_COMMENT_NODE):
+            raise TypeError, u"unsupported element type for top-level node: %d" % c_node.type
+        c_node = _copyNodeToDoc(c_node, <tree.xmlDoc*>self._c_node)
+        c_next = c_node.next
+        tree.xmlAddChild(self._c_node, c_node)
+        _moveTail(c_next, c_node)
+
+    def extend(self, elements):
+        u"""Append a copy of all Elements from a sequence to the list of
+        children.
+        """
+        self._assertNode()
+        for element in elements:
+            self.append(element)
+
+cdef extern from "etree_defs.h":
+    # macro call to 't->tp_new()' for fast instantiation
+    cdef _OpaqueNodeWrapper NEW_OPAQUE_NODE_PROXY "PY_NEW" (object t)
+
+cdef _OpaqueNodeWrapper _newOpaqueAppendOnlyNodeWrapper(xmlNode* c_node):
+    cdef _OpaqueNodeWrapper node
+    if c_node.type in (tree.XML_DOCUMENT_NODE, tree.XML_HTML_DOCUMENT_NODE):
+        node = NEW_OPAQUE_NODE_PROXY(_OpaqueDocumentWrapper)
+    else:
+        node = NEW_OPAQUE_NODE_PROXY(_OpaqueNodeWrapper)
+    node._c_node = c_node
+    return node
+
+# element proxies that allow restricted modification
 
 cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
     u"""A read-only proxy that allows changing the text content.
@@ -453,6 +508,8 @@ cdef _ReadOnlyProxy _newAppendOnlyProxy(
         el = NEW_RO_PROXY(_ModifyContentOnlyPIProxy)
     elif c_node.type == tree.XML_COMMENT_NODE:
         el = NEW_RO_PROXY(_ModifyContentOnlyProxy)
+    else:
+        raise TypeError("Unsupported element type: %d" % c_node.type)
     el._c_node = c_node
     _initReadOnlyProxy(el, source_proxy)
     return el
@@ -463,8 +520,25 @@ cdef xmlNode* _roNodeOf(element) except NULL:
         c_node = (<_Element>element)._c_node
     elif isinstance(element, _ReadOnlyProxy):
         c_node = (<_ReadOnlyProxy>element)._c_node
+    elif isinstance(element, _OpaqueNodeWrapper):
+        c_node = (<_OpaqueNodeWrapper>element)._c_node
     else:
-        raise TypeError, u"invalid value to append()"
+        raise TypeError, u"invalid argument type %s" % type(element)
+
+    if c_node is NULL:
+        raise TypeError, u"invalid element"
+    return c_node
+
+cdef xmlNode* _nonRoNodeOf(element) except NULL:
+    cdef xmlNode* c_node
+    if isinstance(element, _Element):
+        c_node = (<_Element>element)._c_node
+    elif isinstance(element, _AppendOnlyElementProxy):
+        c_node = (<_AppendOnlyElementProxy>element)._c_node
+    elif isinstance(element, _OpaqueNodeWrapper):
+        c_node = (<_OpaqueNodeWrapper>element)._c_node
+    else:
+        raise TypeError, u"invalid argument type %s" % type(element)
 
     if c_node is NULL:
         raise TypeError, u"invalid element"

@@ -30,9 +30,12 @@ cdef extern from "libxslt/xsltInternals.h":
         xmlNode* node
         xmlDoc* output
         xmlNode* insert
+        xmlNode* inst
         xsltTransformState state
 
     ctypedef struct xsltStackElem
+
+    ctypedef struct xsltTemplate
 
     cdef xsltStylesheet* xsltParseStylesheetDoc(xmlDoc* doc) nogil
     cdef void xsltFreeStylesheet(xsltStylesheet* sheet) nogil
@@ -84,6 +87,10 @@ cdef extern from "libxslt/transform.h":
     cdef xsltTransformContext* xsltNewTransformContext(xsltStylesheet* style,
                                                        xmlDoc* doc) nogil
     cdef void xsltFreeTransformContext(xsltTransformContext* context) nogil
+    cdef void xsltApplyOneTemplate(xsltTransformContext* ctxt,
+                                   xmlNode* contextNode, xmlNode* list,
+                                   xsltTemplate* templ,
+                                   xsltStackElem* params) nogil
 
 cdef extern from "libxslt/xsltutils.h":
     cdef int xsltSaveResultToString(char** doc_txt_ptr,
