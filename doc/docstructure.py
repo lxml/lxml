@@ -1,6 +1,6 @@
 
 SITE_STRUCTURE = [
-    ('lxml', ('main.txt', 'intro.txt', '../INSTALL.txt', 'lxml2.txt',
+    ('lxml', ('main.txt', 'intro.txt', '../INSTALL.txt', # 'lxml2.txt',
               'performance.txt', 'compatibility.txt', 'FAQ.txt')),
     ('Developing with lxml', ('tutorial.txt', '@API reference',
                               'api.txt', 'parsing.txt',
