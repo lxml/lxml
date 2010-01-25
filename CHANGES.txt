@@ -14,6 +14,12 @@ Features added
 * ``XSLTExtension.process_children()`` to process the content of the
   XSLT extension element itself.
 
+* ISO-Schematron support based on the de-facto Schematron reference
+  'skeleton implementation'.
+
+* XSLT objects now take XPath object as ``__call__`` stylesheet
+  parameters.
+
 * Enable path caching in ElementPath (``el.find*()``) to avoid parsing
   overhead.
 
@@ -39,11 +45,6 @@ Features added
 
 * Target parsers show their target object in the ``.target`` property
   (compatible with ElementTree).
-
-* XSLT objects now take XPath object as __call__ stylesheet parameters
-
-* ISO-Schematron support based on the de-facto Schematron reference
-  'skeleton implementation'
 
 Bugs fixed
 ----------
