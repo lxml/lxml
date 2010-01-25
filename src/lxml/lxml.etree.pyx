@@ -2604,7 +2604,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
     compatible encoding will enable a declaration by default.
 
     You can also serialise to a Unicode string without declaration by
-    passing the ``unicode`` function as encoding.
+    passing the ``unicode`` function as encoding (or ``str`` in Py3).
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
@@ -2673,6 +2673,8 @@ def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
     Serialize an element to the Python unicode representation of its XML
     tree.
 
+    :deprecated: use ``tostring(el, encoding=unicode)`` instead.
+
     Note that the result does not carry an XML encoding declaration and is
     therefore not necessarily suited for serialization to byte streams without
     further treatment.
@@ -2685,8 +2687,6 @@ def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
     You can prevent the tail text of the element from being serialised
     by passing the boolean ``with_tail`` option.  This has no impact
     on the tail text of children, which will always be serialised.
-
-    :deprecated: use ``tostring(el, encoding=unicode)`` instead.
     """
     if isinstance(element_or_tree, _Element):
         return _tostring(<_Element>element_or_tree, _unicode, method,
@@ -2704,6 +2704,20 @@ def parse(source, _BaseParser parser=None, *, base_url=None):
 
     Return an ElementTree object loaded with source elements.  If no parser
     is provided as second argument, the default parser is used.
+
+    The ``source`` can be any of the following:
+
+    - a file name/path
+    - a file object
+    - a file-like object
+    - a URL using the HTTP or FTP protocol
+
+    To parse from a string, use the ``fromstring()`` function instead.
+
+    Note that it is generally faster to parse from a file path or URL
+    than from an open file object or file-like object.  Transparent
+    decompression from gzip compressed sources is supported (unless
+    explicitly disabled in libxml2).
 
     The ``base_url`` keyword allows setting a URL for the document
     when parsing from a file-like object.  This is needed when looking
