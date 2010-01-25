@@ -114,10 +114,12 @@ class Schematron(_etree._Validator):
     Built on the Schematron language 'reference' skeleton pure-xslt
     implementation, the validator is created as an XSLT 1.0 stylesheet using
     these steps:
-      0) (Extract from XML Schema or RelaxNG schema)
-      1) Process inclusions
-      2) Process abstract patterns
-      3) Compile the schematron schema to XSLT
+
+    0) (Extract from XML Schema or RelaxNG schema)
+    1) Process inclusions
+    2) Process abstract patterns
+    3) Compile the schematron schema to XSLT
+
     The ``include`` and ``expand`` keyword arguments can be used to switch off
     steps 1) and 2).
     To set parameters for steps 1), 2) and 3) hand dictionaries containing xslt
