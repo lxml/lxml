@@ -887,6 +887,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     # not in ElementTree, read-only
     property nsmap:
         u"""Namespace prefix->URI mapping known in the context of this Element.
+
+        Note that changing the returned dict has no effect on the Element.
         """
         def __get__(self):
             cdef xmlNode* c_node
@@ -900,8 +902,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                         prefix = None
                     else:
                         prefix = funicode(c_ns.prefix)
-                    if prefix not in nsmap:
-                        nsmap[prefix] = funicode(c_ns.href)
+                    nsmap[prefix] = funicode(c_ns.href)
                     c_ns = c_ns.next
                 c_node = c_node.parent
             return nsmap
