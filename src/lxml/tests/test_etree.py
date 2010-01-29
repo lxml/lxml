@@ -1993,12 +1993,8 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         r = re.copy()
         r.update(rs)
-        self.assertEquals(
-            re,
-            e.nsmap)
-        self.assertEquals(
-            r,
-            s.nsmap)
+        self.assertEquals(re, e.nsmap)
+        self.assertEquals(r,  s.nsmap)
 
     def test_getiterator_filter_namespace(self):
         Element = self.etree.Element
