@@ -296,6 +296,9 @@ cdef extern from "libxml/xmlsave.h":
         XML_SAVE_NO_DECL  = 2   # drop the xml declaration      (2.6.21)
         XML_SAVE_NO_EMPTY = 4   # no empty tags                 (2.6.22)
         XML_SAVE_NO_XHTML = 8   # disable XHTML1 specific rules (2.6.22)
+        XML_SAVE_XHTML = 16     # force XHTML1 specific rules         (2.7.2)
+        XML_SAVE_AS_XML = 32    # force XML serialization on HTML doc (2.7.2)
+        XML_SAVE_AS_HTML = 64   # force HTML serialization on XML doc (2.7.2)
 
     cdef xmlSaveCtxt* xmlSaveToFilename(char* filename, char* encoding,
                                         int options) nogil
