@@ -8,8 +8,6 @@ lxml
 In general
 ----------
 
-* test namespaces more in-depth
-
 * more testing on multi-threading
 
 * better exception messages for XPath and schemas based on error log,
@@ -25,6 +23,8 @@ In general
 
 * use per-call or per-thread error logs in XSLT/XPath/etc. to keep the
   messages separate, especially in exceptions
+
+* add 'nsmap' parameter to cleanup_namespaces()
 
 
 QName
