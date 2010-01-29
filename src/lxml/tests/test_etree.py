@@ -2439,6 +2439,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         tree = etree.parse(BytesIO(xml))
         self.assertEquals(xml, etree.tostring(tree))
 
+    def test_doctype_output_override(self):
+        etree = self.etree
+        pub_id = "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        sys_id = "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+        doctype_string = _bytes('<!DOCTYPE html PUBLIC "%s" "%s">' % (pub_id, sys_id))
+
+        xml = _bytes('<!DOCTYPE root>\n<root/>')
+        tree = etree.parse(BytesIO(xml))
+        self.assertEquals(xml.replace('<!DOCTYPE root>', doctype_string),
+                          etree.tostring(tree, doctype=doctype_string))
+
     def test_xml_base(self):
         etree = self.etree
         root = etree.XML(_bytes("<root/>"), base_url="http://no/such/url")

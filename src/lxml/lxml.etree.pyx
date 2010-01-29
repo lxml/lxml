@@ -1659,7 +1659,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
-              standalone=None, compression=0):
+              standalone=None, docstring=None, compression=0):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
                   standalone=None, compression=0)
@@ -1702,7 +1702,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             is_standalone = 0
         if compression is None or compression < 0:
             compression = 0
-        _tofilelike(file, self._context_node, encoding, method,
+        _tofilelike(file, self._context_node, encoding, docstring, method,
                     write_declaration, 1, pretty_print, with_tail,
                     is_standalone, compression)
 
@@ -2594,10 +2594,10 @@ def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, pretty_print=False, with_tail=True,
-             standalone=None):
+             standalone=None, doctype=None):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
-                 standalone=None)
+                 standalone=None, doctype=None)
 
     Serialize an element to an encoded string representation of its XML
     tree.
@@ -2617,6 +2617,10 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
 
     Passing a boolean value to the ``standalone`` option will output
     an XML declaration with the corresponding ``standalone`` flag.
+
+    The ``doctype`` option allows passing in a plain string that will
+    be serialised before the XML tree.  Note that passing in non
+    well-formed content here will make the XML output non well-formed.
 
     You can prevent the tail text of the element from being serialised
     by passing the boolean ``with_tail`` option.  This has no impact
@@ -2647,13 +2651,13 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
         is_standalone = 0
 
     if isinstance(element_or_tree, _Element):
-        return _tostring(<_Element>element_or_tree, encoding, method,
+        return _tostring(<_Element>element_or_tree, encoding, doctype, method,
                          write_declaration, 0, pretty_print, with_tail,
                          is_standalone)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         encoding, method, write_declaration, 1, pretty_print,
-                         with_tail, is_standalone)
+                         encoding, doctype, method, write_declaration, 1,
+                         pretty_print, with_tail, is_standalone)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
             python._fqtypename(element_or_tree)
@@ -2670,9 +2674,9 @@ def tostringlist(element_or_tree, *args, **kwargs):
     return [tostring(element_or_tree, *args, **kwargs)]
 
 def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
-              with_tail=True):
+              with_tail=True, doctype=None):
     u"""tounicode(element_or_tree, method="xml", pretty_print=False,
-                  with_tail=True)
+                  with_tail=True, doctype=None)
 
     Serialize an element to the Python unicode representation of its XML
     tree.
@@ -2693,12 +2697,12 @@ def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
     on the tail text of children, which will always be serialised.
     """
     if isinstance(element_or_tree, _Element):
-        return _tostring(<_Element>element_or_tree, _unicode, method,
+        return _tostring(<_Element>element_or_tree, _unicode, doctype, method,
                           0, 0, pretty_print, with_tail, -1)
     elif isinstance(element_or_tree, _ElementTree):
         return _tostring((<_ElementTree>element_or_tree)._context_node,
-                         _unicode, method, 0, 1, pretty_print, with_tail,
-                         -1)
+                         _unicode, doctype, method, 0, 1, pretty_print,
+                         with_tail, -1)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
             type(element_or_tree)

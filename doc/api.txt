@@ -434,6 +434,27 @@ underlying transport protocol:
     ...
   lxml.etree.XMLSyntaxError: ...
 
+Since version 2.3, the serialisation can override the internal subset
+of the document with a user provided DOCTYPE:
+
+.. sourcecode:: pycon
+
+  >>> xml = '<!DOCTYPE root>\n<root/>'
+  >>> tree = etree.parse(StringIO(xml))
+
+  >>> print(etree.tostring(tree))
+  <!DOCTYPE root>
+  <root/>
+
+  >>> print(etree.tostring(tree,
+  ...     doctype='<!DOCTYPE root SYSTEM "/tmp/test.dtd">'))
+  <!DOCTYPE root SYSTEM "/tmp/test.dtd">
+  <root/>
+
+The content will be encoded, but otherwise copied verbatimly into the
+output stream.  It is therefore left to the user to take care for a
+correct doctype format, including the name of the root node.
+
 
 CDATA
 -----

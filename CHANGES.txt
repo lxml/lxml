@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* On serialisation, the new ``doctype`` parameter can be used to
+  override the DOCTYPE (internal subset) of the document.
+
 * New parameter ``output_parent`` to ``XSLTExtension.apply_templates()``
   to append the resulting content directly to an output element.
 
