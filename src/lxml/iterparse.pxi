@@ -457,24 +457,26 @@ Other keyword arguments:
 
     def __next__(self):
         cdef _IterparseContext context
-        cdef xmlparser.xmlParserCtxt* pctxt
-        cdef cstd.FILE* c_stream
-        cdef char* c_data
-        cdef Py_ssize_t c_data_len
-        cdef int error, done
         if self._source is None:
             raise StopIteration
 
         context = <_IterparseContext>self._push_parser_context
-        if python.PyList_GET_SIZE(context._events) > context._event_index:
-            item = python.PyList_GET_ITEM(context._events, context._event_index)
-            python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
-            context._event_index += 1
-            return item
+        if python.PyList_GET_SIZE(context._events) <= context._event_index:
+            self._read_more_events(context)
+        item = python.PyList_GET_ITEM(context._events, context._event_index)
+        python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
+        context._event_index += 1
+        return item
+
+    cdef _read_more_events(self, _IterparseContext context):
+        cdef cstd.FILE* c_stream
+        cdef char* c_data
+        cdef Py_ssize_t c_data_len
+        cdef xmlparser.xmlParserCtxt* pctxt = context._c_ctxt
+        cdef int error = 0, done = 0
 
         del context._events[:]
-        pctxt = context._c_ctxt
-        error = done = 0
+        context._event_index = 0
         c_stream = python.PyFile_AsFile(self._source)
         while python.PyList_GET_SIZE(context._events) == 0:
             if c_stream is NULL:
@@ -517,11 +519,6 @@ Other keyword arguments:
             self.root = context._root
             self._source = None
             raise StopIteration
-
-        context._event_index = 1
-        element = python.PyList_GET_ITEM(context._events, 0)
-        python.Py_INCREF(element) # 'borrowed reference' from PyList_GET_ITEM
-        return element
 
 
 cdef class iterwalk:
