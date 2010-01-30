@@ -2384,6 +2384,18 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(isinstance(root.value[0], objectify.IntElement))
         self.assert_(isinstance(root.value[1], objectify.FloatElement))
 
+    def test_efactory_subtype(self):
+        class Attribute(objectify.ObjectifiedDataElement):
+            def __init__(self):
+                objectify.ObjectifiedDataElement.__init__(self)
+                self.set("datatype", "TYPE")
+                self.set("range", "0.,1.")
+
+        attr = Attribute()
+        self.assertEquals(attr.text, None)
+        self.assertEquals(attr.get("datatype"), "TYPE")
+        self.assertEquals(attr.get("range"), "0.,1.")
+
     def test_XML_base_url_docinfo(self):
         root = objectify.XML(_bytes("<root/>"), base_url="http://no/such/url")
         docinfo = root.getroottree().docinfo
