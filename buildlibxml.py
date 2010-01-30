@@ -7,8 +7,63 @@ try:
 except ImportError:
     from urllib.parse import urlsplit
     from urllib.request import urlretrieve
+    
+    
 
-## Routines to download and build libxml2/xslt:
+# use pre-built libraries on Windows
+
+def download_and_extract_zlatkovic_binaries(destdir):
+    url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
+    libs = dict(
+        libxml2  = None,
+        libxslt  = None,
+        zlib     = None,
+        iconv    = None,
+    )
+    for fn in ftp_listdir(url):
+        for libname in libs:
+            if fn.startswith(libname):
+                assert libs[libname] is None, 'duplicate listings?'
+                assert fn.endswith('.win32.zip')
+                libs[libname] = fn
+
+    if not os.path.exists(destdir): os.makedirs(destdir)
+    for libname, libfn in libs.items():
+        srcfile = urljoin(url, libfn)
+        destfile = os.path.join(destdir, libfn)
+        print('Retrieving "%s" to "%s"' % (srcfile, destfile))
+        urlretrieve(srcfile, destfile)
+        d = unpack_zipfile(destfile, destdir)
+        libs[libname] = d
+
+    return libs
+
+def unpack_zipfile(zipfn, destdir):
+    assert zipfn.endswith('.zip')
+    import zipfile
+    print('Unpacking %s into %s' % (os.path.basename(zipfn), destdir))
+    f = zipfile.ZipFile(zipfn)
+    try:
+        f.extractall(path=destdir)
+    finally:
+        f.close()
+    edir = os.path.join(destdir, os.path.basename(zipfn)[:-len('.zip')])
+    assert os.path.exists(edir), 'missing: %s' % edir
+    return edir
+
+def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
+    assert sys.platform.startswith('win')
+    libs = download_and_extract_zlatkovic_binaries(download_dir)
+    for libname, path in libs.items():
+        i = os.path.join(path, 'include')
+        l = os.path.join(path, 'lib')
+        assert os.path.exists(i), 'does not exist: %s' % i
+        assert os.path.exists(l), 'does not exist: %s' % l
+        static_include_dirs.append(i)
+        static_library_dirs.append(l)
+
+
+## Routines to download and build libxml2/xslt from sources:
 
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
 LIBICONV_LOCATION = 'ftp://ftp.gnu.org/pub/gnu/libiconv/'

@@ -41,14 +41,19 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries): 
     global XML2_CONFIG, XSLT_CONFIG
     if OPTION_BUILD_LIBXML2XSLT:
-        from buildlibxml import build_libxml2xslt
-        XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
-            'libs', 'build/tmp',
-            static_include_dirs, static_library_dirs,
-            static_cflags, static_binaries,
-            libiconv_version=OPTION_LIBICONV_VERSION,
-            libxml2_version=OPTION_LIBXML2_VERSION,
-            libxslt_version=OPTION_LIBXSLT_VERSION)
+        from buildlibxml import build_libxml2xslt, get_prebuilt_libxml2xslt
+        if sys.platform.startswith('win'):
+            get_prebuilt_libxml2xslt(
+                'libs', static_include_dirs, static_library_dirs)
+        else:
+            XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
+                'libs', 'build/tmp',
+                static_include_dirs, static_library_dirs,
+                static_cflags, static_binaries,
+                libiconv_version=OPTION_LIBICONV_VERSION,
+                libxml2_version=OPTION_LIBXML2_VERSION,
+                libxslt_version=OPTION_LIBXSLT_VERSION)
+
     if CYTHON_INSTALLED:
         source_extension = ".pyx"
         print("Building with Cython %s." % Cython.Compiler.Version.version)
@@ -321,6 +326,7 @@ def option_value(name):
     env_val = os.getenv(name.upper().replace('-', '_'))
     return env_val
 
+staticbuild = bool(os.environ.get('STATICBUILD', ''))
 # pick up any commandline options and/or env variables
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
@@ -329,11 +335,11 @@ OPTION_WITHOUT_CYTHON = has_option('without-cython')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
-OPTION_STATIC = has_option('static')
+OPTION_STATIC = staticbuild or has_option('static')
 OPTION_DEBUG_GCC = has_option('debug-gcc')
 OPTION_SHOW_WARNINGS = has_option('warnings')
 OPTION_AUTO_RPATH = has_option('auto-rpath')
-OPTION_BUILD_LIBXML2XSLT = has_option('static-deps')
+OPTION_BUILD_LIBXML2XSLT = staticbuild or has_option('static-deps')
 if OPTION_BUILD_LIBXML2XSLT:
     OPTION_STATIC = True
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
