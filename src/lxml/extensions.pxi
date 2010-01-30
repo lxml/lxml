@@ -466,6 +466,7 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
     if python.PyUnicode_Check(obj):
         obj = _utf8(obj)
     if python.PyBytes_Check(obj):
+        # libxml2 copies the string value
         return xpath.xmlXPathNewCString(_cstr(obj))
     if python.PyBool_Check(obj):
         return xpath.xmlXPathNewBoolean(obj)
