@@ -89,27 +89,34 @@ def fragment_fromstring(html, create_parent=False,
     element.
 
     If create_parent is true (or is a tag name) then a parent node
-    will be created to encapsulate the HTML in a single element.
+    will be created to encapsulate the HTML in a single element.  In
+    this case, leading or trailing text is allowed.
     """
     if not isinstance(html, _strings):
         raise TypeError('string required')
 
-    children = fragments_fromstring(html, True, guess_charset, parser)
-    if not children:
-        raise etree.ParserError('No elements found')
+    accept_leading_text = bool(create_parent)
+
+    elements = fragments_fromstring(
+        html, guess_charset=guess_charset, parser=parser,
+        no_leading_text=not accept_leading_text, **kw)
+
     if create_parent:
-        if not isinstance(create_parent, _strings):
+        if not isinstance(create_parent, basestring):
             create_parent = 'div'
         new_root = Element(create_parent)
-        if isinstance(children[0], _strings):
-            new_root.text = children[0]
-            del children[0]
-        new_root.extend(children)
-        children = new_root
-    elif len(children) > 1:
-        raise etree.ParserError('Multiple elements found')
+        if elements:
+            if isinstance(elements[0], basestring):
+                new_root.text = elements[0]
+                del elements[0]
+            new_root.extend(elements)
+        return new_root
 
-    result = children[0]
+    if not elements:
+        raise etree.ParserError('No elements found')
+    if len(elements) > 1:
+        raise etree.ParserError('Multiple elements found')
+    result = elements[0]
     if result.tail and result.tail.strip():
         raise etree.ParserError('Element followed by text: %r' % result.tail)
     result.tail = None

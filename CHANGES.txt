@@ -55,6 +55,9 @@ Features added
 Bugs fixed
 ----------
 
+* Parsing broken fragments in lxml.html could fail if the fragment
+  contained an orphaned closing '</div>' tag.
+
 * Manually instantiating the custom element classes in
   ``lxml.objectify`` could crash.
 
