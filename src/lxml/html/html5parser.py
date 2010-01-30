@@ -94,14 +94,19 @@ def fragment_fromstring(html, create_parent=False,
     if not isinstance(html, _strings):
         raise TypeError('string required')
 
-    if create_parent:
-        container = create_parent or 'div'
-        html = '<%s>%s</%s>' % (container, html, container)
-
     children = fragments_fromstring(html, True, guess_charset, parser)
     if not children:
         raise etree.ParserError('No elements found')
-    if len(children) > 1:
+    if create_parent:
+        if not isinstance(create_parent, _strings):
+            create_parent = 'div'
+        new_root = Element(create_parent)
+        if isinstance(children[0], _strings):
+            new_root.text = children[0]
+            del children[0]
+        new_root.extend(children)
+        children = new_root
+    elif len(children) > 1:
         raise etree.ParserError('Multiple elements found')
 
     result = children[0]
