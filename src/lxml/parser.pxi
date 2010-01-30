@@ -1082,17 +1082,20 @@ cdef class _FeedParser(_BaseParser):
             py_buffer_len -= buffer_len
             c_data += buffer_len
 
-        while (recover or error == 0) and py_buffer_len > 0:
-            if py_buffer_len > python.INT_MAX:
-                buffer_len = python.INT_MAX
-            else:
-                buffer_len = <int>py_buffer_len
-            if self._for_html:
-                error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
-            else:
-                error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
-            py_buffer_len -= buffer_len
-            c_data += buffer_len
+        #print pctxt.charset, 'NONE' if c_encoding is NULL else c_encoding
+
+        while py_buffer_len > 0 and (error == 0 or recover):
+            with nogil:
+                if py_buffer_len > python.INT_MAX:
+                    buffer_len = python.INT_MAX
+                else:
+                    buffer_len = <int>py_buffer_len
+                if self._for_html:
+                    error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
+                else:
+                    error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
+                py_buffer_len -= buffer_len
+                c_data += buffer_len
 
             if error and not pctxt.replaceEntities and not pctxt.validate:
                 # in this mode, we ignore errors about undefined entities
