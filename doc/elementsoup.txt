@@ -47,7 +47,7 @@ Here is a document full of tag soup, similar to, but not quite like, HTML:
 
 .. sourcecode:: pycon
 
-    >>> tag_soup = '<meta><head><title>Hello</head<body onload=crash()>Hi all<p>'
+    >>> tag_soup = '<meta><head><title>Hello</head><body onload=crash()>Hi all<p>'
 
 all you need to do is pass it to the ``fromstring()`` function:
 
