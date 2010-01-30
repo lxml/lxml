@@ -577,23 +577,33 @@ def fragment_fromstring(html, create_parent=False, base_url=None,
     element.
 
     If create_parent is true (or is a tag name) then a parent node
-    will be created to encapsulate the HTML in a single element.
+    will be created to encapsulate the HTML in a single element.  In
+    this case, leading or trailing text is allowed.
 
     base_url will set the document's base_url attribute (and the tree's docinfo.URL)
     """
     if parser is None:
         parser = html_parser
+
+    accept_leading_text = bool(create_parent)
+
+    elements = fragments_fromstring(
+        html, parser=parser, no_leading_text=not accept_leading_text,
+        base_url=base_url, **kw)
+
     if create_parent:
         if not isinstance(create_parent, basestring):
             create_parent = 'div'
-        return fragment_fromstring('<%s>%s</%s>' % (
-            create_parent, html, create_parent),
-                                   parser=parser, base_url=base_url, **kw)
-    elements = fragments_fromstring(html, parser=parser, no_leading_text=True,
-                                    base_url=base_url, **kw)
+        new_root = Element(create_parent)
+        if elements:
+            if isinstance(elements[0], basestring):
+                new_root.text = elements[0]
+                del elements[0]
+            new_root.extend(elements)
+        return new_root
+
     if not elements:
-        raise etree.ParserError(
-            "No elements found")
+        raise etree.ParserError('No elements found')
     if len(elements) > 1:
         raise etree.ParserError(
             "Multiple elements found (%s)"
