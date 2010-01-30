@@ -45,20 +45,22 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
         cdef bint is_html = 0
         cdef _BaseParser parser
         cdef _Element last_child
+        # don't use normal attribute access as it might be overridden
+        _getattr = object.__getattribute__
         try:
-            namespace = _utf8(self.NAMESPACE)
+            namespace = _utf8(_getattr(self, 'NAMESPACE'))
         except AttributeError:
             namespace = None
         try:
-            ns, tag = _getNsTag(self.TAG)
+            ns, tag = _getNsTag(_getattr(self, 'TAG'))
             if ns is not None:
                 namespace = ns
         except AttributeError:
-            tag = _utf8(self.__class__.__name__)
-            if '.' in tag:
-                tag = tag.split('.')[-1]
+            tag = _utf8(_getattr(_getattr(self, '__class__'), '__name__'))
+            if b'.' in tag:
+                tag = tag.split(b'.')[-1]
         try:
-            parser = self.PARSER
+            parser = _getattr(self, 'PARSER')
         except AttributeError:
             parser = None
             for child in children:
@@ -69,7 +71,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
             is_html = 1
         if namespace is None:
             try:
-                is_html = self.HTML
+                is_html = _getattr(self, 'HTML')
             except AttributeError:
                 pass
         _initNewElement(self, is_html, tag, namespace, parser,

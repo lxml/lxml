@@ -52,6 +52,9 @@ Features added
 Bugs fixed
 ----------
 
+* Manually instantiating the custom element classes in
+  ``lxml.objectify`` could crash.
+
 * Using XSLT extension elements around the root of the output document
   crashed.
 
