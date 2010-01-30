@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Support passing a readily configured logger instance into
+  ``PyErrorLog``, instead of a logger name.
+
 * On serialisation, the new ``doctype`` parameter can be used to
   override the DOCTYPE (internal subset) of the document.
 

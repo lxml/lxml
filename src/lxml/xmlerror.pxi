@@ -360,10 +360,11 @@ cdef class _RotatingErrorLog(_ErrorLog):
         self._entries.append(entry)
 
 cdef class PyErrorLog(_BaseErrorLog):
-    u"""PyErrorLog(self, logger_name=None)
+    u"""PyErrorLog(self, logger_name=None, logger=None)
     A global error log that connects to the Python stdlib logging package.
 
-    The constructor accepts an optional logger name.
+    The constructor accepts an optional logger name or a readily
+    instantiated logger instance.
 
     If you want to change the mapping between libxml2's ErrorLevels and Python
     logging levels, you can modify the level_map dictionary from a subclass.
@@ -378,10 +379,10 @@ cdef class PyErrorLog(_BaseErrorLog):
     object and calls ``self.log(log_entry, format_string, arg1, arg2, ...)``
     with appropriate data.
     """
-    cdef readonly object level_map
+    cdef readonly dict level_map
     cdef object _map_level
     cdef object _log
-    def __init__(self, logger_name=None):
+    def __init__(self, logger_name=None, logger=None):
         _BaseErrorLog.__init__(self, None, None)
         import logging
         self.level_map = {
@@ -390,10 +391,11 @@ cdef class PyErrorLog(_BaseErrorLog):
             ErrorLevels.FATAL   : logging.CRITICAL
             }
         self._map_level = self.level_map.get
-        if logger_name:
-            logger = logging.getLogger(logger_name)
-        else:
-            logger = logging.getLogger()
+        if logger is None:
+            if logger_name:
+                logger = logging.getLogger(logger_name)
+            else:
+                logger = logging.getLogger()
         self._log = logger.log
 
     def copy(self):
