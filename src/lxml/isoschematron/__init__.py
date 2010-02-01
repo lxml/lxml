@@ -69,10 +69,15 @@ schematron_schema_valid = _etree.RelaxNG(_etree.parse(
 
 def stylesheet_params(**kwargs):
     """Convert keyword args to a dictionary of stylesheet parameters.
-    Conversion follows these rules:
+    XSL stylesheet parameters must be XPath expressions, i.e.:
+     * string expressions, like "'5'"
+     * simple (number) expressions, like "5"
+     * valid XPath expressions, like "/a/b/text()"
+    This function converts native Python keyword arguments to stylesheet
+    parameters following these rules:
     If an arg is a string wrap it with XSLT.strparam().
     If an arg is an XPath object use its path string.
-    If arg is None ignore the parameter.
+    If arg is None raise TypeError.
     Else convert arg to string.
     """
     result = {}
@@ -80,7 +85,7 @@ def stylesheet_params(**kwargs):
         if isinstance(val, basestring):
             val = _etree.XSLT.strparam(val)
         elif val is None:
-            continue
+            raise TypeError('None not allowed as a stylesheet parameter')
         elif not isinstance(val, _etree.XPath):
             val = unicode(val)
         result[key] = val
@@ -93,14 +98,11 @@ def _stylesheet_param_dict(paramsDict, kwargsDict):
     stylesheet arguments.
     kwargsDict entries with a value of None are ignored.
     """
-    if paramsDict:
-        # beware of changing mutable default arg
-        paramsDict = dict(paramsDict)
-        for k, v in kwargsDict.items():
-            if v is not None: # None values do not override
-                paramsDict[k] = v
-    else:
-        paramsDict = kwargsDict
+    # beware of changing mutable default arg
+    paramsDict = dict(paramsDict)
+    for k, v in kwargsDict.items():
+        if v is not None: # None values do not override
+            paramsDict[k] = v
     paramsDict = stylesheet_params(**paramsDict)
     return paramsDict
     
@@ -122,9 +124,12 @@ class Schematron(_etree._Validator):
 
     The ``include`` and ``expand`` keyword arguments can be used to switch off
     steps 1) and 2).
-    To set parameters for steps 1), 2) and 3) hand dictionaries containing xslt
-    parameters to the keyword arguments ``include_params``, ``expand_params``
-    or ``compile_params``.
+    To set parameters for steps 1), 2) and 3) hand parameter dictionaries to the
+    keyword arguments ``include_params``, ``expand_params`` or
+    ``compile_params``.
+    For convenience, the compile-step parameter ``phase`` is also exposed as a
+    keyword argument ``phase``. This takes precedence if the parameter is also
+    given in the parameter dictionary.
     If ``store_schematron`` is set to True, the (included-and-expanded)
     schematron document tree is stored and available through the ``schematron``
     property.

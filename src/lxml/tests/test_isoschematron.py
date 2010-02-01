@@ -762,6 +762,21 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assert_(relaxng(tree_invalid), relaxng.error_log)
         self.assert_(not schematron(tree_invalid))
 
+    def test_schematron_invalid_args(self):
+        schema = self.parse('''\
+<sch:schema xmlns:sch="http://purl.oclc.org/dsdl/schematron">
+  <sch:pattern id="number_of_entries">
+    <sch:title>mandatory number_of_entries tests</sch:title>
+    <sch:rule context="number_of_entries">
+      <sch:assert test="text()=count(../entries/entry)">[ERROR] number_of_entries (<sch:value-of select="."/>) must equal the number of entries/entry elements (<sch:value-of select="count(../entries/entry)"/>)</sch:assert>
+    </sch:rule>
+  </sch:pattern>
+</sch:schema>
+''')
+        # handing phase as keyword arg will *not* raise the type error
+        self.assertRaises(TypeError, isoschematron.Schematron, schema,
+                          compile_params={'phase': None})
+
     #TODO: test xslt parameters for inclusion, expand & compile steps (?)
 
 
