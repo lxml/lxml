@@ -151,6 +151,10 @@ cdef class ObjectifiedElement(ElementBase):
         else:
             return textOf(self._c_node) or u''
 
+    # pickle support for objectified Element
+    def __reduce__(self):
+        return (fromstring, (etree.tostring(self),))
+
     property text:
         def __get__(self):
             return textOf(self._c_node)
@@ -1359,31 +1363,24 @@ cdef object _dump(_Element element, int indent):
 
 
 ################################################################################
-# Pickle support
+# Pickle support for objectified ElementTree
 
 def __unpickleElementTree(data):
     return etree.ElementTree(fromstring(data))
 
-cdef _setupPickle(elementReduceFunction, elementTreeReduceFunction):
+cdef _setupPickle(elementTreeReduceFunction):
     if python.IS_PYTHON3:
         import copyreg
     else:
         import copy_reg as copyreg
-    copyreg.constructor(fromstring)
-    copyreg.constructor(__unpickleElementTree)
-    copyreg.pickle(ObjectifiedElement,
-                   elementReduceFunction, fromstring)
     copyreg.pickle(etree._ElementTree,
                    elementTreeReduceFunction, __unpickleElementTree)
-
-def pickleReduceElement(obj):
-    return (fromstring, (etree.tostring(obj),))
 
 def pickleReduceElementTree(obj):
     return (__unpickleElementTree, (etree.tostring(obj),))
 
-_setupPickle(pickleReduceElement, pickleReduceElementTree)
-del pickleReduceElement, pickleReduceElementTree
+_setupPickle(pickleReduceElementTree)
+del pickleReduceElementTree
 
 ################################################################################
 # Element class lookup

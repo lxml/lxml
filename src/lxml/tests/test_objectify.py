@@ -2328,6 +2328,43 @@ class ObjectifyTestCase(HelperTestCase):
             etree.tostring(new_tree),
             etree.tostring(tree))
 
+    def test_pickle_intelement(self):
+        self._test_pickle('<x>42</x>')
+        self._test_pickle(objectify.DataElement(42))
+
+    def test_pickle_floattelement(self):
+        self._test_pickle('<x>42.0</x>')
+        self._test_pickle(objectify.DataElement(42.0))
+
+    def test_pickle_strelement(self):
+        self._test_pickle('<x>Pickle me!</x>')
+        self._test_pickle(objectify.DataElement('Pickle me!'))
+
+    def test_pickle_boolelement(self):
+        self._test_pickle('<x>true</x>')
+        self._test_pickle('<x>false</x>')
+        self._test_pickle(objectify.DataElement(True))
+        self._test_pickle(objectify.DataElement(False))
+
+    def test_pickle_noneelement(self):
+        self._test_pickle('''
+<x xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>''')
+        self._test_pickle(objectify.DataElement(None))
+
+    def _test_pickle(self, stringOrElt):
+        import pickle
+        if isinstance(stringOrElt, (etree._Element, etree._ElementTree)):
+            elt = stringOrElt
+        else:
+            elt = self.XML(stringOrElt)
+        out = BytesIO()
+        pickle.dump(elt, out)
+
+        new_elt = pickle.loads(out.getvalue())
+        self.assertEquals(
+            etree.tostring(new_elt),
+            etree.tostring(elt))
+
     # E-Factory tests, need to use sub-elements as root element is always
     # type-looked-up as ObjectifiedElement (no annotations)
     def test_efactory_int(self):
