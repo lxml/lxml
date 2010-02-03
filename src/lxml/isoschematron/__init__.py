@@ -5,6 +5,7 @@ of the pure-xslt 'skeleton' implementation.
 import os.path
 from lxml import etree as _etree # due to validator __init__ signature
 
+
 # some compat stuff, borrowed from lxml.html
 try:
     bytes = __builtins__["bytes"]
@@ -23,6 +24,12 @@ except (KeyError, NameError):
     basestring = str
 
 
+__all__ = ['extract_xsd', 'extract_rng', 'iso_dsdl_include',
+           'iso_abstract_expand', 'iso_svrl_for_xslt1',
+           'svrl_validation_errors', 'schematron_schema_valid',
+           'stylesheet_params', 'Schematron'] 
+
+
 # some namespaces
 #FIXME: Maybe lxml should provide a dedicated place for common namespace
 #FIXME: definitions?
@@ -39,9 +46,9 @@ _resources_dir = os.path.join(os.path.dirname(__file__), 'resources')
 
 
 # the iso-schematron skeleton implementation steps aka xsl transformations
-extract_from_xsd = _etree.XSLT(_etree.parse(
+extract_xsd = _etree.XSLT(_etree.parse(
     os.path.join(_resources_dir, 'xsl', 'XSD2Schtrn.xsl')))
-extract_from_rng = _etree.XSLT(_etree.parse(
+extract_rng = _etree.XSLT(_etree.parse(
     os.path.join(_resources_dir, 'xsl', 'RNG2Schtrn.xsl')))
 iso_dsdl_include = _etree.XSLT(_etree.parse(
     os.path.join(_resources_dir, 'xsl', 'iso-schematron-xslt1',
@@ -52,9 +59,6 @@ iso_abstract_expand = _etree.XSLT(_etree.parse(
 iso_svrl_for_xslt1 = _etree.XSLT(_etree.parse(
     os.path.join(_resources_dir,
                  'xsl', 'iso-schematron-xslt1', 'iso_svrl_for_xslt1.xsl')))
-# if you want to use another "meta-stylesheet" for compilation to xslt, plug it
-# here
-iso_compile2xslt = iso_svrl_for_xslt1
 
 
 # svrl result accessors
@@ -117,10 +121,10 @@ class Schematron(_etree._Validator):
     implementation, the validator is created as an XSLT 1.0 stylesheet using
     these steps:
 
-    0) (Extract from XML Schema or RelaxNG schema)
-    1) Process inclusions
-    2) Process abstract patterns
-    3) Compile the schematron schema to XSLT
+     0) (Extract from XML Schema or RelaxNG schema)
+     1) Process inclusions
+     2) Process abstract patterns
+     3) Compile the schematron schema to XSLT
 
     The ``include`` and ``expand`` keyword arguments can be used to switch off
     steps 1) and 2).
@@ -178,15 +182,43 @@ class Schematron(_etree._Validator):
       1
     """
 
+    # libxml2 error categorization for validation errors
     _domain = _etree.ErrorDomains.SCHEMATRONV
     _level = _etree.ErrorLevels.ERROR
     _error_type = _etree.ErrorTypes.SCHEMATRONV_ASSERT
 
+    def _extract(self, element):
+        """Extract embedded schematron schema from non-schematron host schema.
+        This method will only be called by __init__ if the given schema document
+        is not a schematron schema by itself.
+        Must return a schematron schema document tree or None.
+        """
+        schematron = None
+        if element.tag == _xml_schema_root:
+            schematron = self._extract_xsd(element)
+        elif element.nsmap[element.prefix] == RELAXNG_NS:
+            # RelaxNG does not have a single unique root element
+            schematron = self._extract_rng(element)
+        return schematron
+    
+    # customization points
+    # etree.XSLT objects that provide the extract, include, expand, compile
+    # steps
+    _extract_xsd = extract_xsd
+    _extract_rng = extract_rng
+    _include = iso_dsdl_include
+    _expand = iso_abstract_expand
+    _compile = iso_svrl_for_xslt1
+    # etree.XPath object that determines input document validity when applied to
+    # the svrl result report; must return a list of result elements (empty if
+    # valid)
+    _validation_errors = svrl_validation_errors
+    
     def __init__(self, etree=None, file=None, include=True, expand=True,
                  include_params={}, expand_params={}, compile_params={},
                  store_schematron=False, store_xslt=False, store_report=False,
                  phase=None):
-        super(self.__class__, self).__init__()
+        super(Schematron, self).__init__()
 
         self._store_report = store_report
         self._schematron = None
@@ -210,20 +242,17 @@ class Schematron(_etree._Validator):
              raise ValueError("Empty tree")
         if root.tag == _schematron_root:
             schematron = root
-        elif root.tag == _xml_schema_root:
-            schematron = extract_from_xsd(root)
-        elif root.nsmap[root.prefix] == RELAXNG_NS:
-            # RelaxNG does not have a single unique root element
-            schematron = extract_from_rng(root)
         else:
+            schematron = self._extract(root)
+        if schematron is None:
             raise _etree.SchematronParseError(
                 "Document is not a schematron schema or schematron-extractable")
         # perform the iso-schematron skeleton implementation steps to get a
         # validating xslt
         if include:
-            schematron = iso_dsdl_include(schematron, **include_params)
+            schematron = self._include(schematron, **include_params)
         if expand:
-            schematron = iso_abstract_expand(schematron, **expand_params)
+            schematron = self._expand(schematron, **expand_params)
         if not schematron_schema_valid(schematron):
             raise _etree.SchematronParseError(
                 "invalid schematron schema: %s" %
@@ -233,7 +262,7 @@ class Schematron(_etree._Validator):
         # add new compile keyword args here if exposing them
         compile_kwargs = {'phase': phase}
         compile_params = _stylesheet_param_dict(compile_params, compile_kwargs)
-        validator_xslt = iso_compile2xslt(schematron, **compile_params)
+        validator_xslt = self._compile(schematron, **compile_params)
         if store_xslt:
             self._validator_xslt = validator_xslt
         self._validator = _etree.XSLT(validator_xslt)
@@ -247,7 +276,7 @@ class Schematron(_etree._Validator):
         result = self._validator(etree)
         if self._store_report:
             self._validation_report = result
-        errors = svrl_validation_errors(result)
+        errors = self._validation_errors(result)
         if errors:
             if isinstance(etree, _etree._Element):
                 fname = etree.getroottree().docinfo.URL or '<file>'

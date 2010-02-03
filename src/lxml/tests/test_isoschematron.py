@@ -777,6 +777,66 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertRaises(TypeError, isoschematron.Schematron, schema,
                           compile_params={'phase': None})
 
+    def test_schematron_customization(self):
+        class MySchematron(isoschematron.Schematron):
+            def _extract(self, root):
+                schematron = (root.xpath(
+                    '//sch:schema',
+                    namespaces={'sch': "http://purl.oclc.org/dsdl/schematron"})
+                    or [None])[0]
+                return schematron
+                              
+            def _include(self, schematron, **kwargs):
+                raise RuntimeError('inclusion unsupported')
+            
+            def _expand(self, schematron, **kwargs):
+                raise RuntimeError('expansion unsupported')
+            
+            def _validation_errors(self, validationReport):
+                valid = etree.XPath(
+                    'count(//svrl:successful-report[@flag="critical"])=1',
+                    namespaces={'svrl': isoschematron.SVRL_NS})(
+                    validationReport)
+                if valid:
+                    return []
+                error = etree.Element('Error')
+                error.text = 'missing critical condition report'
+                return [error]
+
+        tree_valid = self.parse('<AAA><BBB/><CCC/></AAA>')
+        tree_invalid = self.parse('<AAA><BBB/><CCC/><DDD/></AAA>')
+        schema = self.parse('''\
+<schema xmlns="http://www.example.org/yet/another/schema/dialect">
+  <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
+    <pattern id="OpenModel">
+      <title>Open Model</title>
+      <rule context="AAA">
+        <report test="BBB" flag="info">BBB element must be present</report>
+        <report test="CCC" flag="info">CCC element must be present</report>
+      </rule>
+    </pattern>
+    <pattern id="ClosedModel">
+      <title>Closed model"</title>
+      <rule context="AAA">
+        <report test="BBB" flag="info">BBB element must be present</report>
+        <report test="CCC" flag="info">CCC element must be present</report>
+        <report test="count(BBB|CCC) = count(*)" flag="critical">Only BBB and CCC children must be present</report>
+      </rule>
+    </pattern>
+  </schema>
+</schema>
+''')
+        # check if overridden _include is run
+        self.assertRaises(RuntimeError, MySchematron, schema, store_report=True)
+        # check if overridden _expand is run
+        self.assertRaises(RuntimeError, MySchematron, schema, store_report=True,
+                          include=False)
+        
+        schema = MySchematron(schema, store_report=True, include=False,
+                              expand=False)
+        self.assert_(schema.validate(tree_valid))
+        self.assert_(not schema.validate(tree_invalid))
+
     #TODO: test xslt parameters for inclusion, expand & compile steps (?)
 
 
