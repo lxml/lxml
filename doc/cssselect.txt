@@ -74,8 +74,8 @@ In particular these will not be available:
 * UI states: ``:enabled``, ``:disabled``, ``:indeterminate``
   (``:checked`` and ``:unchecked`` *are* available)
 
-Also, none of the psuedo-elements apply, because the selector only
-returns elements and psuedo-elements select portions of text, like
+Also, none of the pseudo-elements apply, because the selector only
+returns elements and pseudo-elements select portions of text, like
 ``::first-line``.
 
 

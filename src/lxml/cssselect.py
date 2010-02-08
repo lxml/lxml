@@ -128,11 +128,11 @@ class Function(object):
         sel_path = self.selector.xpath()
         if self.name in self.unsupported:
             raise ExpressionError(
-                "The psuedo-class %r is not supported" % self.name)
+                "The pseudo-class %r is not supported" % self.name)
         method = '_xpath_' + self.name.replace('-', '_')
         if not hasattr(self, method):
             raise ExpressionError(
-                "The psuedo-class %r is unknown" % self.name)
+                "The pseudo-class %r is unknown" % self.name)
         method = getattr(self, method)
         return method(sel_path, self.expr)
 
@@ -240,11 +240,11 @@ class Pseudo(object):
         el_xpath = self.element.xpath()
         if self.ident in self.unsupported:
             raise ExpressionError(
-                "The psuedo-class %r is unsupported" % self.ident)
+                "The pseudo-class %r is unsupported" % self.ident)
         method = '_xpath_' + self.ident.replace('-', '_')
         if not hasattr(self, method):
             raise ExpressionError(
-                "The psuedo-class %r is unknown" % self.ident)
+                "The pseudo-class %r is unknown" % self.ident)
         method = getattr(self, method)
         el_xpath = method(el_xpath)
         return el_xpath
