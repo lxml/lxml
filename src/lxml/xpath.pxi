@@ -212,8 +212,7 @@ cdef class _XPathEvaluatorBase:
             self._raise_eval_error()
 
         try:
-            result = _unwrapXPathObject(xpathObj, doc,
-                                        self._context._build_smart_strings)
+            result = _unwrapXPathObject(xpathObj, doc, self._context)
         finally:
             _freeXPathObject(xpathObj)
             self._context._release_temp_refs()

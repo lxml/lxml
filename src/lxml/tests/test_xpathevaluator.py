@@ -137,6 +137,24 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEquals(False, hasattr(results[0], 'getparent'))
         self.assertEquals(False, hasattr(results[0], 'attrname'))
 
+    def test_xpath_text_from_other_document(self):
+        xml_data = '''
+        <table>
+                <item xml:id="k1"><value>v1</value></item>
+                <item xml:id="k2"><value>v2</value></item>
+        </table>
+        '''
+
+        def lookup(dummy, id):
+            return etree.XML(xml_data).xpath('id(%r)' % id)
+        functions = {(None, 'lookup') : lookup}
+
+        root = etree.XML('<dummy/>')
+        values = root.xpath("lookup('k1')/value/text()",
+                           extensions=functions)
+        self.assertEquals(['v1'], values)
+        self.assertEquals('value', values[0].getparent().tag)
+
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')
         self.assertEquals(['<!-- Foo -->'],

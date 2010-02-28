@@ -40,6 +40,7 @@ cdef class _BaseContext:
     cdef bint _build_smart_strings
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
+    cdef set _temp_documents
     cdef _ExceptionContext _exc
 
     def __init__(self, namespaces, extensions, enable_regexp,
@@ -91,6 +92,7 @@ cdef class _BaseContext:
         self._extensions = extensions
         self._namespaces = namespaces
         self._temp_refs  = _TempStore()
+        self._temp_documents  = set()
         self._build_smart_strings = build_smart_strings
 
         if enable_regexp:
@@ -307,7 +309,8 @@ cdef class _BaseContext:
     cdef _release_temp_refs(self):
         u"Free temporarily referenced objects from this context."
         self._temp_refs.clear()
-        
+        self._temp_documents.clear()
+
     cdef _hold(self, obj):
         u"""A way to temporarily hold references to nodes in the evaluator.
 
@@ -318,7 +321,7 @@ cdef class _BaseContext:
         cdef _Element element
         if isinstance(obj, _Element):
             self._temp_refs.add(obj)
-            self._temp_refs.add((<_Element>obj)._doc)
+            self._temp_documents.add((<_Element>obj)._doc)
             return
         elif _isString(obj) or not python.PySequence_Check(obj):
             return
@@ -327,7 +330,19 @@ cdef class _BaseContext:
                 #print "Holding element:", <int>element._c_node
                 self._temp_refs.add(o)
                 #print "Holding document:", <int>element._doc._c_doc
-                self._temp_refs.add((<_Element>o)._doc)
+                self._temp_documents.add((<_Element>o)._doc)
+
+    cdef _Document _findDocumentForNode(self, xmlNode* c_node):
+        u"""If an XPath expression returns an element from a different
+        document than the current context document, we call this to
+        see if it was possibly created by an extension and is a known
+        document instance.
+        """
+        cdef _Document doc
+        for doc in self._temp_documents:
+            if doc._c_doc is c_node.doc:
+                return doc
+        return None
 
 def Extension(module, function_mapping=None, *, ns=None):
     u"""Extension(module, function_mapping=None, ns=None)
@@ -520,18 +535,18 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
     return xpath.xmlXPathWrapNodeSet(resultSet)
 
 cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
-                               _Document doc, bint smart_string):
+                               _Document doc, _BaseContext context):
     if xpathObj.type == xpath.XPATH_UNDEFINED:
         raise XPathResultError, u"Undefined xpath result"
     elif xpathObj.type == xpath.XPATH_NODESET:
-        return _createNodeSetResult(xpathObj, doc, smart_string, 0)
+        return _createNodeSetResult(xpathObj, doc, context)
     elif xpathObj.type == xpath.XPATH_BOOLEAN:
         return xpathObj.boolval
     elif xpathObj.type == xpath.XPATH_NUMBER:
         return xpathObj.floatval
     elif xpathObj.type == xpath.XPATH_STRING:
         stringval = funicode(xpathObj.stringval)
-        if smart_string:
+        if context._build_smart_strings:
             stringval = _elementStringResultFactory(
                 stringval, None, None, 0)
         return stringval
@@ -544,12 +559,12 @@ cdef object _unwrapXPathObject(xpath.xmlXPathObject* xpathObj,
     elif xpathObj.type == xpath.XPATH_USERS:
         raise NotImplementedError, u"XPATH_USERS"
     elif xpathObj.type == xpath.XPATH_XSLT_TREE:
-        return _createNodeSetResult(xpathObj, doc, smart_string, 1)
+        return _createNodeSetResult(xpathObj, doc, context)
     else:
         raise XPathResultError, u"Unknown xpath result %s" % unicode(xpathObj.type)
 
 cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
-                                 bint smart_string, bint is_fragment):
+                                 _BaseContext context):
     cdef xmlNode* c_node
     cdef int i
     cdef list result
@@ -558,12 +573,12 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
         return result
     for i in range(xpathObj.nodesetval.nodeNr):
         c_node = xpathObj.nodesetval.nodeTab[i]
-        _unpackNodeSetEntry(result, c_node, doc,
-                            smart_string, is_fragment)
+        _unpackNodeSetEntry(result, c_node, doc, context,
+                            xpathObj.type == xpath.XPATH_XSLT_TREE)
     return result
 
 cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
-                         bint smart_string, bint is_fragment):
+                         _BaseContext context, bint is_fragment):
     cdef xmlNode* c_child
     cdef char* s
     if _isElement(c_node):
@@ -573,13 +588,14 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
             #        -> we store Python refs to these, so that is OK
             # XSLT: can it leak when merging trees from multiple sources?
             c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+            # FIXME: call _instantiateElementFromXPath() instead?
         results.append(
             _fakeDocElementFactory(doc, c_node))
     elif c_node.type == tree.XML_TEXT_NODE or \
              c_node.type == tree.XML_CDATA_SECTION_NODE or \
              c_node.type == tree.XML_ATTRIBUTE_NODE:
         results.append(
-            _buildElementStringResult(doc, c_node, smart_string))
+            _buildElementStringResult(doc, c_node, context))
     elif c_node.type == tree.XML_NAMESPACE_DECL:
         s = (<xmlNs*>c_node).href
         if s is NULL:
@@ -598,8 +614,7 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         if is_fragment:
             c_child = c_node.children
             while c_child is not NULL:
-                _unpackNodeSetEntry(results, c_child, doc,
-                                    smart_string, is_fragment)
+                _unpackNodeSetEntry(results, c_child, doc, context, 0)
                 c_child = c_child.next
     elif c_node.type == tree.XML_XINCLUDE_START or \
             c_node.type == tree.XML_XINCLUDE_END:
@@ -616,6 +631,20 @@ cdef void _freeXPathObject(xpath.xmlXPathObject* xpathObj):
         xpath.xmlXPathFreeNodeSet(xpathObj.nodesetval)
         xpathObj.nodesetval = NULL
     xpath.xmlXPathFreeObject(xpathObj)
+
+cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
+                                           _BaseContext context):
+    # NOTE: this may copy the element - only call this when it can't leak
+    if c_node.doc != doc._c_doc and c_node.doc._private is NULL:
+        # not from the context document and not from a fake document
+        # either => may still be from a known document, e.g. one
+        # created by an extension function
+        doc = context._findDocumentForNode(c_node)
+        if doc is None:
+            # not from a known document at all! => can only make a
+            # safety copy here
+            c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+    return _fakeDocElementFactory(doc, c_node)
 
 ################################################################################
 # special str/unicode subclasses
@@ -664,7 +693,7 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
         return uresult
 
 cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
-                                      bint smart_string):
+                                      _BaseContext context):
     cdef _Element parent = None
     cdef object attrname = None
     cdef xmlNode* c_element
@@ -687,7 +716,7 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
         c_element = _previousElement(c_node)
         is_tail = c_element is not NULL
 
-    if not smart_string:
+    if not context._build_smart_strings:
         return value
 
     if c_element is NULL:
@@ -697,11 +726,10 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
             c_element = c_element.parent
 
     if c_element is not NULL:
-        parent = _fakeDocElementFactory(doc, c_element)
+        parent = _instantiateElementFromXPath(c_element, doc, context)
 
     return _elementStringResultFactory(
         value, parent, attrname, is_tail)
-
 
 ################################################################################
 # callbacks for XPath/XSLT extension functions
@@ -717,7 +745,7 @@ cdef void _extension_function_call(_BaseContext context, function,
         args = []
         for i in range(nargs):
             obj = xpath.valuePop(ctxt)
-            o = _unwrapXPathObject(obj, doc, context._build_smart_strings)
+            o = _unwrapXPathObject(obj, doc, context)
             _freeXPathObject(obj)
             args.append(o)
         args.reverse()
