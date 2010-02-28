@@ -4,6 +4,39 @@ for XML.
 
 __docformat__ = u"restructuredtext en"
 
+__all__ = [
+    'AttributeBasedElementClassLookup', 'C14NError', 'CDATA',
+    'Comment', 'CommentBase', 'CustomElementClassLookup', 'DEBUG',
+    'DTD', 'DTDError', 'DTDParseError', 'DTDValidateError',
+    'DocumentInvalid', 'ETCompatXMLParser', 'ETXPath', 'Element',
+    'ElementBase', 'ElementClassLookup', 'ElementDefaultClassLookup',
+    'ElementNamespaceClassLookup', 'ElementTree', 'Entity', 'EntityBase',
+    'Error', 'ErrorDomains', 'ErrorLevels', 'ErrorTypes', 'Extension',
+    'FallbackElementClassLookup', 'FunctionNamespace', 'HTML',
+    'HTMLParser', 'LIBXML_COMPILED_VERSION', 'LIBXML_VERSION',
+    'LIBXSLT_COMPILED_VERSION', 'LIBXSLT_VERSION', 'LXML_VERSION',
+    'LxmlError', 'LxmlRegistryError', 'LxmlSyntaxError',
+    'NamespaceRegistryError', 'PI', 'PIBase', 'ParseError',
+    'ParserBasedElementClassLookup', 'ParserError', 'ProcessingInstruction',
+    'PyErrorLog', 'PythonElementClassLookup', 'QName', 'RelaxNG',
+    'RelaxNGError', 'RelaxNGErrorTypes', 'RelaxNGParseError',
+    'RelaxNGValidateError', 'Resolver', 'Schematron', 'SchematronError',
+    'SchematronParseError', 'SchematronValidateError', 'SerialisationError',
+    'SubElement', 'TreeBuilder', 'XInclude', 'XIncludeError', 'XML',
+    'XMLDTDID', 'XMLID', 'XMLParser', 'XMLSchema', 'XMLSchemaError',
+    'XMLSchemaParseError', 'XMLSchemaValidateError', 'XMLSyntaxError',
+    'XPath', 'XPathDocumentEvaluator', 'XPathError', 'XPathEvalError',
+    'XPathEvaluator', 'XPathFunctionError', 'XPathResultError',
+    'XPathSyntaxError', 'XSLT', 'XSLTAccessControl', 'XSLTApplyError',
+    'XSLTError', 'XSLTExtension', 'XSLTExtensionError', 'XSLTParseError',
+    'XSLTSaveError', 'cleanup_namespaces', 'clear_error_log', 'dump',
+    'fromstring', 'fromstringlist', 'get_default_parser', 'iselement',
+    'iterparse', 'iterwalk', 'parse', 'parseid', 'set_default_parser',
+    'set_element_class_lookup', 'strip_attributes', 'strip_elements',
+    'strip_tags', 'tostring', 'tostringlist', 'tounicode',
+    'use_global_python_log'
+    ]
+
 cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
@@ -127,11 +160,8 @@ class LxmlError(Error):
         else:
             self.error_log = error_log.copy()
 
-cdef object _LxmlError
-_LxmlError = LxmlError
-
-cdef object error_super_init
-error_super_init = Error.__init__
+cdef object _LxmlError = LxmlError
+cdef object error_super_init = Error.__init__
 
 
 # superclass for all syntax errors
