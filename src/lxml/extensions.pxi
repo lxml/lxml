@@ -777,5 +777,5 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
         else:
             fref = rctxt.function
         xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
-        exception = XPathFunctionError(u"XPath function '%s' not found" % fref)
-        context._exc._store_exception(exception)
+        context._exc._store_exception(
+            XPathFunctionError(u"XPath function '%s' not found" % fref))
