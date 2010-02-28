@@ -2,6 +2,7 @@
 of the pure-xslt 'skeleton' implementation.
 """
 
+import sys
 import os.path
 from lxml import etree as _etree # due to validator __init__ signature
 
@@ -235,9 +236,9 @@ class Schematron(_etree._Validator):
                     root = etree.getroot()
             elif file is not None:
                 root = _etree.parse(file).getroot()
-        except Exception, e:
+        except Exception:
             raise _etree.SchematronParseError(
-                "No tree or file given: %s" % e)
+                "No tree or file given: %s" % sys.exc_info()[1])
         if root is None:
              raise ValueError("Empty tree")
         if root.tag == _schematron_root:
