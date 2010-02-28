@@ -161,3 +161,15 @@ cdef extern from "libxslt/extra.h":
 
 cdef extern from "libexslt/exslt.h":
     cdef void exsltRegisterAll() nogil
+
+    # libexslt 1.1.25+
+    char* EXSLT_DATE_NAMESPACE
+    char* EXSLT_SETS_NAMESPACE
+    char* EXSLT_MATH_NAMESPACE
+    char* EXSLT_STRINGS_NAMESPACE
+
+    cdef int exsltDateXpathCtxtRegister(xmlXPathContext* ctxt, char* prefix)
+    cdef int exsltSetsXpathCtxtRegister(xmlXPathContext* ctxt, char* prefix)
+    cdef int exsltMathXpathCtxtRegister(xmlXPathContext* ctxt, char* prefix)
+    cdef int exsltStrXpathCtxtRegister(xmlXPathContext* ctxt, char* prefix)
+

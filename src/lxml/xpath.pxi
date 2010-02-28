@@ -65,6 +65,7 @@ cdef class _XPathContext(_BaseContext):
         self._register_context(doc)
         self.registerGlobalNamespaces()
         self.registerGlobalFunctions(self._xpathCtxt, _register_xpath_function)
+        self.registerExsltFunctions()
         if self._variables is not None:
             self.registerVariables(self._variables)
 
@@ -74,6 +75,17 @@ cdef class _XPathContext(_BaseContext):
         self.unregisterGlobalNamespaces()
         xpath.xmlXPathRegisteredVariablesCleanup(self._xpathCtxt)
         self._cleanup_context()
+
+    cdef void registerExsltFunctions(self):
+        cdef xpath.xmlXPathContext* ctxt = self._xpathCtxt
+        cdef int i
+        cdef char* c_href
+        if xslt.LIBXSLT_VERSION < 10125:
+            # we'd only execute dummy functions anyway
+            return
+        tree.xmlHashScan(
+            self._xpathCtxt.nsHash, _registerExsltFunctionsForNamespaces,
+            self._xpathCtxt)
 
     cdef registerVariables(self, variable_dict):
         for name, value in variable_dict.items():
@@ -92,6 +104,20 @@ cdef class _XPathContext(_BaseContext):
 
     cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
+
+cdef void _registerExsltFunctionsForNamespaces(
+        void* _c_href, void* _ctxt, char* c_prefix):
+    cdef char* c_href = <char*> _c_href
+    cdef xpath.xmlXPathContext* ctxt = <xpath.xmlXPathContext*> _ctxt
+
+    if cstd.strcmp(c_href, xslt.EXSLT_DATE_NAMESPACE) == 0:
+        xslt.exsltDateXpathCtxtRegister(ctxt, c_prefix)
+    elif cstd.strcmp(c_href, xslt.EXSLT_SETS_NAMESPACE) == 0:
+        xslt.exsltSetsXpathCtxtRegister(ctxt, c_prefix)
+    elif cstd.strcmp(c_href, xslt.EXSLT_MATH_NAMESPACE) == 0:
+        xslt.exsltMathXpathCtxtRegister(ctxt, c_prefix)
+    elif cstd.strcmp(c_href, xslt.EXSLT_STRINGS_NAMESPACE) == 0:
+        xslt.exsltStrXpathCtxtRegister(ctxt, c_prefix)
 
 cdef bint _XPATH_VERSION_WARNING_REQUIRED
 if _LIBXML_VERSION_INT == 20627:
@@ -115,7 +141,8 @@ cdef class _XPathEvaluatorBase:
                           u"Use it at your own risk.")
         self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
-                                      enable_regexp, None, smart_strings)
+                                      enable_regexp, None,
+                                      smart_strings)
         if config.ENABLE_THREADING:
             self._eval_lock = python.PyThread_allocate_lock()
             if self._eval_lock is NULL:
@@ -309,7 +336,8 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
                  extensions=None, regexp=True, smart_strings=True):
         XPathElementEvaluator.__init__(
             self, etree._context_node, namespaces=namespaces, 
-            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
+            extensions=extensions, regexp=regexp,
+            smart_strings=smart_strings)
 
     def __call__(self, _path, **_variables):
         u"""__call__(self, _path, **_variables)
@@ -453,7 +481,7 @@ _replace_strings = re.compile('("[^"]*")|(\'[^\']*\')').sub
 _find_namespaces = re.compile('({[^}]+})').findall
 
 cdef class ETXPath(XPath):
-    u"""ETXPath(self, path, extensions=None, regexp=True)
+    u"""ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
     Special XPath class that supports the ElementTree {uri} notation for namespaces.
 
     Note that this class does not accept the ``namespace`` keyword
@@ -461,7 +489,8 @@ cdef class ETXPath(XPath):
     string.  Smart strings will be returned for string results unless
     you pass ``smart_strings=False``.
     """
-    def __init__(self, path, *, extensions=None, regexp=True, smart_strings=True):
+    def __init__(self, path, *, extensions=None, regexp=True,
+                 smart_strings=True):
         path, namespaces = self._nsextract_path(path)
         XPath.__init__(self, path, namespaces=namespaces,
                        extensions=extensions, regexp=regexp,

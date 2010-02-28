@@ -566,6 +566,35 @@ class ETreeXPathClassTestCase(HelperTestCase):
     def test_xpath_elementtree_error(self):
         self.assertRaises(ValueError, etree.XPath('*'), etree.ElementTree())
 
+
+class ETreeXPathExsltTestCase(HelperTestCase):
+    "Tests for the EXSLT support in XPath (requires libxslt 1.1.25+)"
+
+    NSMAP = dict(
+        date = "http://exslt.org/dates-and-times",
+        math = "http://exslt.org/math",
+        set  = "http://exslt.org/sets",
+        str  = "http://exslt.org/strings",
+        )
+
+    def test_xpath_exslt_functions_date(self):
+        tree = self.parse('<a><b>2009-11-12</b><b>2008-12-11</b></a>')
+
+        match_dates = tree.xpath('//b[date:year(string()) = 2009]',
+                                 namespaces=self.NSMAP)
+        self.assertTrue(match_dates, str(match_dates))
+        self.assertEquals(len(match_dates), 1, str(match_dates))
+        self.assertEquals(match_dates[0].text, '2009-11-12')
+
+    def test_xpath_exslt_functions_strings(self):
+        tree = self.parse('<a><b>2009-11-12</b><b>2008-12-11</b></a>')
+
+        match_date = tree.xpath('str:replace(//b[1], "-", "*")',
+                                namespaces=self.NSMAP)
+        self.assertTrue(match_date, str(match_date))
+        self.assertEquals(match_date, '2009*11*12')
+
+
 class ETreeETXPathClassTestCase(HelperTestCase):
     "Tests for the ETXPath class"
     def test_xpath_compile_ns(self):
@@ -703,11 +732,13 @@ if sys.version_info[0] >= 3:
                                           " lxml.etree.XPathResultError")
     xpath.__doc__ = xpath.__doc__.replace(" exactly 2 arguments",
                                           " exactly 2 positional arguments")
-   
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXPathTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXPathClassTestCase)])
+    if etree.LIBXSLT_COMPILED_VERSION >= (1,1,25):
+        suite.addTests([unittest.makeSuite(ETreeXPathExsltTestCase)])
     suite.addTests([unittest.makeSuite(ETreeETXPathClassTestCase)])
     suite.addTests([doctest.DocTestSuite()])
     suite.addTests(

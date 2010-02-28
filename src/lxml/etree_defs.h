@@ -131,6 +131,13 @@
 #  define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
 #endif
 
+/* libexslt 1.1.25+ support EXSLT functions in XPath */
+#if LIBXSLT_VERSION < 10125
+#define exsltDateXpathCtxtRegister(ctxt, prefix)
+#define exsltSetsXpathCtxtRegister(ctxt, prefix)
+#define exsltMathXpathCtxtRegister(ctxt, prefix)
+#define exsltStrXpathCtxtRegister(ctxt, prefix)
+#endif
 
 /* work around MSDEV 6.0 */
 #if (_MSC_VER == 1200) && (WINVER < 0x0500)

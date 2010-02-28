@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* During regular XPath evaluation, various ESXLT functions are
+  available within their namespace when using libxslt 1.1.26 or later.
+
 * Support passing a readily configured logger instance into
   ``PyErrorLog``, instead of a logger name.
 
