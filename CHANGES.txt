@@ -55,6 +55,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash in XPath evaluation when reading smart strings from a document
+  other than the original context document.
+
 * Parsing broken fragments in lxml.html could fail if the fragment
   contained an orphaned closing '</div>' tag.
 
