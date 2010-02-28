@@ -834,17 +834,17 @@ def parse_series(s):
 ## Tokenizing
 ############################################################
 
-_whitespace_re = re.compile(r'\s+', re.UNICODE)
+_match_whitespace = re.compile(r'\s+', re.UNICODE).match
 
-_comment_re = re.compile(r'/\*.*?\*/', re.DOTALL)
+_replace_comments = re.compile(r'/\*.*?\*/', re.DOTALL).sub
 
-_count_re = re.compile(r'[+-]?\d*n(?:[+-]\d+)?')
+_match_count_number = re.compile(r'[+-]?\d*n(?:[+-]\d+)?').match
 
 def tokenize(s):
     pos = 0
-    s = _comment_re.sub('', s)
+    s = _replace_comments('', s)
     while 1:
-        match = _whitespace_re.match(s, pos=pos)
+        match = _match_whitespace(s, pos=pos)
         if match:
             preceding_whitespace_pos = pos
             pos = match.end()
@@ -852,7 +852,7 @@ def tokenize(s):
             preceding_whitespace_pos = 0
         if pos >= len(s):
             return
-        match = _count_re.match(s, pos=pos)
+        match = _match_count_number(s, pos=pos)
         if match and match.group() != 'n':
             sym = s[pos:match.end()]
             yield Symbol(sym, pos)
