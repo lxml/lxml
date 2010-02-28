@@ -556,7 +556,7 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
     result = []
     if xpathObj.nodesetval is NULL:
         return result
-    for i from 0 <= i < xpathObj.nodesetval.nodeNr:
+    for i in range(xpathObj.nodesetval.nodeNr):
         c_node = xpathObj.nodesetval.nodeTab[i]
         _unpackNodeSetEntry(result, c_node, doc,
                             smart_string, is_fragment)
