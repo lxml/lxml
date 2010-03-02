@@ -9,19 +9,19 @@ libxml2 and libxslt in a standards compliant way.
 ..
    1  XPath
      1.1  The ``xpath()`` method
-     1.2  XPath return values
-     1.3  Generating XPath expressions
-     1.4  The ``XPath`` class
-     1.5  The ``XPathEvaluator`` classes
-     1.6  ``ETXPath``
-     1.7  Error handling
+     1.2  Namespaces and prefixes
+     1.3  XPath return values
+     1.4  Generating XPath expressions
+     1.5  The ``XPath`` class
+     1.6  The ``XPathEvaluator`` classes
+     1.7  ``ETXPath``
+     1.8  Error handling
    2  XSLT
      2.1  XSLT result objects
      2.2  Stylesheet parameters
      2.3  The ``xslt()`` tree method
      2.4  Dealing with stylesheet complexity
      2.5  Profiling
-
 
 The usual setup procedure:
 
@@ -120,9 +120,14 @@ The ``xpath()`` method has support for XPath variables:
   >>> print(root.xpath("$text", text = "Hello World!"))
   Hello World!
 
-Optionally, you can provide a ``namespaces`` keyword argument, which should be
-a dictionary mapping the namespace prefixes used in the XPath expression to
-namespace URIs:
+
+Namespaces and prefixes
+-----------------------
+
+If your XPath expression uses namespace prefixes, you must define them
+in a prefix mapping.  To this end, pass a dictionary to the
+``namespaces`` keyword argument that maps the namespace prefixes used
+in the XPath expression to namespace URIs:
 
 .. sourcecode:: pycon
 
@@ -144,8 +149,18 @@ namespace URIs:
   >>> r[0].text
   'Text'
 
-There is also an optional ``extensions`` argument which is used to define
-`custom extension functions`_ in Python that are local to this evaluation.
+The prefixes you choose here are not linked to the prefixes used
+inside the XML document.  The document may use whatever prefixes it
+likes, including the empty prefix, without breaking the above code.
+
+Note that XPath does not have a notion of a default namespace.  The
+empty prefix is therefore undefined for XPath and cannot be used in
+namespace prefix mappings.
+
+There is also an optional ``extensions`` argument which is used to
+define `custom extension functions`_ in Python that are local to this
+evaluation.  The namespace prefixes that they use in the XPath
+expression must also be defined in the namespace prefix mapping.
 
 
 XPath return values
