@@ -161,9 +161,10 @@ support for various XML standards.  The important ones are:
 * xml:base
 
 Support for XML Schema is currently not 100% complete in libxml2, but
-is definitely very close to compliance.  Schematron is supported,
-although not necessarily complete.  libxml2 also supports loading
-documents through HTTP and FTP.
+is definitely very close to compliance.  Schematron is supported in
+two ways, the best being the original ISO Schematron reference
+implementation via XSLT.  libxml2 also supports loading documents
+through HTTP and FTP.
 
 
 Who uses lxml?
@@ -174,8 +175,7 @@ server applications, such as web servers or applications that
 facilitate some kind of document management.  Many people who deploy
 Zope_ or Plone_ use it together with lxml.  Therefore, it is hard to
 get an idea of who uses it, and the following list of 'users and
-projects we know of' is definitely not a complete list of lxml's
-users.
+projects we know of' is very far from a complete list of lxml's users.
 
 Also note that the compatibility to the ElementTree library does not
 require projects to set a hard dependency on lxml - as long as they do
