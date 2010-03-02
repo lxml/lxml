@@ -32,12 +32,12 @@ class TreeBuilder(_base.TreeBuilder):
     commentClass = None
     fragmentClass = Document
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         html_builder = etree_builders.getETreeModule(html, fullTree=False)
         etree_builder = etree_builders.getETreeModule(etree, fullTree=False)
         self.elementClass = html_builder.Element
         self.commentClass = etree_builder.Comment
-        _base.TreeBuilder.__init__(self)
+        _base.TreeBuilder.__init__(self, *args, **kwargs)
 
     def reset(self):
         _base.TreeBuilder.reset(self)
