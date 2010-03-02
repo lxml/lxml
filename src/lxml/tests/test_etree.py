@@ -389,13 +389,13 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a')
-        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), '', xml).replace('<br/>', '<br></br>'),
+        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), _bytes(''), xml).replace(_bytes('<br/>'), _bytes('<br></br>')),
                           self._writeElement(root))
 
         root = XML(xml)
         self.etree.strip_tags(root, 'a', 'br')
-        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), '',
-                                 re.sub(_bytes('<br[^>]*>'), '', xml)),
+        self.assertEquals(re.sub(_bytes('</?a[^>]*>'), _bytes(''),
+                                 re.sub(_bytes('<br[^>]*>'), _bytes(''), xml)),
                           self._writeElement(root))
 
     def test_strip_tags_ns(self):
@@ -2447,7 +2447,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         xml = _bytes('<!DOCTYPE root>\n<root/>')
         tree = etree.parse(BytesIO(xml))
-        self.assertEquals(xml.replace('<!DOCTYPE root>', doctype_string),
+        self.assertEquals(xml.replace(_bytes('<!DOCTYPE root>'), doctype_string),
                           etree.tostring(tree, doctype=doctype_string))
 
     def test_xml_base(self):

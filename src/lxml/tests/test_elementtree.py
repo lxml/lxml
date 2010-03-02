@@ -443,7 +443,7 @@ class ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
         
         root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>'))
-        keys = root.attrib.keys()
+        keys = list(root.attrib.keys())
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
@@ -451,7 +451,7 @@ class ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
         
         root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>'))
-        keys = root.keys()
+        keys = list(root.keys())
         keys.sort()
         self.assertEquals(['alpha', 'beta', 'gamma'], keys)
 
@@ -469,7 +469,7 @@ class ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
 
         root = XML(_bytes('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />'))
-        keys = root.keys()
+        keys = list(root.keys())
         keys.sort()
         self.assertEquals(['bar', '{http://ns.codespeak.net/test}baz'],
                           keys)
@@ -478,7 +478,7 @@ class ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
         
         root = XML(_bytes('<doc alpha="Alpha" beta="Beta" gamma="Gamma"/>'))
-        values = root.attrib.values()
+        values = list(root.attrib.values())
         values.sort()
         self.assertEquals(['Alpha', 'Beta', 'Gamma'], values)
 
@@ -486,7 +486,7 @@ class ETreeTestCaseBase(HelperTestCase):
         XML = self.etree.XML
         
         root = XML(_bytes('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />'))
-        values = root.attrib.values()
+        values = list(root.attrib.values())
         values.sort()
         self.assertEquals(
             ['Bar', 'Baz'], values)
@@ -2596,7 +2596,7 @@ class ETreeTestCaseBase(HelperTestCase):
         self.assertEquals('test', root[0].get('{%s}a' % ns_href))
 
         xml2 = tostring(root)
-        self.assertTrue(':a=' in xml2, xml2)
+        self.assertTrue(_bytes(':a=') in xml2, xml2)
 
         root2 = fromstring(xml2)
         self.assertEquals('test', root[0].get('{%s}a' % ns_href))
@@ -2614,7 +2614,7 @@ class ETreeTestCaseBase(HelperTestCase):
         root[0].set('{%s}a' % ns_href, 'TEST')
 
         xml2 = tostring(root)
-        self.assertTrue(':a=' in xml2, xml2)
+        self.assertTrue(_bytes(':a=') in xml2, xml2)
 
         root2 = fromstring(xml2)
         self.assertEquals('TEST', root[0].get('{%s}a' % ns_href))

@@ -274,7 +274,7 @@ cdef class _FileReaderContext:
             url = _encodeFilename(url)
             self._c_url = _cstr(url)
         self._url = url
-        self._bytes  = ''
+        self._bytes  = b''
         self._bytes_read = 0
 
     cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):

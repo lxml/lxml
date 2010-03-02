@@ -1688,16 +1688,16 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                 c_ns = cetree.findOrBuildNodeNsPrefix(
                     doc, c_node, _XML_SCHEMA_NS, 'xsd')
                 if c_ns is not NULL:
-                    if ':' in typename_utf8:
-                        prefix, name = typename_utf8.split(':', 1)
+                    if b':' in typename_utf8:
+                        prefix, name = typename_utf8.split(b':', 1)
                         if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
                             typename_utf8 = name
                         elif cstd.strcmp(_cstr(prefix), c_ns.prefix) != 0:
                             prefix = c_ns.prefix
-                            typename_utf8 = prefix + ':' + name
+                            typename_utf8 = prefix + b':' + name
                     elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
                         prefix = c_ns.prefix
-                        typename_utf8 = prefix + ':' + typename_utf8
+                        typename_utf8 = prefix + b':' + typename_utf8
                 c_ns = cetree.findOrBuildNodeNsPrefix(
                     doc, c_node, _XML_SCHEMA_INSTANCE_NS, 'xsi')
                 tree.xmlSetNsProp(c_node, c_ns, "type", _cstr(typename_utf8))

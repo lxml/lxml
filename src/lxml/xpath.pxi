@@ -477,8 +477,8 @@ cdef class XPath(_XPathEvaluatorBase):
 
 cdef object _replace_strings
 cdef object _find_namespaces
-_replace_strings = re.compile('("[^"]*")|(\'[^\']*\')').sub
-_find_namespaces = re.compile('({[^}]+})').findall
+_replace_strings = re.compile(b'("[^"]*")|(\'[^\']*\')').sub
+_find_namespaces = re.compile(b'({[^}]+})').findall
 
 cdef class ETXPath(XPath):
     u"""ETXPath(self, path, extensions=None, regexp=True, smart_strings=True)
@@ -502,7 +502,7 @@ cdef class ETXPath(XPath):
         cdef list namespace_defs = []
         cdef int i
         path_utf = _utf8(path)
-        stripped_path = _replace_strings('', path_utf) # remove string literals
+        stripped_path = _replace_strings(b'', path_utf) # remove string literals
         i = 1
         for namespace_def in _find_namespaces(stripped_path):
             if namespace_def not in namespace_defs:
@@ -515,7 +515,7 @@ cdef class ETXPath(XPath):
                 namespaces[
                     python.PyUnicode_FromEncodedObject(prefix, 'UTF-8', 'strict')
                     ] = namespace
-                prefix_str = prefix + ':'
+                prefix_str = prefix + b':'
                 # FIXME: this also replaces {namespaces} within strings!
                 path_utf = path_utf.replace(namespace_def, prefix_str)
         path = python.PyUnicode_FromEncodedObject(path_utf, 'UTF-8', 'strict')

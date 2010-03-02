@@ -672,14 +672,14 @@ cdef _collectText(xmlNode* c_node):
             if python.IS_PYTHON3:
                 return u''
             else:
-                return ''
+                return b''
         else:
             return None
     if scount == 1:
         return funicode(c_text)
 
     # the rest is not performance critical anymore
-    result = ''
+    result = b''
     while c_node is not NULL:
         result = result + c_node.content
         c_node = _textNodeOrSkip(c_node.next)

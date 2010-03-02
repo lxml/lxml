@@ -1007,7 +1007,7 @@ class TextareaElement(InputMixin, HtmlElement):
             serialisation_method = 'html'
         for el in self:
             # it's rare that we actually get here, so let's not use ''.join()
-            content += etree.tostring(el, method=serialisation_method)
+            content += etree.tostring(el, method=serialisation_method, encoding=unicode)
         return content
     def _value__set(self, value):
         del self[:]
