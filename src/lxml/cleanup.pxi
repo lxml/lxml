@@ -121,7 +121,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
         if strip_pis:
             _removeSiblings(element._c_node, tree.XML_PI_NODE, with_tail)
 
-    # tag names are passes as C pointers as this allows us to take
+    # tag names are passed as C pointers as this allows us to take
     # them from the doc dict and do pointer comparisons
     c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
     if c_ns_tags is NULL:
@@ -152,8 +152,8 @@ cdef _strip_elements(_Document doc, xmlNode* c_node,
         while c_child is not NULL:
             c_next = _nextElement(c_child)
             if c_child.type == tree.XML_ELEMENT_NODE:
-                for i in range(c_tag_count):
-                    if _tagMatchesExactly(c_child, c_ns_tags[2*i], c_ns_tags[2*i+1]):
+                for i in range(0, c_tag_count*2, 2):
+                    if _tagMatchesExactly(c_child, c_ns_tags[i], c_ns_tags[i+1]):
                         if not with_tail:
                             tree.xmlUnlinkNode(c_child)
                         _removeNode(doc, c_child)
