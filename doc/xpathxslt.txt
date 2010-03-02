@@ -150,7 +150,7 @@ in the XPath expression to namespace URIs:
   'Text'
 
 The prefixes you choose here are not linked to the prefixes used
-inside the XML document.  The document may use whatever prefixes it
+inside the XML document.  The document may define whatever prefixes it
 likes, including the empty prefix, without breaking the above code.
 
 Note that XPath does not have a notion of a default namespace.  The
