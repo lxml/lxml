@@ -100,6 +100,8 @@ Bugs fixed
 Other changes
 -------------
 
+* Official support for Python 3.1.2 and later.
+
 * Static MS Windows builds can now download their dependencies
   themselves.
 
