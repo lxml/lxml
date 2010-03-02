@@ -295,7 +295,7 @@ cdef list _filterSpecialTagNames(tag_names, bint* comments, bint* pis, bint* ent
         else:
             ns_tags.append(_getNsTag(tag))
 
-    return [ (ns, tag if tag != '*' else None)
+    return [ (ns, tag if tag != b'*' else None)
              for ns, tag in _sortedTagList(ns_tags) ]
 
 cdef Py_ssize_t _mapTagsToCharArray(xmlDoc* c_doc, list ns_tags,
