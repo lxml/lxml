@@ -60,7 +60,7 @@ PYTYPE_ATTRIBUTE = None
 cdef object TREE_PYTYPE_NAME
 TREE_PYTYPE_NAME = u"TREE"
 
-cdef _unicodeAndUtf8(s):
+cdef tuple _unicodeAndUtf8(s):
     return (s, python.PyUnicode_AsUTF8String(s))
 
 def set_pytype_attribute_tag(attribute_tag=None):
