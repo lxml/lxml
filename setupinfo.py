@@ -52,7 +52,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries,
                 libiconv_version=OPTION_LIBICONV_VERSION,
                 libxml2_version=OPTION_LIBXML2_VERSION,
-                libxslt_version=OPTION_LIBXSLT_VERSION)
+                libxslt_version=OPTION_LIBXSLT_VERSION,
+                multicore=OPTION_MULTICORE)
 
     if CYTHON_INSTALLED:
         source_extension = ".pyx"
@@ -345,3 +346,4 @@ if OPTION_BUILD_LIBXML2XSLT:
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
 OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
+OPTION_MULTICORE = option_value('multicore')

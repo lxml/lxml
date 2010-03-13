@@ -7,8 +7,19 @@ try:
 except ImportError:
     from urllib.parse import urlsplit
     from urllib.request import urlretrieve
-    
-    
+
+multi_make_options = []
+try:
+    from multiprocessing import cpu_count
+except ImportError:
+    pass
+else:
+    cpus = cpu_count()
+    if cpus > 1:
+        if cpus > 5:
+            cpus = 5
+        multi_make_options = ['-j%d' % (cpus+1)]
+
 
 # use pre-built libraries on Windows
 
@@ -229,18 +240,27 @@ def safe_mkdir(dir):
     if not os.path.exists(dir):
         os.makedirs(dir)
 
-def cmmi(configure_cmd, build_dir, **call_setup):
+def cmmi(configure_cmd, build_dir, multicore=None, **call_setup):
     print('Starting build in %s' % build_dir)
     call_subprocess(configure_cmd, cwd=build_dir, **call_setup)
+    if not multicore:
+        make_jobs = multi_make_options
+    elif int(multicore) > 1:
+        make_jobs = ['-j%s' % multicore]
+    else:
+        make_jobs = []
     call_subprocess(
-        ['make'], cwd=build_dir, **call_setup)
+        ['make'] + make_jobs,
+        cwd=build_dir, **call_setup)
     call_subprocess(
-        ['make', 'install'], cwd=build_dir, **call_setup)
+        ['make'] + make_jobs + ['install'],
+        cwd=build_dir, **call_setup)
 
 def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
                       static_cflags, static_binaries,
-                      libxml2_version=None, libxslt_version=None, libiconv_version=None):
+                      libxml2_version=None, libxslt_version=None, libiconv_version=None,
+                      multicore=None):
     safe_mkdir(download_dir)
     safe_mkdir(build_dir)
     libiconv_dir = unpack_tarball(download_libiconv(download_dir, libiconv_version), build_dir)
@@ -278,13 +298,13 @@ def build_libxml2xslt(download_dir, build_dir,
                      ]
 
     # build libiconv
-    cmmi(configure_cmd, libiconv_dir, **call_setup)
+    cmmi(configure_cmd, libiconv_dir, multicore, **call_setup)
 
     # build libxml2
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
         '--with-iconv=%s' % prefix]
-    cmmi(libxml2_configure_cmd, libxml2_dir, **call_setup)
+    cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
 
     # build libxslt
     libxslt_configure_cmd = configure_cmd + [
@@ -295,7 +315,7 @@ def build_libxml2xslt(download_dir, build_dir,
         libxslt_configure_cmd += [
             '--without-crypto',
             ]
-    cmmi(libxslt_configure_cmd, libxslt_dir, **call_setup)
+    cmmi(libxslt_configure_cmd, libxslt_dir, multicore, **call_setup)
 
     # collect build setup for lxml
     xslt_config = os.path.join(prefix, 'bin', 'xslt-config')
