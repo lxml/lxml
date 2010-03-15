@@ -304,8 +304,11 @@ def build_libxml2xslt(download_dir, build_dir,
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
         '--with-iconv=%s' % prefix]
-    if libxml2_version and tuple(map(tryint, libxml2_version.split('.'))) >= (2,7,3):
-        libxml2_configure_cmd.append('--enable-rebuild-docs=no')
+    try:
+        if libxml2_version and tuple(map(tryint, libxml2_version.split('.'))) >= (2,7,3):
+            libxml2_configure_cmd.append('--enable-rebuild-docs=no')
+    except Exception:
+        pass # this isn't required, so ignore any errors
     cmmi(libxml2_configure_cmd, libxml2_dir, multicore, **call_setup)
 
     # build libxslt
