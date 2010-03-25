@@ -5,7 +5,7 @@ try:
     from urlparse import urlsplit, urljoin
     from urllib import urlretrieve
 except ImportError:
-    from urllib.parse import urlsplit
+    from urllib.parse import urlsplit, urljoin
     from urllib.request import urlretrieve
 
 multi_make_options = []
