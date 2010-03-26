@@ -990,12 +990,22 @@ the real namespaces instead:
 
 .. _`namespace prefixes`: http://www.w3.org/TR/xml-names/#ns-qualnames
 
-As you can see, prefixes only become important when you serialise the result.
-However, the above code becomes somewhat verbose due to the lengthy namespace
-names.  And retyping or copying a string over and over again is error prone.
-It is therefore common practice to store a namespace URI in a global variable.
-To adapt the namespace prefixes for serialisation, you can also pass a mapping
-to the Element factory, e.g. to define the default namespace:
+The notation that ElementTree uses was originally brought up by `James
+Clark`_.  It has the major advantage of providing a universally
+qualified name for a tag, regardless of any prefixes that may or may
+not have been used or defined in a document.  By moving the
+indirection of prefixes out of the way, it makes namespace aware code
+much clearer and safer.
+
+.. _`James Clark`: http://www.jclark.com/xml/xmlns.htm
+
+As you can see from the example, prefixes only become important when
+you serialise the result.  However, the above code looks somewhat
+verbose due to the lengthy namespace names.  And retyping or copying a
+string over and over again is error prone.  It is therefore common
+practice to store a namespace URI in a global variable.  To adapt the
+namespace prefixes for serialisation, you can also pass a mapping to
+the Element factory function, e.g. to define the default namespace:
 
 .. sourcecode:: pycon
 
@@ -1043,11 +1053,11 @@ impact on the Element.  Any changes to it are ignored.
 
 Namespaces on attributes work alike, but since version 2.3, lxml.etree
 will make sure that the attribute uses a prefixed namespace
-declaration if one was defined.  This is because unprefixed attribute
-names are not considered being in a namespace by the XML namespace
-specification (`section 6.2`_), so they may end up loosing their
-namespace on a serialise-parse roundtrip, even if they appear in a
-namespaced element.
+declaration.  This is because unprefixed attribute names are not
+considered being in a namespace by the XML namespace specification
+(`section 6.2`_), so they may end up loosing their namespace on a
+serialise-parse roundtrip, even if they appear in a namespaced
+element.
 
 .. sourcecode:: pycon
 
