@@ -298,8 +298,8 @@ ctypedef struct _ns_node_ref:
     xmlNode* node
 
 cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
-    u"""Remove any namespace declarations from a subtree that do not used
-    by any of its elements (or attributes).
+    u"""Remove any namespace declarations from a subtree that are not used by
+    any of its elements (or attributes).
     """
     cdef _ns_node_ref* c_ns_list
     cdef _ns_node_ref* c_nsref_ptr

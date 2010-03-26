@@ -1013,13 +1013,41 @@ to the Element factory, e.g. to define the default namespace:
       <body>Hello World</body>
     </html>
 
+lxml.etree allows you to look up the current namespaces defined for a
+node through the ``.nsmap`` property:
+
+.. sourcecode:: pycon
+
+    >>> xhtml.nsmap
+    {None: 'http://www.w3.org/1999/xhtml'}
+
+Note, however, that this includes all prefixes known in the context of
+an Element, not only those that it defines itself.
+
+.. sourcecode:: pycon
+
+    >>> root = etree.Element('root', nsmap={'a': 'http://a.b/c'})
+    >>> child = etree.SubElement(root, 'child',
+    ...                          nsmap={'b': 'http://b.c/d'})
+    >>> len(root.nsmap)
+    1
+    >>> len(child.nsmap)
+    2
+    >>> child.nsmap['a']
+    'http://a.b/c'
+    >>> child.nsmap['b']
+    'http://b.c/d'
+
+Therefore, modifying the returned dict cannot have any meaningful
+impact on the Element.  Any changes to it are ignored.
+
 Namespaces on attributes work alike, but since version 2.3, lxml.etree
 will make sure that the attribute uses a prefixed namespace
-declaration.  This is because unprefixed attribute names are not
-considered being in a namespace by the XML namespace specification
-(`section 6.2`_), so they may end up loosing their namespace on a
-serialise-parse roundtrip, even if they appear in a namespaced
-element.
+declaration if one was defined.  This is because unprefixed attribute
+names are not considered being in a namespace by the XML namespace
+specification (`section 6.2`_), so they may end up loosing their
+namespace on a serialise-parse roundtrip, even if they appear in a
+namespaced element.
 
 .. sourcecode:: pycon
 
