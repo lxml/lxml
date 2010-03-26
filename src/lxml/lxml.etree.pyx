@@ -1323,41 +1323,57 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return _makeElement(_tag, NULL, self._doc, None, None, None,
                             attrib, nsmap, _extra)
 
-    def find(self, path):
-        u"""find(self, path)
+    def find(self, path, namespaces=None):
+        u"""find(self, path, namespaces=None)
 
         Finds the first matching subelement, by tag name or path.
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.find(self, path)
+        return _elementpath.find(self, path, namespaces)
 
-    def findtext(self, path, default=None):
-        u"""findtext(self, path, default=None)
+    def findtext(self, path, default=None, namespaces=None):
+        u"""findtext(self, path, default=None, namespaces=None)
 
         Finds text for the first matching subelement, by tag name or path.
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findtext(self, path, default)
+        return _elementpath.findtext(self, path, default, namespaces)
 
-    def findall(self, path):
-        u"""findall(self, path)
+    def findall(self, path, namespaces=None):
+        u"""findall(self, path, namespaces=None)
 
         Finds all matching subelements, by tag name or path.
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.findall(self, path)
+        return _elementpath.findall(self, path, namespaces)
 
-    def iterfind(self, path):
-        u"""iterfind(self, path)
+    def iterfind(self, path, namespaces=None):
+        u"""iterfind(self, path, namespaces=None)
 
         Iterates over all matching subelements, by tag name or path.
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         if isinstance(path, QName):
             path = (<QName>path).text
-        return _elementpath.iterfind(self, path)
+        return _elementpath.iterfind(self, path, namespaces)
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
@@ -1796,11 +1812,15 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             return ()
         return root.iter(tag)
 
-    def find(self, path):
-        u"""find(self, path)
+    def find(self, path, namespaces=None):
+        u"""find(self, path, namespaces=None)
 
         Finds the first toplevel element with given tag.  Same as
         ``tree.getroot().find(path)``.
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1810,13 +1830,17 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = u"." + path
             elif start == b"/":
                 path = b"." + path
-        return root.find(path)
+        return root.find(path, namespaces)
 
-    def findtext(self, path, default=None):
-        u"""findtext(self, path, default=None)
+    def findtext(self, path, default=None, namespaces=None):
+        u"""findtext(self, path, default=None, namespaces=None)
 
         Finds the text for the first element matching the ElementPath
         expression.  Same as getroot().findtext(path)
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1826,13 +1850,17 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = u"." + path
             elif start == b"/":
                 path = b"." + path
-        return root.findtext(path, default)
+        return root.findtext(path, default, namespaces)
 
-    def findall(self, path):
-        u"""findall(self, path)
+    def findall(self, path, namespaces=None):
+        u"""findall(self, path, namespaces=None)
 
         Finds all elements matching the ElementPath expression.  Same as
         getroot().findall(path).
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1842,13 +1870,17 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = u"." + path
             elif start == b"/":
                 path = b"." + path
-        return root.findall(path)
+        return root.findall(path, namespaces)
 
-    def iterfind(self, path):
-        u"""iterfind(self, path)
+    def iterfind(self, path, namespaces=None):
+        u"""iterfind(self, path, namespaces=None)
 
         Iterates over all elements matching the ElementPath expression.
         Same as getroot().iterfind(path).
+
+        The optional ``namespaces`` argument accepts a
+        prefix-to-namespace mapping that allows the usage of XPath
+        prefixes in the path expression.
         """
         self._assertHasRoot()
         root = self.getroot()
@@ -1858,7 +1890,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
                 path = u"." + path
             elif start == b"/":
                 path = b"." + path
-        return root.iterfind(path)
+        return root.iterfind(path, namespaces)
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
               smart_strings=True, **_variables):
