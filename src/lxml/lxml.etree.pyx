@@ -1212,10 +1212,13 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Iterate over the following or preceding siblings of this element.
 
-        The direction is determined by the 'preceding' keyword which defaults
-        to False, i.e. forward iteration over the following siblings.  The
-        generated elements can be restricted to a specific tag name with the
-        'tag' keyword.
+        The direction is determined by the 'preceding' keyword which
+        defaults to False, i.e. forward iteration over the following
+        siblings.  When True, the iterator yields the preceding
+        siblings in reverse document order, i.e. starting right before
+        the current element and going left.  The generated elements
+        can be restricted to a specific tag name with the 'tag'
+        keyword.
         """
         return SiblingsIterator(self, tag, preceding=preceding)
 
@@ -1845,7 +1848,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         u"""iterfind(self, path)
 
         Iterates over all elements matching the ElementPath expression.
-        Same as getroot().finditer(path).
+        Same as getroot().iterfind(path).
         """
         self._assertHasRoot()
         root = self.getroot()
