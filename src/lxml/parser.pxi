@@ -15,22 +15,22 @@ class ParseError(LxmlSyntaxError):
 
     For compatibility with ElementTree 1.3 and later.
     """
-    pass
+    def __init__(self, message, code, line, column):
+        if python.PY_VERSION_HEX >= 0x02050000:
+            # Python >= 2.5 uses new style class exceptions
+            super(_ParseError, self).__init__(message)
+        else:
+            _XMLSyntaxError.__init__(self, message)
+        self.position = (line, column)
+        self.code = code
 
 class XMLSyntaxError(ParseError):
     u"""Syntax error while parsing an XML document.
     """
-    def __init__(self, message, code, line, column):
-        if python.PY_VERSION_HEX >= 0x02050000:
-            # Python >= 2.5 uses new style class exceptions
-            super(_XMLSyntaxError, self).__init__(message)
-        else:
-            ParseError.__init__(self, message)
-        self.position = (line, column)
-        self.code = code
+    pass
 
-cdef object _XMLSyntaxError
-_XMLSyntaxError = XMLSyntaxError
+cdef object _XMLSyntaxError = XMLSyntaxError
+cdef object _ParseError = ParseError
 
 class ParserError(LxmlError):
     u"""Internal lxml parser error.
