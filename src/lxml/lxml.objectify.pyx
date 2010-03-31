@@ -699,6 +699,9 @@ cdef class NumberElement(ObjectifiedDataElement):
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
 
+    def __hash__(self):
+        return hash(_parseNumber(self))
+
     def __add__(self, other):
         return _numericValueOf(self) + _numericValueOf(other)
 
@@ -795,6 +798,9 @@ cdef class StringElement(ObjectifiedDataElement):
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
 
+    def __hash__(self):
+        return hash(textOf(self._c_node) or u'')
+
     def __add__(self, other):
         text  = _strValueOf(self)
         other = _strValueOf(other)
@@ -845,6 +851,9 @@ cdef class NoneElement(ObjectifiedDataElement):
         else:
             return python.PyObject_RichCompare(self, None, op)
 
+    def __hash__(self):
+        return hash(None)
+
     property pyval:
         def __get__(self):
             return None
@@ -863,6 +872,9 @@ cdef class BoolElement(IntElement):
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
+
+    def __hash__(self):
+        return hash(__parseBool(textOf(self._c_node)))
 
     def __str__(self):
         return unicode(__parseBool(textOf(self._c_node)))

@@ -58,6 +58,8 @@ Features added
 Bugs fixed
 ----------
 
+* ObjectifiedDataElements in lxml.objectify were not hashable.
+
 * Crash in XPath evaluation when reading smart strings from a document
   other than the original context document.
 

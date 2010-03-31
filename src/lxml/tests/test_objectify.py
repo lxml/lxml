@@ -744,6 +744,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertFalse(isinstance(root.none, objectify.NoneElement))
         self.assertFalse(isinstance(root.none[0], objectify.NoneElement))
         self.assert_(isinstance(root.none[1], objectify.NoneElement))
+        self.assertEquals(hash(root.none[1]), hash(None))
         self.assertEquals(root.none[1], None)
         self.assertFalse(root.none[1])
 
@@ -763,6 +764,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(True + root.bool, True + root.bool)
         self.assertEquals(root.bool * root.bool, True * True)
         self.assertEquals(int(root.bool), int(True))
+        self.assertEquals(hash(root.bool), hash(True))
         self.assertEquals(complex(root.bool), complex(True))
         self.assert_(isinstance(root.bool, objectify.BoolElement))
 
@@ -772,6 +774,7 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEquals(False + root.bool, False + root.bool)
         self.assertEquals(root.bool * root.bool, False * False)
         self.assertEquals(int(root.bool), int(False))
+        self.assertEquals(hash(root.bool), hash(False))
         self.assertEquals(complex(root.bool), complex(False))
         self.assert_(isinstance(root.bool, objectify.BoolElement))
 
@@ -847,6 +850,11 @@ class ObjectifyTestCase(HelperTestCase):
         el = objectify.DataElement(s)
         val = 5
         self.assertRaises(TypeError, el.__mod__, val)
+
+    def test_type_str_hash(self):
+        v = "1"
+        el = objectify.DataElement(v)
+        self.assertEquals(hash(el), hash("1"))
 
     def test_type_str_as_int(self):
         v = "1"
@@ -957,6 +965,10 @@ class ObjectifyTestCase(HelperTestCase):
         self.assert_(isinstance(value, objectify.IntElement))
         self.assertEquals(value, 5)
 
+    def test_data_element_int_hash(self):
+        value = objectify.DataElement(123)
+        self.assertEquals(hash(value), hash(123))
+
     def test_type_float(self):
         Element = self.Element
         SubElement = self.etree.SubElement
@@ -968,6 +980,10 @@ class ObjectifyTestCase(HelperTestCase):
         value = objectify.DataElement(5.5)
         self.assert_(isinstance(value, objectify.FloatElement))
         self.assertEquals(value, 5.5)
+
+    def test_data_element_float_hash(self):
+        value = objectify.DataElement(5.5)
+        self.assertEquals(hash(value), hash(5.5))
 
     def test_data_element_xsitypes(self):
         for xsi, objclass in xsitype2objclass.items():
