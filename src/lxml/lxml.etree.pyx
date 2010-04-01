@@ -34,7 +34,7 @@ __all__ = [
     'iterparse', 'iterwalk', 'parse', 'parseid', 'set_default_parser',
     'set_element_class_lookup', 'strip_attributes', 'strip_elements',
     'strip_tags', 'tostring', 'tostringlist', 'tounicode',
-    'use_global_python_log'
+    'use_global_python_log', 'register_namespace'
     ]
 
 cimport tree, python, config
@@ -139,6 +139,25 @@ _DEFAULT_NAMESPACE_PREFIXES = {
     # objectify
     b"http://codespeak.net/lxml/objectify/pytype" : b"py",
 }
+
+cdef object _check_internal_prefix = re.compile(b"ns\d+$").match
+
+def register_namespace(prefix, uri):
+    u"""Registers a namespace prefix that newly created Elements in that
+    namespace will use.  The registry is global, and any existing
+    mapping for either the given prefix or the namespace URI will be
+    removed.
+    """
+    prefix_utf, uri_utf = _utf8(prefix), _utf8(uri)
+    if _check_internal_prefix(prefix_utf):
+        raise ValueError("Prefix format reserved for internal use")
+    _tagValidOrRaise(prefix_utf)
+    _uriValidOrRaise(uri_utf)
+    for k, v in _DEFAULT_NAMESPACE_PREFIXES.items():
+        if k == uri_utf or v == prefix_utf:
+            del _DEFAULT_NAMESPACE_PREFIXES[k]
+    _DEFAULT_NAMESPACE_PREFIXES[uri_utf] = prefix_utf
+
 
 # Error superclass for ElementTree compatibility
 class Error(Exception):

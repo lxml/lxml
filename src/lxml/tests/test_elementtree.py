@@ -2619,6 +2619,26 @@ class ETreeTestCaseBase(HelperTestCase):
         root2 = fromstring(xml2)
         self.assertEquals('TEST', root[0].get('{%s}a' % ns_href))
 
+    required_versions_ET['test_itertext'] = (1,3)
+    def test_register_namespace(self):
+        # ET 1.3+
+        Element = self.etree.Element
+        tostring = self.etree.tostring
+        prefix = 'TESTPREFIX'
+        namespace = 'http://seriously.unknown/namespace/URI'
+
+        el = Element('{%s}test' % namespace)
+        self.assertEquals(_bytes('<ns0:test xmlns:ns0="%s"></ns0:test>' % namespace),
+            self._writeElement(el))
+
+        self.etree.register_namespace(prefix, namespace)
+        el = Element('{%s}test' % namespace)
+        self.assertEquals(_bytes('<%s:test xmlns:%s="%s"></%s:test>' % (
+            prefix, prefix, namespace, prefix)),
+            self._writeElement(el))
+
+        self.assertRaises(ValueError, self.etree.register_namespace, 'ns25', namespace)
+
     def test_tostring(self):
         tostring = self.etree.tostring
         Element = self.etree.Element
