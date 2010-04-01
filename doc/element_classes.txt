@@ -67,18 +67,44 @@ There is one thing to know up front.  Element classes *must not* have
 an ``__init___`` or ``__new__`` method.  There should not be any
 internal state either, except for the data stored in the underlying
 XML tree.  Element instances are created and garbage collected at
-need, so there is no way to predict when and how often a proxy is
-created for them.  Even worse, when the ``__init__`` method is called,
-the object is not even initialized yet to represent the XML tag, so
-there is not much use in providing an ``__init__`` method in
+need, so there is normally no way to predict when and how often a
+proxy is created for them.  Even worse, when the ``__init__`` method
+is called, the object is not even initialized yet to represent the XML
+tag, so there is not much use in providing an ``__init__`` method in
 subclasses.
 
-Most use cases will not require any class initialisation, so you can content
-yourself with skipping to the next section for now.  However, if you really
-need to set up your element class on instantiation, there is one possible way
-to do so.  ElementBase classes have an ``_init()`` method that can be
-overridden.  It can be used to modify the XML tree, e.g. to construct special
-children or verify and update attributes.
+Most use cases will not require any class initialisation or proxy
+state, so you can content yourself with skipping to the next section
+for now.  However, if you really need to set up your element class on
+instantiation, or need a way to persistently store state in the proxy
+instances instead of the XML tree, here is a way to do so.
+
+There is one important guarantee regarding Element proxies.  Once a
+proxy has been instantiated, it will keep alive as long as there is a
+Python reference to it, and any access to the XML element in the tree
+will return this very instance.  Therefore, if you need to store local
+state in a custom Element class (which is generally discouraged), you
+can do so by keeping the Elements in a tree alive.  If the tree
+doesn't change, you can simply do this:
+
+.. sourcecode:: python
+
+  proxy_cache = list(root.iter())
+
+or
+
+.. sourcecode:: python
+
+  proxy_cache = set(root.iter())
+
+or use any other suitable container.  Note that you have to keep this
+cache manually up to date if the tree changes, which can get tricky in
+cases.
+
+For proxy initialisation, ElementBase classes have an ``_init()``
+method that can be overridden, as oppose to the normal ``__init__()``
+method.  It can be used to modify the XML tree, e.g. to construct
+special children or verify and update attributes.
 
 The semantics of ``_init()`` are as follows:
 
