@@ -25,16 +25,16 @@ __all__ = [
     'SubElement', 'TreeBuilder', 'XInclude', 'XIncludeError', 'XML',
     'XMLDTDID', 'XMLID', 'XMLParser', 'XMLSchema', 'XMLSchemaError',
     'XMLSchemaParseError', 'XMLSchemaValidateError', 'XMLSyntaxError',
-    'XPath', 'XPathDocumentEvaluator', 'XPathError', 'XPathEvalError',
-    'XPathEvaluator', 'XPathFunctionError', 'XPathResultError',
+    'XMLTreeBuilder', 'XPath', 'XPathDocumentEvaluator', 'XPathError',
+    'XPathEvalError', 'XPathEvaluator', 'XPathFunctionError', 'XPathResultError',
     'XPathSyntaxError', 'XSLT', 'XSLTAccessControl', 'XSLTApplyError',
     'XSLTError', 'XSLTExtension', 'XSLTExtensionError', 'XSLTParseError',
     'XSLTSaveError', 'cleanup_namespaces', 'clear_error_log', 'dump',
     'fromstring', 'fromstringlist', 'get_default_parser', 'iselement',
-    'iterparse', 'iterwalk', 'parse', 'parseid', 'set_default_parser',
-    'set_element_class_lookup', 'strip_attributes', 'strip_elements',
-    'strip_tags', 'tostring', 'tostringlist', 'tounicode',
-    'use_global_python_log', 'register_namespace'
+    'iterparse', 'iterwalk', 'parse', 'parseid', 'register_namespace',
+    'set_default_parser', 'set_element_class_lookup', 'strip_attributes',
+    'strip_elements', 'strip_tags', 'tostring', 'tostringlist', 'tounicode',
+    'use_global_python_log'
     ]
 
 cimport tree, python, config

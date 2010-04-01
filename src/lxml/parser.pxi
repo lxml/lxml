@@ -1306,6 +1306,9 @@ cdef class ETCompatXMLParser(XMLParser):
                            encoding=encoding,
                            schema=schema)
 
+# ET 1.2 compatible name
+XMLTreeBuilder = ETCompatXMLParser
+
 
 cdef XMLParser __DEFAULT_XML_PARSER
 __DEFAULT_XML_PARSER = XMLParser()

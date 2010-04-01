@@ -74,6 +74,9 @@ Features added
 Bugs fixed
 ----------
 
+* Export ElementTree compatible XML parser class as
+  ``XMLTreeBuilder``, as it is called in ET 1.2.
+
 * ObjectifiedDataElements in lxml.objectify were not hashable.
 
 * Crash in XPath evaluation when reading smart strings from a document
