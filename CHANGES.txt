@@ -8,6 +8,12 @@ lxml changelog
 Features added
 --------------
 
+* Support 'unicode' string name as encoding parameter in
+  ``tostring()``, following ElementTree 1.3.
+
+* Support 'c14n' serialisation method in ``ElementTree.write()`` and
+  ``tostring()``, following ElementTree 1.3.
+
 * During regular XPath evaluation, various ESXLT functions are
   available within their namespace when using libxslt 1.1.26 or later.
 

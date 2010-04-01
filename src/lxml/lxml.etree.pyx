@@ -1708,17 +1708,23 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
-              standalone=None, docstring=None, compression=0):
+              standalone=None, docstring=None, compression=0,
+              exclusive=False, with_comments=True):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
-                  standalone=None, compression=0)
+                  standalone=None, compression=0,
+                  exclusive=False, with_comments=True)
 
         Write the tree to a filename, file or file-like object.
 
         Defaults to ASCII encoding and writing a declaration as needed.
 
-        The keyword argument 'method' selects the output method: 'xml' or
-        'html'.
+        The keyword argument 'method' selects the output method:
+        'xml', 'html', 'text' or 'c14n'.  Default is 'xml'.
+
+        The ``exclusive`` and ``with_comments`` arguments are only
+        used with C14N output, where they request exclusive and
+        uncommented C14N serialisation respectively.
 
         Passing a boolean value to the ``standalone`` option will
         output an XML declaration with the corresponding
@@ -1729,6 +1735,19 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef bint write_declaration
         cdef int is_standalone
         self._assertHasRoot()
+        if compression is None or compression < 0:
+            compression = 0
+        # C14N serialisation
+        if method == 'c14n':
+            if encoding is not None:
+                raise ValueError("Cannot specify encoding with C14N")
+            if xml_declaration:
+                raise ValueError("Cannot enable XML declaration in C14N")
+            _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
+                            compression)
+            return
+        if not with_comments:
+            raise ValueError("Can only discard comments in C14N serialisation")
         # suppress decl. in default case (purely for ElementTree compatibility)
         if xml_declaration is not None:
             write_declaration = xml_declaration
@@ -1749,8 +1768,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         else:
             write_declaration = 1
             is_standalone = 0
-        if compression is None or compression < 0:
-            compression = 0
         _tofilelike(file, self._context_node, encoding, docstring, method,
                     write_declaration, 1, pretty_print, with_tail,
                     is_standalone, compression)
@@ -2659,26 +2676,36 @@ def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, pretty_print=False, with_tail=True,
-             standalone=None, doctype=None):
+             standalone=None, doctype=None,
+             exclusive=False, with_comments=True):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
-                 standalone=None, doctype=None)
+                 standalone=None, doctype=None,
+                 exclusive=False, with_comments=True)
 
     Serialize an element to an encoded string representation of its XML
     tree.
 
-    Defaults to ASCII encoding without XML declaration.  This behaviour can be
-    configured with the keyword arguments 'encoding' (string) and
-    'xml_declaration' (bool).  Note that changing the encoding to a non UTF-8
-    compatible encoding will enable a declaration by default.
+    Defaults to ASCII encoding without XML declaration.  This
+    behaviour can be configured with the keyword arguments 'encoding'
+    (string) and 'xml_declaration' (bool).  Note that changing the
+    encoding to a non UTF-8 compatible encoding will enable a
+    declaration by default.
 
     You can also serialise to a Unicode string without declaration by
-    passing the ``unicode`` function as encoding (or ``str`` in Py3).
+    passing the ``unicode`` function as encoding (or ``str`` in Py3),
+    or the name 'unicode'.  This changes the return value from a byte
+    string to an unencoded unicode string.
 
     The keyword argument 'pretty_print' (bool) enables formatted XML.
 
     The keyword argument 'method' selects the output method: 'xml',
-    'html' or plain 'text'.
+    'html', plain 'text' (text content without tags) or 'c14n'.
+    Default is 'xml'.
+
+    The ``exclusive`` and ``with_comments`` arguments are only used
+    with C14N output, where they request exclusive and uncommented
+    C14N serialisation respectively.
 
     Passing a boolean value to the ``standalone`` option will output
     an XML declaration with the corresponding ``standalone`` flag.
@@ -2693,11 +2720,21 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
     """
     cdef bint write_declaration
     cdef int is_standalone
-    if encoding is _unicode:
+    # C14N serialisation
+    if method == 'c14n':
+        if encoding is not None:
+            raise ValueError("Cannot specify encoding with C14N")
+        if xml_declaration:
+            raise ValueError("Cannot enable XML declaration in C14N")
+        return _tostringC14N(element_or_tree, exclusive, with_comments)
+    if not with_comments:
+        raise ValueError("Can only discard comments in C14N serialisation")
+    if encoding is _unicode or (encoding is not None and encoding.upper() == 'UNICODE'):
         if xml_declaration:
             raise ValueError, \
                 u"Serialisation to unicode must not request an XML declaration"
         write_declaration = 0
+        encoding = _unicode
     elif xml_declaration is None:
         # by default, write an XML declaration only for non-standard encodings
         write_declaration = encoding is not None and encoding.upper() not in \

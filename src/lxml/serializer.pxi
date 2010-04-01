@@ -142,6 +142,37 @@ cdef _tostring(_Element element, encoding, doctype, method,
         _raiseSerialisationError(error_result)
     return result
 
+cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments):
+    cdef xmlDoc* c_doc
+    cdef char* c_buffer = NULL
+    cdef int byte_count = -1
+    cdef bytes result
+    cdef _Document doc
+    cdef _Element element
+
+    if isinstance(element_or_tree, _Element):
+        doc = (<_Element>element_or_tree)._doc
+        c_doc = _plainFakeRootDoc(doc._c_doc, (<_Element>element_or_tree)._c_node, 0)
+    else:
+        doc = _documentOrRaise(element_or_tree)
+        c_doc = doc._c_doc
+
+    with nogil:
+        byte_count = c14n.xmlC14NDocDumpMemory(
+            c_doc, NULL, exclusive, NULL, with_comments, &c_buffer)
+
+    _destroyFakeDoc(doc._c_doc, c_doc)
+
+    if byte_count < 0 or c_buffer is NULL:
+        if c_buffer is not NULL:
+            tree.xmlFree(c_buffer)
+        raise C14NError, u"C14N failed"
+    try:
+        result = c_buffer[:byte_count]
+    finally:
+        tree.xmlFree(c_buffer)
+    return result
+
 cdef _raiseSerialisationError(int error_result):
     if error_result == xmlerror.XML_ERR_NO_MEMORY:
         return python.PyErr_NoMemory()

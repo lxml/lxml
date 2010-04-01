@@ -3029,6 +3029,30 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEquals(_bytes('<a><b></b></a>'),
                           s)
 
+    def test_c14n_tostring_with_comments(self):
+        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        s = etree.tostring(tree, method='c14n')
+        self.assertEquals(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        s = etree.tostring(tree, method='c14n', with_comments=True)
+        self.assertEquals(_bytes('<!--hi-->\n<a><!--ho--><b></b></a>\n<!--hu-->'),
+                          s)
+        s = etree.tostring(tree, method='c14n', with_comments=False)
+        self.assertEquals(_bytes('<a><b></b></a>'),
+                          s)
+
+    def test_c14n_element_tostring_with_comments(self):
+        tree = self.parse(_bytes('<!--hi--><a><!--ho--><b/></a><!--hu-->'))
+        s = etree.tostring(tree.getroot(), method='c14n')
+        self.assertEquals(_bytes('<a><!--ho--><b></b></a>'),
+                          s)
+        s = etree.tostring(tree.getroot(), method='c14n', with_comments=True)
+        self.assertEquals(_bytes('<a><!--ho--><b></b></a>'),
+                          s)
+        s = etree.tostring(tree.getroot(), method='c14n', with_comments=False)
+        self.assertEquals(_bytes('<a><b></b></a>'),
+                          s)
+
     def test_c14n_exclusive(self):
         tree = self.parse(_bytes(
                 '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
@@ -3046,6 +3070,39 @@ class ETreeC14NTestCase(HelperTestCase):
         tree.write_c14n(f, exclusive=True)
         s = f.getvalue()
         self.assertEquals(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+                          s)
+
+    def test_c14n_tostring_exclusive(self):
+        tree = self.parse(_bytes(
+                '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
+        s = etree.tostring(tree, method='c14n')
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        s = etree.tostring(tree, method='c14n', exclusive=False)
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        s = etree.tostring(tree, method='c14n', exclusive=True)
+        self.assertEquals(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+                          s)
+
+    def test_c14n_element_tostring_exclusive(self):
+        tree = self.parse(_bytes(
+                '<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
+        s = etree.tostring(tree.getroot(), method='c14n')
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        s = etree.tostring(tree.getroot(), method='c14n', exclusive=False)
+        self.assertEquals(_bytes('<a xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+        s = etree.tostring(tree.getroot(), method='c14n', exclusive=True)
+        self.assertEquals(_bytes('<a xmlns="http://abc"><z:b xmlns:z="http://cde"></z:b></a>'),
+                          s)
+
+        s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=False)
+        self.assertEquals(_bytes('<z:b xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
+                          s)
+        s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=True)
+        self.assertEquals(_bytes('<z:b xmlns:z="http://cde"></z:b>'),
                           s)
 
 
