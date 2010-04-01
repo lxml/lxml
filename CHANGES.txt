@@ -14,6 +14,11 @@ Features added
 * Support 'c14n' serialisation method in ``ElementTree.write()`` and
   ``tostring()``, following ElementTree 1.3.
 
+* The ElementPath expression syntax (``el.find*()``) was extended to
+  match the upcoming ElementTree 1.3 that will ship in the standard
+  library of Python 3.2/2.7.  This includes extended support for
+  predicates as well as namespace prefixes (as known from XPath).
+
 * During regular XPath evaluation, various ESXLT functions are
   available within their namespace when using libxslt 1.1.26 or later.
 
