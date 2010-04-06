@@ -74,6 +74,8 @@ Features added
 Bugs fixed
 ----------
 
+* Prevent crash when instantiating ``CommentBase`` and friends.
+
 * Export ElementTree compatible XML parser class as
   ``XMLTreeBuilder``, as it is called in ET 1.2.
 

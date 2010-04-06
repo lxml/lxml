@@ -101,8 +101,7 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
 cdef class CommentBase(_Comment):
     u"""All custom Comment classes must inherit from this one.
 
-    Note that you cannot (and must not) instantiate this class or its
-    subclasses.
+    To create an XML Comment instance, use the ``Comment()`` factory.
 
     Subclasses *must not* override __init__ or __new__ as it is
     absolutely undefined when these objects will be created or
@@ -111,12 +110,24 @@ cdef class CommentBase(_Comment):
     creation, you can implement an ``_init(self)`` method that will be
     called after object creation.
     """
+    def __init__(self, text):
+        # copied from Comment() factory
+        cdef _Document doc
+        cdef xmlDoc*   c_doc
+        if text is None:
+            text = b''
+        else:
+            text = _utf8(text)
+        c_doc = _newXMLDoc()
+        doc = _documentFactory(c_doc, None)
+        self._c_node = _createComment(c_doc, _cstr(text))
+        tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
 
 cdef class PIBase(_ProcessingInstruction):
     u"""All custom Processing Instruction classes must inherit from this one.
 
-    Note that you cannot (and must not) instantiate this class or its
-    subclasses.
+    To create an XML ProcessingInstruction instance, use the ``PI()``
+    factory.
 
     Subclasses *must not* override __init__ or __new__ as it is
     absolutely undefined when these objects will be created or
@@ -125,12 +136,24 @@ cdef class PIBase(_ProcessingInstruction):
     creation, you can implement an ``_init(self)`` method that will be
     called after object creation.
     """
+    def __init__(self, target, text=None):
+        # copied from PI() factory
+        cdef _Document doc
+        cdef xmlDoc*   c_doc
+        target = _utf8(target)
+        if text is None:
+            text = b''
+        else:
+            text = _utf8(text)
+        c_doc = _newXMLDoc()
+        doc = _documentFactory(c_doc, None)
+        self._c_node = _createPI(c_doc, _cstr(target), _cstr(text))
+        tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
 
 cdef class EntityBase(_Entity):
     u"""All custom Entity classes must inherit from this one.
 
-    Note that you cannot (and must not) instantiate this class or its
-    subclasses.
+    To create an XML Entity instance, use the ``Entity()`` factory.
 
     Subclasses *must not* override __init__ or __new__ as it is
     absolutely undefined when these objects will be created or
@@ -139,7 +162,21 @@ cdef class EntityBase(_Entity):
     creation, you can implement an ``_init(self)`` method that will be
     called after object creation.
     """
-    
+    def __init__(self, name):
+        cdef _Document doc
+        cdef xmlDoc*   c_doc
+        cdef char* c_name
+        name_utf = _utf8(name)
+        c_name = _cstr(name_utf)
+        if c_name[0] == c'#':
+            if not _characterReferenceIsValid(c_name + 1):
+                raise ValueError, u"Invalid character reference: '%s'" % name
+        elif not _xmlNameIsValid(c_name):
+            raise ValueError, u"Invalid entity reference: '%s'" % name
+        c_doc = _newXMLDoc()
+        doc = _documentFactory(c_doc, None)
+        self._c_node = _createEntity(c_doc, c_name)
+        tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
 
 ################################################################################
 # Element class lookup
