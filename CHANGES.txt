@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Keyword argument ``namespaces`` in ``lxml.cssselect.CSSSelector()``
+  to pass a prefix-to-namespace mapping for the selector.
+
 * New function ``lxml.etree.register_namespace(prefix, uri)`` that
   globally registers a namespace prefix for a namespace that newly
   created Elements in that namespace will use automatically.  Follows

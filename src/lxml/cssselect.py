@@ -32,10 +32,24 @@ class CSSSelector(etree.XPath):
         >>> root = etree.XML("<a><b><c/><tag><child>TEXT</child></tag></b></a>")
         >>> [ el.tag for el in select(root) ]
         ['child']
+    
+    To use CSS namespaces, you need to pass a prefix-to-namespace
+    mapping as ``namespaces`` keyword argument::
+    
+        >>> rdfns = 'http://www.w3.org/1999/02/22-rdf-syntax-ns#'
+        >>> select_ns = cssselect.CSSSelector('root > rdf|Description',
+        ...                                   namespaces={'rdf': rdfns})
+
+        >>> rdf = etree.XML((
+        ...     '<root xmlns:rdf="%s">'
+        ...       '<rdf:Description>blah</rdf:Description>'
+        ...     '</root>') % rdfns)
+        >>> [(el.tag, el.text) for el in select_ns(rdf)]
+        [('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description', 'blah')]
     """
-    def __init__(self, css):
+    def __init__(self, css, namespaces=None):
         path = css_to_xpath(css)
-        etree.XPath.__init__(self, path)
+        etree.XPath.__init__(self, path, namespaces=namespaces)
         self.css = css
 
     def __repr__(self):
