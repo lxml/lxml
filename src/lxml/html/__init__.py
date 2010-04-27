@@ -1491,7 +1491,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     """
     html = etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding)
-    if not include_meta_content_type:
+    if method == 'html' and not include_meta_content_type:
         if isinstance(html, str):
             html = __str_replace_meta_content_type('', html)
         else:
