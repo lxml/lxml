@@ -77,6 +77,9 @@ Features added
 Bugs fixed
 ----------
 
+* API is hardened against invalid proxy instances to prevent crashes
+  due to incorrectly instantiated Element instances.
+
 * Prevent crash when instantiating ``CommentBase`` and friends.
 
 * Export ElementTree compatible XML parser class as

@@ -494,7 +494,7 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
-    if __DEBUG != 0:
+    if __DEBUG:
         _forwardError(c_log_handler, error)
 
 cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:

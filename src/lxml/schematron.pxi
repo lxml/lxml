@@ -70,14 +70,16 @@ cdef class Schematron(_Validator):
     """
     cdef schematron.xmlSchematron* _c_schema
     cdef xmlDoc* _c_schema_doc
+    def __cinit__(self):
+        self._c_schema = NULL
+        self._c_schema_doc = NULL
+
     def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
         cdef xmlNode* c_node
         cdef char* c_href
         cdef schematron.xmlSchematronParserCtxt* parser_ctxt
-        self._c_schema = NULL
-        self._c_schema_doc = NULL
         _Validator.__init__(self)
         if not config.ENABLE_SCHEMATRON:
             raise SchematronError, \
@@ -138,6 +140,7 @@ cdef class Schematron(_Validator):
         cdef int ret
         cdef int options
 
+        assert self._c_schema is not NULL, "Schematron instance not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 

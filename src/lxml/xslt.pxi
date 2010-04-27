@@ -124,8 +124,7 @@ cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
 cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
                               int parse_options, void* c_ctxt,
                               xslt.xsltLoadType c_type) nogil:
-    # no Python objects here, may be called without thread context !
-    # when we declare a Python object, Pyrex will INCREF(None) !
+    # nogil => no Python objects here, may be called without thread context !
     cdef xmlDoc* c_doc
     cdef xmlDoc* result
     cdef void* c_pcontext
@@ -186,7 +185,7 @@ cdef class XSLTAccessControl:
     See `XSLT`.
     """
     cdef xslt.xsltSecurityPrefs* _prefs
-    def __init__(self, *, read_file=True, write_file=True, create_dir=True,
+    def __cinit__(self, *, read_file=True, write_file=True, create_dir=True,
                  read_network=True, write_network=True):
         self._prefs = xslt.xsltNewSecurityPrefs()
         if self._prefs is NULL:
@@ -271,10 +270,12 @@ cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     cdef _ReadOnlyElementProxy _extension_element_proxy
     cdef dict _extension_elements
-    def __init__(self, namespaces, extensions, enable_regexp,
-                 build_smart_strings):
+    def __cinit__(self):
         self._xsltCtxt = NULL
         self._extension_elements = EMPTY_DICT
+
+    def __init__(self, namespaces, extensions, enable_regexp,
+                 build_smart_strings):
         if extensions is not None and extensions:
             for ns_name_tuple, extension in extensions.items():
                 if ns_name_tuple[0] is None:
@@ -320,7 +321,7 @@ cdef class _XSLTQuotedStringParam:
     quote escaping.
     """
     cdef bytes strval
-    def __init__(self, strval):
+    def __cinit__(self, strval):
         self.strval = _utf8(strval)
 
 
@@ -355,6 +356,9 @@ cdef class XSLT:
     cdef _XSLTResolverContext _xslt_resolver_context
     cdef XSLTAccessControl _access_control
     cdef _ErrorLog _error_log
+
+    def __cinit__(self):
+        self._c_style = NULL
 
     def __init__(self, xslt_input, *, extensions=None, regexp=True,
                  access_control=None):
@@ -413,7 +417,8 @@ cdef class XSLT:
                self._xslt_resolver_context._c_style_doc is not NULL:
             tree.xmlFreeDoc(self._xslt_resolver_context._c_style_doc)
         # this cleans up the doc copy as well
-        xslt.xsltFreeStylesheet(self._c_style)
+        if self._c_style is not NULL:
+            xslt.xsltFreeStylesheet(self._c_style)
 
     property error_log:
         u"The log of errors and warnings of an XSLT execution."
@@ -477,6 +482,7 @@ cdef class XSLT:
         cdef tree.xmlDict* c_dict
         cdef char** params
 
+        assert self._c_style is not NULL, "XSLT stylesheet not initialised"
         input_doc = _documentOrRaise(_input)
         root_node = _rootNodeOrRaise(_input)
 
@@ -645,6 +651,7 @@ cdef extern from "etree_defs.h":
 cdef XSLT _copyXSLT(XSLT stylesheet):
     cdef XSLT new_xslt
     cdef xmlDoc* c_doc
+    assert stylesheet._c_style is not NULL, "XSLT stylesheet not initialised"
     new_xslt = NEW_XSLT(XSLT) # without calling __init__()
     new_xslt._access_control = stylesheet._access_control
     new_xslt._error_log = _ErrorLog()
@@ -668,6 +675,11 @@ cdef class _XSLTResultTree(_ElementTree):
     cdef char* _buffer
     cdef Py_ssize_t _buffer_len
     cdef Py_ssize_t _buffer_refcnt
+    def __cinit__(self):
+        self._buffer = NULL
+        self._buffer_len = 0
+        self._buffer_refcnt = 0
+
     cdef _saveToStringAndSize(self, char** s, int* l):
         cdef _Document doc
         cdef int r
@@ -719,7 +731,7 @@ cdef class _XSLTResultTree(_ElementTree):
     def __getbuffer__(self, Py_buffer* buffer, int flags):
         cdef int l
         if buffer is NULL:
-            return # LOCK
+            return
         if self._buffer is NULL or flags & python.PyBUF_WRITABLE:
             self._saveToStringAndSize(<char**>&buffer.buf, &l)
             buffer.len = l
@@ -748,7 +760,7 @@ cdef class _XSLTResultTree(_ElementTree):
 
     def __releasebuffer__(self, Py_buffer* buffer):
         if buffer is NULL:
-            return # UNLOCK
+            return
         if <char*>buffer.buf is self._buffer:
             self._buffer_refcnt -= 1
             if self._buffer_refcnt == 0:
@@ -778,9 +790,6 @@ cdef _xsltResultTreeFactory(_Document doc, XSLT xslt, _Document profile):
     result = <_XSLTResultTree>_newElementTree(doc, None, _XSLTResultTree)
     result._xslt = xslt
     result._profile = profile
-    result._buffer = NULL
-    result._buffer_refcnt = 0
-    result._buffer_len = 0
     return result
 
 # functions like "output" and "write" are a potential security risk, but we
@@ -831,6 +840,7 @@ cdef class _XSLTProcessingInstruction(PIBase):
         cdef _Element  result_node
         cdef char* c_href
         cdef xmlAttr* c_attr
+        _assertValidNode(self)
         if self._c_node.content is NULL:
             raise ValueError, u"PI lacks content"
         hrefs = _FIND_PI_HREF(u' ' + funicode(self._c_node.content))
@@ -852,6 +862,7 @@ cdef class _XSLTProcessingInstruction(PIBase):
 
         # ID reference to embedded stylesheet
         # try XML:ID lookup
+        _assertValidDoc(self._doc)
         c_href += 1 # skip leading '#'
         c_attr = tree.xmlGetID(self._c_node.doc, c_href)
         if c_attr is not NULL and c_attr.doc is self._c_node.doc:

@@ -20,17 +20,17 @@ class ParseError(LxmlSyntaxError):
             # Python >= 2.5 uses new style class exceptions
             super(_ParseError, self).__init__(message)
         else:
-            _XMLSyntaxError.__init__(self, message)
+            _LxmlSyntaxError.__init__(self, message)
         self.position = (line, column)
         self.code = code
+
+cdef object _LxmlSyntaxError = LxmlSyntaxError
+cdef object _ParseError = ParseError
 
 class XMLSyntaxError(ParseError):
     u"""Syntax error while parsing an XML document.
     """
     pass
-
-cdef object _XMLSyntaxError = XMLSyntaxError
-cdef object _ParseError = ParseError
 
 class ParserError(LxmlError):
     u"""Internal lxml parser error.
@@ -51,7 +51,8 @@ cdef class _ParserDictionaryContext:
     cdef _BaseParser _default_parser
     cdef list _implied_parser_contexts
 
-    def __init__(self):
+    def __cinit__(self):
+        self._c_dict = NULL
         self._implied_parser_contexts = []
 
     def __dealloc__(self):
@@ -65,7 +66,7 @@ cdef class _ParserDictionaryContext:
         cdef python.PyObject* result
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is not NULL:
-            (<object>thread_dict)[u"_ParserDictionaryContext"] = self
+            (<dict>thread_dict)[u"_ParserDictionaryContext"] = self
 
     cdef _ParserDictionaryContext _findThreadParserContext(self):
         u"Find (or create) the _ParserDictionaryContext object for the current thread"
@@ -75,7 +76,7 @@ cdef class _ParserDictionaryContext:
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is NULL:
             return self
-        d = <object>thread_dict
+        d = <dict>thread_dict
         result = python.PyDict_GetItem(d, u"_ParserDictionaryContext")
         if result is not NULL:
             return <object>result
@@ -264,7 +265,7 @@ cdef class _FileReaderContext:
     cdef _ExceptionContext _exc_context
     cdef Py_ssize_t _bytes_read
     cdef char* _c_url
-    def __init__(self, filelike, exc_context, url, encoding):
+    def __cinit__(self, filelike, exc_context, url, encoding):
         self._exc_context = exc_context
         self._filelike = filelike
         self._encoding = encoding
@@ -472,6 +473,13 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ParserSchemaValidationContext _validator
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef python.PyThread_type_lock _lock
+    def __cinit__(self):
+        self._c_ctxt = NULL
+        if not config.ENABLE_THREADING:
+            self._lock = NULL
+        else:
+            self._lock = python.PyThread_allocate_lock()
+        self._error_log = _ErrorLog()
 
     def __dealloc__(self):
         if self._validator is not None:
@@ -543,13 +551,8 @@ cdef _initParserContext(_ParserContext context,
                         _ResolverRegistry resolvers,
                         xmlparser.xmlParserCtxt* c_ctxt):
     _initResolverContext(context, resolvers)
-    if not config.ENABLE_THREADING:
-        context._lock = NULL
-    else:
-        context._lock = python.PyThread_allocate_lock()
     if c_ctxt is not NULL:
         context._initParserContext(c_ctxt)
-    context._error_log = _ErrorLog()
 
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
@@ -839,6 +842,8 @@ cdef class _BaseParser:
         parser._resolvers = self._resolvers
         parser.target = self.target
         parser._class_lookup  = self._class_lookup
+        parser._default_encoding = self._default_encoding
+        parser._schema = self._schema
         return parser
 
     def copy(self):

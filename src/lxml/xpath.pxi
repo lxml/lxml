@@ -130,6 +130,13 @@ cdef class _XPathEvaluatorBase:
     cdef _XPathContext _context
     cdef python.PyThread_type_lock _eval_lock
     cdef _ErrorLog _error_log
+    def __cinit__(self):
+        self._xpathCtxt = NULL
+        if config.ENABLE_THREADING:
+            self._eval_lock = python.PyThread_allocate_lock()
+            if self._eval_lock is NULL:
+                python.PyErr_NoMemory()
+        self._error_log = _ErrorLog()
 
     def __init__(self, namespaces, extensions, enable_regexp,
                  smart_strings):
@@ -139,17 +146,13 @@ cdef class _XPathEvaluatorBase:
             import warnings
             warnings.warn(u"This version of libxml2 has a known XPath bug. " + \
                           u"Use it at your own risk.")
-        self._error_log = _ErrorLog()
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None,
                                       smart_strings)
-        if config.ENABLE_THREADING:
-            self._eval_lock = python.PyThread_allocate_lock()
-            if self._eval_lock is NULL:
-                python.PyErr_NoMemory()
 
     property error_log:
         def __get__(self):
+            assert self._error_log is not None, "XPath evaluator not initialised"
             return self._error_log.copy()
 
     def __dealloc__(self):
@@ -195,7 +198,7 @@ cdef class _XPathEvaluatorBase:
                 result = python.PyThread_acquire_lock(
                     self._eval_lock, python.WAIT_LOCK)
             if result == 0:
-                raise ParserError, u"parser locking failed"
+                raise XPathError, u"XPath evaluator locking failed"
         return 0
 
     cdef void _unlock(self):
@@ -266,6 +269,8 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         cdef _Document doc
+        _assertValidNode(element)
+        _assertValidDoc(element._doc)
         self._element = element
         doc = element._doc
         _XPathEvaluatorBase.__init__(self, namespaces, extensions,
@@ -300,6 +305,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
         cdef char* c_path
+        assert self._xpathCtxt is not NULL, "XPath context not initialised"
         path = _utf8(_path)
         doc = self._element._doc
 
@@ -351,6 +357,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         cdef xmlDoc* c_doc
         cdef _Document doc
         cdef char* c_path
+        assert self._xpathCtxt is not NULL, "XPath context not initialised"
         path = _utf8(_path)
         doc = self._element._doc
 
@@ -417,6 +424,8 @@ cdef class XPath(_XPathEvaluatorBase):
     """
     cdef xpath.xmlXPathCompExpr* _xpath
     cdef bytes _path
+    def __cinit__(self):
+        self._xpath = NULL
 
     def __init__(self, path, *, namespaces=None, extensions=None,
                  regexp=True, smart_strings=True):
@@ -440,6 +449,7 @@ cdef class XPath(_XPathEvaluatorBase):
         cdef _Document document
         cdef _Element element
 
+        assert self._xpathCtxt is not NULL, "XPath context not initialised"
         document = _documentOrRaise(_etree_or_element)
         element  = _rootNodeOrRaise(_etree_or_element)
 

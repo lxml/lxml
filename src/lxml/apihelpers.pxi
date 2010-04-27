@@ -11,6 +11,12 @@ cdef void displayNode(xmlNode* c_node, indent):
         displayNode(c_child, indent + 1)
         c_child = c_child.next
 
+cdef inline int _assertValidNode(_Element element) except -1:
+    assert element._c_node is not NULL, u"invalid Element proxy at %s" % id(element)
+
+cdef inline int _assertValidDoc(_Document doc) except -1:
+    assert doc._c_doc is not NULL, u"invalid Document proxy at %s" % id(doc)
+
 cdef _Document _documentOrRaise(object input):
     u"""Call this to get the document of a _Document, _ElementTree or _Element
     object, or to raise an exception if it can't be determined.
@@ -33,8 +39,8 @@ cdef _Document _documentOrRaise(object input):
     if doc is None:
         raise ValueError, u"Input object has no document: %s" % \
             python._fqtypename(input)
-    else:
-        return doc
+    _assertValidDoc(doc)
+    return doc
 
 cdef _Element _rootNodeOrRaise(object input):
     u"""Call this to get the root node of a _Document, _ElementTree or
@@ -55,36 +61,41 @@ cdef _Element _rootNodeOrRaise(object input):
     if node is None:
         raise ValueError, u"Input object has no element: %s" % \
             python._fqtypename(input)
-    else:
-        return node
+    _assertValidNode(node)
+    return node
 
 cdef _Document _documentOf(object input):
     # call this to get the document of a
     # _Document, _ElementTree or _Element object
     # may return None!
     cdef _Element element
+    cdef _Document doc = None
     if isinstance(input, _ElementTree):
         element = (<_ElementTree>input)._context_node
         if element is not None:
-            return element._doc
+            doc = element._doc
     elif isinstance(input, _Element):
-        return (<_Element>input)._doc
+        doc = (<_Element>input)._doc
     elif isinstance(input, _Document):
-        return <_Document>input
-    return None
+        doc = <_Document>input
+    if doc is not None:
+        _assertValidDoc(doc)
+    return doc
 
 cdef _Element _rootNodeOf(object input):
     # call this to get the root node of a
     # _Document, _ElementTree or _Element object
     # may return None!
+    cdef _Element element = None
     if isinstance(input, _ElementTree):
-        return (<_ElementTree>input)._context_node
+        element = (<_ElementTree>input)._context_node
     elif isinstance(input, _Element):
-        return <_Element>input
+        element = <_Element>input
     elif isinstance(input, _Document):
-        return (<_Document>input).getroot()
-    else:
-        return None
+        element = (<_Document>input).getroot()
+    if element is not None:
+        _assertValidNode(element)
+    return element
 
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
                            _BaseParser parser, text, tail, attrib, nsmap,
@@ -183,6 +194,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
     cdef xmlDoc* c_doc
     if parent is None or parent._doc is None:
         return None
+    _assertValidNode(parent)
     ns_utf, name_utf = _getNsTag(tag)
     c_doc = parent._doc._c_doc
 
@@ -1181,6 +1193,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     if c_node is not NULL:
         for element in elements:
             assert element is not None, u"Node must not be None"
+            _assertValidNode(element)
             # move element and tail over
             c_source_doc = element._c_node.doc
             c_next = element._c_node.next
@@ -1205,10 +1218,12 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     if left_to_right:
         for element in elements:
             assert element is not None, u"Node must not be None"
+            _assertValidNode(element)
             _appendChild(parent, element)
     else:
         for element in elements:
             assert element is not None, u"Node must not be None"
+            _assertValidNode(element)
             _prependChild(parent, element)
 
     return 0

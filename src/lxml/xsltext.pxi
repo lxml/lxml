@@ -37,6 +37,7 @@ cdef class XSLTExtension:
         cdef xmlNode* c_parent
         cdef xmlNode* c_node
         cdef xmlNode* c_context_node
+        assert context._xsltCtxt is not NULL, "XSLT context not initialised"
         c_context_node = _roNodeOf(node)
         #assert c_context_node.doc is context._xsltContext.node.doc, \
         #    "switching input documents during transformation is not currently supported"
@@ -80,6 +81,7 @@ cdef class XSLTExtension:
         cdef xmlNode* c_parent
         cdef xslt.xsltTransformContext* c_ctxt = context._xsltCtxt
         cdef xmlNode* c_old_output_parent = c_ctxt.insert
+        assert context._xsltCtxt is not NULL, "XSLT context not initialised"
 
         # output_parent node is used for adding results instead of
         # elements list used in apply_templates, that's easier and allows to

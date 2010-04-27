@@ -36,6 +36,10 @@ cdef class XMLSchema(_Validator):
     cdef xmlschema.xmlSchema* _c_schema
     cdef bint _has_default_attributes
     cdef bint _add_attribute_defaults
+    def __cinit__(self):
+        self._c_schema = NULL
+        self._has_default_attributes = True # play safe
+        self._add_attribute_defaults = False
 
     def __init__(self, etree=None, *, file=None, attribute_defaults=False):
         cdef _Document doc
@@ -45,9 +49,7 @@ cdef class XMLSchema(_Validator):
         cdef char* c_href
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
 
-        self._has_default_attributes = True # play safe
         self._add_attribute_defaults = attribute_defaults
-        self._c_schema = NULL
         _Validator.__init__(self)
         fake_c_doc = NULL
         if etree is not None:
@@ -126,6 +128,7 @@ cdef class XMLSchema(_Validator):
         cdef xmlDoc* c_doc
         cdef int ret
 
+        assert self._c_schema is not NULL, "Schema instance not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
@@ -161,8 +164,6 @@ cdef class XMLSchema(_Validator):
         cdef _ParserSchemaValidationContext context
         context = NEW_SCHEMA_CONTEXT(_ParserSchemaValidationContext)
         context._schema = self
-        context._valid_ctxt = NULL
-        context._sax_plug = NULL
         context._add_default_attributes = (self._has_default_attributes and (
             add_default_attributes or self._add_attribute_defaults))
         return context
@@ -172,6 +173,10 @@ cdef class _ParserSchemaValidationContext:
     cdef xmlschema.xmlSchemaValidCtxt* _valid_ctxt
     cdef xmlschema.xmlSchemaSAXPlugStruct* _sax_plug
     cdef bint _add_default_attributes
+    def __cinit__(self):
+        self._valid_ctxt = NULL
+        self._sax_plug = NULL
+        self._add_default_attributes = False
 
     def __dealloc__(self):
         self.disconnect()
@@ -179,6 +184,7 @@ cdef class _ParserSchemaValidationContext:
             xmlschema.xmlSchemaFreeValidCtxt(self._valid_ctxt)
 
     cdef _ParserSchemaValidationContext copy(self):
+        assert self._schema is not None, "_ParserSchemaValidationContext not initialised"
         return self._schema._newSaxValidator(
             self._add_default_attributes)
 

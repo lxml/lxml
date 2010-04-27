@@ -79,7 +79,7 @@ cdef class _IterparseContext(_ParserContext):
     cdef char*  _tag_href
     cdef char*  _tag_name
 
-    def __init__(self):
+    def __cinit__(self):
         self._ns_stack = []
         self._pop_ns = self._ns_stack.pop
         self._node_stack = []
@@ -581,7 +581,7 @@ cdef class iterwalk:
         cdef _Element node
         cdef _Element next_node
         cdef int ns_count
-        if python.PyList_GET_SIZE(self._events):
+        if self._events:
             return self._pop_event(0)
         ns_count = 0
         # find next node
@@ -597,7 +597,7 @@ cdef class iterwalk:
                 next_node = None
                 while next_node is None:
                     # back off through parents
-                    self._index = self._index - 1
+                    self._index -= 1
                     node = self._end_node()
                     if self._index < 0:
                         break
@@ -609,8 +609,8 @@ cdef class iterwalk:
                 elif self._event_filter & ITERPARSE_FILTER_END_NS:
                     ns_count = _countNsDefs(next_node._c_node)
                 self._node_stack.append( (next_node, ns_count) )
-                self._index = self._index + 1
-            if python.PyList_GET_SIZE(self._events):
+                self._index += 1
+            if self._events:
                 return self._pop_event(0)
         raise StopIteration
 

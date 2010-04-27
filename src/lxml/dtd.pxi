@@ -28,8 +28,10 @@ cdef class DTD(_Validator):
     catalog.
     """
     cdef tree.xmlDtd* _c_dtd
-    def __init__(self, file=None, *, external_id=None):
+    def __cinit__(self):
         self._c_dtd = NULL
+
+    def __init__(self, file=None, *, external_id=None):
         _Validator.__init__(self)
         if file is not None:
             if _isString(file):
@@ -69,6 +71,7 @@ cdef class DTD(_Validator):
         cdef dtdvalid.xmlValidCtxt* valid_ctxt
         cdef int ret
 
+        assert self._c_dtd is not NULL, "DTD not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 

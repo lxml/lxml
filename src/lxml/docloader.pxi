@@ -1,6 +1,7 @@
 # Custom resolver API
 
 ctypedef enum _InputDocumentDataType:
+    PARSER_DATA_INVALID
     PARSER_DATA_EMPTY
     PARSER_DATA_STRING
     PARSER_DATA_FILENAME
@@ -11,6 +12,10 @@ cdef class _InputDocument:
     cdef object _data_bytes
     cdef object _filename
     cdef object _file
+
+    def __cinit__(self):
+        self._type = PARSER_DATA_INVALID
+
 
 cdef class Resolver:
     u"This is the base class of all resolvers."
@@ -101,7 +106,7 @@ cdef class Resolver:
 cdef class _ResolverRegistry:
     cdef object _resolvers
     cdef Resolver _default_resolver
-    def __init__(self, Resolver default_resolver=None):
+    def __cinit__(self, Resolver default_resolver=None):
         self._resolvers = set()
         self._default_resolver = default_resolver
 

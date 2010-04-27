@@ -6,6 +6,9 @@ cdef class _ReadOnlyProxy:
     cdef xmlNode* _c_node
     cdef _ReadOnlyProxy _source_proxy
     cdef list _dependent_proxies
+    def __cinit__(self):
+        self._c_node = NULL
+        self._free_after_use = 0
 
     cdef int _assertNode(self) except -1:
         u"""This is our way of saying: this proxy is invalid!
@@ -329,7 +332,6 @@ cdef _ReadOnlyProxy _newReadOnlyProxy(
 
 cdef inline _initReadOnlyProxy(_ReadOnlyProxy el,
                                _ReadOnlyProxy source_proxy):
-    el._free_after_use = 0
     if source_proxy is None:
         el._source_proxy = el
         el._dependent_proxies = [el]

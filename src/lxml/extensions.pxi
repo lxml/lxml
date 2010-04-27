@@ -42,6 +42,8 @@ cdef class _BaseContext:
     cdef _TempStore _temp_refs
     cdef set _temp_documents
     cdef _ExceptionContext _exc
+    def __cinit__(self):
+        self._xpathCtxt = NULL
 
     def __init__(self, namespaces, extensions, enable_regexp,
                  build_smart_strings):
@@ -340,7 +342,7 @@ cdef class _BaseContext:
         """
         cdef _Document doc
         for doc in self._temp_documents:
-            if doc._c_doc is c_node.doc:
+            if doc is not None and doc._c_doc is c_node.doc:
                 return doc
         return None
 
@@ -374,7 +376,7 @@ def Extension(module, function_mapping=None, *, ns=None):
 
 cdef class _ExsltRegExp:
     cdef dict _compile_map
-    def __init__(self):
+    def __cinit__(self):
         self._compile_map = {}
 
     cdef _make_string(self, value):

@@ -89,6 +89,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     cdef int error_result
     if element is None:
         return None
+    _assertValidNode(element)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         return _textToString(element._c_node, encoding, with_tail)
@@ -151,10 +152,12 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments):
     cdef _Element element
 
     if isinstance(element_or_tree, _Element):
+        _assertValidNode(<_Element>element_or_tree)
         doc = (<_Element>element_or_tree)._doc
         c_doc = _plainFakeRootDoc(doc._c_doc, (<_Element>element_or_tree)._c_node, 0)
     else:
         doc = _documentOrRaise(element_or_tree)
+        _assertValidDoc(doc)
         c_doc = doc._c_doc
 
     with nogil:
@@ -345,7 +348,7 @@ cdef class _FilelikeWriter:
     cdef object _close_filelike
     cdef _ExceptionContext _exc_context
     cdef _ErrorLog error_log
-    def __init__(self, filelike, exc_context=None, compression=None):
+    def __cinit__(self, filelike, exc_context=None, compression=None):
         if compression is not None and compression > 0:
             filelike = gzip.GzipFile(
                 fileobj=filelike, mode=u'wb', compresslevel=compression)

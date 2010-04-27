@@ -20,6 +20,7 @@ cdef class XInclude:
 
     property error_log:
         def __get__(self):
+            assert self._error_log is not None, "XInclude instance not initialised"
             return self._error_log.copy()
 
     def __call__(self, _Element node not None):
@@ -32,6 +33,8 @@ cdef class XInclude:
         # typed as elements.  The included fragment is added between the two,
         # i.e. as a sibling, which does not conflict with traversal.
         cdef int result
+        _assertValidNode(node)
+        assert self._error_log is not None, "XPath evaluator not initialised"
         self._error_log.connect()
         __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(
             node._doc._parser)

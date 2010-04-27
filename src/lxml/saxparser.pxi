@@ -340,7 +340,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef list _data
     cdef list _element_stack
     cdef object _element_stack_pop
-    cdef _Element _last
+    cdef _Element _last # may be None
     cdef bint _in_tail
 
     def __init__(self, *, element_factory=None, parser=None):
