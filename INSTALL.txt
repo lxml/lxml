@@ -9,8 +9,9 @@ MacOS-X, see the specific sections below.
    1  Requirements
    2  Installation
    3  Building lxml from sources
-   4  MS Windows
-   5  MacOS-X
+   4  Using lxml with python-libxml2
+   5  MS Windows
+   6  MacOS-X
 
 
 Requirements
@@ -88,6 +89,23 @@ you can check the archives of the `mailing list`_ to see if your problem is
 known or otherwise send a mail to the list.
 
  .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+
+
+Using lxml with python-libxml2
+------------------------------
+
+If you want to use lxml together with the official libxml2 Python
+bindings (maybe because one of your dependencies uses it), you must
+build lxml statically.  Otherwise, the two packages will interfere in
+places where the libxml2 library requires global configuration, which
+can have any kind of effect from disappearing functionality to crashes
+in either of the two.
+
+To get a static build, either pass the ``--static-deps`` option to the
+setup.py script, or run ``easy_install`` with the ``STATIC_DEPS``
+environment variable set to true, i.e.
+
+   STATIC_DEPS=true easy_install lxml
 
 
 MS Windows
