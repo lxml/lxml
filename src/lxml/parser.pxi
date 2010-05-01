@@ -198,8 +198,7 @@ cdef int _checkThreadDict(tree.xmlDict* c_dict):
 ############################################################
 
 # name of Python unicode encoding as known to libxml2
-cdef char* _UNICODE_ENCODING
-_UNICODE_ENCODING = NULL
+cdef char* _UNICODE_ENCODING = NULL
 
 cdef void _setupPythonUnicode():
     u"""Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
@@ -249,6 +248,7 @@ cdef char* _findEncodingName(char* buffer, int size):
     elif enc == tree.XML_CHAR_ENCODING_NONE:
         return NULL
     else:
+        # returns a constant char*, no need to free it
         return tree.xmlGetCharEncodingName(enc)
 
 _setupPythonUnicode()
