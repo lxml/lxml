@@ -26,8 +26,13 @@ particular:
 * libxml 2.6.21 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-  If you want to use XPath, do not use libxml2 2.6.27.  We recommend
-  libxml2 2.7.2 or later.
+  * We recommend libxml2 2.7.{2,3,7} or a later version.
+
+  * If you want to use XPath, do not use libxml2 2.6.27.
+
+  * If you want to use the feed parser interface, especially when
+    parsing from unicode strings, do not use libxml2 2.7.4 through
+    2.7.6.
 
 * libxslt 1.1.15 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
