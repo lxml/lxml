@@ -591,16 +591,16 @@ cdef void __initErrorConstants():
                 reverse_dict[value] = name
 
 
-class ErrorLevels:
+class ErrorLevels(object):
     u"Libxml2 error levels"
 
-class ErrorDomains:
+class ErrorDomains(object):
     u"Libxml2 error domains"
 
-class ErrorTypes:
+class ErrorTypes(object):
     u"Libxml2 error types"
 
-class RelaxNGErrorTypes:
+class RelaxNGErrorTypes(object):
     u"Libxml2 RelaxNG error types"
 
 # --- BEGIN: GENERATED CONSTANTS ---
