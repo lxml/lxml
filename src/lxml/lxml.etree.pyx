@@ -470,7 +470,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
 cdef class DocInfo:
     u"Document information provided by parser and DTD."
     cdef _Document _doc
-    def __init__(self, tree):
+    def __cinit__(self, tree):
         u"Create a DocInfo object for an ElementTree object or root Element."
         self._doc = _documentOrRaise(tree)
         root_name, public_id, system_url = self._doc.getdoctype()
