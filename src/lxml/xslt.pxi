@@ -828,10 +828,12 @@ cdef _findStylesheetByID(_Document doc, id):
 
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
-        u"""Try to parse the stylesheet referenced by this PI and return an
-        ElementTree for it.  If the stylesheet is embedded in the same
-        document (referenced via xml:id), find and return an ElementTree for
-        the stylesheet Element.
+        u"""parseXSL(self, parser=None)
+
+        Try to parse the stylesheet referenced by this PI and return
+        an ElementTree for it.  If the stylesheet is embedded in the
+        same document (referenced via xml:id), find and return an
+        ElementTree for the stylesheet Element.
 
         The optional ``parser`` keyword argument can be passed to specify the
         parser used to read from external stylesheet URLs.
@@ -879,6 +881,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
         return _elementTreeFactory(result_node._doc, result_node)
 
     def set(self, key, value):
+        u"""set(self, key, value)
+
+        Sets a pseudo attribute in the text of the processing instruction.
+        """
         if key != u"href":
             raise AttributeError, \
                 u"only setting the 'href' attribute is supported on XSLT-PIs"
@@ -895,6 +901,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
             self.text = text + attrib
 
     def get(self, key, default=None):
+        u"""get(self, key, default=None)
+
+        Parses a pseudo attribute from the text of the processing instruction.
+        """
         for attr, value in _FIND_PI_ATTRIBUTES(u' ' + self.text):
             if attr == key:
                 return value
