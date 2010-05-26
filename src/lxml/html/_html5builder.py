@@ -77,7 +77,7 @@ class TreeBuilder(_base.TreeBuilder):
                                                   self.doctype.systemId))
             buf.append('>')
         buf.append('<html></html>')
-        root = html.fromstring(u''.join(buf))
+        root = html.fromstring(''.join(buf))
 
         # Append the initial comments:
         for comment in self.initialComments:

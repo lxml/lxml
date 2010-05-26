@@ -34,7 +34,7 @@ def main(args=None):
     if options.annotation:
         return annotate(options, args)
     if len(args) != 2:
-        print 'Error: you must give two files'
+        print('Error: you must give two files')
         parser.print_help()
         sys.exit(1)
     file1, file2 = args
