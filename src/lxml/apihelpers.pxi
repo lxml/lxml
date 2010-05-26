@@ -1576,16 +1576,16 @@ cdef _getFilenameForFile(source):
         return source.geturl()
     except:
         pass
-    # gzip file instances have a filename attribute (before Py3k)
+    # file instances have a name attribute
     try:
-        filename = source.filename
+        filename = source.name
         if _isString(filename):
             return os_path_abspath(filename)
     except:
         pass
-    # file instances have a name attribute
+    # gzip file instances have a filename attribute (before Py3k)
     try:
-        filename = source.name
+        filename = source.filename
         if _isString(filename):
             return os_path_abspath(filename)
     except:
