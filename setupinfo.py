@@ -58,6 +58,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
     if CYTHON_INSTALLED:
         source_extension = ".pyx"
         print("Building with Cython %s." % Cython.Compiler.Version.version)
+
+        from Cython.Compiler import Options
+        Options.generate_cleanup_code = 3
     else:
         print ("NOTE: Trying to build without Cython, pre-generated "
                "'%slxml.etree.c' needs to be available." % PACKAGE_PATH)
