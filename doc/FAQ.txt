@@ -560,12 +560,15 @@ versions of libxml2 and libxslt - and make sure they are used.
 
 .. sourcecode:: python
 
+   import sys
    from lxml import etree
-   print "lxml.etree:       ", etree.LXML_VERSION
-   print "libxml used:      ", etree.LIBXML_VERSION
-   print "libxml compiled:  ", etree.LIBXML_COMPILED_VERSION
-   print "libxslt used:     ", etree.LIBXSLT_VERSION
-   print "libxslt compiled: ", etree.LIBXSLT_COMPILED_VERSION
+
+   print("%-20s: %s" % ('Python',           sys.version_info))
+   print("%-20s: %s" % ('lxml.etree',       etree.LXML_VERSION))
+   print("%-20s: %s" % ('libxml used',      etree.LIBXML_VERSION))
+   print("%-20s: %s" % ('libxml compiled',  etree.LIBXML_COMPILED_VERSION))
+   print("%-20s: %s" % ('libxslt used',     etree.LIBXSLT_VERSION))
+   print("%-20s: %s" % ('libxslt compiled', etree.LIBXSLT_COMPILED_VERSION))
 
 If you can figure that the problem is not in lxml but in the
 underlying libxml2 or libxslt, you can ask right on the respective
