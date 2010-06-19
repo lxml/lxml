@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-2.3 (under development)
-=======================
+2.3alpha1 (2010-06-19)
+======================
 
 Features added
 --------------
@@ -89,23 +89,11 @@ Bugs fixed
   now use the hash value of the underlying Python value (string,
   number, etc.) to which they compare equal.
 
-* Crash in XPath evaluation when reading smart strings from a document
-  other than the original context document.
-
 * Parsing broken fragments in lxml.html could fail if the fragment
   contained an orphaned closing '</div>' tag.
 
-* Manually instantiating the custom element classes in
-  ``lxml.objectify`` could crash.
-
 * Using XSLT extension elements around the root of the output document
   crashed.
-
-* Support recent versions of html5lib by not requiring its
-  ``XHTMLParser`` in ``htmlparser.py`` anymore.
-
-* Invalid XML text characters were not rejected by the API when they
-  appeared in unicode strings directly after non-ASCII characters.
 
 * ``lxml.cssselect`` did not distinguish between ``x[attr="val"]`` and
   ``x [attr="val"]`` (with a space).  The latter now matches the
@@ -141,6 +129,48 @@ Other changes
   collector to clean up.
 
 * Static builds include libiconv, in addition to libxml2 and libxslt.
+
+
+2.2.6 (2010-03-02)
+==================
+
+Bugs fixed
+----------
+
+* Fixed several Python 3 regressions by building with Cython 0.11.3.
+
+
+2.2.5 (2010-02-28)
+==================
+
+Features added
+--------------
+
+* Support for running XSLT extension elements on the input root node
+  (e.g. in a template matching on "/").
+
+Bugs fixed
+----------
+
+* Crash in XPath evaluation when reading smart strings from a document
+  other than the original context document.
+
+* Support recent versions of html5lib by not requiring its
+  ``XHTMLParser`` in ``htmlparser.py`` anymore.
+
+* Manually instantiating the custom element classes in
+  ``lxml.objectify`` could crash.
+
+* Invalid XML text characters were not rejected by the API when they
+  appeared in unicode strings directly after non-ASCII characters.
+
+* lxml.html.open_http_urllib() did not work in Python 3.
+
+* The functions ``strip_tags()`` and ``strip_elements()`` in
+  ``lxml.etree`` did not remove all occurrences of a tag in all cases.
+
+* Crash in XSLT extension elements when the XSLT context node is not
+  an element.
 
 
 2.2.4 (2009-11-11)
