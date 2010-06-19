@@ -2619,7 +2619,7 @@ class ETreeTestCaseBase(HelperTestCase):
         root2 = fromstring(xml2)
         self.assertEquals('TEST', root[0].get('{%s}a' % ns_href))
 
-    required_versions_ET['test_itertext'] = (1,3)
+    required_versions_ET['test_register_namespace'] = (1,3)
     def test_register_namespace(self):
         # ET 1.3+
         Element = self.etree.Element

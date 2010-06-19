@@ -43,10 +43,12 @@ def filter_by_version(test_class, version_dict, current_version):
     """Remove test methods that do not work with the current lib version.
     """
     find_required_version = version_dict.get
+    def dummy_test_method(self):
+        pass
     for name in dir(test_class):
         expected_version = find_required_version(name, (0,0,0))
         if expected_version > current_version:
-            setattr(test_class, name, None)
+            setattr(test_class, name, dummy_test_method)
 
 try:
     import doctest
