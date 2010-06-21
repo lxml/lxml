@@ -10,15 +10,14 @@ except ImportError:
 
 multi_make_options = []
 try:
-    from multiprocessing import cpu_count
-except ImportError:
-    pass
-else:
-    cpus = cpu_count()
+    import multiprocessing
+    cpus = multiprocessing.cpu_count()
     if cpus > 1:
         if cpus > 5:
             cpus = 5
         multi_make_options = ['-j%d' % (cpus+1)]
+except:
+    pass
 
 
 # use pre-built libraries on Windows
