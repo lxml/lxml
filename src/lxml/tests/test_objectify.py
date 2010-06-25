@@ -318,6 +318,13 @@ class ObjectifyTestCase(HelperTestCase):
         arg = objectify.DataElement(3.1415)
         self.assertRaises(ValueError, objectify.DataElement, arg,
                           _xsi="xsd:int")
+
+    def test_data_element_element_arg(self):
+        arg = objectify.Element('arg')
+        value = objectify.DataElement(arg)
+        self.assert_(isinstance(value, objectify.ObjectifiedElement))
+        for attr in arg.attrib:
+            self.assertEquals(value.get(attr), arg.get(attr))
         
     def test_root(self):
         root = self.Element("test")
@@ -1967,6 +1974,14 @@ class ObjectifyTestCase(HelperTestCase):
 
         self.assertEquals(r.date.pyval, parse_date(stringify_date(time)))
         self.assertEquals(r.date.text, stringify_date(time))
+
+        date = objectify.DataElement(time)
+
+        self.assert_(isinstance(date, DatetimeElement))
+        self.assert_(isinstance(date.pyval, datetime))
+
+        self.assertEquals(date.pyval, parse_date(stringify_date(time)))
+        self.assertEquals(date.text, stringify_date(time))
 
     def test_object_path(self):
         root = self.XML(xml_str)

@@ -1973,6 +1973,9 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
             if dict_result is not NULL:
                 _pytype = (<PyType>dict_result).name
 
+    if _pytype is None:
+        _pytype = _pytypename(_value)
+
     if _value is None and _pytype != u"str":
         _pytype = _pytype or u"NoneType"
         strval = None
@@ -1984,11 +1987,12 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
         else:
             strval = u"false"
     else:
-        strval = unicode(_value)
+        stringify = unicode
+        dict_result = python.PyDict_GetItem(_PYTYPE_DICT, _pytype)
+        if dict_result is not NULL:
+            stringify = (<PyType>dict_result).stringify
+        strval = stringify(_value)
 
-    if _pytype is None:
-        _pytype = _pytypename(_value)
-    
     if _pytype is not None: 
         if _pytype == u"NoneType" or _pytype == u"none":
             strval = None
