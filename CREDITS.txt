@@ -15,7 +15,7 @@ Ian Bicking
        creator and maintainer of lxml.html
 
 Holger Joukl
-       bug reports, feedback and development on lxml.objectify
+       ISO-Schematron support, development on lxml.objectify, bug reports, feedback
 
 Sidnei da Silva
        official MS Windows builds
