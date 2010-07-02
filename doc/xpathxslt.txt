@@ -13,9 +13,10 @@ libxml2 and libxslt in a standards compliant way.
      1.3  XPath return values
      1.4  Generating XPath expressions
      1.5  The ``XPath`` class
-     1.6  The ``XPathEvaluator`` classes
-     1.7  ``ETXPath``
-     1.8  Error handling
+     1.6  Regular expressions in XPath
+     1.7  The ``XPathEvaluator`` classes
+     1.8  ``ETXPath``
+     1.9  Error handling
    2  XSLT
      2.1  XSLT result objects
      2.2  Stylesheet parameters
@@ -288,6 +289,10 @@ Prefix-to-namespace mappings can be passed as second parameter:
   >>> find = etree.XPath("//n:b", namespaces={'n':'NS'})
   >>> print(find(root)[0].tag)
   {NS}b
+
+
+Regular expressions in XPath
+----------------------------
 
 By default, ``XPath`` supports regular expressions in the EXSLT_ namespace:
 
