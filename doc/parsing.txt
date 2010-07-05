@@ -141,7 +141,8 @@ Available boolean keyword arguments:
 
 * recover - try hard to parse through broken XML
 
-* remove_blank_text - discard blank text nodes between tags
+* remove_blank_text - discard blank text nodes between tags (best used
+  together with a DTD)
 
 * remove_comments - discard comments
 
@@ -157,6 +158,15 @@ Available boolean keyword arguments:
   and very long text content (only affects libxml2 2.7+)
 
 * compact - use compact storage for short text content (on by default)
+
+Other keyword arguments:
+
+* encoding - override the document encoding
+
+* target - a parser target object that will receive the parse events
+  (see `The target parser interface`_)
+
+* schema   - an XMLSchema to validate against (see `validation <validation.html#xmlschema>`_)
 
 
 Error log
@@ -377,7 +387,9 @@ target.  The result of the parser run is whatever the target object
 returns from its ``.close()`` method.  If you want to return an XML
 tree here, you have to create it programmatically in the target
 object.  An example for a parser target that builds a tree is the
-``TreeBuilder``.
+``TreeBuilder``:
+
+.. sourcecode:: pycon
 
   >>> parser = etree.XMLParser(target = etree.TreeBuilder())
 
