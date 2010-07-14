@@ -40,8 +40,9 @@ fragment defining an entity.  The ``url`` argument passes the system URL of
 the requested document, the ``id`` argument is the public ID.  Note that any
 of these may be None.  The context object is not normally used by client code.
 
-Resolving is based on three methods of the Resolver object that build internal
-representations of the result document.  The following methods exist:
+Resolving is based on the methods of the Resolver object that build
+internal representations of the result document.  The following
+methods exist:
 
 * ``resolve_string`` takes a parsable string as result document
 * ``resolve_filename`` takes a filename
