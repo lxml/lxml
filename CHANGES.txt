@@ -77,6 +77,8 @@ Features added
 Bugs fixed
 ----------
 
+* Element repr hex id is shown with leading 0x.
+
 * API is hardened against invalid proxy instances to prevent crashes
   due to incorrectly instantiated Element instances.
 

@@ -83,7 +83,7 @@ cdef class _ReadOnlyProxy:
     def __repr__(self):
         self._assertNode()
         if self._c_node.type == tree.XML_ELEMENT_NODE:
-            return u"<Element %s at %x>" % (self.tag, id(self))
+            return u"<Element %s at 0x%x>" % (self.tag, id(self))
         elif self._c_node.type == tree.XML_COMMENT_NODE:
             return u"<!--%s-->" % self.text
         elif self._c_node.type == tree.XML_ENTITY_NODE:
