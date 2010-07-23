@@ -37,9 +37,9 @@ superior to the well-known ElementTree_ API.  See the introduction_ for more
 information about background and goals.  Some common questions are answered in
 the FAQ_.
 
-For commercial consulting and customisations, please contact <a
-href="http://scoder.behnel.de/">Stefan Behnel</a>.
+For commercial consulting and customisations, please `contact Stefan Behnel`_.
 
+.. _`contact Stefan Behnel`: http://scoder.behnel.de/
 .. _libxml2: http://xmlsoft.org
 .. _libxslt: http://xmlsoft.org/XSLT
 
