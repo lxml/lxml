@@ -5,6 +5,15 @@ lxml changelog
 Under development
 ======================
 
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Crash in XSLT when generating text-only result documents with a
+  stylesheet created in a different thread.
+
 Other changes
 --------------
 

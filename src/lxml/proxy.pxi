@@ -411,8 +411,7 @@ cdef void fixThreadDictNames(xmlNode* c_element,
         fixThreadDictNsForNode(c_element, c_src_dict, c_dict)
         c_element = c_element.children
         while c_element is not NULL:
-            if tree._isElementOrXInclude(c_element):
-                fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
+            fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
             c_element = c_element.next
     elif tree._isElementOrXInclude(c_element):
         fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
