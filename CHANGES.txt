@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+======================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* ``lxml.html.open_in_browser()`` didn't work in Python 3 due to the
+  use of os.tempnam.  It now takes an optional 'encoding' parameter.
+
+Other changes
+--------------
+
+
 2.3alpha2 (2010-07-24)
 ======================
 

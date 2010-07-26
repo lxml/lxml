@@ -1500,19 +1500,24 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
 
 tostring.__doc__ = __fix_docstring(tostring.__doc__)
 
-def open_in_browser(doc):
+def open_in_browser(doc, encoding=None):
     """
-    Open the HTML document in a web browser (saving it to a temporary
-    file to open it).
+    Open the HTML document in a web browser, saving it to a temporary
+    file to open it.  Note that this does not delete the file after
+    use.  This is mainly meant for debugging.
     """
     import os
     import webbrowser
+    import tempfile
+    if not isinstance(doc, etree._ElementTree):
+        doc = etree.ElementTree(doc)
+    handle, fn = tempfile.mkstemp(suffix='.html')
+    f = os.fdopen(handle, 'wb')
     try:
-        write_doc = doc.write
-    except AttributeError:
-        write_doc = etree.ElementTree(element=doc).write
-    fn = os.tempnam() + '.html'
-    write_doc(fn, method="html")
+        doc.write(f, method="html", encoding=encoding or doc.docinfo.encoding or "UTF-8")
+    finally:
+        # we leak the file itself here, but we should at least close it
+        f.close()
     url = 'file://' + fn.replace(os.path.sep, '/')
     print(url)
     webbrowser.open(url)
