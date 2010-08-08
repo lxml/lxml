@@ -45,7 +45,7 @@ class DDTester(DD):
         cid, retval = os.waitpid(pid, 0)
         if retval:
             write('exit status: %d, signal: %d', retval >> 8, retval % 0xFF)
-        if (retval % 0xFF) != 0: # signal received?
+        if (retval % 0xFF) > 2: # signal received?
             return self.FAIL
         return self.PASS
 
