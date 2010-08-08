@@ -526,20 +526,6 @@ class ETreeTestCaseBase(HelperTestCase):
         except AssertionError:
             self.assertEquals(alternative, str(root.attrib))
 
-    def test_attribute_has_key(self):
-        XML = self.etree.XML
-
-        root = XML(_bytes('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />'))
-        self.assertEquals(
-            True, root.attrib.has_key('bar'))
-        self.assertEquals(
-            False, root.attrib.has_key('baz'))
-        self.assertEquals(
-            False, root.attrib.has_key('hah'))
-        self.assertEquals(
-            True,
-            root.attrib.has_key('{http://ns.codespeak.net/test}baz'))
-
     def test_attribute_contains(self):
         XML = self.etree.XML
 

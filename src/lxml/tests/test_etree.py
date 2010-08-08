@@ -207,6 +207,21 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError,
                           etree.Element, "root", nsmap={'a:b' : 'testns'})
 
+    def test_attribute_has_key(self):
+        # ET in Py 3.x has no "attrib.has_key()" method
+        XML = self.etree.XML
+
+        root = XML(_bytes('<foo bar="Bar" xmlns:ns="http://ns.codespeak.net/test" ns:baz="Baz" />'))
+        self.assertEquals(
+            True, root.attrib.has_key('bar'))
+        self.assertEquals(
+            False, root.attrib.has_key('baz'))
+        self.assertEquals(
+            False, root.attrib.has_key('hah'))
+        self.assertEquals(
+            True,
+            root.attrib.has_key('{http://ns.codespeak.net/test}baz'))
+
     def test_attribute_set(self):
         Element = self.etree.Element
         root = Element("root")
