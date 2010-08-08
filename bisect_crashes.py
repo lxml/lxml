@@ -40,8 +40,9 @@ def run_tests(test_cases):
         suite.addTests(test_cases)
         os._exit( not runner.run(suite).wasSuccessful() )
     cid, retval = os.waitpid(pid, 0)
-    retval >>= 8
-    return retval == 0
+    if retval:
+        write('exit status: %d, signal: %d', retval >> 8, retval % 0xFF)
+    return (retval % 0xFF) == 0 # signal
 
 def bisect_tests():
     tests = find_tests()
