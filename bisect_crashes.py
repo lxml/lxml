@@ -57,16 +57,15 @@ def bisect_tests():
             last_failed = True
             tests = left
             shift = len(tests) // 4 + 1
-            break
-        if not run_tests(right):
+        elif not run_tests(right):
             last_failed = True
             tests = right
             shift = len(tests) // 4 + 1
-            break
-
-        last_failed = False
-        shift //= 2
-        tests = tests[shift:] + tests[:shift]
+        else:
+            # retry
+            last_failed = False
+            shift //= 2
+            tests = tests[shift:] + tests[:shift]
     # looks like we can't make the set of tests any smaller
     return last_failed and tests or []
 
