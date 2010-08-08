@@ -306,7 +306,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     document is cleaned up.
     """
     cdef int _ns_counter
-    cdef object _prefix_tail
+    cdef bytes _prefix_tail
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
     
@@ -374,11 +374,11 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         else:
             return <bint>(self._c_doc.standalone == 1)
 
-    cdef buildNewPrefix(self):
+    cdef bytes buildNewPrefix(self):
         # get a new unique prefix ("nsX") for this document
+        cdef bytes ns
         if self._ns_counter < len(_PREFIX_CACHE):
             ns = _PREFIX_CACHE[self._ns_counter]
-            python.Py_INCREF(ns)
         else:
             ns = python.PyBytes_FromFormat("ns%d", self._ns_counter)
         if self._prefix_tail is not None:
@@ -388,9 +388,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             # overflow!
             self._ns_counter = 0
             if self._prefix_tail is None:
-                self._prefix_tail = "A"
+                self._prefix_tail = b"A"
             else:
-                self._prefix_tail += "A"
+                self._prefix_tail += b"A"
         return ns
 
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
