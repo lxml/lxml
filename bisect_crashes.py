@@ -11,6 +11,7 @@ test_base_path = os.path.join(script_path, 'src')
 sys.path.insert(1, test_base_path)
 
 import test
+from DD import DD
 
 cfg = test.Options()
 cfg.verbosity = 0
@@ -27,46 +28,33 @@ def find_tests():
     test_files = test.get_test_files(cfg)
     return test.get_test_cases(test_files, cfg)
 
-def run_tests(test_cases):
-    if not test_cases:
-        return True
-    write('Running subset of %d tests [%s .. %s]',
-          len(test_cases), test_cases[0].id(), test_cases[-1].id())
-    pid = os.fork()
-    if not pid:
-        # child executes tests
-        runner = test.CustomTestRunner(cfg, None)
-        suite = unittest.TestSuite()
-        suite.addTests(test_cases)
-        os._exit( not runner.run(suite).wasSuccessful() )
-    cid, retval = os.waitpid(pid, 0)
-    if retval:
-        write('exit status: %d, signal: %d', retval >> 8, retval % 0xFF)
-    return (retval % 0xFF) == 0 # signal
+class DDTester(DD):
+    def _test(self, test_cases):
+        if not test_cases:
+            return self.PASS
+        test_cases = [ item[-1] for item in test_cases ]
+        write('Running subset of %d tests [%s .. %s]',
+              len(test_cases), test_cases[0].id(), test_cases[-1].id())
+        pid = os.fork()
+        if not pid:
+            # child executes tests
+            runner = test.CustomTestRunner(cfg, None)
+            suite = unittest.TestSuite()
+            suite.addTests(test_cases)
+            os._exit( not runner.run(suite).wasSuccessful() )
+        cid, retval = os.waitpid(pid, 0)
+        if retval:
+            write('exit status: %d, signal: %d', retval >> 8, retval % 0xFF)
+        if (retval % 0xFF) != 0: # signal received?
+            return self.FAIL
+        return self.PASS
 
-def bisect_tests():
+def dd_tests():
     tests = find_tests()
     write('Found %d tests', len(tests))
-    shift = len(tests) // 4
-    failed = []
-    while len(tests) > 1 and shift > 0:
-        mid = len(tests) // 2 + 1
-        left, right = tests[:mid], tests[mid:]
-
-        if not run_tests(left):
-            failed = left[:]
-            tests = left
-            shift = len(tests) // 4 + 1
-        elif not run_tests(right):
-            failed = right[:]
-            tests = right
-            shift = len(tests) // 4 + 1
-        else:
-            # retry
-            shift //= 2
-            tests = tests[shift:] + tests[:shift]
-    # looks like we can't make the set of tests any smaller
-    return failed
+    dd = DDTester()
+    min_tests = dd.ddmin( list(enumerate(tests)) )
+    return [ item[-1] for item in min_tests ]
 
 if __name__ == '__main__':
-    write('Failing tests:\n%s', '\n'.join([test.id() for test in bisect_tests()]))
+    write('Failing tests:\n%s', '\n'.join([test.id() for test in dd_tests()]))
