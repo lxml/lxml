@@ -2195,7 +2195,7 @@ class ETreeTestCaseBase(HelperTestCase):
 
         self.assertEquals(
             [['{ns3}a3'], ['{ns2}a2'], ['{ns1}a1']],
-            [ child.attrib.keys() for child in a ])
+            [ list(child.attrib.keys()) for child in a ])
 
     def test_setslice_all_replace_reversed_ns2(self):
         Element = self.etree.Element
@@ -2217,7 +2217,7 @@ class ETreeTestCaseBase(HelperTestCase):
 
         self.assertEquals(
             [['{ns}a3'], ['{ns}a2'], ['{ns}a1']],
-            [ child.attrib.keys() for child in a ])
+            [ list(child.attrib.keys()) for child in a ])
 
     def test_setslice_end(self):
         Element = self.etree.Element
