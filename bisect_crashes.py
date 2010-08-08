@@ -48,26 +48,25 @@ def bisect_tests():
     tests = find_tests()
     write('Found %d tests', len(tests))
     shift = len(tests) // 4
-    last_failed = False
+    failed = []
     while len(tests) > 1 and shift > 0:
         mid = len(tests) // 2 + 1
         left, right = tests[:mid], tests[mid:]
 
         if not run_tests(left):
-            last_failed = True
+            failed = left[:]
             tests = left
             shift = len(tests) // 4 + 1
         elif not run_tests(right):
-            last_failed = True
+            failed = right[:]
             tests = right
             shift = len(tests) // 4 + 1
         else:
             # retry
-            last_failed = False
             shift //= 2
             tests = tests[shift:] + tests[:shift]
     # looks like we can't make the set of tests any smaller
-    return last_failed and tests or []
+    return failed
 
 if __name__ == '__main__':
     write('Failing tests:\n%s', '\n'.join([test.id() for test in bisect_tests()]))
