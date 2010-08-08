@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Searching for wildcard tags in ``iterparse()`` was broken in Py3.
+
 * ``lxml.html.open_in_browser()`` didn't work in Python 3 due to the
   use of os.tempnam.  It now takes an optional 'encoding' parameter.
 

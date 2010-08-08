@@ -649,6 +649,27 @@ class ETreeOnlyTestCase(HelperTestCase):
             8,
             len(events))
 
+    def test_iterparse_tag_ns(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+
+        iterator = iterparse(f, tag="{urn:test:1}b", events=('start', 'end'))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('start', root[0]), ('end', root[0])],
+            events)
+
+    def test_iterparse_tag_ns_all(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+
+        iterator = iterparse(f, tag="{urn:test:1}*", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals(
+            8,
+            len(events))
+
     def test_iterparse_encoding_error(self):
         text = _str('Søk på nettet')
         wrong_declaration = "<?xml version='1.0' encoding='UTF-8'?>"
