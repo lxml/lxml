@@ -33,8 +33,8 @@ class DDTester(DD):
         if not test_cases:
             return self.PASS
         test_cases = [ item[-1] for item in test_cases ]
-        write('Running subset of %d tests [%s .. %s]',
-              len(test_cases), test_cases[0].id(), test_cases[-1].id())
+        write('Running subset of %d tests %s',
+              len(test_cases), self.coerce(test_cases))
         pid = os.fork()
         if not pid:
             # child executes tests
@@ -48,6 +48,11 @@ class DDTester(DD):
         if (retval % 0xFF) != 0: # signal received?
             return self.FAIL
         return self.PASS
+
+    def coerce(self, test_cases):
+        if not test_cases:
+            return '[]'
+        return '[%s .. %s]' % (test_cases[0].id(), test_cases[-1].id())
 
 def dd_tests():
     tests = find_tests()
