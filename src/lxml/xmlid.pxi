@@ -1,7 +1,7 @@
 cdef object _find_id_attributes
 
-def XMLID(text):
-    u"""XMLID(text)
+def XMLID(text, parser=None, *, base_url=None):
+    u"""XMLID(text, parser=None, base_url=None)
 
     Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -15,14 +15,14 @@ def XMLID(text):
         _find_id_attributes = XPath(u'//*[string(@id)]')
 
     # ElementTree compatible implementation: parse and look for 'id' attributes
-    root = XML(text)
+    root = XML(text, parser, base_url=base_url)
     dic = {}
     for elem in _find_id_attributes(root):
         dic[elem.get(u'id')] = elem
     return (root, dic)
 
-def XMLDTDID(text):
-    u"""XMLDTDID(text)
+def XMLDTDID(text, parser=None, *, base_url=None):
+    u"""XMLDTDID(text, parser=None, base_url=None)
 
     Parse the text and return a tuple (root node, ID dictionary).  The root
     node is the same as returned by the XML() function.  The dictionary
@@ -34,7 +34,7 @@ def XMLDTDID(text):
     The results are undefined.
     """
     cdef _Element root
-    root = XML(text)
+    root = XML(text, parser, base_url=base_url)
     # xml:id spec compatible implementation: use DTD ID attributes from libxml2
     if root._doc._c_doc.ids is NULL:
         return (root, {})

@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* ``XMLID()`` function was missing the optional ``parser`` and
+  ``base_url`` parameters.
+
 * Searching for wildcard tags in ``iterparse()`` was broken in Py3.
 
 * ``lxml.html.open_in_browser()`` didn't work in Python 3 due to the
