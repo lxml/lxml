@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash in newer libxml2 versions when moving elements between
+  documents that had attributes on replaced XInclude nodes.
+
 * ``XMLID()`` function was missing the optional ``parser`` and
   ``base_url`` parameters.
 
