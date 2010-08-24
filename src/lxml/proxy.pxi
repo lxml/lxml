@@ -426,6 +426,7 @@ cdef void fixThreadDictNamesForNode(xmlNode* c_element,
     if c_node.type in (tree.XML_ELEMENT_NODE, tree.XML_XINCLUDE_START):
         fixThreadDictNamesForAttributes(
             c_node.properties, c_src_dict, c_dict)
+        fixThreadDictNsForNode(c_node, c_src_dict, c_dict)
     elif c_node.type == tree.XML_TEXT_NODE:
         # libxml2's SAX2 parser interns some indentation space
         fixThreadDictContentForNode(c_node, c_src_dict, c_dict)
