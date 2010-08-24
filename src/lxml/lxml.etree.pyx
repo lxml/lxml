@@ -179,8 +179,8 @@ class LxmlError(Error):
         else:
             self.error_log = error_log.copy()
 
-cdef object _Error = Error
-cdef object error_super_init = Error.__init__
+cdef object _Error = Error if python.PY_VERSION_HEX >= 0x02050000 else None
+cdef object error_super_init = Error.__init__ if python.PY_VERSION_HEX < 0x02050000 else None
 
 
 # superclass for all syntax errors
