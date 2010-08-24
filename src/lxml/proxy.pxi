@@ -423,7 +423,7 @@ cdef void fixThreadDictNamesForNode(xmlNode* c_element,
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
     if c_node.name is not NULL:
         fixThreadDictNameForNode(c_node, c_src_dict, c_dict)
-    if c_node.type == tree.XML_ELEMENT_NODE:
+    if c_node.type in (tree.XML_ELEMENT_NODE, tree.XML_XINCLUDE_START):
         fixThreadDictNamesForAttributes(
             c_node.properties, c_src_dict, c_dict)
     elif c_node.type == tree.XML_TEXT_NODE:
