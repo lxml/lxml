@@ -295,9 +295,11 @@ def bad_find():
     >>> elem.findall("/tag")
     Traceback (most recent call last):
     SyntaxError: cannot use absolute path on element
-    >>> elem.findall("section//")
-    Traceback (most recent call last):
-    SyntaxError: invalid path
+
+    # this is supported in ET 1.3:
+    #>>> elem.findall("section//")
+    #Traceback (most recent call last):
+    #SyntaxError: invalid path
     """
 
 def parsefile():
