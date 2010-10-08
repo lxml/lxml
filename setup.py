@@ -85,9 +85,12 @@ To contact the project, go to the `project home page
 <http://codespeak.net/lxml/>`_ or see our bug tracker at
 https://launchpad.net/lxml
 
-In case you want to use the current in-development version of lxml, you can
-get it from the subversion repository at http://codespeak.net/svn/lxml/trunk .
-Running ``easy_install lxml==dev`` will install it from
+In case you want to use the current in-development version of lxml,
+you can get it from the subversion repository at
+http://codespeak.net/svn/lxml/trunk .  Note that this requires Cython
+to build the sources, see the build instructions on the project home
+page.  To the same end, running Running ``easy_install lxml==dev``
+will install lxml from
 http://codespeak.net/svn/lxml/trunk#egg=lxml-dev
 
 """ + branch_link) % { "branch_version" : versioninfo.branch_version() }) +
