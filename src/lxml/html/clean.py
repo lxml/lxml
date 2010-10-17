@@ -136,7 +136,7 @@ class Cleaner(object):
         Removes any form tags
 
     ``annoying_tags``:
-        Tags that aren't *wrong*, but are annoying.  ``<blink>`` and ``<marque>``
+        Tags that aren't *wrong*, but are annoying.  ``<blink>`` and ``<marquee>``
 
     ``remove_tags``:
         A list of tags to remove.
@@ -342,7 +342,7 @@ class Cleaner(object):
             remove_tags.add('form')
             kill_tags.update(('button', 'input', 'select', 'textarea'))
         if self.annoying_tags:
-            remove_tags.update(('blink', 'marque'))
+            remove_tags.update(('blink', 'marquee'))
 
         _remove = []
         _kill = []

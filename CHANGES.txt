@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+Under development
+==================
+
+Bugs fixed
+----------
+
+* ``marque`` tag in HTML cleanup code is correctly named ``marquee``.
+
+
 2.3beta1 (2010-09-06)
 =====================
 

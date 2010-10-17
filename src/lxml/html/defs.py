@@ -119,7 +119,7 @@ frame_tags = frozenset([
     ])
 
 # These tags aren't standard
-nonstandard_tags = frozenset(['blink', 'marque'])
+nonstandard_tags = frozenset(['blink', 'marquee'])
 
 tags = (top_level_tags | head_tags | general_block_tags | list_tags
         | table_tags | form_tags | special_inline_tags | phrase_tags
