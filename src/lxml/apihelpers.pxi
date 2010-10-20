@@ -1304,13 +1304,13 @@ cdef inline int isutf8(char* s):
         c = s[0]
     return 0
 
-cdef int check_string_utf8(pystring):
+cdef int check_string_utf8(bytes pystring):
     u"""Check if a string looks like valid UTF-8 XML content.  Returns 0
     for ASCII, 1 for UTF-8 and -1 in the case of errors, such as NULL
     bytes or ASCII control characters.
     """
     cdef char* s = _cstr(pystring)
-    cdef char* c_end = s + python.PyBytes_GET_SIZE(pystring)
+    cdef char* c_end = s + len(pystring)
     cdef bint is_non_ascii = 0
     while s < c_end:
         if s[0] & 0x80:
@@ -1345,21 +1345,27 @@ cdef object funicode(char* s):
     return <bytes>s[:slen]
 
 cdef bytes _utf8(object s):
+    """Test if a string is valid user input and encode it to UTF-8.
+    Reject all bytes/unicode input that contains non-XML characters.
+    Reject all bytes input that contains non-ASCII characters.
+    """
     cdef int invalid
+    cdef bytes utf8_string
     if python.PyBytes_CheckExact(s):
-        invalid = check_string_utf8(s)
-    elif python.PyUnicode_CheckExact(s) or python.PyUnicode_Check(s):
-        s = python.PyUnicode_AsUTF8String(s)
-        invalid = check_string_utf8(s) == -1
+        utf8_string = <bytes>s
+        invalid = check_string_utf8(utf8_string)
+    elif python.PyUnicode_Check(s):
+        utf8_string = python.PyUnicode_AsUTF8String(s)
+        invalid = check_string_utf8(utf8_string) == -1 # non-XML?
     elif python.PyBytes_Check(s):
-        s = bytes(s)
-        invalid = check_string_utf8(s)
+        utf8_string = bytes(s)
+        invalid = check_string_utf8(utf8_string)
     else:
         raise TypeError, u"Argument must be string or unicode."
     if invalid:
         raise ValueError, \
             u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
-    return s
+    return utf8_string
 
 cdef bint _isFilePath(char* c_path):
     u"simple heuristic to see if a path is a filename"
@@ -1428,20 +1434,20 @@ cdef object _encodeFilenameUTF8(object filename):
     if filename is None:
         return None
     elif python.PyBytes_Check(filename):
-        if not check_string_utf8(filename):
+        if not check_string_utf8(<bytes>filename):
             # plain ASCII!
             return filename
-        c_filename = _cstr(filename)
+        c_filename = _cstr(<bytes>filename)
         try:
             # try to decode with default encoding
             filename = python.PyUnicode_Decode(
-                c_filename, python.PyBytes_GET_SIZE(filename),
+                c_filename, len(<bytes>filename),
                 _C_FILENAME_ENCODING, NULL)
         except UnicodeDecodeError, decode_exc:
             try:
                 # try if it's UTF-8
                 filename = python.PyUnicode_DecodeUTF8(
-                    c_filename, python.PyBytes_GET_SIZE(filename), NULL)
+                    c_filename, len(<bytes>filename), NULL)
             except UnicodeDecodeError:
                 raise decode_exc # otherwise re-raise original exception
     if python.PyUnicode_Check(filename):
