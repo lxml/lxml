@@ -8,6 +8,9 @@ Under development
 Bugs fixed
 ----------
 
+* Work-around for libxml2 bug that can leave the HTML parser in a
+  non-functional state after parsing a severly broken document.
+
 * ``marque`` tag in HTML cleanup code is correctly named ``marquee``.
 
 
