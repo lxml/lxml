@@ -504,6 +504,7 @@ cdef class _ParserContext(_ResolverContext):
         if self._c_ctxt is not NULL:
             if self._c_ctxt.html:
                 htmlparser.htmlCtxtReset(self._c_ctxt)
+                self._c_ctxt.disableSAX = 0 # work around bug in libxml2
             elif self._c_ctxt.spaceTab is not NULL or \
                     _LIBXML_VERSION_INT >= 20629: # work around bug in libxml2
                 xmlparser.xmlClearParserCtxt(self._c_ctxt)
