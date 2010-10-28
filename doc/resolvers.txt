@@ -3,14 +3,16 @@ Document loading and URL resolving
 
 .. contents::
 ..
-   1  URI Resolvers
-   2  Document loading in context
-   3  I/O access control in XSLT
+   1  XML Catalogs
+   2  URI Resolvers
+   3  Document loading in context
+   4  I/O access control in XSLT
 
 
-Lxml has support for custom document loaders in both the parsers and XSL
-transformations.  These so-called resolvers are subclasses of the
-etree.Resolver class.
+The normal way to load external entities (such as DTDs) is by using
+XML catalogs.  Lxml also has support for user provided document
+loaders in both the parsers and XSL transformations.  These so-called
+resolvers are subclasses of the etree.Resolver class.
 
 ..
   >>> try: from StringIO import StringIO
@@ -19,6 +21,29 @@ etree.Resolver class.
   ...    def StringIO(s):
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
+
+
+XML Catalogs
+------------
+
+When loading an external entity for a document, e.g. a DTD, the parser
+is normally configured to prevent network access (see the
+``no_network`` parser option).  Instead, it will try to load the
+entity from their local file system path or, in the most common case
+that the entity uses a network URL as reference, from a local XML
+catalog.
+
+`XML catalogs`_ are the preferred and agreed-on mechanism to load
+external entities from XML processors.  Most tools will use them, so
+it is worth configuring them properly on a system.  Many Linux
+installations use them by default, but on other systems they may need
+to get enabled manually.  The `libxml2 site`_ has some documentation
+on `how to set up XML catalogs`_
+
+.. _`XML catalogs`: http://www.oasis-open.org/committees/entity/spec.html
+.. _`libxml2 site`: http://xmlsoft.org/
+.. _`how to set up XML catalogs`: http://xmlsoft.org/catalog.html
+
 
 URI Resolvers
 -------------
