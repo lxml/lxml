@@ -225,6 +225,10 @@ package into the Python package directory::
 
   STATIC_DEPS=true sudo easy_install lxml
 
+The ``STATICBUILD`` environment variable is handled equivalently to
+the ``STATIC_DEPS`` variable, but is used by some other extension
+packages, too.
+
 
 Static linking on Windows
 -------------------------

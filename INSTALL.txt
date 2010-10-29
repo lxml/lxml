@@ -109,12 +109,16 @@ can have any kind of effect from disappearing functionality to crashes
 in either of the two.
 
 To get a static build, either pass the ``--static-deps`` option to the
-setup.py script, or run ``easy_install`` with the ``STATIC_DEPS``
-environment variable set to true, i.e.
+setup.py script, or run ``easy_install`` with the ``STATIC_DEPS`` or
+``STATICBUILD`` environment variable set to true, i.e.
 
 ::
 
    STATIC_DEPS=true easy_install lxml
+
+The ``STATICBUILD`` environment variable is handled equivalently to
+the ``STATIC_DEPS`` variable, but is used by some other extension
+packages, too.
 
 
 MS Windows
