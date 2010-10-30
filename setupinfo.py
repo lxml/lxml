@@ -62,9 +62,12 @@ def ext_modules(static_include_dirs, static_library_dirs,
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 3
     else:
-        print ("NOTE: Trying to build without Cython, pre-generated "
-               "'%slxml.etree.c' needs to be available." % PACKAGE_PATH)
         source_extension = ".c"
+        if not os.path.exists(PACKAGE_PATH + 'lxml.etree.c'):
+            print ("WARNING: Trying to build without Cython, but pre-generated "
+                   "'%slxml.etree.c' does not seem to be available." % PACKAGE_PATH)
+        else:
+            print ("Building without Cython.")
 
     if OPTION_WITHOUT_OBJECTIFY:
         modules = [ entry for entry in EXT_MODULES
