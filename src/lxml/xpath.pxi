@@ -144,7 +144,7 @@ cdef class _XPathEvaluatorBase:
         if _XPATH_VERSION_WARNING_REQUIRED:
             _XPATH_VERSION_WARNING_REQUIRED = 0
             import warnings
-            warnings.warn(u"This version of libxml2 has a known XPath bug. " + \
+            warnings.warn(u"This version of libxml2 has a known XPath bug. "
                           u"Use it at your own risk.")
         self._context = _XPathContext(namespaces, extensions,
                                       enable_regexp, None,
@@ -283,11 +283,13 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     def register_namespace(self, prefix, uri):
         u"""Register a namespace with the XPath context.
         """
+        assert self._xpathCtxt is not NULL, "XPath context not initialised"
         self._context.addNamespace(prefix, uri)
 
     def register_namespaces(self, namespaces):
         u"""Register a prefix -> uri dict.
         """
+        assert self._xpathCtxt is not NULL, "XPath context not initialised"
         for prefix, uri in namespaces.items():
             self._context.addNamespace(prefix, uri)
 

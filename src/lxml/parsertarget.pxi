@@ -19,7 +19,7 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
     cdef object _target_comment
     cdef bint _start_takes_nsmap
 
-    def __init__(self, target):
+    def __cinit__(self, target):
         cdef int event_filter
         event_filter = 0
         self._start_takes_nsmap = 0

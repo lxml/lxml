@@ -66,7 +66,7 @@ cdef class _IDDict:
     cdef _Document _doc
     cdef object _keys
     cdef object _items
-    def __init__(self, etree):
+    def __cinit__(self, etree):
         cdef _Document doc
         doc = _documentOrRaise(etree)
         if doc._c_doc.ids is NULL:
