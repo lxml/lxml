@@ -1361,7 +1361,7 @@ cdef bytes _utf8(object s):
         utf8_string = bytes(s)
         invalid = check_string_utf8(utf8_string)
     else:
-        raise TypeError, u"Argument must be string or unicode."
+        raise TypeError, (u"Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
     if invalid:
         raise ValueError, \
             u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
