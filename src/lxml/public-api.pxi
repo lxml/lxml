@@ -138,6 +138,9 @@ cdef public api bytes utf8(object s):
 cdef public api tuple getNsTag(object tag):
     return _getNsTag(tag)
 
+cdef public api tuple getNsTagWithEmptyNs(object tag):
+    return _getNsTagWithEmptyNs(tag)
+
 cdef public api object namespacedName(xmlNode* c_node):
     return _namespacedName(c_node)
 

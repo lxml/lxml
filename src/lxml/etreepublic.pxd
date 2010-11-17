@@ -181,8 +181,11 @@ cdef extern from "lxml.etree_api.h":
     # convert the string to UTF-8 using the normal lxml.etree semantics
     cdef bytes utf8(object s)
 
-    # split a tag into a (URI, name) tuple
+    # split a tag into a (URI, name) tuple, return None as URI for '{}tag'
     cdef tuple getNsTag(object tag)
+
+    # split a tag into a (URI, name) tuple, return b'' as URI for '{}tag'
+    cdef tuple getNsTagWithEmptyNs(object tag)
 
     # get the "{ns}tag" string for a C node
     cdef object namespacedName(tree.xmlNode* c_node)

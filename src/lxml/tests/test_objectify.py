@@ -63,7 +63,7 @@ xml_str = '''\
     <obj:c2>1</obj:c2>
     <obj:c2>2</obj:c2>
     <other:c2>3</other:c2>
-    <c2>3</c2>
+    <c2>4</c2>
   </obj:c1>
 </obj:root>'''
 
@@ -352,6 +352,11 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.XML(xml_str)
         self.assertRaises(AttributeError, getattr, root.c1, "NOT_THERE")
         self.assertRaises(AttributeError, getattr, root.c1, "{unknownNS}c2")
+
+    def test_child_getattr_empty_ns(self):
+        root = self.XML(xml_str)
+        self.assertEquals("4", getattr(root.c1, "{}c2").text)
+        self.assertEquals("0", getattr(root.c1, "c2").text)
 
     def test_setattr(self):
         for val in [

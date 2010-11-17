@@ -5,6 +5,12 @@ lxml changelog
 Under development
 ==================
 
+Features added
+--------------
+
+* When looking for children, ``lxml.objectify`` takes '{}tag' as
+  meaning an empty namespace, as opposed to the parent namespace.
+
 Bugs fixed
 ----------
 

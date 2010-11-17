@@ -1457,8 +1457,18 @@ cdef object _encodeFilenameUTF8(object filename):
 
 cdef tuple _getNsTag(tag):
     u"""Given a tag, find namespace URI and tag name.
-    Return None for NS uri if no namespace URI available.
+    Return None for NS uri if no namespace URI provided.
     """
+    return __getNsTag(tag, 0)
+
+cdef tuple _getNsTagWithEmptyNs(tag):
+    u"""Given a tag, find namespace URI and tag name.  Return None for NS uri
+    if no namespace URI provided, or the empty string if namespace
+    part is '{}'.
+    """
+    return __getNsTag(tag, 1)
+
+cdef tuple __getNsTag(tag, bint empty_ns):
     cdef char* c_tag
     cdef char* c_ns_end
     cdef Py_ssize_t taglen
@@ -1480,6 +1490,8 @@ cdef tuple _getNsTag(tag):
             raise ValueError, u"Empty tag name"
         if nslen > 0:
             ns = <bytes>c_tag[:nslen]
+        elif empty_ns:
+            ns = b''
         tag = <bytes>c_ns_end[1:taglen+1]
     elif python.PyBytes_GET_SIZE(tag) == 0:
         raise ValueError, u"Empty tag name"

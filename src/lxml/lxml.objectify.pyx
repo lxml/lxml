@@ -468,11 +468,11 @@ cdef object _lookupChild(_Element parent, tag):
     cdef char* c_href
     cdef char* c_tag
     c_node = parent._c_node
-    ns, tag = cetree.getNsTag(tag)
+    ns, tag = cetree.getNsTagWithEmptyNs(tag)
     c_tag = tree.xmlDictExists(
         c_node.doc.dict, _cstr(tag), python.PyBytes_GET_SIZE(tag))
     if c_tag is NULL:
-        return None
+        return None # not in the hash map => not in the tree
     if ns is None:
         c_href = tree._getNs(c_node)
     else:
