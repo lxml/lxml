@@ -171,10 +171,7 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
                           PyUnicode_CheckExact(obj) || \
                           PyObject_TypeCheck(obj, &PyBaseString_Type))
 #else
-#define _isString(obj)   (PyUnicode_CheckExact(obj) || \
-			  PyBytes_CheckExact(obj) || \
-			  PyUnicode_Check(obj) || \
-			  PyBytes_Check(obj))
+#define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
 #define _isElement(c_node) \
