@@ -110,11 +110,11 @@ def ext_modules(static_include_dirs, static_library_dirs,
     result = []
     for module in modules:
         main_module_source = PACKAGE_PATH + module + source_extension
-        dependencies = find_dependencies(module)
         result.append(
             Extension(
             module,
-            sources = [main_module_source] + dependencies,
+            sources = [main_module_source],
+            depends = find_dependencies(module),
             extra_compile_args = _cflags,
             extra_objects = static_binaries,
             define_macros = _define_macros,
@@ -128,10 +128,6 @@ def ext_modules(static_include_dirs, static_library_dirs,
 def find_dependencies(module):
     if not CYTHON_INSTALLED:
         return []
-    from Cython.Compiler.Version import version
-    if split_version(version) < (0,9,6,13):
-        return []
-
     package_dir = os.path.join(get_base_dir(), PACKAGE_PATH)
     files = os.listdir(package_dir)
     pxd_files = [ os.path.join(PACKAGE_PATH, filename) for filename in files
