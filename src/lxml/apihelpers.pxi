@@ -587,7 +587,7 @@ cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
     tree.xmlRemoveProp(c_attr)
     return 0
 
-cdef object _collectAttributes(xmlNode* c_node, int collecttype):
+cdef list _collectAttributes(xmlNode* c_node, int collecttype):
     u"""Collect all attributes of a node in a list.  Depending on collecttype,
     it collects either the name (1), the value (2) or the name-value tuples.
     """

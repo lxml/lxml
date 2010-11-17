@@ -110,7 +110,7 @@ cdef extern from "lxml.etree_api.h":
     cdef object iterattributes(_Element element, int keysvalues)
 
     # return the list of all attribute names (1), values (2) or items (3)
-    cdef object collectAttributes(tree.xmlNode* c_element, int keysvalues)
+    cdef list collectAttributes(tree.xmlNode* c_element, int keysvalues)
 
     # set an attribute value on an element
     # on failure, sets an exception and returns -1
@@ -179,10 +179,10 @@ cdef extern from "lxml.etree_api.h":
     cdef object pyunicode(char* s)
 
     # convert the string to UTF-8 using the normal lxml.etree semantics
-    cdef object utf8(object s)
+    cdef bytes utf8(object s)
 
     # split a tag into a (URI, name) tuple
-    cdef object getNsTag(object tag)
+    cdef tuple getNsTag(object tag)
 
     # get the "{ns}tag" string for a C node
     cdef object namespacedName(tree.xmlNode* c_node)

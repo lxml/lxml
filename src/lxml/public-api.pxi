@@ -93,7 +93,7 @@ cdef public api object getAttributeValue(_Element element, key, default):
 cdef public api object iterattributes(_Element element, int keysvalues):
     return _attributeIteratorFactory(element, keysvalues)
 
-cdef public api object collectAttributes(xmlNode* c_element, int keysvalues):
+cdef public api list collectAttributes(xmlNode* c_element, int keysvalues):
     return _collectAttributes(c_element, keysvalues)
 
 cdef public api int setAttributeValue(_Element element, key, value) except -1:
@@ -132,10 +132,10 @@ cdef public api object pyunicode(char* s):
         raise TypeError
     return funicode(s)
 
-cdef public api object utf8(object s):
+cdef public api bytes utf8(object s):
     return _utf8(s)
 
-cdef public api object getNsTag(object tag):
+cdef public api tuple getNsTag(object tag):
     return _getNsTag(tag)
 
 cdef public api object namespacedName(xmlNode* c_node):
