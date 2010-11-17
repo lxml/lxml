@@ -13,6 +13,12 @@ Bugs fixed
 
 * ``marque`` tag in HTML cleanup code is correctly named ``marquee``.
 
+Other changes
+--------------
+
+* Some public functions in the Cython-level C-API have more explicit
+  return types.
+
 
 2.3beta1 (2010-09-06)
 =====================
