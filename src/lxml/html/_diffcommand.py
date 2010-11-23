@@ -82,6 +82,6 @@ def split_body(html):
     return pre, html, post
 
 def annotate(options, args):
-    print "Not yet implemented"
+    print("Not yet implemented")
     sys.exit(1)
     

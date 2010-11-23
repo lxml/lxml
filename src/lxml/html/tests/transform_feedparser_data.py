@@ -88,10 +88,10 @@ def translate_file(filename):
     try:
         output = serialize_content(parse_content(c))
     except:
-        print 'Bad data in %s:' % filename
-        print c
+        print('Bad data in %s:' % filename)
+        print(c)
         traceback.print_exc()
-        print '-'*60
+        print('-'*60)
         return
     new = os.path.splitext(filename)[0] + '.data'
     f = open(new, 'wb')

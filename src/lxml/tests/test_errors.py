@@ -1,4 +1,4 @@
-﻿# -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 import unittest, doctest
 
 # These tests check that error handling in the Pyrex code is
