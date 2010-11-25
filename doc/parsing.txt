@@ -259,6 +259,9 @@ Therefore, if your goal is to serialise an HTML document as an
 XML/XHTML document after parsing, you may have to apply some manual
 preprocessing first.
 
+Also note that the HTML parser is meant to parse HTML documents.  For
+XHTML documents, use the XML parser, which is namespace aware.
+
 
 Doctype information
 -------------------
