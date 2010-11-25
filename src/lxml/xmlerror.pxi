@@ -154,28 +154,24 @@ cdef class _BaseErrorLog:
         code = xmlerror.XML_ERR_INTERNAL_ERROR
         if self._first_error is None:
             return exctype(default_message, code, 0, 0)
-        if self._first_error is None or \
-                self._first_error.message is None or \
-                not self._first_error.message:
+        if not self._first_error.message:
             message = default_message
-            line = 0
-            column = 0
         else:
             message = self._first_error.message
             code = self._first_error.type
-            line = self._first_error.line
-            column = self._first_error.column
-            if line > 0:
-                if column > 0:
-                    message = u"%s, line %d, column %d" % (message, line, column)
-                else:
-                    message = u"%s, line %d" % (message, line)
+        line = self._first_error.line
+        column = self._first_error.column
+        if line > 0:
+            if column > 0:
+                message = u"%s, line %d, column %d" % (message, line, column)
+            else:
+                message = u"%s, line %d" % (message, line)
         return exctype(message, code, line, column)
 
     cdef _buildExceptionMessage(self, default_message):
         if self._first_error is None:
             return default_message
-        if self._first_error.message is not None and self._first_error.message:
+        if self._first_error.message:
             message = self._first_error.message
         elif default_message is None:
             return None
