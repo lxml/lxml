@@ -34,9 +34,6 @@ import re
 cdef tuple IGNORABLE_ERRORS = (ValueError, TypeError)
 cdef object is_special_method = re.compile(u'__.*__$').match
 
-cdef object islice
-from itertools import islice
-
 cdef object _typename(object t):
     cdef char* c_name
     cdef char* s
