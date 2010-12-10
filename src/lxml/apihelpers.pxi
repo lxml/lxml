@@ -624,7 +624,7 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
 
 cdef object __RE_XML_ENCODING
 __RE_XML_ENCODING = re.compile(
-    ur'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*"[^"]*"\s*', re.U)
+    ur'^(\s*<\?\s*xml[^>]+)\s+encoding\s*=\s*["\'][^"\']*["\']\s*', re.U)
 
 cdef object __REPLACE_XML_ENCODING
 __REPLACE_XML_ENCODING = __RE_XML_ENCODING.sub
