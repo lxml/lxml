@@ -127,6 +127,7 @@ _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 # set up some default namespace prefixes
 cdef object _DEFAULT_NAMESPACE_PREFIXES
 _DEFAULT_NAMESPACE_PREFIXES = {
+    b"http://www.w3.org/XML/1998/namespace": b'xml',
     b"http://www.w3.org/1999/xhtml": b"html",
     b"http://www.w3.org/1999/XSL/Transform": b"xsl",
     b"http://www.w3.org/1999/02/22-rdf-syntax-ns#": b"rdf",
