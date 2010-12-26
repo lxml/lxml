@@ -218,8 +218,7 @@ def fileInTestDir(name):
     return os.path.join(_testdir, name)
 
 def canonicalize(xml):
-    f = BytesIO(xml)
-    tree = etree.parse(f)
+    tree = etree.parse(BytesIO(xml))
     f = BytesIO()
     tree.write_c14n(f)
     return f.getvalue()
