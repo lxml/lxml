@@ -636,7 +636,7 @@ cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
     return __REPLACE_XML_ENCODING(ur'\g<1>', xml_string)
 
-cdef int _hasEncodingDeclaration(object xml_string):
+cdef bint _hasEncodingDeclaration(object xml_string):
     # check if a (unicode) string has an XML encoding declaration
     return __HAS_XML_ENCODING(xml_string) is not None
 
@@ -652,10 +652,10 @@ cdef object _stripDeclaration(object xml_string):
             xml_string = xml_string[i:]
     return xml_string
 
-cdef inline int _hasText(xmlNode* c_node):
+cdef inline bint _hasText(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.children) is not NULL
 
-cdef inline int _hasTail(xmlNode* c_node):
+cdef inline bint _hasTail(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.next) is not NULL
 
 cdef _collectText(xmlNode* c_node):
