@@ -226,6 +226,13 @@ def read_file(name, mode='r'):
         f.close()
     return data
 
+def write_to_file(name, data, mode='w'):
+    f = open(name, mode)
+    try:
+        data = f.write(data)
+    finally:
+        f.close()
+
 def readFileInTestDir(name, mode='r'):
     return read_file(fileInTestDir(name), mode)
 

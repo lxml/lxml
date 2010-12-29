@@ -12,7 +12,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
-from common_imports import SillyFileLike, HelperTestCase
+from common_imports import SillyFileLike, HelperTestCase, write_to_file
 
 try:
     unicode = __builtins__["unicode"]
@@ -211,7 +211,7 @@ class HtmlParserTestCase(HelperTestCase):
     def test_module_parse_html(self):
         parser = self.etree.HTMLParser()
         filename = tempfile.mktemp(suffix=".html")
-        open(filename, 'wb').write(self.html_str)
+        write_to_file(filename, self.html_str, 'wb')
         try:
             f = open(filename, 'rb')
             tree = self.etree.parse(f, parser)

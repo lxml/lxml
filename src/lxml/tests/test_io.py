@@ -13,6 +13,7 @@ if this_dir not in sys.path:
 
 from common_imports import etree, ElementTree, fileInTestDir, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
+from common_imports import read_file, write_to_file
 
 class IOTestCaseBase(HelperTestCase):
     """(c)ElementTree compatibility for IO functions/methods
@@ -100,7 +101,7 @@ class IOTestCaseBase(HelperTestCase):
         handle, filename = tempfile.mkstemp(suffix=".xml")
         self.tree.write(filename)
         try:
-            self.assertEqual(open(filename, 'rb').read().replace(_bytes('\n'), _bytes('')),
+            self.assertEqual(read_file(filename, 'rb').replace(_bytes('\n'), _bytes('')),
                              self.root_str)
         finally:
             os.close(handle)
@@ -140,7 +141,7 @@ class IOTestCaseBase(HelperTestCase):
         # parse from filename
         
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        open(filename, 'wb').write(self.root_str)
+        write_to_file(filename, self.root_str, 'wb')
         try:
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
@@ -151,7 +152,7 @@ class IOTestCaseBase(HelperTestCase):
 
     def test_class_parse_filename_remove_previous(self):
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        open(filename, 'wb').write(self.root_str)
+        write_to_file(filename, self.root_str, 'wb')
         try:
             tree = self.etree.ElementTree()
             root = tree.parse(filename)
@@ -177,8 +178,8 @@ class IOTestCaseBase(HelperTestCase):
         # parse from file object
         
         handle, filename = tempfile.mkstemp(suffix=".xml")
-        os.write(handle, self.root_str)
         try:
+            os.write(handle, self.root_str)
             f = open(filename, 'rb')
             tree = self.etree.ElementTree()
             root = tree.parse(f)
