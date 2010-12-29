@@ -5,7 +5,11 @@ __LXML_VERSION = None
 def version():
     global __LXML_VERSION
     if __LXML_VERSION is None:
-        __LXML_VERSION = open(os.path.join(get_base_dir(), 'version.txt')).read().strip()
+        f = open(os.path.join(get_base_dir(), 'version.txt'))
+        try:
+            __LXML_VERSION = f.read().strip()
+        finally:
+            f.close()
     return __LXML_VERSION
 
 def branch_version():
