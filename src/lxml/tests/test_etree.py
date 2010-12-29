@@ -20,7 +20,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir
+from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir, read_file
 from common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
 from common_imports import canonicalize, sorted, _str, _bytes
 
@@ -2941,7 +2941,7 @@ class XIncludeTestCase(HelperTestCase):
         </doc>
         ''' % filename))
         old_text = root.text
-        content = open(filename).read()
+        content = read_file(filename)
         old_tail = root[0].tail
 
         self.include( etree.ElementTree(root) )
@@ -2962,7 +2962,7 @@ class XIncludeTestCase(HelperTestCase):
 
     def test_xinclude_resolver(self):
         class res(etree.Resolver):
-            include_text = open(fileInTestDir('test.xml')).read()
+            include_text = read_file(fileInTestDir('test.xml'))
             called = {}
             def resolve(self, url, id, context):
                 if url.endswith(".dtd"):
@@ -3015,7 +3015,11 @@ class ETreeC14NTestCase(HelperTestCase):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
         f = BytesIO()
         tree.write_c14n(f, compression=9)
-        s = gzip.GzipFile(fileobj=BytesIO(f.getvalue())).read()
+        gzfile = gzip.GzipFile(fileobj=BytesIO(f.getvalue()))
+        try:
+            s = gzfile.read()
+        finally:
+            gzfile.close()
         self.assertEquals(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           s)
 
@@ -3024,11 +3028,7 @@ class ETreeC14NTestCase(HelperTestCase):
         handle, filename = tempfile.mkstemp()
         try:
             tree.write_c14n(filename)
-            f = open(filename, 'rb')
-            try:
-                data = f.read()
-            finally:
-                f.close()
+            data = read_file(filename, 'rb')
         finally:
             os.close(handle)
             os.remove(filename)
@@ -3159,7 +3159,11 @@ class ETreeWriteTestCase(HelperTestCase):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
         f = BytesIO()
         tree.write(f, compression=9)
-        s = gzip.GzipFile(fileobj=BytesIO(f.getvalue())).read()
+        gzfile = gzip.GzipFile(fileobj=BytesIO(f.getvalue()))
+        try:
+            s = gzfile.read()
+        finally:
+            gzfile.close()
         self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
                           s)
 
@@ -3177,13 +3181,21 @@ class ETreeWriteTestCase(HelperTestCase):
         tree.write(f, compression=1)
         s = f.getvalue()
         self.assert_(len(s) <= len(s0))
-        s1 = gzip.GzipFile(fileobj=BytesIO(s)).read()
+        gzfile = gzip.GzipFile(fileobj=BytesIO(s))
+        try:
+            s1 = gzfile.read()
+        finally:
+            gzfile.close()
 
         f = BytesIO()
         tree.write(f, compression=9)
         s = f.getvalue()
         self.assert_(len(s) <= len(s0))
-        s9 = gzip.GzipFile(fileobj=BytesIO(s)).read()
+        gzfile = gzip.GzipFile(fileobj=BytesIO(s))
+        try:
+            s9 = gzfile.read()
+        finally:
+            gzfile.close()
 
         self.assertEquals(_bytes('<a>'+'<b/>'*200+'</a>'),
                           s0)
@@ -3197,9 +3209,7 @@ class ETreeWriteTestCase(HelperTestCase):
         handle, filename = tempfile.mkstemp()
         try:
             tree.write(filename)
-            f = open(filename, 'rb')
-            data = f.read()
-            f.close()
+            data = read_file(filename, 'rb')
         finally:
             os.close(handle)
             os.remove(filename)
@@ -3212,8 +3222,10 @@ class ETreeWriteTestCase(HelperTestCase):
         try:
             tree.write(filename, compression=9)
             f = gzip.open(filename, 'rb')
-            data = f.read()
-            f.close()
+            try:
+                data = f.read()
+            finally:
+                f.close()
         finally:
             os.close(handle)
             os.remove(filename)
