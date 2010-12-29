@@ -21,7 +21,8 @@ Bugs fixed
   file if it has opened it itself.
 
 * Work-around for libxml2 bug that can leave the HTML parser in a
-  non-functional state after parsing a severly broken document.
+  non-functional state after parsing a severly broken document (fixed
+  in libxml2 2.7.8).
 
 * ``marque`` tag in HTML cleanup code is correctly named ``marquee``.
 
