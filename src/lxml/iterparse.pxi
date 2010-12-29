@@ -454,10 +454,19 @@ cdef class iterparse(_BaseParser):
         return context
 
     cdef _close_source(self):
-        source = self._source
-        self._source = None
-        if self._close_source_file and source is not None:
-            source.close()
+        if self._source is None:
+            return
+        if not self._close_source_file:
+            self._source = None
+            return
+        try:
+            close = self._source.close
+        except AttributeError:
+            close = None
+        finally:
+            self._source = None
+        if close is not None:
+            close()
 
     def copy(self):
         raise TypeError, u"iterparse parsers cannot be copied"

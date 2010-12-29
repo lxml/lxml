@@ -265,6 +265,7 @@ cdef class _FileReaderContext:
     cdef _ExceptionContext _exc_context
     cdef Py_ssize_t _bytes_read
     cdef char* _c_url
+
     def __cinit__(self, filelike, exc_context, url, encoding):
         self._exc_context = exc_context
         self._filelike = filelike
@@ -277,6 +278,18 @@ cdef class _FileReaderContext:
         self._url = url
         self._bytes  = b''
         self._bytes_read = 0
+
+    cdef _close_file(self):
+        if self._filelike is None:
+            return
+        try:
+            close = self._filelike.close
+        except AttributeError:
+            close = None
+        finally:
+            self._filelike = None
+        if close is not None:
+            close()
 
     cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
         cdef cstd.FILE* c_stream
@@ -337,7 +350,7 @@ cdef class _FileReaderContext:
                 result = xmlparser.xmlCtxtReadIO(
                     ctxt, c_read_callback, NULL, c_callback_context,
                     self._c_url, c_encoding, options)
-
+        self._close_file()
         return result
 
     cdef int copyToBuffer(self, char* c_buffer, int c_requested):
@@ -366,12 +379,14 @@ cdef class _FileReaderContext:
                             self._bytes = python.PyUnicode_AsEncodedString(
                                 self._bytes, _cstr(self._encoding), NULL)
                     else:
+                        self._close_file()
                         raise TypeError, \
                             u"reading from file-like objects must return byte strings or unicode strings"
 
                 remaining = python.PyBytes_GET_SIZE(self._bytes)
                 if remaining == 0:
                     self._bytes_read = -1
+                    self._close_file()
                     return c_byte_count
                 self._bytes_read = 0
 
@@ -383,6 +398,7 @@ cdef class _FileReaderContext:
             return c_byte_count
         except:
             self._exc_context._store_raised()
+            self._close_file()
             return -1
 
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
