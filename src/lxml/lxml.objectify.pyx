@@ -557,19 +557,19 @@ cdef _setElementValue(_Element element, value):
                 element._c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
     cetree.setNodeText(element._c_node, value)
 
-cdef _setSlice(slice, _Element target, items):
+cdef _setSlice(sliceobject, _Element target, items):
     cdef _Element parent
     cdef tree.xmlNode* c_node
     cdef Py_ssize_t c_step, c_start, pos
     cdef list new_items
     # collect existing slice
-    if (<python.slice>slice).step is None:
+    if (<slice>sliceobject).step is None:
         c_step = 1
     else:
-        c_step = (<python.slice>slice).step
+        c_step = (<slice>sliceobject).step
     if c_step == 0:
         raise ValueError, u"Invalid slice"
-    del_items = target[slice]
+    del_items = target[sliceobject]
 
     # collect new values
     new_items = []
@@ -614,13 +614,13 @@ cdef _setSlice(slice, _Element target, items):
         if pos > 0:
             item = new_items[pos-1]
         else:
-            if (<python.slice>slice).start > 0:
+            if (<slice>sliceobject).start > 0:
                 c_node = parent._c_node.children
             else:
                 c_node = parent._c_node.last
             c_node = _findFollowingSibling(
                 c_node, tree._getNs(target._c_node), target._c_node.name,
-                (<python.slice>slice).start - 1)
+                (<slice>sliceobject).start - 1)
             if c_node is NULL:
                 while pos < python.PyList_GET_SIZE(new_items):
                     cetree.appendChild(parent, new_items[pos])

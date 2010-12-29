@@ -651,7 +651,7 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
 ################################################################################
 # special str/unicode subclasses
 
-cdef class _ElementUnicodeResult(python.unicode):
+cdef class _ElementUnicodeResult(unicode):
     cdef _Element _parent
     cdef readonly object is_tail
     cdef readonly object is_text
@@ -661,8 +661,8 @@ cdef class _ElementUnicodeResult(python.unicode):
     def getparent(self):
         return self._parent
 
-class _ElementStringResult(str):
-    # we need to use a Python class here, str cannot be C-subclassed
+class _ElementStringResult(bytes):
+    # we need to use a Python class here, bytes cannot be C-subclassed
     # in Pyrex/Cython
     def getparent(self):
         return self._parent

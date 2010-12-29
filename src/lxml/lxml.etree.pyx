@@ -612,7 +612,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             raise ValueError, u"cannot assign None"
         if python.PySlice_Check(x):
             # slice assignment
-            _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
+            _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
             if step > 0:
                 left_to_right = 1
             else:
@@ -647,7 +647,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         if python.PySlice_Check(x):
             # slice deletion
-            if _isFullSlice(<python.slice>x):
+            if _isFullSlice(<slice>x):
                 c_node = self._c_node.children
                 if c_node is not NULL:
                     if not _isElement(c_node):
@@ -657,7 +657,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                         _removeNode(self._doc, c_node)
                         c_node = c_next
             else:
-                _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
+                _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
                 _deleteSlice(self._doc, c_node, slicelength, step)
         else:
             # item deletion
@@ -1042,9 +1042,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         if python.PySlice_Check(x):
             # slicing
-            if _isFullSlice(<python.slice>x):
+            if _isFullSlice(<slice>x):
                 return _collectChildren(self)
-            _findChildSlice(<python.slice>x, self._c_node, &c_node, &step, &slicelength)
+            _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
             if c_node is NULL:
                 return []
             if step > 0:

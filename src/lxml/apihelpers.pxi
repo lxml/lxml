@@ -770,7 +770,7 @@ cdef inline Py_ssize_t _countElements(xmlNode* c_node):
     return count
 
 cdef int _findChildSlice(
-    python.slice sliceobject, xmlNode* c_parent,
+    slice sliceobject, xmlNode* c_parent,
     xmlNode** c_start_node, Py_ssize_t* c_step, Py_ssize_t* c_length) except -1:
     u"""Resolve a children slice.
 
@@ -795,7 +795,7 @@ cdef int _findChildSlice(
         c_start_node[0] = _findChild(c_parent, start)
     return 0
 
-cdef bint _isFullSlice(python.slice sliceobject):
+cdef bint _isFullSlice(slice sliceobject):
     u"""Conservative guess if this slice is a full slice as in ``s[:]``.
     """
     cdef Py_ssize_t step
