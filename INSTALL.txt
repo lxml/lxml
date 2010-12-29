@@ -26,7 +26,7 @@ particular:
 * libxml 2.6.21 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-  * We recommend libxml2 2.7.{2,3,7} or a later version.
+  * We recommend libxml2 2.7.8 or a later version.
 
   * If you want to use XPath, do not use libxml2 2.6.27.
 
