@@ -94,7 +94,11 @@ if sys.version_info[0] >= 3:
     _fix_exceptions = re.compile(r'(.*except [^(]*),\s*(.*:)').sub
     def make_doctest(filename):
         filename = _get_caller_relative_path(filename)
-        doctests = open(filename).read()
+        f = open(filename)
+        try:
+            doctests = f.read()
+        finally:
+            f.close()
         doctests = _fix_unicode(r'\1\2', doctests)
         doctests = _fix_exceptions(r'\1 as \2', doctests)
         return doctest.DocTestCase(
@@ -115,7 +119,11 @@ else:
     _fix_bytes = re.compile(r'(\s+)b(["\'])').sub
     def make_doctest(filename):
         filename = _get_caller_relative_path(filename)
-        doctests = open(filename).read()
+        f = open(filename)
+        try:
+            doctests = f.read()
+        finally:
+            f.close()
         doctests = _fix_traceback(r'\1\2', doctests)
         doctests = _fix_exceptions(r'\1, \2', doctests)
         doctests = _fix_bytes(r'\1\2', doctests)
