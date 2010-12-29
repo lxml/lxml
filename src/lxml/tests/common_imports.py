@@ -78,7 +78,7 @@ def _get_caller_relative_path(filename, frame_depth=2):
 
 if sys.version_info[0] >= 3:
     # Python 3
-    unicode = str
+    from builtins import str as unicode
     def _str(s, encoding="UTF-8"):
         return s
     def _bytes(s, encoding="UTF-8"):
@@ -106,6 +106,7 @@ if sys.version_info[0] >= 3:
                 doctests, {}, os.path.basename(filename), filename, 0))
 else:
     # Python 2
+    from __builtin__ import unicode
     def _str(s, encoding="UTF-8"):
         return unicode(s, encoding=encoding)
     def _bytes(s, encoding="UTF-8"):

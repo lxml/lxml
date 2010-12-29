@@ -18,7 +18,7 @@ if this_dir not in sys.path:
 from common_imports import StringIO, BytesIO, etree
 from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
 from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
-from common_imports import _str, _bytes
+from common_imports import _str, _bytes, unicode
 
 if cElementTree is not None and CET_VERSION <= (1,0,7):
     cElementTree = None
@@ -3638,8 +3638,6 @@ class ETreeTestCaseBase(HelperTestCase):
         """Write out element for comparison.
         """
         data = self.etree.tostring(element, encoding=encoding)
-        if encoding != 'us-ascii':
-            data = data.decode(encoding)
         return canonicalize(data)
 
     def _writeElementFile(self, element, encoding='us-ascii'):
@@ -3658,8 +3656,6 @@ class ETreeTestCaseBase(HelperTestCase):
         finally:
             os.close(handle)
             os.remove(filename)
-        if encoding != 'us-ascii':
-            data = data.decode(encoding)
         return canonicalize(data)
 
     def assertXML(self, expected, element, encoding='us-ascii'):
@@ -3667,6 +3663,8 @@ class ETreeTestCaseBase(HelperTestCase):
 
         Does this two ways; once using BytesIO, once using a real file.
         """
+        if isinstance(expected, unicode):
+            expected = expected.encode(encoding)
         self.assertEquals(expected, self._writeElement(element, encoding))
         self.assertEquals(expected, self._writeElementFile(element, encoding))
 
