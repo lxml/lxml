@@ -360,6 +360,8 @@ cdef class iterparse(_BaseParser):
     cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
                              char* chunk, int size, int terminate) nogil
+    cdef bint _close_source_file
+
     def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
@@ -374,8 +376,10 @@ cdef class iterparse(_BaseParser):
             if not python.IS_PYTHON3:
                 source = filename
             source = open(source, u'rb')
+            self._close_source_file = True
         else:
             filename = _encodeFilename(_getFilenameForFile(source))
+            self._close_source_file = False
 
         self._source = source
         if html:
@@ -449,6 +453,12 @@ cdef class iterparse(_BaseParser):
         context._setEventFilter(self._events, self._tag)
         return context
 
+    cdef _close_source(self):
+        source = self._source
+        self._source = None
+        if self._close_source_file and source is not None:
+            source.close()
+
     def copy(self):
         raise TypeError, u"iterparse parsers cannot be copied"
 
@@ -482,7 +492,7 @@ cdef class iterparse(_BaseParser):
             if c_stream is NULL:
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
                 if not python.PyBytes_Check(data):
-                    self._source = None
+                    self._close_source()
                     raise TypeError, u"reading file objects must return plain strings"
                 c_data_len = python.PyBytes_GET_SIZE(data)
                 c_data = _cstr(data)
@@ -511,13 +521,13 @@ cdef class iterparse(_BaseParser):
         if not error and context._validator is not None:
             error = not context._validator.isvalid()
         if error:
-            self._source = None
+            self._close_source()
             del context._events[:]
             context._assureDocGetsFreed()
             _raiseParseError(pctxt, self._filename, context._error_log)
         if python.PyList_GET_SIZE(context._events) == 0:
             self.root = context._root
-            self._source = None
+            self._close_source()
             raise StopIteration
 
 

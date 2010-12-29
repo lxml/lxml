@@ -14,6 +14,9 @@ Features added
 Bugs fixed
 ----------
 
+* When finished parsing, ``iterparse()`` immediately closes files that
+  it has opened itself.
+
 * Work-around for libxml2 bug that can leave the HTML parser in a
   non-functional state after parsing a severly broken document.
 
