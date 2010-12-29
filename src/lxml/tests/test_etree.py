@@ -3025,8 +3025,10 @@ class ETreeC14NTestCase(HelperTestCase):
         try:
             tree.write_c14n(filename)
             f = open(filename, 'rb')
-            data = f.read()
-            f.close()
+            try:
+                data = f.read()
+            finally:
+                f.close()
         finally:
             os.close(handle)
             os.remove(filename)
@@ -3039,8 +3041,10 @@ class ETreeC14NTestCase(HelperTestCase):
         try:
             tree.write_c14n(filename, compression=9)
             f = gzip.open(filename, 'rb')
-            data = f.read()
-            f.close()
+            try:
+                data = f.read()
+            finally:
+                f.close()
         finally:
             os.close(handle)
             os.remove(filename)
