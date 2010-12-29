@@ -33,7 +33,7 @@ def svn_version():
         data = f.read()
         f.close()
 
-        if data[:1] in ('8', '9'):
+        if data[:1] in ('8', '9') or data[:2] == '10':
             # SVN >= 1.4
             data = [ d.splitlines() for d in data.split('\n\x0c\n') ]
             del data[0][0] # get rid of the '8'
