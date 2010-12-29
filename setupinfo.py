@@ -238,19 +238,21 @@ def run_command(cmd, *args):
         import subprocess
     except ImportError:
         # Python 2.3
-        _, rf, ef = os.popen3(cmd)
+        sf, rf, ef = os.popen3(cmd)
+        sf.close()
+        errors = ef.read()
+        stdout_data = rf.read()
     else:
         # Python 2.4+
         p = subprocess.Popen(cmd, shell=True,
                              stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        rf, ef = p.stdout, p.stderr
-    errors = ef.read()
+        stdout_data, errors = p.communicate()
     global _ERROR_PRINTED
     if errors and not _ERROR_PRINTED:
         _ERROR_PRINTED = True
         print("ERROR: %s" % errors)
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
-    return decode_input(rf.read()).strip()
+    return decode_input(stdout_data).strip()
 
 def get_library_versions():
     xml2_version = run_command(find_xml2_config(), "--version")
