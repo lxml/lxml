@@ -94,11 +94,7 @@ if sys.version_info[0] >= 3:
     _fix_exceptions = re.compile(r'(.*except [^(]*),\s*(.*:)').sub
     def make_doctest(filename):
         filename = _get_caller_relative_path(filename)
-        f = open(filename)
-        try:
-            doctests = f.read()
-        finally:
-            f.close()
+        doctests = read_file(filename)
         doctests = _fix_unicode(r'\1\2', doctests)
         doctests = _fix_exceptions(r'\1 as \2', doctests)
         return doctest.DocTestCase(
@@ -120,11 +116,7 @@ else:
     _fix_bytes = re.compile(r'(\s+)b(["\'])').sub
     def make_doctest(filename):
         filename = _get_caller_relative_path(filename)
-        f = open(filename)
-        try:
-            doctests = f.read()
-        finally:
-            f.close()
+        doctests = read_file(filename)
         doctests = _fix_traceback(r'\1\2', doctests)
         doctests = _fix_exceptions(r'\1, \2', doctests)
         doctests = _fix_bytes(r'\1\2', doctests)
@@ -225,6 +217,17 @@ class LargeFileLikeUnicode(LargeFileLike):
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)
+
+def read_file(name, mode='r'):
+    f = open(name, mode)
+    try:
+        data = f.read()
+    finally:
+        f.close()
+    return data
+
+def readFileInTestDir(name, mode='r'):
+    return read_file(fileInTestDir(name), mode)
 
 def canonicalize(xml):
     tree = etree.parse(BytesIO(xml))
