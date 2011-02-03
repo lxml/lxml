@@ -18,7 +18,7 @@ Bugs fixed
   immediately calls its ``.close()`` method.
 
 * When finished parsing, ``iterparse()`` immediately closes the input
-  file if it has opened it itself.
+  file.
 
 * Work-around for libxml2 bug that can leave the HTML parser in a
   non-functional state after parsing a severly broken document (fixed

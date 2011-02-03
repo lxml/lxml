@@ -360,7 +360,6 @@ cdef class iterparse(_BaseParser):
     cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
                              char* chunk, int size, int terminate) nogil
-    cdef bint _close_source_file
 
     def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
@@ -376,10 +375,8 @@ cdef class iterparse(_BaseParser):
             if not python.IS_PYTHON3:
                 source = filename
             source = open(source, u'rb')
-            self._close_source_file = True
         else:
             filename = _encodeFilename(_getFilenameForFile(source))
-            self._close_source_file = False
 
         self._source = source
         if html:
@@ -455,9 +452,6 @@ cdef class iterparse(_BaseParser):
 
     cdef _close_source(self):
         if self._source is None:
-            return
-        if not self._close_source_file:
-            self._source = None
             return
         try:
             close = self._source.close
