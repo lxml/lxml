@@ -750,9 +750,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Extends the current children by the elements in the iterable.
         """
+        cdef _Element element
         _assertValidNode(self)
         for element in elements:
-            assert element is not None, u"Node must not be None"
+            if element is None:
+                raise TypeError, u"Node must not be None"
             _assertValidNode(element)
             _appendChild(self, element)
 

@@ -1310,10 +1310,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError,
                           a.__setitem__, 0, 'foo')
 
-    def test_append_None(self):
-        # raises AssertionError in ElementTree
+    def test_append_error(self):
         Element = self.etree.Element
-        self.assertRaises(TypeError, Element('a').append, None)
+        root = Element('root')
+        # raises AssertionError in ElementTree
+        self.assertRaises(TypeError, root.append, None)
+        self.assertRaises(TypeError, root.extend, [None])
+        self.assertRaises(TypeError, root.extend, [Element('one'), None])
+        self.assertEquals('one', root[0].tag)
 
     def test_addnext(self):
         Element = self.etree.Element
