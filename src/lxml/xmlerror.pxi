@@ -39,6 +39,18 @@ cdef void connectErrorLog(void* log):
 # Logging classes
 
 cdef class _LogEntry:
+    """A log message entry from an error log.
+
+    Attributes:
+
+    - message: the message text
+    - domain: the domain ID (see lxml.etree.ErrorDomains)
+    - type: the message type ID (see lxml.etree.ErrorTypes)
+    - level: the log level ID (see lxml.etree.ErrorLevels)
+    - line: the line at which the message originated (if applicable)
+    - column: the character column at which the message originated (if applicable)
+    - filename: the name of the file in which the message originated (if applicable)
+    """
     cdef readonly object domain
     cdef readonly object type
     cdef readonly object level
@@ -87,10 +99,14 @@ cdef class _LogEntry:
             self.domain_name, self.type_name, self.message)
 
     property domain_name:
+        """The name of the error domain.  See lxml.etree.ErrorDomains
+        """
         def __get__(self):
             return ErrorDomains._getName(self.domain, u"unknown")
 
     property type_name:
+        """The name of the error type.  See lxml.etree.ErrorTypes
+        """
         def __get__(self):
             if self.domain == ErrorDomains.RELAXNGV:
                 getName = RelaxNGErrorTypes._getName
@@ -99,6 +115,8 @@ cdef class _LogEntry:
             return getName(self.type, u"unknown")
 
     property level_name:
+        """The name of the error level.  See lxml.etree.ErrorLevels
+        """
         def __get__(self):
             return ErrorLevels._getName(self.level, u"unknown")
 
