@@ -435,19 +435,19 @@ XSLT
 ====
 
 lxml.etree introduces a new class, lxml.etree.XSLT. The class can be
-given an ElementTree object to construct an XSLT transformer:
+given an ElementTree or Element object to construct an XSLT
+transformer:
 
 .. sourcecode:: pycon
 
-  >>> f = StringIO('''\
+  >>> xslt_root = etree.XML('''\
   ... <xsl:stylesheet version="1.0"
   ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   ...     <xsl:template match="/">
   ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
-  >>> xslt_doc = etree.parse(f)
-  >>> transform = etree.XSLT(xslt_doc)
+  >>> transform = etree.XSLT(xslt_root)
 
 You can then run the transformation on an ElementTree document by simply
 calling it, and this results in another ElementTree object:
@@ -478,9 +478,8 @@ document:
 
 .. sourcecode:: pycon
 
-  >>> f = StringIO('<a><b>Text</b></a>')
-  >>> doc = etree.parse(f)
-  >>> result = transform(doc)
+  >>> root = etree.XML('<a><b>Text</b></a>')
+  >>> result = transform(root)
 
   >>> result.getroot().text
   'Text'
@@ -543,15 +542,14 @@ XSLT template:
   ...     </xsl:template>
   ... </xsl:stylesheet>''')
   >>> transform = etree.XSLT(xslt_tree)
-  >>> f = StringIO('<a><b>Text</b></a>')
-  >>> doc = etree.parse(f)
+  >>> doc_root = etree.XML('<a><b>Text</b></a>')
 
 The parameters are passed as keyword parameters to the transform call.
 First, let's try passing in a simple integer expression:
 
 .. sourcecode:: pycon
 
-  >>> result = transform(doc, a="5")
+  >>> result = transform(doc_root, a="5")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>5</foo>\n'
 
@@ -559,7 +557,7 @@ You can use any valid XPath expression as parameter value:
 
 .. sourcecode:: pycon
 
-  >>> result = transform(doc, a="/a/b/text()")
+  >>> result = transform(doc_root, a="/a/b/text()")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
@@ -567,7 +565,7 @@ It's also possible to pass an XPath object as a parameter:
 
 .. sourcecode:: pycon
 
-  >>> result = transform(doc, a=etree.XPath("/a/b/text()"))
+  >>> result = transform(doc_root, a=etree.XPath("/a/b/text()"))
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
@@ -575,7 +573,7 @@ Passing a string expression looks like this:
 
 .. sourcecode:: pycon
 
-  >>> result = transform(doc, a="'A'")
+  >>> result = transform(doc_root, a="'A'")
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>A</foo>\n'
 
@@ -588,9 +586,43 @@ value.
 
   >>> plain_string_value = etree.XSLT.strparam(
   ...                          """ It's "Monty Python" """)
-  >>> result = transform(doc, a=plain_string_value)
+  >>> result = transform(doc_root, a=plain_string_value)
   >>> str(result)
   '<?xml version="1.0"?>\n<foo> It\'s "Monty Python" </foo>\n'
+
+
+Errors and messages
+-------------------
+
+Like most of the processing oriented objects in lxml.etree, ``XSLT``
+provides an error log that lists messages and error output from the
+last run.
+
+.. sourcecode:: pycon
+
+  >>> xslt_root = etree.XML('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:template match="/">
+  ...         <xsl:message terminate="no">STARTING</xsl:message>
+  ...         <foo><xsl:value-of select="/a/b/text()" /></foo>
+  ...         <xsl:message terminate="no">DONE</xsl:message>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>''')
+  >>> transform = etree.XSLT(xslt_root)
+
+  >>> doc_root = etree.XML('<a><b>Text</b></a>')
+  >>> result = transform(doc_root)
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>Text</foo>\n'
+
+  >>> transform.error_log
+  <string>:0:0:ERROR:XSLT:ERR_OK: STARTING
+  <string>:0:0:ERROR:XSLT:ERR_OK: DONE
+
+Note that there is no way to distinguish between user messages,
+warnings and error messages that occurred during the run. ``libxslt``
+simply does not provide this information.
 
 
 The ``xslt()`` tree method
