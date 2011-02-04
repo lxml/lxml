@@ -51,11 +51,11 @@ cdef class _LogEntry:
     - column: the character column at which the message originated (if applicable)
     - filename: the name of the file in which the message originated (if applicable)
     """
-    cdef readonly object domain
-    cdef readonly object type
-    cdef readonly object level
-    cdef readonly object line
-    cdef readonly object column
+    cdef readonly int domain
+    cdef readonly int type
+    cdef readonly int level
+    cdef readonly int line
+    cdef readonly int column
     cdef readonly object message
     cdef readonly object filename
 
