@@ -596,7 +596,10 @@ Errors and messages
 
 Like most of the processing oriented objects in lxml.etree, ``XSLT``
 provides an error log that lists messages and error output from the
-last run.
+last run.  See the `parser documentation`_ for a description of the
+error log.
+
+.. _`parser documentation`: parsing.html#error-log
 
 .. sourcecode:: pycon
 
@@ -620,9 +623,29 @@ last run.
   <string>:0:0:ERROR:XSLT:ERR_OK: STARTING
   <string>:0:0:ERROR:XSLT:ERR_OK: DONE
 
-Note that there is no way to distinguish between user messages,
-warnings and error messages that occurred during the run. ``libxslt``
-simply does not provide this information.
+  >>> for entry in transform.error_log:
+  ...     print('message from line %s, col %s: %s' % (
+  ...                entry.line, entry.column, entry.message))
+  ...     print('domain: %s (%d)' % (entry.domain_name, entry.domain))
+  ...     print('type: %s (%d)' % (entry.type_name, entry.type))
+  ...     print('level: %s (%d)' % (entry.level_name, entry.level))
+  ...     print('filename: %s' % entry.filename)
+  message from line 0, col 0: STARTING
+  domain: XSLT (22)
+  type: ERR_OK (0)
+  level: ERROR (2)
+  filename: <string>
+  message from line 0, col 0: DONE
+  domain: XSLT (22)
+  type: ERR_OK (0)
+  level: ERROR (2)
+  filename: <string>
+
+Note that there is no way in XSLT to distinguish between user
+messages, warnings and error messages that occurred during the
+run. ``libxslt`` simply does not provide this information.  You can
+partly work around this limitation by making your own messages
+uniquely identifiable, e.g. with a common text prefix.
 
 
 The ``xslt()`` tree method

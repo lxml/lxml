@@ -172,8 +172,8 @@ Other keyword arguments:
 Error log
 ---------
 
-Parsers have an ``error_log`` property that lists the errors of the
-last parser run:
+Parsers have an ``error_log`` property that lists the errors and
+warnings of the last parser run:
 
 .. sourcecode:: pycon
 
@@ -196,6 +196,27 @@ last parser run:
   1
   >>> print(error.column)
   11
+
+Each entry in the log has the following properties:
+
+* ``message``: the message text
+* ``domain``: the domain ID (see the lxml.etree.ErrorDomains class)
+* ``type``: the message type ID (see the lxml.etree.ErrorTypes class)
+* ``level``: the log level ID (see the lxml.etree.ErrorLevels class)
+* ``line``: the line at which the message originated (if applicable)
+* ``column``: the character column at which the message originated (if applicable)
+* ``filename``: the name of the file in which the message originated (if applicable)
+
+For convenience, there are also three properties that provide readable
+names for the ID values:
+
+* ``domain_name``
+* ``type_name``
+* ``level_name``
+
+To filter for a specific kind of message, use the different
+``filter_*()`` methods on the error log (see the
+lxml.etree._ListErrorLog class).
 
 
 Parsing HTML
