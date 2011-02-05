@@ -590,6 +590,25 @@ value.
   >>> str(result)
   '<?xml version="1.0"?>\n<foo> It\'s "Monty Python" </foo>\n'
 
+If you need to pass parameters that are not legal Python identifiers,
+pass them inside of a dictionary:
+
+.. sourcecode:: pycon
+
+  >>> transform = etree.XSLT(etree.XML('''\
+  ... <xsl:stylesheet version="1.0"
+  ...     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  ...     <xsl:param name="non-python-identifier" />
+  ...     <xsl:template match="/">
+  ...         <foo><xsl:value-of select="$non-python-identifier" /></foo>
+  ...     </xsl:template>
+  ... </xsl:stylesheet>'''))
+
+  >>> result = transform(doc_root, **{'non-python-identifier': '5'})
+  >>> str(result)
+  '<?xml version="1.0"?>\n<foo>5</foo>\n'
+
+
 
 Errors and messages
 -------------------
