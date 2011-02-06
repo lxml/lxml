@@ -228,7 +228,7 @@ See the web sites of lxml `1.3 <http://codespeak.net/lxml/1.3/>`_,
 
 .. `current in-development version <http://codespeak.net/lxml/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-2.3beta1.pdf
+.. _`PDF documentation`: lxmldoc-2.3.pdf
 
 * `lxml 2.3beta1`_, released 2010-09-06 (`changes for 2.3beta1`_)
 
