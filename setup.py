@@ -52,7 +52,8 @@ http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s .
 Running ``easy_install lxml==%(branch_version)sbugfix`` will install
 the unreleased branch state from
 http://codespeak.net/svn/lxml/branch/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
-as soon as a maintenance branch has been established.
+as soon as a maintenance branch has been established.  Note that this
+requires Cython to be installed for the build.
 """
 
 if versioninfo.is_pre_release():
