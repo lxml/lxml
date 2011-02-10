@@ -20,6 +20,9 @@ Holger Joukl
 Sidnei da Silva
        official MS Windows builds
 
+Pascal Oberndörfer
+       official Mac-OS builds
+
 Marc-Antoine Parent
        XPath extension function help and patches
 
