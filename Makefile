@@ -56,7 +56,7 @@ apihtml: inplace
 			PYTHONPATH=. epydoc -v --docformat "restructuredtext en" \
 			-o ../doc/html/api --exclude='[.]html[.]tests|[.]_' \
 			--exclude-introspect='[.]usedoctest' \
-			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
+			--name "lxml API" --url / lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
 website: inplace
@@ -75,7 +75,7 @@ apipdf: inplace
 			PYTHONPATH=. epydoc -v --latex --docformat "restructuredtext en" \
 			-o ../doc/pdf --exclude='([.]html)?[.]tests|[.]_' \
 			--exclude-introspect='html[.]clean|[.]usedoctest' \
-			--name "lxml API" --url http://codespeak.net/lxml/ lxml/) \
+			--name "lxml API" --url / lxml/) \
 		|| (echo "not generating epydoc API documentation")
 
 pdf: apipdf

@@ -95,7 +95,7 @@ If you have read these instructions and still cannot manage to install lxml,
 you can check the archives of the `mailing list`_ to see if your problem is
 known or otherwise send a mail to the list.
 
- .. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`mailing list`: http://lxml.de/mailinglist/
 
 
 Using lxml with python-libxml2

@@ -71,8 +71,10 @@ Special thanks goes to:
 * Fredrik Lundh for ElementTree, its API, and the competition through
   cElementTree.
 
-* Greg Ewing (Pyrex) and Robert Bradshaw (Cython) for the binding
-  technology.
+* Greg Ewing (Pyrex) and Robert Bradshaw et al. (Cython) for the
+  binding technology.
+
+* Jonathan Stoppani for hosting the new mailing list on lxml.de.
 
 * the codespeak crew, in particular Philipp von Weitershausen and
-  Holger Krekel for hosting lxml on codespeak.net
+  Holger Krekel for originally hosting lxml on codespeak.net

@@ -161,25 +161,24 @@ documentation for offline use, take the source archive and copy the
 ``doc/html`` directory out of the source tree.
 
 It's also possible to check out the latest development version of lxml
-from svn directly, using a command like this::
+from github directly, using a command like this (assuming you use hg
+and have have hg-git installed)::
 
-  svn co http://codespeak.net/svn/lxml/trunk lxml
+  hg clone https://github.com/lxml/lxml.git lxml
 
-You can also browse the `Subversion repository`_ through the web, or
-take a look at the `Subversion history`_.  Please read `how to build lxml
-from source`_ first.  The `latest CHANGES`_ of the developer version
-are also accessible.  You can check there if a bug you found has been
-fixed or a feature you want has been implemented in the latest trunk
-version.
+You can also browse the `source repository`_ and its history through
+the web.  Please read `how to build lxml from source`_ first.  The
+`latest CHANGES`_ of the developer version are also accessible.  You
+can check there if a bug you found has been fixed or a feature you
+want has been implemented in the latest trunk version.
 
 .. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
 .. _`this key`: pubkey.asc
 .. _`Older versions`: #old-versions
 .. _`installation instructions`: installation.html
 .. _`how to build lxml from source`: build.html
-.. _`Subversion repository`: http://codespeak.net/svn/lxml/
-.. _`Subversion history`: https://codespeak.net/viewvc/lxml/
-.. _`latest CHANGES`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+.. _`source repository`: https://github.com/lxml/lxml/
+.. _`latest CHANGES`: https://github.com/lxml/lxml/blob/master/CHANGES.txt
 
 
 Mailing list
@@ -189,9 +188,9 @@ Questions? Suggestions? Code to contribute? We have a `mailing list`_.
 
 You can search the archive with Gmane_ or Google_.
 
-.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`mailing list`: http://lxml.de/mailinglist/
 .. _Gmane: http://blog.gmane.org/gmane.comp.python.lxml.devel
-.. _Google: http://www.google.com/webhp?q=site:codespeak.net%2Fmailman%2Flistinfo%2Flxml-dev+
+.. _Google: http://www.google.com/webhp?q=site:comments.gmane.org%2Fgmane.comp.python.lxml.devel+
 
 
 Bug tracker
@@ -213,20 +212,20 @@ The lxml library is shipped under a `BSD license`_. libxml2 and libxslt2
 itself are shipped under the `MIT license`_. There should therefore be no
 obstacle to using lxml in your codebase.
 
-.. _`BSD license`: http://codespeak.net/svn/lxml/trunk/doc/licenses/BSD.txt
+.. _`BSD license`: https://github.com/lxml/lxml/blob/master/doc/licenses/BSD.txt
 .. _`MIT license`: http://www.opensource.org/licenses/mit-license.html
 
 
 Old Versions
 ------------
 
-See the web sites of lxml `1.3 <http://codespeak.net/lxml/1.3/>`_,
-`2.0 <http://codespeak.net/lxml/2.0/>`_, `2.1
-<http://codespeak.net/lxml/2.1/>`_, `2.2
-<http://codespeak.net/lxml/2.2/>`_ and the `current stable version
-<http://codespeak.net/lxml/>`_
+See the web sites of lxml `1.3 <http://lxml.de/1.3/>`_,
+`2.0 <http://lxml.de/2.0/>`_, `2.1
+<http://lxml.de/2.1/>`_, `2.2
+<http://lxml.de/2.2/>`_ and the `current stable version
+<http://lxml.de/>`_
 
-.. `current in-development version <http://codespeak.net/lxml/dev/>`_.
+.. `current in-development version <http://lxml.de/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-2.3.pdf
 
