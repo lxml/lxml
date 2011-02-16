@@ -162,7 +162,7 @@ documentation for offline use, take the source archive and copy the
 
 It's also possible to check out the latest development version of lxml
 from github directly, using a command like this (assuming you use hg
-and have have hg-git installed)::
+and have hg-git installed)::
 
   hg clone https://github.com/lxml/lxml.git lxml
 
