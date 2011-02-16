@@ -6,8 +6,10 @@ Benchmarks and Speed
   Stefan Behnel
 
 .. meta::
-  :description: Performance evaluation of lxml and ElementTree 
-  :keywords: lxml performance, lxml.etree, lxml.objectify, benchmarks, ElementTree
+  :description: Performance evaluation of lxml and ElementTree:
+                fast operations, common pitfalls and optimisation hints.
+  :keywords: Python XML parser performance, XML processing, performance comparison,
+             lxml performance, lxml.etree, lxml.objectify, benchmarks, ElementTree
 
 
 lxml.etree is a very fast XML library.  Most of this is due to the
