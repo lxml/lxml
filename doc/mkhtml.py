@@ -16,6 +16,7 @@ htmlnsmap = {"h" : XHTML_NS}
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
 find_title_tag = XPath("/h:html/h:head/h:title", namespaces=htmlnsmap)
 find_headings = XPath("//h:h1[not(@class)]//text()", namespaces=htmlnsmap)
+find_heading_tag = XPath("//h:h1[@class = 'title'][1]", namespaces=htmlnsmap)
 find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
 find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
@@ -160,6 +161,9 @@ def publish(dirname, lxml_path, release):
         title = find_title_tag(new_tree)
         if title and title[0].text == 'lxml':
             title[0].text = "lxml - Processing XML and HTML with Python"
+            heading = find_heading_tag(new_tree)
+            if heading:
+                heading[0].text = "lxml - XML and HTML with Python"
         new_tree.write(outpath)
 
 if __name__ == '__main__':
