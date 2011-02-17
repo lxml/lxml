@@ -1,6 +1,6 @@
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 from lxml.etree import (parse, fromstring, ElementTree,
-                        Element, SubElement, XPath)
+                        Element, SubElement, XPath, XML)
 import os, shutil, re, sys, copy, time
 
 RST2HTML_OPTIONS = " ".join([
@@ -10,7 +10,8 @@ RST2HTML_OPTIONS = " ".join([
     '--date',
     ])
 
-htmlnsmap = {"h" : "http://www.w3.org/1999/xhtml"}
+XHTML_NS = 'http://www.w3.org/1999/xhtml'
+htmlnsmap = {"h" : XHTML_NS}
 
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
 find_title_tag = XPath("/h:html/h:head/h:title", namespaces=htmlnsmap)
@@ -135,6 +136,26 @@ def publish(dirname, lxml_path, release):
         if title and title[0].text == 'lxml':
             title[0].text = "lxml - Processing XML and HTML with Python"
         new_tree.write(outpath)
+
+    # generate sitemap from menu
+    sitemap = XML('''\
+    <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+    <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+      <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Sitemap of lxml.de - Processing XML and HTML with Python</title>
+        <meta content="lxml - the most feature-rich and easy-to-use library for processing XML and HTML in the Python language"
+              name="description" />
+        <meta content="Python XML, XML, XML processing, HTML, lxml, simple XML, ElementTree, etree, lxml.etree, objectify, XML parsing, XML validation, XPath, XSLT"
+              name="keywords" />
+      </head>
+      <body>
+        <h1>Sitemap of lxml.de - Processing XML and HTML with Python</h1>
+      </body>
+    </html>
+    '''.replace('    ', ' '))
+    sitemap[-1].append(copy.deepcopy(menu))
+    ElementTree(sitemap).write(os.path.join(dirname, 'sitemap.html'))
 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
