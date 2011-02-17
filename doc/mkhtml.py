@@ -129,14 +129,6 @@ def publish(dirname, lxml_path, release):
               os.path.join(dirname, 'changes-%s.html' % release),
               '')
 
-    # integrate menu
-    for tree, basename, outpath in trees.itervalues():
-        new_tree = merge_menu(tree, menu, basename)
-        title = find_title_tag(new_tree)
-        if title and title[0].text == 'lxml':
-            title[0].text = "lxml - Processing XML and HTML with Python"
-        new_tree.write(outpath)
-
     # generate sitemap from menu
     sitemap = XML('''\
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -154,8 +146,21 @@ def publish(dirname, lxml_path, release):
       </body>
     </html>
     '''.replace('    ', ' '))
-    sitemap[-1].append(copy.deepcopy(menu))
+    sitemap_menu = copy.deepcopy(menu)
+    SubElement(SubElement(sitemap_menu[-1], 'li'), 'a', href='http://lxml.de/files/').text = 'Download files'
+    sitemap[-1].append(sitemap_menu) # append to body
     ElementTree(sitemap).write(os.path.join(dirname, 'sitemap.html'))
+
+    # integrate sitemap into the menu
+    SubElement(SubElement(menu[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
+
+    # integrate menu into web pages
+    for tree, basename, outpath in trees.itervalues():
+        new_tree = merge_menu(tree, menu, basename)
+        title = find_title_tag(new_tree)
+        if title and title[0].text == 'lxml':
+            title[0].text = "lxml - Processing XML and HTML with Python"
+        new_tree.write(outpath)
 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
