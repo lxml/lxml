@@ -30,12 +30,13 @@ lxml
 Introduction
 ------------
 
-lxml is a Pythonic binding for the libxml2_ and libxslt_ libraries.  It is
-unique in that it combines the speed and feature completeness of these
-libraries with the simplicity of a native Python API, mostly compatible but
-superior to the well-known ElementTree_ API.  See the introduction_ for more
-information about background and goals.  Some common questions are answered in
-the FAQ_.
+The lxml XML toolkit is a Pythonic binding for the C libraries
+libxml2_ and libxslt_.  It is unique in that it combines the speed and
+XML feature completeness of these libraries with the simplicity of a
+native Python API, mostly compatible but superior to the well-known
+ElementTree_ API.  See the introduction_ for more information about
+background and goals of the lxml project.  Some common questions are
+answered in the FAQ_.
 
 For commercial consulting and customisations, please `contact Stefan Behnel`_.
 
@@ -60,11 +61,11 @@ the normal `source download <#download>`_.
 
   * compatibility_ and differences of lxml.etree
 
-  * `benchmark results`_
+  * `ElementTree performance`_ characteristics and comparison
 
 * lxml.etree:
 
-  * the `lxml.etree Tutorial`_
+  * the `lxml.etree tutorial for XML processing`_
 
   * `lxml.etree specific API`_ documentation
 
@@ -74,13 +75,13 @@ the normal `source download <#download>`_.
 
   * `XPath and XSLT`_ support
 
-  * Python `extension functions`_ for XPath and XSLT
+  * Python `XPath extension functions`_ for XPath and XSLT
 
-  * `custom element classes`_ for custom XML APIs (see `EuroPython 2008 talk`_)
+  * `custom XML element classes`_ for custom XML APIs (see `EuroPython 2008 talk`_)
 
   * a `SAX compliant API`_ for interfacing with other XML tools
 
-  * a `C-level API`_ for interfacing with external C/Pyrex modules
+  * a `C-level API`_ for interfacing with external C/Cython modules
 
 * lxml.objectify:
 
@@ -88,45 +89,47 @@ the normal `source download <#download>`_.
 
   * a brief comparison of `objectify and etree`_
 
-lxml.etree follows the ElementTree_ API as much as possible, building it on
-top of the native libxml2 tree.  If you are new to ElementTree, start with the
-`lxml.etree Tutorial`_.  See also the ElementTree compatibility_ overview and
-the `benchmark results`_ comparing lxml to the original ElementTree_ and
-cElementTree_ implementations.
+lxml.etree follows the ElementTree_ API as much as possible, building
+it on top of the native libxml2 tree.  If you are new to ElementTree,
+start with the `lxml.etree tutorial for XML processing`_.  See also the
+ElementTree compatibility_ overview and the `ElementTree performance`_
+page comparing lxml to the original ElementTree_ and cElementTree_
+implementations.
 
-Right after the `lxml.etree Tutorial`_ and the ElementTree_ documentation, the
-most important place to look is the `lxml.etree specific API`_ documentation.
-It describes how lxml extends the ElementTree API to expose libxml2 and
-libxslt specific functionality, such as XPath_, `Relax NG`_, `XML Schema`_,
-`XSLT`_, and `c14n`_.  Python code can be called from XPath expressions and
-XSLT stylesheets through the use of `extension functions`_.  lxml also offers
-a `SAX compliant API`_, that works with the SAX support in the standard
-library.
+Right after the `lxml.etree tutorial for XML processing`_ and the
+ElementTree_ documentation, the next place to look is the `lxml.etree
+specific API`_ documentation.  It describes how lxml extends the
+ElementTree API to expose libxml2 and libxslt specific XML
+functionality, such as XPath_, `Relax NG`_, `XML Schema`_, XSLT_, and
+`c14n`_.  Python code can be called from XPath expressions and XSLT
+stylesheets through the use of `XPath extension functions`_.  lxml
+also offers a `SAX compliant API`_, that works with the SAX support in
+the standard library.
 
 There is a separate module `lxml.objectify`_ that implements a data-binding
 API on top of lxml.etree.  See the `objectify and etree`_ FAQ entry for a
 comparison.
 
-In addition to the ElementTree API, lxml also features a sophisticated API for
-`custom element classes`_.  This is a simple way to write arbitrary XML driven
-APIs on top of lxml.  As of version 1.1, lxml.etree has a new `C-level API`_
-that can be used to efficiently extend lxml.etree in external C modules,
-including custom element class support.
+In addition to the ElementTree API, lxml also features a sophisticated
+API for `custom XML element classes`_.  This is a simple way to write
+arbitrary XML driven APIs on top of lxml.  lxml.etree also has a
+`C-level API`_ that can be used to efficiently extend lxml.etree in
+external C modules, including fast custom element class support.
 
 .. _ElementTree:  http://effbot.org/zone/element-index.htm
 .. _`ElementTree API`:  http://effbot.org/zone/element-index.htm#documentation
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
-.. _`lxml.etree Tutorial`: tutorial.html
+.. _`lxml.etree tutorial for XML processing`: tutorial.html
 .. _`generated API documentation`:   api/index.html
-.. _`benchmark results`: performance.html
+.. _`ElementTree performance`: performance.html
 .. _`compatibility`: compatibility.html
 .. _`lxml.etree specific API`: api.html
 .. _`parsing`: parsing.html
 .. _`validating`: validation.html
 .. _`XPath and XSLT`: xpathxslt.html
-.. _`extension functions`: extensions.html
-.. _`custom element classes`: element_classes.html
+.. _`XPath extension functions`: extensions.html
+.. _`custom XML element classes`: element_classes.html
 .. _`SAX compliant API`: sax.html
 .. _`C-level API`: capi.html
 .. _`lxml.objectify`: objectify.html
