@@ -9,9 +9,9 @@ The lxml.etree Tutorial
 :Author:
   Stefan Behnel
 
-This tutorial briefly overviews the main concepts of the `ElementTree API`_ as
-implemented by ``lxml.etree``, and some simple enhancements that make your
-life as a programmer easier.
+This is a tutorial on XML processing with ``lxml.etree``.  It briefly
+overviews the main concepts of the `ElementTree API`_, and some simple
+enhancements that make your life as a programmer easier.
 
 For a complete reference of the API, see the `generated API
 documentation`_.
