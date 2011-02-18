@@ -203,7 +203,7 @@ possible, elements behave like normal Python lists:
     >>> print(end[0].tag)
     child3
 
-    >>> root[0] = root[-1] # this moves the element!
+    >>> root[0] = root[-1] # this moves the element in lxml.etree!
     >>> for child in root:
     ...     print(child.tag)
     child3
