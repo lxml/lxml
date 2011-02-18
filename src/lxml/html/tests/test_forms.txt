@@ -26,6 +26,7 @@
 ...     <option value="1">number 1</option>
 ...     <option value="2">number 2</option>
 ...     <option value="3">number 3</option>
+...     <option>number 4</option>
 ...   </select>
 ...   <input type="submit" name="submit1" value="submit">
 ...   <input type="submit" name="submit2" value="submit">
@@ -114,19 +115,25 @@ ValueError: There is no option with the value of 'asdf'
 'No value'
 >>> select = f.inputs['select2']
 >>> select.value # doctest:+NOPARSE_MARKUP
-<MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
+<MultipleSelectOptions {} for select name='select2'>
 >>> select.value.update(['2', '3'])
+>>> select.value # doctest:+NOPARSE_MARKUP
+<MultipleSelectOptions {'2', '3'} for select name='select2'>
 >>> select.value.remove('3')
 >>> select.value.add('asdf')
 Traceback (most recent call last):
     ...
 ValueError: There is no option with the value 'asdf'
+>>> select.value.add('number 4')
+>>> select.value # doctest:+NOPARSE_MARKUP
+<MultipleSelectOptions {'2', 'number 4'} for select name='select2'>
+>>> select.value.remove('number 4')
 >>> select.value_options
-['1', '2', '3']
+['1', '2', '3', 'number 4']
 >>> try: from urllib import urlencode
 ... except ImportError: from urllib.parse import urlencode
 >>> print(urlencode(f.form_values()))
-hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=No+value&select2=1&select2=2&select2=3
+hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=No+value&select2=2
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
@@ -141,7 +148,7 @@ hidden_field: 'new value'
 text_field: 'text_value'
 reset1: None
 single_checkbox: 'on'
-select2: <MultipleSelectOptions {'1', '2', '3'} for select name='select2'>
+select2: <MultipleSelectOptions {'2'} for select name='select2'>
 single_checkbox2: 'good'
 check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 

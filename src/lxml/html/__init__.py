@@ -1138,11 +1138,22 @@ class MultipleSelectOptions(SetMixin):
 
     def __iter__(self):
         for option in self.options:
-            yield option.get('value')
+            if 'selected' in option.attrib:
+                opt_value = option.get('value')
+                if opt_value is None:
+                    opt_value = option.text or ''
+                if opt_value:
+                    opt_value = opt_value.strip()
+                yield opt_value
 
     def add(self, item):
         for option in self.options:
-            if option.get('value') == item:
+            opt_value = option.get('value')
+            if opt_value is None:
+                opt_value = option.text or ''
+            if opt_value:
+                opt_value = opt_value.strip()
+            if opt_value == item:
                 option.set('selected', '')
                 break
         else:
@@ -1151,7 +1162,12 @@ class MultipleSelectOptions(SetMixin):
 
     def remove(self, item):
         for option in self.options:
-            if option.get('value') == item:
+            opt_value = option.get('value')
+            if opt_value is None:
+                opt_value = option.text or ''
+            if opt_value:
+                opt_value = opt_value.strip()
+            if opt_value == item:
                 if 'selected' in option.attrib:
                     del option.attrib['selected']
                 else:

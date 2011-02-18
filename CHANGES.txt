@@ -2,6 +2,25 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* In lxml.html, non-selected ``<option>`` tags no longer show up in the
+  collected form values.
+
+* Adding/removing ``<option>`` values to/from a multiple select form
+  field properly selects them and unselects them.
+
+Other changes
+--------------
+
+
 2.3 (2011-02-06)
 ================
 
