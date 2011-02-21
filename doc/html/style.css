@@ -66,7 +66,7 @@ div.sidemenu {
     border-right: groove gray;
     border-bottom: groove gray;
     padding-right: 1ex;
-    background: #FFFAFA url(tagpython.png) no-repeat top right;
+    background: #FFFAFA url(python-xml.png) no-repeat top right;
 }
 
 html > body div.sidemenu {
@@ -121,8 +121,8 @@ div.sidemenu ul {
 /*** headings ***/
 
 h1.title {
-    background: url(http://codespeak.net/img/codespeak1b.png) no-repeat;
-    padding: 20px 0 0 180px;
+    background: url(python-xml-title.png) no-repeat;
+    padding: 20px 0 0 160px;
     height: 60px;
     font-size: 200%;
 }
