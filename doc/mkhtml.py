@@ -68,10 +68,10 @@ def merge_menu(tree, menu, name):
         if tag[0] != '{':
             el.tag = "{http://www.w3.org/1999/xhtml}" + tag
     current_menu = find_menu(
-        menu_root, name=replace_invalid(' ', name + '-menu'))
+        menu_root, name=replace_invalid(' ', name) + '-menu')
     if not current_menu:
         current_menu = find_menu(
-            menu_root, name=replace_invalid('-', name + '-menu'))
+            menu_root, name=replace_invalid('-', name) + '-menu')
     if current_menu:
         for submenu in current_menu:
             submenu.set("class", submenu.get("class", "").
