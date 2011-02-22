@@ -3,7 +3,7 @@ lxml
 
 .. meta::
   :description: lxml - the most feature-rich and easy-to-use library for processing XML and HTML in the Python language
-  :keywords: Python XML, XML, XML processing, HTML, lxml, simple XML, ElementTree, etree, lxml.etree, objectify, XML parsing, XML validation, XPath, XSLT
+  :keywords: Python XML, XML processing, HTML, lxml, simple XML, ElementTree, etree, lxml.etree, objectify, XML parsing, XML validation, XPath, XSLT
 
 .. class:: pagequote
 
