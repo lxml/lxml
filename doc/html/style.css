@@ -81,6 +81,7 @@ div.sidemenu span.section.title {
 
 div.sidemenu ul.menu.current li {
     color: #CC0000;
+    font-size: 105%;
 }
 
 div.sidemenu ul.menu.current > li > a {
