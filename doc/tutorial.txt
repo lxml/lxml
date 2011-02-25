@@ -915,10 +915,35 @@ need:
     None
     ** cleaning up the subtree
 
-If memory is a real bottleneck, or if building the tree is not desired at all,
-the target parser interface of ``lxml.etree`` can be used.  It creates
-SAX-like events by calling the methods of a target object.  By implementing
-some or all of these methods, you can control which events are generated:
+A very important use cases for ``iterparse()`` is parsing large
+generated XML files, e.g. database dumps.  Most often, these XML
+formats only have one main data item element that hangs directly below
+the root node and that is repeated thousands of times.  In this case,
+it is best practice to let ``lxml.etree`` do the tree building and to
+only intercept exactly on this one Element, using the normal tree API
+for data extraction.
+
+.. sourcecode:: pycon
+
+    >>> xml_file = StringIO('''\
+    ... <root>
+    ...   <a><b>ABC</b><c>abc</c></a>
+    ...   <a><b>MORE DATA</b><c>more data</c></a>
+    ...   <a><b>XYZ</b><c>xyz</c></a>
+    ... </root>''')
+
+    >>> for _, element in etree.iterparse(xml_file, tag='a'):
+    ...     print('%s -- %s' % (element.findtext('b'), element[1].text))
+    ...     element.clear()
+    ABC -- abc
+    MORE DATA -- more data
+    XYZ -- xyz
+
+If, for some reason, building the tree is not desired at all, the
+target parser interface of ``lxml.etree`` can be used.  It creates
+SAX-like events by calling the methods of a target object.  By
+implementing some or all of these methods, you can control which
+events are generated:
 
 .. sourcecode:: pycon
 
