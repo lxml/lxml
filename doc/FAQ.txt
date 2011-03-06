@@ -399,6 +399,9 @@ PyPI URL, e.g.::
 
 	  http://pypi.python.org/pypi/lxml/2.1.5
 
+Christoph Gohlke also provides `unofficial lxml binary builds for
+Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`.
+
 Apart from that, we generally do not provide binary builds of lxml, as
 most of the other operating systems out there can build lxml without
 problems (with the exception of `MacOS-X`_), and the sheer mass of
