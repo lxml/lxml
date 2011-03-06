@@ -55,6 +55,14 @@ The complete lxml documentation is available for download as `PDF
 documentation`_.  The HTML documentation from this web site is part of
 the normal `source download <#download>`_.
 
+* Tutorials:
+
+  * the `lxml.etree tutorial for XML processing`_
+
+  * John Shipman's tutorial on `Python XML processing with lxml`_
+
+  * Fredrik Lundh's `tutorial for ElementTree`_
+
 * ElementTree:
 
   * `ElementTree API`_
@@ -64,8 +72,6 @@ the normal `source download <#download>`_.
   * `ElementTree performance`_ characteristics and comparison
 
 * lxml.etree:
-
-  * the `lxml.etree tutorial for XML processing`_
 
   * `lxml.etree specific API`_ documentation
 
@@ -120,7 +126,9 @@ external C modules, including fast custom element class support.
 .. _`ElementTree API`:  http://effbot.org/zone/element-index.htm#documentation
 .. _cElementTree: http://effbot.org/zone/celementtree.htm
 
+.. _`tutorial for ElementTree`: http://effbot.org/zone/element.htm
 .. _`lxml.etree tutorial for XML processing`: tutorial.html
+.. _`Python XML processing with lxml`: http://www.nmt.edu/tcc/help/pubs/pylxml/
 .. _`generated API documentation`:   api/index.html
 .. _`ElementTree performance`: performance.html
 .. _`compatibility`: compatibility.html
