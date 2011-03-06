@@ -192,6 +192,7 @@ not take advantage of lxml's enhanced feature set.
 * `python-docx`_, a package for handling Microsoft's Word OpenXML format
 * Rambler_, a meta search engine that aggregates different data sources
 * rdfadict_, an RDFa parser with a simple dictionary-like interface.
+* `xupdate-processor`_, an XUpdate implementation for lxml.etree
 
 Zope3 and some of its extensions have good support for lxml:
 
@@ -221,6 +222,7 @@ lxml can provide all three."
 .. _z3c.rml: http://pypi.python.org/pypi/z3c.rml
 .. _zif.sedna: http://pypi.python.org/pypi/zif.sedna
 .. _`python-docx`: http://github.com/mikemaccana/python-docx
+.. _`xupdate-processor`: http://pypi.python.org/pypi/xupdate-processor
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
