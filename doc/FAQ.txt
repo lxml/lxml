@@ -226,7 +226,7 @@ lxml can provide all three."
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
-.. _`sites that link to lxml`: http://www.google.com/search?as_lq=http:%2F%2Fcodespeak.net%2Flxml
+.. _`sites that link to lxml`: http://www.google.com/search?as_lq=http:%2F%2Flxml.de%2F
 .. _`Liza Daly`: http://www.ibm.com/developerworks/xml/library/x-hiperfparse/
 
 
