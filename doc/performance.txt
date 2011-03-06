@@ -271,7 +271,7 @@ faster in total.  So, whenever the input documents are not
 considerably larger than the output, lxml is the clear winner.
 
 Again, note that the cET/ET timings are not based on the standard
-library versions in Python 2.6, but on wastly improved, unreleased
+library versions in Python 2.6, but on vastly improved, unreleased
 developer versions.  Especially the serialiser in the standard library
 modules is several times slower than the benchmarked one, and at least
 20 times slower than the one in lxml.etree.
