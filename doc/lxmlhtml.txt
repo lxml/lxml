@@ -6,8 +6,9 @@ lxml.html
   Ian Bicking
 
 Since version 2.0, lxml comes with a dedicated Python package for
-dealing with HTML: ``lxml.html``.  It provides a special Element API
-for HTML elements, as well as a number of utilities for common tasks.
+dealing with HTML: ``lxml.html``.  It is based on lxml's HTML parser,
+but provides a special Element API for HTML elements, as well as a
+number of utilities for common HTML processing tasks.
 
 .. contents::
 .. 
