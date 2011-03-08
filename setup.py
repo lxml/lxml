@@ -62,6 +62,29 @@ if versioninfo.is_pre_release():
 
 extra_options.update(setupinfo.extra_setup_args())
 
+# FIXME: make this work with Py2.3
+## if sys.version_info < (2,4):
+##     extra_options['data_files'] = [
+##         (os.path.dirname(os.path.join(install_base_dir, pattern)),
+##          [ f for f in glob.glob(pattern) ])
+##         for pattern in patterns
+##         ]
+## else:
+extra_options['package_data'] = {
+    'lxml': [
+        'etreepublic.pxd',
+        'tree.pxd',
+        'etree_defs.h'
+        ],
+    'lxml.isoschematron':  [
+        'resources/rng/iso-schematron.rng',
+        'resources/xsl/*.xsl', 
+        'resources/xsl/iso-schematron-xslt1/*.xsl',
+        'resources/xsl/iso-schematron-xslt1/readme.txt'
+        ],
+    }
+
+
 setup(
     name = "lxml",
     version = versioninfo.version(),
@@ -122,11 +145,6 @@ an appropriate version of Cython installed.
 
     package_dir = {'': 'src'},
     packages = ['lxml', 'lxml.html', 'lxml.isoschematron'],
-    package_data = {'lxml.isoschematron':
-                    ['resources/rng/iso-schematron.rng',
-                     'resources/xsl/*.xsl', 
-                     'resources/xsl/iso-schematron-xslt1/*.xsl',
-                     'resources/xsl/iso-schematron-xslt1/readme.txt']},
     ext_modules = setupinfo.ext_modules(
         STATIC_INCLUDE_DIRS, STATIC_LIBRARY_DIRS,
         STATIC_CFLAGS, STATIC_BINARIES),
