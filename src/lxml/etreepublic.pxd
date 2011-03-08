@@ -1,7 +1,6 @@
 # public Pyrex/C interface to lxml.etree
 
 cimport tree
-cimport python
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)
