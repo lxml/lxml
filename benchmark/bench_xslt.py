@@ -1,6 +1,5 @@
 import sys, copy
 from itertools import *
-from StringIO import StringIO
 
 import benchbase
 from benchbase import with_attributes, with_text, onlylib, serialized
