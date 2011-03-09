@@ -40,9 +40,9 @@ answered in the FAQ_.
 
 For commercial consulting and customisations, please `contact Stefan Behnel`_.
 
-.. _`contact Stefan Behnel`: http://scoder.behnel.de/
-.. _libxml2: http://xmlsoft.org
-.. _libxslt: http://xmlsoft.org/XSLT
+.. _`contact Stefan Behnel`: http://consulting.behnel.de/
+.. _libxml2: http://xmlsoft.org/
+.. _libxslt: http://xmlsoft.org/XSLT/
 
 .. _introduction: intro.html
 .. _FAQ:          FAQ.html
@@ -144,7 +144,7 @@ external C modules, including fast custom element class support.
 .. _`objectify and etree`: FAQ.html#what-is-the-difference-between-lxml-etree-and-lxml-objectify
 .. _`EuroPython 2008 talk`: s5/lxml-ep2008.html
 
-.. _XPath: http://www.w3.org/TR/xpath
+.. _XPath: http://www.w3.org/TR/xpath/
 .. _`Relax NG`: http://www.relaxng.org/
 .. _`XML Schema`: http://www.w3.org/XML/Schema
 .. _`XSLT`: http://www.w3.org/TR/xslt
