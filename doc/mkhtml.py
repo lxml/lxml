@@ -56,7 +56,12 @@ def build_menu_entry(page_title, url, section_head, headings=None):
         subul = SubElement(title, "ul", {"class":"submenu"})
         for heading in headings:
             li = SubElement(subul, "li", {"class":"menu item"})
-            ref = '-'.join(find_words(replace_invalid(' ', heading.lower())))
+            try:
+                ref = heading.getparent().getparent().get('id')
+            except AttributeError:
+                ref = None
+            if ref is None:
+                ref = '-'.join(find_words(replace_invalid(' ', heading.lower())))
             a  = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 
