@@ -81,12 +81,13 @@ administrator)::
 Building lxml from sources
 --------------------------
 
-If you want to build lxml from SVN you should read `how to build lxml
-from source`_ (or the file ``doc/build.txt`` in the source tree).
-Building from Subversion sources or from modified distribution sources
-requires Cython_ to translate the lxml sources into C code.  The
-source distribution ships with pre-generated C source files, so you do
-not need Cython installed to build from release sources.
+If you want to build lxml from the Githup repository, you should read
+`how to build lxml from source`_ (or the file ``doc/build.txt`` in the
+source tree).  Building from developer sources or from modified
+distribution sources requires Cython_ to translate the lxml sources
+into C code.  The source distribution ships with pre-generated C
+source files, so you do not need Cython installed to build from
+release sources.
 
 .. _Cython: http://www.cython.org
 .. _`how to build lxml from source`: build.html

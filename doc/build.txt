@@ -13,7 +13,7 @@ script called ``ez_setup.py`` that can be used to install them.
 .. contents::
 ..
    1  Cython
-   2  Subversion
+   2  Github, git and hg
    3  Setuptools
    4  Running the tests and reporting errors
    5  Building an egg
@@ -41,10 +41,10 @@ So, if you want a reliable build of lxml, we suggest to a) use a
 source release of lxml and b) disable or uninstall Cython for the
 build.
 
-*Only* if you are interested in building lxml from a Subversion
-checkout (e.g. to test a bug fix that has not been release yet) or if
-you want to be an lxml developer, then you do need a working Cython
-installation.  You can use EasyInstall_ to install it::
+*Only* if you are interested in building lxml from a checkout of the
+developer sources (e.g. to test a bug fix that has not been release
+yet) or if you want to be an lxml developer, then you do need a
+working Cython installation.  You can use EasyInstall_ to install it::
 
     easy_install "Cython>=0.14.1"
 
@@ -52,28 +52,33 @@ lxml currently requires Cython 0.14.1, later release versions should
 work as well.
 
 
-Subversion
-----------
+Github, git and hg
+-------------------
 
-The lxml package is developed in a Subversion repository.  You can retrieve
-the current developer version by calling::
+The lxml package is developed in a repository on Github_ using
+Mercurial_ and the `hg-git`_ plugin.  You can retrieve the current
+developer version using::
 
-  svn co http://codespeak.net/svn/lxml/trunk lxml
+  hg clone git://github.com/lxml/lxml.git lxml
 
-This will create a directory ``lxml`` and download the source into it.
-You can also browse the `Subversion repository`_ through the web, use
-your favourite SVN client to access it, or browse the `Subversion
-history`_.
+This will create a directory ``lxml`` and download the source into it,
+including the complete development history.  Don't be afraid, the
+download is fairly quick.  You can also browse the `lxml repository`_
+through the web.
 
-.. _`Subversion repository`: http://codespeak.net/svn/lxml/
-.. _`Subversion history`: https://codespeak.net/viewvc/lxml/
+.. _Github: https://github.com/lxml/
+.. _Mercurial: http://mercurial.selenic.com/
+.. _`hg-git`: http://hg-git.github.com/
+.. _`lxml repository`: https://github.com/lxml/lxml
+.. _`source tar-ball`: https://github.com/lxml/lxml/tarball/master
 
 
 Setuptools
 ----------
 
-Usually, building lxml is done through setuptools.  Do a Subversion checkout
-(or download the source tar-ball and unpack it) and then type::
+Usually, building lxml is done through setuptools.  Clone the source
+repository as described above (or download the `source tar-ball`_ and
+unpack it) and then type::
 
   python setup.py build
 
@@ -90,9 +95,12 @@ or, in Unix-like environments::
 
   make
 
-If you get errors about missing header files (e.g. ``libxml/xmlversion.h``)
-then you need to make sure the development packages of both libxml2
-and libxslt are properly installed.  Try passing the following option to
+If you get errors about missing header files (e.g. ``Python.h`` or
+``libxml/xmlversion.h``) then you need to make sure the development
+packages of Python, libxml2 and libxslt are properly installed.  On
+Linux distributions, they are usually called something like
+``libxml2-dev`` or ``libxslt-devel``.  If these packages were
+installed in non-standard places, try passing the following option to
 setup.py to make sure the right config is found::
 
   python setup.py build --with-xslt-config=/path/to/xslt-config
@@ -115,15 +123,16 @@ with it::
   >>> from lxml import etree
   >>>
 
-To recompile after changes, note that you may have to run ``make clean`` or
-delete the file ``src/lxml/etree.c``.  Distutils do not automatically pick up
-changes that affect files other than the main file ``src/lxml/etree.pyx``.
+To make sure everything gets recompiled cleanly after changes, you can
+run ``make clean`` or delete the file ``src/lxml/etree.c``.  Distutils
+do not automatically pick up changes that affect files other than the
+main file ``src/lxml/etree.pyx``.
 
 
 Running the tests and reporting errors
 --------------------------------------
 
-The source distribution (tgz) and the Subversion repository contain a test
+The source distribution (tgz) and the source repository contain a test
 suite for lxml.  You can run it from the top-level directory::
 
   python test.py
