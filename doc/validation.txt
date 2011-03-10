@@ -360,6 +360,7 @@ validators'.  Pass an Element or ElementTree object to construct a Schematron
 validator:
 
 .. sourcecode:: pycon
+
   >>> from lxml import isoschematron
   >>> f = StringIO('''\
   ... <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
