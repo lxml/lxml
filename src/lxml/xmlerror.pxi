@@ -133,11 +133,14 @@ cdef class _BaseErrorLog:
     def __repr__(self):
         return u''
 
+    cpdef receive(self, _LogEntry entry):
+        pass
+
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef bint is_error
         cdef _LogEntry entry
         cdef _BaseErrorLog global_log
-        entry = _LogEntry()
+        entry = _LogEntry.__new__(_LogEntry)
         entry._setError(error)
         is_error = error.level == xmlerror.XML_ERR_ERROR or \
                    error.level == xmlerror.XML_ERR_FATAL
@@ -155,7 +158,7 @@ cdef class _BaseErrorLog:
         cdef bint is_error
         cdef _LogEntry entry
         cdef _BaseErrorLog global_log
-        entry = _LogEntry()
+        entry = _LogEntry.__new__(_LogEntry)
         entry._setGeneric(domain, type, level, line, message, filename)
         is_error = level == xmlerror.XML_ERR_ERROR or \
                    level == xmlerror.XML_ERR_FATAL
@@ -348,7 +351,7 @@ cdef class _ErrorLog(_ListErrorLog):
     def __iter__(self):
         return iter(self._entries[:])
 
-    def receive(self, entry):
+    cpdef receive(self, _LogEntry entry):
         if self._first_error is None:
             self._first_error = entry
         self._entries.append(entry)
@@ -358,7 +361,7 @@ cdef class _DomainErrorLog(_ErrorLog):
         _ErrorLog.__init__(self)
         self._accepted_domains = tuple(domains)
 
-    def receive(self, entry):
+    cpdef receive(self, _LogEntry entry):
         if entry.domain in self._accepted_domains:
             _ErrorLog.receive(self, entry)
 
@@ -368,7 +371,7 @@ cdef class _RotatingErrorLog(_ErrorLog):
         _ErrorLog.__init__(self)
         self._max_len = max_len
 
-    def receive(self, entry):
+    cpdef receive(self, _LogEntry entry):
         if python.PyList_GET_SIZE(self._entries) > self._max_len:
             del self._entries[0]
         self._entries.append(entry)
@@ -434,7 +437,7 @@ cdef class PyErrorLog(_BaseErrorLog):
             message, *args
             )
 
-    def receive(self, _LogEntry log_entry):
+    cpdef receive(self, _LogEntry log_entry):
         u"""receive(self, log_entry)
 
         Receive a _LogEntry instance from the logging system.  Calls
