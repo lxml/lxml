@@ -127,7 +127,7 @@ cdef class _BaseErrorLog:
         self._first_error = first_error
         self.last_error = last_error
 
-    def copy(self):
+    cpdef copy(self):
         return _BaseErrorLog(self._first_error, self.last_error)
 
     def __repr__(self):
@@ -218,7 +218,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         _BaseErrorLog.__init__(self, first_error, last_error)
         self._entries = entries
 
-    def copy(self):
+    cpdef copy(self):
         u"""Creates a shallow copy of this error log.  Reuses the list of
         entries.
         """
@@ -342,7 +342,7 @@ cdef class _ErrorLog(_ListErrorLog):
         self._first_error = None
         del self._entries[:]
 
-    def copy(self):
+    cpdef copy(self):
         u"""Creates a shallow copy of this error log and the list of entries.
         """
         return _ListErrorLog(self._entries[:], self._first_error,
@@ -415,7 +415,7 @@ cdef class PyErrorLog(_BaseErrorLog):
                 logger = logging.getLogger()
         self._log = logger.log
 
-    def copy(self):
+    cpdef copy(self):
         u"""Dummy method that returns an empty error log.
         """
         return _ListErrorLog([], None, None)
