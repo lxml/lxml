@@ -2769,7 +2769,7 @@ def iselement(element):
     """
     return isinstance(element, _Element) and (<_Element>element)._c_node is not NULL
 
-def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
+def dump(_Element elem not None, *, bint pretty_print=True, bint with_tail=True):
     u"""dump(elem, pretty_print=True, with_tail=True)
 
     Writes an element tree or element structure to sys.stdout. This function
@@ -2779,9 +2779,9 @@ def dump(_Element elem not None, *, pretty_print=True, with_tail=True):
     _dumpToFile(sys.stdout, elem._c_node, pretty_print, with_tail)
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
-             xml_declaration=None, pretty_print=False, with_tail=True,
+             xml_declaration=None, bint pretty_print=False, bint with_tail=True,
              standalone=None, doctype=None,
-             exclusive=False, with_comments=True):
+             bint exclusive=False, bint with_comments=True):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
                  standalone=None, doctype=None,
@@ -2879,8 +2879,8 @@ def tostringlist(element_or_tree, *args, **kwargs):
     """
     return [tostring(element_or_tree, *args, **kwargs)]
 
-def tounicode(element_or_tree, *, method=u"xml", pretty_print=False,
-              with_tail=True, doctype=None):
+def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
+              bint with_tail=True, doctype=None):
     u"""tounicode(element_or_tree, method="xml", pretty_print=False,
                   with_tail=True, doctype=None)
 
