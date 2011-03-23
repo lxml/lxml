@@ -11,6 +11,12 @@ Features added
 Bugs fixed
 ----------
 
+* In lxml.cssselect, use the xpath 'A//B' (short for
+  'A/descendant-or-self::node()/B') instead of 'A/descendant::B' for the css
+  descendant selector ('A B'). This makes a few edge cases to be consistent
+  with the selector behavior in WebKit and Firefox, and makes more css
+  expressions valid location paths (for use in xsl:template match).
+
 * In lxml.html, non-selected ``<option>`` tags no longer show up in the
   collected form values.
 

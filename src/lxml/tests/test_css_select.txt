@@ -112,7 +112,7 @@ Now, the tests:
     >>> pcss('li div:only-child')
     li-div
     >>> pcss('div *:only-child')
-    foobar-span
+    li-div, foobar-span
     >>> pcss('p *:only-of-type')
     Traceback (most recent call last):
         ...
@@ -146,5 +146,7 @@ Now, the tests:
     tag-anchor, nofollow-anchor
     >>> pcss('a[rel="tag"] ~ a')
     nofollow-anchor
-    >>> pcss('ol#first-ol li:last-child', 'ol#first-ol *:last-child')
+    >>> pcss('ol#first-ol li:last-child')
     seventh-li
+    >>> pcss('ol#first-ol *:last-child')
+    li-div, seventh-li
