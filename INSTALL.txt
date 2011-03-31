@@ -8,10 +8,11 @@ MacOS-X, see the specific sections below.
 ..
    1  Requirements
    2  Installation
-   3  Building lxml from sources
-   4  Using lxml with python-libxml2
-   5  MS Windows
-   6  MacOS-X
+   3  Installation in ActivePython
+   4  Building lxml from sources
+   5  Using lxml with python-libxml2
+   6  MS Windows
+   7  MacOS-X
 
 
 Requirements
@@ -77,6 +78,25 @@ administrator)::
 
 .. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
+Installation in ActivePython
+----------------------------
+
+ActiveState_ provides up-to-date and ready-made lxml packages for Windows,
+MacOSX and Linux via its PyPM_ package manager. To install lxml in
+ActivePython_, run the following:
+
+    $ pypm install lxml
+
+To test the installation, try:
+
+    $ python -c "import lxml; print(lxml.__file__)"
+
+This will show you the directory where lxml was installed.
+
+_ActiveState: http://www.activestate.com/
+_ActivePython: http://www.activestate.com/activepython/downloads
+_PyPM: http://code.activestate.com/pypm/lxml/
+
 
 Building lxml from sources
 --------------------------
@@ -125,10 +145,11 @@ packages, too.
 MS Windows
 ----------
 
-For MS Windows, the `binary egg distribution of lxml`_ is statically
-built against the libraries, i.e. it already includes them.  There is
-no need to install the external libraries if you use an official lxml
-build from PyPI.
+For MS Windows, the `binary egg distribution of lxml`_ is statically built
+against the libraries, i.e. it already includes them.  There is no need to
+install the external libraries if you use an official lxml build from PyPI. This
+is true for the ActivePython packages as well (see the `Installation in
+ActivePython` section above).
 
 Unless you know what you are doing, this means: *do not install
 libxml2 or libxslt if you use a binary build of lxml*.  Just use
@@ -140,7 +161,7 @@ libxslt.  You need both libxml2 and libxslt, as well as iconv and
 zlib.
 
 .. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
-.. _`binary egg distribution of lxml`: http://cheeseshop.python.org/pypi/lxml
+.. _`binary egg distribution of lxml`: http://pypi.python.org/pypi/lxml
 
 
 MacOS-X
