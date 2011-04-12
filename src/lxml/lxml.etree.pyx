@@ -2467,8 +2467,9 @@ cdef class ElementDepthFirstIterator(_ElementTagMatcher):
         return current_node
 
     cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
+        cdef int node_type = self._node_type
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
-        if self._node_type == 0 or self._node_type == c_node.type:
+        if node_type == 0 or node_type == c_node.type:
             return c_node
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
