@@ -3,6 +3,7 @@ import os.path
 import re, gc, sys
 
 from lxml import etree
+from lxml import html
 
 def make_version_tuple(version_string):
     l = []
