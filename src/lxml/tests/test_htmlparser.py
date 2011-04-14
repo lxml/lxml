@@ -47,7 +47,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_tostring(self):
         element = self.etree.HTML(self.html_str)
-        self.assertEquals(html.tostring(element, method="xml",
+        self.assertEquals(html.tostring(element, method="html",
                                         encoding='utf-8',
                                         include_meta_content_type=True,),
                           self.html_str_with_utf8_meta)
