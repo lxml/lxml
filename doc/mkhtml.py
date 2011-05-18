@@ -1,5 +1,5 @@
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
-from lxml.etree import (parse, fromstring, ElementTree,
+from lxml.etree import (parse, fromstring, tostring, ElementTree,
                         Element, SubElement, XPath, XML)
 import os, shutil, re, sys, copy, time
 
@@ -83,6 +83,27 @@ def merge_menu(tree, menu, name):
                         replace("foreign", "current"))
     return tree
 
+def inject_flatter_button(tree):
+    head = tree.xpath('h:head[1]', namespaces=htmlnsmap)[0]
+    script = SubElement(head, '{%s}script' % XHTML_NS, type='text/javascript')
+    script.text = """
+    (function() {
+        var s = document.createElement('script');
+        var t = document.getElementsByTagName('script')[0];
+        s.type = 'text/javascript';
+        s.async = true;
+        s.src = 'http://api.flattr.com/js/0.6/load.js?mode=auto';
+        t.parentNode.insertBefore(s, t);
+    })();
+"""
+    script.tail = '\n'
+    intro_div = tree.xpath('h:body//h:div[@id = "introduction"][1]', namespaces=htmlnsmap)[0]
+    intro_div.insert(-1, XML('''<p style="text-align: right;">Support this project
+    through <a href="http://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit">Flattr</a><br/>
+    <a class="FlattrButton" style="display:none;" rev="flattr;button:compact;" href="http://lxml.de/"></a>
+    </p>
+    '''))
+
 def rest2html(script, source_path, dest_path, stylesheet_url):
     command = ('%s %s %s --stylesheet=%s --link-stylesheet %s > %s' %
                (sys.executable, script, RST2HTML_OPTIONS,
@@ -159,6 +180,9 @@ def publish(dirname, lxml_path, release):
 
     # integrate sitemap into the menu
     SubElement(SubElement(menu[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
+
+    # inject flattr button
+    inject_flatter_button(trees['main.txt'][0])
 
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
