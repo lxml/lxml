@@ -14,7 +14,7 @@ except ImportError:
 from lxml import etree
 from lxml.html import defs
 from lxml.html import fromstring, tostring, XHTML_NAMESPACE
-from lxml.html import _nons, _transform_result
+from lxml.html import xhtml_to_html, _transform_result
 
 try:
     set
@@ -234,10 +234,7 @@ class Cleaner(object):
             # ElementTree instance, instead of an element
             doc = doc.getroot()
         # convert XHTML to HTML
-        for el in doc.iter():
-            tag = el.tag
-            if isinstance(tag, basestring):
-                el.tag = _nons(tag)
+        xhtml_to_html(doc)
         # Normalize a case that IE treats <image> like <img>, and that
         # can confuse either this step or later steps.
         for el in doc.iter('image'):
