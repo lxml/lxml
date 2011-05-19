@@ -367,6 +367,7 @@ class Cleaner(object):
                 el.tag = 'div'
             el.clear()
 
+        _kill.reverse() # start with innermost tags
         for el in _kill:
             el.drop_tree()
         for el in _remove:
@@ -383,8 +384,13 @@ class Cleaner(object):
             for el in doc.iter():
                 if el.tag not in allow_tags:
                     bad.append(el)
-            for el in bad:
-                el.drop_tag()
+            if bad:
+                if bad[0] is doc:
+                    el = bad.pop(0)
+                    el.tag = 'div'
+                    el.attrib.clear()
+                for el in bad:
+                    el.drop_tag()
         if self.add_nofollow:
             for el in _find_external_links(doc):
                 if not self.allow_follow(el):
