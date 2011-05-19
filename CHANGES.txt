@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Assertion error in lxml.html.cleaner when discarding top-level elements.
+
 * In lxml.cssselect, use the xpath 'A//B' (short for
   'A/descendant-or-self::node()/B') instead of 'A/descendant::B' for the css
   descendant selector ('A B'). This makes a few edge cases to be consistent
