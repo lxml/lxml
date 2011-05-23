@@ -12,6 +12,7 @@ cdef class _InputDocument:
     cdef object _data_bytes
     cdef object _filename
     cdef object _file
+    cdef bint _close_file
 
     def __cinit__(self):
         self._type = PARSER_DATA_INVALID
@@ -77,14 +78,15 @@ cdef class Resolver:
         doc_ref._filename = _encodeFilename(filename)
         return doc_ref
 
-    def resolve_file(self, f, context, *, base_url=None):
-        u"""resolve_file(self, f, context, base_url=None)
+    def resolve_file(self, f, context, *, base_url=None, bint close=True):
+        u"""resolve_file(self, f, context, base_url=None, close=True)
 
         Return an open file-like object as input document.
 
         Pass open file and context as parameters.  You can pass the
         base URL or filename of the file through the ``base_url``
-        keyword argument.
+        keyword argument.  If the ``close`` flag is True (the
+        default), the file will be closed after reading.
 
         Note that using ``.resolve_filename()`` is more efficient,
         especially in threaded environments.
@@ -100,6 +102,7 @@ cdef class Resolver:
             doc_ref._filename = _encodeFilename(base_url)
         else:
             doc_ref._filename = _getFilenameForFile(f)
+        doc_ref._close_file = close
         doc_ref._file = f
         return doc_ref
 

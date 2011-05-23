@@ -265,10 +265,12 @@ cdef class _FileReaderContext:
     cdef _ExceptionContext _exc_context
     cdef Py_ssize_t _bytes_read
     cdef char* _c_url
+    cdef bint _close_file
 
-    def __cinit__(self, filelike, exc_context, url, encoding):
+    def __cinit__(self, filelike, exc_context, url, encoding=None, bint close_file=False):
         self._exc_context = exc_context
         self._filelike = filelike
+        self._close_file = close_file
         self._encoding = encoding
         if url is None:
             self._c_url = NULL
@@ -280,7 +282,7 @@ cdef class _FileReaderContext:
         self._bytes_read = 0
 
     cdef _close_file(self):
-        if self._filelike is None:
+        if self._filelike is None or not self._close_file:
             return
         try:
             close = self._filelike.close
@@ -459,7 +461,8 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             c_input = xmlparser.xmlNewInputFromFile(
                 c_context, _cstr(doc_ref._filename))
         elif doc_ref._type == PARSER_DATA_FILE:
-            file_context = _FileReaderContext(doc_ref._file, context, url, None)
+            file_context = _FileReaderContext(doc_ref._file, context, url,
+                                              None, doc_ref._close_file)
             c_input = file_context._createParserInput(c_context)
             data = file_context
         else:

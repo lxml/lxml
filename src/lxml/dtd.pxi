@@ -105,7 +105,7 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     cdef _ErrorLog error_log
     cdef tree.xmlDtd* c_dtd
     exc_context = _ExceptionContext()
-    dtd_parser = _FileReaderContext(file, exc_context, None, None)
+    dtd_parser = _FileReaderContext(file, exc_context, None)
     error_log = _ErrorLog()
 
     error_log.connect()

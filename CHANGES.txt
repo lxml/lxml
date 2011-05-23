@@ -8,8 +8,19 @@ Under development
 Features added
 --------------
 
+* ``Resolver.resolve_file()`` takes an additional option
+  ``close_file`` that configures if the file(-like) object will be
+  closed after reading or not.  By default, the file will be closed,
+  as the user is not expected to keep a reference to it.
+
 Bugs fixed
 ----------
+
+* When an open file-like object is passed into ``parse()`` or
+  ``iterparse()``, the parser will no longer close it after use.  This
+  reverts a change in lxml 2.3 where all files would be closed.  It is
+  the users responsibility to properly close the file(-like) object,
+  also in error cases.
 
 * Assertion error in lxml.html.cleaner when discarding top-level elements.
 
