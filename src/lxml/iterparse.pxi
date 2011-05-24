@@ -477,10 +477,10 @@ cdef class iterparse(_BaseParser):
             raise StopIteration
 
         context = <_IterparseContext>self._push_parser_context
-        if python.PyList_GET_SIZE(context._events) <= context._event_index:
+        events = context._events
+        if len(events) <= context._event_index:
             self._read_more_events(context)
-        item = python.PyList_GET_ITEM(context._events, context._event_index)
-        python.Py_INCREF(item) # 'borrowed reference' from PyList_GET_ITEM
+        item = events[context._event_index]
         context._event_index += 1
         return item
 
@@ -491,10 +491,11 @@ cdef class iterparse(_BaseParser):
         cdef xmlparser.xmlParserCtxt* pctxt = context._c_ctxt
         cdef int error = 0, done = 0
 
-        del context._events[:]
+        events = context._events
+        del events[:]
         context._event_index = 0
         c_stream = python.PyFile_AsFile(self._source)
-        while python.PyList_GET_SIZE(context._events) == 0:
+        while not events:
             if c_stream is NULL:
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
                 if not python.PyBytes_Check(data):
@@ -528,10 +529,10 @@ cdef class iterparse(_BaseParser):
             error = not context._validator.isvalid()
         if error:
             self._close_source()
-            del context._events[:]
+            del events[:]
             context._assureDocGetsFreed()
             _raiseParseError(pctxt, self._filename, context._error_log)
-        if python.PyList_GET_SIZE(context._events) == 0:
+        if not events:
             self.root = context._root
             self._close_source()
             raise StopIteration
