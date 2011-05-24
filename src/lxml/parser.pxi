@@ -265,12 +265,12 @@ cdef class _FileReaderContext:
     cdef _ExceptionContext _exc_context
     cdef Py_ssize_t _bytes_read
     cdef char* _c_url
-    cdef bint _close_file
+    cdef bint _close_file_after_read
 
     def __cinit__(self, filelike, exc_context, url, encoding=None, bint close_file=False):
         self._exc_context = exc_context
         self._filelike = filelike
-        self._close_file = close_file
+        self._close_file_after_read = close_file
         self._encoding = encoding
         if url is None:
             self._c_url = NULL
@@ -282,7 +282,7 @@ cdef class _FileReaderContext:
         self._bytes_read = 0
 
     cdef _close_file(self):
-        if self._filelike is None or not self._close_file:
+        if self._filelike is None or not self._close_file_after_read:
             return
         try:
             close = self._filelike.close
