@@ -109,7 +109,10 @@ class ETreeRelaxNGTestCase(HelperTestCase):
         # this will only work if we access the file through path or
         # file object..
         f = open(fileInTestDir('test1.rng'), 'rb')
-        schema = etree.RelaxNG(file=f)
+        try:
+            schema = etree.RelaxNG(file=f)
+        finally:
+            f.close()
 
     def test_relaxng_shortcut(self):
         tree_valid = self.parse('<a><b></b></a>')
