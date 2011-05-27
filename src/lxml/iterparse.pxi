@@ -72,18 +72,14 @@ cdef class _IterparseContext(_ParserContext):
     cdef list _events
     cdef int _event_index
     cdef list _ns_stack
-    cdef object _pop_ns
     cdef list _node_stack
-    cdef object _pop_node
     cdef tuple _tag_tuple
     cdef char*  _tag_href
     cdef char*  _tag_name
 
     def __cinit__(self):
         self._ns_stack = []
-        self._pop_ns = self._ns_stack.pop
         self._node_stack = []
-        self._pop_node = self._node_stack.pop
         self._events = []
         self._event_index = 0
 
@@ -169,7 +165,7 @@ cdef class _IterparseContext(_ParserContext):
                 if self._event_filter & (ITERPARSE_FILTER_START | \
                                          ITERPARSE_FILTER_START_NS | \
                                          ITERPARSE_FILTER_END_NS):
-                    node = self._pop_node()
+                    node = self._node_stack.pop()
                 else:
                     if self._root is None:
                         if self._doc is None:
@@ -179,7 +175,7 @@ cdef class _IterparseContext(_ParserContext):
                 self._events.append( (u"end", node) )
 
         if self._event_filter & ITERPARSE_FILTER_END_NS:
-            ns_count = self._pop_ns()
+            ns_count = self._ns_stack.pop()
             if ns_count > 0:
                 event = (u"end-ns", None)
                 for i from 0 <= i < ns_count:
@@ -545,7 +541,6 @@ cdef class iterwalk:
     was parsing XML data with ``iterparse()``.
     """
     cdef list   _node_stack
-    cdef object _pop_node
     cdef int    _index
     cdef list   _events
     cdef object _pop_event
@@ -561,7 +556,6 @@ cdef class iterwalk:
         self._event_filter = _buildIterparseEventFilter(events)
         self._setTagFilter(tag)
         self._node_stack  = []
-        self._pop_node = self._node_stack.pop
         self._events = []
         self._pop_event = self._events.pop
 
@@ -648,7 +642,7 @@ cdef class iterwalk:
     cdef _Element _end_node(self):
         cdef _Element node
         cdef int i, ns_count
-        node, ns_count = self._pop_node()
+        node, ns_count = self._node_stack.pop()
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \
                    _tagMatches(node._c_node, self._tag_href, self._tag_name):
