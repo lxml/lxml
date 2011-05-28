@@ -12,6 +12,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
+from common_imports import html
 from common_imports import SillyFileLike, HelperTestCase, write_to_file
 
 try:
@@ -25,6 +26,7 @@ class HtmlParserTestCase(HelperTestCase):
     etree = etree
 
     html_str = _bytes("<html><head><title>test</title></head><body><h1>page title</h1></body></html>")
+    html_str_with_utf8_meta = _bytes('<html><head><meta http-equiv="Content-Type" content="text/html charset=utf-8"/><title>test</title></head><body><h1>page title</h1></body></html>')
     html_str_pretty = _bytes("""\
 <html>
 <head><title>test</title></head>
@@ -42,6 +44,13 @@ class HtmlParserTestCase(HelperTestCase):
         element = self.etree.HTML(self.html_str)
         self.assertEqual(self.etree.tostring(element, method="html"),
                          self.html_str)
+
+    def test_html_tostring(self):
+        element = self.etree.HTML(self.html_str)
+        self.assertEquals(html.tostring(element, method="html",
+                                        encoding='utf-8',
+                                        include_meta_content_type=True,),
+                          self.html_str_with_utf8_meta)
 
     def test_module_HTML_unicode(self):
         element = self.etree.HTML(self.uhtml_str)
