@@ -377,7 +377,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         c_node = c_element
         while c_node is not NULL:
             if c_node.ns is not NULL:
-                for i from 0 <= i < c_ns_list_len:
+                for i in range(c_ns_list_len):
                     if c_node.ns is c_ns_list[i].ns:
                         c_ns_list_len -= 1
                         c_ns_list[i].ns   = c_ns_list[c_ns_list_len].ns
@@ -396,7 +396,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         return 0
 
     # free all namespace declarations that remained in the list
-    for i from 0 <= i < c_ns_list_len:
+    for i in range(c_ns_list_len):
         c_node = c_ns_list[i].node
         c_nsdef = c_node.nsDef
         if c_nsdef is c_ns_list[i].ns:
@@ -840,7 +840,7 @@ cdef inline xmlNode* _findChildForwards(xmlNode* c_node, Py_ssize_t index):
         if _isElement(c_child):
             if c == index:
                 return c_child
-            c = c + 1
+            c += 1
         c_child = c_child.next
     return NULL
 
@@ -856,7 +856,7 @@ cdef inline xmlNode* _findChildBackwards(xmlNode* c_node, Py_ssize_t index):
         if _isElement(c_child):
             if c == index:
                 return c_child
-            c = c + 1
+            c += 1
         c_child = c_child.prev
     return NULL
     
@@ -1089,10 +1089,10 @@ cdef int _deleteSlice(_Document doc, xmlNode* c_node,
     c = 0
     c_next = c_node
     while c_node is not NULL and c < count:
-        for i from 0 <= i < step:
+        for i in range(step):
             c_next = next_element(c_next)
         _removeNode(doc, c_node)
-        c = c + 1
+        c += 1
         c_node = c_next
     return 0
 
@@ -1155,10 +1155,10 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     c = 0
     c_next = c_node
     while c_node is not NULL and c < slicelength:
-        for i from 0 <= i < step:
+        for i in range(step):
             c_next = next_element(c_next)
         _removeNode(parent._doc, c_node)
-        c = c + 1
+        c += 1
         c_node = c_next
 
     # make sure each element is inserted only once
@@ -1179,15 +1179,15 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
             _appendChild(parent, element)
             c_node = element._c_node
             if slicelength > 0:
-                slicelength = slicelength - 1
-                for i from 1 <= i < step:
+                slicelength -= 1
+                for i in range(step):
                     c_node = next_element(c_node)
             break
 
     if left_to_right:
         # adjust step size after removing slice as we are not stepping
         # over the newly inserted elements
-        step = step - 1
+        step -= 1
 
     # now insert elements where we removed them
     if c_node is not NULL:
@@ -1206,7 +1206,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
             # stop at the end of the slice
             if slicelength > 0:
                 slicelength = slicelength - 1
-                for i from 0 <= i < step:
+                for i in range(step):
                     c_node = next_element(c_node)
                 if c_node is NULL:
                     break
