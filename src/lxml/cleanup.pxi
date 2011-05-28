@@ -105,7 +105,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     cdef list ns_tags
     cdef char** c_ns_tags
     cdef Py_ssize_t c_tag_count
-    cdef bint strip_comments, strip_pis, strip_entities
+    cdef bint strip_comments = 0, strip_pis = 0, strip_entities = 0
 
     doc = _documentOrRaise(tree_or_element)
     element = _rootNodeOrRaise(tree_or_element)
@@ -194,7 +194,7 @@ def strip_tags(tree_or_element, *tag_names):
     cdef _Element element
     cdef _Document doc
     cdef list ns_tags
-    cdef bint strip_comments, strip_pis, strip_entities
+    cdef bint strip_comments = 0, strip_pis = 0, strip_entities = 0
     cdef char** c_ns_tags
     cdef Py_ssize_t c_tag_count
 

@@ -101,8 +101,8 @@ cdef class _ReadOnlyProxy:
         u"""Returns the subelement at the given position or the requested
         slice.
         """
-        cdef xmlNode* c_node
-        cdef Py_ssize_t step, slicelength
+        cdef xmlNode* c_node = NULL
+        cdef Py_ssize_t step = 0, slicelength = 0
         cdef Py_ssize_t c, i
         cdef _node_to_node_function next_element
         cdef list result

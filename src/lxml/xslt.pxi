@@ -128,7 +128,7 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
     cdef xmlDoc* c_doc
     cdef xmlDoc* result
     cdef void* c_pcontext
-    cdef int error
+    cdef int error = 0
     # find resolver contexts of stylesheet and transformed doc
     if c_type == xslt.XSLT_LOAD_DOCUMENT:
         # transformation time
@@ -480,7 +480,7 @@ cdef class XSLT:
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
         cdef tree.xmlDict* c_dict
-        cdef char** params
+        cdef char** params = NULL
 
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
         input_doc = _documentOrRaise(_input)
@@ -697,8 +697,8 @@ cdef class _XSLTResultTree(_ElementTree):
             python.PyErr_NoMemory()
 
     def __str__(self):
-        cdef char* s
-        cdef int l
+        cdef char* s = NULL
+        cdef int l = 0
         if python.IS_PYTHON3:
             return self.__unicode__()
         self._saveToStringAndSize(&s, &l)
@@ -713,8 +713,8 @@ cdef class _XSLTResultTree(_ElementTree):
 
     def __unicode__(self):
         cdef char* encoding
-        cdef char* s
-        cdef int l
+        cdef char* s = NULL
+        cdef int l = 0
         self._saveToStringAndSize(&s, &l)
         if s is NULL:
             return u''
@@ -729,7 +729,7 @@ cdef class _XSLTResultTree(_ElementTree):
         return _stripEncodingDeclaration(result)
 
     def __getbuffer__(self, Py_buffer* buffer, int flags):
-        cdef int l
+        cdef int l = 0
         if buffer is NULL:
             return
         if self._buffer is NULL or flags & python.PyBUF_WRITABLE:

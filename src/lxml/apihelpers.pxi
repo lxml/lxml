@@ -777,7 +777,7 @@ cdef int _findChildSlice(
     Returns the start node, step size and the slice length in the
     pointer arguments.
     """
-    cdef Py_ssize_t start, stop, childcount
+    cdef Py_ssize_t start = 0, stop = 0, childcount
     childcount = _countElements(c_parent.children)
     if childcount == 0:
         c_start_node[0] = NULL
@@ -798,7 +798,7 @@ cdef int _findChildSlice(
 cdef bint _isFullSlice(slice sliceobject):
     u"""Conservative guess if this slice is a full slice as in ``s[:]``.
     """
-    cdef Py_ssize_t step
+    cdef Py_ssize_t step = 0
     if sliceobject is None:
         return 0
     if sliceobject.start is None and \

@@ -601,12 +601,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Replaces the given subelement index or slice.
         """
-        cdef xmlNode* c_node
+        cdef xmlNode* c_node = NULL
         cdef xmlNode* c_next
         cdef xmlDoc* c_source_doc
         cdef _Element element
         cdef bint left_to_right
-        cdef Py_ssize_t slicelength, step
+        cdef Py_ssize_t slicelength = 0, step = 0
         _assertValidNode(self)
         if value is None:
             raise ValueError, u"cannot assign None"
@@ -641,9 +641,9 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Deletes the given subelement or a slice.
         """
-        cdef xmlNode* c_node
+        cdef xmlNode* c_node = NULL
         cdef xmlNode* c_next
-        cdef Py_ssize_t step, slicelength
+        cdef Py_ssize_t step = 0, slicelength = 0
         _assertValidNode(self)
         if python.PySlice_Check(x):
             # slice deletion
@@ -1036,8 +1036,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         u"""Returns the subelement at the given position or the requested
         slice.
         """
-        cdef xmlNode* c_node
-        cdef Py_ssize_t step, slicelength
+        cdef xmlNode* c_node = NULL
+        cdef Py_ssize_t step = 0, slicelength = 0
         cdef Py_ssize_t c, i
         cdef _node_to_node_function next_element
         cdef list result
