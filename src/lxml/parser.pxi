@@ -458,6 +458,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
                 c_input.cur = c_input.base
                 c_input.end = &c_input.base[c_input.length]
         elif doc_ref._type == PARSER_DATA_FILENAME:
+            data = None
             c_input = xmlparser.xmlNewInputFromFile(
                 c_context, _cstr(doc_ref._filename))
         elif doc_ref._type == PARSER_DATA_FILE:

@@ -24,11 +24,11 @@ cdef _Document _documentOrRaise(object input):
     Should be used in all API functions for consistency.
     """
     cdef _Document doc
-    cdef _Element element
     if isinstance(input, _ElementTree):
-        element = (<_ElementTree>input)._context_node
-        if element is not None:
-            doc = element._doc
+        if (<_ElementTree>input)._context_node is not None:
+            doc = (<_ElementTree>input)._context_node._doc
+        else:
+            doc = None
     elif isinstance(input, _Element):
         doc = (<_Element>input)._doc
     elif isinstance(input, _Document):

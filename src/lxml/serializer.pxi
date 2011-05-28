@@ -403,7 +403,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
                  bint pretty_print, bint with_tail, int standalone,
                  int compression):
     cdef python.PyThreadState* state = NULL
-    cdef _FilelikeWriter writer
+    cdef _FilelikeWriter writer = None
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef char* c_enc
@@ -481,7 +481,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 
 cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                      int compression):
-    cdef _FilelikeWriter writer
+    cdef _FilelikeWriter writer = None
     cdef tree.xmlOutputBuffer* c_buffer
     cdef char* c_filename
     cdef xmlDoc* c_base_doc

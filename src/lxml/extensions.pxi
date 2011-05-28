@@ -105,6 +105,8 @@ cdef class _BaseContext:
         cdef _BaseContext context
         if self._namespaces is not None:
             namespaces = self._namespaces[:]
+        else:
+            namespaces = None
         context = self.__class__(namespaces, None, False,
                                  self._build_smart_strings)
         if self._extensions is not None:

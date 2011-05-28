@@ -297,9 +297,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
         else:
             return _Entity
     elif c_node.type == tree.XML_PI_NODE:
-        if state is not None:
-            cls = (<ElementDefaultClassLookup>state).pi_class
-        if cls is None:
+        if state is None or (<ElementDefaultClassLookup>state).pi_class is None:
             # special case XSLT-PI
             if c_node.name is not NULL and c_node.content is not NULL:
                 if cstd.strcmp(c_node.name, "xml-stylesheet") == 0:
@@ -308,7 +306,7 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
         else:
-            return cls
+            return (<ElementDefaultClassLookup>state).pi_class
     else:
         assert 0, u"Unknown node type: %s" % c_node.type
 

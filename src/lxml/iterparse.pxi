@@ -136,7 +136,7 @@ cdef class _IterparseContext(_ParserContext):
 
     cdef int startNode(self, xmlNode* c_node) except -1:
         cdef xmlNs* c_ns
-        cdef int ns_count
+        cdef int ns_count = 0
         if self._event_filter & ITERPARSE_FILTER_START_NS:
             ns_count = _appendStartNsEvents(c_node, self._events)
         elif self._event_filter & ITERPARSE_FILTER_END_NS:

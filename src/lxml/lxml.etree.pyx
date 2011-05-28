@@ -2515,6 +2515,7 @@ cdef class ElementTextIterator:
 
     def __next__(self):
         cdef _Element element
+        result = None
         while result is None:
             event, element = self._nextEvent() # raises StopIteration
             if event == u"start":

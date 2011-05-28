@@ -469,12 +469,12 @@ cdef class XSLT:
         about the XSLT.  The result of the XSLT will have a property
         xslt_profile that holds an XML tree with profiling data.
         """
-        cdef _XSLTContext context
+        cdef _XSLTContext context = None
         cdef _XSLTResolverContext resolver_context
         cdef _Document input_doc
         cdef _Element root_node
         cdef _Document result_doc
-        cdef _Document profile_doc
+        cdef _Document profile_doc = None
         cdef xmlDoc* c_profile_doc
         cdef xslt.xsltTransformContext* transform_ctxt
         cdef xmlDoc* c_result = NULL
@@ -685,6 +685,8 @@ cdef class _XSLTResultTree(_ElementTree):
         cdef int r
         if self._context_node is not None:
             doc = self._context_node._doc
+        else:
+            doc = None
         if doc is None:
             doc = self._doc
             if doc is None:

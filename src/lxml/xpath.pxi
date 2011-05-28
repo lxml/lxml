@@ -77,9 +77,6 @@ cdef class _XPathContext(_BaseContext):
         self._cleanup_context()
 
     cdef void registerExsltFunctions(self):
-        cdef xpath.xmlXPathContext* ctxt = self._xpathCtxt
-        cdef int i
-        cdef char* c_href
         if xslt.LIBXSLT_VERSION < 10125:
             # we'd only execute dummy functions anyway
             return

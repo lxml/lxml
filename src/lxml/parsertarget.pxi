@@ -132,7 +132,7 @@ cdef class _TargetParserContext(_SaxParserContext):
             else:
                 # Python 2 can't chain exceptions
                 try: parse_result = self._python_target.close()
-                except: pass
+                except: parse_result = None
         return parse_result
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
