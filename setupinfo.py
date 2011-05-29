@@ -104,7 +104,11 @@ def ext_modules(static_include_dirs, static_library_dirs,
     else:
         runtime_library_dirs = []
 
-    if not OPTION_SHOW_WARNINGS:
+    if OPTION_SHOW_WARNINGS:
+        if CYTHON_INSTALLED:
+            from Cython.Compiler import Errors
+            Errors.LEVEL = 0
+    else:
         _cflags = ['-w'] + _cflags
 
     result = []
