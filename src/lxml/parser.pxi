@@ -200,7 +200,7 @@ cdef int _checkThreadDict(tree.xmlDict* c_dict):
 # name of Python unicode encoding as known to libxml2
 cdef char* _UNICODE_ENCODING = NULL
 
-cdef void _setupPythonUnicode():
+cdef int _setupPythonUnicode() except -1:
     u"""Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
     strings if libxml2 supports reading native Python unicode.  This depends
     on iconv and the local Python installation, so we simply check if we find
@@ -226,12 +226,13 @@ cdef void _setupPythonUnicode():
             enc = "UTF-16BE"
         else:
             # not my fault, it's YOUR broken system :)
-            return
+            return 0
     enchandler = tree.xmlFindCharEncodingHandler(enc)
     if enchandler is not NULL:
         global _UNICODE_ENCODING
         tree.xmlCharEncCloseFunc(enchandler)
         _UNICODE_ENCODING = enc
+    return 0
 
 cdef char* _findEncodingName(char* buffer, int size):
     u"Work around bug in libxml2: find iconv name of encoding on our own."

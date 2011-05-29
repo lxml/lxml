@@ -212,8 +212,8 @@ cdef class _BaseContext:
             self._extensions = {}
         self._extensions[(ns_utf, name_utf)] = function
 
-    cdef void registerGlobalFunctions(self, void* ctxt,
-                                      _register_function reg_func):
+    cdef registerGlobalFunctions(self, void* ctxt,
+                                 _register_function reg_func):
         cdef python.PyObject* dict_result
         cdef dict d
         for ns_utf, ns_functions in __FUNCTION_NAMESPACE_REGISTRIES.iteritems():
@@ -228,8 +228,8 @@ cdef class _BaseContext:
                 d[name_utf] = function
                 reg_func(ctxt, name_utf, ns_utf)
 
-    cdef void registerLocalFunctions(self, void* ctxt,
-                                      _register_function reg_func):
+    cdef registerLocalFunctions(self, void* ctxt,
+                                _register_function reg_func):
         cdef python.PyObject* dict_result
         cdef dict d
         if self._extensions is None:
