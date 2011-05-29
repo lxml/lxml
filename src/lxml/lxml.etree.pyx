@@ -1129,7 +1129,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c_child = c_child.prev
             while c_child is not NULL:
                 if _isElement(c_child):
-                    k = k + 1
+                    k += 1
                 c_child = c_child.prev
             return k
 
@@ -1157,7 +1157,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             l = 1
             while c_start_node != c_child and l < k:
                 if _isElement(c_start_node):
-                    l = l + 1
+                    l += 1
                 c_start_node = c_start_node.prev
             if c_start_node == c_child:
                 # found! before slice end?
@@ -1173,7 +1173,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             # we can optimize: stop after c_stop elements if not found
             while c_child != NULL and k < c_stop:
                 if _isElement(c_child):
-                    k = k + 1
+                    k += 1
                 c_child = c_child.prev
             if k < c_stop:
                 return k
