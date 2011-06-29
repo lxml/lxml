@@ -1201,6 +1201,13 @@ simple vocabulary for an XML language:
 One such example is the module ``lxml.html.builder``, which provides a
 vocabulary for HTML.
 
+When dealing with multiple namespaces, it is good practice to define
+one ElementMaker for each namespace URI.  Again, note how the above
+example predefines the tag builders in named constants.  That makes it
+easy to put all tag declarations of a namespace into one Python module
+and to import/use the tag name constants from there.  This avoids
+pitfalls like typos or accidentally missing namespaces.
+
 
 ElementPath
 ===========
