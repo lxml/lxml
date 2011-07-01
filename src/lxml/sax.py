@@ -29,10 +29,12 @@ def _getNsTag(tag):
 class ElementTreeContentHandler(ContentHandler):
     """Build an lxml ElementTree from SAX events.
     """
-    def __init__(self, makeelement=None):
-        self._root = None
+    def __init__(self, makeelement=None, root=None):
+        self._root = root
         self._root_siblings = []
         self._element_stack = []
+        if root is not None:
+            self._element_stack.append(self._root)
         self._default_ns = None
         self._ns_mapping = { None : [None] }
         self._new_mappings = {}
@@ -119,7 +121,10 @@ class ElementTreeContentHandler(ContentHandler):
 
     def endElementNS(self, ns_name, qname):
         element = self._element_stack.pop()
-        if ns_name != _getNsTag(element.tag):
+        ns_uri, name = ns_name
+        if ns_uri is None:
+            ns_uri = self._default_ns
+        if (ns_uri, name) != _getNsTag(element.tag):
             raise SaxError("Unexpected element closed: {%s}%s" % ns_name)
 
     def startElement(self, name, attributes=None):
