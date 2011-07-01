@@ -151,6 +151,30 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual('{blaA}c',
                          root[1].tag)
 
+    def test_etree_sax_handler_default_ns_None(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startPrefixMapping(None, 'blaA')
+        handler.startElementNS((None, 'a'), 'a', {})
+        handler.startPrefixMapping(None, 'blaB')
+        handler.startElementNS((None, 'b'), 'b', {})
+        handler.endElementNS(  (None, 'b'), 'b')
+        handler.endPrefixMapping(None)
+        handler.startElementNS((None, 'c'), 'c', {})
+        handler.endElementNS(  (None, 'c'), 'c')
+        handler.endElementNS(  (None, 'a'), 'a')
+        handler.endPrefixMapping(None)
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual('{blaA}a',
+                         root.tag)
+        self.assertEqual('{blaB}b',
+                         root[0].tag)
+        self.assertEqual('{blaA}c',
+                         root[1].tag)
+
     def test_etree_sax_redefine_ns(self):
         handler = sax.ElementTreeContentHandler()
         handler.startDocument()

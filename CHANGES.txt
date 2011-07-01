@@ -16,6 +16,10 @@ Features added
 Bugs fixed
 ----------
 
+* In ``lxml.sax``, ``endElementNS()`` could incorrectly reject a plain
+  tag name when the corresponding start event inferred the same plain
+  tag name to be in the default namespace.
+
 * When an open file-like object is passed into ``parse()`` or
   ``iterparse()``, the parser will no longer close it after use.  This
   reverts a change in lxml 2.3 where all files would be closed.  It is
