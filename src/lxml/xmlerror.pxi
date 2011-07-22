@@ -523,9 +523,9 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     cdef char* c_message
     cdef char* c_element
     cdef int i, text_size, element_size
-    if __DEBUG == 0 or msg is NULL:
+    if not __DEBUG or msg is NULL:
         return
-    if msg[0] == c'\n' or msg[0] == c'\0':
+    if msg[0] in b'\n\0':
         return
 
     cstd.va_start(args, msg)
