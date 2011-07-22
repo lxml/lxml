@@ -117,16 +117,12 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
         raise DTDParseError(u"error parsing DTD", error_log)
     return c_dtd
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef DTD NEW_DTD "PY_NEW" (object t)
-
 cdef DTD _dtdFactory(tree.xmlDtd* c_dtd):
     # do not run through DTD.__init__()!
     cdef DTD dtd
     if c_dtd is NULL:
         return None
-    dtd = NEW_DTD(DTD)
+    dtd = DTD.__new__(DTD)
     dtd._c_dtd = tree.xmlCopyDtd(c_dtd)
     if dtd._c_dtd is NULL:
         python.PyErr_NoMemory()

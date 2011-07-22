@@ -162,7 +162,7 @@ cdef class XMLSchema(_Validator):
     cdef _ParserSchemaValidationContext _newSaxValidator(
             self, bint add_default_attributes):
         cdef _ParserSchemaValidationContext context
-        context = NEW_SCHEMA_CONTEXT(_ParserSchemaValidationContext)
+        context = _ParserSchemaValidationContext.__new__(_ParserSchemaValidationContext)
         context._schema = self
         context._add_default_attributes = (self._has_default_attributes and (
             add_default_attributes or self._add_attribute_defaults))
@@ -218,7 +218,3 @@ cdef class _ParserSchemaValidationContext:
         if self._valid_ctxt is NULL:
             return 1 # valid
         return xmlschema.xmlSchemaIsValid(self._valid_ctxt)
-
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _ParserSchemaValidationContext NEW_SCHEMA_CONTEXT "PY_NEW" (object t)

@@ -644,15 +644,11 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
     params_ptr[0] = params
     return keep_ref
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for instantiation without calling __init__()
-    cdef XSLT NEW_XSLT "PY_NEW" (object t)
-
 cdef XSLT _copyXSLT(XSLT stylesheet):
     cdef XSLT new_xslt
     cdef xmlDoc* c_doc
     assert stylesheet._c_style is not NULL, "XSLT stylesheet not initialised"
-    new_xslt = NEW_XSLT(XSLT) # without calling __init__()
+    new_xslt = XSLT.__new__(XSLT)
     new_xslt._access_control = stylesheet._access_control
     new_xslt._error_log = _ErrorLog()
     new_xslt._context = stylesheet._context._copy()

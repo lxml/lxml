@@ -452,13 +452,9 @@ cdef tuple __initPrefixCache():
 cdef tuple _PREFIX_CACHE
 _PREFIX_CACHE = __initPrefixCache()
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _Document NEW_DOCUMENT "PY_NEW" (object t)
-
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
-    result = NEW_DOCUMENT(_Document)
+    result = _Document.__new__(_Document)
     result._c_doc = c_doc
     result._ns_counter = 0
     result._prefix_tail = None
@@ -891,14 +887,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __get__(self):
             _assertValidNode(self)
             return _Attrib(self)
-            ## cdef python.PyObject* ref
-            ## if self._attrib is not None:
-            ##     ref = python.PyWeakref_GET_OBJECT(self._attrib)
-            ##     if ref is not <python.PyObject*>None:
-            ##         return <object>ref
-            ## attrib = _Attrib(self)
-            ## self._attrib = python.PyWeakref_NewRef(attrib, NULL)
-            ## return attrib
 
     property text:
         u"""Text before the first subelement. This is either a string or 
@@ -2252,11 +2240,6 @@ cdef class _Attrib:
         if not python.PyDict_Check(other):
             other = dict(other)
         return python.PyObject_RichCompare(one, other, op)
-
-
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _Attrib NEW_ATTRIB "PY_NEW" (object t)
 
 
 cdef class _AttribIterator:

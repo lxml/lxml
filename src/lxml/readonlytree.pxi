@@ -310,20 +310,16 @@ cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
         self._assertNode()
         return _collectAttributes(self._c_node, 3)
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _ReadOnlyProxy NEW_RO_PROXY "PY_NEW" (object t)
-
 cdef _ReadOnlyProxy _newReadOnlyProxy(
     _ReadOnlyProxy source_proxy, xmlNode* c_node):
     cdef _ReadOnlyProxy el
     if c_node.type == tree.XML_ELEMENT_NODE:
-        el = NEW_RO_PROXY(_ReadOnlyElementProxy)
+        el = _ReadOnlyElementProxy.__new__(_ReadOnlyElementProxy)
     elif c_node.type == tree.XML_PI_NODE:
-        el = NEW_RO_PROXY(_ReadOnlyPIProxy)
+        el = _ReadOnlyPIProxy.__new__(_ReadOnlyPIProxy)
     elif c_node.type in (tree.XML_COMMENT_NODE,
                          tree.XML_ENTITY_REF_NODE):
-        el = NEW_RO_PROXY(_ReadOnlyProxy)
+        el = _ReadOnlyProxy.__new__(_ReadOnlyProxy)
     else:
         raise TypeError("Unsupported element type: %d" % c_node.type)
     el._c_node = c_node
@@ -395,16 +391,12 @@ cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
         for element in elements:
             self.append(element)
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _OpaqueNodeWrapper NEW_OPAQUE_NODE_PROXY "PY_NEW" (object t)
-
 cdef _OpaqueNodeWrapper _newOpaqueAppendOnlyNodeWrapper(xmlNode* c_node):
     cdef _OpaqueNodeWrapper node
     if c_node.type in (tree.XML_DOCUMENT_NODE, tree.XML_HTML_DOCUMENT_NODE):
-        node = NEW_OPAQUE_NODE_PROXY(_OpaqueDocumentWrapper)
+        node = _OpaqueDocumentWrapper.__new__(_OpaqueDocumentWrapper)
     else:
-        node = NEW_OPAQUE_NODE_PROXY(_OpaqueNodeWrapper)
+        node = _OpaqueNodeWrapper.__new__(_OpaqueNodeWrapper)
     node._c_node = c_node
     return node
 
@@ -505,11 +497,11 @@ cdef _ReadOnlyProxy _newAppendOnlyProxy(
     _ReadOnlyProxy source_proxy, xmlNode* c_node):
     cdef _ReadOnlyProxy el
     if c_node.type == tree.XML_ELEMENT_NODE:
-        el = NEW_RO_PROXY(_AppendOnlyElementProxy)
+        el = _AppendOnlyElementProxy.__new__(_AppendOnlyElementProxy)
     elif c_node.type == tree.XML_PI_NODE:
-        el = NEW_RO_PROXY(_ModifyContentOnlyPIProxy)
+        el = _ModifyContentOnlyPIProxy.__new__(_ModifyContentOnlyPIProxy)
     elif c_node.type == tree.XML_COMMENT_NODE:
-        el = NEW_RO_PROXY(_ModifyContentOnlyProxy)
+        el = _ModifyContentOnlyProxy.__new__(_ModifyContentOnlyProxy)
     else:
         raise TypeError("Unsupported element type: %d" % c_node.type)
     el._c_node = c_node

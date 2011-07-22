@@ -1259,10 +1259,6 @@ cdef _add_text(_Element elem, text):
             text = old + text
         cetree.setNodeText(elem._c_node, text)
 
-cdef extern from "etree_defs.h":
-    # macro call to 't->tp_new()' for fast instantiation
-    cdef _ObjectifyElementMakerCaller NEW_ELEMENT_MAKER "PY_NEW" (object t)
-
 cdef class ElementMaker:
     u"""ElementMaker(self, namespace=None, nsmap=None, annotate=True, makeelement=None)
 
@@ -1308,7 +1304,7 @@ cdef class ElementMaker:
             return object.__getattr__(self, tag)
         if self._namespace is not None and tag[0] != u"{":
             tag = self._namespace + tag
-        element_maker = NEW_ELEMENT_MAKER(_ObjectifyElementMakerCaller)
+        element_maker = _ObjectifyElementMakerCaller.__new__(_ObjectifyElementMakerCaller)
         element_maker._tag = tag
         element_maker._nsmap = self._nsmap
         element_maker._annotate = self._annotate
