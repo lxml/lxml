@@ -187,6 +187,7 @@ not take advantage of lxml's enhanced feature set.
 * Inteproxy_, a secure HTTP proxy
 * lwebstring_, an XML template engine
 * OpenXMLlib_, a library for handling OpenXML document meta data
+* PsychoPy_, psychology software in Python
 * Pycoon_, a WSGI web development framework based on XML pipelines
 * PyQuery_, a query framework for XML/HTML, similar to jQuery for JavaScript
 * `python-docx`_, a package for handling Microsoft's Word OpenXML format
@@ -215,6 +216,7 @@ lxml can provide all three."
 .. _Inteproxy: http://lists.wald.intevation.org/pipermail/inteproxy-devel/2007-February/000000.html
 .. _lwebstring: http://pypi.python.org/pypi/lwebstring
 .. _OpenXMLlib: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
+.. _PsychoPy: http://www.psychopy.org/
 .. _Pycoon: http://pypi.python.org/pypi/pycoon
 .. _PyQuery: http://pypi.python.org/pypi/pyquery
 .. _Rambler: http://beta.rambler.ru/srch?query=python+lxml&searchtype=web
