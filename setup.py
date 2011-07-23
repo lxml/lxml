@@ -48,10 +48,10 @@ OPTION_RUN_TESTS = setupinfo.has_option('run-tests')
 branch_link = """
 After an official release of a new stable series, bug fixes may become
 available at
-https://github.com/lxml/lxml-maintenance/tree/lxml-%(branch_version)s .
+https://github.com/lxml/lxml/tree/lxml-%(branch_version)s .
 Running ``easy_install lxml==%(branch_version)sbugfix`` will install
 the unreleased branch state from
-https://github.com/lxml/lxml-maintenance/tarball/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
+https://github.com/lxml/lxml/tarball/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
 as soon as a maintenance branch has been established.  Note that this
 requires Cython to be installed at an appropriate version for the build.
 """
@@ -113,8 +113,8 @@ In case you want to use the current in-development version of lxml,
 you can get it from the github repository at
 https://github.com/lxml/lxml .  Note that this requires Cython to
 build the sources, see the build instructions on the project home
-page.  To the same end, running Running ``easy_install lxml==dev``
-will install lxml from
+page.  To the same end, running ``easy_install lxml==dev`` will
+install lxml from
 https://github.com/lxml/lxml/tarball/master#egg=lxml-dev if you have
 an appropriate version of Cython installed.
 
