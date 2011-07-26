@@ -50,7 +50,7 @@ Installation
 Get the `easy_install`_ tool and run the following as super-user (or
 administrator)::
 
-  easy_install lxml
+  easy_install --allow-hosts=lxml.de,*.python.org lxml
 
 .. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
 
@@ -59,7 +59,7 @@ administrator)::
   please search PyPI_ for the last release that has them and pass that
   version to ``easy_install`` like this::
 
-    easy_install lxml==2.2.2
+    easy_install --allow-hosts=lxml.de,*.python.org lxml==2.2.2
 
 * On **Linux** (and most other well-behaved operating systems),
   ``easy_install`` will manage to build the source distribution as
@@ -73,7 +73,7 @@ administrator)::
   and make sure you have a working Internet connection, as this will
   download libxml2 and libxslt in order to build them::
 
-   STATIC_DEPS=true sudo easy_install lxml
+   STATIC_DEPS=true sudo easy_install --allow-hosts=lxml.de,*.python.org lxml
 
 .. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
