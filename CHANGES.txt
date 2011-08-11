@@ -16,6 +16,10 @@ Features added
 Bugs fixed
 ----------
 
+* The html5lib parser integration now uses the 'official'
+  implementation in html5lib itself, which makes it work with newer
+  releases of the library.
+
 * In ``lxml.sax``, ``endElementNS()`` could incorrectly reject a plain
   tag name when the corresponding start event inferred the same plain
   tag name to be in the default namespace.

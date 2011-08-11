@@ -1,12 +1,14 @@
 """
-An interface to html5lib.
+An interface to html5lib that mimics the lxml.html interface.
 """
 
 import urllib
+
 from html5lib import HTMLParser as _HTMLParser
+from html5lib.treebuilders.etree_lxml import TreeBuilder
+
 from lxml import etree
 from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE
-from lxml.html._html5builder import TreeBuilder
 
 # python3 compatibility
 try:
