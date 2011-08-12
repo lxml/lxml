@@ -80,7 +80,7 @@ _css_import_re = re.compile(
 # All kinds of schemes besides just javascript: that can cause
 # execution:
 _javascript_scheme_re = re.compile(
-    r'\s*(?:javascript|jscript|livescript|vbscript|about|mocha):', re.I)
+    r'\s*(?:javascript|jscript|livescript|vbscript|data|about|mocha):', re.I)
 _substitute_whitespace = re.compile(r'\s+').sub
 # FIXME: should data: be blocked?
 

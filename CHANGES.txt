@@ -16,6 +16,8 @@ Features added
 Bugs fixed
 ----------
 
+* HTML cleaning didn't remove 'data:' links.
+
 * The html5lib parser integration now uses the 'official'
   implementation in html5lib itself, which makes it work with newer
   releases of the library.

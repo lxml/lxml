@@ -8,12 +8,14 @@
 ...     <link rel="alternate" type="text/rss" src="evil-rss">
 ...     <style>
 ...       body {background-image: url(javascript:do_evil)};
+...       div {background-image: url(data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==)};
 ...       div {color: expression(evil)};
 ...     </style>
 ...   </head>
 ...   <body onload="evil_function()">
 ...     <!-- I am interpreted for EVIL! -->
 ...     <a href="javascript:evil_function()">a link</a>
+...     <a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==">data</a>
 ...     <a href="#" onclick="evil_function()">another link</a>
 ...     <p onclick="evil_function()">a paragraph</p>
 ...     <div style="display: none">secret EVIL!</div>
@@ -34,12 +36,14 @@
     <link rel="alternate" type="text/rss" src="evil-rss">
     <style>
       body {background-image: url(javascript:do_evil)};
+      div {background-image: url(data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==)};
       div {color: expression(evil)};
     </style>
   </head>
   <body onload="evil_function()">
     <!-- I am interpreted for EVIL! -->
     <a href="javascript:evil_function()">a link</a>
+    <a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==">data</a>
     <a href="#" onclick="evil_function()">another link</a>
     <p onclick="evil_function()">a paragraph</p>
     <div style="display: none">secret EVIL!</div>
@@ -60,12 +64,14 @@
     <link rel="alternate" type="text/rss" src="evil-rss">
     <style>
       body {background-image: url(javascript:do_evil)};
+      div {background-image: url(data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==)};
       div {color: expression(evil)};
     </style>
   </head>
   <body onload="evil_function()">
     <!-- I am interpreted for EVIL! -->
     <a href="javascript:evil_function()">a link</a>
+    <a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgidGVzdCIpOzwvc2NyaXB0Pg==">data</a>
     <a href="#" onclick="evil_function()">another link</a>
     <p onclick="evil_function()">a paragraph</p>
     <div style="display: none">secret EVIL!</div>
@@ -86,6 +92,7 @@
   </head>
   <body>
     <a href="">a link</a>
+    <a href="">data</a>
     <a href="#">another link</a>
     <p>a paragraph</p>
     <div style="display: none">secret EVIL!</div>
@@ -103,6 +110,7 @@
   </head>
   <body>
     <a href="">a link</a>
+    <a href="">data</a>
     <a href="#">another link</a>
     <p>a paragraph</p>
     <div>secret EVIL!</div>
