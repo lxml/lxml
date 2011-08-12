@@ -697,10 +697,10 @@ def xpath():
     'Hello you'
     >>> e(_bytes("stringTest('\\\\xe9lan')").decode("unicode_escape"))
     u'Hello \\xe9lan'
-    >>> e("stringTest('you','there')")
+    >>> e("stringTest('you','there')")   #doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
-    TypeError: stringTest() takes exactly 2 arguments (3 given)
+    TypeError: stringTest() takes... 2 ...arguments ...
     >>> e("floatTest(2)")
     6.0
     >>> e("booleanTest(true())")
