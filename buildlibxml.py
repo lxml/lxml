@@ -115,7 +115,7 @@ def download_libiconv(dest_dir, version=None):
     return download_library(dest_dir, LIBICONV_LOCATION, 'libiconv',
                             version_re, filename, version=version)
 
-def download_library(dest_dir, location, name, version_re, filename, 
+def download_library(dest_dir, location, name, version_re, filename,
                      version=None):
     if version is None:
         try:
@@ -227,11 +227,23 @@ def unpack_tarball(tar_filename, dest):
     return os.path.join(dest, base_dir)
 
 def call_subprocess(cmd, **kw):
-    import subprocess
+    try:
+        from subprocess import proc_call
+    except ImportError:
+        # no subprocess for Python 2.3
+        def proc_call(cmd, **kwargs):
+            cwd = kwargs.get('cwd', '.')
+            old_cwd = os.getcwd()
+            try:
+                os.chdir(cwd)
+                return os.system(' '.join(cmd))
+            finally:
+                os.chdir(old_cwd)
+
     cwd = kw.get('cwd', '.')
     cmd_desc = ' '.join(cmd)
     log.info('Running "%s" in %s' % (cmd_desc, cwd))
-    returncode = subprocess.call(cmd, **kw)
+    returncode = proc_call(cmd, **kw)
     if returncode:
         raise Exception('Command "%s" returned code %s' % (cmd_desc, returncode))
 
