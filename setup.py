@@ -1,6 +1,8 @@
-import sys, os
-import fnmatch
+import os
+import re
+import sys
 import glob
+import fnmatch
 
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
@@ -96,44 +98,42 @@ extra_options['packages'] = [
 
 
 def setup_extra_options():
-    try:
-        set
-    except NameError:
-        from sets import Set as set
-
-    def basePath(paths):
-        if not len(paths):
-            return ''
-
-        base_path = paths[0]
-        while base_path:
-            base_path = os.path.dirname(base_path)
-            for p in paths:
-                if not p.startswith(base_path):
-                    break
-            else:
-                return base_path
-        return base_path
-
-    def removeBaseDirs(directories):
-        filtered_dirs = []
-        for dir_path in directories:
-            for p in directories:
-                if dir_path is not p and p.startswith(dir_path):
-                    break
-            else:
-                filtered_dirs.append(dir_path)
-        return filtered_dirs
-
-    def extractFiles(directories, pattern='*'):
-        get_files = lambda root, files: [os.path.join(root, f) for f in files]
+    is_interesting_package = re.compile('^(libxml|libxslt|libexslt)$').match
+    def extract_files(directories, pattern='*'):
+        def get_files(root, dir_path, files):
+            return [ (root, dir_path, filename)
+                     for filename in fnmatch.filter(files, pattern) ]
 
         file_list = []
         for dir_path in directories:
+            dir_path = os.path.realpath(dir_path)
             for root, dirs, files in os.walk(dir_path):
-                file_list.extend(get_files(root, fnmatch.filter(files, pattern)))
-                file_list.extend(extractFiles(get_files(root, dirs), pattern))
+                rel_dir = root[len(dir_path)+1:]
+                if is_interesting_package(rel_dir):
+                    file_list.extend(get_files(root, rel_dir, files))
         return file_list
+
+    def build_packages(files):
+        packages = {}
+        seen = set()
+        for root_path, rel_path, filename in files:
+            if filename in seen:
+                # libxml2/libxslt header filenames are unique
+                continue
+            seen.add(filename)
+            package_path = '.'.join(rel_path.split(os.sep))
+            if package_path in packages:
+                root, package_files = packages[package_path]
+                if root != root_path:
+                    print("conflicting directories found for include package '%s': %s and %s"
+                          % (package_path, root_path, root))
+                    continue
+            else:
+                package_files = []
+                packages[package_path] = (root_path, package_files)
+            package_files.append(filename)
+
+        return packages
 
     # Copy Global Extra Options
     extra_opts = dict(extra_options)
@@ -148,62 +148,27 @@ def setup_extra_options():
     package_dir = extra_opts.get('package_dir', dict())
     package_data = extra_opts.get('package_data', dict())
 
-    if sys.version_info < (2, 4):
-        # Python 2.3 hasn't package_data:
-        # Migrate from package_data to data_files
-        def _packageDataToDataFiles(key, values):
-            key_path = key.replace('.', '/')
-            dst_path = os.path.join(install_base_dir, key_path)
-            src = 'src/' + key_path
-            files = [f for v in values for f in glob.glob(os.path.join(src, v))]
-            return (dst_path, files)
-
-        from distutils.sysconfig import get_python_lib
-        install_base_dir = get_python_lib(prefix='')
-        data_files = extra_opts.setdefault('data_files', [])
-        package_data = extra_opts.pop('package_data')
-        for key, values in package_data.iteritems():
-            data_files.append(_packageDataToDataFiles(key, values))
-
     # Add lxml.include with (lxml, libxslt headers...)
     #   python setup.py build --static --static-deps install
     #   python setup.py bdist_wininst --static
     if setupinfo.OPTION_STATIC:
-        include_dirs = set()
+        include_dirs = [] # keep them in order
         for extension in ext_modules:
-            include_dirs |= set(extension.include_dirs)
-        include_dirs = removeBaseDirs(include_dirs)
+            for inc_dir in extension.include_dirs:
+                if inc_dir not in include_dirs:
+                    include_dirs.append(inc_dir)
 
-        include_base = basePath(include_dirs)
-        headers = [path for path in extractFiles(include_dirs)]
+        header_packages = build_packages(extract_files(include_dirs))
 
-        if sys.version_info < (2, 4):
-            def _headersToDataFiles(key, fheaders):
-                key_path = key.replace('.', '/')
-                dst_path = os.path.join(install_base_dir, key_path)
-                headers = {}
-                for full_path in fheaders:
-                    fpath, fhead = os.path.split(full_path)
-                    fpath, fdir = os.path.split(fpath)
-                    dst_dir = os.path.join(dst_path, fdir)
-                    headers.setdefault(dst_dir, []).append(full_path)
-                return headers.items()
-
-            data_files.extend(_headersToDataFiles('lxml.include', headers))
-        else:
-            files = {}
-            for full_path in headers:
-                fpath, fhead = os.path.split(full_path)
-                _, fdir = os.path.split(fpath)
-                files.setdefault((fpath, fdir), []).append(fhead)
-
-            package_dir['lxml.include'] = include_base
-            packages.append('lxml.include')
-            for (fpath, fdir), fhs in files.iteritems():
-                kdir = 'lxml.include.' + fdir
-                package_data[kdir] = fhs
-                package_dir[kdir] = fpath
-                packages.append(kdir)
+        packages.append('lxml.include')
+        for package_path, (root_path, filenames) in header_packages.iteritems():
+            if package_path:
+                package = 'lxml.include.' + package_path
+                packages.append(package)
+            else:
+                package = 'lxml.include'
+            package_data[package] = filenames
+            package_dir[package] = root_path
 
     return extra_opts
 
@@ -249,7 +214,6 @@ an appropriate version of Cython installed.
     'License :: OSI Approved :: BSD License',
     'Programming Language :: Cython',
     'Programming Language :: Python :: 2',
-    'Programming Language :: Python :: 2.3',
     'Programming Language :: Python :: 2.4',
     'Programming Language :: Python :: 2.5',
     'Programming Language :: Python :: 2.6',
