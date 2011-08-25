@@ -10,8 +10,8 @@ Features added
 
 * ``lxml.get_includes()`` returns a list of include paths that can be
   used to compile external C code against lxml.  This is specifically
-  required for statically linked lxml builds that need to link against
-  the exact same library versions.
+  required for statically linked lxml builds that need to compile
+  against the exact same header file versions as lxml itself.
 
 * ``Resolver.resolve_file()`` takes an additional option
   ``close_file`` that configures if the file(-like) object will be
