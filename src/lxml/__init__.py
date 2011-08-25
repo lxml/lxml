@@ -2,9 +2,11 @@
 
 import os
 
-def get_include():
+def get_includes():
     """
-    Returns a list of include path (libxml2, libxslt) needed to lxml.
+    Returns a list of header include paths (for lxml itself, libxml2
+    and libxslt) needed to compile C code against lxml if it was built
+    with statically linked libraries.
     """
     lxml_path = __path__[0]
     include_path = os.path.join(lxml_path, 'include')
