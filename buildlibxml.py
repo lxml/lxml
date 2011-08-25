@@ -143,14 +143,15 @@ def download_library(dest_dir, location, name, version_re, filename,
                 if fn.startswith(name+'-'):
                     match = match_libfile_version(fn)
                     if match:
-                        version = tuple(map(tryint, match.group(1).split('.')))
-                        if version > latest:
-                            latest = version
+                        version_tuple = tuple(map(tryint, match.group(1).split('.')))
+                        if version_tuple > latest:
+                            latest = version_tuple
                             filename = fn
-                            break
-            else:
+                            version = None
+            if latest == (0,0,0):
                 raise
-    filename = filename % version
+    if version:
+        filename = filename % version
     full_url = urljoin(location, filename)
     dest_filename = os.path.join(dest_dir, filename)
     if os.path.exists(dest_filename):
