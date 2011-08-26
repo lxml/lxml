@@ -1,3 +1,3 @@
 The command used to run the tests with valgrind:
 
-valgrind --tool=memcheck --leak-check=full --suppressions=valgrind-python.supp python2.3 test.py
+valgrind --tool=memcheck --leak-check=full --suppressions=valgrind-python.supp python2.7 test.py

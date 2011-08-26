@@ -17,7 +17,7 @@ MacOS-X, see the specific sections below.
 Requirements
 ------------
 
-You need Python 2.3 or later.
+You need Python 2.4 or later.
 
 Unless you are using a static binary distribution (e.g. a Windows
 binary egg from PyPI), you need to install libxml2 and libxslt, in
@@ -37,11 +37,11 @@ particular:
 * libxslt 1.1.15 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-  * We recomment libxslt 1.1.26 or later.
+  * We recommend libxslt 1.1.26 or later.
 
 Newer versions generally contain less bugs and are therefore
 recommended.  XML Schema support is also still worked on in libxml2,
-so newer versions will give you better complience with the W3C spec.
+so newer versions will give you better compliance with the W3C spec.
 
 
 Installation

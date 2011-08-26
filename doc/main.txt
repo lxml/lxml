@@ -35,7 +35,7 @@ libxml2_ and libxslt_.  It is unique in that it combines the speed and
 XML feature completeness of these libraries with the simplicity of a
 native Python API, mostly compatible but superior to the well-known
 ElementTree_ API.  The latest release works with all CPython versions
-from 2.3 to 3.2.  See the introduction_ for more information about
+from 2.4 to 3.2.  See the introduction_ for more information about
 background and goals of the lxml project.  Some common questions are
 answered in the FAQ_.
 
