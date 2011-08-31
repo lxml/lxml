@@ -44,10 +44,10 @@ def ext_modules(static_include_dirs, static_library_dirs,
         from buildlibxml import build_libxml2xslt, get_prebuilt_libxml2xslt
         if sys.platform.startswith('win'):
             get_prebuilt_libxml2xslt(
-                'libs', static_include_dirs, static_library_dirs)
+                OPTION_DOWNLOAD_DIR, static_include_dirs, static_library_dirs)
         else:
             XML2_CONFIG, XSLT_CONFIG = build_libxml2xslt(
-                'libs', 'build/tmp',
+                OPTION_DOWNLOAD_DIR, 'build/tmp',
                 static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries,
                 libiconv_version=OPTION_LIBICONV_VERSION,
@@ -355,3 +355,6 @@ OPTION_LIBXML2_VERSION = option_value('libxml2-version')
 OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
 OPTION_MULTICORE = option_value('multicore')
+OPTION_DOWNLOAD_DIR = option_value('download-dir')
+if OPTION_DOWNLOAD_DIR is None:
+    OPTION_DOWNLOAD_DIR = 'libs'
