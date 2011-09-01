@@ -55,6 +55,7 @@ Bugs fixed
 Other changes
 --------------
 
+* Static builds may specify the download directory.
 
 2.3 (2011-02-06)
 ================
