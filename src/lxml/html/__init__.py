@@ -447,10 +447,10 @@ class _MethodFunc(object):
             doc = fromstring(doc, **kw)
         else:
             if 'copy' in kw:
-                copy = kw.pop('copy')
+                make_a_copy = kw.pop('copy')
             else:
-                copy = self.copy
-            if copy:
+                make_a_copy = self.copy
+            if make_a_copy:
                 doc = copy.deepcopy(doc)
         meth = getattr(doc, self.name)
         result = meth(*args, **kw)
