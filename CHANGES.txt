@@ -8,6 +8,9 @@ Under development
 Features added
 --------------
 
+* ``pi.get()`` and ``pi.attrib`` on processing instructions to parse
+  pseudo-attributes from the text content of processing instructions.
+
 * ``lxml.get_include()`` returns a list of include paths that can be
   used to compile external C code against lxml.etree.  This is
   specifically required for statically linked lxml builds when code

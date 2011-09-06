@@ -1579,6 +1579,32 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         else:
             return u"<?%s?>" % self.target
 
+    def get(self, key, default=None):
+        u"""get(self, key, default=None)
+
+        Try to parse pseudo-attributes from the text content of the
+        processing instruction, search for one with the given key as
+        name and return its associated value.
+
+        Note that this is only a convenience method for the most
+        common case that all text content is structured in
+        attribute-like name-value pairs with properly quoted values.
+        It is not guaranteed to work for all possible text content.
+        """
+        return self.attrib.get(key, default)
+
+    property attrib:
+        u"""Returns a dict containing all pseudo-attributes that can be
+        parsed from the text content of this processing instruction.
+        Note that modifying the dict currently has no effect on the
+        XML node, although this is not guaranteed to stay this way.
+        """
+        def __get__(self):
+            return { attr : (value1 or value2)
+                     for attr, value1, value2 in _FIND_PI_ATTRIBUTES(u' ' + self.text) }
+
+cdef object _FIND_PI_ATTRIBUTES = re.compile(ur'\s+(\w+)\s*=\s*(?:\'([^\']*)\'|"([^"]*)")', re.U).findall
+
 cdef class _Entity(__ContentOnlyElement):
     property tag:
         def __get__(self):

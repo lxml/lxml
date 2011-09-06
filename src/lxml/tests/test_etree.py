@@ -449,6 +449,28 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(root[0].target, "mypi")
         self.assertEquals(root[0].text, "my test ")
 
+    def test_pi_pseudo_attributes_get(self):
+        XML = self.etree.XML
+        root = XML(_bytes("<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>"))
+        self.assertEquals(root[0].target, "mypi")
+        self.assertEquals(root[0].get('my'), "1")
+        self.assertEquals(root[0].get('test'), " abc ")
+        self.assertEquals(root[0].get('quotes'), "' '")
+        self.assertEquals(root[0].get('only'), None)
+        self.assertEquals(root[0].get('names'), None)
+        self.assertEquals(root[0].get('nope'), None)
+
+    def test_pi_pseudo_attributes_attrib(self):
+        XML = self.etree.XML
+        root = XML(_bytes("<test><?mypi my='1' test=\" abc \" quotes=\"' '\" only names ?></test>"))
+        self.assertEquals(root[0].target, "mypi")
+        self.assertEquals(root[0].attrib['my'], "1")
+        self.assertEquals(root[0].attrib['test'], " abc ")
+        self.assertEquals(root[0].attrib['quotes'], "' '")
+        self.assertRaises(KeyError, root[0].attrib.__getitem__, 'only')
+        self.assertRaises(KeyError, root[0].attrib.__getitem__, 'names')
+        self.assertRaises(KeyError, root[0].attrib.__getitem__, 'nope')
+
     def test_deepcopy_pi(self):
         # previously caused a crash
         ProcessingInstruction = self.etree.ProcessingInstruction

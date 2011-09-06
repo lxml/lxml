@@ -801,20 +801,10 @@ xslt.exsltRegisterAll()
 ################################################################################
 # XSLT PI support
 
-cdef object _FIND_PI_ATTRIBUTES
-_FIND_PI_ATTRIBUTES = re.compile(ur'\s+(\w+)\s*=\s*["\']([^"\']+)["\']', re.U).findall
-
-cdef object _RE_PI_HREF
-_RE_PI_HREF = re.compile(ur'\s+href\s*=\s*["\']([^"\']+)["\']')
-
-cdef object _FIND_PI_HREF
-_FIND_PI_HREF = _RE_PI_HREF.findall
-
-cdef object _REPLACE_PI_HREF
-_REPLACE_PI_HREF = _RE_PI_HREF.sub
-
-cdef XPath __findStylesheetByID
-__findStylesheetByID = None
+cdef object _RE_PI_HREF = re.compile(ur'\s+href\s*=\s*(?:\'([^\']*)\'|"([^"]*)")')
+cdef object _FIND_PI_HREF = _RE_PI_HREF.findall
+cdef object _REPLACE_PI_HREF = _RE_PI_HREF.sub
+cdef XPath __findStylesheetByID = None
 
 cdef _findStylesheetByID(_Document doc, id):
     global __findStylesheetByID
@@ -843,10 +833,11 @@ cdef class _XSLTProcessingInstruction(PIBase):
         _assertValidNode(self)
         if self._c_node.content is NULL:
             raise ValueError, u"PI lacks content"
-        hrefs = _FIND_PI_HREF(u' ' + funicode(self._c_node.content))
+        hrefs = _FIND_PI_HREF(u' ' + self._c_node.content.decode('UTF-8'))
         if len(hrefs) != 1:
             raise ValueError, u"malformed PI attributes"
-        href_utf = utf8(hrefs[0])
+        hrefs = hrefs[0]
+        href_utf = utf8(hrefs[0] or hrefs[1])
         c_href = _cstr(href_utf)
 
         if c_href[0] != c'#':
@@ -881,7 +872,8 @@ cdef class _XSLTProcessingInstruction(PIBase):
     def set(self, key, value):
         u"""set(self, key, value)
 
-        Sets a pseudo attribute in the text of the processing instruction.
+        Supports setting the 'href' pseudo-attribute in the text of
+        the processing instruction.
         """
         if key != u"href":
             raise AttributeError, \
@@ -897,13 +889,3 @@ cdef class _XSLTProcessingInstruction(PIBase):
             self.text = _REPLACE_PI_HREF(attrib, text)
         else:
             self.text = text + attrib
-
-    def get(self, key, default=None):
-        u"""get(self, key, default=None)
-
-        Parses a pseudo attribute from the text of the processing instruction.
-        """
-        for attr, value in _FIND_PI_ATTRIBUTES(u' ' + self.text):
-            if attr == key:
-                return value
-        return default
