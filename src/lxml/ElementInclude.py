@@ -204,7 +204,8 @@ def _include(elem, loader=None, _parent_hrefs=None, base_url=None):
                 elif parent is None:
                     return text # replaced the root node!
                 else:
-                    parent.text = (parent.text or "") + text + (e.tail or "")
+                    parent.text = (parent.text or "") + text 
+
                 parent.remove(e)
             else:
                 raise FatalIncludeError(

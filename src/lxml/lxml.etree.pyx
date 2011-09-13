@@ -820,8 +820,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if c_node.parent is not self._c_node:
             raise ValueError, u"Element is not a child of this node."
         c_next = element._c_node.next
-        tree.xmlUnlinkNode(c_node)
         _moveTail(c_next, c_node)
+        tree.xmlUnlinkNode(c_node)
         # fix namespace declarations
         moveNodeToDocument(self._doc, c_node.doc, c_node)
 
