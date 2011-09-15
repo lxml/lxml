@@ -141,6 +141,9 @@ class Cleaner(object):
     ``remove_tags``:
         A list of tags to remove.
 
+    ``kill_tags``:
+        A list of tags to kill. Killing also removes tag contents not only the tag itself.
+
     ``allow_tags``:
         A list of tags to include (default include all).
 
