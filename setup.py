@@ -58,6 +58,7 @@ the unreleased branch state from
 https://github.com/lxml/lxml/tarball/lxml-%(branch_version)s#egg=lxml-%(branch_version)sbugfix
 as soon as a maintenance branch has been established.  Note that this
 requires Cython to be installed at an appropriate version for the build.
+
 """
 
 if versioninfo.is_pre_release():
