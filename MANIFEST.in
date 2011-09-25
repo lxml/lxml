@@ -7,6 +7,7 @@ include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.txt TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.c lxml.objectify.c
 recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree_defs.h
+recursive-include src/lxml/isoschematron *.rng *.xsl *.txt
 recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.xsd *.sch *.html *.txt
 recursive-include src/lxml/html/tests *.data *.txt
 recursive-include samples *.xml
@@ -15,4 +16,4 @@ recursive-include doc *.txt *.html *.css *.xml *.mgp pubkey.asc tagpython*.png M
 recursive-include doc/s5/ui *.gif *.htc *.png *.js
 recursive-include doc/s5/ep2008 *.py *.png *.rng
 recursive-include fake_pyrex *.py
-include doc/mkhtml.py doc/rest2html.py
+include doc/*.py
