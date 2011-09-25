@@ -141,6 +141,9 @@ class Cleaner(object):
     ``remove_tags``:
         A list of tags to remove.
 
+    ``kill_tags``:
+        A list of tags to kill. Killing also removes tag contents not only the tag itself.
+
     ``allow_tags``:
         A list of tags to include (default include all).
 
@@ -191,6 +194,7 @@ class Cleaner(object):
     annoying_tags = True
     remove_tags = None
     allow_tags = None
+    kill_tags = None
     remove_unknown_tags = True
     safe_attrs_only = True
     add_nofollow = False
@@ -243,12 +247,11 @@ class Cleaner(object):
             # Of course, if we were going to kill comments anyway, we don't
             # need to worry about this
             self.kill_conditional_comments(doc)
-        kill_tags = set()
+
+        kill_tags = set(self.kill_tags or ())
         remove_tags = set(self.remove_tags or ())
-        if self.allow_tags:
-            allow_tags = set(self.allow_tags)
-        else:
-            allow_tags = set()
+        allow_tags = set(self.allow_tags or ())
+
         if self.scripts:
             kill_tags.add('script')
         if self.safe_attrs_only:
