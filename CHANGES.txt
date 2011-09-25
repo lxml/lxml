@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-=================
+2.3.1 (2011-09-25)
+==================
 
 Features added
 --------------
@@ -58,7 +58,9 @@ Bugs fixed
 Other changes
 --------------
 
-* Static builds may specify the download directory.
+* Static builds can specify the download directory with the
+  ``--download-dir`` option.
+
 
 2.3 (2011-02-06)
 ================

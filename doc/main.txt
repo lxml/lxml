@@ -162,8 +162,8 @@ MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
 release version first.
 
-The latest version is `lxml 2.3`_, released 2011-02-06
-(`changes for 2.3`_).  `Older versions`_ are listed below.
+The latest version is `lxml 2.3.1`_, released 2011-09-25
+(`changes for 2.3.1`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
@@ -236,7 +236,9 @@ See the web sites of lxml `1.3 <http://lxml.de/1.3/>`_, `2.0
 <http://lxml.de/2.2/>`_ and the `latest in-development version
 <http://lxml.de/dev/>`_
 
-.. _`PDF documentation`: lxmldoc-2.3.pdf
+.. _`PDF documentation`: lxmldoc-2.3.1.pdf
+
+* `lxml 2.3`_, released 2011-02-06 (`changes for 2.3`_)
 
 * `lxml 2.3beta1`_, released 2010-09-06 (`changes for 2.3beta1`_)
 
@@ -264,6 +266,7 @@ See the web sites of lxml `1.3 <http://lxml.de/1.3/>`_, `2.0
 
 * `older releases <http://lxml.de/2.2/#old-versions>`_
 
+.. _`lxml 2.3.1`: /files/lxml-2.3.1.tgz
 .. _`lxml 2.3`: /files/lxml-2.3.tgz
 .. _`lxml 2.3beta1`: /files/lxml-2.3beta1.tgz
 .. _`lxml 2.3alpha2`: /files/lxml-2.3alpha2.tgz
@@ -278,6 +281,7 @@ See the web sites of lxml `1.3 <http://lxml.de/1.3/>`_, `2.0
 .. _`lxml 2.2.1`: /files/lxml-2.2.1.tgz
 .. _`lxml 2.2`: /files/lxml-2.2.tgz
 
+.. _`changes for 2.3.1`: /changes-2.3.1.html
 .. _`changes for 2.3`: /changes-2.3.html
 .. _`changes for 2.3beta1`: /changes-2.3beta1.html
 .. _`changes for 2.3alpha2`: /changes-2.3alpha2.html
