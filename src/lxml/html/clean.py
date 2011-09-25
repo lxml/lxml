@@ -139,10 +139,12 @@ class Cleaner(object):
         Tags that aren't *wrong*, but are annoying.  ``<blink>`` and ``<marquee>``
 
     ``remove_tags``:
-        A list of tags to remove.
+        A list of tags to remove.  Only the tags will be removed,
+        their content will get pulled up into the parent tag.
 
     ``kill_tags``:
-        A list of tags to kill. Killing also removes tag contents not only the tag itself.
+        A list of tags to kill.  Killing also removes the tag's content,
+        i.e. the whole subtree, not just the tag itself.
 
     ``allow_tags``:
         A list of tags to include (default include all).

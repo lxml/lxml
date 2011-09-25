@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* New option ``kill_tags`` in ``lxml.html.clean`` to remove specific
+  tags and their content (i.e. their whole subtree).
+
 * ``pi.get()`` and ``pi.attrib`` on processing instructions to parse
   pseudo-attributes from the text content of processing instructions.
 
