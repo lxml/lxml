@@ -129,7 +129,7 @@ The `generated API documentation`_ is a comprehensive API reference
 for the lxml package.
 
 .. _`ElementTree API`: http://effbot.org/zone/element-index.htm
-.. _`the web page`:    http://codespeak.net/lxml/#documentation
+.. _`the web page`:    http://lxml.de/#documentation
 .. _`generated API documentation`: api/index.html
 
 
@@ -472,8 +472,8 @@ implement but didn't due to lack if time.  If *you* find the time,
 patches are very welcome.
 
 .. _ReST: http://docutils.sourceforge.net/rst.html
-.. _`text files`: http://codespeak.net/svn/lxml/trunk/doc/
-.. _`list of missing features`: http://codespeak.net/svn/lxml/trunk/IDEAS.txt
+.. _`text files`: https://github.com/lxml/lxml/tree/master/doc
+.. _`list of missing features`: https://github.com/lxml/lxml/blob/master/IDEAS.txt
 
 Besides enhancing the code, there are a lot of places where you can help the
 project and its user base.  You can
@@ -555,7 +555,7 @@ First, you should look at the `current developer changelog`_ to see if this
 is a known problem that has already been fixed in the SVN trunk since the
 release you are using.
 
-.. _`current developer changelog`: http://codespeak.net/svn/lxml/trunk/CHANGES.txt
+.. _`current developer changelog`: https://github.com/lxml/lxml/blob/master/CHANGES.txt
 
 Also, the 'crash' section above has a few good advices what to try to see if
 the problem is really in lxml - and not in your setup.  Believe it or not,
@@ -598,7 +598,7 @@ take longer for you to get a helpful answer.
 Since as a user of lxml you are likely a programmer, you might find
 `this article on bug reports`_ an interesting read.
 
-.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`mailing list`: http://lxml.de/mailinglist/
 .. _`this article on bug reports`: http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
 

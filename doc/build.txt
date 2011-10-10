@@ -157,7 +157,7 @@ like to know.  Please contact us on the `mailing list`_, and please specify
 the version of lxml, libxml2, libxslt and Python you were using, as well as
 your operating system type (Linux, Windows, MacOs, ...).
 
-.. _`mailing list`: http://codespeak.net/mailman/listinfo/lxml-dev
+.. _`mailing list`: http://lxml.de/mailinglist/
 
 
 Building an egg
@@ -315,7 +315,7 @@ Building Debian packages from SVN sources
 
 `Andreas Pakulat`_ proposed the following approach.
 
-.. _`Andreas Pakulat`: http://codespeak.net/pipermail/lxml-dev/2006-May/001254.html
+.. _`Andreas Pakulat`: http://thread.gmane.org/gmane.comp.python.lxml.devel/1239/focus=1249
 
 * ``apt-get source lxml``
 * remove the unpacked directory

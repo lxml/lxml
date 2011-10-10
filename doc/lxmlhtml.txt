@@ -465,7 +465,7 @@ Example:
 
     >>> from lxml.html import parse, submit_form
     >>> page = parse('http://tinyurl.com').getroot()
-    >>> page.forms[1].fields['url'] = 'http://codespeak.net/lxml/'
+    >>> page.forms[1].fields['url'] = 'http://lxml.de/'
     >>> result = parse(submit_form(page.forms[1])).getroot()
     >>> [a.attrib['href'] for a in result.xpath("//a[@target='_blank']")]
     ['http://tinyurl.com/2xae8s', 'http://preview.tinyurl.com/2xae8s']

@@ -13,7 +13,7 @@ This document describes how to read the source code of lxml_ and how
 to start working on it.  You might also be interested in the companion
 document that describes `how to build lxml from sources`_.
 
-.. _lxml: http://codespeak.net/lxml/
+.. _lxml: http://lxml.de/
 .. _`how to build lxml from sources`: build.html
 .. _`ReStructured Text`: http://docutils.sourceforge.net/rst.html
 .. _epydoc: http://epydoc.sourceforge.net/
@@ -154,7 +154,7 @@ lxml.etree
 ==========
 
 The main module, ``lxml.etree``, is in the file `lxml.etree.pyx
-<http://codespeak.net/svn/lxml/trunk/src/lxml/lxml.etree.pyx>`_.  It
+<https://github.com/lxml/lxml/blob/master/src/lxml/lxml.etree.pyx>`_.  It
 implements the main functions and types of the ElementTree API, as
 well as all the factory functions for proxies.  It is the best place
 to start if you want to find out how a specific feature is
@@ -303,7 +303,7 @@ lxml.objectify
 A Cython implemented extension module that uses the public C-API of
 lxml.etree.  It provides a Python object-like interface to XML trees.
 The implementation resides in the file `lxml.objectify.pyx
-<http://codespeak.net/svn/lxml/trunk/src/lxml/lxml.objectify.pyx>`_.
+<https://github.com/lxml/lxml/blob/master/src/lxml/lxml.objectify.pyx>`_.
 
 
 lxml.html

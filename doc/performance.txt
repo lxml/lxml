@@ -98,9 +98,9 @@ platform.  Note that many of the following ElementTree timings are
 therefore better then what a normal Python installation with the
 standard library (c)ElementTree modules would yield.
 
-.. _`bench_etree.py`:     http://codespeak.net/svn/lxml/trunk/benchmark/bench_etree.py
-.. _`bench_xpath.py`:     http://codespeak.net/svn/lxml/trunk/benchmark/bench_xpath.py
-.. _`bench_objectify.py`: http://codespeak.net/svn/lxml/trunk/benchmark/bench_objectify.py
+.. _`bench_etree.py`:     https://github.com/lxml/lxml/blob/master/benchmark/bench_etree.py
+.. _`bench_xpath.py`:     https://github.com/lxml/lxml/blob/master/benchmark/bench_xpath.py
+.. _`bench_objectify.py`: https://github.com/lxml/lxml/blob/master/benchmark/bench_objectify.py
 
 The scripts run a number of simple tests on the different libraries, using
 different XML tree configurations: different tree sizes (T1-4), with or

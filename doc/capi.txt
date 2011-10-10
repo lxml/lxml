@@ -9,8 +9,8 @@ without going through the Python API.
 The API is described in the file `etreepublic.pxd`_, which is directly
 c-importable by extension modules implemented in Pyrex_ or Cython_.
 
-.. _`etreepublic.pxd`: http://codespeak.net/svn/lxml/trunk/src/lxml/etreepublic.pxd
-.. _Cython: http://www.cython.org
+.. _`etreepublic.pxd`: https://github.com/lxml/lxml/blob/master/src/lxml/etreepublic.pxd
+.. _Cython: http://cython.org
 .. _Pyrex: http://www.cosc.canterbury.ac.nz/~greg/python/Pyrex/
 
 .. contents::
