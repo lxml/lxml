@@ -172,10 +172,11 @@ Who uses lxml?
 
 As an XML library, lxml is often used under the hood of in-house
 server applications, such as web servers or applications that
-facilitate some kind of document management.  Many people who deploy
-Zope_ or Plone_ use it together with lxml.  Therefore, it is hard to
-get an idea of who uses it, and the following list of 'users and
-projects we know of' is very far from a complete list of lxml's users.
+facilitate some kind of content management.  Many people who deploy
+Zope_, Plone_ or Django_ use it together with lxml in the background,
+without speaking publicly about it.  Therefore, it is hard to get an
+idea of who uses it, and the following list of 'users and projects we
+know of' is very far from a complete list of lxml's users.
 
 Also note that the compatibility to the ElementTree library does not
 require projects to set a hard dependency on lxml - as long as they do
@@ -209,6 +210,7 @@ lxml can provide all three."
 
 .. _Zope: http://www.zope.org/
 .. _Plone: http://www.plone.org/
+.. _Django: https://www.djangoproject.com/
 .. _cssutils: http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917
 .. _Deliverance: http://www.openplans.org/projects/deliverance/project-home
 .. _`Enfold Proxy 4`: http://www.enfoldsystems.com/Products/Proxy/4
