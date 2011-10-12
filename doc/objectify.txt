@@ -6,7 +6,7 @@ lxml.objectify
   Stefan Behnel, Holger Joukl
 
 lxml supports an alternative API similar to the Amara_ bindery or
-gnosis.xml.objectify_ through a custom Element implementation.  The main idea
+gnosis.xml.objectify_ through a `custom Element implementation`_.  The main idea
 is to hide the usage of XML behind normal Python objects, sometimes referred
 to as data-binding.  It allows you to use XML as if you were dealing with a
 normal Python object hierarchy.
@@ -19,8 +19,8 @@ available to the normal Python operators.
 .. contents::
 ..
    1  The lxml.objectify API
-     1.1  Creating objectify trees
-     1.2  Element access through object attributes
+     1.1  Element access through object attributes
+     1.2  Creating objectify trees
      1.3  Tree generation with the E-factory
      1.4  Namespace handling
    2  Asserting a Schema
@@ -39,7 +39,7 @@ available to the normal Python operators.
 .. _Amara: http://uche.ogbuji.net/tech/4suite/amara/
 .. _gnosis.xml.objectify: http://gnosis.cx/download/
 .. _`benchmark page`: performance.html#lxml-objectify
-
+.. _`custom Element implementation`: element_classes.html
 
 To set up and use ``objectify``, you need both the ``lxml.etree``
 module and ``lxml.objectify``:
@@ -103,60 +103,6 @@ In ``lxml.objectify``, element trees provide an API that models the behaviour
 of normal Python object trees as closely as possible.
 
 
-Creating objectify trees
-------------------------
-
-As with ``lxml.etree``, you can either create an ``objectify`` tree by
-parsing an XML document or by building one from scratch.  To parse a
-document, just use the ``parse()`` or ``fromstring()`` functions of
-the module:
-
-.. sourcecode:: pycon
-
-    >>> fileobject = StringIO('<test/>')
-
-    >>> tree = objectify.parse(fileobject)
-    >>> print(isinstance(tree.getroot(), objectify.ObjectifiedElement))
-    True
-
-    >>> root = objectify.fromstring('<test/>')
-    >>> print(isinstance(root, objectify.ObjectifiedElement))
-    True
-
-To build a new tree in memory, ``objectify`` replicates the standard
-factory function ``Element()`` from ``lxml.etree``:
-
-.. sourcecode:: pycon
-
-    >>> obj_el = objectify.Element("new")
-    >>> print(isinstance(obj_el, objectify.ObjectifiedElement))
-    True
-
-After creating such an Element, you can use the `usual API`_ of
-lxml.etree to add SubElements to the tree:
-
-.. sourcecode:: pycon
-
-    >>> child = etree.SubElement(obj_el, "newchild", attr="value")
-
-.. _`usual API`: tutorial.html#the-element-class
-
-New subelements will automatically inherit the objectify behaviour
-from their tree.  However, all independent elements that you create
-through the ``Element()`` factory of lxml.etree (instead of objectify)
-will not support the ``objectify`` API by themselves:
-
-.. sourcecode:: pycon
-
-    >>> subel = etree.SubElement(obj_el, "sub")
-    >>> print(isinstance(subel, objectify.ObjectifiedElement))
-    True
-
-    >>> independent_el = etree.Element("new")
-    >>> print(isinstance(independent_el, objectify.ObjectifiedElement))
-    False
-
-
 Element access through object attributes
 ----------------------------------------
 
@@ -167,12 +113,12 @@ attribute will return the sequence of children with corresponding tag names:
 .. sourcecode:: pycon
 
     >>> root = objectify.Element("root")
-    >>> b = etree.SubElement(root, "b")
+    >>> b = objectify.SubElement(root, "b")
     >>> print(root.b[0].tag)
     b
     >>> root.index(root.b[0])
     0
-    >>> b = etree.SubElement(root, "b")
+    >>> b = objectify.SubElement(root, "b")
     >>> print(root.b[0].tag)
     b
     >>> print(root.b[1].tag)
@@ -194,9 +140,9 @@ Iteration and slicing also obey the requested tag:
 
 .. sourcecode:: pycon
 
-    >>> x1 = etree.SubElement(root, "x")
-    >>> x2 = etree.SubElement(root, "x")
-    >>> x3 = etree.SubElement(root, "x")
+    >>> x1 = objectify.SubElement(root, "x")
+    >>> x2 = objectify.SubElement(root, "x")
+    >>> x3 = objectify.SubElement(root, "x")
 
     >>> [ el.tag for el in root.x ]
     ['x', 'x', 'x']
@@ -230,7 +176,7 @@ XML attributes are accessed as in the normal ElementTree API:
 
 .. sourcecode:: pycon
 
-    >>> c = etree.SubElement(root, "c", myattr="someval")
+    >>> c = objectify.SubElement(root, "c", myattr="someval")
     >>> print(root.c.get("myattr"))
     someval
 
@@ -268,12 +214,12 @@ You can also replace children that way:
 
 .. sourcecode:: pycon
 
-    >>> child1 = etree.SubElement(root, "child")
-    >>> child2 = etree.SubElement(root, "child")
-    >>> child3 = etree.SubElement(root, "child")
+    >>> child1 = objectify.SubElement(root, "child")
+    >>> child2 = objectify.SubElement(root, "child")
+    >>> child3 = objectify.SubElement(root, "child")
 
     >>> el = objectify.Element("new_child")
-    >>> subel = etree.SubElement(el, "sub")
+    >>> subel = objectify.SubElement(el, "sub")
 
     >>> root.child = el
     >>> print(root.child.sub.tag)
@@ -296,6 +242,60 @@ Note that special care must be taken when changing the tag name of an element:
     AttributeError: no such child: b
     >>> print(root.notB.tag)
     notB
+
+
+Creating objectify trees
+------------------------
+
+As with ``lxml.etree``, you can either create an ``objectify`` tree by
+parsing an XML document or by building one from scratch.  To parse a
+document, just use the ``parse()`` or ``fromstring()`` functions of
+the module:
+
+.. sourcecode:: pycon
+
+    >>> fileobject = StringIO('<test/>')
+
+    >>> tree = objectify.parse(fileobject)
+    >>> print(isinstance(tree.getroot(), objectify.ObjectifiedElement))
+    True
+
+    >>> root = objectify.fromstring('<test/>')
+    >>> print(isinstance(root, objectify.ObjectifiedElement))
+    True
+
+To build a new tree in memory, ``objectify`` replicates the standard
+factory function ``Element()`` from ``lxml.etree``:
+
+.. sourcecode:: pycon
+
+    >>> obj_el = objectify.Element("new")
+    >>> print(isinstance(obj_el, objectify.ObjectifiedElement))
+    True
+
+After creating such an Element, you can use the `usual API`_ of
+lxml.etree to add SubElements to the tree:
+
+.. sourcecode:: pycon
+
+    >>> child = objectify.SubElement(obj_el, "newchild", attr="value")
+
+.. _`usual API`: tutorial.html#the-element-class
+
+New subelements will automatically inherit the objectify behaviour
+from their tree.  However, all independent elements that you create
+through the ``Element()`` factory of lxml.etree (instead of objectify)
+will not support the ``objectify`` API by themselves:
+
+.. sourcecode:: pycon
+
+    >>> subel = objectify.SubElement(obj_el, "sub")
+    >>> print(isinstance(subel, objectify.ObjectifiedElement))
+    True
+
+    >>> independent_el = etree.Element("new")
+    >>> print(isinstance(independent_el, objectify.ObjectifiedElement))
+    False
 
 
 Tree generation with the E-factory
@@ -368,8 +368,8 @@ the lookup will use the namespace of the parent:
 .. sourcecode:: pycon
 
     >>> root = objectify.Element("{http://ns/}root")
-    >>> b = etree.SubElement(root, "{http://ns/}b")
-    >>> c = etree.SubElement(root, "{http://other/}c")
+    >>> b = objectify.SubElement(root, "{http://ns/}b")
+    >>> c = objectify.SubElement(root, "{http://other/}c")
 
     >>> print(root.b.tag)
     {http://ns/}b
@@ -413,14 +413,14 @@ valid Python identifiers:
 
 .. sourcecode:: pycon
 
-    >>> el = etree.SubElement(root, "{http://ns/}tag-name")
+    >>> el = objectify.SubElement(root, "{http://ns/}tag-name")
     >>> print(root["tag-name"].tag)
     {http://ns/}tag-name
 
     >>> new_el = objectify.Element("{http://ns/}new-element")
-    >>> el = etree.SubElement(new_el, "{http://ns/}child")
-    >>> el = etree.SubElement(new_el, "{http://ns/}child")
-    >>> el = etree.SubElement(new_el, "{http://ns/}child")
+    >>> el = objectify.SubElement(new_el, "{http://ns/}child")
+    >>> el = objectify.SubElement(new_el, "{http://ns/}child")
+    >>> el = objectify.SubElement(new_el, "{http://ns/}child")
 
     >>> root["tag-name"] = [ new_el, new_el ]
     >>> print(len(root["tag-name"]))
@@ -522,10 +522,10 @@ represented by the ``ObjectPath`` class:
 .. sourcecode:: pycon
 
     >>> root = objectify.Element("{http://ns/}root")
-    >>> b1 = etree.SubElement(root, "{http://ns/}b")
-    >>> c  = etree.SubElement(b1,   "{http://ns/}c")
-    >>> b2 = etree.SubElement(root, "{http://ns/}b")
-    >>> d  = etree.SubElement(root, "{http://other/}d")
+    >>> b1 = objectify.SubElement(root, "{http://ns/}b")
+    >>> c  = objectify.SubElement(b1,   "{http://ns/}c")
+    >>> b2 = objectify.SubElement(root, "{http://ns/}b")
+    >>> d  = objectify.SubElement(root, "{http://other/}d")
 
     >>> path = objectify.ObjectPath("root.b.c")
     >>> print(path)
