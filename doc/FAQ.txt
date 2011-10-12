@@ -203,7 +203,7 @@ Zope3 and some of its extensions have good support for lxml:
 * zif.sedna_, an XQuery based interface to the Sedna OpenSource XML database
 
 And don't miss the quotes by our generally happy_ users_, and other
-`sites that link to lxml`_.  As `Liza Daly`_ puts it: "Many software
+`sites that link to lxml`_.   As `Liza Daly`_ puts it: "Many software
 products come with the pick-two caveat, meaning that you must choose
 only two: speed, flexibility, or readability.  When used carefully,
 lxml can provide all three."
