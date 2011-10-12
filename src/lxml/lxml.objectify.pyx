@@ -15,8 +15,8 @@ __all__ = [u'BoolElement', u'DataElement', u'E', u'Element', u'ElementMaker',
            u'FloatElement', u'IntElement', u'LongElement', u'NoneElement',
            u'NumberElement', u'ObjectPath', u'ObjectifiedDataElement',
            u'ObjectifiedElement', u'ObjectifyElementClassLookup',
-           u'PYTYPE_ATTRIBUTE', u'PyType', u'StringElement', u'XML',
-           u'annotate', u'deannotate', u'dump', u'enable_recursive_str',
+           u'PYTYPE_ATTRIBUTE', u'PyType', u'StringElement', u'SubElement',
+           u'XML', u'annotate', u'deannotate', u'dump', u'enable_recursive_str',
            u'fromstring', u'getRegisteredTypes', u'makeparser', u'parse',
            u'pyannotate', u'pytypename', u'set_default_parser',
            u'set_pytype_attribute_tag', u'xsiannotate']
@@ -1810,6 +1810,8 @@ cdef _Element _makeElement(tag, text, attrib, nsmap):
 
 cdef object _fromstring
 _fromstring = etree.fromstring
+
+SubElement = etree.SubElement
 
 def fromstring(xml, parser=None, *, base_url=None):
     u"""fromstring(xml, parser=None, base_url=None)

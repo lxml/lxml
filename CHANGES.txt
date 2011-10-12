@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+2.3.2 (Under development)
+=========================
+
+Features added
+--------------
+
+* ``lxml.objectify`` gained its own ``SubElement()`` function as a
+  copy of ``etree.SubElement`` to avoid an otherwise redundant import
+  of ``lxml.etree`` on the user side.
+
+Bugs fixed
+----------
+
+Other changes
+--------------
+
+
 2.3.1 (2011-09-25)
 ==================
 
