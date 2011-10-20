@@ -389,19 +389,20 @@ see when (or if) a specific bug has been fixed.
 Where are the binary builds?
 ----------------------------
 
-Sidnei da Silva regularly contributes Windows binaries for new
-releases.  This is because two of the major problems of Microsoft
-Windows make it non-trivial for users to build lxml on this platform:
-the lack of a pre-installed standard compiler and the missing package
-management.
+Binary builds are often requested by users of Microsoft Windows.  Two
+of the major design issues of this operating system make it
+non-trivial for users to build lxml: the lack of a pre-installed
+standard compiler and the missing package management.
 
-If there is not currently a binary distribution of the most recent
-lxml release for this platform available from the Python Package Index
-(PyPI), please look through the older versions to see if they provide
-a binary build.  This is done by appending the version number to the
-PyPI URL, e.g.::
+We previously provided Windows binaries for new releases, but
+currently lack a maintainer with a suitable build system.  If there is
+not currently a binary distribution of the most recent lxml release
+for this platform available from the Python Package Index (PyPI),
+please look through the older versions to see if they provide a binary
+build.  This is done by appending the version number to the PyPI URL,
+e.g.::
 
-	  http://pypi.python.org/pypi/lxml/2.1.5
+	  http://pypi.python.org/pypi/lxml/2.2.8
 
 Christoph Gohlke also provides `unofficial lxml binary builds for
 Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ that are
@@ -409,9 +410,9 @@ usually very up to date.
 
 Apart from that, we generally do not provide binary builds of lxml, as
 most of the other operating systems out there can build lxml without
-problems (with the exception of `MacOS-X`_), and the sheer mass of
-variations between platforms makes it futile to provide builds for
-everyone.
+problems (with `MacOS-X`_ being sometimes an exception), and the sheer
+mass of variations between platforms makes it futile to provide builds
+for everyone.
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
