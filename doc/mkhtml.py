@@ -98,11 +98,13 @@ def inject_flatter_button(tree):
 """
     script.tail = '\n'
     intro_div = tree.xpath('h:body//h:div[@id = "introduction"][1]', namespaces=htmlnsmap)[0]
-    intro_div.insert(-1, XML('''<p style="text-align: right;">Support this project
-    through <a href="http://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit">Flattr</a><br/>
-    <a class="FlattrButton" style="display:none;" rev="flattr;button:compact;" href="http://lxml.de/"></a>
-    </p>
-    '''))
+    intro_div.insert(-1, XML(
+        '<p style="text-align: center;">Like working with lxml? '
+        'Happy about the time that it just saved you? <br />'
+        'Show your appreciation with <a href="http://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit">Flattr</a>.<br />'
+        '<a class="FlattrButton" style="display:none;" rev="flattr;button:compact;" href="http://lxml.de/"></a>'
+        '</p>'
+        ))
 
 def rest2html(script, source_path, dest_path, stylesheet_url):
     command = ('%s %s %s --stylesheet=%s --link-stylesheet %s > %s' %
