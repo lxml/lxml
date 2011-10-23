@@ -1093,6 +1093,15 @@ arguments 'pytype' (default: True) and 'xsi' (default: True).
         s = 5 [IntElement]
         n = u'' [StringElement]
 
+Note that ``deannotate()`` does not remove the namespace declarations
+of the ``pytype`` namespace by default.  To remove them as well, and
+to generally clean up the namespace declarations in the document
+(usually when done with the whole processing), pass the option
+``cleanup_namespaces=True``.  This option is new in lxml 2.3.2.  In
+older versions, use the function ``lxml.etree.cleanup_namespaces()``
+instead.
+
+
 The DataElement factory
 -----------------------
 

@@ -8,6 +8,11 @@ lxml changelog
 Features added
 --------------
 
+* ``lxml.objectify.deannotate()`` has a new boolean option
+  ``cleanup_namespaces`` to remove the objectify namespace
+  declarations (and generally clean up the namespace declarations)
+  after removing the type annotations.
+
 * ``lxml.objectify`` gained its own ``SubElement()`` function as a
   copy of ``etree.SubElement`` to avoid an otherwise redundant import
   of ``lxml.etree`` on the user side.

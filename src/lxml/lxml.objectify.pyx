@@ -1726,9 +1726,11 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
 cdef object _strip_attributes = etree.strip_attributes
+cdef object _cleanup_namespaces = etree.cleanup_namespaces
 
-def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
-    u"""deannotate(element_or_tree, pytype=True, xsi=True, xsi_nil=False)
+def deannotate(element_or_tree, *, bint pytype=True, bint xsi=True,
+               bint xsi_nil=False, bint cleanup_namespaces=False):
+    u"""deannotate(element_or_tree, pytype=True, xsi=True, xsi_nil=False, cleanup_namespaces=False)
 
     Recursively de-annotate the elements of an XML tree by removing 'py:pytype'
     and/or 'xsi:type' attributes and/or 'xsi:nil' attributes.
@@ -1739,9 +1741,9 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
     If the 'xsi_nil' keyword argument is True (default: False), 'xsi:nil'
     attributes will be removed.
 
-    Note that this does not touch the namespace declarations.  If you
-    want to remove unused namespace declarations from the tree, use
-    ``lxml.etree.cleanup_namespaces()``.
+    Note that this does not touch the namespace declarations by
+    default.  If you want to remove unused namespace declarations from
+    the tree, pass the option ``cleanup_namespaces=True``.
     """
     cdef list attribute_names = []
 
@@ -1753,6 +1755,8 @@ def deannotate(element_or_tree, *, pytype=True, xsi=True, xsi_nil=False):
         attribute_names.append(XML_SCHEMA_INSTANCE_NIL_ATTR)
 
     _strip_attributes(element_or_tree, *attribute_names)
+    if cleanup_namespaces:
+        _cleanup_namespaces(element_or_tree)
 
 ################################################################################
 # Module level parser setup
