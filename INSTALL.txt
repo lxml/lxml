@@ -39,7 +39,7 @@ particular:
 
   * We recommend libxslt 1.1.26 or later.
 
-Newer versions generally contain less bugs and are therefore
+Newer versions generally contain fewer bugs and are therefore
 recommended.  XML Schema support is also still worked on in libxml2,
 so newer versions will give you better compliance with the W3C spec.
 
@@ -81,7 +81,7 @@ administrator)::
 Building lxml from sources
 --------------------------
 
-If you want to build lxml from the Githup repository, you should read
+If you want to build lxml from the GitHub repository, you should read
 `how to build lxml from source`_ (or the file ``doc/build.txt`` in the
 source tree).  Building from developer sources or from modified
 distribution sources requires Cython_ to translate the lxml sources
