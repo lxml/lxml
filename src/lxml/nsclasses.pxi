@@ -110,8 +110,9 @@ cdef class ElementNamespaceClassLookup(FallbackElementClassLookup):
         u"""get_namespace(self, ns_uri)
 
         Retrieve the namespace object associated with the given URI.
+        Pass None for the empty namespace.
 
-        Creates a new one if it does not yet exist."""
+        Creates a new namespace object if it does not yet exist."""
         if ns_uri:
             ns_utf = _utf8(ns_uri)
         else:
