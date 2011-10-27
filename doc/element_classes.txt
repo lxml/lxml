@@ -38,10 +38,6 @@ custom Element classes.
    4  Generating XML with custom classes
    5  Implementing namespaces
 
-..
-  >>> try: _ = unicode
-  ... except NameError: unicode = str
-
 
 Background on Element proxies
 =============================
@@ -410,7 +406,7 @@ You can use custom Element classes to quickly create XML fragments:
 
   >>> el = hale( "some ", honk(honking = 'true'), bopp, " text" )
 
-  >>> print(etree.tostring(el, encoding=unicode))
+  >>> print(etree.tostring(el, encoding='unicode'))
   <hale>some <honk honking="true"/><bopp/> text</hale>
 
 
