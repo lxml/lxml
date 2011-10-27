@@ -16,9 +16,9 @@ provides the Element interface for subclasses:
   >>> from lxml import etree
 
   >>> class honk(etree.ElementBase):
+  ...    @property
   ...    def honking(self):
   ...       return self.get('honking') == 'true'
-  ...    honking = property(honking)
 
 This defines a new Element class ``honk`` with a property ``honking``.
 
@@ -294,9 +294,26 @@ value in a dictionary.  It is set up as follows:
   >>> parser = etree.XMLParser()
   >>> parser.set_element_class_lookup(lookup)
 
-This class uses its fallback if the attribute is not found or its value is not
-in the mapping.  Normally, the default class lookup is used here.  If you want
-to use the namespace lookup, for example, you can use this code:
+And here is how to use it:
+
+.. sourcecode:: pycon
+
+  >>> xml = '<a id="123"><b id="1234"/><b id="1234" honking="true"/></a>'
+  >>> a = etree.fromstring(xml, parser)
+
+  >>> a.honking       # id does not match !
+  Traceback (most recent call last):
+  AttributeError: 'lxml.etree._Element' object has no attribute 'honking'
+
+  >>> a[0].honking
+  False
+  >>> a[1].honking
+  True
+
+This lookup scheme uses its fallback if the attribute is not found or
+its value is not in the mapping.  Normally, the default class lookup
+is used here.  If you want to use the namespace lookup, for example,
+you can use this code:
 
 .. sourcecode:: pycon
 
@@ -502,9 +519,9 @@ can just pass None as an element name:
   >>> namespace[None] = HonkNSElement # default Element for namespace
 
   >>> class HonkElement(HonkNSElement):
+  ...    @property
   ...    def honking(self):
   ...       return self.get('honking') == 'true'
-  ...    honking = property(honking)
   >>> namespace['honk'] = HonkElement # Element for specific tag
 
 Now you can rely on lxml to always return objects of type HonkNSElement or its
