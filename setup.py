@@ -162,7 +162,7 @@ def setup_extra_options():
         header_packages = build_packages(extract_files(include_dirs))
 
         packages.append('lxml.include')
-        for package_path, (root_path, filenames) in header_packages.iteritems():
+        for package_path, (root_path, filenames) in header_packages.items():
             if package_path:
                 package = 'lxml.include.' + package_path
                 packages.append(package)
