@@ -20,6 +20,13 @@ Features added
 Bugs fixed
 ----------
 
+* Fixed the "descendant" bug in cssselect a second time (after a first
+  fix in lxml 2.3.1).  The previous change resulted in a serious
+  performance regression for the XPath based evaluation of the
+  translated expression.  Note that this breaks the usage of some of
+  the generated XPath expressions as XSLT location paths that
+  previously worked in 2.3.1.
+
 Other changes
 --------------
 
@@ -69,10 +76,11 @@ Bugs fixed
 * Assertion error in lxml.html.cleaner when discarding top-level elements.
 
 * In lxml.cssselect, use the xpath 'A//B' (short for
-  'A/descendant-or-self::node()/B') instead of 'A/descendant::B' for the css
-  descendant selector ('A B'). This makes a few edge cases to be consistent
-  with the selector behavior in WebKit and Firefox, and makes more css
-  expressions valid location paths (for use in xsl:template match).
+  'A/descendant-or-self::node()/B') instead of 'A/descendant::B' for
+  the css descendant selector ('A B').  This makes a few edge cases
+  like ``"div *:last-child"`` consistent with the selector behavior in
+  WebKit and Firefox, and makes more css expressions valid location
+  paths (for use in xsl:template match).
 
 * In lxml.html, non-selected ``<option>`` tags no longer show up in the
   collected form values.

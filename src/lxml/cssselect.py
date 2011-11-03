@@ -494,7 +494,7 @@ class CombinedSelector(object):
 
     def _xpath_descendant(self, xpath, sub):
         # when sub is a descendant in any way of xpath
-        xpath.join('//', sub.xpath())
+        xpath.join('/descendant-or-self::*/', sub.xpath())
         return xpath
     
     def _xpath_child(self, xpath, sub):

@@ -95,7 +95,7 @@ Now of translation:
     >>> xpath('E:nth-last-of-type(1)')
     */e[position() = last() - 1]
     >>> xpath('div E:nth-last-of-type(1) .aclass')
-    div//e[position() = last() - 1]//*[contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
+    div/descendant-or-self::*/e[position() = last() - 1]/descendant-or-self::*/*[contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
     >>> xpath('E:first-child')
     */*[name() = 'e' and (position() = 1)]
     >>> xpath('E:last-child')
@@ -119,7 +119,7 @@ Now of translation:
     >>> xpath('E:not(:contains("foo"))')
     e[not(contains(css:lower-case(string(.)), 'foo'))]
     >>> xpath('E F')
-    e//f
+    e/descendant-or-self::*/f
     >>> xpath('E > F')
     e/f
     >>> xpath('E + F')
@@ -127,7 +127,7 @@ Now of translation:
     >>> xpath('E ~ F')
     e/following-sibling::f
     >>> xpath('div#container p')
-    div[@id = 'container']//p
+    div[@id = 'container']/descendant-or-self::*/p
     >>> xpath('p *:only-of-type')
     Traceback (most recent call last):
         ...
