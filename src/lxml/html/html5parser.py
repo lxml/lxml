@@ -20,8 +20,8 @@ except NameError:
 class HTMLParser(_HTMLParser):
     """An html5lib HTML parser with lxml as tree."""
 
-    def __init__(self, strict=False):
-        _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder)
+    def __init__(self, strict=False, **kwargs):
+        _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder, **kwargs)
 
 
 try:
@@ -32,8 +32,8 @@ else:
     class XHTMLParser(_XHTMLParser):
         """An html5lib XHTML Parser with lxml as tree."""
 
-        def __init__(self, strict=False):
-            _XHTMLParser.__init__(self, strict=strict, tree=TreeBuilder)
+        def __init__(self, strict=False, **kwargs):
+            _XHTMLParser.__init__(self, strict=strict, tree=TreeBuilder, **kwargs)
 
     xhtml_parser = XHTMLParser()
 
