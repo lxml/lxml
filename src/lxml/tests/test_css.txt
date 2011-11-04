@@ -22,6 +22,10 @@ Then of parsing:
     Or([Element[div], Class[Element[td].foo], CombinedSelector[Class[Element[div].bar] <followed> Element[span]]])
     >>> parse('div > p')
     CombinedSelector[Element[div] > Element[p]]
+    >>> parse('div>.foo')
+    CombinedSelector[Element[div] > Class[Element[*].foo]]
+    >>> parse('div > .foo')
+    CombinedSelector[Element[div] > Class[Element[*].foo]]
     >>> parse('td:first')
     Pseudo[Element[td]:first]
     >>> parse('a[name]')

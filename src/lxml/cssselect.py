@@ -693,6 +693,9 @@ def parse_selector(stream):
         elif peek in ('+', '>', '~'):
             # A combinator
             combinator = stream.next()
+            # Ignore optional whitespace after a combinator
+            while stream.peek() == ' ':
+                stream.next()
         else:
             combinator = ' '
         consumed = len(stream.used)
