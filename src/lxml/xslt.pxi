@@ -821,7 +821,6 @@ cdef _findStylesheetByID(_Document doc, id):
             namespaces={u"xsl" : u"http://www.w3.org/1999/XSL/Transform"})
     return __findStylesheetByID(doc, id=id)
 
-@cython.final
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
         u"""parseXSL(self, parser=None)
