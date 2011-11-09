@@ -1356,11 +1356,11 @@ cdef object _dump(_Element element, int indent):
                 else:
                     name = name.replace(pytype_ns, u'py:')
             name = name.replace(xsi_ns, u'xsi:')
-        result = result + u"%s  * %s = %r\n" % (indentstr, name, value)
+        result += u"%s  * %s = %r\n" % (indentstr, name, value)
 
-    indent = indent + 1
+    indent += 1
     for child in element.iterchildren():
-        result = result + _dump(child, indent)
+        result += _dump(child, indent)
     if indent == 1:
         return result[:-1] # strip last '\n'
     else:
@@ -1796,12 +1796,8 @@ def makeparser(**kw):
     blank text.  You can disable this by passing the
     ``remove_blank_text`` boolean keyword option yourself.
     """
-    if python.IS_PYTHON3:
-        remove_blank_text = u'remove_blank_text'
-    else:
-        remove_blank_text = 'remove_blank_text'
-    if remove_blank_text not in kw:
-        kw[remove_blank_text] = True
+    if 'remove_blank_text' not in kw:
+        kw['remove_blank_text'] = True
     parser = etree.XMLParser(**kw)
     parser.set_element_class_lookup( ObjectifyElementClassLookup() )
     return parser
