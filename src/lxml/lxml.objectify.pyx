@@ -931,8 +931,8 @@ cdef inline object _numericValueOf(obj):
     return obj
 
 cdef inline _richcmpPyvals(left, right, int op):
-    left  = getattr3(left,  u'pyval', left)
-    right = getattr3(right, u'pyval', right)
+    left  = getattr(left,  u'pyval', left)
+    right = getattr(right, u'pyval', right)
     return python.PyObject_RichCompare(left, right, op)
 
 
