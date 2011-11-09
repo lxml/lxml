@@ -140,6 +140,8 @@ Now, the tests:
     li-div
     >>> pcss('div > div')
     empty
+    >>> pcss('div>.c', 'div > .c')
+    first-ol
     >>> pcss('div + div')
     foobar-div
     >>> pcss('a ~ a')
