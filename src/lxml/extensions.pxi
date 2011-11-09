@@ -28,6 +28,7 @@ cdef class _ExsltRegExp
 ################################################################################
 # Base class for XSLT and XPath evaluation contexts: functions, namespaces, ...
 
+@cython.internal
 cdef class _BaseContext:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _Document _doc
@@ -376,6 +377,8 @@ def Extension(module, function_mapping=None, *, ns=None):
 ################################################################################
 # EXSLT regexp implementation
 
+@cython.final
+@cython.internal
 cdef class _ExsltRegExp:
     cdef dict _compile_map
     def __cinit__(self):
@@ -653,6 +656,7 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
 ################################################################################
 # special str/unicode subclasses
 
+@cython.final
 cdef class _ElementUnicodeResult(unicode):
     cdef _Element _parent
     cdef readonly object is_tail

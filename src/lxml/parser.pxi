@@ -37,6 +37,8 @@ class ParserError(LxmlError):
     """
     pass
 
+@cython.final
+@cython.internal
 cdef class _ParserDictionaryContext:
     # Global parser context to share the string dictionary.
     #
@@ -258,6 +260,8 @@ _setupPythonUnicode()
 ## support for file-like objects
 ############################################################
 
+@cython.final
+@cython.internal
 cdef class _FileReaderContext:
     cdef object _filelike
     cdef object _encoding
@@ -489,6 +493,7 @@ xmlparser.xmlSetExternalEntityLoader(_local_resolver)
 ## Parsers
 ############################################################
 
+@cython.internal
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef _ParserSchemaValidationContext _validator

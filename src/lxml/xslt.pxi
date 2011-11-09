@@ -47,6 +47,8 @@ LIBXSLT_VERSION = __unpackIntVersion(xslt.xsltLibxsltVersion)
 ################################################################################
 # XSLT document loaders
 
+@cython.final
+@cython.internal
 cdef class _XSLTResolverContext(_ResolverContext):
     cdef xmlDoc* _c_style_doc
     cdef _BaseParser _parser
@@ -266,6 +268,8 @@ cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
 
 cdef dict EMPTY_DICT = {}
 
+@cython.final
+@cython.internal
 cdef class _XSLTContext(_BaseContext):
     cdef xslt.xsltTransformContext* _xsltCtxt
     cdef _ReadOnlyElementProxy _extension_element_proxy
@@ -316,6 +320,8 @@ cdef class _XSLTContext(_BaseContext):
         self._release_temp_refs()
 
 
+@cython.final
+@cython.internal
 cdef class _XSLTQuotedStringParam:
     u"""A wrapper class for literal XSLT string parameters that require
     quote escaping.
@@ -665,6 +671,7 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
 
     return new_xslt
 
+@cython.final
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
     cdef _Document _profile
@@ -814,6 +821,7 @@ cdef _findStylesheetByID(_Document doc, id):
             namespaces={u"xsl" : u"http://www.w3.org/1999/XSL/Transform"})
     return __findStylesheetByID(doc, id=id)
 
+@cython.final
 cdef class _XSLTProcessingInstruction(PIBase):
     def parseXSL(self, parser=None):
         u"""parseXSL(self, parser=None)

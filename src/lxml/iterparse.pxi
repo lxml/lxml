@@ -59,6 +59,8 @@ cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
         c_ns = c_ns.next
     return count
 
+@cython.final
+@cython.internal
 cdef class _IterparseContext(_ParserContext):
     cdef xmlparser.startElementNsSAX2Func _origSaxStart
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd

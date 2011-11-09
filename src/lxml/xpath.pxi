@@ -47,6 +47,8 @@ cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
             <xpath.xmlXPathContext*>ctxt, _cstr(name_utf), _cstr(ns_utf), NULL)
 
 
+@cython.final
+@cython.internal
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
     def __init__(self, namespaces, extensions, enable_regexp, variables,

@@ -1,5 +1,6 @@
 # read-only tree implementation
 
+@cython.internal
 cdef class _ReadOnlyProxy:
     u"A read-only proxy class suitable for PIs/Comments (for internal use only!)."
     cdef bint _free_after_use
@@ -241,6 +242,8 @@ cdef class _ReadOnlyProxy:
         return None
 
 
+@cython.final
+@cython.internal
 cdef class _ReadOnlyPIProxy(_ReadOnlyProxy):
     u"A read-only proxy for processing instructions (for internal use only!)"
     property target:
@@ -248,6 +251,8 @@ cdef class _ReadOnlyPIProxy(_ReadOnlyProxy):
             self._assertNode()
             return funicode(self._c_node.name)
 
+@cython.final
+@cython.internal
 cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
     u"A read-only proxy for entity references (for internal use only!)"
     property name:
@@ -265,6 +270,7 @@ cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
             return u'&%s;' % funicode(self._c_node.name)
 
 
+@cython.internal
 cdef class _ReadOnlyElementProxy(_ReadOnlyProxy):
     u"The main read-only Element proxy class (for internal use only!)."
 
@@ -354,11 +360,14 @@ cdef _freeReadOnlyProxies(_ReadOnlyProxy sourceProxy):
 # This class does not imply any restrictions on modifiability or
 # read-only status of the node, so use with caution.
 
+@cython.internal
 cdef class _OpaqueNodeWrapper:
     cdef tree.xmlNode* _c_node
     def __init__(self):
         raise TypeError, u"This type cannot be instatiated from Python"
 
+@cython.final
+@cython.internal
 cdef class _OpaqueDocumentWrapper(_OpaqueNodeWrapper):
     cdef int _assertNode(self) except -1:
         u"""This is our way of saying: this proxy is invalid!
@@ -402,6 +411,7 @@ cdef _OpaqueNodeWrapper _newOpaqueAppendOnlyNodeWrapper(xmlNode* c_node):
 
 # element proxies that allow restricted modification
 
+@cython.internal
 cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
     u"""A read-only proxy that allows changing the text content.
     """
@@ -424,6 +434,8 @@ cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
                 c_text = _cstr(value)
             tree.xmlNodeSetContent(self._c_node, c_text)
 
+@cython.final
+@cython.internal
 cdef class _ModifyContentOnlyPIProxy(_ModifyContentOnlyProxy):
     u"""A read-only proxy that allows changing the text/target content of a
     processing instruction.
@@ -439,6 +451,8 @@ cdef class _ModifyContentOnlyPIProxy(_ModifyContentOnlyProxy):
             c_text = _cstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
 
+@cython.final
+@cython.internal
 cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
     u"A read-only proxy for entity references (for internal use only!)"
     property name:
@@ -453,6 +467,8 @@ cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
             tree.xmlNodeSetName(self._c_node, c_text)
 
 
+@cython.final
+@cython.internal
 cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
     u"""A read-only element that allows adding children and changing the
     text content (i.e. everything that adds to the subtree).

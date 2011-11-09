@@ -10,6 +10,8 @@ class _TargetParserResult(Exception):
     def __init__(self, result):
         self.result = result
 
+@cython.final
+@cython.internal
 cdef class _PythonSaxParserTarget(_SaxParserTarget):
     cdef object _target_start
     cdef object _target_end
@@ -90,6 +92,8 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
         return self._target_comment(comment)
 
 
+@cython.final
+@cython.internal
 cdef class _TargetParserContext(_SaxParserContext):
     u"""This class maps SAX2 events to the ET parser target interface.
     """

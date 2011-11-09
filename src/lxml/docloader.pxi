@@ -7,6 +7,8 @@ ctypedef enum _InputDocumentDataType:
     PARSER_DATA_FILENAME
     PARSER_DATA_FILE
 
+@cython.final
+@cython.internal
 cdef class _InputDocument:
     cdef _InputDocumentDataType _type
     cdef object _data_bytes
@@ -106,6 +108,8 @@ cdef class Resolver:
         doc_ref._file = f
         return doc_ref
 
+@cython.final
+@cython.internal
 cdef class _ResolverRegistry:
     cdef object _resolvers
     cdef Resolver _default_resolver
@@ -153,6 +157,7 @@ cdef class _ResolverRegistry:
     def __repr__(self):
         return repr(self._resolvers)
 
+@cython.internal
 cdef class _ResolverContext(_ExceptionContext):
     cdef _ResolverRegistry _resolvers
     cdef _TempStore _storage

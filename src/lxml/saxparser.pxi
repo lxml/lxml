@@ -28,6 +28,7 @@ cdef class _SaxParserTarget:
     cdef _handleSaxComment(self, comment):
         return None
 
+@cython.internal
 cdef class _SaxParserContext(_ParserContext):
     u"""This class maps SAX2 events to method calls.
     """

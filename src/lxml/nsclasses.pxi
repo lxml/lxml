@@ -11,6 +11,7 @@ class NamespaceRegistryError(LxmlRegistryError):
     pass
 
 
+@cython.internal
 cdef class _NamespaceRegistry:
     u"Dictionary-like namespace registry"
     cdef object _ns_uri
@@ -78,6 +79,8 @@ cdef class _NamespaceRegistry:
     def clear(self):
         python.PyDict_Clear(self._entries)
 
+@cython.final
+@cython.internal
 cdef class _ClassNamespaceRegistry(_NamespaceRegistry):
     u"Dictionary-like registry for namespace implementation classes"
     def __setitem__(self, name, item):
@@ -186,6 +189,7 @@ def FunctionNamespace(ns_uri):
                    _XPathFunctionNamespaceRegistry(ns_uri)
         return registry
 
+@cython.internal
 cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __setitem__(self, name, item):
         if not callable(item):
@@ -199,6 +203,8 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
     def __repr__(self):
         return u"FunctionNamespace(%r)" % self._ns_uri
 
+@cython.final
+@cython.internal
 cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
     cdef object _prefix
     cdef object _prefix_utf

@@ -343,6 +343,8 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 ############################################################
 # output to file-like objects
 
+@cython.final
+@cython.internal
 cdef class _FilelikeWriter:
     cdef object _filelike
     cdef object _close_filelike

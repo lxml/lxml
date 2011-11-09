@@ -37,6 +37,8 @@ __all__ = [
     'use_global_python_log'
     ]
 
+cimport cython
+
 cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
@@ -243,6 +245,8 @@ __version__ = (tree.LXML_VERSION_STRING).decode(u"ASCII")
 
 # class for temporary storage of Python references,
 # used e.g. for XPath results
+@cython.final
+@cython.internal
 cdef class _TempStore:
     cdef list _storage
     def __init__(self):
@@ -257,6 +261,7 @@ cdef class _TempStore:
         return 0
 
 # class for temporarily storing exceptions raised in extensions
+@cython.internal
 cdef class _ExceptionContext:
     cdef object _exc_info
     cdef void clear(self):
@@ -1476,6 +1481,7 @@ cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     return result
 
 
+@cython.internal
 cdef class __ContentOnlyElement(_Element):
     cdef int _raiseImmutable(self) except -1:
         raise TypeError, u"this element does not have children or attributes"
@@ -2268,6 +2274,8 @@ cdef class _Attrib:
         return python.PyObject_RichCompare(one, other, op)
 
 
+@cython.final
+@cython.internal
 cdef class _AttribIterator:
     u"""Attribute iterator - for internal use only!
     """

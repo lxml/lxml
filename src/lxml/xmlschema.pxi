@@ -168,6 +168,8 @@ cdef class XMLSchema(_Validator):
             add_default_attributes or self._add_attribute_defaults))
         return context
 
+@cython.final
+@cython.internal
 cdef class _ParserSchemaValidationContext:
     cdef XMLSchema _schema
     cdef xmlschema.xmlSchemaValidCtxt* _valid_ctxt
