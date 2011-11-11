@@ -8,29 +8,8 @@ lxml changelog
 Features added
 --------------
 
-* ``lxml.objectify.deannotate()`` has a new boolean option
-  ``cleanup_namespaces`` to remove the objectify namespace
-  declarations (and generally clean up the namespace declarations)
-  after removing the type annotations.
-
-* ``lxml.objectify`` gained its own ``SubElement()`` function as a
-  copy of ``etree.SubElement`` to avoid an otherwise redundant import
-  of ``lxml.etree`` on the user side.
-
 Bugs fixed
 ----------
-
-* Fixed the "descendant" bug in cssselect a second time (after a first
-  fix in lxml 2.3.1).  The previous change resulted in a serious
-  performance regression for the XPath based evaluation of the
-  translated expression.  Note that this breaks the usage of some of
-  the generated XPath expressions as XSLT location paths that
-  previously worked in 2.3.1.
-
-* Fixed parsing of some selectors in cssselect. Whitespace after combinators
-  ">", "+" and "~" is now correctly ignored. Previously is was parsed as
-  a descendant combinator. For example, "div> .foo" was parsed the same as
-  "div>* .foo" instead of "div>.foo".
 
 Other changes
 --------------
@@ -62,6 +41,39 @@ Other changes
   _XPathContext, _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam,
   _XSLTResultTree, _XSLTProcessingInstruction
 
+
+2.3.2 (2011-11-11)
+==================
+
+Features added
+--------------
+
+* ``lxml.objectify.deannotate()`` has a new boolean option
+  ``cleanup_namespaces`` to remove the objectify namespace
+  declarations (and generally clean up the namespace declarations)
+  after removing the type annotations.
+
+* ``lxml.objectify`` gained its own ``SubElement()`` function as a
+  copy of ``etree.SubElement`` to avoid an otherwise redundant import
+  of ``lxml.etree`` on the user side.
+
+Bugs fixed
+----------
+
+* Fixed the "descendant" bug in cssselect a second time (after a first
+  fix in lxml 2.3.1).  The previous change resulted in a serious
+  performance regression for the XPath based evaluation of the
+  translated expression.  Note that this breaks the usage of some of
+  the generated XPath expressions as XSLT location paths that
+  previously worked in 2.3.1.
+
+* Fixed parsing of some selectors in cssselect. Whitespace after combinators
+  ">", "+" and "~" is now correctly ignored. Previously is was parsed as
+  a descendant combinator. For example, "div> .foo" was parsed the same as
+  "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
+
+Other changes
+--------------
 
 
 2.3.1 (2011-09-25)
