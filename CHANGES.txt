@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* lxml.html.diff no longer raises an exception when hitting
+  'img' tags without 'src' attribute.
+
 Other changes
 --------------
 
