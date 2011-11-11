@@ -679,7 +679,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     not returned (just its contents)."""
     if not skip_tag:
         if el.tag == 'img':
-            yield ('img', el.attrib['src'], start_tag(el))
+            yield ('img', el.get('src'), start_tag(el))
         else:
             yield start_tag(el)
     if el.tag in empty_tags and not el.text and not len(el) and not el.tail:
@@ -690,8 +690,8 @@ def flatten_el(el, include_hrefs, skip_tag=False):
     for child in el:
         for item in flatten_el(child, include_hrefs=include_hrefs):
             yield item
-    if el.tag == 'a' and el.attrib.get('href') and include_hrefs:
-        yield ('href', el.attrib['href'])
+    if el.tag == 'a' and el.get('href') and include_hrefs:
+        yield ('href', el.get('href'))
     if not skip_tag:
         yield end_tag(el)
         end_words = split_words(el.tail)

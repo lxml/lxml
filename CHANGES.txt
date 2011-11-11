@@ -32,6 +32,9 @@ Bugs fixed
   a descendant combinator. For example, "div> .foo" was parsed the same as
   "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
 
+* lxml.html.diff no longer raises an exception when hitting
+  'img' tags without 'src' attribute.
+
 Other changes
 --------------
 
