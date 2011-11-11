@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-2.3.2 (Under development)
-=========================
+2.4 (Under development)
+=======================
 
 Features added
 --------------
