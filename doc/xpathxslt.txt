@@ -52,7 +52,7 @@ classes also provide an ``xpath()`` method that supports expressions in the
 complete XPath syntax, as well as `custom extension functions`_.
 
 .. _ElementPath: http://effbot.org/zone/element-xpath.htm
-.. _`find,  findall and findtext`: http://effbot.org/zone/element.htm#searching-for-subelements
+.. _`find, findall and findtext`: http://effbot.org/zone/element.htm#searching-for-subelements
 .. _`custom extension functions`: extensions.html#xpath-extension-functions
 .. _`XSLT extension elements`: extensions.html#xslt-extension-elements
 
