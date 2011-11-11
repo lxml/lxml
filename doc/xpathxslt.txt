@@ -638,7 +638,7 @@ error log.
   >>> str(result)
   '<?xml version="1.0"?>\n<foo>Text</foo>\n'
 
-  >>> transform.error_log
+  >>> print(transform.error_log)
   <string>:0:0:ERROR:XSLT:ERR_OK: STARTING
   <string>:0:0:ERROR:XSLT:ERR_OK: DONE
 
