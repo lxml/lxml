@@ -90,8 +90,8 @@ Done. Now we can have XPath expressions call our new function:
 
 .. sourcecode:: pycon
 
-  >>> print(root.xpath("hello('world')"))
-  Hello world
+  >>> print(root.xpath("hello('Dr. Falken')"))
+  Hello Dr. Falken
   >>> print(root.xpath('hello(local-name(*))'))
   Hello b
   >>> print(root.xpath('hello(string(b))'))
