@@ -30,7 +30,7 @@ Bugs fixed
 * Fixed parsing of some selectors in cssselect. Whitespace after combinators
   ">", "+" and "~" is now correctly ignored. Previously is was parsed as
   a descendant combinator. For example, "div> .foo" was parsed the same as
-  "div>* .foo" instead of "div>.foo".
+  "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
 
 Other changes
 --------------
