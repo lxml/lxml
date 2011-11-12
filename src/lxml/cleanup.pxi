@@ -84,7 +84,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     subtree.  This will remove the elements and their entire subtree,
     including all their attributes, text content and descendants.  It
     will also remove the tail text of the element unless you
-    explicitly set the ``with_tail`` option to False.
+    explicitly set the ``with_tail`` keyword argument option to False.
 
     Note that this will not delete the element (or ElementTree root
     element) that you passed even if it matches.  It will only treat
@@ -97,7 +97,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
             'simpletagname',             # non-namespaced tag
             '{http://some/ns}tagname',   # namespaced tag
             '{http://some/other/ns}*'    # any tag from a namespace
-            Comment                      # comments
+            lxml.etree.Comment           # comments
             )
     """
     cdef _Element element
