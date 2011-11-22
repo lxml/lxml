@@ -19,7 +19,7 @@ Other changes
 
 * Several classes that are for internal use only were removed
   from the ``lxml.etree`` module dict:
-  _InputDocument, _ResolverRegistry, _ResolverContext, _BaseContext,
+  ``_InputDocument, _ResolverRegistry, _ResolverContext, _BaseContext,
   _ExsltRegExp, _IterparseContext, _TempStore, _ExceptionContext,
   __ContentOnlyElement, _AttribIterator, _NamespaceRegistry,
   _ClassNamespaceRegistry, _FunctionNamespaceRegistry,
@@ -31,10 +31,10 @@ Other changes
   _ModifyContentOnlyPIProxy, _ModifyContentOnlyEntityProxy,
   _AppendOnlyElementProxy, _SaxParserContext, _FilelikeWriter,
   _ParserSchemaValidationContext, _XPathContext,
-  _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam
+  _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam``
 
 * Several internal classes can no longer be inherited from:
-  _InputDocument, _ResolverRegistry, _ExsltRegExp, _ElementUnicodeResult,
+  ``_InputDocument, _ResolverRegistry, _ExsltRegExp, _ElementUnicodeResult,
   _IterparseContext, _TempStore, _AttribIterator, _ClassNamespaceRegistry,
   _XPathFunctionNamespaceRegistry, _ParserDictionaryContext,
   _FileReaderContext, _PythonSaxParserTarget, _TargetParserContext,
@@ -42,7 +42,7 @@ Other changes
   _ModifyContentOnlyPIProxy, _ModifyContentOnlyEntityProxy,
   _AppendOnlyElementProxy, _FilelikeWriter, _ParserSchemaValidationContext,
   _XPathContext, _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam,
-  _XSLTResultTree, _XSLTProcessingInstruction
+  _XSLTResultTree, _XSLTProcessingInstruction``
 
 
 2.3.2 (2011-11-11)
