@@ -205,7 +205,7 @@ suite::
 
 And another couple of timings `from a benchmark`_ that Fredrik Lundh
 `used to promote cElementTree`_, comparing a number of different
-parsers.  First, parsing a 280KB XML file containing Shakespeare's
+parsers.  First, parsing a 274KB XML file containing Shakespeare's
 Hamlet::
 
   lxml.etree.parse done in 0.005 seconds
@@ -228,6 +228,44 @@ And a 3.4MB XML file containing the Old Testament::
 
 .. _`from a benchmark`: http://svn.effbot.org/public/elementtree-1.3/benchmark.py
 .. _`used to promote cElementTree`: http://effbot.org/zone/celementtree.htm#benchmarks
+
+Here are the same benchmarks run under an early alpha of CPython 3.3,
+but on a different machine, which makes the absolute numbers
+uncomparable.  This time, however, we include the memory usage of the
+process in KB before and after parsing (using os.fork() to make sure
+we start from a clean state each time).  For the 274KB hamlet.xml
+file::
+
+  Memory usage at start: 7288
+  xml.etree.ElementTree.parse done in 0.104 seconds
+  Memory usage: 14252 (+6964)
+  xml.etree.cElementTree.parse done in 0.016 seconds
+  Memory usage: 9748 (+2460)
+  lxml.etree.parse done in 0.017 seconds
+  Memory usage: 11040 (+3752)
+  lxml.etree[remove_blank_space].parse done in 0.015 seconds
+  Memory usage: 10088 (+2800)
+  minidom tree read in 0.152 seconds
+  Memory usage: 30376 (+23088)
+
+And for the 3.4MB Old Testament XML file::
+
+  Memory usage at start: 20456
+  xml.etree.ElementTree.parse done in 0.419 seconds
+  Memory usage: 46112 (+25656)
+  xml.etree.cElementTree.parse done in 0.054 seconds
+  Memory usage: 32644 (+12188)
+  lxml.etree.parse done in 0.041 seconds
+  Memory usage: 37508 (+17052)
+  lxml.etree[remove_blank_space].parse done in 0.037 seconds
+  Memory usage: 34356 (+13900)
+  minidom tree read in 0.671 seconds
+  Memory usage: 110448 (+89992)
+
+As can be seen from the sizes, both lxml.etree and cElementTree are
+rather memory friendly compared to the pure Python libraries
+ElementTree and (especially) minidom.  And the timings speak for
+themselves anyway.
 
 For plain parser performance, lxml.etree and cElementTree tend to stay
 rather close to each other, usually within a factor of two, with
