@@ -51,6 +51,7 @@ ElementTree_.
      6.4  Why can't I just delete parents or clear the root node in iterparse()?
      6.5  How do I output null characters in XML text?
      6.6  Is lxml vulnerable to XML bombs?
+     6.7  Can lxml parse from file objects opened in unicode mode?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -927,6 +928,27 @@ enabled by default.
 
 Note that libxml2 versions of the 2.6 series do not restrict their
 parser and are therefore vulnerable to DoS attacks.
+
+
+Can lxml parse from file objects opened in unicode/text mode?
+-------------------------------------------------------------
+
+Technically, yes. However, you likely do not want to do that, because
+it is extremely inefficient. The text encoding that libxml2 uses
+internally is UTF-8, so parsing from a Unicode file means that Python
+first reads a chunk of data from the file, then decodes it into a new
+buffer, and then copies it into a new unicode string object, just to
+let libxml2 make yet another copy while encoding it down into UTF-8
+in order to parse it. It's clear that this involves a lot more
+recoding and copying than when parsing straight from the bytes that
+the file contains.
+
+If you really know the encoding better than the parser (e.g. when
+parsing HTML that lacks a content declaration), then instead of passing
+an encoding parameter into the file object when opening it, create a
+new instance of an XMLParser or HTMLParser and pass the encoding into
+its constructor. Afterwards, use that parser for parsing, e.g. by
+passing it into the ``etree.parse(file, parser)`` function.
 
 
 XPath and Document Traversal
