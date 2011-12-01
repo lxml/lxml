@@ -5,13 +5,16 @@ Some code, such a selftest.py, selftest2.py and
 src/lxml/_elementpath.py are derived from ElementTree and
 cElementTree. See doc/licenses/elementtree.txt for the license text.
 
+lxml.cssselect and lxml.html are copyright Ian Bicking and distributed
+under the BSD license (see doc/licenses/BSD.txt).
+
 test.py, the test-runner script, is GPL and copyright Shuttleworth
 Foundation. See doc/licenses/GPL.txt. It is believed the unchanged
 inclusion of test.py to run the unit test suite falls under the
 "aggregation" clause of the GPL and thus does not affect the license
 of the rest of the package.
 
-the doctest.py module is taken from the Python library and falls under
+The doctest.py module is taken from the Python library and falls under
 the PSF Python License.
 
 The isoschematron implementation uses several XSL and RelaxNG resources:
