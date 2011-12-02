@@ -50,9 +50,10 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
         if encoding is _unicode:
             needs_conversion = 1
         elif encoding is not None:
-            encoding = encoding.upper()
-            if encoding != u'UTF-8':
-                if encoding == u'ASCII':
+            # Python prefers lower case encoding names
+            encoding = encoding.lower()
+            if encoding not in (u'utf8', u'utf-8'):
+                if encoding == u'ascii':
                     if isutf8(c_text):
                         # will raise a decode error below
                         needs_conversion = 1
