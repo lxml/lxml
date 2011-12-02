@@ -198,7 +198,7 @@ class C14NError(LxmlError):
 # version information
 cdef __unpackDottedVersion(version):
     cdef list version_list = []
-    l = (version.decode(u"ASCII").replace(u'-', u'.').split(u'.') + [0]*4)[:4]
+    l = (version.decode("ascii").replace(u'-', u'.').split(u'.') + [0]*4)[:4]
     for item in l:
         try:
             item = int(item)
@@ -215,7 +215,7 @@ cdef __unpackDottedVersion(version):
             else:
                 count = 0
             if count:
-                item = item + int(count)
+                item += int(count)
         version_list.append(item)
     return tuple(version_list)
 
@@ -229,16 +229,16 @@ cdef __unpackIntVersion(int c_version):
 cdef int _LIBXML_VERSION_INT
 try:
     _LIBXML_VERSION_INT = int(
-        re.match(u'[0-9]+', (tree.xmlParserVersion).decode(u"ASCII")).group(0))
+        re.match(u'[0-9]+', (tree.xmlParserVersion).decode("ascii")).group(0))
 except Exception:
-    print u"Unknown libxml2 version: %s" % (tree.xmlParserVersion).decode(u"ASCII")
+    print u"Unknown libxml2 version: %s" % (tree.xmlParserVersion).decode("ascii")
     _LIBXML_VERSION_INT = 0
 
 LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
 LIBXML_COMPILED_VERSION = __unpackIntVersion(tree.LIBXML_VERSION)
 LXML_VERSION = __unpackDottedVersion(tree.LXML_VERSION_STRING)
 
-__version__ = (tree.LXML_VERSION_STRING).decode(u"ASCII")
+__version__ = (tree.LXML_VERSION_STRING).decode("ascii")
 
 
 # class for temporary storage of Python references,
@@ -1849,6 +1849,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             write_declaration = xml_declaration
             if encoding is None:
                 encoding = u'ASCII'
+            else:
+                encoding = encoding.upper()
         elif encoding is None:
             encoding = u'ASCII'
             write_declaration = 0

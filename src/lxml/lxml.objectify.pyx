@@ -963,7 +963,7 @@ cdef class PyType:
     cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
         if python.PyBytes_Check(name):
-            name = python.PyUnicode_FromEncodedObject(name, 'ASCII', NULL)
+            name = python.PyUnicode_FromEncodedObject(name, 'ascii', NULL)
         elif not python.PyUnicode_Check(name):
             raise TypeError, u"Type name must be a string"
         if type_check is not None and not callable(type_check):
@@ -1270,7 +1270,7 @@ cdef class ElementMaker:
       >>> html = M.html( M.body( M.p('hello', M.br, 'objectify') ) )
 
       >>> from lxml.etree import tostring
-      >>> print(tostring(html, method='html').decode('ASCII'))
+      >>> print(tostring(html, method='html').decode('ascii'))
       <html><body><p>hello<br>objectify</p></body></html>
 
     Note that this module has a predefined ElementMaker instance called ``E``.
@@ -1583,12 +1583,12 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     if empty_type_name is not None:
         if python.PyBytes_Check(empty_type_name):
             empty_type_name = python.PyUnicode_FromEncodedObject(
-                empty_type_name, "ASCII", NULL)
+                empty_type_name, "ascii", NULL)
         dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, empty_type_name)
     elif empty_pytype_name is not None:
         if python.PyBytes_Check(empty_pytype_name):
             empty_pytype_name = python.PyUnicode_FromEncodedObject(
-                empty_pytype_name, "ASCII", NULL)
+                empty_pytype_name, "ascii", NULL)
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, empty_pytype_name)
     else:
         dict_result = NULL
