@@ -68,7 +68,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
                 text = python.PyUnicode_AsEncodedString(
                     text, encoding, 'strict')
         else:
-            text = c_text
+            text = c_text[:tree.xmlBufferLength(c_buffer)]
     finally:
         tree.xmlBufferFree(c_buffer)
     return text
