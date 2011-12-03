@@ -16,6 +16,173 @@ class DTDValidateError(DTDError):
     """
     pass
 
+cdef class DTDElementContentDecl:
+    cdef object _gc_dtd
+    cdef tree.xmlElementContent* _c_node
+
+    def __cinit__(self):
+        self._gc_dtd = None
+        self._c_node = NULL
+
+    property name:
+       def __get__(self):
+          return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property type:
+       def __get__(self):
+          type = self._c_node.type
+          if type == tree.XML_ELEMENT_CONTENT_PCDATA:
+              return "pcdata"
+          elif type == tree.XML_ELEMENT_CONTENT_ELEMENT:
+              return "element"
+          elif type == tree.XML_ELEMENT_CONTENT_SEQ:
+              return "seq"
+          elif type == tree.XML_ELEMENT_CONTENT_OR:
+              return "or"
+          else:
+              return None
+
+    property occur:
+       def __get__(self):
+          occur = self._c_node.ocur
+          if occur == tree.XML_ELEMENT_CONTENT_ONCE:
+              return "once"
+          elif occur == tree.XML_ELEMENT_CONTENT_OPT:
+              return "opt"
+          elif occur == tree.XML_ELEMENT_CONTENT_MULT:
+              return "mult"
+          elif occur == tree.XML_ELEMENT_CONTENT_PLUS:
+              return "plus"
+          else:
+              return None
+
+    property left:
+       def __get__(self):
+           c1 = self._c_node.c1
+           if c1 is not NULL:
+               node = DTDElementContentDecl()
+               node._gc_dtd = self._gc_dtd
+               node._c_node = <tree.xmlElementContent*>c1
+               return node
+           else:
+               return None
+
+    property right:
+       def __get__(self):
+           c2 = self._c_node.c2
+           if c2 is not NULL:
+               node = DTDElementContentDecl()
+               node._gc_dtd = self._gc_dtd
+               node._c_node = <tree.xmlElementContent*>c2
+               return node
+           else:
+               return None
+
+cdef class DTDAttributeDecl:
+    cdef object _gc_dtd
+    cdef tree.xmlAttribute* _c_node
+
+    def __cinit__(self):
+        self._gc_dtd = None
+        self._c_node = NULL
+
+    property name:
+       def __get__(self):
+          return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property type:
+       def __get__(self):
+          type = self._c_node.atype
+          if type == tree.XML_ATTRIBUTE_CDATA:
+              return "cdata"
+          elif type == tree.XML_ATTRIBUTE_ID:
+              return "id"
+          elif type == tree.XML_ATTRIBUTE_IDREF:
+              return "idref"
+          elif type == tree.XML_ATTRIBUTE_IDREFS:
+              return "idrefs"
+          elif type == tree.XML_ATTRIBUTE_ENTITY:
+              return "entity"
+          elif type == tree.XML_ATTRIBUTE_ENTITIES:
+              return "entities"
+          elif type == tree.XML_ATTRIBUTE_NMTOKEN:
+              return "nmtoken"
+          elif type == tree.XML_ATTRIBUTE_NMTOKENS:
+              return "nmtokens"
+          elif type == tree.XML_ATTRIBUTE_ENUMERATION:
+              return "enumeration"
+          elif type == tree.XML_ATTRIBUTE_NOTATION:
+              return "notation"
+          else:
+              return None
+
+    property default:
+       def __get__(self):
+          default = self._c_node.def_
+          if default == tree.XML_ATTRIBUTE_NONE:
+              return "none"
+          elif default == tree.XML_ATTRIBUTE_REQUIRED:
+              return "required"
+          elif default == tree.XML_ATTRIBUTE_IMPLIED:
+              return "implied"
+          elif default == tree.XML_ATTRIBUTE_FIXED:
+              return "fixed"
+          else:
+              return None
+
+    property defaultValue:
+       def __get__(self):
+          return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
+
+cdef class DTDElementDecl:
+    cdef object _gc_dtd
+    cdef tree.xmlElement* _c_node
+
+    def __cinit__(self):
+        self._gc_dtd = None
+        self._c_node = NULL
+
+    property name:
+       def __get__(self):
+          return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property type:
+        def __get__(self):
+          cdef int type = self._c_node.etype
+          if type == tree.XML_ELEMENT_TYPE_UNDEFINED:
+              return "undefined"
+          elif type == tree.XML_ELEMENT_TYPE_EMPTY:
+              return "empty"
+          elif type == tree.XML_ELEMENT_TYPE_ANY:
+              return "any"
+          elif type == tree.XML_ELEMENT_TYPE_MIXED:
+              return "mixed"
+          elif type == tree.XML_ELEMENT_TYPE_ELEMENT:
+              return "element"
+          else:
+              return None
+
+    property content:
+       def __get__(self):
+           cdef tree.xmlElementContent *content = self._c_node.content
+           if content is not NULL:
+               node = DTDElementContentDecl()
+               node._gc_dtd = self._gc_dtd
+               node._c_node = content
+               return node
+           else:
+               return None
+
+    property attributes:
+       def __get__(self):
+          cdef tree.xmlAttribute *c_node = self._c_node.attributes
+          while c_node is not NULL:
+             node = DTDAttributeDecl()
+             node._gc_dtd = self._gc_dtd
+             node._c_node = c_node
+             yield node
+             c_node = <tree.xmlAttribute*>c_node.next
+
 ################################################################################
 # DTD
 
@@ -54,6 +221,29 @@ cdef class DTD(_Validator):
             raise DTDParseError(
                 self._error_log._buildExceptionMessage(u"error parsing DTD"),
                 self._error_log)
+
+    property name:
+       def __get__(self):
+          return funicode(self._c_dtd.name) if self._c_dtd.name is not NULL else None
+
+    property externalID:
+       def __get__(self):
+          return funicode(self._c_dtd.ExternalID) if self._c_dtd.ExternalID is not NULL else None
+
+    property systemID:
+       def __get__(self):
+          return funicode(self._c_dtd.SystemID) if self._c_dtd.SystemID is not NULL else None
+
+    property declarations:
+       def __get__(self):
+          cdef tree.xmlNode *c_node = self._c_dtd.children
+          while c_node is not NULL:
+             if c_node.type == tree.XML_ELEMENT_DECL:
+                 node = DTDElementDecl()
+                 node._gc_dtd = self
+                 node._c_node = <tree.xmlElement*>c_node
+                 yield node
+             c_node = c_node.next
 
     def __dealloc__(self):
         tree.xmlFreeDtd(self._c_dtd)
