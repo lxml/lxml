@@ -16,7 +16,8 @@ class DTDValidateError(DTDError):
     """
     pass
 
-cdef class DTDElementContentDecl:
+@cython.internal
+cdef class _DTDElementContentDecl:
     cdef object _gc_dtd
     cdef tree.xmlElementContent* _c_node
 
@@ -60,7 +61,7 @@ cdef class DTDElementContentDecl:
        def __get__(self):
            c1 = self._c_node.c1
            if c1 is not NULL:
-               node = DTDElementContentDecl()
+               node = _DTDElementContentDecl()
                node._gc_dtd = self._gc_dtd
                node._c_node = <tree.xmlElementContent*>c1
                return node
@@ -71,14 +72,15 @@ cdef class DTDElementContentDecl:
        def __get__(self):
            c2 = self._c_node.c2
            if c2 is not NULL:
-               node = DTDElementContentDecl()
+               node = _DTDElementContentDecl()
                node._gc_dtd = self._gc_dtd
                node._c_node = <tree.xmlElementContent*>c2
                return node
            else:
                return None
 
-cdef class DTDAttributeDecl:
+@cython.internal
+cdef class _DTDAttributeDecl:
     cdef object _gc_dtd
     cdef tree.xmlAttribute* _c_node
 
@@ -134,7 +136,8 @@ cdef class DTDAttributeDecl:
        def __get__(self):
           return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
 
-cdef class DTDElementDecl:
+@cython.internal
+cdef class _DTDElementDecl:
     cdef object _gc_dtd
     cdef tree.xmlElement* _c_node
 
@@ -166,7 +169,7 @@ cdef class DTDElementDecl:
        def __get__(self):
            cdef tree.xmlElementContent *content = self._c_node.content
            if content is not NULL:
-               node = DTDElementContentDecl()
+               node = _DTDElementContentDecl()
                node._gc_dtd = self._gc_dtd
                node._c_node = content
                return node
@@ -177,7 +180,7 @@ cdef class DTDElementDecl:
        def __get__(self):
           cdef tree.xmlAttribute *c_node = self._c_node.attributes
           while c_node is not NULL:
-             node = DTDAttributeDecl()
+             node = _DTDAttributeDecl()
              node._gc_dtd = self._gc_dtd
              node._c_node = c_node
              yield node
@@ -239,7 +242,7 @@ cdef class DTD(_Validator):
           cdef tree.xmlNode *c_node = self._c_dtd.children
           while c_node is not NULL:
              if c_node.type == tree.XML_ELEMENT_DECL:
-                 node = DTDElementDecl()
+                 node = _DTDElementDecl()
                  node._gc_dtd = self
                  node._c_node = <tree.xmlElement*>c_node
                  yield node
