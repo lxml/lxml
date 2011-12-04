@@ -149,7 +149,7 @@ cdef class _DTDAttributeDecl:
     property tree:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
-           c_node = self._c_node.tree
+           cdef tree.xmlEnumeration *c_node = self._c_node.tree
            while c_node is not NULL:
                yield funicode(c_node.name)
                c_node = c_node.next
