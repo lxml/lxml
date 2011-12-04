@@ -146,6 +146,14 @@ cdef class _DTDAttributeDecl:
            _assertValidDTDNode(self, self._c_node)
            return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
 
+    property tree:
+       def __get__(self):
+           _assertValidDTDNode(self, self._c_node)
+           c_node = self._c_node.tree
+           while c_node is not NULL:
+               yield funicode(c_node.name)
+               c_node = c_node.next
+
 @cython.internal
 cdef class _DTDElementDecl:
     cdef DTD _dtd
