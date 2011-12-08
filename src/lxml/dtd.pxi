@@ -98,12 +98,22 @@ cdef class _DTDAttributeDecl:
         self._c_node = NULL
 
     def __repr__(self):
-        return "<%s.%s object name=%r type=%r default=%r defaultValue=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.default, self.defaultValue, id(self))
+        return "<%s.%s object name=%r elemname=%r prefix=%r type=%r default=%r defaultValue=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.elemname, self.prefix, self.type, self.default, self.defaultValue, id(self))
 
     property name:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
            return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property elemname:
+       def __get__(self):
+           _assertValidDTDNode(self, self._c_node)
+           return funicode(self._c_node.elem) if self._c_node.elem is not NULL else None
+
+    property prefix:
+       def __get__(self):
+           _assertValidDTDNode(self, self._c_node)
+           return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
 
     property type:
        def __get__(self):
@@ -169,12 +179,17 @@ cdef class _DTDElementDecl:
         self._c_node = NULL
 
     def __repr__(self):
-        return "<%s.%s object name=%r type=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, id(self))
+        return "<%s.%s object name=%r prefix=%r type=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.prefix, self.type, id(self))
 
     property name:
         def __get__(self):
             _assertValidDTDNode(self, self._c_node)
             return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property prefix:
+       def __get__(self):
+           _assertValidDTDNode(self, self._c_node)
+           return funicode(self._c_node.prefix) if self._c_node.prefix is not NULL else None
 
     property type:
         def __get__(self):
