@@ -27,6 +27,9 @@ cdef class _DTDElementContentDecl:
     def __cinit__(self):
         self._c_node = NULL
 
+    def __repr__(self):
+        return "<%s.%s object name=%r type=%r occur=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.occur, id(self))
+
     property name:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
@@ -93,6 +96,9 @@ cdef class _DTDAttributeDecl:
 
     def __cinit__(self):
         self._c_node = NULL
+
+    def __repr__(self):
+        return "<%s.%s object name=%r type=%r default=%r defaultValue=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.default, self.defaultValue, id(self))
 
     property name:
        def __get__(self):
@@ -162,10 +168,13 @@ cdef class _DTDElementDecl:
     def __cinit__(self):
         self._c_node = NULL
 
+    def __repr__(self):
+        return "<%s.%s object name=%r type=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, id(self))
+
     property name:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+        def __get__(self):
+            _assertValidDTDNode(self, self._c_node)
+            return funicode(self._c_node.name) if self._c_node.name is not NULL else None
 
     property type:
         def __get__(self):
