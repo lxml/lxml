@@ -196,16 +196,18 @@ cdef class _DTDElementDecl:
            else:
                return None
 
-    property attributes:
-       def __get__(self):
-           _assertValidDTDNode(self, self._c_node)
-           cdef tree.xmlAttribute *c_node = self._c_node.attributes
-           while c_node is not NULL:
-              node = _DTDAttributeDecl()
-              node._dtd = self._dtd
-              node._c_node = c_node
-              yield node
-              c_node = <tree.xmlAttribute*>c_node.next
+    def iterattributes(self):
+        _assertValidDTDNode(self, self._c_node)
+        cdef tree.xmlAttribute *c_node = self._c_node.attributes
+        while c_node is not NULL:
+            node = _DTDAttributeDecl()
+            node._dtd = self._dtd
+            node._c_node = c_node
+            yield node
+            c_node = <tree.xmlAttribute*>c_node.next
+
+    def attributes(self):
+        return list(self.iterattributes())
 
 ################################################################################
 # DTD
@@ -258,16 +260,18 @@ cdef class DTD(_Validator):
        def __get__(self):
           return funicode(self._c_dtd.SystemID) if self._c_dtd.SystemID is not NULL else None
 
-    property declarations:
-       def __get__(self):
-          cdef tree.xmlNode *c_node = self._c_dtd.children
-          while c_node is not NULL:
-             if c_node.type == tree.XML_ELEMENT_DECL:
-                 node = _DTDElementDecl()
-                 node._dtd = self
-                 node._c_node = <tree.xmlElement*>c_node
-                 yield node
-             c_node = c_node.next
+    def iterdeclarations(self):
+        cdef tree.xmlNode *c_node = self._c_dtd.children
+        while c_node is not NULL:
+            if c_node.type == tree.XML_ELEMENT_DECL:
+                node = _DTDElementDecl()
+                node._dtd = self
+                node._c_node = <tree.xmlElement*>c_node
+                yield node
+            c_node = c_node.next
+
+    def declarations(self):
+        return list(self.iterdeclarations())
 
     def __dealloc__(self):
         tree.xmlFreeDtd(self._c_dtd)
