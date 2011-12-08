@@ -213,7 +213,7 @@ cdef class _DTDElementDecl:
             node._dtd = self._dtd
             node._c_node = c_node
             yield node
-            c_node = <tree.xmlAttribute*>c_node.next
+            c_node = c_node.nexth
 
     def attributes(self):
         return list(self.iterattributes())
