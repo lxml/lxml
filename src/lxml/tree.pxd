@@ -123,6 +123,14 @@ cdef extern from "libxml/tree.h":
         XML_ATTRIBUTE_IMPLIED=  3
         XML_ATTRIBUTE_FIXED=    4
 
+    ctypedef enum xmlEntityType:
+        XML_INTERNAL_GENERAL_ENTITY=          1
+        XML_EXTERNAL_GENERAL_PARSED_ENTITY=   2
+        XML_EXTERNAL_GENERAL_UNPARSED_ENTITY= 3
+        XML_INTERNAL_PARAMETER_ENTITY=        4
+        XML_EXTERNAL_PARAMETER_ENTITY=        5
+        XML_INTERNAL_PREDEFINED_ENTITY=       6
+
     ctypedef struct xmlNs:
         char* href
         char* prefix
@@ -190,6 +198,27 @@ cdef extern from "libxml/tree.h":
         xmlAttribute* attributes
         char *prefix
         void *contModel
+
+    ctypedef struct xmlEntity:
+        void* _private
+        xmlElementType type
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlDtd* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        char* orig
+        char* content
+        int length
+        xmlEntityType etype
+        char* ExternalID
+        char* SystemID
+        xmlEntity* nexte
+        char* URI
+        int owner
+        int checked
 
     ctypedef struct xmlDtd:
         char* name

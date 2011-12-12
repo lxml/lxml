@@ -235,6 +235,32 @@ cdef class _DTDElementDecl:
     def attributes(self):
         return list(self.iterattributes())
 
+@cython.internal
+cdef class _DTDEntityDecl:
+    cdef DTD _dtd
+    cdef tree.xmlEntity* _c_node
+
+    def __cinit__(self):
+        self._c_node = NULL
+
+    def __repr__(self):
+        return "<%s.%s object name=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, id(self))
+
+    property name:
+        def __get__(self):
+            _assertValidDTDNode(self, self._c_node)
+            return funicode(self._c_node.name) if self._c_node.name is not NULL else None
+
+    property orig:
+        def __get__(self):
+            _assertValidDTDNode(self, self._c_node)
+            return funicode(self._c_node.orig) if self._c_node.orig is not NULL else None
+
+    property content:
+        def __get__(self):
+            _assertValidDTDNode(self, self._c_node)
+            return funicode(self._c_node.content) if self._c_node.content is not NULL else None
+
 ################################################################################
 # DTD
 
@@ -286,7 +312,7 @@ cdef class DTD(_Validator):
        def __get__(self):
           return funicode(self._c_dtd.SystemID) if self._c_dtd.SystemID is not NULL else None
 
-    def iterdeclarations(self):
+    def iterelements(self):
         cdef tree.xmlNode *c_node = self._c_dtd.children
         while c_node is not NULL:
             if c_node.type == tree.XML_ELEMENT_DECL:
@@ -296,8 +322,21 @@ cdef class DTD(_Validator):
                 yield node
             c_node = c_node.next
 
-    def declarations(self):
-        return list(self.iterdeclarations())
+    def elements(self):
+        return list(self.iterelements())
+
+    def iterentities(self):
+        cdef tree.xmlNode *c_node = self._c_dtd.children
+        while c_node is not NULL:
+            if c_node.type == tree.XML_ENTITY_DECL:
+                node = _DTDEntityDecl()
+                node._dtd = self
+                node._c_node = <tree.xmlEntity*>c_node
+                yield node
+            c_node = c_node.next
+
+    def entities(self):
+        return list(self.iterentities())
 
     def __dealloc__(self):
         tree.xmlFreeDtd(self._c_dtd)
