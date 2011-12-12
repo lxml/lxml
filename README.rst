@@ -19,7 +19,7 @@ If you like it, send us a flattr.
 
   |FlattrLink|_
 
-.. _FlattrLink: https://flattr.com/submit/auto?user_id=scoder&url=https://github.com/lxml/lxml&title=lxml&language=en_GB&tags=github&category=software
+.. _FlattrLink: https://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit
 
 However, if you are using lxml for your work and feel like you should
 give a bit of your own benefit back to support the project, consider
