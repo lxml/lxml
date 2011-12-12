@@ -12,7 +12,7 @@ For installation information, see `INSTALL.txt`_.
 Support the project
 -------------------
 
-Most people who use lxml for their daily work do so because they like using it.
+Most people who use lxml do so because they like using it.
 If you like it, send us a flattr.
 
 .. class:: center
