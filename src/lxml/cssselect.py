@@ -878,11 +878,13 @@ def tokenize(s):
         c = s[pos]
         c2 = s[pos:pos+2]
         if c2 in ('~=', '|=', '^=', '$=', '*=', '::', '!='):
+            if c2 == '::' and preceding_whitespace_pos > 0:
+                yield Token(' ', preceding_whitespace_pos)
             yield Token(c2, pos)
             pos += 2
             continue
         if c in '>+~,.*=[]()|:#':
-            if c in '.#[' and preceding_whitespace_pos > 0:
+            if c in ':.#[' and preceding_whitespace_pos > 0:
                 yield Token(' ', preceding_whitespace_pos)
             yield Token(c, pos)
             pos += 1

@@ -152,3 +152,7 @@ Now, the tests:
     seventh-li
     >>> pcss('ol#first-ol *:last-child')
     li-div, seventh-li
+    >>> pcss('#outer-div:first-child')
+    outer-div
+    >>> pcss('#outer-div :first-child')
+    name-anchor, first-li, li-div, p-b
