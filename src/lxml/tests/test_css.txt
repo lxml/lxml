@@ -34,6 +34,12 @@ Then of parsing:
     CombinedSelector[Element[div] > Class[Element[*].foo]]
     >>> parse('td:first')
     Pseudo[Element[td]:first]
+    >>> parse('td::first')
+    Pseudo[Element[td]::first]
+    >>> parse('td :first')
+    CombinedSelector[Element[td] <followed> Pseudo[Element[*]:first]]
+    >>> parse('td ::first')
+    CombinedSelector[Element[td] <followed> Pseudo[Element[*]::first]]
     >>> parse('a[name]')
     Attrib[Element[a][name]]
     >>> parse('a [name]')

@@ -14,6 +14,12 @@ Bugs fixed
 * lxml.html.diff no longer raises an exception when hitting
   'img' tags without 'src' attribute.
 
+* Fixed parsing of more selectors in cssselect. Whitespace before
+  pseudo-elements and pseudo-classes is significant. (It is a descendant
+  combinator.)
+  "E :pseudo" should parse the same as "E *:pseudo", not "E:pseudo".
+  Patch by Simon Sapin.
+
 Other changes
 --------------
 
