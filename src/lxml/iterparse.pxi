@@ -55,7 +55,7 @@ cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
             prefix = funicode(c_ns.prefix)
         ns_tuple = (prefix, funicode(c_ns.href))
         event_list.append( (u"start-ns", ns_tuple) )
-        count = count + 1
+        count += 1
         c_ns = c_ns.next
     return count
 
@@ -94,8 +94,8 @@ cdef class _IterparseContext(_ParserContext):
         self._origSaxStartNoNs = sax.startElement
         # only override start event handler if needed
         if self._event_filter == 0 or \
-               self._event_filter & (ITERPARSE_FILTER_START | \
-                                     ITERPARSE_FILTER_START_NS | \
+               self._event_filter & (ITERPARSE_FILTER_START |
+                                     ITERPARSE_FILTER_START_NS |
                                      ITERPARSE_FILTER_END_NS):
             sax.startElementNs = _iterparseSaxStart
             sax.startElement = _iterparseSaxStartNoNs
@@ -104,7 +104,7 @@ cdef class _IterparseContext(_ParserContext):
         self._origSaxEndNoNs = sax.endElement
         # only override end event handler if needed
         if self._event_filter == 0 or \
-               self._event_filter & (ITERPARSE_FILTER_END | \
+               self._event_filter & (ITERPARSE_FILTER_END |
                                      ITERPARSE_FILTER_END_NS):
             sax.endElementNs = _iterparseSaxEnd
             sax.endElement = _iterparseSaxEndNoNs
@@ -123,8 +123,7 @@ cdef class _IterparseContext(_ParserContext):
             self._tag_href  = NULL
             self._tag_name  = NULL
         else:
-            self._tag_tuple = _getNsTag(tag)
-            href, name = self._tag_tuple
+            href, name = self._tag_tuple = _getNsTag(tag)
             if href is None or href == b'*':
                 self._tag_href = NULL
             else:
@@ -164,8 +163,8 @@ cdef class _IterparseContext(_ParserContext):
         if self._event_filter & ITERPARSE_FILTER_END:
             if self._tag_tuple is None or \
                    _tagMatches(c_node, self._tag_href, self._tag_name):
-                if self._event_filter & (ITERPARSE_FILTER_START | \
-                                         ITERPARSE_FILTER_START_NS | \
+                if self._event_filter & (ITERPARSE_FILTER_START |
+                                         ITERPARSE_FILTER_START_NS |
                                          ITERPARSE_FILTER_END_NS):
                     node = self._node_stack.pop()
                 else:
@@ -369,11 +368,11 @@ cdef class iterparse(_BaseParser):
         cdef _IterparseContext context
         cdef char* c_encoding
         cdef int parse_options
-        if not hasattr(source, u'read'):
+        if not hasattr(source, 'read'):
             filename = _encodeFilename(source)
             if not python.IS_PYTHON3:
                 source = filename
-            source = open(source, u'rb')
+            source = open(source, 'rb')
             self._close_source_after_read = True
         else:
             filename = _encodeFilename(_getFilenameForFile(source))
@@ -392,11 +391,11 @@ cdef class iterparse(_BaseParser):
         if load_dtd:
             parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
         if dtd_validation:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDVALID | \
-                            xmlparser.XML_PARSE_DTDLOAD
+            parse_options = parse_options | (xmlparser.XML_PARSE_DTDVALID |
+                                             xmlparser.XML_PARSE_DTDLOAD)
         if attribute_defaults:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDATTR | \
-                            xmlparser.XML_PARSE_DTDLOAD
+            parse_options = parse_options | (xmlparser.XML_PARSE_DTDATTR |
+                                             xmlparser.XML_PARSE_DTDLOAD)
         if remove_blank_text:
             parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
         if huge_tree:
@@ -573,8 +572,7 @@ cdef class iterwalk:
             self._tag_href  = NULL
             self._tag_name  = NULL
         else:
-            self._tag_tuple = _getNsTag(tag)
-            href, name = self._tag_tuple
+            href, name = self._tag_tuple = _getNsTag(tag)
             if href is None or href == b'*':
                 self._tag_href = NULL
             else:
@@ -616,7 +614,7 @@ cdef class iterwalk:
                         break
                     next_node = node.getnext()
             if next_node is not None:
-                if self._event_filter & (ITERPARSE_FILTER_START | \
+                if self._event_filter & (ITERPARSE_FILTER_START |
                                          ITERPARSE_FILTER_START_NS):
                     ns_count = self._start_node(next_node)
                 elif self._event_filter & ITERPARSE_FILTER_END_NS:
