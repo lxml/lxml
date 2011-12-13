@@ -2838,6 +2838,8 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
     The ``doctype`` option allows passing in a plain string that will
     be serialised before the XML tree.  Note that passing in non
     well-formed content here will make the XML output non well-formed.
+    Also, an existing doctype in the document tree will not be removed
+    when serialising an ElementTree instance.
 
     You can prevent the tail text of the element from being serialised
     by passing the boolean ``with_tail`` option.  This has no impact
