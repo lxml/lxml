@@ -39,10 +39,14 @@ div.footer {
     font-size: 70%;
 }
 
+.center {
+    text-align: center;
+}
+
 /*** TOC ***/
 
 div.contents.topic ul {
-    margin-top: 0px;
+    margin-top: 0;
 }
 
 div.contents.topic ul > li {
@@ -58,8 +62,8 @@ div.contents.topic > p > a {
 
 div.sidemenu {
     position: absolute;
-    top: 0px;
-    left: 0px;
+    top: 0;
+    left: 0;
     width: 26em;
     font-size: 10px;
     text-align: left;
@@ -102,7 +106,7 @@ div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     position: absolute;
     border: groove #990000;
     padding: 1ex 1ex 1ex 3ex;
-    margin-top: 0px;
+    margin-top: 0;
     margin-left: 4em;
     margin-right: -20em;
     color: #990000;
@@ -175,7 +179,7 @@ p {
     /*margin: 0.5em 0em 1em 0em;*/
     text-align: justify;
     line-height: 1.5em;
-    margin: 0.5em 0em 0em 0em;
+    margin: 0.5em 0 0 0;
 }
 
 th.docinfo-name {
@@ -207,7 +211,7 @@ ul {
 
 ol {
     line-height: 1.5em;
-    margin-left: 0em;
+    margin-left: 0;
 }
 
 blockquote {
@@ -226,8 +230,8 @@ div.eyecatcher, p.eyecatcher {
 
 div.pagequote {
     position: absolute;
-    top: 0px;
-    right: 0px;
+    top: 0;
+    right: 0;
     padding: 10px 10px 0 0;
     text-align: right;
     font-size: 80%;
