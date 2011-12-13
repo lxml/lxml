@@ -23,8 +23,8 @@ If you want to show us that you like it, send us a flattr.
 
 However, if you are using lxml for your work and feel like you should
 give a bit of your own benefit back to support the project, consider
-sending us money through PayPal.  Please read the `Legal Notice`_ below.
-Thank you for your support.
+sending us money through PayPal.  Please read the Legal Notice below,
+at the bottom of this page.  Thank you for your support.
 
 .. class:: center
 
@@ -52,7 +52,6 @@ and fast Python XML processing.
 .. _`contact Stefan Behnel`: http://consulting.behnel.de/
 .. _`doc/main.txt`: http://lxml.de/
 .. _`INSTALL.txt`: http://lxml.de/installation.html
-.. _`Legal Notice`: #legal-notice-for-donations
 
 
 Legal Notice for Donations
