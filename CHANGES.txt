@@ -146,6 +146,9 @@ Other changes
 Features added
 --------------
 
+* ``lxml.html.tostring()`` gained new serialisation options
+  ``with_tail`` and ``doctype``.
+
 Bugs fixed
 ----------
 
