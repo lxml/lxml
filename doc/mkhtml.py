@@ -164,10 +164,14 @@ def publish(dirname, lxml_path, release):
                 outpath = os.path.join(dirname, outname)
 
                 rest2html(script, path, outpath, stylesheet_url)
-
                 tree = parse(outpath)
-                trees[filename] = (tree, basename, outpath)
 
+                if filename == 'main.txt':
+                    # inject donation buttons
+                    #inject_flatter_button(tree)
+                    inject_donate_buttons(lxml_path, script, tree)
+
+                trees[filename] = (tree, basename, outpath)
                 build_menu(tree, basename, section_head)
 
     # also convert CHANGES.txt
@@ -200,10 +204,6 @@ def publish(dirname, lxml_path, release):
 
     # integrate sitemap into the menu
     SubElement(SubElement(menu[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
-
-    # inject flattr button
-    #inject_flatter_button(trees['main.txt'][0])
-    inject_donate_buttons(lxml_path, script, trees['main.txt'][0])
 
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
