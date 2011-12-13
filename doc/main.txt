@@ -39,9 +39,6 @@ from 2.4 to 3.2.  See the introduction_ for more information about
 background and goals of the lxml project.  Some common questions are
 answered in the FAQ_.
 
-For commercial consulting, trainings and customisations, please
-`contact Stefan Behnel <http://consulting.behnel.de/>`_.
-
 .. _libxml2: http://xmlsoft.org/
 .. _libxslt: http://xmlsoft.org/XSLT/
 

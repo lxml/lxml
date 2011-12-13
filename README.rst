@@ -13,7 +13,7 @@ Support the project
 -------------------
 
 Most people who use lxml do so because they like using it.
-If you like it, send us a flattr.
+If you want to show us that you like it, send us a flattr.
 
 .. class:: center
 
@@ -23,7 +23,8 @@ If you like it, send us a flattr.
 
 However, if you are using lxml for your work and feel like you should
 give a bit of your own benefit back to support the project, consider
-sending us money through PayPal.  Please read the Legal Notice below.
+sending us money through PayPal.  Please read the `Legal Notice`_ below.
+Thank you for your support.
 
 .. class:: center
 
@@ -33,8 +34,9 @@ sending us money through PayPal.  Please read the Legal Notice below.
 
 Note that Flattr keeps 10% of the money for itself, so do not send
 any larger amounts through Flattr.  Use PayPal for donations instead,
-or contact `Stefan Behnel`_ for other ways to support the lxml project,
-as well as commercial support, customisations and trainings.
+or `contact Stefan Behnel`_ for other ways to support the lxml project,
+as well as commercial consulting, customisations and trainings on lxml
+and fast Python XML processing.
 
 
 .. |Donate| image:: https://github.com/lxml/lxml/raw/master/doc/html/paypal_btn_donateCC_LG.gif
@@ -47,9 +49,10 @@ as well as commercial support, customisations and trainings.
                 :height: 20
                 :alt: Flattr the lxml project
 
-.. _`Stefan Behnel`: http://consulting.behnel.de/
+.. _`contact Stefan Behnel`: http://consulting.behnel.de/
 .. _`doc/main.txt`: http://lxml.de/
 .. _`INSTALL.txt`: http://lxml.de/installation.html
+.. _`Legal Notice`: #legal-notice-for-donations
 
 
 Legal Notice for Donations
@@ -61,8 +64,8 @@ a donation to the lxml project, you acknowledge that we have the
 right to use the money you donate in any lawful way and for any
 lawful purpose we see fit and we are not obligated to disclose
 the way and purpose to any party unless required by applicable
-law.  Although lxml is free software, to our best knowledge the
-lxml project does not have any tax exempt status.  The lxml
+law.  Although lxml is free software, to the best of our knowledge
+the lxml project does not have any tax exempt status.  The lxml
 project is neither a registered non-profit corporation nor a
 registered charity in any country.  Your donation may or may not
 be tax-deductible; please consult your tax advisor in this matter.

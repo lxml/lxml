@@ -1,7 +1,12 @@
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
-from lxml.etree import (parse, ElementTree,
+from lxml.etree import (parse, fromstring, ElementTree,
                         Element, SubElement, XPath, XML)
-import os, shutil, re, sys, copy
+import os
+import re
+import sys
+import copy
+import shutil
+import subprocess
 
 RST2HTML_OPTIONS = " ".join([
     '--no-toc-backlinks',
@@ -106,11 +111,29 @@ def inject_flatter_button(tree):
         '</p>'
         ))
 
+def inject_donate_buttons(lxml_path, rst2html_script, tree):
+    command = ([sys.executable, rst2html_script]
+               + RST2HTML_OPTIONS.split() + [os.path.join(lxml_path, 'README.rst')])
+    rst2html = subprocess.Popen(command, stdout=subprocess.PIPE)
+    stdout, _ = rst2html.communicate()
+    readme = fromstring(stdout)
+
+    intro_div = tree.xpath('h:body//h:div[@id = "introduction"][1]',
+                           namespaces=htmlnsmap)[0]
+    support_div = readme.xpath('h:body//h:div[@id = "support-the-project"][1]',
+                               namespaces=htmlnsmap)[0]
+    intro_div.append(support_div)
+
+    legal = readme.xpath('h:body//h:div[@id = "legal-notice-for-donations"][1]',
+                         namespaces=htmlnsmap)[0]
+    last_div = tree.xpath('h:body//h:div//h:div', namespaces=htmlnsmap)[-1]
+    last_div.addnext(legal)
+
 def rest2html(script, source_path, dest_path, stylesheet_url):
     command = ('%s %s %s --stylesheet=%s --link-stylesheet %s > %s' %
                (sys.executable, script, RST2HTML_OPTIONS,
                 stylesheet_url, source_path, dest_path))
-    os.system(command)
+    subprocess.call(command, shell=True)
 
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
@@ -184,7 +207,8 @@ def publish(dirname, lxml_path, release):
     SubElement(SubElement(menu[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
 
     # inject flattr button
-    inject_flatter_button(trees['main.txt'][0])
+    #inject_flatter_button(trees['main.txt'][0])
+    inject_donate_buttons(lxml_path, script, trees['main.txt'][0])
 
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
