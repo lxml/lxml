@@ -94,7 +94,6 @@ Limitations
 These applicable pseudoclasses are not yet implemented:
 
 * ``:lang(language)``
-* ``:root``
 * ``*:first-of-type``, ``*:last-of-type``, ``*:nth-of-type``,
   ``*:nth-last-of-type``, ``*:only-of-type``.  All of these work when
   you specify an element type, but not with ``*``

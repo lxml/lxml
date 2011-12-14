@@ -8,6 +8,8 @@ lxml changelog
 Features added
 --------------
 
+* Add support for the :root pseudo-class in cssselect.
+
 Bugs fixed
 ----------
 

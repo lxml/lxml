@@ -300,8 +300,8 @@ class Pseudo(object):
         return xpath
 
     def _xpath_root(self, xpath):
-        # if this element is the root element
-        raise NotImplementedError
+        xpath.add_condition("not(parent::*)")
+        return xpath
 
     def _xpath_first_child(self, xpath):
         xpath.add_star_prefix()
