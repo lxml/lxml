@@ -46,11 +46,8 @@ cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
     count = 0
     c_ns = c_node.nsDef
     while c_ns is not NULL:
-        if c_ns.prefix is NULL:
-            prefix = ''
-        else:
-            prefix = funicode(c_ns.prefix)
-        ns_tuple = (prefix, funicode(c_ns.href))
+        ns_tuple = (funicode(c_ns.prefix) if c_ns.prefix is not NULL else '',
+                    funicode(c_ns.href))
         event_list.append( (u"start-ns", ns_tuple) )
         count += 1
         c_ns = c_ns.next
