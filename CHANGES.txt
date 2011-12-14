@@ -32,14 +32,17 @@ Bugs fixed
   a descendant combinator. For example, "div> .foo" was parsed the same as
   "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
 
-* lxml.html.diff no longer raises an exception when hitting
-  'img' tags without 'src' attribute.
+* Fixed a crash when using ``iterparse()`` for HTML parsing and
+  requesting start events.
 
 * Fixed parsing of more selectors in cssselect.  Whitespace before
   pseudo-elements and pseudo-classes is significant as it is a
   descendant combinator.
   "E :pseudo" should parse the same as "E \*:pseudo", not "E:pseudo".
   Patch by Simon Sapin.
+
+* lxml.html.diff no longer raises an exception when hitting
+  'img' tags without 'src' attribute.
 
 Other changes
 --------------
