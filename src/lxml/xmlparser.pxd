@@ -40,6 +40,8 @@ cdef extern from "libxml/parser.h":
 
     ctypedef void (*endDocumentSAXFunc)(void* ctx)
 
+    ctypedef void (*startDocumentSAXFunc)(void* ctx)
+
     ctypedef void (*referenceSAXFunc)(void * ctx, char* name)
 
     cdef int XML_SAX2_MAGIC
@@ -68,6 +70,7 @@ cdef extern from "libxml/tree.h":
         referenceSAXFunc                reference
         commentSAXFunc                  comment
         processingInstructionSAXFunc	processingInstruction
+        startDocumentSAXFunc            startDocument
         endDocumentSAXFunc              endDocument
         int                             initialized
 
@@ -86,6 +89,7 @@ cdef extern from "libxml/parser.h":
     ctypedef struct xmlParserCtxt:
         xmlDoc* myDoc
         xmlDict* dict
+        int dictNames
         void* _private
         bint wellFormed
         bint recovery

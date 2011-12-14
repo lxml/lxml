@@ -63,6 +63,7 @@ cdef class _IterparseContext(_ParserContext):
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
     cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
     cdef xmlparser.endElementSAXFunc      _origSaxEndNoNs
+    cdef xmlparser.startDocumentSAXFunc   _origSaxStartDocument
     cdef xmlparser.commentSAXFunc         _origSaxComment
     cdef xmlparser.processingInstructionSAXFunc _origSaxPI
     cdef _Element  _root
@@ -87,6 +88,8 @@ cdef class _IterparseContext(_ParserContext):
         cdef xmlparser.xmlSAXHandler* sax
         _ParserContext._initParserContext(self, c_ctxt)
         sax = c_ctxt.sax
+        self._origSaxStartDocument = sax.startDocument
+        sax.startDocument = _iterparseSaxStartDocument
         self._origSaxStart = sax.startElementNs
         self._origSaxStartNoNs = sax.startElement
         # only override start event handler if needed
@@ -228,6 +231,16 @@ cdef inline void _pushSaxEvent(_IterparseContext context,
             context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
         context._c_ctxt.disableSAX = 1
         context._store_raised()
+
+cdef void _iterparseSaxStartDocument(void* ctxt):
+    cdef xmlparser.xmlParserCtxt* c_ctxt
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    context = <_IterparseContext>c_ctxt._private
+    context._origSaxStartDocument(ctxt)
+    if c_ctxt.myDoc and c_ctxt.dict and not c_ctxt.myDoc.dict:
+        # I have no idea why libxml2 disables this - we need it
+        c_ctxt.dictNames = 1
+        c_ctxt.myDoc.dict = c_ctxt.dict
 
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,

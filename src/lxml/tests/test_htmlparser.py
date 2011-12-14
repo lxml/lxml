@@ -288,6 +288,22 @@ class HtmlParserTestCase(HelperTestCase):
             [],
             [ event for (event, element) in events if event != 'end' ])
 
+    def test_html_iterparse_start(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO(
+            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+
+        iterator = iterparse(f, html=True, events=('start',))
+        self.assertEquals(None, iterator.root)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assert_(root is not None)
+        self.assertEquals(
+            [('start', root), ('start', root[0]), ('start', root[0][0]),
+                ('start', root[1]), ('start', root[1][0])],
+            events)
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(HtmlParserTestCase)])
