@@ -36,7 +36,7 @@ cdef int _countNsDefs(xmlNode* c_node):
     count = 0
     c_ns = c_node.nsDef
     while c_ns is not NULL:
-        count = count + 1
+        count += 1
         c_ns = c_ns.next
     return count
 
@@ -47,10 +47,7 @@ cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
     c_ns = c_node.nsDef
     while c_ns is not NULL:
         if c_ns.prefix is NULL:
-            if python.IS_PYTHON3:
-                prefix = u''
-            else:
-                prefix = ''
+            prefix = ''
         else:
             prefix = funicode(c_ns.prefix)
         ns_tuple = (prefix, funicode(c_ns.href))
