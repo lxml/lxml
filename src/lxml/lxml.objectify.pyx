@@ -2,8 +2,7 @@ u"""The ``lxml.objectify`` module implements a Python object API for
 XML.  It is based on `lxml.etree`.
 """
 
-from etreepublic cimport _Document, _Element, ElementBase
-from etreepublic cimport _ElementIterator, ElementClassLookup
+from etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
 from etreepublic cimport elementFactory, import_lxml__etree, textOf, pyunicode
 from python cimport callable, _cstr
 cimport etreepublic as cetree
