@@ -147,7 +147,7 @@ cdef extern from "lxml.etree_api.h":
     cdef tree.xmlNode* previousElement(tree.xmlNode* c_node) nogil
 
     ##########################################################################
-    # iterators
+    # iterators (deprecated API, don't use in new code)
 
     cdef class lxml.etree._ElementTagMatcher [ object LxmlElementTagMatcher ]:
         cdef char* _href

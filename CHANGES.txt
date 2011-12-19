@@ -8,6 +8,10 @@ lxml changelog
 Features added
 --------------
 
+* Iteration with a selective ``tag`` argument supports passing
+  a set of tags.  Tree nodes will be returned by the iterators
+  if they match any of the tags.
+
 * ``lxml.html.tostring()`` gained new serialisation options
   ``with_tail`` and ``doctype``.
 
