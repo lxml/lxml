@@ -71,7 +71,11 @@ extra_options['package_data'] = {
     'lxml': [
         'etreepublic.pxd',
         'tree.pxd',
-        'etree_defs.h'
+        'cstd.pxd',
+        'etree_defs.h',
+        'lxml-version.h',
+        'lxml.etree_api.h',
+        'lxml.etree.h',
         ],
     'lxml.isoschematron':  [
         'resources/rng/iso-schematron.rng',
