@@ -2451,7 +2451,7 @@ cdef class _MultiTagMatcher:
             for item in tag:
                 self._storeTags(item, seen)
 
-    cdef int cacheTags(self, _Document doc) except -1:
+    cdef int cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
         """
         Look up the tag names in the doc dict to enable string pointer comparisons.
         """
@@ -2471,6 +2471,10 @@ cdef class _MultiTagMatcher:
         for href, name in self._py_tags:
             if name is None:
                 c_name = NULL
+            elif force_into_dict:
+                c_name = tree.xmlDictLookup(doc._c_doc.dict, _cstr(name), len(name))
+                if not c_name:
+                    raise MemoryError()
             else:
                 c_name = tree.xmlDictExists(doc._c_doc.dict, _cstr(name), len(name))
                 if not c_name:

@@ -66,13 +66,12 @@ cdef class _IterparseContext(_ParserContext):
     cdef _Element  _root
     cdef _Document _doc
     cdef int _event_filter
-    cdef list _events
     cdef int _event_index
+    cdef list _events
     cdef list _ns_stack
     cdef list _node_stack
     cdef tuple _tag_tuple
-    cdef char*  _tag_href
-    cdef char*  _tag_name
+    cdef _MultiTagMatcher _matcher
 
     def __cinit__(self):
         self._ns_stack = []
@@ -81,7 +80,7 @@ cdef class _IterparseContext(_ParserContext):
         self._event_index = 0
 
     cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
-        u"wrap original SAX2 callbacks"
+        u"""wrap original SAX2 callbacks"""
         cdef xmlparser.xmlSAXHandler* sax
         _ParserContext._initParserContext(self, c_ctxt)
         sax = c_ctxt.sax
@@ -116,21 +115,16 @@ cdef class _IterparseContext(_ParserContext):
 
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildIterparseEventFilter(events)
-        if tag is None or tag == u'*':
-            self._tag_href  = NULL
-            self._tag_name  = NULL
+        if tag is None or tag == '*':
+            self._matcher = None
         else:
-            href, name = self._tag_tuple = _getNsTag(tag)
-            if href is None or href == b'*':
-                self._tag_href = NULL
-            else:
-                self._tag_href = _cstr(href)
-            if name is None or name == b'*':
-                self._tag_name = NULL
-            else:
-                self._tag_name = _cstr(name)
-            if self._tag_href is NULL and self._tag_name is NULL:
-                self._tag_tuple = None
+            self._matcher = _MultiTagMatcher(tag)
+
+    cdef int startDocument(self, xmlDoc* c_doc) except -1:
+        self._doc = _documentFactory(c_doc, None)
+        if self._matcher is not None:
+            self._matcher.cacheTags(self._doc, True) # force entry in libxml2 dict
+        return 0
 
     cdef int startNode(self, xmlNode* c_node) except -1:
         cdef xmlNs* c_ns
@@ -142,11 +136,8 @@ cdef class _IterparseContext(_ParserContext):
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             self._ns_stack.append(ns_count)
         if self._root is None:
-            if self._doc is None:
-                self._doc = _documentFactory(c_node.doc, None)
             self._root = self._doc.getroot()
-        if self._tag_tuple is None or \
-               _tagMatches(c_node, self._tag_href, self._tag_name):
+        if self._matcher is None or self._matcher.matches(c_node):
             node = _elementFactory(self._doc, c_node)
             if self._event_filter & ITERPARSE_FILTER_END:
                 self._node_stack.append(node)
@@ -158,16 +149,13 @@ cdef class _IterparseContext(_ParserContext):
         cdef xmlNs* c_ns
         cdef int ns_count
         if self._event_filter & ITERPARSE_FILTER_END:
-            if self._tag_tuple is None or \
-                   _tagMatches(c_node, self._tag_href, self._tag_name):
+            if self._matcher is None or self._matcher.matches(c_node):
                 if self._event_filter & (ITERPARSE_FILTER_START |
                                          ITERPARSE_FILTER_START_NS |
                                          ITERPARSE_FILTER_END_NS):
                     node = self._node_stack.pop()
                 else:
                     if self._root is None:
-                        if self._doc is None:
-                            self._doc = _documentFactory(c_node.doc, None)
                         self._root = self._doc.getroot()
                     node = _elementFactory(self._doc, c_node)
                 self._events.append( (u"end", node) )
@@ -182,8 +170,7 @@ cdef class _IterparseContext(_ParserContext):
 
     cdef int pushEvent(self, event, xmlNode* c_node) except -1:
         cdef _Element root
-        if self._doc is None:
-            self._doc = _documentFactory(c_node.doc, None)
+        if self._root is None:
             root = self._doc.getroot()
             if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
                 self._root = root
@@ -196,6 +183,16 @@ cdef class _IterparseContext(_ParserContext):
             tree.xmlFreeDoc(self._c_ctxt.myDoc)
             self._c_ctxt.myDoc = NULL
 
+
+cdef inline void _pushSaxStartDocument(_IterparseContext context,
+                                       xmlDoc* c_doc):
+    try:
+        context.startDocument(c_doc)
+    except:
+        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
+            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
+        context._c_ctxt.disableSAX = 1
+        context._store_raised()
 
 cdef inline void _pushSaxStartEvent(_IterparseContext context,
                                     xmlNode* c_node):
@@ -238,6 +235,7 @@ cdef void _iterparseSaxStartDocument(void* ctxt):
         # I have no idea why libxml2 disables this - we need it
         c_ctxt.dictNames = 1
         c_ctxt.myDoc.dict = c_ctxt.dict
+    _pushSaxStartDocument(context, c_ctxt.myDoc)
 
 cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
                              char* URI, int nb_namespaces, char** namespaces,
