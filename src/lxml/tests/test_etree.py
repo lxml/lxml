@@ -682,15 +682,40 @@ class ETreeOnlyTestCase(HelperTestCase):
             [('start', root[0]), ('end', root[0])],
             events)
 
+    def test_iterparse_tag_ns_empty(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a><b><d/></b><c/></a>')
+        iterator = iterparse(f, tag="{}b", events=('start', 'end'))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals(
+            [('start', root[0]), ('end', root[0])],
+            events)
+
+        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        iterator = iterparse(f, tag="{}b", events=('start', 'end'))
+        events = list(iterator)
+        root = iterator.root
+        self.assertEquals([], events)
+
     def test_iterparse_tag_ns_all(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
-
         iterator = iterparse(f, tag="{urn:test:1}*", events=('start', 'end'))
         events = list(iterator)
-        self.assertEquals(
-            8,
-            len(events))
+        self.assertEquals(8, len(events))
+
+    def test_iterparse_tag_ns_empty_all(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a xmlns="urn:test:1"><b><d/></b><c/></a>')
+        iterator = iterparse(f, tag="{}*", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals([], events)
+
+        f = BytesIO('<a><b><d/></b><c/></a>')
+        iterator = iterparse(f, tag="{}*", events=('start', 'end'))
+        events = list(iterator)
+        self.assertEquals(8, len(events))
 
     def test_iterparse_encoding_error(self):
         text = _str('Søk på nettet')
