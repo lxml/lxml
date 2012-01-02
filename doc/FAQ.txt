@@ -843,7 +843,7 @@ breaking.
 If you want to be sure all blank text is removed, you have to use
 either a DTD to tell the parser which whitespace it can safely ignore,
 or remove the ignorable whitespace manually after parsing, e.g. by
-setting all tail text to None::
+setting all tail text to None:
 
 .. sourcecode:: python
 
