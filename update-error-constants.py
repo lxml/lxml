@@ -116,7 +116,7 @@ append_pxd = pxd_result.append
 
 append_pxd('cdef extern from "libxml/xmlerror.h":')
 append_pxi('''\
-# Constants are stored in tuples of strings, for which Pyrex generates very
+# Constants are stored in tuples of strings, for which Cython generates very
 # efficient setup code.  To parse them, iterate over the tuples and parse each
 # line in each string independently.  Tuples of strings (instead of a plain
 # string) are required as some C-compilers of a certain well-known OS vendor
@@ -131,13 +131,12 @@ for enum_name in ENUM_ORDER:
     pxi_name, prefix = ENUM_MAP[enum_name]
 
     append_pxd(ctypedef_indent + 'ctypedef enum %s:' % enum_name)
-    append_pxi('cdef object %s' % pxi_name)
-    append_pxi('%s = (u"""\\' % pxi_name)
+    append_pxi('cdef object %s = (u"""\\' % pxi_name)
 
     prefix_len = len(prefix)
     length = 2 # each string ends with '\n\0'
     for name, val, descr in constants:
-        if descr:
+        if descr and descr != str(val):
             line = '%-50s = %7d # %s' % (name, val, descr)
         else:
             line = '%-50s = %7d' % (name, val)
