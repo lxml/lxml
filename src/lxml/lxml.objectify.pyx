@@ -279,25 +279,26 @@ cdef class ObjectifiedElement(ElementBase):
         cdef tree.xmlNode* c_self_node
         cdef tree.xmlNode* c_parent
         cdef tree.xmlNode* c_node
-        cdef Py_ssize_t start, stop, step, slicelength
+        cdef Py_ssize_t c_index
         if python._isString(key):
             return _lookupChildOrRaise(self, key)
         elif isinstance(key, slice):
             return list(self)[key]
         # normal item access
+        c_index = key   # raises TypeError if necessary
         c_self_node = self._c_node
         c_parent = c_self_node.parent
         if c_parent is NULL:
-            if key == 0:
+            if c_index == 0:
                 return self
             else:
                 raise IndexError, unicode(key)
-        if key < 0:
+        if c_index < 0:
             c_node = c_parent.last
         else:
             c_node = c_parent.children
         c_node = _findFollowingSibling(
-            c_node, tree._getNs(c_self_node), c_self_node.name, key)
+            c_node, tree._getNs(c_self_node), c_self_node.name, c_index)
         if c_node is NULL:
             raise IndexError, unicode(key)
         return elementFactory(self._doc, c_node)
