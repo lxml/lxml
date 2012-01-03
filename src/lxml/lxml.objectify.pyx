@@ -282,7 +282,7 @@ cdef class ObjectifiedElement(ElementBase):
         cdef Py_ssize_t start, stop, step, slicelength
         if python._isString(key):
             return _lookupChildOrRaise(self, key)
-        elif python.PySlice_Check(key):
+        elif isinstance(key, slice):
             return list(self)[key]
         # normal item access
         c_self_node = self._c_node
@@ -330,7 +330,7 @@ cdef class ObjectifiedElement(ElementBase):
             # the 'root[i] = ...' case
             raise TypeError, u"assignment to root element is invalid"
 
-        if python.PySlice_Check(key):
+        if isinstance(key, slice):
             # slice assignment
             _setSlice(key, self, value)
         else:
@@ -351,7 +351,7 @@ cdef class ObjectifiedElement(ElementBase):
         parent = self.getparent()
         if parent is None:
             raise TypeError, u"deleting items not supported by root element"
-        if python.PySlice_Check(key):
+        if isinstance(key, slice):
             # slice deletion
             del_items = list(self)[key]
             remove = parent.remove
@@ -503,7 +503,7 @@ cdef _replaceElement(_Element element, value):
         new_element = cetree.deepcopyNodeToDocument(
             element._doc, (<_Element>value)._c_node)
         new_element.tag = element.tag
-    elif python.PyList_Check(value) or python.PyTuple_Check(value):
+    elif isinstance(value, (list, tuple)):
         element[:] = value
         return
     else:
@@ -519,7 +519,7 @@ cdef _appendValue(_Element parent, tag, value):
             parent._doc, (<_Element>value)._c_node)
         new_element.tag = tag
         cetree.appendChild(parent, new_element)
-    elif python.PyList_Check(value) or python.PyTuple_Check(value):
+    elif isinstance(value, (list, tuple)):
         for item in value:
             _appendValue(parent, tag, item)
     else:
@@ -961,9 +961,9 @@ cdef class PyType:
     cdef object _type
     cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
-        if python.PyBytes_Check(name):
+        if isinstance(name, bytes):
             name = python.PyUnicode_FromEncodedObject(name, 'ascii', NULL)
-        elif not python.PyUnicode_Check(name):
+        elif not isinstance(name, unicode):
             raise TypeError, u"Type name must be a string"
         if type_check is not None and not callable(type_check):
             raise TypeError, u"Type check function must be callable (or None)"
@@ -1580,14 +1580,12 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     doc = element._doc
 
     if empty_type_name is not None:
-        if python.PyBytes_Check(empty_type_name):
-            empty_type_name = python.PyUnicode_FromEncodedObject(
-                empty_type_name, "ascii", NULL)
+        if isinstance(empty_type_name, bytes):
+            empty_type_name = (<bytes>empty_type_name).decode("ascii")
         dict_result = python.PyDict_GetItem(_SCHEMA_TYPE_DICT, empty_type_name)
     elif empty_pytype_name is not None:
-        if python.PyBytes_Check(empty_pytype_name):
-            empty_pytype_name = python.PyUnicode_FromEncodedObject(
-                empty_pytype_name, "ascii", NULL)
+        if isinstance(empty_pytype_name, bytes):
+            empty_pytype_name = (<bytes>empty_pytype_name).decode("ascii")
         dict_result = python.PyDict_GetItem(_PYTYPE_DICT, empty_pytype_name)
     else:
         dict_result = NULL
@@ -1975,7 +1973,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
         strval = None
     elif python._isString(_value):
         strval = _value
-    elif python.PyBool_Check(_value):
+    elif isinstance(_value, bool):
         if _value:
             strval = u"true"
         else:
