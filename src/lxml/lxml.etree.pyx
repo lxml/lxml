@@ -42,7 +42,6 @@ cimport cython
 cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
-cimport cpython.mem
 cimport xpath
 cimport c14n
 cimport cstd
@@ -2411,7 +2410,7 @@ cdef class _MultiTagMatcher:
     cdef void _clear(self):
         self._tag_count = 0
         if self._cached_tags:
-            cpython.mem.PyMem_Free(self._cached_tags)
+            python.PyMem_Free(self._cached_tags)
             self._cached_tags = NULL
 
     cdef initTagMatch(self, tags):
@@ -2464,7 +2463,7 @@ cdef class _MultiTagMatcher:
             self._cached_doc = doc
             return 0
         if not self._cached_tags:
-            self._cached_tags = <char**>cpython.mem.PyMem_Malloc(len(self._py_tags) * 2 * sizeof(char*))
+            self._cached_tags = <char**>python.PyMem_Malloc(len(self._py_tags) * 2 * sizeof(char*))
             if not self._cached_tags:
                 self._cached_doc = None
                 raise MemoryError()
