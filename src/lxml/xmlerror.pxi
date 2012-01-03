@@ -590,7 +590,6 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 
 cdef void __initErrorConstants():
     u"Called at setup time to parse the constants and build the classes below."
-    cdef dict reverse_dict
     find_constants = re.compile(ur"\s*([a-zA-Z0-9_]+)\s*=\s*([0-9]+)").findall
     const_defs = ((ErrorLevels,          __ERROR_LEVELS),
                   (ErrorDomains,         __ERROR_DOMAINS),
@@ -604,7 +603,7 @@ cdef void __initErrorConstants():
             #print len(constants) + 1
             for name, value in find_constants(constants):
                 value = int(value)
-                python.PyObject_SetAttr(cls, name, value)
+                setattr(cls, name, value)
                 reverse_dict[value] = name
 
 

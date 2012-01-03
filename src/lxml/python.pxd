@@ -79,7 +79,6 @@ cdef extern from "Python.h":
                                   Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
                                   Py_ssize_t *slicelength) except -1
 
-    cdef int PyObject_SetAttr(object o, object name, object value)
     cdef object PyObject_RichCompare(object o1, object o2, int op)
     cdef int PyObject_RichCompareBool(object o1, object o2, int op)
 
