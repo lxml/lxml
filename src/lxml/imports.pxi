@@ -17,3 +17,9 @@ from libc.stdio cimport (
     sprintf,
     printf,
 )
+
+from libc.stdlib cimport (
+    malloc,
+    realloc,
+    free,
+)

@@ -558,7 +558,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
             # special case: a single occurrence of 'element %s'
             text_size    = strlen(msg)
             element_size = strlen(c_element)
-            c_message = <char*>cstd.malloc(
+            c_message = <char*>malloc(
                 (text_size + element_size + 1) * sizeof(char))
             sprintf(c_message, msg, c_element)
             c_error.message = c_message
@@ -569,7 +569,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     else:
         text_size    = strlen(c_text)
         element_size = strlen(c_element)
-        c_message = <char*>cstd.malloc(
+        c_message = <char*>malloc(
             (text_size + 12 + element_size + 1) * sizeof(char))
         sprintf(c_message, "%s, element '%s'", c_text, c_element)
         c_error.message = c_message
@@ -582,7 +582,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     _forwardError(c_log_handler, &c_error)
 
     if c_message is not NULL:
-        cstd.free(c_message)
+        free(c_message)
 
 ################################################################################
 ## CONSTANTS FROM "xmlerror.h" (or rather libxml-xmlerror.html)
