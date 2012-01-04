@@ -299,7 +299,7 @@ cdef class _FileReaderContext:
             close()
 
     cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
-        cdef cstd.FILE* c_stream
+        cdef stdio.FILE* c_stream
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
         c_stream = python.PyFile_AsFile(self._filelike)
@@ -326,7 +326,7 @@ cdef class _FileReaderContext:
     cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
         cdef xmlDoc* result
         cdef char* c_encoding
-        cdef cstd.FILE* c_stream
+        cdef stdio.FILE* c_stream
         cdef xmlparser.xmlInputReadCallback c_read_callback
         cdef xmlparser.xmlInputCloseCallback c_close_callback
         cdef void* c_callback_context
@@ -412,7 +412,7 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
-    return cstd.fread(c_buffer, 1,  c_size, <cstd.FILE*>ctxt)
+    return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
 ## support for custom document loaders

@@ -560,7 +560,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
             element_size = string.strlen(c_element)
             c_message = <char*>cstd.malloc(
                 (text_size + element_size + 1) * sizeof(char))
-            cstd.sprintf(c_message, msg, c_element)
+            stdio.sprintf(c_message, msg, c_element)
             c_error.message = c_message
         else:
             c_error.message = ''
@@ -571,7 +571,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
         element_size = string.strlen(c_element)
         c_message = <char*>cstd.malloc(
             (text_size + 12 + element_size + 1) * sizeof(char))
-        cstd.sprintf(c_message, "%s, element '%s'", c_text, c_element)
+        stdio.sprintf(c_message, "%s, element '%s'", c_text, c_element)
         c_error.message = c_message
 
     c_error.domain = xmlerror.XML_FROM_XSLT
