@@ -2,6 +2,34 @@
 lxml changelog
 ==============
 
+2.3.3 (2012-01-04)
+==================
+
+Features added
+--------------
+
+* ``lxml.html.tostring()`` gained new serialisation options
+  ``with_tail`` and ``doctype``.
+
+Bugs fixed
+----------
+
+* Fixed a crash when using ``iterparse()`` for HTML parsing and
+  requesting start events.
+
+* Fixed parsing of more selectors in cssselect.  Whitespace before
+  pseudo-elements and pseudo-classes is significant as it is a
+  descendant combinator.
+  "E :pseudo" should parse the same as "E \*:pseudo", not "E:pseudo".
+  Patch by Simon Sapin.
+
+* lxml.html.diff no longer raises an exception when hitting
+  'img' tags without 'src' attribute.
+
+Other changes
+--------------
+
+
 2.3.2 (2011-11-11)
 ==================
 
@@ -31,18 +59,6 @@ Bugs fixed
   ">", "+" and "~" is now correctly ignored. Previously is was parsed as
   a descendant combinator. For example, "div> .foo" was parsed the same as
   "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
-
-* Fixed a crash when using ``iterparse()`` for HTML parsing and
-  requesting start events.
-
-* Fixed parsing of more selectors in cssselect.  Whitespace before
-  pseudo-elements and pseudo-classes is significant as it is a
-  descendant combinator.
-  "E :pseudo" should parse the same as "E \*:pseudo", not "E:pseudo".
-  Patch by Simon Sapin.
-
-* lxml.html.diff no longer raises an exception when hitting
-  'img' tags without 'src' attribute.
 
 Other changes
 --------------
@@ -148,9 +164,6 @@ Other changes
 
 Features added
 --------------
-
-* ``lxml.html.tostring()`` gained new serialisation options
-  ``with_tail`` and ``doctype``.
 
 Bugs fixed
 ----------
