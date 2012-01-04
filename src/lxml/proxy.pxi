@@ -224,17 +224,17 @@ cdef int _growNsCache(_nscache* c_ns_cache) except -1:
         c_ns_cache.size = 20
     else:
         c_ns_cache.size *= 2
-    c_ns_ptr = <xmlNs**> cstd.realloc(
+    c_ns_ptr = <xmlNs**> stdlib.realloc(
         c_ns_cache.new, c_ns_cache.size * sizeof(xmlNs*))
     if c_ns_ptr is not NULL:
         c_ns_cache.new = c_ns_ptr
-        c_ns_ptr = <xmlNs**> cstd.realloc(
+        c_ns_ptr = <xmlNs**> stdlib.realloc(
             c_ns_cache.old, c_ns_cache.size * sizeof(xmlNs*))
     if c_ns_ptr is not NULL:
         c_ns_cache.old = c_ns_ptr
     else:
-        cstd.free(c_ns_cache.new)
-        cstd.free(c_ns_cache.old)
+        stdlib.free(c_ns_cache.new)
+        stdlib.free(c_ns_cache.old)
         python.PyErr_NoMemory()
         return -1
     return 0
@@ -368,9 +368,9 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
     # cleanup
     if c_ns_cache.new is not NULL:
-        cstd.free(c_ns_cache.new)
+        stdlib.free(c_ns_cache.new)
     if c_ns_cache.old is not NULL:
-        cstd.free(c_ns_cache.old)
+        stdlib.free(c_ns_cache.old)
 
     # 3) fix the names in the tree if we moved it from a different thread
     if doc._c_doc.dict is not c_source_doc.dict:

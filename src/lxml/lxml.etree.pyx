@@ -45,7 +45,7 @@ from python cimport callable, _cstr, _isString
 cimport cpython.mem
 cimport xpath
 cimport c14n
-from libc cimport string, stdio
+from libc cimport string, stdio, stdlib
 cimport cstd
 
 try:
