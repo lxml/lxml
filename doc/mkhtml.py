@@ -1,7 +1,7 @@
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 from lxml.etree import (parse, fromstring, tostring, ElementTree,
                         Element, SubElement, XPath, XML)
-import os, shutil, re, sys, copy, time
+import os, shutil, re, sys, copy, time, subprocess
 
 RST2HTML_OPTIONS = " ".join([
     '--no-toc-backlinks',
