@@ -1,4 +1,4 @@
-from cstd cimport FILE
+from libc.stdio cimport FILE
 cimport cython
 
 cdef extern from "Python.h":
