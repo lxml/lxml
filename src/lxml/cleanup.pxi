@@ -71,7 +71,7 @@ cdef _strip_attributes(xmlNode* c_node, char** c_ns_tags, Py_ssize_t c_tag_count
                                 tree.xmlRemoveProp(c_attr)
                                 break
                         elif c_attr.ns is not NULL and c_attr.ns.href is not NULL:
-                            if cstd.strcmp(c_attr.ns.href, c_href) == 0:
+                            if string.strcmp(c_attr.ns.href, c_href) == 0:
                                 tree.xmlRemoveProp(c_attr)
                                 break
                     c_attr = c_attr.next
@@ -312,7 +312,7 @@ cdef Py_ssize_t _mapTagsToCharArray(xmlDoc* c_doc, list ns_tags,
         else:
             c_tag = _cstr(tag)
             c_ns_tags[1] = tree.xmlDictExists(
-                c_doc.dict, c_tag, cstd.strlen(c_tag))
+                c_doc.dict, c_tag, string.strlen(c_tag))
             if c_ns_tags[1] == NULL:
                 # not in the dict => not in the document
                 continue

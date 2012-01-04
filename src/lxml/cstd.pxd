@@ -1,15 +1,4 @@
-
 from libc.stdio cimport FILE
-
-cdef extern from "string.h":
-    cdef int strlen(char* s) nogil
-    cdef char* strstr(char* haystack, char* needle) nogil
-    cdef char* strchr(char* haystack, int needle) nogil
-    cdef char* strrchr(char* haystack, int needle) nogil
-    cdef int strcmp(char* s1, char* s2) nogil
-    cdef int strncmp(char* s1, char* s2, size_t len) nogil
-    cdef void* memcpy(void* dest, void* src, size_t len) nogil
-    cdef void* memset(void* s, int c, size_t len) nogil
 
 cdef extern from "stdio.h":
     cdef size_t fread(void *ptr, size_t size, size_t nmemb,

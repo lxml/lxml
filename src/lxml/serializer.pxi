@@ -202,7 +202,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
 
     if c_doctype is not NULL:
-        tree.xmlOutputBufferWrite(c_buffer, cstd.strlen(c_doctype), c_doctype)
+        tree.xmlOutputBufferWrite(c_buffer, string.strlen(c_doctype), c_doctype)
         tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
     # write internal DTD subset, preceding PIs/comments, etc.
@@ -270,7 +270,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     c_dtd = c_doc.intSubset
     if c_dtd is NULL or c_dtd.name is NULL:
         return
-    if cstd.strcmp(c_root_name, c_dtd.name) != 0:
+    if string.strcmp(c_root_name, c_dtd.name) != 0:
         return
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
     tree.xmlOutputBufferWriteString(c_buffer, c_dtd.name)

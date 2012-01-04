@@ -66,7 +66,7 @@ cdef class _LogEntry:
         self.level    = <int>error.level
         self.line     = error.line
         self.column   = error.int2
-        size = cstd.strlen(error.message)
+        size = string.strlen(error.message)
         if size > 0 and error.message[size-1] == c'\n':
             size = size - 1 # strip EOL
         try:
@@ -533,19 +533,19 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
         c_text = cstd.va_charptr(args)
     else:
         c_text = NULL
-    if cstd.strstr(msg, 'file %s'):
+    if string.strstr(msg, 'file %s'):
         c_error.file = cstd.va_charptr(args)
         if c_error.file and \
-                cstd.strncmp(c_error.file,
+                string.strncmp(c_error.file,
                             'string://__STRING__XSLT', 23) == 0:
             c_error.file = '<xslt>'
     else:
         c_error.file = NULL
-    if cstd.strstr(msg, 'line %d'):
+    if string.strstr(msg, 'line %d'):
         c_error.line = cstd.va_int(args)
     else:
         c_error.line = 0
-    if cstd.strstr(msg, 'element %s'):
+    if string.strstr(msg, 'element %s'):
         c_element = cstd.va_charptr(args)
     else:
         c_element = NULL
@@ -554,10 +554,10 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     c_message = NULL
     if c_text is NULL:
         if c_element is not NULL and \
-                cstd.strchr(msg, c'%') == cstd.strrchr(msg, c'%'):
+                string.strchr(msg, c'%') == string.strrchr(msg, c'%'):
             # special case: a single occurrence of 'element %s'
-            text_size    = cstd.strlen(msg)
-            element_size = cstd.strlen(c_element)
+            text_size    = string.strlen(msg)
+            element_size = string.strlen(c_element)
             c_message = <char*>cstd.malloc(
                 (text_size + element_size + 1) * sizeof(char))
             cstd.sprintf(c_message, msg, c_element)
@@ -567,8 +567,8 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     elif c_element is NULL:
         c_error.message = c_text
     else:
-        text_size    = cstd.strlen(c_text)
-        element_size = cstd.strlen(c_element)
+        text_size    = string.strlen(c_text)
+        element_size = string.strlen(c_element)
         c_message = <char*>cstd.malloc(
             (text_size + 12 + element_size + 1) * sizeof(char))
         cstd.sprintf(c_message, "%s, element '%s'", c_text, c_element)
