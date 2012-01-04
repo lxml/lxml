@@ -8,3 +8,12 @@ from libc.string cimport (
     memcpy,
     memset,
 )
+
+from libc.stdio cimport (
+    FILE,
+    fread,
+    feof,
+    ferror,
+    sprintf,
+    printf,
+)

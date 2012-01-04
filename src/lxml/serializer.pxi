@@ -532,7 +532,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
 
 cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print, bint with_tail):
     cdef tree.xmlOutputBuffer* c_buffer
-    cdef cstd.FILE* c_file
+    cdef FILE* c_file
     c_file = python.PyFile_AsFile(f)
     if c_file is NULL:
         raise ValueError, u"not a file"
