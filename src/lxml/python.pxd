@@ -4,7 +4,6 @@ cimport cython
 cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef struct PyThreadState
-    cdef int INT_MAX
     cdef int PY_SSIZE_T_MAX
     cdef int PY_VERSION_HEX
 
