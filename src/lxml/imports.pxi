@@ -1,3 +1,5 @@
+from libc.limits cimport INT_MAX
+
 from libc.string cimport (
     strlen,
     strstr,
