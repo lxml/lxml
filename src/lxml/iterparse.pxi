@@ -496,7 +496,7 @@ cdef class iterparse(_BaseParser):
         events = context._events
         del events[:]
         context._event_index = 0
-        c_stream = python.PyFile_AsFile(self._source)
+        c_stream = python.PyFile_AsFile(<python.PyObject* >self._source)
         while not events:
             if c_stream is NULL:
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)

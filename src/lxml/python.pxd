@@ -12,7 +12,7 @@ cdef extern from "Python.h":
     cdef void Py_DECREF(object o)
     cdef void Py_XDECREF(PyObject* o)
 
-    cdef FILE* PyFile_AsFile(object p)
+    cdef FILE* PyFile_AsFile(PyObject* p)
 
     cdef bint PyUnicode_Check(object obj)
     cdef bint PyUnicode_CheckExact(object obj)
