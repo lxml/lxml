@@ -302,7 +302,7 @@ cdef class _FileReaderContext:
         cdef cstd.FILE* c_stream
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
-        c_stream = python.PyFile_AsFile(self._filelike)
+        c_stream = python.PyFile_AsFile(<python.PyObject* >self._filelike)
         if c_stream is NULL:
             c_buffer.readcallback  = _readFilelikeParser
             c_buffer.context = <python.PyObject*>self
@@ -336,7 +336,7 @@ cdef class _FileReaderContext:
         else:
             c_encoding = _cstr(self._encoding)
 
-        c_stream = python.PyFile_AsFile(self._filelike)
+        c_stream = python.PyFile_AsFile(<python.PyObject* >self._filelike)
         if c_stream is NULL:
             c_read_callback  = _readFilelikeParser
             c_callback_context = <python.PyObject*>self
