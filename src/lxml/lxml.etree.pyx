@@ -47,6 +47,8 @@ cimport xpath
 cimport c14n
 cimport cstd
 
+include "imports.pxi"
+
 try:
     import __builtin__
 except ImportError:

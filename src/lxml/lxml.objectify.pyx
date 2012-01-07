@@ -10,6 +10,8 @@ cimport python
 cimport tree
 cimport cstd
 
+include "imports.pxi"
+
 __all__ = [u'BoolElement', u'DataElement', u'E', u'Element', u'ElementMaker',
            u'FloatElement', u'IntElement', u'LongElement', u'NoneElement',
            u'NumberElement', u'ObjectPath', u'ObjectifiedDataElement',
@@ -37,7 +39,7 @@ cdef object _typename(object t):
     cdef char* c_name
     cdef char* s
     c_name = python._fqtypename(t)
-    s = cstd.strrchr(c_name, c'.')
+    s = strrchr(c_name, c'.')
     if s is not NULL:
         c_name = s + 1
     return pyunicode(c_name)
@@ -417,7 +419,7 @@ cdef inline bint _tagMatches(tree.xmlNode* c_node, char* c_href, char* c_name):
     c_node_href = tree._getNs(c_node)
     if c_node_href == NULL:
         return c_href[0] == c'\0'
-    return cstd.strcmp(c_node_href, c_href) == 0
+    return strcmp(c_node_href, c_href) == 0
 
 cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
     cdef tree.xmlNode* c_node
@@ -1695,7 +1697,7 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                         prefix, name = typename_utf8.split(b':', 1)
                         if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
                             typename_utf8 = name
-                        elif cstd.strcmp(_cstr(prefix), c_ns.prefix) != 0:
+                        elif strcmp(_cstr(prefix), c_ns.prefix) != 0:
                             prefix = c_ns.prefix
                             typename_utf8 = prefix + b':' + name
                     elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':

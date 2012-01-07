@@ -487,7 +487,7 @@ cdef class iterparse(_BaseParser):
         return item
 
     cdef _read_more_events(self, _IterparseContext context):
-        cdef cstd.FILE* c_stream
+        cdef FILE* c_stream
         cdef char* c_data
         cdef Py_ssize_t c_data_len
         cdef xmlparser.xmlParserCtxt* pctxt = context._c_ctxt
@@ -513,12 +513,12 @@ cdef class iterparse(_BaseParser):
                         NULL, __ITERPARSE_CHUNK_SIZE)
                 c_data = _cstr(self._buffer)
                 with nogil:
-                    c_data_len = cstd.fread(
+                    c_data_len = fread(
                         c_data, 1, __ITERPARSE_CHUNK_SIZE, c_stream)
                     if c_data_len < __ITERPARSE_CHUNK_SIZE:
-                        if cstd.ferror(c_stream):
+                        if ferror(c_stream):
                             error = 1
-                        elif cstd.feof(c_stream):
+                        elif feof(c_stream):
                             done = 1
                 if not error:
                     error = self._parse_chunk(
