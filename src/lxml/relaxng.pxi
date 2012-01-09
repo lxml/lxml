@@ -47,7 +47,7 @@ cdef class RelaxNG(_Validator):
             if _LIBXML_VERSION_INT < 20624:
                 c_href = _getNs(c_node)
                 if c_href is NULL or \
-                       string.strcmp(c_href,
+                       cstring_h.strcmp(c_href,
                                    'http://relaxng.org/ns/structure/1.0') != 0:
                     raise RelaxNGParseError, u"Document is not Relax NG"
             self._error_log.connect()

@@ -300,9 +300,9 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
         if state is None or (<ElementDefaultClassLookup>state).pi_class is None:
             # special case XSLT-PI
             if c_node.name is not NULL and c_node.content is not NULL:
-                if string.strcmp(c_node.name, "xml-stylesheet") == 0:
-                    if string.strstr(c_node.content, "text/xsl") is not NULL or \
-                           string.strstr(c_node.content, "text/xml") is not NULL:
+                if cstring_h.strcmp(c_node.name, "xml-stylesheet") == 0:
+                    if cstring_h.strstr(c_node.content, "text/xsl") is not NULL or \
+                           cstring_h.strstr(c_node.content, "text/xml") is not NULL:
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
         else:

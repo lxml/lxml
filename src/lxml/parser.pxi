@@ -372,7 +372,7 @@ cdef class _FileReaderContext:
             remaining  = byte_count - self._bytes_read
             while c_requested > remaining:
                 c_start = _cstr(self._bytes) + self._bytes_read
-                string.memcpy(c_buffer, c_start, remaining)
+                cstring_h.memcpy(c_buffer, c_start, remaining)
                 c_byte_count += remaining
                 c_buffer += remaining
                 c_requested -= remaining
@@ -399,7 +399,7 @@ cdef class _FileReaderContext:
 
             if c_requested > 0:
                 c_start = _cstr(self._bytes) + self._bytes_read
-                string.memcpy(c_buffer, c_start, c_requested)
+                cstring_h.memcpy(c_buffer, c_start, c_requested)
                 c_byte_count += c_requested
                 self._bytes_read += c_requested
             return c_byte_count

@@ -266,7 +266,7 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
         c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
         if c_ns is NULL or \
                 c_ns.href is NULL or \
-                string.strcmp(c_ns.href, c_href) != 0:
+                cstring_h.strcmp(c_ns.href, c_href) != 0:
             c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if href_utf == node_ns_utf:
             tree.xmlSetNs(c_node, c_ns)
@@ -424,7 +424,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
     cdef xmlNode* c_element
     if c_href is NULL or c_node is NULL or c_node.type == tree.XML_ENTITY_REF_NODE:
         return NULL
-    if string.strcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
+    if cstring_h.strcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
         # no special cases here, let libxml2 handle this
         return tree.xmlSearchNsByHref(c_node.doc, c_node, c_href)
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -436,7 +436,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
         if c_node.type == tree.XML_ELEMENT_NODE:
             c_ns = c_node.nsDef
             while c_ns is not NULL:
-                if c_ns.href is not NULL and string.strcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and cstring_h.strcmp(c_href, c_ns.href) == 0:
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -451,7 +451,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
             if c_node is not c_element and c_node.ns is not NULL:
                 # optimise: the node may have the namespace itself
                 c_ns = c_node.ns
-                if c_ns.href is not NULL and string.strcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and cstring_h.strcmp(c_href, c_ns.href) == 0:
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -940,17 +940,17 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
             if c_node_href is NULL:
                 return c_href[0] == c'\0'
             else:
-                return string.strcmp(c_node_href, c_href) == 0
+                return cstring_h.strcmp(c_node_href, c_href) == 0
     elif c_href is NULL:
         if _getNs(c_node) is not NULL:
             return 0
-        return c_node.name == c_name or string.strcmp(c_node.name, c_name) == 0
-    elif c_node.name == c_name or string.strcmp(c_node.name, c_name) == 0:
+        return c_node.name == c_name or cstring_h.strcmp(c_node.name, c_name) == 0
+    elif c_node.name == c_name or cstring_h.strcmp(c_node.name, c_name) == 0:
         c_node_href = _getNs(c_node)
         if c_node_href is NULL:
             return c_href[0] == c'\0'
         else:
-            return string.strcmp(c_node_href, c_href) == 0
+            return cstring_h.strcmp(c_node_href, c_href) == 0
     else:
         return 0
 
@@ -981,7 +981,7 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, char* c_href, char* c_name)
     elif c_node_href is NULL:
         return 0
     else:
-        return string.strcmp(c_href, c_node_href) == 0
+        return cstring_h.strcmp(c_href, c_node_href) == 0
 
 cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     u"""Unlink and free a node and subnodes if possible.  Otherwise, make sure
@@ -1328,7 +1328,7 @@ cdef object funicode(char* s):
     cdef char* spos
     cdef bint is_non_ascii
     if python.IS_PYTHON3:
-        slen = string.strlen(s)
+        slen = cstring_h.strlen(s)
         return s[:slen].decode('UTF-8')
     spos = s
     is_non_ascii = 0
@@ -1413,7 +1413,7 @@ cdef object _encodeFilename(object filename):
 cdef object _decodeFilename(char* c_path):
     u"""Make the filename a unicode string if we are in Py3.
     """
-    cdef Py_ssize_t c_len = string.strlen(c_path)
+    cdef Py_ssize_t c_len = cstring_h.strlen(c_path)
     if _isFilePath(c_path):
         try:
             return python.PyUnicode_Decode(
@@ -1481,7 +1481,7 @@ cdef tuple __getNsTag(tag, bint empty_ns):
     c_tag = _cstr(tag)
     if c_tag[0] == c'{':
         c_tag += 1
-        c_ns_end = string.strchr(c_tag, c'}')
+        c_ns_end = cstring_h.strchr(c_tag, c'}')
         if c_ns_end is NULL:
             raise ValueError, u"Invalid tag name"
         nslen  = c_ns_end - c_tag

@@ -145,11 +145,11 @@ cdef _parseObjectPathList(path):
         else:
             ns, name = cetree.getNsTag(item)
             c_name = _cstr(name)
-            index_pos = string.strchr(c_name, c'[')
+            index_pos = cstring_h.strchr(c_name, c'[')
             if index_pos is NULL:
                 index = 0
             else:
-                index_end = string.strchr(index_pos + 1, c']')
+                index_end = cstring_h.strchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, u"index must be enclosed in []"
                 index = int(index_pos[1:index_end - index_pos])
