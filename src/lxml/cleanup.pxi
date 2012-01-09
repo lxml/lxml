@@ -37,7 +37,7 @@ def strip_attributes(tree_or_element, *attribute_names):
 
     # tag names are passes as C pointers as this allows us to take
     # them from the doc dict and do pointer comparisons
-    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
+    c_ns_tags = <char**> stdlib.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
     if c_ns_tags is NULL:
         python.PyErr_NoMemory()
 
@@ -46,7 +46,7 @@ def strip_attributes(tree_or_element, *attribute_names):
         if c_tag_count > 0:
             _strip_attributes(element._c_node, c_ns_tags, c_tag_count)
     finally:
-        cstd.free(c_ns_tags)
+        stdlib.free(c_ns_tags)
 
 cdef _strip_attributes(xmlNode* c_node, char** c_ns_tags, Py_ssize_t c_tag_count):
     cdef xmlAttr* c_attr
@@ -71,7 +71,7 @@ cdef _strip_attributes(xmlNode* c_node, char** c_ns_tags, Py_ssize_t c_tag_count
                                 tree.xmlRemoveProp(c_attr)
                                 break
                         elif c_attr.ns is not NULL and c_attr.ns.href is not NULL:
-                            if cstd.strcmp(c_attr.ns.href, c_href) == 0:
+                            if cstring_h.strcmp(c_attr.ns.href, c_href) == 0:
                                 tree.xmlRemoveProp(c_attr)
                                 break
                     c_attr = c_attr.next
@@ -123,7 +123,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
 
     # tag names are passed as C pointers as this allows us to take
     # them from the doc dict and do pointer comparisons
-    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
+    c_ns_tags = <char**> stdlib.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
     if c_ns_tags is NULL:
         python.PyErr_NoMemory()
 
@@ -133,7 +133,7 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
             _strip_elements(doc, element._c_node, c_ns_tags, c_tag_count,
                             strip_comments, strip_pis, strip_entities, with_tail)
     finally:
-        cstd.free(c_ns_tags)
+        stdlib.free(c_ns_tags)
 
 cdef _strip_elements(_Document doc, xmlNode* c_node,
                      char** c_ns_tags, Py_ssize_t c_tag_count,
@@ -214,7 +214,7 @@ def strip_tags(tree_or_element, *tag_names):
 
     # tag names are passes as C pointers as this allows us to take
     # them from the doc dict and do pointer comparisons
-    c_ns_tags = <char**> cstd.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
+    c_ns_tags = <char**> stdlib.malloc(sizeof(char*) * len(ns_tags) * 2 + 2)
     if c_ns_tags is NULL:
         python.PyErr_NoMemory()
 
@@ -224,7 +224,7 @@ def strip_tags(tree_or_element, *tag_names):
             _strip_tags(doc, element._c_node, c_ns_tags, c_tag_count,
                         strip_comments, strip_pis, strip_entities)
     finally:
-        cstd.free(c_ns_tags)
+        stdlib.free(c_ns_tags)
 
 cdef _strip_tags(_Document doc, xmlNode* c_node,
                  char** c_ns_tags, Py_ssize_t c_tag_count,
@@ -312,7 +312,7 @@ cdef Py_ssize_t _mapTagsToCharArray(xmlDoc* c_doc, list ns_tags,
         else:
             c_tag = _cstr(tag)
             c_ns_tags[1] = tree.xmlDictExists(
-                c_doc.dict, c_tag, cstd.strlen(c_tag))
+                c_doc.dict, c_tag, cstring_h.strlen(c_tag))
             if c_ns_tags[1] == NULL:
                 # not in the dict => not in the document
                 continue
