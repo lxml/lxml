@@ -8,27 +8,12 @@ lxml changelog
 Features added
 --------------
 
-* Iteration with a selective ``tag`` argument supports passing
-  a set of tags.  Tree nodes will be returned by the iterators
-  if they match any of the tags.
-
-* ``lxml.html.tostring()`` gained new serialisation options
-  ``with_tail`` and ``doctype``.
+* Tree iteration and ``iterparse()`` with a selective ``tag``
+  argument supports passing a set of tags.  Tree nodes will be
+  returned by the iterators if they match any of the tags.
 
 Bugs fixed
 ----------
-
-* Fixed a crash when using ``iterparse()`` for HTML parsing and
-  requesting start events.
-
-* Fixed parsing of more selectors in cssselect.  Whitespace before
-  pseudo-elements and pseudo-classes is significant as it is a
-  descendant combinator.
-  "E :pseudo" should parse the same as "E \*:pseudo", not "E:pseudo".
-  Patch by Simon Sapin.
-
-* lxml.html.diff no longer raises an exception when hitting
-  'img' tags without 'src' attribute.
 
 Other changes
 --------------
@@ -59,6 +44,34 @@ Other changes
   _AppendOnlyElementProxy, _FilelikeWriter, _ParserSchemaValidationContext,
   _XPathContext, _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam,
   _XSLTResultTree, _XSLTProcessingInstruction``
+
+
+2.3.3 (2012-01-04)
+==================
+
+Features added
+--------------
+
+* ``lxml.html.tostring()`` gained new serialisation options
+  ``with_tail`` and ``doctype``.
+
+Bugs fixed
+----------
+
+* Fixed a crash when using ``iterparse()`` for HTML parsing and
+  requesting start events.
+
+* Fixed parsing of more selectors in cssselect.  Whitespace before
+  pseudo-elements and pseudo-classes is significant as it is a
+  descendant combinator.
+  "E :pseudo" should parse the same as "E \*:pseudo", not "E:pseudo".
+  Patch by Simon Sapin.
+
+* lxml.html.diff no longer raises an exception when hitting
+  'img' tags without 'src' attribute.
+
+Other changes
+--------------
 
 
 2.3.2 (2011-11-11)

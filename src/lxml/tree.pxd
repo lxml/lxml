@@ -1,4 +1,4 @@
-from cstd cimport FILE
+from libc.stdio cimport FILE
 
 cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING

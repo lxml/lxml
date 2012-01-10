@@ -13,7 +13,9 @@ Support the project
 -------------------
 
 Most people who use lxml do so because they like using it.
-If you want to show us that you like it, send us a flattr.
+If you want to show us that you like it, please blog about
+your experience with it, link to the project website,
+or send us a flattr.
 
 .. class:: center
 
@@ -21,10 +23,11 @@ If you want to show us that you like it, send us a flattr.
 
 .. _FlattrLink: https://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit
 
-However, if you are using lxml for your work and feel like you should
-give a bit of your own benefit back to support the project, consider
-sending us money through PayPal.  Please read the Legal Notice below,
-at the bottom of this page.  Thank you for your support.
+However, if you are using lxml for your work and feel like giving a bit
+of your own benefit back to support the project, consider sending us
+money through PayPal that we can use for fixing bugs in the software
+and improving its features and documentation.  Please read the Legal
+Notice below, at the bottom of this page.  Thank you for your support.
 
 .. class:: center
 

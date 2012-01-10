@@ -1,4 +1,6 @@
 
+from libc.stdio cimport FILE
+
 cdef extern from "string.h":
     cdef int strlen(char* s) nogil
     cdef char* strstr(char* haystack, char* needle) nogil
@@ -10,7 +12,6 @@ cdef extern from "string.h":
     cdef void* memset(void* s, int c, size_t len) nogil
 
 cdef extern from "stdio.h":
-    ctypedef struct FILE
     cdef size_t fread(void *ptr, size_t size, size_t nmemb,
                       FILE *stream) nogil
     cdef int feof(FILE *stream) nogil

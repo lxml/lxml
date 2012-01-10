@@ -209,18 +209,22 @@ class ThreadingTestCase(HelperTestCase):
     <xsl:stylesheet version="1.0"
         xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
       <xsl:template match="*">
-        <foo><xsl:copy><xsl:value-of select="/a/b/text()" /></xsl:copy></foo>
+        <xsl:copy><foo><xsl:value-of select="/a/b/text()" /></foo></xsl:copy>
       </xsl:template>
     </xsl:stylesheet>'''))
             st = etree.XSLT(style)
-            result.append( st(root).getroot()[0] )
+            result.append( st(root).getroot() )
 
-        for test in (run_XML, run_parse, run_move_main, run_xslt):
+        for test in (run_XML, run_parse, run_move_main, run_xslt, run_build):
             tostring(result)
             self._run_thread(test)
 
         self.assertEquals(
-            _bytes('<ns0:root xmlns:ns0="myns" att="someval"><b>B</b><c xmlns="test">C</c><b>B</b><c xmlns="test">C</c><tags/><a>B</a></ns0:root>'),
+            _bytes('<ns0:root xmlns:ns0="myns" att="someval"><b>B</b>'
+                   '<c xmlns="test">C</c><b>B</b><c xmlns="test">C</c><tags/>'
+                   '<a><foo>B</foo></a>'
+                   '<ns0:foo xmlns:ns1="test" ns1:attr="val"/>'
+                   '<ns1:tasty xmlns:ns1="otherns"/></ns0:root>'),
             tostring(result))
 
         def strip_first():
