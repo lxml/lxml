@@ -1,10 +1,9 @@
-from libc.stdio cimport FILE
+from libc cimport stdio
 cimport cython
 
 cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef struct PyThreadState
-    cdef int INT_MAX
     cdef int PY_SSIZE_T_MAX
     cdef int PY_VERSION_HEX
 
@@ -12,7 +11,7 @@ cdef extern from "Python.h":
     cdef void Py_DECREF(object o)
     cdef void Py_XDECREF(PyObject* o)
 
-    cdef FILE* PyFile_AsFile(object p)
+    cdef stdio.FILE* PyFile_AsFile(object p)
 
     cdef bint PyUnicode_Check(object obj)
     cdef bint PyUnicode_CheckExact(object obj)

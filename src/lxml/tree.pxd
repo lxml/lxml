@@ -1,4 +1,4 @@
-from libc.stdio cimport FILE
+from libc cimport stdio
 
 cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
@@ -225,7 +225,7 @@ cdef extern from "libxml/tree.h":
     cdef xmlNs* xmlSearchNsByHref(xmlDoc* doc, xmlNode* node, char* href) nogil
     cdef int xmlIsBlankNode(xmlNode* node) nogil
     cdef long xmlGetLineNo(xmlNode* node) nogil
-    cdef void xmlElemDump(FILE* f, xmlDoc* doc, xmlNode* cur) nogil
+    cdef void xmlElemDump(stdio.FILE* f, xmlDoc* doc, xmlNode* cur) nogil
     cdef void xmlNodeDumpOutput(xmlOutputBuffer* buf,
                                 xmlDoc* doc, xmlNode* cur, int level,
                                 int format, char* encoding) nogil
@@ -284,7 +284,7 @@ cdef extern from "libxml/xmlIO.h":
         void * ioctx, 
         xmlCharEncodingHandler* encoder) nogil
     cdef xmlOutputBuffer* xmlOutputBufferCreateFile(
-        FILE* file, xmlCharEncodingHandler* encoder) nogil
+        stdio.FILE* file, xmlCharEncodingHandler* encoder) nogil
     cdef xmlOutputBuffer* xmlOutputBufferCreateFilename(
         char* URI, xmlCharEncodingHandler* encoder, int compression) nogil
 

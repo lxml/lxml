@@ -299,7 +299,7 @@ cdef class _FileReaderContext:
             close()
 
     cdef xmlparser.xmlParserInputBuffer* _createParserInputBuffer(self):
-        cdef cstd.FILE* c_stream
+        cdef stdio.FILE* c_stream
         cdef xmlparser.xmlParserInputBuffer* c_buffer
         c_buffer = xmlparser.xmlAllocParserInputBuffer(0)
         c_stream = python.PyFile_AsFile(self._filelike)
@@ -326,7 +326,7 @@ cdef class _FileReaderContext:
     cdef xmlDoc* _readDoc(self, xmlparser.xmlParserCtxt* ctxt, int options):
         cdef xmlDoc* result
         cdef char* c_encoding
-        cdef cstd.FILE* c_stream
+        cdef stdio.FILE* c_stream
         cdef xmlparser.xmlInputReadCallback c_read_callback
         cdef xmlparser.xmlInputCloseCallback c_close_callback
         cdef void* c_callback_context
@@ -372,7 +372,7 @@ cdef class _FileReaderContext:
             remaining  = byte_count - self._bytes_read
             while c_requested > remaining:
                 c_start = _cstr(self._bytes) + self._bytes_read
-                cstd.memcpy(c_buffer, c_start, remaining)
+                cstring_h.memcpy(c_buffer, c_start, remaining)
                 c_byte_count += remaining
                 c_buffer += remaining
                 c_requested -= remaining
@@ -399,7 +399,7 @@ cdef class _FileReaderContext:
 
             if c_requested > 0:
                 c_start = _cstr(self._bytes) + self._bytes_read
-                cstd.memcpy(c_buffer, c_start, c_requested)
+                cstring_h.memcpy(c_buffer, c_start, c_requested)
                 c_byte_count += c_requested
                 self._bytes_read += c_requested
             return c_byte_count
@@ -412,7 +412,7 @@ cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
 
 cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
-    return cstd.fread(c_buffer, 1,  c_size, <cstd.FILE*>ctxt)
+    return stdio.fread(c_buffer, 1,  c_size, <stdio.FILE*>ctxt)
 
 ############################################################
 ## support for custom document loaders
@@ -900,7 +900,7 @@ cdef class _BaseParser:
         cdef int buffer_len
         cdef char* c_text
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
-        if py_buffer_len > python.INT_MAX or _UNICODE_ENCODING is NULL:
+        if py_buffer_len > limits.INT_MAX or _UNICODE_ENCODING is NULL:
             text_utf = python.PyUnicode_AsUTF8String(utext)
             py_buffer_len = python.PyBytes_GET_SIZE(text_utf)
             return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
@@ -939,7 +939,7 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_encoding
-        if c_len > python.INT_MAX:
+        if c_len > limits.INT_MAX:
             raise ParserError, u"string is too long to parse it with libxml2"
 
         context = self._getParserContext()
@@ -1100,8 +1100,8 @@ cdef class _FeedParser(_BaseParser):
             self._feed_parser_running = 1
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
-            if py_buffer_len > python.INT_MAX:
-                buffer_len = python.INT_MAX
+            if py_buffer_len > limits.INT_MAX:
+                buffer_len = limits.INT_MAX
             else:
                 buffer_len = <int>py_buffer_len
             if self._for_html:
@@ -1118,8 +1118,8 @@ cdef class _FeedParser(_BaseParser):
 
         while py_buffer_len > 0 and (error == 0 or recover):
             with nogil:
-                if py_buffer_len > python.INT_MAX:
-                    buffer_len = python.INT_MAX
+                if py_buffer_len > limits.INT_MAX:
+                    buffer_len = limits.INT_MAX
                 else:
                     buffer_len = <int>py_buffer_len
                 if self._for_html:
@@ -1449,13 +1449,13 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         c_filename = _cstr(filename_utf)
     if python.PyUnicode_Check(text):
         c_len = python.PyUnicode_GET_DATA_SIZE(text)
-        if c_len > python.INT_MAX:
+        if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 StringIO(text), filename)
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
         c_len = python.PyBytes_GET_SIZE(text)
-        if c_len > python.INT_MAX:
+        if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename)
         c_text = _cstr(text)

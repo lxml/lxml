@@ -80,13 +80,13 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
-        if cstd.strcmp(c_uri, c_doc.URL) == 0:
+        if cstring_h.strcmp(c_uri, c_doc.URL) == 0:
             return _copyDoc(c_doc, 1)
 
     # delegate to the Python resolvers
     try:
         resolvers = context._resolvers
-        if cstd.strncmp('string://__STRING__XSLT__/', c_uri, 26) == 0:
+        if cstring_h.strncmp('string://__STRING__XSLT__/', c_uri, 26) == 0:
             c_uri += 26
         uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
