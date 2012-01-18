@@ -767,6 +767,13 @@ for possible approaches to solve your specific problem:
 
       http://comments.gmane.org/gmane.comp.python.lxml.devel/2942
 
+* in a threaded environment, try to initially import ``lxml.etree``
+  from the main application thread instead of doing first-time imports
+  separately in each spawned worker thread.  If you cannot control the
+  thread spawning of your web/application server, an import of
+  ``lxml.etree`` in sitecustomize.py or usercustomize.py may still do
+  the trick.
+
 * compile lxml without threading support by running ``setup.py`` with the
   ``--without-threading`` option.  While this might be slower in certain
   scenarios on multi-processor systems, it *might* also keep your application
