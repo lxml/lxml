@@ -42,11 +42,14 @@ cimport cython
 cimport tree, python, config
 from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
-cimport cpython.mem
 cimport xpath
 cimport c14n
-from libc cimport limits, string, stdio, stdlib
 cimport cstd
+
+# Cython's standard declarations
+cimport cpython.mem
+from libc cimport limits, stdio, stdlib
+from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 
 try:
     import __builtin__

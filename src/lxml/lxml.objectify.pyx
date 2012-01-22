@@ -8,8 +8,8 @@ from python cimport callable, _cstr
 cimport etreepublic as cetree
 cimport python
 cimport tree
-from libc cimport string
 cimport cstd
+cimport libc.string as cstring_h   # not to be confused with stdlib 'string'
 
 __all__ = [u'BoolElement', u'DataElement', u'E', u'Element', u'ElementMaker',
            u'FloatElement', u'IntElement', u'LongElement', u'NoneElement',
