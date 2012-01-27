@@ -3104,7 +3104,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         return canonicalize(data)
 
 
-class XIncludeTestCase(HelperTestCase):
+class _XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')
         root = etree.XML(_bytes('''\
@@ -3163,12 +3163,12 @@ class XIncludeTestCase(HelperTestCase):
             [("dtd", True), ("include", True), ("input", True)],
             called)
 
-class ETreeXIncludeTestCase(XIncludeTestCase):
+class ETreeXIncludeTestCase(_XIncludeTestCase):
     def include(self, tree):
         tree.xinclude()
 
 
-class ElementIncludeTestCase(XIncludeTestCase):
+class ElementIncludeTestCase(_XIncludeTestCase):
     from lxml import ElementInclude
     def include(self, tree):
         self.ElementInclude.include(tree.getroot())
