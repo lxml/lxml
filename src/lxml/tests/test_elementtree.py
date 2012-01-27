@@ -439,6 +439,25 @@ class _ETreeTestCaseBase(HelperTestCase):
             [('alpha', 'test'), ('beta', 'Beta'), ('gamma', 'Gamma')],
             items)
 
+    def test_attribute_update_attrib(self):
+        XML = self.etree.XML
+
+        root = XML(_bytes('<doc alpha="Alpha" beta="Beta"/>'))
+        items = list(root.attrib.items())
+        items.sort()
+        self.assertEquals(
+            [('alpha', 'Alpha'), ('beta', 'Beta')],
+                                                  items)
+
+        other = XML(_bytes('<doc alpha="test" gamma="Gamma"/>'))
+        root.attrib.update(other.attrib)
+
+        items = list(root.attrib.items())
+        items.sort()
+        self.assertEquals(
+            [('alpha', 'test'), ('beta', 'Beta'), ('gamma', 'Gamma')],
+                                                                     items)
+
     def test_attribute_keys(self):
         XML = self.etree.XML
         

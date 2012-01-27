@@ -15,6 +15,9 @@ Features added
 Bugs fixed
 ----------
 
+* ``Element.attrib.update()`` did not accept an ``attrib`` of
+  another Element as parameter.
+
 Other changes
 --------------
 

@@ -2175,7 +2175,7 @@ cdef class _Attrib:
         _delAttribute(self._element, key)
 
     def update(self, sequence_or_dict):
-        if isinstance(sequence_or_dict, dict):
+        if isinstance(sequence_or_dict, (dict, _Attrib)):
             sequence_or_dict = sequence_or_dict.items()
         for key, value in sequence_or_dict:
             _setAttributeValue(self._element, key, value)
