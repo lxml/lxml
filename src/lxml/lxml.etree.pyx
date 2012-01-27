@@ -2181,16 +2181,14 @@ cdef class _Attrib:
             _setAttributeValue(self._element, key, value)
 
     def pop(self, key, *default):
-        if python.PyTuple_GET_SIZE(default) > 1:
+        if len(default) > 1:
             raise TypeError, u"pop expected at most 2 arguments, got %d" % (
-                python.PyTuple_GET_SIZE(default)+1)
+                len(default)+1)
         result = _getAttributeValue(self._element, key, None)
         if result is None:
-            if python.PyTuple_GET_SIZE(default) == 0:
+            if not default:
                 raise KeyError, key
-            else:
-                result = python.PyTuple_GET_ITEM(default, 0)
-                python.Py_INCREF(result)
+            result = default[0]
         else:
             _delAttribute(self._element, key)
         return result
@@ -2209,10 +2207,9 @@ cdef class _Attrib:
         result = _getAttributeValue(self._element, key, None)
         if result is None:
             raise KeyError, key
-        else:
-            return result
+        return result
 
-    def __nonzero__(self):
+    def __bool__(self):
         cdef xmlAttr* c_attr
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
@@ -2228,7 +2225,7 @@ cdef class _Attrib:
         c_attr = self._element._c_node.properties
         while c_attr is not NULL:
             if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-                c = c + 1
+                c += 1
             c_attr = c_attr.next
         return c
     
@@ -2257,10 +2254,7 @@ cdef class _Attrib:
         return iter(_collectAttributes(self._element._c_node, 3))
 
     def has_key(self, key):
-        if key in self:
-            return True
-        else:
-            return False
+        return key in self
 
     def __contains__(self, key):
         cdef xmlNode* c_node
@@ -2268,15 +2262,12 @@ cdef class _Attrib:
         ns, tag = _getNsTag(key)
         c_node = self._element._c_node
         c_href = NULL if ns is None else _cstr(ns)
-        if tree.xmlHasNsProp(c_node, _cstr(tag), c_href):
-            return 1
-        else:
-            return 0
+        return 1 if tree.xmlHasNsProp(c_node, _cstr(tag), c_href) else 0
 
     def __richcmp__(one, other, int op):
-        if not python.PyDict_Check(one):
+        if not isinstance(one, dict):
             one = dict(one)
-        if not python.PyDict_Check(other):
+        if not isinstance(other, dict):
             other = dict(other)
         return python.PyObject_RichCompare(one, other, op)
 
