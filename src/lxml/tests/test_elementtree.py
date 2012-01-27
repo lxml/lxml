@@ -37,7 +37,7 @@ except NameError:
         seq = list(seq)[::-1]
         return seq
 
-class ETreeTestCaseBase(HelperTestCase):
+class _ETreeTestCaseBase(HelperTestCase):
     etree = None
     required_versions_ET = {}
     required_versions_cET = {}
@@ -3718,11 +3718,11 @@ class ETreeTestCaseBase(HelperTestCase):
 
 
 if etree:
-    class ETreeTestCase(ETreeTestCaseBase):
+    class ETreeTestCase(_ETreeTestCaseBase):
         etree = etree
 
 if ElementTree:
-    class ElementTreeTestCase(ETreeTestCaseBase):
+    class ElementTreeTestCase(_ETreeTestCaseBase):
         etree = ElementTree
 
     filter_by_version(
@@ -3730,7 +3730,7 @@ if ElementTree:
         ElementTreeTestCase.required_versions_ET, ET_VERSION)
 
 if cElementTree:
-    class CElementTreeTestCase(ETreeTestCaseBase):
+    class CElementTreeTestCase(_ETreeTestCaseBase):
         etree = cElementTree
 
     filter_by_version(

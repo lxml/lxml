@@ -15,7 +15,7 @@ from common_imports import etree, ElementTree, fileInTestDir, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 from common_imports import read_file, write_to_file
 
-class IOTestCaseBase(HelperTestCase):
+class _IOTestCaseBase(HelperTestCase):
     """(c)ElementTree compatibility for IO functions/methods
     """
     etree = None
@@ -247,11 +247,11 @@ class IOTestCaseBase(HelperTestCase):
         self.assertRaises(TypeError, self.etree.parse, f)
 
     
-class ETreeIOTestCase(IOTestCaseBase):
+class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
     
 if ElementTree:
-    class ElementTreeIOTestCase(IOTestCaseBase):
+    class ElementTreeIOTestCase(_IOTestCaseBase):
         etree = ElementTree
 
 def test_suite():
