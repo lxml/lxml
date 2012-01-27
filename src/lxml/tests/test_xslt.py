@@ -23,7 +23,7 @@ except (NameError, KeyError): # Python 3
     basestring = str
 
 from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
-from common_imports import doctest, _bytes, _str, make_doctest
+from common_imports import doctest, _bytes, _str, make_doctest, skipif
 
 class ETreeXSLTTestCase(HelperTestCase):
     """XSLT tests etree"""
@@ -1661,6 +1661,9 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
 
 class Py3XSLTTestCase(HelperTestCase):
     """XSLT tests for etree under Python 3"""
+
+    pytestmark = skipif('sys.version_info < (3,0)')
+
     def test_xslt_result_bytes(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\

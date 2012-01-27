@@ -71,6 +71,16 @@ except NameError:
 else:
     locals()['sorted'] = sorted
 
+try:
+    import pytest
+except ImportError:
+    class skipif(object):
+        "Using a class because a function would bind into a method when used in classes"
+        def __init__(self, *args): pass
+        def __call__(self, func, *args): return func
+else:
+    skipif = pytest.mark.skipif
+
 def _get_caller_relative_path(filename, frame_depth=2):
     module = sys.modules[sys._getframe(frame_depth).f_globals['__name__']]
     return os.path.normpath(os.path.join(
