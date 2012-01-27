@@ -431,7 +431,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             [('alpha', 'Alpha'), ('beta', 'Beta')],
             items)
 
-        root.attrib.update({'alpha' : 'test', 'gamma' : 'Gamma'}.items())
+        root.attrib.update(iter({'alpha' : 'test', 'gamma' : 'Gamma'}.items()))
 
         items = list(root.attrib.items())
         items.sort()
