@@ -126,6 +126,32 @@ class ETreeDtdTestCase(HelperTestCase):
             ["valueA", "valueB"],
             attributes)
 
+    def test_dtd_attrs(self):
+        dtd = etree.DTD(fileInTestDir("test.dtd"))
+
+        a = dtd.elements()[0]
+        self.assertEqual(a.name, "a")
+        self.assertEqual(a.type, "element")
+        self.assertEqual(a.content.name, "b")
+        self.assertEqual(a.content.type, "element")
+        self.assertEqual(a.content.occur, "once")
+
+        aattr = a.attributes()[0]
+        self.assertEqual(aattr.name, "default")
+        self.assertEqual(aattr.type, "enumeration")
+        self.assertEqual(aattr.values(), ["valueA", "valueB"])
+        self.assertEqual(aattr.defaultValue, "valueA")
+
+        b = dtd.elements()[1]
+        self.assertEqual(b.name, "b")
+        self.assertEqual(b.type, "empty")
+        self.assertEqual(b.content, None)
+
+        c = dtd.entities()[0]
+        self.assertEqual(c.name, "c")
+        self.assertEqual(c.orig, "&#42;")
+        self.assertEqual(c.content, "*")
+
 
 def test_suite():
     suite = unittest.TestSuite()
