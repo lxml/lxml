@@ -129,6 +129,10 @@ class ETreeDtdTestCase(HelperTestCase):
     def test_dtd_attrs(self):
         dtd = etree.DTD(fileInTestDir("test.dtd"))
 
+        # Test systemID attribute
+        self.assert_(dtd.systemID.endswith("test.dtd"))
+
+        # Test elements and their attributes
         a = dtd.elements()[0]
         self.assertEqual(a.name, "a")
         self.assertEqual(a.type, "element")
@@ -147,10 +151,30 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(b.type, "empty")
         self.assertEqual(b.content, None)
 
+        # Test entities and their attributes
         c = dtd.entities()[0]
         self.assertEqual(c.name, "c")
         self.assertEqual(c.orig, "&#42;")
         self.assertEqual(c.content, "*")
+
+        # Test name and systemID attributes
+        root = etree.XML(_bytes('''
+        <!DOCTYPE a SYSTEM "none" [
+        <!ELEMENT a EMPTY>
+        ]>
+        <a/>
+        '''))
+        dtd = etree.ElementTree(root).docinfo.internalDTD
+        self.assertEqual(dtd.name, "a")
+
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
+        root = etree.fromstring(xml, parser=parser,
+                                base_url=fileInTestDir("test.xml"))
+
+        dtd = root.getroottree().docinfo.internalDTD
+        self.assertEqual(dtd.name, "a")
+        self.assertEqual(dtd.systemID, "test.dtd")
 
 
 def test_suite():
