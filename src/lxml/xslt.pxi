@@ -210,6 +210,7 @@ cdef class XSLTAccessControl:
         if self._prefs is not NULL:
             xslt.xsltFreeSecurityPrefs(self._prefs)
 
+    @cython.final
     cdef _setAccess(self, xslt.xsltSecurityOption option, allow):
         cdef xslt.xsltSecurityCheck function
         if allow:
@@ -218,6 +219,7 @@ cdef class XSLTAccessControl:
             function = xslt.xsltSecurityForbid
         xslt.xsltSetSecurityPrefs(self._prefs, option, function)
 
+    @cython.final
     cdef void _register_in_context(self, xslt.xsltTransformContext* ctxt):
         xslt.xsltSetCtxtSecurityPrefs(self._prefs, ctxt)
 
@@ -232,6 +234,7 @@ cdef class XSLTAccessControl:
                 u'write_network': self._optval(xslt.XSLT_SECPREF_WRITE_NETWORK),
                 }
 
+    @cython.final
     cdef _optval(self, xslt.xsltSecurityOption option):
         cdef xslt.xsltSecurityCheck function
         function = xslt.xsltGetSecurityPrefs(self._prefs, option)
