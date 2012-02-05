@@ -47,22 +47,22 @@ so newer versions will give you better compliance with the W3C spec.
 Installation
 ------------
 
-Get the `easy_install`_ tool and run the following as super-user (or
+Get the pip_ tool and run the following as super-user (or
 administrator)::
 
-  easy_install --allow-hosts=lxml.de,*.python.org lxml
+  pip install lxml
 
-.. _easy_install: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _pip: http://pypi.python.org/pypi/pip
 
 * On **MS Windows**, the above will install the binary builds that we
   provide.  If there is no binary build of the latest release yet,
   please search PyPI_ for the last release that has them and pass that
-  version to ``easy_install`` like this::
+  version to ``pip`` like this::
 
-    easy_install --allow-hosts=lxml.de,*.python.org lxml==2.2.2
+    pip install lxml==2.3
 
 * On **Linux** (and most other well-behaved operating systems),
-  ``easy_install`` will manage to build the source distribution as
+  ``pip`` will manage to build the source distribution as
   long as libxml2 and libxslt are properly installed, including
   development packages, i.e. header files, etc.  Use your package
   management tool to look for packages like ``libxml2-dev`` or
@@ -73,7 +73,7 @@ administrator)::
   and make sure you have a working Internet connection, as this will
   download libxml2 and libxslt in order to build them::
 
-   STATIC_DEPS=true sudo easy_install --allow-hosts=lxml.de,*.python.org lxml
+   STATIC_DEPS=true sudo pip install lxml
 
 .. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
@@ -110,12 +110,12 @@ can have any kind of effect from disappearing functionality to crashes
 in either of the two.
 
 To get a static build, either pass the ``--static-deps`` option to the
-setup.py script, or run ``easy_install`` with the ``STATIC_DEPS`` or
+setup.py script, or run ``pip`` with the ``STATIC_DEPS`` or
 ``STATICBUILD`` environment variable set to true, i.e.
 
 ::
 
-   STATIC_DEPS=true easy_install lxml
+   STATIC_DEPS=true pip install lxml
 
 The ``STATICBUILD`` environment variable is handled equivalently to
 the ``STATIC_DEPS`` variable, but is used by some other extension
@@ -132,7 +132,7 @@ build from PyPI.
 
 Unless you know what you are doing, this means: *do not install
 libxml2 or libxslt if you use a binary build of lxml*.  Just use
-``easy_install`` by following the installation instructions above.
+``pip`` by following the installation instructions above.
 
 *Only* if you want to upgrade the libraries and/or compile lxml from
 sources, you should install a `binary distribution`_ of libxml2 and

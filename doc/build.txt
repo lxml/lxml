@@ -4,17 +4,13 @@ How to build lxml from source
 To build lxml from source, you need libxml2 and libxslt properly
 installed, *including the header files*.  These are likely shipped in
 separate ``-dev`` or ``-devel`` packages like ``libxml2-dev``, which
-you must install before trying to build lxml.  The build process also
-requires setuptools_.  The lxml source distribution comes with a
-script called ``ez_setup.py`` that can be used to install them.
-
-.. _setuptools: http://peak.telecommunity.com/DevCenter/setuptools
+you must install before trying to build lxml.
 
 .. contents::
 ..
    1  Cython
    2  Github, git and hg
-   3  Setuptools
+   3  Building the sources
    4  Running the tests and reporting errors
    5  Building an egg
    6  Building lxml on MacOS-X
@@ -25,7 +21,7 @@ script called ``ez_setup.py`` that can be used to install them.
 Cython
 ------
 
-.. _EasyInstall: http://peak.telecommunity.com/DevCenter/EasyInstall
+.. _pip: http://pypi.python.org/pypi/pip
 .. _Cython: http://www.cython.org
 
 The lxml.etree and lxml.objectify modules are written in Cython_.
@@ -44,9 +40,9 @@ build.
 *Only* if you are interested in building lxml from a checkout of the
 developer sources (e.g. to test a bug fix that has not been release
 yet) or if you want to be an lxml developer, then you do need a
-working Cython installation.  You can use EasyInstall_ to install it::
+working Cython installation.  You can use pip_ to install it::
 
-    easy_install "Cython>=0.16"
+    pip install "Cython>=0.16"
 
 lxml currently requires Cython 0.16, later release versions should
 work as well.
@@ -73,27 +69,26 @@ through the web.
 .. _`source tar-ball`: https://github.com/lxml/lxml/tarball/master
 
 
-Setuptools
-----------
+Building the sources
+---------------------
 
-Usually, building lxml is done through setuptools.  Clone the source
-repository as described above (or download the `source tar-ball`_ and
-unpack it) and then type::
+Clone the source repository as described above (or download
+the `source tar-ball`_ and unpack it) and then type::
 
   python setup.py build
 
 or::
 
-  python setup.py bdist_egg
+  python setup.py bdist_egg     # requires 'setuptools' or 'distribute'
 
 If you want to test lxml from the source directory, it is better to build it
 in-place like this::
 
-  python setup.py  build_ext -i
+  python setup.py build_ext -i
 
 or, in Unix-like environments::
 
-  make
+  make inplace
 
 If you get errors about missing header files (e.g. ``Python.h`` or
 ``libxml/xmlversion.h``) then you need to make sure the development
@@ -112,13 +107,13 @@ files to the include path like::
 
 where the file is in ``/usr/include/libxml2/libxml/xmlversion.h``
 
-To use lxml.etree in-place, you can place lxml's ``src`` directory on your
-Python module search path (PYTHONPATH) and then import ``lxml.etree`` to play
-with it::
+To use lxml.etree in-place, you can place lxml's ``src`` directory
+on your Python module search path (PYTHONPATH) and then import
+``lxml.etree`` to play with it::
 
   # cd lxml
   # PYTHONPATH=src python
-  Python 2.5.1
+  Python 2.7.2
   Type "help", "copyright", "credits" or "license" for more information.
   >>> from lxml import etree
   >>>
@@ -164,7 +159,7 @@ Building an egg
 ---------------
 
 This is the procedure to make an lxml egg for your platform (assuming
-that you have setuptools_ installed):
+that you have "setuptools" or "distribute" installed):
 
 * Download the lxml-x.y.tar.gz release.  This contains the pregenerated C so
   that you can be sure you build exactly from the release sources.  Unpack
@@ -223,16 +218,16 @@ with the desired target versions like this::
 Instead of ``build``, you can use any target, like ``bdist_egg`` if
 you want to use setuptools to build an installable egg.
 
-Note that this also works with EasyInstall_.  Since you can't pass
+Note that this also works with pip_.  Since you can't pass
 command line options in this case, you have to use an environment
 variable instead::
 
-  STATIC_DEPS=true easy_install lxml
+  STATIC_DEPS=true pip install lxml
 
 Some machines may require an additional run with "sudo" to install the
 package into the Python package directory::
 
-  STATIC_DEPS=true sudo easy_install lxml
+  STATIC_DEPS=true sudo pip install lxml
 
 The ``STATICBUILD`` environment variable is handled equivalently to
 the ``STATIC_DEPS`` variable, but is used by some other extension
