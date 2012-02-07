@@ -242,7 +242,6 @@ class Function(object):
             expr = expr._format_element()
         xpath.add_condition('contains(css:lower-case(string(.)), %s)'
                             % xpath_literal(expr.lower()))
-        # FIXME: Currently case insensitive matching doesn't seem to be happening
         return xpath
 
     def _xpath_not(self, xpath, expr):
