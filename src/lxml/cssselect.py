@@ -41,6 +41,8 @@ from lxml import etree
 __all__ = ['SelectorSyntaxError', 'ExpressionError',
            'CSSSelector']
 
+default_namespaces = dict(regexp="http://exslt.org/regular-expressions")
+
 try:
     _basestring = basestring
 except NameError:
@@ -79,6 +81,8 @@ class CSSSelector(etree.XPath):
         [('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description', 'blah')]
     """
     def __init__(self, css, namespaces=None):
+        if namespaces is None:
+            namespaces = default_namespaces
         path = css_to_xpath(css)
         etree.XPath.__init__(self, path, namespaces=namespaces)
         self.css = css
@@ -240,8 +244,8 @@ class Function(object):
         # text content, minus tags, must contain expr
         if isinstance(expr, Element):
             expr = expr._format_element()
-        xpath.add_condition('contains(css:lower-case(string(.)), %s)'
-                            % xpath_literal(expr.lower()))
+        xpath.add_condition("regexp:test(string(.), %s, 'i')"
+                            % xpath_literal(re.escape(expr)))
         return xpath
 
     def _xpath_not(self, xpath, expr):
@@ -251,13 +255,6 @@ class Function(object):
         # FIXME: should I do something about element_path?
         xpath.add_condition('not(%s)' % cond)
         return xpath
-
-def _make_lower_case(context, s):
-    return s.lower()
-
-ns = etree.FunctionNamespace('http://codespeak.net/lxml/css/')
-ns.prefix = 'css'
-ns['lower-case'] = _make_lower_case
 
 class Pseudo(object):
     """
