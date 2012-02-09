@@ -92,7 +92,7 @@ class CSSTestCase(HelperTestCase):
             results = body.xpath(xpath, namespaces=cssselect.default_namespaces)
         except Exception:
             e = sys.exc_info()[1]
-            e.args = ("%s for xpath %r" % (e, xpath))
+            e.args = ("%s for xpath %r" % (e, xpath),)
             raise
         found = {}
         for item in results:
