@@ -12,8 +12,6 @@ try:
 except (NameError, KeyError):
     basestring = (str, bytes)
 
-namespaces = dict(regexp="http://exslt.org/regular-expressions")
-
 # Data borrowed from http://mootools.net/slickspeed/
 
 class CSSTestCase(HelperTestCase):
@@ -91,7 +89,7 @@ class CSSTestCase(HelperTestCase):
         selector, count = self.selectors[self.index]
         xpath = cssselect.css_to_xpath(cssselect.parse(selector))
         try:
-            results = body.xpath(xpath, namespaces=namespaces)
+            results = body.xpath(xpath, namespaces=cssselect.default_namespaces)
         except Exception:
             e = sys.exc_info()[1]
             e.args = ("%s for xpath %r" % (e, xpath))

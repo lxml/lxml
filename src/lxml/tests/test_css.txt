@@ -127,13 +127,13 @@ Now of translation:
     >>> xpath('E:empty')
     e[not(*) and not(normalize-space())]
     >>> xpath('E:contains("foo")')
-    e[regexp:test(string(.), 'foo', 'i')]
+    e[exslt_org_regular_expressions:test(string(.), 'foo', 'i')]
     >>> xpath('E.warning')
     e[contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
     >>> xpath('E#myid')
     e[@id = 'myid']
     >>> xpath('E:not(:contains("foo"))')
-    e[not(regexp:test(string(.), 'foo', 'i'))]
+    e[not(exslt_org_regular_expressions:test(string(.), 'foo', 'i'))]
     >>> xpath('E F')
     e/descendant-or-self::*/f
     >>> xpath('E > F')

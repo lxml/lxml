@@ -41,7 +41,7 @@ from lxml import etree
 __all__ = ['SelectorSyntaxError', 'ExpressionError',
            'CSSSelector']
 
-default_namespaces = dict(regexp="http://exslt.org/regular-expressions")
+default_namespaces = {'exslt_org_regular_expressions': "http://exslt.org/regular-expressions"}
 
 try:
     _basestring = basestring
@@ -82,9 +82,12 @@ class CSSSelector(etree.XPath):
     """
     def __init__(self, css, namespaces=None):
         if namespaces is None:
-            namespaces = default_namespaces
+            ns = default_namespaces
+        else:
+            ns = dict(default_namespaces)
+            ns.update(namespaces)
         path = css_to_xpath(css)
-        etree.XPath.__init__(self, path, namespaces=namespaces)
+        etree.XPath.__init__(self, path, namespaces=ns)
         self.css = css
 
     def __repr__(self):
@@ -244,7 +247,7 @@ class Function(object):
         # text content, minus tags, must contain expr
         if isinstance(expr, Element):
             expr = expr._format_element()
-        xpath.add_condition("regexp:test(string(.), %s, 'i')"
+        xpath.add_condition("exslt_org_regular_expressions:test(string(.), %s, 'i')"
                             % xpath_literal(re.escape(expr)))
         return xpath
 
