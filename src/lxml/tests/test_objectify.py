@@ -214,8 +214,18 @@ class ObjectifyTestCase(HelperTestCase):
         expected = nsmap.copy()
         del expected["myxsd"]
         expected.update(DEFAULT_NSMAP)
-        self.assertEquals(root.value.nsmap, expected) 
-        
+        self.assertEquals(root.value.nsmap, expected)
+
+    def test_date_element_efactory_text(self):
+        # ObjectifiedDataElement can also be used as E-Factory
+        value = objectify.ObjectifiedDataElement('test', 'toast')
+        self.assertEquals(value.text, 'testtoast')
+
+    def test_date_element_efactory_tail(self):
+        # ObjectifiedDataElement can also be used as E-Factory
+        value = objectify.ObjectifiedElement(objectify.ObjectifiedDataElement(), 'test', 'toast')
+        self.assertEquals(value.ObjectifiedDataElement.tail, 'testtoast')
+
     def test_data_element_attrib_attributes_precedence(self):
         # keyword arguments override attrib entries
         value = objectify.DataElement(23, _pytype="str", _xsi="foobar",

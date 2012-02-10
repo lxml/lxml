@@ -80,15 +80,11 @@ cdef public class ElementBase(_Element) [ type LxmlElementBaseType,
         for child in children:
             if _isString(child):
                 if last_child is None:
-                    if _hasText(self._c_node):
-                        self.text += child
-                    else:
-                        self.text = child
+                    _setNodeText(self._c_node,
+                                 (_collectText(self._c_node.children) or '') + child)
                 else:
-                    if _hasTail(last_child._c_node):
-                        last_child.tail += child
-                    else:
-                        last_child.tail = child
+                    _setTailText(last_child._c_node,
+                                 (_collectText(last_child._c_node.next) or '') + child)
             elif isinstance(child, _Element):
                 last_child = child
                 _appendChild(self, last_child)

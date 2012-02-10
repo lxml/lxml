@@ -18,6 +18,12 @@ Bugs fixed
 * ``Element.attrib.update()`` did not accept an ``attrib`` of
   another Element as parameter.
 
+* For subtypes of ``ElementBase`` that make the ``.text`` or ``.tail``
+  properties immutable (as in objectify, for example), inserting text
+  when creating Elements through the E-Factory feature of the class
+  constructor would fail with an exception, stating that the text
+  cannot be modified.
+
 Other changes
 --------------
 
