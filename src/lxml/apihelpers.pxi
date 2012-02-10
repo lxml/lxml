@@ -675,18 +675,12 @@ cdef _collectText(xmlNode* c_node):
     while c_node_cur is not NULL:
         if c_node_cur.content[0] != c'\0':
             c_text = c_node_cur.content
-        scount = scount + 1
+        scount += 1
         c_node_cur = _textNodeOrSkip(c_node_cur.next)
 
     # handle two most common cases first
     if c_text is NULL:
-        if scount > 0:
-            if python.IS_PYTHON3:
-                return u''
-            else:
-                return b''
-        else:
-            return None
+        return '' if scount > 0 else None
     if scount == 1:
         return funicode(c_text)
 
