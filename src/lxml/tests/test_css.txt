@@ -126,6 +126,8 @@ Now of translation:
     e[last() = 1]
     >>> xpath('E:empty')
     e[not(*) and not(normalize-space())]
+    >>> xpath('E:root')
+    e[not(parent::*)]
     >>> xpath('E:contains("foo")')
     e[contains(css:lower-case(string(.)), 'foo')]
     >>> xpath('E.warning')
