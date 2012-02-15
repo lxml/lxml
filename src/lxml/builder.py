@@ -212,12 +212,20 @@ class ElementMaker(object):
         for item in children:
             if callable(item):
                 item = item()
-            t = get(type(item))
+            for basetype in type(item).__mro__:
+                # __mro__ starts with the type itself, and then
+                # searches all supertypes.  If typemap contains
+                # object, this will never fall back to appending an
+                # element.
+                t = get(basetype)
+                if t is not None:
+                    break
             if t is None:
                 if ET.iselement(item):
                     elem.append(item)
                     continue
-                raise TypeError("bad argument type: %r" % item)
+                raise TypeError("bad argument type: %s(%r)" %
+                                (type(item).__name__, item))
             else:
                 v = t(elem, item)
                 if v:
