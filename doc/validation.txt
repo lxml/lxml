@@ -153,9 +153,9 @@ The DTD information is available as attributes on the DTD object. The method
 
 .. sourcecode:: pycon
 
-  >>> dtd = etree.DTD(cStringIO.StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
   >>> for el in dtd.iterelements():
-  >>>     print el.name
+  ...     print el.name
   a
   b
 
@@ -163,7 +163,7 @@ The method ``elements`` returns the element declarations as a list:
 
 .. sourcecode:: pycon
 
-  >>> dtd = etree.DTD(cStringIO.StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
   >>> print len(dtd.elements())
   2
 
@@ -201,7 +201,7 @@ element content declaration objects:
 
 .. sourcecode:: pycon
 
-  >>> dtd = etree.DTD(cStringIO.StringIO('<!ELEMENT a (a|b)+>'))
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a (a|b)+>'))
   >>> con = dtd.elements()[0].content
   >>> print con.type, con.occur, con.name
   or plus None
@@ -231,7 +231,7 @@ Attributes declarations have the following attributes/methods:
 
 Entity declarations are available via the ``iterentities`` and ``entities`` methods:
 
-  >>> dtd = etree.DTD(cStringIO.StringIO('<!ENTITY hurz "&#x40;">'))
+  >>> dtd = etree.DTD(StringIO('<!ENTITY hurz "&#x40;">'))
   >>> ent = dtd.entities()[0]
   >>> print ent.name, ent.orig, ent.content
   hurz &#x40; @
