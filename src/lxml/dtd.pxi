@@ -98,7 +98,7 @@ cdef class _DTDAttributeDecl:
         self._c_node = NULL
 
     def __repr__(self):
-        return "<%s.%s object name=%r elemname=%r prefix=%r type=%r default=%r defaultValue=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.elemname, self.prefix, self.type, self.default, self.defaultValue, id(self))
+        return "<%s.%s object name=%r elemname=%r prefix=%r type=%r default=%r default_value=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.elemname, self.prefix, self.type, self.default, self.default_value, id(self))
 
     property name:
        def __get__(self):
@@ -157,7 +157,7 @@ cdef class _DTDAttributeDecl:
            else:
                return None
 
-    property defaultValue:
+    property default_value:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
            return funicode(self._c_node.defaultValue) if self._c_node.defaultValue is not NULL else None
@@ -304,11 +304,11 @@ cdef class DTD(_Validator):
        def __get__(self):
           return funicode(self._c_dtd.name) if self._c_dtd.name is not NULL else None
 
-    property externalID:
+    property external_id:
        def __get__(self):
           return funicode(self._c_dtd.ExternalID) if self._c_dtd.ExternalID is not NULL else None
 
-    property systemID:
+    property system_url:
        def __get__(self):
           return funicode(self._c_dtd.SystemID) if self._c_dtd.SystemID is not NULL else None
 

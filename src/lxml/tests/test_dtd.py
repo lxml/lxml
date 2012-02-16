@@ -129,8 +129,8 @@ class ETreeDtdTestCase(HelperTestCase):
     def test_dtd_attrs(self):
         dtd = etree.DTD(fileInTestDir("test.dtd"))
 
-        # Test DTD.systemID attribute
-        self.assert_(dtd.systemID.endswith("test.dtd"))
+        # Test DTD.system_url attribute
+        self.assert_(dtd.system_url.endswith("test.dtd"))
 
         # Test elements and their attributes
         a = dtd.elements()[0]
@@ -144,7 +144,7 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(aattr.name, "default")
         self.assertEqual(aattr.type, "enumeration")
         self.assertEqual(aattr.values(), ["valueA", "valueB"])
-        self.assertEqual(aattr.defaultValue, "valueA")
+        self.assertEqual(aattr.default_value, "valueA")
 
         b = dtd.elements()[1]
         self.assertEqual(b.name, "b")
@@ -175,7 +175,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
         dtd = root.getroottree().docinfo.internalDTD
         self.assertEqual(dtd.name, "a")
-        self.assertEqual(dtd.systemID, "test.dtd")
+        self.assertEqual(dtd.system_url, "test.dtd")
 
 
 def test_suite():
