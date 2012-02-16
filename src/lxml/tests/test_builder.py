@@ -9,25 +9,24 @@ import sys, os.path
 from lxml import etree
 from lxml.builder import E
 
-try:
-    import cStringIO
-    StringIO = cStringIO.StringIO
-except ImportError:
-    from io import StringIO
-
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import HelperTestCase
+from common_imports import HelperTestCase, BytesIO, _bytes
 
 class BuilderTestCase(HelperTestCase):
     etree = etree
 
     def test_build_from_xpath_result(self):
-        elem = etree.parse(StringIO('<root><node>text</node></root>'))
+        elem = etree.parse(BytesIO('<root><node>text</node></root>'))
         wrapped = E.b(elem.xpath('string(node)'))
-        self.assertEquals(b'<b>text</b>', etree.tostring(wrapped))
+        self.assertEquals(_bytes('<b>text</b>'), etree.tostring(wrapped))
+
+    def test_unknown_type_raises(self):
+        class UnknownType(object):
+            pass
+        self.assertRaises(TypeError, E.b, UnknownType())
 
 
 def test_suite():
