@@ -158,7 +158,6 @@ The DTD information is available as attributes on the DTD object. The method
   >>>     print el.name
   a
   b
-  >>> dtd = etree.DTD(StringIO('<!ENTITY hurz "&#x40;">'))
 
 The method ``elements`` returns the element declarations as a list:
 
