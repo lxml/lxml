@@ -217,11 +217,17 @@ class ElementMaker(object):
                 if ET.iselement(item):
                     elem.append(item)
                     continue
-                raise TypeError("bad argument type: %r" % item)
-            else:
-                v = t(elem, item)
-                if v:
-                    get(type(v))(elem, v)
+                for basetype in type(item).__mro__:
+                    # See if the typemap knows of any of this type's bases.
+                    t = get(basetype)
+                    if t is not None:
+                        break
+                else:
+                    raise TypeError("bad argument type: %s(%r)" %
+                                    (type(item).__name__, item))
+            v = t(elem, item)
+            if v:
+                get(type(v))(elem, v)
 
         return elem
 
