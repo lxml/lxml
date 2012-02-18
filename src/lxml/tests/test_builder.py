@@ -39,8 +39,16 @@ class BuilderTestCase(HelperTestCase):
         # make users explicitly move or copy the elements, so we raise
         # an exception on an attempt to build from elements with
         # parents.
+        #
+        # Note that for backwards compatibility we don't enforce this
+        # for non-list element constructions.
         elem = etree.parse(BytesIO('<root><node>text</node></root>'))
         self.assertRaises(ValueError, E.b, elem.xpath('node'))
+        # Here's how to be explicit:
+        moved = E.b([node.move() for node in elem.xpath('node')])
+        self.assertEquals(_bytes('<root/>'), etree.tostring(elem))
+        self.assertEquals(_bytes('<b><node>text</node></b>'),
+                          etree.tostring(moved))
 
 
 def test_suite():
