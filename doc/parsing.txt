@@ -141,8 +141,9 @@ Available boolean keyword arguments:
 
 * recover - try hard to parse through broken XML
 
-* remove_blank_text - discard blank text nodes between tags (best used
-  together with a DTD)
+* remove_blank_text - discard blank text nodes between tags, also known as
+  ignorable whitespace.  This is best used together with a DTD or schema
+  (which tells data and noise apart), otherwise a heuristic will be applied.
 
 * remove_comments - discard comments
 
