@@ -19,9 +19,9 @@ class BuilderTestCase(HelperTestCase):
     etree = etree
 
     def test_build_from_xpath_result(self):
-        elem = etree.parse(BytesIO('<root><node>text</node></root>'))
-        wrapped = E.b(elem.xpath('string(node)'))
-        self.assertEquals(_bytes('<b>text</b>'), etree.tostring(wrapped))
+        class StringSubclass(str): pass
+        wrapped = E.b(StringSubclass('Hello'))
+        self.assertEquals(_bytes('<b>Hello</b>'), etree.tostring(wrapped))
 
     def test_unknown_type_raises(self):
         class UnknownType(object):
