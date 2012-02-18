@@ -2177,6 +2177,11 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(re, e.nsmap)
         self.assertEquals(r,  s.nsmap)
 
+    def test_html_prefix_nsmap(self):
+        etree = self.etree
+        el = etree.HTML('<hha:page-description>aa</hha:page-description>').find('.//page-description')
+        self.assertEquals({'hha': None}, el.nsmap)
+
     def test_getiterator_filter_multiple(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
