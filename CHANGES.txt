@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* ``E-factory`` in ``lxml.builder`` accepts subtypes of known data
+  types (such as string subtypes) when building elements around them.
+
 * Add support for the :root pseudo-class in cssselect.
 
 * Tree iteration and ``iterparse()`` with a selective ``tag``
