@@ -12,8 +12,8 @@ except NameError:
     # Python 3
     _unicode = str
 try:
-    basestring = __builtins__["basestring"]
-except (KeyError, NameError):
+    basestring
+except NameError:
     # Python 3
     basestring = str
 

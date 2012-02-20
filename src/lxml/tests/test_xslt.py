@@ -13,13 +13,13 @@ if this_dir not in sys.path:
 is_python3 = sys.version_info[0] >= 3
 
 try:
-    unicode = __builtins__["unicode"]
-except (NameError, KeyError): # Python 3
+    unicode
+except NameError: # Python 3
     unicode = str
 
 try:
-    basestring = __builtins__["basestring"]
-except (NameError, KeyError): # Python 3
+    basestring
+except NameError: # Python 3
     basestring = str
 
 from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir

@@ -9,8 +9,8 @@ from common_imports import StringIO, etree, SillyFileLike, HelperTestCase
 from common_imports import _str, _bytes
 
 try:
-    unicode = __builtins__["unicode"]
-except (NameError, KeyError):
+    unicode
+except NameError:
     unicode = str
 
 ascii_uni = _str('a')

@@ -9,18 +9,18 @@ from lxml import etree as _etree # due to validator __init__ signature
 
 # some compat stuff, borrowed from lxml.html
 try:
-    bytes = __builtins__["bytes"]
-except (KeyError, NameError):
+    bytes
+except NameError:
     # Python < 2.6
     bytes = str
 try:
-    unicode = __builtins__["unicode"]
-except (KeyError, NameError):
+    unicode
+except NameError:
     # Python 3
     unicode = str
 try:
-    basestring = __builtins__["basestring"]
-except (KeyError, NameError):
+    basestring
+except NameError:
     # Python 3
     basestring = str
 

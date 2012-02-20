@@ -15,8 +15,8 @@ from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
 from common_imports import SillyFileLike, HelperTestCase, write_to_file
 
 try:
-    unicode = __builtins__["unicode"]
-except (NameError, KeyError):
+    unicode
+except NameError:
     unicode = str
 
 class HtmlParserTestCase(HelperTestCase):

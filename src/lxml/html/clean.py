@@ -17,32 +17,23 @@ from lxml.html import fromstring, tostring, XHTML_NAMESPACE
 from lxml.html import xhtml_to_html, _transform_result
 
 try:
-    set
+    unichr
 except NameError:
     # Python 3
-    from sets import Set as set
-
-try:
-    unichr = __builtins__['unichr']
-except (NameError, KeyError):
-    # Python 3
     unichr = chr
-
 try:
-    unicode = __builtins__['unicode']
-except (NameError, KeyError):
+    unicode
+except NameError:
     # Python 3
     unicode = str
-
 try:
-    bytes = __builtins__['bytes']
-except (NameError, KeyError):
+    bytes
+except NameError:
     # Python < 2.6
     bytes = str
-
 try:
-    basestring = __builtins__['basestring']
-except (NameError, KeyError):
+    basestring
+except NameError:
     basestring = (str, bytes)
 
 
