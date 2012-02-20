@@ -44,11 +44,6 @@ from lxml.html import defs
 from lxml import cssselect
 from lxml.html._setmixin import SetMixin
 try:
-    from UserDict import DictMixin
-except ImportError:
-    # DictMixin was introduced in Python 2.4
-    from lxml.html._dictmixin import DictMixin
-try:
     set
 except NameError:
     # Python 2.3
