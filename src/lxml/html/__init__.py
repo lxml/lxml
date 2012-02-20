@@ -44,6 +44,11 @@ from lxml.html import defs
 from lxml import cssselect
 from lxml.html._setmixin import SetMixin
 try:
+    from collections import MutableMapping as DictMixin
+except ImportError:
+    # Python < 2.6
+    from UserDict import DictMixin
+try:
     set
 except NameError:
     # Python 2.3
@@ -915,6 +920,10 @@ class FieldsDict(DictMixin):
         return self.inputs.keys()
     def __contains__(self, item):
         return item in self.inputs
+    def __iter__(self):
+        return iter(self.inputs.keys())
+    def __len__(self):
+        return len(self.inputs)
 
     def __repr__(self):
         return '<%s for form %s>' % (
