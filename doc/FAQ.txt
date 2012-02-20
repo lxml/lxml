@@ -26,6 +26,7 @@ ElementTree_.
      1.7  What about that trailing text on serialised Elements?
      1.8  How can I find out if an Element is a comment or PI?
      1.9  How can I map an XML tree into a dict of dicts?
+     1.10 Why does lxml sometimes return 'str' values for text in Python 2?
    2  Installation
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the binary builds?
@@ -349,6 +350,25 @@ I'm glad you asked.
     def recursive_dict(element):
          return element.tag, \
                 dict(map(recursive_dict, element)) or element.text
+
+
+Why does lxml sometimes return 'str' values for text in Python 2?
+-----------------------------------------------------------------
+
+In Python 2, lxml's API returns byte strings for plain ASCII text
+values, be it for tag names or text in Element content.  This is the
+same behaviour as known from ElementTree.  The reasoning is that ASCII
+encoded byte strings are compatible with Unicode strings in Python 2,
+but consume less memory (usually by a factor of 2 or 4) and are faster
+to create because they do not require decoding.  However, plain ASCII
+string values are very common in XML, so this optimisation is
+generally worth it.
+
+In Python 3, lxml always returns Unicode strings for text and names,
+as does ElementTree.  Since Python 3.3, Unicode strings that contain
+only ASCII encodable characters are generally as efficient as byte
+strings.  In older versions of Python 3, the above mentioned
+drawbacks apply.
 
 
 Installation
