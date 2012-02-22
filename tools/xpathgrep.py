@@ -1,13 +1,24 @@
 #!/usr/bin/env python
 
+import sys
+import os.path
+import itertools
+
+def error(message, *args):
+    if args:
+        message = message % args
+    sys.stderr.write('ERROR: %s\n' % message)
+
 try:
     import lxml.etree as et
-except ImportError, e:
-    import sys
-    print >> sys.stderr, "ERR: %s." % e
+except ImportError:
+    error(sys.exc_info()[1])
     sys.exit(5)
 
-import sys, os.path, optparse, itertools
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
 
 SHORT_DESCRIPTION = "An XPath file finder for XML files."
 
@@ -79,7 +90,8 @@ being lexicographically within the interval ``a <= x <= b``.
 REGEXP_NS = "http://exslt.org/regular-expressions"
 PYTHON_BUILTINS_NS = "PYTHON-BUILTINS"
 
-parser = et.XMLParser(remove_blank_text=True)
+def make_parser(remove_blank_text=True, **kwargs):
+    return et.XMLParser(remove_blank_text=remove_blank_text, **kwargs)
 
 def print_result(result, pretty_print):
     if et.iselement(result):
@@ -87,51 +99,69 @@ def print_result(result, pretty_print):
                              pretty_print=pretty_print)
         if pretty_print:
             result = result[:-1] # strip newline at the end
-    print result
+    print(result)
 
 def print_results(results, pretty_print):
-    if isinstance(results, list):
-        for result in results:
-            print_result(result, pretty_print)
-    else:
-        print_result(results, pretty_print)
+    for result in results:
+        print_result(result, pretty_print)
 
-def find_in_file(f, xpath, print_name=True, xinclude=False, pretty_print=True):
-    if hasattr(f, 'name'):
-        filename = f.name
+def iter_input(input, parser, line_by_line):
+    if isinstance(input, basestring):
+        with open(input, 'rb') as f:
+            for tree in iter_input(f, parser, line_by_line):
+                yield tree
     else:
+        if line_by_line:
+            for line in input:
+                if line:
+                    yield et.ElementTree(et.fromstring(line, parser))
+        else:
+            yield et.parse(input, parser)
+
+def find_in_file(f, xpath, print_name=True, xinclude=False, pretty_print=True, line_by_line=False, encoding=None):
+    try:
+        filename = f.name
+    except AttributeError:
         filename = f
 
+    xml_parser = et.XMLParser(encoding=encoding)
+
     try:
-        try:
-            tree = et.parse(f, parser)
-        except IOError, e:
-            print >> sys.stderr, "ERR: parsing %r failed: %s: %s" % (
-                filename, e.__class__.__name__, e)
-            return False
-
-        try:
-            if xinclude:
-                tree.xinclude()
-        except IOError, e:
-            print >> sys.stderr, "ERR: XInclude for %r failed: %s: %s" % (
-                filename, e.__class__.__name__, e)
-            return False
-
         if not callable(xpath):
             xpath = et.XPath(xpath)
 
-        results = xpath(tree)
-        if results == []:
+        try:
+            results = []
+            for tree in iter_input(f, xml_parser, line_by_line):
+                try:
+                    if xinclude:
+                        tree.xinclude()
+                except IOError:
+                    e = sys.exc_info()[1]
+                    error("XInclude for %r failed: %s: %s",
+                          filename, e.__class__.__name__, e)
+                new_results = xpath(tree)
+                if isinstance(new_results, list):
+                    results.extend(new_results)
+                else:
+                    results.append(new_results)
+        except IOError:
+            e = sys.exc_info()[1]
+            error("parsing %r failed: %s: %s",
+                  filename, e.__class__.__name__, e)
+            return False
+
+        if not results:
             return False
         if print_name:
-            print ">> %s" % f
+            print(">> %s" % f)
         if options.verbose:
             print_results(results, pretty_print)
         return True
-    except Exception, e:
-        print >> sys.stderr, "ERR: %r: %s: %s" % (
-            filename, e.__class__.__name__, e)
+    except Exception:
+        e = sys.exc_info()[1]
+        error("%r: %s: %s",
+              filename, e.__class__.__name__, e)
         return False
 
 def register_builtins():
@@ -204,17 +234,21 @@ def parse_options():
     parser.add_option("-p", "--plain",
                       action="store_false", dest="pretty_print", default=True,
                       help="do not pretty-print the output")
-    parser.add_option("-N", "--ns",
-                      action="append", default=[],
-                      dest="namespaces",
-                      help="add a namespace declaration: --ns PREFIX=NS",)
-
+    parser.add_option("-l", "--lines",
+                      action="store_true", dest="line_by_line", default=False,
+                      help="parse each line of input separately (e.g. grep output)")
+    parser.add_option("-e", "--encoding",
+                      dest="encoding",
+                      help="use a specific encoding for parsing (may be required with --lines)")
+    parser.add_option("-N", "--ns", metavar="PREFIX=NS",
+                      action="append", dest="namespaces", default=[],
+                      help="add a namespace declaration")
 
     options, args = parser.parse_args()
 
     if options.long_help:
         parser.print_help()
-        print __doc__[__doc__.find('\n\n')+1:]
+        print(__doc__[__doc__.find('\n\n')+1:])
         sys.exit(0)
 
     if len(args) < 1:
@@ -241,13 +275,13 @@ def main(options, args):
     if len(args) == 1:
         found = find_in_file(
             sys.stdin, xpath, False, options.xinclude,
-            options.pretty_print)
+            options.pretty_print, options.line_by_line, options.encoding)
     else:
         print_name = len(args) > 2
         for filename in itertools.islice(args, 1, None):
             found |= find_in_file(
                 filename, xpath, print_name, options.xinclude,
-                options.pretty_print)
+                options.pretty_print, options.line_by_line, options.encoding)
 
     return found
 
@@ -259,8 +293,8 @@ if __name__ == "__main__":
             sys.exit(0)
         else:
             sys.exit(1)
-    except et.XPathSyntaxError, e:
-        print >> sys.stderr, "Err: %s" % e
+    except et.XPathSyntaxError:
+        error(sys.exc_info()[1])
         sys.exit(4)
     except KeyboardInterrupt:
         pass
