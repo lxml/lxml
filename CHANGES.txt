@@ -8,6 +8,10 @@ lxml changelog
 Features added
 --------------
 
+* ``xpathgrep.py`` gained support for parsing line-by-line (e.g.
+  from grep output) and for surrounding the output with a new root
+  tag.
+
 * ``E-factory`` in ``lxml.builder`` accepts subtypes of known data
   types (such as string subtypes) when building elements around them.
 
@@ -19,6 +23,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* ``xpathgrep.py`` did not work in Python 3.
 
 * ``Element.attrib.update()`` did not accept an ``attrib`` of
   another Element as parameter.
