@@ -24,6 +24,8 @@ Features added
 Bugs fixed
 ----------
 
+* XSLT stylesheet compilation could ignore compilation errors.
+
 * ``xpathgrep.py`` did not work in Python 3.
 
 * ``Element.attrib.update()`` did not accept an ``attrib`` of

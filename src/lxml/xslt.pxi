@@ -403,8 +403,10 @@ cdef class XSLT:
             c_style = xslt.xsltParseStylesheetDoc(c_doc)
         self._error_log.disconnect()
 
-        if c_style is NULL:
+        if c_style is NULL or c_style.errors:
             tree.xmlFreeDoc(c_doc)
+            if c_style is not NULL:
+                xslt.xsltFreeStylesheet(c_style)
             self._xslt_resolver_context._raise_if_stored()
             # last error seems to be the most accurate here
             if self._error_log.last_error is not None and \
