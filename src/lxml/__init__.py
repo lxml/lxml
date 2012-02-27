@@ -12,8 +12,9 @@ def get_include():
     include_path = os.path.join(lxml_path, 'include')
     includes = [lxml_path]
 
-    for name in os.listdir(include_path):
-        includes.append(os.path.join(include_path, name))
+    if os.path.exists(include_path):
+        for name in os.listdir(include_path):
+            includes.append(os.path.join(include_path, name))
 
     return includes
 
