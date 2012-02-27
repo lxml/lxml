@@ -87,11 +87,9 @@ import re
 cdef object gzip
 import gzip
 
-cdef object ITER_EMPTY
-ITER_EMPTY = iter(())
+cdef object ITER_EMPTY = iter(())
 
-cdef object EMPTY_READ_ONLY_DICT
-EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
+cdef object EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
 
 # the rules
 # ---------
@@ -120,20 +118,11 @@ _initThreadLogging()
 xmlparser.xmlInitParser()
 
 # filename encoding
-cdef object _FILENAME_ENCODING
-_FILENAME_ENCODING = sys.getfilesystemencoding()
-if _FILENAME_ENCODING is None:
-    _FILENAME_ENCODING = sys.getdefaultencoding()
-if _FILENAME_ENCODING is None:
-    _FILENAME_ENCODING = b'ascii'
-else:
-    _FILENAME_ENCODING = _FILENAME_ENCODING.encode(u"UTF-8")
-cdef char* _C_FILENAME_ENCODING
-_C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
+cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode(u"UTF-8")
+cdef char* _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
 # set up some default namespace prefixes
-cdef object _DEFAULT_NAMESPACE_PREFIXES
-_DEFAULT_NAMESPACE_PREFIXES = {
+cdef dict _DEFAULT_NAMESPACE_PREFIXES = {
     b"http://www.w3.org/XML/1998/namespace": b'xml',
     b"http://www.w3.org/1999/xhtml": b"html",
     b"http://www.w3.org/1999/XSL/Transform": b"xsl",
@@ -161,7 +150,7 @@ def register_namespace(prefix, uri):
         raise ValueError("Prefix format reserved for internal use")
     _tagValidOrRaise(prefix_utf)
     _uriValidOrRaise(uri_utf)
-    for k, v in _DEFAULT_NAMESPACE_PREFIXES.items():
+    for k, v in list(_DEFAULT_NAMESPACE_PREFIXES.items()):
         if k == uri_utf or v == prefix_utf:
             del _DEFAULT_NAMESPACE_PREFIXES[k]
     _DEFAULT_NAMESPACE_PREFIXES[uri_utf] = prefix_utf
