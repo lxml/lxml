@@ -685,6 +685,19 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return None
         return _elementFactory(new_doc, c_node)
 
+    def move(self):
+        u"""move(self)
+
+        Detaches this node from its parent to explicitly state that
+        it's intentionally being moved somewhere else.
+
+        Returns self.
+        """
+        parent = self.getparent()
+        if parent is not None:
+            parent.remove(self)
+        return self
+
     def set(self, key, value):
         u"""set(self, key, value)
 

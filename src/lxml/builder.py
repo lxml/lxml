@@ -198,36 +198,50 @@ class ElementMaker(object):
         if dict not in typemap:
             typemap[dict] = add_dict
 
+        def add_list(elem, lst):
+            for item in lst:
+                if ET.iselement(item) and item.getparent() is not None:
+                    raise ValueError("Adding an item with a parent would move "
+                                     "the item rather than copying.  Be "
+                                     "explicit by calling either .move() or "
+                                     "deepcopy().")
+                self.add_item(elem, item)
+        if list not in typemap:
+            typemap[list] = add_list
+
         self._typemap = typemap
 
-    def __call__(self, tag, *children, **attrib):
+    def add_item(self, elem, item):
         get = self._typemap.get
 
+        if callable(item):
+            item = item()
+        t = get(type(item))
+        if t is None:
+            if ET.iselement(item):
+                elem.append(item)
+                return
+            for basetype in type(item).__mro__:
+                # See if the typemap knows of any of this type's bases.
+                t = get(basetype)
+                if t is not None:
+                    break
+            else:
+                raise TypeError("bad argument type: %s(%r)" %
+                                (type(item).__name__, item))
+        v = t(elem, item)
+        if v:
+            get(type(v))(elem, v)
+
+    def __call__(self, tag, *children, **attrib):
         if self._namespace is not None and tag[0] != '{':
             tag = self._namespace + tag
         elem = self._makeelement(tag, nsmap=self._nsmap)
         if attrib:
-            get(dict)(elem, attrib)
+            self._typemap.get(dict)(elem, attrib)
 
         for item in children:
-            if callable(item):
-                item = item()
-            t = get(type(item))
-            if t is None:
-                if ET.iselement(item):
-                    elem.append(item)
-                    continue
-                for basetype in type(item).__mro__:
-                    # See if the typemap knows of any of this type's bases.
-                    t = get(basetype)
-                    if t is not None:
-                        break
-                else:
-                    raise TypeError("bad argument type: %s(%r)" %
-                                    (type(item).__name__, item))
-            v = t(elem, item)
-            if v:
-                get(type(v))(elem, v)
+            self.add_item(elem, item)
 
         return elem
 
