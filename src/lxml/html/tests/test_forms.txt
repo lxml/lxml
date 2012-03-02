@@ -167,11 +167,11 @@ check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 <Element form at ...>
 >>> tree.forms[0].fields # doctest: +NOPARSE_MARKUP
 <FieldsDict for form 0>
->>> tree.forms[0].fields.keys()
+>>> list(tree.forms[0].fields.keys())
 ['foo']
->>> tree.forms[0].fields.items()
+>>> list(tree.forms[0].fields.items())
 [('foo', 'bar')]
->>> tree.forms[0].fields.values()
+>>> list(tree.forms[0].fields.values())
 ['bar']
 
 >>> tree = lxml.html.fromstring('''
@@ -181,7 +181,7 @@ check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 ...  </form>
 ... </body></html>
 ... ''')
->>> tree.forms[0].fields.keys()
+>>> list(tree.forms[0].fields.keys())
 ['foo']
 >>> ta = tree.forms[0].inputs['foo']
 >>> print(ta.value)
