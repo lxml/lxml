@@ -1,6 +1,7 @@
 # DEBUG and error logging
 
 cimport xmlerror
+cimport cvarargs
 
 # module level API functions
 
@@ -518,7 +519,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     # no Python objects here, may be called without thread context !
     # when we declare a Python object, Pyrex will INCREF(None) !
     cdef xmlerror.xmlError c_error
-    cdef cstd.va_list args
+    cdef cvarargs.va_list args
     cdef char* c_text
     cdef char* c_message
     cdef char* c_element
@@ -528,13 +529,13 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     if msg[0] in b'\n\0':
         return
 
-    cstd.va_start(args, msg)
+    cvarargs.va_start(args, msg)
     if msg[0] == c'%' and msg[1] == c's':
-        c_text = cstd.va_charptr(args)
+        c_text = cvarargs.va_charptr(args)
     else:
         c_text = NULL
     if cstring_h.strstr(msg, 'file %s'):
-        c_error.file = cstd.va_charptr(args)
+        c_error.file = cvarargs.va_charptr(args)
         if c_error.file and \
                 cstring_h.strncmp(c_error.file,
                             'string://__STRING__XSLT', 23) == 0:
@@ -542,14 +543,14 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     else:
         c_error.file = NULL
     if cstring_h.strstr(msg, 'line %d'):
-        c_error.line = cstd.va_int(args)
+        c_error.line = cvarargs.va_int(args)
     else:
         c_error.line = 0
     if cstring_h.strstr(msg, 'element %s'):
-        c_element = cstd.va_charptr(args)
+        c_element = cvarargs.va_charptr(args)
     else:
         c_element = NULL
-    cstd.va_end(args)
+    cvarargs.va_end(args)
 
     c_message = NULL
     if c_text is NULL:

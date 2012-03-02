@@ -44,7 +44,6 @@ from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from python cimport callable, _cstr, _isString
 cimport xpath
 cimport c14n
-cimport cstd
 
 # Cython's standard declarations
 cimport cpython.mem
