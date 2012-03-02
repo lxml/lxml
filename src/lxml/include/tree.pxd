@@ -1,6 +1,7 @@
 from libc cimport stdio
 
 cdef extern from "lxml-version.h":
+    # deprecated declaration, use etreepublic.pxd instead
     cdef char* LXML_VERSION_STRING
 
 cdef extern from "libxml/xmlversion.h":

@@ -1,6 +1,9 @@
-# public Pyrex/C interface to lxml.etree
+# public Cython/C interface to lxml.etree
 
 cimport tree
+
+cdef extern from "lxml-version.h":
+    cdef char* LXML_VERSION_STRING
 
 cdef extern from "etree_defs.h":
     # test if c_node is considered an Element (i.e. Element, Comment, etc.)

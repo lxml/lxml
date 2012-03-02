@@ -89,6 +89,8 @@ def ext_modules(static_include_dirs, static_library_dirs,
     _define_macros = define_macros()
     _libraries = libraries()
 
+    _include_dirs.append(os.path.join(get_base_dir(), PACKAGE_PATH, 'include'))
+
     if _library_dirs:
         message = "Building against libxml2/libxslt in "
         if len(_library_dirs) > 1:
