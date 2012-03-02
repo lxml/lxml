@@ -69,9 +69,11 @@ extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
     'lxml': [
-        'etreepublic.pxd',
-        'tree.pxd',
-        'etree_defs.h'
+        'lxml.etree.h',
+        'lxml.etree_api.h',
+    ],
+    'lxml.include': [
+        '*.pxd', '*.h'
         ],
     'lxml.isoschematron':  [
         'resources/rng/iso-schematron.rng',
@@ -86,15 +88,7 @@ extra_options['package_dir'] = {
     }
 
 extra_options['packages'] = [
-        'lxml', 'lxml.html', 'lxml.isoschematron'
-    ]
-
-extra_options['package_dir'] = {
-        '': 'src'
-    }
-
-extra_options['packages'] = [
-        'lxml', 'lxml.html', 'lxml.isoschematron'
+        'lxml', 'lxml.include', 'lxml.html', 'lxml.isoschematron'
     ]
 
 
@@ -161,7 +155,6 @@ def setup_extra_options():
 
         header_packages = build_packages(extract_files(include_dirs))
 
-        packages.append('lxml.include')
         for package_path, (root_path, filenames) in header_packages.items():
             if package_path:
                 package = 'lxml.include.' + package_path
