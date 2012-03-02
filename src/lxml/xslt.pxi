@@ -767,6 +767,8 @@ cdef class _XSLTResultTree(_ElementTree):
         buffer.suboffsets = NULL
         buffer.itemsize = 1
         buffer.internal = NULL
+        if buffer.obj is not self: # set by Cython?
+            buffer.obj = self
 
     def __releasebuffer__(self, Py_buffer* buffer):
         if buffer is NULL:
