@@ -95,13 +95,13 @@
 
 /* added to xmlsave API in libxml2 2.6.22 */
 #if LIBXML_VERSION < 20622
-#  define XML_SAVE_NO_EMPTY   1<<2, /* no empty tags */
+#  define XML_SAVE_NO_EMPTY   1<<2  /* no empty tags */
 #  define XML_SAVE_NO_XHTML   1<<3  /* disable XHTML1 specific rules */
 #endif
 
 /* added to xmlsave API in libxml2 2.6.21 */
 #if LIBXML_VERSION < 20621
-#  define XML_SAVE_NO_DECL    1<<1, /* drop the xml declaration */
+#  define XML_SAVE_NO_DECL    1<<1  /* drop the xml declaration */
 #endif
 
 /* schematron was added in libxml2 2.6.21 */
