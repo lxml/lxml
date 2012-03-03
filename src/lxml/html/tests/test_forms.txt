@@ -137,20 +137,20 @@ hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
->>> for name, value in fields.items():
+>>> for name, value in sorted(fields.items()):
 ...     print('%s: %r' % (name, value))
-textarea_field: 'some text'
-radios: None
-submit2: 'submit'
-submit1: 'submit'
-select1: 'No value'
-hidden_field: 'new value'
-text_field: 'text_value'
-reset1: None
-single_checkbox: 'on'
-select2: <MultipleSelectOptions {'2'} for select name='select2'>
-single_checkbox2: 'good'
 check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
+hidden_field: 'new value'
+radios: None
+reset1: None
+select1: 'No value'
+select2: <MultipleSelectOptions {'2'} for select name='select2'>
+single_checkbox: 'on'
+single_checkbox2: 'good'
+submit1: 'submit'
+submit2: 'submit'
+text_field: 'text_value'
+textarea_field: 'some text'
 
 >>> import lxml.html
 >>> tree = lxml.html.fromstring('''
