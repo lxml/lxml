@@ -60,7 +60,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         print("Building with Cython %s." % Cython.Compiler.Version.version)
 
         from Cython.Compiler import Options
-        Options.generate_cleanup_code = 3
+        Options.generate_cleanup_code = 2
     else:
         source_extension = ".c"
         if not os.path.exists(PACKAGE_PATH + 'lxml.etree.c'):
