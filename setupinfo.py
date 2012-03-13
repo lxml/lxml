@@ -59,6 +59,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         source_extension = ".pyx"
         print("Building with Cython %s." % Cython.Compiler.Version.version)
 
+        # generate module cleanup code for globals, but not for etree types imported in objectify
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 2
     else:
