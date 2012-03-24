@@ -8,7 +8,7 @@ from html5lib import HTMLParser as _HTMLParser
 from html5lib.treebuilders.etree_lxml import TreeBuilder
 
 from lxml import etree
-from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE
+from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE, Element
 
 # python3 compatibility
 try:
@@ -101,7 +101,7 @@ def fragment_fromstring(html, create_parent=False,
 
     elements = fragments_fromstring(
         html, guess_charset=guess_charset, parser=parser,
-        no_leading_text=not accept_leading_text, **kw)
+        no_leading_text=not accept_leading_text)
 
     if create_parent:
         if not isinstance(create_parent, basestring):
