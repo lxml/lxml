@@ -399,8 +399,7 @@ cdef class XSLT:
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
         self._error_log.connect()
-        with nogil:
-            c_style = xslt.xsltParseStylesheetDoc(c_doc)
+        c_style = xslt.xsltParseStylesheetDoc(c_doc)
         self._error_log.disconnect()
 
         if c_style is NULL or c_style.errors:
@@ -520,7 +519,6 @@ cdef class XSLT:
             transform_ctxt.profile = 1
 
         try:
-            self._error_log.connect()
             context = self._context._copy()
             context.register_context(transform_ctxt, input_doc)
 
@@ -549,7 +547,6 @@ cdef class XSLT:
             if context is not None:
                 context.free_context()
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            self._error_log.disconnect()
 
         try:
             if resolver_context is not None and resolver_context._has_raised():

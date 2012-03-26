@@ -26,8 +26,6 @@ Bugs fixed
 
 * Fixed undefined names in html5lib parser.
 
-* XSLT stylesheet compilation could ignore compilation errors.
-
 * ``xpathgrep.py`` did not work in Python 3.
 
 * ``Element.attrib.update()`` did not accept an ``attrib`` of
@@ -68,6 +66,24 @@ Other changes
   _AppendOnlyElementProxy, _FilelikeWriter, _ParserSchemaValidationContext,
   _XPathContext, _XSLTResolverContext, _XSLTContext, _XSLTQuotedStringParam,
   _XSLTResultTree, _XSLTProcessingInstruction``
+
+
+2.3.4 (2012-03-26)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Crash due to race condition when errors (or user messages) occur
+  during threaded XSLT processing.
+
+* XSLT stylesheet compilation could ignore compilation errors.
+
+Other changes
+--------------
 
 
 2.3.3 (2012-01-04)
