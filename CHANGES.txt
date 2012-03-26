@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* Crash when building an nsmap (Element property) with empty
+  namespace URIs.
+
 * Crash due to race condition when errors (or user messages) occur
   during threaded XSLT processing.
 
