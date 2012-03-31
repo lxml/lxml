@@ -146,7 +146,7 @@ class Class(object):
     def xpath(self):
         sel_xpath = self.selector.xpath()
         sel_xpath.add_condition(
-            "contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_literal(' '+self.class_name+' '))
+            "@class and contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_literal(' '+self.class_name+' '))
         return sel_xpath
 
 class Function(object):
@@ -407,23 +407,24 @@ class Attrib(object):
                                    % (attrib, xpath_literal(value)))
             #path.add_condition('%s != %s' % (attrib, xpath_literal(value)))
         elif self.operator == '~=':
-            path.add_condition("contains(concat(' ', normalize-space(%s), ' '), %s)" % (attrib, xpath_literal(' '+value+' ')))
+            path.add_condition("%s and contains(concat(' ', normalize-space(%s), ' '), %s)" % (attrib, attrib, xpath_literal(' '+value+' ')))
         elif self.operator == '|=':
             # Weird, but true...
-            path.add_condition('%s = %s or starts-with(%s, %s)' % (
+            path.add_condition('%s and (%s = %s or starts-with(%s, %s))' % (
+                attrib,
                 attrib, xpath_literal(value),
                 attrib, xpath_literal(value + '-')))
         elif self.operator == '^=':
-            path.add_condition('starts-with(%s, %s)' % (
-                attrib, xpath_literal(value)))
+            path.add_condition('%s and starts-with(%s, %s)' % (
+                attrib, attrib, xpath_literal(value)))
         elif self.operator == '$=':
             # Oddly there is a starts-with in XPath 1.0, but not ends-with
-            path.add_condition('substring(%s, string-length(%s)-%s) = %s'
-                               % (attrib, attrib, len(value)-1, xpath_literal(value)))
+            path.add_condition('%s and substring(%s, string-length(%s)-%s) = %s'
+                               % (attrib, attrib, attrib, len(value)-1, xpath_literal(value)))
         elif self.operator == '*=':
-            # FIXME: case sensitive?
-            path.add_condition('contains(%s, %s)' % (
-                attrib, xpath_literal(value)))
+            # Attribute selectors are case sensitive
+            path.add_condition('%s and contains(%s, %s)' % (
+                attrib, attrib, xpath_literal(value)))
         else:
             assert 0, ("Unknown operator: %r" % self.operator)
         return path
@@ -563,7 +564,7 @@ def css_to_xpath(css_expr, prefix='descendant-or-self::'):
                 prefix, match.group(1) or '*', match.group(2))
         match = _class_re.search(css_expr)
         if match is not None:
-            return "%s%s[contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % (
+            return "%s%s[@class and contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % (
                 prefix, match.group(1) or '*', match.group(2))
         css_expr = parse(css_expr)
     expr = css_expr.xpath()

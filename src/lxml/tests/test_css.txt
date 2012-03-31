@@ -88,15 +88,15 @@ Now of translation:
     >>> xpath('E[foo="bar"]')
     e[@foo = 'bar']
     >>> xpath('E[foo~="bar"]')
-    e[contains(concat(' ', normalize-space(@foo), ' '), ' bar ')]
+    e[@foo and contains(concat(' ', normalize-space(@foo), ' '), ' bar ')]
     >>> xpath('E[foo^="bar"]')
-    e[starts-with(@foo, 'bar')]
+    e[@foo and starts-with(@foo, 'bar')]
     >>> xpath('E[foo$="bar"]')
-    e[substring(@foo, string-length(@foo)-2) = 'bar']
+    e[@foo and substring(@foo, string-length(@foo)-2) = 'bar']
     >>> xpath('E[foo*="bar"]')
-    e[contains(@foo, 'bar')]
+    e[@foo and contains(@foo, 'bar')]
     >>> xpath('E[hreflang|="en"]')
-    e[@hreflang = 'en' or starts-with(@hreflang, 'en-')]
+    e[@hreflang and (@hreflang = 'en' or starts-with(@hreflang, 'en-'))]
     >>> #xpath('E:root')
     >>> xpath('E:nth-child(1)')
     */*[name() = 'e' and (position() = 1)]
@@ -111,7 +111,7 @@ Now of translation:
     >>> xpath('E:nth-last-of-type(1)')
     */e[position() = last() - 1]
     >>> xpath('div E:nth-last-of-type(1) .aclass')
-    div/descendant-or-self::*/e[position() = last() - 1]/descendant-or-self::*/*[contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
+    div/descendant-or-self::*/e[position() = last() - 1]/descendant-or-self::*/*[@class and contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
     >>> xpath('E:first-child')
     */*[name() = 'e' and (position() = 1)]
     >>> xpath('E:last-child')
@@ -131,7 +131,7 @@ Now of translation:
     >>> xpath('E:contains("foo")')
     e[contains(css:lower-case(string(.)), 'foo')]
     >>> xpath('E.warning')
-    e[contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
+    e[@class and contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
     >>> xpath('E#myid')
     e[@id = 'myid']
     >>> xpath('E:not(:contains("foo"))')
@@ -164,7 +164,7 @@ Now a Unicode character test:
     >>> print( css_expr[1:] in xpath_expr )
     True
     >>> print( xpath_expr.encode('ascii', 'xmlcharrefreplace').decode('ASCII') )
-    descendant-or-self::*[contains(concat(' ', normalize-space(@class), ' '), ' a&#193;b ')]
+    descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), ' a&#193;b ')]
 
 And some special character tests:
 
