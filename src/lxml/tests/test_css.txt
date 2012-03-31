@@ -111,7 +111,7 @@ Now of translation:
     >>> xpath('E:nth-last-of-type(1)')
     */e[position() = last() - 1]
     >>> xpath('div E:nth-last-of-type(1) .aclass')
-    div/descendant-or-self::*/e[position() = last() - 1]/descendant-or-self::*/*[contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
+    div/descendant-or-self::*/e[position() = last() - 1]/descendant-or-self::*/*[@class and contains(concat(' ', normalize-space(@class), ' '), ' aclass ')]
     >>> xpath('E:first-child')
     */*[name() = 'e' and (position() = 1)]
     >>> xpath('E:last-child')
@@ -131,7 +131,7 @@ Now of translation:
     >>> xpath('E:contains("foo")')
     e[contains(css:lower-case(string(.)), 'foo')]
     >>> xpath('E.warning')
-    e[contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
+    e[@class and contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
     >>> xpath('E#myid')
     e[@id = 'myid']
     >>> xpath('E:not(:contains("foo"))')
@@ -164,7 +164,7 @@ Now a Unicode character test:
     >>> print( css_expr[1:] in xpath_expr )
     True
     >>> print( xpath_expr.encode('ascii', 'xmlcharrefreplace').decode('ASCII') )
-    descendant-or-self::*[contains(concat(' ', normalize-space(@class), ' '), ' a&#193;b ')]
+    descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), ' a&#193;b ')]
 
 And some special character tests:
 

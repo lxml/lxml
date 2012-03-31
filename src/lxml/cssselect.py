@@ -146,7 +146,7 @@ class Class(object):
     def xpath(self):
         sel_xpath = self.selector.xpath()
         sel_xpath.add_condition(
-            "contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_literal(' '+self.class_name+' '))
+            "@class and contains(concat(' ', normalize-space(@class), ' '), %s)" % xpath_literal(' '+self.class_name+' '))
         return sel_xpath
 
 class Function(object):
@@ -563,7 +563,7 @@ def css_to_xpath(css_expr, prefix='descendant-or-self::'):
                 prefix, match.group(1) or '*', match.group(2))
         match = _class_re.search(css_expr)
         if match is not None:
-            return "%s%s[contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % (
+            return "%s%s[@class and contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % (
                 prefix, match.group(1) or '*', match.group(2))
         css_expr = parse(css_expr)
     expr = css_expr.xpath()
