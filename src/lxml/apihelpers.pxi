@@ -292,7 +292,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
             attrib.update(extra)
     if attrib:
         is_html = doc._parser._for_html
-        for name, value in attrib.items():
+        for name, value in sorted(attrib.items()):
             attr_ns_utf, attr_name_utf = _getNsTag(name)
             if not is_html:
                 _attributeValidOrRaise(attr_name_utf)

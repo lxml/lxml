@@ -1122,8 +1122,8 @@ XSI type name:
     >>> print(objectify.dump(root))
     root = None [ObjectifiedElement]
         x = '5' [StringElement]
-          * py:pytype = 'str'
           * myattr = 'someval'
+          * py:pytype = 'str'
 
     >>> root.x = objectify.DataElement(5, _xsi="integer")
     >>> print(objectify.dump(root))

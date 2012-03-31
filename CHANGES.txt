@@ -40,6 +40,13 @@ Bugs fixed
 Other changes
 --------------
 
+* Element attributes passed in as an ``attrib`` dict or as keyword
+  arguments are now sorted by (namespaced) name before being created
+  to make their order predictable for serialisation and iteration.
+  Note that adding or deleting attributes afterwards does not take
+  that order into account, i.e. setting a new attribute appends it
+  after the existing ones.
+
 * Several classes that are for internal use only were removed
   from the ``lxml.etree`` module dict:
   ``_InputDocument, _ResolverRegistry, _ResolverContext, _BaseContext,
