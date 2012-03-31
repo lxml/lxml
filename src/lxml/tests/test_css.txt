@@ -88,15 +88,15 @@ Now of translation:
     >>> xpath('E[foo="bar"]')
     e[@foo = 'bar']
     >>> xpath('E[foo~="bar"]')
-    e[contains(concat(' ', normalize-space(@foo), ' '), ' bar ')]
+    e[@foo and contains(concat(' ', normalize-space(@foo), ' '), ' bar ')]
     >>> xpath('E[foo^="bar"]')
-    e[starts-with(@foo, 'bar')]
+    e[@foo and starts-with(@foo, 'bar')]
     >>> xpath('E[foo$="bar"]')
-    e[substring(@foo, string-length(@foo)-2) = 'bar']
+    e[@foo and substring(@foo, string-length(@foo)-2) = 'bar']
     >>> xpath('E[foo*="bar"]')
-    e[contains(@foo, 'bar')]
+    e[@foo and contains(@foo, 'bar')]
     >>> xpath('E[hreflang|="en"]')
-    e[@hreflang = 'en' or starts-with(@hreflang, 'en-')]
+    e[@hreflang and (@hreflang = 'en' or starts-with(@hreflang, 'en-'))]
     >>> #xpath('E:root')
     >>> xpath('E:nth-child(1)')
     */*[name() = 'e' and (position() = 1)]
