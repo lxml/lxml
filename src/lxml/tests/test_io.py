@@ -244,7 +244,12 @@ class _IOTestCaseBase(HelperTestCase):
             def read(*args):
                 return 1
         f = TestFile()
-        self.assertRaises((TypeError, self.etree.ParseError), self.etree.parse, f)
+
+        try:
+            expect_exc = (TypeError, self.etree.ParseError)
+        except AttributeError:
+            expect_exc = TypeError
+        self.assertRaises(expect_exc, self.etree.parse, f)
 
     
 class ETreeIOTestCase(_IOTestCaseBase):
