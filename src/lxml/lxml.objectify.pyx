@@ -1906,7 +1906,7 @@ def DataElement(_value, attrib=None, nsmap=None, *, _pytype=None, _xsi=None,
     if nsmap is None:
         nsmap = _DEFAULT_NSMAP
     if attrib is not None and attrib:
-        if python.PyDict_Size(_attributes):
+        if _attributes:
             attrib = dict(attrib)
             attrib.update(_attributes)
         _attributes = attrib
