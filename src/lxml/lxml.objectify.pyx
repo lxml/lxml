@@ -1861,10 +1861,11 @@ def parse(f, parser=None, *, base_url=None):
         parser = objectify_parser
     return _parse(f, parser, base_url=base_url)
 
-cdef dict _DEFAULT_NSMAP
-_DEFAULT_NSMAP = { u"py"  : PYTYPE_NAMESPACE,
-                   u"xsi" : XML_SCHEMA_INSTANCE_NS,
-                   u"xsd" : XML_SCHEMA_NS}
+cdef dict _DEFAULT_NSMAP = {
+    u"py"  : PYTYPE_NAMESPACE,
+    u"xsi" : XML_SCHEMA_INSTANCE_NS,
+    u"xsd" : XML_SCHEMA_NS
+}
 
 E = ElementMaker()
 
