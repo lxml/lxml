@@ -12,6 +12,8 @@ try:
 except NameError:
     basestring = (str, bytes)
 
+namespaces = {'re': cssselect.regex_namespace}
+
 # Data borrowed from http://mootools.net/slickspeed/
 
 class CSSTestCase(HelperTestCase):
@@ -87,12 +89,13 @@ class CSSTestCase(HelperTestCase):
         body = doc.xpath('//body')[0]
         bad = []
         selector, count = self.selectors[self.index]
-        xpath = cssselect.css_to_xpath(cssselect.parse(selector))
+        options = dict(regex_prefix='re')
+        xpath = cssselect.css_to_xpath(cssselect.parse(selector, options), **options)
         try:
-            results = body.xpath(xpath)
+            results = body.xpath(xpath, namespaces=namespaces)
         except Exception:
             e = sys.exc_info()[1]
-            e.args = ("%s for xpath %r" % (e, xpath))
+            e.args = ("%s for xpath %r" % (e, xpath),)
             raise
         found = {}
         for item in results:

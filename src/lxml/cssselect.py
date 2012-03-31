@@ -41,6 +41,9 @@ from lxml import etree
 __all__ = ['SelectorSyntaxError', 'ExpressionError',
            'CSSSelector']
 
+default_regex_prefix = 'exslt_org_regular_expressions'
+regex_namespace = "http://exslt.org/regular-expressions"
+
 try:
     _basestring = basestring
 except NameError:
@@ -79,7 +82,18 @@ class CSSSelector(etree.XPath):
         [('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description', 'blah')]
     """
     def __init__(self, css, namespaces=None):
-        path = css_to_xpath(css)
+        if namespaces is None:
+            namespaces= {}
+        regex_prefix = default_regex_prefix 
+        for k, v in namespaces.items():
+            if v == regex_namespace:
+                regex_prefix = k
+                break
+        if regex_prefix not in namespaces:
+            # copy the namespaces dict to avoid mutation
+            namespaces = dict(namespaces)
+            namespaces[regex_prefix] = regex_namespace
+        path = css_to_xpath(css, regex_prefix=regex_prefix)
         etree.XPath.__init__(self, path, namespaces=namespaces)
         self.css = css
 
@@ -133,9 +147,10 @@ class Class(object):
     Represents selector.class_name
     """
 
-    def __init__(self, selector, class_name):
+    def __init__(self, selector, class_name, options):
         self.selector = selector
         self.class_name = class_name
+        self.options = options
 
     def __repr__(self):
         return '%s[%r.%s]' % (
@@ -157,11 +172,12 @@ class Function(object):
     unsupported = [
         'target', 'lang', 'enabled', 'disabled',]
 
-    def __init__(self, selector, type, name, expr):
+    def __init__(self, selector, type, name, expr, options):
         self.selector = selector
         self.type = type
         self.name = name
         self.expr = expr
+        self.options = options
 
     def __repr__(self):
         return '%s[%r%s%s(%r)]' % (
@@ -240,9 +256,9 @@ class Function(object):
         # text content, minus tags, must contain expr
         if isinstance(expr, Element):
             expr = expr._format_element()
-        xpath.add_condition('contains(css:lower-case(string(.)), %s)'
-                            % xpath_literal(expr.lower()))
-        # FIXME: Currently case insensitive matching doesn't seem to be happening
+        regex_prefix = self.options.get('regex_prefix', default_regex_prefix)
+        xpath.add_condition("%s:test(string(.), %s, 'i')"
+                            % (regex_prefix, xpath_literal(re.escape(expr))))
         return xpath
 
     def _xpath_not(self, xpath, expr):
@@ -253,13 +269,6 @@ class Function(object):
         xpath.add_condition('not(%s)' % cond)
         return xpath
 
-def _make_lower_case(context, s):
-    return s.lower()
-
-ns = etree.FunctionNamespace('http://codespeak.net/lxml/css/')
-ns.prefix = 'css'
-ns['lower-case'] = _make_lower_case
-
 class Pseudo(object):
     """
     Represents selector:ident
@@ -269,11 +278,12 @@ class Pseudo(object):
                    'selection', 'before', 'after', 'link', 'visited',
                    'active', 'focus', 'hover']
 
-    def __init__(self, element, type, ident):
+    def __init__(self, element, type, ident, options):
         self.element = element
         assert type in (':', '::')
         self.type = type
         self.ident = ident
+        self.options = options
 
     def __repr__(self):
         return '%s[%r%s%s]' % (
@@ -353,12 +363,13 @@ class Attrib(object):
     Represents selector[namespace|attrib operator value]
     """
 
-    def __init__(self, selector, namespace, attrib, operator, value):
+    def __init__(self, selector, namespace, attrib, operator, value, options):
         self.selector = selector
         self.namespace = namespace
         self.attrib = attrib
         self.operator = operator
         self.value = value
+        self.options = options
 
     def __repr__(self):
         if self.operator == 'exists':
@@ -434,9 +445,10 @@ class Element(object):
     Represents namespace|element
     """
 
-    def __init__(self, namespace, element):
+    def __init__(self, namespace, element, options):
         self.namespace = namespace
         self.element = element
+        self.options = options
 
     def __repr__(self):
         return '%s[%s]' % (
@@ -462,9 +474,10 @@ class Hash(object):
     Represents selector#id
     """
 
-    def __init__(self, selector, id):
+    def __init__(self, selector, id, options):
         self.selector = selector
         self.id = id
+        self.options = options
 
     def __repr__(self):
         return '%s[%r#%s]' % (
@@ -478,8 +491,10 @@ class Hash(object):
 
 class Or(object):
 
-    def __init__(self, items):
+    def __init__(self, items, options):
         self.items = items
+        self.options = options
+
     def __repr__(self):
         return '%s(%r)' % (
             self.__class__.__name__,
@@ -498,11 +513,12 @@ class CombinedSelector(object):
         '~': 'indirect_adjacent',
         }
 
-    def __init__(self, selector, combinator, subselector):
+    def __init__(self, selector, combinator, subselector, options):
         assert selector is not None
         self.selector = selector
         self.combinator = combinator
         self.subselector = subselector
+        self.options = options
 
     def __repr__(self):
         if self.combinator == ' ':
@@ -553,7 +569,7 @@ _el_re = re.compile(r'^\w+\s*$', re.UNICODE)
 _id_re = re.compile(r'^(\w*)#(\w+)\s*$', re.UNICODE)
 _class_re = re.compile(r'^(\w*)\.(\w+)\s*$', re.UNICODE)
 
-def css_to_xpath(css_expr, prefix='descendant-or-self::'):
+def css_to_xpath(css_expr, prefix='descendant-or-self::', regex_prefix=default_regex_prefix):
     if isinstance(css_expr, _basestring):
         match = _el_re.search(css_expr)
         if match is not None:
@@ -566,7 +582,8 @@ def css_to_xpath(css_expr, prefix='descendant-or-self::'):
         if match is not None:
             return "%s%s[@class and contains(concat(' ', normalize-space(@class), ' '), ' %s ')]" % (
                 prefix, match.group(1) or '*', match.group(2))
-        css_expr = parse(css_expr)
+        options = dict(regex_prefix=regex_prefix)
+        css_expr = parse(css_expr, options)
     expr = css_expr.xpath()
     assert expr is not None, (
         "Got None for xpath expression from %s" % repr(css_expr))
@@ -687,11 +704,13 @@ def xpath_literal(s):
 ##############################
 ## Parsing functions
 
-def parse(string):
+def parse(string, options=None):
+    if options is None:
+        options = {}
     stream = TokenStream(tokenize(string))
     stream.source = string
     try:
-        return parse_selector_group(stream)
+        return parse_selector_group(stream, options)
     except SelectorSyntaxError:
         import sys
         e = sys.exc_info()[1]
@@ -703,10 +722,10 @@ def parse(string):
         e.args = tuple([message])
         raise
 
-def parse_selector_group(stream):
+def parse_selector_group(stream, options):
     result = []
     while 1:
-        result.append(parse_selector(stream))
+        result.append(parse_selector(stream, options))
         if stream.peek() == ',':
             stream.next()
         else:
@@ -714,10 +733,10 @@ def parse_selector_group(stream):
     if len(result) == 1:
         return result[0]
     else:
-        return Or(result)
+        return Or(result, options)
 
-def parse_selector(stream):
-    result = parse_simple_selector(stream)
+def parse_selector(stream, options):
+    result = parse_simple_selector(stream, options)
     while 1:
         peek = stream.peek()
         if peek == ',' or peek is None:
@@ -731,14 +750,14 @@ def parse_selector(stream):
         else:
             combinator = ' '
         consumed = len(stream.used)
-        next_selector = parse_simple_selector(stream)
+        next_selector = parse_simple_selector(stream, options)
         if consumed == len(stream.used):
             raise SelectorSyntaxError(
                 "Expected selector, got '%s'" % stream.peek())
-        result = CombinedSelector(result, combinator, next_selector)
+        result = CombinedSelector(result, combinator, next_selector, options)
     return result
 
-def parse_simple_selector(stream):
+def parse_simple_selector(stream, options):
     peek = stream.peek()
     if peek != '*' and not isinstance(peek, Symbol):
         element = namespace = '*'
@@ -757,7 +776,7 @@ def parse_simple_selector(stream):
         else:
             namespace = '*'
             element = next
-    result = Element(namespace, element)
+    result = Element(namespace, element, options)
     has_hash = False
     while 1:
         peek = stream.peek()
@@ -767,16 +786,16 @@ def parse_simple_selector(stream):
                 # (FIXME: is there some more general rule I'm missing?)
                 break
             stream.next()
-            result = Hash(result, stream.next())
+            result = Hash(result, stream.next(), options)
             has_hash = True
             continue
         elif peek == '.':
             stream.next()
-            result = Class(result, stream.next())
+            result = Class(result, stream.next(), options)
             continue
         elif peek == '[':
             stream.next()
-            result = parse_attrib(result, stream)
+            result = parse_attrib(result, stream, options)
             next = stream.next()
             if not next == ']':
                 raise SelectorSyntaxError(
@@ -797,15 +816,15 @@ def parse_simple_selector(stream):
                     selector = int(stream.next())
                 else:
                     # FIXME: parse_simple_selector, or selector, or...?
-                    selector = parse_simple_selector(stream)
+                    selector = parse_simple_selector(stream, options)
                 next = stream.next()
                 if not next == ')':
                     raise SelectorSyntaxError(
                         "Expected ')', got '%s' and '%s'"
                         % (next, selector))
-                result = Function(result, type, ident, selector)
+                result = Function(result, type, ident, selector, options)
             else:
-                result = Pseudo(result, type, ident)
+                result = Pseudo(result, type, ident, options)
             continue
         else:
             if peek == ' ':
@@ -822,7 +841,7 @@ def is_int(v):
     else:
         return True
 
-def parse_attrib(selector, stream):
+def parse_attrib(selector, stream, options):
     attrib = stream.next()
     if stream.peek() == '|':
         namespace = attrib
@@ -831,7 +850,7 @@ def parse_attrib(selector, stream):
     else:
         namespace = '*'
     if stream.peek() == ']':
-        return Attrib(selector, namespace, attrib, 'exists', None)
+        return Attrib(selector, namespace, attrib, 'exists', None, options)
     op = stream.next()
     if not op in ('^=', '$=', '*=', '=', '~=', '|=', '!='):
         raise SelectorSyntaxError(
@@ -840,7 +859,7 @@ def parse_attrib(selector, stream):
     if not isinstance(value, (Symbol, String)):
         raise SelectorSyntaxError(
             "Expected string or symbol, got '%s'" % value)
-    return Attrib(selector, namespace, attrib, op, value)
+    return Attrib(selector, namespace, attrib, op, value, options)
 
 def parse_series(s):
     """
