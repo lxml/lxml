@@ -24,7 +24,7 @@ class CSSTestCase(HelperTestCase):
         ## Changed from original, because the original doesn't make sense.
         ## There really aren't that many occurrances of 'celia'
         #('div:contains(CELIA)', 243),
-        ('div:contains(CELIA)', 30),
+        ('div:contains(CELIA)', 26),
         ('div:nth-child(even)', 106),
         ('div:nth-child(2n)', 106),
         ('div:nth-child(odd)', 137),

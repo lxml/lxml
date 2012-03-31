@@ -129,7 +129,7 @@ Now, the tests:
     empty
     >>> pcss('*:contains("link")')
     html, nil, outer-div, tag-anchor, nofollow-anchor
-    >>> pcss('*:contains("E")')
+    >>> pcss('*:contains("e")')
     html, nil, outer-div, first-ol, first-li, paragraph, p-em
     >>> pcss('.a', '.b', '*.a', 'ol.a')
     first-ol
