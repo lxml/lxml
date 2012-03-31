@@ -164,6 +164,11 @@ class Test_fragment_fromstring(unittest.TestCase):
         self.assertEqual(elem.text, 'head')
         self.assertEqual(elem[0].tag, 'child')
 
+    def test_create_parent_default_type(self):
+        parser = DummyParser(fragments=[])
+        elem = self.call_it('html', parser=parser, create_parent=True)
+        self.assertEqual(elem.tag, xhtml_tag('div'))
+
     def test_create_parent_default_type_no_ns(self):
         parser = DummyParser(fragments=[], namespaceHTMLElements=False)
         elem = self.call_it('html', parser=parser, create_parent=True)
@@ -233,12 +238,24 @@ class Test_fromstring(unittest.TestCase):
         parser = DummyParser(root=root)
         self.assertEqual(self.call_it('', parser=parser), body)
 
+    def test_wraps_multiple_fragments_in_div(self):
+        E = HTMLElementMaker()
+        parser = DummyParser(root=E.html(E.head(), E.body(E.h1(), E.p())))
+        elem = self.call_it('', parser=parser)
+        self.assertEqual(elem.tag, xhtml_tag('div'))
+
     def test_wraps_multiple_fragments_in_div_no_ns(self):
         E = HTMLElementMaker(namespaceHTMLElements=False)
         parser = DummyParser(root=E.html(E.head(), E.body(E.h1(), E.p())),
                              namespaceHTMLElements=False)
         elem = self.call_it('', parser=parser)
         self.assertEqual(elem.tag, 'div')
+
+    def test_wraps_multiple_fragments_in_span(self):
+        E = HTMLElementMaker()
+        parser = DummyParser(root=E.html(E.head(), E.body('foo', E.a('link'))))
+        elem = self.call_it('', parser=parser)
+        self.assertEqual(elem.tag, xhtml_tag('span'))
 
     def test_wraps_multiple_fragments_in_span_no_ns(self):
         E = HTMLElementMaker(namespaceHTMLElements=False)

@@ -110,7 +110,7 @@ def fragment_fromstring(html, create_parent=False,
 
     if create_parent:
         if not isinstance(create_parent, _strings):
-            create_parent = 'div'
+            create_parent = _ns_prefix(parser) + 'div'
         new_root = Element(create_parent)
         if elements:
             if isinstance(elements[0], _strings):
@@ -166,11 +166,20 @@ def fromstring(html, guess_charset=True, parser=None):
     # content that was passed in.  We will create a fake container, which
     # is the body tag, except <body> implies too much structure.
     if _contains_block_level_tag(body):
-        body.tag = 'div'
+        body.tag = _ns_prefix(parser) + 'div'
     else:
-        body.tag = 'span'
+        body.tag = _ns_prefix(parser) + 'span'
     return body
 
+def _ns_prefix(parser):
+    try:
+        use_ns = bool(parser.tree.namespaceHTMLElements)
+    except AttributeError:
+        use_ns = True
+    if use_ns:
+        return '{%s}' % XHTML_NAMESPACE
+    else:
+        return ''
 
 def parse(filename_url_or_file, guess_charset=True, parser=None):
     """Parse a filename, URL, or file-like object into an HTML document
