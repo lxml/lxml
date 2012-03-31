@@ -240,7 +240,7 @@ class Function(object):
         # text content, minus tags, must contain expr
         if isinstance(expr, Element):
             expr = expr._format_element()
-        xpath.add_condition('contains(css:lower-case(string(.)), %s)'
+        xpath.add_condition('contains(lxml_cssselect:lower-case(string(.)), %s)'
                             % xpath_literal(expr.lower()))
         # FIXME: Currently case insensitive matching doesn't seem to be happening
         return xpath
@@ -257,7 +257,7 @@ def _make_lower_case(context, s):
     return s.lower()
 
 ns = etree.FunctionNamespace('http://codespeak.net/lxml/css/')
-ns.prefix = 'css'
+ns.prefix = 'lxml_cssselect'
 ns['lower-case'] = _make_lower_case
 
 class Pseudo(object):
