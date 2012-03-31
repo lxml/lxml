@@ -20,7 +20,7 @@ from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
 from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
 from common_imports import _str, _bytes, unicode
 
-if cElementTree is not None and CET_VERSION <= (1,0,7):
+if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info >= (3,3)):
     cElementTree = None
 
 if ElementTree is not None:
