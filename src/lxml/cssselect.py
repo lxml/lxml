@@ -709,6 +709,9 @@ def parse_selector_group(stream):
         result.append(parse_selector(stream))
         if stream.peek() == ',':
             stream.next()
+            # Ignore optional whitespace after a group separator
+            while stream.peek() == ' ':
+                stream.next()
         else:
             break
     if len(result) == 1:
