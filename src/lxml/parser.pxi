@@ -634,8 +634,8 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         if context._validator is not None and \
                 not context._validator.isvalid():
             well_formed = 0 # actually not 'valid', but anyway ...
-        elif recover or (c_ctxt.wellFormed and \
-                             c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
+        elif recover or (c_ctxt.wellFormed and
+                         c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
             well_formed = 1
         elif not c_ctxt.replaceEntities and not c_ctxt.validate \
                  and context is not None:
