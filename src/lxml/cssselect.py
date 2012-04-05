@@ -710,7 +710,7 @@ def parse_selector_group(stream):
         if stream.peek() == ',':
             stream.next()
             # Ignore optional whitespace after a group separator
-            while stream.peek() == ' ':
+            if stream.peek() == ' ':
                 stream.next()
         else:
             break
@@ -729,7 +729,7 @@ def parse_selector(stream):
             # A combinator
             combinator = stream.next()
             # Ignore optional whitespace after a combinator
-            while stream.peek() == ' ':
+            if stream.peek() == ' ':
                 stream.next()
         else:
             combinator = ' '
