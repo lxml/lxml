@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* DTD objects gained an API that allows read access to their
+  declarations.
+
 * ``xpathgrep.py`` gained support for parsing line-by-line (e.g.
   from grep output) and for surrounding the output with a new root
   tag.
