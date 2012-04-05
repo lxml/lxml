@@ -281,7 +281,7 @@ cdef class _XSLTContext(_BaseContext):
         self._xsltCtxt = NULL
         self._extension_elements = EMPTY_DICT
 
-    def __init__(self, namespaces, extensions, enable_regexp,
+    def __init__(self, namespaces, extensions, error_log, enable_regexp,
                  build_smart_strings):
         if extensions is not None and extensions:
             for ns_name_tuple, extension in extensions.items():
@@ -296,7 +296,7 @@ cdef class _XSLTContext(_BaseContext):
                     name_utf = _utf8(ns_name_tuple[1])
                     self._extension_elements[(ns_utf, name_utf)] = extension
                     del extensions[ns_name_tuple]
-        _BaseContext.__init__(self, namespaces, extensions, enable_regexp,
+        _BaseContext.__init__(self, namespaces, extensions, error_log, enable_regexp,
                               build_smart_strings)
 
     cdef _BaseContext _copy(self):
@@ -420,7 +420,7 @@ cdef class XSLT:
 
         c_doc._private = NULL # no longer used!
         self._c_style = c_style
-        self._context = _XSLTContext(None, extensions, regexp, True)
+        self._context = _XSLTContext(None, extensions, self._error_log, regexp, True)
 
     def __dealloc__(self):
         if self._xslt_resolver_context is not None and \

@@ -36,7 +36,6 @@ cdef void connectErrorLog(void* log):
     xmlerror.xmlSetStructuredErrorFunc(log, _receiveError)
     xslt.xsltSetGenericErrorFunc(log, _receiveXSLTError)
 
-
 # Logging classes
 
 cdef class _LogEntry:
@@ -61,24 +60,27 @@ cdef class _LogEntry:
     cdef readonly object filename
 
     cdef _setError(self, xmlerror.xmlError* error):
-        cdef int size
+        cdef size_t size
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
         self.line     = error.line
         self.column   = error.int2
-        size = cstring_h.strlen(error.message)
-        if size > 0 and error.message[size-1] == c'\n':
-            size = size - 1 # strip EOL
-        try:
-            self.message = python.PyUnicode_DecodeUTF8(
-                error.message, size, NULL)
-        except:
+        if error.message is NULL:
+            self.message = "unknown error"
+        else:
+            size = cstring_h.strlen(error.message)
+            if size > 0 and error.message[size-1] == c'\n':
+                size -= 1 # strip EOL
             try:
-                self.message = python.PyUnicode_DecodeASCII(
-                    error.message, size, 'backslashreplace')
+                self.message = python.PyUnicode_DecodeUTF8(
+                    error.message, size, NULL)
             except:
-                self.message = u'<undecodable error message>'
+                try:
+                    self.message = python.PyUnicode_DecodeASCII(
+                        error.message, size, 'backslashreplace')
+                except:
+                    self.message = '<undecodable error message>'
         if error.file is NULL:
             self.filename = u'<string>'
         else:

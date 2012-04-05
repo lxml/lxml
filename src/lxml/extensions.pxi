@@ -43,10 +43,12 @@ cdef class _BaseContext:
     cdef _TempStore _temp_refs
     cdef set _temp_documents
     cdef _ExceptionContext _exc
+    cdef _ErrorLog _error_log
+
     def __cinit__(self):
         self._xpathCtxt = NULL
 
-    def __init__(self, namespaces, extensions, enable_regexp,
+    def __init__(self, namespaces, extensions, error_log, enable_regexp,
                  build_smart_strings):
         cdef _ExsltRegExp _regexp 
         cdef dict new_extensions
@@ -55,6 +57,7 @@ cdef class _BaseContext:
         self._global_namespaces = []
         self._function_cache = {}
         self._eval_context_dict = None
+        self._error_log = error_log
 
         if extensions is not None:
             # convert extensions to UTF-8
@@ -108,7 +111,7 @@ cdef class _BaseContext:
             namespaces = self._namespaces[:]
         else:
             namespaces = None
-        context = self.__class__(namespaces, None, False,
+        context = self.__class__(namespaces, None, self._error_log, False,
                                  self._build_smart_strings)
         if self._extensions is not None:
             context._extensions = self._extensions.copy()
@@ -129,11 +132,14 @@ cdef class _BaseContext:
     cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._xpathCtxt = xpathCtxt
         xpathCtxt.userData = <void*>self
+        xpathCtxt.error = _receiveXPathError
 
+    @cython.final
     cdef _register_context(self, _Document doc):
         self._doc = doc
         self._exc.clear()
 
+    @cython.final
     cdef _cleanup_context(self):
         #xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
         #self.unregisterGlobalNamespaces()
@@ -141,6 +147,7 @@ cdef class _BaseContext:
         self._eval_context_dict = None
         self._doc = None
 
+    @cython.final
     cdef _release_context(self):
         if self._xpathCtxt is not NULL:
             self._xpathCtxt.userData = NULL
@@ -348,6 +355,66 @@ cdef class _BaseContext:
             if doc is not None and doc._c_doc is c_node.doc:
                 return doc
         return None
+
+
+# libxml2 keeps these error messages in a static array in its code
+# and doesn't give us access to them ...
+
+cdef list LIBXML2_XPATH_ERROR_MESSAGES = [
+    b"Ok",
+    b"Number encoding",
+    b"Unfinished literal",
+    b"Start of literal",
+    b"Expected $ for variable reference",
+    b"Undefined variable",
+    b"Invalid predicate",
+    b"Invalid expression",
+    b"Missing closing curly brace",
+    b"Unregistered function",
+    b"Invalid operand",
+    b"Invalid type",
+    b"Invalid number of arguments",
+    b"Invalid context size",
+    b"Invalid context position",
+    b"Memory allocation error",
+    b"Syntax error",
+    b"Resource error",
+    b"Sub resource error",
+    b"Undefined namespace prefix",
+    b"Encoding error",
+    b"Char out of XML range",
+    b"Invalid or incomplete context",
+    b"Stack usage error",
+    ]
+
+cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) with gil:
+    cdef xmlerror.xmlError error
+    cdef int xpath_code
+    if c_error.message is not NULL:
+        error.message = c_error.message
+    else:
+        xpath_code = c_error.code - xmlerror.XML_XPATH_EXPRESSION_OK
+        if 0 <= xpath_code < len(LIBXML2_XPATH_ERROR_MESSAGES):
+            error.message = _cstr(LIBXML2_XPATH_ERROR_MESSAGES[xpath_code])
+        else:
+            error.message = b"unknown error"
+    error.domain = c_error.domain
+    error.code = c_error.code
+    error.level = c_error.level
+    error.line = c_error.line
+    error.int2 = c_error.int1 # column
+    error.file = c_error.file
+
+    (<_BaseContext>c_ctxt)._error_log._receive(&error)
+
+cdef void _receiveXPathError(void* c_context, xmlerror.xmlError* error) nogil:
+    if not __DEBUG:
+        return
+    if c_context is NULL:
+        _forwardError(NULL, error)
+    else:
+        _forwardXPathError(c_context, error)
+
 
 def Extension(module, function_mapping=None, *, ns=None):
     u"""Extension(module, function_mapping=None, ns=None)

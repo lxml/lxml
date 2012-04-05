@@ -58,8 +58,7 @@ cdef extern from "libxml/xpath.h":
         tree.xmlHashTable* nsHash
         char* function
         char* functionURI
-        # actually signature is void (*error)(void*, xmlError*)
-        void* error
+        xmlerror.xmlStructuredErrorFunc error
         xmlerror.xmlError lastError
         void* userData
 

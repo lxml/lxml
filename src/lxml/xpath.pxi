@@ -51,10 +51,10 @@ cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
 @cython.internal
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
-    def __init__(self, namespaces, extensions, enable_regexp, variables,
+    def __init__(self, namespaces, extensions, error_log, enable_regexp, variables,
                  build_smart_strings):
         self._variables = variables
-        _BaseContext.__init__(self, namespaces, extensions, enable_regexp,
+        _BaseContext.__init__(self, namespaces, extensions, error_log, enable_regexp,
                               build_smart_strings)
 
     cdef set_context(self, xpath.xmlXPathContext* xpathCtxt):
@@ -145,9 +145,8 @@ cdef class _XPathEvaluatorBase:
             import warnings
             warnings.warn(u"This version of libxml2 has a known XPath bug. "
                           u"Use it at your own risk.")
-        self._context = _XPathContext(namespaces, extensions,
-                                      enable_regexp, None,
-                                      smart_strings)
+        self._context = _XPathContext(namespaces, extensions, self._error_log,
+                                      enable_regexp, None, smart_strings)
 
     property error_log:
         def __get__(self):
@@ -190,6 +189,7 @@ cdef class _XPathEvaluatorBase:
             c = path[0]
         return c == c'/'
 
+    @cython.final
     cdef int _lock(self) except -1:
         cdef int result
         if config.ENABLE_THREADING and self._eval_lock != NULL:
@@ -200,6 +200,7 @@ cdef class _XPathEvaluatorBase:
                 raise XPathError, u"XPath evaluator locking failed"
         return 0
 
+    @cython.final
     cdef void _unlock(self):
         if config.ENABLE_THREADING and self._eval_lock != NULL:
             python.PyThread_release_lock(self._eval_lock)
@@ -311,7 +312,6 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         doc = self._element._doc
 
         self._lock()
-        self._error_log.connect()
         self._xpathCtxt.node = self._element._c_node
         try:
             self._context.register_context(doc)
@@ -322,7 +322,6 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
                     c_path, self._xpathCtxt)
             result = self._handle_result(xpathObj, doc)
         finally:
-            self._error_log.disconnect()
             self._context.unregister_context()
             self._unlock()
 
@@ -363,7 +362,6 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         doc = self._element._doc
 
         self._lock()
-        self._error_log.connect()
         try:
             self._context.register_context(doc)
             c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)
@@ -380,7 +378,6 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
                 _destroyFakeDoc(doc._c_doc, c_doc)
                 self._context.unregister_context()
         finally:
-            self._error_log.disconnect()
             self._unlock()
 
         return result
@@ -438,9 +435,7 @@ cdef class XPath(_XPathEvaluatorBase):
         if xpathCtxt is NULL:
             raise MemoryError()
         self.set_context(xpathCtxt)
-        self._error_log.connect()
         self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(self._path))
-        self._error_log.disconnect()
         if self._xpath is NULL:
             self._raise_parse_error()
 
@@ -455,7 +450,6 @@ cdef class XPath(_XPathEvaluatorBase):
         element  = _rootNodeOrRaise(_etree_or_element)
 
         self._lock()
-        self._error_log.connect()
         self._xpathCtxt.doc  = document._c_doc
         self._xpathCtxt.node = element._c_node
 
@@ -467,7 +461,6 @@ cdef class XPath(_XPathEvaluatorBase):
                     self._xpath, self._xpathCtxt)
             result = self._handle_result(xpathObj, document)
         finally:
-            self._error_log.disconnect()
             self._context.unregister_context()
             self._unlock()
         return result
