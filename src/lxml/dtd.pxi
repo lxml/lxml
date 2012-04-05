@@ -302,18 +302,18 @@ cdef class DTD(_Validator):
 
     property name:
        def __get__(self):
-          return funicode(self._c_dtd.name) if self._c_dtd.name is not NULL else None
+          return funicode(self._c_dtd.name) if (self._c_dtd is not NULL and self._c_dtd.name is not NULL) else None
 
     property external_id:
        def __get__(self):
-          return funicode(self._c_dtd.ExternalID) if self._c_dtd.ExternalID is not NULL else None
+          return funicode(self._c_dtd.ExternalID) if (self._c_dtd is not NULL and self._c_dtd.ExternalID is not NULL) else None
 
     property system_url:
        def __get__(self):
-          return funicode(self._c_dtd.SystemID) if self._c_dtd.SystemID is not NULL else None
+          return funicode(self._c_dtd.SystemID) if (self._c_dtd is not NULL and self._c_dtd.SystemID is not NULL) else None
 
     def iterelements(self):
-        cdef tree.xmlNode *c_node = self._c_dtd.children
+        cdef tree.xmlNode *c_node = self._c_dtd.children if self._c_dtd is not NULL else NULL
         while c_node is not NULL:
             if c_node.type == tree.XML_ELEMENT_DECL:
                 node = _DTDElementDecl()
@@ -326,7 +326,7 @@ cdef class DTD(_Validator):
         return list(self.iterelements())
 
     def iterentities(self):
-        cdef tree.xmlNode *c_node = self._c_dtd.children
+        cdef tree.xmlNode *c_node = self._c_dtd.children if self._c_dtd is not NULL else NULL
         while c_node is not NULL:
             if c_node.type == tree.XML_ENTITY_DECL:
                 node = _DTDEntityDecl()
