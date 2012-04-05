@@ -157,15 +157,17 @@ cdef class Schematron(_Validator):
         if valid_ctxt is NULL:
             return python.PyErr_NoMemory()
 
-        self._error_log.connect()
         if _LIBXML_VERSION_INT >= 20632:
             schematron.xmlSchematronSetValidStructuredErrors(
                 valid_ctxt, _receiveError, <void*>self._error_log)
+        else:
+            self._error_log.connect()
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
         _destroyFakeDoc(doc._c_doc, c_doc)
-        self._error_log.disconnect()
+        if _LIBXML_VERSION_INT < 20632:
+            self._error_log.disconnect()
 
         schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
