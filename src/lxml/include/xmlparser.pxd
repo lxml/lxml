@@ -1,6 +1,6 @@
 from tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from xmlerror cimport xmlError
+from xmlerror cimport xmlError, xmlStructuredErrorFunc
 
 
 cdef extern from "libxml/parser.h":
@@ -73,6 +73,8 @@ cdef extern from "libxml/tree.h":
         startDocumentSAXFunc            startDocument
         endDocumentSAXFunc              endDocument
         int                             initialized
+        xmlStructuredErrorFunc          serror
+        void*                           _private
 
 cdef extern from "libxml/xmlIO.h":
     cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc) nogil

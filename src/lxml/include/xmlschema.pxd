@@ -1,5 +1,6 @@
-from xmlparser cimport xmlSAXHandler
 from tree cimport xmlDoc
+from xmlparser cimport xmlSAXHandler
+from xmlerror cimport xmlStructuredErrorFunc
 
 cdef extern from "libxml/xmlschemas.h":
     ctypedef struct xmlSchema
@@ -12,6 +13,11 @@ cdef extern from "libxml/xmlschemas.h":
         XML_SCHEMA_VAL_VC_I_CREATE = 1
 
     cdef xmlSchemaValidCtxt* xmlSchemaNewValidCtxt(xmlSchema* schema) nogil
+    cdef void xmlSchemaSetParserStructuredErrors(xmlSchemaParserCtxt* ctxt,
+        xmlStructuredErrorFunc serror, void *ctx)
+    cdef void xmlSchemaSetValidStructuredErrors(xmlSchemaValidCtxt* ctxt,
+        xmlStructuredErrorFunc serror, void *ctx)
+
     cdef int xmlSchemaValidateDoc(xmlSchemaValidCtxt* ctxt, xmlDoc* doc) nogil
     cdef xmlSchema* xmlSchemaParse(xmlSchemaParserCtxt* ctxt) nogil
     cdef xmlSchemaParserCtxt* xmlSchemaNewParserCtxt(char* URL) nogil

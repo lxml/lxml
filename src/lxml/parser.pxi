@@ -543,9 +543,10 @@ cdef class _ParserContext(_ResolverContext):
                     self._lock, python.WAIT_LOCK)
             if result == 0:
                 raise ParserError, u"parser locking failed"
-        self._error_log.connect()
+        self._error_log.clear()
+        self._c_ctxt.sax.serror = _receiveParserError
         if self._validator is not None:
-            self._validator.connect(self._c_ctxt)
+            self._validator.connect(self._c_ctxt, self._error_log)
         return 0
 
     cdef int cleanup(self) except -1:
@@ -553,7 +554,7 @@ cdef class _ParserContext(_ResolverContext):
             self._validator.disconnect()
         self._resetParserContext()
         self.clear()
-        self._error_log.disconnect()
+        self._c_ctxt.sax.serror = NULL
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_release_lock(self._lock)
         return 0
@@ -580,6 +581,16 @@ cdef _initParserContext(_ParserContext context,
     _initResolverContext(context, resolvers)
     if c_ctxt is not NULL:
         context._initParserContext(c_ctxt)
+
+cdef void _forwardParserError(xmlparser.xmlParserCtxt* _parser_context, xmlerror.xmlError* error) with gil:
+    (<_ParserContext>_parser_context._private)._error_log._receive(error)
+
+cdef void _receiveParserError(void* c_context, xmlerror.xmlError* error) nogil:
+    if __DEBUG:
+        if c_context is NULL or (<xmlparser.xmlParserCtxt*>c_context)._private is NULL:
+            _forwardError(NULL, error)
+        else:
+            _forwardParserError(<xmlparser.xmlParserCtxt*>c_context, error)
 
 cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
@@ -800,23 +811,41 @@ cdef class _BaseParser:
         context._setTarget(target)
         return context
 
+    cdef int _registerHtmlErrorHandler(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
+        cdef xmlparser.xmlSAXHandler* sax = c_ctxt.sax
+        if sax is not NULL and sax.initialized and sax.initialized != xmlparser.XML_SAX2_MAGIC:
+            # need to extend SAX1 context to SAX2 to get proper error reports
+            if sax is &htmlparser.htmlDefaultSAXHandler:
+                sax = <xmlparser.xmlSAXHandler*> stdlib.malloc(sizeof(xmlparser.xmlSAXHandler))
+                if sax is NULL:
+                    raise MemoryError()
+                cstring_h.memcpy(sax, &htmlparser.htmlDefaultSAXHandler,
+                                 sizeof(htmlparser.htmlDefaultSAXHandler))
+                c_ctxt.sax = sax
+            sax.initialized = xmlparser.XML_SAX2_MAGIC
+            sax.serror = _receiveParserError
+            sax.startElementNs = NULL
+            sax.endElementNs = NULL
+            sax._private = NULL
+        return 0
+
     cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
+        cdef xmlparser.xmlParserCtxt* c_ctxt
         if self._for_html:
-            return htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
+            c_ctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
+            self._registerHtmlErrorHandler(c_ctxt)
         else:
-            return xmlparser.xmlNewParserCtxt()
+            c_ctxt = xmlparser.xmlNewParserCtxt()
+        return c_ctxt
 
     cdef xmlparser.xmlParserCtxt* _newPushParserCtxt(self):
         cdef xmlparser.xmlParserCtxt* c_ctxt
-        cdef char* c_filename
-        if self._filename is not None:
-            c_filename = _cstr(self._filename)
-        else:
-            c_filename = NULL
+        cdef char* c_filename = _cstr(self._filename) if self._filename is not None else NULL
         if self._for_html:
             c_ctxt = htmlparser.htmlCreatePushParserCtxt(
                 NULL, NULL, NULL, 0, c_filename, tree.XML_CHAR_ENCODING_NONE)
             if c_ctxt is not NULL:
+                self._registerHtmlErrorHandler(c_ctxt)
                 htmlparser.htmlCtxtUseOptions(c_ctxt, self._parse_options)
         else:
             c_ctxt = xmlparser.xmlCreatePushParserCtxt(

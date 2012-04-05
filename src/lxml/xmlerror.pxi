@@ -331,15 +331,16 @@ cdef class _ErrorLog(_ListErrorLog):
     def __init__(self):
         _ListErrorLog.__init__(self, [], None, None)
 
-    cdef void connect(self):
+    cdef int connect(self) except -1:
         self._first_error = None
         del self._entries[:]
         connectErrorLog(<void*>self)
+        return 0
 
     cdef void disconnect(self):
         connectErrorLog(NULL)
 
-    def clear(self):
+    cpdef clear(self):
         self._first_error = None
         del self._entries[:]
 
@@ -511,13 +512,11 @@ cdef void _forwardError(void* c_log_handler, xmlerror.xmlError* error) with gil:
 
 cdef void _receiveError(void* c_log_handler, xmlerror.xmlError* error) nogil:
     # no Python objects here, may be called without thread context !
-    # when we declare a Python object, Pyrex will INCREF(None) !
     if __DEBUG:
         _forwardError(c_log_handler, error)
 
 cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     # no Python objects here, may be called without thread context !
-    # when we declare a Python object, Pyrex will INCREF(None) !
     cdef xmlerror.xmlError c_error
     cdef cvarargs.va_list args
     cdef char* c_text

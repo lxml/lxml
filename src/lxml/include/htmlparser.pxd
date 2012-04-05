@@ -14,6 +14,8 @@ cdef extern from "libxml/HTMLparser.h":
         HTML_PARSE_RECOVER    # Relaxed parsing
         HTML_PARSE_COMPACT    # compact small text nodes
 
+    xmlSAXHandler htmlDefaultSAXHandler
+
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(
         char* buffer, int size) nogil
     cdef xmlParserCtxt* htmlCreateFileParserCtxt(
