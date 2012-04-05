@@ -1,5 +1,6 @@
 cimport tree
 from tree cimport xmlDoc
+from xmlerror cimport xmlStructuredErrorFunc
 
 cdef extern from "libxml/relaxng.h":
     ctypedef struct xmlRelaxNG
@@ -57,3 +58,8 @@ cdef extern from "libxml/relaxng.h":
     cdef void xmlRelaxNGFree(xmlRelaxNG* schema) nogil
     cdef void xmlRelaxNGFreeParserCtxt(xmlRelaxNGParserCtxt* ctxt) nogil
     cdef void xmlRelaxNGFreeValidCtxt(xmlRelaxNGValidCtxt* ctxt) nogil
+
+    cdef void xmlRelaxNGSetValidStructuredErrors(
+        xmlRelaxNGValidCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx) nogil
+    cdef void xmlRelaxNGSetParserStructuredErrors(
+        xmlRelaxNGParserCtxt* ctxt, xmlStructuredErrorFunc serror, void *ctx) nogil

@@ -65,17 +65,19 @@ cdef class RelaxNG(_Validator):
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
             raise RelaxNGParseError, u"No tree or file given"
+        self._error_log.disconnect()
 
         if parser_ctxt is NULL:
-            self._error_log.disconnect()
             if fake_c_doc is not NULL:
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
                     u"Document is not parsable as Relax NG"),
                 self._error_log)
+
+        relaxng.xmlRelaxNGSetParserStructuredErrors(
+            parser_ctxt, _receiveError, <void*>self._error_log)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
-        self._error_log.disconnect()
 
         if _LIBXML_VERSION_INT >= 20624:
             relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
@@ -110,12 +112,12 @@ cdef class RelaxNG(_Validator):
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
-        self._error_log.connect()
         valid_ctxt = relaxng.xmlRelaxNGNewValidCtxt(self._c_schema)
         if valid_ctxt is NULL:
-            self._error_log.disconnect()
-            python.PyErr_NoMemory()
+            raise MemoryError()
 
+        relaxng.xmlRelaxNGSetValidStructuredErrors(
+            valid_ctxt, _receiveError, <void*>self._error_log)
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
         with nogil:
             ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
@@ -123,7 +125,6 @@ cdef class RelaxNG(_Validator):
 
         relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 
-        self._error_log.disconnect()
         if ret == -1:
             raise RelaxNGValidateError(
                 u"Internal error in Relax NG validation",
