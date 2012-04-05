@@ -358,16 +358,13 @@ cdef class DTD(_Validator):
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
-        self._error_log.connect()
         valid_ctxt = dtdvalid.xmlNewValidCtxt()
         if valid_ctxt is NULL:
-            self._error_log.disconnect()
-            raise DTDError(u"Failed to create validation context",
-                           self._error_log)
+            raise DTDError(u"Failed to create validation context")
 
+        self._error_log.connect()
         c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        with nogil:
-            ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
+        ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
         _destroyFakeDoc(doc._c_doc, c_doc)
 
         dtdvalid.xmlFreeValidCtxt(valid_ctxt)
