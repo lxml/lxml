@@ -126,6 +126,57 @@ class ETreeDtdTestCase(HelperTestCase):
             ["valueA", "valueB"],
             attributes)
 
+    def test_dtd_attrs(self):
+        dtd = etree.DTD(fileInTestDir("test.dtd"))
+
+        # Test DTD.system_url attribute
+        self.assert_(dtd.system_url.endswith("test.dtd"))
+
+        # Test elements and their attributes
+        a = dtd.elements()[0]
+        self.assertEqual(a.name, "a")
+        self.assertEqual(a.type, "element")
+        self.assertEqual(a.content.name, "b")
+        self.assertEqual(a.content.type, "element")
+        self.assertEqual(a.content.occur, "once")
+
+        aattr = a.attributes()[0]
+        self.assertEqual(aattr.name, "default")
+        self.assertEqual(aattr.type, "enumeration")
+        self.assertEqual(aattr.values(), ["valueA", "valueB"])
+        self.assertEqual(aattr.default_value, "valueA")
+
+        b = dtd.elements()[1]
+        self.assertEqual(b.name, "b")
+        self.assertEqual(b.type, "empty")
+        self.assertEqual(b.content, None)
+
+        # Test entities and their attributes
+        c = dtd.entities()[0]
+        self.assertEqual(c.name, "c")
+        self.assertEqual(c.orig, "&#42;")
+        self.assertEqual(c.content, "*")
+
+        # Test DTD.name attribute
+        root = etree.XML(_bytes('''
+        <!DOCTYPE a SYSTEM "none" [
+        <!ELEMENT a EMPTY>
+        ]>
+        <a/>
+        '''))
+        dtd = etree.ElementTree(root).docinfo.internalDTD
+        self.assertEqual(dtd.name, "a")
+
+        # Test DTD.name and DTD.systemID attributes
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
+        root = etree.fromstring(xml, parser=parser,
+                                base_url=fileInTestDir("test.xml"))
+
+        dtd = root.getroottree().docinfo.internalDTD
+        self.assertEqual(dtd.name, "a")
+        self.assertEqual(dtd.system_url, "test.dtd")
+
 
 def test_suite():
     suite = unittest.TestSuite()

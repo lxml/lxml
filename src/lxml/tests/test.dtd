@@ -7,3 +7,5 @@
 <!ATTLIST b
     default (valueA|valueB) "valueB"
 >
+
+<!ENTITY c "&#42;">

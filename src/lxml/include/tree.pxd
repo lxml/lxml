@@ -86,7 +86,52 @@ cdef extern from "libxml/tree.h":
         XML_NAMESPACE_DECL=         18
         XML_XINCLUDE_START=         19
         XML_XINCLUDE_END=           20
+
+    ctypedef enum xmlElementTypeVal:
+        XML_ELEMENT_TYPE_UNDEFINED= 0
+        XML_ELEMENT_TYPE_EMPTY=     1
+        XML_ELEMENT_TYPE_ANY=       2
+        XML_ELEMENT_TYPE_MIXED=     3
+        XML_ELEMENT_TYPE_ELEMENT=   4
+
+    ctypedef enum xmlElementContentType:
+        XML_ELEMENT_CONTENT_PCDATA=  1
+        XML_ELEMENT_CONTENT_ELEMENT= 2
+        XML_ELEMENT_CONTENT_SEQ=     3
+        XML_ELEMENT_CONTENT_OR=      4
+
+    ctypedef enum xmlElementContentOccur:
+        XML_ELEMENT_CONTENT_ONCE= 1
+        XML_ELEMENT_CONTENT_OPT=  2
+        XML_ELEMENT_CONTENT_MULT= 3
+        XML_ELEMENT_CONTENT_PLUS= 4
+
+    ctypedef enum xmlAttributeType:
+        XML_ATTRIBUTE_CDATA =      1
+        XML_ATTRIBUTE_ID=          2
+        XML_ATTRIBUTE_IDREF=       3
+        XML_ATTRIBUTE_IDREFS=      4
+        XML_ATTRIBUTE_ENTITY=      5
+        XML_ATTRIBUTE_ENTITIES=    6
+        XML_ATTRIBUTE_NMTOKEN=     7
+        XML_ATTRIBUTE_NMTOKENS=    8
+        XML_ATTRIBUTE_ENUMERATION= 9
+        XML_ATTRIBUTE_NOTATION=    10
     
+    ctypedef enum xmlAttributeDefault:
+        XML_ATTRIBUTE_NONE=     1
+        XML_ATTRIBUTE_REQUIRED= 2
+        XML_ATTRIBUTE_IMPLIED=  3
+        XML_ATTRIBUTE_FIXED=    4
+
+    ctypedef enum xmlEntityType:
+        XML_INTERNAL_GENERAL_ENTITY=          1
+        XML_EXTERNAL_GENERAL_PARSED_ENTITY=   2
+        XML_EXTERNAL_GENERAL_UNPARSED_ENTITY= 3
+        XML_INTERNAL_PARAMETER_ENTITY=        4
+        XML_EXTERNAL_PARAMETER_ENTITY=        5
+        XML_INTERNAL_PREDEFINED_ENTITY=       6
+
     ctypedef struct xmlNs:
         char* href
         char* prefix
@@ -107,6 +152,74 @@ cdef extern from "libxml/tree.h":
         xmlNs* ns
         xmlNs* nsDef
         unsigned short line
+
+    ctypedef struct xmlElementContent:
+        xmlElementContentType type
+        xmlElementContentOccur ocur
+        char *name
+        xmlElementContent *c1
+        xmlElementContent *c2
+        xmlElementContent *parent
+        char *prefix
+
+    ctypedef struct xmlEnumeration:
+        xmlEnumeration *next
+        char *name
+
+    ctypedef struct xmlAttribute:
+        void* _private
+        xmlElementType type
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlDtd* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        xmlAttribute* nexth
+        xmlAttributeType atype
+        xmlAttributeDefault def_ "def"
+        char* defaultValue
+        xmlEnumeration* tree
+        char* prefix
+        char* elem
+
+    ctypedef struct xmlElement:
+        void* _private
+        xmlElementType   type
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlNode* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        xmlElementTypeVal etype
+        xmlElementContent* content
+        xmlAttribute* attributes
+        char *prefix
+        void *contModel
+
+    ctypedef struct xmlEntity:
+        void* _private
+        xmlElementType type
+        char* name
+        xmlNode* children
+        xmlNode* last
+        xmlDtd* parent
+        xmlNode* next
+        xmlNode* prev
+        xmlDoc* doc
+        char* orig
+        char* content
+        int length
+        xmlEntityType etype
+        char* ExternalID
+        char* SystemID
+        xmlEntity* nexte
+        char* URI
+        int owner
+        int checked
 
     ctypedef struct xmlDtd:
         char* name

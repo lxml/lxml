@@ -148,6 +148,94 @@ in the system catalog:
 
   dtd = etree.DTD(external_id = "-//OASIS//DTD DocBook XML V4.2//EN")
 
+The DTD information is available as attributes on the DTD object. The method
+``iterelements`` provides an iterator over the element declarations:
+
+.. sourcecode:: pycon
+
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
+  >>> for el in dtd.iterelements():
+  ...     print el.name
+  a
+  b
+
+The method ``elements`` returns the element declarations as a list:
+
+.. sourcecode:: pycon
+
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
+  >>> print len(dtd.elements())
+  2
+
+An element declaration object provides the following attributes/methods:
+
+  - ``name``: The name of the element;
+
+  - ``type``: The element type, one of "undefined", "empty", "any", "mixed" or "element";
+
+  - ``content``: Element content declaration (see below);
+
+  - ``iterattributes()``: Return an iterator over attribute declarations (see below);
+
+  - ``attributes()``: Return a list of attribute declarations.
+
+The ``content`` attribute contains information about the content model of the element.
+These element content declaration objects form a binary tree (via the ``left`` and ``right``
+attributes), that makes it possible to reconstruct the content model expression. Here's a
+list of all attributes:
+
+  - ``name``: If this object represents an element in the content model expression,
+    ``name`` is the name of the element, otherwise it is ``None``;
+
+  - ``type``: The type of the node: one of "pcdata", "element", "seq" or "or";
+
+  - ``occur``: How often this element (or this combination of elements) may occur:
+    one of "once", "opt", "mult" or "plus"
+
+  - ``left``: The left hand supexpression
+
+  - ``right``: The right hand supexpression
+
+For example the element declaration ``<!ELEMENT a (a|b)+>`` results in the following
+element content declaration objects:
+
+.. sourcecode:: pycon
+
+  >>> dtd = etree.DTD(StringIO('<!ELEMENT a (a|b)+>'))
+  >>> con = dtd.elements()[0].content
+  >>> print con.type, con.occur, con.name
+  or plus None
+  >>> print con.left.type, con.left.occur, con.left.name
+  element once a
+  >>> print con.right.type, con.right.occur, con.right.name
+  element once b
+
+Attributes declarations have the following attributes/methods:
+
+  - ``name``: The name of the attribute;
+
+  - ``elemname``: The name of the element the attribute belongs to;
+
+  - ``type``: The attribute type, one of "cdata", "id", "idref", "idrefs", "entity",
+    "entities", "nmtoken", "nmtokens", "enumeration" or "notation";
+
+  - ``default``: The type of the default value, one of "none", "required", "implied"
+    or "fixed";
+
+  - ``defaultValue``: The default value;
+
+  - ``itervalues()``: Return an iterator over the allowed attribute values (if the attribute
+    if of type "enumeration");
+
+  - ``values()``: Return a list of allowed attribute values.
+
+Entity declarations are available via the ``iterentities`` and ``entities`` methods:
+
+  >>> dtd = etree.DTD(StringIO('<!ENTITY hurz "&#x40;">'))
+  >>> ent = dtd.entities()[0]
+  >>> print ent.name, ent.orig, ent.content
+  hurz &#x40; @
+
 
 RelaxNG
 -------
