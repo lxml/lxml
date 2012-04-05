@@ -137,7 +137,7 @@ cdef class _BaseContext:
     cdef _cleanup_context(self):
         #xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
         #self.unregisterGlobalNamespaces()
-        python.PyDict_Clear(self._utf_refs)
+        self._utf_refs.clear()
         self._eval_context_dict = None
         self._doc = None
 
