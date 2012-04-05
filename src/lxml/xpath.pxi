@@ -134,7 +134,7 @@ cdef class _XPathEvaluatorBase:
         if config.ENABLE_THREADING:
             self._eval_lock = python.PyThread_allocate_lock()
             if self._eval_lock is NULL:
-                python.PyErr_NoMemory()
+                raise MemoryError()
         self._error_log = _ErrorLog()
 
     def __init__(self, namespaces, extensions, enable_regexp,
@@ -276,7 +276,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
                                      regexp, smart_strings)
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         self.set_context(xpathCtxt)
 
     def register_namespace(self, prefix, uri):
@@ -436,7 +436,7 @@ cdef class XPath(_XPathEvaluatorBase):
         self._path = _utf8(path)
         xpathCtxt = xpath.xmlXPathNewContext(NULL)
         if xpathCtxt is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         self.set_context(xpathCtxt)
         self._error_log.connect()
         self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(self._path))
