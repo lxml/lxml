@@ -155,7 +155,7 @@ The DTD information is available as attributes on the DTD object. The method
 
   >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
   >>> for el in dtd.iterelements():
-  ...     print el.name
+  ...     print(el.name)
   a
   b
 
@@ -164,7 +164,7 @@ The method ``elements`` returns the element declarations as a list:
 .. sourcecode:: pycon
 
   >>> dtd = etree.DTD(StringIO('<!ELEMENT a EMPTY><!ELEMENT b EMPTY>'))
-  >>> print len(dtd.elements())
+  >>> len(dtd.elements())
   2
 
 An element declaration object provides the following attributes/methods:
@@ -192,23 +192,25 @@ list of all attributes:
   - ``occur``: How often this element (or this combination of elements) may occur:
     one of "once", "opt", "mult" or "plus"
 
-  - ``left``: The left hand supexpression
+  - ``left``: The left hand subexpression
 
-  - ``right``: The right hand supexpression
+  - ``right``: The right hand subexpression
 
-For example the element declaration ``<!ELEMENT a (a|b)+>`` results in the following
-element content declaration objects:
+For example, the element declaration ``<!ELEMENT a (a|b)+>`` results
+in the following element content declaration objects:
 
 .. sourcecode:: pycon
 
   >>> dtd = etree.DTD(StringIO('<!ELEMENT a (a|b)+>'))
-  >>> con = dtd.elements()[0].content
-  >>> print con.type, con.occur, con.name
-  or plus None
-  >>> print con.left.type, con.left.occur, con.left.name
-  element once a
-  >>> print con.right.type, con.right.occur, con.right.name
-  element once b
+  >>> content = dtd.elements()[0].content
+  >>> content.type, content.occur, content.name
+  ('or', 'plus', None)
+
+  >>> left, right = content.left, content.right
+  >>> left.type, left.occur, left.name
+  ('element', 'once', 'a')
+  >>> right.type, right.occur, right.name
+  ('element', 'once', 'b')
 
 Attributes declarations have the following attributes/methods:
 
@@ -232,9 +234,9 @@ Attributes declarations have the following attributes/methods:
 Entity declarations are available via the ``iterentities`` and ``entities`` methods:
 
   >>> dtd = etree.DTD(StringIO('<!ENTITY hurz "&#x40;">'))
-  >>> ent = dtd.entities()[0]
-  >>> print ent.name, ent.orig, ent.content
-  hurz &#x40; @
+  >>> entity = dtd.entities()[0]
+  >>> entity.name, entity.orig, entity.content
+  ('hurz', '&#x40;', '@')
 
 
 RelaxNG
