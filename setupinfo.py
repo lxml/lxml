@@ -13,6 +13,7 @@ except ImportError:
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
 PACKAGE_PATH = "src/lxml/"
+INCLUDE_PACKAGE_PATH = PACKAGE_PATH + '/include'
 
 if sys.version_info[0] >= 3:
     _system_encoding = sys.getdefaultencoding()
@@ -90,7 +91,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
     _define_macros = define_macros()
     _libraries = libraries()
 
-    _include_dirs.append(os.path.join(get_base_dir(), PACKAGE_PATH, 'include'))
+    _include_dirs.append(os.path.join(get_base_dir(), INCLUDE_PACKAGE_PATH))
 
     if _library_dirs:
         message = "Building against libxml2/libxslt in "
@@ -135,14 +136,16 @@ def ext_modules(static_include_dirs, static_library_dirs,
 def find_dependencies(module):
     if not CYTHON_INSTALLED:
         return []
-    package_dir = os.path.join(get_base_dir(), PACKAGE_PATH)
-    files = os.listdir(package_dir)
-    pxd_files = [ os.path.join(PACKAGE_PATH, filename) for filename in files
+    base_dir = get_base_dir()
+    package_dir = os.path.join(base_dir, PACKAGE_PATH)
+    includes_dir = os.path.join(base_dir, INCLUDE_PACKAGE_PATH)
+    pxd_files = [ os.path.join(PACKAGE_PATH, filename)
+                  for filename in os.listdir(includes_dir)
                   if filename.endswith('.pxd') ]
 
     if 'etree' in module:
         pxi_files = [ os.path.join(PACKAGE_PATH, filename)
-                      for filename in files
+                      for filename in os.listdir(package_dir)
                       if filename.endswith('.pxi')
                       and 'objectpath' not in filename ]
         pxd_files = [ filename for filename in pxd_files
