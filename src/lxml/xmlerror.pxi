@@ -350,6 +350,7 @@ cdef class _ErrorLog(_ListErrorLog):
         return self.connect()
 
     def __exit__(self, *args):
+        #  TODO: make this a cdef function when Cython supports it
         self.disconnect()
 
     @cython.final
@@ -360,8 +361,8 @@ cdef class _ErrorLog(_ListErrorLog):
         cdef _ErrorLogContext context = _ErrorLogContext.__new__(_ErrorLogContext)
         context.old_error_func = xmlerror.xmlStructuredError
         context.old_error_context = xmlerror.xmlStructuredErrorContext
-        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
         self._logContexts.append(context)
+        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
         return 0
 
     @cython.final
@@ -369,6 +370,7 @@ cdef class _ErrorLog(_ListErrorLog):
         cdef _ErrorLogContext context = self._logContexts.pop()
         xmlerror.xmlSetStructuredErrorFunc(
             context.old_error_context, context.old_error_func)
+        return 0
 
     cpdef clear(self):
         self._first_error = None
