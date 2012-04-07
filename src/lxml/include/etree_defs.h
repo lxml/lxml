@@ -37,12 +37,15 @@
 #  define PyString_AS_STRING(s)              PyBytes_AS_STRING(s)
 #else
 #if PY_VERSION_HEX < 0x02060000
+/* Cython defines these already, but we may not be compiling in Cython code */
+#ifndef PyBytes_CheckExact
 #  define PyBytes_CheckExact(o)              PyString_CheckExact(o)
 #  define PyBytes_Check(o)                   PyString_Check(o)
 #  define PyBytes_FromStringAndSize(s, len)  PyString_FromStringAndSize(s, len)
 #  define PyBytes_FromFormat                 PyString_FromFormat
 #  define PyBytes_GET_SIZE(s)                PyString_GET_SIZE(s)
 #  define PyBytes_AS_STRING(s)               PyString_AS_STRING(s)
+#endif
 /* we currently only use three parameters - MSVC can't compile (s, ...) */
 #  define PyUnicode_FromFormat(s, a, b) (NULL)
 #endif
