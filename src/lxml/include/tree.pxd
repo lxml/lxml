@@ -49,7 +49,7 @@ cdef extern from "libxml/chvalid.h":
 
 cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
-    ctypedef void xmlHashScanner(void* payload, void* data, char* name) # may require GIL!
+    ctypedef void (*xmlHashScanner)(void* payload, void* data, char* name) # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, char* name) nogil
 
@@ -264,16 +264,6 @@ cdef extern from "libxml/tree.h":
         xmlAttr* prev
         xmlDoc* doc
         xmlNs* ns
-        
-    ctypedef struct xmlElement:
-        xmlElementType type
-        char* name
-        xmlNode* children
-        xmlNode* last
-        xmlNode* parent
-        xmlNode* next
-        xmlNode* prev
-        xmlDoc* doc
 
     ctypedef struct xmlID:
         char* value

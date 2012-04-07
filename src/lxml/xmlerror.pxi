@@ -25,13 +25,13 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
 
 cdef void _initThreadLogging():
     # disable generic error lines from libxml2
-    xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
+    xmlerror.xmlSetGenericErrorFunc(NULL, <xmlerror.xmlGenericErrorFunc>_nullGenericErrorFunc)
 
     # divert error messages to the global error log
     connectErrorLog(NULL)
 
 cdef void connectErrorLog(void* log):
-    xslt.xsltSetGenericErrorFunc(log, _receiveXSLTError)
+    xslt.xsltSetGenericErrorFunc(log, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
 
 # Logging classes
 
@@ -368,7 +368,7 @@ cdef class _ErrorLog(_ListErrorLog):
         context.old_error_func = xmlerror.xmlStructuredError
         context.old_error_context = xmlerror.xmlStructuredErrorContext
         self._logContexts.append(context)
-        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
+        xmlerror.xmlSetStructuredErrorFunc(<void*>self, <xmlerror.xmlStructuredErrorFunc>_receiveError)
         return 0
 
     @cython.final

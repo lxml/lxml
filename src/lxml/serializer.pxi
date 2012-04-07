@@ -367,7 +367,7 @@ cdef class _FilelikeWriter:
         self, tree.xmlCharEncodingHandler* enchandler) except NULL:
         cdef tree.xmlOutputBuffer* c_buffer
         c_buffer = tree.xmlOutputBufferCreateIO(
-            _writeFilelikeWriter, _closeFilelikeWriter,
+            <tree.xmlOutputWriteCallback>_writeFilelikeWriter, _closeFilelikeWriter,
             <python.PyObject*>self, enchandler)
         if c_buffer is NULL:
             raise IOError, u"Could not create I/O writer context."

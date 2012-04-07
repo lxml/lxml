@@ -152,14 +152,14 @@ cdef class _IDDict:
     cdef object _build_keys(self):
         keys = []
         tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
-                         _collectIdHashKeys, <python.PyObject*>keys)
+                         <tree.xmlHashScanner>_collectIdHashKeys, <python.PyObject*>keys)
         return keys
 
     cdef object _build_items(self):
         items = []
         context = (items, self._doc)
         tree.xmlHashScan(<tree.xmlHashTable*>self._doc._c_doc.ids,
-                         _collectIdHashItemList, <python.PyObject*>context)
+                         <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
 cdef void _collectIdHashItemDict(void* payload, void* context, char* name):

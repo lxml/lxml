@@ -487,7 +487,7 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
 cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
 
-xmlparser.xmlSetExternalEntityLoader(_local_resolver)
+xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_resolver)
 
 ############################################################
 ## Parsers

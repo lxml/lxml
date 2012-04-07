@@ -83,7 +83,7 @@ cdef class _XPathContext(_BaseContext):
             # we'd only execute dummy functions anyway
             return
         tree.xmlHashScan(
-            self._xpathCtxt.nsHash, _registerExsltFunctionsForNamespaces,
+            self._xpathCtxt.nsHash, <tree.xmlHashScanner>_registerExsltFunctionsForNamespaces,
             self._xpathCtxt)
 
     cdef registerVariables(self, variable_dict):

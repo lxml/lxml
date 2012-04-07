@@ -160,7 +160,7 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
 cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER
 XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
 
-xslt.xsltSetLoaderFunc(_xslt_doc_loader)
+xslt.xsltSetLoaderFunc(<xslt.xsltDocLoaderFunc>_xslt_doc_loader)
 
 ################################################################################
 # XSLT file/network access control
@@ -260,7 +260,7 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
         return 0
     return xslt.xsltRegisterExtFunction(
         <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
-        _xpath_function_call)
+        <xslt.xmlXPathFunction>_xpath_function_call)
 
 cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
@@ -602,7 +602,7 @@ cdef class XSLT:
                                 xslt.xsltTransformContext* transform_ctxt):
         cdef xmlDoc* c_result
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
-                                       _receiveXSLTError)
+                                       <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         if self._access_control is not None:
             self._access_control._register_in_context(transform_ctxt)
         with nogil:

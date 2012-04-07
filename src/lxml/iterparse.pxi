@@ -93,8 +93,8 @@ cdef class _IterparseContext(_ParserContext):
                self._event_filter & (ITERPARSE_FILTER_START |
                                      ITERPARSE_FILTER_START_NS |
                                      ITERPARSE_FILTER_END_NS):
-            sax.startElementNs = _iterparseSaxStart
-            sax.startElement = _iterparseSaxStartNoNs
+            sax.startElementNs = <xmlparser.startElementNsSAX2Func>_iterparseSaxStart
+            sax.startElement = <xmlparser.startElementSAXFunc>_iterparseSaxStartNoNs
 
         self._origSaxEnd = sax.endElementNs
         self._origSaxEndNoNs = sax.endElement
@@ -102,16 +102,16 @@ cdef class _IterparseContext(_ParserContext):
         if self._event_filter == 0 or \
                self._event_filter & (ITERPARSE_FILTER_END |
                                      ITERPARSE_FILTER_END_NS):
-            sax.endElementNs = _iterparseSaxEnd
-            sax.endElement = _iterparseSaxEndNoNs
+            sax.endElementNs = <xmlparser.endElementNsSAX2Func>_iterparseSaxEnd
+            sax.endElement = <xmlparser.endElementSAXFunc>_iterparseSaxEndNoNs
 
         self._origSaxComment = sax.comment
         if self._event_filter & ITERPARSE_FILTER_COMMENT:
-            sax.comment = _iterparseSaxComment
+            sax.comment = <xmlparser.commentSAXFunc>_iterparseSaxComment
 
         self._origSaxPI = sax.processingInstruction
         if self._event_filter & ITERPARSE_FILTER_PI:
-            sax.processingInstruction = _iterparseSaxPI
+            sax.processingInstruction = <xmlparser.processingInstructionSAXFunc>_iterparseSaxPI
 
     cdef _setEventFilter(self, events, tag):
         self._event_filter = _buildIterparseEventFilter(events)
