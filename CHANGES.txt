@@ -27,6 +27,9 @@ Features added
 Bugs fixed
 ----------
 
+* The error logging is less intrusive and avoids a global setup where
+  possible.
+
 * Fixed undefined names in html5lib parser.
 
 * ``xpathgrep.py`` did not work in Python 3.
