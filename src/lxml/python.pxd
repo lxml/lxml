@@ -88,8 +88,7 @@ cdef extern from "Python.h":
     cdef void* PyMem_Realloc(void* p, size_t size)
     cdef void PyMem_Free(void* p)
 
-    # these two always return NULL to pass on the exception
-    cdef object PyErr_NoMemory()
+    # always returns NULL to pass on the exception
     cdef object PyErr_SetFromErrno(object type)
 
     cdef PyThreadState* PyEval_SaveThread()

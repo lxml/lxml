@@ -235,8 +235,7 @@ cdef int _growNsCache(_nscache* c_ns_cache) except -1:
     else:
         stdlib.free(c_ns_cache.new)
         stdlib.free(c_ns_cache.old)
-        python.PyErr_NoMemory()
-        return -1
+        raise MemoryError()
     return 0
 
 cdef inline int _appendToNsCache(_nscache* c_ns_cache,

@@ -153,7 +153,7 @@ cdef class Schematron(_Validator):
         valid_ctxt = schematron.xmlSchematronNewValidCtxt(
             self._c_schema, options)
         if valid_ctxt is NULL:
-            return python.PyErr_NoMemory()
+            raise MemoryError()
 
         if _LIBXML_VERSION_INT >= 20632:
             schematron.xmlSchematronSetValidStructuredErrors(

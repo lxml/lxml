@@ -440,7 +440,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # declare the namespace and return it
         c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if c_ns is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         return c_ns
 
     @cython.final
@@ -1765,17 +1765,17 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             if c_doc.intSubset is not NULL and doc._c_doc.intSubset is NULL:
                 doc._c_doc.intSubset = tree.xmlCopyDtd(c_doc.intSubset)
                 if doc._c_doc.intSubset is NULL:
-                    python.PyErr_NoMemory()
+                    raise MemoryError()
             if c_doc.extSubset is not NULL and not doc._c_doc.extSubset is NULL:
                 doc._c_doc.extSubset = tree.xmlCopyDtd(c_doc.extSubset)
                 if doc._c_doc.extSubset is NULL:
-                    python.PyErr_NoMemory()
+                    raise MemoryError()
             return _elementTreeFactory(None, root)
         elif self._doc is not None:
             _assertValidDoc(self._doc)
             c_doc = tree.xmlCopyDoc(self._doc._c_doc, 1)
             if c_doc is NULL:
-                python.PyErr_NoMemory()
+                raise MemoryError()
             doc = _documentFactory(c_doc, self._doc._parser)
             return _elementTreeFactory(doc, None)
         else:
@@ -1901,7 +1901,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         c_path = tree.xmlGetNodePath(element._c_node)
         _destroyFakeDoc(doc._c_doc, c_doc)
         if c_path is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         path = funicode(c_path)
         tree.xmlFree(c_path)
         return path

@@ -469,7 +469,7 @@ cdef class _ExsltRegExp:
             elif isinstance(firstnode, _Element):
                 c_text = tree.xmlNodeGetContent((<_Element>firstnode)._c_node)
                 if c_text is NULL:
-                    python.PyErr_NoMemory()
+                    raise MemoryError()
                 try:
                     s = funicode(c_text)
                 finally:
@@ -593,12 +593,12 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                             # append a comment node to keep the text nodes separate
                             c_node = tree.xmlNewDocComment(doc._c_doc, "")
                             if c_node is NULL:
-                                python.PyErr_NoMemory()
+                                raise MemoryError()
                             tree.xmlAddChild(fake_node._c_node, c_node)
                         context._hold(value)
                         c_node = tree.xmlNewDocText(doc._c_doc, _cstr(value))
                         if c_node is NULL:
-                            python.PyErr_NoMemory()
+                            raise MemoryError()
                         tree.xmlAddChild(fake_node._c_node, c_node)
                         xpath.xmlXPathNodeSetAdd(resultSet, c_node)
                     else:

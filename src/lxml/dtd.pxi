@@ -402,6 +402,6 @@ cdef DTD _dtdFactory(tree.xmlDtd* c_dtd):
     dtd = DTD.__new__(DTD)
     dtd._c_dtd = tree.xmlCopyDtd(c_dtd)
     if dtd._c_dtd is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     _Validator.__init__(dtd)
     return dtd

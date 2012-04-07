@@ -770,7 +770,7 @@ cdef class _BaseParser:
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newParserCtxt()
             if pctxt is NULL:
-                python.PyErr_NoMemory()
+                raise MemoryError()
             _initParserContext(self._parser_context, self._resolvers, pctxt)
             if self._remove_comments:
                 pctxt.sax.comment = NULL
@@ -791,7 +791,7 @@ cdef class _BaseParser:
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newPushParserCtxt()
             if pctxt is NULL:
-                python.PyErr_NoMemory()
+                raise MemoryError()
             _initParserContext(
                 self._push_parser_context, self._resolvers, pctxt)
             if self._remove_comments:
@@ -1505,7 +1505,7 @@ cdef xmlDoc* _newXMLDoc() except NULL:
     cdef xmlDoc* result
     result = tree.xmlNewDoc(NULL)
     if result is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     if result.encoding is NULL:
         result.encoding = tree.xmlStrdup("UTF-8")
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
@@ -1515,7 +1515,7 @@ cdef xmlDoc* _newHTMLDoc() except NULL:
     cdef xmlDoc* result
     result = tree.htmlNewDoc(NULL, NULL)
     if result is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
@@ -1527,7 +1527,7 @@ cdef xmlDoc* _copyDoc(xmlDoc* c_doc, int recursive) except NULL:
     else:
         result = tree.xmlCopyDoc(c_doc, 0)
     if result is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
@@ -1540,7 +1540,7 @@ cdef xmlDoc* _copyDocRoot(xmlDoc* c_doc, xmlNode* c_new_root) except NULL:
     with nogil:
         c_node = tree.xmlDocCopyNode(c_new_root, result, 1) # recursive
     if c_node is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     tree.xmlDocSetRootElement(result, c_node)
     _copyTail(c_new_root.next, c_node)
     return result
@@ -1550,7 +1550,7 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
     cdef xmlNode* c_root
     c_root = tree.xmlDocCopyNode(c_node, c_doc, 1) # recursive
     if c_root is NULL:
-        python.PyErr_NoMemory()
+        raise MemoryError()
     _copyTail(c_node.next, c_root)
     return c_root
 

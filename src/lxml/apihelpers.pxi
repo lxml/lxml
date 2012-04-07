@@ -130,7 +130,7 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
     if c_node is NULL:
         if doc is None and c_doc is not NULL:
             tree.xmlFreeDoc(c_doc)
-        return python.PyErr_NoMemory()
+        raise MemoryError()
     try:
         if doc is None:
             tree.xmlDocSetRootElement(c_doc, c_node)
@@ -175,7 +175,7 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     if c_node is NULL:
         if c_doc is not NULL:
             tree.xmlFreeDoc(c_doc)
-        return python.PyErr_NoMemory()
+        raise MemoryError()
     tree.xmlDocSetRootElement(c_doc, c_node)
     doc = _documentFactory(c_doc, parser)
     # add namespaces to node if necessary
@@ -205,7 +205,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
 
     c_node = _createElement(c_doc, name_utf)
     if c_node is NULL:
-        return python.PyErr_NoMemory()
+        raise MemoryError()
     tree.xmlAddChild(parent._c_node, c_node)
 
     try:
@@ -340,8 +340,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
                 if c_nsref_ptr is NULL:
                     if c_ns_list is not NULL:
                         stdlib.free(c_ns_list)
-                    python.PyErr_NoMemory()
-                    return -1
+                    raise MemoryError()
                 c_ns_list = c_nsref_ptr
 
             c_ns_list[c_ns_list_len].ns   = c_nsdef
@@ -363,8 +362,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
             if c_nsref_ptr is NULL:
                 if c_ns_list is not NULL:
                     stdlib.free(c_ns_list)
-                python.PyErr_NoMemory()
-                return -1
+                raise MemoryError()
             c_ns_list = c_nsref_ptr
 
         c_ns_list[c_ns_list_len].ns   = c_nsdef
@@ -1036,7 +1034,7 @@ cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
         else:
             c_new_tail = tree.xmlCopyNode(c_tail, 0)
         if c_new_tail is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         tree.xmlAddNextSibling(c_target, c_new_tail)
         c_target = c_new_tail
         c_tail = _textNodeOrSkip(c_tail.next)
@@ -1052,7 +1050,7 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
     while c_sibling != c_node:
         c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
         if c_copy is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         tree.xmlAddPrevSibling(c_target, c_copy)
         c_sibling = c_sibling.next
     while c_sibling.next != NULL and \
@@ -1061,7 +1059,7 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
         c_sibling = c_sibling.next
         c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
         if c_copy is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         tree.xmlAddNextSibling(c_target, c_copy)
 
 cdef int _deleteSlice(_Document doc, xmlNode* c_node,

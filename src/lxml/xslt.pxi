@@ -189,7 +189,7 @@ cdef class XSLTAccessControl:
                  read_network=True, write_network=True):
         self._prefs = xslt.xsltNewSecurityPrefs()
         if self._prefs is NULL:
-            python.PyErr_NoMemory()
+            raise MemoryError()
         self._setAccess(xslt.XSLT_SECPREF_READ_FILE, read_file)
         self._setAccess(xslt.XSLT_SECPREF_WRITE_FILE, write_file)
         self._setAccess(xslt.XSLT_SECPREF_CREATE_DIRECTORY, create_dir)
@@ -498,7 +498,7 @@ cdef class XSLT:
         transform_ctxt = xslt.xsltNewTransformContext(self._c_style, c_doc)
         if transform_ctxt is NULL:
             _destroyFakeDoc(input_doc._c_doc, c_doc)
-            python.PyErr_NoMemory()
+            raise MemoryError()
 
         # using the stylesheet dict is safer than using a possibly
         # unrelated dict from the current thread.  Almost all
@@ -666,7 +666,7 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
     new_xslt._c_style = xslt.xsltParseStylesheetDoc(c_doc)
     if new_xslt._c_style is NULL:
         tree.xmlFreeDoc(c_doc)
-        python.PyErr_NoMemory()
+        raise MemoryError()
 
     return new_xslt
 
@@ -698,7 +698,7 @@ cdef class _XSLTResultTree(_ElementTree):
             r = xslt.xsltSaveResultToString(s, l, doc._c_doc,
                                             self._xslt._c_style)
         if r == -1:
-            python.PyErr_NoMemory()
+            raise MemoryError()
 
     def __str__(self):
         cdef char* s = NULL

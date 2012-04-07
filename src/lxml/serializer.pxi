@@ -30,7 +30,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 
     c_buffer = tree.xmlBufferCreate()
     if c_buffer is NULL:
-        return python.PyErr_NoMemory()
+        raise MemoryError()
 
     with nogil:
         error_result = tree.xmlNodeBufGetContent(c_buffer, c_node)
@@ -114,7 +114,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
         tree.xmlCharEncCloseFunc(enchandler)
-        return python.PyErr_NoMemory()
+        raise MemoryError()
 
     with nogil:
         _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
@@ -179,12 +179,11 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments):
 
 cdef _raiseSerialisationError(int error_result):
     if error_result == xmlerror.XML_ERR_NO_MEMORY:
-        return python.PyErr_NoMemory()
-    else:
-        message = ErrorTypes._getName(error_result)
-        if message is None:
-            message = u"unknown error %d" % error_result
-        raise SerialisationError, message
+        raise MemoryError()
+    message = ErrorTypes._getName(error_result)
+    if message is None:
+        message = u"unknown error %d" % error_result
+    raise SerialisationError, message
 
 ############################################################
 # low-level serialisation functions
