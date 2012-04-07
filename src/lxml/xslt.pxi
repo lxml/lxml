@@ -157,9 +157,7 @@ cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
         c_doc._private = c_pcontext
     return c_doc
 
-cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER
-XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
-
+cdef xslt.xsltDocLoaderFunc XSLT_DOC_DEFAULT_LOADER = xslt.xsltDocDefaultLoader
 xslt.xsltSetLoaderFunc(<xslt.xsltDocLoaderFunc>_xslt_doc_loader)
 
 ################################################################################
