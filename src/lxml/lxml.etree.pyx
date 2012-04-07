@@ -315,6 +315,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # the document
         tree.xmlFreeDoc(self._c_doc)
 
+    @cython.final
     cdef getroot(self):
         # return an element proxy for the document root
         cdef xmlNode* c_node
@@ -323,10 +324,12 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             return None
         return _elementFactory(self, c_node)
 
+    @cython.final
     cdef bint hasdoctype(self):
         # DOCTYPE gets parsed into internal subset (xmlDTD*)
         return self._c_doc is not NULL and self._c_doc.intSubset is not NULL
 
+    @cython.final
     cdef getdoctype(self):
         # get doctype info: root tag, public/system ID (or None if not known)
         cdef tree.xmlDtd* c_dtd
@@ -352,6 +355,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             root_name = funicode(c_root_node.name)
         return (root_name, public_id, sys_url)
 
+    @cython.final
     cdef getxmlinfo(self):
         # return XML version and encoding (or None if not known)
         cdef xmlDoc* c_doc = self._c_doc
@@ -365,6 +369,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             encoding = funicode(c_doc.encoding)
         return (version, encoding)
 
+    @cython.final
     cdef isstandalone(self):
         # returns True for "standalone=true",
         # False for "standalone=false", None if not provided
@@ -373,6 +378,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         else:
             return <bint>(self._c_doc.standalone == 1)
 
+    @cython.final
     cdef bytes buildNewPrefix(self):
         # get a new unique prefix ("nsX") for this document
         cdef bytes ns
@@ -392,6 +398,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
                 self._prefix_tail += b"A"
         return ns
 
+    @cython.final
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
                                    char* c_href, char* c_prefix,
                                    bint is_attribute) except NULL:
@@ -436,6 +443,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
             python.PyErr_NoMemory()
         return c_ns
 
+    @cython.final
     cdef int _setNodeNs(self, xmlNode* c_node, char* href) except -1:
         u"Lookup namespace structure and set it for the node."
         cdef xmlNs* c_ns

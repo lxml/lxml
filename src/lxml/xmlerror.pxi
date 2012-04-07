@@ -56,6 +56,7 @@ cdef class _LogEntry:
     cdef readonly object message
     cdef readonly object filename
 
+    @cython.final
     cdef _setError(self, xmlerror.xmlError* error):
         cdef size_t size
         self.domain   = error.domain
@@ -83,6 +84,7 @@ cdef class _LogEntry:
         else:
             self.filename = _decodeFilename(error.file)
 
+    @cython.final
     cdef _setGeneric(self, int domain, int type, int level, int line,
                      message, filename):
         self.domain  = domain
@@ -136,6 +138,7 @@ cdef class _BaseErrorLog:
     cpdef receive(self, _LogEntry entry):
         pass
 
+    @cython.final
     cdef void _receive(self, xmlerror.xmlError* error):
         cdef bint is_error
         cdef _LogEntry entry
@@ -153,6 +156,7 @@ cdef class _BaseErrorLog:
         if is_error:
             self.last_error = entry
 
+    @cython.final
     cdef void _receiveGeneric(self, int domain, int type, int level, int line,
                               message, filename):
         cdef bint is_error
@@ -171,6 +175,7 @@ cdef class _BaseErrorLog:
         if is_error:
             self.last_error = entry
 
+    @cython.final
     cdef _buildParseException(self, exctype, default_message):
         code = xmlerror.XML_ERR_INTERNAL_ERROR
         if self._first_error is None:
@@ -189,6 +194,7 @@ cdef class _BaseErrorLog:
                 message = u"%s, line %d" % (message, line)
         return exctype(message, code, line, column)
 
+    @cython.final
     cdef _buildExceptionMessage(self, default_message):
         if self._first_error is None:
             return default_message

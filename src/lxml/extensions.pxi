@@ -271,6 +271,7 @@ cdef class _BaseContext:
                        (ns_utf, name_utf) not in self._extensions:
                     unreg_func(ctxt, name_utf, ns_utf)
 
+    @cython.final
     cdef _find_cached_function(self, char* c_ns_uri, char* c_name):
         u"""Lookup an extension function in the cache and return it.
 
@@ -318,11 +319,13 @@ cdef class _BaseContext:
 
     # Python reference keeping during XPath function evaluation
 
+    @cython.final
     cdef _release_temp_refs(self):
         u"Free temporarily referenced objects from this context."
         self._temp_refs.clear()
         self._temp_documents.clear()
 
+    @cython.final
     cdef _hold(self, obj):
         u"""A way to temporarily hold references to nodes in the evaluator.
 
@@ -344,6 +347,7 @@ cdef class _BaseContext:
                 #print "Holding document:", <int>element._doc._c_doc
                 self._temp_documents.add((<_Element>o)._doc)
 
+    @cython.final
     cdef _Document _findDocumentForNode(self, xmlNode* c_node):
         u"""If an XPath expression returns an element from a different
         document than the current context document, we call this to
