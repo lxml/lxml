@@ -50,22 +50,19 @@ cdef class RelaxNG(_Validator):
                        cstring_h.strcmp(c_href,
                                    'http://relaxng.org/ns/structure/1.0') != 0:
                     raise RelaxNGParseError, u"Document is not Relax NG"
-            self._error_log.connect()
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
             if _isString(file):
                 doc = None
                 filename = _encodeFilename(file)
-                self._error_log.connect()
-                parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+                with self._error_log:
+                    parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
             else:
                 doc = _parseDocument(file, None, None)
-                self._error_log.connect()
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
             raise RelaxNGParseError, u"No tree or file given"
-        self._error_log.disconnect()
 
         if parser_ctxt is NULL:
             if fake_c_doc is not NULL:

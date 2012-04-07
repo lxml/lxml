@@ -843,7 +843,5 @@ cdef extern from "libxml/xmlerror.h":
         void* ctxt, xmlStructuredErrorFunc func) nogil
 
 cdef extern from "libxml/globals.h":
-    cdef void xmlThrDefSetGenericErrorFunc(
-        void* ctx, xmlGenericErrorFunc handler) nogil
-    cdef void xmlThrDefSetStructuredErrorFunc(
-        void* ctx, xmlStructuredErrorFunc handler) nogil
+    cdef xmlStructuredErrorFunc xmlStructuredError
+    cdef void* xmlStructuredErrorContext

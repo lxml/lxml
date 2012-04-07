@@ -281,17 +281,15 @@ cdef class DTD(_Validator):
         if file is not None:
             if _isString(file):
                 file = _encodeFilename(file)
-                self._error_log.connect()
-                self._c_dtd = xmlparser.xmlParseDTD(NULL, _cstr(file))
-                self._error_log.disconnect()
-            elif hasattr(file, u'read'):
+                with self._error_log:
+                    self._c_dtd = xmlparser.xmlParseDTD(NULL, _cstr(file))
+            elif hasattr(file, 'read'):
                 self._c_dtd = _parseDtdFromFilelike(file)
             else:
                 raise DTDParseError, u"file must be a filename or file-like object"
         elif external_id is not None:
-            self._error_log.connect()
-            self._c_dtd = xmlparser.xmlParseDTD(external_id, NULL)
-            self._error_log.disconnect()
+            with self._error_log:
+                self._c_dtd = xmlparser.xmlParseDTD(external_id, NULL)
         else:
             raise DTDParseError, u"either filename or external ID required"
 
@@ -362,14 +360,14 @@ cdef class DTD(_Validator):
         if valid_ctxt is NULL:
             raise DTDError(u"Failed to create validation context")
 
-        self._error_log.connect()
-        c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
-        _destroyFakeDoc(doc._c_doc, c_doc)
+        try:
+            with self._error_log:
+                c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+                ret = dtdvalid.xmlValidateDtd(valid_ctxt, c_doc, self._c_dtd)
+                _destroyFakeDoc(doc._c_doc, c_doc)
+        finally:
+            dtdvalid.xmlFreeValidCtxt(valid_ctxt)
 
-        dtdvalid.xmlFreeValidCtxt(valid_ctxt)
-
-        self._error_log.disconnect()
         if ret == -1:
             raise DTDValidateError(u"Internal error in DTD validation",
                                    self._error_log)
@@ -388,9 +386,8 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
     dtd_parser = _FileReaderContext(file, exc_context, None)
     error_log = _ErrorLog()
 
-    error_log.connect()
-    c_dtd = dtd_parser._readDtd()
-    error_log.disconnect()
+    with error_log:
+        c_dtd = dtd_parser._readDtd()
 
     exc_context._raise_if_stored()
     if c_dtd is NULL:

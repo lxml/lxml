@@ -25,15 +25,12 @@ cdef void _nullGenericErrorFunc(void* ctxt, char* msg, ...) nogil:
 
 cdef void _initThreadLogging():
     # disable generic error lines from libxml2
-    xmlerror.xmlThrDefSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
     xmlerror.xmlSetGenericErrorFunc(NULL, _nullGenericErrorFunc)
 
     # divert error messages to the global error log
-    xmlerror.xmlThrDefSetStructuredErrorFunc(NULL, _receiveError)
     connectErrorLog(NULL)
 
 cdef void connectErrorLog(void* log):
-    xmlerror.xmlSetStructuredErrorFunc(log, _receiveError)
     xslt.xsltSetGenericErrorFunc(log, _receiveXSLTError)
 
 # Logging classes
@@ -178,11 +175,11 @@ cdef class _BaseErrorLog:
         code = xmlerror.XML_ERR_INTERNAL_ERROR
         if self._first_error is None:
             return exctype(default_message, code, 0, 0)
-        if not self._first_error.message:
-            message = default_message
-        else:
-            message = self._first_error.message
+        message = self._first_error.message
+        if message:
             code = self._first_error.type
+        else:
+            message = default_message
         line = self._first_error.line
         column = self._first_error.column
         if line > 0:
@@ -329,18 +326,49 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         return self.filter_from_level(ErrorLevels.WARNING)
 
+@cython.final
+@cython.internal
+cdef class _ErrorLogContext:
+    """
+    Error log context for the 'with' statement.
+    Stores a reference to the current callbacks to allow for
+    recursively stacked log contexts.
+    """
+    cdef xmlerror.xmlStructuredErrorFunc old_error_func
+    cdef void* old_error_context
+
 cdef class _ErrorLog(_ListErrorLog):
+    cdef list _logContexts
+    def __cinit__(self):
+        self._logContexts = []
+
     def __init__(self):
         _ListErrorLog.__init__(self, [], None, None)
 
+    @cython.final
+    cdef int __enter__(self) except -1:
+        return self.connect()
+
+    def __exit__(self, *args):
+        self.disconnect()
+
+    @cython.final
     cdef int connect(self) except -1:
         self._first_error = None
         del self._entries[:]
-        connectErrorLog(<void*>self)
+
+        cdef _ErrorLogContext context = _ErrorLogContext.__new__(_ErrorLogContext)
+        context.old_error_func = xmlerror.xmlStructuredError
+        context.old_error_context = xmlerror.xmlStructuredErrorContext
+        xmlerror.xmlSetStructuredErrorFunc(<void*>self, _receiveError)
+        self._logContexts.append(context)
         return 0
 
-    cdef void disconnect(self):
-        connectErrorLog(NULL)
+    @cython.final
+    cdef int disconnect(self) except -1:
+        cdef _ErrorLogContext context = self._logContexts.pop()
+        xmlerror.xmlSetStructuredErrorFunc(
+            context.old_error_context, context.old_error_func)
 
     cpdef clear(self):
         self._first_error = None

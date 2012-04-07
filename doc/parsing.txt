@@ -182,10 +182,10 @@ warnings of the last parser run:
   >>> print(len(parser.error_log))
   0
 
-  >>> tree = etree.XML("<root></b>", parser)
+  >>> tree = etree.XML("<root>\n</b>", parser)
   Traceback (most recent call last):
     ...
-  lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 1, column 11
+  lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 2, column 5
 
   >>> print(len(parser.error_log))
   1
@@ -194,9 +194,9 @@ warnings of the last parser run:
   >>> print(error.message)
   Opening and ending tag mismatch: root line 1 and b
   >>> print(error.line)
-  1
+  2
   >>> print(error.column)
-  11
+  5
 
 Each entry in the log has the following properties:
 

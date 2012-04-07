@@ -88,32 +88,30 @@ cdef class Schematron(_Validator):
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
             self._c_schema_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
-            self._error_log.connect()
-            parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(
-                self._c_schema_doc)
+            parser_ctxt = schematron.xmlSchematronNewDocParserCtxt(self._c_schema_doc)
         elif file is not None:
             filename = _getFilenameForFile(file)
             if filename is None:
                 # XXX assume a string object
                 filename = file
             filename = _encodeFilename(filename)
-            self._error_log.connect()
-            parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
+            with self._error_log:
+                parser_ctxt = schematron.xmlSchematronNewParserCtxt(_cstr(filename))
         else:
             raise SchematronParseError, u"No tree or file given"
 
         if parser_ctxt is NULL:
-            self._error_log.disconnect()
             if self._c_schema_doc is not NULL:
                 tree.xmlFreeDoc(self._c_schema_doc)
                 self._c_schema_doc = NULL
-            python.PyErr_NoMemory()
-            return
+            raise MemoryError()
 
-        self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
-        self._error_log.disconnect()
+        try:
+            with self._error_log:
+                self._c_schema = schematron.xmlSchematronParse(parser_ctxt)
+        finally:
+            schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
 
-        schematron.xmlSchematronFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
             raise SchematronParseError(
                 u"Document is not a valid Schematron schema",
@@ -160,14 +158,16 @@ cdef class Schematron(_Validator):
         if _LIBXML_VERSION_INT >= 20632:
             schematron.xmlSchematronSetValidStructuredErrors(
                 valid_ctxt, _receiveError, <void*>self._error_log)
+            c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            with nogil:
+                ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
+            _destroyFakeDoc(doc._c_doc, c_doc)
         else:
-            self._error_log.connect()
-        c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        with nogil:
-            ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
-        _destroyFakeDoc(doc._c_doc, c_doc)
-        if _LIBXML_VERSION_INT < 20632:
-            self._error_log.disconnect()
+            with self._error_log:
+                c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+                with nogil:
+                    ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
+                _destroyFakeDoc(doc._c_doc, c_doc)
 
         schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 
