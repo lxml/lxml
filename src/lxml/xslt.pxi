@@ -398,9 +398,8 @@ cdef class XSLT:
         self._xslt_resolver_context._c_style_doc = _copyDoc(c_doc, 1)
         c_doc._private = <python.PyObject*>self._xslt_resolver_context
 
-        self._error_log.connect()
-        c_style = xslt.xsltParseStylesheetDoc(c_doc)
-        self._error_log.disconnect()
+        with self._error_log:
+            c_style = xslt.xsltParseStylesheetDoc(c_doc)
 
         if c_style is NULL or c_style.errors:
             tree.xmlFreeDoc(c_doc)

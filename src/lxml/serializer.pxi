@@ -503,10 +503,9 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
         elif hasattr(f, u'write'):
             writer   = _FilelikeWriter(f, compression=compression)
             c_buffer = writer._createOutputBuffer(NULL)
-            writer.error_log.connect()
-            bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, exclusive, NULL,
-                                          with_comments, c_buffer)
-            writer.error_log.disconnect()
+            with writer.error_log:
+                bytes = c14n.xmlC14NDocSaveTo(c_doc, NULL, exclusive, NULL,
+                                              with_comments, c_buffer)
             if bytes >= 0:
                 bytes = tree.xmlOutputBufferClose(c_buffer)
             else:
