@@ -69,11 +69,32 @@ Then of parsing:
 
 Some parse error tests:
 
-    >>> try: parse('attributes(href)/html/body/a')
-    ... except: # Py2, Py3, ...
-    ...     import sys
-    ...     print(str(sys.exc_info()[1]).replace("(u'", "('"))
+    >>> def parse_error(css):
+    ...     try: return parse(css)
+    ...     except: # Py2, Py3, ...
+    ...         import sys
+    ...         print(str(sys.exc_info()[1]).replace("(u'", "('"))
+
+    >>> parse_error('attributes(href)/html/body/a')
     Expected selector, got '(' at [Symbol('attributes', 0)] -> Token('(', 10)
+    >>> parse_error('attributes(href)')
+    Expected selector, got '(' at [Symbol('attributes', 0)] -> Token('(', 10)
+    >>> parse_error('html/body/a')
+    Unexpected symbol: '/' at 4
+    >>> parse_error(' ')
+    Expected selector, got 'None' at [] -> None
+    >>> parse_error('div, ')
+    Expected selector, got 'None' at [Symbol('div', 0), Token(',', 3)] -> None
+    >>> parse_error(' , div')
+    Expected selector, got ',' at [] -> Token(',', 1)
+    >>> parse_error('p, , div')
+    Expected selector, got ',' at [Symbol('p', 0), Token(',', 1)] -> Token(',', 3)
+    >>> parse_error('div > ')
+    Expected selector, got 'None' at [Symbol('div', 0), Token('>', 4)] -> None
+    >>> parse_error(' > div')
+    Expected selector, got '>' at [] -> Token('>', 1)
+
+    # TODO: test more errors
 
 Now of translation:
 

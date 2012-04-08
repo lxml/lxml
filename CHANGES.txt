@@ -43,6 +43,8 @@ Bugs fixed
   constructor would fail with an exception, stating that the text
   cannot be modified.
 
+* Fix in cssselect: fail on empty simple selectors
+
 Other changes
 --------------
 

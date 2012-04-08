@@ -720,7 +720,11 @@ def parse_selector_group(stream):
         return Or(result)
 
 def parse_selector(stream):
+    consumed = len(stream.used)
     result = parse_simple_selector(stream)
+    if consumed == len(stream.used):
+        raise SelectorSyntaxError(
+            "Expected selector, got '%s'" % stream.peek())
     while 1:
         peek = stream.peek()
         if peek == ',' or peek is None:
