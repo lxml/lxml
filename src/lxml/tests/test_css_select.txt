@@ -116,7 +116,7 @@ Now, the tests:
     >>> pcss('p *:only-of-type')
     Traceback (most recent call last):
         ...
-    NotImplementedError: *:only-of-type is not implemented
+    ExpressionError: *:only-of-type is not implemented
     >>> pcss('p:only-of-type')
     paragraph
     >>> pcss('a:empty')

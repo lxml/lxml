@@ -15,7 +15,7 @@ except NameError:
 # Data borrowed from http://mootools.net/slickspeed/
 
 class CSSTestCase(HelperTestCase):
-    
+
     selectors = [
         ## Changed from original; probably because I'm only searching the body
         #('*', 252),
@@ -87,12 +87,12 @@ class CSSTestCase(HelperTestCase):
         body = doc.xpath('//body')[0]
         bad = []
         selector, count = self.selectors[self.index]
-        xpath = cssselect.css_to_xpath(cssselect.parse(selector))
+        selector = cssselect.CSSSelector(selector)
         try:
-            results = body.xpath(xpath)
+            results = selector(body)
         except Exception:
             e = sys.exc_info()[1]
-            e.args = ("%s for xpath %r" % (e, xpath),)
+            e.args = ("%s for xpath %r" % (e, selector.path),)
             raise
         found = {}
         for item in results:
@@ -103,13 +103,13 @@ class CSSTestCase(HelperTestCase):
         if isinstance(results, basestring):
             assert 0, (
                 "Got string result (%r), not element, for xpath %r"
-                % (results[:20], str(xpath)))
+                % (results[:20], str(selector.path)))
         if len(results) != count:
             #if self.shortDescription() == 'div.character, div.dialog':
             #    import pdb; pdb.set_trace()
             assert 0, (
                 "Did not get expected results (%s) instead %s for xpath %r"
-                % (count, len(results), str(xpath)))
+                % (count, len(results), str(selector.path)))
 
     def shortDescription(self):
         return self.selectors[self.index][0]
@@ -123,12 +123,11 @@ def unique(s):
         found[item] = None
         result.append(s)
     return result
-        
+
 def test_suite():
     suite = unittest.TestSuite()
     if sys.version_info >= (2,4):
         suite.addTests([make_doctest('test_css_select.txt')])
-    suite.addTests([make_doctest('test_css.txt')])
     suite.addTests(doctest.DocTestSuite(cssselect))
     suite.addTests(list(CSSTestCase.all()))
     return suite
