@@ -11,36 +11,37 @@ from lxml import etree
 
 ## Work-around the lack of absolute import in Python 2.4
 #from __future__ import absolute_import
-#from cssselect import Translator, SelectorSyntaxError, ExpressionError
+#from cssselect import ...
 try:
-    __import__('cssselect')
+    external_cssselect = __import__('cssselect')
 except ImportError:
     raise ImportError('cssselect seems not to be installed. '
                       'See http://packages.python.org/cssselect/')
 
-SelectorSyntaxError = sys.modules['cssselect.parser'].SelectorSyntaxError
-ExpressionError = sys.modules['cssselect.xpath'].ExpressionError
-Translator = sys.modules['cssselect'].Translator
-Element = sys.modules['cssselect.parser'].Element
-xpath_literal = sys.modules['cssselect.xpath'].xpath_literal
+SelectorSyntaxError = external_cssselect.SelectorSyntaxError
+ExpressionError = external_cssselect.ExpressionError
+SelectorError = external_cssselect.SelectorError
 
 
-__all__ = ['SelectorSyntaxError', 'ExpressionError', 'CSSSelector']
+__all__ = ['SelectorSyntaxError', 'ExpressionError', 'SelectorError',
+           'CSSSelector']
 
 
-class LxmlTranslator(Translator):
+class LxmlTranslator(external_cssselect.GenericTranslator):
     """
     A custom CSS selector to XPath translator with lxml-specific extensions.
     """
     def xpath_contains_function(self, xpath, function):
-        # text content, minus tags, must contain expr
-        text = function.arguments
-        if isinstance(text, Element):
-            text = text._format_element()
         xpath.add_condition(
             'contains(__lxml_internal_css:lower-case(string(.)), %s)'
-            % xpath_literal(text.lower()))
+            % self.xpath_literal(function.arguments.lower()))
         return xpath
+
+
+class LxmlHTMLTranslator(LxmlTranslator, external_cssselect.HTMLTranslator):
+    """
+    lxml extensions + HTML support.
+    """
 
 
 def _make_lower_case(context, s):
@@ -76,9 +77,15 @@ class CSSSelector(etree.XPath):
         ...     '</root>') % rdfns)
         >>> [(el.tag, el.text) for el in select_ns(rdf)]
         [('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description', 'blah')]
+
     """
-    def __init__(self, css, namespaces=None):
-        path = LxmlTranslator().css_to_xpath(css)
+    def __init__(self, css, namespaces=None, html=False, translator=None):
+        if translator is None:
+            if html:
+                translator = LxmlHTMLTranslator()
+            else:
+                translator = LxmlTranslator()
+        path = translator.css_to_xpath(css)
         etree.XPath.__init__(self, path, namespaces=namespaces)
         self.css = css
 

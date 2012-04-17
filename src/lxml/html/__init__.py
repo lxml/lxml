@@ -288,7 +288,7 @@ class HtmlMixin(object):
         """
         # Do the import here to make the dependency optional.
         from lxml.cssselect import CSSSelector
-        return CSSSelector(expr)(self)
+        return CSSSelector(expr, html=True)(self)
 
     ########################################
     ## Link functions

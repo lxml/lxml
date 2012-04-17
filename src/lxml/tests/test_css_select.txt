@@ -90,9 +90,7 @@ Now, the tests:
     >>> # FIXME: I'm not 100% sure this is right:
     >>> pcss('li:nth-child(3n+1)')
     first-li, fourth-li, seventh-li
-    >>> # FIXME: I'm not sure if nth-last-child(1) or nth-last-child(1)
-    >>> # should be equivalent to nth-last-child()
-    >>> pcss('li:nth-last-child()', 'li:nth-last-child(0)')
+    >>> pcss('li:nth-last-child(0)')
     seventh-li
     >>> pcss('li:nth-last-child(2n)', 'li:nth-last-child(even)')
     second-li, fourth-li, sixth-li
