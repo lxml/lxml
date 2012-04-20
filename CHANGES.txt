@@ -81,6 +81,21 @@ Other changes
   _XSLTResultTree, _XSLTProcessingInstruction``
 
 
+2.3.5 (?)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Crash in sax/target parser when reporting empty doctype.
+
+Other changes
+--------------
+
+
 2.3.4 (2012-03-26)
 ==================
 
