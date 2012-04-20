@@ -304,6 +304,102 @@ class HtmlParserTestCase(HelperTestCase):
                 ('start', root[1]), ('start', root[1][0])],
             events)
 
+    def test_html_parser_target_tag(self):
+        assertFalse  = self.assertFalse
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                assertFalse(attrib)
+            def end(self, tag):
+                events.append(("end", tag))
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+
+        parser.feed("<html><body></body></html>")
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals([
+            ("start", "html"), ("start", "body"),
+            ("end", "body"), ("end", "html")], events)
+
+    def test_html_parser_target_doctype_empty(self):
+        assertFalse  = self.assertFalse
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                assertFalse(attrib)
+            def end(self, tag):
+                events.append(("end", tag))
+            def doctype(self, *args):
+                events.append(("doctype", args))
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+        parser.feed("<!DOCTYPE><html><body></body></html>")
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals([
+            ("doctype", (None, None, None)),
+            ("start", "html"), ("start", "body"),
+            ("end", "body"), ("end", "html")], events)
+
+    def test_html_parser_target_doctype_html(self):
+        assertFalse  = self.assertFalse
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                assertFalse(attrib)
+            def end(self, tag):
+                events.append(("end", tag))
+            def doctype(self, *args):
+                events.append(("doctype", args))
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+        parser.feed("<!DOCTYPE html><html><body></body></html>")
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals([
+            ("doctype", ("html", None, None)),
+            ("start", "html"), ("start", "body"),
+            ("end", "body"), ("end", "html")], events)
+
+    def test_html_parser_target_doctype_html_full(self):
+        assertFalse  = self.assertFalse
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                assertFalse(attrib)
+            def end(self, tag):
+                events.append(("end", tag))
+            def doctype(self, *args):
+                events.append(("doctype", args))
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+        parser.feed('<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "sys.dtd">'
+                    '<html><body></body></html>')
+        done = parser.close()
+
+        self.assertEquals("DONE", done)
+        self.assertEquals([
+            ("doctype", ("html", "-//W3C//DTD HTML 4.01//EN", "sys.dtd")),
+            ("start", "html"), ("start", "body"),
+            ("end", "body"), ("end", "html")], events)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(HtmlParserTestCase)])

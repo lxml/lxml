@@ -1315,6 +1315,12 @@ cdef int check_string_utf8(bytes pystring):
         s += 1
     return is_non_ascii
 
+cdef inline object funicodeOrNone(char* s):
+    return funicode(s) if s is not NULL else None
+
+cdef inline object funicodeOrEmpty(char* s):
+    return funicode(s) if s is not NULL else ''
+
 cdef object funicode(char* s):
     cdef Py_ssize_t slen
     cdef char* spos
