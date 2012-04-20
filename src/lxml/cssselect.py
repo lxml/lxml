@@ -79,12 +79,13 @@ class CSSSelector(etree.XPath):
         [('{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description', 'blah')]
 
     """
-    def __init__(self, css, namespaces=None, html=False, translator=None):
-        if translator is None:
-            if html:
-                translator = LxmlHTMLTranslator()
-            else:
-                translator = LxmlTranslator()
+    def __init__(self, css, namespaces=None, translator='xml'):
+        if translator == 'xml':
+            translator = LxmlTranslator()
+        elif translator == 'html':
+            translator = LxmlHTMLTranslator()
+        elif translator == 'xhtml':
+            translator = LxmlHTMLTranslator(xhtml=True)
         path = translator.css_to_xpath(css)
         etree.XPath.__init__(self, path, namespaces=namespaces)
         self.css = css

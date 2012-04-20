@@ -277,7 +277,7 @@ class HtmlMixin(object):
         """
         return _collect_string_content(self)
 
-    def cssselect(self, expr):
+    def cssselect(self, expr, translator='html'):
         """
         Run the CSS expression on this element and its children,
         returning a list of the results.
@@ -288,7 +288,7 @@ class HtmlMixin(object):
         """
         # Do the import here to make the dependency optional.
         from lxml.cssselect import CSSSelector
-        return CSSSelector(expr, html=True)(self)
+        return CSSSelector(expr, translator=translator)(self)
 
     ########################################
     ## Link functions
