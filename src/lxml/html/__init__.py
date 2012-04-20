@@ -503,8 +503,7 @@ class HtmlComment(etree.CommentBase, HtmlMixin):
     pass
 
 class HtmlElement(etree.ElementBase, HtmlMixin):
-    # Override etree.ElementBase.cssselect, despite the MRO
-    cssselect = HtmlMixin.cssselect
+    pass
 
 class HtmlProcessingInstruction(etree.PIBase, HtmlMixin):
     pass

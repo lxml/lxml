@@ -1449,20 +1449,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                                           smart_strings=smart_strings)
         return evaluator(_path, **_variables)
 
-    def cssselect(self, expr, *, translator='xml'):
-        """
-        Run the CSS expression on this element and its children,
-        returning a list of the results.
-
-        Equivalent to lxml.cssselect.CSSSelect(expr)(self) -- note
-        that pre-compiling the expression can provide a substantial
-        speedup.
-        """
-        # Do the import here to make the dependency optional.
-        from lxml.cssselect import CSSSelector
-        return CSSSelector(expr, translator=translator)(self)
-
-
 
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
