@@ -276,7 +276,7 @@ class HtmlParserTestCase(HelperTestCase):
 
     def test_html_iterparse_file(self):
         iterparse = self.etree.iterparse
-        iterator = iterparse(fileInTestDir("css_shakespear.html"),
+        iterator = iterparse(fileInTestDir("shakespeare.html"),
                              html=True)
 
         self.assertEquals(None, iterator.root)
