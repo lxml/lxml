@@ -282,8 +282,8 @@ class HtmlMixin(object):
         Run the CSS expression on this element and its children,
         returning a list of the results.
 
-        Equivalent to lxml.cssselect.CSSSelect(expr)(self) -- note
-        that pre-compiling the expression can provide a substantial
+        Equivalent to lxml.cssselect.CSSSelect(expr, translator='html')(self)
+        -- note that pre-compiling the expression can provide a substantial
         speedup.
         """
         # Do the import here to make the dependency optional.
