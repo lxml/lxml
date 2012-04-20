@@ -238,11 +238,12 @@ class Function(object):
 
     def _xpath_contains(self, xpath, expr):
         # text content, minus tags, must contain expr
+        # this selector was removed from the CSS3 spec
+        # case sensitive for speed, matching jQuery's implementation
         if isinstance(expr, Element):
             expr = expr._format_element()
-        xpath.add_condition('contains(css:lower-case(string(.)), %s)'
-                            % xpath_literal(expr.lower()))
-        # FIXME: Currently case insensitive matching doesn't seem to be happening
+        xpath.add_condition('contains(string(.), %s)'
+                            % xpath_literal(expr))
         return xpath
 
     def _xpath_not(self, xpath, expr):
@@ -252,13 +253,6 @@ class Function(object):
         # FIXME: should I do something about element_path?
         xpath.add_condition('not(%s)' % cond)
         return xpath
-
-def _make_lower_case(context, s):
-    return s.lower()
-
-ns = etree.FunctionNamespace('http://codespeak.net/lxml/css/')
-ns.prefix = 'css'
-ns['lower-case'] = _make_lower_case
 
 class Pseudo(object):
     """

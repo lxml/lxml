@@ -129,13 +129,13 @@ Now of translation:
     >>> xpath('E:root')
     e[not(parent::*)]
     >>> xpath('E:contains("foo")')
-    e[contains(css:lower-case(string(.)), 'foo')]
+    e[contains(string(.), 'foo')]
     >>> xpath('E.warning')
     e[@class and contains(concat(' ', normalize-space(@class), ' '), ' warning ')]
     >>> xpath('E#myid')
     e[@id = 'myid']
     >>> xpath('E:not(:contains("foo"))')
-    e[not(contains(css:lower-case(string(.)), 'foo'))]
+    e[not(contains(string(.), 'foo'))]
     >>> xpath('E F')
     e/descendant-or-self::*/f
     >>> xpath('E > F')
