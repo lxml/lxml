@@ -285,10 +285,10 @@ cdef void _handleSaxDoctype(void* ctxt, char* c_name, char* c_public,
     if context._origSaxDoctype is not NULL:
         context._origSaxDoctype(c_ctxt, c_name, c_public, c_system)
     try:
-        public_id = funicode(c_public) if c_public is not NULL else None
-        system_id = funicode(c_system) if c_system is not NULL else None
         context._target._handleSaxDoctype(
-            funicode(c_name), public_id, system_id)
+            funicodeOrNone(c_name),
+            funicodeOrNone(c_public),
+            funicodeOrNone(c_system))
     except:
         context._handleSaxException(c_ctxt)
 
@@ -302,8 +302,9 @@ cdef void _handleSaxPI(void* ctxt, char* c_target, char* c_data) with gil:
     if context._origSaxPi is not NULL:
         context._origSaxPi(c_ctxt, c_target, c_data)
     try:
-        data = funicode(c_data) if c_data is not NULL else None
-        context._target._handleSaxPi(funicode(c_target), data)
+        context._target._handleSaxPi(
+            funicodeOrNone(c_target),
+            funicodeOrEmpty(c_data))
     except:
         context._handleSaxException(c_ctxt)
 
@@ -317,7 +318,7 @@ cdef void _handleSaxComment(void* ctxt, char* c_data) with gil:
     if context._origSaxComment is not NULL:
         context._origSaxComment(c_ctxt, c_data)
     try:
-        context._target._handleSaxComment(funicode(c_data))
+        context._target._handleSaxComment(funicodeOrEmpty(c_data))
     except:
         context._handleSaxException(c_ctxt)
 
