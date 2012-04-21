@@ -1,7 +1,6 @@
 import unittest
 
 import lxml.html
-import lxml.cssselect
 
 from lxml.tests.common_imports import doctest, HelperTestCase
 
@@ -46,6 +45,14 @@ class CSSTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
+    try:
+        import cssselect
+    except ImportError:
+        # no 'cssselect' installed
+        print("Skipping tests in lxml.cssselect - external cssselect package is not installed")
+        return suite
+
+    import lxml.cssselect
     suite.addTests(doctest.DocTestSuite(lxml.cssselect))
     suite.addTests([unittest.makeSuite(CSSTestCase)])
     return suite
