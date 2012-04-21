@@ -7,10 +7,16 @@ selection.  The most important is obviously XPath_, but there is also
 ObjectPath_ in the `lxml.objectify`_ module.  The newest child of this family
 is `CSS selection`_, which is implemented in the new ``lxml.cssselect`` module.
 
+Although it started its life in lxml, cssselect_ is now an independant project.
+It translates CSS selectors to XPath 1.0 expressions that can be used with
+lxml’s XPath engine. ``lxml.cssselect`` adds a few convienience shortcuts.
+
+
 .. _XPath: xpathxslt.html#xpath
 .. _ObjectPath: objectify.html#objectpath
 .. _`lxml.objectify`: objectify.html
 .. _`CSS selection`: http://www.w3.org/TR/CSS21/selector.html
+.. _cssselect: http://packages.python.org/cssselect/
 
 .. contents::
 ..
@@ -23,7 +29,7 @@ is `CSS selection`_, which is implemented in the new ``lxml.cssselect`` module.
 The CSSSelector class
 =====================
 
-The most important class in the ``cssselect`` module is ``CSSSelector``.  It
+The most important class in the ``lxml.cssselect`` module is ``CSSSelector``.  It
 provides the same interface as the XPath_ class, but accepts a CSS selector
 expression as input:
 
@@ -42,7 +48,7 @@ expression by inspecting the object:
 .. sourcecode:: pycon
 
     >>> sel.path
-    "descendant-or-self::div[contains(concat(' ', normalize-space(@class), ' '), ' content ')]"
+    "descendant-or-self::div[@class and contains(concat(' ', normalize-space(@class), ' '), ' content ')]"
 
 To use the selector, simply call it with a document or element
 object:
@@ -57,26 +63,47 @@ object:
     >>> [e.get('id') for e in sel(h)]
     ['inner']
 
+Using ``CSSSelector`` is equivalent to translating with ``cssselect``
+and using the ``XPath`` class:
 
-CSS Selectors
-=============
+.. sourcecode:: pycon
 
-This libraries attempts to implement CSS selectors `as described in
-the w3c specification
-<http://www.w3.org/TR/2001/CR-css3-selectors-20011113/>`_.  Many of
-the pseudo-classes do not apply in this context, including all
-`dynamic pseudo-classes
-<http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#dynamic-pseudos>`_.
-In particular these will not be available:
+    >>> from cssselect import GenericTranslator
+    >>> from lxml.etree import XPath
+    >>> sel = XPath(GenericTranslator().css_to_xpath('div.content'))
 
-* link state: ``:link``, ``:visited``, ``:target``
-* actions: ``:hover``, ``:active``, ``:focus``
-* UI states: ``:enabled``, ``:disabled``, ``:indeterminate``
-  (``:checked`` and ``:unchecked`` *are* available)
+``CSSSelector`` takes a ``translator`` parameter to let you choose which
+translator to use. It can be ``'xml'`` (the default), ``'xhtml'``, ``'html'``
+or a `Translator object`_.
 
-Also, none of the pseudo-elements apply, because the selector only
-returns elements and pseudo-elements select portions of text, like
-``::first-line``.
+.. _Translator object: http://packages.python.org/cssselect/#cssselect.GenericTranslator
+
+
+The cssselect method
+====================
+
+lxml ``Element`` objects have a ``cssselect`` convenience method.
+
+.. sourcecode:: pycon
+
+    >>> h.cssselect('div.content') == sel(h)
+    True
+
+Note however that pre-compiling the expression with the ``CSSSelector`` or
+``XPath`` class can provide a substantial speedup.
+
+The method also accepts a ``translator`` parameter. On ``HtmlElement``
+objects, the default is changed to ``'html'``.
+
+
+Supported Selectors
+===================
+
+Most `Level 3`_ selectors are supported. The details are in the
+`cssselect documentation`_.
+
+.. _Level 3: http://www.w3.org/TR/2011/REC-css3-selectors-20110929/
+.. _cssselect documentation: http://packages.python.org/cssselect/#supported-selectors
 
 
 Namespaces
@@ -85,23 +112,5 @@ Namespaces
 In CSS you can use ``namespace-prefix|element``, similar to
 ``namespace-prefix:element`` in an XPath expression.  In fact, it maps
 one-to-one, and the same rules are used to map namespace prefixes to
-namespace URIs.
-
-
-Limitations
-===========
-
-These applicable pseudoclasses are not yet implemented:
-
-* ``:lang(language)``
-* ``*:first-of-type``, ``*:last-of-type``, ``*:nth-of-type``,
-  ``*:nth-last-of-type``, ``*:only-of-type``.  All of these work when
-  you specify an element type, but not with ``*``
-
-Unlike XPath you cannot provide parameters in your expressions -- all
-expressions are completely static.
-
-XPath has underspecified string quoting rules (there seems to be no
-string quoting at all), so if you use expressions that contain
-characters that requiring quoting you might have problems with the
-translation from CSS to XPath.
+namespace URIs: the ``CSSSelector`` class accepts a dictionary as its
+``namespaces`` argument.
