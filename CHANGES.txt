@@ -46,6 +46,12 @@ Bugs fixed
 Other changes
 --------------
 
+* The functionality of "lxml.cssselect" was moved into a separate PyPI
+  package called "cssselect".  To continue using it, you must install
+  that package separately.  The "lxml.cssselect" module is still
+  available and provides the same interface, provided the "cssselect"
+  package can be imported at runtime.
+
 * Element attributes passed in as an ``attrib`` dict or as keyword
   arguments are now sorted by (namespaced) name before being created
   to make their order predictable for serialisation and iteration.
