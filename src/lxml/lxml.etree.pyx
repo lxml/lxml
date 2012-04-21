@@ -107,6 +107,14 @@ DEF __MAX_LOG_SIZE = 100
 # make the compiled-in debug state publicly available
 DEBUG = __DEBUG
 
+# A struct to store a cached qualified tag name+href pair.
+# While we can borrow the c_name from the document dict,
+# PyPy requires us to store a Python reference for the
+# namespace in order to keep the byte buffer alive.
+cdef struct qname:
+    char* c_name
+    python.PyObject* href
+
 # global per-thread setup
 tree.xmlThrDefIndentTreeOutput(1)
 tree.xmlThrDefLineNumbersDefaultValue(1)
@@ -2381,7 +2389,7 @@ cdef class _MultiTagMatcher:
     Match an xmlNode against a list of tags.
     """
     cdef list _py_tags
-    cdef char** _cached_tags
+    cdef qname* _cached_tags
     cdef size_t _tag_count
     cdef _Document _cached_doc
     cdef int _node_types
@@ -2396,9 +2404,24 @@ cdef class _MultiTagMatcher:
     def __dealloc__(self):
         self._clear()
 
+    cdef bint rejectsAll(self):
+        return not self._tag_count and not self._node_types
+
+    cdef bint rejectsAllAttributes(self):
+        return not self._tag_count
+
+    cdef bint matchesType(self, int node_type):
+        if node_type == tree.XML_ELEMENT_NODE and self._tag_count:
+            return True
+        return self._node_types & (1 << node_type)
+
     cdef void _clear(self):
+        cdef size_t i, count
+        count = self._tag_count
         self._tag_count = 0
         if self._cached_tags:
+            for i in xrange(count):
+                python.Py_XDECREF(self._cached_tags[i].href)
             cpython.mem.PyMem_Free(self._cached_tags)
             self._cached_tags = NULL
 
@@ -2452,37 +2475,41 @@ cdef class _MultiTagMatcher:
             self._cached_doc = doc
             return 0
         if not self._cached_tags:
-            self._cached_tags = <char**>cpython.mem.PyMem_Malloc(len(self._py_tags) * 2 * sizeof(char*))
+            self._cached_tags = <qname*>cpython.mem.PyMem_Malloc(len(self._py_tags) * sizeof(qname))
             if not self._cached_tags:
                 self._cached_doc = None
                 raise MemoryError()
-        for href, name in self._py_tags:
-            if name is None:
-                c_name = NULL
-            elif force_into_dict:
-                c_name = tree.xmlDictLookup(doc._c_doc.dict, _cstr(name), len(name))
-                if not c_name:
-                    raise MemoryError()
-            else:
-                c_name = tree.xmlDictExists(doc._c_doc.dict, _cstr(name), len(name))
-                if not c_name:
-                    # name not in dict => not in document either
-                    continue
-            self._cached_tags[self._tag_count] = c_name
-            self._tag_count += 1
-            self._cached_tags[self._tag_count] = _cstr(href) if href is not None else NULL
-            self._tag_count += 1
+        self._tag_count = _mapTagsToQnameMatchArray(
+            doc._c_doc, self._py_tags, self._cached_tags, force_into_dict)
         self._cached_doc = doc
         return 0
 
     cdef inline bint matches(self, xmlNode* c_node):
-        cdef size_t i
+        cdef qname* c_qname
         if self._node_types & (1 << c_node.type):
             return True
         elif c_node.type == tree.XML_ELEMENT_NODE:
-            for i in xrange(0, self._tag_count, 2):
-                if _tagMatchesExactly(c_node, self._cached_tags[i+1], self._cached_tags[i]):
+            for c_qname in self._cached_tags[:self._tag_count]:
+                if _tagMatchesExactly(c_node, c_qname):
                     return True
+        return False
+
+    cdef inline bint matchesAttribute(self, xmlAttr* c_attr):
+        """Attribute matches differ from Element matches in that they do
+        not care about node types and href NULL values are not wildcards
+        but match only unnamespaced attributes.
+        """
+        cdef char* c_href
+        cdef qname* c_qname
+        for c_qname in self._cached_tags[:self._tag_count]:
+            if c_qname.c_name is NULL or c_qname.c_name is c_attr.name:
+                c_href = tree._getNs(<xmlNode*>c_attr)
+                if c_qname.href is NULL:
+                    if c_href is NULL:
+                        return True
+                elif c_href is not NULL:
+                    if cstring_h.strcmp(c_href, python.__cstr(c_qname.href)) == 0:
+                        return True
         return False
 
 cdef class _ElementMatchIterator:

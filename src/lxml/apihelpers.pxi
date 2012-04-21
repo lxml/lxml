@@ -946,15 +946,15 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     else:
         return 0
 
-cdef inline bint _tagMatchesExactly(xmlNode* c_node, char* c_href, char* c_name):
+cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     u"""Tests if the node matches namespace URI and tag name.
 
     This differs from _tagMatches() in that it does not consider a
-    NULL value in c_href a wildcard, and that it expects the c_name to
-    be taken from the doc dict, i.e. it only compares the names by
+    NULL value in qname.href a wildcard, and that it expects the c_name
+    to be taken from the doc dict, i.e. it only compares the names by
     address.
 
-    A node matches if it matches both c_href and c_name.
+    A node matches if it matches both href and c_name of the qname.
 
     A node matches c_href if any of the following is true:
     * its namespace is NULL and c_href is the empty string
@@ -965,15 +965,48 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, char* c_href, char* c_name)
     * its name string points to the same address (!) as c_name
     """
     cdef char* c_node_href
-    if c_name is not NULL and c_name is not c_node.name:
+    if c_qname.c_name is not NULL and c_qname.c_name is not c_node.name:
         return 0
     c_node_href = _getNs(c_node)
-    if c_href is NULL:
+    if c_qname.href is NULL:
         return c_node_href is NULL or c_node_href[0] == '\0'
     elif c_node_href is NULL:
         return 0
     else:
-        return cstring_h.strcmp(c_href, c_node_href) == 0
+        return cstring_h.strcmp(python.__cstr(c_qname.href), c_node_href) == 0
+
+cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
+                                          qname* c_ns_tags, bint force_into_dict) except -1:
+    u"""Map a sequence of (name, namespace) pairs to a qname array for efficient
+    matching with _tagMatchesExactly() above.
+
+    Note that each qname struct in the array owns its href byte string object
+    if it is not NULL.
+    """
+    cdef Py_ssize_t count = 0
+    cdef char* c_tag
+    cdef bytes ns, tag
+    for ns, tag in ns_tags:
+        if tag is None:
+            c_tag = NULL
+        elif force_into_dict:
+            c_tag = tree.xmlDictLookup(c_doc.dict, _cstr(tag), len(tag))
+            if c_tag is NULL:
+                raise MemoryError()
+        else:
+            c_tag = tree.xmlDictExists(c_doc.dict, _cstr(tag), len(tag))
+            if c_tag is NULL:
+                # not in the dict => not in the document
+                continue
+        c_ns_tags[0].c_name = c_tag
+        if ns is None:
+            c_ns_tags[0].href = NULL
+        else:
+            python.Py_INCREF(ns) # keep an owned reference!
+            c_ns_tags[0].href = <python.PyObject*>ns
+        c_ns_tags += 1
+        count += 1
+    return count
 
 cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
     u"""Unlink and free a node and subnodes if possible.  Otherwise, make sure

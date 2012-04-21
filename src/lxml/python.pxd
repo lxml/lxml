@@ -98,6 +98,7 @@ cdef extern from "Python.h":
     # some handy functions
     cdef int callable "PyCallable_Check" (object obj)
     cdef char* _cstr "PyBytes_AS_STRING" (object s)
+    cdef char* __cstr "PyBytes_AS_STRING" (PyObject* s)
 
     # Py_buffer related flags
     cdef int PyBUF_SIMPLE
