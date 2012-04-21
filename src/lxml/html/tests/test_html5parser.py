@@ -268,31 +268,44 @@ class Test_parse(unittest.TestCase):
 
     def make_temp_file(self, contents=''):
         tmpfile = tempfile.NamedTemporaryFile()
-        tmpfile.write(contents.encode('utf8'))
-        tmpfile.flush()
-        tmpfile.seek(0)
-        return tmpfile
+        try:
+            tmpfile.write(contents.encode('utf8'))
+            tmpfile.flush()
+            tmpfile.seek(0)
+            return tmpfile
+        except Exception:
+            tmpfile.close()
+            raise
 
     def test_with_file_object(self):
         parser = DummyParser(doc='the doc')
         fp = open(__file__)
-        self.assertEqual(self.call_it(fp, parser=parser), 'the doc')
-        self.assertEqual(parser.parse_args, (fp,))
+        try:
+            self.assertEqual(self.call_it(fp, parser=parser), 'the doc')
+            self.assertEqual(parser.parse_args, (fp,))
+        finally:
+            fp.close()
 
     def test_with_file_name(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('data')
-        self.assertEqual(self.call_it(tmpfile.name, parser=parser), 'the doc')
-        fp, = parser.parse_args
-        self.assertEqual(fp.read(), tmpfile.read())
+        try:
+            self.assertEqual(self.call_it(tmpfile.name, parser=parser), 'the doc')
+            fp, = parser.parse_args
+            self.assertEqual(fp.read(), tmpfile.read())
+        finally:
+            tmpfile.close()
 
     def test_with_url(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('content')
-        url = 'file://' + tmpfile.name
-        self.assertEqual(self.call_it(url, parser=parser), 'the doc')
-        fp, = parser.parse_args
-        self.assertEqual(fp.read(), tmpfile.read())
+        try:
+            url = 'file://' + tmpfile.name
+            self.assertEqual(self.call_it(url, parser=parser), 'the doc')
+            fp, = parser.parse_args
+            self.assertEqual(fp.read(), tmpfile.read())
+        finally:
+            tmpfile.close()
 
     @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
