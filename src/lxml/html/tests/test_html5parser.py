@@ -292,7 +292,10 @@ class Test_parse(unittest.TestCase):
         try:
             self.assertEqual(self.call_it(tmpfile.name, parser=parser), 'the doc')
             fp, = parser.parse_args
-            self.assertEqual(fp.read(), tmpfile.read())
+            try:
+                self.assertEqual(fp.read(), tmpfile.read())
+            finally:
+                fp.close()
         finally:
             tmpfile.close()
 
@@ -303,7 +306,10 @@ class Test_parse(unittest.TestCase):
             url = 'file://' + tmpfile.name
             self.assertEqual(self.call_it(url, parser=parser), 'the doc')
             fp, = parser.parse_args
-            self.assertEqual(fp.read(), tmpfile.read())
+            try:
+                self.assertEqual(fp.read(), tmpfile.read())
+            finally:
+                fp.close()
         finally:
             tmpfile.close()
 
