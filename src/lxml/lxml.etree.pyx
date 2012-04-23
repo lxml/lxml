@@ -2466,10 +2466,6 @@ cdef class _MultiTagMatcher:
         """
         Look up the tag names in the doc dict to enable string pointer comparisons.
         """
-        cdef char* c_name
-        if doc is self._cached_doc:
-            # doc and dict didn't change => names already cached
-            return 0
         self._tag_count = 0
         if not self._py_tags:
             self._cached_doc = doc
