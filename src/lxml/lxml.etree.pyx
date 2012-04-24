@@ -2393,9 +2393,11 @@ cdef class _MultiTagMatcher:
     cdef size_t _tag_count
     cdef _Document _cached_doc
     cdef int _node_types
+    cdef int _cached_size
 
     def __cinit__(self, tags):
         self._cached_tags = NULL
+        self._cached_size = 0
         self._tag_count = 0
         self._node_types = 0
         self._py_tags = []
@@ -2466,6 +2468,10 @@ cdef class _MultiTagMatcher:
         """
         Look up the tag names in the doc dict to enable string pointer comparisons.
         """
+        cdef int dict_size = tree.xmlDictSize(doc._c_doc.dict)
+        if doc is self._cached_doc and dict_size == self._cached_size:
+            # doc and dict didn't change => names already cached
+            return 0
         self._tag_count = 0
         if not self._py_tags:
             self._cached_doc = doc
@@ -2478,6 +2484,7 @@ cdef class _MultiTagMatcher:
         self._tag_count = _mapTagsToQnameMatchArray(
             doc._c_doc, self._py_tags, self._cached_tags, force_into_dict)
         self._cached_doc = doc
+        self._cached_size = dict_size
         return 0
 
     cdef inline bint matches(self, xmlNode* c_node):
