@@ -546,48 +546,32 @@ cdef class iterwalk:
     A tree walker that generates events from an existing tree as if it
     was parsing XML data with ``iterparse()``.
     """
+    cdef _MultiTagMatcher _matcher
     cdef list   _node_stack
     cdef int    _index
     cdef list   _events
     cdef object _pop_event
     cdef int    _event_filter
-    cdef tuple  _tag_tuple
-    cdef char*  _tag_href
-    cdef char*  _tag_name
 
     def __init__(self, element_or_tree, events=(u"end",), tag=None):
         cdef _Element root
         cdef int ns_count
         root = _rootNodeOrRaise(element_or_tree)
         self._event_filter = _buildIterparseEventFilter(events)
-        self._setTagFilter(tag)
+        if tag is None or tag == '*':
+            self._matcher = None
+        else:
+            self._matcher = _MultiTagMatcher(tag)
         self._node_stack  = []
         self._events = []
         self._pop_event = self._events.pop
 
-        if self._event_filter != 0:
+        if self._event_filter:
             self._index = 0
             ns_count = self._start_node(root)
             self._node_stack.append( (root, ns_count) )
         else:
             self._index = -1
-
-    cdef void _setTagFilter(self, tag):
-        if tag is None or tag == u'*':
-            self._tag_href  = NULL
-            self._tag_name  = NULL
-        else:
-            href, name = self._tag_tuple = _getNsTag(tag)
-            if href is None or href == b'*':
-                self._tag_href = NULL
-            else:
-                self._tag_href = _cstr(href)
-            if name is None or name == b'*':
-                self._tag_name = NULL
-            else:
-                self._tag_name = _cstr(name)
-            if self._tag_href is NULL and self._tag_name is NULL:
-                self._tag_tuple = None
 
     def __iter__(self):
         return self
@@ -596,10 +580,13 @@ cdef class iterwalk:
         cdef xmlNode* c_child
         cdef _Element node
         cdef _Element next_node
-        cdef int ns_count
+        cdef int ns_count = 0
         if self._events:
             return self._pop_event(0)
-        ns_count = 0
+        if self._matcher is not None and self._index >= 0:
+            node = self._node_stack[self._index][0]
+            self._matcher.cacheTags(node._doc)
+
         # find next node
         while self._index >= 0:
             node = self._node_stack[self._index][0]
@@ -639,8 +626,7 @@ cdef class iterwalk:
         else:
             ns_count = 0
         if self._event_filter & ITERPARSE_FILTER_START:
-            if self._tag_tuple is None or \
-                   _tagMatches(node._c_node, self._tag_href, self._tag_name):
+            if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"start", node) )
         return ns_count
 
@@ -649,8 +635,7 @@ cdef class iterwalk:
         cdef int i, ns_count
         node, ns_count = self._node_stack.pop()
         if self._event_filter & ITERPARSE_FILTER_END:
-            if self._tag_tuple is None or \
-                   _tagMatches(node._c_node, self._tag_href, self._tag_name):
+            if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"end", node) )
         if self._event_filter & ITERPARSE_FILTER_END_NS:
             event = (u"end-ns", None)
