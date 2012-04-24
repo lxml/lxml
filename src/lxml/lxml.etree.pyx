@@ -47,6 +47,7 @@ cimport c14n
 
 # Cython's standard declarations
 cimport cpython.mem
+cimport cpython.ref
 from libc cimport limits, stdio, stdlib
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
 

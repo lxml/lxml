@@ -1002,7 +1002,7 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
         if ns is None:
             c_ns_tags[count].href = NULL
         else:
-            python.Py_INCREF(ns) # keep an owned reference!
+            cpython.ref.Py_INCREF(ns) # keep an owned reference!
             c_ns_tags[count].href = <python.PyObject*>ns
         count += 1
     return count
