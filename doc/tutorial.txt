@@ -479,7 +479,8 @@ serialised the tree to XML:
     another - Child 3
 
 If you know you are only interested in a single tag, you can pass its name to
-``iter()`` to have it filter for you:
+``iter()`` to have it filter for you.  Since lxml 2.4, you can also pass more
+than one tag to intercept on multiple tags during iteration.
 
 .. sourcecode:: pycon
 
@@ -487,6 +488,12 @@ If you know you are only interested in a single tag, you can pass its name to
     ...     print("%s - %s" % (element.tag, element.text))
     child - Child 1
     child - Child 2
+
+    >>> for element in root.iter("another", "child"):
+    ...     print("%s - %s" % (element.tag, element.text))
+    child - Child 1
+    child - Child 2
+    another - Child 3
 
 By default, iteration yields all nodes in the tree, including
 ProcessingInstructions, Comments and Entity instances.  If you want to

@@ -196,7 +196,7 @@ children.  Using the tree defined above, we get:
   >>> [ child.tag for child in root ]
   ['a', 'b', 'c', 'd']
 
-To iterate in the opposite direction, use the ``reversed()`` function
+To iterate in the opposite direction, use the builtin ``reversed()`` function
 that exists in Python 2.4 and later.
 
 Tree traversal should use the ``element.iter()`` method:
@@ -229,25 +229,33 @@ Note how ``element.iterdescendants()`` does not include the element
 itself, as opposed to ``element.iter()``.  The latter effectively
 implements the 'descendant-or-self' axis in XPath.
 
-All of these iterators support an additional ``tag`` keyword argument that
-filters the generated elements by tag name:
+All of these iterators support one (or more, since lxml 2.4) additional
+arguments that filter the generated elements by tag name:
 
 .. sourcecode:: pycon
 
-  >>> [ child.tag for child in root.iterchildren(tag='a') ]
+  >>> [ child.tag for child in root.iterchildren('a') ]
   ['a']
-  >>> [ child.tag for child in d.iterchildren(tag='a') ]
+  >>> [ child.tag for child in d.iterchildren('a') ]
   []
-  >>> [ el.tag for el in root.iterdescendants(tag='d') ]
+  >>> [ el.tag for el in root.iterdescendants('d') ]
   ['d']
-  >>> [ el.tag for el in root.iter(tag='d') ]
+  >>> [ el.tag for el in root.iter('d') ]
   ['d']
+  >>> [ el.tag for el in root.iter('d', 'a') ]
+  ['a', 'd']
+
+Note that the order of the elements is determined by the iteration order,
+which is the document order in most cases (except for preceding siblings
+and ancestors, where it is the reversed document order).  The order of
+the tag selection arguments is irrelevant, as you can see in the last
+example.
 
 The most common way to traverse an XML tree is depth-first, which
 traverses the tree in document order.  This is implemented by the
 ``.iter()`` method.  While there is no dedicated method for
 breadth-first traversal, it is almost as simple if you use the
-``collections.deque`` type from Python 2.4.
+``collections.deque`` type that is available in Python 2.4 and later.
 
 .. sourcecode:: pycon
 

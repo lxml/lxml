@@ -1277,8 +1277,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return None
         return _elementFactory(self._doc, c_node)
 
-    def itersiblings(self, tag=None, *, preceding=False):
-        u"""itersiblings(self, tag=None, preceding=False)
+    def itersiblings(self, tag=None, *tags, preceding=False):
+        u"""itersiblings(self, tag=None, *tags, preceding=False)
 
         Iterate over the following or preceding siblings of this element.
 
@@ -1286,43 +1286,52 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         defaults to False, i.e. forward iteration over the following
         siblings.  When True, the iterator yields the preceding
         siblings in reverse document order, i.e. starting right before
-        the current element and going left.  The generated elements
-        can be restricted to a specific tag name with the 'tag'
-        keyword.
-        """
-        return SiblingsIterator(self, tag, preceding=preceding)
+        the current element and going backwards.
 
-    def iterancestors(self, tag=None):
-        u"""iterancestors(self, tag=None)
+        The returned elements can be restricted to a specific tag name by
+        passing a tag or a series of tag names.
+        """
+        if tag is not None:
+            tags += (tag,)
+        return SiblingsIterator(self, tags, preceding=preceding)
+
+    def iterancestors(self, tag=None, *tags):
+        u"""iterancestors(self, tag=None, *tags)
 
         Iterate over the ancestors of this element (from parent to parent).
 
-        The generated elements can be restricted to a specific tag name with
-        the 'tag' keyword.
+        The returned elements can be restricted to a specific tag name by
+        passing a tag or a series of tag names.
         """
-        return AncestorsIterator(self, tag)
+        if tag is not None:
+            tags += (tag,)
+        return AncestorsIterator(self, tags)
 
-    def iterdescendants(self, tag=None):
-        u"""iterdescendants(self, tag=None)
+    def iterdescendants(self, tag=None, *tags):
+        u"""iterdescendants(self, tag=None, *tags)
 
         Iterate over the descendants of this element in document order.
 
         As opposed to ``el.iter()``, this iterator does not yield the element
-        itself.  The generated elements can be restricted to a specific tag
-        name with the 'tag' keyword.
+        itself.  The returned elements can be restricted to a specific tag
+        name by passing a tag or a series of tag names.
         """
-        return ElementDepthFirstIterator(self, tag, inclusive=False)
+        if tag is not None:
+            tags += (tag,)
+        return ElementDepthFirstIterator(self, tags, inclusive=False)
 
-    def iterchildren(self, tag=None, *, reversed=False):
-        u"""iterchildren(self, tag=None, reversed=False)
+    def iterchildren(self, tag=None, *tags, reversed=False):
+        u"""iterchildren(self, tag=None, *tags, reversed=False)
 
         Iterate over the children of this element.
 
-        As opposed to using normal iteration on this element, the generated
-        elements can be restricted to a specific tag name with the 'tag'
-        keyword and reversed with the 'reversed' keyword.
+        As opposed to using normal iteration on this element, the returned
+        elements can be restricted to a specific tag name by passing a tag
+        or a series of tag names, and reversed with the 'reversed' keyword.
         """
-        return ElementChildIterator(self, tag, reversed=reversed)
+        if tag is not None:
+            tags += (tag,)
+        return ElementChildIterator(self, tags, reversed=reversed)
 
     def getroottree(self):
         u"""getroottree(self)
@@ -1336,15 +1345,17 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidDoc(self._doc)
         return _elementTreeFactory(self._doc, None)
 
-    def getiterator(self, tag=None):
-        u"""getiterator(self, tag=None)
+    def getiterator(self, tag=None, *tags):
+        u"""getiterator(self, tag=None, *tags)
 
         Returns a sequence or iterator of all elements in the subtree in
         document order (depth first pre-order), starting with this
         element.
 
         Can be restricted to find only elements with a specific tag
-        (pass ``tag="xyz"``) or from a namespace (pass ``tag="{ns}*"``).
+        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
+        Passing a sequence of tags will let the iterator return all
+        elements matching any of these tags, in document order.
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
@@ -1357,34 +1368,43 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
           method in new code if you require backwards compatibility
           with older versions of lxml or ElementTree.
         """
-        return ElementDepthFirstIterator(self, tag)
+        if tag is not None:
+            tags += (tag,)
+        return ElementDepthFirstIterator(self, tags)
 
-    def iter(self, tag=None):
-        u"""iter(self, tag=None)
+    def iter(self, tag=None, *tags):
+        u"""iter(self, tag=None, *tags)
 
         Iterate over all elements in the subtree in document order (depth
         first pre-order), starting with this element.
 
         Can be restricted to find only elements with a specific tag
-        (pass ``tag="xyz"``) or from a namespace (pass ``tag="{ns}*"``).
+        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
+        Passing a sequence of tags will let the iterator return all
+        elements matching any of these tags, in document order.
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
         """
-        return ElementDepthFirstIterator(self, tag)
+        if tag is not None:
+            tags += (tag,)
+        return ElementDepthFirstIterator(self, tags)
 
-    def itertext(self, tag=None, *, with_tail=True):
-        u"""itertext(self, tag=None, with_tail=True)
+    def itertext(self, tag=None, *tags, with_tail=True):
+        u"""itertext(self, tag=None, *tags, with_tail=True)
 
         Iterates over the text content of a subtree.
 
-        You can pass the ``tag`` keyword argument to restrict text content to
-        a specific tag name.
+        You can pass a tag name to restrict text content to a specific tag
+        name.  Passing a sequence of tags will let the iterator consider
+        all elements matching any of these tags.
 
         You can set the ``with_tail`` keyword argument to ``False`` to skip
         over tail text.
         """
-        return ElementTextIterator(self, tag, with_tail=with_tail)
+        if tag is not None:
+            tags += (tag,)
+        return ElementTextIterator(self, tags, with_tail=with_tail)
 
     def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
         u"""makeelement(self, _tag, attrib=None, nsmap=None, **_extra)
@@ -1915,15 +1935,16 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         tree.xmlFree(c_path)
         return path
 
-    def getiterator(self, tag=None):
-        u"""getiterator(self, tag=None)
+    def getiterator(self, tag=None, *tags):
+        u"""getiterator(self, *tags, tag=None)
 
         Returns a sequence or iterator of all elements in document order
         (depth first pre-order), starting with the root element.
 
         Can be restricted to find only elements with a specific tag
-        (pass ``tag="xyz"`` or ``tag="{ns}xyz"``) or from a namespace
-        (pass ``tag="{ns}*"``).
+        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
+        Passing a sequence of tags will let the iterator return all
+        elements matching any of these tags, in document order.
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
@@ -1939,10 +1960,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         root = self.getroot()
         if root is None:
             return ()
-        return root.getiterator(tag)
+        if tag is not None:
+            tags += (tag,)
+        return root.getiterator(*tags)
 
-    def iter(self, tag=None):
-        u"""iter(self, tag=None)
+    def iter(self, tag=None, *tags):
+        u"""iter(self, tag=None, *tags)
 
         Creates an iterator for the root element.  The iterator loops over
         all elements in this tree, in document order.
@@ -1950,7 +1973,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         root = self.getroot()
         if root is None:
             return ()
-        return root.iter(tag)
+        if tag is not None:
+            tags += (tag,)
+        return root.iter(*tags)
 
     def find(self, path, namespaces=None):
         u"""find(self, path, namespaces=None)
@@ -2424,7 +2449,7 @@ cdef class _MultiTagMatcher:
         self._tag_count = 0
         if self._cached_tags:
             for i in xrange(count):
-                python.Py_XDECREF(self._cached_tags[i].href)
+                cpython.ref.Py_XDECREF(self._cached_tags[i].href)
             cpython.mem.PyMem_Free(self._cached_tags)
             self._cached_tags = NULL
 
@@ -2432,16 +2457,16 @@ cdef class _MultiTagMatcher:
         self._cached_doc = None
         del self._py_tags[:]
         self._clear()
-        if tags is None:
-            # match anything
+        if tags is None or tags == ():
+            # no selection in tags argument => match anything
             self._node_types = (
                 1 << tree.XML_COMMENT_NODE |
                 1 << tree.XML_PI_NODE |
                 1 << tree.XML_ENTITY_REF_NODE |
                 1 << tree.XML_ELEMENT_NODE)
-            return
-        self._node_types = 0
-        self._storeTags(tags, set())
+        else:
+            self._node_types = 0
+            self._storeTags(tags, set())
 
     cdef _storeTags(self, tag, set seen):
         if tag is Comment:
@@ -2456,10 +2481,13 @@ cdef class _MultiTagMatcher:
             if tag in seen:
                 return
             seen.add(tag)
-            href, name = _getNsTag(tag)
-            if name == b'*':
-                name = None
-            self._py_tags.append((href, name))
+            if tag in ('*', '{*}*'):
+                self._node_types |= 1 << tree.XML_ELEMENT_NODE
+            else:
+                href, name = _getNsTag(tag)
+                if name == b'*':
+                    name = None
+                self._py_tags.append((href, name))
         else:
             # support a sequence of tags
             for item in tag:
@@ -2476,6 +2504,7 @@ cdef class _MultiTagMatcher:
         self._tag_count = 0
         if not self._py_tags:
             self._cached_doc = doc
+            self._cached_size = dict_size
             return 0
         if not self._cached_tags:
             self._cached_tags = <qname*>cpython.mem.PyMem_Malloc(len(self._py_tags) * sizeof(qname))
@@ -2599,7 +2628,7 @@ cdef class ElementDepthFirstIterator:
     instructions.  To filter them out, check if the ``tag`` property
     of the returned element is a string (i.e. not None and not a
     factory function), or pass the ``Element`` factory for the ``tag``
-    keyword.
+    argument to receive only Elements.
 
     If the optional ``tag`` argument is not None, the iterator returns only
     the elements that match the respective name and namespace.

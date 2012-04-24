@@ -2195,19 +2195,46 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         self.assertEquals(
             [a, b],
-               list(a.getiterator( ('a', 'b') )))
+               list(a.getiterator('a', 'b')))
+        self.assertEquals(
+            [],
+              list(a.getiterator('x', 'y')))
+        self.assertEquals(
+            [a, f],
+              list(a.getiterator('f', 'a')))
+        self.assertEquals(
+            [c, e, f],
+               list(c.getiterator('c', '*', 'a')))
+        self.assertEquals(
+            [],
+                  list(a.getiterator( (), () )))
+
+    def test_getiterator_filter_multiple_tuple(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(b, 'd')
+        e = SubElement(c, 'e')
+        f = SubElement(c, 'f')
+
+        self.assertEquals(
+            [a, b],
+                  list(a.getiterator( ('a', 'b') )))
         self.assertEquals(
             [],
               list(a.getiterator( ('x', 'y') )))
         self.assertEquals(
             [a, f],
-              list(a.getiterator( ('f', 'a') )))
+                  list(a.getiterator( ('f', 'a') )))
         self.assertEquals(
             [c, e, f],
-               list(c.getiterator( ('c', '*', 'a') )))
+                     list(c.getiterator( ('c', '*', 'a') )))
         self.assertEquals(
             [],
-                  list(a.getiterator( () )))
+              list(a.getiterator( () )))
 
     def test_getiterator_filter_namespace(self):
         Element = self.etree.Element
