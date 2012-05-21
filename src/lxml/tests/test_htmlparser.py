@@ -32,7 +32,7 @@ class HtmlParserTestCase(HelperTestCase):
 </html>
 """)
     broken_html_str = _bytes("<html><head><title>test<body><h1>page title</h3></p></html>")
-    uhtml_str = _str("<html><head><title>test Ã¡\uF8D2</title></head><body><h1>page Ã¡\uF8D2 title</h1></body></html>")
+    uhtml_str = _str("<html><head><title>test Ã¡</title></head><body><h1>page Ã¡ title</h1></body></html>")
 
     def tearDown(self):
         super(HtmlParserTestCase, self).tearDown()
