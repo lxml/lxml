@@ -961,7 +961,8 @@ cdef class _BaseParser:
             context.cleanup()
 
     cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
-                           char* c_filename) except NULL:
+                           char* c_filename,
+                           char* encoding_override=NULL) except NULL:
         u"""Parse document, share dictionary if possible.
         """
         cdef _ParserContext context
@@ -977,7 +978,9 @@ cdef class _BaseParser:
             pctxt = context._c_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
-            if self._default_encoding is None:
+            if encoding_override is not NULL:
+                c_encoding = encoding_override
+            elif self._default_encoding is None:
                 c_encoding = NULL
             else:
                 c_encoding = _cstr(self._default_encoding)
@@ -1465,7 +1468,8 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 ## helper functions for document creation
 ############################################################
 
-cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
+cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser,
+                       char* encoding_override=NULL) except NULL:
     cdef char* c_filename
     cdef char* c_text
     cdef Py_ssize_t c_len
@@ -1488,7 +1492,8 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename)
         c_text = _cstr(text)
-        return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
+        return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename,
+                                               encoding_override)
 
 cdef xmlDoc* _parseDocFromFile(filename8, _BaseParser parser) except NULL:
     if parser is None:
@@ -1598,6 +1603,7 @@ cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
 
 cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
     cdef xmlDoc* c_doc
+    cdef char* encoding_override = NULL
     if python.PyUnicode_Check(text):
         if _hasEncodingDeclaration(text):
             raise ValueError, \
@@ -1605,11 +1611,12 @@ cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
             text = python.PyUnicode_AsUTF8String(text)
+            encoding_override = "UTF-8"
     elif not python.PyBytes_Check(text):
         raise ValueError, u"can only parse strings"
     if python.PyUnicode_Check(url):
         url = python.PyUnicode_AsUTF8String(url)
-    c_doc = _parseDoc(text, url, parser)
+    c_doc = _parseDoc(text, url, parser, encoding_override)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, _BaseParser parser):
