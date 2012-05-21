@@ -1046,16 +1046,23 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_filename
+        cdef object encoding
         if not filename:
             filename = None
 
+        encoding = self._default_encoding
+        if encoding is None and hasattr(filelike, u'getvalue'):
+            # StringIO - is it unicode?
+            if python.PyUnicode_Check(filelike.getvalue()):
+                # It will be encoded as UTF-8; ensure it is interpreted as such
+                encoding = "UTF-8"
         context = self._getParserContext()
         context.prepare()
         try:
             pctxt = context._c_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             file_context = _FileReaderContext(
-                filelike, context, filename, self._default_encoding)
+                filelike, context, filename, encoding)
             result = file_context._readDoc(pctxt, self._parse_options)
 
             return context._handleParseResultDoc(
