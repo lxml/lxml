@@ -11,7 +11,8 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
+from common_imports import etree, html, StringIO, BytesIO, fileInTestDir
+from common_imports import _bytes, _str
 from common_imports import SillyFileLike, HelperTestCase, write_to_file
 
 try:
@@ -23,6 +24,7 @@ class HtmlParserTestCase(HelperTestCase):
     """HTML parser test cases
     """
     etree = etree
+    html = html
 
     html_str = _bytes("<html><head><title>test</title></head><body><h1>page title</h1></body></html>")
     html_str_pretty = _bytes("""\
@@ -33,6 +35,7 @@ class HtmlParserTestCase(HelperTestCase):
 """)
     broken_html_str = _bytes("<html><head><title>test<body><h1>page title</h3></p></html>")
     uhtml_str = _str("<html><head><title>test Ã¡</title></head><body><h1>page Ã¡ title</h1></body></html>")
+    uhtml_str_title = _str("test Ã¡")
 
     def tearDown(self):
         super(HtmlParserTestCase, self).tearDown()
@@ -60,6 +63,18 @@ class HtmlParserTestCase(HelperTestCase):
         f = BytesIO("<html></body>")
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
+
+    def testUnicodeHTMLParsing(self):
+        tree = self.html.parse(StringIO(self.uhtml_str))
+        self.assertEqual(self.uhtml_str_title,
+                         list(tree.getroot())[0].text_content())
+
+        # etree uses a different code path if the StringIO.tell() != 0
+        stringio = StringIO('x' + self.uhtml_str)
+        stringio.read(1)
+        tree = self.html.parse(stringio)
+        self.assertEqual(self.uhtml_str_title,
+                         list(tree.getroot())[0].text_content())
 
     def test_html_element_name_empty(self):
         parser = self.etree.HTMLParser()
