@@ -65,6 +65,7 @@ class HtmlParserTestCase(HelperTestCase):
                           parse, f, parser)
 
     def testUnicodeHTMLParsing(self):
+        # Test cases for https://bugs.launchpad.net/lxml/+bug/1002581
         tree = self.html.parse(StringIO(self.uhtml_str))
         self.assertEqual(self.uhtml_str_title,
                          list(tree.getroot())[0].text_content())
