@@ -64,7 +64,7 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
-    def testUnicodeHTMLParsing(self):
+    def test_unicode_html_parsing(self):
         # Test cases for https://bugs.launchpad.net/lxml/+bug/1002581
         tree = self.html.parse(StringIO(self.uhtml_str))
         self.assertEqual(self.uhtml_str_title,
