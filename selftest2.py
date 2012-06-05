@@ -432,3 +432,6 @@ if __name__ == "__main__":
     import doctest, selftest2
     failed, tested = doctest.testmod(selftest2)
     print("%d tests ok." % (tested - failed))
+    if failed > 0:
+        print("%d tests failed. Exiting with non-zero return code." % failed)
+        sys.exit(1)
