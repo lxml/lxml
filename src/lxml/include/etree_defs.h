@@ -91,6 +91,11 @@
 #  define XML_PARSE_HUGE       1 << 19
 #endif
 
+#if LIBXML_VERSION < 20704
+/* FIXME: hack to make new error reporting compile in old libxml2 versions */
+#  define xmlStructuredErrorContext NULL
+#endif
+
 /* added to xmlsave API in libxml2 2.6.23 */
 #if LIBXML_VERSION < 20623
 #  define xmlSaveToBuffer(buffer, encoding, options)
