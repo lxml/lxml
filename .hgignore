@@ -1,0 +1,19 @@
+syntax: glob
+
+*.pyc
+*.pyo
+__pycache__
+
+build/
+dist/
+cython_debug/
+.git/
+.gitrev
+.coverage
+*.orig
+*.rej
+*.dep
+*.swp
+*.so
+*.o
+*~
