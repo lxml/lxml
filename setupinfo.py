@@ -131,6 +131,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
             runtime_library_dirs = runtime_library_dirs,
             libraries = _libraries,
             ))
+    if CYTHON_INSTALLED and OPTION_WITH_CYTHON_GDB:
+        for ext in result:
+            ext.cython_gdb = True
     return result
 
 def find_dependencies(module):
@@ -347,6 +350,7 @@ OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_WITHOUT_CYTHON = has_option('without-cython')
+OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
