@@ -279,13 +279,8 @@ cdef class _BaseContext:
         """
         cdef python.PyObject* c_dict
         cdef python.PyObject* dict_result
-        if c_ns_uri is NULL:
-            c_dict = python.PyDict_GetItem(
-                self._function_cache, None)
-        else:
-            c_dict = python.PyDict_GetItem(
-                self._function_cache, c_ns_uri)
-
+        c_dict = python.PyDict_GetItem(
+            self._function_cache, None if c_ns_uri is NULL else c_ns_uri)
         if c_dict is not NULL:
             dict_result = python.PyDict_GetItem(
                 <object>c_dict, c_name)
