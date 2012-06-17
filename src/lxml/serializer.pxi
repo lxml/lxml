@@ -151,8 +151,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     cdef bytes result
     cdef _Document doc
     cdef _Element element
-
-    cdef char **c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
+    cdef char **c_inclusive_ns_prefixes
 
     if isinstance(element_or_tree, _Element):
         _assertValidNode(<_Element>element_or_tree)
@@ -163,12 +162,16 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
         _assertValidDoc(doc)
         c_doc = doc._c_doc
 
-    with nogil:
-        byte_count = c14n.xmlC14NDocDumpMemory(
-            c_doc, NULL, exclusive, c_inclusive_ns_prefixes, with_comments, &c_buffer)
+    c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
 
-    _destroyFakeDoc(doc._c_doc, c_doc)
-    cstd.free(c_inclusive_ns_prefixes)
+    try:
+         with nogil:
+             byte_count = c14n.xmlC14NDocDumpMemory(
+                 c_doc, NULL, exclusive, c_inclusive_ns_prefixes, with_comments, &c_buffer)
+
+    finally:
+         _destroyFakeDoc(doc._c_doc, c_doc)
+         cstd.free(c_inclusive_ns_prefixes)
 
     if byte_count < 0 or c_buffer is NULL:
         if c_buffer is not NULL:
@@ -486,6 +489,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 cdef char **_convert_ns_prefixes(inclusive_ns_prefixes):
     cdef char **c_inclusive_ns_prefixes
     cdef char *c_prefix
+    cdef bytes prefix
     if not inclusive_ns_prefixes:
          return NULL
 
@@ -511,11 +515,13 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
     cdef xmlDoc* c_base_doc
     cdef xmlDoc* c_doc
     cdef int bytes = -1
-    cdef char **c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
+    cdef char **c_inclusive_ns_prefixes
 
     c_base_doc = element._c_node.doc
     c_doc = _fakeRootDoc(c_base_doc, element._c_node)
     try:
+        c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
+
         if _isString(f):
             filename8 = _encodeFilename(f)
             c_filename = _cstr(filename8)
