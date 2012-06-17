@@ -658,7 +658,6 @@ cdef object _createNodeSetResult(xpath.xmlXPathObject* xpathObj, _Document doc,
 cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
                          _BaseContext context, bint is_fragment):
     cdef xmlNode* c_child
-    cdef char* s
     if _isElement(c_node):
         if c_node.doc != doc._c_doc and c_node.doc._private is NULL:
             # XXX: works, but maybe not always the right thing to do?
@@ -675,17 +674,8 @@ cdef _unpackNodeSetEntry(list results, xmlNode* c_node, _Document doc,
         results.append(
             _buildElementStringResult(doc, c_node, context))
     elif c_node.type == tree.XML_NAMESPACE_DECL:
-        s = (<xmlNs*>c_node).href
-        if s is NULL:
-            href = None
-        else:
-            href = funicode(s)
-        s = (<xmlNs*>c_node).prefix
-        if s is NULL:
-            prefix = None
-        else:
-            prefix = funicode(s)
-        results.append( (prefix, href) )
+        results.append( (funicodeOrNone((<xmlNs*>c_node).prefix),
+                         funicodeOrNone((<xmlNs*>c_node).href)) )
     elif c_node.type == tree.XML_DOCUMENT_NODE or \
             c_node.type == tree.XML_HTML_DOCUMENT_NODE:
         # ignored for everything but result tree fragments
