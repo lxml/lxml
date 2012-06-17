@@ -1632,12 +1632,13 @@ cdef class _Entity(__ContentOnlyElement):
 
 
 cdef class QName:
-    u"""QName(text_or_uri, tag=None)
+    u"""QName(text_or_uri_or_element, tag=None)
 
     QName wrapper for qualified XML names.
 
     Pass a tag name by itself or a namespace URI and a tag name to
-    create a qualified name.
+    create a qualified name.  Alternatively, pass an Element to
+    extract its tag name.
 
     The ``text`` property holds the qualified name in
     ``{namespace}tagname`` notation.  The ``namespace`` and
@@ -1646,7 +1647,9 @@ cdef class QName:
 
     You can pass QName objects wherever a tag name is expected.  Also,
     setting Element text from a QName will resolve the namespace
-    prefix and set a qualified text value.
+    prefix and set a qualified text value.  This is helpful in XML
+    languages like SOAP or XML-Schema that use prefixed tag names in
+    their text content.
     """
     cdef readonly object text
     cdef readonly object localname
