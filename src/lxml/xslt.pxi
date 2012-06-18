@@ -256,6 +256,7 @@ cdef class XSLTAccessControl:
 cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
         return 0
+    # libxml2 internalises the strings if ctxt has a dict
     return xslt.xsltRegisterExtFunction(
         <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
         <xslt.xmlXPathFunction>_xpath_function_call)
@@ -263,6 +264,7 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
 cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
         return 0
+    # libxml2 internalises the strings if ctxt has a dict
     return xslt.xsltRegisterExtFunction(
         <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
         NULL)
@@ -506,8 +508,16 @@ cdef class XSLT:
         # anyway.
         if transform_ctxt.dict is not NULL:
             xmlparser.xmlDictFree(transform_ctxt.dict)
-        transform_ctxt.dict = self._c_style.doc.dict
-        xmlparser.xmlDictReference(transform_ctxt.dict)
+        if kw:
+            # parameter values are stored in the dict
+            # => avoid unnecessarily cluttering the global dict
+            transform_ctxt.dict = xmlparser.xmlDictCreateSub(self._c_style.doc.dict)
+            if transform_ctxt.dict is NULL:
+                xslt.xsltFreeTransformContext(transform_ctxt)
+                raise MemoryError()
+        else:
+            transform_ctxt.dict = self._c_style.doc.dict
+            xmlparser.xmlDictReference(transform_ctxt.dict)
 
         xslt.xsltSetCtxtParseOptions(
             transform_ctxt, input_doc._parser._parse_options)
@@ -522,13 +532,12 @@ cdef class XSLT:
             resolver_context = self._xslt_resolver_context._copy()
             transform_ctxt._private = <python.PyObject*>resolver_context
 
-            live_refs = _convert_xslt_parameters(transform_ctxt, kw, &params)
+            _convert_xslt_parameters(transform_ctxt, kw, &params)
             c_result = self._run_transform(
                 c_doc, params, context, transform_ctxt)
             if params is not NULL:
                 # deallocate space for parameters
                 python.PyMem_Free(params)
-            live_refs = None
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
@@ -578,6 +587,7 @@ cdef class XSLT:
         result_doc = _documentFactory(c_result, input_doc._parser)
 
         c_dict = c_result.dict
+        xmlparser.xmlDictReference(c_dict)
         __GLOBAL_PARSER_CONTEXT.initThreadDictRef(&c_result.dict)
         if c_dict is not c_result.dict or \
                 self._c_style.doc.dict is not c_result.dict or \
@@ -592,6 +602,7 @@ cdef class XSLT:
                 if input_doc._c_doc.dict is not c_result.dict:
                     fixThreadDictNames(<xmlNode*>c_result,
                                        input_doc._c_doc.dict, c_result.dict)
+        xmlparser.xmlDictFree(c_dict)
 
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
@@ -612,11 +623,11 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                               dict parameters, char*** params_ptr):
     cdef Py_ssize_t i, parameter_count
     cdef char** params
-    cdef list keep_ref
+    cdef tree.xmlDict* c_dict = transform_ctxt.dict
     params_ptr[0] = NULL
     parameter_count = len(parameters)
     if parameter_count == 0:
-        return None
+        return
     # allocate space for parameters
     # * 2 as we want an entry for both key and value,
     # and + 1 as array is NULL terminated
@@ -624,10 +635,8 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
         sizeof(char*) * (parameter_count * 2 + 1))
     try:
         i = 0
-        keep_ref = []
         for key, value in parameters.iteritems():
             k = _utf8(key)
-            keep_ref.append(k)
             if isinstance(value, _XSLTQuotedStringParam):
                 v = (<_XSLTQuotedStringParam>value).strval
                 xslt.xsltQuoteOneUserParam(
@@ -637,17 +646,15 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                     v = (<XPath>value)._path
                 else:
                     v = _utf8(value)
-                    keep_ref.append(v)
-                params[i] = _cstr(k)
+                params[i] = tree.xmlDictLookup(c_dict, _cstr(k), len(k))
                 i += 1
-                params[i] = _cstr(v)
+                params[i] = tree.xmlDictLookup(c_dict, _cstr(v), len(v))
                 i += 1
     except:
         python.PyMem_Free(params)
         raise
     params[i] = NULL
     params_ptr[0] = params
-    return keep_ref
 
 cdef XSLT _copyXSLT(XSLT stylesheet):
     cdef XSLT new_xslt
