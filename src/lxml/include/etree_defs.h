@@ -20,8 +20,24 @@
 #define va_int(ap)     va_arg(ap, int)
 #define va_charptr(ap) va_arg(ap, char *)
 
-/* Threading can crash under Python <= 2.4.1 */
-#if PY_VERSION_HEX < 0x02040200
+#ifdef PYPY_VERSION
+#    define IS_PYPY 1
+#else
+#    define IS_PYPY 0
+#endif
+
+#if PY_VERSION_HEX >= 0x03000000
+#  define IS_PYTHON3 1
+#else
+#  define IS_PYTHON3 0
+#endif
+
+#if !IS_PYPY
+#  define PyWeakref_LockObject(obj)          (NULL)
+#endif
+
+/* Threading can crash under Python <= 2.4.1 and is not currently supported by PyPy */
+#if PY_VERSION_HEX < 0x02040200 || IS_PYPY
 #  ifndef WITHOUT_THREADING
 #    define WITHOUT_THREADING
 #  endif
@@ -36,6 +52,9 @@
 #  define PyString_GET_SIZE(s)               PyBytes_GET_SIZE(s)
 #  define PyString_AS_STRING(s)              PyBytes_AS_STRING(s)
 #else
+#if IS_PYPY
+#  define PyFile_AsFile(o)                   (NULL)
+#endif
 #if PY_VERSION_HEX < 0x02060000
 /* Cython defines these already, but we may not be compiling in Cython code */
 #ifndef PyBytes_CheckExact
@@ -49,12 +68,6 @@
 /* we currently only use three parameters - MSVC can't compile (s, ...) */
 #  define PyUnicode_FromFormat(s, a, b) (NULL)
 #endif
-#endif
-
-#if PY_VERSION_HEX >= 0x03000000
-#  define IS_PYTHON3 1
-#else
-#  define IS_PYTHON3 0
 #endif
 
 #ifdef WITHOUT_THREADING

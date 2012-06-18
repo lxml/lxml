@@ -9,7 +9,10 @@ cdef inline _Element getProxy(xmlNode* c_node):
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
-        return <_Element>c_node._private
+        if python.IS_PYPY:
+            return <_Element>python.PyWeakref_LockObject(<python.PyObject*>c_node._private)
+        else:
+            return <_Element>c_node._private
     else:
         return None
 
@@ -24,7 +27,10 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     assert c_node._private is NULL, u"double registering proxy!"
     proxy._doc = doc
     proxy._c_node = c_node
-    c_node._private = <void*>proxy
+    if python.IS_PYPY:
+        c_node._private = <void*>python.PyWeakref_NewRef(proxy, NULL)
+    else:
+        c_node._private = <void*>proxy
     # additional INCREF to make sure _Document is GC-ed LAST!
     proxy._gc_doc = <python.PyObject*>doc
     python.Py_INCREF(doc)
@@ -34,7 +40,10 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     """
     cdef xmlNode* c_node
     c_node = proxy._c_node
-    assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
+    if python.IS_PYPY:
+        python.Py_XDECREF(<python.PyObject*>c_node._private)
+    else:
+        assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
     c_node._private = NULL
     return 0
 
@@ -49,7 +58,11 @@ cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
     iff it was replaced (None otherwise).
     """
     cdef _Document old_doc
-    cdef _Element element = <_Element>c_node._private
+    cdef _Element element
+    if python.IS_PYPY:
+        element = <_Element>python.PyWeakref_LockObject(<python.PyObject*>c_node._private)
+    else:
+        element = <_Element>c_node._private
     if element._doc is not doc:
         old_doc = element._doc
         element._doc = doc

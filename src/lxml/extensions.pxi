@@ -127,6 +127,9 @@ cdef class _BaseContext:
             return <object>dict_result
         utf = _utf8(s)
         self._utf_refs[s] = utf
+        if python.IS_PYPY:
+            # use C level refs, PyPy refs are not enough!
+            python.Py_INCREF(utf)
         return utf
 
     cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt):
@@ -143,6 +146,10 @@ cdef class _BaseContext:
     cdef _cleanup_context(self):
         #xpath.xmlXPathRegisteredNsCleanup(self._xpathCtxt)
         #self.unregisterGlobalNamespaces()
+        if python.IS_PYPY:
+            # clean up double refs in PyPy (see "_to_utf()" method)
+            for ref in self._utf_refs.itervalues():
+                python.Py_DECREF(ref)
         self._utf_refs.clear()
         self._eval_context_dict = None
         self._doc = None
