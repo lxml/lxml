@@ -466,10 +466,9 @@ cdef class _ExsltRegExp:
                 if c_text is NULL:
                     raise MemoryError()
                 try:
-                    s = funicode(c_text)
+                    return funicode(c_text)
                 finally:
                     tree.xmlFree(c_text)
-                return s
             else:
                 return unicode(firstnode)
         else:
