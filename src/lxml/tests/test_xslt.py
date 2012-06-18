@@ -198,79 +198,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEquals(expected,
                           unicode(res))
 
-    def test_exslt_str(self):
-        tree = self.parse('<a><b>B</b><c>C</c></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:str="http://exslt.org/strings"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    exclude-result-prefixes="str xsl">
-  <xsl:template match="text()">
-    <xsl:value-of select="str:align(string(.), '***', 'center')" />
-  </xsl:template>
-  <xsl:template match="*">
-    <xsl:copy>
-      <xsl:apply-templates/>
-    </xsl:copy>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        self.assertEquals('''\
-<?xml version="1.0"?>
-<a><b>*B*</b><c>*C*</c></a>
-''',
-                          str(res))
-
-    if etree.LIBXSLT_VERSION >= (1,1,21):
-        def test_exslt_str_attribute_replace(self):
-            tree = self.parse('<a><b>B</b><c>C</c></a>')
-            style = self.parse('''\
-      <xsl:stylesheet version = "1.0"
-          xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
-          xmlns:str="http://exslt.org/strings"
-          extension-element-prefixes="str">
-
-          <xsl:template match="/">
-            <h1 class="{str:replace('abc', 'b', 'x')}">test</h1>
-          </xsl:template>
-
-      </xsl:stylesheet>''')
-
-            st = etree.XSLT(style)
-            res = st(tree)
-            self.assertEquals('''\
-<?xml version="1.0"?>
-<h1 class="axc">test</h1>
-''',
-                              str(res))
-
-    def test_exslt_math(self):
-        tree = self.parse('<a><b>B</b><c>C</c></a>')
-        style = self.parse('''\
-<xsl:stylesheet version="1.0"
-    xmlns:math="http://exslt.org/math"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    exclude-result-prefixes="math xsl">
-  <xsl:template match="*">
-    <xsl:copy>
-      <xsl:attribute name="pi">
-        <xsl:value-of select="math:constant('PI', count(*)+2)"/>
-      </xsl:attribute>
-      <xsl:apply-templates/>
-    </xsl:copy>
-  </xsl:template>
-</xsl:stylesheet>''')
-
-        st = etree.XSLT(style)
-        res = st(tree)
-        self.assertEquals('''\
-<?xml version="1.0"?>
-<a pi="3.14"><b pi="3">B</b><c pi="3">C</c></a>
-''',
-                          str(res))
-
     def test_xslt_input(self):
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
@@ -1017,6 +944,82 @@ class ETreeXSLTTestCase(HelperTestCase):
         pi.set("href", "TEST")
         self.assertEquals("TEST", pi.get("href"))
 
+class ETreeEXSLTTestCase(HelperTestCase):
+    """EXSLT tests"""
+
+    def test_exslt_str(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:str="http://exslt.org/strings"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    exclude-result-prefixes="str xsl">
+  <xsl:template match="text()">
+    <xsl:value-of select="str:align(string(.), '***', 'center')" />
+  </xsl:template>
+  <xsl:template match="*">
+    <xsl:copy>
+      <xsl:apply-templates/>
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<a><b>*B*</b><c>*C*</c></a>
+''',
+                          str(res))
+
+    if etree.LIBXSLT_VERSION >= (1,1,21):
+        def test_exslt_str_attribute_replace(self):
+            tree = self.parse('<a><b>B</b><c>C</c></a>')
+            style = self.parse('''\
+      <xsl:stylesheet version = "1.0"
+          xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+          xmlns:str="http://exslt.org/strings"
+          extension-element-prefixes="str">
+
+          <xsl:template match="/">
+            <h1 class="{str:replace('abc', 'b', 'x')}">test</h1>
+          </xsl:template>
+
+      </xsl:stylesheet>''')
+
+            st = etree.XSLT(style)
+            res = st(tree)
+            self.assertEquals('''\
+<?xml version="1.0"?>
+<h1 class="axc">test</h1>
+''',
+                              str(res))
+
+    def test_exslt_math(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:math="http://exslt.org/math"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    exclude-result-prefixes="math xsl">
+  <xsl:template match="*">
+    <xsl:copy>
+      <xsl:attribute name="pi">
+        <xsl:value-of select="math:constant('PI', count(*)+2)"/>
+      </xsl:attribute>
+      <xsl:apply-templates/>
+    </xsl:copy>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEquals('''\
+<?xml version="1.0"?>
+<a pi="3.14"><b pi="3">B</b><c pi="3">C</c></a>
+''',
+                          str(res))
+
     def test_exslt_regexp_test(self):
         xslt = etree.XSLT(etree.XML(_bytes("""\
 <xsl:stylesheet version="1.0"
@@ -1725,6 +1728,7 @@ class Py3XSLTTestCase(HelperTestCase):
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXSLTTestCase)])
+    suite.addTests([unittest.makeSuite(ETreeEXSLTTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXSLTExtFuncTestCase)])
     suite.addTests([unittest.makeSuite(ETreeXSLTExtElementTestCase)])
     if is_python3:
