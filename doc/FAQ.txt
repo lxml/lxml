@@ -184,7 +184,8 @@ Also note that the compatibility to the ElementTree library does not
 require projects to set a hard dependency on lxml - as long as they do
 not take advantage of lxml's enhanced feature set.
 
-* `cssutils <http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917>`_, a CSS parser and toolkit, can be used with ``lxml.cssselect``
+* `cssutils <http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917>`_,
+  a CSS parser and toolkit, can be used with ``lxml.cssselect``
 * `Deliverance <http://www.openplans.org/projects/deliverance/project-home>`_,
   a content theming tool
 * `Enfold Proxy 4 <http://www.enfoldsystems.com/Products/Proxy/4>`_,
