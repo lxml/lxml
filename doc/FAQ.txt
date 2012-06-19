@@ -197,6 +197,7 @@ not take advantage of lxml's enhanced feature set.
 * Rambler_, a meta search engine that aggregates different data sources
 * rdfadict_, an RDFa parser with a simple dictionary-like interface.
 * `xupdate-processor`_, an XUpdate implementation for lxml.etree
+* `Diazo <http://docs.diazo.org/>`_, an XSLT-under-the-hood web site theming engine
 
 Zope3 and some of its extensions have good support for lxml:
 
