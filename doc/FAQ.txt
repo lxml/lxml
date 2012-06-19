@@ -184,26 +184,42 @@ Also note that the compatibility to the ElementTree library does not
 require projects to set a hard dependency on lxml - as long as they do
 not take advantage of lxml's enhanced feature set.
 
-* cssutils_, a CSS parser and toolkit, can be used with ``lxml.cssselect``
-* Deliverance_, a content theming tool
-* `Enfold Proxy 4`_, a web server accelerator with on-the-fly XSLT processing
-* Inteproxy_, a secure HTTP proxy
-* lwebstring_, an XML template engine
-* OpenXMLlib_, a library for handling OpenXML document meta data
-* PsychoPy_, psychology software in Python
-* Pycoon_, a WSGI web development framework based on XML pipelines
-* PyQuery_, a query framework for XML/HTML, similar to jQuery for JavaScript
-* `python-docx`_, a package for handling Microsoft's Word OpenXML format
-* Rambler_, a meta search engine that aggregates different data sources
-* rdfadict_, an RDFa parser with a simple dictionary-like interface.
-* `xupdate-processor`_, an XUpdate implementation for lxml.etree
-* `Diazo <http://docs.diazo.org/>`_, an XSLT-under-the-hood web site theming engine
+* `cssutils <http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917>`_, a CSS parser and toolkit, can be used with ``lxml.cssselect``
+* `Deliverance <http://www.openplans.org/projects/deliverance/project-home>`_,
+  a content theming tool
+* `Enfold Proxy 4 <http://www.enfoldsystems.com/Products/Proxy/4>`_,
+  a web server accelerator with on-the-fly XSLT processing
+* `Inteproxy <http://lists.wald.intevation.org/pipermail/inteproxy-devel/2007-February/000000.html>`_,
+  a secure HTTP proxy
+* `lwebstring <http://pypi.python.org/pypi/lwebstring>`_,
+  an XML template engine
+* `OpenXMLlib <http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250>`_,
+  a library for handling OpenXML document meta data
+* `PsychoPy <http://www.psychopy.org/>`_,
+  psychology software in Python
+* `Pycoon <http://pypi.python.org/pypi/pycoon>`_,
+  a WSGI web development framework based on XML pipelines
+* `PyQuery <http://pypi.python.org/pypi/pyquery>`_,
+  a query framework for XML/HTML, similar to jQuery for JavaScript
+* `python-docx <http://github.com/mikemaccana/python-docx>`_,
+  a package for handling Microsoft's Word OpenXML format
+* `Rambler <http://beta.rambler.ru/srch?query=python+lxml&searchtype=web>`_,
+  a meta search engine that aggregates different data sources
+* `rdfadict <http://pypi.python.org/pypi/rdfadict>`_,
+  an RDFa parser with a simple dictionary-like interface.
+* `xupdate-processor <http://pypi.python.org/pypi/xupdate-processor>`_,
+  an XUpdate implementation for lxml.etree
+* `Diazo <http://docs.diazo.org/>`_,
+  an XSLT-under-the-hood web site theming engine
 
 Zope3 and some of its extensions have good support for lxml:
 
-* gocept.lxml_, Zope3 interface bindings for lxml
-* z3c.rml_, an implementation of ReportLab's RML format
-* zif.sedna_, an XQuery based interface to the Sedna OpenSource XML database
+* `gocept.lxml <http://pypi.python.org/pypi/gocept.lxml>`_,
+  Zope3 interface bindings for lxml
+* `z3c.rml <http://pypi.python.org/pypi/z3c.rml>`_,
+  an implementation of ReportLab's RML format
+* `zif.sedna <http://pypi.python.org/pypi/zif.sedna>`_,
+  an XQuery based interface to the Sedna OpenSource XML database
 
 And don't miss the quotes by our generally happy_ users_, and other
 `sites that link to lxml`_.   As `Liza Daly`_ puts it: "Many software
@@ -214,22 +230,6 @@ lxml can provide all three."
 .. _Zope: http://www.zope.org/
 .. _Plone: http://www.plone.org/
 .. _Django: https://www.djangoproject.com/
-.. _cssutils: http://code.google.com/p/cssutils/source/browse/trunk/examples/style.py?r=917
-.. _Deliverance: http://www.openplans.org/projects/deliverance/project-home
-.. _`Enfold Proxy 4`: http://www.enfoldsystems.com/Products/Proxy/4
-.. _gocept.lxml: http://pypi.python.org/pypi/gocept.lxml
-.. _Inteproxy: http://lists.wald.intevation.org/pipermail/inteproxy-devel/2007-February/000000.html
-.. _lwebstring: http://pypi.python.org/pypi/lwebstring
-.. _OpenXMLlib: http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250
-.. _PsychoPy: http://www.psychopy.org/
-.. _Pycoon: http://pypi.python.org/pypi/pycoon
-.. _PyQuery: http://pypi.python.org/pypi/pyquery
-.. _Rambler: http://beta.rambler.ru/srch?query=python+lxml&searchtype=web
-.. _rdfadict: http://pypi.python.org/pypi/rdfadict
-.. _z3c.rml: http://pypi.python.org/pypi/z3c.rml
-.. _zif.sedna: http://pypi.python.org/pypi/zif.sedna
-.. _`python-docx`: http://github.com/mikemaccana/python-docx
-.. _`xupdate-processor`: http://pypi.python.org/pypi/xupdate-processor
 
 .. _happy: http://thread.gmane.org/gmane.comp.python.lxml.devel/3244/focus=3244
 .. _users: http://article.gmane.org/gmane.comp.python.lxml.devel/3246
