@@ -975,7 +975,7 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     else:
         return cstring_h.strcmp(python.__cstr(c_qname.href), c_node_href) == 0
 
-cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
+cdef size_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:
     u"""Map a sequence of (name, namespace) pairs to a qname array for efficient
     matching with _tagMatchesExactly() above.
@@ -983,7 +983,7 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
     Note that each qname struct in the array owns its href byte string object
     if it is not NULL.
     """
-    cdef Py_ssize_t count = 0, i
+    cdef size_t count = 0, i
     cdef char* c_tag
     cdef bytes ns, tag
     for ns, tag in ns_tags:
