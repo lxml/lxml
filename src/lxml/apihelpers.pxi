@@ -983,7 +983,7 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
     Note that each qname struct in the array owns its href byte string object
     if it is not NULL.
     """
-    cdef Py_ssize_t count = 0
+    cdef Py_ssize_t count = 0, i
     cdef char* c_tag
     cdef bytes ns, tag
     for ns, tag in ns_tags:
@@ -992,6 +992,9 @@ cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
         elif force_into_dict:
             c_tag = tree.xmlDictLookup(c_doc.dict, _cstr(tag), len(tag))
             if c_tag is NULL:
+                # clean up before raising the error
+                for i in xrange(count):
+                    cpython.ref.Py_XDECREF(c_ns_tags[i].href)
                 raise MemoryError()
         else:
             c_tag = tree.xmlDictExists(c_doc.dict, _cstr(tag), len(tag))
