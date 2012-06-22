@@ -1801,11 +1801,11 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
               standalone=None, docstring=None, compression=0,
-              exclusive=False, with_comments=True):
+              exclusive=False, with_comments=True, inclusive_ns_prefixes=None):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
                   standalone=None, compression=0,
-                  exclusive=False, with_comments=True)
+                  exclusive=False, with_comments=True, inclusive_ns_prefixes=None)
 
         Write the tree to a filename, file or file-like object.
 
@@ -1823,21 +1823,34 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         ``standalone`` flag.
 
         The ``compression`` option enables GZip compression level 1-9.
+
+        The ``inclusive_ns_prefixes`` should be a list of namespace strings
+        (i.e. ['xs', 'xsi']) that will be promoted to the top-level element
+        during exclusive C14N serialisation.  This parameter is ignored if
+        exclusive mode=False.
+
+        If exclusive=True and no list is provided, a namespace will only be
+        rendered if it is used by the immediate parent or one of its attributes
+        and its prefix and values have not already been rendered by an ancestor
+        of the namespace node's parent element.
         """
         cdef bint write_declaration
         cdef int is_standalone
+
         self._assertHasRoot()
         _assertValidNode(self._context_node)
         if compression is None or compression < 0:
             compression = 0
+
         # C14N serialisation
         if method == 'c14n':
             if encoding is not None:
                 raise ValueError("Cannot specify encoding with C14N")
             if xml_declaration:
                 raise ValueError("Cannot enable XML declaration in C14N")
+
             _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                            compression)
+                            compression, inclusive_ns_prefixes)
             return
         if not with_comments:
             raise ValueError("Can only discard comments in C14N serialisation")
@@ -2112,20 +2125,31 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         XInclude()(self._context_node)
 
     def write_c14n(self, file, *, exclusive=False, with_comments=True,
-                   compression=0):
+                   compression=0, inclusive_ns_prefixes=None):
         u"""write_c14n(self, file, exclusive=False, with_comments=True,
-                       compression=0)
+                       compression=0, inclusive_ns_prefixes=None)
 
         C14N write of document. Always writes UTF-8.
 
         The ``compression`` option enables GZip compression level 1-9.
+
+        The ``inclusive_ns_prefixes`` should be a list of namespace strings
+        (i.e. ['xs', 'xsi']) that will be promoted to the top-level element
+        during exclusive C14N serialisation.  This parameter is ignored if
+        exclusive mode=False.
+
+        If exclusive=True and no list is provided, a namespace will only be
+        rendered if it is used by the immediate parent or one of its attributes
+        and its prefix and values have not already been rendered by an ancestor
+        of the namespace node's parent element.
         """
         self._assertHasRoot()
         _assertValidNode(self._context_node)
         if compression is None or compression < 0:
             compression = 0
+
         _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
-                        compression)
+                        compression, inclusive_ns_prefixes)
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
     return _newElementTree(doc, context_node, _ElementTree)
@@ -2791,11 +2815,11 @@ def dump(_Element elem not None, *, bint pretty_print=True, bint with_tail=True)
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, bint pretty_print=False, bint with_tail=True,
              standalone=None, doctype=None,
-             bint exclusive=False, bint with_comments=True):
+             bint exclusive=False, bint with_comments=True, inclusive_ns_prefixes=None):
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
                  standalone=None, doctype=None,
-                 exclusive=False, with_comments=True)
+                 exclusive=False, with_comments=True, inclusive_ns_prefixes)
 
     Serialize an element to an encoded string representation of its XML
     tree.
@@ -2842,7 +2866,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
             raise ValueError("Cannot specify encoding with C14N")
         if xml_declaration:
             raise ValueError("Cannot enable XML declaration in C14N")
-        return _tostringC14N(element_or_tree, exclusive, with_comments)
+        return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
     if not with_comments:
         raise ValueError("Can only discard comments in C14N serialisation")
     if encoding is _unicode or (encoding is not None and encoding.upper() == 'UNICODE'):
