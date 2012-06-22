@@ -496,7 +496,8 @@ cdef char **_convert_ns_prefixes(inclusive_ns_prefixes):
 
     num_inclusive_ns_prefixes = len(inclusive_ns_prefixes)
 
-    c_inclusive_ns_prefixes = <char **>python.PyMem_Malloc(sizeof(char *) * num_inclusive_ns_prefixes)
+    # Need to allocate one extra memory block to handle last NULL entry
+    c_inclusive_ns_prefixes = <char **>python.PyMem_Malloc(sizeof(char *) * (num_inclusive_ns_prefixes + 1))
 
     # Converting Python object to C type
     for n, inclusive_ns_prefix in enumerate(inclusive_ns_prefixes):
