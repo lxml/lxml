@@ -54,8 +54,7 @@ cdef inline void _releaseProxy(_Element proxy):
     proxy._gc_doc = NULL
 
 cdef inline void _updateProxyDocument(xmlNode* c_node, _Document doc):
-    u"""Replace the document reference of a proxy and return the old one
-    iff it was replaced (None otherwise).
+    u"""Replace the document reference of a proxy.
     """
     cdef _Document old_doc
     cdef _Element element
