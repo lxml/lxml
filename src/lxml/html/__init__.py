@@ -1299,6 +1299,13 @@ class CheckboxGroup(list):
         self.value.clear()
     value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
 
+    def value_options(self):
+        """
+        Returns a list of all the possible values.
+        """
+        return [el.get('value') for el in self]
+    value_options = property(value_options, doc=value_options.__doc__)
+
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__, list.__repr__(self))

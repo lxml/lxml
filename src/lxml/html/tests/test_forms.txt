@@ -76,6 +76,8 @@ b'<input type="checkbox" name="single_checkbox" checked>'
 <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
 >>> tostring(group[0])
 b'<input type="checkbox" name="check_group" value="1" checked>'
+>>> group.value_options
+['1', '2', '3', '4']
 >>> group.value.add('doesnotexist')
 Traceback (most recent call last):
     ...
