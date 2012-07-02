@@ -33,7 +33,7 @@ class LxmlTranslator(external_cssselect.GenericTranslator):
     """
     def xpath_contains_function(self, xpath, function):
         # Defined there, removed in later drafts:
-    # http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
+        # http://www.w3.org/TR/2001/CR-css3-selectors-20011113/#content-selectors
         if function.argument_types() not in (['STRING'], ['IDENT']):
             raise ExpressionError(
                 "Expected a single string or ident for :contains(), got %r"
