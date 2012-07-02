@@ -20,7 +20,7 @@ Requirements
 You need Python 2.4 or later.
 
 Unless you are using a static binary distribution (e.g. a Windows
-binary egg from PyPI), you need to install libxml2 and libxslt, in
+binary egg from PyPI_), you need to install libxml2 and libxslt, in
 particular:
 
 * libxml 2.6.21 or later. It can be found here:
@@ -43,28 +43,34 @@ Newer versions generally contain fewer bugs and are therefore
 recommended.  XML Schema support is also still worked on in libxml2,
 so newer versions will give you better compliance with the W3C spec.
 
+.. _PyPI: http://pypi.python.org/pypi/lxml
+
 
 Installation
 ------------
 
-Get the pip_ tool and run the following as super-user (or
-administrator)::
+Unless you are on MS Windows, the best way to install lxml is to
+get the pip_ package management tool and run the following as
+super-user (or administrator)::
 
   pip install lxml
 
+To install a specific version, either download the distribution
+manually and let pip install that, or pass the desired version
+to pip::
+
+  pip install lxml==2.3
+
 .. _pip: http://pypi.python.org/pypi/pip
 
-* On **MS Windows**, the above will install the binary builds that we
-  provide.  If there is no binary build of the latest release yet,
-  please search PyPI_ for the last release that has them and pass that
-  version to ``pip`` like this::
-
-    pip install lxml==2.3
-
-  If you find that it tries to start a build from sources and fails,
-  consider downloading the binary distribution manually and letting
-  pip install that directly.  Also see the related
-  `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+* For **MS Windows**, we no longer provide binary distributions due
+  to the lack of a maintainer with access to that non-free platform
+  as well as a working build system.  Also see the related
+  `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.  If you fail
+  to build lxml on your MS Windows system from the signed and tested
+  sources that we release, consider using the unofficial binaries that
+  `Christoph Gohlke <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
+  generously provides.
 
 * On **Linux** (and most other well-behaved operating systems),
   ``pip`` will manage to build the source distribution as
@@ -72,15 +78,14 @@ administrator)::
   development packages, i.e. header files, etc.  Use your package
   management tool to look for packages like ``libxml2-dev`` or
   ``libxslt-devel`` if the build fails, and make sure they are
-  installed.
+  installed.  Alternatively, setting ``STATIC_DEPS=true`` will
+  download and build both libraries automatically.
 
 * On **MacOS-X**, use the following to build the source distribution,
   and make sure you have a working Internet connection, as this will
   download libxml2 and libxslt in order to build them::
 
    STATIC_DEPS=true sudo pip install lxml
-
-.. _PyPI: http://cheeseshop.python.org/pypi/lxml
 
 
 Building lxml from sources
@@ -130,22 +135,21 @@ packages, too.
 MS Windows
 ----------
 
-For MS Windows, the `binary egg distribution of lxml`_ is statically
-built against the libraries, i.e. it already includes them.  There is
-no need to install the external libraries if you use an official lxml
-build from PyPI.
+Most MS Windows systems lack the necessarily tools to build software,
+starting with a C compiler already.  Microsoft leaves it to users to
+install and configure them, which is usually not trivial and means
+that distributors cannot rely on these dependencies being available
+on a given system.  In a way, you get what you've paid for and make
+others pay for it.
 
-Unless you know what you are doing, this means: *do not install
-libxml2 or libxslt if you use a binary build of lxml*.  Just use
-``pip`` by following the installation instructions above.
-
-*Only* if you want to upgrade the libraries and/or compile lxml from
-sources, you should install a `binary distribution`_ of libxml2 and
-libxslt.  You need both libxml2 and libxslt, as well as iconv and
-zlib.
-
-.. _`binary distribution`: http://www.zlatkovic.com/libxml.en.html
-.. _`binary egg distribution of lxml`: http://cheeseshop.python.org/pypi/lxml
+Due to the additional lack of package management of this platform,
+it is best to link the library dependencies statically when building
+from sources.  For that, use the
+`binary distribution <http://www.zlatkovic.com/libxml.en.html>`_
+of libxml2 and libxslt.  You need both libxml2 and libxslt, as well
+as iconv and zlib, which you can get from the same download site.
+Further build instructions are in the
+`source build documentation <build.html>`_.
 
 
 MacOS-X
