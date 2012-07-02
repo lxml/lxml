@@ -3,7 +3,7 @@
 This module supports selecting XML/HTML tags based on CSS selectors.
 See the `CSSSelector` class for details.
 
-This is a thin wrapper around cssselect.
+This is a thin wrapper around cssselect 0.7 or later.
 """
 
 import sys
