@@ -61,6 +61,11 @@ administrator)::
 
     pip install lxml==2.3
 
+  If you find that it tries to start a build from sources and fails,
+  consider downloading the binary distribution manually and letting
+  pip install that directly.  Also see the related
+  `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+
 * On **Linux** (and most other well-behaved operating systems),
   ``pip`` will manage to build the source distribution as
   long as libxml2 and libxslt are properly installed, including
