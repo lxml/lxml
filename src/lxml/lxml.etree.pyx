@@ -2295,10 +2295,13 @@ cdef class _Attrib:
         return 1 if tree.xmlHasNsProp(c_node, _cstr(tag), c_href) else 0
 
     def __richcmp__(one, other, int op):
+        if not isinstance(other, dict):
+            try:
+                other = dict(other)
+            except (TypeError, ValueError):
+                return False
         if not isinstance(one, dict):
             one = dict(one)
-        if not isinstance(other, dict):
-            other = dict(other)
         return python.PyObject_RichCompare(one, other, op)
 
 
