@@ -15,7 +15,7 @@ class NamespaceRegistryError(LxmlRegistryError):
 cdef class _NamespaceRegistry:
     u"Dictionary-like namespace registry"
     cdef object _ns_uri
-    cdef object _ns_uri_utf
+    cdef bytes _ns_uri_utf
     cdef dict _entries
     cdef char* _c_ns_uri_utf
     def __cinit__(self, ns_uri):
@@ -40,7 +40,7 @@ cdef class _NamespaceRegistry:
         if hasattr(class_dict_iterable, u'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
-            if (name is None or name[:1] != u'_') and callable(item):
+            if (name is None or name[:1] != '_') and callable(item):
                 self[name] = item
 
     def __getitem__(self, name):
@@ -77,7 +77,7 @@ cdef class _NamespaceRegistry:
         return iter(self._entries.items())
 
     def clear(self):
-        python.PyDict_Clear(self._entries)
+        self._entries.clear()
 
 @cython.final
 @cython.internal
