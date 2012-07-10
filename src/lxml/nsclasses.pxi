@@ -178,10 +178,7 @@ def FunctionNamespace(ns_uri):
 
     Creates a new one if it does not yet exist. A function namespace
     can only be used to register extension functions."""
-    if ns_uri:
-        ns_utf = _utf8(ns_uri)
-    else:
-        ns_utf = None
+    ns_utf = _utf8(ns_uri) if ns_uri else None
     try:
         return __FUNCTION_NAMESPACE_REGISTRIES[ns_utf]
     except KeyError:
