@@ -61,7 +61,7 @@ cdef class _BaseContext:
 
         if extensions is not None:
             # convert extensions to UTF-8
-            if python.PyDict_Check(extensions):
+            if isinstance(extensions, dict):
                 extensions = (extensions,)
             # format: [ {(ns, name):function} ] -> {(ns_utf, name_utf):function}
             new_extensions = {}
@@ -75,7 +75,7 @@ cdef class _BaseContext:
             extensions = new_extensions or None
 
         if namespaces is not None:
-            if python.PyDict_Check(namespaces):
+            if isinstance(namespaces, dict):
                 namespaces = namespaces.items()
             if namespaces:
                 ns = []
@@ -117,14 +117,14 @@ cdef class _BaseContext:
             context._extensions = self._extensions.copy()
         return context
 
-    cdef object _to_utf(self, s):
+    cdef bytes _to_utf(self, s):
         u"Convert to UTF-8 and keep a reference to the encoded string"
         cdef python.PyObject* dict_result
         if s is None:
             return None
         dict_result = python.PyDict_GetItem(self._utf_refs, s)
         if dict_result is not NULL:
-            return <object>dict_result
+            return <bytes>dict_result
         utf = _utf8(s)
         self._utf_refs[s] = utf
         if python.IS_PYPY:
