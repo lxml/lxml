@@ -53,11 +53,11 @@ the following examples.  Any number of arguments is allowed:
 
 .. sourcecode:: pycon
 
-  >>> def hello(dummy, a):
+  >>> def hello(context, a):
   ...    return "Hello %s" % a
-  >>> def ola(dummy, a):
+  >>> def ola(context, a):
   ...    return "Ola %s" % a
-  >>> def loadsofargs(dummy, *args):
+  >>> def loadsofargs(context, *args):
   ...    return "Got %d arguments." % len(args)
 
 
@@ -167,9 +167,7 @@ allows functions to keep state:
 
   >>> def print_context(context):
   ...     context.eval_context[context.context_node.tag] = "done"
-  ...     entries = list(context.eval_context.items())
-  ...     entries.sort()
-  ...     print(entries)
+  ...     print(sorted(context.eval_context.items()))
   >>> ns["print_context"] = print_context
 
   >>> ignore = root.xpath("//*[pt:print_context()]")
