@@ -734,7 +734,7 @@ cdef class _XSLTResultTree(_ElementTree):
             if encoding is NULL:
                 result = s[:l].decode('UTF-8')
             else:
-                result = python.PyUnicode_Decode(s, l, encoding, 'strict')
+                result = s[:l].decode(encoding)
         finally:
             tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
