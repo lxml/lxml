@@ -185,11 +185,13 @@ cdef class XSLTAccessControl:
     See `XSLT`.
     """
     cdef xslt.xsltSecurityPrefs* _prefs
-    def __cinit__(self, *, read_file=True, write_file=True, create_dir=True,
-                 read_network=True, write_network=True):
+    def __cinit__(self):
         self._prefs = xslt.xsltNewSecurityPrefs()
         if self._prefs is NULL:
             raise MemoryError()
+
+    def __init__(self, *, bint read_file=True, bint write_file=True, bint create_dir=True,
+                 bint read_network=True, bint write_network=True):
         self._setAccess(xslt.XSLT_SECPREF_READ_FILE, read_file)
         self._setAccess(xslt.XSLT_SECPREF_WRITE_FILE, write_file)
         self._setAccess(xslt.XSLT_SECPREF_CREATE_DIRECTORY, create_dir)
@@ -209,7 +211,7 @@ cdef class XSLTAccessControl:
             xslt.xsltFreeSecurityPrefs(self._prefs)
 
     @cython.final
-    cdef _setAccess(self, xslt.xsltSecurityOption option, allow):
+    cdef _setAccess(self, xslt.xsltSecurityOption option, bint allow):
         cdef xslt.xsltSecurityCheck function
         if allow:
             function = xslt.xsltSecurityAllow
