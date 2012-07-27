@@ -33,10 +33,13 @@ cdef class _NamespaceRegistry:
 
         Forgivingly update the registry.
 
-        If registered values do not match the required type for this
-        registry, or if their name starts with '_', they will be
-        silently discarded. This allows registrations at the module or
-        class level using vars(), globals() etc."""
+        ``class_dict_iterable`` may be a dict or some other iterable
+        that yields (name, value) pairs.
+
+        If a value does not match the required type for this registry,
+        or if the name starts with '_', it will be silently discarded.
+        This allows registrations at the module or class level using
+        vars(), globals() etc."""
         if hasattr(class_dict_iterable, u'items'):
             class_dict_iterable = class_dict_iterable.items()
         for name, item in class_dict_iterable:
