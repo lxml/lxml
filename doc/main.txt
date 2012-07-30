@@ -228,10 +228,12 @@ obstacle to using lxml in your codebase.
 Old Versions
 ------------
 
-See the web sites of lxml `1.3 <http://lxml.de/1.3/>`_, `2.0
-<http://lxml.de/2.0/>`_, `2.1 <http://lxml.de/2.1/>`_, `2.2
-<http://lxml.de/2.2/>`_ and the `latest in-development version
-<http://lxml.de/dev/>`_
+See the web sites of lxml
+`1.3 <http://lxml.de/1.3/>`_,
+`2.0 <http://lxml.de/2.0/>`_,
+`2.1 <http://lxml.de/2.1/>`_,
+`2.2 <http://lxml.de/2.2/>`_
+and the `latest in-development version <http://lxml.de/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-2.3.4.pdf
 
