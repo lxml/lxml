@@ -27,6 +27,10 @@ Features added
 Bugs fixed
 ----------
 
+* ``el.find('*')`` could accidentally return a comment or processing
+  instruction that happened to be in the wrong spot.  (Same for the
+  other ``.find*()`` methods.)
+
 * The error logging is less intrusive and avoids a global setup where
   possible.
 

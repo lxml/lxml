@@ -93,7 +93,7 @@ def prepare_child(next, token):
 def prepare_star(next, token):
     def select(result):
         for elem in result:
-            for e in elem:
+            for e in elem.iterchildren('*'):
                 yield e
     return select
 
