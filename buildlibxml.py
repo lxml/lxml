@@ -288,20 +288,21 @@ def build_libxml2xslt(download_dir, build_dir,
         # We compile Universal if we are on a machine > 10.3
         major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
         if major_version > 7:
-            env = os.environ.copy()
             if minor_version < 6:
-                env.update({
+                env_default = {
                     'CFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
                     'LDFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
                     'MACOSX_DEPLOYMENT_TARGET' : "10.3"
-                    })
+                    }
             else:
-                env.update({
+                env_default = {
                     'CFLAGS' : "-arch ppc -arch i386 -arch x86_64 -O2",
                     'LDFLAGS' : "-arch ppc -arch i386 -arch x86_64",
                     'MACOSX_DEPLOYMENT_TARGET' : "10.6"
-                    })
-            call_setup['env'] = env
+                    }
+            env = os.environ.copy()
+            env_default.update(env)
+            call_setup['env'] = env_default
 
     configure_cmd = ['./configure',
                      '--disable-dependency-tracking',
