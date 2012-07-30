@@ -118,7 +118,7 @@ def create_version_h(svn_version):
             svn_version += '.0'
 
     version_h = open(
-        os.path.join(get_base_dir(), 'src', 'lxml', 'include', 'lxml-version.h'),
+        os.path.join(get_base_dir(), 'src', 'lxml', 'includes', 'lxml-version.h'),
         'w')
     version_h.write('''\
 #ifndef LXML_VERSION_STRING

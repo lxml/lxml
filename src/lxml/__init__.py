@@ -9,7 +9,7 @@ def get_include():
     with statically linked libraries.
     """
     lxml_path = __path__[0]
-    include_path = os.path.join(lxml_path, 'include')
+    include_path = os.path.join(lxml_path, 'includes')
     includes = [include_path, lxml_path]
 
     for name in os.listdir(include_path):

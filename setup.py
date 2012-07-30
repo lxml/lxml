@@ -72,7 +72,7 @@ extra_options['package_data'] = {
         'lxml.etree.h',
         'lxml.etree_api.h',
     ],
-    'lxml.include': [
+    'lxml.includes': [
         '*.pxd', '*.h'
         ],
     'lxml.isoschematron':  [
@@ -88,7 +88,7 @@ extra_options['package_dir'] = {
     }
 
 extra_options['packages'] = [
-        'lxml', 'lxml.include', 'lxml.html', 'lxml.isoschematron'
+        'lxml', 'lxml.includes', 'lxml.html', 'lxml.isoschematron'
     ]
 
 
@@ -157,10 +157,10 @@ def setup_extra_options():
 
         for package_path, (root_path, filenames) in header_packages.items():
             if package_path:
-                package = 'lxml.include.' + package_path
+                package = 'lxml.includes.' + package_path
                 packages.append(package)
             else:
-                package = 'lxml.include'
+                package = 'lxml.includes'
             package_data[package] = filenames
             package_dir[package] = root_path
 

@@ -13,7 +13,7 @@ except ImportError:
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
 PACKAGE_PATH = "src/lxml/"
-INCLUDE_PACKAGE_PATH = PACKAGE_PATH + '/include'
+INCLUDE_PACKAGE_PATH = PACKAGE_PATH + 'includes'
 
 if sys.version_info[0] >= 3:
     _system_encoding = sys.getdefaultencoding()

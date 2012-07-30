@@ -3,7 +3,7 @@
 import sys, os, os.path, re, codecs
 
 BUILD_SOURCE_FILE = os.path.join("src", "lxml", "xmlerror.pxi")
-BUILD_DEF_FILE    = os.path.join("src", "lxml", "xmlerror.pxd")
+BUILD_DEF_FILE    = os.path.join("src", "lxml", "includes", "xmlerror.pxd")
 
 if len(sys.argv) < 2 or sys.argv[1].lower() in ('-h', '--help'):
     print("This script generates the constants in file %s" % BUILD_SOURCE_FILE)
