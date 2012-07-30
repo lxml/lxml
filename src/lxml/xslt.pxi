@@ -456,7 +456,8 @@ cdef class XSLT:
 
         The maximum traversal depth that the stylesheet engine will allow.
         This does not only count the template recursion depth but also takes
-        the number of variables/parameters into account.
+        the number of variables/parameters into account.  The required setting
+        for a run depends on both the stylesheet and the input data.
 
         Example::
 
