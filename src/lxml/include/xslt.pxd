@@ -3,6 +3,7 @@ from xpath cimport xmlXPathContext, xmlXPathFunction
 
 cdef extern from "libxslt/xslt.h":
     cdef int xsltLibxsltVersion
+    cdef int xsltMaxDepth
 
 cdef extern from "libxslt/xsltconfig.h":
     cdef int LIBXSLT_VERSION

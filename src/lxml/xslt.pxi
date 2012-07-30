@@ -450,6 +450,25 @@ cdef class XSLT:
         """
         return _XSLTQuotedStringParam(strval)
 
+    @staticmethod
+    def set_global_max_depth(int max_depth):
+        u"""set_global_max_depth(max_depth)
+
+        The maximum traversal depth that the stylesheet engine will allow.
+        This does not only count the template recursion depth but also takes
+        the number of variables/parameters into account.
+
+        Example::
+
+            XSLT.set_global_max_depth(5000)
+
+        Note that this is currently a global, module-wide setting because
+        libxslt does not support it at a per-stylesheet level.
+        """
+        if max_depth < 0:
+            raise ValueError("cannot set a maximum stylesheet traversal depth < 0")
+        xslt.xsltMaxDepth = max_depth
+
     def apply(self, _input, *, profile_run=False, **kw):
         u"""apply(self, _input,  profile_run=False, **kw)
         
