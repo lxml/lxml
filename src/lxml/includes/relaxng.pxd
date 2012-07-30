@@ -1,6 +1,6 @@
-cimport tree
-from tree cimport xmlDoc
-from xmlerror cimport xmlStructuredErrorFunc
+from lxml.includes cimport tree
+from lxml.includes.tree cimport xmlDoc
+from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
 cdef extern from "libxml/relaxng.h":
     ctypedef struct xmlRelaxNG

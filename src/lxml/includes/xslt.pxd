@@ -1,5 +1,5 @@
-from tree cimport xmlDoc, xmlNode, xmlDict, xmlChar, const_xmlChar
-from xpath cimport xmlXPathContext, xmlXPathFunction
+from lxml.includes.tree cimport xmlDoc, xmlNode, xmlDict, xmlChar, const_xmlChar
+from lxml.includes.xpath cimport xmlXPathContext, xmlXPathFunction
 
 from libc.string cimport const_char
 

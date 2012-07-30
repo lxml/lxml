@@ -1,6 +1,6 @@
-from tree cimport xmlDoc
-from xmlparser cimport xmlSAXHandler
-from xmlerror cimport xmlStructuredErrorFunc
+from lxml.includes.tree cimport xmlDoc
+from lxml.includes.xmlparser cimport xmlSAXHandler
+from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 
 cdef extern from "libxml/xmlschemas.h":
     ctypedef struct xmlSchema

@@ -1,8 +1,8 @@
-cimport tree
-cimport xmlerror
+from lxml.includes cimport tree
+from lxml.includes cimport xmlerror
 
 from libc.string cimport const_char
-from tree cimport xmlChar, const_xmlChar
+from lxml.includes.tree cimport xmlChar, const_xmlChar
 
 cdef extern from "libxml/xpath.h":
     ctypedef enum xmlXPathObjectType:

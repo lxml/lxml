@@ -1,4 +1,4 @@
-from tree cimport xmlDoc, xmlNode
+from lxml.includes.tree cimport xmlDoc, xmlNode
 
 cdef extern from "libxml/xinclude.h":
 

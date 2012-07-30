@@ -1,5 +1,5 @@
-cimport tree, xmlerror
-from tree cimport xmlDoc, xmlDtd
+from lxml.includes cimport tree, xmlerror
+from lxml.includes.tree cimport xmlDoc, xmlDtd
 
 cdef extern from "libxml/schematron.h":
     ctypedef struct xmlSchematron

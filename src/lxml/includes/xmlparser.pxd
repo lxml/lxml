@@ -1,8 +1,8 @@
 from libc.string cimport const_char
 
-from tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd, const_xmlChar
-from tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from xmlerror cimport xmlError, xmlStructuredErrorFunc
+from lxml.includes.tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd, const_xmlChar
+from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
+from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc
 
 
 cdef extern from "libxml/parser.h":

@@ -1,6 +1,6 @@
-from tree cimport xmlDoc, xmlOutputBuffer, xmlChar
-from xpath cimport xmlNodeSet
-    
+from lxml.includes.tree cimport xmlDoc, xmlOutputBuffer, xmlChar
+from lxml.includes.xpath cimport xmlNodeSet
+
 cdef extern from "libxml/c14n.h":
     cdef int xmlC14NDocDumpMemory(xmlDoc* doc,
                                   xmlNodeSet* nodes,

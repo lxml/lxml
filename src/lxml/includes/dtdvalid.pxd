@@ -1,5 +1,5 @@
-cimport tree
-from tree cimport xmlDoc, xmlDtd
+from lxml.includes cimport tree
+from lxml.includes.tree cimport xmlDoc, xmlDtd
 
 cdef extern from "libxml/valid.h":
     ctypedef struct xmlValidCtxt

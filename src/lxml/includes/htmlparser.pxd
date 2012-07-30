@@ -1,7 +1,7 @@
-from tree cimport xmlDoc, xmlDict
-from tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from xmlparser cimport xmlParserCtxt, xmlSAXHandler, xmlSAXHandlerV1
-from xmlerror cimport xmlError
+from lxml.includes.tree cimport xmlDoc, xmlDict
+from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
+from lxml.includes.xmlparser cimport xmlParserCtxt, xmlSAXHandler, xmlSAXHandlerV1
+from lxml.includes.xmlerror cimport xmlError
 
 cdef extern from "libxml/HTMLparser.h":
     ctypedef enum htmlParserOption:

@@ -1,7 +1,7 @@
 # public Cython/C interface to lxml.etree
 
-cimport tree
-from tree cimport const_xmlChar
+from lxml.includes cimport tree
+from lxml.includes.tree cimport const_xmlChar
 
 cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
