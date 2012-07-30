@@ -245,12 +245,6 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `lxml 2.3`_, released 2011-02-06 (`changes for 2.3`_)
 
-* `lxml 2.3beta1`_, released 2010-09-06 (`changes for 2.3beta1`_)
-
-* `lxml 2.3alpha2`_, released 2010-07-24 (`changes for 2.3alpha2`_)
-
-* `lxml 2.3alpha1`_, released 2010-06-19 (`changes for 2.3alpha1`_)
-
 * `lxml 2.2.8`_, released 2010-09-02 (`changes for 2.2.8`_)
 
 * `lxml 2.2.7`_, released 2010-07-24 (`changes for 2.2.7`_)
@@ -276,9 +270,6 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 2.3.2`: /files/lxml-2.3.2.tgz
 .. _`lxml 2.3.1`: /files/lxml-2.3.1.tgz
 .. _`lxml 2.3`: /files/lxml-2.3.tgz
-.. _`lxml 2.3beta1`: /files/lxml-2.3beta1.tgz
-.. _`lxml 2.3alpha2`: /files/lxml-2.3alpha2.tgz
-.. _`lxml 2.3alpha1`: /files/lxml-2.3alpha1.tgz
 .. _`lxml 2.2.8`: /files/lxml-2.2.8.tgz
 .. _`lxml 2.2.7`: /files/lxml-2.2.7.tgz
 .. _`lxml 2.2.6`: /files/lxml-2.2.6.tgz
@@ -294,9 +285,6 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`changes for 2.3.2`: /changes-2.3.2.html
 .. _`changes for 2.3.1`: /changes-2.3.1.html
 .. _`changes for 2.3`: /changes-2.3.html
-.. _`changes for 2.3beta1`: /changes-2.3beta1.html
-.. _`changes for 2.3alpha2`: /changes-2.3alpha2.html
-.. _`changes for 2.3alpha1`: /changes-2.3alpha1.html
 .. _`changes for 2.2.8`: /changes-2.2.8.html
 .. _`changes for 2.2.7`: /changes-2.2.7.html
 .. _`changes for 2.2.6`: /changes-2.2.6.html
