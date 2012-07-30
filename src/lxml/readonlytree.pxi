@@ -263,7 +263,7 @@ cdef class _ReadOnlyEntityProxy(_ReadOnlyProxy):
             value_utf = _utf8(value)
             assert u'&' not in value and u';' not in value, \
                 u"Invalid entity name '%s'" % value
-            tree.xmlNodeSetName(self._c_node, _cstr(value_utf))
+            tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
     property text:
         def __get__(self):
@@ -425,13 +425,12 @@ cdef class _ModifyContentOnlyProxy(_ReadOnlyProxy):
 
         def __set__(self, value):
             cdef tree.xmlDict* c_dict
-            cdef char* c_text
             self._assertNode()
             if value is None:
-                c_text = NULL
+                c_text = <const_xmlChar*>NULL
             else:
                 value = _utf8(value)
-                c_text = _cstr(value)
+                c_text = _xcstr(value)
             tree.xmlNodeSetContent(self._c_node, c_text)
 
 @cython.final
@@ -448,7 +447,7 @@ cdef class _ModifyContentOnlyPIProxy(_ModifyContentOnlyProxy):
         def __set__(self, value):
             self._assertNode()
             value = _utf8(value)
-            c_text = _cstr(value)
+            c_text = _xcstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
 
 @cython.final
@@ -463,7 +462,7 @@ cdef class _ModifyContentOnlyEntityProxy(_ModifyContentOnlyProxy):
             value = _utf8(value)
             assert u'&' not in value and u';' not in value, \
                 u"Invalid entity name '%s'" % value
-            c_text = _cstr(value)
+            c_text = _xcstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
 
 

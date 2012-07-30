@@ -200,7 +200,7 @@ cdef int _checkThreadDict(tree.xmlDict* c_dict):
 ############################################################
 
 # name of Python unicode encoding as known to libxml2
-cdef char* _UNICODE_ENCODING = NULL
+cdef const_char* _UNICODE_ENCODING = NULL
 
 cdef int _setupPythonUnicode() except -1:
     u"""Sets _UNICODE_ENCODING to the internal encoding name of Python unicode
@@ -210,8 +210,8 @@ cdef int _setupPythonUnicode() except -1:
     """
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef Py_ssize_t l
-    cdef char* buffer
-    cdef char* enc
+    cdef const_char* buffer
+    cdef const_char* enc
     utext = python.PyUnicode_DecodeUTF8("<test/>", 7, NULL)
     l = python.PyUnicode_GET_DATA_SIZE(utext)
     buffer = python.PyUnicode_AS_DATA(utext)
@@ -236,7 +236,7 @@ cdef int _setupPythonUnicode() except -1:
         _UNICODE_ENCODING = enc
     return 0
 
-cdef char* _findEncodingName(char* buffer, int size):
+cdef const_char* _findEncodingName(const_char* buffer, int size):
     u"Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
     enc = tree.xmlDetectCharEncoding(buffer, size)
@@ -418,7 +418,7 @@ cdef int _readFileParser(void* ctxt, char* c_buffer, int c_size) nogil:
 ## support for custom document loaders
 ############################################################
 
-cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
+cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_pubid,
                                                xmlparser.xmlParserCtxt* c_context) with gil:
     cdef _ResolverContext context
     cdef xmlparser.xmlParserInput* c_input
@@ -442,11 +442,11 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             url = None
         else:
             # parsing a related document (DTD etc.) => UTF-8 encoded URL?
-            url = _decodeFilename(c_url)
+            url = _decodeFilename(<const_xmlChar*>c_url)
         if c_pubid is NULL:
             pubid = None
         else:
-            pubid = funicode(c_pubid) # always UTF-8
+            pubid = funicode(<const_xmlChar*>c_pubid) # always UTF-8
 
         doc_ref = context._resolvers.resolve(url, pubid, context)
     except:
@@ -458,10 +458,10 @@ cdef xmlparser.xmlParserInput* _local_resolver(char* c_url, char* c_pubid,
             data = doc_ref._data_bytes
             c_input = xmlparser.xmlNewInputStream(c_context)
             if c_input is not NULL:
-                c_input.base = _cstr(data)
+                c_input.base = _xcstr(data)
                 c_input.length = python.PyBytes_GET_SIZE(data)
                 c_input.cur = c_input.base
-                c_input.end = &c_input.base[c_input.length]
+                c_input.end = c_input.base + c_input.length
         elif doc_ref._type == PARSER_DATA_FILENAME:
             data = None
             c_input = xmlparser.xmlNewInputFromFile(
@@ -668,9 +668,9 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
             _raiseParseError(c_ctxt, filename, None)
     else:
         if result.URL is NULL and filename is not None:
-            result.URL = tree.xmlStrdup(_cstr(filename))
+            result.URL = tree.xmlStrdup(_xcstr(filename))
         if result.encoding is NULL:
-            result.encoding = tree.xmlStrdup("UTF-8")
+            result.encoding = tree.xmlStrdup(<unsigned char*>"UTF-8")
 
     if context._validator is not None and \
            context._validator._add_default_attributes:
@@ -696,12 +696,11 @@ cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
 cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
                                       xmlNode* c_node) nogil:
     cdef xmlNode* c_attr
-    cdef char* c_name
     c_name = tree.xmlDictLookup(c_dict, c_node.name, -1)
     if c_name is NULL:
         return -1
     if c_name is not c_node.name:
-        tree.xmlFree(c_node.name)
+        tree.xmlFree(<char*>c_node.name)
         c_node.name = c_name
     c_attr = <xmlNode*>c_node.properties
     while c_attr is not NULL:
@@ -709,7 +708,7 @@ cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
         if c_name is NULL:
             return -1
         if c_name is not c_attr.name:
-            tree.xmlFree(c_attr.name)
+            tree.xmlFree(<char*>c_attr.name)
             c_attr.name = c_name
         c_attr = c_attr.next
     return 0
@@ -815,7 +814,7 @@ cdef class _BaseParser:
         cdef xmlparser.xmlSAXHandler* sax = c_ctxt.sax
         if sax is not NULL and sax.initialized and sax.initialized != xmlparser.XML_SAX2_MAGIC:
             # need to extend SAX1 context to SAX2 to get proper error reports
-            if sax is &htmlparser.htmlDefaultSAXHandler:
+            if <xmlparser.xmlSAXHandlerV1*>sax is &htmlparser.htmlDefaultSAXHandler:
                 sax = <xmlparser.xmlSAXHandler*> stdlib.malloc(sizeof(xmlparser.xmlSAXHandler))
                 if sax is NULL:
                     raise MemoryError()
@@ -927,7 +926,7 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef Py_ssize_t py_buffer_len
         cdef int buffer_len
-        cdef char* c_text
+        cdef const_char* c_text
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
         if py_buffer_len > limits.INT_MAX or _UNICODE_ENCODING is NULL:
             text_utf = python.PyUnicode_AsUTF8String(utext)
@@ -1099,8 +1098,8 @@ cdef class _FeedParser(_BaseParser):
         cdef _ParserContext context
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef Py_ssize_t py_buffer_len
-        cdef char* c_data
-        cdef char* c_encoding
+        cdef const_char* c_data
+        cdef const_char* c_encoding
         cdef int buffer_len
         cdef int error
         cdef bint recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
@@ -1212,8 +1211,8 @@ cdef class _FeedParser(_BaseParser):
             return result
 
 cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
-                             char* c_data, int buffer_len,
-                             char* c_encoding, int parse_options) except -1:
+                             const_char* c_data, int buffer_len,
+                             const_char* c_encoding, int parse_options) except -1:
     cdef xmlparser.xmlParserInput* c_input_stream
     # libxml2 crashes if spaceTab is not initialised
     if _LIBXML_VERSION_INT < 20629 and c_ctxt.spaceTab is NULL:
@@ -1507,7 +1506,7 @@ cdef xmlDoc* _newXMLDoc() except NULL:
     if result is NULL:
         raise MemoryError()
     if result.encoding is NULL:
-        result.encoding = tree.xmlStrdup("UTF-8")
+        result.encoding = tree.xmlStrdup(<unsigned char*>"UTF-8")
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
@@ -1569,8 +1568,8 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
         if base_url is not None:
             base_url = _encodeFilenameUTF8(base_url)
             if doc._c_doc.URL is not NULL:
-                tree.xmlFree(doc._c_doc.URL)
-            doc._c_doc.URL = tree.xmlStrdup(_cstr(base_url))
+                tree.xmlFree(<char*>doc._c_doc.URL)
+            doc._c_doc.URL = tree.xmlStrdup(_xcstr(base_url))
         return doc
 
     if base_url is not None:
@@ -1589,7 +1588,7 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
         return _parseFilelikeDocument(
             source, _encodeFilenameUTF8(url), parser)
 
-    raise TypeError, u"cannot parse from '%s'" % funicode(python._fqtypename(source))
+    raise TypeError, u"cannot parse from '%s'" % python._fqtypename(source).decode('UTF-8')
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
     cdef xmlDoc* c_doc

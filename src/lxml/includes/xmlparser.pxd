@@ -1,48 +1,50 @@
-from tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd
+from libc.string cimport const_char
+
+from tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd, const_xmlChar
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from xmlerror cimport xmlError, xmlStructuredErrorFunc
 
 
 cdef extern from "libxml/parser.h":
     ctypedef void (*startElementNsSAX2Func)(void* ctx,
-                                            char* localname,
-                                            char* prefix,
-                                            char* URI,
+                                            const_xmlChar* localname,
+                                            const_xmlChar* prefix,
+                                            const_xmlChar* URI,
                                             int nb_namespaces,
-                                            char** namespaces,
+                                            const_xmlChar** namespaces,
                                             int nb_attributes,
                                             int nb_defaulted,
-                                            char** attributes)
+                                            const_xmlChar** attributes)
 
     ctypedef void (*endElementNsSAX2Func)(void* ctx,
-                                          char* localname,
-                                          char* prefix,
-                                          char* URI)
+                                          const_xmlChar* localname,
+                                          const_xmlChar* prefix,
+                                          const_xmlChar* URI)
 
-    ctypedef void (*startElementSAXFunc)(void* ctx, char* name, char** atts)
+    ctypedef void (*startElementSAXFunc)(void* ctx, const_xmlChar* name, const_xmlChar** atts)
 
-    ctypedef void (*endElementSAXFunc)(void* ctx, char* name)
+    ctypedef void (*endElementSAXFunc)(void* ctx, const_xmlChar* name)
 
-    ctypedef void (*charactersSAXFunc)(void* ctx, char* ch, int len)
+    ctypedef void (*charactersSAXFunc)(void* ctx, const_xmlChar* ch, int len)
 
-    ctypedef void (*cdataBlockSAXFunc)(void* ctx, char* value, int len)
+    ctypedef void (*cdataBlockSAXFunc)(void* ctx, const_xmlChar* value, int len)
 
-    ctypedef void (*commentSAXFunc)(void* ctx, char* value)
+    ctypedef void (*commentSAXFunc)(void* ctx, const_xmlChar* value)
 
     ctypedef void (*processingInstructionSAXFunc)(void* ctx, 
-                                                  char* target, 
-                                                  char* data)
+                                                  const_xmlChar* target,
+                                                  const_xmlChar* data)
 
     ctypedef void (*internalSubsetSAXFunc)(void* ctx, 
-                                            char* name, 
-                                            char* externalID, 
-                                            char* systemID)
+                                            const_xmlChar* name,
+                                            const_xmlChar* externalID,
+                                            const_xmlChar* systemID)
 
     ctypedef void (*endDocumentSAXFunc)(void* ctx)
 
     ctypedef void (*startDocumentSAXFunc)(void* ctx)
 
-    ctypedef void (*referenceSAXFunc)(void * ctx, char* name)
+    ctypedef void (*referenceSAXFunc)(void * ctx, const_xmlChar* name)
 
     cdef int XML_SAX2_MAGIC
 
@@ -50,14 +52,18 @@ cdef extern from "libxml/tree.h":
     ctypedef struct xmlParserInput:
         int line
         int length
-        char* base
-        char* cur
-        char* end
+        const_xmlChar* base
+        const_xmlChar* cur
+        const_xmlChar* end
 
     ctypedef struct xmlParserInputBuffer:
         void* context
         xmlInputReadCallback  readcallback
         xmlInputCloseCallback closecallback
+
+    ctypedef struct xmlSAXHandlerV1:
+        # same as xmlSAXHandler, but without namespaces
+        pass
 
     ctypedef struct xmlSAXHandler:
         internalSubsetSAXFunc           internalSubset
@@ -185,7 +191,7 @@ cdef extern from "libxml/parser.h":
 # entity loaders:
 
     ctypedef xmlParserInput* (*xmlExternalEntityLoader)(
-        char * URL, char * ID, xmlParserCtxt* context) nogil
+        const_char * URL, const_char * ID, xmlParserCtxt* context) nogil
     cdef xmlExternalEntityLoader xmlGetExternalEntityLoader() nogil
     cdef void xmlSetExternalEntityLoader(xmlExternalEntityLoader f) nogil
 

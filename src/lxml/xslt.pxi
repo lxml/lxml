@@ -66,7 +66,7 @@ cdef _initXSLTResolverContext(_XSLTResolverContext context,
     context._parser = parser
     context._c_style_doc = NULL
 
-cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
+cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
                                        int parse_options, int* error) with gil:
     # call the Python document loaders
     cdef _XSLTResolverContext context
@@ -80,13 +80,13 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
     if c_doc is not NULL and c_doc.URL is not NULL:
-        if cstring_h.strcmp(c_uri, c_doc.URL) == 0:
+        if tree.xmlStrcmp(c_uri, c_doc.URL) == 0:
             return _copyDoc(c_doc, 1)
 
     # delegate to the Python resolvers
     try:
         resolvers = context._resolvers
-        if cstring_h.strncmp('string://__STRING__XSLT__/', c_uri, 26) == 0:
+        if tree.xmlStrncmp(<unsigned char*>'string://__STRING__XSLT__/', c_uri, 26) == 0:
             c_uri += 26
         uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
@@ -111,7 +111,7 @@ cdef xmlDoc* _xslt_resolve_from_python(char* c_uri, void* c_context,
         error[0] = 1
         return NULL
 
-cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
+cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
     try:
         message = u"Cannot resolve URI %s" % _decodeFilename(c_uri)
@@ -123,7 +123,7 @@ cdef void _xslt_store_resolver_exception(char* c_uri, void* context,
     except Exception, e:
         (<_XSLTResolverContext>context)._store_exception(e)
 
-cdef xmlDoc* _xslt_doc_loader(char* c_uri, tree.xmlDict* c_dict,
+cdef xmlDoc* _xslt_doc_loader(const_xmlChar* c_uri, tree.xmlDict* c_dict,
                               int parse_options, void* c_ctxt,
                               xslt.xsltLoadType c_type) nogil:
     # nogil => no Python objects here, may be called without thread context !
@@ -249,7 +249,7 @@ cdef class XSLTAccessControl:
         items = self.options.items()
         items.sort()
         return u"%s(%s)" % (
-            funicode(python._fqtypename(self)).split(u'.')[-1],
+            python._fqtypename(self).decode('UTF-8').split(u'.')[-1],
             u', '.join([u"%s=%r" % item for item in items]))
 
 ################################################################################
@@ -391,7 +391,7 @@ cdef class XSLT:
         if c_doc.URL is NULL:
             doc_url_utf = python.PyUnicode_AsASCIIString(
                 u"string://__STRING__XSLT__/%d.xslt" % id(self))
-            c_doc.URL = tree.xmlStrdup(_cstr(doc_url_utf))
+            c_doc.URL = tree.xmlStrdup(_xcstr(doc_url_utf))
 
         self._error_log = _ErrorLog()
         self._xslt_resolver_context = _XSLTResolverContext()
@@ -511,7 +511,7 @@ cdef class XSLT:
         cdef xmlDoc* c_result = NULL
         cdef xmlDoc* c_doc
         cdef tree.xmlDict* c_dict
-        cdef char** params = NULL
+        cdef const_char** params = NULL
 
         assert self._c_style is not NULL, "XSLT stylesheet not initialised"
         input_doc = _documentOrRaise(_input)
@@ -629,7 +629,7 @@ cdef class XSLT:
         return _xsltResultTreeFactory(result_doc, self, profile_doc)
 
     cdef xmlDoc* _run_transform(self, xmlDoc* c_input_doc,
-                                char** params, _XSLTContext context,
+                                const_char** params, _XSLTContext context,
                                 xslt.xsltTransformContext* transform_ctxt):
         cdef xmlDoc* c_result
         xslt.xsltSetTransformErrorFunc(transform_ctxt, <void*>self._error_log,
@@ -642,9 +642,9 @@ cdef class XSLT:
         return c_result
 
 cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
-                              dict parameters, char*** params_ptr):
+                              dict parameters, const_char*** params_ptr):
     cdef Py_ssize_t i, parameter_count
-    cdef char** params
+    cdef const_char** params
     cdef tree.xmlDict* c_dict = transform_ctxt.dict
     params_ptr[0] = NULL
     parameter_count = len(parameters)
@@ -653,8 +653,8 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
     # allocate space for parameters
     # * 2 as we want an entry for both key and value,
     # and + 1 as array is NULL terminated
-    params = <char**>python.PyMem_Malloc(
-        sizeof(char*) * (parameter_count * 2 + 1))
+    params = <const_char**>python.PyMem_Malloc(
+        sizeof(const_char*) * (parameter_count * 2 + 1))
     try:
         i = 0
         for key, value in parameters.iteritems():
@@ -668,9 +668,9 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                     v = (<XPath>value)._path
                 else:
                     v = _utf8(value)
-                params[i] = tree.xmlDictLookup(c_dict, _cstr(k), len(k))
+                params[i] = <const_char*>tree.xmlDictLookup(c_dict, _xcstr(k), len(k))
                 i += 1
-                params[i] = tree.xmlDictLookup(c_dict, _cstr(v), len(v))
+                params[i] = <const_char*>tree.xmlDictLookup(c_dict, _xcstr(v), len(v))
                 i += 1
     except:
         python.PyMem_Free(params)
@@ -703,7 +703,7 @@ cdef XSLT _copyXSLT(XSLT stylesheet):
 cdef class _XSLTResultTree(_ElementTree):
     cdef XSLT _xslt
     cdef _Document _profile
-    cdef char* _buffer
+    cdef xmlChar* _buffer
     cdef Py_ssize_t _buffer_len
     cdef Py_ssize_t _buffer_refcnt
     def __cinit__(self):
@@ -711,7 +711,7 @@ cdef class _XSLTResultTree(_ElementTree):
         self._buffer_len = 0
         self._buffer_refcnt = 0
 
-    cdef _saveToStringAndSize(self, char** s, int* l):
+    cdef _saveToStringAndSize(self, xmlChar** s, int* l):
         cdef _Document doc
         cdef int r
         if self._context_node is not None:
@@ -730,7 +730,7 @@ cdef class _XSLTResultTree(_ElementTree):
             raise MemoryError()
 
     def __str__(self):
-        cdef char* s = NULL
+        cdef xmlChar* s = NULL
         cdef int l = 0
         if python.IS_PYTHON3:
             return self.__unicode__()
@@ -741,12 +741,12 @@ cdef class _XSLTResultTree(_ElementTree):
         try:
             result = <bytes>s[:l]
         finally:
-            tree.xmlFree(s)
+            tree.xmlFree(<char*>s)
         return result
 
     def __unicode__(self):
         cdef char* encoding
-        cdef char* s = NULL
+        cdef xmlChar* s = NULL
         cdef int l = 0
         self._saveToStringAndSize(&s, &l)
         if s is NULL:
@@ -758,7 +758,7 @@ cdef class _XSLTResultTree(_ElementTree):
             else:
                 result = s[:l].decode(encoding)
         finally:
-            tree.xmlFree(s)
+            tree.xmlFree(<char*>s)
         return _stripEncodingDeclaration(result)
 
     def __getbuffer__(self, Py_buffer* buffer, int flags):
@@ -766,14 +766,14 @@ cdef class _XSLTResultTree(_ElementTree):
         if buffer is NULL:
             return
         if self._buffer is NULL or flags & python.PyBUF_WRITABLE:
-            self._saveToStringAndSize(<char**>&buffer.buf, &l)
+            self._saveToStringAndSize(<xmlChar**>&buffer.buf, &l)
             buffer.len = l
             if self._buffer is NULL and not flags & python.PyBUF_WRITABLE:
-                self._buffer = <char*>buffer.buf
+                self._buffer = <xmlChar*>buffer.buf
                 self._buffer_len = l
                 self._buffer_refcnt = 1
         else:
-            buffer.buf = <char*>self._buffer
+            buffer.buf = self._buffer
             buffer.len = self._buffer_len
             self._buffer_refcnt += 1
         if flags & python.PyBUF_WRITABLE:
@@ -796,10 +796,10 @@ cdef class _XSLTResultTree(_ElementTree):
     def __releasebuffer__(self, Py_buffer* buffer):
         if buffer is NULL:
             return
-        if <char*>buffer.buf is self._buffer:
+        if <xmlChar*>buffer.buf is self._buffer:
             self._buffer_refcnt -= 1
             if self._buffer_refcnt == 0:
-                tree.xmlFree(self._buffer)
+                tree.xmlFree(<char*>self._buffer)
                 self._buffer = NULL
         else:
             tree.xmlFree(<char*>buffer.buf)
@@ -865,17 +865,18 @@ cdef class _XSLTProcessingInstruction(PIBase):
         """
         cdef _Document result_doc
         cdef _Element  result_node
-        cdef char* c_href
+        cdef bytes href_utf
+        cdef const_xmlChar* c_href
         cdef xmlAttr* c_attr
         _assertValidNode(self)
         if self._c_node.content is NULL:
             raise ValueError, u"PI lacks content"
-        hrefs = _FIND_PI_HREF(u' ' + self._c_node.content.decode('UTF-8'))
+        hrefs = _FIND_PI_HREF(u' ' + (<unsigned char*>self._c_node.content).decode('UTF-8'))
         if len(hrefs) != 1:
             raise ValueError, u"malformed PI attributes"
         hrefs = hrefs[0]
         href_utf = utf8(hrefs[0] or hrefs[1])
-        c_href = _cstr(href_utf)
+        c_href = _xcstr(href_utf)
 
         if c_href[0] != c'#':
             # normal URL, try to parse from it
@@ -883,8 +884,10 @@ cdef class _XSLTProcessingInstruction(PIBase):
                 c_href,
                 tree.xmlNodeGetBase(self._c_node.doc, self._c_node))
             if c_href is not NULL:
-                href_utf = c_href
-                tree.xmlFree(c_href)
+                try:
+                    href_utf = <unsigned char*>c_href
+                finally:
+                    tree.xmlFree(<char*>c_href)
             result_doc = _parseDocumentFromURL(href_utf, parser)
             return _elementTreeFactory(result_doc, None)
 

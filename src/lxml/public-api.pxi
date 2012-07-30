@@ -10,7 +10,7 @@ cdef public api _ElementTree elementTreeFactory(_Element context_node):
     return newElementTree(context_node, _ElementTree)
 
 cdef public api _ElementTree newElementTree(_Element context_node,
-                                        object subclass):
+                                            object subclass):
     if <void*>context_node is NULL or context_node is None:
         raise TypeError
 
@@ -22,11 +22,11 @@ cdef public api _Element elementFactory(_Document doc, xmlNode* c_node):
     return _elementFactory(doc, c_node)
 
 cdef public api _Element makeElement(tag, _Document doc, parser,
-                                 text, tail, attrib, nsmap):
+                                     text, tail, attrib, nsmap):
     return _makeElement(tag, NULL, doc, parser, text, tail, attrib, nsmap, None)
 
 cdef public api _Element makeSubElement(_Element parent, tag, text, tail,
-                                    attrib, nsmap):
+                                        attrib, nsmap):
     return _makeSubElement(parent, tag, text, tail, attrib, nsmap, None)
 
 cdef public api void setElementClassLookupFunction(
@@ -40,10 +40,10 @@ cdef public api object lookupNamespaceElementClass(state, doc, xmlNode* c_node):
     return _find_nselement_class(state, doc, c_node)
 
 cdef public api object callLookupFallback(FallbackElementClassLookup lookup,
-                                      _Document doc, xmlNode* c_node):
+                                          _Document doc, xmlNode* c_node):
     return _callLookupFallback(lookup, doc, c_node)
 
-cdef public api int tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+cdef public api int tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
     if c_node is NULL:
         return -1
     return _tagMatches(c_node, c_href, c_name)
@@ -84,7 +84,7 @@ cdef public api object attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node
     return _attributeValue(c_element, c_attrib_node)
 
 cdef public api object attributeValueFromNsName(xmlNode* c_element,
-                                            char* ns, char* name):
+                                                const_xmlChar* ns, const_xmlChar* name):
     return _attributeValueFromNsName(c_element, ns, name)
 
 cdef public api object getAttributeValue(_Element element, key, default):
@@ -103,7 +103,7 @@ cdef public api int delAttribute(_Element element, key) except -1:
     return _delAttribute(element, key)
 
 cdef public api int delAttributeFromNsName(tree.xmlNode* c_element,
-                                       char* c_href, char* c_name):
+                                           const_xmlChar* c_href, const_xmlChar* c_name):
     return _delAttributeFromNsName(c_element, c_href, c_name)
 
 cdef public api bint hasChild(xmlNode* c_node):
@@ -127,7 +127,7 @@ cdef public api xmlNode* previousElement(xmlNode* c_node):
 cdef public api void appendChild(_Element parent, _Element child):
     _appendChild(parent, child)
 
-cdef public api object pyunicode(char* s):
+cdef public api object pyunicode(const_xmlChar* s):
     if s is NULL:
         raise TypeError
     return funicode(s)
@@ -144,7 +144,7 @@ cdef public api tuple getNsTagWithEmptyNs(object tag):
 cdef public api object namespacedName(xmlNode* c_node):
     return _namespacedName(c_node)
 
-cdef public api object namespacedNameFromNsName(char* href, char* name):
+cdef public api object namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     return _namespacedNameFromNsName(href, name)
 
 cdef public api void iteratorStoreNext(_ElementIterator iterator, _Element node):
@@ -154,7 +154,7 @@ cdef public api void initTagMatch(_ElementTagMatcher matcher, tag):
     matcher._initTagMatch(tag)
 
 cdef public api tree.xmlNs* findOrBuildNodeNsPrefix(
-    _Document doc, xmlNode* c_node, char* href, char* prefix) except NULL:
+        _Document doc, xmlNode* c_node, const_xmlChar* href, const_xmlChar* prefix) except NULL:
     if doc is None:
         raise TypeError
     return doc._findOrBuildNodeNs(c_node, href, prefix, 0)

@@ -1,5 +1,7 @@
-from tree cimport xmlDoc, xmlNode, xmlDict
+from tree cimport xmlDoc, xmlNode, xmlDict, xmlChar, const_xmlChar
 from xpath cimport xmlXPathContext, xmlXPathFunction
+
+from libc.string cimport const_char
 
 cdef extern from "libxslt/xslt.h":
     cdef int xsltLibxsltVersion
@@ -69,7 +71,7 @@ cdef extern from "libxslt/documents.h":
         XSLT_LOAD_STYLESHEET
         XSLT_LOAD_DOCUMENT
 
-    ctypedef xmlDoc* (*xsltDocLoaderFunc)(char* URI, xmlDict* dict,
+    ctypedef xmlDoc* (*xsltDocLoaderFunc)(const_xmlChar* URI, xmlDict* dict,
                                           int options,
                                           void* ctxt,
                                           xsltLoadType type) nogil
@@ -78,9 +80,9 @@ cdef extern from "libxslt/documents.h":
 
 cdef extern from "libxslt/transform.h":
     cdef xmlDoc* xsltApplyStylesheet(xsltStylesheet* style, xmlDoc* doc,
-                                     char** params) nogil
+                                     const_char** params) nogil
     cdef xmlDoc* xsltApplyStylesheetUser(xsltStylesheet* style, xmlDoc* doc,
-                                         char** params, char* output,
+                                         const_char** params, const_char* output,
                                          void* profile,
                                          xsltTransformContext* context) nogil
     cdef void xsltProcessOneNode(xsltTransformContext* ctxt,
@@ -95,7 +97,7 @@ cdef extern from "libxslt/transform.h":
                                    xsltStackElem* params) nogil
 
 cdef extern from "libxslt/xsltutils.h":
-    cdef int xsltSaveResultToString(char** doc_txt_ptr,
+    cdef int xsltSaveResultToString(xmlChar** doc_txt_ptr,
                                     int* doc_txt_len,
                                     xmlDoc* result,
                                     xsltStylesheet* style) nogil

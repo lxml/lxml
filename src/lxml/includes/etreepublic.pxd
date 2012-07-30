@@ -1,6 +1,7 @@
 # public Cython/C interface to lxml.etree
 
 cimport tree
+from tree cimport const_xmlChar
 
 cdef extern from "lxml-version.h":
     cdef char* LXML_VERSION_STRING
@@ -10,7 +11,7 @@ cdef extern from "etree_defs.h":
     cdef bint _isElement(tree.xmlNode* c_node) nogil
 
     # return the namespace URI of the node or NULL
-    cdef char* _getNs(tree.xmlNode* node) nogil
+    cdef const_xmlChar* _getNs(tree.xmlNode* node) nogil
 
     # pair of macros for tree traversal
     cdef void BEGIN_FOR_EACH_ELEMENT_FROM(tree.xmlNode* tree_top,
@@ -102,7 +103,7 @@ cdef extern from "lxml.etree_api.h":
 
     # return the value of the attribute with 'ns' and 'name' (or None)
     cdef object attributeValueFromNsName(tree.xmlNode* c_element,
-                                         char* c_ns, char* c_name)
+                                         const_xmlChar* c_ns, const_xmlChar* c_name)
 
     # return the value of attribute "{ns}name", or the default value
     cdef object getAttributeValue(_Element element, key, default)
@@ -125,7 +126,7 @@ cdef extern from "lxml.etree_api.h":
     # delete an attribute based on name and namespace URI
     # returns -1 if the attribute was not found (no exception)
     cdef int delAttributeFromNsName(tree.xmlNode* c_element,
-                                    char* c_href, char* c_name)
+                                    const_xmlChar* c_href, const_xmlChar* c_name)
 
     ##########################################################################
     # XML node helper functions
@@ -175,10 +176,10 @@ cdef extern from "lxml.etree_api.h":
 
     # check if a C node matches a tag name and namespace
     # (NULL allowed for each => always matches)
-    cdef int tagMatches(tree.xmlNode* c_node, char* c_href, char* c_name)
+    cdef int tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name)
 
     # convert a UTF-8 char* to a Python string or unicode string
-    cdef object pyunicode(char* s)
+    cdef object pyunicode(const_xmlChar* s)
 
     # convert the string to UTF-8 using the normal lxml.etree semantics
     cdef bytes utf8(object s)
@@ -193,7 +194,7 @@ cdef extern from "lxml.etree_api.h":
     cdef object namespacedName(tree.xmlNode* c_node)
 
     # get the "{ns}tag" string for a href/tagname pair (c_ns may be NULL)
-    cdef object namespacedNameFromNsName(char* c_ns, char* c_tag)
+    cdef object namespacedNameFromNsName(const_xmlChar* c_ns, const_xmlChar* c_tag)
 
     # check if the node has a text value (which may be '')
     cdef bint hasText(tree.xmlNode* c_node) nogil
@@ -218,7 +219,7 @@ cdef extern from "lxml.etree_api.h":
 
     # recursively lookup a namespace in element or ancestors, or create it
     cdef tree.xmlNs* findOrBuildNodeNsPrefix(
-        _Document doc, tree.xmlNode* c_node, char* href, char* prefix)
+        _Document doc, tree.xmlNode* c_node, const_xmlChar* href, const_xmlChar* prefix)
 
     # find the Document of an Element, ElementTree or Document (itself!)
     cdef _Document documentOrRaise(object input)

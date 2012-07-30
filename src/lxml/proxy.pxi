@@ -460,7 +460,7 @@ cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
 cdef inline void fixThreadDictNameForNode(xmlNode* c_node,
                                           tree.xmlDict* c_src_dict,
                                           tree.xmlDict* c_dict) nogil:
-    cdef char* c_name = c_node.name
+    cdef const_xmlChar* c_name = c_node.name
     if c_name is not NULL and \
            c_node.type != tree.XML_TEXT_NODE and \
            c_node.type != tree.XML_COMMENT_NODE:
@@ -474,10 +474,10 @@ cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
                                              tree.xmlDict* c_src_dict,
                                              tree.xmlDict* c_dict) nogil:
     if c_node.content is not NULL and \
-           c_node.content is not <char*>&c_node.properties:
+           c_node.content is not <xmlChar*>&c_node.properties:
         if tree.xmlDictOwns(c_src_dict, c_node.content):
             # result can be NULL on memory error, but we don't handle that here
-            c_node.content = tree.xmlDictLookup(c_dict, c_node.content, -1)
+            c_node.content = <xmlChar*>tree.xmlDictLookup(c_dict, c_node.content, -1)
 
 cdef inline void fixThreadDictNsForNode(xmlNode* c_node,
                                         tree.xmlDict* c_src_dict,

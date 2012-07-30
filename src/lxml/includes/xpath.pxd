@@ -1,6 +1,9 @@
 cimport tree
 cimport xmlerror
 
+from libc.string cimport const_char
+from tree cimport xmlChar, const_xmlChar
+
 cdef extern from "libxml/xpath.h":
     ctypedef enum xmlXPathObjectType:
         XPATH_UNDEFINED = 0
@@ -49,15 +52,15 @@ cdef extern from "libxml/xpath.h":
         xmlNodeSet* nodesetval
         bint boolval
         double floatval
-        char* stringval
+        xmlChar* stringval
 
     ctypedef struct xmlXPathContext:
         tree.xmlDoc* doc
         tree.xmlNode* node
         tree.xmlDict* dict
         tree.xmlHashTable* nsHash
-        char* function
-        char* functionURI
+        const_xmlChar* function
+        const_xmlChar* functionURI
         xmlerror.xmlStructuredErrorFunc error
         xmlerror.xmlError lastError
         void* userData
@@ -72,22 +75,22 @@ cdef extern from "libxml/xpath.h":
 
     ctypedef void (*xmlXPathFunction)(xmlXPathParserContext* ctxt, int nargs) nogil
     ctypedef xmlXPathFunction (*xmlXPathFuncLookupFunc)(void* ctxt,
-                                                        char* name,
-                                                        char* ns_uri) nogil
+                                                        const_xmlChar* name,
+                                                        const_xmlChar* ns_uri) nogil
     
     cdef xmlXPathContext* xmlXPathNewContext(tree.xmlDoc* doc) nogil
-    cdef xmlXPathObject* xmlXPathEvalExpression(char* str,
+    cdef xmlXPathObject* xmlXPathEvalExpression(const_xmlChar* str,
                                                 xmlXPathContext* ctxt) nogil
     cdef xmlXPathObject* xmlXPathCompiledEval(xmlXPathCompExpr* comp,
                                               xmlXPathContext* ctxt) nogil
-    cdef xmlXPathCompExpr* xmlXPathCompile(char* str) nogil
+    cdef xmlXPathCompExpr* xmlXPathCompile(const_xmlChar* str) nogil
     cdef xmlXPathCompExpr* xmlXPathCtxtCompile(xmlXPathContext* ctxt,
-                                               char* str) nogil
+                                               const_xmlChar* str) nogil
     cdef void xmlXPathFreeContext(xmlXPathContext* ctxt) nogil
     cdef void xmlXPathFreeCompExpr(xmlXPathCompExpr* comp) nogil
     cdef void xmlXPathFreeObject(xmlXPathObject* obj) nogil
     cdef int xmlXPathRegisterNs(xmlXPathContext* ctxt,
-                                char* prefix, char* ns_uri) nogil
+                                const_xmlChar* prefix, const_xmlChar* ns_uri) nogil
     
     cdef xmlNodeSet* xmlXPathNodeSetCreate(tree.xmlNode* val) nogil
     cdef void xmlXPathFreeNodeSet(xmlNodeSet* val) nogil
@@ -95,31 +98,31 @@ cdef extern from "libxml/xpath.h":
 
 cdef extern from "libxml/xpathInternals.h":
     cdef int xmlXPathRegisterFunc(xmlXPathContext* ctxt,
-                                  char* name,
+                                  const_xmlChar* name,
                                   xmlXPathFunction f) nogil
     cdef int xmlXPathRegisterFuncNS(xmlXPathContext* ctxt,
-                                    char* name,
-                                    char* ns_uri,
+                                    const_xmlChar* name,
+                                    const_xmlChar* ns_uri,
                                     xmlXPathFunction f) nogil
     cdef void xmlXPathRegisterFuncLookup(xmlXPathContext *ctxt,
                                          xmlXPathFuncLookupFunc f,
                                          void *funcCtxt) nogil
     cdef int xmlXPathRegisterVariable(xmlXPathContext *ctxt, 
-                                      char* name,
+                                      const_xmlChar* name,
                                       xmlXPathObject* value) nogil
     cdef int xmlXPathRegisterVariableNS(xmlXPathContext *ctxt, 
-                                        char* name, 
-                                        char* ns_uri, 
+                                        const_xmlChar* name,
+                                        const_xmlChar* ns_uri,
                                         xmlXPathObject* value) nogil
     cdef void xmlXPathRegisteredVariablesCleanup(xmlXPathContext *ctxt) nogil
     cdef void xmlXPathRegisteredNsCleanup(xmlXPathContext *ctxt) nogil
     cdef xmlXPathObject* valuePop (xmlXPathParserContext *ctxt) nogil
     cdef int valuePush(xmlXPathParserContext* ctxt, xmlXPathObject *value) nogil
     
-    cdef xmlXPathObject* xmlXPathNewCString(char *val) nogil
-    cdef xmlXPathObject* xmlXPathWrapCString(char * val) nogil
-    cdef xmlXPathObject* xmlXPathNewString(char *val) nogil
-    cdef xmlXPathObject* xmlXPathWrapString(char * val) nogil
+    cdef xmlXPathObject* xmlXPathNewCString(const_char *val) nogil
+    cdef xmlXPathObject* xmlXPathWrapCString(const_char * val) nogil
+    cdef xmlXPathObject* xmlXPathNewString(const_xmlChar *val) nogil
+    cdef xmlXPathObject* xmlXPathWrapString(const_xmlChar * val) nogil
     cdef xmlXPathObject* xmlXPathNewFloat(double val) nogil
     cdef xmlXPathObject* xmlXPathNewBoolean(int val) nogil
     cdef xmlXPathObject* xmlXPathNewNodeSet(tree.xmlNode* val) nogil

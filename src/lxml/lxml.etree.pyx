@@ -42,6 +42,7 @@ cimport cython
 from lxml cimport python
 from lxml.includes cimport tree, config
 from lxml.includes.tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
+from lxml.includes.tree cimport const_xmlChar, xmlChar, _xcstr
 from lxml.python cimport callable, _cstr, _isString
 from lxml.includes cimport xpath
 from lxml.includes cimport c14n
@@ -51,6 +52,7 @@ cimport cpython.mem
 cimport cpython.ref
 from libc cimport limits, stdio, stdlib
 from libc cimport string as cstring_h   # not to be confused with stdlib 'string'
+from libc.string cimport const_char
 
 try:
     import __builtin__
@@ -114,7 +116,7 @@ DEBUG = __DEBUG
 # PyPy requires us to store a Python reference for the
 # namespace in order to keep the byte buffer alive.
 cdef struct qname:
-    char* c_name
+    const_xmlChar* c_name
     python.PyObject* href
 
 # global per-thread setup
@@ -234,9 +236,9 @@ cdef __unpackIntVersion(int c_version):
 cdef int _LIBXML_VERSION_INT
 try:
     _LIBXML_VERSION_INT = int(
-        re.match(u'[0-9]+', (tree.xmlParserVersion).decode("ascii")).group(0))
+        re.match(u'[0-9]+', (<unsigned char*>tree.xmlParserVersion).decode("ascii")).group(0))
 except Exception:
-    print u"Unknown libxml2 version: %s" % (tree.xmlParserVersion).decode("ascii")
+    print u"Unknown libxml2 version: %s" % (<unsigned char*>tree.xmlParserVersion).decode("ascii")
     _LIBXML_VERSION_INT = 0
 
 LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
@@ -410,7 +412,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
 
     @cython.final
     cdef xmlNs* _findOrBuildNodeNs(self, xmlNode* c_node,
-                                   char* c_href, char* c_prefix,
+                                   const_xmlChar* c_href, const_xmlChar* c_prefix,
                                    bint is_attribute) except NULL:
         u"""Get or create namespace structure for a node.  Reuses the prefix if
         possible.
@@ -435,17 +437,17 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         # none found => determine a suitable new prefix
         if c_prefix is NULL:
             dict_result = python.PyDict_GetItem(
-                _DEFAULT_NAMESPACE_PREFIXES, c_href)
+                _DEFAULT_NAMESPACE_PREFIXES, <unsigned char*>c_href)
             if dict_result is not NULL:
                 prefix = <object>dict_result
             else:
                 prefix = self.buildNewPrefix()
-            c_prefix = _cstr(prefix)
+            c_prefix = _xcstr(prefix)
 
         # make sure the prefix is not in use already
         while tree.xmlSearchNs(self._c_doc, c_node, c_prefix) is not NULL:
             prefix = self.buildNewPrefix()
-            c_prefix = _cstr(prefix)
+            c_prefix = _xcstr(prefix)
 
         # declare the namespace and return it
         c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
@@ -454,10 +456,9 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
         return c_ns
 
     @cython.final
-    cdef int _setNodeNs(self, xmlNode* c_node, char* href) except -1:
+    cdef int _setNodeNs(self, xmlNode* c_node, const_xmlChar* c_href) except -1:
         u"Lookup namespace structure and set it for the node."
-        cdef xmlNs* c_ns
-        c_ns = self._findOrBuildNodeNs(c_node, href, NULL, 0)
+        c_ns = self._findOrBuildNodeNs(c_node, c_href, NULL, 0)
         tree.xmlSetNs(c_node, c_ns)
 
 cdef tuple __initPrefixCache():
@@ -538,15 +539,14 @@ cdef class DocInfo:
                 return None
             return _decodeFilename(self._doc._c_doc.URL)
         def __set__(self, url):
-            cdef char* c_oldurl
             url = _encodeFilename(url)
             c_oldurl = self._doc._c_doc.URL
             if url is None:
                 self._doc._c_doc.URL = NULL
             else:
-                self._doc._c_doc.URL = tree.xmlStrdup(_cstr(url))
+                self._doc._c_doc.URL = tree.xmlStrdup(_xcstr(url))
             if c_oldurl is not NULL:
-                tree.xmlFree(c_oldurl)
+                tree.xmlFree(<void*>c_oldurl)
 
     property doctype:
         u"Returns a DOCTYPE declaration string for the document."
@@ -890,11 +890,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             else:
                 _tagValidOrRaise(name)
             self._tag = value
-            tree.xmlNodeSetName(self._c_node, _cstr(name))
+            tree.xmlNodeSetName(self._c_node, _xcstr(name))
             if ns is None:
                 self._c_node.ns = NULL
             else:
-                self._doc._setNodeNs(self._c_node, _cstr(ns))
+                self._doc._setNodeNs(self._c_node, _xcstr(ns))
 
     property attrib:
         u"""Element attribute dictionary. Where possible, use get(), set(),
@@ -1007,7 +1007,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Element, regardless of the document type (XML or HTML).
         """
         def __get__(self):
-            cdef char* c_base
             _assertValidNode(self)
             c_base = tree.xmlNodeGetBase(self._doc._c_doc, self._c_node)
             if c_base is NULL:
@@ -1019,13 +1018,12 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return base
 
         def __set__(self, url):
-            cdef char* c_base
             _assertValidNode(self)
             if url is None:
-                c_base = NULL
+                c_base = <const_xmlChar*>NULL
             else:
                 url = _encodeFilename(url)
-                c_base = _cstr(url)
+                c_base = _xcstr(url)
             tree.xmlNodeSetBase(self._c_node, c_base)
 
     # ACCESSORS
@@ -1544,13 +1542,12 @@ cdef class __ContentOnlyElement(_Element):
 
         def __set__(self, value):
             cdef tree.xmlDict* c_dict
-            cdef char* c_text
             _assertValidNode(self)
             if value is None:
-                c_text = NULL
+                c_text = <const_xmlChar*>NULL
             else:
                 value = _utf8(value)
-                c_text = _cstr(value)
+                c_text = _xcstr(value)
             tree.xmlNodeSetContent(self._c_node, c_text)
 
     # ACCESSORS
@@ -1603,7 +1600,7 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
         def __set__(self, value):
             _assertValidNode(self)
             value = _utf8(value)
-            c_text = _cstr(value)
+            c_text = _xcstr(value)
             tree.xmlNodeSetName(self._c_node, c_text)
 
     def __repr__(self):
@@ -1655,7 +1652,7 @@ cdef class _Entity(__ContentOnlyElement):
             value_utf = _utf8(value)
             assert u'&' not in value and u';' not in value, \
                 u"Invalid entity name '%s'" % value
-            tree.xmlNodeSetName(self._c_node, _cstr(value_utf))
+            tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
     property text:
         # FIXME: should this be None or '&[VALUE];' or the resolved
@@ -1915,7 +1912,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef _Document doc
         cdef _Element root
         cdef xmlDoc* c_doc
-        cdef char* c_path
         _assertValidNode(element)
         if self._context_node is not None:
             root = self._context_node
@@ -2289,11 +2285,10 @@ cdef class _Attrib:
 
     def __contains__(self, key):
         cdef xmlNode* c_node
-        cdef char* c_href
         ns, tag = _getNsTag(key)
         c_node = self._element._c_node
-        c_href = NULL if ns is None else _cstr(ns)
-        return 1 if tree.xmlHasNsProp(c_node, _cstr(tag), c_href) else 0
+        c_href = <const_xmlChar*>NULL if ns is None else _xcstr(ns)
+        return 1 if tree.xmlHasNsProp(c_node, _xcstr(tag), c_href) else 0
 
     def __richcmp__(one, other, int op):
         if not isinstance(one, dict):
@@ -2394,7 +2389,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
         while c_node is not NULL and \
                   self._node_type != 0 and \
                   (self._node_type != c_node.type or
-                   not _tagMatches(c_node, self._href, self._name)):
+                   not _tagMatches(c_node, <const_xmlChar*>self._href, <const_xmlChar*>self._name)):
             c_node = self._next_element(c_node)
         if c_node is NULL:
             self._node = None
@@ -2536,7 +2531,6 @@ cdef class _MultiTagMatcher:
         not care about node types and href NULL values are not wildcards
         but match only unnamespaced attributes.
         """
-        cdef char* c_href
         cdef qname* c_qname
         for c_qname in self._cached_tags[:self._tag_count]:
             if c_qname.c_name is NULL or c_qname.c_name is c_attr.name:
@@ -2545,7 +2539,7 @@ cdef class _MultiTagMatcher:
                     if c_href is NULL:
                         return True
                 elif c_href is not NULL:
-                    if cstring_h.strcmp(c_href, python.__cstr(c_qname.href)) == 0:
+                    if tree.xmlStrcmp(c_href, <const_xmlChar*>python.__cstr(c_qname.href)) == 0:
                         return True
         return False
 
@@ -2732,20 +2726,20 @@ cdef class ElementTextIterator:
 
 cdef xmlNode* _createElement(xmlDoc* c_doc, object name_utf) except NULL:
     cdef xmlNode* c_node
-    c_node = tree.xmlNewDocNode(c_doc, NULL, _cstr(name_utf), NULL)
+    c_node = tree.xmlNewDocNode(c_doc, NULL, _xcstr(name_utf), NULL)
     return c_node
 
-cdef xmlNode* _createComment(xmlDoc* c_doc, char* text):
+cdef xmlNode* _createComment(xmlDoc* c_doc, const_xmlChar* text):
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocComment(c_doc, text)
     return c_node
 
-cdef xmlNode* _createPI(xmlDoc* c_doc, char* target, char* text):
+cdef xmlNode* _createPI(xmlDoc* c_doc, const_xmlChar* target, const_xmlChar* text):
     cdef xmlNode* c_node
     c_node = tree.xmlNewDocPI(c_doc, target, text)
     return c_node
 
-cdef xmlNode* _createEntity(xmlDoc* c_doc, char* name):
+cdef xmlNode* _createEntity(xmlDoc* c_doc, const_xmlChar* name):
     cdef xmlNode* c_node
     c_node = tree.xmlNewReference(c_doc, name)
     return c_node
@@ -2780,7 +2774,7 @@ def Comment(text=None):
         text = _utf8(text)
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
-    c_node = _createComment(c_doc, _cstr(text))
+    c_node = _createComment(c_doc, _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
 
@@ -2800,7 +2794,7 @@ def ProcessingInstruction(target, text=None):
         text = _utf8(text)
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
-    c_node = _createPI(c_doc, _cstr(target), _cstr(text))
+    c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
 
@@ -2832,9 +2826,8 @@ def Entity(name):
     cdef _Document doc
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
-    cdef char* c_name
     name_utf = _utf8(name)
-    c_name = _cstr(name_utf)
+    c_name = _xcstr(name_utf)
     if c_name[0] == c'#':
         if not _characterReferenceIsValid(c_name + 1):
             raise ValueError, u"Invalid character reference: '%s'" % name

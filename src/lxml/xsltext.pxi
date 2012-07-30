@@ -46,7 +46,7 @@ cdef class XSLTExtension:
             c_parent = _nonRoNodeOf(output_parent)
         else:
             c_parent = tree.xmlNewDocNode(
-                context._xsltCtxt.output, NULL, "fake-parent", NULL)
+                context._xsltCtxt.output, NULL, <unsigned char*>"fake-parent", NULL)
 
         c_node = context._xsltCtxt.insert
         context._xsltCtxt.insert = c_parent
@@ -91,7 +91,7 @@ cdef class XSLTExtension:
             c_parent = _nonRoNodeOf(output_parent)
         else:
             c_parent = tree.xmlNewDocNode(
-                context._xsltCtxt.output, NULL, "fake-parent", NULL)
+                context._xsltCtxt.output, NULL, <unsigned char*>"fake-parent", NULL)
 
         c_ctxt.insert = _nonRoNodeOf(output_parent)
         xslt.xsltApplyOneTemplate(c_ctxt,
@@ -145,7 +145,6 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
     cdef _XSLTContext context
     cdef XSLTExtension extension
     cdef python.PyObject* dict_result
-    cdef char* c_uri
     cdef xmlNode* c_node
     cdef _ReadOnlyProxy context_node = None, self_node = None
     cdef object output_parent # not restricted to ro-nodes
@@ -160,7 +159,7 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
     try:
         try:
             dict_result = python.PyDict_GetItem(
-                context._extension_elements, (c_uri, c_inst_node.name))
+                context._extension_elements, (<unsigned char*>c_uri, <unsigned char*>c_inst_node.name))
             if dict_result is NULL:
                 raise KeyError, \
                     u"extension element %s not found" % funicode(c_inst_node.name)

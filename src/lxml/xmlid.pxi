@@ -162,7 +162,7 @@ cdef class _IDDict:
                          <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
-cdef void _collectIdHashItemDict(void* payload, void* context, char* name):
+cdef void _collectIdHashItemDict(void* payload, void* context, const_xmlChar* name):
     # collect elements from ID attribute hash table
     cdef tree.xmlID* c_id
     c_id = <tree.xmlID*>payload
@@ -172,7 +172,7 @@ cdef void _collectIdHashItemDict(void* payload, void* context, char* name):
     element = _elementFactory(doc, c_id.attr.parent)
     dic[funicode(name)] = element
 
-cdef void _collectIdHashItemList(void* payload, void* context, char* name):
+cdef void _collectIdHashItemList(void* payload, void* context, const_xmlChar* name):
     # collect elements from ID attribute hash table
     cdef tree.xmlID* c_id
     cdef list lst
@@ -183,7 +183,7 @@ cdef void _collectIdHashItemList(void* payload, void* context, char* name):
     element = _elementFactory(doc, c_id.attr.parent)
     lst.append( (funicode(name), element) )
 
-cdef void _collectIdHashKeys(void* payload, void* collect_list, char* name):
+cdef void _collectIdHashKeys(void* payload, void* collect_list, const_xmlChar* name):
     cdef tree.xmlID* c_id
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:

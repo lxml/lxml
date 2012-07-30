@@ -2,8 +2,8 @@
 # ObjectPath
 
 ctypedef struct _ObjectPath:
-    char* href
-    char* name
+    const_xmlChar* href
+    const_xmlChar* name
     Py_ssize_t index
 
 
@@ -132,9 +132,9 @@ cdef _parseObjectPathString(path):
 cdef _parseObjectPathList(path):
     u"""Parse object path sequence into a (ns, name, index) list.
     """
-    cdef char* index_pos
-    cdef char* index_end
-    cdef char* c_name
+    cdef xmlChar* index_pos
+    cdef xmlChar* index_end
+    cdef unsigned char* c_name
     cdef list new_path = []
     for item in path:
         item = item.strip()
@@ -144,15 +144,15 @@ cdef _parseObjectPathList(path):
             index = 0
         else:
             ns, name = cetree.getNsTag(item)
-            c_name = _cstr(name)
-            index_pos = cstring_h.strchr(c_name, c'[')
+            c_name = <unsigned char*>_cstr(name)
+            index_pos = tree.xmlStrchr(c_name, c'[')
             if index_pos is NULL:
                 index = 0
             else:
-                index_end = cstring_h.strchr(index_pos + 1, c']')
+                index_end = tree.xmlStrchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, u"index must be enclosed in []"
-                index = int(index_pos[1:index_end - index_pos])
+                index = int((<unsigned char*>index_pos)[1:index_end - index_pos])
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, u"index not allowed on root node"
                 name = <bytes>c_name[:index_pos - c_name]
@@ -170,14 +170,8 @@ cdef _ObjectPath* _buildObjectPathSegments(path_list) except NULL:
         raise MemoryError()
     c_path = c_path_segments
     for href, name, index in path_list:
-        if href is None:
-            c_path[0].href = NULL
-        else:
-            c_path[0].href = _cstr(href)
-        if name is None:
-            c_path[0].name = NULL
-        else:
-            c_path[0].name = _cstr(name)
+        c_path[0].href = _xcstr(href) if href is not None else NULL
+        c_path[0].name = _xcstr(name) if name is not None else NULL
         c_path[0].index = index
         c_path += 1
     return c_path_segments
@@ -187,8 +181,6 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
     u"""Follow the path to find the target element.
     """
     cdef tree.xmlNode* c_node
-    cdef char* c_href
-    cdef char* c_name
     cdef Py_ssize_t c_index
     c_node = root._c_node
     c_name = c_path[0].name
@@ -204,11 +196,11 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
                 (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
 
     while c_node is not NULL:
-        c_path_len = c_path_len - 1
+        c_path_len -= 1
         if c_path_len <= 0:
             break
 
-        c_path = c_path + 1
+        c_path += 1
         if c_path[0].href is not NULL:
             c_href = c_path[0].href # otherwise: keep parent namespace
         c_name = tree.xmlDictExists(c_node.doc.dict, c_path[0].name, -1)
@@ -217,11 +209,7 @@ cdef _findObjectPath(_Element root, _ObjectPath* c_path, Py_ssize_t c_path_len,
             c_node = NULL
             break
         c_index = c_path[0].index
-
-        if c_index < 0:
-            c_node = c_node.last
-        else:
-            c_node = c_node.children
+        c_node = c_node.last if c_index < 0 else c_node.children
         c_node = _findFollowingSibling(c_node, c_href, c_name, c_index)
 
     if c_node is not NULL:
@@ -241,8 +229,6 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
     cdef _Element child
     cdef tree.xmlNode* c_node
     cdef tree.xmlNode* c_child
-    cdef char* c_href
-    cdef char* c_name
     cdef Py_ssize_t c_index
     if c_path_len == 1:
         raise TypeError, u"cannot update root node"
@@ -258,8 +244,8 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
             (cetree.namespacedNameFromNsName(c_href, c_name), root.tag)
 
     while c_path_len > 1:
-        c_path_len = c_path_len - 1
-        c_path = c_path + 1
+        c_path_len -= 1
+        c_path += 1
         if c_path[0].href is not NULL:
             c_href = c_path[0].href # otherwise: keep parent namespace
         c_index = c_path[0].index
@@ -268,10 +254,7 @@ cdef _createObjectPath(_Element root, _ObjectPath* c_path,
             c_name = c_path[0].name
             c_child = NULL
         else:
-            if c_index < 0:
-                c_child = c_node.last
-            else:
-                c_child = c_node.children
+            c_child = c_node.last if c_index < 0 else c_node.children
             c_child = _findFollowingSibling(c_child, c_href, c_name, c_index)
 
         if c_child is not NULL:
@@ -306,7 +289,7 @@ cdef list _buildDescendantPaths(tree.xmlNode* c_node, prefix_string):
     tag = cetree.namespacedName(c_node)
     if prefix_string:
         if prefix_string[-1] != u'.':
-            prefix_string = prefix_string + u'.'
+            prefix_string += u'.'
         prefix_string = prefix_string + tag
     else:
         prefix_string = tag
@@ -322,7 +305,6 @@ cdef int _recursiveBuildDescendantPaths(tree.xmlNode* c_node,
     """
     cdef python.PyObject* dict_result
     cdef tree.xmlNode* c_child
-    cdef char* c_href
     cdef dict tags = {}
     path_list.append( u'.'.join(path) )
     c_href = tree._getNs(c_node)
@@ -340,10 +322,7 @@ cdef int _recursiveBuildDescendantPaths(tree.xmlNode* c_node,
         else:
             tag = cetree.namespacedName(c_child)
         dict_result = python.PyDict_GetItem(tags, tag)
-        if dict_result is NULL:
-            count = 0
-        else:
-            count = (<object>dict_result) + 1
+        count = (<object>dict_result) + 1 if dict_result is not NULL else 0
         tags[tag] = count
         if count > 0:
             tag += u'[%d]' % count

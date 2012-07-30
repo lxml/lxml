@@ -116,7 +116,7 @@ cdef class CommentBase(_Comment):
             text = _utf8(text)
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
-        self._c_node = _createComment(c_doc, _cstr(text))
+        self._c_node = _createComment(c_doc, _xcstr(text))
         tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
 
 cdef class PIBase(_ProcessingInstruction):
@@ -143,7 +143,7 @@ cdef class PIBase(_ProcessingInstruction):
             text = _utf8(text)
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
-        self._c_node = _createPI(c_doc, _cstr(target), _cstr(text))
+        self._c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
         tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
 
 cdef class EntityBase(_Entity):
@@ -161,9 +161,8 @@ cdef class EntityBase(_Entity):
     def __init__(self, name):
         cdef _Document doc
         cdef xmlDoc*   c_doc
-        cdef char* c_name
         name_utf = _utf8(name)
-        c_name = _cstr(name_utf)
+        c_name = _xcstr(name_utf)
         if c_name[0] == c'#':
             if not _characterReferenceIsValid(c_name + 1):
                 raise ValueError, u"Invalid character reference: '%s'" % name
@@ -296,9 +295,9 @@ cdef object _lookupDefaultElementClass(state, _Document _doc, xmlNode* c_node):
         if state is None or (<ElementDefaultClassLookup>state).pi_class is None:
             # special case XSLT-PI
             if c_node.name is not NULL and c_node.content is not NULL:
-                if cstring_h.strcmp(c_node.name, "xml-stylesheet") == 0:
-                    if cstring_h.strstr(c_node.content, "text/xsl") is not NULL or \
-                           cstring_h.strstr(c_node.content, "text/xml") is not NULL:
+                if tree.xmlStrcmp(c_node.name, <unsigned char*>"xml-stylesheet") == 0:
+                    if tree.xmlStrstr(c_node.content, <unsigned char*>"text/xsl") is not NULL or \
+                           tree.xmlStrstr(c_node.content, <unsigned char*>"text/xml") is not NULL:
                         return _XSLTProcessingInstruction
             return _ProcessingInstruction
         else:
@@ -325,8 +324,8 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     """
     cdef object _class_mapping
     cdef object _pytag
-    cdef char* _c_ns
-    cdef char* _c_name
+    cdef const_xmlChar* _c_ns
+    cdef const_xmlChar* _c_name
     def __cinit__(self):
         self._lookup_function = _attribute_class_lookup
 
@@ -337,8 +336,8 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
         if ns is None:
             self._c_ns = NULL
         else:
-            self._c_ns = _cstr(ns)
-        self._c_name = _cstr(name)
+            self._c_ns = _xcstr(ns)
+        self._c_name = _xcstr(name)
         self._class_mapping = dict(class_mapping)
 
         FallbackElementClassLookup.__init__(self, fallback)
@@ -402,7 +401,6 @@ cdef class CustomElementClassLookup(FallbackElementClassLookup):
 
 cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     cdef CustomElementClassLookup lookup
-    cdef char* c_str
 
     lookup = <CustomElementClassLookup>state
 
@@ -421,10 +419,7 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
     else:
         name = funicode(c_node.name)
     c_str = tree._getNs(c_node)
-    if c_str is NULL:
-        ns = None
-    else:
-        ns = funicode(c_str)
+    ns = funicode(c_str) if c_str is not NULL else None
 
     cls = lookup.lookup(element_type, doc, ns, name)
     if cls is not None:

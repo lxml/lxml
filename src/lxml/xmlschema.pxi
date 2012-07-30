@@ -46,7 +46,6 @@ cdef class XMLSchema(_Validator):
         cdef _Element root_node
         cdef xmlDoc* fake_c_doc
         cdef xmlNode* c_node
-        cdef char* c_href
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
 
         self._add_attribute_defaults = attribute_defaults
@@ -61,7 +60,8 @@ cdef class XMLSchema(_Validator):
                 c_node = root_node._c_node
                 c_href = _getNs(c_node)
                 if c_href is NULL or \
-                       cstring_h.strcmp(c_href, 'http://www.w3.org/2001/XMLSchema') != 0:
+                       tree.xmlStrcmp(
+                           c_href, <unsigned char*>'http://www.w3.org/2001/XMLSchema') != 0:
                     raise XMLSchemaParseError, u"Document is not XML Schema"
 
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)

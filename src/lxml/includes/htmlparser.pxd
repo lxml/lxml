@@ -1,6 +1,6 @@
 from tree cimport xmlDoc, xmlDict
 from tree cimport xmlInputReadCallback, xmlInputCloseCallback
-from xmlparser cimport xmlParserCtxt, xmlSAXHandler
+from xmlparser cimport xmlParserCtxt, xmlSAXHandler, xmlSAXHandlerV1
 from xmlerror cimport xmlError
 
 cdef extern from "libxml/HTMLparser.h":
@@ -14,7 +14,7 @@ cdef extern from "libxml/HTMLparser.h":
         HTML_PARSE_RECOVER    # Relaxed parsing
         HTML_PARSE_COMPACT    # compact small text nodes
 
-    xmlSAXHandler htmlDefaultSAXHandler
+    xmlSAXHandlerV1 htmlDefaultSAXHandler
 
     cdef xmlParserCtxt* htmlCreateMemoryParserCtxt(
         char* buffer, int size) nogil

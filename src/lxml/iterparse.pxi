@@ -237,10 +237,10 @@ cdef void _iterparseSaxStartDocument(void* ctxt):
         c_ctxt.myDoc.dict = c_ctxt.dict
     _pushSaxStartDocument(context, c_ctxt.myDoc)
 
-cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
-                             char* URI, int nb_namespaces, char** namespaces,
+cdef void _iterparseSaxStart(void* ctxt, const_xmlChar* localname, const_xmlChar* prefix,
+                             const_xmlChar* URI, int nb_namespaces, const_xmlChar** namespaces,
                              int nb_attributes, int nb_defaulted,
-                             char** attributes):
+                             const_xmlChar** attributes):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -251,7 +251,8 @@ cdef void _iterparseSaxStart(void* ctxt, char* localname, char* prefix,
         nb_attributes, nb_defaulted, attributes)
     _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI):
+cdef void _iterparseSaxEnd(void* ctxt, const_xmlChar* localname, const_xmlChar* prefix,
+                           const_xmlChar* URI):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -259,7 +260,7 @@ cdef void _iterparseSaxEnd(void* ctxt, char* localname, char* prefix, char* URI)
     _pushSaxEndEvent(context, c_ctxt.node)
     context._origSaxEnd(ctxt, localname, prefix, URI)
 
-cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
+cdef void _iterparseSaxStartNoNs(void* ctxt, const_xmlChar* name, const_xmlChar** attributes):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -267,7 +268,7 @@ cdef void _iterparseSaxStartNoNs(void* ctxt, char* name, char** attributes):
     context._origSaxStartNoNs(ctxt, name, attributes)
     _pushSaxStartEvent(context, c_ctxt.node)
 
-cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
+cdef void _iterparseSaxEndNoNs(void* ctxt, const_xmlChar* name):
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -275,7 +276,7 @@ cdef void _iterparseSaxEndNoNs(void* ctxt, char* name):
     _pushSaxEndEvent(context, c_ctxt.node)
     context._origSaxEndNoNs(ctxt, name)
 
-cdef void _iterparseSaxComment(void* ctxt, char* text):
+cdef void _iterparseSaxComment(void* ctxt, const_xmlChar* text):
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
@@ -286,7 +287,7 @@ cdef void _iterparseSaxComment(void* ctxt, char* text):
     if c_node is not NULL:
         _pushSaxEvent(context, u"comment", c_node)
 
-cdef void _iterparseSaxPI(void* ctxt, char* target, char* data):
+cdef void _iterparseSaxPI(void* ctxt, const_xmlChar* target, const_xmlChar* data):
     cdef xmlNode* c_node
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _IterparseContext context
@@ -361,7 +362,7 @@ cdef class iterparse(_BaseParser):
     cdef object _source
     cdef object _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
-                             char* chunk, int size, int terminate) nogil
+                             const_char* chunk, int size, int terminate) nogil
     cdef bint _close_source_after_read
 
     def __init__(self, source, events=(u"end",), *, tag=None,

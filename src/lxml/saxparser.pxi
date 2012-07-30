@@ -116,11 +116,11 @@ cdef class _SaxParserContext(_ParserContext):
         c_ctxt.disableSAX = 1
         self._store_raised()
 
-cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
-                          char* c_namespace, int c_nb_namespaces,
-                          char** c_namespaces,
+cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar* c_prefix,
+                          const_xmlChar* c_namespace, int c_nb_namespaces,
+                          const_xmlChar** c_namespaces,
                           int c_nb_attributes, int c_nb_defaulted,
-                          char** c_attributes) with gil:
+                          const_xmlChar** c_attributes) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _Element element
@@ -153,7 +153,7 @@ cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
                         value = ''
                 else:
                     value = python.PyUnicode_DecodeUTF8(
-                        c_attributes[3], c_attributes[4] - c_attributes[3],
+                        <const_char*>c_attributes[3], c_attributes[4] - c_attributes[3],
                         "strict")
                 attrib[name] = value
                 c_attributes += 5
@@ -177,8 +177,8 @@ cdef void _handleSaxStart(void* ctxt, char* c_localname, char* c_prefix,
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxStartNoNs(void* ctxt, char* c_name,
-                              char** c_attributes) with gil:
+cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
+                              const_xmlChar** c_attributes) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     cdef _Element element
@@ -215,8 +215,8 @@ cdef void _handleSaxStartNoNs(void* ctxt, char* c_name,
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxEnd(void* ctxt, char* c_localname, char* c_prefix,
-                        char* c_namespace) with gil:
+cdef void _handleSaxEnd(void* ctxt, const_xmlChar* c_localname, const_xmlChar* c_prefix,
+                        const_xmlChar* c_namespace) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -231,7 +231,7 @@ cdef void _handleSaxEnd(void* ctxt, char* c_localname, char* c_prefix,
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxEndNoNs(void* ctxt, char* c_name) with gil:
+cdef void _handleSaxEndNoNs(void* ctxt, const_xmlChar* c_name) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -245,7 +245,7 @@ cdef void _handleSaxEndNoNs(void* ctxt, char* c_name) with gil:
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxData(void* ctxt, char* c_data, int data_len) with gil:
+cdef void _handleSaxData(void* ctxt, const_xmlChar* c_data, int data_len) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -256,11 +256,11 @@ cdef void _handleSaxData(void* ctxt, char* c_data, int data_len) with gil:
         context._origSaxData(c_ctxt, c_data, data_len)
     try:
         context._target._handleSaxData(
-            python.PyUnicode_DecodeUTF8(c_data, data_len, NULL))
+            python.PyUnicode_DecodeUTF8(<const_char*>c_data, data_len, NULL))
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxCData(void* ctxt, char* c_data, int data_len) with gil:
+cdef void _handleSaxCData(void* ctxt, const_xmlChar* c_data, int data_len) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -271,12 +271,12 @@ cdef void _handleSaxCData(void* ctxt, char* c_data, int data_len) with gil:
         context._origSaxCData(c_ctxt, c_data, data_len)
     try:
         context._target._handleSaxData(
-            python.PyUnicode_DecodeUTF8(c_data, data_len, NULL))
+            python.PyUnicode_DecodeUTF8(<const_char*>c_data, data_len, NULL))
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxDoctype(void* ctxt, char* c_name, char* c_public,
-                            char* c_system) with gil:
+cdef void _handleSaxDoctype(void* ctxt, const_xmlChar* c_name, const_xmlChar* c_public,
+                            const_xmlChar* c_system) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -293,7 +293,7 @@ cdef void _handleSaxDoctype(void* ctxt, char* c_name, char* c_public,
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxPI(void* ctxt, char* c_target, char* c_data) with gil:
+cdef void _handleSaxPI(void* ctxt, const_xmlChar* c_target, const_xmlChar* c_data) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
@@ -309,7 +309,7 @@ cdef void _handleSaxPI(void* ctxt, char* c_target, char* c_data) with gil:
     except:
         context._handleSaxException(c_ctxt)
 
-cdef void _handleSaxComment(void* ctxt, char* c_data) with gil:
+cdef void _handleSaxComment(void* ctxt, const_xmlChar* c_data) with gil:
     cdef _SaxParserContext context
     cdef xmlparser.xmlParserCtxt* c_ctxt
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt

@@ -23,7 +23,7 @@ cdef int _findOutputMethod(method) except -1:
 
 cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef bint needs_conversion
-    cdef char* c_text
+    cdef const_xmlChar* c_text
     cdef xmlNode* c_text_node
     cdef tree.xmlBuffer* c_buffer
     cdef int error_result
@@ -37,7 +37,7 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
         if with_tail:
             c_text_node = _textNodeOrSkip(c_node.next)
             while c_text_node is not NULL:
-                tree.xmlBufferWriteChar(c_buffer, c_text_node.content)
+                tree.xmlBufferWriteChar(c_buffer, <const_char*>c_text_node.content)
                 c_text_node = _textNodeOrSkip(c_text_node.next)
         c_text = tree.xmlBufferContent(c_buffer)
 
@@ -62,13 +62,13 @@ cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
 
         if needs_conversion:
             text = python.PyUnicode_DecodeUTF8(
-                c_text, tree.xmlBufferLength(c_buffer), 'strict')
+                <const_char*>c_text, tree.xmlBufferLength(c_buffer), 'strict')
             if encoding is not _unicode:
                 encoding = _utf8(encoding)
                 text = python.PyUnicode_AsEncodedString(
                     text, encoding, 'strict')
         else:
-            text = c_text[:tree.xmlBufferLength(c_buffer)]
+            text = (<unsigned char*>c_text)[:tree.xmlBufferLength(c_buffer)]
     finally:
         tree.xmlBufferFree(c_buffer)
     return text
@@ -83,9 +83,9 @@ cdef _tostring(_Element element, encoding, doctype, method,
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlBuffer* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
-    cdef char* c_enc
-    cdef char* c_version
-    cdef char* c_doctype
+    cdef const_char* c_enc
+    cdef const_xmlChar* c_version
+    cdef const_xmlChar* c_doctype
     cdef int c_method
     cdef int error_result
     if element is None:
@@ -103,13 +103,13 @@ cdef _tostring(_Element element, encoding, doctype, method,
         c_doctype = NULL
     else:
         doctype = _utf8(doctype)
-        c_doctype = _cstr(doctype)
+        c_doctype = _xcstr(doctype)
     # it is necessary to *and* find the encoding handler *and* use
     # encoding during output
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
     if enchandler is NULL and c_enc is not NULL:
         if encoding is not None:
-            encoding = encoding.decode(u'UTF-8')
+            encoding = encoding.decode('UTF-8')
         raise LookupError, u"unknown encoding: '%s'" % encoding
     c_buffer = tree.xmlAllocOutputBuffer(enchandler)
     if c_buffer is NULL:
@@ -133,11 +133,11 @@ cdef _tostring(_Element element, encoding, doctype, method,
 
     try:
         if encoding is _unicode:
-            result = tree.xmlBufferContent(
-                c_result_buffer)[:tree.xmlBufferLength(c_result_buffer)].decode('UTF-8')
+            result = (<unsigned char*>tree.xmlBufferContent(
+                c_result_buffer))[:tree.xmlBufferLength(c_result_buffer)].decode('UTF-8')
         else:
-            result = <bytes>tree.xmlBufferContent(
-                c_result_buffer)[:tree.xmlBufferLength(c_result_buffer)]
+            result = <bytes>(<unsigned char*>tree.xmlBufferContent(
+                c_result_buffer))[:tree.xmlBufferLength(c_result_buffer)]
     finally:
         error_result = tree.xmlOutputBufferClose(c_buffer)
     if error_result < 0:
@@ -146,7 +146,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
 
 cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments):
     cdef xmlDoc* c_doc
-    cdef char* c_buffer = NULL
+    cdef xmlChar* c_buffer = NULL
     cdef int byte_count = -1
     cdef bytes result
     cdef _Document doc
@@ -169,12 +169,12 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments):
 
     if byte_count < 0 or c_buffer is NULL:
         if c_buffer is not NULL:
-            tree.xmlFree(c_buffer)
+            tree.xmlFree(<char*>c_buffer)
         raise C14NError, u"C14N failed"
     try:
         result = c_buffer[:byte_count]
     finally:
-        tree.xmlFree(c_buffer)
+        tree.xmlFree(<char*>c_buffer)
     return result
 
 cdef _raiseSerialisationError(int error_result):
@@ -189,7 +189,7 @@ cdef _raiseSerialisationError(int error_result):
 # low-level serialisation functions
 
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
-                             xmlNode* c_node, char* encoding, char* c_doctype,
+                             xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
                              int c_method, bint write_xml_declaration,
                              bint write_complete_document,
                              bint pretty_print, bint with_tail,
@@ -201,7 +201,8 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
 
     if c_doctype is not NULL:
-        tree.xmlOutputBufferWrite(c_buffer, cstring_h.strlen(c_doctype), c_doctype)
+        tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
+                                  <const_char*>c_doctype)
         tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
     # write internal DTD subset, preceding PIs/comments, etc.
@@ -246,12 +247,12 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
-                                    char* version, char* encoding,
+                                    const_xmlChar* version, const_char* encoding,
                                     int standalone) nogil:
     if version is NULL:
-        version = "1.0"
+        version = <unsigned char*>"1.0"
     tree.xmlOutputBufferWrite(c_buffer, 15, "<?xml version='")
-    tree.xmlOutputBufferWriteString(c_buffer, version)
+    tree.xmlOutputBufferWriteString(c_buffer, <const_char*>version)
     tree.xmlOutputBufferWrite(c_buffer, 12, "' encoding='")
     tree.xmlOutputBufferWriteString(c_buffer, encoding)
     if standalone == 0:
@@ -262,25 +263,25 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
-                            xmlDoc* c_doc, char* c_root_name,
-                            char* encoding) nogil:
+                            xmlDoc* c_doc, const_xmlChar* c_root_name,
+                            const_char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     c_dtd = c_doc.intSubset
     if c_dtd is NULL or c_dtd.name is NULL:
         return
-    if cstring_h.strcmp(c_root_name, c_dtd.name) != 0:
+    if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
         return
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
-    tree.xmlOutputBufferWriteString(c_buffer, c_dtd.name)
+    tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.name)
     if c_dtd.SystemID != NULL and c_dtd.SystemID[0] != c'\0':
         if c_dtd.ExternalID != NULL and c_dtd.ExternalID[0] != c'\0':
             tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
-            tree.xmlOutputBufferWriteString(c_buffer, c_dtd.ExternalID)
+            tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.ExternalID)
             tree.xmlOutputBufferWrite(c_buffer, 3, '" "')
         else:
             tree.xmlOutputBufferWrite(c_buffer, 9, ' SYSTEM "')
-        tree.xmlOutputBufferWriteString(c_buffer, c_dtd.SystemID)
+        tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.SystemID)
         tree.xmlOutputBufferWrite(c_buffer, 1, '"')
     if c_dtd.entities == NULL and c_dtd.elements == NULL and \
            c_dtd.attributes == NULL and c_dtd.notations == NULL and \
@@ -298,7 +299,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     char* encoding, bint pretty_print) nogil:
+                     const_char* encoding, bint pretty_print) nogil:
     u"Write the element tail."
     c_node = c_node.next
     while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
@@ -307,7 +308,7 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -325,7 +326,7 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
         c_sibling = c_sibling.next
 
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                             char* encoding, bint pretty_print) nogil:
+                             const_char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
     if c_node.parent is not NULL and _isElement(c_node.parent):
         return
@@ -408,8 +409,8 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
     cdef _FilelikeWriter writer = None
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
-    cdef char* c_enc
-    cdef char* c_doctype
+    cdef const_char* c_enc
+    cdef const_xmlChar* c_doctype
     cdef int error_result
     if encoding is None:
         c_enc = NULL
@@ -420,7 +421,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         c_doctype = NULL
     else:
         doctype = _utf8(doctype)
-        c_doctype = _cstr(doctype)
+        c_doctype = _xcstr(doctype)
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         data = _textToString(element._c_node, encoding, with_tail)
@@ -462,7 +463,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
     else:
         tree.xmlCharEncCloseFunc(enchandler)
         raise TypeError, \
-            u"File or filename expected, got '%s'" % funicode(python._fqtypename(f))
+            u"File or filename expected, got '%s'" % python._fqtypename(f).decode('UTF-8')
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
                        write_xml_declaration, write_doctype,
@@ -511,7 +512,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                 tree.xmlOutputBufferClose(c_buffer)
         else:
             raise TypeError, \
-                u"File or filename expected, got '%s'" % funicode(python._fqtypename(f))
+                u"File or filename expected, got '%s'" % python._fqtypename(f).decode('UTF-8')
     finally:
         _destroyFakeDoc(c_base_doc, c_doc)
 

@@ -1,4 +1,5 @@
 from libc cimport stdio
+from libc.string cimport const_char
 cimport cython
 
 cdef extern from "Python.h":
@@ -126,7 +127,7 @@ cdef extern from "pythread.h":
 
 cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef bint _isString(object obj)
-    cdef char* _fqtypename(object t)
+    cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
     cdef bint IS_PYTHON3
     cdef bint IS_PYPY

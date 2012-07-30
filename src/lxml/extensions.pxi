@@ -183,7 +183,7 @@ cdef class _BaseContext:
             self._namespaces = namespaces
         if self._xpathCtxt is not NULL:
             xpath.xmlXPathRegisterNs(
-                self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+                self._xpathCtxt, _xcstr(prefix_utf), _xcstr(ns_uri_utf))
 
     cdef registerNamespace(self, prefix, ns_uri):
         if prefix is None:
@@ -192,14 +192,14 @@ cdef class _BaseContext:
         ns_uri_utf = self._to_utf(ns_uri)
         self._global_namespaces.append(prefix_utf)
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
-                                 _cstr(prefix_utf), _cstr(ns_uri_utf))
+                                 _xcstr(prefix_utf), _xcstr(ns_uri_utf))
 
     cdef registerLocalNamespaces(self):
         if self._namespaces is None:
             return
         for prefix_utf, ns_uri_utf in self._namespaces:
             xpath.xmlXPathRegisterNs(
-                self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+                self._xpathCtxt, _xcstr(prefix_utf), _xcstr(ns_uri_utf))
 
     cdef registerGlobalNamespaces(self):
         cdef list ns_prefixes = _find_all_extension_prefixes()
@@ -207,18 +207,18 @@ cdef class _BaseContext:
             for prefix_utf, ns_uri_utf in ns_prefixes:
                 self._global_namespaces.append(prefix_utf)
                 xpath.xmlXPathRegisterNs(
-                    self._xpathCtxt, _cstr(prefix_utf), _cstr(ns_uri_utf))
+                    self._xpathCtxt, _xcstr(prefix_utf), _xcstr(ns_uri_utf))
 
     cdef unregisterGlobalNamespaces(self):
         if python.PyList_GET_SIZE(self._global_namespaces) > 0:
             for prefix_utf in self._global_namespaces:
                 xpath.xmlXPathRegisterNs(self._xpathCtxt,
-                                         _cstr(prefix_utf), NULL)
+                                         _xcstr(prefix_utf), NULL)
             del self._global_namespaces[:]
     
     cdef void _unregisterNamespace(self, prefix_utf):
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
-                                 _cstr(prefix_utf), NULL)
+                                 _xcstr(prefix_utf), NULL)
     
     # extension functions
 
@@ -279,7 +279,7 @@ cdef class _BaseContext:
                     unreg_func(ctxt, name_utf, ns_utf)
 
     @cython.final
-    cdef _find_cached_function(self, char* c_ns_uri, char* c_name):
+    cdef _find_cached_function(self, const_xmlChar* c_ns_uri, const_xmlChar* c_name):
         u"""Lookup an extension function in the cache and return it.
 
         Parameters: c_ns_uri may be NULL, c_name must not be NULL
@@ -290,7 +290,7 @@ cdef class _BaseContext:
             self._function_cache, None if c_ns_uri is NULL else c_ns_uri)
         if c_dict is not NULL:
             dict_result = python.PyDict_GetItem(
-                <object>c_dict, c_name)
+                <object>c_dict, <unsigned char*>c_name)
             if dict_result is not NULL:
                 return <object>dict_result
         return None
@@ -458,7 +458,6 @@ cdef class _ExsltRegExp:
         self._compile_map = {}
 
     cdef _make_string(self, value):
-        cdef char* c_text
         if _isString(value):
             return value
         elif python.PyList_Check(value):
@@ -592,12 +591,12 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                             context._hold(fake_node)
                         else:
                             # append a comment node to keep the text nodes separate
-                            c_node = tree.xmlNewDocComment(doc._c_doc, "")
+                            c_node = tree.xmlNewDocComment(doc._c_doc, <unsigned char*>"")
                             if c_node is NULL:
                                 raise MemoryError()
                             tree.xmlAddChild(fake_node._c_node, c_node)
                         context._hold(value)
-                        c_node = tree.xmlNewDocText(doc._c_doc, _cstr(value))
+                        c_node = tree.xmlNewDocText(doc._c_doc, _xcstr(value))
                         if c_node is NULL:
                             raise MemoryError()
                         tree.xmlAddChild(fake_node._c_node, c_node)
@@ -767,7 +766,6 @@ cdef object _buildElementStringResult(_Document doc, xmlNode* c_node,
     cdef _Element parent = None
     cdef object attrname = None
     cdef xmlNode* c_element
-    cdef char* s
     cdef bint is_tail
 
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -843,9 +841,10 @@ cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
         _extension_function_call(context, function, ctxt, nargs)
     else:
         if rctxt.functionURI is not NULL:
-            fref = u"{%s}%s" % (rctxt.functionURI, rctxt.function)
+            fref = u"{%s}%s" % ((<unsigned char*>rctxt.functionURI).decode('UTF-8'),
+                                (<unsigned char*>rctxt.function).decode('UTF-8'))
         else:
-            fref = rctxt.function
+            fref = (<unsigned char*>rctxt.function).decode('UTF-8')
         xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
         context._exc._store_exception(
             XPathFunctionError(u"XPath function '%s' not found" % fref))

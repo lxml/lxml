@@ -134,7 +134,6 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     cdef python.PyObject* dict_result
     cdef ElementNamespaceClassLookup lookup
     cdef _NamespaceRegistry registry
-    cdef char* c_namespace_utf
     if state is None:
         return _lookupDefaultElementClass(None, doc, c_node)
 
@@ -145,7 +144,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
     c_namespace_utf = _getNs(c_node)
     if c_namespace_utf is not NULL:
         dict_result = python.PyDict_GetItem(
-            lookup._namespace_registries, c_namespace_utf)
+            lookup._namespace_registries, <unsigned char*>c_namespace_utf)
     else:
         dict_result = python.PyDict_GetItem(
             lookup._namespace_registries, None)
@@ -155,7 +154,7 @@ cdef object _find_nselement_class(state, _Document doc, xmlNode* c_node):
 
         if c_node.name is not NULL:
             dict_result = python.PyDict_GetItem(
-                classes, c_node.name)
+                classes, <unsigned char*>c_node.name)
         else:
             dict_result = NULL
 

@@ -31,20 +31,20 @@ _XPATH_EVAL_ERRORS = (
 cdef int _register_xpath_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
-            <xpath.xmlXPathContext*>ctxt, _cstr(name_utf),
+            <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf),
             _xpath_function_call)
     else:
         return xpath.xmlXPathRegisterFuncNS(
-            <xpath.xmlXPathContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
+            <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             _xpath_function_call)
 
 cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
     if ns_utf is None:
         return xpath.xmlXPathRegisterFunc(
-            <xpath.xmlXPathContext*>ctxt, _cstr(name_utf), NULL)
+            <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), NULL)
     else:
         return xpath.xmlXPathRegisterFuncNS(
-            <xpath.xmlXPathContext*>ctxt, _cstr(name_utf), _cstr(ns_utf), NULL)
+            <xpath.xmlXPathContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf), NULL)
 
 
 @cython.final
@@ -90,16 +90,16 @@ cdef class _XPathContext(_BaseContext):
         for name, value in variable_dict.items():
             name_utf = self._to_utf(name)
             xpath.xmlXPathRegisterVariable(
-                self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
+                self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef registerVariable(self, name, value):
         name_utf = self._to_utf(name)
         xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
+            self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, _cstr(name_utf), _wrapXPathObject(value, None, None))
+            self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
 
     cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
@@ -306,7 +306,6 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         """
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
-        cdef char* c_path
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         path = _utf8(_path)
         doc = self._element._doc
@@ -316,7 +315,7 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         try:
             self._context.register_context(doc)
             self._context.registerVariables(_variables)
-            c_path = _cstr(path)
+            c_path = _xcstr(path)
             with nogil:
                 xpathObj = xpath.xmlXPathEvalExpression(
                     c_path, self._xpathCtxt)
@@ -356,7 +355,6 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef xmlDoc* c_doc
         cdef _Document doc
-        cdef char* c_path
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
         path = _utf8(_path)
         doc = self._element._doc
@@ -367,7 +365,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)
             try:
                 self._context.registerVariables(_variables)
-                c_path = _cstr(path)
+                c_path = _xcstr(path)
                 with nogil:
                     self._xpathCtxt.doc  = c_doc
                     self._xpathCtxt.node = tree.xmlDocGetRootElement(c_doc)
@@ -435,7 +433,7 @@ cdef class XPath(_XPathEvaluatorBase):
         if xpathCtxt is NULL:
             raise MemoryError()
         self.set_context(xpathCtxt)
-        self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _cstr(self._path))
+        self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _xcstr(self._path))
         if self._xpath is NULL:
             self._raise_parse_error()
 

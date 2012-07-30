@@ -231,13 +231,11 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
     This only works for a newly created node!
     """
     cdef xmlNs* c_ns
-    cdef char*  c_prefix
-    cdef char*  c_href
     cdef list nsdefs
     if not nsmap:
         if node_ns_utf is not None:
             _uriValidOrRaise(node_ns_utf)
-            doc._setNodeNs(c_node, _cstr(node_ns_utf))
+            doc._setNodeNs(c_node, _xcstr(node_ns_utf))
         return 0
 
     nsdefs = list(nsmap.items())
@@ -255,25 +253,25 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
     for prefix, href in nsdefs:
         href_utf = _utf8(href)
         _uriValidOrRaise(href_utf)
-        c_href = _cstr(href_utf)
+        c_href = _xcstr(href_utf)
         if prefix is not None:
             prefix_utf = _utf8(prefix)
             _prefixValidOrRaise(prefix_utf)
-            c_prefix = _cstr(prefix_utf)
+            c_prefix = _xcstr(prefix_utf)
         else:
-            c_prefix = NULL
+            c_prefix = <const_xmlChar*>NULL
         # add namespace with prefix if it is not already known
         c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
         if c_ns is NULL or \
                 c_ns.href is NULL or \
-                cstring_h.strcmp(c_ns.href, c_href) != 0:
+                tree.xmlStrcmp(c_ns.href, c_href) != 0:
             c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
         if href_utf == node_ns_utf:
             tree.xmlSetNs(c_node, c_ns)
             node_ns_utf = None
 
     if node_ns_utf is not None:
-        doc._setNodeNs(c_node, _cstr(node_ns_utf))
+        doc._setNodeNs(c_node, _xcstr(node_ns_utf))
     return 0
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
@@ -298,12 +296,12 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
                 _attributeValidOrRaise(attr_name_utf)
             value_utf = _utf8(value)
             if attr_ns_utf is None:
-                tree.xmlNewProp(c_node, _cstr(attr_name_utf), _cstr(value_utf))
+                tree.xmlNewProp(c_node, _xcstr(attr_name_utf), _xcstr(value_utf))
             else:
                 _uriValidOrRaise(attr_ns_utf)
-                c_ns = doc._findOrBuildNodeNs(c_node, _cstr(attr_ns_utf), NULL, 1)
+                c_ns = doc._findOrBuildNodeNs(c_node, _xcstr(attr_ns_utf), NULL, 1)
                 tree.xmlNewNsProp(c_node, c_ns,
-                                  _cstr(attr_name_utf), _cstr(value_utf))
+                                  _xcstr(attr_name_utf), _xcstr(value_utf))
 
 ctypedef struct _ns_node_ref:
     xmlNs* ns
@@ -409,7 +407,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         stdlib.free(c_ns_list)
     return 0
 
-cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
+cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute):
     u"""Search a namespace declaration that covers a node (element or
     attribute).
 
@@ -422,7 +420,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
     cdef xmlNode* c_element
     if c_href is NULL or c_node is NULL or c_node.type == tree.XML_ENTITY_REF_NODE:
         return NULL
-    if cstring_h.strcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
+    if tree.xmlStrcmp(c_href, tree.XML_XML_NAMESPACE) == 0:
         # no special cases here, let libxml2 handle this
         return tree.xmlSearchNsByHref(c_node.doc, c_node, c_href)
     if c_node.type == tree.XML_ATTRIBUTE_NODE:
@@ -434,7 +432,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
         if c_node.type == tree.XML_ELEMENT_NODE:
             c_ns = c_node.nsDef
             while c_ns is not NULL:
-                if c_ns.href is not NULL and cstring_h.strcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and tree.xmlStrcmp(c_href, c_ns.href) == 0:
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -449,7 +447,7 @@ cdef xmlNs* _searchNsByHref(xmlNode* c_node, char* c_href, bint is_attribute):
             if c_node is not c_element and c_node.ns is not NULL:
                 # optimise: the node may have the namespace itself
                 c_ns = c_node.ns
-                if c_ns.href is not NULL and cstring_h.strcmp(c_href, c_ns.href) == 0:
+                if c_ns.href is not NULL and tree.xmlStrcmp(c_href, c_ns.href) == 0:
                     if c_ns.prefix is NULL and is_attribute:
                         # for attributes, continue searching a named
                         # prefix, but keep the first default namespace
@@ -508,8 +506,6 @@ cdef int _replaceNodeByChildren(_Document doc, xmlNode* c_node) except -1:
     return 0
 
 cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
-    cdef char* value
-    cdef char* c_href
     c_href = _getNs(<xmlNode*>c_attrib_node)
     value = tree.xmlGetNsProp(c_element, c_attrib_node.name, c_href)
     try:
@@ -519,8 +515,8 @@ cdef object _attributeValue(xmlNode* c_element, xmlAttr* c_attrib_node):
     return result
 
 cdef object _attributeValueFromNsName(xmlNode* c_element,
-                                      char* c_href, char* c_name):
-    cdef char* c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
+                                      const_xmlChar* c_href, const_xmlChar* c_name):
+    c_result = tree.xmlGetNsProp(c_element, c_name, c_href)
     if c_result is NULL:
         return None
     try:
@@ -530,11 +526,9 @@ cdef object _attributeValueFromNsName(xmlNode* c_element,
     return result
 
 cdef object _getNodeAttributeValue(xmlNode* c_node, key, default):
-    cdef char* c_result
-    cdef char* c_href
     ns, tag = _getNsTag(key)
-    c_href = NULL if ns is None else _cstr(ns)
-    c_result = tree.xmlGetNsProp(c_node, _cstr(tag), c_href)
+    c_href = <const_xmlChar*>NULL if ns is None else _xcstr(ns)
+    c_result = tree.xmlGetNsProp(c_node, _xcstr(tag), c_href)
     if c_result is NULL:
         # XXX free namespace that is not in use..?
         return default
@@ -549,35 +543,30 @@ cdef inline object _getAttributeValue(_Element element, key, default):
 
 cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef xmlNs* c_ns
-    cdef char* c_value
-    cdef char* c_tag
     ns, tag = _getNsTag(key)
     if not element._doc._parser._for_html:
         _attributeValidOrRaise(tag)
-    c_tag = _cstr(tag)
+    c_tag = _xcstr(tag)
     if isinstance(value, QName):
         value = _resolveQNameText(element, value)
     else:
         value = _utf8(value)
-    c_value = _cstr(value)
+    c_value = _xcstr(value)
     if ns is None:
         c_ns = NULL
     else:
-        c_ns = element._doc._findOrBuildNodeNs(element._c_node,
-                                               _cstr(ns), NULL, 1)
+        c_ns = element._doc._findOrBuildNodeNs(element._c_node, _xcstr(ns), NULL, 1)
     tree.xmlSetNsProp(element._c_node, c_ns, c_tag, c_value)
     return 0
 
 cdef int _delAttribute(_Element element, key) except -1:
-    cdef char* c_href
     ns, tag = _getNsTag(key)
-    c_href = NULL if ns is None else _cstr(ns)
-    if _delAttributeFromNsName(element._c_node, c_href, _cstr(tag)):
+    c_href = <const_xmlChar*>NULL if ns is None else _xcstr(ns)
+    if _delAttributeFromNsName(element._c_node, c_href, _xcstr(tag)):
         raise KeyError, key
     return 0
 
-cdef int _delAttributeFromNsName(xmlNode* c_node, char* c_href, char* c_name):
-    cdef xmlAttr* c_attr
+cdef int _delAttributeFromNsName(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
     c_attr = tree.xmlHasNsProp(c_node, c_name, c_href)
     if c_attr is NULL:
         # XXX free namespace that is not in use..?
@@ -590,15 +579,14 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
     it collects either the name (1), the value (2) or the name-value tuples.
     """
     cdef Py_ssize_t count
-    cdef xmlAttr* c_attr
     c_attr = c_node.properties
     count = 0
     while c_attr is not NULL:
         if c_attr.type == tree.XML_ATTRIBUTE_NODE:
-            count = count + 1
+            count += 1
         c_attr = c_attr.next
 
-    if count == 0:
+    if not count:
         return []
 
     attributes = python.PyList_New(count)
@@ -616,7 +604,7 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
 
             python.Py_INCREF(item)
             python.PyList_SET_ITEM(attributes, count, item)
-            count = count + 1
+            count += 1
         c_attr = c_attr.next
     return attributes
 
@@ -664,7 +652,7 @@ cdef _collectText(xmlNode* c_node):
     If there was no text to collect, return None
     """
     cdef Py_ssize_t scount
-    cdef char* c_text
+    cdef xmlChar* c_text
     cdef xmlNode* c_node_cur
     # check for multiple text nodes
     scount = 0
@@ -685,9 +673,9 @@ cdef _collectText(xmlNode* c_node):
     # the rest is not performance critical anymore
     result = b''
     while c_node is not NULL:
-        result = result + c_node.content
+        result += <unsigned char*>c_node.content
         c_node = _textNodeOrSkip(c_node.next)
-    return funicode(result)
+    return funicode(<const_xmlChar*><unsigned char*>result)
 
 cdef void _removeText(xmlNode* c_node):
     u"""Remove all text nodes.
@@ -711,10 +699,10 @@ cdef int _setNodeText(xmlNode* c_node, value) except -1:
     # now add new text node with value at start
     if python._isString(value):
         text = _utf8(value)
-        c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+        c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
     elif isinstance(value, CDATA):
         c_text_node = tree.xmlNewCDataBlock(
-            c_node.doc, _cstr((<CDATA>value)._utf8_data),
+            c_node.doc, _xcstr((<CDATA>value)._utf8_data),
             python.PyBytes_GET_SIZE((<CDATA>value)._utf8_data))
     else:
         # this will raise the right error
@@ -733,7 +721,7 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     if value is None:
         return 0
     text = _utf8(value)
-    c_text_node = tree.xmlNewDocText(c_node.doc, _cstr(text))
+    c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
     # XXX what if we're the top element?
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
@@ -745,7 +733,7 @@ cdef bytes _resolveQNameText(_Element element, value):
         return tag
     else:
         c_ns = element._doc._findOrBuildNodeNs(
-            element._c_node, _cstr(ns), NULL, 0)
+            element._c_node, _xcstr(ns), NULL, 0)
         return python.PyBytes_FromFormat('%s:%s', c_ns.prefix, _cstr(tag))
 
 cdef inline bint _hasChild(xmlNode* c_node):
@@ -757,7 +745,7 @@ cdef inline Py_ssize_t _countElements(xmlNode* c_node):
     count = 0
     while c_node is not NULL:
         if _isElement(c_node):
-            count = count + 1
+            count += 1
         c_node = c_node.next
     return count
 
@@ -903,7 +891,7 @@ cdef inline xmlNode* _parentElement(xmlNode* c_node):
         return NULL
     return c_node
 
-cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
+cdef inline bint _tagMatches(xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
     u"""Tests if the node matches namespace URI and tag name.
 
     A node matches if it matches both c_href and c_name.
@@ -917,7 +905,6 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
     * c_name is NULL
     * its name string equals the c_name string
     """
-    cdef char* c_node_href
     if c_node is NULL:
         return 0
     if c_node.type != tree.XML_ELEMENT_NODE:
@@ -932,17 +919,17 @@ cdef inline bint _tagMatches(xmlNode* c_node, char* c_href, char* c_name):
             if c_node_href is NULL:
                 return c_href[0] == c'\0'
             else:
-                return cstring_h.strcmp(c_node_href, c_href) == 0
+                return tree.xmlStrcmp(c_node_href, c_href) == 0
     elif c_href is NULL:
         if _getNs(c_node) is not NULL:
             return 0
-        return c_node.name == c_name or cstring_h.strcmp(c_node.name, c_name) == 0
-    elif c_node.name == c_name or cstring_h.strcmp(c_node.name, c_name) == 0:
+        return c_node.name == c_name or tree.xmlStrcmp(c_node.name, c_name) == 0
+    elif c_node.name == c_name or tree.xmlStrcmp(c_node.name, c_name) == 0:
         c_node_href = _getNs(c_node)
         if c_node_href is NULL:
             return c_href[0] == c'\0'
         else:
-            return cstring_h.strcmp(c_node_href, c_href) == 0
+            return tree.xmlStrcmp(c_node_href, c_href) == 0
     else:
         return 0
 
@@ -964,7 +951,6 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     * c_name is NULL
     * its name string points to the same address (!) as c_name
     """
-    cdef char* c_node_href
     if c_qname.c_name is not NULL and c_qname.c_name is not c_node.name:
         return 0
     c_node_href = _getNs(c_node)
@@ -973,7 +959,7 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     elif c_node_href is NULL:
         return 0
     else:
-        return cstring_h.strcmp(python.__cstr(c_qname.href), c_node_href) == 0
+        return tree.xmlStrcmp(<const_xmlChar*>python.__cstr(c_qname.href), c_node_href) == 0
 
 cdef size_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:
@@ -984,20 +970,19 @@ cdef size_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
     if it is not NULL.
     """
     cdef size_t count = 0, i
-    cdef char* c_tag
     cdef bytes ns, tag
     for ns, tag in ns_tags:
         if tag is None:
-            c_tag = NULL
+            c_tag = <const_xmlChar*>NULL
         elif force_into_dict:
-            c_tag = tree.xmlDictLookup(c_doc.dict, _cstr(tag), len(tag))
+            c_tag = tree.xmlDictLookup(c_doc.dict, _xcstr(tag), len(tag))
             if c_tag is NULL:
                 # clean up before raising the error
                 for i in xrange(count):
                     cpython.ref.Py_XDECREF(c_ns_tags[i].href)
                 raise MemoryError()
         else:
-            c_tag = tree.xmlDictExists(c_doc.dict, _cstr(tag), len(tag))
+            c_tag = tree.xmlDictExists(c_doc.dict, _xcstr(tag), len(tag))
             if c_tag is NULL:
                 # not in the dict => not in the document
                 continue
@@ -1322,12 +1307,12 @@ cdef int _prependSibling(_Element element, _Element sibling) except -1:
     # parent element has moved; change them too..
     moveNodeToDocument(element._doc, c_source_doc, c_node)
 
-cdef inline int isutf8(char* s):
-    cdef char c = s[0]
+cdef inline int isutf8(const_xmlChar* s):
+    cdef xmlChar c = s[0]
     while c != c'\0':
         if c & 0x80:
             return 1
-        s = s + 1
+        s += 1
         c = s[0]
     return 0
 
@@ -1336,8 +1321,8 @@ cdef int check_string_utf8(bytes pystring):
     for ASCII, 1 for UTF-8 and -1 in the case of errors, such as NULL
     bytes or ASCII control characters.
     """
-    cdef char* s = _cstr(pystring)
-    cdef char* c_end = s + len(pystring)
+    cdef const_xmlChar* s = _xcstr(pystring)
+    cdef const_xmlChar* c_end = s + len(pystring)
     cdef bint is_non_ascii = 0
     while s < c_end:
         if s[0] & 0x80:
@@ -1350,19 +1335,18 @@ cdef int check_string_utf8(bytes pystring):
         s += 1
     return is_non_ascii
 
-cdef inline object funicodeOrNone(char* s):
+cdef inline object funicodeOrNone(const_xmlChar* s):
     return funicode(s) if s is not NULL else None
 
-cdef inline object funicodeOrEmpty(char* s):
+cdef inline object funicodeOrEmpty(const_xmlChar* s):
     return funicode(s) if s is not NULL else ''
 
-cdef object funicode(char* s):
+cdef object funicode(const_xmlChar* s):
     cdef Py_ssize_t slen
-    cdef char* spos
+    cdef const_xmlChar* spos
     cdef bint is_non_ascii
     if python.IS_PYTHON3:
-        slen = cstring_h.strlen(s)
-        return s[:slen].decode('UTF-8')
+        return s.decode('UTF-8')
     spos = s
     is_non_ascii = 0
     while spos[0] != c'\0':
@@ -1370,9 +1354,9 @@ cdef object funicode(char* s):
             is_non_ascii = 1
             break
         spos += 1
-    while spos[0] != c'\0':
-        spos += 1
     slen = spos - s
+    if spos[0] != c'\0':
+        slen += tree.xmlStrlen(spos)
     if is_non_ascii:
         return s[:slen].decode('UTF-8')
     return <bytes>s[:slen]
@@ -1400,9 +1384,9 @@ cdef bytes _utf8(object s):
             u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
     return utf8_string
 
-cdef bint _isFilePath(char* c_path):
+cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"
-    cdef char c
+    cdef xmlChar c
     # test if it looks like an absolute Unix path or a Windows network path
     if c_path[0] == c'/':
         return 1
@@ -1433,7 +1417,7 @@ cdef object _encodeFilename(object filename):
     elif python.PyUnicode_Check(filename):
         filename8 = python.PyUnicode_AsEncodedString(
             filename, 'UTF-8', NULL)
-        if _isFilePath(filename8):
+        if _isFilePath(<unsigned char*>filename8):
             try:
                 return python.PyUnicode_AsEncodedString(
                     filename, _C_FILENAME_ENCODING, NULL)
@@ -1443,21 +1427,21 @@ cdef object _encodeFilename(object filename):
     else:
         raise TypeError, u"Argument must be string or unicode."
 
-cdef object _decodeFilename(char* c_path):
+cdef object _decodeFilename(const_xmlChar* c_path):
     u"""Make the filename a unicode string if we are in Py3.
     """
-    cdef Py_ssize_t c_len = cstring_h.strlen(c_path)
+    c_len = tree.xmlStrlen(c_path)
     if _isFilePath(c_path):
         try:
             return python.PyUnicode_Decode(
-                c_path, c_len, _C_FILENAME_ENCODING, NULL)
+                <const_char*>c_path, c_len, _C_FILENAME_ENCODING, NULL)
         except UnicodeDecodeError:
             pass
     try:
-        return c_path[:c_len].decode('UTF-8')
+        return (<unsigned char*>c_path)[:c_len].decode('UTF-8')
     except UnicodeDecodeError:
         # this is a stupid fallback, but it might still work...
-        return c_path[:c_len].decode('latin-1', 'replace')
+        return (<unsigned char*>c_path)[:c_len].decode('latin-1', 'replace')
 
 cdef object _encodeFilenameUTF8(object filename):
     u"""Recode filename as UTF-8. Tries ASCII, local filesystem encoding and
@@ -1531,16 +1515,16 @@ cdef tuple __getNsTag(tag, bint empty_ns):
     return ns, tag
 
 cdef inline int _pyXmlNameIsValid(name_utf8):
-    return _xmlNameIsValid(_cstr(name_utf8))
+    return _xmlNameIsValid(_xcstr(name_utf8))
 
 cdef inline int _pyHtmlNameIsValid(name_utf8):
-    return _htmlNameIsValid(_cstr(name_utf8))
+    return _htmlNameIsValid(_xcstr(name_utf8))
 
-cdef inline int _xmlNameIsValid(char* c_name):
+cdef inline int _xmlNameIsValid(const_xmlChar* c_name):
     return tree.xmlValidateNCName(c_name, 0) == 0
 
-cdef int _htmlNameIsValid(char* c_name):
-    cdef char c
+cdef int _htmlNameIsValid(const_xmlChar* c_name):
+    cdef xmlChar c
     if c_name is NULL or c_name[0] == c'\0':
         return 0
     while c_name[0] != c'\0':
@@ -1548,10 +1532,10 @@ cdef int _htmlNameIsValid(char* c_name):
         if c in (c'&', c'<', c'>', c'/', c'"', c"'",
                  c'\t', c'\n', c'\x0B', c'\x0C', c'\r', c' '):
             return 0
-        c_name = c_name + 1
+        c_name += 1
     return 1
 
-cdef bint _characterReferenceIsValid(char* c_name):
+cdef bint _characterReferenceIsValid(const_xmlChar* c_name):
     cdef bint is_hex
     if c_name[0] == c'x':
         c_name += 1
@@ -1564,8 +1548,8 @@ cdef bint _characterReferenceIsValid(char* c_name):
         if c_name[0] < c'0' or c_name[0] > c'9':
             if not is_hex:
                 return 0
-            if not (c_name[0] >= c'a' and c_name[0] <= c'f'):
-                if not (c_name[0] >= c'A' and c_name[0] <= c'F'):
+            if not (c'a' <= c_name[0] <= c'f'):
+                if not (c'A' <= c_name[0] <= c'F'):
                     return 0
         c_name += 1
     return 1
@@ -1605,7 +1589,7 @@ cdef int _uriValidOrRaise(uri_utf) except -1:
 cdef inline object _namespacedName(xmlNode* c_node):
     return _namespacedNameFromNsName(_getNs(c_node), c_node.name)
 
-cdef object _namespacedNameFromNsName(char* href, char* name):
+cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     if href is NULL:
         return funicode(name)
     elif python.IS_PYTHON3:

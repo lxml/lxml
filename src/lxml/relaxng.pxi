@@ -35,7 +35,6 @@ cdef class RelaxNG(_Validator):
         cdef _Element root_node
         cdef xmlNode* c_node
         cdef xmlDoc* fake_c_doc
-        cdef char* c_href
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
         _Validator.__init__(self)
         fake_c_doc = NULL
@@ -47,8 +46,8 @@ cdef class RelaxNG(_Validator):
             if _LIBXML_VERSION_INT < 20624:
                 c_href = _getNs(c_node)
                 if c_href is NULL or \
-                       cstring_h.strcmp(c_href,
-                                   'http://relaxng.org/ns/structure/1.0') != 0:
+                       tree.xmlStrcmp(
+                           c_href, <unsigned char*>'http://relaxng.org/ns/structure/1.0') != 0:
                     raise RelaxNGParseError, u"Document is not Relax NG"
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)

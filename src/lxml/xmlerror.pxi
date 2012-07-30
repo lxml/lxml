@@ -82,7 +82,7 @@ cdef class _LogEntry:
         if error.file is NULL:
             self.filename = u'<string>'
         else:
-            self.filename = _decodeFilename(error.file)
+            self.filename = _decodeFilename(<const_xmlChar*>error.file)
 
     @cython.final
     cdef _setGeneric(self, int domain, int type, int level, int line,
