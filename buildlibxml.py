@@ -283,7 +283,7 @@ def build_libxml2xslt(download_dir, build_dir,
 
     call_setup = {}
     env_setup = None
-    if sys.platform in ('darwin',):
+    if sys.platform == 'darwin':
         import platform
         # We compile Universal if we are on a machine > 10.3
         major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
