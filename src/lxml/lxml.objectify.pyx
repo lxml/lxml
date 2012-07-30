@@ -363,42 +363,6 @@ cdef class ObjectifiedElement(ElementBase):
             sibling = self.__getitem__(key)
             parent.remove(sibling)
 
-    def iterfind(self, path):
-        u"iterfind(self, path)"
-        # Reimplementation of Element.iterfind() to make it work without child
-        # iteration.
-        xpath = etree.ETXPath(path)
-        return iter(xpath(self))
-
-    def findall(self, path):
-        u"findall(self, path)"
-        # Reimplementation of Element.findall() to make it work without child
-        # iteration.
-        xpath = etree.ETXPath(path)
-        return xpath(self)
-
-    def find(self, path):
-        u"find(self, path)"
-        # Reimplementation of Element.find() to make it work without child
-        # iteration.
-        result = self.findall(path)
-        if isinstance(result, list) and len(result):
-            return result[0]
-        elif isinstance(result, _Element):
-            return result
-        else:
-            return None
-
-    def findtext(self, path, default=None):
-        u"findtext(self, path, default=None)"
-        # Reimplementation of Element.findtext() to make it work without child
-        # iteration.
-        result = self.find(path)
-        if isinstance(result, _Element):
-            return result.text or u""
-        else:
-            return default
-
     def descendantpaths(self, prefix=None):
         u"""descendantpaths(self, prefix=None)
 

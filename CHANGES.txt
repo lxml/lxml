@@ -27,6 +27,15 @@ Features added
 Bugs fixed
 ----------
 
+* The ``.find*()`` methods in ``lxml.objectify`` no longer use XPath
+  internally, which makes them faster in many cases (especially when
+  short circuiting after a single or couple of elements) and fixes
+  some behavioural differences compared to ``lxml.etree``.  Note that
+  this means that they no longer support arbitrary XPath expressions
+  but only the subset that the ``ElementPath`` language supports.
+  The previous implementation was also redundant with the normal
+  XPath support, which can be used as a replacement.
+
 * ``el.find('*')`` could accidentally return a comment or processing
   instruction that happened to be in the wrong spot.  (Same for the
   other ``.find*()`` methods.)
