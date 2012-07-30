@@ -436,8 +436,8 @@ cdef class XSLT:
         def __get__(self):
             return self._error_log.copy()
 
-    @classmethod
-    def strparam(_, strval):
+    @staticmethod
+    def strparam(strval):
         u"""strparam(strval)
 
         Mark an XSLT string parameter that requires quote escaping
