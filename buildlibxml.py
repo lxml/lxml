@@ -1,5 +1,5 @@
-import os, re, sys
-from distutils import log, sysconfig
+import os, re, sys, subprocess
+from distutils import log, sysconfig, version
 
 try:
     from urlparse import urlsplit, urljoin
@@ -287,18 +287,31 @@ def build_libxml2xslt(download_dir, build_dir,
         import platform
         # We compile Universal if we are on a machine > 10.3
         major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
+        # Check to see if ppc is supported (XCode4 drops ppc support)
+        include_ppc = True
+        if os.path.exists('/usr/bin/xcodebuild'):
+            pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, err = pipe.communicate()
+            xcode_version = out.splitlines()[0]
+            # Also parse only first digit, because 3.2.1 can't be parsed nicely
+            if (xcode_version.startswith('Xcode') and
+                version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
+                include_ppc = False
         if major_version > 7:
             env = os.environ.copy()
+            arch_string = ""
+            if include_ppc:
+                arch_string = "-arch ppc "
             if minor_version < 6:
                 env.update({
-                    'CFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
-                    'LDFLAGS' : "-arch ppc -arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
+                    'CFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
+                    'LDFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
                     'MACOSX_DEPLOYMENT_TARGET' : "10.3"
                     })
             else:
                 env.update({
-                    'CFLAGS' : "-arch ppc -arch i386 -arch x86_64 -O2",
-                    'LDFLAGS' : "-arch ppc -arch i386 -arch x86_64",
+                    'CFLAGS' : arch_string + "-arch i386 -arch x86_64 -O2",
+                    'LDFLAGS' : arch_string + "-arch i386 -arch x86_64",
                     'MACOSX_DEPLOYMENT_TARGET' : "10.6"
                     })
             call_setup['env'] = env
