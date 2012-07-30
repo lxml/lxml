@@ -285,19 +285,19 @@ def build_libxml2xslt(download_dir, build_dir,
     env_setup = None
     if sys.platform == 'darwin':
         import platform
-        # We compile Universal if we are on a machine > 10.3
+        # check target architectures on MacOS-X (ppc, i386, x86_64)
         major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
-        # Check to see if ppc is supported (XCode4 drops ppc support)
-        include_ppc = True
-        if os.path.exists('/usr/bin/xcodebuild'):
-            pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            out, err = pipe.communicate()
-            xcode_version = out.splitlines()[0]
-            # Also parse only first digit, because 3.2.1 can't be parsed nicely
-            if (xcode_version.startswith('Xcode') and
-                version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
-                include_ppc = False
         if major_version > 7:
+            # Check to see if ppc is supported (XCode4 drops ppc support)
+            include_ppc = True
+            if os.path.exists('/usr/bin/xcodebuild'):
+                pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                out, err = pipe.communicate()
+                xcode_version = out.splitlines()[0]
+                # Also parse only first digit, because 3.2.1 can't be parsed nicely
+                if (xcode_version.startswith('Xcode') and
+                    version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
+                    include_ppc = False
             arch_string = ""
             if include_ppc:
                 arch_string = "-arch ppc "
