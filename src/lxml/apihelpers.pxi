@@ -1,6 +1,6 @@
 # Private/public helper functions for API functions
 
-cimport uri
+from lxml.includes cimport uri
 
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging

@@ -1,5 +1,5 @@
 #  support for XMLSchema validation
-cimport xmlschema
+from lxml.includes cimport xmlschema
 
 class XMLSchemaError(LxmlError):
     u"""Base class of all XML Schema errors

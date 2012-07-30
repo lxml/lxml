@@ -1,7 +1,7 @@
 # DEBUG and error logging
 
-cimport xmlerror
-cimport cvarargs
+from lxml.includes cimport xmlerror
+from lxml cimport cvarargs
 
 # module level API functions
 

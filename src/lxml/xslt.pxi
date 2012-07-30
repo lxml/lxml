@@ -1,6 +1,6 @@
 # XSLT
 
-cimport xslt
+from lxml.includes cimport xslt
 
 class XSLTError(LxmlError):
     u"""Base class of all XSLT errors.

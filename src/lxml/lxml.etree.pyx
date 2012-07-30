@@ -39,11 +39,12 @@ __all__ = [
 
 cimport cython
 
-cimport tree, python, config
-from tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
-from python cimport callable, _cstr, _isString
-cimport xpath
-cimport c14n
+from lxml cimport python
+from lxml.includes cimport tree, config
+from lxml.includes.tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
+from lxml.python cimport callable, _cstr, _isString
+from lxml.includes cimport xpath
+from lxml.includes cimport c14n
 
 # Cython's standard declarations
 cimport cpython.mem
@@ -76,7 +77,7 @@ except (ImportError, AttributeError):
     from StringIO import StringIO, StringIO as BytesIO
 
 cdef object _elementpath
-import _elementpath
+from lxml import _elementpath
 
 cdef object sys
 import sys

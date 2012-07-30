@@ -1,5 +1,5 @@
 # support for RelaxNG validation
-cimport relaxng
+from lxml.includes cimport relaxng
 
 class RelaxNGError(LxmlError):
     u"""Base class for RelaxNG errors.

@@ -1,5 +1,5 @@
 # support for Schematron validation
-cimport schematron
+from lxml.includes cimport schematron
 
 class SchematronError(LxmlError):
     u"""Base class of all Schematron errors.

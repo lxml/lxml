@@ -1,7 +1,7 @@
 # Parsers for XML and HTML
 
-cimport xmlparser
-cimport htmlparser
+from lxml.includes cimport xmlparser
+from lxml.includes cimport htmlparser
 
 cdef class _ParserContext(_ResolverContext)
 cdef class _SaxParserContext(_ParserContext)

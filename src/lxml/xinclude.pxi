@@ -1,6 +1,6 @@
 # XInclude processing
 
-cimport xinclude
+from lxml.includes cimport xinclude
 
 class XIncludeError(LxmlError):
     u"""Error during XInclude processing.

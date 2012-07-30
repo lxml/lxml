@@ -1,5 +1,5 @@
 # support for DTD validation
-cimport dtdvalid
+from lxml.includes cimport dtdvalid
 
 class DTDError(LxmlError):
     u"""Base class for DTD errors.
