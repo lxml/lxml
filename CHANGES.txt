@@ -108,7 +108,7 @@ Other changes
   _XSLTResultTree, _XSLTProcessingInstruction``
 
 
-2.3.5 (?)
+2.3.5 (2012-07-31)
 ==================
 
 Features added
@@ -116,6 +116,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* Crash when merging text nodes in ``element.remove()``.
 
 * Crash in sax/target parser when reporting empty doctype.
 
