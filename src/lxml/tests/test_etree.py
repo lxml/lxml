@@ -432,6 +432,19 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(_bytes('<test>TESTA<b>B<c xmlns="urn:c"></c>CT</b>BTAT<x>X<a>ABT<c xmlns="urn:x"></c>CT</a>AT</x>XT</test>'),
                           self._writeElement(root))
 
+    def test_strip_tags_and_remove(self):
+        # previously crashed
+        HTML = self.etree.HTML
+        root = HTML(_bytes('<div><h1>title</h1> <b>foo</b> <p>boo</p></div>'))[0][0]
+        self.assertEquals(_bytes('<div><h1>title</h1> <b>foo</b> <p>boo</p></div>'),
+                          self.etree.tostring(root))
+        self.etree.strip_tags(root, 'b')
+        self.assertEquals(_bytes('<div><h1>title</h1> foo <p>boo</p></div>'),
+                          self.etree.tostring(root))
+        root.remove(root[0])
+        self.assertEquals(_bytes('<div>TEST<p>boo</p></div>'),
+                          self.etree.tostring(root))
+
     def test_pi(self):
         # lxml.etree separates target and text
         Element = self.etree.Element

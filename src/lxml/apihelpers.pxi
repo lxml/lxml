@@ -1038,9 +1038,7 @@ cdef void _moveTail(xmlNode* c_tail, xmlNode* c_target):
     c_tail = _textNodeOrSkip(c_tail)
     while c_tail is not NULL:
         c_next = _textNodeOrSkip(c_tail.next)
-        tree.xmlUnlinkNode(c_tail)
-        tree.xmlAddNextSibling(c_target, c_tail)
-        c_target = c_tail
+        c_target = tree.xmlAddNextSibling(c_target, c_tail)
         c_tail = c_next
 
 cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
@@ -1055,8 +1053,7 @@ cdef int _copyTail(xmlNode* c_tail, xmlNode* c_target) except -1:
             c_new_tail = tree.xmlCopyNode(c_tail, 0)
         if c_new_tail is NULL:
             raise MemoryError()
-        tree.xmlAddNextSibling(c_target, c_new_tail)
-        c_target = c_new_tail
+        c_target = tree.xmlAddNextSibling(c_target, c_new_tail)
         c_tail = _textNodeOrSkip(c_tail.next)
     return 0
 
