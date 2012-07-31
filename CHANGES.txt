@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Crash when merging text nodes in ``element.remove()``.
+
 * Crash in sax/target parser when reporting empty doctype.
 
 Other changes
