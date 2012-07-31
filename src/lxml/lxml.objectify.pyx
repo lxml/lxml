@@ -5,7 +5,7 @@ XML.  It is based on `lxml.etree`.
 from lxml.includes.etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
 from lxml.includes.etreepublic cimport elementFactory, import_lxml__etree, textOf, pyunicode
 from lxml.includes.tree cimport xmlChar, const_xmlChar, _xcstr
-from lxml.python cimport callable, _cstr
+from lxml.python cimport callable
 from lxml cimport python
 from lxml.includes cimport tree
 
@@ -37,7 +37,7 @@ cdef tuple IGNORABLE_ERRORS = (ValueError, TypeError)
 cdef object is_special_method = re.compile(u'__.*__$').match
 
 cdef object _typename(object t):
-    cdef char* s
+    cdef const_char* c_name
     c_name = python._fqtypename(t)
     s = cstring_h.strrchr(c_name, c'.')
     if s is not NULL:

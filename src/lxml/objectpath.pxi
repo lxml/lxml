@@ -132,9 +132,6 @@ cdef _parseObjectPathString(path):
 cdef _parseObjectPathList(path):
     u"""Parse object path sequence into a (ns, name, index) list.
     """
-    cdef xmlChar* index_pos
-    cdef xmlChar* index_end
-    cdef unsigned char* c_name
     cdef list new_path = []
     for item in path:
         item = item.strip()
@@ -144,7 +141,7 @@ cdef _parseObjectPathList(path):
             index = 0
         else:
             ns, name = cetree.getNsTag(item)
-            c_name = <unsigned char*>_cstr(name)
+            c_name = _xcstr(name)
             index_pos = tree.xmlStrchr(c_name, c'[')
             if index_pos is NULL:
                 index = 0
@@ -152,7 +149,7 @@ cdef _parseObjectPathList(path):
                 index_end = tree.xmlStrchr(index_pos + 1, c']')
                 if index_end is NULL:
                     raise ValueError, u"index must be enclosed in []"
-                index = int((<unsigned char*>index_pos)[1:index_end - index_pos])
+                index = int(index_pos[1:index_end - index_pos])
                 if python.PyList_GET_SIZE(new_path) == 0 and index != 0:
                     raise ValueError, u"index not allowed on root node"
                 name = <bytes>c_name[:index_pos - c_name]
