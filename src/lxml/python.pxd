@@ -97,7 +97,6 @@ cdef extern from "Python.h":
     cdef PyObject* PyThreadState_GetDict()
 
     # some handy functions
-    cdef int callable "PyCallable_Check" (object obj)
     cdef char* _cstr "PyBytes_AS_STRING" (object s)
     cdef char* __cstr "PyBytes_AS_STRING" (PyObject* s)
 

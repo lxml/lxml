@@ -5,7 +5,6 @@ XML.  It is based on `lxml.etree`.
 from lxml.includes.etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
 from lxml.includes.etreepublic cimport elementFactory, import_lxml__etree, textOf, pyunicode
 from lxml.includes.tree cimport xmlChar, const_xmlChar, _xcstr
-from lxml.python cimport callable
 from lxml cimport python
 from lxml.includes cimport tree
 

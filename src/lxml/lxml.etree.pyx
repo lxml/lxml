@@ -43,7 +43,7 @@ from lxml cimport python
 from lxml.includes cimport tree, config
 from lxml.includes.tree cimport xmlDoc, xmlNode, xmlAttr, xmlNs, _isElement, _getNs
 from lxml.includes.tree cimport const_xmlChar, xmlChar, _xcstr
-from lxml.python cimport callable, _cstr, _isString
+from lxml.python cimport _cstr, _isString
 from lxml.includes cimport xpath
 from lxml.includes cimport c14n
 
