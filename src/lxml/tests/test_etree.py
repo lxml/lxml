@@ -442,7 +442,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(_bytes('<div><h1>title</h1> foo <p>boo</p></div>'),
                           self.etree.tostring(root))
         root.remove(root[0])
-        self.assertEquals(_bytes('<div>TEST<p>boo</p></div>'),
+        self.assertEquals(_bytes('<div><p>boo</p></div>'),
                           self.etree.tostring(root))
 
     def test_pi(self):
