@@ -2,11 +2,13 @@
 lxml changelog
 ==============
 
-2.4 (Under development)
-=======================
+3.0alpha1 (2012-07-31)
+======================
 
 Features added
 --------------
+
+* Initial support for building in PyPy (through cpyext).
 
 * DTD objects gained an API that allows read access to their
   declarations.
@@ -60,7 +62,7 @@ Other changes
 --------------
 
 * The code base was overhauled to properly use 'const' where the API
-  of libxml2 and libxslt request it.  This also has an impact on the
+  of libxml2 and libxslt requests it.  This also has an impact on the
   public C-API of lxml itself, as defined in ``etreepublic.pxd``, as
   well as the provided declarations in the ``lxml/includes/`` directory.
   Code that uses these declarations may have to be adapted.  On the
