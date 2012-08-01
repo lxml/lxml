@@ -238,7 +238,10 @@ def _build_path_iterator(path, namespaces):
     except AttributeError:
         # Python 3
         _next = stream.__next__
-    token = _next()
+    try:
+        token = _next()
+    except StopIteration:
+        raise SyntaxError("empty path expression")
     selector = []
     while 1:
         try:

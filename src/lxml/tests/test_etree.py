@@ -2364,6 +2364,13 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(len(root.findall(".//{X}*")), 2)
         self.assertEquals(len(root.findall(".//b")), 3)
 
+    def test_findall_syntax_error(self):
+        XML = self.etree.XML
+        root = XML(_bytes('<a><b><c/></b><b/><c><b/><b/></c><b/></a>'))
+        self.assertRaises(SyntaxError, root.findall, '')
+        self.assertRaises(SyntaxError, root.findall, '//')  # absolute path on Element
+        self.assertRaises(SyntaxError, root.findall, './//')
+
     def test_index(self):
         etree = self.etree
         e = etree.Element('foo')
