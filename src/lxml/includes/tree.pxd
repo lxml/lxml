@@ -71,7 +71,7 @@ cdef extern from *: # actually "libxml/dict.h"
     cdef const_xmlChar* xmlDictLookup(xmlDict* dict, const_xmlChar* name, int len) nogil
     cdef const_xmlChar* xmlDictExists(xmlDict* dict, const_xmlChar* name, int len) nogil
     cdef int xmlDictOwns(xmlDict* dict, const_xmlChar* name) nogil
-    cdef int xmlDictSize(xmlDict* dict) nogil
+    cdef size_t xmlDictSize(xmlDict* dict) nogil
 
 cdef extern from "libxml/tree.h":
     ctypedef struct xmlDoc
