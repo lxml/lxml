@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+3.0alpha2 (??)
+======================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Passing long Unicode strings into the ``feed()`` parser interface
+  failed to read the entire string.
+
+Other changes
+-------------
+
+
 3.0alpha1 (2012-07-31)
 ======================
 

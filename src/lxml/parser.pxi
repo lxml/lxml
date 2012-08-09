@@ -1127,20 +1127,13 @@ cdef class _FeedParser(_BaseParser):
             context.prepare()
             self._feed_parser_running = 1
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
-            if py_buffer_len > limits.INT_MAX:
-                buffer_len = limits.INT_MAX
-            else:
-                buffer_len = <int>py_buffer_len
             if self._for_html:
-                error = _htmlCtxtResetPush(pctxt, c_data, buffer_len,
-                                           c_encoding, self._parse_options)
+                error = _htmlCtxtResetPush(
+                    pctxt, NULL, 0, c_encoding, self._parse_options)
             else:
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
-                    pctxt, c_data, buffer_len, NULL, c_encoding)
-            py_buffer_len -= buffer_len
-            c_data += buffer_len
+                    pctxt, NULL, 0, NULL, c_encoding)
 
         #print pctxt.charset, 'NONE' if c_encoding is NULL else c_encoding
 
