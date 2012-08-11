@@ -43,14 +43,9 @@
 #  endif
 #endif
 
-/* Python 3 doesn't have PyFile_*(), PyString_*(), ... */
+/* Python 3 doesn't have PyFile_*() anymore */
 #if PY_VERSION_HEX >= 0x03000000
 #  define PyFile_AsFile(o)                   (NULL)
-#  define PyString_Check(o)                  PyBytes_Check(o)
-#  define PyString_FromStringAndSize(s, len) PyBytes_FromStringAndSize(s, len)
-#  define PyString_FromFormat                PyBytes_FromFormat
-#  define PyString_GET_SIZE(s)               PyBytes_GET_SIZE(s)
-#  define PyString_AS_STRING(s)              PyBytes_AS_STRING(s)
 #else
 #if IS_PYPY
 #  define PyFile_AsFile(o)                   (NULL)
