@@ -237,16 +237,3 @@ cdef list _find_all_extension_prefixes():
                 ns_prefixes.append(
                     (registry._prefix_utf, registry._ns_uri_utf))
     return ns_prefixes
-
-cdef object _find_extension(ns_uri_utf, name_utf):
-    cdef python.PyObject* dict_result
-    dict_result = python.PyDict_GetItem(
-        __FUNCTION_NAMESPACE_REGISTRIES, ns_uri_utf)
-    if dict_result is NULL:
-        return None
-    extensions = (<_NamespaceRegistry>dict_result)._entries
-    dict_result = python.PyDict_GetItem(extensions, name_utf)
-    if dict_result is NULL:
-        return None
-    else:
-        return <object>dict_result

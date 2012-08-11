@@ -64,39 +64,6 @@ cdef _Element _rootNodeOrRaise(object input):
     _assertValidNode(node)
     return node
 
-cdef _Document _documentOf(object input):
-    # call this to get the document of a
-    # _Document, _ElementTree or _Element object
-    # may return None!
-    cdef _Element element
-    cdef _Document doc = None
-    if isinstance(input, _ElementTree):
-        element = (<_ElementTree>input)._context_node
-        if element is not None:
-            doc = element._doc
-    elif isinstance(input, _Element):
-        doc = (<_Element>input)._doc
-    elif isinstance(input, _Document):
-        doc = <_Document>input
-    if doc is not None:
-        _assertValidDoc(doc)
-    return doc
-
-cdef _Element _rootNodeOf(object input):
-    # call this to get the root node of a
-    # _Document, _ElementTree or _Element object
-    # may return None!
-    cdef _Element element = None
-    if isinstance(input, _ElementTree):
-        element = (<_ElementTree>input)._context_node
-    elif isinstance(input, _Element):
-        element = <_Element>input
-    elif isinstance(input, _Document):
-        element = (<_Document>input).getroot()
-    if element is not None:
-        _assertValidNode(element)
-    return element
-
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
                            _BaseParser parser, text, tail, attrib, nsmap,
                            extra_attrs):
@@ -625,18 +592,6 @@ cdef object _stripEncodingDeclaration(object xml_string):
 cdef bint _hasEncodingDeclaration(object xml_string):
     # check if a (unicode) string has an XML encoding declaration
     return __HAS_XML_ENCODING(xml_string) is not None
-
-cdef object _stripDeclaration(object xml_string):
-    # this is a hack to remove the XML declaration when we encode to UTF-8
-    xml_string = xml_string.strip()
-    if xml_string[:5] == '<?xml':
-        i = xml_string.find('?>')
-        if i != -1:
-            i = i + 2
-            while xml_string[i:i+1] in '\n\r ':
-                i = i+1
-            xml_string = xml_string[i:]
-    return xml_string
 
 cdef inline bint _hasText(xmlNode* c_node):
     return c_node is not NULL and _textNodeOrSkip(c_node.children) is not NULL

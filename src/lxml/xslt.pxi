@@ -263,14 +263,6 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
         <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
         <xslt.xmlXPathFunction>_xpath_function_call)
 
-cdef int _unregister_xslt_function(void* ctxt, name_utf, ns_utf):
-    if ns_utf is None:
-        return 0
-    # libxml2 internalises the strings if ctxt has a dict
-    return xslt.xsltRegisterExtFunction(
-        <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
-        NULL)
-
 cdef dict EMPTY_DICT = {}
 
 @cython.final
