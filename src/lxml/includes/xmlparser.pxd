@@ -197,7 +197,7 @@ cdef extern from "libxml/parser.h":
 
 # DTDs:
 
-    cdef xmlDtd* xmlParseDTD(char* ExternalID, char* SystemID) nogil
+    cdef xmlDtd* xmlParseDTD(const_xmlChar* ExternalID, const_xmlChar* SystemID) nogil
     cdef xmlDtd* xmlIOParseDTD(xmlSAXHandler* sax,
                                xmlParserInputBuffer* input,
                                int enc) nogil

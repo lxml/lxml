@@ -83,7 +83,7 @@ cdef class _XPathContext(_BaseContext):
             # we'd only execute dummy functions anyway
             return
         tree.xmlHashScan(
-            self._xpathCtxt.nsHash, <tree.xmlHashScanner>_registerExsltFunctionsForNamespaces,
+            self._xpathCtxt.nsHash, _registerExsltFunctionsForNamespaces,
             self._xpathCtxt)
 
     cdef registerVariables(self, variable_dict):
@@ -105,17 +105,17 @@ cdef class _XPathContext(_BaseContext):
         __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
 
 cdef void _registerExsltFunctionsForNamespaces(
-        void* _c_href, void* _ctxt, char* c_prefix):
-    cdef char* c_href = <char*> _c_href
-    cdef xpath.xmlXPathContext* ctxt = <xpath.xmlXPathContext*> _ctxt
+        void* _c_href, void* _ctxt, xmlChar* c_prefix):
+    c_href = <const_xmlChar*> _c_href
+    ctxt = <xpath.xmlXPathContext*> _ctxt
 
-    if cstring_h.strcmp(c_href, xslt.EXSLT_DATE_NAMESPACE) == 0:
+    if tree.xmlStrcmp(c_href, xslt.EXSLT_DATE_NAMESPACE) == 0:
         xslt.exsltDateXpathCtxtRegister(ctxt, c_prefix)
-    elif cstring_h.strcmp(c_href, xslt.EXSLT_SETS_NAMESPACE) == 0:
+    elif tree.xmlStrcmp(c_href, xslt.EXSLT_SETS_NAMESPACE) == 0:
         xslt.exsltSetsXpathCtxtRegister(ctxt, c_prefix)
-    elif cstring_h.strcmp(c_href, xslt.EXSLT_MATH_NAMESPACE) == 0:
+    elif tree.xmlStrcmp(c_href, xslt.EXSLT_MATH_NAMESPACE) == 0:
         xslt.exsltMathXpathCtxtRegister(ctxt, c_prefix)
-    elif cstring_h.strcmp(c_href, xslt.EXSLT_STRINGS_NAMESPACE) == 0:
+    elif tree.xmlStrcmp(c_href, xslt.EXSLT_STRINGS_NAMESPACE) == 0:
         xslt.exsltStrXpathCtxtRegister(ctxt, c_prefix)
 
 cdef bint _XPATH_VERSION_WARNING_REQUIRED

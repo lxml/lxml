@@ -229,7 +229,7 @@ cdef int _setupPythonUnicode() except -1:
 cdef const_char* _findEncodingName(const_char* buffer, int size):
     u"Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
-    enc = tree.xmlDetectCharEncoding(buffer, size)
+    enc = tree.xmlDetectCharEncoding(<const_xmlChar*>buffer, size)
     if enc == tree.XML_CHAR_ENCODING_UTF16LE:
         return "UTF-16LE"
     elif enc == tree.XML_CHAR_ENCODING_UTF16BE:

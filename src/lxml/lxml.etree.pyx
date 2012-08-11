@@ -2390,7 +2390,7 @@ cdef public class _ElementIterator(_ElementTagMatcher) [
         c_node = self._next_element(node._c_node)
         while c_node is not NULL and \
                   self._node_type != 0 and \
-                  (self._node_type != c_node.type or
+                  (<tree.xmlElementType>self._node_type != c_node.type or
                    not _tagMatches(c_node, <const_xmlChar*>self._href, <const_xmlChar*>self._name)):
             c_node = self._next_element(c_node)
         if c_node is NULL:
@@ -2512,7 +2512,7 @@ cdef class _MultiTagMatcher:
             if not self._cached_tags:
                 self._cached_doc = None
                 raise MemoryError()
-        self._tag_count = _mapTagsToQnameMatchArray(
+        self._tag_count = <size_t>_mapTagsToQnameMatchArray(
             doc._c_doc, self._py_tags, self._cached_tags, force_into_dict)
         self._cached_doc = doc
         self._cached_size = dict_size

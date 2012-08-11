@@ -1,5 +1,5 @@
-# XSLT
 
+# XSLT
 from lxml.includes cimport xslt
 
 class XSLTError(LxmlError):
@@ -260,7 +260,7 @@ cdef int _register_xslt_function(void* ctxt, name_utf, ns_utf):
         return 0
     # libxml2 internalises the strings if ctxt has a dict
     return xslt.xsltRegisterExtFunction(
-        <xslt.xsltTransformContext*>ctxt, _cstr(name_utf), _cstr(ns_utf),
+        <xslt.xsltTransformContext*>ctxt, _xcstr(name_utf), _xcstr(ns_utf),
         <xslt.xmlXPathFunction>_xpath_function_call)
 
 cdef dict EMPTY_DICT = {}
@@ -654,7 +654,7 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
             if isinstance(value, _XSLTQuotedStringParam):
                 v = (<_XSLTQuotedStringParam>value).strval
                 xslt.xsltQuoteOneUserParam(
-                    transform_ctxt, _cstr(k), _cstr(v))
+                    transform_ctxt, _xcstr(k), _xcstr(v))
             else:
                 if isinstance(value, XPath):
                     v = (<XPath>value)._path
@@ -733,11 +733,11 @@ cdef class _XSLTResultTree(_ElementTree):
         try:
             result = <bytes>s[:l]
         finally:
-            tree.xmlFree(<char*>s)
+            tree.xmlFree(s)
         return result
 
     def __unicode__(self):
-        cdef char* encoding
+        cdef xmlChar* encoding
         cdef xmlChar* s = NULL
         cdef int l = 0
         self._saveToStringAndSize(&s, &l)
@@ -750,7 +750,7 @@ cdef class _XSLTResultTree(_ElementTree):
             else:
                 result = s[:l].decode(encoding)
         finally:
-            tree.xmlFree(<char*>s)
+            tree.xmlFree(s)
         return _stripEncodingDeclaration(result)
 
     def __getbuffer__(self, Py_buffer* buffer, int flags):

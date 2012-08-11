@@ -163,6 +163,7 @@ cdef class Schematron(_Validator):
                 ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
             _destroyFakeDoc(doc._c_doc, c_doc)
         else:
+            ret = -1
             with self._error_log:
                 c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
                 with nogil:

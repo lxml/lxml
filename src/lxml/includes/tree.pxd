@@ -52,7 +52,7 @@ cdef extern from "libxml/encoding.h":
     cdef xmlCharEncodingHandler* xmlGetCharEncodingHandler(
         xmlCharEncoding enc) nogil
     cdef int xmlCharEncCloseFunc(xmlCharEncodingHandler* handler) nogil
-    cdef xmlCharEncoding xmlDetectCharEncoding(char* text, int len) nogil
+    cdef xmlCharEncoding xmlDetectCharEncoding(const_xmlChar* text, int len) nogil
     cdef const_char* xmlGetCharEncodingName(xmlCharEncoding enc) nogil
     cdef xmlCharEncoding xmlParseCharEncoding(char* name) nogil
 
@@ -61,9 +61,9 @@ cdef extern from "libxml/chvalid.h":
 
 cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
-    ctypedef void (*xmlHashScanner)(void* payload, void* data, char* name) # may require GIL!
+    ctypedef void (*xmlHashScanner)(void* payload, void* data, const_xmlChar* name) # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
-    void* xmlHashLookup(xmlHashTable* table, char* name) nogil
+    void* xmlHashLookup(xmlHashTable* table, const_xmlChar* name) nogil
 
 cdef extern from *: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C

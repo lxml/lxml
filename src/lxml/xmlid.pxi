@@ -84,7 +84,7 @@ cdef class _IDDict:
         cdef xmlAttr* c_attr
         c_ids = self._doc._c_doc.ids
         id_utf = _utf8(id_name)
-        c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _cstr(id_utf))
+        c_id = <tree.xmlID*>tree.xmlHashLookup(c_ids, _xcstr(id_utf))
         if c_id is NULL:
             raise KeyError, u"key not found."
         c_attr = c_id.attr
@@ -99,7 +99,7 @@ cdef class _IDDict:
         cdef tree.xmlID* c_id
         id_utf = _utf8(id_name)
         c_id = <tree.xmlID*>tree.xmlHashLookup(
-            self._doc._c_doc.ids, _cstr(id_utf))
+            self._doc._c_doc.ids, _xcstr(id_utf))
         return c_id is not NULL
 
     def has_key(self, id_name):
@@ -162,7 +162,7 @@ cdef class _IDDict:
                          <tree.xmlHashScanner>_collectIdHashItemList, <python.PyObject*>context)
         return items
 
-cdef void _collectIdHashItemList(void* payload, void* context, const_xmlChar* name):
+cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
     # collect elements from ID attribute hash table
     cdef tree.xmlID* c_id
     cdef list lst
@@ -173,7 +173,7 @@ cdef void _collectIdHashItemList(void* payload, void* context, const_xmlChar* na
     element = _elementFactory(doc, c_id.attr.parent)
     lst.append( (funicode(name), element) )
 
-cdef void _collectIdHashKeys(void* payload, void* collect_list, const_xmlChar* name):
+cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name):
     cdef tree.xmlID* c_id
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:

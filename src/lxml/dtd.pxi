@@ -282,14 +282,14 @@ cdef class DTD(_Validator):
             if _isString(file):
                 file = _encodeFilename(file)
                 with self._error_log:
-                    self._c_dtd = xmlparser.xmlParseDTD(NULL, _cstr(file))
+                    self._c_dtd = xmlparser.xmlParseDTD(NULL, _xcstr(file))
             elif hasattr(file, 'read'):
                 self._c_dtd = _parseDtdFromFilelike(file)
             else:
                 raise DTDParseError, u"file must be a filename or file-like object"
         elif external_id is not None:
             with self._error_log:
-                self._c_dtd = xmlparser.xmlParseDTD(external_id, NULL)
+                self._c_dtd = xmlparser.xmlParseDTD(<const_xmlChar*>external_id, NULL)
         else:
             raise DTDParseError, u"either filename or external ID required"
 
@@ -350,7 +350,7 @@ cdef class DTD(_Validator):
         cdef _Element root_node
         cdef xmlDoc* c_doc
         cdef dtdvalid.xmlValidCtxt* valid_ctxt
-        cdef int ret
+        cdef int ret = -1
 
         assert self._c_dtd is not NULL, "DTD not initialised"
         doc = _documentOrRaise(etree)

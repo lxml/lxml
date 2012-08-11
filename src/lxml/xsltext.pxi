@@ -135,7 +135,7 @@ cdef _registerXSLTExtensions(xslt.xsltTransformContext* c_ctxt,
                              extension_dict):
     for ns_utf, name_utf in extension_dict:
         xslt.xsltRegisterExtElement(
-            c_ctxt, _cstr(name_utf), _cstr(ns_utf),
+            c_ctxt, _xcstr(name_utf), _xcstr(ns_utf),
             <xslt.xsltTransformFunction>_callExtensionElement)
 
 cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
