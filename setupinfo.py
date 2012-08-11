@@ -139,7 +139,7 @@ def find_dependencies(module):
     base_dir = get_base_dir()
     package_dir = os.path.join(base_dir, PACKAGE_PATH)
     includes_dir = os.path.join(base_dir, INCLUDE_PACKAGE_PATH)
-    pxd_files = [ os.path.join(PACKAGE_PATH, filename)
+    pxd_files = [ os.path.join(includes_dir, filename)
                   for filename in os.listdir(includes_dir)
                   if filename.endswith('.pxd') ]
 
