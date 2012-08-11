@@ -963,7 +963,7 @@ cdef int _removeNode(_Document doc, xmlNode* c_node) except -1:
         moveNodeToDocument(doc, c_node.doc, c_node)
     return 0
 
-cdef int _removeSiblings(xmlNode* c_element, int node_type, bint with_tail) except -1:
+cdef int _removeSiblings(xmlNode* c_element, tree.xmlElementType node_type, bint with_tail) except -1:
     cdef xmlNode* c_node
     cdef xmlNode* c_next
     c_node = c_element.next
