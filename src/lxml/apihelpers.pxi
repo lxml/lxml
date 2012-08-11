@@ -906,15 +906,19 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     * c_name is NULL
     * its name string points to the same address (!) as c_name
     """
+    cdef char* c_href
     if c_qname.c_name is not NULL and c_qname.c_name is not c_node.name:
         return 0
-    c_node_href = _getNs(c_node)
     if c_qname.href is NULL:
+        return 1
+    c_node_href = _getNs(c_node)
+    c_href = python.__cstr(c_qname.href)
+    if c_href[0] == '\0':
         return c_node_href is NULL or c_node_href[0] == '\0'
     elif c_node_href is NULL:
         return 0
     else:
-        return tree.xmlStrcmp(<const_xmlChar*>python.__cstr(c_qname.href), c_node_href) == 0
+        return tree.xmlStrcmp(<const_xmlChar*>c_href, c_node_href) == 0
 
 cdef Py_ssize_t _mapTagsToQnameMatchArray(xmlDoc* c_doc, list ns_tags,
                                           qname* c_ns_tags, bint force_into_dict) except -1:

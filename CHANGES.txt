@@ -8,6 +8,20 @@ lxml changelog
 Features added
 --------------
 
+
+* The ``.iter()`` method of elements now accepts ``tag`` arguments like
+  ``"{*}name"`` to search for elements with a given local name in any
+  namespace. With this addition, all combinations of wildcards now work
+  as expected:
+  ``"{ns}name"``, ``"{}name"``, ``"{*}name"``, ``"{ns}*"``, ``"{}*"``
+  and ``"{*}*"``.  Note that ``"name"`` is equivalent to ``"{}name"``,
+  but ``"*"`` is ``"{*}*"``.
+  The same change applies to the ``.getiterator()``, ``.itersiblings()``,
+  ``.iterancestors()``, ``.iterdescendants()``, ``.iterchildren()``
+  and ``.itertext()`` methods as well as the ``strip_attributes()``,
+  ``strip_elements()`` and ``strip_tags()`` functions.
+
+
 Bugs fixed
 ----------
 
