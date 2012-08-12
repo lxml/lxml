@@ -16,11 +16,14 @@ def strip_attributes(tree_or_element, *attribute_names):
     Delete all attributes with the provided attribute names from an
     Element (or ElementTree) and its descendants.
 
+    Attribute names can contain wildcards as in `_Element.iter`.
+
     Example usage::
 
         strip_attributes(root_element,
                          'simpleattr',
-                         '{http://some/ns}attrname')
+                         '{http://some/ns}attrname',
+                         '{http://other/ns}*')
     """
     cdef _MultiTagMatcher matcher
     cdef _Element element
@@ -56,6 +59,8 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     including all their attributes, text content and descendants.  It
     will also remove the tail text of the element unless you
     explicitly set the ``with_tail`` keyword argument option to False.
+
+    Tag names can contain wildcards as in `_Element.iter`.
 
     Note that this will not delete the element (or ElementTree root
     element) that you passed even if it matches.  It will only treat
@@ -132,6 +137,8 @@ def strip_tags(tree_or_element, *tag_names):
     *not* their text/tail content or descendants.  Instead, it will
     merge the text content and children of the element into its
     parent.
+
+    Tag names can contain wildcards as in `_Element.iter`.
 
     Note that this will not delete the element (or ElementTree root
     element) that you passed even if it matches.  It will only treat

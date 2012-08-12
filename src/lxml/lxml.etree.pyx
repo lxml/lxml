@@ -1289,8 +1289,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         siblings in reverse document order, i.e. starting right before
         the current element and going backwards.
 
-        The returned elements can be restricted to a specific tag name by
-        passing a tag or a series of tag names.
+        Can be restricted to find only elements with a specific tag,
+        see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1301,8 +1301,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Iterate over the ancestors of this element (from parent to parent).
 
-        The returned elements can be restricted to a specific tag name by
-        passing a tag or a series of tag names.
+        Can be restricted to find only elements with a specific tag,
+        see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1314,8 +1314,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Iterate over the descendants of this element in document order.
 
         As opposed to ``el.iter()``, this iterator does not yield the element
-        itself.  The returned elements can be restricted to a specific tag
-        name by passing a tag or a series of tag names.
+        itself.  The returned elements can be restricted to find only elements
+        with a specific tag, see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1327,8 +1327,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Iterate over the children of this element.
 
         As opposed to using normal iteration on this element, the returned
-        elements can be restricted to a specific tag name by passing a tag
-        or a series of tag names, and reversed with the 'reversed' keyword.
+        elements can be reversed with the 'reversed' keyword and restricted
+        to find only elements with a specific tag, see `iter`.
         """
         if tag is not None:
             tags += (tag,)
@@ -1353,13 +1353,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         document order (depth first pre-order), starting with this
         element.
 
-        Can be restricted to find only elements with a specific tag
-        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
-        Passing a sequence of tags will let the iterator return all
-        elements matching any of these tags, in document order.
-
-        You can also pass the Element, Comment, ProcessingInstruction and
-        Entity factory functions to look only for the specific element type.
+        Can be restricted to find only elements with a specific tag,
+        see `iter`.
 
         :deprecated: Note that this method is deprecated as of
           ElementTree 1.3 and lxml 2.0.  It returns an iterator in
@@ -1379,13 +1374,17 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         Iterate over all elements in the subtree in document order (depth
         first pre-order), starting with this element.
 
-        Can be restricted to find only elements with a specific tag
-        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
-        Passing a sequence of tags will let the iterator return all
-        elements matching any of these tags, in document order.
+        Can be restricted to find only elements with a specific tag:
+        pass ``"{ns}localname"`` as tag. Either or both of ``ns`` and
+        ``localname`` can be ``*`` for a wildcard; ``ns`` can be empty
+        for no namespace. ``"localname"`` is equivalent to ``"{}localname"``
+        but ``"*"`` is ``"{*}*"``, not ``"{}*"``.
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
+
+        Passing a sequence of tags will let the iterator return all
+        elements matching any of these tags, in document order.
         """
         if tag is not None:
             tags += (tag,)
@@ -1396,9 +1395,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
 
         Iterates over the text content of a subtree.
 
-        You can pass a tag name to restrict text content to a specific tag
-        name.  Passing a sequence of tags will let the iterator consider
-        all elements matching any of these tags.
+        You can pass a tag name to restrict text content to specific elements,
+        see `iter`.
 
         You can set the ``with_tail`` keyword argument to ``False`` to skip
         over tail text.
@@ -1956,13 +1954,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Returns a sequence or iterator of all elements in document order
         (depth first pre-order), starting with the root element.
 
-        Can be restricted to find only elements with a specific tag
-        (pass ``"xyz"`` as tag) or from a namespace (pass ``"{ns}*"`` as tag).
-        Passing a sequence of tags will let the iterator return all
-        elements matching any of these tags, in document order.
-
-        You can also pass the Element, Comment, ProcessingInstruction and
-        Entity factory functions to look only for the specific element type.
+        Can be restricted to find only elements with a specific tag,
+        see `_Element.iter`.
 
         :deprecated: Note that this method is deprecated as of
           ElementTree 1.3 and lxml 2.0.  It returns an iterator in
@@ -1984,6 +1977,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
         Creates an iterator for the root element.  The iterator loops over
         all elements in this tree, in document order.
+
+        Can be restricted to find only elements with a specific tag,
+        see `_Element.iter`.
         """
         root = self.getroot()
         if root is None:
@@ -2512,6 +2508,10 @@ cdef class _MultiTagMatcher:
                 href, name = _getNsTag(tag)
                 if name == b'*':
                     name = None
+                if href is None:
+                    href = b''  # no namespace
+                elif href == b'*':
+                    href = None  # wildcard: any namespace, including none
                 self._py_tags.append((href, name))
         else:
             # support a sequence of tags
@@ -2554,19 +2554,12 @@ cdef class _MultiTagMatcher:
 
     cdef inline bint matchesAttribute(self, xmlAttr* c_attr):
         """Attribute matches differ from Element matches in that they do
-        not care about node types and href NULL values are not wildcards
-        but match only unnamespaced attributes.
+        not care about node types.
         """
         cdef qname* c_qname
         for c_qname in self._cached_tags[:self._tag_count]:
-            if c_qname.c_name is NULL or c_qname.c_name is c_attr.name:
-                c_href = tree._getNs(<xmlNode*>c_attr)
-                if c_qname.href is NULL:
-                    if c_href is NULL:
-                        return True
-                elif c_href is not NULL:
-                    if tree.xmlStrcmp(c_href, <const_xmlChar*>python.__cstr(c_qname.href)) == 0:
-                        return True
+            if _tagMatchesExactly(<xmlNode*>c_attr, c_qname):
+                return True
         return False
 
 cdef class _ElementMatchIterator:

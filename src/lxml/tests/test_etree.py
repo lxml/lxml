@@ -2259,6 +2259,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(b, '{b}d')
         e = SubElement(c, '{a}e')
         f = SubElement(c, '{b}f')
+        g = SubElement(c, 'g')
 
         self.assertEquals(
             [a],
@@ -2278,6 +2279,37 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEquals(
             [d, f],
             list(a.getiterator('{b}*')))
+        self.assertEquals(
+            [g],
+            list(a.getiterator('g')))
+        self.assertEquals(
+            [g],
+            list(a.getiterator('{}g')))
+        self.assertEquals(
+            [g],
+            list(a.getiterator('{}*')))
+
+    def test_getiterator_filter_local_name(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('{a}a')
+        b = SubElement(a, '{nsA}b')
+        c = SubElement(b, '{nsB}b')
+        d = SubElement(a, 'b')
+        e = SubElement(a, '{nsA}e')
+        f = SubElement(e, '{nsB}e')
+        g = SubElement(e, 'e')
+
+        self.assertEquals(
+            [b, c, d],
+            list(a.getiterator('{*}b')))
+        self.assertEquals(
+            [e, f, g],
+            list(a.getiterator('{*}e')))
+        self.assertEquals(
+            [a, b, c, d, e, f, g],
+            list(a.getiterator('{*}*')))
 
     def test_getiterator_filter_entities(self):
         Element = self.etree.Element
