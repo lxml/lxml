@@ -2270,6 +2270,9 @@ class ETreeOnlyTestCase(HelperTestCase):
             [],
             list(a.getiterator('a')))
         self.assertEquals(
+            [a,b,d,c,e,f],
+            list(a.getiterator('*')))
+        self.assertEquals(
             [f],
             list(c.getiterator('{b}*')))
         self.assertEquals(
