@@ -151,7 +151,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     cdef bytes result
     cdef _Document doc
     cdef _Element element
-    cdef char **c_inclusive_ns_prefixes
+    cdef xmlChar **c_inclusive_ns_prefixes
 
     if isinstance(element_or_tree, _Element):
         _assertValidNode(<_Element>element_or_tree)
@@ -162,8 +162,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
         _assertValidDoc(doc)
         c_doc = doc._c_doc
 
-    c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
-
+    c_inclusive_ns_prefixes = _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes) if inclusive_ns_prefixes else NULL
     try:
          with nogil:
              byte_count = c14n.xmlC14NDocDumpMemory(
@@ -176,12 +175,12 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
 
     if byte_count < 0 or c_buffer is NULL:
         if c_buffer is not NULL:
-            tree.xmlFree(<char*>c_buffer)
+            tree.xmlFree(c_buffer)
         raise C14NError, u"C14N failed"
     try:
         result = c_buffer[:byte_count]
     finally:
-        tree.xmlFree(<char*>c_buffer)
+        tree.xmlFree(c_buffer)
     return result
 
 cdef _raiseSerialisationError(int error_result):
@@ -489,42 +488,40 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
     if error_result != xmlerror.XML_ERR_OK:
         _raiseSerialisationError(error_result)
 
-cdef char **_convert_ns_prefixes(inclusive_ns_prefixes):
-    cdef char **c_inclusive_ns_prefixes
-    cdef char *c_prefix
-    cdef bytes prefix
-    if not inclusive_ns_prefixes:
-         return NULL
-
-    num_inclusive_ns_prefixes = len(inclusive_ns_prefixes)
-
+cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NULL:
+    cdef size_t i, num_ns_prefixes = len(ns_prefixes)
     # Need to allocate one extra memory block to handle last NULL entry
-    c_inclusive_ns_prefixes = <char **>python.PyMem_Malloc(sizeof(char *) * (num_inclusive_ns_prefixes + 1))
+    c_ns_prefixes = <xmlChar **>python.PyMem_Malloc(sizeof(xmlChar*) * (num_ns_prefixes + 1))
+    i = 0
+    try:
+        for prefix in ns_prefixes:
+             prefix_utf = _utf8(prefix)
+             c_prefix = tree.xmlDictExists(c_dict, _xcstr(prefix_utf), len(prefix_utf))
+             if c_prefix:
+                 # unknown prefixes do not need to get serialised
+                 c_ns_prefixes[i] = <xmlChar*>c_prefix
+                 i += 1
+    except:
+        python.PyMem_Free(c_ns_prefixes)
+        raise
 
-    # Converting Python object to C type
-    for n, inclusive_ns_prefix in enumerate(inclusive_ns_prefixes):
-         inclusive_ns_prefix = _utf8(inclusive_ns_prefix)
-         c_prefix = inclusive_ns_prefix  # create a cloned copy
-         c_inclusive_ns_prefixes[n] = c_prefix
-
-    c_inclusive_ns_prefixes[num_inclusive_ns_prefixes] = NULL  # last entry needs to be NULL
-
-    return c_inclusive_ns_prefixes
+    c_ns_prefixes[i] = NULL  # append end marker
+    return c_ns_prefixes
 
 cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
                      int compression, inclusive_ns_prefixes):
     cdef _FilelikeWriter writer = None
     cdef tree.xmlOutputBuffer* c_buffer
+    cdef xmlChar **c_inclusive_ns_prefixes = NULL
     cdef char* c_filename
     cdef xmlDoc* c_base_doc
     cdef xmlDoc* c_doc
     cdef int bytes = -1
-    cdef char **c_inclusive_ns_prefixes
 
     c_base_doc = element._c_node.doc
     c_doc = _fakeRootDoc(c_base_doc, element._c_node)
     try:
-        c_inclusive_ns_prefixes = _convert_ns_prefixes(inclusive_ns_prefixes)
+        c_inclusive_ns_prefixes = _convert_ns_prefixes(c_doc.dict, inclusive_ns_prefixes) if inclusive_ns_prefixes else NULL
 
         if _isString(f):
             filename8 = _encodeFilename(f)
