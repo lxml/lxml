@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* C14N allows specifying the inclusive prefixes to be promoted
+  to top-level during exclusive serialisation.
+
 Bugs fixed
 ----------
 
