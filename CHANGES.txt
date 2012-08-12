@@ -18,8 +18,9 @@ Features added
   but ``"*"`` is ``"{*}*"``.
   The same change applies to the ``.getiterator()``, ``.itersiblings()``,
   ``.iterancestors()``, ``.iterdescendants()``, ``.iterchildren()``
-  and ``.itertext()`` methods as well as the ``strip_attributes()``,
-  ``strip_elements()`` and ``strip_tags()`` functions.
+  and ``.itertext()`` methods;the ``strip_attributes()``,
+  ``strip_elements()`` and ``strip_tags()`` functions as well as the
+  ``iterparse()`` class.
 
 
 Bugs fixed
