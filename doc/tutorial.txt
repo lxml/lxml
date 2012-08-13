@@ -479,7 +479,7 @@ serialised the tree to XML:
     another - Child 3
 
 If you know you are only interested in a single tag, you can pass its name to
-``iter()`` to have it filter for you.  Since lxml 2.4, you can also pass more
+``iter()`` to have it filter for you.  Since lxml 3.0, you can also pass more
 than one tag to intercept on multiple tags during iteration.
 
 .. sourcecode:: pycon
@@ -527,6 +527,9 @@ make sure only Element objects are returned, you can pass the
     >>> for element in root.iter(tag=etree.Entity):
     ...     print(element.text)
     &#234;
+
+Note that passing a wildcard ``"*"`` tag name will also yield all
+``Element`` nodes (and only elements).
 
 In lxml.etree, elements provide `further iterators`_ for all directions in the
 tree: children, parents (or rather ancestors) and siblings.
@@ -1117,6 +1120,34 @@ You can also use XPath with fully qualified names:
 
     >>> print(results[0].tag)
     {http://www.w3.org/1999/xhtml}body
+
+For convenience, you can use ``"*"`` wildcards in all iterators of lxml.etree,
+both for tag names and namespaces:
+
+.. sourcecode:: pycon
+
+    >>> for el in xhtml.iter('*'): print(el.tag)   # any element
+    {http://www.w3.org/1999/xhtml}html
+    {http://www.w3.org/1999/xhtml}body
+    >>> for el in xhtml.iter('{http://www.w3.org/1999/xhtml}*'): print(el.tag)
+    {http://www.w3.org/1999/xhtml}html
+    {http://www.w3.org/1999/xhtml}body
+    >>> for el in xhtml.iter('{*}body'): print(el.tag)
+    {http://www.w3.org/1999/xhtml}body
+
+To look for elements that do not have a namespace, either use the
+plain tag name or provide the empty namespace explicitly:
+
+.. sourcecode:: pycon
+
+    >>> [ el.tag for el in xhtml.iter('{http://www.w3.org/1999/xhtml}body') ]
+    ['{http://www.w3.org/1999/xhtml}body']
+    >>> [ el.tag for el in xhtml.iter('body') ]
+    []
+    >>> [ el.tag for el in xhtml.iter('{}body') ]
+    []
+    >>> [ el.tag for el in xhtml.iter('{}*') ]
+    []
 
 
 The E-factory
