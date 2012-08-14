@@ -1721,10 +1721,13 @@ cdef class QName:
     def __hash__(self):
         return self.text.__hash__()
     def __richcmp__(one, other, int op):
-        if not _isString(one):
-            one = unicode(one)
-        if not _isString(other):
-            other = unicode(other)
+        try:
+            if not _isString(one):
+                one = unicode(one)
+            if not _isString(other):
+                other = unicode(other)
+        except ValueError:
+            return NotImplemented
         return python.PyObject_RichCompare(one, other, op)
 
 
@@ -2313,10 +2316,13 @@ cdef class _Attrib:
         return 1 if tree.xmlHasNsProp(c_node, _xcstr(tag), c_href) else 0
 
     def __richcmp__(one, other, int op):
-        if not isinstance(one, dict):
-            one = dict(one)
-        if not isinstance(other, dict):
-            other = dict(other)
+        try:
+            if not isinstance(one, dict):
+                one = dict(one)
+            if not isinstance(other, dict):
+                other = dict(other)
+        except (TypeError, ValueError):
+            return NotImplemented
         return python.PyObject_RichCompare(one, other, op)
 
 
