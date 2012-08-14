@@ -3418,6 +3418,15 @@ class ETreeC14NTestCase(HelperTestCase):
         self.assertEquals(_bytes('<z:b xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
                           s)
 
+    def test_c14n_tostring_inclusive_ns_prefixes(self):
+        """ Regression test to fix memory allocation issues (use 3+ inclusive NS spaces)"""
+        tree = self.parse(_bytes(
+                '<a xmlns:x="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b/></a>'))
+
+        s = etree.tostring(tree, method='c14n', exclusive=True, inclusive_ns_prefixes=['x', 'y', 'z'])
+        self.assertEquals(_bytes('<a xmlns:x="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"><z:b></z:b></a>'),
+                          s)
+
 
 class ETreeWriteTestCase(HelperTestCase):
     def test_write(self):
