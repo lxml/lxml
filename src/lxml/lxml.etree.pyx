@@ -2314,9 +2314,15 @@ cdef class _Attrib:
 
     def __richcmp__(one, other, int op):
         if not isinstance(one, dict):
-            one = dict(one)
+            try:
+                one = dict(one)
+            except (TypeError, ValueError):
+                pass
         if not isinstance(other, dict):
-            other = dict(other)
+            try:
+                other = dict(other)
+            except (TypeError, ValueError):
+                pass
         return python.PyObject_RichCompare(one, other, op)
 
 
