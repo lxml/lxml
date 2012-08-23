@@ -285,9 +285,11 @@ cdef extern from "libxml/tree.h":
         
     ctypedef struct xmlBuffer
 
+    ctypedef struct xmlBuf   # new in libxml2 2.9
+
     ctypedef struct xmlOutputBuffer:
-        xmlBuffer* buffer
-        xmlBuffer* conv
+        xmlBuf* buffer
+        xmlBuf* conv
         int error
 
     const_xmlChar* XML_XML_NAMESPACE
@@ -359,6 +361,8 @@ cdef extern from "libxml/tree.h":
     cdef void xmlBufferFree(xmlBuffer* buf) nogil
     cdef const_xmlChar* xmlBufferContent(xmlBuffer* buf) nogil
     cdef int xmlBufferLength(xmlBuffer* buf) nogil
+    cdef const_xmlChar* xmlBufContent(xmlBuf* buf) nogil # new in libxml2 2.9
+    cdef size_t xmlBufLength(xmlBuf* buf) nogil # new in libxml2 2.9
     cdef int xmlKeepBlanksDefault(int val) nogil
     cdef xmlChar* xmlNodeGetBase(xmlDoc* doc, xmlNode* node) nogil
     cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri) nogil

@@ -147,6 +147,13 @@
 #  define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
 #endif
 
+#include "libxml/tree.h"
+#ifndef LIBXML2_NEW_BUFFER
+   typedef xmlBuffer xmlBuf;
+#  define xmlBufContent(buf) xmlBufferContent(buf)
+#  define xmlBufLength(buf) xmlBufferLength(buf)
+#endif
+
 /* libexslt 1.1.25+ support EXSLT functions in XPath */
 #if LIBXSLT_VERSION < 10125
 #define exsltDateXpathCtxtRegister(ctxt, prefix)

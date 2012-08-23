@@ -81,7 +81,7 @@ cdef _tostring(_Element element, encoding, doctype, method,
     tree.
     """
     cdef tree.xmlOutputBuffer* c_buffer
-    cdef tree.xmlBuffer* c_result_buffer
+    cdef tree.xmlBuf* c_result_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef const_char* c_enc
     cdef const_xmlChar* c_version
@@ -133,11 +133,11 @@ cdef _tostring(_Element element, encoding, doctype, method,
 
     try:
         if encoding is _unicode:
-            result = (<unsigned char*>tree.xmlBufferContent(
-                c_result_buffer))[:tree.xmlBufferLength(c_result_buffer)].decode('UTF-8')
+            result = (<unsigned char*>tree.xmlBufContent(
+                c_result_buffer))[:tree.xmlBufLength(c_result_buffer)].decode('UTF-8')
         else:
-            result = <bytes>(<unsigned char*>tree.xmlBufferContent(
-                c_result_buffer))[:tree.xmlBufferLength(c_result_buffer)]
+            result = <bytes>(<unsigned char*>tree.xmlBufContent(
+                c_result_buffer))[:tree.xmlBufLength(c_result_buffer)]
     finally:
         error_result = tree.xmlOutputBufferClose(c_buffer)
     if error_result < 0:
@@ -194,12 +194,12 @@ cdef _raiseSerialisationError(int error_result):
 ############################################################
 # low-level serialisation functions
 
-cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
-                             xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
-                             int c_method, bint write_xml_declaration,
-                             bint write_complete_document,
-                             bint pretty_print, bint with_tail,
-                             int standalone) nogil:
+cdef int _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
+                            xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
+                            int c_method, bint write_xml_declaration,
+                            bint write_complete_document,
+                            bint pretty_print, bint with_tail,
+                            int standalone) nogil:
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
@@ -224,7 +224,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
         if c_nsdecl_node is NULL:
             c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
-            return
+            return -1
         _copyParentNamespaces(c_node, c_nsdecl_node)
 
         c_nsdecl_node.parent = c_node.parent
@@ -251,6 +251,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
     if pretty_print:
         tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
+    return 0
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     const_xmlChar* version, const_char* encoding,
@@ -268,16 +269,16 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
     else:
         tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
 
-cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
-                            xmlDoc* c_doc, const_xmlChar* c_root_name,
-                            const_char* encoding) nogil:
+cdef int _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
+                           xmlDoc* c_doc, const_xmlChar* c_root_name,
+                           const_char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     c_dtd = c_doc.intSubset
     if c_dtd is NULL or c_dtd.name is NULL:
-        return
+        return 0
     if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
-        return
+        return 0
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
     tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.name)
     if c_dtd.SystemID != NULL and c_dtd.SystemID[0] != c'\0':
@@ -293,16 +294,22 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
            c_dtd.attributes == NULL and c_dtd.notations == NULL and \
            c_dtd.pentities == NULL:
         tree.xmlOutputBufferWrite(c_buffer, 2, '>\n')
-        return
+        return 0
     tree.xmlOutputBufferWrite(c_buffer, 3, ' [\n')
     if c_dtd.notations != NULL:
-        tree.xmlDumpNotationTable(c_buffer.buffer,
-                                  <tree.xmlNotationTable*>c_dtd.notations)
+        c_buf = tree.xmlBufferCreate()
+        if not c_buf: return -1
+        tree.xmlDumpNotationTable(c_buf, <tree.xmlNotationTable*>c_dtd.notations)
+        tree.xmlOutputBufferWrite(
+            c_buffer, tree.xmlBufferLength(c_buf),
+            <const_char*>tree.xmlBufferContent(c_buf))
+        tree.xmlBufferFree(c_buf)
     c_node = c_dtd.children
     while c_node is not NULL:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, 0, encoding)
         c_node = c_node.next
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
+    return 0
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      const_char* encoding, bint pretty_print) nogil:
