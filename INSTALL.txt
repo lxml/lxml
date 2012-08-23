@@ -23,7 +23,7 @@ Unless you are using a static binary distribution (e.g. a Windows
 binary egg from PyPI_), you need to install libxml2 and libxslt, in
 particular:
 
-* libxml 2.6.21 or later. It can be found here:
+* libxml2 2.6.21 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
   * We recommend libxml2 2.7.8 or a later version.

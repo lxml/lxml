@@ -159,8 +159,8 @@ MS Windows usually become available through PyPI a few days after a
 source release.  If you can't wait, consider trying a less recent
 release version first.
 
-The latest version is `lxml 3.0alpha1`_, released 2012-07-31
-(`changes for 3.0alpha1`_).  `Older versions`_ are listed below.
+The latest version is `lxml 3.0alpha2`_, released 2012-08-23
+(`changes for 3.0alpha2`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
@@ -236,7 +236,9 @@ See the web sites of lxml
 `2.3 <http://lxml.de/2.3/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.0alpha1.pdf
+.. _`PDF documentation`: lxmldoc-3.0alpha2.pdf
+
+* `lxml 3.0alpha1`_, released 2012-07-31 (`changes for 3.0alpha1`_)
 
 * `lxml 2.3.5`_, released 2012-07-31 (`changes for 2.3.5`_)
 
@@ -270,6 +272,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `older releases <http://lxml.de/2.2/#old-versions>`_
 
+.. _`lxml 3.0alpha2`: /files/lxml-3.0alpha2.tgz
 .. _`lxml 3.0alpha1`: /files/lxml-3.0alpha1.tgz
 .. _`lxml 2.3.5`: /files/lxml-2.3.5.tgz
 .. _`lxml 2.3.4`: /files/lxml-2.3.4.tgz
@@ -287,6 +290,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 2.2.1`: /files/lxml-2.2.1.tgz
 .. _`lxml 2.2`: /files/lxml-2.2.tgz
 
+.. _`changes for 3.0alpha2`: /changes-3.0alpha2.html
 .. _`changes for 3.0alpha1`: /changes-3.0alpha1.html
 .. _`changes for 2.3.5`: /changes-2.3.5.html
 .. _`changes for 2.3.4`: /changes-2.3.4.html

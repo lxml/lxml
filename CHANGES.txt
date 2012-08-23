@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-3.0alpha2 (??)
+3.0alpha2 (2012-08-23)
 ======================
 
 Features added
@@ -32,6 +32,8 @@ Bugs fixed
 
 Other changes
 -------------
+
+* The code was adapted to work with the upcoming libxml2 2.9.0 release.
 
 
 3.0alpha1 (2012-07-31)
