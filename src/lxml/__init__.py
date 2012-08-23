@@ -1,13 +1,12 @@
 # this is a package
 
-import os
-
 def get_include():
     """
     Returns a list of header include paths (for lxml itself, libxml2
     and libxslt) needed to compile C code against lxml if it was built
     with statically linked libraries.
     """
+    import os
     lxml_path = __path__[0]
     include_path = os.path.join(lxml_path, 'includes')
     includes = [include_path, lxml_path]
