@@ -3011,7 +3011,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
     u"""tostring(element_or_tree, encoding=None, method="xml",
                  xml_declaration=None, pretty_print=False, with_tail=True,
                  standalone=None, doctype=None,
-                 exclusive=False, with_comments=True, inclusive_ns_prefixes)
+                 exclusive=False, with_comments=True, inclusive_ns_prefixes=None)
 
     Serialize an element to an encoded string representation of its XML
     tree.
