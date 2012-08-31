@@ -215,10 +215,10 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
     cdef xmlNs* c_new_ns
     cdef int prefix_known
     c_parent = c_from_node.parent
-    while c_parent is not NULL and (tree._isElementOrXInclude(c_parent) or
-                                    c_parent.type == tree.XML_DOCUMENT_NODE):
+    while c_parent and (tree._isElementOrXInclude(c_parent) or
+                        c_parent.type == tree.XML_DOCUMENT_NODE):
         c_new_ns = c_parent.nsDef
-        while c_new_ns is not NULL:
+        while c_new_ns:
             # libxml2 will check if the prefix is already defined
             tree.xmlNewNs(c_to_node, c_new_ns.href, c_new_ns.prefix)
             c_new_ns = c_new_ns.next
