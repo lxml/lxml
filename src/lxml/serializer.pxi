@@ -194,37 +194,39 @@ cdef _raiseSerialisationError(int error_result):
 ############################################################
 # low-level serialisation functions
 
-cdef int _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
-                            xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
-                            int c_method, bint write_xml_declaration,
-                            bint write_complete_document,
-                            bint pretty_print, bint with_tail,
-                            int standalone) nogil:
+cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
+                             xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
+                             int c_method, bint write_xml_declaration,
+                             bint write_complete_document,
+                             bint pretty_print, bint with_tail,
+                             int standalone) nogil:
     cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
     c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
+        if c_buffer.error:
+            return
 
-    if c_doctype is not NULL:
+    if c_doctype:
         tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
                                   <const_char*>c_doctype)
         tree.xmlOutputBufferWriteString(c_buffer, "\n")
 
     # write internal DTD subset, preceding PIs/comments, etc.
-    if write_complete_document:
+    if write_complete_document and not c_buffer.error:
         if c_doctype is NULL:
             _writeDtdToBuffer(c_buffer, c_doc, c_node.name, encoding)
         _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
 
     c_nsdecl_node = c_node
-    if c_node.parent is NULL or c_node.parent.type != tree.XML_DOCUMENT_NODE:
+    if not c_node.parent or c_node.parent.type != tree.XML_DOCUMENT_NODE:
         # copy the node and add namespaces from parents
         # this is required to make libxml write them
         c_nsdecl_node = tree.xmlCopyNode(c_node, 2)
-        if c_nsdecl_node is NULL:
+        if not c_nsdecl_node:
             c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
-            return -1
+            return
         _copyParentNamespaces(c_node, c_nsdecl_node)
 
         c_nsdecl_node.parent = c_node.parent
@@ -244,6 +246,9 @@ cdef int _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         c_nsdecl_node.children = c_nsdecl_node.last = NULL
         tree.xmlFreeNode(c_nsdecl_node)
 
+    if c_buffer.error:
+        return
+
     # write tail, trailing comments, etc.
     if with_tail:
         _writeTail(c_buffer, c_node, encoding, pretty_print)
@@ -251,7 +256,6 @@ cdef int _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
     if pretty_print:
         tree.xmlOutputBufferWrite(c_buffer, 1, "\n")
-    return 0
 
 cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
                                     const_xmlChar* version, const_char* encoding,
@@ -269,19 +273,19 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
     else:
         tree.xmlOutputBufferWrite(c_buffer, 4, "'?>\n")
 
-cdef int _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
-                           xmlDoc* c_doc, const_xmlChar* c_root_name,
-                           const_char* encoding) nogil:
+cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
+                            xmlDoc* c_doc, const_xmlChar* c_root_name,
+                            const_char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     c_dtd = c_doc.intSubset
-    if c_dtd is NULL or c_dtd.name is NULL:
-        return 0
+    if not c_dtd or not c_dtd.name:
+        return
     if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
-        return 0
+        return
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
     tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.name)
-    if c_dtd.SystemID != NULL and c_dtd.SystemID[0] != c'\0':
+    if c_dtd.SystemID and c_dtd.SystemID[0] != c'\0':
         if c_dtd.ExternalID != NULL and c_dtd.ExternalID[0] != c'\0':
             tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
             tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.ExternalID)
@@ -290,32 +294,33 @@ cdef int _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
             tree.xmlOutputBufferWrite(c_buffer, 9, ' SYSTEM "')
         tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.SystemID)
         tree.xmlOutputBufferWrite(c_buffer, 1, '"')
-    if c_dtd.entities == NULL and c_dtd.elements == NULL and \
-           c_dtd.attributes == NULL and c_dtd.notations == NULL and \
-           c_dtd.pentities == NULL:
+    if not c_dtd.entities and not c_dtd.elements and \
+           not c_dtd.attributes and not c_dtd.notations and \
+           not c_dtd.pentities:
         tree.xmlOutputBufferWrite(c_buffer, 2, '>\n')
-        return 0
+        return
     tree.xmlOutputBufferWrite(c_buffer, 3, ' [\n')
-    if c_dtd.notations != NULL:
+    if c_dtd.notations and not c_buffer.error:
         c_buf = tree.xmlBufferCreate()
-        if not c_buf: return -1
+        if not c_buf:
+            c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
+            return
         tree.xmlDumpNotationTable(c_buf, <tree.xmlNotationTable*>c_dtd.notations)
         tree.xmlOutputBufferWrite(
             c_buffer, tree.xmlBufferLength(c_buf),
             <const_char*>tree.xmlBufferContent(c_buf))
         tree.xmlBufferFree(c_buf)
     c_node = c_dtd.children
-    while c_node is not NULL:
+    while c_node and not c_buffer.error:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, 0, encoding)
         c_node = c_node.next
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
-    return 0
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      const_char* encoding, bint pretty_print) nogil:
     u"Write the element tail."
     c_node = c_node.next
-    while c_node is not NULL and c_node.type == tree.XML_TEXT_NODE:
+    while c_node and c_node.type == tree.XML_TEXT_NODE and not c_buffer.error:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0,
                                pretty_print, encoding)
         c_node = c_node.next
@@ -323,15 +328,15 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                              const_char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
-    if c_node.parent is not NULL and _isElement(c_node.parent):
+    if c_node.parent and _isElement(c_node.parent):
         return
     # we are at a root node, so add PI and comment siblings
     c_sibling = c_node
-    while c_sibling.prev != NULL and \
+    while c_sibling.prev and \
             (c_sibling.prev.type == tree.XML_PI_NODE or \
                  c_sibling.prev.type == tree.XML_COMMENT_NODE):
         c_sibling = c_sibling.prev
-    while c_sibling != c_node:
+    while c_sibling is not c_node and not c_buffer.error:
         tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_sibling, 0,
                                pretty_print, encoding)
         if pretty_print:
@@ -341,11 +346,11 @@ cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
 cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                              const_char* encoding, bint pretty_print) nogil:
     cdef xmlNode* c_sibling
-    if c_node.parent is not NULL and _isElement(c_node.parent):
+    if c_node.parent and _isElement(c_node.parent):
         return
     # we are at a root node, so add PI and comment siblings
     c_sibling = c_node.next
-    while c_sibling != NULL and \
+    while not c_buffer.error and c_sibling and \
             (c_sibling.type == tree.XML_PI_NODE or \
                  c_sibling.type == tree.XML_COMMENT_NODE):
         if pretty_print:
