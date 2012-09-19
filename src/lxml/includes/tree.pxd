@@ -437,9 +437,13 @@ cdef extern from "libxml/globals.h":
     cdef int xmlThrDefLineNumbersDefaultValue(int onoff) nogil
     cdef int xmlThrDefIndentTreeOutput(int onoff) nogil
     
-cdef extern from "libxml/xmlmemory.h":
-    cdef void* xmlMalloc(size_t size) nogil
-    cdef int xmlMemBlocks() nogil
+cdef extern from "libxml/xmlmemory.h" nogil:
+    cdef void* xmlMalloc(size_t size)
+    cdef int xmlMemBlocks()
+    cdef int xmlMemUsed()
+    cdef void xmlMemDisplay(stdio.FILE* file)
+    cdef void xmlMemDisplayLast(stdio.FILE* file, long num_bytes)
+    cdef void xmlMemShow(stdio.FILE* file, int count)
 
 cdef extern from "etree_defs.h":
     cdef bint _isElement(xmlNode* node) nogil

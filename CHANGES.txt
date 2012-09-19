@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* Python level access to (optional) libxml2 memory debugging features
+  to simplify debugging of memory leaks etc.
+
 Bugs fixed
 ----------
 

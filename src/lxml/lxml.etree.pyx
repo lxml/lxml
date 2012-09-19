@@ -3267,3 +3267,8 @@ include "schematron.pxi" # Schematron (requires libxml2 2.6.21+)
 # Public C API
 
 include "public-api.pxi"
+
+################################################################################
+# Other stuff
+
+include "debug.pxi"
