@@ -12,6 +12,10 @@ For installation information, see `INSTALL.txt`_.
 Support the project
 -------------------
 
+lxml has been downloaded from the Python Package Index
+more than five million times and is also available directly
+in many package distributions e.g. for Linux or MacOS-X.
+
 Most people who use lxml do so because they like using it.
 If you want to show us that you like it, please blog about
 your experience with it, link to the project website,
