@@ -25,8 +25,8 @@ cdef class _MemDebug:
     def dict_size(self):
         """dict_size(self)
 
-        Returns the total size of the global name dictionary used by libxml2
-        for the current thread.
+        Returns the current size of the global name dictionary used by libxml2
+        for the current thread.  Each thread has its own dictionary.
         """
         c_dict = __GLOBAL_PARSER_CONTEXT._getThreadDict(NULL)
         if c_dict is NULL:
