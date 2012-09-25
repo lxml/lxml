@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-3.0beta1 (??)
-======================
+3.0beta1 (2012-09-25)
+=====================
 
 Features added
 --------------
@@ -13,6 +13,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* Some tests were adapted to work with PyPy.
 
 Other changes
 -------------
