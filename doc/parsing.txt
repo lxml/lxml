@@ -40,8 +40,8 @@ The usual setup procedure:
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
 
-  >>> try: unicode = __builtins__["unicode"]
-  ... except (NameError, KeyError): unicode = str
+  >>> try: unicode = unicode
+  ... except NameError: unicode = str
 
   >>> import sys
   >>> from lxml import etree as _etree
@@ -328,7 +328,7 @@ a target object to the parser:
 
   >>> class EchoTarget:
   ...     def start(self, tag, attrib):
-  ...         print("start %s %s" % (tag, attrib))
+  ...         print("start %s %r" % (tag, dict(attrib)))
   ...     def end(self, tag):
   ...         print("end %s" % tag)
   ...     def data(self, data):
@@ -382,7 +382,7 @@ that the parser can reuse them afterwards.
   ...     def __init__(self):
   ...         self.events = []
   ...     def start(self, tag, attrib):
-  ...         self.events.append("start %s %s" % (tag, attrib))
+  ...         self.events.append("start %s %r" % (tag, dict(attrib)))
   ...     def end(self, tag):
   ...         self.events.append("end %s" % tag)
   ...     def data(self, data):

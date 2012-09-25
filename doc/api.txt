@@ -54,8 +54,8 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
   ...    class deque(list):
   ...        def popleft(self): return self.pop(0)
 
-  >>> try: unicode = __builtins__["unicode"]
-  ... except (NameError, KeyError): unicode = str
+  >>> try: unicode = unicode
+  ... except NameError: unicode = str
 
 
 lxml.etree

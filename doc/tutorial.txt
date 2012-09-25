@@ -49,10 +49,10 @@ documentation`_.
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
 
-  >>> try: unicode = __builtins__["unicode"]
+  >>> try: unicode = unicode
   ... except (NameError, KeyError): unicode = str
 
-  >>> try: basestring = __builtins__["basestring"]
+  >>> try: basestring = basestring
   ... except (NameError, KeyError): basestring = str
 
 
