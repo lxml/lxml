@@ -4,8 +4,8 @@ lxml.html adds a find_class method to elements::
     >>> from lxml.html import document_fromstring, fragment_fromstring, tostring
     >>> from lxml.html.clean import clean, clean_html
     >>> from lxml.html import usedoctest
-    >>> try: unicode = __builtins__["unicode"]
-    ... except (KeyError, NameError): unicode = str
+    >>> try: unicode = unicode
+    ... except NameError: unicode = str
 
     >>> h = document_fromstring('''
     ... <html><head></head>
