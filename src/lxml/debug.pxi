@@ -22,6 +22,17 @@ cdef class _MemDebug:
         """
         return tree.xmlMemBlocks()
 
+    def dict_size(self):
+        """dict_size(self)
+
+        Returns the total size of the global name dictionary used by libxml2
+        for the current thread.
+        """
+        c_dict = __GLOBAL_PARSER_CONTEXT._getThreadDict(NULL)
+        if c_dict is NULL:
+            raise MemoryError()
+        return tree.xmlDictSize(c_dict)
+
     def dump(self, output_file=None, byte_count=None):
         """dump(self, output_file=None, byte_count=None)
 
