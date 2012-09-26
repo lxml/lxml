@@ -14,6 +14,8 @@ Features added
 Bugs fixed
 ----------
 
+* Fix a memory leak in XPath by switching to Cython 0.17.1.
+
 * Some tests were adapted to work with PyPy.
 
 Other changes
