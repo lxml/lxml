@@ -215,6 +215,7 @@ an appropriate version of Cython installed.
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.1',
     'Programming Language :: Python :: 3.2',
+    'Programming Language :: Python :: 3.3',
     'Programming Language :: C',
     'Operating System :: OS Independent',
     'Topic :: Text Processing :: Markup :: HTML',
