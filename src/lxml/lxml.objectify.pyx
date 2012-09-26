@@ -1542,6 +1542,19 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
 
     StrType  = _PYTYPE_DICT.get(u'str')
     NoneType = _PYTYPE_DICT.get(u'NoneType')
+
+    # set these to None outside of the fake loop below to prevent Cython's
+    # control flow analysis (that doesn't know about the loop) from
+    # "doing the right thing" and assuming they do not need to be
+    # decref-ed before the 'first' assignment
+    typename = None
+    typename_utf8 = None
+    old_pytypename = None
+    pytype = None
+    pytype_name = None
+    value  = None
+    prefix = None
+
     c_node = element._c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
