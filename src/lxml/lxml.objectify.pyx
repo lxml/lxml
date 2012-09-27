@@ -1516,14 +1516,10 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
                empty_type_name, empty_pytype_name):
     cdef _Document doc
     cdef tree.xmlNode* c_node
-    cdef tree.xmlNs*   c_ns
-    cdef python.PyObject* dict_result
-    cdef PyType pytype, empty_pytype, StrType, NoneType
+    cdef PyType empty_pytype, StrType, NoneType
 
     if not annotate_xsi and not annotate_pytype:
         return
-
-    doc = element._doc
 
     if empty_type_name is not None:
         if isinstance(empty_type_name, bytes):
@@ -1543,141 +1539,143 @@ cdef _annotate(_Element element, bint annotate_xsi, bint annotate_pytype,
     StrType  = _PYTYPE_DICT.get(u'str')
     NoneType = _PYTYPE_DICT.get(u'NoneType')
 
-    # set these to None outside of the fake loop below to prevent Cython's
-    # control flow analysis (that doesn't know about the loop) from
-    # "doing the right thing" and assuming they do not need to be
-    # decref-ed before the 'first' assignment
-    typename = None
-    typename_utf8 = None
-    old_pytypename = None
-    pytype = None
-    pytype_name = None
-    value  = None
-    prefix = None
-
+    doc = element._doc
     c_node = element._c_node
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
-        typename = None
-        pytype = None
-        value  = None
-        istree = 0
-        # if element is defined as xsi:nil, represent it as None
-        if cetree.attributeValueFromNsName(
-            c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"nil") == u"true":
-            pytype = NoneType
+        _annotate_element(c_node, doc, annotate_xsi, annotate_pytype,
+                          ignore_xsi, ignore_pytype,
+                          empty_type_name, empty_pytype, StrType, NoneType)
+    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
-        if  pytype is None and not ignore_xsi:
-            # check that old xsi type value is valid
-            typename = cetree.attributeValueFromNsName(
-                c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"type")
-            if typename is not None:
+cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
+                           bint annotate_xsi, bint annotate_pytype,
+                           bint ignore_xsi, bint ignore_pytype,
+                           empty_type_name, PyType empty_pytype,
+                           PyType StrType, PyType NoneType) except -1:
+    cdef tree.xmlNs*   c_ns
+    cdef python.PyObject* dict_result
+    cdef PyType pytype = None
+    typename = None
+    istree = 0
+
+    # if element is defined as xsi:nil, represent it as None
+    if cetree.attributeValueFromNsName(
+        c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"nil") == u"true":
+        pytype = NoneType
+
+    if  pytype is None and not ignore_xsi:
+        # check that old xsi type value is valid
+        typename = cetree.attributeValueFromNsName(
+            c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"type")
+        if typename is not None:
+            dict_result = python.PyDict_GetItem(
+                _SCHEMA_TYPE_DICT, typename)
+            if dict_result is NULL and u':' in typename:
+                prefix, typename = typename.split(u':', 1)
                 dict_result = python.PyDict_GetItem(
                     _SCHEMA_TYPE_DICT, typename)
-                if dict_result is NULL and u':' in typename:
-                    prefix, typename = typename.split(u':', 1)
-                    dict_result = python.PyDict_GetItem(
-                        _SCHEMA_TYPE_DICT, typename)
+            if dict_result is not NULL:
+                pytype = <PyType>dict_result
+                if pytype is not StrType:
+                    # StrType does not have a typecheck but is the default
+                    # anyway, so just accept it if given as type
+                    # information
+                    pytype = _check_type(c_node, pytype)
+                    if pytype is None:
+                        typename = None
+
+    if pytype is None and not ignore_pytype:
+        # check that old pytype value is valid
+        old_pytypename = cetree.attributeValueFromNsName(
+            c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
+        if old_pytypename is not None:
+            if old_pytypename == TREE_PYTYPE_NAME:
+                if not cetree.hasChild(c_node):
+                    # only case where we should keep it,
+                    # everything else is clear enough
+                    pytype = TREE_PYTYPE
+            else:
+                if old_pytypename == u'none':
+                    # transition from lxml 1.x
+                    old_pytypename = u"NoneType"
+                dict_result = python.PyDict_GetItem(
+                    _PYTYPE_DICT, old_pytypename)
                 if dict_result is not NULL:
                     pytype = <PyType>dict_result
                     if pytype is not StrType:
-                        # StrType does not have a typecheck but is the default
-                        # anyway, so just accept it if given as type
-                        # information
+                        # StrType does not have a typecheck but is the
+                        # default anyway, so just accept it if given as
+                        # type information
                         pytype = _check_type(c_node, pytype)
-                        if pytype is None:
-                            typename = None
 
-        if pytype is None and not ignore_pytype:
-            # check that old pytype value is valid
-            old_pytypename = cetree.attributeValueFromNsName(
-                c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-            if old_pytypename is not None:
-                if old_pytypename == TREE_PYTYPE_NAME:
-                    if not cetree.hasChild(c_node):
-                        # only case where we should keep it,
-                        # everything else is clear enough
-                        pytype = TREE_PYTYPE
-                else:
-                    if old_pytypename == u'none':
-                        # transition from lxml 1.x
-                        old_pytypename = u"NoneType"
-                    dict_result = python.PyDict_GetItem(
-                        _PYTYPE_DICT, old_pytypename)
-                    if dict_result is not NULL:
-                        pytype = <PyType>dict_result
-                        if pytype is not StrType:
-                            # StrType does not have a typecheck but is the
-                            # default anyway, so just accept it if given as
-                            # type information
-                            pytype = _check_type(c_node, pytype)
+    if pytype is None:
+        # try to guess type
+        if not cetree.hasChild(c_node):
+            # element has no children => data class
+            pytype = _guessPyType(textOf(c_node), StrType)
+        else:
+            istree = 1
 
-        if pytype is None:
-            # try to guess type
-            if not cetree.hasChild(c_node):
-                # element has no children => data class
-                pytype = _guessPyType(textOf(c_node), StrType)
-            else:
-                istree = 1
-
-        if pytype is None:
-            # use default type for empty elements
-            if cetree.hasText(c_node):
-                pytype = StrType
-            else:
-                pytype = empty_pytype
-                if typename is None:
-                    typename = empty_type_name
-
-        if pytype is not None:
+    if pytype is None:
+        # use default type for empty elements
+        if cetree.hasText(c_node):
+            pytype = StrType
+        else:
+            pytype = empty_pytype
             if typename is None:
-                if not istree:
-                    if python.PyList_GET_SIZE(pytype._schema_types) > 0:
-                        # pytype->xsi:type is a 1:n mapping
-                        # simply take the first
-                        typename = pytype._schema_types[0]
-            elif typename not in pytype._schema_types:
-                typename = pytype._schema_types[0]
+                typename = empty_type_name
 
-        if annotate_xsi:
-            if typename is None or istree:
-                cetree.delAttributeFromNsName(
-                    c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"type")
-            else:
-                # update or create attribute
-                typename_utf8 = cetree.utf8(typename)
-                c_ns = cetree.findOrBuildNodeNsPrefix(
-                    doc, c_node, _XML_SCHEMA_NS, <unsigned char*>'xsd')
-                if c_ns is not NULL:
-                    if b':' in typename_utf8:
-                        prefix, name = typename_utf8.split(b':', 1)
-                        if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
-                            typename_utf8 = name
-                        elif tree.xmlStrcmp(_xcstr(prefix), c_ns.prefix) != 0:
-                            typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + name
-                    elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
-                        typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + typename_utf8
+    if pytype is not None:
+        if typename is None:
+            if not istree:
+                if python.PyList_GET_SIZE(pytype._schema_types) > 0:
+                    # pytype->xsi:type is a 1:n mapping
+                    # simply take the first
+                    typename = pytype._schema_types[0]
+        elif typename not in pytype._schema_types:
+            typename = pytype._schema_types[0]
+
+    if annotate_xsi:
+        if typename is None or istree:
+            cetree.delAttributeFromNsName(
+                c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"type")
+        else:
+            # update or create attribute
+            typename_utf8 = cetree.utf8(typename)
+            c_ns = cetree.findOrBuildNodeNsPrefix(
+                doc, c_node, _XML_SCHEMA_NS, <unsigned char*>'xsd')
+            if c_ns is not NULL:
+                if b':' in typename_utf8:
+                    prefix, name = typename_utf8.split(b':', 1)
+                    if c_ns.prefix is NULL or c_ns.prefix[0] == c'\0':
+                        typename_utf8 = name
+                    elif tree.xmlStrcmp(_xcstr(prefix), c_ns.prefix) != 0:
+                        typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + name
+                elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
+                    typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + typename_utf8
+            c_ns = cetree.findOrBuildNodeNsPrefix(
+                doc, c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>'xsi')
+            tree.xmlSetNsProp(c_node, c_ns, <unsigned char*>"type", _xcstr(typename_utf8))
+
+    if annotate_pytype:
+        if pytype is None:
+            # delete attribute if it exists
+            cetree.delAttributeFromNsName(
+                c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
+        else:
+            # update or create attribute
+            c_ns = cetree.findOrBuildNodeNsPrefix(
+                doc, c_node, _PYTYPE_NAMESPACE, <unsigned char*>'py')
+            pytype_name = cetree.utf8(pytype.name)
+            tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
+                              _xcstr(pytype_name))
+            if pytype is NoneType:
                 c_ns = cetree.findOrBuildNodeNsPrefix(
                     doc, c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>'xsi')
-                tree.xmlSetNsProp(c_node, c_ns, <unsigned char*>"type", _xcstr(typename_utf8))
+                tree.xmlSetNsProp(c_node, c_ns, <unsigned char*>"nil", <unsigned char*>"true")
 
-        if annotate_pytype:
-            if pytype is None:
-                # delete attribute if it exists
-                cetree.delAttributeFromNsName(
-                    c_node, _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
-            else:
-                # update or create attribute
-                c_ns = cetree.findOrBuildNodeNsPrefix(
-                    doc, c_node, _PYTYPE_NAMESPACE, <unsigned char*>'py')
-                pytype_name = cetree.utf8(pytype.name)
-                tree.xmlSetNsProp(c_node, c_ns, _PYTYPE_ATTRIBUTE_NAME,
-                                  _xcstr(pytype_name))
-                if pytype is NoneType:
-                    c_ns = cetree.findOrBuildNodeNsPrefix(
-                        doc, c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>'xsi')
-                    tree.xmlSetNsProp(c_node, c_ns, <unsigned char*>"nil", <unsigned char*>"true")
-    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+    return 0
 
 cdef object _strip_attributes = etree.strip_attributes
 cdef object _cleanup_namespaces = etree.cleanup_namespaces
