@@ -145,8 +145,7 @@ class Cleaner(object):
 
     ``safe_attrs_only``:
         If true, only include 'safe' attributes (specifically the list
-        from `feedparser
-        <http://feedparser.org/docs/html-sanitization.html>`_).
+        from the feedparser HTML sanitisation web site).
 
     ``add_nofollow``:
         If true, then any <a> tags will have ``rel="nofollow"`` added to them.
