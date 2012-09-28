@@ -68,8 +68,8 @@ images are treated like words:
 
 Images may sometimes not have 'src' attributes:
 
-    >>> pdiff('<img src="tease"><img><img src="test">', '<img><img src="toast">')
-    <del><img src="tease"></del> <img><ins><img src="toast"></ins>
+    >>> pdiff('<img src="tease"> <img> test <img src="test">', '<img> test <img src="toast">')
+    <del><img src="tease"></del> <img> test <ins><img src="toast"></ins>
     <del><img src="test"></del>
 
 A test of empty elements:
