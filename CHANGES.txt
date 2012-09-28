@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+Under development
+=====================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* End-of-file handling was incorrect in iterparse() when reading from
+  a low-level C file stream and failed in libxml2 2.9.0 due to its
+  improved consistency checks.
+
+Other changes
+-------------
+
+
 3.0beta1 (2012-09-26)
 =====================
 
