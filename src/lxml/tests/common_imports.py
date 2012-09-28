@@ -134,6 +134,16 @@ else:
             doctest_parser.get_doctest(
                 doctests, {}, os.path.basename(filename), filename, 0))
 
+try:
+    skipIf = unittest.skipIf
+except AttributeError:
+    def skipIf(condition, why,
+               _skip=lambda test_method: None,
+               _keep=lambda test_method: test_method):
+        if condition:
+            return _skip
+        return _keep
+
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):
         gc.collect()

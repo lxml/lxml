@@ -11,7 +11,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, _bytes, doctest
-from common_imports import HelperTestCase, fileInTestDir, make_doctest
+from common_imports import HelperTestCase, fileInTestDir, make_doctest, skipIf
 
 class ETreeDtdTestCase(HelperTestCase):
     def test_dtd(self):
@@ -116,6 +116,8 @@ class ETreeDtdTestCase(HelperTestCase):
             "valueB",
             root[0].get("default"))
 
+    @skipIf(etree.LIBXML_VERSION == (2,9,0),
+            "DTD loading is broken for incremental parsing in libxml2 2.9.0")
     def test_iterparse_file_dtd(self):
         iterparse = etree.iterparse
         iterator = iterparse(fileInTestDir("test.xml"), events=("start",),
