@@ -475,14 +475,16 @@ cdef class iterparse(_BaseParser):
         return self
 
     def __next__(self):
-        cdef _IterparseContext context
-        if self._source is None:
-            raise StopIteration
-
-        context = <_IterparseContext>self._push_parser_context
+        cdef _IterparseContext context = <_IterparseContext>self._push_parser_context
         events = context._events
         if len(events) <= context._event_index:
-            self._read_more_events(context)
+            del events[:]
+            context._event_index = 0
+            if self._source is not None:
+                self._read_more_events(context)
+            if not events:
+                self.root = context._root
+                raise StopIteration
         item = events[context._event_index]
         context._event_index += 1
         return item
@@ -495,8 +497,6 @@ cdef class iterparse(_BaseParser):
         cdef int error = 0, done = 0
 
         events = context._events
-        del events[:]
-        context._event_index = 0
         c_stream = python.PyFile_AsFile(self._source)
         while not events:
             if c_stream is NULL:
@@ -525,20 +525,16 @@ cdef class iterparse(_BaseParser):
                     error = self._parse_chunk(
                         pctxt, c_data, c_data_len, done)
             if error or done:
+                self._close_source()
                 self._buffer = None
                 break
 
         if not error and context._validator is not None:
             error = not context._validator.isvalid()
         if error:
-            self._close_source()
             del events[:]
             context._assureDocGetsFreed()
             _raiseParseError(pctxt, self._filename, context._error_log)
-        if not events:
-            self.root = context._root
-            self._close_source()
-            raise StopIteration
 
 
 cdef class iterwalk:
