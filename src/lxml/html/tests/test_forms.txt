@@ -48,7 +48,7 @@ False
 >>> hidden.value
 'hidden_value'
 >>> hidden.value = 'new value'
->>> tostring(hidden)
+>>> tostring(hidden, with_tail=False)
 b'<input type="hidden" name="hidden_field" value="new value">'
 >>> checkbox = f.inputs['single_checkbox']
 >>> checkbox.checkable
@@ -62,7 +62,7 @@ None
 >>> checkbox.checked = True
 >>> checkbox.value
 'on'
->>> tostring(checkbox)
+>>> tostring(checkbox, with_tail=False)
 b'<input type="checkbox" name="single_checkbox" checked>'
 >>> checkbox2 = f.inputs['single_checkbox2']
 >>> checkbox2.checked = True
@@ -74,7 +74,7 @@ b'<input type="checkbox" name="single_checkbox" checked>'
 >>> group.value.add('1')
 >>> group.value # doctest:+NOPARSE_MARKUP
 <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
->>> tostring(group[0])
+>>> tostring(group[0], with_tail=False)
 b'<input type="checkbox" name="check_group" value="1" checked>'
 >>> group.value_options
 ['1', '2', '3', '4']
@@ -93,10 +93,10 @@ KeyError: "No checkbox with value 'doesnotexist'"
 >>> radios.value = 'value1'
 >>> radios.value
 'value1'
->>> tostring(radios[0])
+>>> tostring(radios[0], with_tail=False)
 b'<input type="radio" name="radios" value="value1" id="value1" checked>'
 >>> radios.value = None
->>> tostring(radios[0])
+>>> tostring(radios[0], with_tail=False)
 b'<input type="radio" name="radios" value="value1" id="value1">'
 >>> radios.value_options
 ['value1', 'value2', 'value3']
