@@ -154,10 +154,8 @@ Download
 
 The best way to download lxml is to visit `lxml at the Python Package
 Index`_ (PyPI).  It has the source that compiles on various platforms.
-The source distribution is signed with `this key`_.  Binary builds for
-MS Windows usually become available through PyPI a few days after a
-source release.  If you can't wait, consider trying a less recent
-release version first.
+The source distribution is signed with `this key`_.  Binary builds are
+not available from PyPI due to the increased maintenance overhead.
 
 The latest version is `lxml 3.0beta1`_, released 2012-09-26
 (`changes for 3.0beta1`_).  `Older versions`_ are listed below.

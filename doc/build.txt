@@ -22,7 +22,7 @@ Cython
 ------
 
 .. _pip: http://pypi.python.org/pypi/pip
-.. _Cython: http://www.cython.org
+.. _Cython: http://cython.org
 
 The lxml.etree and lxml.objectify modules are written in Cython_.
 Since we distribute the Cython-generated .c files with lxml releases,
@@ -150,7 +150,7 @@ and::
 If the tests give failures, errors, or worse, segmentation faults, we'd really
 like to know.  Please contact us on the `mailing list`_, and please specify
 the version of lxml, libxml2, libxslt and Python you were using, as well as
-your operating system type (Linux, Windows, MacOs, ...).
+your operating system type (Linux, Windows, MacOS-X, ...).
 
 .. _`mailing list`: http://lxml.de/mailinglist/
 
@@ -210,8 +210,8 @@ subdirectory ``libs`` in the lxml distribution, and call ``setup.py``
 with the desired target versions like this::
 
   python setup.py build --static-deps \
-         --libxml2-version=2.7.3 \
-         --libxslt-version=1.1.24 \
+         --libxml2-version=2.7.8 \
+         --libxslt-version=1.1.27 \
 
   sudo python setup.py install
 
@@ -224,8 +224,8 @@ variable instead::
 
   STATIC_DEPS=true pip install lxml
 
-Some machines may require an additional run with "sudo" to install the
-package into the Python package directory::
+To install the package into the system Python package directory,
+run the installation with "sudo"::
 
   STATIC_DEPS=true sudo pip install lxml
 

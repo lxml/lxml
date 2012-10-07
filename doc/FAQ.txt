@@ -412,30 +412,18 @@ see when (or if) a specific bug has been fixed.
 Where are the binary builds?
 ----------------------------
 
-Binary builds are often requested by users of Microsoft Windows.  Two
-of the major design issues of this operating system make it
-non-trivial for users to build lxml: the lack of a pre-installed
+Binary builds are most often requested by users of Microsoft Windows.
+Two of the major design issues of this operating system make it
+non-trivial for its users to build lxml: the lack of a pre-installed
 standard compiler and the missing package management.
 
-We previously provided Windows binaries for new releases, but
-currently lack a maintainer with a suitable build system.  If there is
-not currently a binary distribution of the most recent lxml release
-for this platform available from the Python Package Index (PyPI),
-please look through the older versions to see if they provide a binary
-build.  This is done by appending the version number to the PyPI URL,
-e.g.::
-
-	  http://pypi.python.org/pypi/lxml/2.2.8
-
-Christoph Gohlke also provides `unofficial lxml binary builds for
-Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ that are
-usually very up to date.
-
-Apart from that, we generally do not provide binary builds of lxml, as
-most of the other operating systems out there can build lxml without
-problems (with `MacOS-X`_ being sometimes an exception), and the sheer
-mass of variations between platforms makes it futile to provide builds
-for everyone.
+We previously provided Windows binaries through PyPI, but no
+longer do so due to the high maintenance overhead they introduce and
+the difficulty in supporting different system configurations.
+Christoph Gohlke generously provides `unofficial lxml binary builds
+for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_ that
+are usually very up to date.  Consider using them if you prefer a
+binary build over a signed official source release.
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
