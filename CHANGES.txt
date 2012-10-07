@@ -18,6 +18,9 @@ Bugs fixed
 Other changes
 -------------
 
+* The build no longer uses Cython by default unless the generated C files
+  are missing.  To use Cython, pass the option "--with-cython".
+
 
 3.0beta1 (2012-09-26)
 =====================
