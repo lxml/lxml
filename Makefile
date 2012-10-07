@@ -1,18 +1,21 @@
 PYTHON?=python
-PYTHON3?=python3.0
+PYTHON3?=python3
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
 LXMLVERSION=`cat version.txt`
 
+PY2_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+
 all: inplace
 
 # Build in-place
 inplace:
-	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i
+	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PY2_WITH_CYTHON)
 
 build:
-	$(PYTHON) setup.py $(SETUPFLAGS) build
+	$(PYTHON) setup.py $(SETUPFLAGS) build $(PY2_WITH_CYTHON)
 
 test_build: build
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
@@ -24,7 +27,7 @@ test_inplace: inplace
 
 test_inplace3: inplace
 	$(MAKE) clean
-	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i
+	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest2.py

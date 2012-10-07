@@ -81,10 +81,15 @@ or::
 
   python setup.py bdist_egg     # requires 'setuptools' or 'distribute'
 
+To (re-)build the C sources with Cython, you must additionally pass the
+option ``--with-cython``::
+
+  python setup.py build --with-cython
+
 If you want to test lxml from the source directory, it is better to build it
 in-place like this::
 
-  python setup.py build_ext -i
+  python setup.py build_ext -i --with-cython
 
 or, in Unix-like environments::
 

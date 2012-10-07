@@ -12,7 +12,7 @@ except ImportError:
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
 
-PACKAGE_PATH = "src/lxml/"
+PACKAGE_PATH = "src%slxml%s" % (os.path.sep, os.path.sep)
 INCLUDE_PACKAGE_PATH = PACKAGE_PATH + 'includes'
 
 if sys.version_info[0] >= 3:
@@ -56,26 +56,29 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 libxslt_version=OPTION_LIBXSLT_VERSION,
                 multicore=OPTION_MULTICORE)
 
-    if CYTHON_INSTALLED:
-        source_extension = ".pyx"
-        print("Building with Cython %s." % Cython.Compiler.Version.version)
-
-        # generate module cleanup code
-        from Cython.Compiler import Options
-        Options.generate_cleanup_code = 3
-    else:
-        source_extension = ".c"
-        if not os.path.exists(PACKAGE_PATH + 'lxml.etree.c'):
-            print ("WARNING: Trying to build without Cython, but pre-generated "
-                   "'%slxml.etree.c' does not seem to be available." % PACKAGE_PATH)
-        else:
-            print ("Building without Cython.")
-
     if OPTION_WITHOUT_OBJECTIFY:
         modules = [ entry for entry in EXT_MODULES
                     if 'objectify' not in entry ]
     else:
         modules = EXT_MODULES
+
+    c_files_exist = [ os.path.exists('%s%s.c' % (PACKAGE_PATH, module)) for module in modules ]
+
+    if CYTHON_INSTALLED and (OPTION_WITH_CYTHON or False in c_files_exist):
+        source_extension = ".pyx"
+        print("Building with Cython %s." % Cython.Compiler.Version.version)
+        # generate module cleanup code
+        from Cython.Compiler import Options
+        Options.generate_cleanup_code = 3
+    elif False in c_files_exist:
+        for exists, module in zip(c_files_exist, modules):
+            if not exists:
+                raise RuntimeError(
+                    "ERROR: Trying to build without Cython, but pre-generated "
+                    "'%s%s.c' is not available." % (PACKAGE_PATH, module))
+    else:
+        source_extension = ".c"
+        print("Building without Cython.")
 
     lib_versions = get_library_versions()
     if lib_versions[0]:
@@ -347,6 +350,7 @@ OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_WITHOUT_CYTHON = has_option('without-cython')
+OPTION_WITH_CYTHON = has_option('with-cython')
 OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
 if OPTION_WITHOUT_CYTHON:
