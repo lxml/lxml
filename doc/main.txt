@@ -157,8 +157,8 @@ Index`_ (PyPI).  It has the source that compiles on various platforms.
 The source distribution is signed with `this key`_.  Binary builds are
 not available from PyPI due to the increased maintenance overhead.
 
-The latest version is `lxml 3.0beta1`_, released 2012-09-26
-(`changes for 3.0beta1`_).  `Older versions`_ are listed below.
+The latest version is `lxml 3.0`_, released 2012-10-07
+(`changes for 3.0`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
 
@@ -234,7 +234,9 @@ See the web sites of lxml
 `2.3 <http://lxml.de/2.3/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.0beta1.pdf
+.. _`PDF documentation`: lxmldoc-3.0.pdf
+
+* `lxml 3.0beta1`_, released 2012-09-26 (`changes for 3.0beta1`_)
 
 * `lxml 3.0alpha2`_, released 2012-08-23 (`changes for 3.0alpha2`_)
 
@@ -272,6 +274,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `older releases <http://lxml.de/2.2/#old-versions>`_
 
+.. _`lxml 3.0`: /files/lxml-3.0.tgz
 .. _`lxml 3.0beta1`: /files/lxml-3.0beta1.tgz
 .. _`lxml 3.0alpha2`: /files/lxml-3.0alpha2.tgz
 .. _`lxml 3.0alpha1`: /files/lxml-3.0alpha1.tgz
@@ -292,6 +295,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 2.2.1`: /files/lxml-2.2.1.tgz
 .. _`lxml 2.2`: /files/lxml-2.2.tgz
 
+.. _`changes for 3.0`: /changes-3.0.html
 .. _`changes for 3.0beta1`: /changes-3.0beta1.html
 .. _`changes for 3.0alpha2`: /changes-3.0alpha2.html
 .. _`changes for 3.0alpha1`: /changes-3.0alpha1.html
