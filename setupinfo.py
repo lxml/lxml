@@ -70,13 +70,19 @@ def ext_modules(static_include_dirs, static_library_dirs,
         # generate module cleanup code
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 3
-    elif False in c_files_exist:
+    elif not OPTION_WITHOUT_CYTHON and False in c_files_exist:
         for exists, module in zip(c_files_exist, modules):
             if not exists:
                 raise RuntimeError(
-                    "ERROR: Trying to build without Cython, but pre-generated "
-                    "'%s%s.c' is not available." % (PACKAGE_PATH, module))
+                    "ERROR: Trying to build without Cython, but pre-generated '%s%s.c' "
+                    "is not available (pass --without-cython to ignore this error)." % (
+                        PACKAGE_PATH, module))
     else:
+        if False in c_files_exist:
+            for exists, module in zip(c_files_exist, modules):
+                if not exists:
+                    print("WARNING: Trying to build without Cython, but pre-generated "
+                          "'%s%s.c' is not available." % (PACKAGE_PATH, module))
         source_extension = ".c"
         print("Building without Cython.")
 

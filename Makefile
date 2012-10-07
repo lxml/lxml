@@ -116,4 +116,4 @@ docclean:
 realclean: clean docclean
 	find . -name '*.c' -exec rm -f {} \;
 	rm -f TAGS
-	$(PYTHON) setup.py clean -a
+	$(PYTHON) setup.py clean -a --without-cython
