@@ -157,7 +157,7 @@ Index`_ (PyPI).  It has the source that compiles on various platforms.
 The source distribution is signed with `this key`_.  Binary builds are
 not available from PyPI due to the increased maintenance overhead.
 
-The latest version is `lxml 3.0`_, released 2012-10-07
+The latest version is `lxml 3.0`_, released 2012-10-08
 (`changes for 3.0`_).  `Older versions`_ are listed below.
 
 Please take a look at the `installation instructions`_!
