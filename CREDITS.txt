@@ -17,11 +17,8 @@ Ian Bicking
 Holger Joukl
        ISO-Schematron support, development on lxml.objectify, bug reports, feedback
 
-Sidnei da Silva
-       official MS Windows builds
-
-Pascal Oberndörfer
-       official Mac-OS builds
+Simon Sapin
+       external maintenance and development of the cssselect package
 
 Marc-Antoine Parent
        XPath extension function help and patches
@@ -56,6 +53,12 @@ David Sankel
 
 Marcin Kasperski
        PDF documentation generation
+
+Sidnei da Silva
+       official MS Windows builds
+
+Pascal Oberndörfer
+       official Mac-OS builds
 
 ... and lots of other people who contributed to lxml by reporting
 bugs, discussing its functionality or blaming the docs for the bugs in
