@@ -4,7 +4,7 @@ Things to try out when life permits
 * zlib-based parsing/serialising of compressed in-memory data
 
   * requires a libxml2 I/O OutputBuffer with appropriate I/O functions
-    that call into the lzma compression routines
+    that call into the zlib compression routines
 
 * lzma-based parsing/serialising of compressed in-memory data
 
@@ -41,3 +41,14 @@ Things to try out when life permits
 
   * Disadvantage: the tree has to be built manually. In the current
     SAX based implementation, libxml2 does it for us.
+
+* rewrite iterparse() to accept a parser as argument instead of being
+  one
+
+  * disadvantage: iterparse() can't deal with all parser options
+
+* provide an HTMLParser wrapper that handles broken encodings in broken
+  HTML better, e.g. using BeautifulSoup's "unicode dammit" analyser
+
+* expose namespace prefixes through the QName class
+

@@ -27,25 +27,6 @@ In general
 * add 'nsmap' parameter to cleanup_namespaces()
 
 
-XML Parser
-----------
-
-* provide a way to let users pass in a custom DTD for validation
-
-
-HTML Parser
------------
-
-* provide a parser wrapper that handles broken encodings in broken
-  HTML better, e.g. using BeautifulSoup's "unicode dammit" analyser
-
-
-QName
------
-
-* expose prefix support?
-
-
 Entities
 --------
 
@@ -57,11 +38,3 @@ Objectify
 
 * emulate setting special __attributes__ on ObjectifiedElement's as Python
   attributes, not XML children
-
-
-Maybe
------
-
-* rewrite iterparse() to accept a parser as argument instead of being
-  one (or maybe not: iterparse() can't deal with all parser options
-  anyway).
