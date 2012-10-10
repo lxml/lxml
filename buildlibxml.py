@@ -292,7 +292,7 @@ def build_libxml2xslt(download_dir, build_dir,
             include_ppc = True
             if os.path.exists('/usr/bin/xcodebuild'):
                 pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, err = pipe.communicate()
+                out, _ = pipe.communicate()
                 xcode_version = out.splitlines()[0].decode('utf8')
                 # Also parse only first digit, because 3.2.1 can't be parsed nicely
                 if (xcode_version.startswith('Xcode') and
