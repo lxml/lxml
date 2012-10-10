@@ -13,6 +13,10 @@ In general
 * better exception messages for XPath and schemas based on error log,
   e.g. missing namespace mappings in XPath
 
+* when building statically, compile everything into one shared library
+  instead of one for lxml.etree and one for lxml.objectify to prevent
+  the redundant static linking of the library dependencies.
+
 * more testing on input/output of encoded filenames, including custom
   resolvers, relative XSLT imports, ...
 
