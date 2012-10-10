@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* #1065139: static MacOS-X build failed in Py3
+
+Other changes
+-------------
+
+
 3.0 (2012-10-08)
 ================
 
