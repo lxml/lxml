@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-Under development
+3.0.1 (???)
 =================
 
 Features added
@@ -11,7 +11,9 @@ Features added
 Bugs fixed
 ----------
 
-* #1065139: static MacOS-X build failed in Py3
+* GH#71: Failure to work with libxml2 2.6.x.
+
+* LP#1065139: static MacOS-X build failed in Py3
 
 Other changes
 -------------
