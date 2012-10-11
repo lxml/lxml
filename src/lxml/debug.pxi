@@ -42,7 +42,10 @@ cdef class _MemDebug:
         to the file ".memorylist" in the current directory.
 
         The optional parameter 'byte_count' limits the number of bytes in the dump.
+        Note that this parameter is ignored when lxml is compiled against a libxml2
+        version before 2.7.0.
         """
+        cdef Py_ssize_t c_count
         if output_file is None:
             output_file = b'.memorylist'
         elif isinstance(output_file, unicode):
@@ -52,10 +55,13 @@ cdef class _MemDebug:
         if f is NULL:
             raise IOError("Failed to create file %s" % output_file.decode(sys.getfilesystemencoding()))
         try:
-            if byte_count is None:
+            if tree.LIBXML_VERSION < 20700:
+                tree.xmlMemDisplay(f)
+            elif byte_count is None:
                 tree.xmlMemDisplay(f)
             else:
-                tree.xmlMemDisplayLast(f, byte_count)
+                c_count = byte_count
+                tree.xmlMemDisplayLast(f, c_count)
         finally:
             stdio.fclose(f)
 

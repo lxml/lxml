@@ -97,6 +97,7 @@
 #  define XML_PARSE_OLD10      1 << 17
 #  define XML_PARSE_NOBASEFIX  1 << 18
 #  define XML_PARSE_HUGE       1 << 19
+#  define xmlMemDisplayLast(f,d)
 #endif
 
 #if LIBXML_VERSION < 20704
