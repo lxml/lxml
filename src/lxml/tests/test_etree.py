@@ -12,6 +12,7 @@ import unittest
 import copy
 import sys
 import re
+import gc
 import operator
 import tempfile
 import gzip
@@ -3175,6 +3176,18 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         result = tostring(a, encoding=_unicode, pretty_print=True)
         self.assertEquals(result, "<a>\n  <b/>\n  <c/>\n</a>\n")
+
+    def test_pypy_proxy_collect(self):
+        root = etree.Element('parent')
+        etree.SubElement(root, 'child')
+
+        self.assertEquals(len(root), 1)
+        self.assertEquals(root[0].tag, 'child')
+
+        # in PyPy, GC used to kill the Python proxy instance without cleanup
+        gc.collect()
+        self.assertEquals(len(root), 1)
+        self.assertEquals(root[0].tag, 'child')
 
     # helper methods
 
