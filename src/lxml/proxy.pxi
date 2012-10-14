@@ -2,7 +2,14 @@
 
 # Proxies represent elements, their reference is stored in the C
 # structure of the respective node to avoid multiple instantiation of
-# the Python class
+# the Python class.
+#
+# In PyPy, we store weak references instead of borrowed back-pointer
+# references as borrowed references cannot be long-lived in its
+# compatibility layer cpyext. Since we can't know when the object dies
+# (and even the weak-ref callback won't tell us that), we double check
+# on access that the object really is still alive and delete the
+# weak-ref if it isn't.
 
 cdef inline _Element getProxy(xmlNode* c_node):
     u"""Get a proxy for a given node.
