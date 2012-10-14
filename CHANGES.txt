@@ -11,9 +11,12 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1065924: Element proxies could disappear during garbage collection
+  in PyPy without proper cleanup.
+
 * GH#71: Failure to work with libxml2 2.6.x.
 
-* LP#1065139: static MacOS-X build failed in Py3
+* LP#1065139: static MacOS-X build failed in Py3.
 
 Other changes
 -------------
