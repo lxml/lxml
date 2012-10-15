@@ -8,6 +8,11 @@ import copy
 import shutil
 import subprocess
 
+try:
+    from io import open as open_file
+except ImportError:
+    from codecs import open as open_file
+
 RST2HTML_OPTIONS = " ".join([
     '--no-toc-backlinks',
     '--strip-comments',
@@ -135,6 +140,30 @@ def rest2html(script, source_path, dest_path, stylesheet_url):
                 stylesheet_url, source_path, dest_path))
     subprocess.call(command, shell=True)
 
+def convert_changelog(lxml_path, changelog_file_path, rst2html_script, stylesheet_url):
+    f = open_file(os.path.join(lxml_path, 'CHANGES.txt'), 'r', encoding='utf-8')
+    try:
+        content = f.read()
+    finally:
+        f.close()
+
+    links = dict(LP='`%s <https://bugs.launchpad.net/lxml/+bug/%s>`_',
+                 GH='`%s <https://github.com/lxml/lxml/issues/%s>`_')
+    replace_tracker_links = re.compile('((LP|GH)#([0-9]+))').sub
+    def insert_link(match):
+        text, ref_type, ref_id = match.groups()
+        return links[ref_type] % (text, ref_id)
+    content = replace_tracker_links(insert_link, content)
+
+    command = [sys.executable, rst2html_script] + RST2HTML_OPTIONS.split() + [
+        '--link-stylesheet', '--stylesheet', stylesheet_url ]
+    out_file = open(changelog_file_path, 'wb')
+    try:
+        rst2html = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=out_file)
+        rst2html.communicate(content.encode('utf8'))
+    finally:
+        out_file.close()
+
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
@@ -180,10 +209,8 @@ def publish(dirname, lxml_path, release):
                 build_menu(tree, basename, section_head)
 
     # also convert CHANGES.txt
-    rest2html(script,
-              os.path.join(lxml_path, 'CHANGES.txt'),
-              os.path.join(dirname, 'changes-%s.html' % release),
-              '')
+    convert_changelog(lxml_path, os.path.join(dirname, 'changes-%s.html' % release),
+                      script, stylesheet_url)
 
     # generate sitemap from menu
     sitemap = XML('''\
