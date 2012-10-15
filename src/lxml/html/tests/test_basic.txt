@@ -99,3 +99,15 @@ drop the comment.  Here, ``drop_tag()`` behaves exactly like ``drop_tree()``:
       <div>footer</div>
      </body>
     </html>
+
+In Python3 it should be possible to parse strings given as bytes objects, at
+least if an encoding is given.
+
+    >>> from lxml.html import HTMLParser
+    >>> enc = 'utf-8'
+    >>> html_parser = HTMLParser(encoding=enc)
+    >>> src = b'<html><body>\xc3\xa4</body></html>'
+    >>> doc = fromstring(src, parser=html_parser)
+    >>> tostring(doc, encoding=enc)
+		'<html><body>\xc3\xa4</body></html>'
+
