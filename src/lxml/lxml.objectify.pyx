@@ -1126,6 +1126,8 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
 ################################################################################
 # adapted ElementMaker supports registered PyTypes
 
+@cython.final
+@cython.internal
 cdef class _ObjectifyElementMakerCaller:
     cdef object _tag
     cdef object _nsmap
