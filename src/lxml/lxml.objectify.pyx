@@ -4,6 +4,8 @@ XML.  It is based on `lxml.etree`.
 
 from __future__ import absolute_import
 
+cimport cython
+
 from lxml.includes.etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
 from lxml.includes.etreepublic cimport elementFactory, import_lxml__etree, textOf, pyunicode
 from lxml.includes.tree cimport xmlChar, const_xmlChar, _xcstr
@@ -1218,12 +1220,22 @@ cdef class ElementMaker:
       >>> print(tostring(html, method='html').decode('ascii'))
       <html><body><p>hello<br>objectify</p></body></html>
 
+    To create tags that are not valid Python identifiers, call the factory
+    directly and pass the tag name as first argument::
+
+      >>> root = M('tricky-tag', 'some text')
+      >>> print(root.tag)
+      tricky-tag
+      >>> print(root.text)
+      some text
+
     Note that this module has a predefined ElementMaker instance called ``E``.
     """
     cdef object _makeelement
     cdef object _namespace
     cdef object _nsmap
     cdef bint _annotate
+    cdef dict _cache
     def __init__(self, *, namespace=None, nsmap=None, annotate=True,
                  makeelement=None):
         if nsmap is None:
@@ -1242,19 +1254,37 @@ cdef class ElementMaker:
             self._makeelement = makeelement
         else:
             self._makeelement = None
+        self._cache = {}
 
-    def __getattr__(self, tag):
+    @cython.final
+    cdef _build_element_maker(self, tag):
         cdef _ObjectifyElementMakerCaller element_maker
-        if is_special_method(tag):
-            return object.__getattr__(self, tag)
-        if self._namespace is not None and tag[0] != u"{":
-            tag = self._namespace + tag
         element_maker = _ObjectifyElementMakerCaller.__new__(_ObjectifyElementMakerCaller)
-        element_maker._tag = tag
+        if self._namespace is not None and tag[0] != u"{":
+            element_maker._tag = self._namespace + tag
+        else:
+            element_maker._tag = tag
         element_maker._nsmap = self._nsmap
         element_maker._annotate = self._annotate
         element_maker._element_factory = self._makeelement
+        if len(self._cache) > 200:
+            self._cache.clear()
+        self._cache[tag] = element_maker
         return element_maker
+
+    def __getattr__(self, tag):
+        element_maker = self._cache.get(tag, None)
+        if element_maker is None:
+            if is_special_method(tag):
+                return object.__getattr__(self, tag)
+            return self._build_element_maker(tag)
+        return element_maker
+
+    def __call__(self, tag, *args, **kwargs):
+        element_maker = self._cache.get(tag, None)
+        if element_maker is None:
+            element_maker = self._build_element_maker(tag)
+        return element_maker(*args, **kwargs)
 
 ################################################################################
 # Recursive element dumping
