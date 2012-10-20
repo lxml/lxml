@@ -1,7 +1,14 @@
 
+import os
+
+if os.path.exists(os.path.join(os.path.dirname(__file__), '..', 'funding.txt')):
+    funding = ('../funding.txt',)
+else:
+    funding = ()
+
 SITE_STRUCTURE = [
     ('lxml', ('main.txt', 'intro.txt', '../INSTALL.txt', # 'lxml2.txt',
-              'performance.txt', 'compatibility.txt', 'FAQ.txt')),
+              'performance.txt', 'compatibility.txt', 'FAQ.txt') + funding),
     ('Developing with lxml', ('tutorial.txt', '@API reference',
                               'api.txt', 'parsing.txt',
                               'validation.txt', 'xpathxslt.txt',

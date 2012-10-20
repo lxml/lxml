@@ -10,6 +10,7 @@ cython_debug/
 .git/
 .gitrev
 .coverage
+funding.txt
 *.orig
 *.rej
 *.dep
