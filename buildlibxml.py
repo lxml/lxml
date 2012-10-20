@@ -1,4 +1,5 @@
 import os, re, sys, subprocess
+import tarfile
 from distutils import log, sysconfig, version
 
 try:
@@ -212,7 +213,6 @@ def _extractall(self, path=".", members=None):
                 self._dbg(1, "tarfile: %s" % sys.exc_info()[1])
 
 def unpack_tarball(tar_filename, dest):
-    import tarfile
     print('Unpacking %s into %s' % (os.path.basename(tar_filename), dest))
     tar = tarfile.open(tar_filename)
     base_dir = None
@@ -282,7 +282,6 @@ def build_libxml2xslt(download_dir, build_dir,
     safe_mkdir(prefix)
 
     call_setup = {}
-    env_setup = None
     if sys.platform == 'darwin':
         import platform
         # check target architectures on MacOS-X (ppc, i386, x86_64)
@@ -293,7 +292,7 @@ def build_libxml2xslt(download_dir, build_dir,
             if os.path.exists('/usr/bin/xcodebuild'):
                 pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 out, _ = pipe.communicate()
-                xcode_version = out.splitlines()[0].decode('utf8')
+                xcode_version = (out.decode('utf8').splitlines() or [''])[0]
                 # Also parse only first digit, because 3.2.1 can't be parsed nicely
                 if (xcode_version.startswith('Xcode') and
                     version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
