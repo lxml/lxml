@@ -268,6 +268,40 @@ def cmmi(configure_cmd, build_dir, multicore=None, **call_setup):
         ['make'] + make_jobs + ['install'],
         cwd=build_dir, **call_setup)
 
+def configure_darwin_env(env_setup):
+    import platform
+    # check target architectures on MacOS-X (ppc, i386, x86_64)
+    major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
+    if major_version > 7:
+        # Check to see if ppc is supported (XCode4 drops ppc support)
+        include_ppc = True
+        if os.path.exists('/usr/bin/xcodebuild'):
+            pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            out, _ = pipe.communicate()
+            xcode_version = (out.decode('utf8').splitlines() or [''])[0]
+            # Also parse only first digit, because 3.2.1 can't be parsed nicely
+            if (xcode_version.startswith('Xcode') and
+                version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
+                include_ppc = False
+        arch_string = ""
+        if include_ppc:
+            arch_string = "-arch ppc "
+        if minor_version < 6:
+            env_default = {
+                'CFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
+                'LDFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
+                'MACOSX_DEPLOYMENT_TARGET' : "10.3"
+            }
+        else:
+            env_default = {
+                'CFLAGS' : arch_string + "-arch i386 -arch x86_64 -O2",
+                'LDFLAGS' : arch_string + "-arch i386 -arch x86_64",
+                'MACOSX_DEPLOYMENT_TARGET' : "10.6"
+            }
+        env = os.environ.copy()
+        env_default.update(env)
+        env_setup['env'] = env_default
+
 def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
                       static_cflags, static_binaries,
@@ -283,38 +317,7 @@ def build_libxml2xslt(download_dir, build_dir,
 
     call_setup = {}
     if sys.platform == 'darwin':
-        import platform
-        # check target architectures on MacOS-X (ppc, i386, x86_64)
-        major_version, minor_version = tuple(map(int, platform.mac_ver()[0].split('.')[:2]))
-        if major_version > 7:
-            # Check to see if ppc is supported (XCode4 drops ppc support)
-            include_ppc = True
-            if os.path.exists('/usr/bin/xcodebuild'):
-                pipe = subprocess.Popen(['/usr/bin/xcodebuild', '-version'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                out, _ = pipe.communicate()
-                xcode_version = (out.decode('utf8').splitlines() or [''])[0]
-                # Also parse only first digit, because 3.2.1 can't be parsed nicely
-                if (xcode_version.startswith('Xcode') and
-                    version.StrictVersion(xcode_version.split()[1]) >= version.StrictVersion('4.0')):
-                    include_ppc = False
-            arch_string = ""
-            if include_ppc:
-                arch_string = "-arch ppc "
-            if minor_version < 6:
-                env_default = {
-                    'CFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
-                    'LDFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
-                    'MACOSX_DEPLOYMENT_TARGET' : "10.3"
-                    }
-            else:
-                env_default = {
-                    'CFLAGS' : arch_string + "-arch i386 -arch x86_64 -O2",
-                    'LDFLAGS' : arch_string + "-arch i386 -arch x86_64",
-                    'MACOSX_DEPLOYMENT_TARGET' : "10.6"
-                    }
-            env = os.environ.copy()
-            env_default.update(env)
-            call_setup['env'] = env_default
+        configure_darwin_env(call_setup)
 
     configure_cmd = ['./configure',
                      '--disable-dependency-tracking',
