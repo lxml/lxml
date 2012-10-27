@@ -110,7 +110,7 @@ def _unquote_match(s, pos):
 
 def _transform_result(typ, result):
     """Convert the result back into the input type.
-"""
+    """
     if issubclass(typ, bytes):
         return tostring(result, encoding='utf-8')
     elif issubclass(typ, unicode):
@@ -128,41 +128,41 @@ class HtmlMixin(object):
 
     def base_url(self):
         """
-Returns the base URL, given when the page was parsed.
+        Returns the base URL, given when the page was parsed.
 
-Use with ``urlparse.urljoin(el.base_url, href)`` to get
-absolute URLs.
-"""
+        Use with ``urlparse.urljoin(el.base_url, href)`` to get
+        absolute URLs.
+        """
         return self.getroottree().docinfo.URL
     base_url = property(base_url, doc=base_url.__doc__)
 
     def forms(self):
         """
-Return a list of all the forms
-"""
+        Return a list of all the forms
+        """
         return _forms_xpath(self)
     forms = property(forms, doc=forms.__doc__)
 
     def body(self):
         """
-Return the <body> element. Can be called from a child element
-to get the document's head.
-"""
+        Return the <body> element.  Can be called from a child element
+        to get the document's head.
+        """
         return self.xpath('//body|//x:body', namespaces={'x':XHTML_NAMESPACE})[0]
     body = property(body, doc=body.__doc__)
 
     def head(self):
         """
-Returns the <head> element. Can be called from a child
-element to get the document's head.
-"""
+        Returns the <head> element.  Can be called from a child
+        element to get the document's head.
+        """
         return self.xpath('//head|//x:head', namespaces={'x':XHTML_NAMESPACE})[0]
     head = property(head, doc=head.__doc__)
 
     def _label__get(self):
         """
-Get or set any <label> element associated with this element.
-"""
+        Get or set any <label> element associated with this element.
+        """
         id = self.get('id')
         if not id:
             return None
@@ -190,10 +190,10 @@ Get or set any <label> element associated with this element.
 
     def drop_tree(self):
         """
-Removes this element from the tree, including its children and
-text. The tail text is joined to the previous element or
-parent.
-"""
+        Removes this element from the tree, including its children and
+        text.  The tail text is joined to the previous element or
+        parent.
+        """
         parent = self.getparent()
         assert parent is not None
         if self.tail:
@@ -206,16 +206,16 @@ parent.
 
     def drop_tag(self):
         """
-Remove the tag, but not its children or text. The children and text
-are merged into the parent.
+        Remove the tag, but not its children or text.  The children and text
+        are merged into the parent.
 
-Example::
+        Example::
 
->>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
->>> h.find('.//b').drop_tag()
->>> print(tostring(h, encoding=unicode))
-<div>Hello World!</div>
-"""
+            >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
+            >>> h.find('.//b').drop_tag()
+            >>> print(tostring(h, encoding=unicode))
+            <div>Hello World!</div>
+        """
         parent = self.getparent()
         assert parent is not None
         previous = self.getprevious()
@@ -238,29 +238,29 @@ Example::
 
     def find_rel_links(self, rel):
         """
-Find any links like ``<a rel="{rel}">...</a>``; returns a list of elements.
-"""
+        Find any links like ``<a rel="{rel}">...</a>``; returns a list of elements.
+        """
         rel = rel.lower()
         return [el for el in _rel_links_xpath(self)
                 if el.get('rel').lower() == rel]
 
     def find_class(self, class_name):
         """
-Find any elements with the given class name.
-"""
+        Find any elements with the given class name.
+        """
         return _class_xpath(self, class_name=class_name)
 
     def get_element_by_id(self, id, *default):
         """
-Get the first element in a document with the given id. If none is
-found, return the default argument if provided or raise KeyError
-otherwise.
+        Get the first element in a document with the given id.  If none is
+        found, return the default argument if provided or raise KeyError
+        otherwise.
 
-Note that there can be more than one element with the same id,
-and this isn't uncommon in HTML documents found in the wild.
-Browsers return only the first match, and this function does
-the same.
-"""
+        Note that there can be more than one element with the same id,
+        and this isn't uncommon in HTML documents found in the wild.
+        Browsers return only the first match, and this function does
+        the same.
+        """
         try:
             # FIXME: should this check for multiple matches?
             # browsers just return the first one
@@ -273,19 +273,19 @@ the same.
 
     def text_content(self):
         """
-Return the text content of the tag (and the text in any children).
-"""
+        Return the text content of the tag (and the text in any children).
+        """
         return _collect_string_content(self)
 
     def cssselect(self, expr, translator='html'):
         """
-Run the CSS expression on this element and its children,
-returning a list of the results.
+        Run the CSS expression on this element and its children,
+        returning a list of the results.
 
-Equivalent to lxml.cssselect.CSSSelect(expr, translator='html')(self)
--- note that pre-compiling the expression can provide a substantial
-speedup.
-"""
+        Equivalent to lxml.cssselect.CSSSelect(expr, translator='html')(self)
+        -- note that pre-compiling the expression can provide a substantial
+        speedup.
+        """
         # Do the import here to make the dependency optional.
         from lxml.cssselect import CSSSelector
         return CSSSelector(expr, translator=translator)(self)
@@ -296,14 +296,14 @@ speedup.
 
     def make_links_absolute(self, base_url=None, resolve_base_href=True):
         """
-Make all links in the document absolute, given the
-``base_url`` for the document (the full URL where the document
-came from), or if no ``base_url`` is given, then the ``.base_url`` of the document.
+        Make all links in the document absolute, given the
+        ``base_url`` for the document (the full URL where the document
+        came from), or if no ``base_url`` is given, then the ``.base_url`` of the document.
 
-If ``resolve_base_href`` is true, then any ``<base href>``
-tags in the document are used *and* removed from the document.
-If it is false then any such tag is ignored.
-"""
+        If ``resolve_base_href`` is true, then any ``<base href>``
+        tags in the document are used *and* removed from the document.
+        If it is false then any such tag is ignored.
+        """
         if base_url is None:
             base_url = self.base_url
             if base_url is None:
@@ -317,10 +317,10 @@ If it is false then any such tag is ignored.
 
     def resolve_base_href(self):
         """
-Find any ``<base href>`` tag in the document, and apply its
-values to all links found in the document. Also remove the
-tag once it has been applied.
-"""
+        Find any ``<base href>`` tag in the document, and apply its
+        values to all links found in the document.  Also remove the
+        tag once it has been applied.
+        """
         base_href = None
         basetags = self.xpath('//base[@href]|//x:base[@href]', namespaces={'x':XHTML_NAMESPACE})
         for b in basetags:
@@ -332,21 +332,21 @@ tag once it has been applied.
 
     def iterlinks(self):
         """
-Yield (element, attribute, link, pos), where attribute may be None
-(indicating the link is in the text). ``pos`` is the position
-where the link occurs; often 0, but sometimes something else in
-the case of links in stylesheets or style tags.
+        Yield (element, attribute, link, pos), where attribute may be None
+        (indicating the link is in the text).  ``pos`` is the position
+        where the link occurs; often 0, but sometimes something else in
+        the case of links in stylesheets or style tags.
 
-Note: <base href> is *not* taken into account in any way. The
-link you get is exactly the link in the document.
+        Note: <base href> is *not* taken into account in any way.  The
+        link you get is exactly the link in the document.
 
-Note: multiple links inside of a single text string or
-attribute value are returned in reversed order. This makes it
-possible to replace or delete them from the text string value
-based on their reported text positions. Otherwise, a
-modification at one text position can change the positions of
-links reported later on.
-"""
+        Note: multiple links inside of a single text string or
+        attribute value are returned in reversed order.  This makes it
+        possible to replace or delete them from the text string value
+        based on their reported text positions.  Otherwise, a
+        modification at one text position can change the positions of
+        links reported later on.
+        """
         link_attrs = defs.link_attrs
         for el in self.iter():
             attribs = el.attrib
@@ -380,7 +380,7 @@ links reported later on.
                     ## FIXME: while it's fine we *find* this link,
                     ## according to the spec we aren't supposed to
                     ## actually change the value, including resolving
-                    ## it. It can also still be a link, even if it
+                    ## it.  It can also still be a link, even if it
                     ## doesn't have a valuetype="ref" (which seems to be the norm)
                     ## http://www.w3.org/TR/html401/struct/objects.html#adef-valuetype
                     yield (el, 'value', el.get('value'), 0)
@@ -412,21 +412,21 @@ links reported later on.
     def rewrite_links(self, link_repl_func, resolve_base_href=True,
                       base_href=None):
         """
-Rewrite all the links in the document. For each link
-``link_repl_func(link)`` will be called, and the return value
-will replace the old link.
+        Rewrite all the links in the document.  For each link
+        ``link_repl_func(link)`` will be called, and the return value
+        will replace the old link.
 
-Note that links may not be absolute (unless you first called
-``make_links_absolute()``), and may be internal (e.g.,
-``'#anchor'``). They can also be values like
-``'mailto:email'`` or ``'javascript:expr'``.
+        Note that links may not be absolute (unless you first called
+        ``make_links_absolute()``), and may be internal (e.g.,
+        ``'#anchor'``).  They can also be values like
+        ``'mailto:email'`` or ``'javascript:expr'``.
 
-If you give ``base_href`` then all links passed to
-``link_repl_func()`` will take that into account.
+        If you give ``base_href`` then all links passed to
+        ``link_repl_func()`` will take that into account.
 
-If the ``link_repl_func`` returns None, the attribute or
-tag text will be removed completely.
-"""
+        If the ``link_repl_func`` returns None, the attribute or
+        tag text will be removed completely.
+        """
         if base_href is not None:
             # FIXME: this can be done in one pass with a wrapper
             # around link_repl_func
@@ -459,12 +459,12 @@ tag text will be removed completely.
 
 class _MethodFunc(object):
     """
-An object that represents a method on an element as a function;
-the function takes either an element or an HTML string. It
-returns whatever the function normally returns, or if the function
-works in-place (and so returns None) it returns a serialized form
-of the resulting document.
-"""
+    An object that represents a method on an element as a function;
+    the function takes either an element or an HTML string.  It
+    returns whatever the function normally returns, or if the function
+    works in-place (and so returns None) it returns a serialized form
+    of the resulting document.
+    """
     def __init__(self, name, copy=False, source_class=HtmlMixin):
         self.name = name
         self.copy = copy
@@ -515,12 +515,12 @@ class HtmlEntity(etree.EntityBase, HtmlMixin):
 class HtmlElementClassLookup(etree.CustomElementClassLookup):
     """A lookup scheme for HTML Element classes.
 
-To create a lookup instance with different Element classes, pass a tag
-name mapping of Element classes in the ``classes`` keyword argument and/or
-a tag name mapping of Mixin classes in the ``mixins`` keyword argument.
-The special key '*' denotes a Mixin class that should be mixed into all
-Element classes.
-"""
+    To create a lookup instance with different Element classes, pass a tag
+    name mapping of Element classes in the ``classes`` keyword argument and/or
+    a tag name mapping of Mixin classes in the ``mixins`` keyword argument.
+    The special key '*' denotes a Mixin class that should be mixed into all
+    Element classes.
+    """
     _default_element_classes = {}
 
     def __init__(self, classes=None, mixins=None):
@@ -569,15 +569,15 @@ def document_fromstring(html, parser=None, **kw):
 def fragments_fromstring(html, no_leading_text=False, base_url=None,
                          parser=None, **kw):
     """
-Parses several HTML elements, returning a list of elements.
+    Parses several HTML elements, returning a list of elements.
 
-The first item in the list may be a string (though leading
-whitespace is removed). If no_leading_text is true, then it will
-be an error if there is leading text, and it will always be a list
-of only elements.
+    The first item in the list may be a string (though leading
+    whitespace is removed).  If no_leading_text is true, then it will
+    be an error if there is leading text, and it will always be a list
+    of only elements.
 
-base_url will set the document's base_url attribute (and the tree's docinfo.URL)
-"""
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    """
     if parser is None:
         parser = html_parser
     # FIXME: check what happens when you give html with a body, head, etc.
@@ -603,16 +603,16 @@ base_url will set the document's base_url attribute (and the tree's docinfo.URL)
 def fragment_fromstring(html, create_parent=False, base_url=None,
                         parser=None, **kw):
     """
-Parses a single HTML element; it is an error if there is more than
-one element, or if anything but whitespace precedes or follows the
-element.
+    Parses a single HTML element; it is an error if there is more than
+    one element, or if anything but whitespace precedes or follows the
+    element.
 
-If create_parent is true (or is a tag name) then a parent node
-will be created to encapsulate the HTML in a single element. In
-this case, leading or trailing text is allowed.
+    If create_parent is true (or is a tag name) then a parent node
+    will be created to encapsulate the HTML in a single element.  In
+    this case, leading or trailing text is allowed.
 
-base_url will set the document's base_url attribute (and the tree's docinfo.URL)
-"""
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    """
     if parser is None:
         parser = html_parser
 
@@ -648,13 +648,13 @@ base_url will set the document's base_url attribute (and the tree's docinfo.URL)
 
 def fromstring(html, base_url=None, parser=None, **kw):
     """
-Parse the html, returning a single element/document.
+    Parse the html, returning a single element/document.
 
-This tries to minimally parse the chunk of text, without knowing if it
-is a fragment or a document.
+    This tries to minimally parse the chunk of text, without knowing if it
+    is a fragment or a document.
 
-base_url will set the document's base_url attribute (and the tree's docinfo.URL)
-"""
+    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    """
     if parser is None:
         parser = html_parser
     start = html[:10].lstrip().lower()
@@ -702,7 +702,7 @@ base_url will set the document's base_url attribute (and the tree's docinfo.URL)
         # element passed in
         return body[0]
     # Now we have a body which represents a bunch of tags which have the
-    # content that was passed in. We will create a fake container, which
+    # content that was passed in.  We will create a fake container, which
     # is the body tag, except <body> implies too much structure.
     if _contains_block_level_tag(body):
         body.tag = 'div'
@@ -712,13 +712,13 @@ base_url will set the document's base_url attribute (and the tree's docinfo.URL)
 
 def parse(filename_or_url, parser=None, base_url=None, **kw):
     """
-Parse a filename, URL, or file-like object into an HTML document
-tree. Note: this returns a tree, not an element. Use
-``parse(...).getroot()`` to get the document root.
+    Parse a filename, URL, or file-like object into an HTML document
+    tree.  Note: this returns a tree, not an element.  Use
+    ``parse(...).getroot()`` to get the document root.
 
-You can override the base URL with the ``base_url`` keyword. This
-is most useful when parsing from a file-like object.
-"""
+    You can override the base URL with the ``base_url`` keyword.  This
+    is most useful when parsing from a file-like object.
+    """
     if parser is None:
         parser = html_parser
     return etree.parse(filename_or_url, parser, base_url=base_url, **kw)
@@ -745,24 +745,24 @@ def _element_name(el):
 
 class FormElement(HtmlElement):
     """
-Represents a <form> element.
-"""
+    Represents a <form> element.
+    """
 
     def inputs(self):
         """
-Returns an accessor for all the input elements in the form.
+        Returns an accessor for all the input elements in the form.
 
-See `InputGetter` for more information about the object.
-"""
+        See `InputGetter` for more information about the object.
+        """
         return InputGetter(self)
     inputs = property(inputs, doc=inputs.__doc__)
 
     def _fields__get(self):
         """
-Dictionary-like object that represents all the fields in this
-form. You can set values in this dictionary to effect the
-form.
-"""
+        Dictionary-like object that represents all the fields in this
+        form.  You can set values in this dictionary to effect the
+        form.
+        """
         return FieldsDict(self.inputs)
     def _fields__set(self, value):
         prev_keys = self.fields.keys()
@@ -791,9 +791,9 @@ form.
 
     def form_values(self):
         """
-Return a list of tuples of the field values for the form.
-This is suitable to be passed to ``urllib.urlencode()``.
-"""
+        Return a list of tuples of the field values for the form.
+        This is suitable to be passed to ``urllib.urlencode()``.
+        """
         results = []
         for el in self.inputs:
             name = el.name
@@ -823,8 +823,8 @@ This is suitable to be passed to ``urllib.urlencode()``.
 
     def _action__get(self):
         """
-Get/set the form's ``action`` attribute.
-"""
+        Get/set the form's ``action`` attribute.
+        """
         base_url = self.base_url
         action = self.get('action')
         if base_url and action is not None:
@@ -840,9 +840,9 @@ Get/set the form's ``action`` attribute.
 
     def _method__get(self):
         """
-Get/set the form's method. Always returns a capitalized
-string, and defaults to ``'GET'``
-"""
+        Get/set the form's method.  Always returns a capitalized
+        string, and defaults to ``'GET'``
+        """
         return self.get('method', 'GET').upper()
     def _method__set(self, value):
         self.set('method', value.upper())
@@ -852,28 +852,28 @@ HtmlElementClassLookup._default_element_classes['form'] = FormElement
 
 def submit_form(form, extra_values=None, open_http=None):
     """
-Helper function to submit a form. Returns a file-like object, as from
-``urllib.urlopen()``. This object also has a ``.geturl()`` function,
-which shows the URL if there were any redirects.
+    Helper function to submit a form.  Returns a file-like object, as from
+    ``urllib.urlopen()``.  This object also has a ``.geturl()`` function,
+    which shows the URL if there were any redirects.
 
-You can use this like::
+    You can use this like::
 
-form = doc.forms[0]
-form.inputs['foo'].value = 'bar' # etc
-response = form.submit()
-doc = parse(response)
-doc.make_links_absolute(response.geturl())
+        form = doc.forms[0]
+        form.inputs['foo'].value = 'bar' # etc
+        response = form.submit()
+        doc = parse(response)
+        doc.make_links_absolute(response.geturl())
 
-To change the HTTP requester, pass a function as ``open_http`` keyword
-argument that opens the URL for you. The function must have the following
-signature::
+    To change the HTTP requester, pass a function as ``open_http`` keyword
+    argument that opens the URL for you.  The function must have the following
+    signature::
 
-open_http(method, URL, values)
+        open_http(method, URL, values)
 
-The action is one of 'GET' or 'POST', the URL is the target URL as a
-string, and the values are a sequence of ``(name, value)`` tuples with the
-form data.
-"""
+    The action is one of 'GET' or 'POST', the URL is the target URL as a
+    string, and the values are a sequence of ``(name, value)`` tuples with the
+    form data.
+    """
     values = form.form_values()
     if extra_values:
         if hasattr(extra_values, 'items'):
@@ -935,18 +935,18 @@ class FieldsDict(DictMixin):
 class InputGetter(object):
 
     """
-An accessor that represents all the input fields in a form.
+    An accessor that represents all the input fields in a form.
 
-You can get fields by name from this, with
-``form.inputs['field_name']``. If there are a set of checkboxes
-with the same name, they are returned as a list (a `CheckboxGroup`
-which also allows value setting). Radio inputs are handled
-similarly.
+    You can get fields by name from this, with
+    ``form.inputs['field_name']``.  If there are a set of checkboxes
+    with the same name, they are returned as a list (a `CheckboxGroup`
+    which also allows value setting).  Radio inputs are handled
+    similarly.
 
-You can also iterate over this to get all input elements. This
-won't return the same thing as if you get all the names, as
-checkboxes and radio elements are returned individually.
-"""
+    You can also iterate over this to get all input elements.  This
+    won't return the same thing as if you get all the names, as
+    checkboxes and radio elements are returned individually.
+    """
 
     _name_xpath = etree.XPath(".//*[@name = $name and (local-name(.) = 'select' or local-name(.) = 'input' or local-name(.) = 'textarea')]")
     _all_xpath = etree.XPath(".//*[local-name() = 'select' or local-name() = 'input' or local-name() = 'textarea']")
@@ -1001,14 +1001,14 @@ checkboxes and radio elements are returned individually.
 class InputMixin(object):
 
     """
-Mix-in for all input elements (input, select, and textarea)
-"""
+    Mix-in for all input elements (input, select, and textarea)
+    """
 
 
     def _name__get(self):
         """
-Get/set the name of the element
-"""
+        Get/set the name of the element
+        """
         return self.get('name')
     def _name__set(self, value):
         self.set('name', value)
@@ -1028,14 +1028,14 @@ Get/set the name of the element
 
 class TextareaElement(InputMixin, HtmlElement):
     """
-``<textarea>`` element. You can get the name with ``.name`` and
-get/set the value with ``.value``
-"""
+    ``<textarea>`` element.  You can get the name with ``.name`` and
+    get/set the value with ``.value``
+    """
 
     def _value__get(self):
         """
-Get/set the value (which is the contents of this element)
-"""
+        Get/set the value (which is the contents of this element)
+        """
         content = self.text or ''
         if self.tag.startswith("{%s}" % XHTML_NAMESPACE):
             serialisation_method = 'xml'
@@ -1057,24 +1057,24 @@ HtmlElementClassLookup._default_element_classes['textarea'] = TextareaElement
 
 class SelectElement(InputMixin, HtmlElement):
     """
-``<select>`` element. You can get the name with ``.name``.
+    ``<select>`` element.  You can get the name with ``.name``.
 
-``.value`` will be the value of the selected option, unless this
-is a multi-select element (``<select multiple>``), in which case
-it will be a set-like object. In either case ``.value_options``
-gives the possible values.
+    ``.value`` will be the value of the selected option, unless this
+    is a multi-select element (``<select multiple>``), in which case
+    it will be a set-like object.  In either case ``.value_options``
+    gives the possible values.
 
-The boolean attribute ``.multiple`` shows if this is a
-multi-select.
-"""
+    The boolean attribute ``.multiple`` shows if this is a
+    multi-select.
+    """
 
     def _value__get(self):
         """
-Get/set the value of this select (the selected option).
+        Get/set the value of this select (the selected option).
 
-If this is a multi-select, this is a set-like object that
-represents all the selected options.
-"""
+        If this is a multi-select, this is a set-like object that
+        represents all the selected options.
+        """
         if self.multiple:
             return MultipleSelectOptions(self)
         for el in _options_xpath(self):
@@ -1126,9 +1126,9 @@ represents all the selected options.
 
     def value_options(self):
         """
-All the possible values this select can have (the ``value``
-attribute of all the ``<option>`` elements.
-"""
+        All the possible values this select can have (the ``value``
+        attribute of all the ``<option>`` elements.
+        """
         options = []
         for el in _options_xpath(self):
             value = el.get('value')
@@ -1142,8 +1142,8 @@ attribute of all the ``<option>`` elements.
 
     def _multiple__get(self):
         """
-Boolean attribute: is there a ``multiple`` attribute on this element.
-"""
+        Boolean attribute: is there a ``multiple`` attribute on this element.
+        """
         return 'multiple' in self.attrib
     def _multiple__set(self, value):
         if value:
@@ -1156,19 +1156,19 @@ HtmlElementClassLookup._default_element_classes['select'] = SelectElement
 
 class MultipleSelectOptions(SetMixin):
     """
-Represents all the selected options in a ``<select multiple>`` element.
+    Represents all the selected options in a ``<select multiple>`` element.
 
-You can add to this set-like option to select an option, or remove
-to unselect the option.
-"""
+    You can add to this set-like option to select an option, or remove
+    to unselect the option.
+    """
 
     def __init__(self, select):
         self.select = select
 
     def options(self):
         """
-Iterator of all the ``<option>`` elements.
-"""
+        Iterator of all the ``<option>`` elements.
+        """
         return iter(_options_xpath(self.select))
     options = property(options)
 
@@ -1222,19 +1222,19 @@ Iterator of all the ``<option>`` elements.
 
 class RadioGroup(list):
     """
-This object represents several ``<input type=radio>`` elements
-that have the same name.
+    This object represents several ``<input type=radio>`` elements
+    that have the same name.
 
-You can use this like a list, but also use the property
-``.value`` to check/uncheck inputs. Also you can use
-``.value_options`` to get the possible values.
-"""
+    You can use this like a list, but also use the property
+    ``.value`` to check/uncheck inputs.  Also you can use
+    ``.value_options`` to get the possible values.
+    """
 
     def _value__get(self):
         """
-Get/set the value, which checks the radio with that value (and
-unchecks any other value).
-"""
+        Get/set the value, which checks the radio with that value (and
+        unchecks any other value).
+        """
         for el in self:
             if 'checked' in el.attrib:
                 return el.get('value')
@@ -1262,8 +1262,8 @@ unchecks any other value).
 
     def value_options(self):
         """
-Returns a list of all the possible values.
-"""
+        Returns a list of all the possible values.
+        """
         return [el.get('value') for el in self]
     value_options = property(value_options, doc=value_options.__doc__)
 
@@ -1274,20 +1274,20 @@ Returns a list of all the possible values.
 
 class CheckboxGroup(list):
     """
-Represents a group of checkboxes (``<input type=checkbox>``) that
-have the same name.
+    Represents a group of checkboxes (``<input type=checkbox>``) that
+    have the same name.
 
-In addition to using this like a list, the ``.value`` attribute
-returns a set-like object that you can add to or remove from to
-check and uncheck checkboxes. You can also use ``.value_options``
-to get the possible values.
-"""
+    In addition to using this like a list, the ``.value`` attribute
+    returns a set-like object that you can add to or remove from to
+    check and uncheck checkboxes.  You can also use ``.value_options``
+    to get the possible values.
+    """
 
     def _value__get(self):
         """
-Return a set-like object that can be modified to check or
-uncheck individual checkboxes according to their value.
-"""
+        Return a set-like object that can be modified to check or
+        uncheck individual checkboxes according to their value.
+        """
         return CheckboxValues(self)
     def _value__set(self, value):
         self.value.clear()
@@ -1302,8 +1302,8 @@ uncheck individual checkboxes according to their value.
 
     def value_options(self):
         """
-Returns a list of all the possible values.
-"""
+        Returns a list of all the possible values.
+        """
         return [el.get('value') for el in self]
     value_options = property(value_options, doc=value_options.__doc__)
 
@@ -1314,9 +1314,9 @@ Returns a list of all the possible values.
 class CheckboxValues(SetMixin):
 
     """
-Represents the values of the checked checkboxes in a group of
-checkboxes with the same name.
-"""
+    Represents the values of the checked checkboxes in a group of
+    checkboxes with the same name.
+    """
 
     def __init__(self, group):
         self.group = group
@@ -1356,28 +1356,28 @@ checkboxes with the same name.
 
 class InputElement(InputMixin, HtmlElement):
     """
-Represents an ``<input>`` element.
+    Represents an ``<input>`` element.
 
-You can get the type with ``.type`` (which is lower-cased and
-defaults to ``'text'``).
+    You can get the type with ``.type`` (which is lower-cased and
+    defaults to ``'text'``).
 
-Also you can get and set the value with ``.value``
+    Also you can get and set the value with ``.value``
 
-Checkboxes and radios have the attribute ``input.checkable ==
-True`` (for all others it is false) and a boolean attribute
-``.checked``.
+    Checkboxes and radios have the attribute ``input.checkable ==
+    True`` (for all others it is false) and a boolean attribute
+    ``.checked``.
 
-"""
+    """
 
     ## FIXME: I'm a little uncomfortable with the use of .checked
     def _value__get(self):
         """
-Get/set the value of this element, using the ``value`` attribute.
+        Get/set the value of this element, using the ``value`` attribute.
 
-Also, if this is a checkbox and it has no value, this defaults
-to ``'on'``. If it is a checkbox or radio that is not
-checked, this returns None.
-"""
+        Also, if this is a checkbox and it has no value, this defaults
+        to ``'on'``.  If it is a checkbox or radio that is not
+        checked, this returns None.
+        """
         if self.checkable:
             if self.checked:
                 return self.get('value') or 'on'
@@ -1404,8 +1404,8 @@ checked, this returns None.
 
     def _type__get(self):
         """
-Return the type of this element (using the type attribute).
-"""
+        Return the type of this element (using the type attribute).
+        """
         return self.get('type', 'text').lower()
     def _type__set(self, value):
         self.set('type', value)
@@ -1413,18 +1413,18 @@ Return the type of this element (using the type attribute).
 
     def checkable(self):
         """
-Boolean: can this element be checked?
-"""
+        Boolean: can this element be checked?
+        """
         return self.type in ['checkbox', 'radio']
     checkable = property(checkable, doc=checkable.__doc__)
 
     def _checked__get(self):
         """
-Boolean attribute to get/set the presence of the ``checked``
-attribute.
+        Boolean attribute to get/set the presence of the ``checked``
+        attribute.
 
-You can only use this on checkable input types.
-"""
+        You can only use this on checkable input types.
+        """
         if not self.checkable:
             raise AttributeError('Not a checkable input type')
         return 'checked' in self.attrib
@@ -1442,17 +1442,17 @@ HtmlElementClassLookup._default_element_classes['input'] = InputElement
 
 class LabelElement(HtmlElement):
     """
-Represents a ``<label>`` element.
+    Represents a ``<label>`` element.
 
-Label elements are linked to other elements with their ``for``
-attribute. You can access this element with ``label.for_element``.
-"""
+    Label elements are linked to other elements with their ``for``
+    attribute.  You can access this element with ``label.for_element``.
+    """
 
     def _for_element__get(self):
         """
-Get/set the element this label points to. Return None if it
-can't be found.
-"""
+        Get/set the element this label points to.  Return None if it
+        can't be found.
+        """
         id = self.get('for')
         if not id:
             return None
@@ -1477,8 +1477,8 @@ HtmlElementClassLookup._default_element_classes['label'] = LabelElement
 
 def html_to_xhtml(html):
     """Convert all tags in an HTML tree to XHTML by moving them to the
-XHTML namespace.
-"""
+    XHTML namespace.
+    """
     try:
         html = html.getroot()
     except AttributeError:
@@ -1492,8 +1492,8 @@ XHTML namespace.
 
 def xhtml_to_html(xhtml):
     """Convert all tags in an XHTML tree to HTML by removing their
-XHTML namespace.
-"""
+    XHTML namespace.
+    """
     try:
         xhtml = xhtml.getroot()
     except AttributeError:
@@ -1514,65 +1514,65 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
              encoding=None, method="html", with_tail=True, doctype=None):
     """Return an HTML string representation of the document.
 
-Note: if include_meta_content_type is true this will create a
-``<meta http-equiv="Content-Type" ...>`` tag in the head;
-regardless of the value of include_meta_content_type any existing
-``<meta http-equiv="Content-Type" ...>`` tag will be removed
+    Note: if include_meta_content_type is true this will create a
+    ``<meta http-equiv="Content-Type" ...>`` tag in the head;
+    regardless of the value of include_meta_content_type any existing
+    ``<meta http-equiv="Content-Type" ...>`` tag will be removed
 
-The ``encoding`` argument controls the output encoding (defauts to
-ASCII, with &#...; character references for any characters outside
-of ASCII). Note that you can pass the name ``'unicode'`` as
-``encoding`` argument to serialise to a unicode string.
+    The ``encoding`` argument controls the output encoding (defauts to
+    ASCII, with &#...; character references for any characters outside
+    of ASCII).  Note that you can pass the name ``'unicode'`` as
+    ``encoding`` argument to serialise to a unicode string.
 
-The ``method`` argument defines the output method. It defaults to
-'html', but can also be 'xml' for xhtml output, or 'text' to
-serialise to plain text without markup.
+    The ``method`` argument defines the output method.  It defaults to
+    'html', but can also be 'xml' for xhtml output, or 'text' to
+    serialise to plain text without markup.
 
-To leave out the tail text of the top-level element that is being
-serialised, pass ``with_tail=False``.
+    To leave out the tail text of the top-level element that is being
+    serialised, pass ``with_tail=False``.
 
-The ``doctype`` option allows passing in a plain string that will
-be serialised before the XML tree. Note that passing in non
-well-formed content here will make the XML output non well-formed.
-Also, an existing doctype in the document tree will not be removed
-when serialising an ElementTree instance.
+    The ``doctype`` option allows passing in a plain string that will
+    be serialised before the XML tree.  Note that passing in non
+    well-formed content here will make the XML output non well-formed.
+    Also, an existing doctype in the document tree will not be removed
+    when serialising an ElementTree instance.
 
-Example::
+    Example::
 
->>> from lxml import html
->>> root = html.fragment_fromstring('<p>Hello<br>world!</p>')
+        >>> from lxml import html
+        >>> root = html.fragment_fromstring('<p>Hello<br>world!</p>')
 
->>> html.tostring(root)
-b'<p>Hello<br>world!</p>'
->>> html.tostring(root, method='html')
-b'<p>Hello<br>world!</p>'
+        >>> html.tostring(root)
+        b'<p>Hello<br>world!</p>'
+        >>> html.tostring(root, method='html')
+        b'<p>Hello<br>world!</p>'
 
->>> html.tostring(root, method='xml')
-b'<p>Hello<br/>world!</p>'
+        >>> html.tostring(root, method='xml')
+        b'<p>Hello<br/>world!</p>'
 
->>> html.tostring(root, method='text')
-b'Helloworld!'
+        >>> html.tostring(root, method='text')
+        b'Helloworld!'
 
->>> html.tostring(root, method='text', encoding=unicode)
-u'Helloworld!'
+        >>> html.tostring(root, method='text', encoding=unicode)
+        u'Helloworld!'
 
->>> root = html.fragment_fromstring('<div><p>Hello<br>world!</p>TAIL</div>')
->>> html.tostring(root[0], method='text', encoding=unicode)
-u'Helloworld!TAIL'
+        >>> root = html.fragment_fromstring('<div><p>Hello<br>world!</p>TAIL</div>')
+        >>> html.tostring(root[0], method='text', encoding=unicode)
+        u'Helloworld!TAIL'
 
->>> html.tostring(root[0], method='text', encoding=unicode, with_tail=False)
-u'Helloworld!'
+        >>> html.tostring(root[0], method='text', encoding=unicode, with_tail=False)
+        u'Helloworld!'
 
->>> doc = html.document_fromstring('<p>Hello<br>world!</p>')
->>> html.tostring(doc, method='html', encoding=unicode)
-u'<html><body><p>Hello<br>world!</p></body></html>'
+        >>> doc = html.document_fromstring('<p>Hello<br>world!</p>')
+        >>> html.tostring(doc, method='html', encoding=unicode)
+        u'<html><body><p>Hello<br>world!</p></body></html>'
 
->>> print(html.tostring(doc, method='html', encoding=unicode,
-... doctype='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"'
-... ' "http://www.w3.org/TR/html4/strict.dtd">'))
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html><body><p>Hello<br>world!</p></body></html>
-"""
+        >>> print(html.tostring(doc, method='html', encoding=unicode,
+        ...          doctype='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"'
+        ...                  ' "http://www.w3.org/TR/html4/strict.dtd">'))
+        <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+        <html><body><p>Hello<br>world!</p></body></html>
+    """
     html = etree.tostring(doc, method=method, pretty_print=pretty_print,
                           encoding=encoding, with_tail=with_tail,
                           doctype=doctype)
@@ -1587,10 +1587,10 @@ tostring.__doc__ = __fix_docstring(tostring.__doc__)
 
 def open_in_browser(doc, encoding=None):
     """
-Open the HTML document in a web browser, saving it to a temporary
-file to open it. Note that this does not delete the file after
-use. This is mainly meant for debugging.
-"""
+    Open the HTML document in a web browser, saving it to a temporary
+    file to open it.  Note that this does not delete the file after
+    use.  This is mainly meant for debugging.
+    """
     import os
     import webbrowser
     import tempfile
@@ -1613,29 +1613,29 @@ use. This is mainly meant for debugging.
 
 class HTMLParser(etree.HTMLParser):
     """An HTML parser that is configured to return lxml.html Element
-objects.
-"""
+    objects.
+    """
     def __init__(self, **kwargs):
         super(HTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
 class XHTMLParser(etree.XMLParser):
     """An XML parser that is configured to return lxml.html Element
-objects.
+    objects.
 
-Note that this parser is not really XHTML aware unless you let it
-load a DTD that declares the HTML entities. To do this, make sure
-you have the XHTML DTDs installed in your catalogs, and create the
-parser like this::
+    Note that this parser is not really XHTML aware unless you let it
+    load a DTD that declares the HTML entities.  To do this, make sure
+    you have the XHTML DTDs installed in your catalogs, and create the
+    parser like this::
 
->>> parser = XHTMLParser(load_dtd=True)
+        >>> parser = XHTMLParser(load_dtd=True)
 
-If you additionally want to validate the document, use this::
+    If you additionally want to validate the document, use this::
 
->>> parser = XHTMLParser(dtd_validation=True)
+        >>> parser = XHTMLParser(dtd_validation=True)
 
-For catalog support, see http://www.xmlsoft.org/catalog.html.
-"""
+    For catalog support, see http://www.xmlsoft.org/catalog.html.
+    """
     def __init__(self, **kwargs):
         super(XHTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
@@ -1643,8 +1643,8 @@ For catalog support, see http://www.xmlsoft.org/catalog.html.
 def Element(*args, **kw):
     """Create a new HTML Element.
 
-This can also be used for XHTML documents.
-"""
+    This can also be used for XHTML documents.
+    """
     v = html_parser.makeelement(*args, **kw)
     return v
 
