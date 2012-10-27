@@ -106,8 +106,8 @@ least if an encoding is given.
     >>> from lxml.html import HTMLParser
     >>> enc = 'utf-8'
     >>> html_parser = HTMLParser(encoding=enc)
-    >>> src = b'<html><body>\xc3\xa4</body></html>'
+    >>> src = '<html><body>Test</body></html>'.encode(enc)
     >>> doc = fromstring(src, parser=html_parser)
-    >>> tostring(doc, encoding=enc)
-		'<html><body>\xc3\xa4</body></html>'
+    >>> print(tostring(doc, encoding=unicode))
+		'<html><body>Test</body></html>'
 
