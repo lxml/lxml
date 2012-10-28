@@ -658,7 +658,8 @@ def fromstring(html, base_url=None, parser=None, **kw):
     if parser is None:
         parser = html_parser
     start = html[:10].lstrip().lower()
-    if start.startswith('<html') or start.startswith('<!doctype'):
+    if (isinstance(start, bytes) and start.startswith( ('<html'.encode(), '<!doctype'.encode()) ) or
+        not isinstance(start, bytes) and start.startswith( ('<html', '<!doctype') )):
         # Looks like a full HTML document
         return document_fromstring(html, parser=parser, base_url=base_url, **kw)
     # otherwise, lets parse it out...
