@@ -20,6 +20,9 @@ Other changes
 * The externally useless class ``_ObjectifyElementMakerCaller`` was
   removed from the module API of lxml.objectify.
 
+* LP#1075622: lxml.builder is faster for adding text to elements with
+  many children.  Patch by Anders Hammarquist.
+
 
 3.0.1 (2012-10-14)
 ==================
