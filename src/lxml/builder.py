@@ -179,9 +179,9 @@ class ElementMaker(object):
             typemap = {}
         
         def add_text(elem, item):
-            if len(elem):
+            try:
                 elem[-1].tail = (elem[-1].tail or "") + item
-            else:
+            except IndexError:
                 elem.text = (elem.text or "") + item
         if str not in typemap:
             typemap[str] = add_text
