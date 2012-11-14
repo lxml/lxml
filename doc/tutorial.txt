@@ -1009,8 +1009,9 @@ target to a usable state (also in the case of an error!).
 Namespaces
 ==========
 
-The ElementTree API avoids `namespace prefixes`_ wherever possible and deploys
-the real namespaces instead:
+The ElementTree API avoids
+`namespace prefixes <http://www.w3.org/TR/xml-names/#ns-qualnames>`_
+wherever possible and deploys the real namespaces (the URI) instead:
 
 .. sourcecode:: pycon
 
@@ -1023,16 +1024,12 @@ the real namespaces instead:
       <html:body>Hello World</html:body>
     </html:html>
 
-.. _`namespace prefixes`: http://www.w3.org/TR/xml-names/#ns-qualnames
-
-The notation that ElementTree uses was originally brought up by `James
-Clark`_.  It has the major advantage of providing a universally
-qualified name for a tag, regardless of any prefixes that may or may
-not have been used or defined in a document.  By moving the
-indirection of prefixes out of the way, it makes namespace aware code
-much clearer and safer.
-
-.. _`James Clark`: http://www.jclark.com/xml/xmlns.htm
+The notation that ElementTree uses was originally brought up by
+`James Clark <http://www.jclark.com/xml/xmlns.htm>`_.  It has the major
+advantage of providing a universally qualified name for a tag, regardless
+of any prefixes that may or may not have been used or defined in a document.
+By moving the indirection of prefixes out of the way, it makes namespace
+aware code much clearer and easier to get right.
 
 As you can see from the example, prefixes only become important when
 you serialise the result.  However, the above code looks somewhat
@@ -1057,6 +1054,37 @@ the Element factory function, e.g. to define the default namespace:
     <html xmlns="http://www.w3.org/1999/xhtml">
       <body>Hello World</body>
     </html>
+
+You can also use the ``QName`` helper class to build or split qualified
+tag names:
+
+.. sourcecode:: pycon
+
+    >>> tag = etree.QName('http://www.w3.org/1999/xhtml', 'html')
+    >>> print(tag.localname)
+    html
+    >>> print(tag.namespace)
+    http://www.w3.org/1999/xhtml
+    >>> print(tag.text)
+    {http://www.w3.org/1999/xhtml}html
+
+    >>> tag = etree.QName('{http://www.w3.org/1999/xhtml}html')
+    >>> print(tag.localname)
+    html
+    >>> print(tag.namespace)
+    http://www.w3.org/1999/xhtml
+
+    >>> root = etree.Element('{http://www.w3.org/1999/xhtml}html')
+    >>> tag = etree.QName(root)
+    >>> print(tag.localname)
+    html
+
+    >>> tag = etree.QName(root, 'script')
+    >>> print(tag.text)
+    {http://www.w3.org/1999/xhtml}script
+    >>> tag = etree.QName('{http://www.w3.org/1999/xhtml}html', 'script')
+    >>> print(tag.text)
+    {http://www.w3.org/1999/xhtml}script
 
 lxml.etree allows you to look up the current namespaces defined for a
 node through the ``.nsmap`` property:
