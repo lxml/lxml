@@ -2,7 +2,12 @@ import unittest
 
 import lxml.html
 
-from lxml.tests.common_imports import doctest, HelperTestCase
+from lxml.tests.common_imports import doctest, HelperTestCase, skipif
+
+try:
+    import cssselect
+except ImportError:
+    cssselect = None
 
 
 HTML = '''
@@ -14,6 +19,8 @@ HTML = '''
 
 
 class CSSTestCase(HelperTestCase):
+
+    pytestmark = skipif('cssselect is None')
 
     def test_cssselect(self):
         div, = lxml.html.fromstring(HTML).xpath('//div')
