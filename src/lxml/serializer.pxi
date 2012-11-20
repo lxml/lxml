@@ -194,25 +194,24 @@ cdef _raiseSerialisationError(int error_result):
 ############################################################
 # low-level serialisation functions
 
+cdef void _writeDoctype(tree.xmlOutputBuffer* c_buffer,
+                        const_xmlChar* c_doctype) nogil:
+    tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
+                              <const_char*>c_doctype)
+    tree.xmlOutputBufferWriteString(c_buffer, "\n")
+
 cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
                              xmlNode* c_node, const_char* encoding, const_xmlChar* c_doctype,
                              int c_method, bint write_xml_declaration,
                              bint write_complete_document,
                              bint pretty_print, bint with_tail,
                              int standalone) nogil:
-    cdef xmlDoc* c_doc
     cdef xmlNode* c_nsdecl_node
-    c_doc = c_node.doc
+    cdef xmlDoc* c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
-        if c_buffer.error:
-            return
-
     if c_doctype:
-        tree.xmlOutputBufferWrite(c_buffer, tree.xmlStrlen(c_doctype),
-                                  <const_char*>c_doctype)
-        tree.xmlOutputBufferWriteString(c_buffer, "\n")
-
+        _writeDoctype(c_buffer, c_doctype)
     # write internal DTD subset, preceding PIs/comments, etc.
     if write_complete_document and not c_buffer.error:
         if c_doctype is NULL:
@@ -462,26 +461,10 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         else:
             f.write(data)
         return
-    enchandler = tree.xmlFindCharEncodingHandler(c_enc)
-    if enchandler is NULL:
-        if encoding is not None:
-            encoding = encoding.decode(u'UTF-8')
-        raise LookupError, u"unknown encoding: '%s'" % encoding
 
-    if _isString(f):
-        filename8 = _encodeFilename(f)
-        c_buffer = tree.xmlOutputBufferCreateFilename(
-            _cstr(filename8), enchandler, compression)
-        if c_buffer is NULL:
-            return python.PyErr_SetFromErrno(IOError)
+    writer = _create_output_buffer(f, c_enc, compression, &c_buffer)
+    if writer is None:
         state = python.PyEval_SaveThread()
-    elif hasattr(f, u'write'):
-        writer   = _FilelikeWriter(f, compression=compression)
-        c_buffer = writer._createOutputBuffer(enchandler)
-    else:
-        tree.xmlCharEncCloseFunc(enchandler)
-        raise TypeError, \
-            u"File or filename expected, got '%s'" % python._fqtypename(f).decode('UTF-8')
 
     _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
                        write_xml_declaration, write_doctype,
@@ -499,6 +482,35 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         writer._exc_context._raise_if_stored()
     if error_result != xmlerror.XML_ERR_OK:
         _raiseSerialisationError(error_result)
+
+cdef _create_output_buffer(f, const_char* c_enc, int compression,
+                           tree.xmlOutputBuffer** c_buffer_ret):
+    cdef tree.xmlOutputBuffer* c_buffer
+    cdef _FilelikeWriter writer
+    enchandler = tree.xmlFindCharEncodingHandler(c_enc)
+    if enchandler is NULL:
+        raise LookupError(u"unknown encoding: '%s'" %
+                          c_enc.decode(u'UTF-8') if c_enc is not NULL else u'')
+    try:
+        if _isString(f):
+            filename8 = _encodeFilename(f)
+            c_buffer = tree.xmlOutputBufferCreateFilename(
+                _cstr(filename8), enchandler, compression)
+            if c_buffer is NULL:
+                return python.PyErr_SetFromErrno(IOError) # raises IOError
+            writer = None
+        elif hasattr(f, u'write'):
+            writer = _FilelikeWriter(f, compression=compression)
+            c_buffer = writer._createOutputBuffer(enchandler)
+        else:
+            raise TypeError(
+                u"File or filename expected, got '%s'" %
+                python._fqtypename(f).decode('UTF-8'))
+    except:
+        tree.xmlCharEncCloseFunc(enchandler)
+        raise
+    c_buffer_ret[0] = c_buffer
+    return writer
 
 cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NULL:
     cdef size_t i, num_ns_prefixes = len(ns_prefixes)
@@ -569,6 +581,263 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
             if len(errors):
                 message = errors[0].message
         raise C14NError, message
+
+# incremental serialisation
+
+cdef class xmlfile:
+    """xmlfile(self, output_file, encoding=None, compression=None)
+
+    A simple mechanism for incremental XML serialisation.
+
+    Usage example:
+
+         with xmlfile("somefile.xml", encoding='utf-8') as xf:
+             xf.write_declaration(standalone=True)
+             xf.write_doctype('<!DOCTYPE root SYSTEM "some.dtd">')
+
+             # generate an element (the root element)
+             with xf.Element('root') as root_element:
+                  # generate content, e.g. through iterparse
+                  for element in generate_some_elements():
+                      # serialise generated elements into the XML file
+                      xf.write(element)
+    """
+    cdef object output_file
+    cdef object encoding
+    cdef int compresslevel
+    cdef _IncrementalFileWriter writer
+
+    def __init__(self, output_file not None, encoding=None, compression=None):
+        self.output_file = output_file
+        self.encoding = _utf8orNone(encoding)
+        self.compresslevel = compression or 0
+
+    def __enter__(self):
+        assert self.output_file is not None
+        cdef _IncrementalFileWriter writer = _IncrementalFileWriter(
+            self.output_file, self.encoding, self.compresslevel)
+        self.writer = writer
+        return writer
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.writer is not None:
+            raise_on_error = exc_type is None
+            self.writer._close(raise_on_error)
+
+cdef enum _IncrementalFileWriterStatus:
+    WRITER_STARTING = 0
+    WRITER_DECL_WRITTEN = 1
+    WRITER_DTD_WRITTEN = 2
+    WRITER_IN_ELEMENT = 3
+    WRITER_FINISHED = 4
+
+@cython.final
+@cython.internal
+cdef class _IncrementalFileWriter:
+    cdef tree.xmlOutputBuffer* _c_out
+    cdef object _encoding
+    cdef const_char* _c_encoding
+    cdef object _target
+    cdef list _element_stack
+    cdef int _status
+
+    def __cinit__(self, outfile, bytes encoding, int compresslevel):
+        self._status = WRITER_STARTING
+        self._element_stack = []
+        if encoding is None:
+            encoding = b'ASCII'
+        self._encoding = encoding
+        self._c_encoding = _cstr(encoding) if encoding is not None else NULL
+        self._target = _create_output_buffer(outfile, self._c_encoding, compresslevel, &self._c_out)
+
+    def write_declaration(self, version=None, standalone=None, doctype=None):
+        """write_declaration(self, version=None, standalone=None, doctype=None)
+
+        Write an XML declaration and (optionally) a doctype into the file.
+        """
+        assert self._c_out is not NULL
+        cdef const_xmlChar* c_version
+        cdef int c_standalone
+        if self._status >= WRITER_DECL_WRITTEN:
+            raise LxmlSyntaxError("XML declaration already written")
+        version = _utf8orNone(version)
+        c_version = _xcstr(version) if version is not None else NULL
+        doctype = _utf8orNone(doctype)
+        if standalone is None:
+            c_standalone = -1
+        else:
+            c_standalone = 1 if standalone else 0
+        _writeDeclarationToBuffer(self._c_out, c_version, self._c_encoding, c_standalone)
+        if doctype is not None:
+            _writeDoctype(self._c_out, _xcstr(doctype))
+            self._status = WRITER_DTD_WRITTEN
+        else:
+            self._status = WRITER_DECL_WRITTEN
+        self._handle_error(xmlerror.XML_ERR_OK)
+
+    def write_doctype(self, doctype):
+        """write_doctype(self, doctype)
+
+        Writes the given doctype declaration verbatimly into the file.
+        """
+        assert self._c_out is not NULL
+        if doctype is None:
+            return
+        if self._status >= WRITER_DTD_WRITTEN:
+            raise LxmlSyntaxError("DOCTYPE already written or cannot write it here")
+        doctype = _utf8(doctype)
+        _writeDoctype(self._c_out, _xcstr(doctype))
+        self._status = WRITER_DTD_WRITTEN
+        self._handle_error(xmlerror.XML_ERR_OK)
+
+    def element(self, tag, attrib=None, nsmap=None, **_extra):
+        """element(self, tag, attrib=None, nsmap=None, **_extra)
+
+        Returns a context manager that writes an opening and closing tag.
+        """
+        assert self._c_out is not NULL
+        attributes = []
+        if attrib is not None:
+            if isinstance(attrib, (dict, _Attrib)):
+                attrib = attrib.items()
+            for name, value in attrib:
+                if name not in _extra:
+                    ns, tag = _getNsTag(name)
+                    attributes.append((ns, tag, value))
+        if _extra:
+            for name, value in _extra.iteritems():
+                ns, tag = _getNsTag(name)
+                attributes.append((ns, tag, value))
+        if nsmap:
+            nsmap = { _utf8(ns) : (_utf8(prefix) if prefix else None)
+                      for prefix, ns in nsmap.items() }
+        else:
+            nsmap = None
+        ns, name = _getNsTag(tag)
+        return _FileWriterElement(self, (ns, name, attributes, nsmap))
+
+    cdef _write_qname(self, bytes name, bytes prefix):
+        if prefix is not None:
+            tree.xmlOutputBufferWrite(self._c_out, len(prefix), _cstr(prefix))
+            tree.xmlOutputBufferWrite(self._c_out, 1, ':')
+        tree.xmlOutputBufferWrite(self._c_out, len(name), _cstr(name))
+
+    cdef _write_start_element(self, element_config):
+        if self._status > WRITER_IN_ELEMENT:
+            raise LxmlSyntaxError("cannot append trailing element to complete XML document")
+        ns, name, attributes, nsmap = element_config
+        prefix = self._find_prefix(ns, nsmap)
+        tree.xmlOutputBufferWrite(self._c_out, 1, '<')
+        self._write_qname(name, prefix)
+        self._write_attributes(attributes)
+        tree.xmlOutputBufferWrite(self._c_out, 1, '>')
+        self._handle_error(xmlerror.XML_ERR_OK)
+
+        self._element_stack.append((ns, name, prefix, nsmap))
+        self._status = WRITER_IN_ELEMENT
+
+    cdef _write_attributes(self, list attributes):
+        for ns, name, value in attributes:
+            tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
+            self._write_qname(name, self._find_prefix(ns))
+            tree.xmlOutputBufferWrite(self._c_out, 2, '="')
+            tree.xmlOutputBufferWriteEscape(self._c_out, _cstr(value), NULL)
+            tree.xmlOutputBufferWrite(self._c_out, 1, '"')
+
+    cdef _write_end_element(self, element_config):
+        cdef bytes prefix
+        if self._status != WRITER_IN_ELEMENT:
+            raise LxmlSyntaxError("not in an element")
+        ns, name, attributes, nsmap = element_config
+        if not self._element_stack or self._element_stack[-1][:2] != (ns, name):
+            raise LxmlSyntaxError("inconsistent exit action in context manager")
+
+        prefix = self._element_stack[-1][2]
+        tree.xmlOutputBufferWrite(self._c_out, 2, '</')
+        self._write_qname(name, prefix)
+        tree.xmlOutputBufferWrite(self._c_out, 1, '>')
+
+        self._element_stack.pop()
+        if not self._element_stack:
+            self._status = WRITER_FINISHED
+        self._handle_error(xmlerror.XML_ERR_OK)
+
+    cdef _find_prefix(self, bytes href, nsmap=None):
+        if href is None:
+            return None
+        if nsmap is not None and href in nsmap:
+            return nsmap[href]
+        for element_config in reversed(self._element_stack):
+            nsmap = element_config[-1]
+            if href in nsmap:
+                return nsmap[href]
+        return None
+
+    def write(self, *args, bint with_tail=True, bint pretty_print=False):
+        """write(self, *args, with_tail=True, pretty_print=False)
+
+        Write subtrees or strings into the file.
+        """
+        assert self._c_out is not NULL
+        for content in args:
+            if _isString(content):
+                if self._status != WRITER_IN_ELEMENT:
+                    raise LxmlSyntaxError("not in an element")
+                content = _utf8(content)
+                tree.xmlOutputBufferWriteEscape(self._c_out, content, NULL)
+            elif iselement(content):
+                if self._status > WRITER_IN_ELEMENT:
+                    raise LxmlSyntaxError("cannot append trailing element to complete XML document")
+                _writeNodeToBuffer(self._c_out, (<_Element>content)._c_node,
+                                   self._c_encoding, NULL, OUTPUT_METHOD_XML,
+                                   False, False, pretty_print, with_tail, False)
+                if (<_Element>content)._c_node.type == tree.XML_ELEMENT_NODE:
+                    if not self._element_stack:
+                        self._status = WRITER_FINISHED
+            else:
+                raise TypeError("got invalid input value of type %s, expected string or Element" % type(content))
+            self._handle_error(xmlerror.XML_ERR_OK)
+
+    cdef _close(self, bint raise_on_error):
+        if raise_on_error:
+            if self._status < WRITER_IN_ELEMENT:
+                raise LxmlSyntaxError("no content written")
+            if self._element_stack:
+                raise LxmlSyntaxError("pending open tags on close")
+        error_result = self._c_out.error
+        if error_result == xmlerror.XML_ERR_OK:
+            error_result = tree.xmlOutputBufferClose(self._c_out)
+            if error_result > 0:
+                error_result = xmlerror.XML_ERR_OK
+        else:
+            tree.xmlOutputBufferClose(self._c_out)
+        if raise_on_error:
+            self._handle_error(error_result)
+
+    cdef _handle_error(self, int error_result):
+        if error_result == xmlerror.XML_ERR_OK:
+            error_result = self._c_out.error
+        if error_result != xmlerror.XML_ERR_OK:
+            if self._writer is not None:
+                self._writer._exc_context._raise_if_stored()
+            _raiseSerialisationError(error_result)
+
+@cython.final
+@cython.internal
+cdef class _FileWriterElement:
+    cdef object _element
+    cdef _IncrementalFileWriter _writer
+
+    def __cinit__(self, _IncrementalFileWriter writer not None, element_config):
+        self._writer = writer
+        self._element = element_config
+
+    def __enter__(self):
+        self._writer._write_start_element(self._element)
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._writer._write_end_element(self._element)
+
 
 # dump node to file (mainly for debug)
 

@@ -1340,6 +1340,9 @@ cdef bytes _utf8(object s):
             u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
     return utf8_string
 
+cdef bytes _utf8orNone(object s):
+    return _utf8(s) if s is not None else None
+
 cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"
     cdef xmlChar c

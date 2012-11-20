@@ -1,5 +1,5 @@
 from libc cimport stdio
-from libc.string cimport const_char
+from libc.string cimport const_char, const_uchar
 
 cdef extern from "lxml-version.h":
     # deprecated declaration, use etreepublic.pxd instead
@@ -55,6 +55,8 @@ cdef extern from "libxml/encoding.h":
     cdef xmlCharEncoding xmlDetectCharEncoding(const_xmlChar* text, int len) nogil
     cdef const_char* xmlGetCharEncodingName(xmlCharEncoding enc) nogil
     cdef xmlCharEncoding xmlParseCharEncoding(char* name) nogil
+    ctypedef int (*xmlCharEncodingOutputFunc)(
+            unsigned char *out_buf, int *outlen, const_uchar *in_buf, int *inlen)
 
 cdef extern from "libxml/chvalid.h":
     cdef int xmlIsChar_ch(char c) nogil
@@ -383,9 +385,12 @@ cdef extern from "libxml/valid.h":
                                    xmlNotationTable* table) nogil
 
 cdef extern from "libxml/xmlIO.h":
-    cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, const_char* str) nogil
     cdef int xmlOutputBufferWrite(xmlOutputBuffer* out,
                                   int len, const_char* str) nogil
+    cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, const_char* str) nogil
+    cdef int xmlOutputBufferWriteEscape(xmlOutputBuffer* out,
+                                        const_char* str,
+                                        xmlCharEncodingOutputFunc escapefunc) nogil
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out) nogil
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out) nogil
 

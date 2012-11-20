@@ -8,6 +8,8 @@ Under development
 Features added
 --------------
 
+* New incremental XML file writing API ``etree.xmlfile()``.
+
 * E factory in lxml.objectify is callable to simplify the creation of
   tags with non-identifier names without having to resort to getattr().
 
