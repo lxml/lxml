@@ -19,13 +19,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
                 pass
-        self.assertXml(_bytes('<test></test>'))
+        self.assertXml('<test></test>')
 
     def test_element_write_text(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
                 xf.write('toast')
-        self.assertXml(_bytes('<test>toast</test>'))
+        self.assertXml('<test>toast</test>')
 
     def test_element_nested(self):
         with etree.xmlfile(self._file) as xf:
@@ -33,7 +33,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 with xf.element('toast'):
                     with xf.element('taste'):
                         xf.write('conTent')
-        self.assertXml(_bytes('<test><toast><taste>conTent</taste></toast></test>'))
+        self.assertXml('<test><toast><taste>conTent</taste></toast></test>')
 
     def test_element_nested_with_text(self):
         with etree.xmlfile(self._file) as xf:
@@ -45,26 +45,26 @@ class _XmlFileTestCaseBase(HelperTestCase):
                         xf.write('inside')
                     xf.write('tnet')
                 xf.write('noc')
-        self.assertXml(_bytes('<test>con<toast>tent<taste>inside</taste>'
-                              'tnet</toast>noc</test>'))
+        self.assertXml('<test>con<toast>tent<taste>inside</taste>'
+                       'tnet</toast>noc</test>')
 
     def test_write_Element(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.Element('test'))
-        self.assertXml(_bytes('<test/>'))
+        self.assertXml('<test/>')
 
     def test_pi(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.ProcessingInstruction('pypi'))
             with xf.element('test'):
                 pass
-        self.assertXml(_bytes('<?pypi ?><test></test>'))
+        self.assertXml('<?pypi ?><test></test>')
 
     def test_encoding(self):
         with etree.xmlfile(self._file, encoding='utf16') as xf:
             with xf.element('test'):
                 xf.write('toast')
-        self.assertXml(_bytes('<test>toast</test>'), encoding='utf16')
+        self.assertXml('<test>toast</test>', encoding='utf16')
 
     def test_failure_preceding_text(self):
         try:
