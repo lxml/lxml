@@ -741,7 +741,7 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
             self._write_qname(name, self._find_prefix(ns))
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
-            tree.xmlOutputBufferWriteEscape(self._c_out, _cstr(value), NULL)
+            tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(value), NULL)
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
     cdef _write_end_element(self, element_config):
@@ -784,7 +784,7 @@ cdef class _IncrementalFileWriter:
                 if self._status != WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("not in an element")
                 content = _utf8(content)
-                tree.xmlOutputBufferWriteEscape(self._c_out, content, NULL)
+                tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")

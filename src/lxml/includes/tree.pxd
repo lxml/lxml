@@ -389,7 +389,7 @@ cdef extern from "libxml/xmlIO.h":
                                   int len, const_char* str) nogil
     cdef int xmlOutputBufferWriteString(xmlOutputBuffer* out, const_char* str) nogil
     cdef int xmlOutputBufferWriteEscape(xmlOutputBuffer* out,
-                                        const_char* str,
+                                        const_xmlChar* str,
                                         xmlCharEncodingOutputFunc escapefunc) nogil
     cdef int xmlOutputBufferFlush(xmlOutputBuffer* out) nogil
     cdef int xmlOutputBufferClose(xmlOutputBuffer* out) nogil
