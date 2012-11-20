@@ -2,6 +2,8 @@
 
 """
 Tests for the incremental XML serialisation API.
+
+Tests require Python 2.5 or later.
 """
 
 from __future__ import with_statement
@@ -55,6 +57,18 @@ class _XmlFileTestCaseBase(HelperTestCase):
             xf.write(etree.Element('test'))
         self.assertXml('<test/>')
 
+    def test_write_Element_repeatedly(self):
+        element = etree.Element('test')
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                for i in range(100):
+                    xf.write(element)
+
+        tree = self._parse_file()
+        self.assertIsNotNone(tree)
+        self.assertEqual(100, len(tree.getroot()))
+        self.assertEqual(set(['test']), set(el.tag for el in tree.getroot()))
+
     def test_pi(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.ProcessingInstruction('pypi'))
@@ -73,20 +87,31 @@ class _XmlFileTestCaseBase(HelperTestCase):
             with etree.xmlfile(self._file) as xf:
                 xf.write('toast')
         except etree.LxmlSyntaxError:
-            pass
+            self.assertTrue(True)
         else:
             self.assertTrue(False)
 
     def test_failure_trailing_text(self):
-        try:
-            with etree.xmlfile(self._file) as xf:
-                with xf.element('test'):
-                    pass
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                pass
+            try:
                 xf.write('toast')
-        except etree.LxmlSyntaxError:
-            pass
-        else:
-            self.assertTrue(False)
+            except etree.LxmlSyntaxError:
+                self.assertTrue(True)
+            else:
+                self.assertTrue(False)
+
+    def test_failure_trailing_Element(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                pass
+            try:
+                xf.write(etree.Element('test'))
+            except etree.LxmlSyntaxError:
+                self.assertTrue(True)
+            else:
+                self.assertTrue(False)
 
     def _read_file(self):
         self._file.seek(0)

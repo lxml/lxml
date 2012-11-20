@@ -782,7 +782,8 @@ cdef class _IncrementalFileWriter:
         for content in args:
             if _isString(content):
                 if self._status != WRITER_IN_ELEMENT:
-                    raise LxmlSyntaxError("not in an element")
+                    if self._status > WRITER_IN_ELEMENT or content.strip():
+                        raise LxmlSyntaxError("not in an element")
                 content = _utf8(content)
                 tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
             elif iselement(content):
