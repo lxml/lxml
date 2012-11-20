@@ -65,7 +65,7 @@ class _XmlFileTestCaseBase(HelperTestCase):
                     xf.write(element)
 
         tree = self._parse_file()
-        self.assertIsNotNone(tree)
+        self.assertTrue(tree is not None)
         self.assertEqual(100, len(tree.getroot()))
         self.assertEqual(set(['test']), set(el.tag for el in tree.getroot()))
 
