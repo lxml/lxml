@@ -596,8 +596,11 @@ cdef class xmlfile:
              xf.write_doctype('<!DOCTYPE root SYSTEM "some.dtd">')
 
              # generate an element (the root element)
-             with xf.Element('root') as root_element:
-                  # generate content, e.g. through iterparse
+             with xf.Element('root'):
+                  # write a complete Element into the open root element
+                  xf.write(etree.Element('test'))
+
+                  # generate and write more Elements, e.g. through iterparse
                   for element in generate_some_elements():
                       # serialise generated elements into the XML file
                       xf.write(element)
