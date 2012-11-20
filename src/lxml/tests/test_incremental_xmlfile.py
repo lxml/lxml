@@ -15,7 +15,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, _bytes, BytesIO
+from common_imports import etree, BytesIO
 from common_imports import HelperTestCase
 
 class _XmlFileTestCaseBase(HelperTestCase):
@@ -135,6 +135,24 @@ class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
 class TempXmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._file = tempfile.NamedTemporaryFile()
+
+class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
+    class SimpleFileLike(object):
+        def __init__(self, target):
+            self._target = target
+            self.write = target.write
+            self.close = target.close
+
+    def setUp(self):
+        self._target = BytesIO()
+        self._file = self.SimpleFileLike(self._target)
+
+    def _read_file(self):
+        return self._target.getvalue()
+
+    def _parse_file(self):
+        self._target.seek(0)
+        return etree.parse(self._target)
 
 
 def test_suite():
