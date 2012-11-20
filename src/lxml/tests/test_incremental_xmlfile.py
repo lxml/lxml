@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 """
-IO test cases that apply to both etree and ElementTree
+Tests for the incremental XML serialisation API.
 """
 
 import unittest
-import tempfile, gzip, os, os.path, sys, gc, shutil
+import tempfile, os, sys
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
