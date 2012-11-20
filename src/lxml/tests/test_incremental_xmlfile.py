@@ -159,6 +159,7 @@ def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(BytesIOXmlFileTestCase),
                     unittest.makeSuite(TempXmlFileTestCase),
+                    unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
                     ])
     return suite
 
