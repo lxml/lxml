@@ -4,6 +4,8 @@
 Tests for the incremental XML serialisation API.
 """
 
+from __future__ import with_statement
+
 import unittest
 import tempfile, os, sys
 
