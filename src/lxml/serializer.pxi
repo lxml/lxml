@@ -738,7 +738,9 @@ cdef class _IncrementalFileWriter:
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         self._handle_error(xmlerror.XML_ERR_OK)
 
-        self._element_stack.append((ns, name, prefix, nsmap))
+        # _find_prefix() changes nsmap, so making a copy can be important
+        # if the same _FileWriterElement is used more than onec.
+        self._element_stack.append((ns, name, prefix, nsmap.copy()))
         self._status = WRITER_IN_ELEMENT
 
     cdef _write_attributes(self, list attributes, dict nsmap):
