@@ -705,12 +705,12 @@ cdef class _IncrementalFileWriter:
                 attrib = attrib.items()
             for name, value in attrib:
                 if name not in _extra:
-                    ns, tag = _getNsTag(name)
-                    attributes.append((ns, tag, value))
+                    ns, name = _getNsTag(name)
+                    attributes.append((ns, name, _utf8(value)))
         if _extra:
             for name, value in _extra.iteritems():
-                ns, tag = _getNsTag(name)
-                attributes.append((ns, tag, value))
+                ns, name = _getNsTag(name)
+                attributes.append((ns, name, _utf8(value)))
         if nsmap:
             nsmap = { _utf8(ns) : (_utf8(prefix) if prefix else None)
                       for prefix, ns in nsmap.items() }
