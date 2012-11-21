@@ -742,9 +742,13 @@ cdef class _IncrementalFileWriter:
         self._status = WRITER_IN_ELEMENT
 
     cdef _write_attributes(self, list attributes, dict nsmap):
-        for ns, name, value in attributes:
+        attributes = [
+            (self._find_prefix(ns, nsmap), name, value)
+            for ns, name, value in attributes
+        ] + [(b'xmlns', prefix, href) for href, prefix in nsmap.items()]
+        for prefix, name, value in attributes:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
-            self._write_qname(name, self._find_prefix(ns, nsmap))
+            self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
             tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(value), NULL)
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
@@ -776,7 +780,13 @@ cdef class _IncrementalFileWriter:
             nsmap = element_config[-1]
             if href in nsmap:
                 return nsmap[href]
-        return None
+        i = 0
+        while 1:
+            prefix = _utf8('ns%d' % i)
+            if prefix not in nsmap:
+                nsmap[href] = prefix
+                return prefix
+            i += 1
 
     def write(self, *args, bint with_tail=True, bint pretty_print=False):
         """write(self, *args, with_tail=True, pretty_print=False)
