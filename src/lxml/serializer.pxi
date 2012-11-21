@@ -711,13 +711,15 @@ cdef class _IncrementalFileWriter:
             for name, value in _extra.iteritems():
                 ns, tag = _getNsTag(name)
                 attributes.append((ns, tag, value))
+        reversed_nsmap = {}
         if nsmap:
-            nsmap = { _utf8(ns) : (_utf8(prefix) if prefix else None)
-                      for prefix, ns in nsmap.items() }
-        else:
-            nsmap = None
+            for prefix, ns in nsmap.items():
+                if prefix is not None:
+                    prefix = _utf8(prefix)
+                    _prefixValidOrRaise(prefix)
+                reversed_nsmap[_utf8(ns)] = prefix
         ns, name = _getNsTag(tag)
-        return _FileWriterElement(self, (ns, name, attributes, nsmap))
+        return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
 
     cdef _write_qname(self, bytes name, bytes prefix):
         if prefix is not None:
@@ -732,17 +734,17 @@ cdef class _IncrementalFileWriter:
         prefix = self._find_prefix(ns, nsmap)
         tree.xmlOutputBufferWrite(self._c_out, 1, '<')
         self._write_qname(name, prefix)
-        self._write_attributes(attributes)
+        self._write_attributes(attributes, nsmap)
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         self._handle_error(xmlerror.XML_ERR_OK)
 
         self._element_stack.append((ns, name, prefix, nsmap))
         self._status = WRITER_IN_ELEMENT
 
-    cdef _write_attributes(self, list attributes):
+    cdef _write_attributes(self, list attributes, dict nsmap):
         for ns, name, value in attributes:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
-            self._write_qname(name, self._find_prefix(ns))
+            self._write_qname(name, self._find_prefix(ns, nsmap))
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
             tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(value), NULL)
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
@@ -765,7 +767,7 @@ cdef class _IncrementalFileWriter:
             self._status = WRITER_FINISHED
         self._handle_error(xmlerror.XML_ERR_OK)
 
-    cdef _find_prefix(self, bytes href, nsmap=None):
+    cdef _find_prefix(self, bytes href, nsmap):
         if href is None:
             return None
         if nsmap is not None and href in nsmap:
