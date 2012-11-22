@@ -731,26 +731,34 @@ cdef class _IncrementalFileWriter:
         if self._status > WRITER_IN_ELEMENT:
             raise LxmlSyntaxError("cannot append trailing element to complete XML document")
         ns, name, attributes, nsmap = element_config
-        prefix = self._find_prefix(ns, nsmap)
+        flat_namespace_map, new_namespaces = self._collect_namespaces(nsmap)
+        prefix = self._find_prefix(ns, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '<')
         self._write_qname(name, prefix)
-        self._write_attributes(attributes, nsmap)
+        self._write_attributes_and_namespaces(
+            attributes, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         self._handle_error(xmlerror.XML_ERR_OK)
 
-        # _find_prefix() changes nsmap, so making a copy can be important
-        # if the same _FileWriterElement is used more than once.
-        self._element_stack.append((ns, name, prefix, nsmap.copy()))
+        self._element_stack.append((ns, name, prefix, flat_namespace_map))
         self._status = WRITER_IN_ELEMENT
 
-    cdef _write_attributes(self, list attributes, dict nsmap):
-        attributes = [
-            (self._find_prefix(ns, nsmap), name, value)
-            for ns, name, value in attributes]
-        # _find_prefix may change nsmap, do this afterwards.
-        ns_declarations = [
-            (b'xmlns', prefix, href) for href, prefix in nsmap.items()]
-        for prefix, name, value in (ns_declarations + attributes):
+    cdef _write_attributes_and_namespaces(self, list attributes,
+                                          dict flat_namespace_map,
+                                          list new_namespaces):
+        if attributes:
+            # _find_prefix() may append to new_namespaces => build them first
+            attributes = [
+                (self._find_prefix(ns, flat_namespace_map, new_namespaces), name, value)
+                for ns, name, value in attributes ]
+        if new_namespaces:
+            new_namespaces.sort()
+            self._write_attributes_list(new_namespaces)
+        if attributes:
+            self._write_attributes_list(attributes)
+
+    cdef _write_attributes_list(self, list attributes):
+        for prefix, name, value in attributes:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
             self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
@@ -758,39 +766,49 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
     cdef _write_end_element(self, element_config):
-        cdef bytes prefix
         if self._status != WRITER_IN_ELEMENT:
             raise LxmlSyntaxError("not in an element")
-        ns, name, attributes, nsmap = element_config
-        if not self._element_stack or self._element_stack[-1][:2] != (ns, name):
+        if not self._element_stack or self._element_stack[-1][:2] != element_config[:2]:
             raise LxmlSyntaxError("inconsistent exit action in context manager")
 
-        prefix = self._element_stack[-1][2]
+        name, prefix = self._element_stack.pop()[1:3]
         tree.xmlOutputBufferWrite(self._c_out, 2, '</')
         self._write_qname(name, prefix)
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
 
-        self._element_stack.pop()
         if not self._element_stack:
             self._status = WRITER_FINISHED
         self._handle_error(xmlerror.XML_ERR_OK)
 
-    cdef _find_prefix(self, bytes href, nsmap):
+    cdef _find_prefix(self, bytes href, dict flat_namespaces_map, list new_namespaces):
         if href is None:
             return None
-        if nsmap is not None and href in nsmap:
-            return nsmap[href]
-        for element_config in reversed(self._element_stack):
-            ancestor_nsmap = element_config[-1]
-            if href in ancestor_nsmap:
-                return ancestor_nsmap[href]
+        if href in flat_namespaces_map:
+            return flat_namespaces_map[href]
+        # need to create a new prefix
+        prefixes = flat_namespaces_map.values()
         i = 0
-        while 1:
+        while True:
             prefix = _utf8('ns%d' % i)
-            if prefix not in nsmap:
-                nsmap[href] = prefix
+            if prefix not in prefixes:
+                new_namespaces.append((b'xmlns', prefix, href))
+                flat_namespaces_map[href] = prefix
                 return prefix
             i += 1
+
+    def _collect_namespaces(self, dict nsmap):
+        new_namespaces = []
+        flat_namespaces_map = {}
+        for ns, prefix in nsmap.iteritems():
+            flat_namespaces_map[ns] = prefix
+            new_namespaces.append((b'xmlns', prefix, ns))
+        # merge in flat namespace map of parent
+        if self._element_stack:
+            for ns, prefix in (<dict>self._element_stack[-1][-1]).iteritems():
+                if flat_namespaces_map.get(ns) is None:
+                    # unknown or empty prefix => prefer a 'real' prefix
+                    flat_namespaces_map[ns] = prefix
+        return flat_namespaces_map, new_namespaces
 
     def write(self, *args, bint with_tail=True, bint pretty_print=False):
         """write(self, *args, with_tail=True, pretty_print=False)
