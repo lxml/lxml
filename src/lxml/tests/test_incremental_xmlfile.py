@@ -76,6 +76,27 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 pass
         self.assertXml('<?pypi ?><test></test>')
 
+    def test_comment(self):
+        with etree.xmlfile(self._file) as xf:
+            xf.write(etree.Comment('a comment'))
+            with xf.element('test'):
+                pass
+        self.assertXml('<!--a comment--><test></test>')
+
+    def test_attribute(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test', attrib={'k': 'v'}):
+                pass
+        self.assertXml('<test k="v"></test>')
+
+    def test_escaping(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write('Comments: <!-- text -->\n')
+                xf.write('Entities: &amp;')
+        self.assertXml(
+            '<test>Comments: &lt;!-- text --&gt;\nEntities: &amp;amp;</test>')
+
     def test_encoding(self):
         with etree.xmlfile(self._file, encoding='utf16') as xf:
             with xf.element('test'):
