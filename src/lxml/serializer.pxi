@@ -739,7 +739,7 @@ cdef class _IncrementalFileWriter:
         self._handle_error(xmlerror.XML_ERR_OK)
 
         # _find_prefix() changes nsmap, so making a copy can be important
-        # if the same _FileWriterElement is used more than onec.
+        # if the same _FileWriterElement is used more than once.
         self._element_stack.append((ns, name, prefix, nsmap.copy()))
         self._status = WRITER_IN_ELEMENT
 
