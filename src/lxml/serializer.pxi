@@ -746,9 +746,11 @@ cdef class _IncrementalFileWriter:
     cdef _write_attributes(self, list attributes, dict nsmap):
         attributes = [
             (self._find_prefix(ns, nsmap), name, value)
-            for ns, name, value in attributes
-        ] + [(b'xmlns', prefix, href) for href, prefix in nsmap.items()]
-        for prefix, name, value in attributes:
+            for ns, name, value in attributes]
+        # _find_prefix may change nsmap, do this afterwards.
+        ns_declarations = [
+            (b'xmlns', prefix, href) for href, prefix in nsmap.items()]
+        for prefix, name, value in (ns_declarations + attributes):
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
             self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
