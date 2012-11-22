@@ -69,6 +69,32 @@ class _XmlFileTestCaseBase(HelperTestCase):
         self.assertEqual(100, len(tree.getroot()))
         self.assertEqual(set(['test']), set(el.tag for el in tree.getroot()))
 
+    def test_namespace_nsmap(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('{nsURI}test', nsmap={'x': 'nsURI'}):
+                pass
+        self.assertXml('<x:test xmlns:x="nsURI"></x:test>')
+
+    def test_namespace_nested_nsmap(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test', nsmap={'x': 'nsURI'}):
+                with xf.element('{nsURI}toast'):
+                    pass
+        self.assertXml('<test xmlns:x="nsURI"><x:toast></x:toast></test>')
+
+    def test_anonymous_namespace(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('{nsURI}test'):
+                pass
+        self.assertXml('<ns0:test xmlns:ns0="nsURI"></ns0:test>')
+
+    def test_namespace_nested_anonymous(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                with xf.element('{nsURI}toast'):
+                    pass
+        self.assertXml('<test><ns0:toast xmlns:ns0="nsURI"></ns0:toast></test>')
+
     def test_pi(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.ProcessingInstruction('pypi'))
