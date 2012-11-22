@@ -88,6 +88,13 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 pass
         self.assertXml('<ns0:test xmlns:ns0="nsURI"></ns0:test>')
 
+    def test_namespace_nested_anonymous(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                with xf.element('{nsURI}toast'):
+                    pass
+        self.assertXml('<test><ns0:toast xmlns:ns0="nsURI"></ns0:toast></test>')
+
     def test_pi(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.ProcessingInstruction('pypi'))

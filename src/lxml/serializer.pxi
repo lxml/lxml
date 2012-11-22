@@ -781,9 +781,9 @@ cdef class _IncrementalFileWriter:
         if nsmap is not None and href in nsmap:
             return nsmap[href]
         for element_config in reversed(self._element_stack):
-            nsmap = element_config[-1]
-            if href in nsmap:
-                return nsmap[href]
+            ancestor_nsmap = element_config[-1]
+            if href in ancestor_nsmap:
+                return ancestor_nsmap[href]
         i = 0
         while 1:
             prefix = _utf8('ns%d' % i)
