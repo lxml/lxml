@@ -19,6 +19,8 @@ from common_imports import etree, BytesIO
 from common_imports import HelperTestCase
 
 class _XmlFileTestCaseBase(HelperTestCase):
+    _file = None  # to be set by specific subtypes below
+
     def test_element(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
