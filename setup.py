@@ -50,7 +50,10 @@ if versioninfo.is_pre_release():
     branch_link = ""
 
 
-extra_options = {'zip_safe': False}
+extra_options = {}
+if 'setuptools' in sys.modules:
+    extra_options['zip_safe'] = False
+
 extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
