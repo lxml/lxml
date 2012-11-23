@@ -623,61 +623,66 @@ might become handy.  Just pass the ``unicode`` type as encoding:
    u'HelloW\xf6rld'
 
 The W3C has a good `article about the Unicode character set and
-character encodings`_.
-
-.. _`article about the Unicode character set and character encodings`: http://www.w3.org/International/tutorials/tutorial-char-enc/
+character encodings
+<http://www.w3.org/International/tutorials/tutorial-char-enc/>`_.
 
 
 The ElementTree class
 =====================
 
 An ``ElementTree`` is mainly a document wrapper around a tree with a
-root node.  It provides a couple of methods for parsing, serialisation
-and general document handling.  One of the bigger differences is that
-it serialises as a complete document, as opposed to a single
-``Element``.  This includes top-level processing instructions and
-comments, as well as a DOCTYPE and other DTD content in the document:
+root node.  It provides a couple of methods for serialisation and
+general document handling.
 
 .. sourcecode:: pycon
 
-    >>> tree = etree.parse(StringIO('''\
+    >>> root = etree.XML('''\
     ... <?xml version="1.0"?>
-    ... <!DOCTYPE root SYSTEM "test" [ <!ENTITY tasty "eggs"> ]>
+    ... <!DOCTYPE root SYSTEM "test" [ <!ENTITY tasty "parsnips"> ]>
     ... <root>
     ...   <a>&tasty;</a>
     ... </root>
-    ... '''))
+    ... ''')
 
+    >>> tree = etree.ElementTree(root)
+    >>> print(tree.docinfo.xml_version)
+    1.0
     >>> print(tree.docinfo.doctype)
     <!DOCTYPE root SYSTEM "test">
 
-    >>> # lxml 1.3.4 and later
-    >>> print(etree.tostring(tree))
+An ``ElementTree`` is also what you get back when you call the
+``parse()`` function to parse files or file-like objects (see the
+parsing section below).
+
+One of the important differences is that the ``ElementTree`` class
+serialises as a complete document, as opposed to a single ``Element``.
+This includes top-level processing instructions and comments, as well
+as a DOCTYPE and other DTD content in the document:
+
+.. sourcecode:: pycon
+
+    >>> print(etree.tostring(tree))  # lxml 1.3.4 and later
     <!DOCTYPE root SYSTEM "test" [
-    <!ENTITY tasty "eggs">
+    <!ENTITY tasty "parsnips">
     ]>
     <root>
-      <a>eggs</a>
+      <a>parsnips</a>
     </root>
 
-    >>> # lxml 1.3.4 and later
-    >>> print(etree.tostring(etree.ElementTree(tree.getroot())))
-    <!DOCTYPE root SYSTEM "test" [
-    <!ENTITY tasty "eggs">
-    ]>
-    <root>
-      <a>eggs</a>
-    </root>
+In the original xml.etree.ElementTree implementation and in lxml
+up to 1.3.3, the output looks the same as when serialising only
+the root Element:
 
-    >>> # ElementTree and lxml <= 1.3.3
+.. sourcecode:: pycon
+
     >>> print(etree.tostring(tree.getroot()))
     <root>
-      <a>eggs</a>
+      <a>parsnips</a>
     </root>
 
-Note that this has changed in lxml 1.3.4 to match the behaviour of
-lxml 2.0.  Before, the examples were serialised without DTD content,
-which made lxml loose DTD information in an input-output cycle.
+This serialisation behaviour has changed in lxml 1.3.4.  Before,
+the tree was serialised without DTD content, which made lxml
+loose DTD information in an input-output cycle.
 
 
 Parsing from strings and files
@@ -721,17 +726,26 @@ commonly used to write XML literals right into the source:
     >>> etree.tostring(root)
     b'<root>data</root>'
 
+There is also a corresponding function ``HTML()`` for HTML literals.
+
 
 The parse() function
 --------------------
 
-The ``parse()`` function is used to parse from files and file-like objects:
+The ``parse()`` function is used to parse from files and file-like objects.
+
+As an example of such a file-like object, the following code uses the
+``StringIO`` class for reading from a string instead of an external file.
+That class comes from the ``StringIO`` module in Python 2.  In Python 2.6
+and later, including Python 3.x, you would rather use the ``BytesIO`` class
+from the ``io`` module.  However, in real life, you would obviously avoid
+doing this all together and use the string parsing functions above.
 
 .. sourcecode:: pycon
 
-    >>> some_file_like = StringIO("<root>data</root>")
+    >>> some_file_like_object = StringIO("<root>data</root>")
 
-    >>> tree = etree.parse(some_file_like)
+    >>> tree = etree.parse(some_file_like_object)
 
     >>> etree.tostring(tree)
     b'<root>data</root>'
@@ -763,7 +777,11 @@ The ``parse()`` function supports any of the following sources:
 * an HTTP or FTP URL string
 
 Note that passing a filename or URL is usually faster than passing an
-open file.
+open file or file-like object.  However, the HTTP/FTP client in libxml2
+is rather simple, so things like HTTP authentication require a dedicated
+URL request library, e.g. ``urllib2`` or ``request``.  These libraries
+usually provide a file-like object for the result that you can parse
+from while the response is streaming in.
 
 
 Parser objects
