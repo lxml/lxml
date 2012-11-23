@@ -153,37 +153,37 @@ Download
 --------
 
 The best way to download lxml is to visit `lxml at the Python Package
-Index`_ (PyPI).  It has the source that compiles on various platforms.
-The source distribution is signed with `this key`_.  Binary builds are
-not available from PyPI due to the increased maintenance overhead.
+Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
+that compiles on various platforms.  The source distribution is signed
+with `this key <pubkey.asc>`_.  Binary builds are not available from
+PyPI due to the increased maintenance overhead.
 
 The latest version is `lxml 3.0.1`_, released 2012-10-14
-(`changes for 3.0.1`_).  `Older versions`_ are listed below.
+(`changes for 3.0.1`_).  `Older versions <#old-versions>`_
+are listed below.
 
-Please take a look at the `installation instructions`_!
+Please take a look at the
+`installation instructions <installation.html>`_ !
 
 This complete web site (including the generated API documentation) is
 part of the source distribution, so if you want to download the
 documentation for offline use, take the source archive and copy the
-``doc/html`` directory out of the source tree.
+``doc/html`` directory out of the source tree, or use the
+`PDF documentation`_.
 
-It's also possible to check out the latest development version of lxml
-from github directly, using a command like this (assuming you use hg
-and have hg-git installed)::
+The latest installable developer sources should usually be available from the
+`build server <http://lxml.de/build/>`_.  It's also possible to check out
+the latest development version of lxml from github directly, using a command
+like this (assuming you use hg and have hg-git installed)::
 
   hg clone https://github.com/lxml/lxml.git lxml
 
-You can also browse the `source repository`_ and its history through
-the web.  Please read `how to build lxml from source`_ first.  The
-`latest CHANGES`_ of the developer version are also accessible.  You
-can check there if a bug you found has been fixed or a feature you
-want has been implemented in the latest trunk version.
+You can browse the `source repository`_ and its history through
+the web.  Please read `how to build lxml from source <build.html>`_
+first.  The `latest CHANGES`_ of the developer version are also
+accessible.  You can check there if a bug you found has been fixed
+or a feature you want has been implemented in the latest trunk version.
 
-.. _`lxml at the Python Package Index`: http://pypi.python.org/pypi/lxml/
-.. _`this key`: pubkey.asc
-.. _`Older versions`: #old-versions
-.. _`installation instructions`: installation.html
-.. _`how to build lxml from source`: build.html
 .. _`source repository`: https://github.com/lxml/lxml/
 .. _`latest CHANGES`: https://github.com/lxml/lxml/blob/master/CHANGES.txt
 
