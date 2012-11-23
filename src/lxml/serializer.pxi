@@ -801,7 +801,10 @@ cdef class _IncrementalFileWriter:
         flat_namespaces_map = {}
         for ns, prefix in nsmap.iteritems():
             flat_namespaces_map[ns] = prefix
-            new_namespaces.append((b'xmlns', prefix, ns))
+            if prefix is None:
+                new_namespaces.append((None, b'xmlns', ns))
+            else:
+                new_namespaces.append((b'xmlns', prefix, ns))
         # merge in flat namespace map of parent
         if self._element_stack:
             for ns, prefix in (<dict>self._element_stack[-1][-1]).iteritems():

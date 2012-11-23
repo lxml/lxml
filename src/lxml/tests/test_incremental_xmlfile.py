@@ -97,6 +97,19 @@ class _XmlFileTestCaseBase(HelperTestCase):
                     pass
         self.assertXml('<test><ns0:toast xmlns:ns0="nsURI"></ns0:toast></test>')
 
+    def test_default_namespace(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('{nsURI}test', nsmap={None: 'nsURI'}):
+                pass
+        self.assertXml('<test xmlns="nsURI"></test>')
+
+    def test_nested_default_namespace(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('{nsURI}test', nsmap={None: 'nsURI'}):
+                with xf.element('{nsURI}toast'):
+                    pass
+        self.assertXml('<test xmlns="nsURI"><toast></toast></test>')
+
     def test_pi(self):
         with etree.xmlfile(self._file) as xf:
             xf.write(etree.ProcessingInstruction('pypi'))
