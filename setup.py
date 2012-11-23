@@ -7,8 +7,6 @@ import fnmatch
 # for command line options and supported environment variables, please
 # see the end of 'setupinfo.py'
 
-extra_options = {}
-
 try:
     import Cython
     # may need to work around setuptools bug by providing a fake Pyrex
@@ -16,20 +14,7 @@ try:
 except ImportError:
     pass
 
-try:
-    import pkg_resources
-    try:
-        pkg_resources.require("setuptools>=0.6c5")
-    except pkg_resources.VersionConflict:
-        from ez_setup import use_setuptools
-        use_setuptools(version="0.6c5")
-    #pkg_resources.require("Cython==0.9.6.10")
-    from setuptools import setup
-    extra_options["zip_safe"] = False
-except ImportError:
-    # no setuptools installed
-    from distutils.core import setup
-
+from distutils.core import setup
 
 import versioninfo
 import setupinfo
@@ -65,6 +50,7 @@ if versioninfo.is_pre_release():
     branch_link = ""
 
 
+extra_options = {'zip_safe': False}
 extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
