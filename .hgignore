@@ -11,6 +11,7 @@ cython_debug/
 .gitrev
 .coverage
 funding.txt
+.tox
 *.orig
 *.rej
 *.dep
