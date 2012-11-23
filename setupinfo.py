@@ -126,20 +126,26 @@ def ext_modules(static_include_dirs, static_library_dirs,
         main_module_source = PACKAGE_PATH + module + source_extension
         result.append(
             Extension(
-            module,
-            sources = [main_module_source],
-            depends = find_dependencies(module),
-            extra_compile_args = _cflags,
-            extra_objects = static_binaries,
-            define_macros = _define_macros,
-            include_dirs = _include_dirs,
-            library_dirs = _library_dirs,
-            runtime_library_dirs = runtime_library_dirs,
-            libraries = _libraries,
+                module,
+                sources = [main_module_source],
+                depends = find_dependencies(module),
+                extra_compile_args = _cflags,
+                extra_objects = static_binaries,
+                define_macros = _define_macros,
+                include_dirs = _include_dirs,
+                library_dirs = _library_dirs,
+                runtime_library_dirs = runtime_library_dirs,
+                libraries = _libraries,
             ))
     if CYTHON_INSTALLED and OPTION_WITH_CYTHON_GDB:
         for ext in result:
             ext.cython_gdb = True
+
+    if CYTHON_INSTALLED and source_extension == '.pyx':
+        # build .c files right now and convert Extension() objects
+        from Cython.Build import cythonize
+        result = cythonize(result)
+
     return result
 
 def find_dependencies(module):
