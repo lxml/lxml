@@ -9,7 +9,17 @@
 # TODO: add xml/html parsing tests
 # TODO: etc
 
-import re, sys, string
+import re, sys
+
+def stdout():
+    if sys.version_info[0] < 3:
+        return sys.stdout
+    class bytes_stdout(object):
+        def write(self, data):
+            if isinstance(data, bytes):
+                data = data.decode('ISO8859-1')
+            sys.stdout.write(data)
+    return bytes_stdout()
 
 try:
     from StringIO import StringIO as BytesIO
@@ -38,10 +48,13 @@ def serialize(elem, **options):
     file = BytesIO()
     tree = ElementTree.ElementTree(elem)
     tree.write(file, **options)
-    try:
-        encoding = options["encoding"]
-    except KeyError:
-        encoding = "utf-8"
+    if sys.version_info[0] < 3:
+        try:
+            encoding = options["encoding"]
+        except KeyError:
+            encoding = "utf-8"
+    else:
+        encoding = 'ISO8859-1'
     result = fix_compatibility(file.getvalue().decode(encoding))
     if sys.version_info[0] < 3:
         result = result.encode(encoding)
@@ -308,7 +321,7 @@ def parsefile():
 
     >>> tree = ElementTree.parse("samples/simple.xml")
     >>> normalize_crlf(tree)
-    >>> tree.write(sys.stdout)
+    >>> tree.write(stdout())
     <root>
        <element key="value">text</element>
        <element>text</element>tail
@@ -316,7 +329,7 @@ def parsefile():
     </root>
     >>> tree = ElementTree.parse("samples/simple-ns.xml")
     >>> normalize_crlf(tree)
-    >>> tree.write(sys.stdout)
+    >>> tree.write(stdout())
     <root xmlns="http://namespace/">
        <element key="value">text</element>
        <element>text</element>tail
@@ -347,19 +360,19 @@ del parsehtml
 def parseliteral():
     r"""
     >>> element = ElementTree.XML("<html><body>text</body></html>")
-    >>> ElementTree.ElementTree(element).write(sys.stdout)
+    >>> ElementTree.ElementTree(element).write(stdout())
     <html><body>text</body></html>
     >>> element = ElementTree.fromstring("<html><body>text</body></html>")
-    >>> ElementTree.ElementTree(element).write(sys.stdout)
+    >>> ElementTree.ElementTree(element).write(stdout())
     <html><body>text</body></html>
 
 ##     >>> sequence = ["<html><body>", "text</bo", "dy></html>"]
 ##     >>> element = ElementTree.fromstringlist(sequence)
-##     >>> ElementTree.ElementTree(element).write(sys.stdout)
+##     >>> ElementTree.ElementTree(element).write(stdout())
 ##     <html><body>text</body></html>
 
-    >>> print(ElementTree.tostring(element))
-    <html><body>text</body></html>
+    >>> print(repr(ElementTree.tostring(element)).lstrip('b'))
+    '<html><body>text</body></html>'
 
 # looks different in lxml
 #    >>> print(ElementTree.tostring(element, "ascii"))
@@ -518,10 +531,10 @@ def writefile():
 def writestring():
     """
     >>> elem = ElementTree.XML("<html><body>text</body></html>")
-    >>> ElementTree.tostring(elem)
+    >>> print(repr(ElementTree.tostring(elem)).lstrip('b'))
     '<html><body>text</body></html>'
     >>> elem = ElementTree.fromstring("<html><body>text</body></html>")
-    >>> ElementTree.tostring(elem)
+    >>> print(repr(ElementTree.tostring(elem)).lstrip('b'))
     '<html><body>text</body></html>'
     """
 

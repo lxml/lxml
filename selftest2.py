@@ -14,6 +14,16 @@ except ImportError:
 
 from lxml import etree as ElementTree
 
+def stdout():
+    if sys.version_info[0] < 3:
+        return sys.stdout
+    class bytes_stdout(object):
+        def write(self, data):
+            if isinstance(data, bytes):
+                data = data.decode('ISO8859-1')
+            sys.stdout.write(data)
+    return bytes_stdout()
+
 def unserialize(text):
     file = StringIO(text)
     tree = ElementTree.parse(file)
@@ -25,11 +35,10 @@ def serialize(elem, encoding=None):
     if encoding:
         tree.write(file, encoding=encoding)
     else:
-        encoding = "utf-8"
         tree.write(file)
     result = file.getvalue()
     if sys.version_info[0] >= 3:
-        result = result.decode(encoding)
+        result = result.decode('ISO8859-1')
     result = result.replace(' />', '/>')
     if result[-1:] == '\n':
         result = result[:-1]
@@ -118,14 +127,14 @@ def parsefile():
     mode, and doctest doesn't filter out carriage returns.
 
     >>> tree = ElementTree.parse(open("samples/simple.xml", "rb"))
-    >>> tree.write(sys.stdout)
+    >>> tree.write(stdout())
     <root>
        <element key="value">text</element>
        <element>text</element>tail
        <empty-element/>
     </root>
     >>> tree = ElementTree.parse(open("samples/simple-ns.xml", "rb"))
-    >>> tree.write(sys.stdout)
+    >>> tree.write(stdout())
     <root xmlns="http://namespace/">
        <element key="value">text</element>
        <element>text</element>tail
