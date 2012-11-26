@@ -31,7 +31,7 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
-import threading
+import sys
 import re
 try:
     from urlparse import urljoin
@@ -582,6 +582,8 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
         parser = html_parser
     # FIXME: check what happens when you give html with a body, head, etc.
     start = html[:20].lstrip().lower()
+    if sys.version_info[0] >= 3 and hasattr(start, 'decode'): # Py3 can't mix bytes into startswith()
+        start = start.decode('ISO8859-1')
     if not start.startswith('<html') and not start.startswith('<!doctype'):
         html = '<html><body>%s</body></html>' % html
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
@@ -658,6 +660,8 @@ def fromstring(html, base_url=None, parser=None, **kw):
     if parser is None:
         parser = html_parser
     start = html[:10].lstrip().lower()
+    if sys.version_info[0] >= 3 and hasattr(start, 'decode'): # Py3 can't mix bytes into startswith()
+        start = start.decode('ISO8859-1')
     if start.startswith('<html') or start.startswith('<!doctype'):
         # Looks like a full HTML document
         return document_fromstring(html, parser=parser, base_url=base_url, **kw)
