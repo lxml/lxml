@@ -16,6 +16,10 @@ Features added
 Bugs fixed
 ----------
 
+* GH#33: lxml.html.fromstring() failed to accept bytes input in Py3.
+
+* LP#1080792: Static build of libxml2 2.9.0 failed due to missing file.
+
 Other changes
 -------------
 
