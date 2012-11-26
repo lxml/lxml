@@ -26,7 +26,6 @@ test_inplace: inplace
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest2.py
 
 test_inplace3: inplace
-	$(MAKE) clean
 	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
