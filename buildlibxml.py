@@ -174,7 +174,7 @@ def _extractall(self, path=".", members=None):
     import copy
     is_ignored_file = re.compile(
         r'''[\\/]((test|results?)[\\/]
-                  |doc[\\/].*(Log|[.](out|imp|err|png|ent|gif|tif|pdf))$
+                  |doc[\\/].*(Log|[.](out|imp|err|ent|gif|tif|pdf))$
                   |tests[\\/](.*[\\/])?(?!Makefile)[^\\/]*$
                   |python[\\/].*[.]py$
                  )
