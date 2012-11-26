@@ -131,7 +131,7 @@ _initThreadLogging()
 xmlparser.xmlInitParser()
 
 # filename encoding
-cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode(u"UTF-8")
+cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode("UTF-8")
 cdef char* _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
 # set up some default namespace prefixes
