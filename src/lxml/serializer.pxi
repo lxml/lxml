@@ -796,7 +796,7 @@ cdef class _IncrementalFileWriter:
                 return prefix
             i += 1
 
-    def _collect_namespaces(self, dict nsmap):
+    cdef _collect_namespaces(self, dict nsmap):
         new_namespaces = []
         flat_namespaces_map = {}
         for ns, prefix in nsmap.iteritems():
