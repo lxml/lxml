@@ -1,11 +1,14 @@
 import difflib
 from lxml import etree
 from lxml.html import fragment_fromstring
-import cgi
 import re
 
 __all__ = ['html_annotate', 'htmldiff']
 
+try:
+    from html import escape as html_escape
+except ImportError:
+    from cgi import escape as html_escape
 try:
     _unicode = unicode
 except NameError:
@@ -23,7 +26,7 @@ except NameError:
 
 def default_markup(text, version):
     return '<span title="%s">%s</span>' % (
-        cgi.escape(_unicode(version), 1), text)
+        html_escape(_unicode(version), 1), text)
 
 def html_annotate(doclist, markup=default_markup):
     """
@@ -686,7 +689,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         return
     start_words = split_words(el.text)
     for word in start_words:
-        yield cgi.escape(word)
+        yield html_escape(word)
     for child in el:
         for item in flatten_el(child, include_hrefs=include_hrefs):
             yield item
@@ -696,7 +699,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         yield end_tag(el)
         end_words = split_words(el.tail)
         for word in end_words:
-            yield cgi.escape(word)
+            yield html_escape(word)
 
 def split_words(text):
     """ Splits some text into words. Includes trailing whitespace (one
@@ -715,7 +718,7 @@ def start_tag(el):
     The text representation of the start tag for a tag.
     """
     return '<%s%s>' % (
-        el.tag, ''.join([' %s="%s"' % (name, cgi.escape(value, True))
+        el.tag, ''.join([' %s="%s"' % (name, html_escape(value, True))
                          for name, value in el.attrib.items()]))
 
 def end_tag(el):
