@@ -1265,7 +1265,7 @@ class ObjectifyTestCase(HelperTestCase):
 
         self.assertEqual(root.b[0], 5)
         self.assertEqual(5, root.b[0])
-        self.assertNotEquals(root.b[0], "5")
+        self.assertNotEqual(root.b[0], "5")
 
         root.b = 5
         self.assertTrue(root.b)
@@ -1767,11 +1767,11 @@ class ObjectifyTestCase(HelperTestCase):
         self.assertEqual(None, root.n.get(XML_SCHEMA_NIL_ATTR))
 
         for c in root.iterchildren():
-            self.assertNotEquals(None, c.get(objectify.PYTYPE_ATTRIBUTE))
+            self.assertNotEqual(None, c.get(objectify.PYTYPE_ATTRIBUTE))
             # these have no equivalent in xsi:type
             if (c.get(objectify.PYTYPE_ATTRIBUTE) not in [TREE_PYTYPE, 
                 "NoneType"]):
-                self.assertNotEquals(
+                self.assertNotEqual(
                     None, c.get(XML_SCHEMA_INSTANCE_TYPE_ATTR))
 
     def test_xsitype_deannotate(self):

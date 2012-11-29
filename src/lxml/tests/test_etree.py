@@ -2129,7 +2129,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(
             None,
             e1.prefix)
-        self.assertNotEquals(
+        self.assertNotEqual(
             None,
             e2.prefix)
         self.assertEqual(
@@ -3222,7 +3222,7 @@ class _XIncludeTestCase(HelperTestCase):
 
     def test_xinclude(self):
         tree = etree.parse(fileInTestDir('include/test_xinclude.xml'))
-        self.assertNotEquals(
+        self.assertNotEqual(
             'a',
             tree.getroot()[1].tag)
         # process xincludes
