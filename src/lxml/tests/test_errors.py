@@ -39,7 +39,7 @@ class ErrorTestCase(HelperTestCase):
         del l
         gc.collect()
 
-        self.assertEquals(sys.getrefcount(None), count)
+        self.assertEqual(sys.getrefcount(None), count)
 
 def test_suite():
     suite = unittest.TestSuite()

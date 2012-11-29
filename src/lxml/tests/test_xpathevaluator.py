@@ -23,7 +23,7 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_number(self):
         tree = self.parse('<a>1</a>')
-        self.assertEquals(1.,
+        self.assertEqual(1.,
                           tree.xpath('number(/a)'))
         tree = self.parse('<a>A</a>')
         actual = str(tree.xpath('number(/a)'))
@@ -33,12 +33,12 @@ class ETreeXPathTestCase(HelperTestCase):
         
     def test_xpath_string(self):
         tree = self.parse('<a>Foo</a>')
-        self.assertEquals('Foo',
+        self.assertEqual('Foo',
                           tree.xpath('string(/a/text())'))
 
     def test_xpath_document_root(self):
         tree = self.parse('<a><b/></a>')
-        self.assertEquals([],
+        self.assertEqual([],
                           tree.xpath('/'))
 
     def test_xpath_namespace(self):
@@ -48,55 +48,55 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_namespace_empty(self):
         tree = self.parse('<a/>')
-        self.assertEquals([('xml', 'http://www.w3.org/XML/1998/namespace')],
+        self.assertEqual([('xml', 'http://www.w3.org/XML/1998/namespace')],
                           tree.xpath('namespace::*'))
 
     def test_xpath_list_elements(self):
         tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
         root = tree.getroot()
-        self.assertEquals([root[0], root[1]],
+        self.assertEqual([root[0], root[1]],
                           tree.xpath('/a/b'))
 
     def test_xpath_list_nothing(self):
         tree = self.parse('<a><b/></a>')
-        self.assertEquals([],
+        self.assertEqual([],
                           tree.xpath('/a/c'))
         # this seems to pass a different code path, also should return nothing
-        self.assertEquals([],
+        self.assertEqual([],
                           tree.xpath('/a/c/text()'))
     
     def test_xpath_list_text(self):
         tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
         root = tree.getroot()
-        self.assertEquals(['Foo', 'Bar'],
+        self.assertEqual(['Foo', 'Bar'],
                           tree.xpath('/a/b/text()'))
 
     def test_xpath_list_text_parent(self):
         tree = self.parse('<a><b>FooBar</b><b>BarFoo</b></a>')
         root = tree.getroot()
-        self.assertEquals(['FooBar', 'BarFoo'],
+        self.assertEqual(['FooBar', 'BarFoo'],
                           tree.xpath('/a/b/text()'))
-        self.assertEquals([root[0], root[1]],
+        self.assertEqual([root[0], root[1]],
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
 
     def test_xpath_list_text_parent_no_smart_strings(self):
         tree = self.parse('<a><b>FooBar</b><b>BarFoo</b></a>')
         root = tree.getroot()
-        self.assertEquals(['FooBar', 'BarFoo'],
+        self.assertEqual(['FooBar', 'BarFoo'],
                           tree.xpath('/a/b/text()', smart_strings=True))
-        self.assertEquals([root[0], root[1]],
+        self.assertEqual([root[0], root[1]],
                           [r.getparent() for r in
                            tree.xpath('/a/b/text()', smart_strings=True)])
-        self.assertEquals([None, None],
+        self.assertEqual([None, None],
                           [r.attrname for r in
                            tree.xpath('/a/b/text()', smart_strings=True)])
 
-        self.assertEquals(['FooBar', 'BarFoo'],
+        self.assertEqual(['FooBar', 'BarFoo'],
                           tree.xpath('/a/b/text()', smart_strings=False))
-        self.assertEquals([False, False],
+        self.assertEqual([False, False],
                           [hasattr(r, 'getparent') for r in
                            tree.xpath('/a/b/text()', smart_strings=False)])
-        self.assertEquals([None, None],
+        self.assertEqual([None, None],
                           [r.attrname for r in
                            tree.xpath('/a/b/text()', smart_strings=True)])
 
@@ -104,38 +104,38 @@ class ETreeXPathTestCase(HelperTestCase):
         xml = _bytes('<a><b>FooBar\\u0680\\u3120</b><b>BarFoo\\u0680\\u3120</b></a>').decode("unicode_escape")
         tree = self.parse(xml.encode('utf-8'))
         root = tree.getroot()
-        self.assertEquals([_bytes('FooBar\\u0680\\u3120').decode("unicode_escape"),
+        self.assertEqual([_bytes('FooBar\\u0680\\u3120').decode("unicode_escape"),
                            _bytes('BarFoo\\u0680\\u3120').decode("unicode_escape")],
                           tree.xpath('/a/b/text()'))
-        self.assertEquals([root[0], root[1]],
+        self.assertEqual([root[0], root[1]],
                           [r.getparent() for r in tree.xpath('/a/b/text()')])
 
     def test_xpath_list_attribute(self):
         tree = self.parse('<a b="B" c="C"/>')
-        self.assertEquals(['B'],
+        self.assertEqual(['B'],
                           tree.xpath('/a/@b'))
 
     def test_xpath_list_attribute_parent(self):
         tree = self.parse('<a b="BaSdFgHjKl" c="CqWeRtZuI"/>')
         results = tree.xpath('/a/@c')
-        self.assertEquals(1, len(results))
-        self.assertEquals('CqWeRtZuI', results[0])
-        self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
+        self.assertEqual(1, len(results))
+        self.assertEqual('CqWeRtZuI', results[0])
+        self.assertEqual(tree.getroot().tag, results[0].getparent().tag)
 
     def test_xpath_list_attribute_parent_no_smart_strings(self):
         tree = self.parse('<a b="BaSdFgHjKl" c="CqWeRtZuI"/>')
 
         results = tree.xpath('/a/@c', smart_strings=True)
-        self.assertEquals(1, len(results))
-        self.assertEquals('CqWeRtZuI', results[0])
-        self.assertEquals('c', results[0].attrname)
-        self.assertEquals(tree.getroot().tag, results[0].getparent().tag)
+        self.assertEqual(1, len(results))
+        self.assertEqual('CqWeRtZuI', results[0])
+        self.assertEqual('c', results[0].attrname)
+        self.assertEqual(tree.getroot().tag, results[0].getparent().tag)
 
         results = tree.xpath('/a/@c', smart_strings=False)
-        self.assertEquals(1, len(results))
-        self.assertEquals('CqWeRtZuI', results[0])
-        self.assertEquals(False, hasattr(results[0], 'getparent'))
-        self.assertEquals(False, hasattr(results[0], 'attrname'))
+        self.assertEqual(1, len(results))
+        self.assertEqual('CqWeRtZuI', results[0])
+        self.assertEqual(False, hasattr(results[0], 'getparent'))
+        self.assertEqual(False, hasattr(results[0], 'attrname'))
 
     def test_xpath_text_from_other_document(self):
         xml_data = '''
@@ -152,12 +152,12 @@ class ETreeXPathTestCase(HelperTestCase):
         root = etree.XML('<dummy/>')
         values = root.xpath("lookup('k1')/value/text()",
                            extensions=functions)
-        self.assertEquals(['v1'], values)
-        self.assertEquals('value', values[0].getparent().tag)
+        self.assertEqual(['v1'], values)
+        self.assertEqual('value', values[0].getparent().tag)
 
     def test_xpath_list_comment(self):
         tree = self.parse('<a><!-- Foo --></a>')
-        self.assertEquals(['<!-- Foo -->'],
+        self.assertEqual(['<!-- Foo -->'],
                           list(map(repr, tree.xpath('/a/node()'))))
 
     def test_rel_xpath_boolean(self):
@@ -170,21 +170,21 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><c><b>Foo</b><b>Bar</b></c><c><b>Hey</b></c></a>')
         root = tree.getroot()
         c = root[0]
-        self.assertEquals([c[0], c[1]],
+        self.assertEqual([c[0], c[1]],
                           c.xpath('b'))
-        self.assertEquals([c[0], c[1], root[1][0]],
+        self.assertEqual([c[0], c[1], root[1][0]],
                           c.xpath('//b'))
 
     def test_xpath_ns(self):
         tree = self.parse('<a xmlns="uri:a"><b></b></a>')
         root = tree.getroot()
-        self.assertEquals(
+        self.assertEqual(
             [root[0]],
             tree.xpath('//foo:b', namespaces={'foo': 'uri:a'}))
-        self.assertEquals(
+        self.assertEqual(
             [],
             tree.xpath('//foo:b', namespaces={'foo': 'uri:c'}))
-        self.assertEquals(
+        self.assertEqual(
             [root[0]],
             root.xpath('//baz:b', namespaces={'baz': 'uri:a'}))
 
@@ -249,7 +249,7 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b><c></c></b></a>')
         e = etree.XPathEvaluator(tree)
         root = tree.getroot()
-        self.assertEquals(
+        self.assertEqual(
             [root],
             e('//a'))
 
@@ -257,11 +257,11 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b><c></c></b></a>')
         child_tree = etree.ElementTree(tree.getroot()[0])
         e = etree.XPathEvaluator(child_tree)
-        self.assertEquals(
+        self.assertEqual(
             [],
             e('a'))
         root = child_tree.getroot()
-        self.assertEquals(
+        self.assertEqual(
             [root[0]],
             e('c'))
 
@@ -269,14 +269,14 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b><c></c></b></a>')
         child_tree = etree.ElementTree(tree.getroot()[0])
         e = etree.XPathEvaluator(child_tree)
-        self.assertEquals(
+        self.assertEqual(
             [],
             e('/a'))
         root = child_tree.getroot()
-        self.assertEquals(
+        self.assertEqual(
             [root],
             e('/b'))
-        self.assertEquals(
+        self.assertEqual(
             [],
             e('/c'))
 
@@ -284,7 +284,7 @@ class ETreeXPathTestCase(HelperTestCase):
         tree = self.parse('<a><b><c></c></b></a>')
         root = tree.getroot()
         e = etree.XPathEvaluator(root[0])
-        self.assertEquals(
+        self.assertEqual(
             [root[0][0]],
             e('c'))
         
@@ -294,7 +294,7 @@ class ETreeXPathTestCase(HelperTestCase):
         extension = {(None, 'foo'): foo}
         tree = self.parse('<a><b></b></a>')
         e = etree.XPathEvaluator(tree, extensions=[extension])
-        self.assertEquals(
+        self.assertEqual(
             "hello you", e("foo('you')"))
 
     def test_xpath_extensions_wrong_args(self):
@@ -325,9 +325,9 @@ class ETreeXPathTestCase(HelperTestCase):
         x = self.parse('<a/>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e("foo('World')/result")
-        self.assertEquals(2, len(r))
-        self.assertEquals('Hoi', r[0].text)
-        self.assertEquals('Dag', r[1].text)
+        self.assertEqual(2, len(r))
+        self.assertEqual('Hoi', r[0].text)
+        self.assertEqual('Dag', r[1].text)
 
     def test_xpath_extensions_nodes_append(self):
         def f(evaluator, nodes):
@@ -341,9 +341,9 @@ class ETreeXPathTestCase(HelperTestCase):
         x = self.parse('<a/>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e("foo(/*)/result")
-        self.assertEquals(2, len(r))
-        self.assertEquals('Hoi', r[0].text)
-        self.assertEquals('Dag', r[1].text)
+        self.assertEqual(2, len(r))
+        self.assertEqual('Hoi', r[0].text)
+        self.assertEqual('Dag', r[1].text)
 
     def test_xpath_extensions_nodes_append2(self):
         def f(evaluator, nodes):
@@ -358,19 +358,19 @@ class ETreeXPathTestCase(HelperTestCase):
         x = self.parse('<result>Honk</result>')
         e = etree.XPathEvaluator(x, extensions=[{(None, 'foo'): f}])
         r = e("foo(/*)/result")
-        self.assertEquals(3, len(r))
-        self.assertEquals('Hoi',  r[0].text)
-        self.assertEquals('Dag',  r[1].text)
-        self.assertEquals('Honk', r[2].text)
+        self.assertEqual(3, len(r))
+        self.assertEqual('Hoi',  r[0].text)
+        self.assertEqual('Dag',  r[1].text)
+        self.assertEqual('Honk', r[2].text)
 
     def test_xpath_context_node(self):
         tree = self.parse('<root><a/><b><c/></b></root>')
 
         check_call = []
         def check_context(ctxt, nodes):
-            self.assertEquals(len(nodes), 1)
+            self.assertEqual(len(nodes), 1)
             check_call.append(nodes[0].tag)
-            self.assertEquals(ctxt.context_node, nodes[0])
+            self.assertEqual(ctxt.context_node, nodes[0])
             return True
 
         find = etree.XPath("//*[p:foo(.)]",
@@ -379,14 +379,14 @@ class ETreeXPathTestCase(HelperTestCase):
         find(tree)
 
         check_call.sort()
-        self.assertEquals(check_call, ["a", "b", "c", "root"])
+        self.assertEqual(check_call, ["a", "b", "c", "root"])
 
     def test_xpath_eval_context_propagation(self):
         tree = self.parse('<root><a/><b><c/></b></root>')
 
         check_call = {}
         def check_context(ctxt, nodes):
-            self.assertEquals(len(nodes), 1)
+            self.assertEqual(len(nodes), 1)
             tag = nodes[0].tag
             # empty during the "b" call, a "b" during the "c" call
             check_call[tag] = ctxt.eval_context.get("b")
@@ -398,8 +398,8 @@ class ETreeXPathTestCase(HelperTestCase):
                            extensions=[{('ns', 'foo') : check_context}])
         result = find(tree)
 
-        self.assertEquals(result, [tree.getroot()[1][0]])
-        self.assertEquals(check_call, {'b':None, 'c':'b'})
+        self.assertEqual(result, [tree.getroot()[1][0]])
+        self.assertEqual(check_call, {'b':None, 'c':'b'})
 
     def test_xpath_eval_context_clear(self):
         tree = self.parse('<root><a/><b><c/></b></root>')
@@ -408,7 +408,7 @@ class ETreeXPathTestCase(HelperTestCase):
         def check_context(ctxt):
             check_call["done"] = True
             # context must be empty for each new evaluation
-            self.assertEquals(len(ctxt.eval_context), 0)
+            self.assertEqual(len(ctxt.eval_context), 0)
             ctxt.eval_context["test"] = True
             return True
 
@@ -417,8 +417,8 @@ class ETreeXPathTestCase(HelperTestCase):
                            extensions=[{('ns', 'foo') : check_context}])
         result = find(tree)
 
-        self.assertEquals(result, [tree.getroot()[1]])
-        self.assertEquals(check_call["done"], True)
+        self.assertEqual(result, [tree.getroot()[1]])
+        self.assertEqual(check_call["done"], True)
 
         check_call.clear()
         find = etree.XPath("//b[p:foo()]",
@@ -426,8 +426,8 @@ class ETreeXPathTestCase(HelperTestCase):
                            extensions=[{('ns', 'foo') : check_context}])
         result = find(tree)
 
-        self.assertEquals(result, [tree.getroot()[1]])
-        self.assertEquals(check_call["done"], True)
+        self.assertEqual(result, [tree.getroot()[1]])
+        self.assertEqual(check_call["done"], True)
 
     def test_xpath_variables(self):
         x = self.parse('<a attr="true"/>')
@@ -435,15 +435,15 @@ class ETreeXPathTestCase(HelperTestCase):
 
         expr = "/a[@attr=$aval]"
         r = e(expr, aval=1)
-        self.assertEquals(0, len(r))
+        self.assertEqual(0, len(r))
 
         r = e(expr, aval="true")
-        self.assertEquals(1, len(r))
-        self.assertEquals("true", r[0].get('attr'))
+        self.assertEqual(1, len(r))
+        self.assertEqual("true", r[0].get('attr'))
 
         r = e(expr, aval=True)
-        self.assertEquals(1, len(r))
-        self.assertEquals("true", r[0].get('attr'))
+        self.assertEqual(1, len(r))
+        self.assertEqual("true", r[0].get('attr'))
 
     def test_xpath_variables_nodeset(self):
         x = self.parse('<a attr="true"/>')
@@ -453,9 +453,9 @@ class ETreeXPathTestCase(HelperTestCase):
         etree.SubElement(element, "test-sub")
         expr = "$value"
         r = e(expr, value=element)
-        self.assertEquals(1, len(r))
-        self.assertEquals(element.tag, r[0].tag)
-        self.assertEquals(element[0].tag, r[0][0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual(element.tag, r[0].tag)
+        self.assertEqual(element[0].tag, r[0][0].tag)
 
     def test_xpath_extensions_mix(self):
         x = self.parse('<a attr="true"><test/></a>')
@@ -527,15 +527,15 @@ class ETreeXPathClassTestCase(HelperTestCase):
 
         expr = etree.XPath("/a[@attr != 'true']")
         r = expr(x)
-        self.assertEquals(0, len(r))
+        self.assertEqual(0, len(r))
 
         expr = etree.XPath("/a[@attr = 'true']")
         r = expr(x)
-        self.assertEquals(1, len(r))
+        self.assertEqual(1, len(r))
 
         expr = etree.XPath( expr.path )
         r = expr(x)
-        self.assertEquals(1, len(r))
+        self.assertEqual(1, len(r))
 
     def test_xpath_compile_element(self):
         x = self.parse('<a><b/><c/></a>')
@@ -543,22 +543,22 @@ class ETreeXPathClassTestCase(HelperTestCase):
 
         expr = etree.XPath("./b")
         r = expr(root)
-        self.assertEquals(1, len(r))
-        self.assertEquals('b', r[0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual('b', r[0].tag)
 
         expr = etree.XPath("./*")
         r = expr(root)
-        self.assertEquals(2, len(r))
+        self.assertEqual(2, len(r))
 
     def test_xpath_compile_vars(self):
         x = self.parse('<a attr="true"/>')
 
         expr = etree.XPath("/a[@attr=$aval]")
         r = expr(x, aval=False)
-        self.assertEquals(0, len(r))
+        self.assertEqual(0, len(r))
 
         r = expr(x, aval=True)
-        self.assertEquals(1, len(r))
+        self.assertEqual(1, len(r))
 
     def test_xpath_compile_error(self):
         self.assertRaises(SyntaxError, etree.XPath, '\\fad')
@@ -583,8 +583,8 @@ class ETreeXPathExsltTestCase(HelperTestCase):
         match_dates = tree.xpath('//b[date:year(string()) = 2009]',
                                  namespaces=self.NSMAP)
         self.assertTrue(match_dates, str(match_dates))
-        self.assertEquals(len(match_dates), 1, str(match_dates))
-        self.assertEquals(match_dates[0].text, '2009-11-12')
+        self.assertEqual(len(match_dates), 1, str(match_dates))
+        self.assertEqual(match_dates[0].text, '2009-11-12')
 
     def test_xpath_exslt_functions_strings(self):
         tree = self.parse('<a><b>2009-11-12</b><b>2008-12-11</b></a>')
@@ -592,7 +592,7 @@ class ETreeXPathExsltTestCase(HelperTestCase):
         match_date = tree.xpath('str:replace(//b[1], "-", "*")',
                                 namespaces=self.NSMAP)
         self.assertTrue(match_date, str(match_date))
-        self.assertEquals(match_date, '2009*11*12')
+        self.assertEqual(match_date, '2009*11*12')
 
 
 class ETreeETXPathClassTestCase(HelperTestCase):
@@ -602,13 +602,13 @@ class ETreeETXPathClassTestCase(HelperTestCase):
 
         expr = etree.ETXPath("/a/{nsa}b")
         r = expr(x)
-        self.assertEquals(1, len(r))
-        self.assertEquals('{nsa}b', r[0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual('{nsa}b', r[0].tag)
 
         expr = etree.ETXPath("/a/{nsb}b")
         r = expr(x)
-        self.assertEquals(1, len(r))
-        self.assertEquals('{nsb}b', r[0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual('{nsb}b', r[0].tag)
 
     # disabled this test as non-ASCII characters in namespace URIs are
     # not acceptable
@@ -618,13 +618,13 @@ class ETreeETXPathClassTestCase(HelperTestCase):
 
         expr = etree.ETXPath(_bytes("/a/{http://nsa/\\uf8d2}b").decode("unicode_escape"))
         r = expr(x)
-        self.assertEquals(1, len(r))
-        self.assertEquals(_bytes('{http://nsa/\\uf8d2}b').decode("unicode_escape"), r[0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual(_bytes('{http://nsa/\\uf8d2}b').decode("unicode_escape"), r[0].tag)
 
         expr = etree.ETXPath(_bytes("/a/{http://nsb/\\uf8d1}b").decode("unicode_escape"))
         r = expr(x)
-        self.assertEquals(1, len(r))
-        self.assertEquals(_bytes('{http://nsb/\\uf8d1}b').decode("unicode_escape"), r[0].tag)
+        self.assertEqual(1, len(r))
+        self.assertEqual(_bytes('{http://nsb/\\uf8d1}b').decode("unicode_escape"), r[0].tag)
 
 SAMPLE_XML = etree.parse(BytesIO("""
 <body>

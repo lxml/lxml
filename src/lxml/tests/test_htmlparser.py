@@ -77,14 +77,14 @@ class HtmlParserTestCase(HelperTestCase):
         Element = parser.makeelement
 
         pname = Element('p:name')
-        self.assertEquals(pname.tag, 'p:name')
+        self.assertEqual(pname.tag, 'p:name')
 
         pname = Element('{test}p:name')
-        self.assertEquals(pname.tag, '{test}p:name')
+        self.assertEqual(pname.tag, '{test}p:name')
 
         pname = Element('name')
         pname.tag = 'p:name'
-        self.assertEquals(pname.tag, 'p:name')
+        self.assertEqual(pname.tag, 'p:name')
 
     def test_html_element_name_quote(self):
         parser = self.etree.HTMLParser()
@@ -98,7 +98,7 @@ class HtmlParserTestCase(HelperTestCase):
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', "pname'")
         self.assertRaises(ValueError, setattr, el, 'tag', '"pname')
-        self.assertEquals(el.tag, "name")
+        self.assertEqual(el.tag, "name")
 
     def test_html_element_name_space(self):
         parser = self.etree.HTMLParser()
@@ -110,7 +110,7 @@ class HtmlParserTestCase(HelperTestCase):
 
         el = Element('name')
         self.assertRaises(ValueError, setattr, el, 'tag', ' name ')
-        self.assertEquals(el.tag, "name")
+        self.assertEqual(el.tag, "name")
 
     def test_html_subelement_name_empty(self):
         parser = self.etree.HTMLParser()
@@ -129,10 +129,10 @@ class HtmlParserTestCase(HelperTestCase):
 
         el = Element('name')
         pname = SubElement(el, 'p:name')
-        self.assertEquals(pname.tag, 'p:name')
+        self.assertEqual(pname.tag, 'p:name')
 
         pname = SubElement(el, '{test}p:name')
-        self.assertEquals(pname.tag, '{test}p:name')
+        self.assertEqual(pname.tag, '{test}p:name')
 
     def test_html_subelement_name_quote(self):
         parser = self.etree.HTMLParser()
@@ -170,7 +170,7 @@ class HtmlParserTestCase(HelperTestCase):
             BytesIO(html_latin1),
             self.etree.HTMLParser(encoding="iso-8859-1"))
         p = tree.find("//p")
-        self.assertEquals(p.text, text)
+        self.assertEqual(p.text, text)
 
     def test_parse_encoding_8bit_override(self):
         text = _str('Søk på nettet')
@@ -191,7 +191,7 @@ class HtmlParserTestCase(HelperTestCase):
             BytesIO(html_latin1),
             self.etree.HTMLParser(encoding="iso-8859-1"))
         p = tree.find("//p")
-        self.assertEquals(p.text, text)
+        self.assertEqual(p.text, text)
 
     def test_module_HTML_broken(self):
         element = self.etree.HTML(self.broken_html_str)
@@ -202,7 +202,7 @@ class HtmlParserTestCase(HelperTestCase):
         # by default, libxml2 generates CDATA nodes for <script> content
         html = _bytes('<html><head><style>foo</style></head></html>')
         element = self.etree.HTML(html)
-        self.assertEquals(element[0][0].text, "foo")
+        self.assertEqual(element[0][0].text, "foo")
 
     def test_module_HTML_access(self):
         element = self.etree.HTML(self.html_str)
@@ -264,12 +264,12 @@ class HtmlParserTestCase(HelperTestCase):
             '<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True)
-        self.assertEquals(None, iterator.root)
+        self.assertEqual(None, iterator.root)
 
         events = list(iterator)
         root = iterator.root
         self.assert_(root is not None)
-        self.assertEquals(
+        self.assertEqual(
             [('end', root[0][0]), ('end', root[0]), ('end', root[1][0]),
              ('end', root[1]), ('end', root)],
             events)
@@ -279,12 +279,12 @@ class HtmlParserTestCase(HelperTestCase):
         iterator = iterparse(fileInTestDir("shakespeare.html"),
                              html=True)
 
-        self.assertEquals(None, iterator.root)
+        self.assertEqual(None, iterator.root)
         events = list(iterator)
         root = iterator.root
         self.assert_(root is not None)
-        self.assertEquals(249, len(events))
-        self.assertEquals(
+        self.assertEqual(249, len(events))
+        self.assertEqual(
             [],
             [ event for (event, element) in events if event != 'end' ])
 
@@ -294,12 +294,12 @@ class HtmlParserTestCase(HelperTestCase):
             '<html><head><title>TITLE</title><body><p>P</p></body></html>')
 
         iterator = iterparse(f, html=True, events=('start',))
-        self.assertEquals(None, iterator.root)
+        self.assertEqual(None, iterator.root)
 
         events = list(iterator)
         root = iterator.root
         self.assert_(root is not None)
-        self.assertEquals(
+        self.assertEqual(
             [('start', root), ('start', root[0]), ('start', root[0][0]),
                 ('start', root[1]), ('start', root[1][0])],
             events)
@@ -321,8 +321,8 @@ class HtmlParserTestCase(HelperTestCase):
         parser.feed("<html><body></body></html>")
         done = parser.close()
 
-        self.assertEquals("DONE", done)
-        self.assertEquals([
+        self.assertEqual("DONE", done)
+        self.assertEqual([
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)
 
@@ -344,8 +344,8 @@ class HtmlParserTestCase(HelperTestCase):
         parser.feed("<!DOCTYPE><html><body></body></html>")
         done = parser.close()
 
-        self.assertEquals("DONE", done)
-        self.assertEquals([
+        self.assertEqual("DONE", done)
+        self.assertEqual([
             ("doctype", (None, None, None)),
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)
@@ -368,8 +368,8 @@ class HtmlParserTestCase(HelperTestCase):
         parser.feed("<!DOCTYPE html><html><body></body></html>")
         done = parser.close()
 
-        self.assertEquals("DONE", done)
-        self.assertEquals([
+        self.assertEqual("DONE", done)
+        self.assertEqual([
             ("doctype", ("html", None, None)),
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)
@@ -393,8 +393,8 @@ class HtmlParserTestCase(HelperTestCase):
                     '<html><body></body></html>')
         done = parser.close()
 
-        self.assertEquals("DONE", done)
-        self.assertEquals([
+        self.assertEqual("DONE", done)
+        self.assertEqual([
             ("doctype", ("html", "-//W3C//DTD HTML 4.01//EN", "sys.dtd")),
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)

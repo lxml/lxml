@@ -43,9 +43,9 @@ class ClassLookupTestCase(HelperTestCase):
         ns[None] = TestElement
 
         root = etree.XML(xml_str)
-        self.assertEquals(root.FIND_ME,
+        self.assertEqual(root.FIND_ME,
                           TestElement.FIND_ME)
-        self.assertEquals(root[0].FIND_ME,
+        self.assertEqual(root[0].FIND_ME,
                           TestElement.FIND_ME)
         self.assertFalse(hasattr(root[0][-1], 'FIND_ME'))
 
@@ -70,9 +70,9 @@ class ClassLookupTestCase(HelperTestCase):
         </root>
         """), parser)
 
-        self.assertEquals("default element", root.FIND_ME)
-        self.assertEquals("default pi", root[0].FIND_ME)
-        self.assertEquals("default comment", root[1].FIND_ME)
+        self.assertEqual("default element", root.FIND_ME)
+        self.assertEqual("default pi", root[0].FIND_ME)
+        self.assertEqual("default comment", root[1].FIND_ME)
 
     def test_attribute_based_lookup(self):
         class TestElement(etree.ElementBase):
@@ -86,7 +86,7 @@ class ClassLookupTestCase(HelperTestCase):
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
-        self.assertEquals(root[0].FIND_ME,
+        self.assertEqual(root[0].FIND_ME,
                           TestElement.FIND_ME)
         self.assertFalse(hasattr(root[0][0], 'FIND_ME'))
 
@@ -103,7 +103,7 @@ class ClassLookupTestCase(HelperTestCase):
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
-        self.assertEquals(root[0].FIND_ME,
+        self.assertEqual(root[0].FIND_ME,
                           TestElement.FIND_ME)
         self.assertFalse(hasattr(root[0][1], 'FIND_ME'))
 
@@ -127,10 +127,10 @@ class ClassLookupTestCase(HelperTestCase):
 
         root = etree.XML(xml_str)
         self.assertFalse(hasattr(root, 'FIND_ME'))
-        self.assertEquals(root[0].FIND_ME,
+        self.assertEqual(root[0].FIND_ME,
                           TestElement1.FIND_ME)
         self.assertFalse(hasattr(root[0][1], 'FIND_ME'))
-        self.assertEquals(root[0][-1].FIND_ME,
+        self.assertEqual(root[0][-1].FIND_ME,
                           TestElement2.FIND_ME)
 
     def test_parser_based_lookup(self):
@@ -148,9 +148,9 @@ class ClassLookupTestCase(HelperTestCase):
         parser.set_element_class_lookup( MyLookup() )
 
         root = etree.parse(BytesIO(xml_str), parser).getroot()
-        self.assertEquals(root.FIND_ME,
+        self.assertEqual(root.FIND_ME,
                           TestElement.FIND_ME)
-        self.assertEquals(root[0].FIND_ME,
+        self.assertEqual(root[0].FIND_ME,
                           TestElement.FIND_ME)
 
         root = etree.parse(BytesIO(xml_str)).getroot()
@@ -180,10 +180,10 @@ class ClassLookupTestCase(HelperTestCase):
                    parser)
 
         a = root[0]
-        self.assertEquals(a.tag, "a")
-        self.assertEquals(root[0].tag, "a")
+        self.assertEqual(a.tag, "a")
+        self.assertEqual(root[0].tag, "a")
         del a
-        self.assertEquals(root[0].tag, "a")
+        self.assertEqual(root[0].tag, "a")
 
     def test_lookup_without_fallback(self):
         class Lookup(etree.CustomElementClassLookup):
@@ -203,7 +203,7 @@ class ClassLookupTestCase(HelperTestCase):
 
         root = etree.XML('<foo/>', parser)
 
-        self.assertEquals("test", root.custom())
+        self.assertEqual("test", root.custom())
 
 
 def test_suite():

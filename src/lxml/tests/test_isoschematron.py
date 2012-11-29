@@ -229,7 +229,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assert_(schematron(tree_valid), schematron.error_log)
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(len(schematron.error_log), 1,
+        self.assertEqual(len(schematron.error_log), 1,
                           'expected single error: %s (%s errors)' %
                           (schematron.error_log, len(schematron.error_log)))
 
@@ -383,7 +383,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 2
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -397,7 +397,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 1
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -486,7 +486,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 3
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -498,7 +498,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 1
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -510,7 +510,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 2
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -522,7 +522,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 3
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -611,7 +611,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 3
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -622,7 +622,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 1
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -633,7 +633,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 2
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
@@ -644,7 +644,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         expected = 3
         valid = schematron(tree_invalid)
         self.assert_(not valid)
-        self.assertEquals(
+        self.assertEqual(
             len(schematron.error_log), expected, 'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
                                       

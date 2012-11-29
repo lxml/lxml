@@ -38,7 +38,7 @@ class ThreadingTestCase(HelperTestCase):
             del thread_root
 
         self._run_thread(run_thread)
-        self.assertEquals(xml, tostring(main_root))
+        self.assertEqual(xml, tostring(main_root))
 
     def test_main_xslt_in_thread(self):
         XML = self.etree.XML
@@ -58,7 +58,7 @@ class ThreadingTestCase(HelperTestCase):
             result.append( st(root) )
 
         self._run_thread(run_thread)
-        self.assertEquals('''\
+        self.assertEqual('''\
 <?xml version="1.0"?>
 <foo><a>B</a></foo>
 ''',
@@ -81,7 +81,7 @@ class ThreadingTestCase(HelperTestCase):
             root.append( st(root).getroot() )
 
         self._run_thread(run_thread)
-        self.assertEquals(_bytes('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>'),
+        self.assertEqual(_bytes('<a><b>B</b><c>C</c><foo><a>B</a></foo></a>'),
                           tostring(root))
 
     def test_thread_xslt_attr_replace(self):
@@ -106,7 +106,7 @@ class ThreadingTestCase(HelperTestCase):
             result.append( style(root).getroot() )
 
         self._run_thread(run_thread)
-        self.assertEquals(_bytes('<root class="xyz"/>'),
+        self.assertEqual(_bytes('<root class="xyz"/>'),
                           tostring(result[0]))
 
     def test_thread_create_xslt(self):
@@ -135,7 +135,7 @@ class ThreadingTestCase(HelperTestCase):
         st = stylesheets[0]
         result = tostring( st(root) )
 
-        self.assertEquals(_bytes('<div id="test">BC</div>'),
+        self.assertEqual(_bytes('<div id="test">BC</div>'),
                           result)
 
     def test_thread_error_log(self):
@@ -219,7 +219,7 @@ class ThreadingTestCase(HelperTestCase):
             tostring(result)
             self._run_thread(test)
 
-        self.assertEquals(
+        self.assertEqual(
             _bytes('<ns0:root xmlns:ns0="myns" att="someval"><b>B</b>'
                    '<c xmlns="test">C</c><b>B</b><c xmlns="test">C</c><tags/>'
                    '<a><foo>B</foo></a>'
@@ -234,7 +234,7 @@ class ThreadingTestCase(HelperTestCase):
         while len(result):
             self._run_thread(strip_first)
 
-        self.assertEquals(
+        self.assertEqual(
             _bytes('<ns0:root xmlns:ns0="myns" att="someval"/>'),
             tostring(result))
 
@@ -372,14 +372,14 @@ class ThreadPipelineTestCase(HelperTestCase):
         start.start()
         # make sure the last thread has terminated
         last.join(60) # time out after 60 seconds
-        self.assertEquals(item_count, last.out_queue.qsize())
+        self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
         results = [ get() for _ in range(item_count) ]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
-            self.assertEquals(comparison, result)
+            self.assertEqual(comparison, result)
 
     def test_thread_pipeline_global_parse(self):
         item_count = self.item_count
@@ -402,14 +402,14 @@ class ThreadPipelineTestCase(HelperTestCase):
         start.start()
         # make sure the last thread has terminated
         last.join(60) # time out after 90 seconds
-        self.assertEquals(item_count, last.out_queue.qsize())
+        self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
         results = [ get() for _ in range(item_count) ]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
-            self.assertEquals(comparison, result)
+            self.assertEqual(comparison, result)
 
 
 def test_suite():

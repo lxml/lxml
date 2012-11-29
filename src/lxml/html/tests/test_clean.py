@@ -32,7 +32,7 @@ class CleanerTest(unittest.TestCase):
             allow_tags = ['table', 'tr', 'td'])
         result = cleaner.clean_html(html_root)
 
-        self.assertEquals(12-5+1, len(list(result.iter())))
+        self.assertEqual(12-5+1, len(list(result.iter())))
 
 def test_suite():
     suite = unittest.TestSuite()

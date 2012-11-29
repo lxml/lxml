@@ -109,10 +109,10 @@ class ETreeDtdTestCase(HelperTestCase):
         tree = etree.parse(fileInTestDir('test.xml'), parser)
         root = tree.getroot()
 
-        self.assertEquals(
+        self.assertEqual(
             "valueA",
             root.get("default"))
-        self.assertEquals(
+        self.assertEqual(
             "valueB",
             root[0].get("default"))
 
@@ -124,7 +124,7 @@ class ETreeDtdTestCase(HelperTestCase):
                              attribute_defaults=True)
         attributes = [ element.get("default")
                        for event, element in iterator ]
-        self.assertEquals(
+        self.assertEqual(
             ["valueA", "valueB"],
             attributes)
 

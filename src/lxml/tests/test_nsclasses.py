@@ -62,15 +62,15 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assert_(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el[0], 'maeh'))
         self.assertFalse(hasattr(el[0], 'bluff'))
-        self.assertEquals(el.bluff(), 'bluff')
+        self.assertEqual(el.bluff(), 'bluff')
         del el
 
         self.Namespace('ns11').update(maeh_dict)
         el = tree.getroot()
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
-        self.assertEquals(el.bluff(), 'bluff')
-        self.assertEquals(el[0].maeh(), 'maeh')
+        self.assertEqual(el.bluff(), 'bluff')
+        self.assertEqual(el[0].maeh(), 'maeh')
         del el
 
         self.Namespace('ns10').clear()
@@ -137,9 +137,9 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertFalse(hasattr(el[2], 'bluff'))
         self.assertFalse(hasattr(el[2], 'maeh'))
 
-        self.assertEquals(el.bluff(), 'bluff')
-        self.assertEquals(el[0].maeh(), 'maeh')
-        self.assertEquals(el[1].bluff(), 'bluff')
+        self.assertEqual(el.bluff(), 'bluff')
+        self.assertEqual(el[0].maeh(), 'maeh')
+        self.assertEqual(el[1].bluff(), 'bluff')
 
         self.Namespace('ns20').clear()
         self.Namespace('ns21').clear()
@@ -155,8 +155,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         etree.SubElement(el, "maeh")
         self.assert_(hasattr(el, 'bluff'))
         self.assert_(hasattr(el[0], 'maeh'))
-        self.assertEquals(el.bluff(), 'bluff')
-        self.assertEquals(el[0].maeh(), 'maeh')
+        self.assertEqual(el.bluff(), 'bluff')
+        self.assertEqual(el[0].maeh(), 'maeh')
 
         self.Namespace(None).clear()
         self.Namespace('ns30').clear()
@@ -176,32 +176,32 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
             maeh("TeXT", bluff, honk(), "TAiL"),
             "Tail")
 
-        self.assertEquals('default_class', el.tag)
-        self.assertEquals('testtext', el.text)
-        self.assertEquals(None, el.tail)
-        self.assertEquals(2, len(el))
-        self.assertEquals(7, len(list(el.iter())))
+        self.assertEqual('default_class', el.tag)
+        self.assertEqual('testtext', el.text)
+        self.assertEqual(None, el.tail)
+        self.assertEqual(2, len(el))
+        self.assertEqual(7, len(list(el.iter())))
 
-        self.assertEquals('bluff_class', el[0].tag)
-        self.assertEquals('TaIL', el[0][0].tail)
-        self.assertEquals('TaIL', ''.join(el[0].itertext()))
-        self.assertEquals('{http://a.b/c}HONK',
+        self.assertEqual('bluff_class', el[0].tag)
+        self.assertEqual('TaIL', el[0][0].tail)
+        self.assertEqual('TaIL', ''.join(el[0].itertext()))
+        self.assertEqual('{http://a.b/c}HONK',
                           el[0][0].tag)
-        self.assertEquals('maeh_class',
+        self.assertEqual('maeh_class',
                           el[0][1].tag)
 
-        self.assertEquals('maeh_class', el[1].tag)
-        self.assertEquals('TeXT', el[1].text)
-        self.assertEquals('bluff_class', el[1][0].tag)
-        self.assertEquals('{http://a.b/c}HONK', el[1][1].tag)
-        self.assertEquals('TAiL', el[1][1].tail)
+        self.assertEqual('maeh_class', el[1].tag)
+        self.assertEqual('TeXT', el[1].text)
+        self.assertEqual('bluff_class', el[1][0].tag)
+        self.assertEqual('{http://a.b/c}HONK', el[1][1].tag)
+        self.assertEqual('TAiL', el[1][1].tail)
 
-        self.assertEquals('TeXTTAiL',
+        self.assertEqual('TeXTTAiL',
                           ''.join(el[1].itertext()))
-        self.assertEquals('Tail', el[1].tail)
-        self.assertEquals('TAiL', el[1][1].tail)
-        self.assertEquals('bluff_class', el[1][0].tag)
-        self.assertEquals('{http://a.b/c}HONK', el[1][1].tag)
+        self.assertEqual('Tail', el[1].tail)
+        self.assertEqual('TAiL', el[1][1].tail)
+        self.assertEqual('bluff_class', el[1][0].tag)
+        self.assertEqual('{http://a.b/c}HONK', el[1][1].tag)
         
 
 def test_suite():

@@ -27,7 +27,7 @@ uxml = _bytes("<test><title>test \\xc3\\xa1\\u3120</title><h1>page \\xc3\\xa1\\u
 class UnicodeTestCase(HelperTestCase):
     def test_unicode_xml(self):
         tree = etree.XML(_str('<p>%s</p>') % uni)
-        self.assertEquals(uni, tree.text)
+        self.assertEqual(uni, tree.text)
 
     def test_unicode_xml_broken(self):
         uxml = _str('<?xml version="1.0" encoding="UTF-8"?>') + \
@@ -36,7 +36,7 @@ class UnicodeTestCase(HelperTestCase):
 
     def test_unicode_tag(self):
         el = etree.Element(uni)
-        self.assertEquals(uni, el.tag)
+        self.assertEqual(uni, el.tag)
 
     def test_unicode_tag_invalid(self):
         # sadly, Klingon is not well-formed
@@ -45,7 +45,7 @@ class UnicodeTestCase(HelperTestCase):
     def test_unicode_nstag(self):
         tag = _str("{http://abc/}%s") % uni
         el = etree.Element(tag)
-        self.assertEquals(tag, el.tag)
+        self.assertEqual(tag, el.tag)
 
     def test_unicode_ns_invalid(self):
         # namespace URIs must conform to RFC 3986
@@ -60,29 +60,29 @@ class UnicodeTestCase(HelperTestCase):
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
         tag = _str("{%s}%s") % (uni, uni)
-        self.assertEquals(qname.text, tag)
-        self.assertEquals(unicode(qname), tag)
+        self.assertEqual(qname.text, tag)
+        self.assertEqual(unicode(qname), tag)
 
     def test_unicode_qname_invalid(self):
         self.assertRaises(ValueError, etree.QName, invalid_tag)
 
     def test_unicode_attr(self):
         el = etree.Element('foo', {'bar': uni})
-        self.assertEquals(uni, el.attrib['bar'])
+        self.assertEqual(uni, el.attrib['bar'])
 
     def test_unicode_comment(self):
         el = etree.Comment(uni)
-        self.assertEquals(uni, el.text)
+        self.assertEqual(uni, el.text)
 
     def test_unicode_parse_stringio(self):
         el = etree.parse(StringIO(_str('<p>%s</p>') % uni)).getroot()
-        self.assertEquals(uni, el.text)
+        self.assertEqual(uni, el.text)
 
 ##     def test_parse_fileobject_unicode(self):
 ##         # parse unicode from unamed file object (not support by ElementTree)
 ##         f = SillyFileLike(uxml)
 ##         root = etree.parse(f).getroot()
-##         self.assertEquals(unicode(etree.tostring(root, 'UTF-8'), 'UTF-8'),
+##         self.assertEqual(unicode(etree.tostring(root, 'UTF-8'), 'UTF-8'),
 ##                           uxml)
 
 def test_suite():
