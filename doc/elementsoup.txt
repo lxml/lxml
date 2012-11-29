@@ -61,7 +61,7 @@ To see what we have here, you can serialise it:
 .. sourcecode:: pycon
 
     >>> from lxml.etree import tostring
-    >>> print tostring(root, pretty_print=True),
+    >>> print(tostring(root, pretty_print=True).strip())
     <html>
       <meta/>
       <head>
@@ -131,10 +131,10 @@ Any other encoding will output the respective byte sequences.
     >>> tostring(body, method="html", encoding="utf-8")
     '<body>\xc2\xa9\xe2\x82\xac-\xc3\xb5\xc6\xbd<p></p></body>'
 
-    >>> tostring(body, encoding=unicode)
+    >>> tostring(body, encoding='unicode')
     u'<body>\xa9\u20ac-\xf5\u01bd<p/></body>'
 
-    >>> tostring(body, method="html", encoding=unicode)
+    >>> tostring(body, method="html", encoding='unicode')
     u'<body>\xa9\u20ac-\xf5\u01bd<p></p></body>'
 
 
@@ -172,7 +172,7 @@ better.
 
     >>> root = lxml.html.fromstring(tag_soup)
     >>> try:
-    ...     ignore = tostring(root, encoding=unicode)
+    ...     ignore = tostring(root, encoding='unicode')
     ... except UnicodeDecodeError:
     ...     root = lxml.html.soupparser.fromstring(tag_soup)
 
