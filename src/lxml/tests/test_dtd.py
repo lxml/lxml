@@ -23,12 +23,12 @@ class ETreeDtdTestCase(HelperTestCase):
         root = tree.getroot()
 
         dtd = etree.DTD(fileInTestDir("test.dtd"))
-        self.assert_(dtd.validate(root))
+        self.assertTrue(dtd.validate(root))
 
     def test_dtd_stringio(self):
         root = etree.XML(_bytes("<b/>"))
         dtd = etree.DTD(BytesIO("<!ELEMENT b EMPTY>"))
-        self.assert_(dtd.validate(root))
+        self.assertTrue(dtd.validate(root))
 
     def test_dtd_parse_invalid(self):
         fromstring = etree.fromstring
@@ -51,7 +51,7 @@ class ETreeDtdTestCase(HelperTestCase):
             e = sys.exc_info()[1]
             errors = [ entry.message for entry in e.error_log
                        if dtd_filename in entry.message ]
-        self.assert_(errors)
+        self.assertTrue(errors)
 
     def test_dtd_parse_valid(self):
         parser = etree.XMLParser(dtd_validation=True)
@@ -83,7 +83,7 @@ class ETreeDtdTestCase(HelperTestCase):
         <b><a/></b>
         '''))
         dtd = etree.ElementTree(root).docinfo.internalDTD
-        self.assert_(dtd)
+        self.assertTrue(dtd)
         dtd.assertValid(root)
 
     def test_dtd_internal_invalid(self):
@@ -96,7 +96,7 @@ class ETreeDtdTestCase(HelperTestCase):
         <b><a/></b>
         '''))
         dtd = etree.ElementTree(root).docinfo.internalDTD
-        self.assert_(dtd)
+        self.assertTrue(dtd)
         self.assertFalse(dtd.validate(root))
 
     def test_dtd_broken(self):
@@ -132,7 +132,7 @@ class ETreeDtdTestCase(HelperTestCase):
         dtd = etree.DTD(fileInTestDir("test.dtd"))
 
         # Test DTD.system_url attribute
-        self.assert_(dtd.system_url.endswith("test.dtd"))
+        self.assertTrue(dtd.system_url.endswith("test.dtd"))
 
         # Test elements and their attributes
         a = dtd.elements()[0]

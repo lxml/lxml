@@ -268,7 +268,7 @@ class HtmlParserTestCase(HelperTestCase):
 
         events = list(iterator)
         root = iterator.root
-        self.assert_(root is not None)
+        self.assertTrue(root is not None)
         self.assertEqual(
             [('end', root[0][0]), ('end', root[0]), ('end', root[1][0]),
              ('end', root[1]), ('end', root)],
@@ -282,7 +282,7 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(None, iterator.root)
         events = list(iterator)
         root = iterator.root
-        self.assert_(root is not None)
+        self.assertTrue(root is not None)
         self.assertEqual(249, len(events))
         self.assertEqual(
             [],
@@ -298,7 +298,7 @@ class HtmlParserTestCase(HelperTestCase):
 
         events = list(iterator)
         root = iterator.root
-        self.assert_(root is not None)
+        self.assertTrue(root is not None)
         self.assertEqual(
             [('start', root), ('start', root[0]), ('start', root[0][0]),
                 ('start', root[1]), ('start', root[1][0])],

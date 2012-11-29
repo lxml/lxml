@@ -46,24 +46,24 @@ class ETreeOnlyTestCase(HelperTestCase):
     etree = etree
 
     def test_version(self):
-        self.assert_(isinstance(etree.__version__, _unicode))
-        self.assert_(isinstance(etree.LXML_VERSION, tuple))
+        self.assertTrue(isinstance(etree.__version__, _unicode))
+        self.assertTrue(isinstance(etree.LXML_VERSION, tuple))
         self.assertEqual(len(etree.LXML_VERSION), 4)
-        self.assert_(isinstance(etree.LXML_VERSION[0], int))
-        self.assert_(isinstance(etree.LXML_VERSION[1], int))
-        self.assert_(isinstance(etree.LXML_VERSION[2], int))
-        self.assert_(isinstance(etree.LXML_VERSION[3], int))
-        self.assert_(etree.__version__.startswith(
+        self.assertTrue(isinstance(etree.LXML_VERSION[0], int))
+        self.assertTrue(isinstance(etree.LXML_VERSION[1], int))
+        self.assertTrue(isinstance(etree.LXML_VERSION[2], int))
+        self.assertTrue(isinstance(etree.LXML_VERSION[3], int))
+        self.assertTrue(etree.__version__.startswith(
             str(etree.LXML_VERSION[0])))
 
     def test_c_api(self):
         if hasattr(self.etree, '__pyx_capi__'):
             # newer Pyrex compatible C-API
-            self.assert_(isinstance(self.etree.__pyx_capi__, dict))
-            self.assert_(len(self.etree.__pyx_capi__) > 0)
+            self.assertTrue(isinstance(self.etree.__pyx_capi__, dict))
+            self.assertTrue(len(self.etree.__pyx_capi__) > 0)
         else:
             # older C-API mechanism
-            self.assert_(hasattr(self.etree, '_import_c_api'))
+            self.assertTrue(hasattr(self.etree, '_import_c_api'))
 
     def test_element_names(self):
         Element = self.etree.Element
@@ -791,7 +791,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(root[0]), 1)
         self.assertEqual(root[0][0].tag, "othertag")
         # FIXME: would be nice to get some errors logged ...
-        #self.assert_(len(parser.error_log) > 0, "error log is empty")
+        #self.assertTrue(len(parser.error_log) > 0, "error log is empty")
 
     def test_elementtree_parser_target_type_error(self):
         assertEqual = self.assertEqual
@@ -1216,7 +1216,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         xml = _str('<!DOCTYPE doc SYSTEM "%s"><doc>&myentity;</doc>') % test_url
         self.assertRaises(etree.XMLSyntaxError, parse, StringIO(xml), parser)
-        self.assert_(check.resolved)
+        self.assertTrue(check.resolved)
 
     def test_resolve_error(self):
         parse = self.etree.parse
@@ -1969,9 +1969,9 @@ class ETreeOnlyTestCase(HelperTestCase):
             "xmlid"    : root[3],
             "warn1"    : root[4]
             }
-        self.assert_("chapter1" in dic)
-        self.assert_("warn1" in dic)
-        self.assert_("xmlid" in dic)
+        self.assertTrue("chapter1" in dic)
+        self.assertTrue("warn1" in dic)
+        self.assertTrue("xmlid" in dic)
         self._checkIDDict(dic, expected)
 
     def test_XMLDTDID(self):
@@ -2003,9 +2003,9 @@ class ETreeOnlyTestCase(HelperTestCase):
             "xmlid"    : root[3],
             "warn1"    : root[4]
             }
-        self.assert_("chapter1" in dic)
-        self.assert_("warn1" in dic)
-        self.assert_("xmlid" in dic)
+        self.assertTrue("chapter1" in dic)
+        self.assertTrue("warn1" in dic)
+        self.assertTrue("xmlid" in dic)
         self._checkIDDict(dic, expected)
 
     def test_XMLDTDID_empty(self):
@@ -2787,7 +2787,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         f = LargeFileLikeUnicode()
         tree = self.etree.parse(f)
         root = tree.getroot()
-        self.assert_(root.tag.endswith('root'))
+        self.assertTrue(root.tag.endswith('root'))
 
     def test_dtd_io(self):
         # check that DTDs that go in also go back out
@@ -3053,7 +3053,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         
-        self.assert_(isinstance(tounicode(a), _unicode))
+        self.assertTrue(isinstance(tounicode(a), _unicode))
         self.assertEqual(_bytes('<a><b></b><c></c></a>'),
                           canonicalize(tounicode(a)))
 
@@ -3066,8 +3066,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         d = SubElement(c, 'd')
-        self.assert_(isinstance(tounicode(b), _unicode))
-        self.assert_(isinstance(tounicode(c), _unicode))
+        self.assertTrue(isinstance(tounicode(b), _unicode))
+        self.assertTrue(isinstance(tounicode(c), _unicode))
         self.assertEqual(_bytes('<b></b>'),
                           canonicalize(tounicode(b)))
         self.assertEqual(_bytes('<c><d></d></c>'),
@@ -3088,8 +3088,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(c, 'd')
         b.tail = 'Foo'
 
-        self.assert_(isinstance(tounicode(b), _unicode))
-        self.assert_(tounicode(b) == '<b/>Foo' or
+        self.assertTrue(isinstance(tounicode(b), _unicode))
+        self.assertTrue(tounicode(b) == '<b/>Foo' or
                      tounicode(b) == '<b />Foo')
 
     def test_tounicode_pretty(self):
@@ -3119,7 +3119,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         
-        self.assert_(isinstance(tostring(a, encoding=_unicode), _unicode))
+        self.assertTrue(isinstance(tostring(a, encoding=_unicode), _unicode))
         self.assertEqual(_bytes('<a><b></b><c></c></a>'),
                           canonicalize(tostring(a, encoding=_unicode)))
 
@@ -3132,8 +3132,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         b = SubElement(a, 'b')
         c = SubElement(a, 'c')
         d = SubElement(c, 'd')
-        self.assert_(isinstance(tostring(b, encoding=_unicode), _unicode))
-        self.assert_(isinstance(tostring(c, encoding=_unicode), _unicode))
+        self.assertTrue(isinstance(tostring(b, encoding=_unicode), _unicode))
+        self.assertTrue(isinstance(tostring(c, encoding=_unicode), _unicode))
         self.assertEqual(_bytes('<b></b>'),
                           canonicalize(tostring(b, encoding=_unicode)))
         self.assertEqual(_bytes('<c><d></d></c>'),
@@ -3155,8 +3155,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(c, 'd')
         b.tail = 'Foo'
 
-        self.assert_(isinstance(tostring(b, encoding=_unicode), _unicode))
-        self.assert_(tostring(b, encoding=_unicode) == '<b/>Foo' or
+        self.assertTrue(isinstance(tostring(b, encoding=_unicode), _unicode))
+        self.assertTrue(tostring(b, encoding=_unicode) == '<b/>Foo' or
                      tostring(b, encoding=_unicode) == '<b />Foo')
 
     def test_tostring_unicode_pretty(self):
@@ -3475,7 +3475,7 @@ class ETreeWriteTestCase(HelperTestCase):
         f = BytesIO()
         tree.write(f, compression=1)
         s = f.getvalue()
-        self.assert_(len(s) <= len(s0))
+        self.assertTrue(len(s) <= len(s0))
         gzfile = gzip.GzipFile(fileobj=BytesIO(s))
         try:
             s1 = gzfile.read()
@@ -3485,7 +3485,7 @@ class ETreeWriteTestCase(HelperTestCase):
         f = BytesIO()
         tree.write(f, compression=9)
         s = f.getvalue()
-        self.assert_(len(s) <= len(s0))
+        self.assertTrue(len(s) <= len(s0))
         gzfile = gzip.GzipFile(fileobj=BytesIO(s))
         try:
             s9 = gzfile.read()
@@ -3566,15 +3566,15 @@ class ETreeErrorLogTest(HelperTestCase):
             e = sys.exc_info()[1]
             logs = e.error_log
         f.close()
-        self.assert_([ log for log in logs
+        self.assertTrue([ log for log in logs
                        if 'mismatch' in log.message ])
-        self.assert_([ log for log in logs
+        self.assertTrue([ log for log in logs
                        if 'PARSER'   in log.domain_name])
-        self.assert_([ log for log in logs
+        self.assertTrue([ log for log in logs
                        if 'ERR_TAG_NAME_MISMATCH' in log.type_name ])
-        self.assert_([ log for log in logs
+        self.assertTrue([ log for log in logs
                        if 1 == log.line ])
-        self.assert_([ log for log in logs
+        self.assertTrue([ log for log in logs
                        if 15 == log.column ])
 
     def _test_python_error_logging(self):
@@ -3596,13 +3596,13 @@ class ETreeErrorLogTest(HelperTestCase):
             pass
         f.close()
 
-        self.assert_([ message for message in messages
+        self.assertTrue([ message for message in messages
                        if 'mismatch' in message ])
-        self.assert_([ message for message in messages
+        self.assertTrue([ message for message in messages
                        if ':PARSER:'   in message])
-        self.assert_([ message for message in messages
+        self.assertTrue([ message for message in messages
                        if ':ERR_TAG_NAME_MISMATCH:' in message ])
-        self.assert_([ message for message in messages
+        self.assertTrue([ message for message in messages
                        if ':1:15:' in message ])
 
 def test_suite():

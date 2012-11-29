@@ -18,8 +18,8 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_boolean(self):
         tree = self.parse('<a><b></b><b></b></a>')
-        self.assert_(tree.xpath('boolean(/a/b)'))
-        self.assert_(not tree.xpath('boolean(/a/c)'))
+        self.assertTrue(tree.xpath('boolean(/a/b)'))
+        self.assertTrue(not tree.xpath('boolean(/a/c)'))
 
     def test_xpath_number(self):
         tree = self.parse('<a>1</a>')
@@ -43,8 +43,8 @@ class ETreeXPathTestCase(HelperTestCase):
 
     def test_xpath_namespace(self):
         tree = self.parse('<a xmlns="test" xmlns:p="myURI"/>')
-        self.assert_((None, "test") in tree.xpath('namespace::*'))
-        self.assert_(('p', 'myURI') in tree.xpath('namespace::*'))
+        self.assertTrue((None, "test") in tree.xpath('namespace::*'))
+        self.assertTrue(('p', 'myURI') in tree.xpath('namespace::*'))
 
     def test_xpath_namespace_empty(self):
         tree = self.parse('<a/>')
@@ -163,8 +163,8 @@ class ETreeXPathTestCase(HelperTestCase):
     def test_rel_xpath_boolean(self):
         root = etree.XML('<a><b><c/></b></a>')
         el = root[0]
-        self.assert_(el.xpath('boolean(c)'))
-        self.assert_(not el.xpath('boolean(d)'))
+        self.assertTrue(el.xpath('boolean(c)'))
+        self.assertTrue(not el.xpath('boolean(d)'))
 
     def test_rel_xpath_list_elements(self):
         tree = self.parse('<a><c><b>Foo</b><b>Bar</b></c><c><b>Hey</b></c></a>')

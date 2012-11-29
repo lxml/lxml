@@ -35,8 +35,8 @@ class ETreeSchematronTestCase(HelperTestCase):
 </schema>
 ''')
         schema = etree.Schematron(schema)
-        self.assert_(schema.validate(tree_valid))
-        self.assert_(not schema.validate(tree_invalid))
+        self.assertTrue(schema.validate(tree_valid))
+        self.assertTrue(not schema.validate(tree_invalid))
 
     def test_schematron_elementtree_error(self):
         self.assertRaises(ValueError, etree.Schematron, etree.ElementTree())

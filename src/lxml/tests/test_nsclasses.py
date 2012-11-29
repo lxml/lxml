@@ -58,8 +58,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         tree = self.parse(_bytes('<bluff xmlns="ns10"><ns11:maeh xmlns:ns11="ns11"/></bluff>'))
 
         el = tree.getroot()
-        self.assert_(isinstance(el, etree.ElementBase))
-        self.assert_(hasattr(el, 'bluff'))
+        self.assertTrue(isinstance(el, etree.ElementBase))
+        self.assertTrue(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el[0], 'maeh'))
         self.assertFalse(hasattr(el[0], 'bluff'))
         self.assertEqual(el.bluff(), 'bluff')
@@ -67,8 +67,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         self.Namespace('ns11').update(maeh_dict)
         el = tree.getroot()
-        self.assert_(hasattr(el, 'bluff'))
-        self.assert_(hasattr(el[0], 'maeh'))
+        self.assertTrue(hasattr(el, 'bluff'))
+        self.assertTrue(hasattr(el[0], 'maeh'))
         self.assertEqual(el.bluff(), 'bluff')
         self.assertEqual(el[0].maeh(), 'maeh')
         del el
@@ -80,7 +80,7 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.assertFalse(hasattr(el, 'bluff'))
         self.assertFalse(hasattr(el, 'maeh'))
         self.assertFalse(hasattr(el[0], 'bluff'))
-        self.assert_(hasattr(el[0], 'maeh'))
+        self.assertTrue(hasattr(el[0], 'maeh'))
 
         self.Namespace('ns11').clear()
 
@@ -102,13 +102,13 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         el = tree.getroot()
         self.assertFalse(isinstance(el, etree.ElementBase))
         for child in el[:-1]:
-            self.assert_(isinstance(child, etree.ElementBase), child.tag)
+            self.assertTrue(isinstance(child, etree.ElementBase), child.tag)
         self.assertFalse(isinstance(el[-1], etree.ElementBase))
 
-        self.assert_(hasattr(el[0], 'bluff'))
-        self.assert_(hasattr(el[1], 'bluff'))
-        self.assert_(hasattr(el[2], 'maeh'))
-        self.assert_(hasattr(el[3], 'maeh'))
+        self.assertTrue(hasattr(el[0], 'bluff'))
+        self.assertTrue(hasattr(el[1], 'bluff'))
+        self.assertTrue(hasattr(el[2], 'maeh'))
+        self.assertTrue(hasattr(el[3], 'maeh'))
         self.assertFalse(hasattr(el[4], 'maeh'))
         del el
 
@@ -122,18 +122,18 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
         self.Namespace('ns21').update(maeh_dict)
 
         el = etree.Element("{ns20}bluff")
-        self.assert_(hasattr(el, 'bluff'))
+        self.assertTrue(hasattr(el, 'bluff'))
 
         child = etree.SubElement(el, "{ns21}maeh")
-        self.assert_(hasattr(child, 'maeh'))
+        self.assertTrue(hasattr(child, 'maeh'))
         child = etree.SubElement(el, "{ns20}bluff")
-        self.assert_(hasattr(child, 'bluff'))
+        self.assertTrue(hasattr(child, 'bluff'))
         child = etree.SubElement(el, "{ns21}bluff")
         self.assertFalse(hasattr(child, 'bluff'))
         self.assertFalse(hasattr(child, 'maeh'))
 
-        self.assert_(hasattr(el[0], 'maeh'))
-        self.assert_(hasattr(el[1], 'bluff'))
+        self.assertTrue(hasattr(el[0], 'maeh'))
+        self.assertTrue(hasattr(el[1], 'bluff'))
         self.assertFalse(hasattr(el[2], 'bluff'))
         self.assertFalse(hasattr(el[2], 'maeh'))
 
@@ -153,8 +153,8 @@ class ETreeNamespaceClassesTestCase(HelperTestCase):
 
         el = etree.Element("{ns30}bluff")
         etree.SubElement(el, "maeh")
-        self.assert_(hasattr(el, 'bluff'))
-        self.assert_(hasattr(el[0], 'maeh'))
+        self.assertTrue(hasattr(el, 'bluff'))
+        self.assertTrue(hasattr(el[0], 'maeh'))
         self.assertEqual(el.bluff(), 'bluff')
         self.assertEqual(el[0].maeh(), 'maeh')
 

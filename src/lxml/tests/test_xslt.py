@@ -497,7 +497,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         style = etree.XSLT(styledoc)
         result = style(source)
         self.assertEqual('', str(result))
-        self.assert_("TEST TEST TEST" in [entry.message
+        self.assertTrue("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
 
     def test_xslt_message_terminate(self):
@@ -515,7 +515,7 @@ class ETreeXSLTTestCase(HelperTestCase):
         style = etree.XSLT(styledoc)
 
         self.assertRaises(etree.XSLTApplyError, style, source)
-        self.assert_("TEST TEST TEST" in [entry.message
+        self.assertTrue("TEST TEST TEST" in [entry.message
                                           for entry in style.error_log])
 
     def test_xslt_shortcut(self):
@@ -1299,7 +1299,7 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
 
         def mytext(ctxt, values):
             for value in values:
-                self.assert_(hasattr(value, 'tag'),
+                self.assertTrue(hasattr(value, 'tag'),
                              "%s is not an Element" % type(value))
                 self.assertEqual(value.tag, 'b')
                 self.assertEqual(value.text, 'BBB')

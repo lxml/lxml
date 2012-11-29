@@ -196,14 +196,14 @@ class _IOTestCaseBase(HelperTestCase):
         # parse from unamed file object    
         f = SillyFileLike()
         root = self.etree.ElementTree().parse(f)
-        self.assert_(root.tag.endswith('foo'))
+        self.assertTrue(root.tag.endswith('foo'))
 
     def test_module_parse_large_fileobject(self):
         # parse from unamed file object
         f = LargeFileLike()
         tree = self.etree.parse(f)
         root = tree.getroot()
-        self.assert_(root.tag.endswith('root'))
+        self.assertTrue(root.tag.endswith('root'))
 
     def test_module_parse_fileobject_error(self):
         class LocalError(Exception):

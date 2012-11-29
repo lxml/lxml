@@ -92,13 +92,13 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         root1 = Element('root')
         SubElement(root1, 'one')
-        self.assert_(root1[0] in root1)
+        self.assertTrue(root1[0] in root1)
 
         root2 = Element('root')
         SubElement(root2, 'two')
         SubElement(root2, 'three')
-        self.assert_(root2[0] in root2)
-        self.assert_(root2[1] in root2)
+        self.assertTrue(root2[0] in root2)
+        self.assertTrue(root2[1] in root2)
 
         self.assertFalse(root1[0] in root2)
         self.assertFalse(root2[0] in root1)
@@ -704,20 +704,20 @@ class _ETreeTestCaseBase(HelperTestCase):
         ProcessingInstruction = self.etree.ProcessingInstruction
         
         el = Element('hoi')
-        self.assert_(iselement(el))
+        self.assertTrue(iselement(el))
 
         el2 = XML(_bytes('<foo/>'))
-        self.assert_(iselement(el2))
+        self.assertTrue(iselement(el2))
 
         tree = ElementTree(element=Element('dag'))
-        self.assert_(not iselement(tree))
-        self.assert_(iselement(tree.getroot()))
+        self.assertTrue(not iselement(tree))
+        self.assertTrue(iselement(tree.getroot()))
 
         c = Comment('test')
-        self.assert_(iselement(c))
+        self.assertTrue(iselement(c))
 
         p = ProcessingInstruction("test", "some text")
-        self.assert_(iselement(p))
+        self.assertTrue(iselement(p))
         
     def test_iteration(self):
         XML = self.etree.XML
@@ -1305,7 +1305,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         # can't use C14N here!
         self.assertEqual('c', b1.tag)
         self.assertEqual(_bytes('<c'), tostring(b1)[:2])
-        self.assert_(_bytes('<c') in tostring(a))
+        self.assertTrue(_bytes('<c') in tostring(a))
 
     def test_tag_reset_root_ns(self):
         Element = self.etree.Element
@@ -2680,7 +2680,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         d = SubElement(c, 'd')
         b.tail = 'Foo'
 
-        self.assert_(tostring(b) == _bytes('<b/>Foo') or
+        self.assertTrue(tostring(b) == _bytes('<b/>Foo') or
                      tostring(b) == _bytes('<b />Foo'))
 
     required_versions_ET['test_tostring_method_html'] = (1,3)
@@ -3251,7 +3251,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
         btree = copy.copy(atree)
         self.assertFalse(btree is atree)
-        self.assert_(btree.getroot() is atree.getroot())
+        self.assertTrue(btree.getroot() is atree.getroot())
         self.assertEqual('Foo', atree.getroot().text)
 
     def _test_element_boolean(self):
@@ -3364,7 +3364,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         parser = etree.XMLParser()
         if hasattr(parser, "version"):
             # ElementTree 1.3+, cET
-            self.assert_(re.match("[^ ]+ [0-9.]+", parser.version))
+            self.assertTrue(re.match("[^ ]+ [0-9.]+", parser.version))
 
     # feed parser interface
 
@@ -3440,8 +3440,8 @@ class _ETreeTestCaseBase(HelperTestCase):
             e = sys.exc_info()[1]
             self.assertNotEquals(None, e.code)
             self.assertNotEquals(0, e.code)
-            self.assert_(isinstance(e.position, tuple))
-            self.assert_(e.position >= (0, 0))
+            self.assertTrue(isinstance(e.position, tuple))
+            self.assertTrue(e.position >= (0, 0))
 
     # parser target interface
 
@@ -3693,7 +3693,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             has_encoding = re.compile(enc_re).match
         else:
             has_encoding = re.compile(_bytes(enc_re)).match
-        self.assert_(has_encoding(result))
+        self.assertTrue(has_encoding(result))
         result_encoding = has_encoding(result).group(1)
         self.assertEqual(result_encoding.upper(), encoding.upper())
         
@@ -3705,10 +3705,10 @@ class _ETreeTestCaseBase(HelperTestCase):
         self._check_element(tree.getroot())
         
     def _check_element(self, element):
-        self.assert_(hasattr(element, 'tag'))
-        self.assert_(hasattr(element, 'attrib'))
-        self.assert_(hasattr(element, 'text'))
-        self.assert_(hasattr(element, 'tail'))
+        self.assertTrue(hasattr(element, 'tag'))
+        self.assertTrue(hasattr(element, 'attrib'))
+        self.assertTrue(hasattr(element, 'text'))
+        self.assertTrue(hasattr(element, 'tail'))
         self._check_string(element.tag)
         self._check_mapping(element.attrib)
         if element.text != None:

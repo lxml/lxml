@@ -28,8 +28,8 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         schema = etree.XMLSchema(schema)
-        self.assert_(schema.validate(tree_valid))
-        self.assert_(not schema.validate(tree_invalid))
+        self.assertTrue(schema.validate(tree_valid))
+        self.assertTrue(not schema.validate(tree_invalid))
 
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
@@ -55,7 +55,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertEqual('ho', root[2].get('hardy'))
         self.assertEqual(None, root[3].get('hardy'))
 
-        self.assert_(schema(tree))
+        self.assertTrue(schema(tree))
 
         root = tree.getroot()
         self.assertEqual('ho', root[0].get('hardy'))
@@ -246,7 +246,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         finally:
             f.close()
         tree_valid = self.parse('<a><b></b></a>')
-        self.assert_(schema.validate(tree_valid))
+        self.assertTrue(schema.validate(tree_valid))
 
     def test_xmlschema_import_file(self):
         # this will only work if we access the file through path or
@@ -254,7 +254,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema = etree.XMLSchema(file=fileInTestDir('test_import.xsd'))
         tree_valid = self.parse(
             '<a:x xmlns:a="http://codespeak.net/lxml/schema/ns1"><b></b></a:x>')
-        self.assert_(schema.validate(tree_valid))
+        self.assertTrue(schema.validate(tree_valid))
 
     def test_xmlschema_shortcut(self):
         tree_valid = self.parse('<a><b></b></a>')
@@ -269,8 +269,8 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
   </xsd:complexType>
 </xsd:schema>
 ''')
-        self.assert_(tree_valid.xmlschema(schema))
-        self.assert_(not tree_invalid.xmlschema(schema))
+        self.assertTrue(tree_valid.xmlschema(schema))
+        self.assertTrue(not tree_invalid.xmlschema(schema))
 
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):

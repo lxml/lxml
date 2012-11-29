@@ -18,7 +18,7 @@ if BS_INSTALLED:
               </body></html>
             """
             root = self.soupparser.fromstring(html)
-            self.assert_(root.find('.//input').get('disabled') is not None)
+            self.assertTrue(root.find('.//input').get('disabled') is not None)
 
 
 def test_suite():

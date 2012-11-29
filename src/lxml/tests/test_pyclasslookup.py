@@ -209,7 +209,7 @@ class PyClassLookupTestCase(HelperTestCase):
             return el_class
         self._setClassLookup(lookup)
         root = self.XML(xml_str)
-        self.assert_(el_class.TRUE)
+        self.assertTrue(el_class.TRUE)
 
     def test_lookup_get(self):
         el_class = self._buildElementClass()

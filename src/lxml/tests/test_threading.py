@@ -155,9 +155,9 @@ class ThreadingTestCase(HelperTestCase):
                 except self.etree.ParseError:
                     e = sys.exc_info()[1]
                     errors = e.error_log.filter_types(expected_error)
-                self.assert_(errors, "Expected error not found")
+                self.assertTrue(errors, "Expected error not found")
                 for error in errors:
-                    self.assert_(
+                    self.assertTrue(
                         tag in error.message and tag.upper() in error.message,
                         "%s and %s not found in '%s'" % (
                         tag, tag.upper(), error.message))
