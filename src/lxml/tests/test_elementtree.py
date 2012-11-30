@@ -3743,6 +3743,15 @@ if ElementTree:
     class ElementTreeTestCase(_ETreeTestCaseBase):
         etree = ElementTree
 
+        @classmethod
+        def setUpClass(cls):
+            import warnings
+            # ElementTree warns about getiterator() in recent Pythons
+            warnings.filterwarnings(
+                'ignore',
+                'This method will be removed.*\.iter\(\).*instead',
+                PendingDeprecationWarning)
+
     filter_by_version(
         ElementTreeTestCase,
         ElementTreeTestCase.required_versions_ET, ET_VERSION)
