@@ -589,10 +589,11 @@ class ETreeXPathExsltTestCase(HelperTestCase):
     def test_xpath_exslt_functions_strings(self):
         tree = self.parse('<a><b>2009-11-12</b><b>2008-12-11</b></a>')
 
-        match_date = tree.xpath('str:replace(//b[1], "-", "*")',
-                                namespaces=self.NSMAP)
-        self.assertTrue(match_date, str(match_date))
-        self.assertEqual(match_date, '2009*11*12')
+        aligned_date = tree.xpath(
+            'str:align(string(//b[1]), "%s", "center")' % ('-'*20),
+            namespaces=self.NSMAP)
+        self.assertTrue(aligned_date, str(aligned_date))
+        self.assertEqual(aligned_date, '-----2009-11-12-----')
 
 
 class ETreeETXPathClassTestCase(HelperTestCase):
