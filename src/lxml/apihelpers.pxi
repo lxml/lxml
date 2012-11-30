@@ -1555,7 +1555,7 @@ cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
-        if isutf8(href) or isutf8(name):
+        if isutf8(_xcstr(s)):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
             return s
