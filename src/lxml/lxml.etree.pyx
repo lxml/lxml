@@ -2995,14 +2995,17 @@ def iselement(element):
     """
     return isinstance(element, _Element) and (<_Element>element)._c_node is not NULL
 
-def dump(_Element elem not None, *, bint pretty_print=True, bint with_tail=True):
+def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
     u"""dump(elem, pretty_print=True, with_tail=True)
 
     Writes an element tree or element structure to sys.stdout. This function
     should be used for debugging only.
     """
-    _assertValidNode(elem)
-    _dumpToFile(sys.stdout, elem._c_node, pretty_print, with_tail)
+    xml = tostring(elem, pretty_print=pretty_print, with_tail=with_tail,
+                   encoding=u'unicode' if python.IS_PYTHON3 else None)
+    if not pretty_print:
+        xml += '\n'
+    sys.stdout.write(xml)
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, bint pretty_print=False, bint with_tail=True,

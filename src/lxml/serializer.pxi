@@ -878,21 +878,3 @@ cdef class _FileWriterElement:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._writer._write_end_element(self._element)
-
-
-# dump node to file (mainly for debug)
-
-cdef _dumpToFile(f, xmlNode* c_node, bint pretty_print, bint with_tail):
-    cdef tree.xmlOutputBuffer* c_buffer
-    cdef stdio.FILE* c_file
-    c_file = python.PyFile_AsFile(f)
-    if c_file is NULL:
-        raise ValueError, u"not a file"
-    c_buffer = tree.xmlOutputBufferCreateFile(c_file, NULL)
-    tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0, pretty_print, NULL)
-    if with_tail:
-        _writeTail(c_buffer, c_node, NULL, 0)
-    if not pretty_print:
-        # not written yet
-        tree.xmlOutputBufferWriteString(c_buffer, '\n')
-    tree.xmlOutputBufferFlush(c_buffer)
