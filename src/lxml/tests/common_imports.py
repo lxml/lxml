@@ -13,6 +13,11 @@ def make_version_tuple(version_string):
             l.append(part)
     return tuple(l)
 
+IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
+           getattr(sys, 'pypy_version_info', None) is not None)
+
+IS_PYTHON3 = sys.version_info[0] >= 3
+
 try:
     from elementtree import ElementTree # standard ET
 except ImportError:
