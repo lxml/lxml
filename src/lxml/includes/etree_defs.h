@@ -48,8 +48,11 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #else
 #if IS_PYPY
+#  undef PyFile_AsFile
 #  define PyFile_AsFile(o)                   (NULL)
-#endif
+#  undef PyUnicode_FromFormat
+#  define PyUnicode_FromFormat(s, a, b)      (NULL)
+#else
 #if PY_VERSION_HEX < 0x02060000
 /* Cython defines these already, but we may not be compiling in Cython code */
 #ifndef PyBytes_CheckExact
@@ -61,7 +64,8 @@
 #  define PyBytes_AS_STRING(s)               PyString_AS_STRING(s)
 #endif
 /* we currently only use three parameters - MSVC can't compile (s, ...) */
-#  define PyUnicode_FromFormat(s, a, b) (NULL)
+#  define PyUnicode_FromFormat(s, a, b)      (NULL)
+#endif
 #endif
 #endif
 
