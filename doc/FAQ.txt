@@ -362,15 +362,15 @@ values, be it for tag names or text in Element content.  This is the
 same behaviour as known from ElementTree.  The reasoning is that ASCII
 encoded byte strings are compatible with Unicode strings in Python 2,
 but consume less memory (usually by a factor of 2 or 4) and are faster
-to create because they do not require decoding.  However, plain ASCII
-string values are very common in XML, so this optimisation is
-generally worth it.
+to create because they do not require decoding.  Plain ASCII string
+values are very common in XML, so this optimisation is generally worth
+it.
 
 In Python 3, lxml always returns Unicode strings for text and names,
-as does ElementTree.  Since Python 3.3, Unicode strings that contain
-only ASCII encodable characters are generally as efficient as byte
-strings.  In older versions of Python 3, the above mentioned
-drawbacks apply.
+as does ElementTree.  Since Python 3.3, Unicode strings containing
+only characters that can be encoded in ASCII or Latin-1 are generally
+as efficient as byte strings.  In older versions of Python 3, the
+above mentioned drawbacks apply.
 
 
 Installation
