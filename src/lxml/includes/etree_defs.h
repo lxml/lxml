@@ -65,6 +65,13 @@
 #endif
 #endif
 
+/* PySlice_GetIndicesEx() has wrong signature in Py<=3.1 */
+#if PY_VERSION_HEX >= 0x03020000
+#  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(o, l, b, e, s, sl)
+#else
+#  define _lx_PySlice_GetIndicesEx(o, l, b, e, s, sl) PySlice_GetIndicesEx(((PySliceObject*)o), l, b, e, s, sl)
+#endif
+
 #ifdef WITHOUT_THREADING
 #  define PyEval_SaveThread() (NULL)
 #  define PyEval_RestoreThread(state)

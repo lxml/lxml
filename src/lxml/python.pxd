@@ -74,13 +74,11 @@ cdef extern from "Python.h":
     cdef bint PyTuple_CheckExact(object instance)
     cdef bint PySlice_Check(object instance)
 
-    ctypedef class __builtin__.slice [object PySliceObject]:
-        pass
-
     cdef int _PyEval_SliceIndex(object value, Py_ssize_t* index) except 0
-    cdef int PySlice_GetIndicesEx(slice slice, Py_ssize_t length,
-                                  Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
-                                  Py_ssize_t *slicelength) except -1
+    cdef int PySlice_GetIndicesEx "_lx_PySlice_GetIndicesEx" (
+            object slice, Py_ssize_t length,
+            Py_ssize_t *start, Py_ssize_t *stop, Py_ssize_t *step,
+            Py_ssize_t *slicelength) except -1
 
     cdef object PyObject_RichCompare(object o1, object o2, int op)
     cdef int PyObject_RichCompareBool(object o1, object o2, int op)
