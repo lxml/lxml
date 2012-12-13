@@ -171,8 +171,9 @@ To see that this is really XML, you can serialise the tree you have created:
 Elements are lists
 ------------------
 
-To make the access to these subelements as easy and straight forward as
-possible, elements behave like normal Python lists:
+To make the access to these subelements easy and straight forward,
+elements mimic the behaviour of normal Python lists as closely as
+possible:
 
 .. sourcecode:: pycon
 
@@ -203,28 +204,79 @@ possible, elements behave like normal Python lists:
     >>> print(end[0].tag)
     child3
 
-    >>> root[0] = root[-1] # this moves the element in lxml.etree!
+Prior to ElementTree 1.3 and lxml 2.0, you could also check the truth value of
+an Element to see if it has children, i.e. if the list of children is empty:
+
+.. sourcecode:: python
+
+   if root:   # this no longer works!
+       print("The root element has children")
+
+This is no longer supported as people tend to expect that a "something"
+evaluates to True and expect Elements to be "something", may they have
+children or not.  So, many users find it surprising that any Element
+would evaluate to False in an if-statement like the above.  Instead,
+use ``len(element)``, which is both more explicit and less error prone.
+
+.. sourcecode:: pycon
+
+   >>> print(etree.iselement(root))  # test if it's some kind of Element
+   True
+   >>> if len(root):                 # test if it has children
+   ...     print("The root element has children")
+   The root element has children
+
+There is another important case where the behaviour of Elements in lxml
+(in 2.0 and later) deviates from that of lists and from that of the
+original ElementTree (prior to version 1.3 or Python 2.7/3.2):
+
+.. sourcecode:: pycon
+
+    >>> for child in root:
+    ...     print(child.tag)
+    child0
+    child1
+    child2
+    child3
+    >>> root[0] = root[-1]  # this moves the element in lxml.etree!
     >>> for child in root:
     ...     print(child.tag)
     child3
     child1
     child2
 
-Prior to ElementTree 1.3 and lxml 2.0, you could also check the truth value of
-an Element to see if it has children, i.e. if the list of children is empty.
-This is no longer supported as people tend to find it surprising that a
-non-None reference to an existing Element can evaluate to False.  Instead, use
-``len(element)``, which is both more explicit and less error prone.
+In this example, the last element is *moved* to a different position,
+instead of being copied, i.e. it is automatically removed from its
+previous position when it is put in a different place.  In lists,
+objects can appear in multiple positions at the same time, and the
+above assignment would just copy the item reference into the first
+position, so that both contain the exact same item:
 
-Note in the examples that the last element was *moved* to a different position
-in the last example.  This is a difference from the original ElementTree (and
-from lists), where elements can sit in multiple positions of any number of
-trees.  In lxml.etree, elements can only sit in one position of one tree at a
-time.
+.. sourcecode:: pycon
 
-If you want to *copy* an element to a different position, consider creating an
-independent *deep copy* using the ``copy`` module from Python's standard
-library:
+   >>> l = [0, 1, 2, 3]
+   >>> l[0] = l[-1]
+   >>> l
+   [3, 1, 2, 3]
+
+Note that in the original ElementTree, a single Element object can sit
+in any number of places in any number of trees, which allows for the same
+copy operation as with lists.  The obvious drawback is that modifications
+to such an Element will apply to all places where it appears in a tree,
+which may or may not be intended.
+
+The upside of this difference is that an Element in lxml.etree always
+has exactly one parent, which can be queried through the ``getparent()``
+method.  This is not supported in the original ElementTree.
+
+.. sourcecode:: pycon
+
+    >>> root is root[0].getparent()  # lxml.etree only!
+    True
+
+If you want to *copy* an element to a different position in lxml.etree,
+consider creating an independent *deep copy* using the ``copy`` module
+from Python's standard library:
 
 .. sourcecode:: pycon
 
@@ -237,13 +289,6 @@ library:
     child1
     >>> print([ c.tag for c in root ])
     ['child3', 'child1', 'child2']
-
-The way up in the tree is provided through the ``getparent()`` method:
-
-.. sourcecode:: pycon
-
-    >>> root is root[0].getparent()  # lxml.etree only!
-    True
 
 The siblings (or neighbours) of an element are accessed as next and previous
 elements:
