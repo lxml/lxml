@@ -126,14 +126,18 @@ def parsefile():
     here; by default, the 'parse' function opens the file in binary
     mode, and doctest doesn't filter out carriage returns.
 
-    >>> tree = ElementTree.parse(open("samples/simple.xml", "rb"))
+    >>> file = open("samples/simple.xml", "rb")
+    >>> tree = ElementTree.parse(file)
+    >>> file.close()
     >>> tree.write(stdout())
     <root>
        <element key="value">text</element>
        <element>text</element>tail
        <empty-element/>
     </root>
-    >>> tree = ElementTree.parse(open("samples/simple-ns.xml", "rb"))
+    >>> file = open("samples/simple-ns.xml", "rb")
+    >>> tree = ElementTree.parse(file)
+    >>> file.close()
     >>> tree.write(stdout())
     <root xmlns="http://namespace/">
        <element key="value">text</element>
@@ -396,7 +400,8 @@ def makeelement():
 ##     >>> builder = ElementTree.TreeBuilder()
 ##     >>> builder.addobserver(observer)
 ##     >>> parser = ElementTree.XMLParser(builder)
-##     >>> parser.feed(open("samples/simple.xml", "rb").read())
+##     >>> file = open("samples/simple.xml", "rb")
+##     >>> parser.feed(file.read())
 ##     start root
 ##     start element
 ##     end element
@@ -405,6 +410,7 @@ def makeelement():
 ##     start empty-element
 ##     end empty-element
 ##     end root
+##     >>> file.close()
 
 ##     """
 
