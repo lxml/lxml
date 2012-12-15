@@ -301,8 +301,8 @@ elements:
     True
 
 
-Elements carry attributes
--------------------------
+Elements carry attributes as a dict
+-----------------------------------
 
 XML elements support attributes.  You can create them directly in the Element
 factory:
@@ -313,36 +313,62 @@ factory:
     >>> etree.tostring(root)
     b'<root interesting="totally"/>'
 
-Fast and direct access to these attributes is provided by the ``set()`` and
-``get()`` methods of elements:
+Attributes are just unordered name-value pairs, so a very convenient way
+of dealing with them is through the dictionary-like interface of Elements:
 
 .. sourcecode:: pycon
 
     >>> print(root.get("interesting"))
     totally
 
-    >>> root.set("interesting", "somewhat")
-    >>> print(root.get("interesting"))
-    somewhat
+    >>> print(root.get("hello"))
+    None
+    >>> root.set("hello", "Huhu")
+    >>> print(root.get("hello"))
+    Huhu
 
-However, a very convenient way of dealing with them is through the dictionary
-interface of the ``attrib`` property:
+    >>> etree.tostring(root)
+    b'<root interesting="totally" hello="Huhu"/>'
+
+    >>> sorted(root.keys())
+    ['hello', 'interesting']
+
+    >>> for name, value in sorted(root.items()):
+    ...     print('%s = %r' % (name, value))
+    hello = 'Huhu'
+    interesting = 'totally'
+
+For the cases where you want to do item lookup or have other reasons for
+getting a 'real' dictionary-like object, e.g. for passing it around,
+you can use the ``attrib`` property:
 
 .. sourcecode:: pycon
 
     >>> attributes = root.attrib
 
     >>> print(attributes["interesting"])
-    somewhat
-
-    >>> print(attributes.get("hello"))
+    totally
+    >>> print(attributes.get("no-such-attribute"))
     None
 
     >>> attributes["hello"] = "Guten Tag"
-    >>> print(attributes.get("hello"))
+    >>> print(attributes["hello"])
     Guten Tag
     >>> print(root.get("hello"))
     Guten Tag
+
+Note that ``attrib`` is a dict-like object backed by the Element itself.
+This means that any changes to the Element are reflected in ``attrib``
+and vice versa.  It also means that the XML tree stays alive in memory
+as long as the ``attrib`` of one of its Elements is in use.  To get an
+independent snapshot of the attributes that does not depend on the XML
+tree, copy it into a dict:
+
+.. sourcecode:: pycon
+
+    >>> d = dict(root.attrib)
+    >>> sorted(d.items())
+    [('hello', 'Guten Tag'), ('interesting', 'totally')]
 
 
 Elements contain text
