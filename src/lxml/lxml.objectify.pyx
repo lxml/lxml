@@ -425,7 +425,11 @@ cdef object _lookupChild(_Element parent, tag):
         c_node.doc.dict, _xcstr(tag), python.PyBytes_GET_SIZE(tag))
     if c_tag is NULL:
         return None # not in the hash map => not in the tree
-    c_href = tree._getNs(c_node) if ns is None else _xcstr(ns)
+    if ns is None:
+        # either inherit ns from parent or use empty (i.e. no) namespace
+        c_href = tree._getNs(c_node) or <tree.const_xmlChar*>''
+    else:
+        c_href = _xcstr(ns)
     c_result = _findFollowingSibling(c_node.children, c_href, c_tag, 0)
     if c_result is NULL:
         return None

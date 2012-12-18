@@ -16,6 +16,11 @@ Features added
 Bugs fixed
 ----------
 
+* When starting from a non-namespaced element in lxml.objectify, searching
+  for a child without explicitly specifying a namespace incorrectly found
+  namespaced elements with the requested local name, instead of restricting
+  the search to non-namespaced children.
+
 * GH#85: Deprecation warnings were fixed for Python 3.x.
 
 * GH#33: lxml.html.fromstring() failed to accept bytes input in Py3.

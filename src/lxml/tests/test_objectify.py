@@ -348,6 +348,15 @@ class ObjectifyTestCase(HelperTestCase):
         root = self.XML(xml_str)
         self.assertEqual("0", root.c1.c2.text)
 
+    def test_child_ns_nons(self):
+        root = self.XML("""
+            <root>
+                <foo:x xmlns:foo="/foo/bar">1</foo:x>
+                <x>2</x>
+            </root>
+        """)
+        self.assertEqual(2, root.x)
+
     def test_countchildren(self):
         root = self.XML(xml_str)
         self.assertEqual(1, root.countchildren())
