@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* New build-time option ``--with-unicode-strings`` for Python 2 that
+  makes the API always return Unicode strings for names and text
+  instead of byte strings for plain ASCII content.
+
 * New incremental XML file writing API ``etree.xmlfile()``.
 
 * E factory in lxml.objectify is callable to simplify the creation of

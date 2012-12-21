@@ -32,6 +32,15 @@
 #  define IS_PYTHON3 0
 #endif
 
+#if IS_PYTHON3
+#undef LXML_UNICODE_STRINGS
+#define LXML_UNICODE_STRINGS 1
+#else
+#ifndef LXML_UNICODE_STRINGS
+#define LXML_UNICODE_STRINGS 0
+#endif
+#endif
+
 #if !IS_PYPY
 #  define PyWeakref_LockObject(obj)          (NULL)
 #endif

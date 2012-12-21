@@ -1301,7 +1301,7 @@ cdef object funicode(const_xmlChar* s):
     cdef Py_ssize_t slen
     cdef const_xmlChar* spos
     cdef bint is_non_ascii
-    if python.IS_PYTHON3:
+    if python.LXML_UNICODE_STRINGS:
         return s.decode('UTF-8')
     spos = s
     is_non_ascii = 0
@@ -1551,11 +1551,11 @@ cdef inline object _namespacedName(xmlNode* c_node):
 cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     if href is NULL:
         return funicode(name)
-    elif python.IS_PYTHON3:
+    elif python.LXML_UNICODE_STRINGS and python.PY_VERSION_HEX >= 0x02060000:
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
-        if isutf8(_xcstr(s)):
+        if python.LXML_UNICODE_STRINGS or isutf8(_xcstr(s)):
             return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
         else:
             return s

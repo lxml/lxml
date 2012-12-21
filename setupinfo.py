@@ -250,6 +250,8 @@ def define_macros():
         macros.append(('WITHOUT_THREADING', None))
     if OPTION_WITH_REFNANNY:
         macros.append(('CYTHON_REFNANNY', None))
+    if OPTION_WITH_UNICODE_STRINGS:
+        macros.append(('LXML_UNICODE_STRINGS', '1'))
     return macros
 
 _ERROR_PRINTED = False
@@ -359,6 +361,7 @@ def option_value(name):
 staticbuild = bool(os.environ.get('STATICBUILD', ''))
 # pick up any commandline options and/or env variables
 OPTION_WITHOUT_OBJECTIFY = has_option('without-objectify')
+OPTION_WITH_UNICODE_STRINGS = has_option('with-unicode-strings')
 OPTION_WITHOUT_ASSERT = has_option('without-assert')
 OPTION_WITHOUT_THREADING = has_option('without-threading')
 OPTION_WITHOUT_CYTHON = has_option('without-cython')
