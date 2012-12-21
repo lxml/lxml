@@ -15,3 +15,7 @@ script:
   - python setup.py clean
   - python setup.py build_ext --inplace
   - make test
+
+matrix:
+  allow_failures:
+    - python: pypy
