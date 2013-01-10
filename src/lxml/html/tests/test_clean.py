@@ -34,6 +34,32 @@ class CleanerTest(unittest.TestCase):
 
         self.assertEqual(12-5+1, len(list(result.iter())))
 
+    def test_safe_attrs_included(self):
+        html = """<p><span style="color: #00ffff;">Cyan</span></p>"""
+
+        safe_attrs=set(lxml.html.defs.safe_attrs)
+        safe_attrs.add('style')
+
+        cleaner = Cleaner(
+            safe_attrs_only=True,
+            safe_attrs=safe_attrs)
+        result = cleaner.clean_html(html)
+
+        self.assertEqual(html, result)
+
+    def test_safe_attrs_excluded(self):
+        html = """<p><span style="color: #00ffff;">Cyan</span></p>"""
+        expected = """<p><span>Cyan</span></p>"""
+
+        safe_attrs=set()
+
+        cleaner = Cleaner(
+            safe_attrs_only=True,
+            safe_attrs=safe_attrs)
+        result = cleaner.clean_html(html)
+
+        self.assertEqual(expected, result)
+
 def test_suite():
     suite = unittest.TestSuite()
     if sys.version_info >= (2,4):

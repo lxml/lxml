@@ -147,6 +147,10 @@ class Cleaner(object):
         If true, only include 'safe' attributes (specifically the list
         from the feedparser HTML sanitisation web site).
 
+    ``safe_attrs``:
+        A set of attribute names to override the default list of attributes
+        considered 'safe' (when safe_attrs_only=True).
+
     ``add_nofollow``:
         If true, then any <a> tags will have ``rel="nofollow"`` added to them.
 
@@ -189,6 +193,7 @@ class Cleaner(object):
     kill_tags = None
     remove_unknown_tags = True
     safe_attrs_only = True
+    safe_attrs = defs.safe_attrs
     add_nofollow = False
     host_whitelist = ()
     whitelist_tags = set(['iframe', 'embed'])
@@ -247,14 +252,15 @@ class Cleaner(object):
         if self.scripts:
             kill_tags.add('script')
         if self.safe_attrs_only:
-            safe_attrs = set(defs.safe_attrs)
+            safe_attrs = set(self.safe_attrs)
             for el in doc.iter():
                 attrib = el.attrib
                 for aname in attrib.keys():
                     if aname not in safe_attrs:
                         del attrib[aname]
         if self.javascript:
-            if not self.safe_attrs_only:
+            if not (self.safe_attrs_only and
+                    self.safe_attrs == defs.safe_attrs):
                 # safe_attrs handles events attributes itself
                 for el in doc.iter():
                     attrib = el.attrib
