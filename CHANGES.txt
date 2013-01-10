@@ -9,7 +9,7 @@ Features added
 --------------
 
 * GH#89: lxml.html.clean allows overriding the set of attributes that it
-  considers 'safe'.
+  considers 'safe'.  Patch by Francis Devereux.
 
 Bugs fixed
 ----------
@@ -154,7 +154,7 @@ Features added
   ``.iterancestors()``, ``.iterdescendants()``, ``.iterchildren()``
   and ``.itertext()`` methods;the ``strip_attributes()``,
   ``strip_elements()`` and ``strip_tags()`` functions as well as the
-  ``iterparse()`` class.
+  ``iterparse()`` class.  Patch by Simon Sapin.
 
 * C14N allows specifying the inclusive prefixes to be promoted
   to top-level during exclusive serialisation.
