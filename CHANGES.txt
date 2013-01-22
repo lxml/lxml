@@ -14,6 +14,11 @@ Features added
 Bugs fixed
 ----------
 
+* GH#95: When used with namespace prefixes, the  ``el.find*()`` methods
+  always used the first namespace mapping that was provided for each
+  path expression instead of using the one that was actually passed
+  in for the current run.
+
 Other changes
 -------------
 
