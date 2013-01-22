@@ -224,7 +224,7 @@ def _build_path_iterator(path, namespaces):
     if path[-1:] == "/":
         path = path + "*" # implicit all (FIXME: keep this?)
     try:
-        return _cache[path]
+        return _cache[(path, namespaces and tuple(sorted(namespaces.items())) or None)]
     except KeyError:
         pass
     if len(_cache) > 100:
