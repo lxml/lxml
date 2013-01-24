@@ -500,7 +500,7 @@ cdef class _ParserContext(_ResolverContext):
     def __dealloc__(self):
         if self._validator is not None:
             self._validator.disconnect()
-        if self._lock is not NULL:
+        if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_free_lock(self._lock)
         if self._c_ctxt is not NULL:
             xmlparser.xmlFreeParserCtxt(self._c_ctxt)

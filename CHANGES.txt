@@ -19,6 +19,9 @@ Bugs fixed
   path expression instead of using the one that was actually passed
   in for the current run.
 
+* LP#1092521, GH#91: Fix undefined C symbol in Python runtimes compiled
+  without threading support.
+
 Other changes
 -------------
 
