@@ -157,7 +157,7 @@ def prepare_predicate(next, token):
                 if elem.get(key) == value:
                     yield elem
         return select
-    if signature == "-" and not re.match("\d+$", predicate[0]):
+    if signature == "-" and not re.match("-?\d+$", predicate[0]):
         # [tag]
         tag = predicate[0]
         def select(result):
@@ -166,7 +166,7 @@ def prepare_predicate(next, token):
                     yield elem
                     break
         return select
-    if signature == "-='" and not re.match("\d+$", predicate[0]):
+    if signature == "-='" and not re.match("-?\d+$", predicate[0]):
         # [tag='value']
         tag = predicate[0]
         value = predicate[-1]
@@ -180,10 +180,14 @@ def prepare_predicate(next, token):
     if signature == "-" or signature == "-()" or signature == "-()-":
         # [index] or [last()] or [last()-index]
         if signature == "-":
+            # [index]
             index = int(predicate[0]) - 1
-            if index == -1:
-                raise SyntaxError(
-                    "indices in ElementPath predicates are 1-based as in XPath, not 0-based")
+            if index < 0:
+                if index == -1:
+                    raise SyntaxError(
+                        "indices in path predicates are 1-based, not 0-based")
+                else:
+                    raise SyntaxError("path index >= 1 expected")
         else:
             if predicate[0] != "last":
                 raise SyntaxError("unsupported function")
