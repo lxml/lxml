@@ -130,14 +130,17 @@ cdef class _TargetParserContext(_SaxParserContext):
                 self._raise_if_stored()
             if not self._c_ctxt.wellFormed and not recover:
                 _raiseParseError(self._c_ctxt, filename, self._error_log)
-        finally:
+        except:
             if python.IS_PYTHON3:
-                parse_result = self._python_target.close()
+                self._python_target.close()
+                raise
             else:
+                exc = sys.exc_info()
                 # Python 2 can't chain exceptions
-                try: parse_result = self._python_target.close()
-                except: parse_result = None
-        return parse_result
+                try: self._python_target.close()
+                except: pass
+                raise exc[0], exc[1], exc[2]
+        return self._python_target.close()
 
     cdef xmlDoc* _handleParseResultDoc(self, _BaseParser parser,
                                        xmlDoc* result, filename) except NULL:
@@ -151,11 +154,15 @@ cdef class _TargetParserContext(_SaxParserContext):
             self._raise_if_stored()
             if not self._c_ctxt.wellFormed and not recover:
                 _raiseParseError(self._c_ctxt, filename, self._error_log)
-        finally:
+        except:
             if python.IS_PYTHON3:
-                parse_result = self._python_target.close()
+                self._python_target.close()
+                raise
             else:
+                exc = sys.exc_info()
                 # Python 2 can't chain exceptions
-                try: parse_result = self._python_target.close()
+                try: self._python_target.close()
                 except: pass
+                raise exc[0], exc[1], exc[2]
+        parse_result = self._python_target.close()
         raise _TargetParserResult(parse_result)

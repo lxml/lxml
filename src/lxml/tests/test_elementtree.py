@@ -3479,6 +3479,123 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual("DONE", done)
         self.assertEqual(["start", "end"], events)
 
+    def test_parser_target_error_in_start(self):
+        assertEqual = self.assertEqual
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertEqual("TAG", tag)
+                raise ValueError("TEST")
+            def end(self, tag):
+                events.append("end")
+                assertEqual("TAG", tag)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            parser.feed("<TAG/>")
+        except ValueError:
+            self.assertTrue('TEST' in str(sys.exc_info()[1]))
+        else:
+            self.assertTrue(False)
+        if 'lxml' in self.etree.__name__:
+            self.assertEqual(["start"], events)
+        else:
+            # cElementTree calls end() as well
+            self.assertTrue("start" in events)
+
+    def test_parser_target_error_in_end(self):
+        assertEqual = self.assertEqual
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertEqual("TAG", tag)
+            def end(self, tag):
+                events.append("end")
+                assertEqual("TAG", tag)
+                raise ValueError("TEST")
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            parser.feed("<TAG/>")
+        except ValueError:
+            self.assertTrue('TEST' in str(sys.exc_info()[1]))
+        else:
+            self.assertTrue(False)
+        self.assertEqual(["start", "end"], events)
+
+    def test_parser_target_error_in_close(self):
+        assertEqual = self.assertEqual
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertEqual("TAG", tag)
+            def end(self, tag):
+                events.append("end")
+                assertEqual("TAG", tag)
+            def close(self):
+                raise ValueError("TEST")
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            parser.feed("<TAG/>")
+            parser.close()
+        except ValueError:
+            self.assertTrue('TEST' in str(sys.exc_info()[1]))
+        else:
+            self.assertTrue(False)
+        self.assertEqual(["start", "end"], events)
+
+    def test_parser_target_error_in_start_and_close(self):
+        assertEqual = self.assertEqual
+
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start")
+                assertEqual("TAG", tag)
+                raise IndexError("TEST-IE")
+            def end(self, tag):
+                events.append("end")
+                assertEqual("TAG", tag)
+            def close(self):
+                raise ValueError("TEST-VE")
+
+        parser = self.etree.XMLParser(target=Target())
+
+        try:
+            parser.feed("<TAG/>")
+            parser.close()
+        except IndexError:
+            if 'lxml' in self.etree.__name__:
+                # we try not to swallow the initial exception in Py2
+                self.assertTrue(sys.version_info[0] < 3)
+            self.assertTrue('TEST-IE' in str(sys.exc_info()[1]))
+        except ValueError:
+            if 'lxml' in self.etree.__name__:
+                self.assertTrue(sys.version_info[0] >= 3)
+            self.assertTrue('TEST-VE' in str(sys.exc_info()[1]))
+        else:
+            self.assertTrue(False)
+
+        if 'lxml' in self.etree.__name__:
+            self.assertEqual(["start"], events)
+        else:
+            # cElementTree calls end() as well
+            self.assertTrue("start" in events)
+
     def test_elementtree_parser_target(self):
         assertEqual = self.assertEqual
         assertFalse  = self.assertFalse
