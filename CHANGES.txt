@@ -20,7 +20,7 @@ Bugs fixed
   in for the current run.
 
 * LP#1092521, GH#91: Fix undefined C symbol in Python runtimes compiled
-  without threading support.
+  without threading support.  Patch by Ulrich Seidl.
 
 Other changes
 -------------
