@@ -181,6 +181,9 @@ def prepare_predicate(next, token):
         # [index] or [last()] or [last()-index]
         if signature == "-":
             index = int(predicate[0]) - 1
+            if index == -1:
+                raise SyntaxError(
+                    "indices in ElementPath predicates are 1-based as in XPath, not 0-based")
         else:
             if predicate[0] != "last":
                 raise SyntaxError("unsupported function")
