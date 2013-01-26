@@ -2221,12 +2221,15 @@ cdef class _Attrib:
 
     # MANIPULATORS
     def __setitem__(self, key, value):
+        _assertValidNode(self._element)
         _setAttributeValue(self._element, key, value)
 
     def __delitem__(self, key):
+        _assertValidNode(self._element)
         _delAttribute(self._element, key)
 
     def update(self, sequence_or_dict):
+        _assertValidNode(self._element)
         if isinstance(sequence_or_dict, (dict, _Attrib)):
             sequence_or_dict = sequence_or_dict.items()
         for key, value in sequence_or_dict:
@@ -2236,6 +2239,7 @@ cdef class _Attrib:
         if len(default) > 1:
             raise TypeError, u"pop expected at most 2 arguments, got %d" % (
                 len(default)+1)
+        _assertValidNode(self._element)
         result = _getAttributeValue(self._element, key, None)
         if result is None:
             if not default:
@@ -2246,24 +2250,34 @@ cdef class _Attrib:
         return result
 
     def clear(self):
-        cdef xmlNode* c_node
-        c_node = self._element._c_node
+        _assertValidNode(self._element)
+        cdef xmlNode* c_node = self._element._c_node
         while c_node.properties is not NULL:
             tree.xmlRemoveProp(c_node.properties)
 
     # ACCESSORS
     def __repr__(self):
-        return repr(dict( _attributeIteratorFactory(self._element, 3) ))
-    
+        _assertValidNode(self._element)
+        return repr(dict( _collectAttributes(self._element._c_node, 3) ))
+
+    def __copy__(self):
+        _assertValidNode(self._element)
+        return dict(_collectAttributes(self._element._c_node, 3))
+
+    def __deepcopy__(self, memo):
+        _assertValidNode(self._element)
+        return dict(_collectAttributes(self._element._c_node, 3))
+
     def __getitem__(self, key):
+        _assertValidNode(self._element)
         result = _getAttributeValue(self._element, key, None)
         if result is None:
             raise KeyError, key
         return result
 
     def __bool__(self):
-        cdef xmlAttr* c_attr
-        c_attr = self._element._c_node.properties
+        _assertValidNode(self._element)
+        cdef xmlAttr* c_attr = self._element._c_node.properties
         while c_attr is not NULL:
             if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 return 1
@@ -2271,44 +2285,53 @@ cdef class _Attrib:
         return 0
 
     def __len__(self):
-        cdef xmlAttr* c_attr
-        cdef Py_ssize_t c
-        c = 0
-        c_attr = self._element._c_node.properties
+        _assertValidNode(self._element)
+        cdef xmlAttr* c_attr = self._element._c_node.properties
+        cdef Py_ssize_t c = 0
         while c_attr is not NULL:
             if c_attr.type == tree.XML_ATTRIBUTE_NODE:
                 c += 1
             c_attr = c_attr.next
         return c
-    
+
     def get(self, key, default=None):
+        _assertValidNode(self._element)
         return _getAttributeValue(self._element, key, default)
 
     def keys(self):
+        _assertValidNode(self._element)
         return _collectAttributes(self._element._c_node, 1)
 
     def __iter__(self):
+        _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 1))
     
     def iterkeys(self):
+        _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 1))
 
     def values(self):
+        _assertValidNode(self._element)
         return _collectAttributes(self._element._c_node, 2)
 
     def itervalues(self):
+        _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 2))
 
     def items(self):
+        _assertValidNode(self._element)
         return _collectAttributes(self._element._c_node, 3)
 
     def iteritems(self):
+        _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 3))
 
     def has_key(self, key):
+        _assertValidNode(self._element)
         return key in self
 
     def __contains__(self, key):
+        _assertValidNode(self._element)
         cdef xmlNode* c_node
         ns, tag = _getNsTag(key)
         c_node = self._element._c_node

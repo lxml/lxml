@@ -281,7 +281,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(None, root.text)
         self.assertEqual('hoi', root.tag)
 
-    def test_attributes(self):
+    def test_attrib(self):
         ElementTree = self.etree.ElementTree
         
         f = BytesIO('<doc one="One" two="Two"/>')
@@ -291,7 +291,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual('Two', root.attrib['two'])
         self.assertRaises(KeyError, operator.getitem, root.attrib, 'three')
 
-    def test_attributes2(self):
+    def test_attrib_get(self):
         ElementTree = self.etree.ElementTree
         
         f = BytesIO('<doc one="One" two="Two"/>')
@@ -302,7 +302,40 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(None, root.attrib.get('three'))
         self.assertEqual('foo', root.attrib.get('three', 'foo'))
 
-    def test_attributes3(self):
+    def test_attrib_dict(self):
+        ElementTree = self.etree.ElementTree
+
+        f = BytesIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        attrib = dict(root.attrib)
+        self.assertEqual('One', attrib['one'])
+        self.assertEqual('Two', attrib['two'])
+        self.assertRaises(KeyError, operator.getitem, attrib, 'three')
+
+    def test_attrib_copy(self):
+        ElementTree = self.etree.ElementTree
+
+        f = BytesIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        attrib = copy.copy(root.attrib)
+        self.assertEqual('One', attrib['one'])
+        self.assertEqual('Two', attrib['two'])
+        self.assertRaises(KeyError, operator.getitem, attrib, 'three')
+
+    def test_attrib_deepcopy(self):
+        ElementTree = self.etree.ElementTree
+
+        f = BytesIO('<doc one="One" two="Two"/>')
+        doc = ElementTree(file=f)
+        root = doc.getroot()
+        attrib = copy.deepcopy(root.attrib)
+        self.assertEqual('One', attrib['one'])
+        self.assertEqual('Two', attrib['two'])
+        self.assertRaises(KeyError, operator.getitem, attrib, 'three')
+
+    def test_attributes_get(self):
         ElementTree = self.etree.ElementTree
         
         f = BytesIO('<doc one="One" two="Two"/>')
