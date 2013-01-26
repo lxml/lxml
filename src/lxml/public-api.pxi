@@ -7,13 +7,14 @@ cdef public api _Element deepcopyNodeToDocument(_Document doc, xmlNode* c_root):
     return _elementFactory(doc, c_node)
 
 cdef public api _ElementTree elementTreeFactory(_Element context_node):
+    _assertValidNode(context_node)
     return newElementTree(context_node, _ElementTree)
 
 cdef public api _ElementTree newElementTree(_Element context_node,
                                             object subclass):
     if <void*>context_node is NULL or context_node is None:
         raise TypeError
-
+    _assertValidNode(context_node)
     return _newElementTree(context_node._doc, context_node, subclass)
 
 cdef public api _Element elementFactory(_Document doc, xmlNode* c_node):
@@ -27,6 +28,7 @@ cdef public api _Element makeElement(tag, _Document doc, parser,
 
 cdef public api _Element makeSubElement(_Element parent, tag, text, tail,
                                         attrib, nsmap):
+    _assertValidNode(parent)
     return _makeSubElement(parent, tag, text, tail, attrib, nsmap, None)
 
 cdef public api void setElementClassLookupFunction(
@@ -88,18 +90,22 @@ cdef public api object attributeValueFromNsName(xmlNode* c_element,
     return _attributeValueFromNsName(c_element, ns, name)
 
 cdef public api object getAttributeValue(_Element element, key, default):
+    _assertValidNode(element)
     return _getAttributeValue(element, key, default)
 
 cdef public api object iterattributes(_Element element, int keysvalues):
+    _assertValidNode(element)
     return _attributeIteratorFactory(element, keysvalues)
 
 cdef public api list collectAttributes(xmlNode* c_element, int keysvalues):
     return _collectAttributes(c_element, keysvalues)
 
 cdef public api int setAttributeValue(_Element element, key, value) except -1:
+    _assertValidNode(element)
     return _setAttributeValue(element, key, value)
 
 cdef public api int delAttribute(_Element element, key) except -1:
+    _assertValidNode(element)
     return _delAttribute(element, key)
 
 cdef public api int delAttributeFromNsName(tree.xmlNode* c_element,
