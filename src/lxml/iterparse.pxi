@@ -503,7 +503,7 @@ cdef class iterparse(_BaseParser):
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
                 if not python.PyBytes_Check(data):
                     self._close_source()
-                    raise TypeError, u"reading file objects must return plain strings"
+                    raise TypeError("reading file objects must return bytes objects")
                 c_data_len = python.PyBytes_GET_SIZE(data)
                 c_data = _cstr(data)
                 done = (c_data_len == 0)
