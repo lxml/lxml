@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-3.1.0 (??)
-=====================
+3.1.0 (2013-02-10)
+==================
 
 Features added
 --------------
@@ -15,7 +15,7 @@ Bugs fixed
 ----------
 
 * LP#1104370: ``copy.copy(el.attrib)`` raised an exception.  It now returns
-  a copy of itself as a plain Python dict.
+  a copy of the attributes as a plain Python dict.
 
 * GH#95: When used with namespace prefixes, the  ``el.find*()`` methods
   always used the first namespace mapping that was provided for each
