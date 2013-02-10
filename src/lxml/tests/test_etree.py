@@ -3639,8 +3639,10 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])
-    suite.addTests(
-        [make_doctest('../../../doc/api.txt')])
+    if sys.version_info >= (2,5):
+        # now requires the 'with' statement
+        suite.addTests(
+            [make_doctest('../../../doc/api.txt')])
     suite.addTests(
         [make_doctest('../../../doc/FAQ.txt')])
     suite.addTests(

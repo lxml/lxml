@@ -42,12 +42,14 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    10  write_c14n on ElementTree
 
 ..
-  >>> try: from StringIO import StringIO
-  ... except ImportError:
+  >>> try:
   ...    from io import BytesIO
   ...    def StringIO(s=None):
   ...        if isinstance(s, str): s = s.encode("UTF-8")
   ...        return BytesIO(s)
+  ... except ImportError:
+  ...    from StringIO import StringIO # Py2 <= 2.5
+  ...    BytesIO = StringIO
 
   >>> try: from collections import deque
   ... except ImportError:
@@ -462,6 +464,46 @@ of the document with a user provided DOCTYPE:
 The content will be encoded, but otherwise copied verbatimly into the
 output stream.  It is therefore left to the user to take care for a
 correct doctype format, including the name of the root node.
+
+
+Incremental XML generation
+--------------------------
+
+Since version 3.1, lxml has an API for incrementally generating XML
+using the ``with`` statement.  It's main purpose is to freely and
+safely mix surrounding elements with pre-built in-memory trees, e.g.
+to write out large documents that consist mostly of repetitive
+subtrees (like database dumps).
+
+The API can serialise to real files as well as file-like objects,
+e.g. ``io.BytesIO``.  Here is a simple example::
+
+  >>> f = BytesIO()
+  >>> with etree.xmlfile(f) as xf:
+  ...     with xf.element('abc'):
+  ...         xf.write('text')
+
+  >>> print(f.getvalue().decode('utf-8'))
+  <abc>text</abc>
+
+To insert pre-constructed Elements and subtrees, just pass them
+into ``write()``::
+
+  >>> f = BytesIO()
+  >>> with etree.xmlfile(f) as xf:
+  ...     with xf.element('abc'):
+  ...         with xf.element('in'):
+  ...             for tag in ('x', 'y', 'z'):
+  ...                 el = etree.Element(tag, attr='42')
+  ...                 xf.write(el)
+
+  >>> print(f.getvalue().decode('utf-8'))
+  <abc><in><x attr="42"/><y attr="42"/><z attr="42"/></in></abc>
+
+It is a common pattern to have one or more nested ``element()`` blocks,
+and then build XML subtrees in memory, usually in a loop, to write
+them out into the XML file one after the other.  That way, they can be
+removed from memory right after their construction.
 
 
 CDATA
