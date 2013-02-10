@@ -473,10 +473,13 @@ Since version 3.1, lxml has an API for incrementally generating XML
 using the ``with`` statement.  It's main purpose is to freely and
 safely mix surrounding elements with pre-built in-memory trees, e.g.
 to write out large documents that consist mostly of repetitive
-subtrees (like database dumps).
+subtrees (like database dumps).  But it can be useful in many cases
+where memory consumption matters or where XML is naturally generated
+sequentially.
 
-The API can serialise to real files as well as file-like objects,
-e.g. ``io.BytesIO``.  Here is a simple example::
+The API can serialise to real files (also given as file paths) as
+well as file-like objects, e.g. ``io.BytesIO()``.  Here is a simple
+example::
 
   >>> f = BytesIO()
   >>> with etree.xmlfile(f) as xf:
@@ -493,17 +496,25 @@ into ``write()``::
   >>> with etree.xmlfile(f) as xf:
   ...     with xf.element('abc'):
   ...         with xf.element('in'):
-  ...             for tag in ('x', 'y', 'z'):
-  ...                 el = etree.Element(tag, attr='42')
+  ...             for value in '123':
+  ...                 # construct a really complex XML tree
+  ...                 el = etree.Element('xyz', attr=value)
+  ...
   ...                 xf.write(el)
+  ...
+  ...                 # no longer needed, discard it right away!
+  ...                 el = None
 
   >>> print(f.getvalue().decode('utf-8'))
-  <abc><in><x attr="42"/><y attr="42"/><z attr="42"/></in></abc>
+  <abc><in><xyz attr="1"/><xyz attr="2"/><xyz attr="3"/></in></abc>
 
-It is a common pattern to have one or more nested ``element()`` blocks,
-and then build XML subtrees in memory, usually in a loop, to write
-them out into the XML file one after the other.  That way, they can be
-removed from memory right after their construction.
+It is a common pattern to have one or more nested ``element()``
+blocks, and then build in-memory XML subtrees in a loop (using the
+ElementTree API, the builder API, XSLT, or whatever) to write them
+out into the XML file one after the other.  That way, they can be
+removed from memory right after their construction, which can largely
+reduce the memory footprint of an application, while keeping the
+overall XML generation easy, safe and correct.
 
 
 CDATA
