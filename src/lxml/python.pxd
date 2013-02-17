@@ -14,13 +14,6 @@ cdef extern from "Python.h":
 
     cdef stdio.FILE* PyFile_AsFile(object p)
 
-    cdef bint PyUnicode_Check(object obj)
-    cdef bint PyUnicode_CheckExact(object obj)
-    cdef bint PyBytes_Check(object obj)
-    cdef bint PyBytes_CheckExact(object obj)
-
-    cdef cython.unicode PyUnicode_FromEncodedObject(object s, char* encoding,
-                                                    char* errors)
     cdef bytes PyUnicode_AsEncodedString(object u, char* encoding,
                                          char* errors)
     cdef cython.unicode PyUnicode_FromFormat(char* format, ...) # Python 3

@@ -512,13 +512,10 @@ cdef class ETXPath(XPath):
                 i += 1
                 namespace_defs.append(namespace_def)
                 namespace = namespace_def[1:-1] # remove '{}'
-                namespace = python.PyUnicode_FromEncodedObject(
-                    namespace, 'UTF-8', 'strict')
-                namespaces[
-                    python.PyUnicode_FromEncodedObject(prefix, 'UTF-8', 'strict')
-                    ] = namespace
+                namespace = (<bytes>namespace).decode('utf8')
+                namespaces[prefix.decode('utf8')] = namespace
                 prefix_str = prefix + b':'
                 # FIXME: this also replaces {namespaces} within strings!
                 path_utf = path_utf.replace(namespace_def, prefix_str)
-        path = python.PyUnicode_FromEncodedObject(path_utf, 'UTF-8', 'strict')
+        path = path_utf.decode('utf8')
         return path, namespaces

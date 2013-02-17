@@ -556,12 +556,12 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
     cdef _Element fake_node = None
     cdef xmlNode* c_node
 
-    if python.PyUnicode_Check(obj):
+    if isinstance(obj, unicode):
         obj = _utf8(obj)
-    if python.PyBytes_Check(obj):
+    if isinstance(obj, bytes):
         # libxml2 copies the string value
         return xpath.xmlXPathNewCString(_cstr(obj))
-    if python.PyBool_Check(obj):
+    if isinstance(obj, bool):
         return xpath.xmlXPathNewBoolean(obj)
     if python.PyNumber_Check(obj):
         return xpath.xmlXPathNewFloat(obj)
@@ -582,9 +582,9 @@ cdef xpath.xmlXPathObject* _wrapXPathObject(object obj, _Document doc,
                         raise XPathResultError, \
                               u"Non-Element values not supported at this point - got %r" % value
                     # support strings by appending text nodes to an Element
-                    if python.PyUnicode_Check(value):
+                    if isinstance(value, unicode):
                         value = _utf8(value)
-                    if python.PyBytes_Check(value):
+                    if isinstance(value, bytes):
                         if fake_node is None:
                             fake_node = _makeElement("text-root", NULL, doc, None,
                                                      None, None, None, None, None)
@@ -744,7 +744,7 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
     else:
         is_text = not (is_tail or is_attribute)
 
-    if python.PyBytes_CheckExact(string_value):
+    if type(string_value) is bytes:
         result = _ElementStringResult(string_value)
         result._parent = parent
         result.is_attribute = is_attribute

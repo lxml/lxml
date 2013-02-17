@@ -501,7 +501,7 @@ cdef class iterparse(_BaseParser):
         while not events:
             if c_stream is NULL:
                 data = self._source.read(__ITERPARSE_CHUNK_SIZE)
-                if not python.PyBytes_Check(data):
+                if not isinstance(data, bytes):
                     self._close_source()
                     raise TypeError("reading file objects must return bytes objects")
                 c_data_len = python.PyBytes_GET_SIZE(data)

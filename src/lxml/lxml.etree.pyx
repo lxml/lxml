@@ -917,8 +917,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __set__(self, value):
             _assertValidNode(self)
             if isinstance(value, QName):
-                value = python.PyUnicode_FromEncodedObject(
-                    _resolveQNameText(self, value), 'UTF-8', 'strict')
+                value = _resolveQNameText(self, value).decode('utf8')
             _setNodeText(self._c_node, value)
 
         # using 'del el.text' is the wrong thing to do
@@ -1707,14 +1706,12 @@ cdef class QName:
                 ns_utf = tag_utf # case 1: namespace ended up as tag name
             tag_utf = _utf8(tag)
         _tagValidOrRaise(tag_utf)
-        self.localname = python.PyUnicode_FromEncodedObject(
-            tag_utf, 'UTF-8', NULL)
+        self.localname = (<bytes>tag_utf).decode('utf8')
         if ns_utf is None:
             self.namespace = None
             self.text = self.localname
         else:
-            self.namespace = python.PyUnicode_FromEncodedObject(
-                ns_utf, 'UTF-8', NULL)
+            self.namespace = (<bytes>ns_utf).decode('utf8')
             self.text = u"{%s}%s" % (self.namespace, self.localname)
     def __str__(self):
         return self.text

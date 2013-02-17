@@ -49,11 +49,11 @@ cdef object _typename(object t):
 
 # namespace/name for "pytype" hint attribute
 cdef object PYTYPE_NAMESPACE
-cdef object PYTYPE_NAMESPACE_UTF8
+cdef bytes PYTYPE_NAMESPACE_UTF8
 cdef const_xmlChar* _PYTYPE_NAMESPACE
 
 cdef object PYTYPE_ATTRIBUTE_NAME
-cdef object PYTYPE_ATTRIBUTE_NAME_UTF8
+cdef bytes PYTYPE_ATTRIBUTE_NAME_UTF8
 cdef const_xmlChar* _PYTYPE_ATTRIBUTE_NAME
 
 PYTYPE_ATTRIBUTE = None
@@ -86,13 +86,11 @@ def set_pytype_attribute_tag(attribute_tag=None):
     else:
         PYTYPE_NAMESPACE_UTF8, PYTYPE_ATTRIBUTE_NAME_UTF8 = \
             cetree.getNsTag(attribute_tag)
-        PYTYPE_NAMESPACE = python.PyUnicode_FromEncodedObject(
-            PYTYPE_NAMESPACE_UTF8, 'UTF-8', NULL)
-        PYTYPE_ATTRIBUTE_NAME = python.PyUnicode_FromEncodedObject(
-            PYTYPE_ATTRIBUTE_NAME_UTF8, 'UTF-8', NULL)
+        PYTYPE_NAMESPACE = PYTYPE_NAMESPACE_UTF8.decode('utf8')
+        PYTYPE_ATTRIBUTE_NAME = PYTYPE_ATTRIBUTE_NAME_UTF8.decode('utf8')
 
-    _PYTYPE_NAMESPACE      = _xcstr(PYTYPE_NAMESPACE_UTF8)
-    _PYTYPE_ATTRIBUTE_NAME = _xcstr(PYTYPE_ATTRIBUTE_NAME_UTF8)
+    _PYTYPE_NAMESPACE      = PYTYPE_NAMESPACE_UTF8
+    _PYTYPE_ATTRIBUTE_NAME = PYTYPE_ATTRIBUTE_NAME_UTF8
     PYTYPE_ATTRIBUTE = cetree.namespacedNameFromNsName(
         _PYTYPE_NAMESPACE, _PYTYPE_ATTRIBUTE_NAME)
 
@@ -914,7 +912,7 @@ cdef class PyType:
     cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
         if isinstance(name, bytes):
-            name = python.PyUnicode_FromEncodedObject(name, 'ascii', NULL)
+            name = (<bytes>name).encode('ascii')
         elif not isinstance(name, unicode):
             raise TypeError, u"Type name must be a string"
         if type_check is not None and not callable(type_check):

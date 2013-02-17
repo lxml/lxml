@@ -503,8 +503,7 @@ cdef class _AppendOnlyElementProxy(_ReadOnlyElementProxy):
         def __set__(self, value):
             self._assertNode()
             if isinstance(value, QName):
-                value = python.PyUnicode_FromEncodedObject(
-                    _resolveQNameText(self, value), 'UTF-8', 'strict')
+                value = _resolveQNameText(self, value).decode('utf8')
             _setNodeText(self._c_node, value)
 
 

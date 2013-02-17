@@ -368,10 +368,10 @@ cdef class _FileReaderContext:
                 c_requested -= remaining
 
                 self._bytes = self._filelike.read(c_requested)
-                if not python.PyBytes_Check(self._bytes):
-                    if python.PyUnicode_Check(self._bytes):
+                if not isinstance(self._bytes, bytes):
+                    if isinstance(self._bytes, unicode):
                         if self._encoding is None:
-                            self._bytes = python.PyUnicode_AsUTF8String(self._bytes)
+                            self._bytes = (<unicode>self._bytes).encode('utf8')
                         else:
                             self._bytes = python.PyUnicode_AsEncodedString(
                                 self._bytes, _cstr(self._encoding), NULL)
@@ -1093,14 +1093,14 @@ cdef class _FeedParser(_BaseParser):
         cdef int buffer_len
         cdef int error
         cdef bint recover = self._parse_options & xmlparser.XML_PARSE_RECOVER
-        if python.PyBytes_Check(data):
+        if isinstance(data, bytes):
             if self._default_encoding is None:
                 c_encoding = NULL
             else:
                 c_encoding = self._default_encoding
             c_data = _cstr(data)
             py_buffer_len = python.PyBytes_GET_SIZE(data)
-        elif python.PyUnicode_Check(data):
+        elif isinstance(data, unicode):
             if _UNICODE_ENCODING is NULL:
                 raise ParserError, \
                     u"Unicode parsing is not supported on this platform"
@@ -1458,7 +1458,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     else:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
-    if python.PyUnicode_Check(text):
+    if isinstance(text, unicode):
         c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(

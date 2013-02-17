@@ -1324,20 +1324,20 @@ cdef bytes _utf8(object s):
     """
     cdef int invalid
     cdef bytes utf8_string
-    if python.PyBytes_CheckExact(s):
+    if not python.IS_PYTHON3 and type(s) is bytes:
         utf8_string = <bytes>s
         invalid = check_string_utf8(utf8_string)
-    elif python.PyUnicode_Check(s):
-        utf8_string = python.PyUnicode_AsUTF8String(s)
+    elif isinstance(s, unicode):
+        utf8_string = (<unicode>s).encode('utf8')
         invalid = check_string_utf8(utf8_string) == -1 # non-XML?
-    elif python.PyBytes_Check(s):
+    elif isinstance(s, bytes):
         utf8_string = bytes(s)
         invalid = check_string_utf8(utf8_string)
     else:
-        raise TypeError, (u"Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
+        raise TypeError("Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
     if invalid:
-        raise ValueError, \
-            u"All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters"
+        raise ValueError(
+            "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters")
     return utf8_string
 
 cdef bytes _utf8orNone(object s):
@@ -1371,11 +1371,10 @@ cdef object _encodeFilename(object filename):
     """
     if filename is None:
         return None
-    elif python.PyBytes_Check(filename):
+    elif isinstance(filename, bytes):
         return filename
-    elif python.PyUnicode_Check(filename):
-        filename8 = python.PyUnicode_AsEncodedString(
-            filename, 'UTF-8', NULL)
+    elif isinstance(filename, unicode):
+        filename8 = (<unicode>filename).encode('utf8')
         if _isFilePath(<unsigned char*>filename8):
             try:
                 return python.PyUnicode_AsEncodedString(
@@ -1384,7 +1383,7 @@ cdef object _encodeFilename(object filename):
                 pass
         return filename8
     else:
-        raise TypeError, u"Argument must be string or unicode."
+        raise TypeError("Argument must be string or unicode.")
 
 cdef object _decodeFilename(const_xmlChar* c_path):
     u"""Make the filename a unicode string if we are in Py3.
@@ -1409,7 +1408,7 @@ cdef object _encodeFilenameUTF8(object filename):
     cdef char* c_filename
     if filename is None:
         return None
-    elif python.PyBytes_Check(filename):
+    elif isinstance(filename, bytes):
         if not check_string_utf8(<bytes>filename):
             # plain ASCII!
             return filename
@@ -1419,17 +1418,17 @@ cdef object _encodeFilenameUTF8(object filename):
             filename = python.PyUnicode_Decode(
                 c_filename, len(<bytes>filename),
                 _C_FILENAME_ENCODING, NULL)
-        except UnicodeDecodeError, decode_exc:
+        except UnicodeDecodeError as decode_exc:
             try:
-                # try if it's UTF-8
-                filename = python.PyUnicode_DecodeUTF8(
-                    c_filename, len(<bytes>filename), NULL)
+                # try if it's proper UTF-8
+                (<bytes>filename).decode('utf8')
+                return filename
             except UnicodeDecodeError:
                 raise decode_exc # otherwise re-raise original exception
-    if python.PyUnicode_Check(filename):
-        return python.PyUnicode_AsUTF8String(filename)
+    if isinstance(filename, unicode):
+        return (<unicode>filename).encode('utf8')
     else:
-        raise TypeError, u"Argument must be string or unicode."
+        raise TypeError("Argument must be string or unicode.")
 
 cdef tuple _getNsTag(tag):
     u"""Given a tag, find namespace URI and tag name.
@@ -1515,33 +1514,33 @@ cdef bint _characterReferenceIsValid(const_xmlChar* c_name):
 
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError, u"Invalid tag name %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
+        raise ValueError("Invalid tag name %r" %
+                         (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError, u"Invalid HTML tag name %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
+        raise ValueError("Invalid HTML tag name %r" %
+                         (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
-        raise ValueError, u"Invalid attribute name %r" % \
-            python.PyUnicode_FromEncodedObject(name_utf, 'UTF-8', NULL)
+        raise ValueError("Invalid attribute name %r" %
+                         (<bytes>name_utf).decode('utf8'))
     return 0
 
 cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError, u"Invalid namespace prefix %r" % \
-            python.PyUnicode_FromEncodedObject(tag_utf, 'UTF-8', NULL)
+        raise ValueError("Invalid namespace prefix %r" %
+                         (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _uriValidOrRaise(uri_utf) except -1:
     cdef uri.xmlURI* c_uri = uri.xmlParseURI(_cstr(uri_utf))
     if c_uri is NULL:
-        raise ValueError, u"Invalid namespace URI %r" % \
-            python.PyUnicode_FromEncodedObject(uri_utf, 'UTF-8', NULL)
+        raise ValueError("Invalid namespace URI %r" %
+                         (<bytes>uri_utf).decode('utf8'))
     uri.xmlFreeURI(c_uri)
     return 0
 
@@ -1556,7 +1555,7 @@ cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
         if python.LXML_UNICODE_STRINGS or isutf8(_xcstr(s)):
-            return python.PyUnicode_FromEncodedObject(s, 'UTF-8', NULL)
+            return (<bytes>s).decode('utf8')
         else:
             return s
 

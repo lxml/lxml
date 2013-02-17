@@ -55,9 +55,9 @@ cdef class Resolver:
         argument.
         """
         cdef _InputDocument doc_ref
-        if python.PyUnicode_Check(string):
-            string = python.PyUnicode_AsUTF8String(string)
-        elif not python.PyBytes_Check(string):
+        if isinstance(string, unicode):
+            string = (<unicode>string).encode('utf8')
+        elif not isinstance(string, bytes):
             raise TypeError, "argument must be a byte string or unicode string"
         doc_ref = _InputDocument()
         doc_ref._type = PARSER_DATA_STRING
