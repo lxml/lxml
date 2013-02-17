@@ -875,22 +875,42 @@ library`_ recipe page.
 Why can't lxml parse my XML from unicode strings?
 -------------------------------------------------
 
-lxml can read Python unicode strings and even tries to support them if libxml2
-does not.  However, if the unicode string declares an XML encoding internally
+First of all, XML is explicitly defined as a stream of bytes.  It's not
+Unicode text.  Take a look at the `XML specification`_, it's all about byte
+sequences and how to map them to text and structure.  That leads to rule
+number one: do not decode your XML data yourself.  That's a part of the
+work of an XML parser, and it does it very well.  Just pass it your data as
+a plain byte stream, it will always do the right thing, by specification.
+
+This also includes not opening XML files in text mode.  Make sure you always
+use binary mode, or, even better, pass the file path into lxml's ``parse()``
+function to let it do the file opening, reading and closing itself.  This
+is the most simple and most efficient way to do it.
+
+That being said, lxml can read Python unicode strings and even tries to
+support them if libxml2 does not.  This is because there is one valid use
+case for parsing XML from text strings: literal XML fragments in source
+code.
+
+However, if the unicode string declares an XML encoding internally
 (``<?xml encoding="..."?>``), parsing is bound to fail, as this encoding is
-most likely not the real encoding used in Python unicode.  The same is true
-for HTML unicode strings that contain charset meta tags, although the problems
-may be more subtle here.  The libxml2 HTML parser may not be able to parse the
-meta tags in broken HTML and may end up ignoring them, so even if parsing
-succeeds, later handling may still fail with character encoding errors.
+almost certainly not the real encoding used in Python unicode.  The same is
+true for HTML unicode strings that contain charset meta tags, although the
+problems may be more subtle here.  The libxml2 HTML parser may not be able
+to parse the meta tags in broken HTML and may end up ignoring them, so even
+if parsing succeeds, later handling may still fail with character encoding
+errors.  Therefore, parsing HTML from unicode strings is a much saner thing
+to do than parsing XML from unicode strings.
 
 Note that Python uses different encodings for unicode on different platforms,
 so even specifying the real internal unicode encoding is not portable between
 Python interpreters.  Don't do it.
 
-Python unicode strings with XML data or HTML data that carry encoding
-information are broken.  lxml will not parse them.  You must provide parsable
-data in a valid encoding.
+Python unicode strings with XML data that carry encoding information are
+broken.  lxml will not parse them.  You must provide parsable data in a
+valid encoding.
+
+.. _`XML specification`: http://www.w3.org/TR/REC-xml/
 
 
 What is the difference between str(xslt(doc)) and xslt(doc).write() ?
