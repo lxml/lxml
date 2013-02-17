@@ -838,7 +838,7 @@ commonly used to parse XML fragments.
 
 The ``parse()`` function supports any of the following sources:
 
-* an open file object
+* an open file object (make sure to open it in binary mode)
 
 * a file-like object that has a ``.read(byte_count)`` method returning
   a byte string on each call
