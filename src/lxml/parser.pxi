@@ -1580,23 +1580,24 @@ cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
 
 cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
     cdef xmlDoc* c_doc
-    if python.PyUnicode_Check(text):
+    if isinstance(text, unicode):
         if _hasEncodingDeclaration(text):
-            raise ValueError, \
-                u"Unicode strings with encoding declaration are not supported."
+            raise ValueError(
+                u"Unicode strings with encoding declaration are not supported. "
+                u"Please use bytes input or XML fragments without declaration.")
         # pass native unicode only if libxml2 can handle it
         if _UNICODE_ENCODING is NULL:
-            text = python.PyUnicode_AsUTF8String(text)
-    elif not python.PyBytes_Check(text):
+            text = (<unicode>text).encode('utf8')
+    elif not isinstance(text, bytes):
         raise ValueError, u"can only parse strings"
-    if python.PyUnicode_Check(url):
-        url = python.PyUnicode_AsUTF8String(url)
+    if isinstance(url, unicode):
+        url = (<unicode>url).encode('utf8')
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, _BaseParser parser):
     cdef xmlDoc* c_doc
-    if python.PyUnicode_Check(url):
-        url = python.PyUnicode_AsUTF8String(url)
+    if isinstance(url, unicode):
+        url = (<unicode>url).encode('utf8')
     c_doc = _parseDocFromFilelike(source, url, parser)
     return _documentFactory(c_doc, parser)
