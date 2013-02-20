@@ -52,7 +52,8 @@ ElementTree_.
      6.4  Why can't I just delete parents or clear the root node in iterparse()?
      6.5  How do I output null characters in XML text?
      6.6  Is lxml vulnerable to XML bombs?
-     6.7  Can lxml parse from file objects opened in unicode mode?
+     6.7  How do I configure lxml safely as a web-service endpoint?
+     6.8  Can lxml parse from file objects opened in unicode mode?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -965,6 +966,61 @@ enabled by default.
 
 Note that libxml2 versions of the 2.6 series do not restrict their
 parser and are therefore vulnerable to DoS attacks.
+
+Note also that these "hard limits" may still be high enough to
+allow for excessive resource usage in a given use case.  Also
+see the next question.
+
+
+How do I use lxml safely as a web-service endpoint?
+---------------------------------------------------
+
+XML based web-service endpoints are generally subject to several
+types of attacks if they allow some kind of untrusted input.
+From the point of view of the underlying XML tool, the most
+obvious attacks try to send a relatively small amount of data
+that induces a comparatively large resource consumption on the
+receiver side.
+
+First of all, make sure network access is not enabled for the XML
+parser that you use for parsing untrusted content and that it is
+not configured to load external DTDs.  Otherwise, attackers can
+try to trick the parser into an attempt to load external resources
+that are overly slow or impossible to retrieve, thus wasting time
+and other valuable resources on your server such as socket
+connections.
+
+Some of the most famous excessive content expansion attacks
+use XML entity references.  Luckily, entity expansion is mostly
+useless for the data commonly sent through web services and
+can simply be disabled, which rules out several types of
+denial of service attacks at once.  Consequently, version
+1.2 of the SOAP standard explicitly disallows entity references
+in the XML stream.
+
+To disable entity expansion, use an XML parser that is configured
+with the option ``resolve_entities=False``.  Then, after (or
+while) parsing the document, use ``root.iter(etree.Entity)`` to
+recursively search for entity references.  If it contains any,
+reject the entire input document with a suitable error response.
+
+Another attack to consider is compression bombs.  If you allow
+compressed input into your web service, attackers can try to send
+well forged highly repetitive and thus very well compressing input
+that unpacks into a very large XML document in your server's main
+memory, potentially a thousand times larger than the compressed
+input data.
+
+As a counter measure, either disable compressed input for your
+web server, at least for untrusted sources, or use incremental
+parsing with ``iterparse()`` instead of parsing the whole input
+document into memory in one shot.  That allows you to enforce
+suitable limits on the input by applying semantic checks that
+detect and prevent an illegitimate use of your service.  If
+possible, you can also use this to reduce the amount of data
+that you need to keep in memory while parsing the document,
+thus further reducing the possibility of an attacker to trick
+your system into excessive resource usage.
 
 
 Can lxml parse from file objects opened in unicode/text mode?
