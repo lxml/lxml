@@ -968,8 +968,10 @@ Note that libxml2 versions of the 2.6 series do not restrict their
 parser and are therefore vulnerable to DoS attacks.
 
 Note also that these "hard limits" may still be high enough to
-allow for excessive resource usage in a given use case.  Also
-see the next question.
+allow for excessive resource usage in a given use case.  They are
+compile time modifiable, so building your own library versions will
+allow you to change the limits to your own needs. Also see the next
+question.
 
 
 How do I use lxml safely as a web-service endpoint?
@@ -988,7 +990,9 @@ not configured to load external DTDs.  Otherwise, attackers can
 try to trick the parser into an attempt to load external resources
 that are overly slow or impossible to retrieve, thus wasting time
 and other valuable resources on your server such as socket
-connections.
+connections.  Note that you can register your own document loader
+in lxml, which allows for fine-grained control over any read access
+to resources.
 
 Some of the most famous excessive content expansion attacks
 use XML entity references.  Luckily, entity expansion is mostly
@@ -1003,6 +1007,8 @@ with the option ``resolve_entities=False``.  Then, after (or
 while) parsing the document, use ``root.iter(etree.Entity)`` to
 recursively search for entity references.  If it contains any,
 reject the entire input document with a suitable error response.
+In lxml 3.x, you can also use the new DTD introspection API to
+apply your own restrictions on input documents.
 
 Another attack to consider is compression bombs.  If you allow
 compressed input into your web service, attackers can try to send
@@ -1021,6 +1027,18 @@ possible, you can also use this to reduce the amount of data
 that you need to keep in memory while parsing the document,
 thus further reducing the possibility of an attacker to trick
 your system into excessive resource usage.
+
+Finally, please be aware that XPath suffers from the same
+vulnerability as SQL when it comes to content injection.  The
+obvious fix is to not build any XPath expressions via string
+formatting or concatenation when the parameters may come from
+untrusted sources, and instead use XPath variables, which
+safely expose their values to the evaluation engine.
+
+The defusedxml_ package comes with an example setup and a wrapper
+API for lxml that applies certain counter measures internally.
+
+.. _defusedxml: https://bitbucket.org/tiran/defusedxml
 
 
 Can lxml parse from file objects opened in unicode/text mode?
