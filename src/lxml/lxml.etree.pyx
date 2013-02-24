@@ -2855,8 +2855,8 @@ cdef class CDATA:
         >>> el = etree.Element('content')
         >>> el.text = etree.CDATA('a string')
     """
-    cdef object _utf8_data
-    def __init__(self, data):
+    cdef bytes _utf8_data
+    def __cinit__(self, data):
         self._utf8_data = _utf8(data)
 
 def Entity(name):
