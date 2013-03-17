@@ -5,7 +5,7 @@ Tests for different Element class lookup mechanisms.
 """
 
 
-import unittest, doctest, operator, os.path, sys
+import unittest, os.path, sys, gc
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -22,6 +22,54 @@ xml_str = _bytes('''\
     <other:c2>2</other:c2>
   </c1>
 </root>''')
+
+
+class ProxyTestCase(HelperTestCase):
+    """Basic tests for element proxy behaviour.
+    """
+    etree = etree
+
+    def test_proxy_reuse(self):
+        root = etree.XML('<a><b><c/></b></a>')
+        b = root.find('b')
+        self.assertTrue(b is root[0])
+
+    def test_proxy_reuse_after_gc(self):
+        root = etree.XML('<a><b><c/></b></a>')
+        b = root.find('b')
+        self.assertTrue(self.etree.iselement(b))
+        gc.collect()
+        self.assertTrue(b is root[0])
+
+    def test_proxy_reuse_after_del_root(self):
+        root = etree.XML('<a><b><c/></b></a>')
+        b = root.find('b')
+        self.assertTrue(self.etree.iselement(b))
+        c = b.find('c')
+        self.assertTrue(self.etree.iselement(c))
+        del root
+        gc.collect()
+        self.assertTrue(b[0] is c)
+
+    def test_proxy_hashing(self):
+        root = etree.XML('<a><b><c/></b></a>')
+        old_elements = set(root.iter())
+        elements = root.iter()
+        del root
+        gc.collect()
+
+        missing = len(old_elements)
+        self.assertEqual(3, missing)
+        for new in elements:
+            for old in old_elements:
+                if old == new:
+                    self.assertTrue(old is new)
+                    missing -= 1
+                    break
+            else:
+                self.assertTrue(False, "element '%s' is missing" % new.tag)
+        self.assertEqual(0, missing)
+
 
 class ClassLookupTestCase(HelperTestCase):
     """Test cases for different Element class lookup mechanisms.
