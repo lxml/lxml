@@ -515,24 +515,19 @@ To remove the all suspicious content from this unparsed document, use the
 .. sourcecode:: pycon
 
     >>> from lxml.html.clean import clean_html
-    
     >>> print clean_html(html)
-    <html>
-      <body>
-        <div>
-          <style>/* deleted */</style>
-          <a href="">a link</a>
-          <a href="#">another link</a>
-          <p>a paragraph</p>
-          <div>secret EVIL!</div>
-          of EVIL!
-          Password:
-          annoying EVIL!
-          <a href="evil-site">spam spam SPAM!</a>
-          <img src="evil!">
-        </div>
-      </body>
-    </html>
+    <div><style>/* deleted */</style><body>
+       
+       <a href="">a link</a>
+       <a href="#">another link</a>
+       <p>a paragraph</p>
+       <div>secret EVIL!</div>
+        of EVIL! 
+                                                                                                       
+                                                                                                       
+         Password:                                                                                     
+       annoying EVIL!<a href="evil-site">spam spam SPAM!</a>                                           
+       <img src="evil!"></body></div>   
 
 The ``Cleaner`` class supports several keyword arguments to control exactly
 which content is removed:
