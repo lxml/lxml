@@ -624,8 +624,9 @@ cdef class xmlfile:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.writer is not None:
+            old_writer, self.writer = self.writer, None
             raise_on_error = exc_type is None
-            self.writer._close(raise_on_error)
+            old_writer._close(raise_on_error)
 
 cdef enum _IncrementalFileWriterStatus:
     WRITER_STARTING = 0
