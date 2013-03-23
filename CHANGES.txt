@@ -16,6 +16,9 @@ Bugs fixed
 Other changes
 -------------
 
+* The externally useless class ``lxml.etree._BaseParser`` was removed
+  from the module dict.
+
 
 3.1.0 (2013-02-10)
 ==================

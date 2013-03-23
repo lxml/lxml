@@ -703,6 +703,7 @@ cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
         c_attr = c_attr.next
     return 0
 
+@cython.internal
 cdef class _BaseParser:
     cdef ElementClassLookup _class_lookup
     cdef _ResolverRegistry _resolvers
@@ -723,9 +724,7 @@ cdef class _BaseParser:
                  filename, encoding):
         cdef tree.xmlCharEncodingHandler* enchandler
         cdef int c_encoding
-        if not isinstance(self, HTMLParser) and \
-                not isinstance(self, XMLParser) and \
-                not isinstance(self, iterparse):
+        if not isinstance(self, (XMLParser, HTMLParser, iterparse)):
             raise TypeError, u"This class cannot be instantiated"
 
         self._parse_options = parse_options
