@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Illegal memory access during cleanup in incremental xmlfile writer.
+
+Other changes
+-------------
+
+
 3.1.0 (2013-02-10)
 ==================
 

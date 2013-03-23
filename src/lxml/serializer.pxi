@@ -654,6 +654,10 @@ cdef class _IncrementalFileWriter:
         self._c_encoding = _cstr(encoding) if encoding is not None else NULL
         self._target = _create_output_buffer(outfile, self._c_encoding, compresslevel, &self._c_out)
 
+    def __dealloc__(self):
+        if self._c_out is not NULL:
+            tree.xmlOutputBufferClose(self._c_out)
+
     def write_declaration(self, version=None, standalone=None, doctype=None):
         """write_declaration(self, version=None, standalone=None, doctype=None)
 
@@ -677,7 +681,7 @@ cdef class _IncrementalFileWriter:
             self._status = WRITER_DTD_WRITTEN
         else:
             self._status = WRITER_DECL_WRITTEN
-        self._handle_error(xmlerror.XML_ERR_OK)
+        self._handle_error(self._c_out.error)
 
     def write_doctype(self, doctype):
         """write_doctype(self, doctype)
@@ -692,7 +696,7 @@ cdef class _IncrementalFileWriter:
         doctype = _utf8(doctype)
         _writeDoctype(self._c_out, _xcstr(doctype))
         self._status = WRITER_DTD_WRITTEN
-        self._handle_error(xmlerror.XML_ERR_OK)
+        self._handle_error(self._c_out.error)
 
     def element(self, tag, attrib=None, nsmap=None, **_extra):
         """element(self, tag, attrib=None, nsmap=None, **_extra)
@@ -739,7 +743,7 @@ cdef class _IncrementalFileWriter:
         self._write_attributes_and_namespaces(
             attributes, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
-        self._handle_error(xmlerror.XML_ERR_OK)
+        self._handle_error(self._c_out.error)
 
         self._element_stack.append((ns, name, prefix, flat_namespace_map))
         self._status = WRITER_IN_ELEMENT
@@ -779,7 +783,7 @@ cdef class _IncrementalFileWriter:
 
         if not self._element_stack:
             self._status = WRITER_FINISHED
-        self._handle_error(xmlerror.XML_ERR_OK)
+        self._handle_error(self._c_out.error)
 
     cdef _find_prefix(self, bytes href, dict flat_namespaces_map, list new_namespaces):
         if href is None:
@@ -838,7 +842,7 @@ cdef class _IncrementalFileWriter:
                         self._status = WRITER_FINISHED
             else:
                 raise TypeError("got invalid input value of type %s, expected string or Element" % type(content))
-            self._handle_error(xmlerror.XML_ERR_OK)
+            self._handle_error(self._c_out.error)
 
     cdef _close(self, bint raise_on_error):
         if raise_on_error:
@@ -853,12 +857,11 @@ cdef class _IncrementalFileWriter:
                 error_result = xmlerror.XML_ERR_OK
         else:
             tree.xmlOutputBufferClose(self._c_out)
+        self._c_out = NULL
         if raise_on_error:
             self._handle_error(error_result)
 
     cdef _handle_error(self, int error_result):
-        if error_result == xmlerror.XML_ERR_OK:
-            error_result = self._c_out.error
         if error_result != xmlerror.XML_ERR_OK:
             if self._writer is not None:
                 self._writer._exc_context._raise_if_stored()
