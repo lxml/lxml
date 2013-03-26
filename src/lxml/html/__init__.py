@@ -769,7 +769,7 @@ class FormElement(HtmlElement):
         return FieldsDict(self.inputs)
     def _fields__set(self, value):
         prev_keys = self.fields.keys()
-        for key, value in value.iteritems():
+        for key, value in value.items():
             if key in prev_keys:
                 prev_keys.remove(key)
             self.fields[key] = value

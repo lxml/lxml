@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1160386: Write access to ``lxml.html.FormElement.fields`` raised
+  an AttributeError in Py3.
+
 * Illegal memory access during cleanup in incremental xmlfile writer.
 
 Other changes
