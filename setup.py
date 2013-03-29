@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import glob
 import fnmatch
 
 # for command line options and supported environment variables, please
@@ -14,7 +13,10 @@ try:
 except ImportError:
     pass
 
-from distutils.core import setup
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 import versioninfo
 import setupinfo
