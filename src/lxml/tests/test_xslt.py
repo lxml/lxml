@@ -198,6 +198,27 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertEqual(expected,
                           unicode(res))
 
+    def test_xslt_unicode_standalone(self):
+        tree = self.parse(_bytes('<a><b>\\uF8D2</b><c>\\uF8D2</c></a>'
+        ).decode("unicode_escape"))
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+  <xsl:output encoding="UTF-16" standalone="no"/>
+  <xsl:template match="/">
+    <foo><xsl:value-of select="/a/b/text()" /></foo>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        st = etree.XSLT(style)
+        res = st(tree)
+        expected = _bytes('''\
+<?xml version="1.0" standalone="no"?>
+<foo>\\uF8D2</foo>
+''').decode("unicode_escape")
+        self.assertEqual(expected,
+                         unicode(res))
+
     def test_xslt_input(self):
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
