@@ -567,7 +567,7 @@ I think I have found a bug in lxml. What should I do?
 -----------------------------------------------------
 
 First, you should look at the `current developer changelog`_ to see if this
-is a known problem that has already been fixed in the SVN trunk since the
+is a known problem that has already been fixed in the master branch since the
 release you are using.
 
 .. _`current developer changelog`: https://github.com/lxml/lxml/blob/master/CHANGES.txt
@@ -599,11 +599,12 @@ mailing lists, which may considerably reduce the time to find a fix or
 work-around.  See the next question for some hints on how to do that.
 
 Otherwise, we would really like to hear about it.  Please report it to
-the `mailing list`_ so that we can fix it.  It is very helpful in this
-case if you can come up with a short code snippet that demonstrates
-your problem.  If others can reproduce and see the problem, it is much
-easier for them to fix it - and maybe even easier for you to describe
-it and get people convinced that it really is a problem to fix.
+the `bug tracker`_ or to the `mailing list`_ so that we can fix it.
+It is very helpful in this case if you can come up with a short code
+snippet that demonstrates your problem.  If others can reproduce and
+see the problem, it is much easier for them to fix it - and maybe even
+easier for you to describe it and get people convinced that it really
+is a problem to fix.
 
 It is important that you always report the version of lxml, libxml2
 and libxslt that you get from the code snippet above.  If we do not
@@ -613,6 +614,7 @@ take longer for you to get a helpful answer.
 Since as a user of lxml you are likely a programmer, you might find
 `this article on bug reports`_ an interesting read.
 
+.. _`bug tracker`: https://bugs.launchpad.net/lxml/
 .. _`mailing list`: http://lxml.de/mailinglist/
 .. _`this article on bug reports`: http://www.chiark.greenend.org.uk/~sgtatham/bugs.html
 
