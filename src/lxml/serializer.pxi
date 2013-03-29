@@ -134,10 +134,10 @@ cdef _tostring(_Element element, encoding, doctype, method,
     try:
         if encoding is _unicode:
             result = (<unsigned char*>tree.xmlBufContent(
-                c_result_buffer))[:tree.xmlBufLength(c_result_buffer)].decode('UTF-8')
+                c_result_buffer))[:tree.xmlBufUse(c_result_buffer)].decode('UTF-8')
         else:
             result = <bytes>(<unsigned char*>tree.xmlBufContent(
-                c_result_buffer))[:tree.xmlBufLength(c_result_buffer)]
+                c_result_buffer))[:tree.xmlBufUse(c_result_buffer)]
     finally:
         error_result = tree.xmlOutputBufferClose(c_buffer)
     if error_result < 0:

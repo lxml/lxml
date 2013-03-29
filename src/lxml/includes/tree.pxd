@@ -364,7 +364,7 @@ cdef extern from "libxml/tree.h":
     cdef const_xmlChar* xmlBufferContent(xmlBuffer* buf) nogil
     cdef int xmlBufferLength(xmlBuffer* buf) nogil
     cdef const_xmlChar* xmlBufContent(xmlBuf* buf) nogil # new in libxml2 2.9
-    cdef size_t xmlBufLength(xmlBuf* buf) nogil # new in libxml2 2.9
+    cdef size_t xmlBufUse(xmlBuf* buf) nogil # new in libxml2 2.9
     cdef int xmlKeepBlanksDefault(int val) nogil
     cdef xmlChar* xmlNodeGetBase(xmlDoc* doc, xmlNode* node) nogil
     cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri) nogil

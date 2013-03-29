@@ -172,7 +172,7 @@
 #ifndef LIBXML2_NEW_BUFFER
    typedef xmlBuffer xmlBuf;
 #  define xmlBufContent(buf) xmlBufferContent(buf)
-#  define xmlBufLength(buf) xmlBufferLength(buf)
+#  define xmlBufUse(buf) xmlBufferLength(buf)
 #endif
 
 /* libexslt 1.1.25+ support EXSLT functions in XPath */

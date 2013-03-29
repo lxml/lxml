@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Replace illegal usage of ``xmlBufLength()`` in libxml2 2.9.0 by
+  properly exported API function ``xmlBufUse()``.
+
+Other changes
+-------------
+
+
 3.1.1 (2013-03-29)
 ==================
 
