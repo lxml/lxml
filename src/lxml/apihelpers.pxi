@@ -575,15 +575,11 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
         c_attr = c_attr.next
     return attributes
 
-cdef object __RE_XML_ENCODING
-__RE_XML_ENCODING = re.compile(
+cdef object __RE_XML_ENCODING = re.compile(
     ur'^(<\?xml[^>]+)\s+encoding\s*=\s*["\'][^"\']*["\'](\s*\?>|)', re.U)
 
-cdef object __REPLACE_XML_ENCODING
-__REPLACE_XML_ENCODING = __RE_XML_ENCODING.sub
-
-cdef object __HAS_XML_ENCODING
-__HAS_XML_ENCODING = __RE_XML_ENCODING.match
+cdef object __REPLACE_XML_ENCODING = __RE_XML_ENCODING.sub
+cdef object __HAS_XML_ENCODING = __RE_XML_ENCODING.match
 
 cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
