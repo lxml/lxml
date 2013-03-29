@@ -589,7 +589,7 @@ cdef class xmlfile:
 
     A simple mechanism for incremental XML serialisation.
 
-    Usage example:
+    Usage example::
 
          with xmlfile("somefile.xml", encoding='utf-8') as xf:
              xf.write_declaration(standalone=True)
