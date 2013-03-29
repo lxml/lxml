@@ -178,6 +178,10 @@ like this (assuming you use hg and have hg-git installed)::
 
   hg clone git://github.com/lxml/lxml.git lxml
 
+Alternatively, if you use git, this should work as well::
+
+  git clone git://github.com/lxml/lxml.git lxml
+
 You can browse the `source repository`_ and its history through
 the web.  Please read `how to build lxml from source <build.html>`_
 first.  The `latest CHANGES`_ of the developer version are also
