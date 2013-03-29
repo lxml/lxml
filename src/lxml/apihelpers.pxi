@@ -587,7 +587,7 @@ __HAS_XML_ENCODING = __RE_XML_ENCODING.match
 
 cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
-    return __REPLACE_XML_ENCODING(ur'\g<1>', xml_string)
+    return __REPLACE_XML_ENCODING(ur'\g<1> ', xml_string)
 
 cdef bint _hasEncodingDeclaration(object xml_string):
     # check if a (unicode) string has an XML encoding declaration

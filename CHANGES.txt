@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* Fix serialisation error in XSLT output when converting the result tree
+  to a Unicode string.
+
 * Replace illegal usage of ``xmlBufLength()`` in libxml2 2.9.0 by
   properly exported API function ``xmlBufUse()``.
 
