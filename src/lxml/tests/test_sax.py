@@ -216,6 +216,40 @@ class ETreeSaxTestCase(HelperTestCase):
         self.assertEqual('b', root[0].tag)
         self.assertEqual('c', root[1].tag)
 
+    def test_etree_sax_no_ns_attributes(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+        handler.startElement('a', {"attr_a1": "a1"})
+        handler.startElement('b', {"attr_b1": "b1"})
+        handler.endElement('b')
+        handler.endElement('a')
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual('a', root.tag)
+        self.assertEqual('b', root[0].tag)
+        self.assertEqual('a1', root.attrib["attr_a1"])
+        self.assertEqual('b1', root[0].attrib["attr_b1"])
+
+    def test_etree_sax_ns_attributes(self):
+        handler = sax.ElementTreeContentHandler()
+        handler.startDocument()
+
+        handler.startElement('a', {"blaA:attr_a1": "a1"})
+        handler.startElement('b', {"blaA:attr_b1": "b1"})
+        handler.endElement('b')
+        handler.endElement('a')
+
+        handler.endDocument()
+
+        new_tree = handler.etree
+        root = new_tree.getroot()
+        self.assertEqual('a', root.tag)
+        self.assertEqual('b', root[0].tag)
+        self.assertEqual('a1', root.attrib["{blaA}attr_a1"])
+        self.assertEqual('b1', root[0].attrib["{blaA}attr_b1"])
+
     def test_etree_sax_error(self):
         handler = sax.ElementTreeContentHandler()
         handler.startDocument()
@@ -233,14 +267,14 @@ class ETreeSaxTestCase(HelperTestCase):
         handler = sax.ElementTreeContentHandler()
         sax.ElementTreeProducer(saxifiable, handler).saxify()
         return handler.etree
-        
+
     def _saxify_serialize(self, tree):
         new_tree = self._saxify_unsaxify(tree)
         f = BytesIO()
         new_tree.write(f)
         return f.getvalue().replace(_bytes('\n'), _bytes(''))
 
-    
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeSaxTestCase)])

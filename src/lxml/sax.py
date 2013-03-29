@@ -26,6 +26,12 @@ def _getNsTag(tag):
     else:
         return (None, tag)
 
+def _getAttrNSTag(attr_key):
+    if ":" in attr_key:
+        return tuple(attr_key.split(":", 1))
+    else:
+        return (None, attr_key)
+
 class ElementTreeContentHandler(ContentHandler):
     """Build an lxml ElementTree from SAX events.
     """
@@ -45,7 +51,7 @@ class ElementTreeContentHandler(ContentHandler):
         return ElementTree(self._root)
 
     etree = property(_get_etree, doc=_get_etree.__doc__)
-    
+
     def setDocumentLocator(self, locator):
         pass
 
@@ -127,6 +133,10 @@ class ElementTreeContentHandler(ContentHandler):
             raise SaxError("Unexpected element closed: " + el_tag)
 
     def startElement(self, name, attributes=None):
+        if attributes is not None:
+            attributes = dict(
+                    [(_getAttrNSTag(k), v) for k, v in attributes.items()]
+                )
         self.startElementNS((None, name), name, attributes)
 
     def endElement(self, name):
@@ -143,7 +153,7 @@ class ElementTreeContentHandler(ContentHandler):
             last_element.text = (last_element.text or '') + data
 
     ignorableWhitespace = characters
-        
+
 
 class ElementTreeProducer(object):
     """Produces SAX events for an element and children.
