@@ -236,19 +236,10 @@ class ETreeSaxTestCase(HelperTestCase):
         handler = sax.ElementTreeContentHandler()
         handler.startDocument()
 
-        handler.startElement('a', {"blaA:attr_a1": "a1"})
-        handler.startElement('b', {"blaA:attr_b1": "b1"})
-        handler.endElement('b')
-        handler.endElement('a')
-
-        handler.endDocument()
-
-        new_tree = handler.etree
-        root = new_tree.getroot()
-        self.assertEqual('a', root.tag)
-        self.assertEqual('b', root[0].tag)
-        self.assertEqual('a1', root.attrib["{blaA}attr_a1"])
-        self.assertEqual('b1', root[0].attrib["{blaA}attr_b1"])
+        self.assertRaises(ValueError,
+            handler.startElement,
+            'a', {"blaA:attr_a1": "a1"}
+        )
 
     def test_etree_sax_error(self):
         handler = sax.ElementTreeContentHandler()
