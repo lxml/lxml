@@ -11,6 +11,10 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1136509: Passing attributes through the namespace-unaware API of
+  the sax bridge (i.e. the ``handler.startElement()`` method) failed
+  with a ``TypeError``.  Patch by Mike Bayer.
+
 * LP#1123074: Fix serialisation error in XSLT output when converting
   the result tree to a Unicode string.
 
