@@ -13,13 +13,13 @@ cdef int _findOutputMethod(method) except -1:
     if method is None:
         return OUTPUT_METHOD_XML
     method = method.lower()
-    if method == u"xml":
+    if method == "xml":
         return OUTPUT_METHOD_XML
-    if method == u"html":
+    if method == "html":
         return OUTPUT_METHOD_HTML
-    if method == u"text":
+    if method == "text":
         return OUTPUT_METHOD_TEXT
-    raise ValueError, u"unknown output method %r" % method
+    raise ValueError(u"unknown output method %r" % method)
 
 cdef _textToString(xmlNode* c_node, encoding, bint with_tail):
     cdef bint needs_conversion
