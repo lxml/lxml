@@ -88,15 +88,18 @@ very easy to add as tiny test methods, so if you write a performance test for
 a specific part of the API yourself, please consider sending it to the lxml
 mailing list.
 
-The timings cited below compare lxml 2.3 (with libxml2 2.7.6) to the
-latest developer versions of ElementTree (1.3beta2) and cElementTree
-(1.0.6a3).  They were run single-threaded on a 2.5GHz 64bit Intel Core
-Duo machine under Ubuntu Linux 9.10 (Karmic).  The C libraries were
-compiled with the same platform specific optimisation flags.  The
-Python interpreter (2.6.4) was also manually compiled for the
-platform.  Note that many of the following ElementTree timings are
-therefore better then what a normal Python installation with the
-standard library (c)ElementTree modules would yield.
+The timings presented below compare lxml 3.1.1 (with libxml2 2.9.0) to the
+latest released versions of ElementTree (with cElementTree as accelerator
+module) in the standard library of CPython 3.3.0.  They were run
+single-threaded on a 2.9GHz 64bit double core Intel i7 machine under
+Ubuntu Linux 12.10 (Quantal).  The C libraries were compiled with the
+same platform specific optimisation flags.  The Python interpreter was
+also manually compiled for the platform.  Note that many of the following
+ElementTree timings are therefore better than what a normal Python
+installation with the standard library (c)ElementTree modules would yield.
+Note also that CPython 2.7 and 3.2+ come with a newer ElementTree version,
+so older Python installations will not perform as good for (c)ElementTree,
+and sometimes substantially worse.
 
 .. _`bench_etree.py`:     https://github.com/lxml/lxml/blob/master/benchmark/bench_etree.py
 .. _`bench_xpath.py`:     https://github.com/lxml/lxml/blob/master/benchmark/bench_xpath.py
@@ -134,56 +137,54 @@ Serialisation is an area where lxml excels.  The reason is that it
 executes entirely at the C level, without any interaction with Python
 code.  The results are rather impressive, especially for UTF-8, which
 is native to libxml2.  While 20 to 40 times faster than (c)ElementTree
-1.2 (which is part of the standard library since Python 2.5), lxml is
-still more than 7 times as fast as the much improved ElementTree 1.3::
+1.2 (which was part of the standard library before Python 2.7/3.2),
+lxml is still more than 10 times as fast as the much improved
+ElementTree 1.3 in recent Python versions::
 
-  lxe: tostring_utf16  (S-TR T1)    9.8219 msec/pass
-  cET: tostring_utf16  (S-TR T1)   88.7740 msec/pass
-  ET : tostring_utf16  (S-TR T1)   99.6690 msec/pass
+  lxe: tostring_utf16  (S-TR T1)    7.9958 msec/pass
+  cET: tostring_utf16  (S-TR T1)   83.1358 msec/pass
 
-  lxe: tostring_utf16  (UATR T1)   10.3750 msec/pass
-  cET: tostring_utf16  (UATR T1)   90.7581 msec/pass
-  ET : tostring_utf16  (UATR T1)  102.3569 msec/pass
+  lxe: tostring_utf16  (UATR T1)    8.3222 msec/pass
+  cET: tostring_utf16  (UATR T1)   84.4688 msec/pass
 
-  lxe: tostring_utf16  (S-TR T2)   10.2711 msec/pass
-  cET: tostring_utf16  (S-TR T2)   93.5340 msec/pass
-  ET : tostring_utf16  (S-TR T2)  105.8500 msec/pass
+  lxe: tostring_utf16  (S-TR T2)    8.2297 msec/pass
+  cET: tostring_utf16  (S-TR T2)   87.3415 msec/pass
 
-  lxe: tostring_utf8   (S-TR T2)    7.1261 msec/pass
-  cET: tostring_utf8   (S-TR T2)   93.4091 msec/pass
-  ET : tostring_utf8   (S-TR T2)  105.5419 msec/pass
+  lxe: tostring_utf8   (S-TR T2)    6.5677 msec/pass
+  cET: tostring_utf8   (S-TR T2)   76.2064 msec/pass
 
-  lxe: tostring_utf8   (U-TR T3)    1.4591 msec/pass
-  cET: tostring_utf8   (U-TR T3)   29.6180 msec/pass
-  ET : tostring_utf8   (U-TR T3)   31.9080 msec/pass
+  lxe: tostring_utf8   (U-TR T3)    1.1952 msec/pass
+  cET: tostring_utf8   (U-TR T3)   22.0058 msec/pass
 
-The same applies to plain text serialisation.  Note that the
-cElementTree version in the standard library does not currently
-support this, as it is a new feature in ET 1.3 and lxml.etree 2.0::
+The difference is somewhat smaller for plain text serialisation::
 
-  lxe: tostring_text_ascii     (S-TR T1)    1.9400 msec/pass
-  cET: tostring_text_ascii     (S-TR T1)   41.6231 msec/pass
-  ET : tostring_text_ascii     (S-TR T1)   52.7501 msec/pass
+  lxe: tostring_text_ascii     (S-TR T1)    2.7738 msec/pass
+  cET: tostring_text_ascii     (S-TR T1)    4.7629 msec/pass
 
-  lxe: tostring_text_ascii     (S-TR T3)    0.5331 msec/pass
-  cET: tostring_text_ascii     (S-TR T3)   12.9712 msec/pass
-  ET : tostring_text_ascii     (S-TR T3)   15.3620 msec/pass
+  lxe: tostring_text_ascii     (S-TR T3)    0.8273 msec/pass
+  cET: tostring_text_ascii     (S-TR T3)    1.5273 msec/pass
 
-  lxe: tostring_text_utf16     (S-TR T1)    3.2430 msec/pass
-  cET: tostring_text_utf16     (S-TR T1)   41.9259 msec/pass
-  ET : tostring_text_utf16     (S-TR T1)   53.4091 msec/pass
+  lxe: tostring_text_utf16     (S-TR T1)    2.7659 msec/pass
+  cET: tostring_text_utf16     (S-TR T1)   10.5038 msec/pass
 
-  lxe: tostring_text_utf16     (U-TR T1)    3.6838 msec/pass
-  cET: tostring_text_utf16     (U-TR T1)   38.7859 msec/pass
-  ET : tostring_text_utf16     (U-TR T1)   50.8440 msec/pass
+  lxe: tostring_text_utf16     (U-TR T1)    2.8017 msec/pass
+  cET: tostring_text_utf16     (U-TR T1)   10.5207 msec/pass
 
-Unlike ElementTree, the ``tostring()`` function in lxml also supports
-serialisation to a Python unicode string object::
+The ``tostring()`` function also supports serialisation to a Python
+unicode string object, which is currently faster in ElementTree
+under CPython 3.3::
 
-  lxe: tostring_text_unicode   (S-TR T1)    2.4869 msec/pass
-  lxe: tostring_text_unicode   (U-TR T1)    3.0370 msec/pass
-  lxe: tostring_text_unicode   (S-TR T3)    0.6518 msec/pass
-  lxe: tostring_text_unicode   (U-TR T3)    0.7300 msec/pass
+  lxe: tostring_text_unicode   (S-TR T1)    2.6896 msec/pass
+  cET: tostring_text_unicode   (S-TR T1)    1.0056 msec/pass
+
+  lxe: tostring_text_unicode   (U-TR T1)    2.7366 msec/pass
+  cET: tostring_text_unicode   (U-TR T1)    1.0154 msec/pass
+
+  lxe: tostring_text_unicode   (S-TR T3)    0.7997 msec/pass
+  cET: tostring_text_unicode   (S-TR T3)    0.3154 msec/pass
+
+  lxe: tostring_text_unicode   (U-TR T4)    0.0048 msec/pass
+  cET: tostring_text_unicode   (U-TR T4)    0.0160 msec/pass
 
 For parsing, lxml.etree and cElementTree compete for the medal.
 Depending on the input, either of the two can be faster.  The (c)ET
@@ -191,113 +192,111 @@ libraries use a very thin layer on top of the expat parser, which is
 known to be very fast.  Here are some timings from the benchmarking
 suite::
 
-  lxe: parse_stringIO  (SAXR T1)   19.9990 msec/pass
-  cET: parse_stringIO  (SAXR T1)    8.4970 msec/pass
-  ET : parse_stringIO  (SAXR T1)  183.9781 msec/pass
+  lxe: parse_bytesIO   (SAXR T1)   13.0246 msec/pass
+  cET: parse_bytesIO   (SAXR T1)    8.2929 msec/pass
 
-  lxe: parse_stringIO  (S-XR T3)    2.0790 msec/pass
-  cET: parse_stringIO  (S-XR T3)    2.7430 msec/pass
-  ET : parse_stringIO  (S-XR T3)   47.4229 msec/pass
+  lxe: parse_bytesIO   (S-XR T3)    1.3542 msec/pass
+  cET: parse_bytesIO   (S-XR T3)    2.4023 msec/pass
 
-  lxe: parse_stringIO  (UAXR T3)   11.1630 msec/pass
-  cET: parse_stringIO  (UAXR T3)   15.0940 msec/pass
-  ET : parse_stringIO  (UAXR T3)   92.6890 msec/pass
+  lxe: parse_bytesIO   (UAXR T3)    7.5610 msec/pass
+  cET: parse_bytesIO   (UAXR T3)   11.2455 msec/pass
 
 And another couple of timings `from a benchmark`_ that Fredrik Lundh
 `used to promote cElementTree`_, comparing a number of different
 parsers.  First, parsing a 274KB XML file containing Shakespeare's
 Hamlet::
 
-  lxml.etree.parse done in 0.005 seconds
-  cElementTree.parse done in 0.012 seconds
-  elementtree.ElementTree.parse done in 0.136 seconds
-  elementtree.XMLTreeBuilder: 6636 nodes read in 0.243 seconds
-  elementtree.SimpleXMLTreeBuilder: 6636 nodes read in 0.314 seconds
-  elementtree.SgmlopXMLTreeBuilder: 6636 nodes read in 0.104 seconds
-  minidom tree read in 0.137 seconds
+  xml.etree.ElementTree.parse done in 0.017 seconds
+  xml.etree.cElementTree.parse done in 0.007 seconds
+  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.007 seconds
+  lxml.etree.parse done in 0.003 seconds
+  drop_whitespace.parse done in 0.003 seconds
+  lxml.etree.XMLParser.feed(): 6636 nodes read in 0.004 seconds
+  minidom tree read in 0.080 seconds
 
 And a 3.4MB XML file containing the Old Testament::
 
-  lxml.etree.parse done in 0.031 seconds
-  cElementTree.parse done in 0.039 seconds
-  elementtree.ElementTree.parse done in 0.537 seconds
-  elementtree.XMLTreeBuilder: 25317 nodes read in 0.577 seconds
-  elementtree.SimpleXMLTreeBuilder: 25317 nodes read in 1.265 seconds
-  elementtree.SgmlopXMLTreeBuilder: 25317 nodes read in 0.331 seconds
-  minidom tree read in 0.643 seconds
+  xml.etree.ElementTree.parse done in 0.038 seconds
+  xml.etree.cElementTree.parse done in 0.030 seconds
+  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.030 seconds
+  lxml.etree.parse done in 0.016 seconds
+  drop_whitespace.parse done in 0.015 seconds
+  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.022 seconds
+  minidom tree read in 0.288 seconds
 
 .. _`from a benchmark`: http://svn.effbot.org/public/elementtree-1.3/benchmark.py
 .. _`used to promote cElementTree`: http://effbot.org/zone/celementtree.htm#benchmarks
 
-Here are the same benchmarks run under an early alpha of CPython 3.3,
-but on a different machine, which makes the absolute numbers
-uncomparable.  This time, however, we include the memory usage of the
-process in KB before and after parsing (using os.fork() to make sure
-we start from a clean state each time).  For the 274KB hamlet.xml
-file::
+Here are the same benchmarks again, but including the memory usage
+of the process in KB before and after parsing (using os.fork() to
+make sure we start from a clean state each time).  For the 274KB
+hamlet.xml file::
 
-  Memory usage at start: 7288
-  xml.etree.ElementTree.parse done in 0.104 seconds
-  Memory usage: 14252 (+6964)
-  xml.etree.cElementTree.parse done in 0.016 seconds
-  Memory usage: 9748 (+2460)
-  lxml.etree.parse done in 0.017 seconds
-  Memory usage: 11040 (+3752)
-  lxml.etree[remove_blank_space].parse done in 0.015 seconds
-  Memory usage: 10088 (+2800)
-  minidom tree read in 0.152 seconds
-  Memory usage: 30376 (+23088)
+  Memory usage: 7284
+  xml.etree.ElementTree.parse done in 0.017 seconds
+  Memory usage: 9432 (+2148)
+  xml.etree.cElementTree.parse done in 0.007 seconds
+  Memory usage: 9432 (+2152)
+  xml.etree.cElementTree.XMLParser.feed(): 6636 nodes read in 0.007 seconds
+  Memory usage: 9448 (+2164)
+  lxml.etree.parse done in 0.003 seconds
+  Memory usage: 11032 (+3748)
+  drop_whitespace.parse done in 0.003 seconds
+  Memory usage: 10224 (+2940)
+  lxml.etree.XMLParser.feed(): 6636 nodes read in 0.004 seconds
+  Memory usage: 11804 (+4520)
+  minidom tree read in 0.080 seconds
+  Memory usage: 12324 (+5040)
 
 And for the 3.4MB Old Testament XML file::
 
-  Memory usage at start: 20456
-  xml.etree.ElementTree.parse done in 0.419 seconds
-  Memory usage: 46112 (+25656)
-  xml.etree.cElementTree.parse done in 0.054 seconds
-  Memory usage: 32644 (+12188)
-  lxml.etree.parse done in 0.041 seconds
-  Memory usage: 37508 (+17052)
-  lxml.etree[remove_blank_space].parse done in 0.037 seconds
-  Memory usage: 34356 (+13900)
-  minidom tree read in 0.671 seconds
-  Memory usage: 110448 (+89992)
+  Memory usage: 10420
+  xml.etree.ElementTree.parse done in 0.038 seconds
+  Memory usage: 20660 (+10240)
+  xml.etree.cElementTree.parse done in 0.030 seconds
+  Memory usage: 20660 (+10240)
+  xml.etree.cElementTree.XMLParser.feed(): 25317 nodes read in 0.030 seconds
+  Memory usage: 20844 (+10424)
+  lxml.etree.parse done in 0.016 seconds
+  Memory usage: 27624 (+17204)
+  drop_whitespace.parse done in 0.015 seconds
+  Memory usage: 24468 (+14052)
+  lxml.etree.XMLParser.feed(): 25317 nodes read in 0.022 seconds
+  Memory usage: 29844 (+19424)
+  minidom tree read in 0.288 seconds
+  Memory usage: 28788 (+18368)
 
 As can be seen from the sizes, both lxml.etree and cElementTree are
 rather memory friendly compared to the pure Python libraries
-ElementTree and (especially) minidom.  And the timings speak for
-themselves anyway.
+ElementTree and (especially) minidom.  Comparing to older CPython
+versions, the memory footprint of the minidom library was considerably
+reduced in CPython 3.3, by about a factor of 4 in this case.
 
 For plain parser performance, lxml.etree and cElementTree tend to stay
 rather close to each other, usually within a factor of two, with
 winners well distributed over both sides.  Similar timings can be
 observed for the ``iterparse()`` function::
 
-  lxe: iterparse_stringIO  (SAXR T1)   24.8621 msec/pass
-  cET: iterparse_stringIO  (SAXR T1)   17.3280 msec/pass
-  ET : iterparse_stringIO  (SAXR T1)  199.1270 msec/pass
+  lxe: iterparse_bytesIO   (SAXR T1)   17.9198 msec/pass
+  cET: iterparse_bytesIO   (SAXR T1)   14.4982 msec/pass
 
-  lxe: iterparse_stringIO  (UAXR T3)   12.3630 msec/pass
-  cET: iterparse_stringIO  (UAXR T3)   17.5190 msec/pass
-  ET : iterparse_stringIO  (UAXR T3)   95.8610 msec/pass
+  lxe: iterparse_bytesIO   (UAXR T3)    8.8522 msec/pass
+  cET: iterparse_bytesIO   (UAXR T3)   12.9857 msec/pass
 
 However, if you benchmark the complete round-trip of a serialise-parse
 cycle, the numbers will look similar to these::
 
-  lxe: write_utf8_parse_stringIO  (S-TR T1)   27.5791 msec/pass
-  cET: write_utf8_parse_stringIO  (S-TR T1)  158.9060 msec/pass
-  ET : write_utf8_parse_stringIO  (S-TR T1)  347.8320 msec/pass
+  lxe: write_utf8_parse_bytesIO   (S-TR T1)   19.8867 msec/pass
+  cET: write_utf8_parse_bytesIO   (S-TR T1)   80.7259 msec/pass
 
-  lxe: write_utf8_parse_stringIO  (UATR T2)   34.4141 msec/pass
-  cET: write_utf8_parse_stringIO  (UATR T2)  187.7041 msec/pass
-  ET : write_utf8_parse_stringIO  (UATR T2)  388.9449 msec/pass
+  lxe: write_utf8_parse_bytesIO   (UATR T2)   23.7896 msec/pass
+  cET: write_utf8_parse_bytesIO   (UATR T2)   98.0766 msec/pass
 
-  lxe: write_utf8_parse_stringIO  (S-TR T3)    3.7861 msec/pass
-  cET: write_utf8_parse_stringIO  (S-TR T3)   52.4600 msec/pass
-  ET : write_utf8_parse_stringIO  (S-TR T3)  101.4550 msec/pass
+  lxe: write_utf8_parse_bytesIO   (S-TR T3)    3.0684 msec/pass
+  cET: write_utf8_parse_bytesIO   (S-TR T3)   24.6122 msec/pass
 
-  lxe: write_utf8_parse_stringIO  (SATR T4)    0.5522 msec/pass
-  cET: write_utf8_parse_stringIO  (SATR T4)    3.8941 msec/pass
-  ET : write_utf8_parse_stringIO  (SATR T4)    5.9431 msec/pass
+  lxe: write_utf8_parse_bytesIO   (SATR T4)    0.3495 msec/pass
+  cET: write_utf8_parse_bytesIO   (SATR T4)    1.9610 msec/pass
 
 For applications that require a high parser throughput of large files,
 and that do little to no serialization, both cET and lxml.etree are a
@@ -352,68 +351,58 @@ support, but also increases the overhead of tree building and
 restructuring.  This can be seen from the tree setup times of the
 benchmark (given in seconds)::
 
-  lxe:       --     S-     U-     -A     SA     UA  
-       T1: 0.0407 0.0470 0.0506 0.0396 0.0464 0.0504
-       T2: 0.0480 0.0557 0.0584 0.0520 0.0608 0.0627
-       T3: 0.0118 0.0132 0.0136 0.0319 0.0322 0.0319
-       T4: 0.0002 0.0002 0.0002 0.0006 0.0006 0.0006
-  cET:       --     S-     U-     -A     SA     UA  
-       T1: 0.0045 0.0043 0.0043 0.0045 0.0043 0.0043
-       T2: 0.0068 0.0069 0.0066 0.0078 0.0070 0.0069
-       T3: 0.0040 0.0040 0.0040 0.0050 0.0052 0.0067
-       T4: 0.0000 0.0000 0.0000 0.0001 0.0001 0.0001
-  ET :       --     S-     U-     -A     SA     UA  
-       T1: 0.0479 0.1051 0.1279 0.0487 0.1597 0.0484
-       T2: 0.1995 0.0553 0.2297 0.2550 0.0550 0.2881
-       T3: 0.0177 0.0169 0.0174 0.0185 0.2895 0.0189
-       T4: 0.0003 0.0002 0.0003 0.0003 0.0014 0.0003
+  lxe:       --     S-     U-     -A     SA     UA
+       T1: 0.0299 0.0343 0.0344 0.0293 0.0345 0.0342
+       T2: 0.0368 0.0423 0.0418 0.0427 0.0474 0.0459
+       T3: 0.0088 0.0084 0.0086 0.0251 0.0258 0.0261
+       T4: 0.0002 0.0002 0.0002 0.0005 0.0006 0.0006
+  cET:       --     S-     U-     -A     SA     UA
+       T1: 0.0050 0.0045 0.0093 0.0044 0.0043 0.0043
+       T2: 0.0073 0.0075 0.0074 0.0201 0.0075 0.0074
+       T3: 0.0033 0.0213 0.0032 0.0034 0.0033 0.0035
+       T4: 0.0000 0.0000 0.0000 0.0000 0.0000 0.0000
 
-While lxml is still a lot faster than ET in most cases, cET can be
-several times faster than lxml here.  One of the reasons is that lxml
-must encode incoming string data and tag names into UTF-8, and
-additionally discard the created Python elements after their use, when
-they are no longer referenced.  ET and cET represent the tree itself
-through these objects, which reduces the overhead in creating them.
+The timings are somewhat close to each other, although cET can be
+several times faster than lxml for larger trees.  One of the
+reasons is that lxml must encode incoming string data and tag names
+into UTF-8, and additionally discard the created Python elements
+after their use, when they are no longer referenced.  ElementTree
+represents the tree itself through these objects, which reduces
+the overhead in creating them.
 
 
 Child access
 ------------
 
-The same reason makes operations like collecting children as in
-``list(element)`` more costly in lxml.  Where ET and cET can quickly
-create a shallow copy of their list of children, lxml has to create a
-Python object for each child and collect them in a list::
+The same tree overhead makes operations like collecting children as in
+``list(element)`` more costly in lxml.  Where cET can quickly create
+a shallow copy of their list of children, lxml has to create a Python
+object for each child and collect them in a list::
 
-  lxe: root_list_children        (--TR T1)    0.0079 msec/pass
-  cET: root_list_children        (--TR T1)    0.0029 msec/pass
-  ET : root_list_children        (--TR T1)    0.0100 msec/pass
+  lxe: root_list_children        (--TR T1)    0.0038 msec/pass
+  cET: root_list_children        (--TR T1)    0.0010 msec/pass
 
-  lxe: root_list_children        (--TR T2)    0.0849 msec/pass
-  cET: root_list_children        (--TR T2)    0.0110 msec/pass
-  ET : root_list_children        (--TR T2)    0.1481 msec/pass
+  lxe: root_list_children        (--TR T2)    0.0455 msec/pass
+  cET: root_list_children        (--TR T2)    0.0050 msec/pass
 
 This handicap is also visible when accessing single children::
 
-  lxe: first_child               (--TR T2)    0.0699 msec/pass
-  cET: first_child               (--TR T2)    0.0608 msec/pass
-  ET : first_child               (--TR T2)    0.3419 msec/pass
+  lxe: first_child               (--TR T2)    0.0424 msec/pass
+  cET: first_child               (--TR T2)    0.0384 msec/pass
 
-  lxe: last_child                (--TR T1)    0.0710 msec/pass
-  cET: last_child                (--TR T1)    0.0648 msec/pass
-  ET : last_child                (--TR T1)    0.3309 msec/pass
+  lxe: last_child                (--TR T1)    0.0477 msec/pass
+  cET: last_child                (--TR T1)    0.0467 msec/pass
 
 ... unless you also add the time to find a child index in a bigger
 list.  ET and cET use Python lists here, which are based on arrays.
 The data structure used by libxml2 is a linked tree, and thus, a
 linked list of children::
 
-  lxe: middle_child              (--TR T1)    0.0989 msec/pass
-  cET: middle_child              (--TR T1)    0.0598 msec/pass
-  ET : middle_child              (--TR T1)    0.3390 msec/pass
+  lxe: middle_child              (--TR T1)    0.0710 msec/pass
+  cET: middle_child              (--TR T1)    0.0420 msec/pass
 
-  lxe: middle_child              (--TR T2)    2.7599 msec/pass
-  cET: middle_child              (--TR T2)    0.0620 msec/pass
-  ET : middle_child              (--TR T2)    0.3610 msec/pass
+  lxe: middle_child              (--TR T2)    1.7393 msec/pass
+  cET: middle_child              (--TR T2)    0.0396 msec/pass
 
 
 Element creation
@@ -423,21 +412,18 @@ As opposed to ET, libxml2 has a notion of documents that each element must be
 in.  This results in a major performance difference for creating independent
 Elements that end up in independently created documents::
 
-  lxe: create_elements           (--TC T2)    1.1640 msec/pass
-  cET: create_elements           (--TC T2)    0.0808 msec/pass
-  ET : create_elements           (--TC T2)    0.5801 msec/pass
+  lxe: create_elements           (--TC T2)    1.0045 msec/pass
+  cET: create_elements           (--TC T2)    0.0753 msec/pass
 
 Therefore, it is always preferable to create Elements for the document they
 are supposed to end up in, either as SubElements of an Element or using the
 explicit ``Element.makeelement()`` call::
 
-  lxe: makeelement               (--TC T2)    1.2751 msec/pass
-  cET: makeelement               (--TC T2)    0.1469 msec/pass
-  ET : makeelement               (--TC T2)    0.7451 msec/pass
+  lxe: makeelement               (--TC T2)    1.0586 msec/pass
+  cET: makeelement               (--TC T2)    0.1483 msec/pass
 
-  lxe: create_subelements        (--TC T2)    1.1470 msec/pass
-  cET: create_subelements        (--TC T2)    0.1080 msec/pass
-  ET : create_subelements        (--TC T2)    1.4369 msec/pass
+  lxe: create_subelements        (--TC T2)    0.8826 msec/pass
+  cET: create_subelements        (--TC T2)    0.0827 msec/pass
 
 So, if the main performance bottleneck of an application is creating large XML
 trees in memory through calls to Element and SubElement, cET is the best
@@ -454,13 +440,11 @@ requires lxml to do recursive adaptations throughout the moved tree structure.
 The following benchmark appends all root children of the second tree to the
 root of the first tree::
 
-  lxe: append_from_document      (--TR T1,T2)    2.0740 msec/pass
-  cET: append_from_document      (--TR T1,T2)    0.1271 msec/pass
-  ET : append_from_document      (--TR T1,T2)    0.4020 msec/pass
+  lxe: append_from_document      (--TR T1,T2)    1.0812 msec/pass
+  cET: append_from_document      (--TR T1,T2)    0.1104 msec/pass
 
-  lxe: append_from_document      (--TR T3,T4)    0.0229 msec/pass
-  cET: append_from_document      (--TR T3,T4)    0.0088 msec/pass
-  ET : append_from_document      (--TR T3,T4)    0.0291 msec/pass
+  lxe: append_from_document      (--TR T3,T4)    0.0155 msec/pass
+  cET: append_from_document      (--TR T3,T4)    0.0060 msec/pass
 
 Although these are fairly small numbers compared to parsing, this easily shows
 the different performance classes for lxml and (c)ET.  Where the latter do not
@@ -471,26 +455,25 @@ with the size of the tree that is moved.
 This difference is not always as visible, but applies to most parts of the
 API, like inserting newly created elements::
 
-  lxe: insert_from_document       (--TR T1,T2)    7.2598 msec/pass
-  cET: insert_from_document       (--TR T1,T2)    0.1578 msec/pass
-  ET : insert_from_document       (--TR T1,T2)    0.5150 msec/pass
+  lxe: insert_from_document         (--TR T1,T2)    3.9763 msec/pass
+  cET: insert_from_document         (--TR T1,T2)    0.1459 msec/pass
 
 or replacing the child slice by a newly created element::
 
-  lxe: replace_children_element   (--TC T1)    0.1149 msec/pass
-  cET: replace_children_element   (--TC T1)    0.0110 msec/pass
-  ET : replace_children_element   (--TC T1)    0.0558 msec/pass
+  lxe: replace_children_element   (--TC T1)    0.0749 msec/pass
+  cET: replace_children_element   (--TC T1)    0.0081 msec/pass
 
 as opposed to replacing the slice with an existing element from the
 same document::
 
-  lxe: replace_children           (--TC T1)    0.0091 msec/pass
-  cET: replace_children           (--TC T1)    0.0060 msec/pass
-  ET : replace_children           (--TC T1)    0.0188 msec/pass
+  lxe: replace_children           (--TC T1)    0.0052 msec/pass
+  cET: replace_children           (--TC T1)    0.0036 msec/pass
 
 While these numbers are too small to provide a major performance
 impact in practice, you should keep this difference in mind when you
-merge very large trees.
+merge very large trees.  Note that Elements have a ``makeelement()``
+method that allows to create an Element within the same document,
+thus avoiding the merge overhead when inserting it into that tree.
 
 
 deepcopy
@@ -498,17 +481,14 @@ deepcopy
 
 Deep copying a tree is fast in lxml::
 
-  lxe: deepcopy_all              (--TR T1)    5.0900 msec/pass
-  cET: deepcopy_all              (--TR T1)   57.9181 msec/pass
-  ET : deepcopy_all              (--TR T1)  499.1000 msec/pass
+  lxe: deepcopy_all              (--TR T1)    3.1650 msec/pass
+  cET: deepcopy_all              (--TR T1)   53.9973 msec/pass
 
-  lxe: deepcopy_all              (-ATR T2)    6.3980 msec/pass
-  cET: deepcopy_all              (-ATR T2)   65.6390 msec/pass
-  ET : deepcopy_all              (-ATR T2)  526.5379 msec/pass
+  lxe: deepcopy_all              (-ATR T2)    3.7365 msec/pass
+  cET: deepcopy_all              (-ATR T2)   61.6267 msec/pass
 
-  lxe: deepcopy_all              (S-TR T3)    1.4491 msec/pass
-  cET: deepcopy_all              (S-TR T3)   14.7018 msec/pass
-  ET : deepcopy_all              (S-TR T3)  123.5120 msec/pass
+  lxe: deepcopy_all              (S-TR T3)    0.7913 msec/pass
+  cET: deepcopy_all              (S-TR T3)   13.6220 msec/pass
 
 So, for example, if you have a database-like scenario where you parse in a
 large tree and then search and copy independent subtrees from it for further
@@ -518,44 +498,37 @@ processing, lxml is by far the best choice here.
 Tree traversal
 --------------
 
-Another area where lxml is very fast is iteration for tree traversal.  If your
-algorithms can benefit from step-by-step traversal of the XML tree and
-especially if few elements are of interest or the target element tag name is
-known, lxml is a good choice::
+Another important area in XML processing is iteration for tree
+traversal.  If your algorithms can benefit from step-by-step
+traversal of the XML tree and especially if few elements are of
+interest or the target element tag name is known, the ``.iter()``
+method is a good choice::
 
-  lxe: getiterator_all      (--TR T1)    1.6890 msec/pass
-  cET: getiterator_all      (--TR T1)   23.8621 msec/pass
-  ET : getiterator_all      (--TR T1)   11.1070 msec/pass
+  lxe: iter_all             (--TR T1)    1.2021 msec/pass
+  cET: iter_all             (--TR T1)    0.2649 msec/pass
 
-  lxe: getiterator_islice   (--TR T2)    0.0188 msec/pass
-  cET: getiterator_islice   (--TR T2)    0.1841 msec/pass
-  ET : getiterator_islice   (--TR T2)   11.7059 msec/pass
+  lxe: iter_islice          (--TR T2)    0.0119 msec/pass
+  cET: iter_islice          (--TR T2)    0.0050 msec/pass
 
-  lxe: getiterator_tag      (--TR T2)    0.0119 msec/pass
-  cET: getiterator_tag      (--TR T2)    0.3560 msec/pass
-  ET : getiterator_tag      (--TR T2)   10.6668 msec/pass
+  lxe: iter_tag             (--TR T2)    0.0112 msec/pass
+  cET: iter_tag             (--TR T2)    0.0112 msec/pass
 
-  lxe: getiterator_tag_all  (--TR T2)    0.2429 msec/pass
-  cET: getiterator_tag_all  (--TR T2)   20.3710 msec/pass
-  ET : getiterator_tag_all  (--TR T2)   10.6280 msec/pass
+  lxe: iter_tag_all         (--TR T2)    0.1838 msec/pass
+  cET: iter_tag_all         (--TR T2)    0.5472 msec/pass
 
 This translates directly into similar timings for ``Element.findall()``::
 
-  lxe: findall              (--TR T2)    2.4588 msec/pass
-  cET: findall              (--TR T2)   24.1358 msec/pass
-  ET : findall              (--TR T2)   13.0949 msec/pass
+  lxe: findall              (--TR T2)    2.6150 msec/pass
+  cET: findall              (--TR T2)    0.9973 msec/pass
 
-  lxe: findall              (--TR T3)    0.5939 msec/pass
-  cET: findall              (--TR T3)    6.9802 msec/pass
-  ET : findall              (--TR T3)    3.8991 msec/pass
+  lxe: findall              (--TR T3)    0.5975 msec/pass
+  cET: findall              (--TR T3)    0.2525 msec/pass
 
-  lxe: findall_tag          (--TR T2)    0.2789 msec/pass
-  cET: findall_tag          (--TR T2)   20.5719 msec/pass
-  ET : findall_tag          (--TR T2)   10.8678 msec/pass
+  lxe: findall_tag          (--TR T2)    0.2692 msec/pass
+  cET: findall_tag          (--TR T2)    0.5770 msec/pass
 
-  lxe: findall_tag          (--TR T3)    0.1638 msec/pass
-  cET: findall_tag          (--TR T3)    5.0790 msec/pass
-  ET : findall_tag          (--TR T3)    2.5120 msec/pass
+  lxe: findall_tag          (--TR T3)    0.1111 msec/pass
+  cET: findall_tag          (--TR T3)    0.1919 msec/pass
 
 Note that all three libraries currently use the same Python
 implementation for ``.findall()``, except for their native tree
@@ -572,38 +545,55 @@ provides more than one way of accessing it and you should take care which part
 of the lxml API you use.  The most straight forward way is to call the
 ``xpath()`` method on an Element or ElementTree::
 
-  lxe: xpath_method         (--TC T1)    0.7598 msec/pass
-  lxe: xpath_method         (--TC T2)   12.6798 msec/pass
-  lxe: xpath_method         (--TC T3)    0.0758 msec/pass
-  lxe: xpath_method         (--TC T4)    0.6182 msec/pass
+  lxe: xpath_method         (--TC T1)    0.5553 msec/pass
+  lxe: xpath_method         (--TC T2)    8.1232 msec/pass
+  lxe: xpath_method         (--TC T3)    0.0479 msec/pass
+  lxe: xpath_method         (--TC T4)    0.3920 msec/pass
 
 This is well suited for testing and when the XPath expressions are as diverse
 as the trees they are called on.  However, if you have a single XPath
 expression that you want to apply to a larger number of different elements,
 the ``XPath`` class is the most efficient way to do it::
 
-  lxe: xpath_class          (--TC T1)    0.2189 msec/pass
-  lxe: xpath_class          (--TC T2)    1.4110 msec/pass
-  lxe: xpath_class          (--TC T3)    0.0319 msec/pass
-  lxe: xpath_class          (--TC T4)    0.0880 msec/pass
+  lxe: xpath_class          (--TC T1)    0.2112 msec/pass
+  lxe: xpath_class          (--TC T2)    1.0867 msec/pass
+  lxe: xpath_class          (--TC T3)    0.0203 msec/pass
+  lxe: xpath_class          (--TC T4)    0.0594 msec/pass
 
 Note that this still allows you to use variables in the expression, so you can
 parse it once and then adapt it through variables at call time.  In other
 cases, where you have a fixed Element or ElementTree and want to run different
 expressions on it, you should consider the ``XPathEvaluator``::
 
-  lxe: xpath_element        (--TR T1)    0.1669 msec/pass
-  lxe: xpath_element        (--TR T2)    6.9060 msec/pass
-  lxe: xpath_element        (--TR T3)    0.0451 msec/pass
-  lxe: xpath_element        (--TR T4)    0.1681 msec/pass
+  lxe: xpath_element        (--TR T1)    0.1118 msec/pass
+  lxe: xpath_element        (--TR T2)    5.1293 msec/pass
+  lxe: xpath_element        (--TR T3)    0.0262 msec/pass
+  lxe: xpath_element        (--TR T4)    0.1111 msec/pass
 
 While it looks slightly slower, creating an XPath object for each of the
 expressions generates a much higher overhead here::
 
-  lxe: xpath_class_repeat   (--TC T1)    0.7451 msec/pass
-  lxe: xpath_class_repeat   (--TC T2)   12.2290 msec/pass
-  lxe: xpath_class_repeat   (--TC T3)    0.0730 msec/pass
-  lxe: xpath_class_repeat   (--TC T4)    0.5970 msec/pass
+  lxe: xpath_class_repeat           (--TC T1   )    0.5620 msec/pass
+  lxe: xpath_class_repeat           (--TC T2   )    7.5161 msec/pass
+  lxe: xpath_class_repeat           (--TC T3   )    0.0451 msec/pass
+  lxe: xpath_class_repeat           (--TC T4   )    0.3688 msec/pass
+
+Also note that tree iteration can well be faster than XPath, and
+sometimes substantially so.  Above all, it can efficiently
+short-circuit after the first couple of elements were found.  The
+XPath engine will always return the complete result set, regardless
+of how much of it actually will be used.
+
+Here is an example where only the first matching element is being
+searched, a case for which XPath has syntax support as well::
+
+  lxe: find_single                (--TR T2)    0.0184 msec/pass
+  cET: find_single                (--TR T2)    0.0052 msec/pass
+
+  lxe: iter_single                (--TR T2)    0.0029 msec/pass
+  cET: iter_single                (--TR T2)    0.0007 msec/pass
+
+  lxe: xpath_single               (--TR T2)    0.0226 msec/pass
 
 
 A longer example
@@ -770,21 +760,21 @@ ObjectPath can be used to speed up the access to elements that are deep in the
 tree.  It avoids step-by-step Python element instantiations along the path,
 which can substantially improve the access time::
 
-  lxe: attribute                  (--TR T1)    4.8928 msec/pass
-  lxe: attribute                  (--TR T2)   25.5480 msec/pass
-  lxe: attribute                  (--TR T4)    4.6349 msec/pass
+  lxe: attribute                  (--TR T1)    4.5464 msec/pass
+  lxe: attribute                  (--TR T2)   18.6505 msec/pass
+  lxe: attribute                  (--TR T4)    4.4115 msec/pass
 
-  lxe: objectpath                 (--TR T1)    1.4842 msec/pass
-  lxe: objectpath                 (--TR T2)   21.1990 msec/pass
-  lxe: objectpath                 (--TR T4)    1.4892 msec/pass
+  lxe: objectpath                 (--TR T1)    0.9568 msec/pass
+  lxe: objectpath                 (--TR T2)   13.3109 msec/pass
+  lxe: objectpath                 (--TR T4)    1.0018 msec/pass
 
-  lxe: attributes_deep            (--TR T1)   11.9710 msec/pass
-  lxe: attributes_deep            (--TR T2)   32.4290 msec/pass
-  lxe: attributes_deep            (--TR T4)   11.4839 msec/pass
+  lxe: attributes_deep            (--TR T1)    6.4061 msec/pass
+  lxe: attributes_deep            (--TR T2)   20.8254 msec/pass
+  lxe: attributes_deep            (--TR T4)    6.2237 msec/pass
 
-  lxe: objectpath_deep            (--TR T1)    4.8139 msec/pass
-  lxe: objectpath_deep            (--TR T2)   24.6511 msec/pass
-  lxe: objectpath_deep            (--TR T4)    4.7588 msec/pass
+  lxe: objectpath_deep            (--TR T1)    1.5173 msec/pass
+  lxe: objectpath_deep            (--TR T2)   14.9171 msec/pass
+  lxe: objectpath_deep            (--TR T4)    1.5221 msec/pass
 
 Note, however, that parsing ObjectPath expressions is not for free either, so
 this is most effective for frequently accessing the same element.
@@ -814,17 +804,17 @@ expressions to be more selective.  By choosing the right trees (or even
 subtrees and elements) to cache, you can trade memory usage against access
 speed::
 
-  lxe: attribute_cached           (--TR T1)    3.8228 msec/pass
-  lxe: attribute_cached           (--TR T2)   23.7138 msec/pass
-  lxe: attribute_cached           (--TR T4)    3.5269 msec/pass
+  lxe: attribute_cached           (--TR T1)    3.8185 msec/pass
+  lxe: attribute_cached           (--TR T2)   17.1666 msec/pass
+  lxe: attribute_cached           (--TR T4)    3.6592 msec/pass
 
-  lxe: attributes_deep_cached     (--TR T1)    4.6771 msec/pass
-  lxe: attributes_deep_cached     (--TR T2)   24.8699 msec/pass
-  lxe: attributes_deep_cached     (--TR T4)    4.3321 msec/pass
+  lxe: attributes_deep_cached     (--TR T1)    4.3907 msec/pass
+  lxe: attributes_deep_cached     (--TR T2)   18.0719 msec/pass
+  lxe: attributes_deep_cached     (--TR T4)    4.3812 msec/pass
 
-  lxe: objectpath_deep_cached     (--TR T1)    1.1430 msec/pass
-  lxe: objectpath_deep_cached     (--TR T2)   19.7470 msec/pass
-  lxe: objectpath_deep_cached     (--TR T4)    1.1740 msec/pass
+  lxe: objectpath_deep_cached     (--TR T1)    0.7939 msec/pass
+  lxe: objectpath_deep_cached     (--TR T2)   13.5620 msec/pass
+  lxe: objectpath_deep_cached     (--TR T4)    0.8042 msec/pass
 
 Things to note: you cannot currently use ``weakref.WeakKeyDictionary`` objects
 for this as lxml's element objects do not support weak references (which are
