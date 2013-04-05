@@ -337,28 +337,28 @@ class BenchMark(benchbase.TreeBenchMark):
             root.index(child, start=-100, stop=-5)
 
     @nochange
-    def bench_getiterator_all(self, root):
-        list(root.getiterator())
+    def bench_iter_all(self, root):
+        list(root.iter())
 
     @nochange
-    def bench_getiterator_islice(self, root):
-        list(islice(root.getiterator(), 10, 110))
+    def bench_iter_islice(self, root):
+        list(islice(root.iter(), 10, 110))
 
     @nochange
-    def bench_getiterator_tag(self, root):
-        list(islice(root.getiterator(self.SEARCH_TAG), 3, 10))
+    def bench_iter_tag(self, root):
+        list(islice(root.iter(self.SEARCH_TAG), 3, 10))
 
     @nochange
-    def bench_getiterator_tag_all(self, root):
-        list(root.getiterator(self.SEARCH_TAG))
+    def bench_iter_tag_all(self, root):
+        list(root.iter(self.SEARCH_TAG))
 
     @nochange
-    def bench_getiterator_tag_none(self, root):
-        list(root.getiterator("{ThisShould}NeverExist"))
+    def bench_iter_tag_none(self, root):
+        list(root.iter("{ThisShould}NeverExist"))
 
     @nochange
-    def bench_getiterator_tag_text(self, root):
-        [ e.text for e in root.getiterator(self.SEARCH_TAG) ]
+    def bench_iter_tag_text(self, root):
+        [ e.text for e in root.iter(self.SEARCH_TAG) ]
 
     @nochange
     def bench_findall(self, root):
