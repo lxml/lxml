@@ -55,6 +55,9 @@ documentation`_.
   >>> try: basestring = basestring
   ... except (NameError, KeyError): basestring = str
 
+  >>> try: next = next
+  ... except NameError:
+  ...     def next(it): return it.next()
 
 A common way to import ``lxml.etree`` is as follows:
 
@@ -674,7 +677,7 @@ serialisation is ASCII:
 
 .. sourcecode:: pycon
 
-   >>> br = root.find('.//br')
+   >>> br = next(root.iter('br'))  # get first result of iteration
    >>> br.tail = u'W\xf6rld'
 
    >>> etree.tostring(root, method='text')  # doctest: +ELLIPSIS
@@ -1422,3 +1425,19 @@ Find Elements with a certain attribute:
     a
     >>> print(root.findall(".//a[@y]"))
     []
+
+The ``.iter()`` method is a special case that only finds specific tags
+in the tree by their name, not based on a path.  That means that the
+following commands are equivalent in the success case:
+
+.. sourcecode:: pycon
+
+    >>> print(root.find(".//b").tag)
+    b
+    >>> print(next(root.iterfind(".//b")).tag)
+    b
+    >>> print(next(root.iter("b")).tag)
+    b
+
+Note that the ``.find()`` method simply returns None if no match is found,
+whereas the other two examples would raise a ``StopIteration`` exception.
