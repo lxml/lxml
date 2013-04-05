@@ -367,7 +367,7 @@ def build_treeset_name(trees, tn, an, serialized, children):
 def printSetupTimes(benchmark_suites):
     print("Setup times for trees in seconds:")
     for b in benchmark_suites:
-        sys.stdout.write("%-3s:    " % b.lib_name)
+        sys.stdout.write("%-3s:     " % b.lib_name)
         for an in (0,1):
             for tn in (0,1,2):
                 sys.stdout.write('  %s   ' %
