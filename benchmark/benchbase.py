@@ -1,7 +1,22 @@
 import sys, re, string, time, copy, gc
 from itertools import *
-from StringIO import StringIO
 import time
+
+try:
+    from io import BytesIO
+except ImportError:
+    from StringIO import StringIO as BytesIO
+
+try:
+    izip
+except NameError:
+    izip = zip  # Py3
+
+def exec_(code, glob):
+    if sys.version_info[0] >= 3:
+        exec(code, glob)
+    else:
+        exec("exec code in glob")
 
 
 TREE_FACTOR = 1 # increase tree size with '-l / '-L' cmd option
@@ -186,8 +201,9 @@ class TreeBenchMark(object):
             "Element"    : self.etree.Element,
             "SubElement" : self.etree.SubElement
             }
+
         # create function object
-        exec "\n".join(output) in namespace
+        exec_("\n".join(output), namespace)
         return namespace["element_factory"]
 
     def _all_trees(self):
@@ -238,7 +254,6 @@ class TreeBenchMark(object):
         root = self.etree.Element('{abc}rootnode')
         children = [root]
         for i in range(6 + TREE_FACTOR):
-            tag_no = count().next
             children = [ SubElement(c, "{cdefg}a%05d" % (i%8), attributes)
                          for i,c in enumerate(chain(children, children, children)) ]
         for child in children:
@@ -253,7 +268,6 @@ class TreeBenchMark(object):
         current_time = time.time
         t = current_time()
         root = self.etree.Element('{abc}rootnode')
-        children = [root]
         for ch1 in self.atoz:
             el = SubElement(root, "{abc}"+ch1*5, attributes)
             el.text = text
@@ -283,14 +297,16 @@ class TreeBenchMark(object):
             else:
                 tree_sets = ()
             if tree_sets:
-                tree_tuples = [ map(int, tree_set.split(','))
-                                for tree_set in tree_sets ]
+                tree_tuples = [list(map(int, tree_set.split(',')))
+                               for tree_set in tree_sets]
             else:
                 try:
-                    function = getattr(method, 'im_func', method)
                     arg_count = method.func_code.co_argcount - 1
                 except AttributeError:
-                    arg_count = 1
+                    try:
+                        arg_count = method.__code__.co_argcount - 1
+                    except AttributeError:
+                        arg_count = 1
                 tree_tuples = self._permutations(all_trees, arg_count)
 
             serialized = getattr(method, 'STRING',   False)
@@ -326,7 +342,7 @@ class TreeBenchMark(object):
 ############################################################
 
 def buildSuites(benchmark_class, etrees, selected):
-    benchmark_suites = map(benchmark_class, etrees)
+    benchmark_suites = list(map(benchmark_class, etrees))
 
     # sorted by name and tree tuple
     benchmarks = [ sorted(b.benchmarks()) for b in benchmark_suites ]
@@ -346,19 +362,20 @@ def build_treeset_name(trees, tn, an, serialized, children):
     attr = {0:'-', 1:'A'}[an]
     ser  = {True:'X', False:'T'}[serialized]
     chd  = {True:'C', False:'R'}[children]
-    return "%s%s%s%s T%s" % (text, attr, ser, chd, ',T'.join(imap(str, trees))[:6])
+    return "%s%s%s%s T%s" % (text, attr, ser, chd, ',T'.join(map(str, trees))[:6])
 
 def printSetupTimes(benchmark_suites):
-    print "Setup times for trees in seconds:"
+    print("Setup times for trees in seconds:")
     for b in benchmark_suites:
-        print "%-3s:    " % b.lib_name,
+        sys.stdout.write("%-3s:    " % b.lib_name)
         for an in (0,1):
             for tn in (0,1,2):
-                print '  %s  ' % build_treeset_name((), tn, an, False, False)[:2],
-        print
+                sys.stdout.write('  %s   ' %
+                    build_treeset_name((), tn, an, False, False)[:2])
+        print('')
         for i, tree_times in enumerate(b.setup_times):
-            print "     T%d:" % (i+1), ' '.join("%6.4f" % t for t in tree_times)
-    print
+            print("     T%d: %s" % (i+1, ' '.join("%6.4f" % t for t in tree_times)))
+    print('')
 
 def runBench(suite, method_name, method_call, tree_set, tn, an,
              serial, children, no_change):
@@ -399,32 +416,33 @@ def runBench(suite, method_name, method_call, tree_set, tn, an,
     gc.collect()
     return times
 
+
 def runBenchmarks(benchmark_suites, benchmarks):
     for bench_calls in izip(*benchmarks):
         for lib, (bench, benchmark_setup) in enumerate(izip(benchmark_suites, bench_calls)):
             bench_name = benchmark_setup[0]
             tree_set_name = build_treeset_name(*benchmark_setup[-6:-1])
-            print "%-3s: %-28s" % (bench.lib_name, bench_name[6:34]),
-            print "(%-10s)" % tree_set_name,
+            sys.stdout.write("%-3s: %-28s (%-10s) " % (
+                bench.lib_name, bench_name[6:34], tree_set_name))
             sys.stdout.flush()
 
             try:
                 result = runBench(bench, *benchmark_setup)
             except SkippedTest:
-                print "skipped"
+                print("skipped")
             except KeyboardInterrupt:
-                print "interrupted by user"
+                print("interrupted by user")
                 sys.exit(1)
-            except Exception, e:
-                print "failed: %s: %s" % (e.__class__.__name__, e)
+            except Exception:
+                exc_type, exc_value = sys.exc_info()[:2]
+                print("failed: %s: %s" % (exc_type.__name__, exc_value))
+                exc_type = exc_value = None
             else:
-                print "%9.4f msec/pass, best of (" % min(result),
-                for t in result:
-                    print "%9.4f" % t,
-                print ")"
+                print("%9.4f msec/pass, best of (%s)" % (
+                      min(result), ' '.join("%9.4f" % t for t in result)))
 
         if len(benchmark_suites) > 1:
-            print # empty line between different benchmarks
+            print('')  # empty line between different benchmarks
 
 ############################################################
 # Main program
@@ -505,17 +523,17 @@ def main(benchmark_class):
                     pass
 
     if not _etrees:
-        print "No library to test. Exiting."
+        print("No library to test. Exiting.")
         sys.exit(1)
 
-    print "Preparing test suites and trees ..."
+    print("Preparing test suites and trees ...")
     selected = set( sys.argv[1:] )
     benchmark_suites, benchmarks = \
                       buildSuites(benchmark_class, _etrees, selected)
 
-    print "Running benchmark on", ', '.join(b.lib_name
-                                            for b in benchmark_suites)
-    print
+    print("Running benchmark on", ', '.join(b.lib_name
+                                            for b in benchmark_suites))
+    print('')
 
     printSetupTimes(benchmark_suites)
 
