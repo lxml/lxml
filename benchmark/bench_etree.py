@@ -89,7 +89,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @nochange
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
-    def bench_write_utf8_parse_stringIO(self, root):
+    def bench_write_utf8_parse_bytesIO(self, root):
         f = BytesIO()
         self.etree.ElementTree(root).write(f, encoding='UTF-8')
         f.seek(0)
@@ -98,7 +98,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     @serialized
-    def bench_parse_stringIO(self, root_xml):
+    def bench_parse_bytesIO(self, root_xml):
         f = BytesIO(root_xml)
         self.etree.parse(f)
 
@@ -111,7 +111,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     @serialized
-    def bench_iterparse_stringIO(self, root_xml):
+    def bench_iterparse_bytesIO(self, root_xml):
         f = BytesIO(root_xml)
         for event, element in self.etree.iterparse(f):
             pass
@@ -119,7 +119,7 @@ class BenchMark(benchbase.TreeBenchMark):
     @with_attributes(True, False)
     @with_text(text=True, utext=True)
     @serialized
-    def bench_iterparse_stringIO_clear(self, root_xml):
+    def bench_iterparse_bytesIO_clear(self, root_xml):
         f = BytesIO(root_xml)
         for event, element in self.etree.iterparse(f):
             element.clear()
