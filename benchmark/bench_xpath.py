@@ -67,7 +67,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
             else:
                 return ()
         extensions = {("test", "child") : return_child}
-        xpath = self.etree.XPath("t:child(.)", namespaces={"test":"t"},
+        xpath = self.etree.XPath("t:child(.)", namespaces={"t":"test"},
                                  extensions=extensions)
         for child in children:
             xpath(child)
