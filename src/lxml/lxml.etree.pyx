@@ -2544,7 +2544,7 @@ cdef class _MultiTagMatcher:
             for item in tag:
                 self._storeTags(item, seen)
 
-    cdef int cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
+    cdef inline int cacheTags(self, _Document doc, bint force_into_dict=False) except -1:
         """
         Look up the tag names in the doc dict to enable string pointer comparisons.
         """
@@ -2719,6 +2719,7 @@ cdef class ElementDepthFirstIterator:
             self._next_node = _elementFactory(current_node._doc, c_node)
         return current_node
 
+    @cython.final
     cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
         cdef int node_types = self._matcher._node_types
         if not node_types:
@@ -2729,6 +2730,7 @@ cdef class ElementDepthFirstIterator:
         tree.END_FOR_EACH_ELEMENT_FROM(c_node)
         return NULL
 
+    @cython.final
     cdef xmlNode* _nextNodeMatchTag(self, xmlNode* c_node):
         tree.BEGIN_FOR_EACH_ELEMENT_FROM(self._top_node._c_node, c_node, 0)
         if self._matcher.matches(c_node):
