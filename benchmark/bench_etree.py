@@ -357,6 +357,10 @@ class BenchMark(benchbase.TreeBenchMark):
         list(root.iter(self.SEARCH_TAG))
 
     @nochange
+    def bench_iter_tag_one_at_a_time(self, root):
+        list(islice(root.iter(self.SEARCH_TAG), 2**30, None))
+
+    @nochange
     def bench_iter_tag_none(self, root):
         list(root.iter("{ThisShould}NeverExist"))
 
