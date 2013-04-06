@@ -341,6 +341,10 @@ class BenchMark(benchbase.TreeBenchMark):
         list(root.iter())
 
     @nochange
+    def bench_iter_one_at_a_time(self, root):
+        list(islice(root.iter(), 2**30, None))
+
+    @nochange
     def bench_iter_islice(self, root):
         list(islice(root.iter(), 10, 110))
 
