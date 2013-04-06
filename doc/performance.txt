@@ -774,21 +774,21 @@ ObjectPath can be used to speed up the access to elements that are deep in the
 tree.  It avoids step-by-step Python element instantiations along the path,
 which can substantially improve the access time::
 
-  lxe: attribute                  (--TR T1)    4.5464 msec/pass
-  lxe: attribute                  (--TR T2)   18.6505 msec/pass
-  lxe: attribute                  (--TR T4)    4.4115 msec/pass
+  lxe: attribute                  (--TR T1)    4.1828 msec/pass
+  lxe: attribute                  (--TR T2)   17.3802 msec/pass
+  lxe: attribute                  (--TR T4)    3.8657 msec/pass
 
-  lxe: objectpath                 (--TR T1)    0.9568 msec/pass
+  lxe: objectpath                 (--TR T1)    0.9289 msec/pass
   lxe: objectpath                 (--TR T2)   13.3109 msec/pass
-  lxe: objectpath                 (--TR T4)    1.0018 msec/pass
+  lxe: objectpath                 (--TR T4)    0.9289 msec/pass
 
-  lxe: attributes_deep            (--TR T1)    6.4061 msec/pass
-  lxe: attributes_deep            (--TR T2)   20.8254 msec/pass
-  lxe: attributes_deep            (--TR T4)    6.2237 msec/pass
+  lxe: attributes_deep            (--TR T1)    6.2900 msec/pass
+  lxe: attributes_deep            (--TR T2)   20.4713 msec/pass
+  lxe: attributes_deep            (--TR T4)    6.1679 msec/pass
 
-  lxe: objectpath_deep            (--TR T1)    1.5173 msec/pass
-  lxe: objectpath_deep            (--TR T2)   14.9171 msec/pass
-  lxe: objectpath_deep            (--TR T4)    1.5221 msec/pass
+  lxe: objectpath_deep            (--TR T1)    1.3049 msec/pass
+  lxe: objectpath_deep            (--TR T2)   14.0815 msec/pass
+  lxe: objectpath_deep            (--TR T4)    1.3051 msec/pass
 
 Note, however, that parsing ObjectPath expressions is not for free either, so
 this is most effective for frequently accessing the same element.
@@ -818,17 +818,17 @@ expressions to be more selective.  By choosing the right trees (or even
 subtrees and elements) to cache, you can trade memory usage against access
 speed::
 
-  lxe: attribute_cached           (--TR T1)    3.8185 msec/pass
-  lxe: attribute_cached           (--TR T2)   17.1666 msec/pass
-  lxe: attribute_cached           (--TR T4)    3.6592 msec/pass
+  lxe: attribute_cached           (--TR T1)    3.1357 msec/pass
+  lxe: attribute_cached           (--TR T2)   15.8911 msec/pass
+  lxe: attribute_cached           (--TR T4)    2.9194 msec/pass
 
-  lxe: attributes_deep_cached     (--TR T1)    4.3907 msec/pass
-  lxe: attributes_deep_cached     (--TR T2)   18.0719 msec/pass
-  lxe: attributes_deep_cached     (--TR T4)    4.3812 msec/pass
+  lxe: attributes_deep_cached     (--TR T1)    3.8984 msec/pass
+  lxe: attributes_deep_cached     (--TR T2)   16.8300 msec/pass
+  lxe: attributes_deep_cached     (--TR T4)    3.6936 msec/pass
 
-  lxe: objectpath_deep_cached     (--TR T1)    0.7939 msec/pass
-  lxe: objectpath_deep_cached     (--TR T2)   13.5620 msec/pass
-  lxe: objectpath_deep_cached     (--TR T4)    0.8042 msec/pass
+  lxe: objectpath_deep_cached     (--TR T1)    0.7496 msec/pass
+  lxe: objectpath_deep_cached     (--TR T2)   12.3763 msec/pass
+  lxe: objectpath_deep_cached     (--TR T4)    0.7427 msec/pass
 
 Things to note: you cannot currently use ``weakref.WeakKeyDictionary`` objects
 for this as lxml's element objects do not support weak references (which are
