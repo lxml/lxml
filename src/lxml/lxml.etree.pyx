@@ -2713,8 +2713,10 @@ cdef class ElementDepthFirstIterator:
             c_node = self._nextNodeAnyTag(c_node)
         else:
             c_node = self._nextNodeMatchTag(c_node)
-        self._next_node = (_elementFactory(current_node._doc, c_node)
-                           if c_node is not NULL else None)
+        if c_node is NULL:
+            self._next_node = None
+        else:
+            self._next_node = _elementFactory(current_node._doc, c_node)
         return current_node
 
     cdef xmlNode* _nextNodeAnyTag(self, xmlNode* c_node):
