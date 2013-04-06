@@ -13,7 +13,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
     @onlylib('lxe')
     @children
     def bench_xpath_class(self, children):
-        xpath = self.etree.XPath("./*[0]")
+        xpath = self.etree.XPath("./*[1]")
         for child in children:
             xpath(child)
 
@@ -22,7 +22,7 @@ class XPathBenchMark(benchbase.TreeBenchMark):
     @children
     def bench_xpath_class_repeat(self, children):
         for child in children:
-            xpath = self.etree.XPath("./*[0]")
+            xpath = self.etree.XPath("./*[1]")
             xpath(child)
 
     @nochange
@@ -30,14 +30,14 @@ class XPathBenchMark(benchbase.TreeBenchMark):
     def bench_xpath_element(self, root):
         xpath = self.etree.XPathElementEvaluator(root)
         for child in root:
-            xpath.evaluate("./*[0]")
+            xpath.evaluate("./*[1]")
 
     @nochange
     @onlylib('lxe')
     @children
     def bench_xpath_method(self, children):
         for child in children:
-            child.xpath("./*[0]")
+            child.xpath("./*[1]")
 
     @nochange
     @onlylib('lxe')

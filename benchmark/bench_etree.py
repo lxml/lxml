@@ -408,7 +408,7 @@ class BenchMark(benchbase.TreeBenchMark):
         if xpath is None:
             ns, tag = self.SEARCH_TAG[1:].split('}')
             xpath = self._bench_xpath_single_xpath = self.etree.XPath(
-                './/p:%s' % tag, namespaces={'p': ns})
+                './/p:%s[1]' % tag, namespaces={'p': ns})
         xpath(root)
 
     @nochange
@@ -418,6 +418,30 @@ class BenchMark(benchbase.TreeBenchMark):
     @nochange
     def bench_iter_single(self, root):
         next(root.iter(self.SEARCH_TAG))
+
+    _bench_xpath_two_xpath = None
+
+    @nochange
+    @onlylib('lxe')
+    def bench_xpath_two(self, root):
+        xpath = self._bench_xpath_two_xpath
+        if xpath is None:
+            ns, tag = self.SEARCH_TAG[1:].split('}')
+            xpath = self._bench_xpath_two_xpath = self.etree.XPath(
+                './/p:%s[position() < 3]' % tag, namespaces={'p': ns})
+        xpath(root)
+
+    @nochange
+    def bench_iterfind_two(self, root):
+        it = root.iterfind(".//%s" % self.SEARCH_TAG)
+        next(it)
+        next(it)
+
+    @nochange
+    def bench_iter_two(self, root):
+        it = root.iter(self.SEARCH_TAG)
+        next(it)
+        next(it)
 
 
 if __name__ == '__main__':
