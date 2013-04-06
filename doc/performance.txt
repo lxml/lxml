@@ -504,35 +504,38 @@ traversal of the XML tree and especially if few elements are of
 interest or the target element tag name is known, the ``.iter()``
 method is a good choice::
 
-  lxe: iter_all             (--TR T1)    1.2021 msec/pass
-  cET: iter_all             (--TR T1)    0.2649 msec/pass
+  lxe: iter_all             (--TR T1)    1.0529 msec/pass
+  cET: iter_all             (--TR T1)    0.2635 msec/pass
 
-  lxe: iter_islice          (--TR T2)    0.0119 msec/pass
+  lxe: iter_islice          (--TR T2)    0.0110 msec/pass
   cET: iter_islice          (--TR T2)    0.0050 msec/pass
 
-  lxe: iter_tag             (--TR T2)    0.0112 msec/pass
+  lxe: iter_tag             (--TR T2)    0.0079 msec/pass
   cET: iter_tag             (--TR T2)    0.0112 msec/pass
 
-  lxe: iter_tag_all         (--TR T2)    0.1838 msec/pass
-  cET: iter_tag_all         (--TR T2)    0.5472 msec/pass
+  lxe: iter_tag_all         (--TR T2)    0.1822 msec/pass
+  cET: iter_tag_all         (--TR T2)    0.5343 msec/pass
 
 This translates directly into similar timings for ``Element.findall()``::
 
-  lxe: findall              (--TR T2)    2.6150 msec/pass
+  lxe: findall              (--TR T2)    1.7176 msec/pass
   cET: findall              (--TR T2)    0.9973 msec/pass
 
-  lxe: findall              (--TR T3)    0.5975 msec/pass
+  lxe: findall              (--TR T3)    0.3967 msec/pass
   cET: findall              (--TR T3)    0.2525 msec/pass
 
-  lxe: findall_tag          (--TR T2)    0.2692 msec/pass
+  lxe: findall_tag          (--TR T2)    0.2258 msec/pass
   cET: findall_tag          (--TR T2)    0.5770 msec/pass
 
-  lxe: findall_tag          (--TR T3)    0.1111 msec/pass
+  lxe: findall_tag          (--TR T3)    0.1085 msec/pass
   cET: findall_tag          (--TR T3)    0.1919 msec/pass
 
 Note that all three libraries currently use the same Python
 implementation for ``.findall()``, except for their native tree
-iterator (``element.iter()``).
+iterator (``element.iter()``).  In general, lxml is very fast
+for iteration, but looses ground against cET when many Elements
+are found and need to be instantiated.  So, the more selective
+your search is, the faster lxml will run.
 
 
 XPath
@@ -545,44 +548,43 @@ provides more than one way of accessing it and you should take care which part
 of the lxml API you use.  The most straight forward way is to call the
 ``xpath()`` method on an Element or ElementTree::
 
-  lxe: xpath_method         (--TC T1)    0.5553 msec/pass
-  lxe: xpath_method         (--TC T2)    8.1232 msec/pass
-  lxe: xpath_method         (--TC T3)    0.0479 msec/pass
-  lxe: xpath_method         (--TC T4)    0.3920 msec/pass
+  lxe: xpath_method         (--TC T1)    0.3982 msec/pass
+  lxe: xpath_method         (--TC T2)    7.8895 msec/pass
+  lxe: xpath_method         (--TC T3)    0.0477 msec/pass
+  lxe: xpath_method         (--TC T4)    0.3982 msec/pass
 
 This is well suited for testing and when the XPath expressions are as diverse
 as the trees they are called on.  However, if you have a single XPath
 expression that you want to apply to a larger number of different elements,
 the ``XPath`` class is the most efficient way to do it::
 
-  lxe: xpath_class          (--TC T1)    0.2112 msec/pass
-  lxe: xpath_class          (--TC T2)    1.0867 msec/pass
-  lxe: xpath_class          (--TC T3)    0.0203 msec/pass
-  lxe: xpath_class          (--TC T4)    0.0594 msec/pass
+  lxe: xpath_class          (--TC T1)    0.0713 msec/pass
+  lxe: xpath_class          (--TC T2)    1.1325 msec/pass
+  lxe: xpath_class          (--TC T3)    0.0215 msec/pass
+  lxe: xpath_class          (--TC T4)    0.0722 msec/pass
 
 Note that this still allows you to use variables in the expression, so you can
 parse it once and then adapt it through variables at call time.  In other
 cases, where you have a fixed Element or ElementTree and want to run different
 expressions on it, you should consider the ``XPathEvaluator``::
 
-  lxe: xpath_element        (--TR T1)    0.1118 msec/pass
-  lxe: xpath_element        (--TR T2)    5.1293 msec/pass
-  lxe: xpath_element        (--TR T3)    0.0262 msec/pass
-  lxe: xpath_element        (--TR T4)    0.1111 msec/pass
+  lxe: xpath_element        (--TR T1)    0.1101 msec/pass
+  lxe: xpath_element        (--TR T2)    2.0473 msec/pass
+  lxe: xpath_element        (--TR T3)    0.0267 msec/pass
+  lxe: xpath_element        (--TR T4)    0.1087 msec/pass
 
 While it looks slightly slower, creating an XPath object for each of the
 expressions generates a much higher overhead here::
 
-  lxe: xpath_class_repeat           (--TC T1   )    0.5620 msec/pass
-  lxe: xpath_class_repeat           (--TC T2   )    7.5161 msec/pass
-  lxe: xpath_class_repeat           (--TC T3   )    0.0451 msec/pass
-  lxe: xpath_class_repeat           (--TC T4   )    0.3688 msec/pass
+  lxe: xpath_class_repeat           (--TC T1   )    0.3884 msec/pass
+  lxe: xpath_class_repeat           (--TC T2   )    7.6182 msec/pass
+  lxe: xpath_class_repeat           (--TC T3   )    0.0465 msec/pass
+  lxe: xpath_class_repeat           (--TC T4   )    0.3877 msec/pass
 
-Also note that tree iteration can well be faster than XPath, and
-sometimes substantially so.  Above all, it can efficiently
-short-circuit after the first couple of elements were found.  The
-XPath engine will always return the complete result set, regardless
-of how much of it actually will be used.
+Note that tree iteration can be substantially faster than XPath if
+your code short-circuits after the first couple of elements were
+found.  The XPath engine will always return the complete result set,
+regardless of how much of it will actually be used.
 
 Here is an example where only the first matching element is being
 searched, a case for which XPath has syntax support as well::
@@ -590,10 +592,22 @@ searched, a case for which XPath has syntax support as well::
   lxe: find_single                (--TR T2)    0.0184 msec/pass
   cET: find_single                (--TR T2)    0.0052 msec/pass
 
-  lxe: iter_single                (--TR T2)    0.0029 msec/pass
+  lxe: iter_single                (--TR T2)    0.0024 msec/pass
   cET: iter_single                (--TR T2)    0.0007 msec/pass
 
-  lxe: xpath_single               (--TR T2)    0.0226 msec/pass
+  lxe: xpath_single               (--TR T2)    0.0033 msec/pass
+
+When looking for the first two elements out of many, the numbers
+explode for XPath, as restricting the result subset requires a
+more complex expression::
+
+  lxe: iterfind_two               (--TR T2)    0.0184 msec/pass
+  cET: iterfind_two               (--TR T2)    0.0062 msec/pass
+
+  lxe: iter_two                   (--TR T2)    0.0029 msec/pass
+  cET: iter_two                   (--TR T2)    0.0017 msec/pass
+
+  lxe: xpath_two                  (--TR T2)    0.2768 msec/pass
 
 
 A longer example
