@@ -599,7 +599,7 @@ cdef class xmlfile:
              xf.write_doctype('<!DOCTYPE root SYSTEM "some.dtd">')
 
              # generate an element (the root element)
-             with xf.Element('root'):
+             with xf.element('root'):
                   # write a complete Element into the open root element
                   xf.write(etree.Element('test'))
 
