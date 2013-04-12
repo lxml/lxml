@@ -49,9 +49,8 @@ so newer versions will give you better compliance with the W3C spec.
 Installation
 ------------
 
-Unless you are on MS Windows, the best way to install lxml is to
-get the pip_ package management tool and run the following as
-super-user (or administrator)::
+The best way to install lxml is to get the pip_ package management
+tool and run the following as super-user (or administrator)::
 
   pip install lxml
 
@@ -59,15 +58,17 @@ To install a specific version, either download the distribution
 manually and let pip install that, or pass the desired version
 to pip::
 
-  pip install lxml==2.3
+  pip install lxml==3.1.2
 
 .. _pip: http://pypi.python.org/pypi/pip
 
-* For **MS Windows**, we no longer provide binary distributions.  Also
-  see the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+* For **MS Windows**, recent lxml releases feature community donated
+  binary distributions, although you might still want to take a look
+  at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
   If you fail to build lxml on your MS Windows system from the signed
-  and tested sources that we release, consider using the `unofficial
-  Windows binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
+  and tested sources that we release, consider using the binary builds
+  from PyPI or the `unofficial Windows binaries
+  <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
   that Christoph Gohlke generously provides.
 
 * On **Linux** (and most other well-behaved operating systems),
