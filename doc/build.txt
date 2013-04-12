@@ -44,8 +44,8 @@ working Cython installation.  You can use pip_ to install it::
 
     pip install "Cython>=0.18"
 
-lxml currently requires Cython 0.17.3, later release versions should
-work as well.
+lxml currently requires at least Cython 0.18, later release versions
+should work as well.
 
 
 Github, git and hg
