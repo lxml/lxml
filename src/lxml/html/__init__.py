@@ -581,7 +581,7 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     if parser is None:
         parser = html_parser
     # FIXME: check what happens when you give html with a body, head, etc.
-    start = html[:20].lstrip().lower()
+    start = html[:1000].lstrip()[0:10].lower()
     if sys.version_info[0] >= 3 and hasattr(start, 'decode'): # Py3 can't mix bytes into startswith()
         start = start.decode('ISO8859-1')
     if not start.startswith('<html') and not start.startswith('<!doctype'):
