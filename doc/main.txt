@@ -155,8 +155,7 @@ Download
 The best way to download lxml is to visit `lxml at the Python Package
 Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
-with `this key <pubkey.asc>`_.  Binary builds are not available from
-PyPI due to the increased maintenance overhead.
+with `this key <pubkey.asc>`_.
 
 The latest version is `lxml 3.1.2`_, released 2013-04-12
 (`changes for 3.1.2`_).  `Older versions <#old-versions>`_
