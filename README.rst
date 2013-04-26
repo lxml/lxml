@@ -12,23 +12,18 @@ For installation information, see `INSTALL.txt`_.
 Support the project
 -------------------
 
-lxml has been downloaded from the Python Package Index
-more than five million times and is also available directly
-in many package distributions e.g. for Linux or MacOS-X.
+lxml has been downloaded from the `Python Package Index`_ more than
+two million times and is also available directly in many package
+distributions, e.g. for Linux or MacOS-X.
+
+.. _`Python Package Index`: https://pypi.python.org/pypi/lxml
 
 Most people who use lxml do so because they like using it.
-If you want to show us that you like it, please blog about
-your experience with it, link to the project website,
-or send us a flattr.
+You can show us that you like it by blogging about your experience
+with it and linking to the project website.
 
-.. class:: center
-
-  |FlattrLink|_
-
-.. _FlattrLink: https://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit
-
-However, if you are using lxml for your work and feel like giving a bit
-of your own benefit back to support the project, consider sending us
+If you are using lxml for your work and feel like giving a bit of
+your own benefit back to support the project, consider sending us
 money through PayPal that we can use for fixing bugs in the software
 and improving its features and documentation.  Please read the Legal
 Notice below, at the bottom of this page.  Thank you for your support.
@@ -39,12 +34,21 @@ Notice below, at the bottom of this page.  Thank you for your support.
 
 .. _Donate: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R56JE3VCPDA9N
 
-Note that Flattr keeps 10% of the money for itself, so do not send
-any larger amounts through Flattr.  Use PayPal for donations instead,
-or `contact Stefan Behnel`_ for other ways to support the lxml project,
-as well as commercial consulting, customisations and trainings on lxml
-and fast Python XML processing.
+Alternatively, if you prefer expressing your appreciation in a monthy
+dose of pennies rather than a dedicated donation, you can also use
+Flattr to do so.
 
+.. class:: center
+
+  |FlattrLink|_
+
+.. _FlattrLink: https://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit
+
+Note that Flattr keeps 10% of the transactions for itself, which is money
+you pay that will not reach us.  Do not send any larger amounts through
+Flattr.  Use PayPal for donations instead, or `contact Stefan Behnel`_ for
+other ways to support the lxml project, as well as commercial consulting,
+customisations and trainings on lxml and fast Python XML processing.
 
 .. |Donate| image:: https://github.com/lxml/lxml/raw/master/doc/html/paypal_btn_donateCC_LG.gif
             :width: 160
