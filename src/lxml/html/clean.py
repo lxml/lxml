@@ -312,7 +312,8 @@ class Cleaner(object):
             for el in list(doc.iter('link')):
                 if 'stylesheet' in el.get('rel', '').lower():
                     # Note this kills alternate stylesheets as well
-                    el.drop_tree()
+                    if not self.allow_element(el):
+                        el.drop_tree()
         if self.meta:
             kill_tags.add('meta')
         if self.page_structure:
