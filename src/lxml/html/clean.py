@@ -97,7 +97,8 @@ class Cleaner(object):
         Removes any ``<script>`` tags.
 
     ``javascript``:
-        Removes any Javascript, like an ``onclick`` attribute.
+        Removes any Javascript, like an ``onclick`` attribute. Also removes stylesheets
+        as they could contain Javascript.
 
     ``comments``:
         Removes any comments.
@@ -165,6 +166,8 @@ class Cleaner(object):
 
         Note that this parameter might not work as intended if you do not
         make the links absolute before doing the cleaning.
+
+        Note that you may also need to set ``whitelist_tags``.
 
     ``whitelist_tags``:
         A set of tags that can be included with ``host_whitelist``.
