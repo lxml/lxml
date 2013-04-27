@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+3.2 (2013-??)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* LP#715687: lxml.html.clean no longer discards scripts that are explicitly
+  allowed by the user provided whitelist.
+
+Other changes
+-------------
+
+
 3.1.2 (2013-04-12)
 ==================
 
