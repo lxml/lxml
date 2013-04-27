@@ -275,7 +275,7 @@ class Cleaner(object):
                 for el in _find_styled_elements(doc):
                     old = el.get('style')
                     new = _css_javascript_re.sub('', old)
-                    new = _css_import_re.sub('', old)
+                    new = _css_import_re.sub('', new)
                     if self._has_sneaky_javascript(new):
                         # Something tricky is going on...
                         del el.attrib['style']
