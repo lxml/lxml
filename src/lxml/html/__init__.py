@@ -699,6 +699,8 @@ def fromstring(html, base_url=None, parser=None, **kw):
                 # We don't care about text or tail in a head
                 other_head.drop_tree()
         return doc
+    if body is None:
+        return doc
     if (len(body) == 1 and (not body.text or not body.text.strip())
         and (not body[-1].tail or not body[-1].tail.strip())):
         # The body has just one element, so it was probably a single
