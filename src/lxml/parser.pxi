@@ -586,9 +586,17 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
                           _ErrorLog error_log) except 0:
     if filename is not None and \
            ctxt.lastError.domain == xmlerror.XML_FROM_IO:
+        if isinstance(filename, bytes):
+            filename = _decodeFilenameWithLength(
+                <bytes>filename, len(<bytes>filename))
         if ctxt.lastError.message is not NULL:
+            try:
+                message = (ctxt.lastError.message).decode('utf-8')
+            except UnicodeDecodeError:
+                # the filename may be in there => play safe
+                message = (ctxt.lastError.message).decode('iso8859-1')
             message = u"Error reading file '%s': %s" % (
-                filename, (ctxt.lastError.message).strip())
+                filename, message.strip())
         else:
             message = u"Error reading '%s'" % filename
         raise IOError, message

@@ -1384,7 +1384,11 @@ cdef object _encodeFilename(object filename):
 cdef object _decodeFilename(const_xmlChar* c_path):
     u"""Make the filename a unicode string if we are in Py3.
     """
-    c_len = tree.xmlStrlen(c_path)
+    return _decodeFilenameWithLength(c_path, tree.xmlStrlen(c_path))
+
+cdef object _decodeFilenameWithLength(const_xmlChar* c_path, size_t c_len):
+    u"""Make the filename a unicode string if we are in Py3.
+    """
     if _isFilePath(c_path):
         try:
             return python.PyUnicode_Decode(
