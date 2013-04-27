@@ -118,3 +118,45 @@ least if an encoding is given.
     1
     >>> print(docs[0])
     Test
+
+Bug 599318: Call fromstring with a frameset fragment should not raise an error,
+the whole document is returned.
+
+    >>> import lxml.html
+    >>> content='''
+    ... <frameset>
+    ...  <frame src="main.php" name="srcpg">
+    ... </frameset>'''
+    >>> etree_document = lxml.html.fromstring(content)
+    >>> print(tostring(etree_document, encoding=unicode))
+    <html><frameset><frame src="main.php" name="srcpg"></frameset></html>
+
+Bug 599318: Call fromstring with a div fragment should not raise an error,
+only the element is returned
+
+    >>> import lxml.html
+    >>> content='<div></div>'
+    >>> etree_document = lxml.html.fromstring(content)
+    >>> print(tostring(etree_document, encoding=unicode))
+    <div></div>
+
+Bug 599318: Call fromstring with a head fragment should not raise an error,
+the whole document is returned.
+
+    >>> import lxml.html
+    >>> content='<head></head>'
+    >>> etree_document = lxml.html.fromstring(content)
+    >>> print(tostring(etree_document, encoding=unicode))
+    <html><head></head></html>
+
+Bug 690319: Leading whitespace before doctype declaration should not raise an error.
+
+    >>> import lxml.html
+    >>> content='''
+    ...     <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+    ...     <html>
+    ...     </html>'''
+    >>> etree_document = lxml.html.fromstring(content)
+    >>> print(tostring(etree_document, encoding=unicode))
+    <html></html>
+
