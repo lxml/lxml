@@ -251,6 +251,22 @@ class _IOTestCaseBase(HelperTestCase):
             expect_exc = TypeError
         self.assertRaises(expect_exc, self.etree.parse, f)
 
+    def test_etree_parse_io_error(self):
+        # this is a directory name that contains characters beyond latin-1
+        dirnameEN = _str('Directory')
+        dirnameRU = _str('ÐšÐ°Ñ‚Ð°Ð»Ð¾Ð³')
+        filename = _str('nosuchfile.xml')
+        try:
+            dn = tempfile.mkdtemp(prefix=dirnameEN)
+            self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
+        finally:
+            os.rmdir(dn)
+        try:
+            dn = tempfile.mkdtemp(prefix=dirnameRU)
+            self.assertRaises(IOError, self.etree.parse, os.path.join(dn, filename))
+        finally:
+            os.rmdir(dn)
+
     
 class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
