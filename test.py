@@ -564,8 +564,10 @@ def main(argv):
 
     if sys.version_info[:2] < (2,5):
         # exclude tests that require the 'with' statement
-        test_files = [ test_file for test_file in test_files
-                       if 'test_incremental_xmlfile.py' not in test_file ]
+        test_files = [
+            test_file for test_file in test_files
+            if 'test_incremental_xmlfile.py' not in test_file
+            and 'test_http_io.py' not in test_file]
 
     if cfg.list_tests or cfg.run_tests:
         test_cases = get_test_cases(test_files, cfg, tracer=tracer)
