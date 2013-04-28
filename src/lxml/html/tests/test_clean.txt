@@ -28,7 +28,7 @@
 ...     </form>
 ...     <a href="evil-site">spam spam SPAM!</a>
 ...     <a href="http://example.com" rel="author">Author</a>
-...     <a href="http://example.com">Text</a>
+...     <a href="http://example.com" rel="nofollow">Text</a>
 ...     <img src="evil!">
 ...   </body>
 ... </html>'''
@@ -60,7 +60,7 @@
     </form>
     <a href="evil-site">spam spam SPAM!</a>
     <a href="http://example.com" rel="author">Author</a>
-    <a href="http://example.com">Text</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
     <img src="evil!">
   </body>
 </html>
@@ -92,7 +92,7 @@
     </form>
     <a href="evil-site">spam spam SPAM!</a>
     <a href="http://example.com" rel="author">Author</a>
-    <a href="http://example.com">Text</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
     <img src="evil!">
   </body>
 </html>
@@ -112,7 +112,7 @@
     Password:
     <a href="evil-site">spam spam SPAM!</a>
     <a href="http://example.com" rel="author">Author</a>
-    <a href="http://example.com">Text</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
     <img src="evil!">
   </body>
 </html>
@@ -154,7 +154,7 @@
     Password:
     <a href="evil-site">spam spam SPAM!</a>
     <a href="http://example.com" rel="author">Author</a>
-    <a href="http://example.com">Text</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
     <img src="evil!">
   </body>
 </html>

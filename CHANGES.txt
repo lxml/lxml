@@ -14,8 +14,11 @@ Bugs fixed
 * LP#673205: Parsing from in-memory strings disabled network access in the
   default parser and made subsequent attempts to parse from a URL fail.
 
+* LP#971754: lxml.html.clean appends 'nofollow' to 'rel' attributes instead
+  of overwriting the current value.
+
 * LP#715687: lxml.html.clean no longer discards scripts that are explicitly
-  allowed by the user provided whitelist.
+  allowed by the user provided whitelist.  Patch by Christine Koppelt.
 
 Other changes
 -------------
