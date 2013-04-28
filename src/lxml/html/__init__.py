@@ -557,6 +557,11 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
 # parsing
 ################################################################################
 
+_looks_like_full_html_unicode = re.compile(
+    unicode(r'^\s*<(?:html|!doctype)'), re.I).match
+_looks_like_full_html_bytes = re.compile(
+    r'^\s*<(?:html|!doctype)'.encode('ascii'), re.I).match
+
 def document_fromstring(html, parser=None, **kw):
     if parser is None:
         parser = html_parser
@@ -581,11 +586,12 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     if parser is None:
         parser = html_parser
     # FIXME: check what happens when you give html with a body, head, etc.
-    start = html[:20].lstrip().lower()
-    if sys.version_info[0] >= 3 and hasattr(start, 'decode'): # Py3 can't mix bytes into startswith()
-        start = start.decode('ISO8859-1')
-    if not start.startswith('<html') and not start.startswith('<!doctype'):
-        html = '<html><body>%s</body></html>' % html
+    if isinstance(html, bytes):
+        if not _looks_like_full_html_bytes(html):
+            html = '<html><body>%s</body></html>'.encode('ascii') % html
+    else:
+        if not _looks_like_full_html_unicode(html):
+            html = '<html><body>%s</body></html>' % html
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert _nons(doc.tag) == 'html'
     bodies = [e for e in doc if _nons(e.tag) == 'body']
@@ -659,14 +665,14 @@ def fromstring(html, base_url=None, parser=None, **kw):
     """
     if parser is None:
         parser = html_parser
-    start = html[:10].lstrip().lower()
-    if sys.version_info[0] >= 3 and hasattr(start, 'decode'): # Py3 can't mix bytes into startswith()
-        start = start.decode('ISO8859-1')
-    if start.startswith('<html') or start.startswith('<!doctype'):
-        # Looks like a full HTML document
-        return document_fromstring(html, parser=parser, base_url=base_url, **kw)
-    # otherwise, lets parse it out...
+    if isinstance(html, bytes):
+        is_full_html = _looks_like_full_html_bytes(html)
+    else:
+        is_full_html = _looks_like_full_html_unicode(html)
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
+    if is_full_html:
+        return doc
+    # otherwise, lets parse it out...
     bodies = doc.findall('body')
     if not bodies:
         bodies = doc.findall('{%s}body' % XHTML_NAMESPACE)
