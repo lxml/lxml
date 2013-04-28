@@ -4,6 +4,8 @@
 Web IO test cases that need Python 2.5+ (wsgiref)
 """
 
+from __future__ import with_statement
+
 import unittest
 import textwrap
 import os
@@ -78,7 +80,7 @@ class HttpIOTestCase(HelperTestCase):
         self.assertEqual('a', root[0].tag)
 
     def test_network_dtd(self):
-        data = map(textwrap.dedent, [
+        data = [_bytes(textwrap.dedent(s)) for s in [
             # XML file
             '''\
             <?xml version="1.0"?>
@@ -87,7 +89,7 @@ class HttpIOTestCase(HelperTestCase):
             ''',
             # DTD
             '<!ENTITY myentity "DEFINED">',
-        ])
+        ]]
 
         responses = []
         def handler(environ, start_response):

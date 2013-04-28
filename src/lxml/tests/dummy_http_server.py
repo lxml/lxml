@@ -3,8 +3,14 @@ Simple HTTP request dumper for tests in Python 2.5+.
 """
 
 import sys
-import urlparse
 from contextlib import contextmanager
+
+try:
+    import urlparse
+except ImportError:
+    # Python 3
+    import urllib.parse as urlparse
+
 
 @contextmanager
 def webserver(app, port=0, host=None):
@@ -31,7 +37,12 @@ def webserver(app, port=0, host=None):
         server.shutdown()
 
 
-from SocketServer import ThreadingMixIn
+try:
+    from SocketServer import ThreadingMixIn
+except ImportError:
+    # Python 3
+    from socketserver import ThreadingMixIn
+
 import wsgiref.simple_server as wsgiserver
 class WebServer(wsgiserver.WSGIServer, ThreadingMixIn):
     """A web server that starts a new thread for each request.
