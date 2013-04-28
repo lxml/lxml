@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-3.2 (2013-??)
+3.2.0 (2013-04-28)
 ==================
 
 Features added
@@ -10,6 +10,17 @@ Features added
 
 Bugs fixed
 ----------
+
+* LP#690319: Leading whitespace could change the behaviour of the string
+  parsing functions in ``lxml.html``.
+
+* LP#599318: The string parsing functions in ``lxml.html`` are more robust
+  in the face of uncommon HTML content like framesets or missing body tags.
+  Patch by Stefan Seelmann.
+
+* LP#712941: I/O errors while trying to access files with paths that contain
+  non-ASCII characters could raise ``UnicodeDecodeError`` instead of properly
+  reporting the ``IOError``.
 
 * LP#673205: Parsing from in-memory strings disabled network access in the
   default parser and made subsequent attempts to parse from a URL fail.
