@@ -334,6 +334,7 @@ cdef class _FileReaderContext:
             c_read_callback  = _readFileParser
             c_callback_context = c_stream
 
+        orig_options = ctxt.options
         with nogil:
             if ctxt.html:
                 result = htmlparser.htmlCtxtReadIO(
@@ -347,6 +348,7 @@ cdef class _FileReaderContext:
                 result = xmlparser.xmlCtxtReadIO(
                     ctxt, c_read_callback, NULL, c_callback_context,
                     self._c_url, c_encoding, options)
+        ctxt.options = orig_options # work around libxml2 problem
         self._close_file()
         return result
 
@@ -938,6 +940,7 @@ cdef class _BaseParser:
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
             c_text = python.PyUnicode_AS_DATA(utext)
+            orig_options = pctxt.options
             with nogil:
                 if self._for_html:
                     result = htmlparser.htmlCtxtReadMemory(
@@ -951,6 +954,7 @@ cdef class _BaseParser:
                     result = xmlparser.xmlCtxtReadMemory(
                         pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
                         self._parse_options)
+            pctxt.options = orig_options # work around libxml2 problem
 
             return context._handleParseResultDoc(self, result, None)
         finally:
@@ -978,6 +982,7 @@ cdef class _BaseParser:
             else:
                 c_encoding = _cstr(self._default_encoding)
 
+            orig_options = pctxt.options
             with nogil:
                 if self._for_html:
                     result = htmlparser.htmlCtxtReadMemory(
@@ -991,6 +996,7 @@ cdef class _BaseParser:
                     result = xmlparser.xmlCtxtReadMemory(
                         pctxt, c_text, c_len, c_filename,
                         c_encoding, self._parse_options)
+            pctxt.options = orig_options # work around libxml2 problem
 
             return context._handleParseResultDoc(self, result, None)
         finally:
@@ -1000,7 +1006,6 @@ cdef class _BaseParser:
         cdef _ParserContext context
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
-        cdef int orig_options
         cdef char* c_encoding
         result = NULL
 

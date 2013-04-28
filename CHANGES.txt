@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* LP#673205: Parsing from a string disabled network access in the default
+  parser and made subsequent attempts to parse from a URL fail.
+
 * LP#715687: lxml.html.clean no longer discards scripts that are explicitly
   allowed by the user provided whitelist.
 
