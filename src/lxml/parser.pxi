@@ -427,7 +427,10 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
     if context is None:
         if __DEFAULT_ENTITY_LOADER is NULL:
             return NULL
-        return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+        with nogil:
+            # free the GIL as we might do serious I/O here (e.g. HTTP)
+            c_input = __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+        return c_input
 
     try:
         if c_url is NULL:
@@ -456,8 +459,11 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
                 c_input.end = c_input.base + c_input.length
         elif doc_ref._type == PARSER_DATA_FILENAME:
             data = None
-            c_input = xmlparser.xmlNewInputFromFile(
-                c_context, _cstr(doc_ref._filename))
+            c_filename = _cstr(doc_ref._filename)
+            with nogil:
+                # free the GIL as we might do serious I/O here
+                c_input = xmlparser.xmlNewInputFromFile(
+                    c_context, c_filename)
         elif doc_ref._type == PARSER_DATA_FILE:
             file_context = _FileReaderContext(doc_ref._file, context, url,
                                               None, doc_ref._close_file)
@@ -474,7 +480,11 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
 
     if __DEFAULT_ENTITY_LOADER is NULL:
         return NULL
-    return __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+
+    with nogil:
+        # free the GIL as we might do serious I/O here (e.g. HTTP)
+        c_input = __DEFAULT_ENTITY_LOADER(c_url, c_pubid, c_context)
+    return c_input
 
 cdef xmlparser.xmlExternalEntityLoader __DEFAULT_ENTITY_LOADER
 __DEFAULT_ENTITY_LOADER = xmlparser.xmlGetExternalEntityLoader()
