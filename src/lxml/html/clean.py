@@ -399,7 +399,10 @@ class Cleaner(object):
         if self.add_nofollow:
             for el in _find_external_links(doc):
                 if not self.allow_follow(el):
-                    el.set('rel', 'nofollow')
+                    rel = 'nofollow'
+                    if el.get('rel'):
+                        rel = el.get('rel') + ' ' + rel
+                    el.set('rel', rel)
 
     def allow_follow(self, anchor):
         """
