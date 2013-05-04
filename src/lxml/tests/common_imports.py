@@ -19,10 +19,10 @@ IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
 IS_PYTHON3 = sys.version_info[0] >= 3
 
 try:
-    from elementtree import ElementTree # standard ET
+    from xml.etree import ElementTree # Python 2.5+
 except ImportError:
     try:
-        from xml.etree import ElementTree # Python 2.5+
+        from elementtree import ElementTree # standard ET
     except ImportError:
         ElementTree = None
 
@@ -32,10 +32,10 @@ else:
     ET_VERSION = (0,0,0)
 
 try:
-    import cElementTree # standard ET
+    from xml.etree import cElementTree # Python 2.5+
 except ImportError:
     try:
-        from xml.etree import cElementTree # Python 2.5+
+        import cElementTree # standard ET
     except ImportError:
         cElementTree = None
 
