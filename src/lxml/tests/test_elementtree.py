@@ -42,6 +42,14 @@ class _ETreeTestCaseBase(HelperTestCase):
     required_versions_ET = {}
     required_versions_cET = {}
 
+    def XMLParser(self, **kwargs):
+        try:
+            XMLParser = self.etree.XMLParser
+        except AttributeError:
+            assert 'ElementTree' in self.etree.__name__
+            XMLParser = self.etree.TreeBuilder
+        return XMLParser(**kwargs)
+
     def test_element(self):
         for i in range(10):
             e = self.etree.Element('foo')
@@ -3005,7 +3013,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     required_versions_ET['test_parse_encoding_8bit_explicit'] = (1,3)
     def test_parse_encoding_8bit_explicit(self):
-        XMLParser = self.etree.XMLParser
+        XMLParser = self.XMLParser
 
         text = _str('Søk på nettet')
         xml_latin1 = (_str('<a>%s</a>') % text).encode('iso-8859-1')
@@ -3021,7 +3029,7 @@ class _ETreeTestCaseBase(HelperTestCase):
 
     required_versions_ET['test_parse_encoding_8bit_override'] = (1,3)
     def test_parse_encoding_8bit_override(self):
-        XMLParser = self.etree.XMLParser
+        XMLParser = self.XMLParser
 
         text = _str('Søk på nettet')
         wrong_declaration = _str("<?xml version='1.0' encoding='UTF-8'?>")
@@ -3402,7 +3410,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     # feed parser interface
 
     def test_feed_parser_bytes(self):
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
 
         parser.feed(_bytes('<?xml version='))
         parser.feed(_bytes('"1.0"?><ro'))
@@ -3418,7 +3426,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual(root[0].get("test"), "works")
 
     def test_feed_parser_unicode(self):
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
 
         parser.feed(_str('<ro'))
         parser.feed(_str('ot><'))
@@ -3435,13 +3443,13 @@ class _ETreeTestCaseBase(HelperTestCase):
     required_versions_ET['test_feed_parser_error_close_empty'] = (1,3)
     def test_feed_parser_error_close_empty(self):
         ParseError = self.etree.ParseError
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
         self.assertRaises(ParseError, parser.close)
 
     required_versions_ET['test_feed_parser_error_close_incomplete'] = (1,3)
     def test_feed_parser_error_close_incomplete(self):
         ParseError = self.etree.ParseError
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
 
         parser.feed('<?xml version=')
         parser.feed('"1.0"?><ro')
@@ -3451,7 +3459,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     required_versions_ET['test_feed_parser_error_broken'] = (1,3)
     def test_feed_parser_error_broken(self):
         ParseError = self.etree.ParseError
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
 
         parser.feed('<?xml version=')
         parser.feed('"1.0"?><ro')
@@ -3466,7 +3474,7 @@ class _ETreeTestCaseBase(HelperTestCase):
     required_versions_ET['test_feed_parser_error_position'] = (1,3)
     def test_feed_parser_error_position(self):
         ParseError = self.etree.ParseError
-        parser = self.etree.XMLParser()
+        parser = self.XMLParser()
         try:
             parser.close()
         except ParseError:
@@ -3484,7 +3492,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             pass
 
         target = Target()
-        parser = self.etree.XMLParser(target=target)
+        parser = self.XMLParser(target=target)
 
         self.assertEqual(target, parser.target)
 
@@ -3504,7 +3512,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         parser.feed("<TAG/>")
         done = parser.close()
@@ -3527,7 +3535,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         try:
             parser.feed("<TAG/>")
@@ -3556,7 +3564,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         try:
             parser.feed("<TAG/>")
@@ -3580,7 +3588,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 raise ValueError("TEST")
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         try:
             parser.feed("<TAG/>")
@@ -3606,7 +3614,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 raise ValueError("TEST-VE")
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         try:
             parser.feed("<TAG/>")
@@ -3646,7 +3654,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return Element("DONE")
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
         tree = self.etree.ElementTree()
         tree.parse(BytesIO("<TAG/>"), parser=parser)
 
@@ -3667,7 +3675,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         parser.feed('<root a="roota" b="rootb"><sub c="subc"/></root>')
         done = parser.close()
@@ -3688,7 +3696,7 @@ class _ETreeTestCaseBase(HelperTestCase):
             def close(self):
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         parser.feed('<root>A<sub/>B</root>')
         done = parser.close()
@@ -3719,7 +3727,7 @@ class _ETreeTestCaseBase(HelperTestCase):
                 self._flush_data()
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         dtd = '''
             <!DOCTYPE root [
@@ -3759,7 +3767,7 @@ class _ETreeTestCaseBase(HelperTestCase):
                 self._flush_data()
                 return "DONE"
 
-        parser = self.etree.XMLParser(target=Target())
+        parser = self.XMLParser(target=Target())
 
         def feed():
             parser.feed('<root><sub/><sub>some &ent;</sub><sub/></root>')
@@ -3791,7 +3799,7 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual("CHILDTAIL", root[0].tail)
 
     def test_treebuilder_target(self):
-        parser = self.etree.XMLParser(target=self.etree.TreeBuilder())
+        parser = self.XMLParser(target=self.etree.TreeBuilder())
         parser.feed('<root>ROOTTEXT<child>CHILDTEXT</child>CHILDTAIL</root>')
         root = parser.close()
 
