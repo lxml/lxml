@@ -1497,6 +1497,68 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
         self.assertEqual(self._rootstring(result),
                           _bytes('<A><T>Y</T><T>XYZ</T></A>'))
 
+    def test_extension_element_apply_templates_elements_only(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
+  </xsl:template>
+  <xsl:template match="x"><X/></xsl:template>
+  <xsl:template match="z">XYZ</xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                for child in self_node:
+                    for result in self.apply_templates(context, child,
+                                                       elements_only=True):
+                        assert not isinstance(result, basestring)
+                        output_parent.append(result)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEqual(self._rootstring(result),
+                          _bytes('<A><X/></A>'))
+
+    def test_extension_element_apply_templates_remove_blank_text(self):
+        tree = self.parse('<a><b>B</b></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    extension-element-prefixes="myns">
+  <xsl:template match="a">
+    <A><myns:myext><x>X</x><y>Y</y><z/></myns:myext></A>
+  </xsl:template>
+  <xsl:template match="x"><X/></xsl:template>
+  <xsl:template match="y"><xsl:text>   </xsl:text></xsl:template>
+  <xsl:template match="z">XYZ</xsl:template>
+</xsl:stylesheet>''')
+
+        class MyExt(etree.XSLTExtension):
+            def execute(self, context, self_node, input_node, output_parent):
+                for child in self_node:
+                    for result in self.apply_templates(context, child,
+                                                       remove_blank_text=True):
+                        if isinstance(result, basestring):
+                            assert result.strip()
+                            el = etree.Element("T")
+                            el.text = result
+                        else:
+                            el = result
+                        output_parent.append(el)
+
+        extensions = { ('testns', 'myext') : MyExt() }
+
+        result = tree.xslt(style, extensions=extensions)
+        self.assertEqual(self._rootstring(result),
+                          _bytes('<A><X/><T>XYZ</T></A>'))
+
     def test_extension_element_apply_templates_target_node(self):
         tree = self.parse('<a><b>B</b></a>')
         style = self.parse('''\
