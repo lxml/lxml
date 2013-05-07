@@ -548,9 +548,32 @@ that passes an Element into the ``.apply_templates()`` method of the
   >>> str(result)
   '<?xml version="1.0"?>\n<foo><CHILD>--xyz--</CHILD></foo>\n'
 
-Note how we applied the templates to a child of the extension element
+Here, we applied the templates to a child of the extension element
 itself, i.e. to an element inside the stylesheet instead of an element
 of the input document.
+
+The return value of ``.apply_templates()`` is always a list.  It may
+contain a mix of elements and strings, collected from the XSLT processing
+result.  If you want to append these values to the output parent, be aware
+that you cannot use the ``.append()`` method to add strings.  In many
+cases, you would only be interested in elements anyway, so you can discard
+strings (e.g. formatting whitespace) and append the rest.
+
+If you want to include string results in the output, you can either build
+an appropriate tree yourself and append that, or you can manually add the
+string values to the current output tree, e.g. by concatenating them with
+the ``.tail`` of the last element that was appended.
+
+Note that you can also let lxml build the result tree for you by passing
+the ``output_parent`` into the ``.apply_templates()`` method.  In this
+case, the result will be None and all content found by applying templates
+will be appended to the output parent.
+
+If you do not care about string results at all, e.g. because you already
+know that they will only contain whitespace, you can pass the option
+``elements_only=True`` to the ``.apply_templates()`` method, or pass
+``remove_blank_text=True`` to remove only those strings that consist
+entirely of whitespace.
 
 
 Working with read-only elements
