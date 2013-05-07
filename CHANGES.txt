@@ -2,6 +2,24 @@
 lxml changelog
 ==============
 
+Under development
+==================
+
+Features added
+--------------
+
+* The methods ``apply_templates()`` and ``process_children()`` of XSLT
+  extension elements have gained two new boolean options ``elements_only``
+  and ``remove_blank_text`` that discard either all strings or whitespace-only
+  strings from the result list.
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+
 3.2.0 (2013-04-28)
 ==================
 
