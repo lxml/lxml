@@ -156,6 +156,29 @@ class ClassLookupTestCase(HelperTestCase):
         self.assertEqual("default pi", root[0].FIND_ME)
         self.assertEqual("default comment", root[1].FIND_ME)
 
+    def test_evil_class_lookup(self):
+        class MyLookup(etree.CustomElementClassLookup):
+            def lookup(self, t, d, ns, name):
+                if name == 'none':
+                    return None
+                elif name == 'obj':
+                    return object()
+                else:
+                    return etree.ElementBase
+
+        parser = etree.XMLParser()
+        parser.set_element_class_lookup(MyLookup())
+
+        root = etree.XML(_bytes('<none/>'), parser)
+        self.assertEqual('none', root.tag)
+
+        self.assertRaises(
+            TypeError,
+            etree.XML, _bytes("<obj />"), parser)
+
+        root = etree.XML(_bytes('<root/>'), parser)
+        self.assertEqual('root', root.tag)
+
     def test_attribute_based_lookup(self):
         class TestElement(etree.ElementBase):
             FIND_ME = "attribute_based"

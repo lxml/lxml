@@ -16,6 +16,9 @@ Features added
 Bugs fixed
 ----------
 
+* Returning non-type objects from a custom class lookup method could lead
+  to a crash.
+
 * Instantiating and using subtypes of Comments and ProcessingInstructions
   crashed.
 

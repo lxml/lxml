@@ -365,7 +365,11 @@ cdef object _attribute_class_lookup(state, _Document doc, xmlNode* c_node):
             c_node, lookup._c_ns, lookup._c_name)
         dict_result = python.PyDict_GetItem(lookup._class_mapping, value)
         if dict_result is not NULL:
-            return <object>dict_result
+            cls = <object>dict_result
+            if not isinstance(cls, type):
+                raise TypeError("class lookup must return class, got %s"
+                                % type(cls))
+            return cls
     return _callLookupFallback(lookup, doc, c_node)
 
 
@@ -436,6 +440,9 @@ cdef object _custom_class_lookup(state, _Document doc, xmlNode* c_node):
 
     cls = lookup.lookup(element_type, doc, ns, name)
     if cls is not None:
+        if not isinstance(cls, type):
+            raise TypeError("class lookup must return class, got %s"
+                            % type(cls))
         return cls
     return _callLookupFallback(lookup, doc, c_node)
 
@@ -506,6 +513,9 @@ cdef object _python_class_lookup(state, _Document doc, tree.xmlNode* c_node):
     _freeReadOnlyProxies(proxy)
 
     if cls is not None:
+        if not isinstance(cls, type):
+            raise TypeError("class lookup must return class, got %s"
+                            % type(cls))
         return cls
     return _callLookupFallback(lookup, doc, c_node)
 
