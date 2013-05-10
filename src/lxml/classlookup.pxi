@@ -117,7 +117,11 @@ cdef class CommentBase(_Comment):
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
         self._c_node = _createComment(c_doc, _xcstr(text))
+        if self._c_node is NULL:
+            raise MemoryError()
         tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
+        _registerProxy(self, doc, self._c_node)
+        self._init()
 
 cdef class PIBase(_ProcessingInstruction):
     u"""All custom Processing Instruction classes must inherit from this one.
@@ -144,7 +148,11 @@ cdef class PIBase(_ProcessingInstruction):
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
         self._c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
+        if self._c_node is NULL:
+            raise MemoryError()
         tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
+        _registerProxy(self, doc, self._c_node)
+        self._init()
 
 cdef class EntityBase(_Entity):
     u"""All custom Entity classes must inherit from this one.
@@ -171,7 +179,12 @@ cdef class EntityBase(_Entity):
         c_doc = _newXMLDoc()
         doc = _documentFactory(c_doc, None)
         self._c_node = _createEntity(c_doc, c_name)
+        if self._c_node is NULL:
+            raise MemoryError()
         tree.xmlAddChild(<xmlNode*>c_doc, self._c_node)
+        _registerProxy(self, doc, self._c_node)
+        self._init()
+
 
 ################################################################################
 # Element class lookup

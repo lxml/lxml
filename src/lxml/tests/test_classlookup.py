@@ -70,6 +70,40 @@ class ProxyTestCase(HelperTestCase):
                 self.assertTrue(False, "element '%s' is missing" % new.tag)
         self.assertEqual(0, missing)
 
+    def test_element_base(self):
+        el = self.etree.ElementBase()
+        self.assertEqual('ElementBase', el.tag)
+        root = self.etree.ElementBase()
+        root.append(el)
+        self.assertEqual('ElementBase', root[0].tag)
+
+    def test_element_base_children(self):
+        el = self.etree.ElementBase(etree.ElementBase())
+        self.assertEqual('ElementBase', el.tag)
+        self.assertEqual(1, len(el))
+        self.assertEqual('ElementBase', el[0].tag)
+
+        root = self.etree.ElementBase()
+        root.append(el)
+        self.assertEqual('ElementBase', root[0].tag)
+        self.assertEqual('ElementBase', root[0][0].tag)
+
+    def test_comment_base(self):
+        el = self.etree.CommentBase('some text')
+        self.assertEqual(self.etree.Comment, el.tag)
+        self.assertEqual('some text', el.text)
+        root = self.etree.Element('root')
+        root.append(el)
+        self.assertEqual('some text', root[0].text)
+
+    def test_pi_base(self):
+        el = self.etree.PIBase('the target', 'some text')
+        self.assertEqual(self.etree.ProcessingInstruction, el.tag)
+        self.assertEqual('some text', el.text)
+        root = self.etree.Element('root')
+        root.append(el)
+        self.assertEqual('some text', root[0].text)
+
 
 class ClassLookupTestCase(HelperTestCase):
     """Test cases for different Element class lookup mechanisms.
@@ -256,6 +290,7 @@ class ClassLookupTestCase(HelperTestCase):
 
 def test_suite():
     suite = unittest.TestSuite()
+    suite.addTests([unittest.makeSuite(ProxyTestCase)])
     suite.addTests([unittest.makeSuite(ClassLookupTestCase)])
     return suite
 

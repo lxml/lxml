@@ -16,6 +16,9 @@ Features added
 Bugs fixed
 ----------
 
+* Instantiating and using subtypes of Comments and ProcessingInstructions
+  crashed.
+
 Other changes
 -------------
 
