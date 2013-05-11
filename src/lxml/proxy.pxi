@@ -369,7 +369,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         c_node = c_element
         while c_node is not NULL:
             if c_node.ns is not NULL:
-                for i from 0 <= i < c_ns_cache.last:
+                for i in range(c_ns_cache.last):
                     if c_node.ns is c_ns_cache.old[i]:
                         c_node.ns = c_ns_cache.new[i]
                         break
