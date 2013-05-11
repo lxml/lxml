@@ -369,17 +369,25 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         c_node = c_element
         while c_node is not NULL:
             if c_node.ns is not NULL:
+                c_ns = NULL
                 for i in range(c_ns_cache.last):
                     if c_node.ns is c_ns_cache.old[i]:
-                        c_node.ns = c_ns_cache.new[i]
+                        if (c_node.type == tree.XML_ATTRIBUTE_NODE
+                                and c_node.ns.prefix
+                                and not c_ns_cache.new[i].prefix):
+                            # avoid dropping prefix from attributes
+                            continue
+                        c_ns = c_ns_cache.new[i]
                         break
-                else:
-                    # not in cache => find a replacement from this document
+
+                if not c_ns:
+                    # not in cache or not acceptable
+                    # => find a replacement from this document
                     c_ns = doc._findOrBuildNodeNs(
                         c_start_node, c_node.ns.href, c_node.ns.prefix,
                         c_node.type == tree.XML_ATTRIBUTE_NODE)
                     _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
-                    c_node.ns = c_ns
+                c_node.ns = c_ns
 
             if c_node is c_element:
                 # after the element, continue with its attributes

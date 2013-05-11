@@ -16,6 +16,11 @@ Features added
 Bugs fixed
 ----------
 
+* When moving Elements to another tree, the namespace cleanup mechanism
+  no longer drops namespace prefixes from attributes for which it finds
+  a default namespace declaration, to prevent them from appearing as
+  unnamespaced attributes after serialisation.
+
 * Returning non-type objects from a custom class lookup method could lead
   to a crash.
 

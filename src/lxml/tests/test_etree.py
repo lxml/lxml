@@ -2084,6 +2084,92 @@ class ETreeOnlyTestCase(HelperTestCase):
             _bytes('<bar xmlns="http://ns.infrae.com/foo" xmlns:hoi="http://ns.infrae.com/hoi" hoi:test="value"></bar>'),
             self._writeElement(e))
 
+    def test_attribute_keeps_namespace_prefix_on_merge(self):
+        etree = self.etree
+
+        root = etree.Element('{http://test/ns}root',
+                             nsmap={None: 'http://test/ns'})
+        sub = etree.Element('{http://test/ns}sub',
+                            nsmap={'test': 'http://test/ns'})
+
+        sub.attrib['{http://test/ns}attr'] = 'value'
+        self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
+        self.assertEqual(
+            _bytes('<test:sub xmlns:test="http://test/ns" test:attr="value"/>'),
+            etree.tostring(sub))
+
+        root.append(sub)
+        self.assertEqual(
+            _bytes('<root xmlns="http://test/ns">'
+                   '<sub xmlns:test="http://test/ns" test:attr="value"/>'
+                   '</root>'),
+            etree.tostring(root))
+
+    def test_attribute_keeps_namespace_prefix_on_merge_with_nons(self):
+        etree = self.etree
+
+        root = etree.Element('root')
+        sub = etree.Element('{http://test/ns}sub',
+                            nsmap={'test': 'http://test/ns'})
+
+        sub.attrib['{http://test/ns}attr'] = 'value'
+        self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
+        self.assertEqual(
+            _bytes('<test:sub xmlns:test="http://test/ns" test:attr="value"/>'),
+            etree.tostring(sub))
+
+        root.append(sub)
+        self.assertEqual(
+            _bytes('<root>'
+                   '<test:sub xmlns:test="http://test/ns" test:attr="value"/>'
+                   '</root>'),
+            etree.tostring(root))
+
+    def test_attribute_gets_namespace_prefix_on_merge_with_nons(self):
+        etree = self.etree
+
+        root = etree.Element('root')
+        sub = etree.Element('{http://test/ns}sub',
+                            nsmap={None: 'http://test/ns'})
+
+        sub.attrib['{http://test/ns}attr'] = 'value'
+        self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
+        self.assertEqual(
+            _bytes('<sub xmlns="http://test/ns" '
+                   'xmlns:ns0="http://test/ns" ns0:attr="value"/>'),
+            etree.tostring(sub))
+
+        root.append(sub)
+        self.assertEqual(
+            _bytes('<root>'
+                   '<sub xmlns="http://test/ns"'
+                   ' xmlns:ns0="http://test/ns" ns0:attr="value"/>'
+                   '</root>'),
+            etree.tostring(root))
+
+    def test_attribute_gets_namespace_prefix_on_merge(self):
+        etree = self.etree
+
+        root = etree.Element('{http://test/ns}root',
+                             nsmap={'test': 'http://test/ns',
+                                    None: 'http://test/ns'})
+        sub = etree.Element('{http://test/ns}sub',
+                            nsmap={None: 'http://test/ns'})
+
+        sub.attrib['{http://test/ns}attr'] = 'value'
+        self.assertEqual(sub.attrib['{http://test/ns}attr'], 'value')
+        self.assertEqual(
+            _bytes('<sub xmlns="http://test/ns" '
+                   'xmlns:ns0="http://test/ns" ns0:attr="value"/>'),
+            etree.tostring(sub))
+
+        root.append(sub)
+        self.assertEqual(
+            _bytes('<test:root xmlns:test="http://test/ns" xmlns="http://test/ns">'
+                   '<test:sub test:attr="value"/>'
+                   '</test:root>'),
+            etree.tostring(root))
+
     def test_namespaces_elementtree(self):
         etree = self.etree
         r = {None: 'http://ns.infrae.com/foo',
