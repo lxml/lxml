@@ -179,6 +179,47 @@ class ClassLookupTestCase(HelperTestCase):
         root = etree.XML(_bytes('<root/>'), parser)
         self.assertEqual('root', root.tag)
 
+    def test_class_lookup_type_mismatch(self):
+        class MyLookup(etree.CustomElementClassLookup):
+            def lookup(self, t, d, ns, name):
+                if t == 'element':
+                    if name == 'root':
+                        return etree.ElementBase
+                    return etree.CommentBase
+                elif t == 'comment':
+                    return etree.PIBase
+                elif t == 'PI':
+                    return etree.EntityBase
+                elif t == 'entity':
+                    return etree.ElementBase
+                else:
+                    raise ValueError('got type %s' % t)
+
+        parser = etree.XMLParser(resolve_entities=False)
+        parser.set_element_class_lookup(MyLookup())
+
+        root = etree.XML(_bytes('<root></root>'), parser)
+        self.assertEqual('root', root.tag)
+        self.assertEqual(etree.ElementBase, type(root))
+
+        root = etree.XML(_bytes("<root><test/></root>"), parser)
+        self.assertRaises(TypeError, root.__getitem__, 0)
+
+        root = etree.XML(_bytes("<root><!-- test --></root>"), parser)
+        self.assertRaises(TypeError, root.__getitem__, 0)
+
+        root = etree.XML(_bytes("<root><?test?></root>"), parser)
+        self.assertRaises(TypeError, root.__getitem__, 0)
+
+        root = etree.XML(
+            _bytes('<!DOCTYPE root [<!ENTITY myent "ent">]>'
+                   '<root>&myent;</root>'),
+            parser)
+        self.assertRaises(TypeError, root.__getitem__, 0)
+
+        root = etree.XML(_bytes('<root><root/></root>'), parser)
+        self.assertEqual('root', root[0].tag)
+
     def test_attribute_based_lookup(self):
         class TestElement(etree.ElementBase):
             FIND_ME = "attribute_based"
