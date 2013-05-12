@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+Under development
+=================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* Return values of user provided element class lookup methods are now
+  validated against the type of the XML node they represent to prevent
+  API class mismatches.
+
+
 3.2.1 (2013-05-11)
 ==================
 
