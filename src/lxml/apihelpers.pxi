@@ -1482,13 +1482,10 @@ cdef inline int _xmlNameIsValid(const_xmlChar* c_name):
     return tree.xmlValidateNCName(c_name, 0) == 0
 
 cdef int _htmlNameIsValid(const_xmlChar* c_name):
-    cdef xmlChar c
     if c_name is NULL or c_name[0] == c'\0':
         return 0
     while c_name[0] != c'\0':
-        c = c_name[0]
-        if c in (c'&', c'<', c'>', c'/', c'"', c"'",
-                 c'\t', c'\n', c'\x0B', c'\x0C', c'\r', c' '):
+        if c_name[0] in b'&<>/"\'\t\n\x0B\x0C\r ':
             return 0
         c_name += 1
     return 1
