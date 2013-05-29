@@ -253,7 +253,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
 
     # write tail, trailing comments, etc.
     if with_tail:
-        _writeTail(c_buffer, c_node, encoding, pretty_print)
+        _writeTail(c_buffer, c_node, encoding, c_method, pretty_print)
     if write_complete_document:
         _writeNextSiblings(c_buffer, c_node, encoding, pretty_print)
     if pretty_print:
@@ -319,12 +319,16 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
     tree.xmlOutputBufferWrite(c_buffer, 3, "]>\n")
 
 cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
-                     const_char* encoding, bint pretty_print) nogil:
+                     const_char* encoding, int c_method, bint pretty_print) nogil:
     u"Write the element tail."
     c_node = c_node.next
     while c_node and c_node.type == tree.XML_TEXT_NODE and not c_buffer.error:
-        tree.xmlNodeDumpOutput(c_buffer, c_node.doc, c_node, 0,
-                               pretty_print, encoding)
+        if c_method == OUTPUT_METHOD_HTML:
+            tree.htmlNodeDumpFormatOutput(
+                c_buffer, c_node.doc, c_node, encoding, pretty_print)
+        else:
+            tree.xmlNodeDumpOutput(
+                c_buffer, c_node.doc, c_node, 0, pretty_print, encoding)
         c_node = c_node.next
 
 cdef void _writePrevSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
