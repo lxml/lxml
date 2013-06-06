@@ -915,7 +915,9 @@ def open_http_urllib(method, url, values):
         url += urlencode(values)
         data = None
     else:
-        data = urlencode(values)
+    ## FIXME: Find a way to ask user about preferred encoding scheme and use it.
+    ## encoding to bytes is REQUIRED in python3.
+        data = urlencode(values).encode('utf-8')
     return urlopen(url, data)
 
 class FieldsDict(DictMixin):
