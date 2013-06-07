@@ -3,6 +3,8 @@
 # should document just how it differs).
 
 # Data taken from http://www.w3.org/TR/html401/index/elements.html
+# and http://www.w3.org/community/webed/wiki/HTML/New_HTML5_Elements
+# for html5_tags.
 
 try:
     frozenset
@@ -117,10 +119,18 @@ font_style_tags = frozenset([
 frame_tags = frozenset([
     'frameset', 'frame', 'noframes',
     ])
+    
+html5_tags = frozenset([
+    'article', 'aside', 'audio', 'canvas', 'command', 'datalist',
+    'details', 'embed', 'figcaption', 'figure', 'footer', 'header',
+    'hgroup', 'keygen', 'mark', 'math', 'meter', 'nav', 'output',
+    'progress', 'rp', 'rt', 'ruby', 'section', 'source', 'summary',
+    'svg', 'time', 'track', 'video', 'wbr'
+    ])
 
 # These tags aren't standard
 nonstandard_tags = frozenset(['blink', 'marquee'])
 
 tags = (top_level_tags | head_tags | general_block_tags | list_tags
         | table_tags | form_tags | special_inline_tags | phrase_tags
-        | font_style_tags | nonstandard_tags)
+        | font_style_tags | nonstandard_tags | html5_tags)
