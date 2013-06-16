@@ -857,10 +857,10 @@ cdef inline int __parseBoolAsInt(text):
         return 1
     return -1
 
-cdef inline object _parseNumber(NumberElement element):
+cdef object _parseNumber(NumberElement element):
     return element._parse_value(textOf(element._c_node))
 
-cdef inline object _strValueOf(obj):
+cdef object _strValueOf(obj):
     if python._isString(obj):
         return obj
     if isinstance(obj, _Element):
@@ -869,15 +869,17 @@ cdef inline object _strValueOf(obj):
         return u''
     return unicode(obj)
 
-cdef inline object _numericValueOf(obj):
+cdef object _numericValueOf(obj):
     if isinstance(obj, NumberElement):
         return _parseNumber(<NumberElement>obj)
-    elif hasattr(obj, u'pyval'):
+    try:
         # not always numeric, but Python will raise the right exception
         return obj.pyval
+    except AttributeError:
+        pass
     return obj
 
-cdef inline _richcmpPyvals(left, right, int op):
+cdef _richcmpPyvals(left, right, int op):
     left  = getattr(left,  u'pyval', left)
     right = getattr(right, u'pyval', right)
     return python.PyObject_RichCompare(left, right, op)
