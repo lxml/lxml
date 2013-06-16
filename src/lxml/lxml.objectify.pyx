@@ -837,23 +837,23 @@ def __checkBool(s):
     if value == -1:
         raise ValueError
 
-cpdef __parseBool(s):
+cpdef bint __parseBool(s):
     cdef int value
     if s is None:
         return False
     value = __parseBoolAsInt(s)
     if value == -1:
         raise ValueError, u"Invalid boolean value: '%s'" % s
-    return <bint>value
+    return value
 
 cdef inline int __parseBoolAsInt(text):
-    if text == u'false':
+    if text == 'false':
         return 0
-    elif text == u'true':
+    elif text == 'true':
         return 1
-    elif text == u'0':
+    elif text == '0':
         return 0
-    elif text == u'1':
+    elif text == '1':
         return 1
     return -1
 
