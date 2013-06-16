@@ -1091,7 +1091,7 @@ cdef PyType _guessPyType(value, PyType defaulttype):
             type_check(value)
             return <PyType>tested_pytype
         except IGNORABLE_ERRORS:
-            # could not be parsed as the specififed type => ignore
+            # could not be parsed as the specified type => ignore
             pass
     return defaulttype
 
