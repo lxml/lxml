@@ -1845,6 +1845,7 @@ def Element(_tag, attrib=None, nsmap=None, *, _pytype=None, **_attributes):
     """
     if attrib is not None:
         if python.PyDict_Size(_attributes):
+            attrib = dict(attrib)
             attrib.update(_attributes)
         _attributes = attrib
     if _pytype is None:
