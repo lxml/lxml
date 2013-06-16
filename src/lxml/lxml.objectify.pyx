@@ -341,7 +341,6 @@ cdef class ObjectifiedElement(ElementBase):
             _replaceElement(element, value)
 
     def __delitem__(self, key):
-        cdef Py_ssize_t start, stop, step, slicelength
         parent = self.getparent()
         if parent is None:
             raise TypeError, u"deleting items not supported by root element"
