@@ -1099,7 +1099,7 @@ cdef object _guessElementClass(tree.xmlNode* c_node):
     value = textOf(c_node)
     if value is None:
         return None
-    if value == u'':
+    if value == '':
         return StringElement
     
     for type_check, pytype in _TYPE_CHECKS:
@@ -1228,15 +1228,9 @@ cdef class ElementMaker:
     def __init__(self, *, namespace=None, nsmap=None, annotate=True,
                  makeelement=None):
         if nsmap is None:
-            if annotate:
-                nsmap = _DEFAULT_NSMAP
-            else:
-                nsmap = {}
+            nsmap = _DEFAULT_NSMAP if annotate else {}
         self._nsmap = nsmap
-        if namespace is None:
-            self._namespace = None
-        else:
-            self._namespace = u"{%s}" % namespace
+        self._namespace = None if namespace is None else u"{%s}" % namespace
         self._annotate = annotate
         if makeelement is not None:
             assert callable(makeelement)
@@ -1278,8 +1272,7 @@ cdef class ElementMaker:
 ################################################################################
 # Recursive element dumping
 
-cdef bint __RECURSIVE_STR
-__RECURSIVE_STR = 0 # default: off
+cdef bint __RECURSIVE_STR = 0 # default: off
 
 def enable_recursive_str(on=True):
     u"""enable_recursive_str(on=True)
@@ -1580,7 +1573,7 @@ cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
 
     # if element is defined as xsi:nil, represent it as None
     if cetree.attributeValueFromNsName(
-        c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"nil") == u"true":
+        c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>"nil") == "true":
         pytype = NoneType
 
     if  pytype is None and not ignore_xsi:
@@ -1615,9 +1608,9 @@ cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
                     # everything else is clear enough
                     pytype = TREE_PYTYPE
             else:
-                if old_pytypename == u'none':
+                if old_pytypename == 'none':
                     # transition from lxml 1.x
-                    old_pytypename = u"NoneType"
+                    old_pytypename = "NoneType"
                 dict_result = python.PyDict_GetItem(
                     _PYTYPE_DICT, old_pytypename)
                 if dict_result is not NULL:
@@ -1835,9 +1828,9 @@ def parse(f, parser=None, *, base_url=None):
     return _parse(f, parser, base_url=base_url)
 
 cdef dict _DEFAULT_NSMAP = {
-    u"py"  : PYTYPE_NAMESPACE,
-    u"xsi" : XML_SCHEMA_INSTANCE_NS,
-    u"xsd" : XML_SCHEMA_NS
+    "py"  : PYTYPE_NAMESPACE,
+    "xsi" : XML_SCHEMA_INSTANCE_NS,
+    "xsd" : XML_SCHEMA_NS
 }
 
 E = ElementMaker()
