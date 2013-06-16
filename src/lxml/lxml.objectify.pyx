@@ -998,29 +998,15 @@ cdef class PyType:
             self._schema_types = list(map(unicode, types))
 
 
-cdef dict _PYTYPE_DICT
-_PYTYPE_DICT = {}
-
-cdef dict _SCHEMA_TYPE_DICT
-_SCHEMA_TYPE_DICT = {}
-
-cdef list _TYPE_CHECKS
-_TYPE_CHECKS = []
-
-cdef _lower_bool(b):
-    if b:
-        return u"true"
-    else:
-        return u"false"
+cdef dict _PYTYPE_DICT = {}
+cdef dict _SCHEMA_TYPE_DICT = {}
+cdef list _TYPE_CHECKS = []
 
 def __lower_bool(b):
-    return _lower_bool(b)
+    return u"true" if b else u"false"
 
 cdef _pytypename(obj):
-    if python._isString(obj):
-        return u"str"
-    else:
-        return _typename(obj)
+    return u"str" if python._isString(obj) else _typename(obj)
 
 def pytypename(obj):
     u"""pytypename(obj)
