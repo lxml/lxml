@@ -58,8 +58,7 @@ cdef const_xmlChar* _PYTYPE_ATTRIBUTE_NAME
 
 PYTYPE_ATTRIBUTE = None
 
-cdef object TREE_PYTYPE_NAME
-TREE_PYTYPE_NAME = u"TREE"
+cdef unicode TREE_PYTYPE_NAME = u"TREE"
 
 cdef tuple _unicodeAndUtf8(s):
     return (s, python.PyUnicode_AsUTF8String(s))
@@ -912,7 +911,7 @@ cdef class PyType:
     cdef list _schema_types
     def __init__(self, name, type_check, type_class, stringify=None):
         if isinstance(name, bytes):
-            name = (<bytes>name).encode('ascii')
+            name = (<bytes>name).decode('ascii')
         elif not isinstance(name, unicode):
             raise TypeError, u"Type name must be a string"
         if type_check is not None and not callable(type_check):
@@ -1064,8 +1063,7 @@ cdef _registerPyTypes():
     pytype.register()
 
 # non-registered PyType for inner tree elements
-cdef PyType TREE_PYTYPE
-TREE_PYTYPE = PyType(TREE_PYTYPE_NAME, None, ObjectifiedElement)
+cdef PyType TREE_PYTYPE = PyType(TREE_PYTYPE_NAME, None, ObjectifiedElement)
 
 _registerPyTypes()
 
