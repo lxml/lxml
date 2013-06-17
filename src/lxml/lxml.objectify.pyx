@@ -1664,7 +1664,7 @@ cdef int _annotate_element(tree.xmlNode* c_node, _Document doc,
                         typename_utf8 = name
                     elif tree.xmlStrcmp(_xcstr(prefix), c_ns.prefix) != 0:
                         typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + name
-                elif c_ns.prefix is not NULL or c_ns.prefix[0] != c'\0':
+                elif c_ns.prefix is not NULL and c_ns.prefix[0] != c'\0':
                     typename_utf8 = (<unsigned char*>c_ns.prefix) + b':' + typename_utf8
             c_ns = cetree.findOrBuildNodeNsPrefix(
                 doc, c_node, _XML_SCHEMA_INSTANCE_NS, <unsigned char*>'xsi')
