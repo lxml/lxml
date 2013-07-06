@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1185701: spurious XMLSyntaxError after finishing iterparse().
+
 Other changes
 -------------
 

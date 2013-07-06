@@ -457,7 +457,10 @@ cdef class iterparse(_BaseParser):
         return context
 
     cdef _close_source(self):
-        if self._source is None or not self._close_source_after_read:
+        if self._source is None:
+            return
+        if not self._close_source_after_read:
+            self._source = None
             return
         try:
             close = self._source.close
