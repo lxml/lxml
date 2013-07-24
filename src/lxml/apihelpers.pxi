@@ -556,7 +556,7 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
     if not count:
         return []
 
-    attributes = python.PyList_New(count)
+    attributes = [None] * count
     c_attr = c_node.properties
     count = 0
     while c_attr is not NULL:
@@ -568,9 +568,7 @@ cdef list _collectAttributes(xmlNode* c_node, int collecttype):
             else:
                 item = (_namespacedName(<xmlNode*>c_attr),
                         _attributeValue(c_node, c_attr))
-
-            python.Py_INCREF(item)
-            python.PyList_SET_ITEM(attributes, count, item)
+            attributes[count] = item
             count += 1
         c_attr = c_attr.next
     return attributes
