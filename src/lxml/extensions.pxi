@@ -720,10 +720,10 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
 @cython.final
 cdef class _ElementUnicodeResult(unicode):
     cdef _Element _parent
-    cdef readonly object is_tail
-    cdef readonly object is_text
-    cdef readonly object is_attribute
     cdef readonly object attrname
+    cdef readonly bint is_tail
+    cdef readonly bint is_text
+    cdef readonly bint is_attribute
 
     def getparent(self):
         return self._parent
