@@ -53,8 +53,8 @@ cdef class _LogEntry:
     cdef readonly int level
     cdef readonly int line
     cdef readonly int column
-    cdef readonly object message
-    cdef readonly object filename
+    cdef readonly unicode message
+    cdef readonly unicode filename
 
     @cython.final
     cdef _setError(self, xmlerror.xmlError* error):
@@ -65,20 +65,19 @@ cdef class _LogEntry:
         self.line     = error.line
         self.column   = error.int2
         if error.message is NULL:
-            self.message = "unknown error"
+            self.message = u"unknown error"
         else:
             size = cstring_h.strlen(error.message)
             if size > 0 and error.message[size-1] == c'\n':
                 size -= 1 # strip EOL
             try:
-                self.message = python.PyUnicode_DecodeUTF8(
-                    error.message, size, NULL)
-            except:
+                self.message = error.message[:size].decode('utf8')
+            except UnicodeDecodeError:
                 try:
-                    self.message = python.PyUnicode_DecodeASCII(
-                        error.message, size, 'backslashreplace')
-                except:
-                    self.message = '<undecodable error message>'
+                    self.message = error.message[:size].decode(
+                        'ascii', 'backslashreplace')
+                except UnicodeDecodeError:
+                    self.message = u'<undecodable error message>'
         if error.file is NULL:
             self.filename = u'<string>'
         else:
