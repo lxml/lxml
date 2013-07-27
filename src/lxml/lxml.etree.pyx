@@ -1684,9 +1684,9 @@ cdef class QName:
     languages like SOAP or XML-Schema that use prefixed tag names in
     their text content.
     """
-    cdef readonly object text
-    cdef readonly object localname
-    cdef readonly object namespace
+    cdef readonly unicode text
+    cdef readonly unicode localname
+    cdef readonly unicode namespace
     def __init__(self, text_or_uri_or_element, tag=None):
         if not _isString(text_or_uri_or_element):
             if isinstance(text_or_uri_or_element, _Element):
