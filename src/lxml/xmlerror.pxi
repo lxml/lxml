@@ -53,8 +53,8 @@ cdef class _LogEntry:
     cdef readonly int level
     cdef readonly int line
     cdef readonly int column
-    cdef readonly unicode message
-    cdef readonly unicode filename
+    cdef readonly object message
+    cdef readonly object filename
 
     @cython.final
     cdef _setError(self, xmlerror.xmlError* error):
