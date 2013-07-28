@@ -1729,7 +1729,7 @@ cdef class QName:
                 other = unicode(other)
         except (ValueError, UnicodeDecodeError):
             return NotImplemented
-        return python.PyUnicode_RichCompare(one, other, op)
+        return python.PyObject_RichCompare(one, other, op)
 
 
 cdef public class _ElementTree [ type LxmlElementTreeType,
