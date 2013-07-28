@@ -13,6 +13,8 @@ Bugs fixed
 
 * LP#1185701: spurious XMLSyntaxError after finishing iterparse().
 
+* Crash in lxml.objectify during xsi annotation.
+
 Other changes
 -------------
 
