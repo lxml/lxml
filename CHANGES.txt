@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+3.2.3 (2013-07-28)
+==================
+
+Bugs fixed
+----------
+
+* Fix support for Python 2.4 which was lost in 3.2.2.
+
+
 3.2.2 (2013-07-28)
 ==================
 
