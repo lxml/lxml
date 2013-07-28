@@ -1719,13 +1719,17 @@ cdef class QName:
         return self.text.__hash__()
     def __richcmp__(one, other, int op):
         try:
-            if not _isString(one):
+            if type(one) is QName:
+                one = (<QName>one).text
+            elif not isinstance(one, unicode):
                 one = unicode(one)
-            if not _isString(other):
+            if type(other) is QName:
+                other = (<QName>other).text
+            elif not isinstance(other, unicode):
                 other = unicode(other)
-        except ValueError:
+        except (ValueError, UnicodeDecodeError):
             return NotImplemented
-        return python.PyObject_RichCompare(one, other, op)
+        return python.PyUnicode_RichCompare(one, other, op)
 
 
 cdef public class _ElementTree [ type LxmlElementTreeType,

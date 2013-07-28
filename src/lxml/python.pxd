@@ -21,6 +21,7 @@ cdef extern from "Python.h":
                                          char* encoding, char* errors)
     cdef cython.unicode PyUnicode_DecodeUTF8(char* s, Py_ssize_t size, char* errors)
     cdef cython.unicode PyUnicode_DecodeLatin1(char* s, Py_ssize_t size, char* errors)
+    cdef object PyUnicode_RichCompare(object o1, object o2, int op)
     cdef bytes PyUnicode_AsUTF8String(object ustring)
     cdef bytes PyUnicode_AsASCIIString(object ustring)
     cdef char* PyUnicode_AS_DATA(object ustring)
