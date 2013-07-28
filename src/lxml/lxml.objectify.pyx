@@ -680,7 +680,7 @@ cdef class NumberElement(ObjectifiedDataElement):
         return abs( _numericValueOf(self) )
 
     def __nonzero__(self):
-        return _numericValueOf(self) != 0
+        return bool(_numericValueOf(self))
 
     def __invert__(self):
         return ~ _numericValueOf(self)
@@ -734,10 +734,7 @@ cdef class StringElement(ObjectifiedDataElement):
             return len(text)
 
     def __nonzero__(self):
-        text = textOf(self._c_node)
-        if text is None:
-            return False
-        return len(text) > 0
+        return bool(textOf(self._c_node))
 
     def __richcmp__(self, other, int op):
         return _richcmpPyvals(self, other, op)
