@@ -144,13 +144,13 @@ class ElementMaker(object):
     For namespace support, you can pass a namespace map (``nsmap``)
     and/or a specific target ``namespace`` to the ElementMaker class::
 
-    >>> E = ElementMaker(namespace="http://my.ns/")
-    >>> print(ET.tostring( E.test ))
-    <test xmlns="http://my.ns/"/>
+        >>> E = ElementMaker(namespace="http://my.ns/")
+        >>> print(ET.tostring( E.test ))
+        <test xmlns="http://my.ns/"/>
 
-    >>> E = ElementMaker(namespace="http://my.ns/", nsmap={'p':'http://my.ns/'})
-    >>> print(ET.tostring( E.test ))
-    <p:test xmlns:p="http://my.ns/"/>
+        >>> E = ElementMaker(namespace="http://my.ns/", nsmap={'p':'http://my.ns/'})
+        >>> print(ET.tostring( E.test ))
+        <p:test xmlns:p="http://my.ns/"/>
     """
 
     def __init__(self, typemap=None,

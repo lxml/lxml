@@ -75,9 +75,11 @@ schematron_schema_valid = _etree.RelaxNG(_etree.parse(
 def stylesheet_params(**kwargs):
     """Convert keyword args to a dictionary of stylesheet parameters.
     XSL stylesheet parameters must be XPath expressions, i.e.:
-     * string expressions, like "'5'"
-     * simple (number) expressions, like "5"
-     * valid XPath expressions, like "/a/b/text()"
+
+    * string expressions, like "'5'"
+    * simple (number) expressions, like "5"
+    * valid XPath expressions, like "/a/b/text()"
+
     This function converts native Python keyword arguments to stylesheet
     parameters following these rules:
     If an arg is a string wrap it with XSLT.strparam().
