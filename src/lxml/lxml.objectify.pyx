@@ -877,8 +877,8 @@ cdef object _numericValueOf(obj):
     return obj
 
 cdef _richcmpPyvals(left, right, int op):
-    left  = getattr(left,  u'pyval', left)
-    right = getattr(right, u'pyval', right)
+    left  = getattr(left,  'pyval', left)
+    right = getattr(right, 'pyval', right)
     return python.PyObject_RichCompare(left, right, op)
 
 
