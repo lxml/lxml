@@ -71,6 +71,13 @@ A test of empty elements:
 
     >>> pdiff('some <br> text', 'some <br> test')
     some <ins><br> test</ins> <del><br> text</del>
+    
+Whitespace is preserved during the diff:
+
+    >>> print repr(htmldiff('<pre>first\nsecond\nthird</pre>', '<pre>first\nsecond\nthird</pre>'))
+    <pre>first\nsecond\nthird</pre>
+    >>> print repr(htmldiff('<pre>first\nsecond</pre>', '<pre>first\nsecond\n third</pre>'))
+    <pre></pre>
 
 The sixteen combinations::
 
