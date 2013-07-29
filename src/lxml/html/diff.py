@@ -602,7 +602,7 @@ def fixup_chunks(chunks):
 
             elif chunk[0] == 'href':
                 href = chunk[1]
-                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=True)
+                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=None)
                 tag_accum = []
                 result.append(cur_word)
             continue
