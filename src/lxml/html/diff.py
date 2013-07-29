@@ -716,8 +716,8 @@ def flatten_el(el, include_hrefs, skip_tag=False):
 split_words_re = re.compile(r'\S+(?:\s|$)')
 
 def split_words(text):
-    """ Splits some text into words. Includes trailing whitespace (one
-    space) on each word when appropriate.  """
+    """ Splits some text into words. Includes trailing whitespace
+    on each word when appropriate.  """
     if not text or not text.strip():
         return []
 
