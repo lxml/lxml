@@ -240,3 +240,5 @@ Testing split_trailing_whitespace::
     ('test', '\n\n')
     >>> split_trailing_whitespace(' test\n ')
     (' test', '\n ')
+    >>> split_trailing_whitespace('test')
+    ('test','')
