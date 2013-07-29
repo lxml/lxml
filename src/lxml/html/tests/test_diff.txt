@@ -45,11 +45,6 @@ Style tags are largely ignored in terms of differences, though markup is not eli
     >>> pdiff('<p>Hey there</p>', '')
     <ins></ins> <p><del>Hey there</del></p>
 
-Whitespace is ignored, as it's not meaningful in HTML::
-
-    >>> pdiff('<div>Hi\n\nguys</div>', '<div>Hi guy</div>')
-    <div>Hi <ins>guy</ins> <del>guys</del> </div>
-
 Movement between paragraphs is ignored, as tag-based changes are generally ignored::
     >>> 
     >>> pdiff('<p>Hello</p><p>World</p>', '<p>Hello World</p>')
@@ -231,3 +226,10 @@ Testing split_unbalanced::
     >>> split_unbalanced(['So', '</i>', 'Hi', '<b>', 'There'])
     (['<b>'], ['So', 'Hi', 'There'], ['</i>'])
     
+
+Testing split_trailing_whitespace::
+
+    >>> split_trailing_whitespace('test\n\n')
+    ('test', '\n\n')
+    >>> split_trailing_whitespace(' test\n ')
+    (' test', '\n ')
