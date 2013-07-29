@@ -13,7 +13,7 @@ if this_dir not in sys.path:
 
 from common_imports import etree, ElementTree, fileInTestDir, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
-from common_imports import read_file, write_to_file
+from common_imports import read_file, write_to_file, BytesIO
 
 
 class _IOTestCaseBase(HelperTestCase):
@@ -271,6 +271,31 @@ class _IOTestCaseBase(HelperTestCase):
     
 class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
+
+    def test_write_compressed_text(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        ElementTree = self.etree.ElementTree
+        text = _str("qwrtioüöä")
+
+        root = Element('root')
+        root.text = text
+        child = SubElement(root, 'sub')
+        child.text = 'TEXT'
+        child.tail = 'TAIL'
+        SubElement(root, 'sub').text = text
+
+        tree = ElementTree(root)
+        out = BytesIO()
+        tree.write(out, method='text', encoding='utf8', compression=9)
+        out.seek(0)
+
+        f = gzip.GzipFile(fileobj=out)
+        try:
+            result = f.read().decode('utf8')
+        finally:
+            f.close()
+        self.assertEqual(text+'TEXTTAIL'+text, result)
 
 
 if ElementTree:

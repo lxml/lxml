@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Under development
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Compressed plain-text serialisation to file-like objects was broken.
+
+Other changes
+-------------
+
+
 3.2.3 (2013-07-28)
 ==================
 

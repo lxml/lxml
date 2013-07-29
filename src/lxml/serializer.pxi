@@ -1,5 +1,8 @@
 # XML serialization and output functions
 
+cdef object GzipFile
+from gzip import GzipFile
+
 class SerialisationError(LxmlError):
     u"""A libxml2 error that occurred during serialisation.
     """
@@ -370,7 +373,7 @@ cdef class _FilelikeWriter:
     cdef _ErrorLog error_log
     def __cinit__(self, filelike, exc_context=None, compression=None):
         if compression is not None and compression > 0:
-            filelike = gzip.GzipFile(
+            filelike = GzipFile(
                 fileobj=filelike, mode='wb', compresslevel=compression)
             self._close_filelike = filelike.close
         self._filelike = filelike
@@ -429,28 +432,19 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
     cdef const_char* c_enc
     cdef const_xmlChar* c_doctype
     cdef int error_result
-    if encoding is None:
-        c_enc = NULL
-    else:
-        encoding = _utf8(encoding)
-        c_enc = _cstr(encoding)
-    if doctype is None:
-        c_doctype = NULL
-    else:
-        doctype = _utf8(doctype)
-        c_doctype = _xcstr(doctype)
+
     c_method = _findOutputMethod(method)
     if c_method == OUTPUT_METHOD_TEXT:
         data = _textToString(element._c_node, encoding, with_tail)
         if compression:
             bytes_out = BytesIO()
-            gzip_file = gzip.GzipFile(
+            gzip_file = GzipFile(
                 fileobj=bytes_out, mode='wb', compresslevel=compression)
             try:
                 gzip_file.write(data)
             finally:
                 gzip_file.close()
-            data = bytes_out
+            data = bytes_out.getvalue()
         if _isString(f):
             filename8 = _encodeFilename(f)
             f = open(filename8, 'wb')
@@ -461,6 +455,17 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         else:
             f.write(data)
         return
+
+    if encoding is None:
+        c_enc = NULL
+    else:
+        encoding = _utf8(encoding)
+        c_enc = _cstr(encoding)
+    if doctype is None:
+        c_doctype = NULL
+    else:
+        doctype = _utf8(doctype)
+        c_doctype = _xcstr(doctype)
 
     writer = _create_output_buffer(f, c_enc, compression, &c_buffer)
     if writer is None:
