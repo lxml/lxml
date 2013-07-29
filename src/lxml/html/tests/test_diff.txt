@@ -241,4 +241,4 @@ Testing split_trailing_whitespace::
     >>> split_trailing_whitespace(' test\n ')
     (' test', '\n ')
     >>> split_trailing_whitespace('test')
-    ('test','')
+    ('test', '')
