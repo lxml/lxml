@@ -75,9 +75,9 @@ A test of empty elements:
 Whitespace is preserved during the diff:
 
     >>> print repr(htmldiff('<pre>first\nsecond\nthird</pre>', '<pre>first\nsecond\nthird</pre>'))
-    <pre>first\nsecond\nthird</pre>
+    u'<pre>first\nsecond\nthird</pre>'
     >>> print repr(htmldiff('<pre>first\nsecond</pre>', '<pre>first\nsecond\n third</pre>'))
-    <pre></pre>
+    u'<pre>first\nsecond\n <ins>third</ins> </pre>'
 
 The sixteen combinations::
 
