@@ -170,7 +170,6 @@ def htmldiff(old_html, new_html):
     """ 
     old_html_tokens = tokenize(old_html)
     new_html_tokens = tokenize(new_html)
-    print old_html_tokens, new_html_tokens
     result = htmldiff_tokens(old_html_tokens, new_html_tokens)
     result = ''.join(result).strip()
     return fixup_ins_del_tags(result)
