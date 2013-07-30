@@ -10,6 +10,9 @@ First, a handy function for normalizing whitespace and doing word wrapping::
     >>> def pdiff(text1, text2):
     ...     pwrapped(htmldiff(text1, text2))
 
+    <p>This is some test <ins>textual writing with some changed stuff
+    </ins> <del>text with some changes</del> and some same stuff</p>
+
 Example::
 
     >>> from lxml.html.diff import htmldiff, html_annotate
