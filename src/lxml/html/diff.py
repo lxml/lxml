@@ -602,7 +602,7 @@ def fixup_chunks(chunks):
 
             elif chunk[0] == 'href':
                 href = chunk[1]
-                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=None)
+                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=" ")
                 tag_accum = []
                 result.append(cur_word)
             continue
@@ -713,7 +713,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         for word in end_words:
             yield html_escape(word)
 
-split_words_re = re.compile(r'\S+(?:\s|$)')
+split_words_re = re.compile(r'\S+(?:\s+|$)')
 
 def split_words(text):
     """ Splits some text into words. Includes trailing whitespace
