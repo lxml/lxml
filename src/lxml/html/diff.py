@@ -451,7 +451,7 @@ class token(_unicode):
     # displayed diff if no change has occurred:
     hide_when_equal = False
 
-    def __new__(cls, text, pre_tags=None, post_tags=None, trailing_whitespace=None):
+    def __new__(cls, text, pre_tags=None, post_tags=None, trailing_whitespace=""):
         obj = _unicode.__new__(cls, text)
 
         if pre_tags is not None:
@@ -482,7 +482,7 @@ class tag_token(token):
     is only represented in a document by a tag.  """
 
     def __new__(cls, tag, data, html_repr, pre_tags=None, 
-                post_tags=None, trailing_whitespace=None):
+                post_tags=None, trailing_whitespace=""):
         obj = token.__new__(cls, "%s: %s" % (type, data), 
                             pre_tags=pre_tags, 
                             post_tags=post_tags, 
@@ -589,11 +589,7 @@ def fixup_chunks(chunks):
         if isinstance(chunk, tuple):
             if chunk[0] == 'img':
                 src = chunk[1]
-                tag, whitespace = split_trailing_whitespace(chunk[2])
-                if whitespace:
-                    trailing_whitespace = whitespace
-                else:
-                    trailing_whitespace = None
+                tag, trailing_whitespace = split_trailing_whitespace(chunk[2])
                 cur_word = tag_token('img', src, html_repr=tag,
                                      pre_tags=tag_accum,
                                      trailing_whitespace=trailing_whitespace)
@@ -608,11 +604,7 @@ def fixup_chunks(chunks):
             continue
 
         if is_word(chunk):
-            chunk, whitespace = split_trailing_whitespace(chunk)
-            if whitespace:
-                trailing_whitespace = whitespace
-            else:
-                trailing_whitespace = None
+            chunk, trailing_whitespace = split_trailing_whitespace(chunk)
             cur_word = token(chunk, pre_tags=tag_accum, trailing_whitespace=trailing_whitespace)
             tag_accum = []
             result.append(cur_word)
