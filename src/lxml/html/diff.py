@@ -120,13 +120,13 @@ def compress_merge_back(tokens, tok):
         tokens.append(tok)
     else:
         text = _unicode(last)
-        if last.trailing_whitespace:
-            text += last.trailing_whitespace
+        if last.whitespace:
+            text = last.whitespace[0] + text + last.whitespace[1]
         text += tok
         merged = token(text,
                        pre_tags=last.pre_tags,
                        post_tags=tok.post_tags,
-                       trailing_whitespace=tok.trailing_whitespace)
+                       whitespace=tok.whitespace)
         merged.annotation = last.annotation
         tokens[-1] = merged
     
@@ -140,8 +140,8 @@ def markup_serialize_tokens(tokens, markup_func):
             yield pre
         html = token.html()
         html = markup_func(html, token.annotation)
-        if token.trailing_whitespace:
-            html += token.trailing_whitespace
+        if token.whitespace:
+            html =  token.whitespace[0] + html + token.whitespace[1]
         yield html
         for post in token.post_tags:
             yield post
@@ -220,8 +220,8 @@ def expand_tokens(tokens, equal=False):
         for pre in token.pre_tags:
             yield pre
         if not equal or not token.hide_when_equal:
-            if token.trailing_whitespace:
-                yield token.html() + token.trailing_whitespace
+            if token.whitespace:
+                yield token.whitespace[0] + token.html() + token.whitespace[1]
             else:
                 yield token.html()
         for post in token.post_tags:
@@ -442,8 +442,8 @@ class token(_unicode):
     adjacent to a word, so there may be close tags in pre_tags, or
     open tags in post_tags.
 
-    We also keep track of whether the word was originally followed by
-    whitespace, even though we do not want to treat the word as
+    We also keep track of whether the word has start and end whitespace,
+    even though we do not want to treat the word as
     equivalent to a similar word that does not have a trailing
     space."""
 
@@ -451,7 +451,7 @@ class token(_unicode):
     # displayed diff if no change has occurred:
     hide_when_equal = False
 
-    def __new__(cls, text, pre_tags=None, post_tags=None, trailing_whitespace=""):
+    def __new__(cls, text, pre_tags=None, post_tags=None, whitespace=None):
         obj = _unicode.__new__(cls, text)
 
         if pre_tags is not None:
@@ -464,13 +464,13 @@ class token(_unicode):
         else:
             obj.post_tags = []
 
-        obj.trailing_whitespace = trailing_whitespace
+        obj.whitespace = whitespace
 
         return obj
 
     def __repr__(self):
         return 'token(%s, %r, %r, %r)' % (_unicode.__repr__(self), self.pre_tags,
-                                          self.post_tags, self.trailing_whitespace)
+                                          self.post_tags, self.whitespace)
 
     def html(self):
         return _unicode(self)
@@ -482,24 +482,24 @@ class tag_token(token):
     is only represented in a document by a tag.  """
 
     def __new__(cls, tag, data, html_repr, pre_tags=None, 
-                post_tags=None, trailing_whitespace=""):
+                post_tags=None, whitespace=None):
         obj = token.__new__(cls, "%s: %s" % (type, data), 
                             pre_tags=pre_tags, 
                             post_tags=post_tags, 
-                            trailing_whitespace=trailing_whitespace)
+                            whitespace=whitespace)
         obj.tag = tag
         obj.data = data
         obj.html_repr = html_repr
         return obj
 
     def __repr__(self):
-        return 'tag_token(%s, %s, html_repr=%s, post_tags=%r, pre_tags=%r, trailing_whitespace=%r)' % (
+        return 'tag_token(%s, %s, html_repr=%s, post_tags=%r, pre_tags=%r, whitespace=%r)' % (
             self.tag, 
             self.data, 
             self.html_repr, 
             self.pre_tags, 
             self.post_tags, 
-            self.trailing_whitespace)
+            self.whitespace)
     def html(self):
         return self.html_repr
 
@@ -570,12 +570,18 @@ def cleanup_html(html):
 
 end_whitespace_re = re.compile(r'[ \t\n\r]$')
 
-def split_trailing_whitespace(word):
+def split_whitespace(word):
     """
-    This function takes a word, such as 'test\n\n' and returns ('test','\n\n')
+    This function takes a word, such as '\rtest\n\n' and returns ('test',('\r', '\n\n'))
+    The second item it returns is a tuple containing (start_whitespace, end_whitespace)
     """
-    stripped_length = len(word.rstrip())
-    return word[0:stripped_length], word[stripped_length:]
+    rstripped_length = len(word.rstrip())
+    lstripped_length = len(word.lstrip())
+
+    lstrip_difference = len(word) - lstripped_length
+
+    return word[lstrip_difference:rstripped_length], (word[:lstrip_difference],
+                                                      word[rstripped_length:])
 
 
 def fixup_chunks(chunks):
@@ -589,23 +595,23 @@ def fixup_chunks(chunks):
         if isinstance(chunk, tuple):
             if chunk[0] == 'img':
                 src = chunk[1]
-                tag, trailing_whitespace = split_trailing_whitespace(chunk[2])
+                tag, whitespace = split_whitespace(chunk[2])
                 cur_word = tag_token('img', src, html_repr=tag,
                                      pre_tags=tag_accum,
-                                     trailing_whitespace=trailing_whitespace)
+                                     whitespace=whitespace)
                 tag_accum = []
                 result.append(cur_word)
 
             elif chunk[0] == 'href':
                 href = chunk[1]
-                cur_word = href_token(href, pre_tags=tag_accum, trailing_whitespace=" ")
+                cur_word = href_token(href, pre_tags=tag_accum, whitespace=("", " "))
                 tag_accum = []
                 result.append(cur_word)
             continue
 
         if is_word(chunk):
-            chunk, trailing_whitespace = split_trailing_whitespace(chunk)
-            cur_word = token(chunk, pre_tags=tag_accum, trailing_whitespace=trailing_whitespace)
+            chunk, _whitespace = split_whitespace(chunk)
+            cur_word = token(chunk, pre_tags=tag_accum, whitespace=whitespace)
             tag_accum = []
             result.append(cur_word)
 

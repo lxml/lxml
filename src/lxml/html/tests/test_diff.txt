@@ -210,7 +210,7 @@ Internals
 
 Some utility functions::
 
-    >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced, split_trailing_whitespace
+    >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced, split_whitespace
     >>> def pfixup(text):
     ...     print(fixup_ins_del_tags(text).strip())
     >>> pfixup('<ins><p>some text <b>and more text</b> and more</p></ins>')
@@ -238,11 +238,13 @@ Testing split_unbalanced::
     (['<b>'], ['So', 'Hi', 'There'], ['</i>'])
     
 
-Testing split_trailing_whitespace::
+Testing split_whitespace::
 
-    >>> split_trailing_whitespace('test\n\n')
-    ('test', '\n\n')
-    >>> split_trailing_whitespace(' test\n ')
-    (' test', '\n ')
-    >>> split_trailing_whitespace('test')
-    ('test', '')
+    >>> split_whitespace('test\n\n')
+    ('test', ('', '\n\n'))
+    >>> split_whitespace(' test\n ')
+    (' test', ('', '\n '))
+    >>> split_whitespace('test')
+    ('test', ('', ''))
+    >>> split_whitespace('\n   test   \r')
+    ('test', ('\n   ', '   \r'))
