@@ -575,13 +575,13 @@ def split_whitespace(word):
     This function takes a word, such as '\rtest\n\n' and returns ('test',('\r', '\n\n'))
     The second item it returns is a tuple containing (start_whitespace, end_whitespace)
     """
-    rstripped_length = len(word.rstrip())
-    lstripped_length = len(word.lstrip())
+    stripped = word.rstrip()
+    rstrip_diff = len(word) - len(stripped)
 
-    lstrip_difference = len(word) - lstripped_length
+    stripped = stripped.lstrip()
+    lstrip_diff = len(word) - (rstrip_diff + len(stripped))
 
-    return word[lstrip_difference:rstripped_length], (word[:lstrip_difference],
-                                                      word[rstripped_length:])
+    return stripped, (word[:lstrip_diff], word[lstrip_diff + len(stripped):])
 
 
 def fixup_chunks(chunks):
