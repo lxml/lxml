@@ -705,7 +705,7 @@ def flatten_el(el, include_hrefs, skip_tag=False):
         for word in end_words:
             yield html_escape(word)
 
-split_words_re = re.compile(r'\S+(?:\s+|$)')
+split_words_re = re.compile(r'\S+(?:\s+|$)', re.U)
 
 def split_words(text):
     """ Splits some text into words. Includes trailing whitespace
