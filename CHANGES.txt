@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1206077: htmldiff discarded whitespace from the output.
+
 * Compressed plain-text serialisation to file-like objects was broken.
 
 Other changes
