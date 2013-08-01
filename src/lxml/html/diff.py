@@ -610,7 +610,7 @@ def fixup_chunks(chunks):
             continue
 
         if is_word(chunk):
-            chunk, _whitespace = split_whitespace(chunk)
+            chunk, whitespace = split_whitespace(chunk)
             cur_word = token(chunk, pre_tags=tag_accum, whitespace=whitespace)
             tag_accum = []
             result.append(cur_word)

@@ -243,7 +243,7 @@ Testing split_whitespace::
     >>> split_whitespace('test\n\n')
     ('test', ('', '\n\n'))
     >>> split_whitespace(' test\n ')
-    (' test', ('', '\n '))
+    ('test', (' ', '\n '))
     >>> split_whitespace('test')
     ('test', ('', ''))
     >>> split_whitespace('\n   test   \r')
