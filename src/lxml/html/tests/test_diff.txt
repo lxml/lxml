@@ -75,7 +75,7 @@ A test of empty elements:
 Whitespace is generally ignored for the diff but preserved during the diff:
 
     >>> print(htmldiff('<p> first\nsecond\nthird</p>', '<p>   &#xA0; first\n  second\nthird  </p>'))
-    <p>first
+    <p>     first
       second
     third  </p>
     >>> print(htmldiff('<pre>first\nsecond\nthird</pre>', '<pre>first\nsecond\nthird</pre>'))
