@@ -728,9 +728,11 @@ def start_tag(el):
     """
     The text representation of the start tag for a tag.
     """
-    return '<%s%s>' % (
+    split_text = split_whitespace(el.text)[1][0]
+    return '<%s%s>%s' % (
         el.tag, ''.join([' %s="%s"' % (name, html_escape(value, True))
-                         for name, value in el.attrib.items()]))
+                         for name, value in el.attrib.items()]),
+        split_text)
 
 def end_tag(el):
     """ The text representation of an end tag for a tag.  Includes
