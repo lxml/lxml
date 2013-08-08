@@ -124,9 +124,7 @@ on your Python module search path (PYTHONPATH) and then import
   >>>
 
 To make sure everything gets recompiled cleanly after changes, you can
-run ``make clean`` or delete the file ``src/lxml/etree.c``.  Distutils
-do not automatically pick up changes that affect files other than the
-main file ``src/lxml/etree.pyx``.
+run ``make clean`` or delete the file ``src/lxml/etree.c``.
 
 
 Running the tests and reporting errors
