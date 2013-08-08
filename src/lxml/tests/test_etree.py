@@ -15,6 +15,7 @@ import re
 import gc
 import operator
 import tempfile
+import zlib
 import gzip
 
 this_dir = os.path.dirname(__file__)
