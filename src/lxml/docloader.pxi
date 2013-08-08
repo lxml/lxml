@@ -11,7 +11,7 @@ ctypedef enum _InputDocumentDataType:
 @cython.internal
 cdef class _InputDocument:
     cdef _InputDocumentDataType _type
-    cdef object _data_bytes
+    cdef bytes _data_bytes
     cdef object _filename
     cdef object _file
     cdef bint _close_file
