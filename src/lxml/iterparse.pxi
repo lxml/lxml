@@ -360,7 +360,7 @@ cdef class iterparse(_BaseParser):
     cdef object _events
     cdef readonly object root
     cdef object _source
-    cdef object _buffer
+    cdef bytes _buffer
     cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
                              const_char* chunk, int size, int terminate) nogil
     cdef bint _close_source_after_read
