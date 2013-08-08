@@ -355,7 +355,7 @@ cdef class AttributeBasedElementClassLookup(FallbackElementClassLookup):
     missing.
     """
     cdef object _class_mapping
-    cdef object _pytag
+    cdef tuple _pytag
     cdef const_xmlChar* _c_ns
     cdef const_xmlChar* _c_name
     def __cinit__(self):
