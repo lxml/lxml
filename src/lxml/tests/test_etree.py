@@ -3300,6 +3300,21 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(root), 1)
         self.assertEqual(root[0].tag, 'child')
 
+    def test_element_refcycle(self):
+        class SubEl(etree.ElementBase):
+            pass
+
+        el1 = SubEl()
+        el2 = SubEl()
+        self.assertEqual('SubEl', el1.tag)
+        self.assertEqual('SubEl', el2.tag)
+        el1.other = el2
+        el2.other = el1
+
+        del el1, el2
+        gc.collect()
+        # not really testing anything here, but it shouldn't crash
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii', compression=0):
