@@ -95,6 +95,13 @@ or, in Unix-like environments::
 
   make inplace
 
+To speed up the build in test environments (e.g. on a continuous
+integration server), set the ``CFLAGS`` environment variable to
+disable C compiler optimisations (e.g. "-O0" for gcc, that's
+minus-oh-zero), for example::
+
+  CFLAGS="-O0"  make inplace
+
 If you get errors about missing header files (e.g. ``Python.h`` or
 ``libxml/xmlversion.h``) then you need to make sure the development
 packages of Python, libxml2 and libxslt are properly installed.  On

@@ -62,6 +62,12 @@ to pip::
 
 .. _pip: http://pypi.python.org/pypi/pip
 
+To speed up the build in test environments, e.g. on a continuous
+integration server, disable the C compiler optimisations by setting
+the ``CFLAGS`` environment variable::
+
+  CFLAGS="-O0"  pip install lxml
+
 * For **MS Windows**, recent lxml releases feature community donated
   binary distributions, although you might still want to take a look
   at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
