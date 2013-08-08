@@ -206,7 +206,7 @@ cdef class _FunctionNamespaceRegistry(_NamespaceRegistry):
 @cython.internal
 cdef class _XPathFunctionNamespaceRegistry(_FunctionNamespaceRegistry):
     cdef object _prefix
-    cdef object _prefix_utf
+    cdef bytes _prefix_utf
 
     property prefix:
         u"Namespace prefix for extension functions."
