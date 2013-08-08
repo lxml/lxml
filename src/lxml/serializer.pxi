@@ -647,7 +647,7 @@ cdef enum _IncrementalFileWriterStatus:
 @cython.internal
 cdef class _IncrementalFileWriter:
     cdef tree.xmlOutputBuffer* _c_out
-    cdef object _encoding
+    cdef bytes _encoding
     cdef const_char* _c_encoding
     cdef object _target
     cdef list _element_stack
