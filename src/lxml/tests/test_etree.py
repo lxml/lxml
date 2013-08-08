@@ -392,14 +392,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         XML = self.etree.XML
         xml = _bytes('''
         <div>
-	    <div>
-		I like <strong>sheep</strong>.
-		<br/>
-		I like lots of <strong>sheep</strong>.
-		<br/>
-		Click <a href="http://www.sheep.com">here</a> for <a href="http://www.sheep.com">those</a> sheep.
-		<br/>
-	    </div>
+            <div>
+                I like <strong>sheep</strong>.
+                <br/>
+                I like lots of <strong>sheep</strong>.
+                <br/>
+                Click <a href="http://www.sheep.com">here</a>
+                 for <a href="http://www.sheep.com">those</a> sheep.
+                <br/>
+            </div>
         </div>
         '''.strip())
 
