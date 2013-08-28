@@ -138,7 +138,7 @@ cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar*
         if c_nb_defaulted > 0:
             # only add default attributes if we asked for them
             if c_ctxt.loadsubset & xmlparser.XML_COMPLETE_ATTRS == 0:
-                c_nb_attributes = c_nb_attributes - c_nb_defaulted
+                c_nb_attributes -= c_nb_defaulted
         if c_nb_attributes == 0:
             attrib = EMPTY_READ_ONLY_DICT
         else:
@@ -203,7 +203,7 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
                         value = ''
                 else:
                     value = funicode(c_attributes[1])
-                c_attributes = c_attributes + 2
+                c_attributes += 2
                 attrib[name] = value
         element = context._target._handleSaxStart(
             tag, attrib, EMPTY_READ_ONLY_DICT)
