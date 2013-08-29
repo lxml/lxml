@@ -354,6 +354,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         self._factory = element_factory
         self._parser = parser
 
+    @cython.final
     cdef int _flush(self) except -1:
         if python.PyList_GET_SIZE(self._data) > 0:
             if self._last is not None:
@@ -366,6 +367,54 @@ cdef class TreeBuilder(_SaxParserTarget):
                     self._last.text = text
             del self._data[:]
         return 0
+
+    # internal SAX event handlers
+
+    @cython.final
+    cdef _handleSaxStart(self, tag, attrib, nsmap):
+        self._flush()
+        if self._factory is not None:
+            self._last = self._factory(tag, attrib)
+            if python.PyList_GET_SIZE(self._element_stack) > 0:
+                _appendChild(self._element_stack[-1], self._last)
+        elif python.PyList_GET_SIZE(self._element_stack) > 0:
+            self._last = _makeSubElement(
+                self._element_stack[-1], tag, None, None, attrib, nsmap, None)
+        else:
+            self._last = _makeElement(
+                tag, NULL, None, self._parser, None, None, attrib, nsmap, None)
+        self._element_stack.append(self._last)
+        self._in_tail = 0
+        return self._last
+
+    @cython.final
+    cdef _handleSaxEnd(self, tag):
+        self._flush()
+        self._last = self._element_stack_pop()
+        self._in_tail = 1
+        return self._last
+
+    @cython.final
+    cdef int _handleSaxData(self, data) except -1:
+        self._data.append(data)
+
+    @cython.final
+    cdef _handleSaxPi(self, target, data):
+        self._flush()
+        self._last = ProcessingInstruction(target, data)
+        if python.PyList_GET_SIZE(self._element_stack) > 0:
+            _appendChild(self._element_stack[-1], self._last)
+        self._in_tail = 1
+        return self._last
+
+    @cython.final
+    cdef _handleSaxComment(self, comment):
+        self._flush()
+        self._last = Comment(comment)
+        if python.PyList_GET_SIZE(self._element_stack) > 0:
+            _appendChild(self._element_stack[-1], self._last)
+        self._in_tail = 1
+        return self._last
 
     # Python level event handlers
 
@@ -416,46 +465,3 @@ cdef class TreeBuilder(_SaxParserTarget):
         u"""comment(self, comment)
         """
         return self._handleSaxComment(comment)
-
-    # internal SAX event handlers
-
-    cdef _handleSaxStart(self, tag, attrib, nsmap):
-        self._flush()
-        if self._factory is not None:
-            self._last = self._factory(tag, attrib)
-            if python.PyList_GET_SIZE(self._element_stack) > 0:
-                _appendChild(self._element_stack[-1], self._last)
-        elif python.PyList_GET_SIZE(self._element_stack) > 0:
-            self._last = _makeSubElement(
-                self._element_stack[-1], tag, None, None, attrib, nsmap, None)
-        else:
-            self._last = _makeElement(
-                tag, NULL, None, self._parser, None, None, attrib, nsmap, None)
-        self._element_stack.append(self._last)
-        self._in_tail = 0
-        return self._last
-
-    cdef _handleSaxEnd(self, tag):
-        self._flush()
-        self._last = self._element_stack_pop()
-        self._in_tail = 1
-        return self._last
-
-    cdef int _handleSaxData(self, data) except -1:
-        self._data.append(data)
-
-    cdef _handleSaxPi(self, target, data):
-        self._flush()
-        self._last = ProcessingInstruction(target, data)
-        if python.PyList_GET_SIZE(self._element_stack) > 0:
-            _appendChild(self._element_stack[-1], self._last)
-        self._in_tail = 1
-        return self._last
-
-    cdef _handleSaxComment(self, comment):
-        self._flush()
-        self._last = Comment(comment)
-        if python.PyList_GET_SIZE(self._element_stack) > 0:
-            _appendChild(self._element_stack[-1], self._last)
-        self._in_tail = 1
-        return self._last
