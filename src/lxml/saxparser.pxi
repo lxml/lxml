@@ -356,7 +356,7 @@ cdef class TreeBuilder(_SaxParserTarget):
 
     @cython.final
     cdef int _flush(self) except -1:
-        if python.PyList_GET_SIZE(self._data) > 0:
+        if self._data:
             if self._last is not None:
                 text = u"".join(self._data)
                 if self._in_tail:
@@ -375,9 +375,9 @@ cdef class TreeBuilder(_SaxParserTarget):
         self._flush()
         if self._factory is not None:
             self._last = self._factory(tag, attrib)
-            if python.PyList_GET_SIZE(self._element_stack) > 0:
+            if self._element_stack:
                 _appendChild(self._element_stack[-1], self._last)
-        elif python.PyList_GET_SIZE(self._element_stack) > 0:
+        elif self._element_stack:
             self._last = _makeSubElement(
                 self._element_stack[-1], tag, None, None, attrib, nsmap, None)
         else:
@@ -402,7 +402,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef _handleSaxPi(self, target, data):
         self._flush()
         self._last = ProcessingInstruction(target, data)
-        if python.PyList_GET_SIZE(self._element_stack) > 0:
+        if self._element_stack:
             _appendChild(self._element_stack[-1], self._last)
         self._in_tail = 1
         return self._last
@@ -411,7 +411,7 @@ cdef class TreeBuilder(_SaxParserTarget):
     cdef _handleSaxComment(self, comment):
         self._flush()
         self._last = Comment(comment)
-        if python.PyList_GET_SIZE(self._element_stack) > 0:
+        if self._element_stack:
             _appendChild(self._element_stack[-1], self._last)
         self._in_tail = 1
         return self._last
@@ -424,7 +424,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         Flushes the builder buffers, and returns the toplevel document
         element.
         """
-        assert python.PyList_GET_SIZE(self._element_stack) == 0, u"missing end tags"
+        assert not self._element_stack, u"missing end tags"
         assert self._last is not None, u"missing toplevel element"
         return self._last
 
