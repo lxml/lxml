@@ -618,7 +618,7 @@ cdef class xmlfile:
     cdef int compresslevel
     cdef _IncrementalFileWriter writer
 
-    def __init__(self, output_file not None, bytes encoding=None, compression=None):
+    def __init__(self, output_file not None, encoding=None, compression=None):
         self.output_file = output_file
         self.encoding = _utf8orNone(encoding)
         self.compresslevel = compression or 0
