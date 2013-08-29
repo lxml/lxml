@@ -3208,7 +3208,7 @@ include "readonlytree.pxi" # Read-only implementation of Element proxies
 include "classlookup.pxi"  # Element class lookup mechanisms
 include "nsclasses.pxi"    # Namespace implementation and registry
 include "docloader.pxi"    # Support for custom document loaders
-include "parser.pxi"       # XML Parser
+include "parser.pxi"       # XML and HTML parsers
 include "saxparser.pxi"    # SAX-like Parser interface and tree builder
 include "parsertarget.pxi" # ET Parser target
 include "serializer.pxi"   # XML output functions
