@@ -196,7 +196,7 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
             tag, attrib, EMPTY_READ_ONLY_DICT)
         if element is not None and c_ctxt.input is not NULL:
             if c_ctxt.input.line < 65535:
-                element._c_node.line = <short>c_ctxt.input.line
+                element._c_node.line = <unsigned short>c_ctxt.input.line
             else:
                 element._c_node.line = 65535
     except:
