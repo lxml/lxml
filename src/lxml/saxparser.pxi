@@ -147,10 +147,7 @@ cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar*
                 name = _namespacedNameFromNsName(
                     c_attributes[2], c_attributes[0])
                 if c_attributes[3] is NULL:
-                    if python.IS_PYTHON3:
-                        value = u''
-                    else:
-                        value = ''
+                    value = ''
                 else:
                     value = python.PyUnicode_DecodeUTF8(
                         <const_char*>c_attributes[3], c_attributes[4] - c_attributes[3],
@@ -162,10 +159,7 @@ cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar*
         else:
             nsmap = {}
             for i from 0 <= i < c_nb_namespaces:
-                if c_namespaces[0] is NULL:
-                    prefix = None
-                else:
-                    prefix = funicode(c_namespaces[0])
+                prefix = funicodeOrNone(c_namespaces[0])
                 nsmap[prefix] = funicode(c_namespaces[1])
                 c_namespaces += 2
         element = context._target._handleSaxStart(tag, attrib, nsmap)
@@ -196,15 +190,8 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
             attrib = {}
             while c_attributes[0] is not NULL:
                 name = funicode(c_attributes[0])
-                if c_attributes[1] is NULL:
-                    if python.IS_PYTHON3:
-                        value = u''
-                    else:
-                        value = ''
-                else:
-                    value = funicode(c_attributes[1])
+                attrib[name] = funicodeOrEmpty(c_attributes[1])
                 c_attributes += 2
-                attrib[name] = value
         element = context._target._handleSaxStart(
             tag, attrib, EMPTY_READ_ONLY_DICT)
         if element is not None and c_ctxt.input is not NULL:
