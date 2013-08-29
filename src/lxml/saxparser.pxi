@@ -143,7 +143,7 @@ cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar*
             attrib = EMPTY_READ_ONLY_DICT
         else:
             attrib = {}
-            for i from 0 <= i < c_nb_attributes:
+            for i in range(0, c_nb_attributes):
                 name = _namespacedNameFromNsName(
                     c_attributes[2], c_attributes[0])
                 if c_attributes[3] is NULL:
@@ -158,7 +158,7 @@ cdef void _handleSaxStart(void* ctxt, const_xmlChar* c_localname, const_xmlChar*
             nsmap = EMPTY_READ_ONLY_DICT
         else:
             nsmap = {}
-            for i from 0 <= i < c_nb_namespaces:
+            for i in range(0, c_nb_attributes):
                 prefix = funicodeOrNone(c_namespaces[0])
                 nsmap[prefix] = funicode(c_namespaces[1])
                 c_namespaces += 2
