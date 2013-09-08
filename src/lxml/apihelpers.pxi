@@ -900,12 +900,33 @@ cdef inline bint _tagMatchesExactly(xmlNode* c_node, qname* c_qname):
     * c_name is NULL
     * its name string points to the same address (!) as c_name
     """
+    return _nsTagMatchesExactly(_getNs(c_node), c_node.name, c_qname)
+
+cdef inline bint _nsTagMatchesExactly(const_xmlChar* c_node_href,
+                                      const_xmlChar* c_node_name,
+                                      qname* c_qname):
+    u"""Tests if name and namespace URI match those of c_qname.
+
+    This differs from _tagMatches() in that it does not consider a
+    NULL value in qname.href a wildcard, and that it expects the c_name
+    to be taken from the doc dict, i.e. it only compares the names by
+    address.
+
+    A node matches if it matches both href and c_name of the qname.
+
+    A node matches c_href if any of the following is true:
+    * its namespace is NULL and c_href is the empty string
+    * its namespace string equals the c_href string
+
+    A node matches c_name if any of the following is true:
+    * c_name is NULL
+    * its name string points to the same address (!) as c_name
+    """
     cdef char* c_href
-    if c_qname.c_name is not NULL and c_qname.c_name is not c_node.name:
+    if c_qname.c_name is not NULL and c_qname.c_name is not c_node_name:
         return 0
     if c_qname.href is NULL:
         return 1
-    c_node_href = _getNs(c_node)
     c_href = python.__cstr(c_qname.href)
     if c_href[0] == '\0':
         return c_node_href is NULL or c_node_href[0] == '\0'

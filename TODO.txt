@@ -5,6 +5,8 @@ ToDo's for lxml
 lxml
 ====
 
+* create all iterparse events only on start events and store the end events in the stack
+
 In general
 ----------
 

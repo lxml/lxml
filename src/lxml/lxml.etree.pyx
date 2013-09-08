@@ -2579,6 +2579,16 @@ cdef class _MultiTagMatcher:
                     return True
         return False
 
+    cdef inline bint matchesNsTag(self, const_xmlChar* c_href,
+                                  const_xmlChar* c_name):
+        cdef qname* c_qname
+        if self._node_types & (1 << tree.XML_ELEMENT_NODE):
+            return True
+        for c_qname in self._cached_tags[:self._tag_count]:
+            if _nsTagMatchesExactly(c_href, c_name, c_qname):
+                return True
+        return False
+
     cdef inline bint matchesAttribute(self, xmlAttr* c_attr):
         """Attribute matches differ from Element matches in that they do
         not care about node types.

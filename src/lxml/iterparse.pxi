@@ -2,316 +2,7 @@
 
 DEF __ITERPARSE_CHUNK_SIZE = 32768
 
-ctypedef enum _IterparseEventFilter:
-    ITERPARSE_FILTER_START     =  1
-    ITERPARSE_FILTER_END       =  2
-    ITERPARSE_FILTER_START_NS  =  4
-    ITERPARSE_FILTER_END_NS    =  8
-    ITERPARSE_FILTER_COMMENT   = 16
-    ITERPARSE_FILTER_PI        = 32
-
-cdef int _buildIterparseEventFilter(events) except -1:
-    cdef int event_filter
-    event_filter = 0
-    for event in events:
-        if event == u'start':
-            event_filter |= ITERPARSE_FILTER_START
-        elif event == u'end':
-            event_filter |= ITERPARSE_FILTER_END
-        elif event == u'start-ns':
-            event_filter |= ITERPARSE_FILTER_START_NS
-        elif event == u'end-ns':
-            event_filter |= ITERPARSE_FILTER_END_NS
-        elif event == u'comment':
-            event_filter |= ITERPARSE_FILTER_COMMENT
-        elif event == u'pi':
-            event_filter |= ITERPARSE_FILTER_PI
-        else:
-            raise ValueError, u"invalid event name '%s'" % event
-    return event_filter
-
-cdef int _countNsDefs(xmlNode* c_node):
-    cdef xmlNs* c_ns
-    cdef int count
-    count = 0
-    c_ns = c_node.nsDef
-    while c_ns is not NULL:
-        count += 1
-        c_ns = c_ns.next
-    return count
-
-cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
-    cdef xmlNs* c_ns
-    cdef int count
-    count = 0
-    c_ns = c_node.nsDef
-    while c_ns is not NULL:
-        ns_tuple = (funicode(c_ns.prefix) if c_ns.prefix is not NULL else '',
-                    funicode(c_ns.href))
-        event_list.append( (u"start-ns", ns_tuple) )
-        count += 1
-        c_ns = c_ns.next
-    return count
-
-@cython.final
-@cython.internal
-cdef class _IterparseContext(_ParserContext):
-    cdef xmlparser.startElementNsSAX2Func _origSaxStart
-    cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
-    cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
-    cdef xmlparser.endElementSAXFunc      _origSaxEndNoNs
-    cdef xmlparser.startDocumentSAXFunc   _origSaxStartDocument
-    cdef xmlparser.commentSAXFunc         _origSaxComment
-    cdef xmlparser.processingInstructionSAXFunc _origSaxPI
-    cdef _Element  _root
-    cdef _Document _doc
-    cdef int _event_filter
-    cdef int _event_index
-    cdef list _events
-    cdef list _ns_stack
-    cdef list _node_stack
-    cdef tuple _tag_tuple
-    cdef _MultiTagMatcher _matcher
-
-    def __cinit__(self):
-        self._ns_stack = []
-        self._node_stack = []
-        self._events = []
-        self._event_index = 0
-
-    cdef void _initParserContext(self, xmlparser.xmlParserCtxt* c_ctxt):
-        u"""wrap original SAX2 callbacks"""
-        cdef xmlparser.xmlSAXHandler* sax
-        _ParserContext._initParserContext(self, c_ctxt)
-        sax = c_ctxt.sax
-        self._origSaxStartDocument = sax.startDocument
-        sax.startDocument = _iterparseSaxStartDocument
-        self._origSaxStart = sax.startElementNs
-        self._origSaxStartNoNs = sax.startElement
-        # only override start event handler if needed
-        if self._event_filter == 0 or \
-               self._event_filter & (ITERPARSE_FILTER_START |
-                                     ITERPARSE_FILTER_START_NS |
-                                     ITERPARSE_FILTER_END_NS):
-            sax.startElementNs = <xmlparser.startElementNsSAX2Func>_iterparseSaxStart
-            sax.startElement = <xmlparser.startElementSAXFunc>_iterparseSaxStartNoNs
-
-        self._origSaxEnd = sax.endElementNs
-        self._origSaxEndNoNs = sax.endElement
-        # only override end event handler if needed
-        if self._event_filter == 0 or \
-               self._event_filter & (ITERPARSE_FILTER_END |
-                                     ITERPARSE_FILTER_END_NS):
-            sax.endElementNs = <xmlparser.endElementNsSAX2Func>_iterparseSaxEnd
-            sax.endElement = <xmlparser.endElementSAXFunc>_iterparseSaxEndNoNs
-
-        self._origSaxComment = sax.comment
-        if self._event_filter & ITERPARSE_FILTER_COMMENT:
-            sax.comment = <xmlparser.commentSAXFunc>_iterparseSaxComment
-
-        self._origSaxPI = sax.processingInstruction
-        if self._event_filter & ITERPARSE_FILTER_PI:
-            sax.processingInstruction = <xmlparser.processingInstructionSAXFunc>_iterparseSaxPI
-
-    cdef _setEventFilter(self, events, tag):
-        self._event_filter = _buildIterparseEventFilter(events)
-        if tag is None or tag == '*':
-            self._matcher = None
-        else:
-            self._matcher = _MultiTagMatcher(tag)
-
-    cdef int startDocument(self, xmlDoc* c_doc) except -1:
-        self._doc = _documentFactory(c_doc, None)
-        if self._matcher is not None:
-            self._matcher.cacheTags(self._doc, True) # force entry in libxml2 dict
-        return 0
-
-    cdef int startNode(self, xmlNode* c_node) except -1:
-        cdef xmlNs* c_ns
-        cdef int ns_count = 0
-        if self._event_filter & ITERPARSE_FILTER_START_NS:
-            ns_count = _appendStartNsEvents(c_node, self._events)
-        elif self._event_filter & ITERPARSE_FILTER_END_NS:
-            ns_count = _countNsDefs(c_node)
-        if self._event_filter & ITERPARSE_FILTER_END_NS:
-            self._ns_stack.append(ns_count)
-        if self._root is None:
-            self._root = self._doc.getroot()
-        if self._matcher is None or self._matcher.matches(c_node):
-            node = _elementFactory(self._doc, c_node)
-            if self._event_filter & ITERPARSE_FILTER_END:
-                self._node_stack.append(node)
-            if self._event_filter & ITERPARSE_FILTER_START:
-                self._events.append( (u"start", node) )
-        return 0
-
-    cdef int endNode(self, xmlNode* c_node) except -1:
-        cdef xmlNs* c_ns
-        cdef int ns_count
-        if self._event_filter & ITERPARSE_FILTER_END:
-            if self._matcher is None or self._matcher.matches(c_node):
-                if self._event_filter & (ITERPARSE_FILTER_START |
-                                         ITERPARSE_FILTER_START_NS |
-                                         ITERPARSE_FILTER_END_NS):
-                    node = self._node_stack.pop()
-                else:
-                    if self._root is None:
-                        self._root = self._doc.getroot()
-                    node = _elementFactory(self._doc, c_node)
-                self._events.append( (u"end", node) )
-
-        if self._event_filter & ITERPARSE_FILTER_END_NS:
-            ns_count = self._ns_stack.pop()
-            if ns_count > 0:
-                event = (u"end-ns", None)
-                for i from 0 <= i < ns_count:
-                    self._events.append(event)
-        return 0
-
-    cdef int pushEvent(self, event, xmlNode* c_node) except -1:
-        cdef _Element root
-        if self._root is None:
-            root = self._doc.getroot()
-            if root is not None and root._c_node.type == tree.XML_ELEMENT_NODE:
-                self._root = root
-        node = _elementFactory(self._doc, c_node)
-        self._events.append( (event, node) )
-        return 0
-
-    cdef void _assureDocGetsFreed(self):
-        if self._c_ctxt.myDoc is not NULL and self._doc is None:
-            tree.xmlFreeDoc(self._c_ctxt.myDoc)
-            self._c_ctxt.myDoc = NULL
-
-
-cdef inline void _pushSaxStartDocument(_IterparseContext context,
-                                       xmlDoc* c_doc):
-    try:
-        context.startDocument(c_doc)
-    except:
-        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        context._c_ctxt.disableSAX = 1
-        context._store_raised()
-
-cdef inline void _pushSaxStartEvent(_IterparseContext context,
-                                    xmlNode* c_node):
-    try:
-        if context._c_ctxt.html:
-            _fixHtmlDictNodeNames(context._c_ctxt.dict, c_node)
-        context.startNode(c_node)
-    except:
-        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        context._c_ctxt.disableSAX = 1
-        context._store_raised()
-
-cdef inline void _pushSaxEndEvent(_IterparseContext context,
-                                  xmlNode* c_node):
-    try:
-        context.endNode(c_node)
-    except:
-        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        context._c_ctxt.disableSAX = 1
-        context._store_raised()
-
-cdef inline void _pushSaxEvent(_IterparseContext context,
-                               event, xmlNode* c_node):
-    try:
-        context.pushEvent(event, c_node)
-    except:
-        if context._c_ctxt.errNo == xmlerror.XML_ERR_OK:
-            context._c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
-        context._c_ctxt.disableSAX = 1
-        context._store_raised()
-
-cdef void _iterparseSaxStartDocument(void* ctxt):
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    context._origSaxStartDocument(ctxt)
-    if c_ctxt.myDoc and c_ctxt.dict and not c_ctxt.myDoc.dict:
-        # I have no idea why libxml2 disables this - we need it
-        c_ctxt.dictNames = 1
-        c_ctxt.myDoc.dict = c_ctxt.dict
-    _pushSaxStartDocument(context, c_ctxt.myDoc)
-
-cdef void _iterparseSaxStart(void* ctxt, const_xmlChar* localname, const_xmlChar* prefix,
-                             const_xmlChar* URI, int nb_namespaces, const_xmlChar** namespaces,
-                             int nb_attributes, int nb_defaulted,
-                             const_xmlChar** attributes):
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    context._origSaxStart(
-        ctxt, localname, prefix, URI,
-        nb_namespaces, namespaces,
-        nb_attributes, nb_defaulted, attributes)
-    _pushSaxStartEvent(context, c_ctxt.node)
-
-cdef void _iterparseSaxEnd(void* ctxt, const_xmlChar* localname, const_xmlChar* prefix,
-                           const_xmlChar* URI):
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    _pushSaxEndEvent(context, c_ctxt.node)
-    context._origSaxEnd(ctxt, localname, prefix, URI)
-
-cdef void _iterparseSaxStartNoNs(void* ctxt, const_xmlChar* name, const_xmlChar** attributes):
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    context._origSaxStartNoNs(ctxt, name, attributes)
-    _pushSaxStartEvent(context, c_ctxt.node)
-
-cdef void _iterparseSaxEndNoNs(void* ctxt, const_xmlChar* name):
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    _pushSaxEndEvent(context, c_ctxt.node)
-    context._origSaxEndNoNs(ctxt, name)
-
-cdef void _iterparseSaxComment(void* ctxt, const_xmlChar* text):
-    cdef xmlNode* c_node
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    context._origSaxComment(ctxt, text)
-    c_node = _iterparseFindLastNode(c_ctxt)
-    if c_node is not NULL:
-        _pushSaxEvent(context, u"comment", c_node)
-
-cdef void _iterparseSaxPI(void* ctxt, const_xmlChar* target, const_xmlChar* data):
-    cdef xmlNode* c_node
-    cdef xmlparser.xmlParserCtxt* c_ctxt
-    cdef _IterparseContext context
-    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    context = <_IterparseContext>c_ctxt._private
-    context._origSaxPI(ctxt, target, data)
-    c_node = _iterparseFindLastNode(c_ctxt)
-    if c_node is not NULL:
-        _pushSaxEvent(context, u"pi", c_node)
-
-cdef inline xmlNode* _iterparseFindLastNode(xmlparser.xmlParserCtxt* c_ctxt):
-    # this mimics what libxml2 creates for comments/PIs
-    if c_ctxt.inSubset == 1:
-        return c_ctxt.myDoc.intSubset.last
-    elif c_ctxt.inSubset == 2:
-        return c_ctxt.myDoc.extSubset.last
-    elif c_ctxt.node is NULL:
-        return c_ctxt.myDoc.last
-    elif c_ctxt.node.type == tree.XML_ELEMENT_NODE:
-        return c_ctxt.node.last
-    else:
-        return c_ctxt.node.next
-
-cdef class iterparse(_BaseParser):
+cdef class iterparse:
     u"""iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, huge_tree=False, schema=None)
 
     Incremental parser.
@@ -356,13 +47,12 @@ cdef class iterparse(_BaseParser):
      - encoding: override the document encoding
      - schema: an XMLSchema to validate against
     """
+    cdef _FeedParser _parser
     cdef object _tag
     cdef object _events
     cdef readonly object root
     cdef object _source
-    cdef bytes _buffer
-    cdef int (*_parse_chunk)(xmlparser.xmlParserCtxt* ctxt,
-                             const_char* chunk, int size, int terminate) nogil
+    cdef object _error
     cdef bint _close_source_after_read
 
     def __init__(self, source, events=(u"end",), *, tag=None,
@@ -371,9 +61,45 @@ cdef class iterparse(_BaseParser):
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, huge_tree=False, XMLSchema schema=None):
-        cdef _IterparseContext context
-        cdef char* c_encoding
-        cdef int parse_options
+        if html:
+            # make sure we're not looking for namespaces
+            events = tuple([ event for event in events
+                             if event not in ('start-ns', 'end-ns') ])
+            parser = HTMLPullParser(
+                events,
+                tag=tag,
+                encoding=encoding,
+                remove_blank_text=remove_blank_text,
+                remove_comments=remove_comments,
+                remove_pis=remove_pis,
+                strip_cdata=strip_cdata,
+                no_network=no_network,
+                target=None,  # TODO
+                schema=schema,
+                compact=compact)
+        else:
+            parser = XMLPullParser(
+                events,
+                tag=tag,
+                encoding=encoding,
+                attribute_defaults=attribute_defaults,
+                dtd_validation=dtd_validation,
+                load_dtd=load_dtd,
+                no_network=no_network,
+                schema=schema,
+                huge_tree=huge_tree,
+                remove_blank_text=remove_blank_text,
+                resolve_entities=resolve_entities,
+                remove_comments=remove_comments,
+                remove_pis=remove_pis,
+                strip_cdata=strip_cdata,
+                target=None,  # TODO
+                compact=compact)
+
+        context = <_SaxParserContext?>parser._getPushParserContext()
+        self._events = context.events_iterator
+        self._parser = parser
+
         if not hasattr(source, 'read'):
             filename = _encodeFilename(source)
             if not python.IS_PYTHON3:
@@ -385,77 +111,14 @@ cdef class iterparse(_BaseParser):
             self._close_source_after_read = False
 
         self._source = source
-        if html:
-            # make sure we're not looking for namespaces
-            events = tuple([ event for event in events
-                             if event != u'start-ns' and event != u'end-ns' ])
-
-        self._events = events
-        self._tag = tag
-
-        parse_options = _XML_DEFAULT_PARSE_OPTIONS
-        if load_dtd:
-            parse_options = parse_options | xmlparser.XML_PARSE_DTDLOAD
-        if dtd_validation:
-            parse_options = parse_options | (xmlparser.XML_PARSE_DTDVALID |
-                                             xmlparser.XML_PARSE_DTDLOAD)
-        if attribute_defaults:
-            parse_options = parse_options | (xmlparser.XML_PARSE_DTDATTR |
-                                             xmlparser.XML_PARSE_DTDLOAD)
-        if remove_blank_text:
-            parse_options = parse_options | xmlparser.XML_PARSE_NOBLANKS
-        if huge_tree:
-            parse_options = parse_options | xmlparser.XML_PARSE_HUGE
-        if not no_network:
-            parse_options = parse_options ^ xmlparser.XML_PARSE_NONET
-        if not compact:
-            parse_options = parse_options ^ xmlparser.XML_PARSE_COMPACT
-        if not resolve_entities:
-            parse_options = parse_options ^ xmlparser.XML_PARSE_NOENT
-        if not strip_cdata:
-            parse_options = parse_options ^ xmlparser.XML_PARSE_NOCDATA
-
-        _BaseParser.__init__(self, parse_options, html, schema,
-                             remove_comments, remove_pis, strip_cdata,
-                             None, filename, encoding)
-
-        if self._for_html:
-            self._parse_chunk = htmlparser.htmlParseChunk
-        else:
-            self._parse_chunk = xmlparser.xmlParseChunk
-
-        context = <_IterparseContext>self._getPushParserContext()
-        __GLOBAL_PARSER_CONTEXT.initParserDict(context._c_ctxt)
-
-        if self._default_encoding is not None:
-            if self._for_html:
-                error = _htmlCtxtResetPush(
-                    context._c_ctxt, NULL, 0,
-                    _cstr(self._default_encoding), self._parse_options)
-            else:
-                xmlparser.xmlCtxtUseOptions(
-                    context._c_ctxt, self._parse_options)
-                error = xmlparser.xmlCtxtResetPush(
-                    context._c_ctxt, NULL, 0, NULL,
-                    _cstr(self._default_encoding))
-
-        context.prepare()
-        # parser will not be unlocked - no other methods supported
 
     property error_log:
         u"""The error log of the last (or current) parser run.
         """
         def __get__(self):
-            cdef _ParserContext context
-            context = self._getPushParserContext()
-            return context._error_log.copy()
+            return self._parser.feed_error_log
 
-    cdef _ParserContext _createContext(self, target):
-        cdef _IterparseContext context
-        context = _IterparseContext()
-        context._setEventFilter(self._events, self._tag)
-        return context
-
+    @cython.final
     cdef _close_source(self):
         if self._source is None:
             return
@@ -471,73 +134,56 @@ cdef class iterparse(_BaseParser):
         if close is not None:
             close()
 
-    def copy(self):
-        raise TypeError, u"iterparse parsers cannot be copied"
-
     def __iter__(self):
         return self
 
     def __next__(self):
-        cdef _IterparseContext context = <_IterparseContext>self._push_parser_context
-        events = context._events
-        if len(events) <= context._event_index:
-            del events[:]
-            context._event_index = 0
-            if self._source is not None:
-                self._read_more_events(context)
-            if not events:
-                self.root = context._root
-                raise StopIteration
-        item = events[context._event_index]
-        context._event_index += 1
-        return item
-
-    cdef _read_more_events(self, _IterparseContext context):
-        cdef stdio.FILE* c_stream
-        cdef char* c_data
-        cdef Py_ssize_t c_data_len
-        cdef xmlparser.xmlParserCtxt* pctxt = context._c_ctxt
-        cdef int error = 0, done = 0
-
-        events = context._events
-        c_stream = python.PyFile_AsFile(self._source)
-        while not events:
-            if c_stream is NULL:
-                data = self._source.read(__ITERPARSE_CHUNK_SIZE)
-                if not isinstance(data, bytes):
+        try:
+            return next(self._events)
+        except StopIteration:
+            pass
+        context = <_SaxParserContext>self._parser._getPushParserContext()
+        if self._source is not None:
+            done = False
+            while not done:
+                try:
+                    done = self._read_more_events(context)
+                    return next(self._events)
+                except StopIteration:
+                    pass  # no events yet
+                except Exception, e:
+                    self._error = e
                     self._close_source()
-                    raise TypeError("reading file objects must return bytes objects")
-                c_data_len = python.PyBytes_GET_SIZE(data)
-                c_data = _cstr(data)
-                done = (c_data_len == 0)
-                error = self._parse_chunk(pctxt, c_data, c_data_len, done)
-            else:
-                if self._buffer is None:
-                    self._buffer = python.PyBytes_FromStringAndSize(
-                        NULL, __ITERPARSE_CHUNK_SIZE)
-                c_data = _cstr(self._buffer)
-                with nogil:
-                    c_data_len = stdio.fread(
-                        c_data, 1, __ITERPARSE_CHUNK_SIZE, c_stream)
-                    if c_data_len < __ITERPARSE_CHUNK_SIZE:
-                        if stdio.ferror(c_stream):
-                            error = 1
-                        elif stdio.feof(c_stream):
-                            done = 1
-                if not error:
-                    error = self._parse_chunk(
-                        pctxt, c_data, c_data_len, done)
-            if error or done:
-                self._close_source()
-                self._buffer = None
-                break
+                    try:
+                        return next(self._events)
+                    except StopIteration:
+                        break
+        # nothing left to read or return
+        if self._error is not None:
+            error = self._error
+            self._error = None
+            raise error
+        if (context._validator is not None
+                and not context._validator.isvalid()):
+            _raiseParseError(context._c_ctxt, self._filename,
+                             context._error_log)
+        # no errors => all done
+        raise StopIteration
 
-        if not error and context._validator is not None:
-            error = not context._validator.isvalid()
-        if error:
-            del events[:]
-            context._assureDocGetsFreed()
-            _raiseParseError(pctxt, self._filename, context._error_log)
+    @cython.final
+    cdef bint _read_more_events(self, _SaxParserContext context) except -123:
+        data = self._source.read(__ITERPARSE_CHUNK_SIZE)
+        if not isinstance(data, bytes):
+            self._close_source()
+            raise TypeError("reading file objects must return bytes objects")
+        if not data:
+            try:
+                self.root = self._parser.close()
+            finally:
+                self._close_source()
+            return True
+        self._parser.feed(data)
+        return False
 
 
 cdef class iterwalk:
@@ -557,7 +203,7 @@ cdef class iterwalk:
         cdef _Element root
         cdef int ns_count
         root = _rootNodeOrRaise(element_or_tree)
-        self._event_filter = _buildIterparseEventFilter(events)
+        self._event_filter = _buildParseEventFilter(events)
         if tag is None or tag == '*':
             self._matcher = None
         else:
@@ -606,10 +252,10 @@ cdef class iterwalk:
                         break
                     next_node = node.getnext()
             if next_node is not None:
-                if self._event_filter & (ITERPARSE_FILTER_START |
-                                         ITERPARSE_FILTER_START_NS):
+                if self._event_filter & (PARSE_EVENT_FILTER_START |
+                                         PARSE_EVENT_FILTER_START_NS):
                     ns_count = self._start_node(next_node)
-                elif self._event_filter & ITERPARSE_FILTER_END_NS:
+                elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
                     ns_count = _countNsDefs(next_node._c_node)
                 self._node_stack.append( (next_node, ns_count) )
                 self._index += 1
@@ -619,13 +265,13 @@ cdef class iterwalk:
 
     cdef int _start_node(self, _Element node):
         cdef int ns_count
-        if self._event_filter & ITERPARSE_FILTER_START_NS:
+        if self._event_filter & PARSE_EVENT_FILTER_START_NS:
             ns_count = _appendStartNsEvents(node._c_node, self._events)
-        elif self._event_filter & ITERPARSE_FILTER_END_NS:
+        elif self._event_filter & PARSE_EVENT_FILTER_END_NS:
             ns_count = _countNsDefs(node._c_node)
         else:
             ns_count = 0
-        if self._event_filter & ITERPARSE_FILTER_START:
+        if self._event_filter & PARSE_EVENT_FILTER_START:
             if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"start", node) )
         return ns_count
@@ -634,11 +280,36 @@ cdef class iterwalk:
         cdef _Element node
         cdef int i, ns_count
         node, ns_count = self._node_stack.pop()
-        if self._event_filter & ITERPARSE_FILTER_END:
+        if self._event_filter & PARSE_EVENT_FILTER_END:
             if self._matcher is None or self._matcher.matches(node._c_node):
                 self._events.append( (u"end", node) )
-        if self._event_filter & ITERPARSE_FILTER_END_NS:
+        if self._event_filter & PARSE_EVENT_FILTER_END_NS:
             event = (u"end-ns", None)
             for i from 0 <= i < ns_count:
                 self._events.append(event)
         return node
+
+
+cdef int _countNsDefs(xmlNode* c_node):
+    cdef xmlNs* c_ns
+    cdef int count
+    count = 0
+    c_ns = c_node.nsDef
+    while c_ns is not NULL:
+        count += 1
+        c_ns = c_ns.next
+    return count
+
+
+cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
+    cdef xmlNs* c_ns
+    cdef int count
+    count = 0
+    c_ns = c_node.nsDef
+    while c_ns is not NULL:
+        ns_tuple = (funicode(c_ns.prefix) if c_ns.prefix is not NULL else '',
+                    funicode(c_ns.href))
+        event_list.append( (u"start-ns", ns_tuple) )
+        count += 1
+        c_ns = c_ns.next
+    return count
