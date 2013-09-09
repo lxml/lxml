@@ -18,7 +18,7 @@ if this_dir not in sys.path:
 from common_imports import StringIO, BytesIO, etree
 from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
 from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
-from common_imports import _str, _bytes, unicode
+from common_imports import _str, _bytes, unicode, next
 
 if cElementTree is not None and (CET_VERSION <= (1,0,7) or sys.version_info >= (3,3)):
     cElementTree = None
@@ -3893,9 +3893,183 @@ class _ETreeTestCaseBase(HelperTestCase):
         self.assertEqual("value", mapping["key"])
 
 
+class _XMLPullParserTest(unittest.TestCase):
+    etree = None
+
+    def _feed(self, parser, data, chunk_size=None):
+        if chunk_size is None:
+            parser.feed(data)
+        else:
+            for i in range(0, len(data), chunk_size):
+                parser.feed(data[i:i+chunk_size])
+
+    def _close_and_get_root(self, parser):
+        root = parser.close()
+        if root is None and 'ElementTree' in self.etree.__name__:
+            root = parser.root
+        return root
+
+    def assert_event_tags(self, parser, expected):
+        events = parser.read_events()
+        self.assertEqual([(action, elem.tag) for action, elem in events],
+                         expected)
+
+    def test_simple_xml(self):
+        for chunk_size in (None, 1, 5):
+            #with self.subTest(chunk_size=chunk_size):
+                parser = self.etree.XMLPullParser()
+                self.assert_event_tags(parser, [])
+                self._feed(parser, "<!-- comment -->\n", chunk_size)
+                self.assert_event_tags(parser, [])
+                self._feed(parser,
+                           "<root>\n  <element key='value'>text</element",
+                           chunk_size)
+                self.assert_event_tags(parser, [])
+                self._feed(parser, ">\n", chunk_size)
+                self.assert_event_tags(parser, [('end', 'element')])
+                self._feed(parser, "<element>text</element>tail\n", chunk_size)
+                self._feed(parser, "<empty-element/>\n", chunk_size)
+                self.assert_event_tags(parser, [
+                    ('end', 'element'),
+                    ('end', 'empty-element'),
+                    ])
+                self._feed(parser, "</root>\n", chunk_size)
+                self.assert_event_tags(parser, [('end', 'root')])
+                # Closing sets the `root` attribute
+                #self.assertIs(parser.root, None)
+                root = self._close_and_get_root(parser)
+                self.assertEqual(root.tag, 'root')
+
+    def test_feed_while_iterating(self):
+        parser = self.etree.XMLPullParser()
+        it = parser.read_events()
+        self._feed(parser, "<root>\n  <element key='value'>text</element>\n")
+        action, elem = next(it)
+        self.assertEqual((action, elem.tag), ('end', 'element'))
+        self._feed(parser, "</root>\n")
+        action, elem = next(it)
+        self.assertEqual((action, elem.tag), ('end', 'root'))
+        with self.assertRaises(StopIteration):
+            next(it)
+
+    def test_simple_xml_with_ns(self):
+        parser = self.etree.XMLPullParser()
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<!-- comment -->\n")
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<root xmlns='namespace'>\n")
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<element key='value'>text</element")
+        self.assert_event_tags(parser, [])
+        self._feed(parser, ">\n")
+        self.assert_event_tags(parser, [('end', '{namespace}element')])
+        self._feed(parser, "<element>text</element>tail\n")
+        self._feed(parser, "<empty-element/>\n")
+        self.assert_event_tags(parser, [
+            ('end', '{namespace}element'),
+            ('end', '{namespace}empty-element'),
+            ])
+        self._feed(parser, "</root>\n")
+        self.assert_event_tags(parser, [('end', '{namespace}root')])
+        # Closing sets the `root` attribute
+        #self.assertIs(parser.root, None)
+        root = self._close_and_get_root(parser)
+        self.assertEqual(root.tag, '{namespace}root')
+
+    def test_ns_events(self):
+        parser = self.etree.XMLPullParser(events=('start-ns', 'end-ns'))
+        self._feed(parser, "<!-- comment -->\n")
+        self._feed(parser, "<root xmlns='namespace'>\n")
+        self.assertEqual(
+            list(parser.read_events()),
+            [('start-ns', ('', 'namespace'))])
+        self._feed(parser, "<element key='value'>text</element")
+        self._feed(parser, ">\n")
+        self._feed(parser, "<element>text</element>tail\n")
+        self._feed(parser, "<empty-element/>\n")
+        self._feed(parser, "</root>\n")
+        self.assertEqual(list(parser.read_events()), [('end-ns', None)])
+        parser.close()
+
+    def test_events(self):
+        parser = self.etree.XMLPullParser(events=())
+        self._feed(parser, "<root/>\n")
+        self.assert_event_tags(parser, [])
+
+        parser = self.etree.XMLPullParser(events=('start', 'end'))
+        self._feed(parser, "<!-- comment -->\n")
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<root>\n")
+        self.assert_event_tags(parser, [('start', 'root')])
+        self._feed(parser, "<element key='value'>text</element")
+        self.assert_event_tags(parser, [('start', 'element')])
+        self._feed(parser, ">\n")
+        self.assert_event_tags(parser, [('end', 'element')])
+        self._feed(parser,
+                   "<element xmlns='foo'>text<empty-element/></element>tail\n")
+        self.assert_event_tags(parser, [
+            ('start', '{foo}element'),
+            ('start', '{foo}empty-element'),
+            ('end', '{foo}empty-element'),
+            ('end', '{foo}element'),
+            ])
+        self._feed(parser, "</root>")
+        root = self._close_and_get_root(parser)
+        #self.assertIs(parser.root, None)
+        self.assert_event_tags(parser, [('end', 'root')])
+        self.assertEqual(root.tag, 'root')
+
+        parser = self.etree.XMLPullParser(events=('start',))
+        self._feed(parser, "<!-- comment -->\n")
+        self.assert_event_tags(parser, [])
+        self._feed(parser, "<root>\n")
+        self.assert_event_tags(parser, [('start', 'root')])
+        self._feed(parser, "<element key='value'>text</element")
+        self.assert_event_tags(parser, [('start', 'element')])
+        self._feed(parser, ">\n")
+        self.assert_event_tags(parser, [])
+        self._feed(parser,
+                   "<element xmlns='foo'>text<empty-element/></element>tail\n")
+        self.assert_event_tags(parser, [
+            ('start', '{foo}element'),
+            ('start', '{foo}empty-element'),
+            ])
+        self._feed(parser, "</root>")
+        root = self._close_and_get_root(parser)
+        self.assertEqual(root.tag, 'root')
+
+    def test_events_sequence(self):
+        # Test that events can be some sequence that's not just a tuple or list
+        eventset = set(['end', 'start'])
+        parser = self.etree.XMLPullParser(events=eventset)
+        self._feed(parser, "<foo>bar</foo>")
+        self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
+
+        class DummyIter:
+            def __init__(self):
+                self.events = iter(['start', 'end', 'start-ns'])
+            def __iter__(self):
+                return self
+            def __next__(self):
+                return next(self.events)
+            next = __next__
+
+        parser = self.etree.XMLPullParser(events=DummyIter())
+        self._feed(parser, "<foo>bar</foo>")
+        self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
+
+    def test_unknown_event(self):
+        with self.assertRaises(ValueError):
+            self.etree.XMLPullParser(events=('start', 'end', 'bogus'))
+
+
 if etree:
     class ETreeTestCase(_ETreeTestCaseBase):
         etree = etree
+
+    class ETreePullTestCase(_XMLPullParserTest):
+        etree = etree
+
 
 if ElementTree:
     class ElementTreeTestCase(_ETreeTestCaseBase):
@@ -3914,6 +4088,10 @@ if ElementTree:
         ElementTreeTestCase,
         ElementTreeTestCase.required_versions_ET, ET_VERSION)
 
+    class ElementTreePullTestCase(_XMLPullParserTest):
+        etree = ElementTree
+
+
 if cElementTree:
     class CElementTreeTestCase(_ETreeTestCaseBase):
         etree = cElementTree
@@ -3922,12 +4100,16 @@ if cElementTree:
         CElementTreeTestCase,
         CElementTreeTestCase.required_versions_cET, CET_VERSION)
 
+
 def test_suite():
     suite = unittest.TestSuite()
     if etree:
         suite.addTests([unittest.makeSuite(ETreeTestCase)])
+        suite.addTests([unittest.makeSuite(ETreePullTestCase)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
+        if hasattr(ElementTree, 'XMLPullParser'):
+            suite.addTests([unittest.makeSuite(ElementTreePullTestCase)])
     if cElementTree:
         suite.addTests([unittest.makeSuite(CElementTreeTestCase)])
     return suite

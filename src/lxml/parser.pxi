@@ -774,7 +774,12 @@ cdef class _BaseParser:
             self._default_encoding = encoding
 
     cdef _collectEvents(self, event_types, tag):
-        self._events_to_collect = (tuple(set(event_types)), tag)
+        if event_types is None:
+            event_types = ()
+        else:
+            event_types = tuple(set(event_types))
+            _buildParseEventFilter(event_types)  # purely for validation
+        self._events_to_collect = (event_types, tag)
 
     cdef _ParserContext _getParserContext(self):
         cdef xmlparser.xmlParserCtxt* pctxt
@@ -1342,13 +1347,19 @@ cdef class XMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata,
                              target, None, encoding)
 
+
 cdef class XMLPullParser(XMLParser):
     """
     XML parser that collects parse events in an iterator.
     """
-    def __init__(self, events, *, tag=None, **kwargs):
+    def __init__(self, events=None, *, tag=None, **kwargs):
         XMLParser.__init__(self, **kwargs)
+        if events is None:
+            events = ('end',)
         self._collectEvents(events, tag)
+
+    def read_events(self):
+        return (<_SaxParserContext?>self._getPushParserContext()).events_iterator
 
 
 cdef class ETCompatXMLParser(XMLParser):
@@ -1481,6 +1492,7 @@ cdef class HTMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata,
                              target, None, encoding)
 
+
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()
 
@@ -1489,9 +1501,14 @@ cdef class HTMLPullParser(HTMLParser):
     """
     HTML parser that collects parse events in an iterator.
     """
-    def __init__(self, events, *, tag=None, **kwargs):
+    def __init__(self, events=None, *, tag=None, **kwargs):
         HTMLParser.__init__(self, **kwargs)
+        if events is None:
+            events = ('end',)
         self._collectEvents(events, tag)
+
+    def read_events(self):
+        return (<_SaxParserContext?>self._getPushParserContext()).events_iterator
 
 
 ############################################################

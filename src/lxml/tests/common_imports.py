@@ -76,6 +76,16 @@ except NameError:
 else:
     locals()['sorted'] = sorted
 
+
+try:
+    next
+except NameError:
+    def next(it):
+        return it.next()
+else:
+    locals()['next'] = next
+
+
 try:
     import pytest
 except ImportError:

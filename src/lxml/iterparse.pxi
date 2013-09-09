@@ -96,8 +96,7 @@ cdef class iterparse:
                 target=None,  # TODO
                 compact=compact)
 
-        context = <_SaxParserContext?>parser._getPushParserContext()
-        self._events = context.events_iterator
+        self._events = parser.read_events()
         self._parser = parser
 
         if not hasattr(source, 'read'):
