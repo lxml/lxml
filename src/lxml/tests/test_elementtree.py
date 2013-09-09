@@ -3949,8 +3949,12 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "</root>\n")
         action, elem = next(it)
         self.assertEqual((action, elem.tag), ('end', 'root'))
-        with self.assertRaises(StopIteration):
+        try:
             next(it)
+        except StopIteration:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
 
     def test_simple_xml_with_ns(self):
         parser = self.etree.XMLPullParser()
@@ -4059,8 +4063,12 @@ class _XMLPullParserTest(unittest.TestCase):
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
 
     def test_unknown_event(self):
-        with self.assertRaises(ValueError):
+        try:
             self.etree.XMLPullParser(events=('start', 'end', 'bogus'))
+        except ValueError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
 
 
 if etree:
