@@ -21,6 +21,9 @@ Bugs fixed
 Other changes
 -------------
 
+* ``iterparse()`` was rewritten to use the new ``*PullParser``
+  classes internally.
+
 
 3.2.3 (2013-07-28)
 ==================
