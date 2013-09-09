@@ -3906,7 +3906,8 @@ class _XMLPullParserTest(unittest.TestCase):
     def _close_and_get_root(self, parser):
         root = parser.close()
         if root is None and 'ElementTree' in self.etree.__name__:
-            root = parser.root
+            # ElementTree's API is rather weird in Py3.4 alpha
+            root = parser._root
         return root
 
     def assert_event_tags(self, parser, expected):
