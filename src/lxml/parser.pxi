@@ -1349,8 +1349,19 @@ cdef class XMLParser(_FeedParser):
 
 
 cdef class XMLPullParser(XMLParser):
-    """
+    """XMLPullParser(self, events=None, *, tag=None, **kwargs)
+
     XML parser that collects parse events in an iterator.
+
+    The collected events are the same as for iterparse(), but the
+    parser itself is non-blocking in the sense that it receives
+    data chunks incrementally through its .feed() method, instead
+    of reading them directly from a file(-like) object all by itself.
+
+    By default, it collects Element end events.  To change that,
+    pass any subset of the available events into the ``events``
+    argument: ``'start'``, ``'end'``, ``'start-ns'``,
+    ``'end-ns'``, ``'comment'``, ``'pi'``.
     """
     def __init__(self, events=None, *, tag=None, **kwargs):
         XMLParser.__init__(self, **kwargs)
@@ -1498,8 +1509,19 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 
 
 cdef class HTMLPullParser(HTMLParser):
-    """
+    """HTMLPullParser(self, events=None, *, tag=None, **kwargs)
+
     HTML parser that collects parse events in an iterator.
+
+    The collected events are the same as for iterparse(), but the
+    parser itself is non-blocking in the sense that it receives
+    data chunks incrementally through its .feed() method, instead
+    of reading them directly from a file(-like) object all by itself.
+
+    By default, it collects Element end events.  To change that,
+    pass any subset of the available events into the ``events``
+    argument: ``'start'``, ``'end'``, ``'start-ns'``,
+    ``'end-ns'``, ``'comment'``, ``'pi'``.
     """
     def __init__(self, events=None, *, tag=None, **kwargs):
         HTMLParser.__init__(self, **kwargs)
