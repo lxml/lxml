@@ -1261,6 +1261,8 @@ cdef int _appendSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling behind an element.
     """
     c_node = sibling._c_node
+    if element._c_node is c_node:
+        return 0  # nothing to do
     c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
@@ -1275,6 +1277,8 @@ cdef int _prependSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling before an element.
     """
     c_node = sibling._c_node
+    if element._c_node is c_node:
+        return 0  # nothing to do
     c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
