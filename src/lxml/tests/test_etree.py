@@ -1420,11 +1420,37 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
 
-    def test_addnext_root(self):
+    def test_addprevious_noops(self):
         Element = self.etree.Element
-        a = Element('a')
-        b = Element('b')
-        self.assertRaises(TypeError, a.addnext, b)
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(root, 'b')
+        a.addprevious(a)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
+        b.addprevious(b)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
+        b.addprevious(a)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
+
+    def test_addnext_noops(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(root, 'b')
+        a.addnext(a)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
+        b.addnext(b)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
+        a.addnext(b)
+        self.assertEqual('a', root[0].tag)
+        self.assertEqual('b', root[1].tag)
 
     def test_addnext_root(self):
         Element = self.etree.Element
