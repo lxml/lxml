@@ -116,7 +116,7 @@ class ETreeDtdTestCase(HelperTestCase):
             "valueB",
             root[0].get("default"))
 
-    @skipIf(etree.LIBXML_VERSION == (2,9,0),
+    @skipIf(etree.LIBXML_VERSION[:2] == (2, 9),
             "DTD loading is broken for incremental parsing in libxml2 2.9.0")
     def test_iterparse_file_dtd(self):
         iterparse = etree.iterparse
