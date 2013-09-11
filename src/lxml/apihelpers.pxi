@@ -1214,9 +1214,8 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 cdef int _appendChild(_Element parent, _Element child) except -1:
     u"""Append a new child to a parent element.
     """
-    cdef xmlNode* c_next
-    cdef xmlNode* c_node = child._c_node
-    cdef xmlDoc* c_source_doc = c_node.doc
+    c_node = child._c_node
+    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1230,10 +1229,8 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
 cdef int _prependChild(_Element parent, _Element child) except -1:
     u"""Prepend a new child to a parent element.
     """
-    cdef xmlNode* c_next
-    cdef xmlNode* c_child
-    cdef xmlNode* c_node = child._c_node
-    cdef xmlDoc* c_source_doc = c_node.doc
+    c_node = child._c_node
+    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1251,9 +1248,8 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
     u"""Append a new child to a parent element.
     """
-    cdef xmlNode* c_node = sibling._c_node
-    cdef xmlDoc* c_source_doc = c_node.doc
-    cdef xmlNode* c_next
+    c_node = sibling._c_node
+    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1266,9 +1262,8 @@ cdef int _appendSibling(_Element element, _Element sibling) except -1:
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
     u"""Append a new child to a parent element.
     """
-    cdef xmlNode* c_node = sibling._c_node
-    cdef xmlDoc* c_source_doc = c_node.doc
-    cdef xmlNode* c_next
+    c_node = sibling._c_node
+    c_source_doc = c_node.doc
     # store possible text node
     c_next = c_node.next
     # move node itself
