@@ -1382,6 +1382,18 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError, root.extend, [Element('one'), None])
         self.assertEqual('one', root[0].tag)
 
+    def test_append_recursive_error(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        self.assertRaises(ValueError, root.append, root)
+        child = SubElement(root, 'child')
+        self.assertRaises(ValueError, child.append, root)
+        child2 = SubElement(child, 'child2')
+        self.assertRaises(ValueError, child2.append, root)
+        self.assertRaises(ValueError, child2.append, child)
+        self.assertEqual('child2', root[0][0].tag)
+
     def test_addnext(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
