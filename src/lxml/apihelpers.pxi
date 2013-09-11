@@ -1237,7 +1237,7 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     moveNodeToDocument(parent._doc, c_source_doc, c_node)
 
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
-    u"""Append a new child to a parent element.
+    u"""Add a new sibling behind an element.
     """
     c_node = sibling._c_node
     c_source_doc = c_node.doc
@@ -1251,7 +1251,7 @@ cdef int _appendSibling(_Element element, _Element sibling) except -1:
     moveNodeToDocument(element._doc, c_source_doc, c_node)
 
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
-    u"""Append a new child to a parent element.
+    u"""Add a new sibling before an element.
     """
     c_node = sibling._c_node
     c_source_doc = c_node.doc
