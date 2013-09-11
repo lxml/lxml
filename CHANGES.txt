@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* Raise ``ValueError`` when trying to append an Element to itself or
+  to one of its own descendants.
+
 * LP#1206077: htmldiff discarded whitespace from the output.
 
 * Compressed plain-text serialisation to file-like objects was broken.
