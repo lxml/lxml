@@ -1195,6 +1195,12 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     """
     c_node = child._c_node
     c_source_doc = c_node.doc
+    # prevent cycles
+    c_parent = parent._c_node
+    while c_parent:
+        if c_parent is c_node:
+            raise ValueError("cannot append parent to itself")
+        c_parent = c_parent.parent
     # store possible text node
     c_next = c_node.next
     # move node itself
@@ -1210,6 +1216,12 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     """
     c_node = child._c_node
     c_source_doc = c_node.doc
+    # prevent cycles
+    c_parent = parent._c_node
+    while c_parent:
+        if c_parent is c_node:
+            raise ValueError("cannot append parent to itself")
+        c_parent = c_parent.parent
     # store possible text node
     c_next = c_node.next
     # move node itself
