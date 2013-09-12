@@ -105,7 +105,7 @@ cdef extern from "libxml/parser.h":
         bint disableSAX
         int errNo
         bint replaceEntities
-        bint loadsubset
+        int loadsubset  # != 0 if enabled, int value == why
         bint validate
         xmlError lastError
         xmlNode* node
