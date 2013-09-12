@@ -118,14 +118,26 @@ class ETreeDtdTestCase(HelperTestCase):
 
     @skipIf(etree.LIBXML_VERSION == (2, 9, 0),
             "DTD loading is broken for incremental parsing in libxml2 2.9.0")
-    def test_iterparse_file_dtd(self):
+    def test_iterparse_file_dtd_start(self):
         iterparse = etree.iterparse
-        iterator = iterparse(fileInTestDir("test.xml"), events=("start",),
+        iterator = iterparse(fileInTestDir("test.xml"), events=('start',),
                              attribute_defaults=True)
         attributes = [ element.get("default")
                        for event, element in iterator ]
         self.assertEqual(
             ["valueA", "valueB"],
+            attributes)
+
+    @skipIf(etree.LIBXML_VERSION == (2, 9, 0),
+            "DTD loading is broken for incremental parsing in libxml2 2.9.0")
+    def test_iterparse_file_dtd_end(self):
+        iterparse = etree.iterparse
+        iterator = iterparse(fileInTestDir("test.xml"), events=('end',),
+                             attribute_defaults=True)
+        attributes = [ element.get("default")
+                       for event, element in iterator ]
+        self.assertEqual(
+            ["valueB", "valueA"],
             attributes)
 
     def test_dtd_attrs(self):

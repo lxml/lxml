@@ -52,6 +52,7 @@ cdef class iterparse:
     cdef object _events
     cdef readonly object root
     cdef object _source
+    cdef object _filename
     cdef object _error
     cdef bint _close_source_after_read
 
@@ -61,6 +62,16 @@ cdef class iterparse:
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, huge_tree=False, XMLSchema schema=None):
+        if not hasattr(source, 'read'):
+            self._filename = source
+            if not python.IS_PYTHON3:
+                source = _encodeFilename(source)
+            source = open(source, 'rb')
+            self._close_source_after_read = True
+        else:
+            self._filename = _getFilenameForFile(source)
+            self._close_source_after_read = False
+
         if html:
             # make sure we're not looking for namespaces
             events = tuple([ event for event in events
@@ -68,6 +79,7 @@ cdef class iterparse:
             parser = HTMLPullParser(
                 events,
                 tag=tag,
+                base_url=self._filename,
                 encoding=encoding,
                 remove_blank_text=remove_blank_text,
                 remove_comments=remove_comments,
@@ -81,6 +93,7 @@ cdef class iterparse:
             parser = XMLPullParser(
                 events,
                 tag=tag,
+                base_url=self._filename,
                 encoding=encoding,
                 attribute_defaults=attribute_defaults,
                 dtd_validation=dtd_validation,
@@ -98,17 +111,6 @@ cdef class iterparse:
 
         self._events = parser.read_events()
         self._parser = parser
-
-        if not hasattr(source, 'read'):
-            filename = _encodeFilename(source)
-            if not python.IS_PYTHON3:
-                source = filename
-            source = open(source, 'rb')
-            self._close_source_after_read = True
-        else:
-            filename = _encodeFilename(_getFilenameForFile(source))
-            self._close_source_after_read = False
-
         self._source = source
 
     property error_log:

@@ -739,21 +739,19 @@ cdef class _BaseParser:
     cdef bint _remove_pis
     cdef bint _strip_cdata
     cdef XMLSchema _schema
-    cdef object _filename
+    cdef bytes _filename
     cdef readonly object target
     cdef object _default_encoding
     cdef tuple _events_to_collect  # (event_types, tag)
 
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
-                 remove_comments, remove_pis, strip_cdata, target,
-                 filename, encoding):
+                 remove_comments, remove_pis, strip_cdata, target, encoding):
         cdef tree.xmlCharEncodingHandler* enchandler
         cdef int c_encoding
         if not isinstance(self, (XMLParser, HTMLParser)):
             raise TypeError, u"This class cannot be instantiated"
 
         self._parse_options = parse_options
-        self._filename = filename
         self.target = target
         self._for_html = for_html
         self._remove_comments = remove_comments
@@ -772,6 +770,9 @@ cdef class _BaseParser:
                 raise LookupError, u"unknown encoding: '%s'" % encoding
             tree.xmlCharEncCloseFunc(enchandler)
             self._default_encoding = encoding
+
+    cdef _setBaseURL(self, base_url):
+        self._filename = _encodeFilename(base_url)
 
     cdef _collectEvents(self, event_types, tag):
         if event_types is None:
@@ -1158,13 +1159,16 @@ cdef class _FeedParser(_BaseParser):
             context.prepare()
             self._feed_parser_running = 1
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
+            c_filename = (_cstr(self._filename)
+                          if self._filename is not None else NULL)
             if self._for_html:
                 error = _htmlCtxtResetPush(
-                    pctxt, NULL, 0, c_encoding, self._parse_options)
+                    pctxt, NULL, 0, c_filename, c_encoding,
+                    self._parse_options)
             else:
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
-                    pctxt, NULL, 0, NULL, c_encoding)
+                    pctxt, NULL, 0, c_filename, c_encoding)
 
         #print pctxt.charset, 'NONE' if c_encoding is NULL else c_encoding
 
@@ -1232,7 +1236,8 @@ cdef class _FeedParser(_BaseParser):
 
 cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
                              const_char* c_data, int buffer_len,
-                             const_char* c_encoding, int parse_options) except -1:
+                             const_char* c_filename, const_char* c_encoding,
+                             int parse_options) except -1:
     cdef xmlparser.xmlParserInput* c_input_stream
     # libxml2 crashes if spaceTab is not initialised
     if _LIBXML_VERSION_INT < 20629 and c_ctxt.spaceTab is NULL:
@@ -1240,7 +1245,8 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
         c_ctxt.spaceMax = 10
 
     # libxml2 lacks an HTML push parser setup function
-    error = xmlparser.xmlCtxtResetPush(c_ctxt, NULL, 0, NULL, c_encoding)
+    error = xmlparser.xmlCtxtResetPush(
+        c_ctxt, NULL, 0, c_filename, c_encoding)
     if error:
         return error
 
@@ -1345,7 +1351,7 @@ cdef class XMLParser(_FeedParser):
 
         _BaseParser.__init__(self, parse_options, 0, schema,
                              remove_comments, remove_pis, strip_cdata,
-                             target, None, encoding)
+                             target, encoding)
 
 
 cdef class XMLPullParser(XMLParser):
@@ -1362,11 +1368,15 @@ cdef class XMLPullParser(XMLParser):
     pass any subset of the available events into the ``events``
     argument: ``'start'``, ``'end'``, ``'start-ns'``,
     ``'end-ns'``, ``'comment'``, ``'pi'``.
+
+    To support loading external dependencies relative to the input
+    source, you can pass the ``base_url``.
     """
-    def __init__(self, events=None, *, tag=None, **kwargs):
+    def __init__(self, events=None, *, tag=None, base_url=None, **kwargs):
         XMLParser.__init__(self, **kwargs)
         if events is None:
             events = ('end',)
+        self._setBaseURL(base_url)
         self._collectEvents(events, tag)
 
     def read_events(self):
@@ -1501,7 +1511,7 @@ cdef class HTMLParser(_FeedParser):
 
         _BaseParser.__init__(self, parse_options, 1, schema,
                              remove_comments, remove_pis, strip_cdata,
-                             target, None, encoding)
+                             target, encoding)
 
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
@@ -1509,7 +1519,7 @@ __DEFAULT_HTML_PARSER = HTMLParser()
 
 
 cdef class HTMLPullParser(HTMLParser):
-    """HTMLPullParser(self, events=None, *, tag=None, **kwargs)
+    """HTMLPullParser(self, events=None, *, tag=None, base_url=None, **kwargs)
 
     HTML parser that collects parse events in an iterator.
 
@@ -1522,11 +1532,15 @@ cdef class HTMLPullParser(HTMLParser):
     pass any subset of the available events into the ``events``
     argument: ``'start'``, ``'end'``, ``'start-ns'``,
     ``'end-ns'``, ``'comment'``, ``'pi'``.
+
+    To support loading external dependencies relative to the input
+    source, you can pass the ``base_url``.
     """
-    def __init__(self, events=None, *, tag=None, **kwargs):
+    def __init__(self, events=None, *, tag=None, base_url=None, **kwargs):
         HTMLParser.__init__(self, **kwargs)
         if events is None:
             events = ('end',)
+        self._setBaseURL(base_url)
         self._collectEvents(events, tag)
 
     def read_events(self):
