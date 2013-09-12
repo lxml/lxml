@@ -125,7 +125,7 @@ cdef class _SaxParserContext(_ParserContext):
         # doctype propagation is always required for entity replacement
         self._origSaxDoctype = sax.internalSubset
         if self._target._sax_event_filter & SAX_EVENT_DOCTYPE:
-            sax.internalSubset = _handleSaxDoctype
+            sax.internalSubset = _handleSaxTargetDoctype
 
         self._origSaxPI = sax.processingInstruction = NULL
         if self._target._sax_event_filter & SAX_EVENT_PI:
@@ -133,7 +133,7 @@ cdef class _SaxParserContext(_ParserContext):
 
         self._origSaxComment = sax.comment = NULL
         if self._target._sax_event_filter & SAX_EVENT_COMMENT:
-            sax.comment = _handleSaxComment
+            sax.comment = _handleSaxTargetComment
 
         # enforce entity replacement
         sax.reference = NULL
@@ -166,7 +166,7 @@ cdef class _SaxParserContext(_ParserContext):
 
         self._origSaxComment = sax.comment
         if self._event_filter & PARSE_EVENT_FILTER_COMMENT:
-            sax.comment = <xmlparser.commentSAXFunc>_handleSaxCommentEvent
+            sax.comment = <xmlparser.commentSAXFunc>_handleSaxComment
 
         self._origSaxPI = sax.processingInstruction
         if self._event_filter & PARSE_EVENT_FILTER_PI:
@@ -476,9 +476,9 @@ cdef void _handleSaxData(void* ctxt, const_xmlChar* c_data, int data_len) with g
         context._handleSaxException(c_ctxt)
 
 
-cdef void _handleSaxDoctype(void* ctxt, const_xmlChar* c_name,
-                            const_xmlChar* c_public,
-                            const_xmlChar* c_system) with gil:
+cdef void _handleSaxTargetDoctype(void* ctxt, const_xmlChar* c_name,
+                                  const_xmlChar* c_public,
+                                  const_xmlChar* c_system) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     context = <_SaxParserContext>c_ctxt._private
@@ -534,7 +534,7 @@ cdef void _handleSaxPIEvent(void* ctxt, const_xmlChar* target,
         context.pushEvent('pi', c_node)
 
 
-cdef void _handleSaxComment(void* ctxt, const_xmlChar* c_data) with gil:
+cdef void _handleSaxTargetComment(void* ctxt, const_xmlChar* c_data) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     if c_ctxt._private is NULL:
@@ -548,7 +548,7 @@ cdef void _handleSaxComment(void* ctxt, const_xmlChar* c_data) with gil:
         context._handleSaxException(c_ctxt)
 
 
-cdef void _handleSaxCommentEvent(void* ctxt, const_xmlChar* text) with gil:
+cdef void _handleSaxComment(void* ctxt, const_xmlChar* text) with gil:
     # can only be called when collecting comment events
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
     context = <_SaxParserContext>c_ctxt._private
