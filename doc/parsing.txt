@@ -810,7 +810,30 @@ The target is generally free to decide how it wants to create an XML tree
 or whatever else it wants to make of the parser callbacks.  In many cases,
 however, you will want to make your custom target inherit from the
 ``TreeBuilder`` class in order to have it build a tree that you can process
-normally.
+normally.  The ``start()`` and ``.end()`` methods of ``TreeBuilder`` return
+the Element object that was created, so you can override them and modify
+the input or output according to your needs.  Here is an example that
+filters attributes before they are being added to the tree:
+
+.. sourcecode:: pycon
+
+  >>> class AttributeFilter(etree.TreeBuilder):
+  ...     def start(self, tag, attrib):
+  ...         attrib = dict(attrib)
+  ...         if 'evil' in attrib:
+  ...             del attrib['evil']
+  ...         return super(AttributeFilter, self).start(tag, attrib)
+
+  >>> parser = etree.XMLPullParser(target=AttributeFilter())
+  >>> parser.feed('<root><child1 test="123" /><child2 evil="YES" /></root>')
+
+  >>> for action, element in parser.read_events():
+  ...     print('%s: %s(%r)' % (action, element.tag, element.attrib))
+  end: child1({'test': '123'})
+  end: child2({})
+  end: root({})
+
+  >>> root = parser.close()
 
 
 iterparse and iterwalk
