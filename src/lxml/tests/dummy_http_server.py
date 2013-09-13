@@ -35,6 +35,7 @@ def webserver(app, port=0, host=None):
         yield 'http://%s:%s/' % (host, port)  # yield control to 'with' body
     finally:
         server.shutdown()
+        server.server_close()
 
 
 try:
