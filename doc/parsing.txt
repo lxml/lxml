@@ -727,7 +727,7 @@ behaves exactly like ``iterparse()``, but works on Elements and ElementTrees:
 .. sourcecode:: pycon
 
 
-  >>> root = etree.XML(xml)
+  >>> root = etree.fromstring(xml)
   >>> context = etree.iterwalk(
   ...             root, events=("start", "end"), tag="element")
   >>> for action, elem in context:
@@ -760,17 +760,15 @@ function:
 
 .. sourcecode:: pycon
 
-  >>> uxml = u'<test> \uf8d1 + \uf8d2 </test>'
-  >>> uxml
-  u'<test> \uf8d1 + \uf8d2 </test>'
-  >>> root = etree.XML(uxml)
+  >>> root = etree.XML(u'<test> \uf8d1 + \uf8d2 </test>')
 
 This requires, however, that unicode strings do not specify a conflicting
 encoding themselves and thus lie about their real encoding:
 
 .. sourcecode:: pycon
 
-  >>> etree.XML( u'<?xml version="1.0" encoding="ASCII"?>\n' + uxml )
+  >>> etree.XML(u'<?xml version="1.0" encoding="ASCII"?>\n' +
+  ...           u'<test> \uf8d1 + \uf8d2 </test>')
   Traceback (most recent call last):
     ...
   ValueError: Unicode strings with encoding declaration are not supported. Please use bytes input or XML fragments without declaration.
