@@ -326,7 +326,7 @@ a target object to the parser:
 
 .. sourcecode:: pycon
 
-  >>> class EchoTarget:
+  >>> class EchoTarget(object):
   ...     def start(self, tag, attrib):
   ...         print("start %s %r" % (tag, dict(attrib)))
   ...     def end(self, tag):
@@ -378,7 +378,7 @@ that the parser can reuse them afterwards.
 
 .. sourcecode:: pycon
 
-  >>> class CollectorTarget:
+  >>> class CollectorTarget(object):
   ...     def __init__(self):
   ...         self.events = []
   ...     def start(self, tag, attrib):
@@ -503,23 +503,273 @@ of the parser forwards the return value of the target's ``close()``
 method.
 
 
+Incremental event parsing
+=========================
+
+In Python 3.4, the ``xml.etree.ElementTree`` package gained an extension
+to the feed parser interface that is implemented by the ``XMLPullParser``
+class.  It additionally allows processing parse events after each
+incremental parsing step, by calling the ``.read_events()`` method and
+iterating over the result.  This is most useful for non-blocking execution
+environments where data chunks arrive one after the other and should be
+processed as far as possible in each step.
+
+The basic usage is as follows:
+
+.. sourcecode:: pycon
+
+  >>> parser = etree.XMLPullParser(events=('start', 'end'))
+
+  >>> def print_events(parser):
+  ...     for action, element in parser.read_events():
+  ...         print('%s: %s' % (action, element.tag))
+
+  >>> parser.feed('<root>some text')
+  >>> print_events(parser)
+  start: root
+  >>> print_events(parser)    # well, no more events, as before ...
+
+  >>> parser.feed('<child><a />')
+  >>> print_events(parser)
+  start: child
+  start: a
+  end: a
+
+  >>> parser.feed('</child></roo')
+  >>> print_events(parser)
+  end: child
+  >>> parser.feed('t>')
+  >>> print_events(parser)
+  end: root
+
+Just like the normal feed parser, the ``XMLPullParser`` builds a tree in
+memory (and you should always call the ``.close()`` method when done with
+parsing):
+
+.. sourcecode:: pycon
+
+  >>> root = parser.close()
+  >>> etree.tostring(root)
+  b'<root>some text<child><a/></child></root>'
+
+However, since the parser provides incremental access to that tree,
+you can explicitly delete content that you no longer need once you
+have processed it.  Read the section on `Modifying the tree`_ below
+to see what you can do here and what kind of modifications you should
+avoid.
+
+In lxml, it is enough to call the ``.read_events()`` method once as
+the iterator it returns can be reused when new events are available.
+
+Also, as known from other iterators in lxml, you can pass a ``tag``
+argument that selects which parse events are returned by the
+``.read_events()`` iterator.
+
+
+Event types
+-----------
+
+The parse events are tuples ``(event-type, object)``.  The event types
+supported by ElementTree and lxml.etree are the strings 'start', 'end',
+'start-ns' and 'end-ns'.  The 'start' and 'end' events represent opening
+and closing elements.  They are accompanied by the respective Element
+instance.  By default, only 'end' events are generated, whereas the
+example above requested the generation of both 'start' and 'end' events.
+
+The 'start-ns' and 'end-ns' events notify about namespace declarations.
+They do not come with Elements.  Instead, the value of the 'start-ns'
+event is a tuple ``(prefix, namespaceURI)`` that designates the beginning
+of a prefix-namespace mapping.  The corresponding ``end-ns`` event does
+not have a value (None).  It is common practice to use a list as namespace
+stack and pop the last entry on the 'end-ns' event.
+
+.. sourcecode:: pycon
+
+  >>> def print_events(events):
+  ...     for action, obj in events:
+  ...         if action in ('start', 'end'):
+  ...             print("%s: %s" % (action, obj.tag))
+  ...         elif action == 'start-ns':
+  ...             print("%s: %s" % (action, obj))
+  ...         else:
+  ...             print(action)
+
+  >>> event_types = ("start", "end", "start-ns", "end-ns")
+  >>> parser = etree.XMLPullParser(event_types)
+  >>> events = parser.read_events()
+
+  >>> parser.feed('<root><element>')
+  >>> print_events(events)
+  start: root
+  start: element
+  >>> parser.feed('text</element><element>text</element>')
+  >>> print_events(events)
+  end: element
+  start: element
+  end: element
+  >>> parser.feed('<empty-element xmlns="http://testns/" />')
+  >>> print_events(events)
+  start-ns: ('', 'http://testns/')
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
+  end-ns
+  >>> parser.feed('</root>')
+  >>> print_events(events)
+  end: root
+
+
+Modifying the tree
+------------------
+
+You can modify the element and its descendants when handling the
+'end' event.  To save memory, for example, you can remove subtrees
+that are no longer needed:
+
+.. sourcecode:: pycon
+
+  >>> parser = etree.XMLPullParser()
+  >>> events = parser.read_events()
+
+  >>> parser.feed('<root><element key="value">text</element>')
+  >>> parser.feed('<element><child /></element>')
+  >>> for action, elem in events:
+  ...     print('%s: %d' % (elem.tag, len(elem)))  # processing
+  ...     elem.clear()                             # delete children
+  element: 0
+  child: 0
+  element: 1
+  >>> parser.feed('<empty-element xmlns="http://testns/" /></root>')
+  >>> for action, elem in events:
+  ...     print('%s: %d' % (elem.tag, len(elem)))  # processing
+  ...     elem.clear()                             # delete children
+  {http://testns/}empty-element: 0
+  root: 3
+
+  >>> root = parser.close()
+  >>> etree.tostring(root)
+  b'<root/>'
+
+**WARNING**: During the 'start' event, any content of the element,
+such as the descendants, following siblings or text, is not yet
+available and should not be accessed.  Only attributes are guaranteed
+to be set.  During the 'end' event, the element and its descendants
+can be freely modified, but its following siblings should not be
+accessed.  During either of the two events, you **must not** modify or
+move the ancestors (parents) of the current element.  You should also
+avoid moving or discarding the element itself.  The golden rule is: do
+not touch anything that will have to be touched again by the parser
+later on.
+
+If you have elements with a long list of children in your XML file and want
+to save more memory during parsing, you can clean up the preceding siblings
+of the current element:
+
+.. sourcecode:: pycon
+
+  >>> for event, element in parser.read_events():
+  ...     # ... do something with the element
+  ...     element.clear()                 # clean up children
+  ...     while element.getprevious() is not None:
+  ...         del element.getparent()[0]  # clean up preceding siblings
+
+The ``while`` loop deletes multiple siblings in a row.  This is only necessary
+if you skipped over some of them using the ``tag`` keyword argument.
+Otherwise, a simple ``if`` should do.  The more selective your tag is,
+however, the more thought you will have to put into finding the right way to
+clean up the elements that were skipped.  Therefore, it is sometimes easier to
+traverse all elements and do the tag selection by hand in the event handler
+code.
+
+
+Selective tag events
+--------------------
+
+As an extension over ElementTree, lxml.etree accepts a ``tag`` keyword
+argument just like ``element.iter(tag)``.  This restricts events to a
+specific tag or namespace:
+
+.. sourcecode:: pycon
+
+  >>> parser = etree.XMLPullParser(tag="element")
+
+  >>> parser.feed('<root><element key="value">text</element>')
+  >>> parser.feed('<element><child /></element>')
+  >>> parser.feed('<empty-element xmlns="http://testns/" /></root>')
+
+  >>> for action, elem in parser.read_events():
+  ...     print("%s: %s" % (action, elem.tag))
+  end: element
+  end: element
+
+  >>> event_types = ("start", "end")
+  >>> parser = etree.XMLPullParser(event_types, tag="{http://testns/}*")
+
+  >>> parser.feed('<root><element key="value">text</element>')
+  >>> parser.feed('<element><child /></element>')
+  >>> parser.feed('<empty-element xmlns="http://testns/" /></root>')
+
+  >>> for action, elem in parser.read_events():
+  ...     print("%s: %s" % (action, elem.tag))
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
+
+
+Comments and PIs
+----------------
+
+As an extension over ElementTree, the ``XMLPullParser`` in lxml.etree
+also supports the event types 'comment' and 'pi' for the respective
+XML structures.
+
+.. sourcecode:: pycon
+
+  >>> event_types = ("start", "end", "comment", "pi")
+  >>> parser = etree.XMLPullParser(event_types)
+
+  >>> parser.feed('<?some pi ?><!-- a comment --><root>')
+  >>> parser.feed('<element key="value">text</element>')
+  >>> parser.feed('<!-- another comment -->')
+  >>> parser.feed('<element>text</element>tail')
+  >>> parser.feed('<empty-element xmlns="http://testns/" />')
+  >>> parser.feed('</root>')
+
+  >>> for action, elem in parser.read_events():
+  ...     if action in ('start', 'end'):
+  ...         print("%s: %s" % (action, elem.tag))
+  ...     elif action == 'pi':
+  ...         print("%s: -%s=%s-" % (action, elem.target, elem.text))
+  ...     else: # 'comment'
+  ...         print("%s: -%s-" % (action, elem.text))
+  pi: -some=pi -
+  comment: - a comment -
+  start: root
+  start: element
+  end: element
+  comment: - another comment -
+  start: element
+  end: element
+  start: {http://testns/}empty-element
+  end: {http://testns/}empty-element
+  end: root
+
+  >>> root = parser.close()
+  >>> print(root.tag)
+  root
+
+
 iterparse and iterwalk
 ======================
 
 As known from ElementTree, the ``iterparse()`` utility function
 returns an iterator that generates parser events for an XML file (or
-file-like object), while building the tree.  The values are tuples
-``(event-type, object)``.  The event types supported by ElementTree
-and lxml.etree are the strings 'start', 'end', 'start-ns' and
-'end-ns'.
-
-The 'start' and 'end' events represent opening and closing elements.
-They are accompanied by the respective Element instance.  By default,
-only 'end' events are generated:
+file-like object), while building the tree.  You can think of it as
+a blocking wrapper around the ``XMLPullParser`` that automatically and
+incrementally reads data from the input file for you and provides a
+single iterator for them:
 
 .. sourcecode:: pycon
 
-  >>> xml = '''\
+  >>> xml = '''
   ... <root>
   ...   <element key='value'>text</element>
   ...   <element>text</element>tail
@@ -535,7 +785,8 @@ only 'end' events are generated:
   end: {http://testns/}empty-element
   end: root
 
-The resulting tree is available through the ``root`` property of the iterator:
+After parsing, the resulting tree is available through the ``root`` property
+of the iterator:
 
 .. sourcecode:: pycon
 
@@ -559,177 +810,24 @@ The other event types can be activated with the ``events`` keyword argument:
   end: {http://testns/}empty-element
   end: root
 
-The 'start-ns' and 'end-ns' events notify about namespace
-declarations.  They do not come with Elements.  Instead, the value of
-the 'start-ns' event is a tuple ``(prefix, namespaceURI)`` that
-designates the beginning of a prefix-namespace mapping.  The
-corresponding ``end-ns`` event does not have a value (None).  It is
-common practice to use a list as namespace stack and pop the last
-entry on the 'end-ns' event.
-
-.. sourcecode:: pycon
-
-  >>> print(xml[:-1])
-  <root>
-    <element key='value'>text</element>
-    <element>text</element>tail
-    <empty-element xmlns="http://testns/" />
-  </root>
-
-  >>> events = ("start", "end", "start-ns", "end-ns")
-  >>> context = etree.iterparse(StringIO(xml), events=events)
-  >>> for action, elem in context:
-  ...     if action in ('start', 'end'):
-  ...         print("%s: %s" % (action, elem.tag))
-  ...     elif action == 'start-ns':
-  ...         print("%s: %s" % (action, elem))
-  ...     else:
-  ...         print(action)
-  start: root
-  start: element
-  end: element
-  start: element
-  end: element
-  start-ns: ('', 'http://testns/')
-  start: {http://testns/}empty-element
-  end: {http://testns/}empty-element
-  end-ns
-  end: root
-
-
-Selective tag events
---------------------
-
-As an extension over ElementTree, lxml.etree accepts a ``tag`` keyword
-argument just like ``element.iter(tag)``.  This restricts events to a
-specific tag or namespace:
-
-.. sourcecode:: pycon
-
-  >>> context = etree.iterparse(StringIO(xml), tag="element")
-  >>> for action, elem in context:
-  ...     print("%s: %s" % (action, elem.tag))
-  end: element
-  end: element
-
-  >>> events = ("start", "end")
-  >>> context = etree.iterparse(
-  ...             StringIO(xml), events=events, tag="{http://testns/}*")
-  >>> for action, elem in context:
-  ...     print("%s: %s" % (action, elem.tag))
-  start: {http://testns/}empty-element
-  end: {http://testns/}empty-element
-
-
-Comments and PIs
-----------------
-
-As an extension over ElementTree, the ``iterparse()`` function in
-lxml.etree also supports the event types 'comment' and 'pi' for the
-respective XML structures.
-
-.. sourcecode:: pycon
-
-  >>> commented_xml = '''\
-  ... <?some pi ?>
-  ... <!-- a comment -->
-  ... <root>
-  ...   <element key='value'>text</element>
-  ...   <!-- another comment -->
-  ...   <element>text</element>tail
-  ...   <empty-element xmlns="http://testns/" />
-  ... </root>
-  ... '''
-
-  >>> events = ("start", "end", "comment", "pi")
-  >>> context = etree.iterparse(StringIO(commented_xml), events=events)
-  >>> for action, elem in context:
-  ...     if action in ('start', 'end'):
-  ...         print("%s: %s" % (action, elem.tag))
-  ...     elif action == 'pi':
-  ...         print("%s: -%s=%s-" % (action, elem.target, elem.text))
-  ...     else: # 'comment'
-  ...         print("%s: -%s-" % (action, elem.text))
-  pi: -some=pi -
-  comment: - a comment -
-  start: root
-  start: element
-  end: element
-  comment: - another comment -
-  start: element
-  end: element
-  start: {http://testns/}empty-element
-  end: {http://testns/}empty-element
-  end: root
-
-  >>> print(context.root.tag)
-  root
-
-
-Modifying the tree
-------------------
-
-You can modify the element and its descendants when handling the 'end' event.
-To save memory, for example, you can remove subtrees that are no longer
-needed:
-
-.. sourcecode:: pycon
-
-  >>> context = etree.iterparse(StringIO(xml))
-  >>> for action, elem in context:
-  ...     print(len(elem))
-  ...     elem.clear()
-  0
-  0
-  0
-  3
-  >>> context.root.getchildren()
-  []
-
-**WARNING**: During the 'start' event, any content of the element,
-such as the descendants, following siblings or text, is not yet
-available and should not be accessed.  Only attributes are guaranteed
-to be set.  During the 'end' event, the element and its descendants
-can be freely modified, but its following siblings should not be
-accessed.  During either of the two events, you **must not** modify or
-move the ancestors (parents) of the current element.  You should also
-avoid moving or discarding the element itself.  The golden rule is: do
-not touch anything that will have to be touched again by the parser
-later on.
-
-If you have elements with a long list of children in your XML file and want to
-save more memory during parsing, you can clean up the preceding siblings of
-the current element:
-
-.. sourcecode:: pycon
-
-  >>> for event, element in etree.iterparse(StringIO(xml)):
-  ...     # ... do something with the element
-  ...     element.clear()                 # clean up children
-  ...     while element.getprevious() is not None: 
-  ...         del element.getparent()[0]  # clean up preceding siblings
-
-The ``while`` loop deletes multiple siblings in a row.  This is only necessary
-if you skipped over some of them using the ``tag`` keyword argument.
-Otherwise, a simple ``if`` should do.  The more selective your tag is,
-however, the more thought you will have to put into finding the right way to
-clean up the elements that were skipped.  Therefore, it is sometimes easier to
-traverse all elements and do the tag selection by hand in the event handler
-code.
+``iterparse()`` also supports the ``tag`` argument for selective event
+iteration and several other parameters that control the parser setup.
+You can also use it to parse HTML input by passing ``html=True``.
 
 
 iterwalk
 --------
 
-A second extension over ElementTree is the ``iterwalk()`` function.  It
-behaves exactly like ``iterparse()``, but works on Elements and ElementTrees:
+A second extension over ElementTree is the ``iterwalk()`` function.
+It behaves exactly like ``iterparse()``, but works on Elements and
+ElementTrees.  Here is an example for a tree parsed by ``iterparse()``:
 
 .. sourcecode:: pycon
 
+  >>> f = StringIO(xml)
+  >>> context = etree.iterparse(
+  ...             f, events=("start", "end"), tag="element")
 
-  >>> root = etree.fromstring(xml)
-  >>> context = etree.iterwalk(
-  ...             root, events=("start", "end"), tag="element")
   >>> for action, elem in context:
   ...     print("%s: %s" % (action, elem.tag))
   start: element
@@ -737,9 +835,14 @@ behaves exactly like ``iterparse()``, but works on Elements and ElementTrees:
   start: element
   end: element
 
-  >>> f = StringIO(xml)
-  >>> context = etree.iterparse(
-  ...             f, events=("start", "end"), tag="element")
+  >>> root = context.root
+
+And now we can take the resulting in-memory tree and iterate over it
+using ``iterwalk()`` to get the exact same events without parsing the
+input again:
+
+  >>> context = etree.iterwalk(
+  ...             root, events=("start", "end"), tag="element")
 
   >>> for action, elem in context:
   ...     print("%s: %s" % (action, elem.tag))
