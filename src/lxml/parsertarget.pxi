@@ -28,7 +28,7 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
         try:
             self._target_start = target.start
             if self._target_start is not None:
-                event_filter = event_filter | SAX_EVENT_START
+                event_filter |= SAX_EVENT_START
         except AttributeError:
             pass
         else:
@@ -41,31 +41,31 @@ cdef class _PythonSaxParserTarget(_SaxParserTarget):
         try:
             self._target_end = target.end
             if self._target_end is not None:
-                event_filter = event_filter | SAX_EVENT_END
+                event_filter |= SAX_EVENT_END
         except AttributeError:
             pass
         try:
             self._target_data = target.data
             if self._target_data is not None:
-                event_filter = event_filter | SAX_EVENT_DATA
+                event_filter |= SAX_EVENT_DATA
         except AttributeError:
             pass
         try:
             self._target_doctype = target.doctype
             if self._target_doctype is not None:
-                event_filter = event_filter | SAX_EVENT_DOCTYPE
+                event_filter |= SAX_EVENT_DOCTYPE
         except AttributeError:
             pass
         try:
             self._target_pi = target.pi
             if self._target_pi is not None:
-                event_filter = event_filter | SAX_EVENT_PI
+                event_filter |= SAX_EVENT_PI
         except AttributeError:
             pass
         try:
             self._target_comment = target.comment
             if self._target_comment is not None:
-                event_filter = event_filter | SAX_EVENT_COMMENT
+                event_filter |= SAX_EVENT_COMMENT
         except AttributeError:
             pass
         self._sax_event_filter = event_filter
