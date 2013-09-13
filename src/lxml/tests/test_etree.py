@@ -3770,6 +3770,122 @@ class ETreeErrorLogTest(HelperTestCase):
         self.assertTrue([ message for message in messages
                        if ':1:15:' in message ])
 
+
+class XMLPullParserTest(unittest.TestCase):
+    etree = etree
+
+    def assert_event_tags(self, events, expected):
+        self.assertEqual([(action, elem.tag) for action, elem in events],
+                         expected)
+
+    def test_pull_from_simple_target(self):
+        class Target(object):
+            def start(self, tag, attrib):
+                return 'start(%s)' % tag
+            def end(self, tag):
+                return 'end(%s)' % tag
+            def close(self):
+                return 'close()'
+
+        parser = self.etree.XMLPullParser(target=Target())
+        events = parser.read_events()
+
+        parser.feed('<root><element>')
+        self.assertFalse(list(events))
+        self.assertFalse(list(events))
+        parser.feed('</element><child>')
+        self.assertEqual([('end', 'end(element)')], list(events))
+        parser.feed('</child>')
+        self.assertEqual([('end', 'end(child)')], list(events))
+        parser.feed('</root>')
+        self.assertEqual([('end', 'end(root)')], list(events))
+        self.assertFalse(list(events))
+        self.assertEqual('close()', parser.close())
+
+    def test_pull_from_simple_target_start_end(self):
+        class Target(object):
+            def start(self, tag, attrib):
+                return 'start(%s)' % tag
+            def end(self, tag):
+                return 'end(%s)' % tag
+            def close(self):
+                return 'close()'
+
+        parser = self.etree.XMLPullParser(
+            ['start', 'end'], target=Target())
+        events = parser.read_events()
+
+        parser.feed('<root><element>')
+        self.assertEqual(
+            [('start', 'start(root)'), ('start', 'start(element)')],
+            list(events))
+        self.assertFalse(list(events))
+        parser.feed('</element><child>')
+        self.assertEqual(
+            [('end', 'end(element)'), ('start', 'start(child)')],
+            list(events))
+        parser.feed('</child>')
+        self.assertEqual(
+            [('end', 'end(child)')],
+            list(events))
+        parser.feed('</root>')
+        self.assertEqual(
+            [('end', 'end(root)')],
+            list(events))
+        self.assertFalse(list(events))
+        self.assertEqual('close()', parser.close())
+
+    def test_pull_from_tree_builder(self):
+        parser = self.etree.XMLPullParser(
+            ['start', 'end'], target=etree.TreeBuilder())
+        events = parser.read_events()
+
+        parser.feed('<root><element>')
+        self.assert_event_tags(
+            events, [('start', 'root'), ('start', 'element')])
+        self.assertFalse(list(events))
+        parser.feed('</element><child>')
+        self.assert_event_tags(
+            events, [('end', 'element'), ('start', 'child')])
+        parser.feed('</child>')
+        self.assert_event_tags(
+            events, [('end', 'child')])
+        parser.feed('</root>')
+        self.assert_event_tags(
+            events, [('end', 'root')])
+        self.assertFalse(list(events))
+        root = parser.close()
+        self.assertEqual('root', root.tag)
+
+    def test_pull_from_tree_builder_subclass(self):
+        class Target(etree.TreeBuilder):
+            def end(self, tag):
+                el = super(Target, self).end(tag)
+                el.tag += '-huhu'
+                return el
+
+        parser = self.etree.XMLPullParser(
+            ['start', 'end'], target=Target())
+        events = parser.read_events()
+
+        parser.feed('<root><element>')
+        self.assert_event_tags(
+            events, [('start', 'root'), ('start', 'element')])
+        self.assertFalse(list(events))
+        parser.feed('</element><child>')
+        self.assert_event_tags(
+            events, [('end', 'element-huhu'), ('start', 'child')])
+        parser.feed('</child>')
+        self.assert_event_tags(
+            events, [('end', 'child-huhu')])
+        parser.feed('</root>')
+        self.assert_event_tags(
+            events, [('end', 'root-huhu')])
+        self.assertFalse(list(events))
+        root = parser.close()
+        self.assertEqual('root-huhu', root.tag)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeOnlyTestCase)])
@@ -3778,6 +3894,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeC14NTestCase)])
     suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
     suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
+    suite.addTests([unittest.makeSuite(XMLPullParserTest)])
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])
     if sys.version_info >= (2,6):

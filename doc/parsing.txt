@@ -15,13 +15,16 @@ event-driven API (currently only for XML).
      1.4  Doctype information
    2  The target parser interface
    3  The feed parser interface
-   4  iterparse and iterwalk
-     4.1  Selective tag events
-     4.2  Comments and PIs
-     4.3  Modifying the tree
-     4.4  iterwalk
-   5  Python unicode strings
-     5.1  Serialising to Unicode strings
+   4 Incremental event parsing
+     4.1 Event types
+     4.1 Modifying the tree
+     4.3 Selective tag events
+     4.4 Comments and PIs
+     4.5 Events with custom targets
+   5  iterparse and iterwalk
+     5.1  iterwalk
+   6  Python unicode strings
+     6.1  Serialising to Unicode strings
 
 
 The usual setup procedure:
@@ -755,6 +758,59 @@ XML structures.
   >>> root = parser.close()
   >>> print(root.tag)
   root
+
+
+Events with custom targets
+--------------------------
+
+You can combine the pull parser with a parser target.  In that case,
+it is the target's responsibility to generate event values.  Whatever
+it returns from its ``.start()`` and ``.end()`` methods will be returned
+by the pull parser as the second item of the parse events tuple.
+
+.. sourcecode:: pycon
+
+  >>> class Target(object):
+  ...     def start(self, tag, attrib):
+  ...         print('-> start(%s)' % tag)
+  ...         return '>>START: %s<<' % tag
+  ...     def end(self, tag):
+  ...         print('-> end(%s)' % tag)
+  ...         return '>>END: %s<<' % tag
+  ...     def close(self):
+  ...         print('-> close()')
+  ...         return "CLOSED!"
+
+  >>> event_types = ('start', 'end')
+  >>> parser = etree.XMLPullParser(event_types, target=Target())
+
+  >>> parser.feed('<root><child1 /><child2 /></root>')
+  -> start(root)
+  -> start(child1)
+  -> end(child1)
+  -> start(child2)
+  -> end(child2)
+  -> end(root)
+
+  >>> for action, value in parser.read_events():
+  ...     print('%s: %s' % (action, value))
+  start: >>START: root<<
+  start: >>START: child1<<
+  end: >>END: child1<<
+  start: >>START: child2<<
+  end: >>END: child2<<
+  end: >>END: root<<
+
+  >>> print(parser.close())
+  -> close()
+  CLOSED!
+
+As you can see, the event values do not even have to be Element objects.
+The target is generally free to decide how it wants to create an XML tree
+or whatever else it wants to make of the parser callbacks.  In many cases,
+however, you will want to make your custom target inherit from the
+``TreeBuilder`` class in order to have it build a tree that you can process
+normally.
 
 
 iterparse and iterwalk

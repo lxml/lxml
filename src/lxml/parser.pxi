@@ -827,18 +827,19 @@ cdef class _BaseParser:
         return self._push_parser_context
 
     cdef _ParserContext _createContext(self, target, events_to_collect):
-        cdef _TargetParserContext target_context
         cdef _SaxParserContext sax_context
         if target is not None:
-            target_context = _TargetParserContext()
-            target_context._setTarget(target)
-            return target_context
+            sax_context = _TargetParserContext()
+            (<_TargetParserContext>sax_context)._setTarget(target)
+        elif events_to_collect:
+            sax_context = _SaxParserContext()
+        else:
+            # nothing special to configure
+            return _ParserContext()
         if events_to_collect:
             events, tag = events_to_collect
-            sax_context = _SaxParserContext()
             sax_context._setEventFilter(events, tag)
-            return sax_context
-        return _ParserContext()
+        return sax_context
 
     cdef int _registerHtmlErrorHandler(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
         cdef xmlparser.xmlSAXHandler* sax = c_ctxt.sax
