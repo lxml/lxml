@@ -12,9 +12,9 @@ install:
     pip install --use-mirrors cython
 
 script:
-  - python setup.py clean
-  - python setup.py build_ext --inplace
-  - make test
+  - python -u setup.py clean
+  - python -u setup.py build_ext --inplace
+  - PYTHONUNBUFFERED=x make test
 
 matrix:
   allow_failures:
