@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* LP#1228881: ``repr(XSLTAccessControl)`` failed in Python 3.
+
 * Raise ``ValueError`` when trying to append an Element to itself or
   to one of its own descendants.
 

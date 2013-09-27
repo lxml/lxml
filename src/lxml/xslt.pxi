@@ -246,8 +246,7 @@ cdef class XSLTAccessControl:
             return None
 
     def __repr__(self):
-        items = self.options.items()
-        items.sort()
+        items = sorted(self.options.items())
         return u"%s(%s)" % (
             python._fqtypename(self).decode('UTF-8').split(u'.')[-1],
             u', '.join([u"%s=%r" % item for item in items]))

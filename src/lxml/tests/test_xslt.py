@@ -782,6 +782,15 @@ class ETreeXSLTTestCase(HelperTestCase):
                           access_control=access_control)
         self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
 
+    def test_xslt_access_control_repr(self):
+        access_control = etree.XSLTAccessControl.DENY_ALL
+        self.assertTrue(repr(access_control).startswith(type(access_control).__name__))
+        self.assertEqual(repr(access_control), repr(access_control))
+        self.assertNotEqual(repr(etree.XSLTAccessControl.DENY_ALL),
+                            repr(etree.XSLTAccessControl.DENY_WRITE))
+        self.assertNotEqual(repr(etree.XSLTAccessControl.DENY_ALL),
+                            repr(etree.XSLTAccessControl()))
+
     def test_xslt_move_result(self):
         root = etree.XML(_bytes('''\
         <transform>
