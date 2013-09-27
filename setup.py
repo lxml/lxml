@@ -7,13 +7,6 @@ import fnmatch
 # see the end of 'setupinfo.py'
 
 try:
-    import Cython
-    # may need to work around setuptools bug by providing a fake Pyrex
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "fake_pyrex"))
-except ImportError:
-    pass
-
-try:
     from setuptools import setup
 except ImportError:
     from distutils.core import setup
