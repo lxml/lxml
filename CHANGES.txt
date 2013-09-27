@@ -17,7 +17,8 @@ Bugs fixed
 * LP#1228881: ``repr(XSLTAccessControl)`` failed in Python 3.
 
 * Raise ``ValueError`` when trying to append an Element to itself or
-  to one of its own descendants.
+  to one of its own descendants, instead of running into an infinite
+  loop.
 
 * LP#1206077: htmldiff discarded whitespace from the output.
 
