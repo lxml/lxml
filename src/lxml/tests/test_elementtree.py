@@ -3903,11 +3903,12 @@ class _XMLPullParserTest(unittest.TestCase):
             for i in range(0, len(data), chunk_size):
                 parser.feed(data[i:i+chunk_size])
 
-    def _close_and_get_root(self, parser):
-        root = parser.close()
-        if root is None and 'ElementTree' in self.etree.__name__:
-            # ElementTree's API is rather weird in Py3.4 alpha
-            root = parser._root
+    def _close_and_return_root(self, parser):
+        if 'ElementTree' in self.etree.__name__:
+            # ElementTree's API is a bit unwieldy in Py3.4
+            root = parser._close_and_return_root()
+        else:
+            root = parser.close()
         return root
 
     def assert_event_tags(self, parser, expected):
@@ -3936,9 +3937,7 @@ class _XMLPullParserTest(unittest.TestCase):
                     ])
                 self._feed(parser, "</root>\n", chunk_size)
                 self.assert_event_tags(parser, [('end', 'root')])
-                # Closing sets the `root` attribute
-                #self.assertIs(parser.root, None)
-                root = self._close_and_get_root(parser)
+                root = self._close_and_return_root(parser)
                 self.assertEqual(root.tag, 'root')
 
     def test_feed_while_iterating(self):
@@ -3976,9 +3975,7 @@ class _XMLPullParserTest(unittest.TestCase):
             ])
         self._feed(parser, "</root>\n")
         self.assert_event_tags(parser, [('end', '{namespace}root')])
-        # Closing sets the `root` attribute
-        #self.assertIs(parser.root, None)
-        root = self._close_and_get_root(parser)
+        root = self._close_and_return_root(parser)
         self.assertEqual(root.tag, '{namespace}root')
 
     def test_ns_events(self):
@@ -4019,8 +4016,7 @@ class _XMLPullParserTest(unittest.TestCase):
             ('end', '{foo}element'),
             ])
         self._feed(parser, "</root>")
-        root = self._close_and_get_root(parser)
-        #self.assertIs(parser.root, None)
+        root = self._close_and_return_root(parser)
         self.assert_event_tags(parser, [('end', 'root')])
         self.assertEqual(root.tag, 'root')
 
@@ -4040,7 +4036,7 @@ class _XMLPullParserTest(unittest.TestCase):
             ('start', '{foo}empty-element'),
             ])
         self._feed(parser, "</root>")
-        root = self._close_and_get_root(parser)
+        root = self._close_and_return_root(parser)
         self.assertEqual(root.tag, 'root')
 
     def test_events_sequence(self):
