@@ -157,7 +157,7 @@ cdef class _ParserDictionaryContext:
 
         # see if we have a current implied parser
         context = self._findThreadParserContext()
-        if python.PyList_GET_SIZE(context._implied_parser_contexts):
+        if context._implied_parser_contexts:
             implied_context = context._implied_parser_contexts[-1]
             return implied_context
         return None
