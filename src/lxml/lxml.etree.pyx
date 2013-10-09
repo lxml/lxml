@@ -900,7 +900,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         """
         def __get__(self):
             _assertValidNode(self)
-            return _Attrib(self)
+            return _Attrib.__new__(_Attrib, self)
 
     property text:
         u"""Text before the first subelement. This is either a string or 
