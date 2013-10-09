@@ -955,14 +955,11 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             cdef long line
             _assertValidNode(self)
             line = tree.xmlGetLineNo(self._c_node)
-            if line > 0:
-                return line
-            else:
-                return None
+            return line if line > 0 else None
 
         def __set__(self, line):
             _assertValidNode(self)
-            if line < 0:
+            if line <= 0:
                 self._c_node.line = 0
             else:
                 self._c_node.line = line
