@@ -1007,8 +1007,10 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
                 if self._doc._c_doc.URL is NULL:
                     return None
                 return _decodeFilename(self._doc._c_doc.URL)
-            base = _decodeFilename(c_base)
-            tree.xmlFree(c_base)
+            try:
+                base = _decodeFilename(c_base)
+            finally:
+                tree.xmlFree(c_base)
             return base
 
         def __set__(self, url):
