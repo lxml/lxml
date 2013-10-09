@@ -436,7 +436,7 @@ def Extension(module, function_mapping=None, *, ns=None):
     functions.
     """
     cdef dict functions = {}
-    if python.PyDict_Check(function_mapping):
+    if isinstance(function_mapping, dict):
         for function_name, xpath_name in function_mapping.items():
             functions[(ns, xpath_name)] = getattr(module, function_name)
     else:
@@ -460,7 +460,7 @@ cdef class _ExsltRegExp:
     cdef _make_string(self, value):
         if _isString(value):
             return value
-        elif python.PyList_Check(value):
+        elif isinstance(value, list):
             # node set: take recursive text concatenation of first element
             if python.PyList_GET_SIZE(value) == 0:
                 return u''

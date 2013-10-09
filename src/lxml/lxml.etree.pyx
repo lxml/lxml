@@ -620,7 +620,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         _assertValidNode(self)
         if value is None:
             raise ValueError, u"cannot assign None"
-        if python.PySlice_Check(x):
+        if isinstance(x, slice):
             # slice assignment
             _findChildSlice(<slice>x, self._c_node, &c_node, &step, &slicelength)
             if step > 0:
@@ -655,7 +655,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef xmlNode* c_next
         cdef Py_ssize_t step = 0, slicelength = 0
         _assertValidNode(self)
-        if python.PySlice_Check(x):
+        if isinstance(x, slice):
             # slice deletion
             if _isFullSlice(<slice>x):
                 c_node = self._c_node.children
@@ -1038,7 +1038,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         cdef _node_to_node_function next_element
         cdef list result
         _assertValidNode(self)
-        if python.PySlice_Check(x):
+        if isinstance(x, slice):
             # slicing
             if _isFullSlice(<slice>x):
                 return _collectChildren(self)
@@ -1548,7 +1548,7 @@ cdef class __ContentOnlyElement(_Element):
     # ACCESSORS
     def __getitem__(self, x):
         u"__getitem__(self, x)"
-        if python.PySlice_Check(x):
+        if isinstance(x, slice):
             return []
         else:
             raise IndexError, u"list index out of range"

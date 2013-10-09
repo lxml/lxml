@@ -1100,8 +1100,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
     else:
         next_element = _previousElement
 
-    if not python.PyList_Check(elements) and \
-            not python.PyTuple_Check(elements):
+    if not isinstance(elements, (list, tuple)):
         elements = list(elements)
 
     if step > 1:

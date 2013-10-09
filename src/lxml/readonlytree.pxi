@@ -108,7 +108,7 @@ cdef class _ReadOnlyProxy:
         cdef _node_to_node_function next_element
         cdef list result
         self._assertNode()
-        if python.PySlice_Check(x):
+        if isinstance(x, slice):
             # slicing
             if _isFullSlice(<slice>x):
                 return _collectChildren(self)

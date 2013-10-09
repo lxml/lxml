@@ -58,15 +58,10 @@ cdef extern from "Python.h":
     cdef object PySequence_List(object o)
     cdef object PySequence_Tuple(object o)
 
-    cdef bint PyDict_Check(object instance)
-    cdef bint PyList_Check(object instance)
-    cdef bint PyTuple_Check(object instance)
     cdef bint PyNumber_Check(object instance)
-    cdef bint PyBool_Check(object instance)
     cdef bint PySequence_Check(object instance)
     cdef bint PyType_Check(object instance)
     cdef bint PyTuple_CheckExact(object instance)
-    cdef bint PySlice_Check(object instance)
 
     cdef int _PyEval_SliceIndex(object value, Py_ssize_t* index) except 0
     cdef int PySlice_GetIndicesEx "_lx_PySlice_GetIndicesEx" (
