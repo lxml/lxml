@@ -1963,7 +1963,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         root = self.getroot()
         if root is None:
-            return ()
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return root.getiterator(*tags)
@@ -1979,7 +1979,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         root = self.getroot()
         if root is None:
-            return ()
+            return ITER_EMPTY
         if tag is not None:
             tags += (tag,)
         return root.iter(*tags)
