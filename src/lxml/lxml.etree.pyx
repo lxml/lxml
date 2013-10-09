@@ -1753,7 +1753,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             self._context_node = doc.getroot()
             if self._context_node is None:
                 self._doc = doc
-        except _TargetParserResult, result_container:
+        except _TargetParserResult as result_container:
             # raises a TypeError if we don't get an _Element
             self._context_node = result_container.result
         return self._context_node
@@ -2920,7 +2920,7 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
     elif file is not None:
         try:
             doc = _parseDocument(file, parser, None)
-        except _TargetParserResult, result_container:
+        except _TargetParserResult as result_container:
             return result_container.result
     else:
         c_doc = _newXMLDoc()
@@ -2950,7 +2950,7 @@ def HTML(text, _BaseParser parser=None, *, base_url=None):
     try:
         doc = _parseMemoryDocument(text, base_url, parser)
         return doc.getroot()
-    except _TargetParserResult, result_container:
+    except _TargetParserResult as result_container:
         return result_container.result
 
 def XML(text, _BaseParser parser=None, *, base_url=None):
@@ -2978,7 +2978,7 @@ def XML(text, _BaseParser parser=None, *, base_url=None):
     try:
         doc = _parseMemoryDocument(text, base_url, parser)
         return doc.getroot()
-    except _TargetParserResult, result_container:
+    except _TargetParserResult as result_container:
         return result_container.result
 
 def fromstring(text, _BaseParser parser=None, *, base_url=None):
@@ -2998,7 +2998,7 @@ def fromstring(text, _BaseParser parser=None, *, base_url=None):
     try:
         doc = _parseMemoryDocument(text, base_url, parser)
         return doc.getroot()
-    except _TargetParserResult, result_container:
+    except _TargetParserResult as result_container:
         return result_container.result
 
 def fromstringlist(strings, _BaseParser parser=None):
@@ -3202,7 +3202,7 @@ def parse(source, _BaseParser parser=None, *, base_url=None):
     try:
         doc = _parseDocument(source, parser, base_url)
         return _elementTreeFactory(doc, None)
-    except _TargetParserResult, result_container:
+    except _TargetParserResult as result_container:
         return result_container.result
 
 
