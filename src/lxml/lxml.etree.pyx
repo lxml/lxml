@@ -203,7 +203,7 @@ class C14NError(LxmlError):
 
 # version information
 cdef __unpackDottedVersion(version):
-    cdef list version_list = []
+    version_list = []
     l = (version.decode("ascii").replace(u'-', u'.').split(u'.') + [0]*4)[:4]
     for item in l:
         try:
@@ -465,8 +465,7 @@ cdef tuple __initPrefixCache():
     return tuple([ python.PyBytes_FromFormat("ns%d", i)
                    for i in range(30) ])
 
-cdef tuple _PREFIX_CACHE
-_PREFIX_CACHE = __initPrefixCache()
+cdef tuple _PREFIX_CACHE = __initPrefixCache()
 
 cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     cdef _Document result
