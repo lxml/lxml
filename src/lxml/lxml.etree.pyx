@@ -1053,8 +1053,8 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             c = 0
             while c_node is not NULL and c < slicelength:
                 result.append(_elementFactory(self._doc, c_node))
-                c = c + 1
-                for i from 0 <= i < step:
+                c += 1
+                for i in range(step):
                     c_node = next_element(c_node)
             return result
         else:
