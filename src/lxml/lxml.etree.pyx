@@ -1525,14 +1525,11 @@ cdef class __ContentOnlyElement(_Element):
     property attrib:
         def __get__(self):
             return {}
-        
+
     property text:
         def __get__(self):
             _assertValidNode(self)
-            if self._c_node.content is NULL:
-                return ''
-            else:
-                return funicode(self._c_node.content)
+            return funicodeOrEmpty(self._c_node.content)
 
         def __set__(self, value):
             cdef tree.xmlDict* c_dict
