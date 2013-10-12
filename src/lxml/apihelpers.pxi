@@ -250,7 +250,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     if attrib is not None and not hasattr(attrib, u'items'):
         raise TypeError, u"Invalid attribute dictionary: %s" % \
             python._fqtypename(attrib)
-    if extra is not None and extra:
+    if extra:
         if attrib is None:
             attrib = extra
         else:
