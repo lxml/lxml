@@ -14,6 +14,10 @@ Features added
 Bugs fixed
 ----------
 
+* The ``ElementMaker`` in lxml.objectify did not accept a dict as
+  argument for adding attributes to the element it's building. This
+  works as in lxml.builder now.
+
 * LP#1228881: ``repr(XSLTAccessControl)`` failed in Python 3.
 
 * Raise ``ValueError`` when trying to append an Element to itself or

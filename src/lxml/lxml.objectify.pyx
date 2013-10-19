@@ -1121,7 +1121,6 @@ cdef class _ObjectifyElementMakerCaller:
     def __call__(self, *children, **attrib):
         u"__call__(self, *children, **attrib)"
         cdef _ObjectifyElementMakerCaller elementMaker
-        cdef python.PyObject* pytype
         cdef _Element element
         cdef _Element childElement
         cdef bint has_children
@@ -1155,13 +1154,24 @@ cdef class _ObjectifyElementMakerCaller:
                         elementMaker._tag)
                     cetree.appendChild(element, childElement)
                 has_children = 1
+            elif isinstance(child, dict):
+                for name, value in child.items():
+                    # keyword arguments in attrib take precedence
+                    if name in attrib:
+                        continue
+                    pytype = _PYTYPE_DICT.get(_typename(value))
+                    if pytype is not None:
+                        value = (<PyType>pytype).stringify(value)
+                    elif not python._isString(value):
+                        value = unicode(value)
+                    cetree.setAttributeValue(element, name, value)
             else:
                 if pytype_name is not None:
                     # concatenation always makes the result a string
                     has_string_value = 1
                 pytype_name = _typename(child)
-                pytype = python.PyDict_GetItem(_PYTYPE_DICT, pytype_name)
-                if pytype is not NULL:
+                pytype = _PYTYPE_DICT.get(_typename(child))
+                if pytype is not None:
                     _add_text(element, (<PyType>pytype).stringify(child))
                 else:
                     has_string_value = 1
@@ -1200,11 +1210,12 @@ cdef class ElementMaker:
     Example::
 
       >>> M = ElementMaker(annotate=False)
-      >>> html = M.html( M.body( M.p('hello', M.br, 'objectify') ) )
+      >>> attributes = {'class': 'par'}
+      >>> html = M.html( M.body( M.p('hello', attributes, M.br, 'objectify', style="font-weight: bold") ) )
 
       >>> from lxml.etree import tostring
       >>> print(tostring(html, method='html').decode('ascii'))
-      <html><body><p>hello<br>objectify</p></body></html>
+      <html><body><p style="font-weight: bold" class="par">hello<br>objectify</p></body></html>
 
     To create tags that are not valid Python identifiers, call the factory
     directly and pass the tag name as first argument::
