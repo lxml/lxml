@@ -127,7 +127,6 @@ def _select(el, select):
 
 def _fill_single(input, value):
     if _nons(input.tag) == 'textarea':
-        input.clear()
         input.text = value
     else:
         input.set('value', value)
