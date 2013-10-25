@@ -89,6 +89,9 @@ import sys
 cdef object re
 import re
 
+cdef object islice
+from itertools import islice
+
 cdef object ITER_EMPTY = iter(())
 
 cdef object EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})

@@ -214,6 +214,7 @@ cdef class _BaseErrorLog:
 cdef class _ListErrorLog(_BaseErrorLog):
     u"Immutable base version of a list based error log."
     cdef list _entries
+    cdef int _offset
     def __init__(self, entries, first_error, last_error):
         if entries:
             if first_error is None:
@@ -227,33 +228,39 @@ cdef class _ListErrorLog(_BaseErrorLog):
         u"""Creates a shallow copy of this error log.  Reuses the list of
         entries.
         """
-        return _ListErrorLog(self._entries, self._first_error, self.last_error)
+        cdef _ListErrorLog log = _ListErrorLog(
+            self._entries, self._first_error, self.last_error)
+        log._offset = self._offset
+        return log
 
     def __iter__(self):
-        return iter(self._entries)
+        entries = self._entries
+        if self._offset:
+            entries = islice(entries, self._offset)
+        return iter(entries)
 
     def __repr__(self):
-        cdef list l = []
-        for entry in self._entries:
-            l.append(repr(entry))
-        return u'\n'.join(l)
+        return u'\n'.join([repr(entry) for entry in self])
 
     def __getitem__(self, index):
+        if self._offset:
+            index += self._offset
         return self._entries[index]
 
     def __len__(self):
-        return len(self._entries)
+        return len(self._entries) - self._offset
 
     def __contains__(self, error_type):
-        for entry in self._entries:
+        cdef Py_ssize_t i
+        for i, entry in enumerate(self._entries):
+            if i < self._offset:
+                continue
             if entry.type == error_type:
                 return True
         return False
 
     def __nonzero__(self):
-        cdef bint result
-        result = self._entries
-        return result
+        return len(self._entries) > self._offset
 
     def filter_domains(self, domains):
         u"""Filter the errors by the given domains and return a new error log
@@ -263,7 +270,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         cdef list filtered = []
         if not python.PySequence_Check(domains):
             domains = (domains,)
-        for entry in self._entries:
+        for entry in self:
             if entry.domain in domains:
                 filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
@@ -278,7 +285,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         cdef list filtered = []
         if not python.PySequence_Check(types):
             types = (types,)
-        for entry in self._entries:
+        for entry in self:
             if entry.type in types:
                 filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
@@ -293,7 +300,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         cdef list filtered = []
         if not python.PySequence_Check(levels):
             levels = (levels,)
-        for entry in self._entries:
+        for entry in self:
             if entry.level in levels:
                 filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
@@ -305,7 +312,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         cdef _LogEntry entry
         cdef list filtered = []
-        for entry in self._entries:
+        for entry in self:
             if entry.level >= level:
                 filtered.append(entry)
         return _ListErrorLog(filtered, None, None)
@@ -380,16 +387,19 @@ cdef class _ErrorLog(_ListErrorLog):
 
     cpdef clear(self):
         self._first_error = None
+        self.last_error = None
+        self._offset = 0
         del self._entries[:]
 
     cpdef copy(self):
         u"""Creates a shallow copy of this error log and the list of entries.
         """
-        return _ListErrorLog(self._entries[:], self._first_error,
-                             self.last_error)
+        return _ListErrorLog(
+            self._entries[self._offset:],
+            self._first_error, self.last_error)
 
     def __iter__(self):
-        return iter(self._entries[:])
+        return iter(self._entries[self._offset:])
 
     cpdef receive(self, _LogEntry entry):
         if self._first_error is None:
@@ -412,9 +422,16 @@ cdef class _RotatingErrorLog(_ErrorLog):
         self._max_len = max_len
 
     cpdef receive(self, _LogEntry entry):
-        if python.PyList_GET_SIZE(self._entries) > self._max_len:
-            del self._entries[0]
+        if self._first_error is None:
+            self._first_error = entry
         self._entries.append(entry)
+
+        if len(self._entries) > self._max_len:
+            self._offset += 1
+            if self._offset > self._max_len // 3:
+                offset = self._offset
+                self._offset = 0
+                del self._entries[:offset]
 
 cdef class PyErrorLog(_BaseErrorLog):
     u"""PyErrorLog(self, logger_name=None, logger=None)
