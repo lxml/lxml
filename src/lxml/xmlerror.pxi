@@ -53,35 +53,39 @@ cdef class _LogEntry:
     cdef readonly int level
     cdef readonly int line
     cdef readonly int column
-    cdef readonly object message
-    cdef readonly object filename
+    cdef object _message
+    cdef object _filename
+    cdef char* _c_message
+    cdef const_xmlChar* _c_filename
+
+    def __dealloc__(self):
+        tree.xmlFree(self._c_message)
+        tree.xmlFree(self._c_filename)
 
     @cython.final
     cdef _setError(self, xmlerror.xmlError* error):
-        cdef size_t size
         self.domain   = error.domain
         self.type     = error.code
         self.level    = <int>error.level
         self.line     = error.line
         self.column   = error.int2
-        if error.message is NULL:
-            self.message = u"unknown error"
+        self._c_message = NULL
+        self._c_filename = NULL
+        if error.message is NULL or error.message[0] in b'\n\0':
+            self._message = u"unknown error"
         else:
-            size = cstring_h.strlen(error.message)
-            if size > 0 and error.message[size-1] == c'\n':
-                size -= 1 # strip EOL
-            try:
-                self.message = error.message[:size].decode('utf8')
-            except UnicodeDecodeError:
-                try:
-                    self.message = error.message[:size].decode(
-                        'ascii', 'backslashreplace')
-                except UnicodeDecodeError:
-                    self.message = u'<undecodable error message>'
+            self._message = None
+            self._c_message = <char*> tree.xmlStrdup(
+                <const_xmlChar*> error.message)
+            if not self._c_message:
+                raise MemoryError()
         if error.file is NULL:
-            self.filename = u'<string>'
+            self._filename = u'<string>'
         else:
-            self.filename = _decodeFilename(<const_xmlChar*>error.file)
+            self._filename = None
+            self._c_filename = tree.xmlStrdup(<const_xmlChar*> error.file)
+            if not self._c_filename:
+                raise MemoryError()
 
     @cython.final
     cdef _setGeneric(self, int domain, int type, int level, int line,
@@ -91,8 +95,8 @@ cdef class _LogEntry:
         self.level   = level
         self.line    = line
         self.column  = 0
-        self.message = message
-        self.filename = filename
+        self._message = message
+        self._filename = filename
 
     def __repr__(self):
         return u"%s:%d:%d:%s:%s:%s: %s" % (
@@ -120,6 +124,43 @@ cdef class _LogEntry:
         """
         def __get__(self):
             return ErrorLevels._getName(self.level, u"unknown")
+
+    property message:
+        def __get__(self):
+            cdef size_t size
+            if self._message is not None:
+                return self._message
+            if self._c_message is NULL:
+                return None
+            size = cstring_h.strlen(self._c_message)
+            if size > 0 and self._c_message[size-1] == '\n':
+                size -= 1  # strip EOL
+            # cannot use funicode() here because the message may contain
+            # byte encoded file paths etc.
+            try:
+                self._message = self._c_message[:size].decode('utf8')
+            except UnicodeDecodeError:
+                try:
+                    self.message = self._c_message[:size].decode(
+                        'ascii', 'backslashreplace')
+                except UnicodeDecodeError:
+                    self._message = u'<undecodable error message>'
+            if self._c_message:
+                # clean up early
+                tree.xmlFree(self._c_message)
+                self._c_message = NULL
+            return self._message
+
+    property filename:
+        def __get__(self):
+            if self._filename is None:
+                if self._c_filename is not NULL:
+                    self._filename = _decodeFilename(self._c_filename)
+                    # clean up early
+                    tree.xmlFree(self._c_filename)
+                    self._c_filename = NULL
+            return self._filename
+
 
 cdef class _BaseErrorLog:
     cdef _LogEntry _first_error
