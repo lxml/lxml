@@ -402,7 +402,7 @@ cdef class _ErrorLog(_ListErrorLog):
         return iter(self._entries[self._offset:])
 
     cpdef receive(self, _LogEntry entry):
-        if self._first_error is None:
+        if self._first_error is None and entry.level >= xmlerror.XML_ERR_ERROR:
             self._first_error = entry
         self._entries.append(entry)
 
@@ -422,7 +422,7 @@ cdef class _RotatingErrorLog(_ErrorLog):
         self._max_len = max_len
 
     cpdef receive(self, _LogEntry entry):
-        if self._first_error is None:
+        if self._first_error is None and entry.level >= xmlerror.XML_ERR_ERROR:
             self._first_error = entry
         self._entries.append(entry)
 

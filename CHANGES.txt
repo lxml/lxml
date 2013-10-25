@@ -14,6 +14,10 @@ Features added
 Bugs fixed
 ----------
 
+* Error messages in the log and in exception messages that originated
+  from libxml2 could accidentally be picked up from preceding warnings
+  instead of the actual error.
+
 * The ``ElementMaker`` in lxml.objectify did not accept a dict as
   argument for adding attributes to the element it's building. This
   works as in lxml.builder now.
