@@ -1375,13 +1375,14 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         pass ``"{ns}localname"`` as tag. Either or both of ``ns`` and
         ``localname`` can be ``*`` for a wildcard; ``ns`` can be empty
         for no namespace. ``"localname"`` is equivalent to ``"{}localname"``
-        but ``"*"`` is ``"{*}*"``, not ``"{}*"``.
+        (i.e. no namespace) but ``"*"`` is ``"{*}*"`` (any or no namespace),
+        not ``"{}*"``.
 
         You can also pass the Element, Comment, ProcessingInstruction and
         Entity factory functions to look only for the specific element type.
 
-        Passing a sequence of tags will let the iterator return all
-        elements matching any of these tags, in document order.
+        Passing more than one tag will let the iterator return all elements
+        matching any of these tags, in document order.
         """
         if tag is not None:
             tags += (tag,)
