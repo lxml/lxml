@@ -1707,6 +1707,15 @@ class ETreeOnlyTestCase(HelperTestCase):
             result.append(el.text)
         self.assertEqual(['Two', 'Bla'], result)
 
+    def test_iterchildren_tag_posarg(self):
+        XML = self.etree.XML
+
+        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two></doc>'))
+        result = []
+        for el in root.iterchildren('two'):
+            result.append(el.text)
+        self.assertEqual(['Two', 'Bla'], result)
+
     def test_iterchildren_tag_reversed(self):
         XML = self.etree.XML
         
@@ -1722,6 +1731,15 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>'))
         result = []
         for el in root.iterchildren(tag=['two', 'three']):
+            result.append(el.text)
+        self.assertEqual(['Two', 'Bla', None], result)
+
+    def test_iterchildren_tag_multiple_posarg(self):
+        XML = self.etree.XML
+
+        root = XML(_bytes('<doc><one/><two>Two</two>Hm<two>Bla</two><three/></doc>'))
+        result = []
+        for el in root.iterchildren('two', 'three'):
             result.append(el.text)
         self.assertEqual(['Two', 'Bla', None], result)
 
@@ -1765,10 +1783,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(b, 'd')
         self.assertEqual(
             [a],
+            list(d.iterancestors('a')))
+        self.assertEqual(
+            [a],
             list(d.iterancestors(tag='a')))
+
         self.assertEqual(
             [b, a],
-               list(d.iterancestors(tag='*')))
+            list(d.iterancestors('*')))
+        self.assertEqual(
+            [b, a],
+            list(d.iterancestors(tag='*')))
 
     def test_iterancestors_tag_multiple(self):
         Element    = self.etree.Element
@@ -1780,19 +1805,38 @@ class ETreeOnlyTestCase(HelperTestCase):
         d = SubElement(b, 'd')
         self.assertEqual(
             [b, a],
-               list(d.iterancestors(tag=('a', 'b'))))
-        self.assertEqual(
-            [],
-               list(d.iterancestors(tag=('w', 'x', 'y', 'z'))))
-        self.assertEqual(
-            [],
-              list(d.iterancestors(tag=('d', 'x'))))
+            list(d.iterancestors(tag=('a', 'b'))))
         self.assertEqual(
             [b, a],
-              list(d.iterancestors(tag=('b', '*'))))
+            list(d.iterancestors('a', 'b')))
+
+        self.assertEqual(
+            [],
+            list(d.iterancestors(tag=('w', 'x', 'y', 'z'))))
+        self.assertEqual(
+            [],
+            list(d.iterancestors('w', 'x', 'y', 'z')))
+
+        self.assertEqual(
+            [],
+            list(d.iterancestors(tag=('d', 'x'))))
+        self.assertEqual(
+            [],
+            list(d.iterancestors('d', 'x')))
+
+        self.assertEqual(
+            [b, a],
+            list(d.iterancestors(tag=('b', '*'))))
+        self.assertEqual(
+            [b, a],
+            list(d.iterancestors('b', '*')))
+
         self.assertEqual(
             [b],
-              list(d.iterancestors(tag=('b', 'c'))))
+            list(d.iterancestors(tag=('b', 'c'))))
+        self.assertEqual(
+            [b],
+            list(d.iterancestors('b', 'c')))
 
     def test_iterdescendants(self):
         Element = self.etree.Element
@@ -1824,13 +1868,21 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(
             [],
             list(a.iterdescendants('a')))
+        self.assertEqual(
+            [],
+            list(a.iterdescendants(tag='a')))
+
         a2 = SubElement(e, 'a')
         self.assertEqual(
             [a2],
             list(a.iterdescendants('a')))
+
         self.assertEqual(
             [a2],
             list(c.iterdescendants('a')))
+        self.assertEqual(
+            [a2],
+            list(c.iterdescendants(tag='a')))
 
     def test_iterdescendants_tag_multiple(self):
         Element = self.etree.Element
@@ -1845,16 +1897,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(
             [b, e],
             list(a.iterdescendants(tag=('a', 'b', 'e'))))
+        self.assertEqual(
+            [b, e],
+            list(a.iterdescendants('a', 'b', 'e')))
+
         a2 = SubElement(e, 'a')
         self.assertEqual(
             [b, a2],
             list(a.iterdescendants(tag=('a', 'b'))))
         self.assertEqual(
+            [b, a2],
+            list(a.iterdescendants('a', 'b')))
+
+        self.assertEqual(
             [],
             list(c.iterdescendants(tag=('x', 'y', 'z'))))
         self.assertEqual(
+            [],
+            list(c.iterdescendants('x', 'y', 'z')))
+
+        self.assertEqual(
             [b, d, c, e, a2],
-              list(a.iterdescendants(tag=('x', 'y', 'z', '*'))))
+            list(a.iterdescendants(tag=('x', 'y', 'z', '*'))))
+        self.assertEqual(
+            [b, d, c, e, a2],
+            list(a.iterdescendants('x', 'y', 'z', '*')))
 
     def test_getroottree(self):
         Element = self.etree.Element
