@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* Memory leak when creating an XPath evaluator in a thread.
+
 * LP#1228881: ``repr(XSLTAccessControl)`` failed in Python 3.
 
 * Raise ``ValueError`` when trying to append an Element to itself or
