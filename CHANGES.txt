@@ -32,6 +32,11 @@ Bugs fixed
 
 * Compressed plain-text serialisation to file-like objects was broken.
 
+* lxml.html.formfill: Fix textarea form filling.
+  The textarea used to be cleared before the new content was set,
+  which removed the name attribute.
+
+
 Other changes
 -------------
 

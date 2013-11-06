@@ -98,3 +98,15 @@ Example::
       <input name="v4" class="error">
       <input name="v4">
     </form>
+
+
+REGRESSION: When filling textareas, the "name" attribute used to
+be removed. The "name" attribute should be kept::
+
+    >>> print(fill_form_html('''
+    ... <form>
+    ...   <textarea name="foo">Initial value</textarea>
+    ... </form>''', dict(foo="Bar")))
+    <form>
+      <textarea name="foo">Bar</textarea>
+    </form>
