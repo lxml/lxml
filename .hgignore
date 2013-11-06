@@ -4,9 +4,17 @@ syntax: glob
 *.pyo
 __pycache__
 
+src/lxml/includes/lxml-version.h
+src/lxml/lxml.etree.c
+src/lxml/lxml.etree.h
+src/lxml/lxml.etree_api.h
+src/lxml/lxml.objectify.c
+
 build/
 dist/
+doc/html/
 cython_debug/
+.idea/
 .git/
 .gitrev
 .coverage
@@ -16,6 +24,8 @@ funding.txt
 *.rej
 *.dep
 *.swp
+*.pdb
 *.so
 *.o
+*.pyd
 *~
