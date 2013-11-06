@@ -59,7 +59,9 @@ cdef class _XPathContext(_BaseContext):
 
     cdef set_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._set_xpath_context(xpathCtxt)
-        self._setupDict(xpathCtxt)
+        # This would be a good place to set up the XPath parser dict, but
+        # we cannot use the current thread dict as we do not know which
+        # thread will execute the XPath evaluator - so, no dict for now.
         self.registerLocalNamespaces()
         self.registerLocalFunctions(xpathCtxt, _register_xpath_function)
 
@@ -100,9 +102,6 @@ cdef class _XPathContext(_BaseContext):
     cdef void _registerVariable(self, name_utf, value):
         xpath.xmlXPathRegisterVariable(
             self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
-
-    cdef void _setupDict(self, xpath.xmlXPathContext* xpathCtxt):
-        __GLOBAL_PARSER_CONTEXT.initXPathParserDict(xpathCtxt)
 
 cdef void _registerExsltFunctionsForNamespaces(
         void* _c_href, void* _ctxt, xmlChar* c_prefix):
