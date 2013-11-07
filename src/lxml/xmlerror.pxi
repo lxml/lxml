@@ -343,10 +343,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         Return a log with all messages of the requested level of worse.
         """
         cdef _LogEntry entry
-        cdef list filtered = []
-        for entry in self:
-            if entry.level >= level:
-                filtered.append(entry)
+        filtered = [entry for entry in self if entry.level >= level]
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_fatals(self):
