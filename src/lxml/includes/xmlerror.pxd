@@ -40,6 +40,8 @@ cdef extern from "libxml/xmlerror.h":
         XML_FROM_MODULE                                    =      26 # The dynamically loaded module modul
         XML_FROM_I18N                                      =      27 # The module handling character conversion
         XML_FROM_SCHEMATRONV                               =      28 # The Schematron validator module
+        XML_FROM_BUFFER                                    =      29 # The buffers module
+        XML_FROM_URI                                       =      30 # The URI module
 
     ctypedef enum xmlParserErrors:
         XML_ERR_OK                                         =       0
@@ -152,6 +154,8 @@ cdef extern from "libxml/xmlerror.h":
         XML_WAR_ENTITY_REDEFINED                           =     107
         XML_ERR_UNKNOWN_VERSION                            =     108
         XML_ERR_VERSION_MISMATCH                           =     109
+        XML_ERR_NAME_TOO_LONG                              =     110
+        XML_ERR_USER_STOP                                  =     111
         XML_NS_ERR_XML_NAMESPACE                           =     200
         XML_NS_ERR_UNDEFINED_NAMESPACE                     =     201
         XML_NS_ERR_QNAME                                   =     202
@@ -773,8 +777,7 @@ cdef extern from "libxml/xmlerror.h":
         XML_I18N_EXCESS_HANDLER                            =    6002
         XML_I18N_CONV_FAILED                               =    6003
         XML_I18N_NO_OUTPUT                                 =    6004
-        XML_CHECK_                                         =    6005 # 5033
-        XML_CHECK_X                                        =    6006 # 503
+        XML_BUF_OVERFLOW                                   =    7000
 
     ctypedef enum xmlRelaxNGValidErr:
         XML_RELAXNG_OK                                     =       0
