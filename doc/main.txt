@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.2.3`_, released 2013-07-28
-(`changes for 3.2.3`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.2.4`_, released 2013-11-07
+(`changes for 3.2.4`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -239,7 +239,9 @@ See the web sites of lxml
 `3.1 <http://lxml.de/3.1/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.2.3.pdf
+.. _`PDF documentation`: lxmldoc-3.2.4.pdf
+
+* `lxml 3.2.3`_, released 2013-07-28 (`changes for 3.2.3`_)
 
 * `lxml 3.2.2`_, released 2013-07-28 (`changes for 3.2.2`_)
 
@@ -261,26 +263,9 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `lxml 3.0`_, released 2012-10-08 (`changes for 3.0`_)
 
-* `lxml 3.0beta1`_, released 2012-09-26 (`changes for 3.0beta1`_)
+* `older releases <http://lxml.de/3.0/#old-versions>`_
 
-* `lxml 3.0alpha2`_, released 2012-08-23 (`changes for 3.0alpha2`_)
-
-* `lxml 3.0alpha1`_, released 2012-07-31 (`changes for 3.0alpha1`_)
-
-* `lxml 2.3.5`_, released 2012-07-31 (`changes for 2.3.5`_)
-
-* `lxml 2.3.4`_, released 2012-03-26 (`changes for 2.3.4`_)
-
-* `lxml 2.3.3`_, released 2012-01-04 (`changes for 2.3.3`_)
-
-* `lxml 2.3.2`_, released 2011-11-11 (`changes for 2.3.2`_)
-
-* `lxml 2.3.1`_, released 2011-09-25 (`changes for 2.3.1`_)
-
-* `lxml 2.3`_, released 2011-02-06 (`changes for 2.3`_)
-
-* `older releases <http://lxml.de/2.3/#old-versions>`_
-
+.. _`lxml 3.2.4`: /files/lxml-3.2.4.tgz
 .. _`lxml 3.2.3`: /files/lxml-3.2.3.tgz
 .. _`lxml 3.2.2`: /files/lxml-3.2.2.tgz
 .. _`lxml 3.2.1`: /files/lxml-3.2.1.tgz
@@ -292,17 +277,8 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 3.0.2`: /files/lxml-3.0.2.tgz
 .. _`lxml 3.0.1`: /files/lxml-3.0.1.tgz
 .. _`lxml 3.0`: /files/lxml-3.0.tgz
-.. _`lxml 3.0beta1`: /files/lxml-3.0beta1.tgz
-.. _`lxml 3.0alpha2`: /files/lxml-3.0alpha2.tgz
-.. _`lxml 3.0alpha1`: /files/lxml-3.0alpha1.tgz
-.. _`lxml 2.3.6`: /files/lxml-2.3.6.tgz
-.. _`lxml 2.3.5`: /files/lxml-2.3.5.tgz
-.. _`lxml 2.3.4`: /files/lxml-2.3.4.tgz
-.. _`lxml 2.3.3`: /files/lxml-2.3.3.tgz
-.. _`lxml 2.3.2`: /files/lxml-2.3.2.tgz
-.. _`lxml 2.3.1`: /files/lxml-2.3.1.tgz
-.. _`lxml 2.3`: /files/lxml-2.3.tgz
 
+.. _`changes for 3.2.4`: /changes-3.2.4.html
 .. _`changes for 3.2.3`: /changes-3.2.3.html
 .. _`changes for 3.2.2`: /changes-3.2.2.html
 .. _`changes for 3.2.1`: /changes-3.2.1.html
@@ -314,13 +290,3 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`changes for 3.0.2`: /changes-3.0.2.html
 .. _`changes for 3.0.1`: /changes-3.0.1.html
 .. _`changes for 3.0`: /changes-3.0.html
-.. _`changes for 3.0beta1`: /changes-3.0beta1.html
-.. _`changes for 3.0alpha2`: /changes-3.0alpha2.html
-.. _`changes for 3.0alpha1`: /changes-3.0alpha1.html
-.. _`changes for 2.3.6`: /changes-2.3.6.html
-.. _`changes for 2.3.5`: /changes-2.3.5.html
-.. _`changes for 2.3.4`: /changes-2.3.4.html
-.. _`changes for 2.3.3`: /changes-2.3.3.html
-.. _`changes for 2.3.2`: /changes-2.3.2.html
-.. _`changes for 2.3.1`: /changes-2.3.1.html
-.. _`changes for 2.3`: /changes-2.3.html
