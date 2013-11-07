@@ -85,7 +85,7 @@ pdf: apipdf
 	(cd doc/pdf && pdflatex lxmldoc.tex \
 		    && pdflatex lxmldoc.tex \
 		    && pdflatex lxmldoc.tex)
-	@pdfopt doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
+	@cp doc/pdf/lxmldoc.pdf doc/pdf/lxmldoc-${LXMLVERSION}.pdf
 	@echo "PDF available as doc/pdf/lxmldoc-${LXMLVERSION}.pdf"
 
 # Two pdflatex runs are needed to build the correct Table of contents.
