@@ -308,12 +308,9 @@ cdef class _ListErrorLog(_BaseErrorLog):
         containing the matches.
         """
         cdef _LogEntry entry
-        cdef list filtered = []
         if isinstance(domains, (int, long)):
             domains = (domains,)
-        for entry in self:
-            if entry.domain in domains:
-                filtered.append(entry)
+        filtered = [entry for entry in self if entry.domain in domains]
         return _ListErrorLog(filtered, None, None)
 
     def filter_types(self, types):
@@ -323,12 +320,9 @@ cdef class _ListErrorLog(_BaseErrorLog):
         log containing the matches.
         """
         cdef _LogEntry entry
-        cdef list filtered = []
         if isinstance(types, (int, long)):
             types = (types,)
-        for entry in self:
-            if entry.type in types:
-                filtered.append(entry)
+        filtered = [entry for entry in self if entry.type in types]
         return _ListErrorLog(filtered, None, None)
 
     def filter_levels(self, levels):
@@ -338,12 +332,9 @@ cdef class _ListErrorLog(_BaseErrorLog):
         error log containing the matches.
         """
         cdef _LogEntry entry
-        cdef list filtered = []
         if isinstance(levels, (int, long)):
             levels = (levels,)
-        for entry in self:
-            if entry.level in levels:
-                filtered.append(entry)
+        filtered = [entry for entry in self if entry.level in levels]
         return _ListErrorLog(filtered, None, None)
 
     def filter_from_level(self, level):
