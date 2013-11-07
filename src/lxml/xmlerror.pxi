@@ -309,7 +309,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         cdef _LogEntry entry
         cdef list filtered = []
-        if not python.PySequence_Check(domains):
+        if isinstance(domains, (int, long)):
             domains = (domains,)
         for entry in self:
             if entry.domain in domains:
@@ -324,7 +324,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         cdef _LogEntry entry
         cdef list filtered = []
-        if not python.PySequence_Check(types):
+        if isinstance(types, (int, long)):
             types = (types,)
         for entry in self:
             if entry.type in types:
@@ -339,7 +339,7 @@ cdef class _ListErrorLog(_BaseErrorLog):
         """
         cdef _LogEntry entry
         cdef list filtered = []
-        if not python.PySequence_Check(levels):
+        if isinstance(levels, (int, long)):
             levels = (levels,)
         for entry in self:
             if entry.level in levels:
