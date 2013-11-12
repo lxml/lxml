@@ -430,7 +430,8 @@ class HtmlMixin(object):
         if base_href is not None:
             # FIXME: this can be done in one pass with a wrapper
             # around link_repl_func
-            self.make_links_absolute(base_href, resolve_base_href=resolve_base_href)
+            self.make_links_absolute(
+                base_href, resolve_base_href=resolve_base_href)
         elif resolve_base_href:
             self.resolve_base_href()
         for el, attrib, link, pos in self.iterlinks():
@@ -448,13 +449,13 @@ class HtmlMixin(object):
                 new = el.text[:pos] + new_link + el.text[pos+len(link):]
                 el.text = new
             else:
-                cur = el.attrib[attrib]
+                cur = el.get(attrib)
                 if not pos and len(cur) == len(link):
                     # Most common case
-                    el.attrib[attrib] = new_link
+                    new = new_link
                 else:
                     new = cur[:pos] + new_link + cur[pos+len(link):]
-                    el.attrib[attrib] = new
+                el.set(attrib, new)
 
 
 class _MethodFunc(object):
