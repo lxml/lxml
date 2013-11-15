@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-3.2.4 (2013-11-07)
+Under development
 ==================
 
 Features added
@@ -42,6 +42,31 @@ Other changes
 
 * ``iterparse()`` was rewritten to use the new ``*PullParser``
   classes internally.
+
+
+
+3.2.4 (2013-11-07)
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Memory leak when creating an XPath evaluator in a thread.
+
+* LP#1228881: ``repr(XSLTAccessControl)`` failed in Python 3.
+
+* Raise ``ValueError`` when trying to append an Element to itself or
+  to one of its own descendants.
+
+* LP#1206077: htmldiff discarded whitespace from the output.
+
+* Compressed plain-text serialisation to file-like objects was broken.
+
+Other changes
+-------------
 
 
 3.2.3 (2013-07-28)
