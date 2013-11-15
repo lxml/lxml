@@ -613,7 +613,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
         return
 
     cvarargs.va_start(args, msg)
-    if msg[0] == c'%' and msg[1] == c's':
+    if msg[0] == '%' and msg[1] == 's':
         c_text = cvarargs.va_charptr(args)
     else:
         c_text = NULL
@@ -637,8 +637,8 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 
     c_message = NULL
     if c_text is NULL:
-        if c_element is not NULL and \
-                cstring_h.strchr(msg, c'%') == cstring_h.strrchr(msg, c'%'):
+        if (c_element is not NULL and
+                cstring_h.strchr(msg, '%') == cstring_h.strrchr(msg, '%')):
             # special case: a single occurrence of 'element %s'
             text_size    = cstring_h.strlen(msg)
             element_size = cstring_h.strlen(c_element)
