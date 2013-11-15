@@ -8,6 +8,10 @@ Under development
 Features added
 --------------
 
+* New option ``handle_failures`` in ``make_links_absolute()`` and
+  ``resolve_base_href()`` (lxml.html) that enables ignoring or
+  discarding links that fail to parse as URLs.
+
 * New parser classes ``XMLPullParser`` and ``HTMLPullParser`` for
   incremental parsing, as implemented for ElementTree in Python 3.4.
 

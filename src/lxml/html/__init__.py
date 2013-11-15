@@ -294,15 +294,21 @@ class HtmlMixin(object):
     ## Link functions
     ########################################
 
-    def make_links_absolute(self, base_url=None, resolve_base_href=True):
+    def make_links_absolute(self, base_url=None, resolve_base_href=True,
+                            handle_failures=None):
         """
         Make all links in the document absolute, given the
         ``base_url`` for the document (the full URL where the document
-        came from), or if no ``base_url`` is given, then the ``.base_url`` of the document.
+        came from), or if no ``base_url`` is given, then the ``.base_url``
+        of the document.
 
         If ``resolve_base_href`` is true, then any ``<base href>``
         tags in the document are used *and* removed from the document.
         If it is false then any such tag is ignored.
+
+        If ``handle_failures`` is None (default), a failure to process
+        a URL will abort the processing.  If set to 'ignore', errors
+        are ignored.  If set to 'discard', failing URLs will be removed.
         """
         if base_url is None:
             base_url = self.base_url
@@ -311,24 +317,48 @@ class HtmlMixin(object):
                     "No base_url given, and the document has no base_url")
         if resolve_base_href:
             self.resolve_base_href()
-        def link_repl(href):
-            return urljoin(base_url, href)
+
+        if handle_failures == 'ignore':
+            def link_repl(href):
+                try:
+                    return urljoin(base_url, href)
+                except ValueError:
+                    return href
+        elif handle_failures == 'discard':
+            def link_repl(href):
+                try:
+                    return urljoin(base_url, href)
+                except ValueError:
+                    return None
+        elif handle_failures is None:
+            def link_repl(href):
+                return urljoin(base_url, href)
+        else:
+            raise ValueError(
+                "unexpected value for handle_failures: %r" % handle_failures)
+
         self.rewrite_links(link_repl)
 
-    def resolve_base_href(self):
+    def resolve_base_href(self, handle_failures=None):
         """
         Find any ``<base href>`` tag in the document, and apply its
         values to all links found in the document.  Also remove the
         tag once it has been applied.
+
+        If ``handle_failures`` is None (default), a failure to process
+        a URL will abort the processing.  If set to 'ignore', errors
+        are ignored.  If set to 'discard', failing URLs will be removed.
         """
         base_href = None
-        basetags = self.xpath('//base[@href]|//x:base[@href]', namespaces={'x':XHTML_NAMESPACE})
+        basetags = self.xpath('//base[@href]|//x:base[@href]',
+                              namespaces={'x': XHTML_NAMESPACE})
         for b in basetags:
             base_href = b.get('href')
             b.drop_tree()
         if not base_href:
             return
-        self.make_links_absolute(base_href, resolve_base_href=False)
+        self.make_links_absolute(base_href, resolve_base_href=False,
+                                 handle_failures=handle_failures)
 
     def iterlinks(self):
         """
@@ -434,6 +464,7 @@ class HtmlMixin(object):
                 base_href, resolve_base_href=resolve_base_href)
         elif resolve_base_href:
             self.resolve_base_href()
+
         for el, attrib, link, pos in self.iterlinks():
             new_link = link_repl_func(link.strip())
             if new_link == link:
@@ -445,14 +476,14 @@ class HtmlMixin(object):
                 else:
                     del el.attrib[attrib]
                 continue
+
             if attrib is None:
                 new = el.text[:pos] + new_link + el.text[pos+len(link):]
                 el.text = new
             else:
                 cur = el.get(attrib)
                 if not pos and len(cur) == len(link):
-                    # Most common case
-                    new = new_link
+                    new = new_link  # most common case
                 else:
                     new = cur[:pos] + new_link + cur[pos+len(link):]
                 el.set(attrib, new)

@@ -185,6 +185,22 @@ An application of ``iterlinks()`` is ``make_links_absolute()``::
      </body>
     </html>
 
+If the document contains invalid links, you may choose to "discard" or "ignore"
+them by passing the respective option into the ``handle_failures`` argument::
+
+    >>> html = lxml.html.fromstring ('''\
+    ... <html><body><div>
+    ...     <a href="http://fancybase.com]Buy">test2</a>
+    ... </div></body></html>''')
+
+    >>> html.make_links_absolute(base_url="http://my.little.server/url/",
+    ...                          handle_failures="discard")
+
+    >>> print(lxml.html.tostring (html, pretty_print=True, encoding='unicode'))
+    <html><body><div>
+        <a>test2</a>
+    </div></body></html>
+
 Check if we can replace multiple links inside of the same text string::
 
     >>> html = lxml.html.fromstring ("""\
@@ -209,10 +225,7 @@ Check if we can replace multiple links inside of the same text string::
 
     >>> html.make_links_absolute ()
 
-    >>> try: _unicode = unicode
-    ... except NameError: _unicode = str
-
-    >>> print(lxml.html.tostring (html, pretty_print = True, encoding=_unicode))
+    >>> print(lxml.html.tostring (html, pretty_print=True, encoding='unicode'))
     <html>
       <head>
         <title>Test</title>
