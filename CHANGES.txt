@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* LP#1255132: crash when trying to run validation over non-Element (e.g.
+  comment or PI).
+
+Other changes
+-------------
+
+
 3.2.4 (2013-11-07)
 ==================
 
