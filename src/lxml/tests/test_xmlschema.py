@@ -13,6 +13,7 @@ if this_dir not in sys.path:
 from common_imports import etree, BytesIO, HelperTestCase, fileInTestDir
 from common_imports import doctest, make_doctest
 
+
 class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema(self):
         tree_valid = self.parse('<a><b></b></a>')
@@ -218,6 +219,25 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
     def test_xmlschema_elementtree_error(self):
         self.assertRaises(ValueError, etree.XMLSchema, etree.ElementTree())
 
+    def test_xmlschema_comment_error(self):
+        self.assertRaises(ValueError, etree.XMLSchema, etree.Comment('TEST'))
+
+    def test_xmlschema_illegal_validation_error(self):
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="xsd:string"/>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+
+        root = etree.Element('a')
+        root.text = 'TEST'
+        self.assertTrue(schema(root))
+
+        self.assertRaises(ValueError, schema, etree.Comment('TEST'))
+        self.assertRaises(ValueError, schema, etree.PI('a', 'text'))
+        self.assertRaises(ValueError, schema, etree.Entity('text'))
+
     def test_xmlschema_invalid_schema1(self):
         schema = self.parse('''\
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -376,6 +396,7 @@ class ETreeXMLSchemaResolversTestCase(HelperTestCase):
         schema_doc = etree.parse(self.resolver_schema_int, parser = parser)
         schema = etree.XMLSchema(schema_doc)
 
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeXMLSchemaTestCase)])
@@ -383,6 +404,7 @@ def test_suite():
     suite.addTests(
         [make_doctest('../../../doc/validation.txt')])
     return suite
+
 
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)
