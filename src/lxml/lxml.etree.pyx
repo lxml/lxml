@@ -902,7 +902,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         keys(), values() and items() to access element attributes.
         """
         def __get__(self):
-            _assertValidNode(self)
             return _Attrib.__new__(_Attrib, self)
 
     property text:
