@@ -318,6 +318,7 @@ cdef class _XSLTContext(_BaseContext):
 
 @cython.final
 @cython.internal
+@cython.freelist(8)
 cdef class _XSLTQuotedStringParam:
     u"""A wrapper class for literal XSLT string parameters that require
     quote escaping.

@@ -20,6 +20,7 @@ cdef inline int _assertValidDTDNode(node, void *c_node) except -1:
     assert c_node is not NULL, u"invalid DTD proxy at %s" % id(node)
 
 @cython.internal
+@cython.freelist(8)
 cdef class _DTDElementContentDecl:
     cdef DTD _dtd
     cdef tree.xmlElementContent* _c_node
@@ -87,6 +88,7 @@ cdef class _DTDElementContentDecl:
                return None
 
 @cython.internal
+@cython.freelist(8)
 cdef class _DTDAttributeDecl:
     cdef DTD _dtd
     cdef tree.xmlAttribute* _c_node
@@ -167,6 +169,7 @@ cdef class _DTDAttributeDecl:
         return list(self.itervalues())
 
 @cython.internal
+@cython.freelist(8)
 cdef class _DTDElementDecl:
     cdef DTD _dtd
     cdef tree.xmlElement* _c_node
@@ -227,6 +230,7 @@ cdef class _DTDElementDecl:
         return list(self.iterattributes())
 
 @cython.internal
+@cython.freelist(8)
 cdef class _DTDEntityDecl:
     cdef DTD _dtd
     cdef tree.xmlEntity* _c_node

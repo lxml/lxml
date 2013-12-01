@@ -482,6 +482,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     return result
 
 
+@cython.freelist(8)
 cdef class DocInfo:
     u"Document information provided by parser and DTD."
     cdef _Document _doc
@@ -579,6 +580,7 @@ cdef class DocInfo:
             return _dtdFactory(self._doc._c_doc.extSubset)
 
 
+@cython.freelist(16)
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     u"""Element class.
 
@@ -1659,6 +1661,7 @@ cdef class _Entity(__ContentOnlyElement):
         return u"&%s;" % self.name
 
 
+@cython.freelist(8)
 cdef class QName:
     u"""QName(text_or_uri_or_element, tag=None)
 
@@ -1727,6 +1730,7 @@ cdef class QName:
         return python.PyObject_RichCompare(one, other, op)
 
 
+@cython.freelist(8)
 cdef public class _ElementTree [ type LxmlElementTreeType,
                                  object LxmlElementTree ]:
     cdef _Document _doc
@@ -2207,6 +2211,7 @@ cdef _ElementTree _newElementTree(_Document doc, _Element context_node,
     return result
 
 
+@cython.freelist(16)
 cdef class _Attrib:
     u"""A dict-like proxy for the ``Element.attrib`` property.
     """
@@ -2858,6 +2863,7 @@ def ProcessingInstruction(target, text=None):
 
 PI = ProcessingInstruction
 
+@cython.freelist(8)
 cdef class CDATA:
     u"""CDATA(data)
 

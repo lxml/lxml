@@ -35,6 +35,7 @@ cdef void connectErrorLog(void* log):
 
 # Logging classes
 
+@cython.freelist(16)
 cdef class _LogEntry:
     """A log message entry from an error log.
 

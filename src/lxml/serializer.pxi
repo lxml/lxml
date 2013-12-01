@@ -877,6 +877,7 @@ cdef class _IncrementalFileWriter:
 
 @cython.final
 @cython.internal
+@cython.freelist(8)
 cdef class _FileWriterElement:
     cdef object _element
     cdef _IncrementalFileWriter _writer
