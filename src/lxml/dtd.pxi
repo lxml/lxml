@@ -24,9 +24,6 @@ cdef class _DTDElementContentDecl:
     cdef DTD _dtd
     cdef tree.xmlElementContent* _c_node
 
-    def __cinit__(self):
-        self._c_node = NULL
-
     def __repr__(self):
         return "<%s.%s object name=%r type=%r occur=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.type, self.occur, id(self))
 
@@ -93,9 +90,6 @@ cdef class _DTDElementContentDecl:
 cdef class _DTDAttributeDecl:
     cdef DTD _dtd
     cdef tree.xmlAttribute* _c_node
-
-    def __cinit__(self):
-        self._c_node = NULL
 
     def __repr__(self):
         return "<%s.%s object name=%r elemname=%r prefix=%r type=%r default=%r default_value=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.elemname, self.prefix, self.type, self.default, self.default_value, id(self))
@@ -177,9 +171,6 @@ cdef class _DTDElementDecl:
     cdef DTD _dtd
     cdef tree.xmlElement* _c_node
 
-    def __cinit__(self):
-        self._c_node = NULL
-
     def __repr__(self):
         return "<%s.%s object name=%r prefix=%r type=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, self.prefix, self.type, id(self))
 
@@ -239,10 +230,6 @@ cdef class _DTDElementDecl:
 cdef class _DTDEntityDecl:
     cdef DTD _dtd
     cdef tree.xmlEntity* _c_node
-
-    def __cinit__(self):
-        self._c_node = NULL
-
     def __repr__(self):
         return "<%s.%s object name=%r at 0x%x>" % (self.__class__.__module__, self.__class__.__name__, self.name, id(self))
 
@@ -273,9 +260,6 @@ cdef class DTD(_Validator):
     catalog.
     """
     cdef tree.xmlDtd* _c_dtd
-    def __cinit__(self):
-        self._c_dtd = NULL
-
     def __init__(self, file=None, *, external_id=None):
         _Validator.__init__(self)
         if file is not None:
