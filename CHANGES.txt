@@ -45,7 +45,8 @@ Other changes
 -------------
 
 * Some basic API classes use freelists internally for faster
-  instantiation.
+  instantiation.  This can speed up some ``iterparse()`` scenarios,
+  for example.
 
 * ``iterparse()`` was rewritten to use the new ``*PullParser``
   classes internally.
