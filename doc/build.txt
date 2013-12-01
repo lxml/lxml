@@ -42,9 +42,9 @@ developer sources (e.g. to test a bug fix that has not been release
 yet) or if you want to be an lxml developer, then you do need a
 working Cython installation.  You can use pip_ to install it::
 
-    pip install "Cython>=0.18"
+    pip install "Cython>=0.19.2"
 
-lxml currently requires at least Cython 0.18, later release versions
+lxml currently requires at least Cython 0.19, later release versions
 should work as well.
 
 
