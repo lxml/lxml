@@ -312,6 +312,8 @@ include "xmlerror.pxi"     # Error and log handling
 ################################################################################
 # Public Python API
 
+@cython.final
+@cython.freelist(8)
 cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     u"""Internal base class to reference a libxml document.
 
