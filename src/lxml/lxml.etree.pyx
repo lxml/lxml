@@ -1711,7 +1711,7 @@ cdef class QName:
     def __str__(self):
         return self.text
     def __hash__(self):
-        return self.text.__hash__()
+        return hash(self.text)
     def __richcmp__(one, other, int op):
         try:
             if type(one) is QName:
