@@ -364,7 +364,7 @@ cdef _freeReadOnlyProxies(_ReadOnlyProxy sourceProxy):
 cdef class _OpaqueNodeWrapper:
     cdef tree.xmlNode* _c_node
     def __init__(self):
-        raise TypeError, u"This type cannot be instatiated from Python"
+        raise TypeError, u"This type cannot be instantiated from Python"
 
 @cython.final
 @cython.internal
