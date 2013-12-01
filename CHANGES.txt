@@ -44,6 +44,9 @@ Bugs fixed
 Other changes
 -------------
 
+* Some basic API classes use freelists internally for faster
+  instantiation.
+
 * ``iterparse()`` was rewritten to use the new ``*PullParser``
   classes internally.
 
