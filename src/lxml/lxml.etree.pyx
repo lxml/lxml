@@ -482,7 +482,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     return result
 
 
-@cython.freelist(8)
+@cython.freelist(4)
 cdef class DocInfo:
     u"Document information provided by parser and DTD."
     cdef _Document _doc
