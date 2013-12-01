@@ -1644,7 +1644,7 @@ cdef class _Entity(__ContentOnlyElement):
         def __set__(self, value):
             _assertValidNode(self)
             value_utf = _utf8(value)
-            if u'&' in value or u';' in value:
+            if b'&' in value_utf or b';' in value_utf:
                 raise ValueError(u"Invalid entity name '%s'" % value)
             tree.xmlNodeSetName(self._c_node, _xcstr(value_utf))
 
