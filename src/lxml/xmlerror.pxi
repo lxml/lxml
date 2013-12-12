@@ -57,7 +57,7 @@ cdef class _LogEntry:
     cdef object _message
     cdef object _filename
     cdef char* _c_message
-    cdef const_xmlChar* _c_filename
+    cdef xmlChar* _c_filename
 
     def __dealloc__(self):
         tree.xmlFree(self._c_message)
