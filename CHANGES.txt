@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Under development
-==================
+3.3.0beta1 (2013-12-12)
+=======================
 
 Features added
 --------------
@@ -17,6 +17,9 @@ Features added
 
 Bugs fixed
 ----------
+
+* LP#1255132: crash when trying to run validation over non-Element (e.g.
+  comment or PI).
 
 * Error messages in the log and in exception messages that originated
   from libxml2 could accidentally be picked up from preceding warnings
@@ -50,22 +53,6 @@ Other changes
 
 * ``iterparse()`` was rewritten to use the new ``*PullParser``
   classes internally.
-
-
-3.2.x
-==================
-
-Features added
---------------
-
-Bugs fixed
-----------
-
-* LP#1255132: crash when trying to run validation over non-Element (e.g.
-  comment or PI).
-
-Other changes
--------------
 
 
 3.2.4 (2013-11-07)
