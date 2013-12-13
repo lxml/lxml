@@ -653,7 +653,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         # ET raises ExpatError, lxml raises XMLSyntaxError
         self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
 
-    def test_iterparse_broken_recover(self):
+    def _test_iterparse_broken_recover(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a><b><c/></a>')
         it = iterparse(f, events=('start', 'end'), recover=True)

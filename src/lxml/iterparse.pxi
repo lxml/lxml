@@ -7,7 +7,7 @@ cdef class iterparse:
                   attribute_defaults=False, dtd_validation=False, \
                   load_dtd=False, no_network=True, remove_blank_text=False, \
                   remove_comments=False, remove_pis=False, encoding=None, \
-                  html=False, recover=None, huge_tree=False, schema=None)
+                  html=False, huge_tree=False, schema=None)
 
     Incremental parser.
 
@@ -47,8 +47,6 @@ cdef class iterparse:
      - huge_tree: disable security restrictions and support very deep trees
                   and very long text content (only affects libxml2 2.7+)
      - html: parse input as HTML (default: XML)
-     - recover: try hard to parse through broken input (default: True for HTML,
-                False otherwise)
 
     Other keyword arguments:
      - encoding: override the document encoding
@@ -68,7 +66,7 @@ cdef class iterparse:
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
-                 html=False, recover=None, huge_tree=False,
+                 html=False, huge_tree=False,
                  XMLSchema schema=None):
         if not hasattr(source, 'read'):
             self._filename = source
@@ -80,9 +78,6 @@ cdef class iterparse:
             self._filename = _getFilenameForFile(source)
             self._close_source_after_read = False
 
-        if recover is None:
-            recover = html
-
         if html:
             # make sure we're not looking for namespaces
             events = tuple([ event for event in events
@@ -90,7 +85,7 @@ cdef class iterparse:
             parser = HTMLPullParser(
                 events,
                 tag=tag,
-                recover=recover,
+                recover=False,
                 base_url=self._filename,
                 encoding=encoding,
                 remove_blank_text=remove_blank_text,
@@ -105,7 +100,7 @@ cdef class iterparse:
             parser = XMLPullParser(
                 events,
                 tag=tag,
-                recover=recover,
+                recover=False,
                 base_url=self._filename,
                 encoding=encoding,
                 attribute_defaults=attribute_defaults,
