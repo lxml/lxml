@@ -3,7 +3,11 @@
 DEF __ITERPARSE_CHUNK_SIZE = 32768
 
 cdef class iterparse:
-    u"""iterparse(self, source, events=("end",), tag=None, recover=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, huge_tree=False, schema=None)
+    u"""iterparse(self, source, events=("end",), tag=None, \
+                  attribute_defaults=False, dtd_validation=False, \
+                  load_dtd=False, no_network=True, remove_blank_text=False, \
+                  remove_comments=False, remove_pis=False, encoding=None, \
+                  html=False, recover=None, huge_tree=False, schema=None)
 
     Incremental parser.
 
@@ -59,12 +63,13 @@ cdef class iterparse:
     cdef object _error
     cdef bint _close_source_after_read
 
-    def __init__(self, source, events=(u"end",), *, tag=None, recover=None,
+    def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
-                 html=False, huge_tree=False, XMLSchema schema=None):
+                 html=False, recover=None, huge_tree=False,
+                 XMLSchema schema=None):
         if not hasattr(source, 'read'):
             self._filename = source
             if not python.IS_PYTHON3:
