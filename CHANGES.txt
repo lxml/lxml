@@ -8,6 +8,8 @@ Latest development
 Features added
 --------------
 
+* ``iterparse()`` supports the ``recover`` option.
+
 Bugs fixed
 ----------
 
@@ -33,6 +35,9 @@ Features added
 
 * New parser classes ``XMLPullParser`` and ``HTMLPullParser`` for
   incremental parsing, as implemented for ElementTree in Python 3.4.
+
+* ``iterparse()`` enables recovery mode by default for HTML parsing
+  (``html=True``).
 
 Bugs fixed
 ----------

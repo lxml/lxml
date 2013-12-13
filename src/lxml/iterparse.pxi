@@ -3,7 +3,7 @@
 DEF __ITERPARSE_CHUNK_SIZE = 32768
 
 cdef class iterparse:
-    u"""iterparse(self, source, events=("end",), tag=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, huge_tree=False, schema=None)
+    u"""iterparse(self, source, events=("end",), tag=None, recover=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, remove_blank_text=False, remove_comments=False, remove_pis=False, encoding=None, html=False, huge_tree=False, schema=None)
 
     Incremental parser.
 
@@ -42,6 +42,9 @@ cdef class iterparse:
      - resolve_entities: replace entities by their text value (default: True)
      - huge_tree: disable security restrictions and support very deep trees
                   and very long text content (only affects libxml2 2.7+)
+     - html: parse input as HTML (default: XML)
+     - recover: try hard to parse through broken input (default: True for HTML,
+                False otherwise)
 
     Other keyword arguments:
      - encoding: override the document encoding
@@ -56,7 +59,7 @@ cdef class iterparse:
     cdef object _error
     cdef bint _close_source_after_read
 
-    def __init__(self, source, events=(u"end",), *, tag=None,
+    def __init__(self, source, events=(u"end",), *, tag=None, recover=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
@@ -72,6 +75,9 @@ cdef class iterparse:
             self._filename = _getFilenameForFile(source)
             self._close_source_after_read = False
 
+        if recover is None:
+            recover = html
+
         if html:
             # make sure we're not looking for namespaces
             events = tuple([ event for event in events
@@ -79,6 +85,7 @@ cdef class iterparse:
             parser = HTMLPullParser(
                 events,
                 tag=tag,
+                recover=recover,
                 base_url=self._filename,
                 encoding=encoding,
                 remove_blank_text=remove_blank_text,
@@ -93,6 +100,7 @@ cdef class iterparse:
             parser = XMLPullParser(
                 events,
                 tag=tag,
+                recover=recover,
                 base_url=self._filename,
                 encoding=encoding,
                 attribute_defaults=attribute_defaults,

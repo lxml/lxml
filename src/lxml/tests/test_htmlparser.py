@@ -274,6 +274,32 @@ class HtmlParserTestCase(HelperTestCase):
              ('end', root[1]), ('end', root)],
             events)
 
+    def test_html_iterparse_broken(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<head><title>TEST></head><p>P<br></div>')
+
+        iterator = iterparse(f, html=True)
+        self.assertEqual(None, iterator.root)
+
+        events = list(iterator)
+        root = iterator.root
+        self.assertTrue(root is not None)
+        self.assertEqual('html', root.tag)
+        self.assertEqual('head', root[0].tag)
+        self.assertEqual('body', root[1].tag)
+        self.assertEqual('p', root[1][0].tag)
+        self.assertEqual('br', root[1][0][0].tag)
+        self.assertEqual(
+            [('end', root[0][0]), ('end', root[0]), ('end', root[1][0][0]),
+             ('end', root[1][0]), ('end', root[1]), ('end', root)],
+            events)
+
+    def test_html_iterparse_broken_no_recover(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<p>P<br></div>')
+        iterator = iterparse(f, html=True, recover=False)
+        self.assertRaises(self.etree.XMLSyntaxError, list, iterator)
+
     def test_html_iterparse_file(self):
         iterparse = self.etree.iterparse
         iterator = iterparse(fileInTestDir("shakespeare.html"),
