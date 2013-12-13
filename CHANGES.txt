@@ -2,6 +2,25 @@
 lxml changelog
 ==============
 
+Latest development
+=======================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* The safety check in the read-only tree implementation (e.g. used by
+  ``PythonElementClassLookup``) raises a more appropriate ``ReferenceError``
+  for illegal access after tree disposal instead of an ``AssertionError``.
+  This should only impact test code that specifically checks the original
+  behaviour.
+
+
 3.3.0beta1 (2013-12-12)
 =======================
 
