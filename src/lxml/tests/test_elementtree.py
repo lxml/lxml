@@ -4093,8 +4093,11 @@ if ElementTree:
         ElementTreeTestCase,
         ElementTreeTestCase.required_versions_ET, ET_VERSION)
 
-    class ElementTreePullTestCase(_XMLPullParserTest):
-        etree = ElementTree
+    if hasattr(ElementTree, 'XMLPullParser'):
+        class ElementTreePullTestCase(_XMLPullParserTest):
+            etree = ElementTree
+    else:
+        ElementTreePullTestCase = None
 
 
 if cElementTree:
@@ -4113,7 +4116,7 @@ def test_suite():
         suite.addTests([unittest.makeSuite(ETreePullTestCase)])
     if ElementTree:
         suite.addTests([unittest.makeSuite(ElementTreeTestCase)])
-        if hasattr(ElementTree, 'XMLPullParser'):
+        if ElementTreePullTestCase:
             suite.addTests([unittest.makeSuite(ElementTreePullTestCase)])
     if cElementTree:
         suite.addTests([unittest.makeSuite(CElementTreeTestCase)])
