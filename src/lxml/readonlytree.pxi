@@ -14,7 +14,8 @@ cdef class _ReadOnlyProxy:
     cdef int _assertNode(self) except -1:
         u"""This is our way of saying: this proxy is invalid!
         """
-        assert self._c_node is not NULL, u"Proxy invalidated!"
+        if not self._c_node:
+            raise ReferenceError("Proxy invalidated!")
         return 0
 
     cdef int _raise_unsupported_type(self):

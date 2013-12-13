@@ -76,7 +76,7 @@ class PyClassLookupTestCase(HelperTestCase):
         self._setClassLookup(lookup)
         root = self.XML(xml_str)
         self.assertNotEqual(None, el_class.EL)
-        self.assertRaises(AssertionError, el_class.EL.getchildren)
+        self.assertRaises(ReferenceError, el_class.EL.getchildren)
 
     def test_lookup_tag(self):
         el_class = self._buildElementClass()
