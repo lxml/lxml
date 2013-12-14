@@ -653,16 +653,39 @@ class ETreeOnlyTestCase(HelperTestCase):
         # ET raises ExpatError, lxml raises XMLSyntaxError
         self.assertRaises(self.etree.XMLSyntaxError, list, iterparse(f))
 
-    def _test_iterparse_broken_recover(self):
+    def test_iterparse_broken_recover(self):
         iterparse = self.etree.iterparse
         f = BytesIO('<a><b><c/></a>')
         it = iterparse(f, events=('start', 'end'), recover=True)
         events = [(ev, el.tag) for ev, el in it]
         root = it.root
         self.assertTrue(root is not None)
-        self.assertTrue(('start', 'a') in events)
-        self.assertTrue(('start', 'b') in events)
-        self.assertTrue(('end', 'b') in events)
+
+        self.assertEqual(1, events.count(('start', 'a')))
+        self.assertEqual(1, events.count(('end', 'a')))
+
+        self.assertEqual(1, events.count(('start', 'b')))
+        self.assertEqual(1, events.count(('end', 'b')))
+
+        self.assertEqual(1, events.count(('start', 'c')))
+        self.assertEqual(1, events.count(('end', 'c')))
+
+    def test_iterparse_broken_multi_recover(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO('<a><b><c/></d><b><c/></a></b>')
+        it = iterparse(f, events=('start', 'end'), recover=True)
+        events = [(ev, el.tag) for ev, el in it]
+        root = it.root
+        self.assertTrue(root is not None)
+
+        self.assertEqual(1, events.count(('start', 'a')))
+        self.assertEqual(1, events.count(('end', 'a')))
+
+        self.assertEqual(2, events.count(('start', 'b')))
+        self.assertEqual(2, events.count(('end', 'b')))
+
+        self.assertEqual(2, events.count(('start', 'c')))
+        self.assertEqual(2, events.count(('end', 'c')))
 
     def test_iterparse_strip(self):
         iterparse = self.etree.iterparse

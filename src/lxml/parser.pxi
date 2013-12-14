@@ -1225,6 +1225,12 @@ cdef class _FeedParser(_BaseParser):
             htmlparser.htmlParseChunk(pctxt, NULL, 0, 1)
         else:
             xmlparser.xmlParseChunk(pctxt, NULL, 0, 1)
+
+        if (pctxt.recovery and not pctxt.disableSAX and
+                isinstance(context, _SaxParserContext)):
+            # apply any left-over 'end' events
+            (<_SaxParserContext>context).flushEvents()
+
         try:
             result = context._handleParseResult(self, pctxt.myDoc, None)
         finally:

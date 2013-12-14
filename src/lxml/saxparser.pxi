@@ -195,6 +195,14 @@ cdef class _SaxParserContext(_ParserContext):
         self.events_iterator._events.append( (event, node) )
         return 0
 
+    cdef int flushEvents(self) except -1:
+        events = self.events_iterator._events
+        while self._node_stack:
+            events.append( ('end', self._node_stack.pop()) )
+            _pushSaxNsEndEvents(self)
+        while self._ns_stack:
+            _pushSaxNsEndEvents(self)
+
     cdef void _handleSaxException(self, xmlparser.xmlParserCtxt* c_ctxt):
         if c_ctxt.errNo == xmlerror.XML_ERR_OK:
             c_ctxt.errNo = xmlerror.XML_ERR_INTERNAL_ERROR
