@@ -322,7 +322,7 @@ cdef void _handleSaxTargetStart(
             nsmap = EMPTY_READ_ONLY_DICT
         else:
             nsmap = {}
-            for i in xrange(c_nb_attributes):
+            for i in xrange(c_nb_namespaces):
                 prefix = funicodeOrNone(c_namespaces[0])
                 nsmap[prefix] = funicode(c_namespaces[1])
                 c_namespaces += 2
