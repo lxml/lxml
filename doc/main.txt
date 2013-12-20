@@ -242,7 +242,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-3.3.0beta2.pdf
 
-* `lxml 3.3.0beta1`, released 2013-12-12  (`changes for 3.3.0beta1`_)
+* `lxml 3.3.0beta1`_, released 2013-12-12  (`changes for 3.3.0beta1`_)
 
 * `lxml 3.2.4`_, released 2013-11-07 (`changes for 3.2.4`_)
 
