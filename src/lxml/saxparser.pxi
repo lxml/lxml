@@ -508,6 +508,7 @@ cdef void _handleSaxStartDocument(void* ctxt) with gil:
         # I have no idea why libxml2 disables this - we need it
         c_ctxt.dictNames = 1
         c_doc.dict = c_ctxt.dict
+        xmlparser.xmlDictReference(c_ctxt.dict)
     try:
         context.startDocument(c_doc)
     except:

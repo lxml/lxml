@@ -12,7 +12,7 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
-from common_imports import SillyFileLike, HelperTestCase, write_to_file
+from common_imports import SillyFileLike, HelperTestCase, write_to_file, next
 
 try:
     unicode
@@ -273,6 +273,27 @@ class HtmlParserTestCase(HelperTestCase):
             [('end', root[0][0]), ('end', root[0]), ('end', root[1][0]),
              ('end', root[1]), ('end', root)],
             events)
+
+    def test_html_iterparse_stop_short(self):
+        iterparse = self.etree.iterparse
+        f = BytesIO(
+            '<html><head><title>TITLE</title><body><p>P</p></body></html>')
+
+        iterator = iterparse(f, html=True)
+        self.assertEqual(None, iterator.root)
+
+        event, element = next(iterator)
+        self.assertEqual('end', event)
+        self.assertEqual('title', element.tag)
+        self.assertEqual(None, iterator.root)
+        del element
+
+        event, element = next(iterator)
+        self.assertEqual('end', event)
+        self.assertEqual('head', element.tag)
+        self.assertEqual(None, iterator.root)
+        del element
+        del iterator
 
     def test_html_iterparse_broken(self):
         iterparse = self.etree.iterparse
