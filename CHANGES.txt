@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-Latest development
+3.3.0beta2 (2013-12-20)
 =======================
 
 Features added
@@ -12,6 +12,8 @@ Features added
 
 Bugs fixed
 ----------
+
+* Crash in ``iterparse()`` for HTML parsing.
 
 Other changes
 -------------
