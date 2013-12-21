@@ -15,6 +15,8 @@ Bugs fixed
 
 * Crash in ``iterparse()`` for HTML parsing.
 
+* Crash in target parsing with attributes.
+
 Other changes
 -------------
 
