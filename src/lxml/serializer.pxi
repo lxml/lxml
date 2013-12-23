@@ -649,7 +649,7 @@ cdef class _IncrementalFileWriter:
     cdef tree.xmlOutputBuffer* _c_out
     cdef bytes _encoding
     cdef const_char* _c_encoding
-    cdef object _target
+    cdef _FilelikeWriter _target
     cdef list _element_stack
     cdef int _status
 
@@ -660,7 +660,8 @@ cdef class _IncrementalFileWriter:
             encoding = b'ASCII'
         self._encoding = encoding
         self._c_encoding = _cstr(encoding) if encoding is not None else NULL
-        self._target = _create_output_buffer(outfile, self._c_encoding, compresslevel, &self._c_out)
+        self._target = _create_output_buffer(
+            outfile, self._c_encoding, compresslevel, &self._c_out)
 
     def __dealloc__(self):
         if self._c_out is not NULL:
@@ -871,8 +872,8 @@ cdef class _IncrementalFileWriter:
 
     cdef _handle_error(self, int error_result):
         if error_result != xmlerror.XML_ERR_OK:
-            if self._writer is not None:
-                self._writer._exc_context._raise_if_stored()
+            if self._target is not None:
+                self._target._exc_context._raise_if_stored()
             _raiseSerialisationError(error_result)
 
 @cython.final
