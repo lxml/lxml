@@ -113,6 +113,6 @@ docclean:
 	rm -fr doc/pdf
 
 realclean: clean docclean
-	find . -name '*.c' -exec rm -f {} \;
+	find src -name '*.c' -exec rm -f {} \;
 	rm -f TAGS
 	$(PYTHON) setup.py clean -a --without-cython
