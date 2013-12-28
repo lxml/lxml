@@ -35,10 +35,10 @@ cdef _Document _documentOrRaise(object input):
         doc = <_Document>input
     else:
         raise TypeError, u"Invalid input object: %s" % \
-            python._fqtypename(input)
+            python._fqtypename(input).decode('utf8')
     if doc is None:
         raise ValueError, u"Input object has no document: %s" % \
-            python._fqtypename(input)
+            python._fqtypename(input).decode('utf8')
     _assertValidDoc(doc)
     return doc
 
@@ -57,11 +57,11 @@ cdef _Element _rootNodeOrRaise(object input):
         node = (<_Document>input).getroot()
     else:
         raise TypeError, u"Invalid input object: %s" % \
-            python._fqtypename(input)
+            python._fqtypename(input).decode('utf8')
     if (node is None or not node._c_node or
             node._c_node.type != tree.XML_ELEMENT_NODE):
         raise ValueError, u"Input object has no element: %s" % \
-            python._fqtypename(input)
+            python._fqtypename(input).decode('utf8')
     _assertValidNode(node)
     return node
 
@@ -250,7 +250,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
     # 'extra' is not checked here (expected to be a keyword dict)
     if attrib is not None and not hasattr(attrib, u'items'):
         raise TypeError, u"Invalid attribute dictionary: %s" % \
-            python._fqtypename(attrib)
+            python._fqtypename(attrib).decode('utf8')
     if extra:
         if attrib is None:
             attrib = extra

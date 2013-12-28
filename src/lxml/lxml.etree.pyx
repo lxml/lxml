@@ -3138,7 +3138,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
                          pretty_print, with_tail, is_standalone)
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
-            python._fqtypename(element_or_tree)
+            python._fqtypename(element_or_tree).decode('utf8')
 
 def tostringlist(element_or_tree, *args, **kwargs):
     u"""tostringlist(element_or_tree, *args, **kwargs)
