@@ -1541,32 +1541,32 @@ cdef bint _characterReferenceIsValid(const_xmlChar* c_name):
 
 cdef int _tagValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError("Invalid tag name %r" %
+        raise ValueError(u"Invalid tag name %r" %
                          (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _htmlTagValidOrRaise(tag_utf) except -1:
     if not _pyHtmlNameIsValid(tag_utf):
-        raise ValueError("Invalid HTML tag name %r" %
+        raise ValueError(u"Invalid HTML tag name %r" %
                          (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _attributeValidOrRaise(name_utf) except -1:
     if not _pyXmlNameIsValid(name_utf):
-        raise ValueError("Invalid attribute name %r" %
+        raise ValueError(u"Invalid attribute name %r" %
                          (<bytes>name_utf).decode('utf8'))
     return 0
 
 cdef int _prefixValidOrRaise(tag_utf) except -1:
     if not _pyXmlNameIsValid(tag_utf):
-        raise ValueError("Invalid namespace prefix %r" %
+        raise ValueError(u"Invalid namespace prefix %r" %
                          (<bytes>tag_utf).decode('utf8'))
     return 0
 
 cdef int _uriValidOrRaise(uri_utf) except -1:
     cdef uri.xmlURI* c_uri = uri.xmlParseURI(_cstr(uri_utf))
     if c_uri is NULL:
-        raise ValueError("Invalid namespace URI %r" %
+        raise ValueError(u"Invalid namespace URI %r" %
                          (<bytes>uri_utf).decode('utf8'))
     uri.xmlFreeURI(c_uri)
     return 0
