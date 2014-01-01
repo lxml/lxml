@@ -868,6 +868,7 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferClose(self._c_out)
         self._status = WRITER_FINISHED
         self._c_out = NULL
+        del self._element_stack[:]
         if raise_on_error:
             self._handle_error(error_result)
 
