@@ -2,6 +2,21 @@
 lxml changelog
 ==============
 
+Latest changes
+=======================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* Crash in xmlfile() when closing open elements out of order in an error case.
+
+Other changes
+-------------
+
+
 3.3.0beta2 (2013-12-20)
 =======================
 
