@@ -175,6 +175,25 @@ class _XmlFileTestCaseBase(HelperTestCase):
             else:
                 self.assertTrue(False)
 
+    def test_closing_out_of_order_in_error_case(self):
+        cm_exit = None
+        try:
+            with etree.xmlfile(self._file) as xf:
+                x = xf.element('test')
+                cm_exit = x.__exit__
+                x.__enter__()
+                raise ValueError('123')
+        except ValueError:
+            self.assertTrue(cm_exit)
+            try:
+                cm_exit(ValueError, ValueError("huhu"), None)
+            except etree.LxmlSyntaxError:
+                self.assertTrue(True)
+            else:
+                self.assertTrue(False)
+        else:
+            self.assertTrue(False)
+
     def _read_file(self):
         self._file.seek(0)
         return self._file.read()
