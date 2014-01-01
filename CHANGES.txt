@@ -11,6 +11,10 @@ Features added
 Bugs fixed
 ----------
 
+* Crash in xmlfile() when closing open elements out of order in an error case.
+
+* Crash in target parsing with attributes.
+
 * LP#1255132: crash when trying to run validation over non-Element (e.g.
   comment or PI).
 
