@@ -959,7 +959,7 @@ cdef class _BaseParser:
         cdef Py_ssize_t py_buffer_len
         cdef int buffer_len, c_kind
         cdef const_char* c_text
-        cdef const_char* c_encoding
+        cdef const_char* c_encoding = _UNICODE_ENCODING
         if python.PEP393_ENABLED:
             python.PyUnicode_READY(utext)
             c_text = <const_char*>python.PyUnicode_DATA(utext)
@@ -968,22 +968,22 @@ cdef class _BaseParser:
             if c_kind == 1:
                 c_encoding = 'ISO-8859-1'
             elif c_kind == 2:
+                py_buffer_len *= 2
                 if python._is_big_endian():
                     c_encoding = 'UTF-16BE'  # actually UCS-2
                 else:
                     c_encoding = 'UTF-16LE'  # actually UCS-2
             elif c_kind == 4:
+                py_buffer_len *= 4
                 if python._is_big_endian():
                     c_encoding = 'UCS-4BE'
                 else:
                     c_encoding = 'UCS-4LE'
             else:
                 assert False, "Illegal Unicode kind %d" % c_kind
-            py_buffer_len *= c_kind
         else:
             py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
             c_text = python.PyUnicode_AS_DATA(utext)
-            c_encoding = _UNICODE_ENCODING
         assert py_buffer_len <= limits.INT_MAX
         buffer_len = py_buffer_len
 
