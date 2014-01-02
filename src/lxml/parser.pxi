@@ -960,10 +960,7 @@ cdef class _BaseParser:
         cdef int buffer_len
         cdef const_char* c_text
         py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
-        if py_buffer_len > limits.INT_MAX or _UNICODE_ENCODING is NULL:
-            text_utf = python.PyUnicode_AsUTF8String(utext)
-            py_buffer_len = python.PyBytes_GET_SIZE(text_utf)
-            return self._parseDoc(_cstr(text_utf), py_buffer_len, c_filename)
+        assert py_buffer_len <= limits.INT_MAX
         buffer_len = py_buffer_len
 
         context = self._getParserContext()
@@ -993,7 +990,7 @@ cdef class _BaseParser:
         finally:
             context.cleanup()
 
-    cdef xmlDoc* _parseDoc(self, char* c_text, Py_ssize_t c_len,
+    cdef xmlDoc* _parseDoc(self, char* c_text, int c_len,
                            char* c_filename) except NULL:
         u"""Parse document, share dictionary if possible.
         """
@@ -1001,9 +998,6 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef char* c_encoding
-        if c_len > limits.INT_MAX:
-            raise ParserError, u"string is too long to parse it with libxml2"
-
         context = self._getParserContext()
         context.prepare()
         try:
@@ -1071,7 +1065,8 @@ cdef class _BaseParser:
         finally:
             context.cleanup()
 
-    cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename) except NULL:
+    cdef xmlDoc* _parseDocFromFilelike(self, filelike, filename,
+                                       encoding) except NULL:
         cdef _ParserContext context
         cdef _FileReaderContext file_context
         cdef xmlDoc* result
@@ -1086,7 +1081,8 @@ cdef class _BaseParser:
             pctxt = context._c_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             file_context = _FileReaderContext(
-                filelike, context, filename, self._default_encoding)
+                filelike, context, filename,
+                encoding or self._default_encoding)
             result = file_context._readDoc(pctxt, self._parse_options)
 
             return context._handleParseResultDoc(
@@ -1573,13 +1569,17 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
-                StringIO(text), filename)
+                StringIO(text), filename, None)
+        if _UNICODE_ENCODING is NULL:
+            text = (<unicode>text).encode('utf8')
+            return (<_BaseParser>parser)._parseDocFromFilelike(
+                BytesIO(text), filename, "UTF-8")
         return (<_BaseParser>parser)._parseUnicodeDoc(text, c_filename)
     else:
         c_len = python.PyBytes_GET_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
-                BytesIO(text), filename)
+                BytesIO(text), filename, None)
         c_text = _cstr(text)
         return (<_BaseParser>parser)._parseDoc(c_text, c_len, c_filename)
 
@@ -1592,7 +1592,7 @@ cdef xmlDoc* _parseDocFromFilelike(source, filename,
                                    _BaseParser parser) except NULL:
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
-    return (<_BaseParser>parser)._parseDocFromFilelike(source, filename)
+    return (<_BaseParser>parser)._parseDocFromFilelike(source, filename, None)
 
 cdef xmlDoc* _newXMLDoc() except NULL:
     cdef xmlDoc* result
@@ -1650,7 +1650,6 @@ cdef xmlNode* _copyNodeToDoc(xmlNode* c_node, xmlDoc* c_doc) except NULL:
 
 ############################################################
 ## API level helper functions for _Document creation
-## (here we convert to UTF-8)
 ############################################################
 
 cdef _Document _parseDocument(source, _BaseParser parser, base_url):
@@ -1674,41 +1673,29 @@ cdef _Document _parseDocument(source, _BaseParser parser, base_url):
     if hasattr(source, u'getvalue') and hasattr(source, u'tell'):
         # StringIO - reading from start?
         if source.tell() == 0:
-            return _parseMemoryDocument(
-                source.getvalue(), _encodeFilenameUTF8(url), parser)
+            return _parseMemoryDocument(source.getvalue(), url, parser)
 
     # Support for file-like objects (urlgrabber.urlopen, ...)
     if hasattr(source, u'read'):
-        return _parseFilelikeDocument(
-            source, _encodeFilenameUTF8(url), parser)
+        return _parseFilelikeDocument(source, url, parser)
 
     raise TypeError, u"cannot parse from '%s'" % python._fqtypename(source).decode('UTF-8')
 
 cdef _Document _parseDocumentFromURL(url, _BaseParser parser):
-    cdef xmlDoc* c_doc
     c_doc = _parseDocFromFile(url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseMemoryDocument(text, url, _BaseParser parser):
-    cdef xmlDoc* c_doc
     if isinstance(text, unicode):
         if _hasEncodingDeclaration(text):
             raise ValueError(
                 u"Unicode strings with encoding declaration are not supported. "
                 u"Please use bytes input or XML fragments without declaration.")
-        # pass native unicode only if libxml2 can handle it
-        if _UNICODE_ENCODING is NULL:
-            text = (<unicode>text).encode('utf8')
     elif not isinstance(text, bytes):
         raise ValueError, u"can only parse strings"
-    if isinstance(url, unicode):
-        url = (<unicode>url).encode('utf8')
     c_doc = _parseDoc(text, url, parser)
     return _documentFactory(c_doc, parser)
 
 cdef _Document _parseFilelikeDocument(source, url, _BaseParser parser):
-    cdef xmlDoc* c_doc
-    if isinstance(url, unicode):
-        url = (<unicode>url).encode('utf8')
     c_doc = _parseDocFromFilelike(source, url, parser)
     return _documentFactory(c_doc, parser)
