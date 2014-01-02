@@ -11,6 +11,8 @@ Features added
 Bugs fixed
 ----------
 
+* HTML parsing of Unicode strings could misdecode the input on some platforms.
+
 * Crash in xmlfile() when closing open elements out of order in an error case.
 
 Other changes
