@@ -29,6 +29,14 @@ class UnicodeTestCase(HelperTestCase):
         tree = etree.XML('<p>%s</p>' % uni)
         self.assertEqual(uni, tree.text)
 
+    def test_wide_unicode_xml(self):
+        if sys.maxunicode < 1114111:
+            return  # skip test
+        tree = etree.XML(_bytes('<p>\\U00026007</p>').decode('unicode_escape'))
+        self.assertEqual(1, len(tree.text))
+        self.assertEqual(_bytes('\\U00026007').decode('unicode_escape'),
+                         tree.text)
+
     def test_unicode_xml_broken(self):
         uxml = ('<?xml version="1.0" encoding="UTF-8"?>' +
                 '<p>%s</p>' % uni)

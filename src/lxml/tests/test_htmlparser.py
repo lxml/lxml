@@ -54,6 +54,17 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(element.findtext('.//h1'),
                          _bytes("page Ã¡ title").decode('utf8'))
 
+    def test_wide_unicode_xml(self):
+        if sys.maxunicode < 1114111:
+            return  # skip test
+        element = self.etree.HTML(_bytes(
+            '<html><body><p>\\U00026007</p></body></html>'
+        ).decode('unicode_escape'))
+        p_text = element.findtext('.//p')
+        self.assertEqual(1, len(p_text))
+        self.assertEqual(_bytes('\\U00026007').decode('unicode_escape'),
+                         p_text)
+
     def test_module_HTML_pretty_print(self):
         element = self.etree.HTML(self.html_str)
         self.assertEqual(self.etree.tostring(element, method="html", pretty_print=True),
