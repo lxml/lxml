@@ -13,11 +13,11 @@ try:
 except NameError:
     unicode = str
 
-ascii_uni = _str('a')
+ascii_uni = _bytes('a').decode('utf8')
 
 klingon = _bytes("\\uF8D2").decode("unicode_escape") # not valid for XML names
 
-invalid_tag = _str("test") + klingon
+invalid_tag = _bytes("test").decode('utf8') + klingon
 
 uni = _bytes('\\xc3\\u0680\\u3120').decode("unicode_escape") # some non-ASCII characters
 
@@ -26,12 +26,12 @@ uxml = _bytes("<test><title>test \\xc3\\xa1\\u3120</title><h1>page \\xc3\\xa1\\u
 
 class UnicodeTestCase(HelperTestCase):
     def test_unicode_xml(self):
-        tree = etree.XML(_str('<p>%s</p>') % uni)
+        tree = etree.XML('<p>%s</p>' % uni)
         self.assertEqual(uni, tree.text)
 
     def test_unicode_xml_broken(self):
-        uxml = _str('<?xml version="1.0" encoding="UTF-8"?>') + \
-               _str('<p>%s</p>') % uni
+        uxml = ('<?xml version="1.0" encoding="UTF-8"?>' +
+                '<p>%s</p>' % uni)
         self.assertRaises(ValueError, etree.XML, uxml)
 
     def test_unicode_tag(self):
@@ -43,23 +43,23 @@ class UnicodeTestCase(HelperTestCase):
         self.assertRaises(ValueError, etree.Element, invalid_tag)
 
     def test_unicode_nstag(self):
-        tag = _str("{http://abc/}%s") % uni
+        tag = "{http://abc/}%s" % uni
         el = etree.Element(tag)
         self.assertEqual(tag, el.tag)
 
     def test_unicode_ns_invalid(self):
         # namespace URIs must conform to RFC 3986
-        tag = _str("{http://%s/}abc") % uni
+        tag = "{http://%s/}abc" % uni
         self.assertRaises(ValueError, etree.Element, tag)
 
     def test_unicode_nstag_invalid(self):
         # sadly, Klingon is not well-formed
-        tag = _str("{http://abc/}%s") % invalid_tag
+        tag = "{http://abc/}%s" % invalid_tag
         self.assertRaises(ValueError, etree.Element, tag)
 
     def test_unicode_qname(self):
         qname = etree.QName(uni, uni)
-        tag = _str("{%s}%s") % (uni, uni)
+        tag = "{%s}%s" % (uni, uni)
         self.assertEqual(qname.text, tag)
         self.assertEqual(unicode(qname), tag)
 
@@ -75,7 +75,7 @@ class UnicodeTestCase(HelperTestCase):
         self.assertEqual(uni, el.text)
 
     def test_unicode_parse_stringio(self):
-        el = etree.parse(StringIO(_str('<p>%s</p>') % uni)).getroot()
+        el = etree.parse(StringIO('<p>%s</p>' % uni)).getroot()
         self.assertEqual(uni, el.text)
 
 ##     def test_parse_fileobject_unicode(self):
