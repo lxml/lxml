@@ -957,9 +957,33 @@ cdef class _BaseParser:
         cdef xmlDoc* result
         cdef xmlparser.xmlParserCtxt* pctxt
         cdef Py_ssize_t py_buffer_len
-        cdef int buffer_len
+        cdef int buffer_len, c_kind
         cdef const_char* c_text
-        py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
+        cdef const_char* c_encoding
+        if python.PEP393_ENABLED:
+            python.PyUnicode_READY(utext)
+            c_text = <const_char*>python.PyUnicode_DATA(utext)
+            py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
+            c_kind = python.PyUnicode_KIND(utext)
+            if c_kind == 1:
+                c_encoding = 'ISO-8859-1'
+            elif c_kind == 2:
+                if python._is_big_endian():
+                    c_encoding = 'UTF-16BE'  # actually UCS-2
+                else:
+                    c_encoding = 'UTF-16LE'  # actually UCS-2
+            elif c_kind == 4:
+                if python._is_big_endian():
+                    c_encoding = 'UCS-4BE'
+                else:
+                    c_encoding = 'UCS-4LE'
+            else:
+                assert False, "Illegal Unicode kind %d" % c_kind
+            py_buffer_len *= c_kind
+        else:
+            py_buffer_len = python.PyUnicode_GET_DATA_SIZE(utext)
+            c_text = python.PyUnicode_AS_DATA(utext)
+            c_encoding = _UNICODE_ENCODING
         assert py_buffer_len <= limits.INT_MAX
         buffer_len = py_buffer_len
 
@@ -968,13 +992,11 @@ cdef class _BaseParser:
         try:
             pctxt = context._c_ctxt
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
-
-            c_text = python.PyUnicode_AS_DATA(utext)
             orig_options = pctxt.options
             with nogil:
                 if self._for_html:
                     result = htmlparser.htmlCtxtReadMemory(
-                        pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                        pctxt, c_text, buffer_len, c_filename, c_encoding,
                         self._parse_options)
                     if result is not NULL:
                         if _fixHtmlDictNames(pctxt.dict, result) < 0:
@@ -982,7 +1004,7 @@ cdef class _BaseParser:
                             result = NULL
                 else:
                     result = xmlparser.xmlCtxtReadMemory(
-                        pctxt, c_text, buffer_len, c_filename, _UNICODE_ENCODING,
+                        pctxt, c_text, buffer_len, c_filename, c_encoding,
                         self._parse_options)
             pctxt.options = orig_options # work around libxml2 problem
 
@@ -1566,11 +1588,16 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if isinstance(text, unicode):
-        c_len = python.PyUnicode_GET_DATA_SIZE(text)
+        if python.PEP393_ENABLED:
+            python.PyUnicode_READY(text)
+            c_len = python.PyUnicode_GET_LENGTH(text)
+            c_len *= python.PyUnicode_KIND(text)
+        else:
+            c_len = python.PyUnicode_GET_DATA_SIZE(text)
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 StringIO(text), filename, None)
-        if _UNICODE_ENCODING is NULL:
+        if _UNICODE_ENCODING is NULL and not python.PEP393_ENABLED:
             text = (<unicode>text).encode('utf8')
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename, "UTF-8")

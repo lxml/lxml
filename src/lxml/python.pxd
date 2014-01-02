@@ -2,6 +2,9 @@ from libc cimport stdio
 from libc.string cimport const_char
 cimport cython
 
+cdef extern from *:
+    cdef bint PEP393_ENABLED "CYTHON_PEP393_ENABLED"
+
 cdef extern from "Python.h":
     ctypedef struct PyObject
     ctypedef struct PyThreadState
@@ -13,6 +16,12 @@ cdef extern from "Python.h":
     cdef void Py_XDECREF(PyObject* o)
 
     cdef stdio.FILE* PyFile_AsFile(object p)
+
+    # PEP 393
+    cdef int PyUnicode_READY(object u) except -1
+    cdef Py_ssize_t PyUnicode_GET_LENGTH(object u)
+    cdef int PyUnicode_KIND(object u)
+    cdef void* PyUnicode_DATA(object u)
 
     cdef bytes PyUnicode_AsEncodedString(object u, char* encoding,
                                          char* errors)
@@ -115,6 +124,7 @@ cdef extern from "pythread.h":
         NOWAIT_LOCK
 
 cdef extern from "etree_defs.h": # redefines some functions as macros
+    cdef bint _is_big_endian "_lx__is_big_endian" ()
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)

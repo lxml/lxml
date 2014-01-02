@@ -171,7 +171,7 @@ cdef extern from "libxml/parser.h":
                                int options) nogil
     cdef xmlDoc* xmlCtxtReadMemory(xmlParserCtxt* ctxt,
                                    char* buffer, int size,
-                                   char* filename, char* encoding,
+                                   char* filename, const_char* encoding,
                                    int options) nogil
 
 # iterparse:

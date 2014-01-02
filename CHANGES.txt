@@ -8,6 +8,8 @@ Latest changes
 Features added
 --------------
 
+* Unicode string parsing was optimised for Python 3.3 (PEP 393).
+
 Bugs fixed
 ----------
 
