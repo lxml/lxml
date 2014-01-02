@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-Latest changes
+3.2.5 (2014-01-02)
 ==================
 
 Features added
