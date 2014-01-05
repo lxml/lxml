@@ -99,6 +99,41 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue(dtd)
         self.assertFalse(dtd.validate(root))
 
+    def test_dtd_api_internal(self):
+        root = etree.XML(_bytes('''
+        <!DOCTYPE b SYSTEM "none" [
+        <!ATTLIST a
+          attr (x | y | z) "z"
+        >
+        <!ELEMENT b (a)>
+        <!ELEMENT a EMPTY>
+        ]>
+        <b><a/></b>
+        '''))
+        dtd = etree.ElementTree(root).docinfo.internalDTD
+        self.assertTrue(dtd)
+        dtd.assertValid(root)
+
+        seen = []
+        for el in dtd.iterelements():
+            if el.name == 'a':
+                self.assertEqual(1, len(el.attributes()))
+                for attr in el.iterattributes():
+                    self.assertEqual('attr', attr.name)
+                    self.assertEqual('enumeration', attr.type)
+                    self.assertEqual('none', attr.default)
+                    self.assertEqual('z', attr.default_value)
+                    values = attr.values()
+                    values.sort()
+                    self.assertEqual(['x', 'y', 'z'], values)
+            else:
+                self.assertEqual('b', el.name)
+                self.assertEqual(0, len(el.attributes()))
+            seen.append(el.name)
+        seen.sort()
+        self.assertEqual(['a', 'b'], seen)
+        self.assertEqual(2, len(dtd.elements()))
+
     def test_dtd_broken(self):
         self.assertRaises(etree.DTDParseError, etree.DTD,
                           BytesIO("<!ELEMENT b HONKEY>"))
