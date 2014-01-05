@@ -569,12 +569,12 @@ cdef class DocInfo:
     property internalDTD:
         u"Returns a DTD validator based on the internal subset of the document."
         def __get__(self):
-            return _dtdFactory(self._doc._c_doc.intSubset)
+            return _dtdFactory(self._doc, self._doc._c_doc.intSubset)
 
     property externalDTD:
         u"Returns a DTD validator based on the external subset of the document."
         def __get__(self):
-            return _dtdFactory(self._doc._c_doc.extSubset)
+            return _dtdFactory(self._doc, self._doc._c_doc.extSubset)
 
 
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:

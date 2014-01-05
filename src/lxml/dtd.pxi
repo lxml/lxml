@@ -273,8 +273,8 @@ cdef class DTD(_Validator):
     catalog.
     """
     cdef tree.xmlDtd* _c_dtd
-    def __cinit__(self):
-        self._c_dtd = NULL
+    cdef _Document _doc      # keep document alive if it owns the xmlDtd*
+    cdef bint _freed_by_doc  # False by default, True if _doc is set
 
     def __init__(self, file=None, *, external_id=None):
         _Validator.__init__(self)
@@ -337,7 +337,8 @@ cdef class DTD(_Validator):
         return list(self.iterentities())
 
     def __dealloc__(self):
-        tree.xmlFreeDtd(self._c_dtd)
+        if not self._freed_by_doc:
+            tree.xmlFreeDtd(self._c_dtd)
 
     def __call__(self, etree):
         u"""__call__(self, etree)
@@ -394,14 +395,18 @@ cdef tree.xmlDtd* _parseDtdFromFilelike(file) except NULL:
         raise DTDParseError(u"error parsing DTD", error_log)
     return c_dtd
 
-cdef DTD _dtdFactory(tree.xmlDtd* c_dtd):
+cdef DTD _dtdFactory(_Document xml_doc, tree.xmlDtd* c_dtd):
     # do not run through DTD.__init__()!
     cdef DTD dtd
     if c_dtd is NULL:
         return None
+    # Guess what, xmlCopyDtd() does not copy the links from the elements
+    # to their attributes, so the DTD would become useless if we copied it.
+    # Instead, we keep a reference to the owning Document to let it do the
+    # cleanup itself.
     dtd = DTD.__new__(DTD)
-    dtd._c_dtd = tree.xmlCopyDtd(c_dtd)
-    if dtd._c_dtd is NULL:
-        raise MemoryError()
+    dtd._doc = xml_doc
+    dtd._freed_by_doc = xml_doc is not None
+    dtd._c_dtd = c_dtd
     _Validator.__init__(dtd)
     return dtd

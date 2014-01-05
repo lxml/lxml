@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* LP#1266171: The DTD-API failed to return declared attributes of
+  internal/external subset DTDs (i.e. those from the docinfo property).
+
+Other changes
+-------------
+
+
 3.2.5 (2014-01-02)
 ==================
 
