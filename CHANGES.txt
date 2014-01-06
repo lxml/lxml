@@ -11,8 +11,8 @@ Features added
 Bugs fixed
 ----------
 
-* LP#1266171: The DTD-API failed to return declared attributes of
-  internal/external subset DTDs (i.e. those from the docinfo property).
+* LP#1266171: DTDs instantiated from internal/external subsets (i.e. through
+  the docinfo property) lost their attribute declarations.
 
 Other changes
 -------------
