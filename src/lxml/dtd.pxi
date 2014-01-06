@@ -394,48 +394,55 @@ cdef DTD _dtdFactory(tree.xmlDtd* c_dtd):
 
 
 cdef tree.xmlDtd* _copyDtd(tree.xmlDtd* c_orig_dtd) except NULL:
+    """
+    Copy a DTD.  libxml2 (currently) fails to set up the element->attributes
+    links when copying DTDs, so we have to rebuild them here.
+    """
     c_dtd = tree.xmlCopyDtd(c_orig_dtd)
     if not c_dtd:
         raise MemoryError
-    # libxml2 (currently) fails to set up the element->attributes links
-    # when copying DTDs, so we have to rebuild them here
-    cdef tree.xmlNode* c_next_node = c_dtd.children
-    while c_next_node:
-        c_node = c_next_node
-        c_next_node = c_node.next
-        if c_node.type != tree.XML_ATTRIBUTE_DECL:
-            continue
-        c_attr = <tree.xmlAttribute*>c_node
-        c_elem = dtdvalid.xmlGetDtdElementDesc(c_dtd, c_attr.elem)
-        if c_elem is NULL:
-            # no such element? something is wrong with the DTD ...
-            continue
-        c_pos = c_elem.attributes
-        if not c_pos:
-            c_elem.attributes = c_attr
-            c_attr.nexth = NULL
-            continue
-        # libxml2 keeps namespace declarations first, and we need to make
-        # sure we don't re-insert attributes that are already there
-        if _isDtdNsDecl(c_attr):
-            if not _isDtdNsDecl(c_pos):
-                c_elem.attributes = c_attr
-                c_attr.nexth = c_pos
-                continue
-            while c_pos != c_attr and c_pos.nexth and _isDtdNsDecl(c_pos.nexth):
-                c_pos = c_pos.nexth
-        else:
-            # append at end
-            while c_pos != c_attr and c_pos.nexth:
-                c_pos = c_pos.nexth
-        if c_pos == c_attr:
-            continue
-        c_attr.nexth = c_pos.nexth
-        c_pos.nexth = c_attr
+    cdef tree.xmlNode* c_node = c_dtd.children
+    while c_node:
+        if c_node.type == tree.XML_ATTRIBUTE_DECL:
+            _linkDtdAttribute(c_dtd, <tree.xmlAttribute*>c_node)
+        c_node = c_node.next
     return c_dtd
 
 
-cdef inline bint _isDtdNsDecl(tree.xmlAttribute* c_attr):
+cdef void _linkDtdAttribute(tree.xmlDtd* c_dtd, tree.xmlAttribute* c_attr):
+    """
+    Create the link to the DTD attribute declaration from the corresponding
+    element declaration.
+    """
+    c_elem = dtdvalid.xmlGetDtdElementDesc(c_dtd, c_attr.elem)
+    if not c_elem:
+        # no such element? something is wrong with the DTD ...
+        return
+    c_pos = c_elem.attributes
+    if not c_pos:
+        c_elem.attributes = c_attr
+        c_attr.nexth = NULL
+        return
+    # libxml2 keeps namespace declarations first, and we need to make
+    # sure we don't re-insert attributes that are already there
+    if _isDtdNsDecl(c_attr):
+        if not _isDtdNsDecl(c_pos):
+            c_elem.attributes = c_attr
+            c_attr.nexth = c_pos
+            return
+        while c_pos != c_attr and c_pos.nexth and _isDtdNsDecl(c_pos.nexth):
+            c_pos = c_pos.nexth
+    else:
+        # append at end
+        while c_pos != c_attr and c_pos.nexth:
+            c_pos = c_pos.nexth
+    if c_pos == c_attr:
+        return
+    c_attr.nexth = c_pos.nexth
+    c_pos.nexth = c_attr
+
+
+cdef bint _isDtdNsDecl(tree.xmlAttribute* c_attr):
     if cstring_h.strcmp(<const_char*>c_attr.name, "xmlns") == 0:
         return True
     if (c_attr.prefix is not NULL and
