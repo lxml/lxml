@@ -574,12 +574,12 @@ cdef class DocInfo:
     property internalDTD:
         u"Returns a DTD validator based on the internal subset of the document."
         def __get__(self):
-            return _dtdFactory(self._doc, self._doc._c_doc.intSubset)
+            return _dtdFactory(self._doc._c_doc.intSubset)
 
     property externalDTD:
         u"Returns a DTD validator based on the external subset of the document."
         def __get__(self):
-            return _dtdFactory(self._doc, self._doc._c_doc.extSubset)
+            return _dtdFactory(self._doc._c_doc.extSubset)
 
 
 @cython.freelist(16)
@@ -1798,13 +1798,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             doc = root._doc
             c_doc = self._context_node._doc._c_doc
             if c_doc.intSubset is not NULL and doc._c_doc.intSubset is NULL:
-                doc._c_doc.intSubset = tree.xmlCopyDtd(c_doc.intSubset)
-                if doc._c_doc.intSubset is NULL:
-                    raise MemoryError()
+                doc._c_doc.intSubset = _copyDtd(c_doc.intSubset)
             if c_doc.extSubset is not NULL and not doc._c_doc.extSubset is NULL:
-                doc._c_doc.extSubset = tree.xmlCopyDtd(c_doc.extSubset)
-                if doc._c_doc.extSubset is NULL:
-                    raise MemoryError()
+                doc._c_doc.extSubset = _copyDtd(c_doc.extSubset)
             return _elementTreeFactory(None, root)
         elif self._doc is not None:
             _assertValidDoc(self._doc)
