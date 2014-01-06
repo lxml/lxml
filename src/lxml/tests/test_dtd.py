@@ -103,7 +103,8 @@ class ETreeDtdTestCase(HelperTestCase):
         root = etree.XML(_bytes('''
         <!DOCTYPE b SYSTEM "none" [
         <!ATTLIST a
-          attr (x | y | z) "z"
+          attr1 (x | y | z) "z"
+          attr2 CDATA #FIXED "X"
         >
         <!ELEMENT b (a)>
         <!ELEMENT a EMPTY>
@@ -117,15 +118,20 @@ class ETreeDtdTestCase(HelperTestCase):
         seen = []
         for el in dtd.iterelements():
             if el.name == 'a':
-                self.assertEqual(1, len(el.attributes()))
+                self.assertEqual(2, len(el.attributes()))
                 for attr in el.iterattributes():
-                    self.assertEqual('attr', attr.name)
-                    self.assertEqual('enumeration', attr.type)
-                    self.assertEqual('none', attr.default)
-                    self.assertEqual('z', attr.default_value)
-                    values = attr.values()
-                    values.sort()
-                    self.assertEqual(['x', 'y', 'z'], values)
+                    if attr.name == 'attr1':
+                        self.assertEqual('enumeration', attr.type)
+                        self.assertEqual('none', attr.default)
+                        self.assertEqual('z', attr.default_value)
+                        values = attr.values()
+                        values.sort()
+                        self.assertEqual(['x', 'y', 'z'], values)
+                    else:
+                        self.assertEqual('attr2', attr.name)
+                        self.assertEqual('cdata', attr.type)
+                        self.assertEqual('fixed', attr.default)
+                        self.assertEqual('X', attr.default_value)
             else:
                 self.assertEqual('b', el.name)
                 self.assertEqual(0, len(el.attributes()))
@@ -133,6 +139,43 @@ class ETreeDtdTestCase(HelperTestCase):
         seen.sort()
         self.assertEqual(['a', 'b'], seen)
         self.assertEqual(2, len(dtd.elements()))
+
+    def test_internal_dtds(self):
+        for el_count in range(2, 5):
+            for attr_count in range(4):
+                root = etree.XML(_bytes('''
+                <!DOCTYPE el0 SYSTEM "none" [
+                ''' + ''.join(['''
+                <!ATTLIST el%d
+                  attr%d (x | y | z) "z"
+                >
+                ''' % (e, a) for a in range(attr_count) for e in range(el_count)
+                ]) + ''.join(['''
+                <!ELEMENT el%d EMPTY>
+                ''' % e for e in range(1, el_count)
+                ]) + '''
+                ''' + '<!ELEMENT el0 (%s)>' % '|'.join([
+                    'el%d' % e for e in range(1, el_count)]) + '''
+                ]>
+                <el0><el1 %s /></el0>
+                ''' % ' '.join(['attr%d="x"' % a for a in range(attr_count)])))
+                dtd = etree.ElementTree(root).docinfo.internalDTD
+                self.assertTrue(dtd)
+                dtd.assertValid(root)
+
+                e = -1
+                for e, el in enumerate(dtd.iterelements()):
+                    self.assertEqual(attr_count, len(el.attributes()))
+                    a = -1
+                    for a, attr in enumerate(el.iterattributes()):
+                        self.assertEqual('enumeration', attr.type)
+                        self.assertEqual('none', attr.default)
+                        self.assertEqual('z', attr.default_value)
+                        values = sorted(attr.values())
+                        self.assertEqual(['x', 'y', 'z'], values)
+                    self.assertEqual(attr_count - 1, a)
+                self.assertEqual(el_count - 1, e)
+                self.assertEqual(el_count, len(dtd.elements()))
 
     def test_dtd_broken(self):
         self.assertRaises(etree.DTDParseError, etree.DTD,
