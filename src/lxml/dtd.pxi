@@ -399,7 +399,7 @@ cdef tree.xmlDtd* _copyDtd(tree.xmlDtd* c_orig_dtd) except NULL:
         raise MemoryError
     # libxml2 (currently) fails to set up the element->attributes links
     # when copying DTDs, so we have to rebuild them here
-    c_next_node = c_dtd.children
+    cdef tree.xmlNode* c_next_node = c_dtd.children
     while c_next_node:
         c_node = c_next_node
         c_next_node = c_node.next
