@@ -124,10 +124,12 @@ cdef extern from "pythread.h":
         NOWAIT_LOCK
 
 cdef extern from "etree_defs.h": # redefines some functions as macros
-    cdef bint _is_big_endian "_lx__is_big_endian" ()
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)
     cdef bint LXML_UNICODE_STRINGS
     cdef bint IS_PYTHON3
     cdef bint IS_PYPY
+
+cdef extern from "lxml_endian.h":
+    cdef bint PY_BIG_ENDIAN  # defined in later Py3.x versions

@@ -969,13 +969,13 @@ cdef class _BaseParser:
                 c_encoding = 'ISO-8859-1'
             elif c_kind == 2:
                 py_buffer_len *= 2
-                if python._is_big_endian():
+                if python.PY_BIG_ENDIAN:
                     c_encoding = 'UTF-16BE'  # actually UCS-2
                 else:
                     c_encoding = 'UTF-16LE'  # actually UCS-2
             elif c_kind == 4:
                 py_buffer_len *= 4
-                if python._is_big_endian():
+                if python.PY_BIG_ENDIAN:
                     c_encoding = 'UCS-4BE'
                 else:
                     c_encoding = 'UCS-4LE'

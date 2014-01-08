@@ -239,9 +239,6 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #define _getNs(c_node) \
         (((c_node)->ns == 0) ? 0 : ((c_node)->ns->href))
 
-#include <stdint.h>
-#define _lx__is_big_endian() \
-    (((union {uint32_t i; char c[4];}) {0x01020304}).c[0] == 1)
 
 /* Macro pair implementation of a depth first tree walker
  *
