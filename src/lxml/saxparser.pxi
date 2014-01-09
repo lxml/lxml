@@ -63,6 +63,7 @@ cdef class _SaxParserContext(_ParserContext):
     u"""This class maps SAX2 events to parser target events.
     """
     cdef _SaxParserTarget _target
+    cdef _BaseParser _parser
     cdef xmlparser.startElementNsSAX2Func _origSaxStart
     cdef xmlparser.endElementNsSAX2Func   _origSaxEnd
     cdef xmlparser.startElementSAXFunc    _origSaxStartNoNs
@@ -84,9 +85,10 @@ cdef class _SaxParserContext(_ParserContext):
     cdef _Element  _root
     cdef _MultiTagMatcher _matcher
 
-    def __cinit__(self):
+    def __cinit__(self, _BaseParser parser):
         self._ns_stack = []
         self._node_stack = []
+        self._parser = parser
         self.events_iterator = _ParseEventsIterator()
 
     cdef void _setSaxParserTarget(self, _SaxParserTarget target):
@@ -180,7 +182,10 @@ cdef class _SaxParserContext(_ParserContext):
             self._matcher = _MultiTagMatcher(tag)
 
     cdef int startDocument(self, xmlDoc* c_doc) except -1:
-        self._doc = _documentFactory(c_doc, None)
+        try:
+            self._doc = _documentFactory(c_doc, self._parser)
+        finally:
+            self._parser = None  # clear circular reference ASAP
         if self._matcher is not None:
             self._matcher.cacheTags(self._doc, True) # force entry in libxml2 dict
         return 0

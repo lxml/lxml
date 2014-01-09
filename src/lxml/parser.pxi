@@ -829,10 +829,10 @@ cdef class _BaseParser:
     cdef _ParserContext _createContext(self, target, events_to_collect):
         cdef _SaxParserContext sax_context
         if target is not None:
-            sax_context = _TargetParserContext()
+            sax_context = _TargetParserContext(self)
             (<_TargetParserContext>sax_context)._setTarget(target)
         elif events_to_collect:
-            sax_context = _SaxParserContext()
+            sax_context = _SaxParserContext(self)
         else:
             # nothing special to configure
             return _ParserContext()

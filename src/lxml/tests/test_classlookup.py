@@ -156,6 +156,49 @@ class ClassLookupTestCase(HelperTestCase):
         self.assertEqual("default pi", root[0].FIND_ME)
         self.assertEqual("default comment", root[1].FIND_ME)
 
+    def test_default_class_lookup_pull_parser(self):
+        class TestElement(etree.ElementBase):
+            FIND_ME = "default element"
+        class TestComment(etree.CommentBase):
+            FIND_ME = "default comment"
+        class TestPI(etree.PIBase):
+            FIND_ME = "default pi"
+
+        parser = etree.XMLPullParser(events=('start', 'end', 'comment', 'pi'))
+        lookup = etree.ElementDefaultClassLookup(
+            element=TestElement, comment=TestComment, pi=TestPI)
+        parser.set_element_class_lookup(lookup)
+
+        events_seen = []
+
+        def add_events(events):
+            for ev, el in events:
+                events_seen.append((ev, el.FIND_ME))
+
+        parser.feed("""<?xml version='1.0'?>
+        <root>
+          <?myPI?>
+        """)
+        add_events(parser.read_events())
+
+        parser.feed("<!-- hi -->")
+        add_events(parser.read_events())
+
+        parser.feed("</root>")
+        root = parser.close()
+        add_events(parser.read_events())
+
+        self.assertEqual([
+            ('start',   "default element"),
+            ('pi',      "default pi"),
+            ('comment', "default comment"),
+            ('end',     "default element"),
+        ], events_seen)
+
+        self.assertEqual("default element", root.FIND_ME)
+        self.assertEqual("default pi", root[0].FIND_ME)
+        self.assertEqual("default comment", root[1].FIND_ME)
+
     def test_evil_class_lookup(self):
         class MyLookup(etree.CustomElementClassLookup):
             def lookup(self, t, d, ns, name):
