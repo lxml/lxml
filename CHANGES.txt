@@ -11,6 +11,12 @@ Features added
 Bugs fixed
 ----------
 
+* Element class lookup wasn't available for the new pull parsers or when using
+  a custom parser target.
+
+* Setting Element attributes on instantiation with both the ``attrib`` argument
+  and keyword arguments could modify the mapping passed as ``attrib``.
+
 * LP#1266171: DTDs instantiated from internal/external subsets (i.e. through
   the docinfo property) lost their attribute declarations.
 
@@ -115,7 +121,7 @@ Other changes
   for example.
 
 * ``iterparse()`` was rewritten to use the new ``*PullParser``
-  classes internally.
+  classes internally instead of being a parser itself.
 
 
 3.2.5 (2014-01-02)
