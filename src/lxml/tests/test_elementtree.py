@@ -607,6 +607,16 @@ class _ETreeTestCaseBase(HelperTestCase):
         root.set("attr", "TEST")
         self.assertEqual("TEST", root.get("attr"))
 
+    def test_attrib_as_attrib(self):
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEqual("TEST", root.attrib["attr"])
+
+        root2 = Element("root2", root.attrib)
+        self.assertEqual("TEST", root2.attrib["attr"])
+
     def test_attribute_iterator(self):
         XML = self.etree.XML
         

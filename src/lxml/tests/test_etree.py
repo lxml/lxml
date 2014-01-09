@@ -230,6 +230,41 @@ class ETreeOnlyTestCase(HelperTestCase):
         root.set("attr", "TEST")
         self.assertEqual("TEST", root.get("attr"))
 
+    def test_attrib_and_keywords(self):
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEqual("TEST", root.attrib["attr"])
+
+        root2 = Element("root2", root.attrib, attr2='TOAST')
+        self.assertEqual("TEST", root2.attrib["attr"])
+        self.assertEqual("TOAST", root2.attrib["attr2"])
+        self.assertEqual(None, root.attrib.get("attr2"))
+
+    def test_attrib_order(self):
+        Element = self.etree.Element
+
+        keys = ["attr%d" % i for i in range(10)]
+        values = ["TEST-%d" % i for i in range(10)]
+        items = list(zip(keys, values))
+
+        root = Element("root")
+        for key, value in items:
+            root.set(key, value)
+        self.assertEqual(keys, root.attrib.keys())
+        self.assertEqual(values, root.attrib.values())
+
+        root2 = Element("root2", root.attrib,
+                        attr_99='TOAST-1', attr_98='TOAST-2')
+        self.assertEqual(['attr_98', 'attr_99'] + keys,
+                         root2.attrib.keys())
+        self.assertEqual(['TOAST-2', 'TOAST-1'] + values,
+                         root2.attrib.values())
+
+        self.assertEqual(keys, root.attrib.keys())
+        self.assertEqual(values, root.attrib.values())
+
     def test_attribute_set_invalid(self):
         # ElementTree accepts arbitrary attribute values
         # lxml.etree allows only strings

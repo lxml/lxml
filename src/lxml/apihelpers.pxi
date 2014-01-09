@@ -2,6 +2,12 @@
 
 from lxml.includes cimport uri
 
+cdef object OrderedDict = None
+try:
+    from collections import OrderedDict
+except ImportError:
+    pass
+
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
     cdef xmlNode* c_child
@@ -242,34 +248,51 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
         doc._setNodeNs(c_node, _xcstr(node_ns_utf))
     return 0
 
-cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, extra):
+cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     u"""Initialise the attributes of an element node.
     """
     cdef bint is_html
     cdef xmlNs* c_ns
-    # 'extra' is not checked here (expected to be a keyword dict)
     if attrib is not None and not hasattr(attrib, u'items'):
         raise TypeError, u"Invalid attribute dictionary: %s" % \
             python._fqtypename(attrib).decode('utf8')
+    if not attrib and not extra:
+        return  # nothing to do
+    is_html = doc._parser._for_html
+    seen = set()
     if extra:
-        if attrib is None:
-            attrib = extra
-        else:
-            attrib.update(extra)
+        for name, value in sorted(extra.items()):
+            _addAttributeToNode(c_node, doc, is_html, name, value, seen)
     if attrib:
-        is_html = doc._parser._for_html
-        for name, value in sorted(attrib.items()):
-            attr_ns_utf, attr_name_utf = _getNsTag(name)
-            if not is_html:
-                _attributeValidOrRaise(attr_name_utf)
-            value_utf = _utf8(value)
-            if attr_ns_utf is None:
-                tree.xmlNewProp(c_node, _xcstr(attr_name_utf), _xcstr(value_utf))
-            else:
-                _uriValidOrRaise(attr_ns_utf)
-                c_ns = doc._findOrBuildNodeNs(c_node, _xcstr(attr_ns_utf), NULL, 1)
-                tree.xmlNewNsProp(c_node, c_ns,
-                                  _xcstr(attr_name_utf), _xcstr(value_utf))
+        # attrib will usually be a plain unordered dict
+        if type(attrib) is dict:
+            attrib = sorted(attrib.items())
+        elif isinstance(attrib, _Attrib) or (
+                OrderedDict is not None and isinstance(attrib, OrderedDict)):
+            attrib = attrib.items()
+        else:
+            # assume it's an unordered mapping of some kind
+            attrib = sorted(attrib.items())
+        for name, value in attrib:
+            _addAttributeToNode(c_node, doc, is_html, name, value, seen)
+
+cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
+                             name, value, set seen_tags) except -1:
+    ns_utf, name_utf = tag = _getNsTag(name)
+    if tag in seen_tags:
+        return 0
+    seen_tags.add(tag)
+    if not is_html:
+        _attributeValidOrRaise(name_utf)
+    value_utf = _utf8(value)
+    if ns_utf is None:
+        tree.xmlNewProp(c_node, _xcstr(name_utf), _xcstr(value_utf))
+    else:
+        _uriValidOrRaise(ns_utf)
+        c_ns = doc._findOrBuildNodeNs(c_node, _xcstr(ns_utf), NULL, 1)
+        tree.xmlNewNsProp(c_node, c_ns,
+                          _xcstr(name_utf), _xcstr(value_utf))
+    return 0
 
 ctypedef struct _ns_node_ref:
     xmlNs* ns
