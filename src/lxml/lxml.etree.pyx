@@ -1531,7 +1531,7 @@ cdef class __ContentOnlyElement(_Element):
 
     property attrib:
         def __get__(self):
-            return {}
+            return EMPTY_READ_ONLY_DICT
 
     property text:
         def __get__(self):

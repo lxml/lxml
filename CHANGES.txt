@@ -11,6 +11,9 @@ Features added
 Bugs fixed
 ----------
 
+* The (empty) value returned by the ``attrib`` property of Entity and Comment
+  objects was mutable.
+
 * Element class lookup wasn't available for the new pull parsers or when using
   a custom parser target.
 
