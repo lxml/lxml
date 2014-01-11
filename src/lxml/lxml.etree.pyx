@@ -2002,11 +2002,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         root = self.getroot()
         if _isString(path):
-            start = path[:1]
-            if start == u"/":
-                path = u"." + path
-            elif start == b"/":
-                path = b"." + path
+            if path[:1] == "/":
+                path = "." + path
         return root.find(path, namespaces)
 
     def findtext(self, path, default=None, namespaces=None):
@@ -2022,11 +2019,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         root = self.getroot()
         if _isString(path):
-            start = path[:1]
-            if start == u"/":
-                path = u"." + path
-            elif start == b"/":
-                path = b"." + path
+            if path[:1] == "/":
+                path = "." + path
         return root.findtext(path, default, namespaces)
 
     def findall(self, path, namespaces=None):
@@ -2042,11 +2036,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         root = self.getroot()
         if _isString(path):
-            start = path[:1]
-            if start == u"/":
-                path = u"." + path
-            elif start == b"/":
-                path = b"." + path
+            if path[:1] == "/":
+                path = "." + path
         return root.findall(path, namespaces)
 
     def iterfind(self, path, namespaces=None):
@@ -2062,11 +2053,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         self._assertHasRoot()
         root = self.getroot()
         if _isString(path):
-            start = path[:1]
-            if start == u"/":
-                path = u"." + path
-            elif start == b"/":
-                path = b"." + path
+            if path[:1] == "/":
+                path = "." + path
         return root.iterfind(path, namespaces)
 
     def xpath(self, _path, *, namespaces=None, extensions=None,
