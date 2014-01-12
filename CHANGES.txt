@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Latest changes
-==================
+3.3.0beta4 (2014-01-12)
+=======================
 
 Features added
 --------------
@@ -25,6 +25,9 @@ Bugs fixed
 
 Other changes
 -------------
+
+* Built with Cython 0.20pre (gitrev 012ae82eb) to prepare support for
+  Python 3.4.
 
 
 3.3.0beta3 (2014-01-02)
