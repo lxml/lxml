@@ -2,6 +2,25 @@
 lxml changelog
 ==============
 
+3.3.0beta5 (2014-01-16)
+=======================
+
+Features added
+--------------
+
+* The PEP 393 unicode parsing support gained a fallback for wchar strings
+  which might still be somewhat common on Windows systems.
+
+Bugs fixed
+----------
+
+* Passing a string into ``fromstringlist()`` raises an exception instead of
+  parsing the string character by character.
+
+Other changes
+-------------
+
+
 3.3.0beta4 (2014-01-12)
 =======================
 
