@@ -3006,6 +3006,9 @@ def fromstringlist(strings, _BaseParser parser=None):
     the ``parser`` keyword argument.
     """
     cdef _Document doc
+    if isinstance(strings, (bytes, unicode)):
+        raise ValueError("passing a single string into fromstringlist() is not"
+                         " efficient, use fromstring() instead")
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     feed = parser.feed
