@@ -18,7 +18,7 @@ cdef extern from "Python.h":
     cdef stdio.FILE* PyFile_AsFile(object p)
 
     # PEP 393
-    cdef int PyUnicode_READY(object u) except -1
+    cdef bint PyUnicode_IS_READY(object u)
     cdef Py_ssize_t PyUnicode_GET_LENGTH(object u)
     cdef int PyUnicode_KIND(object u)
     cdef void* PyUnicode_DATA(object u)

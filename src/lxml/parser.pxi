@@ -200,23 +200,20 @@ cdef int _setupPythonUnicode() except -1:
     """
     cdef tree.xmlCharEncodingHandler* enchandler
     cdef Py_ssize_t l
-    cdef const_char* buffer
     cdef const_char* enc
-    utext = python.PyUnicode_DecodeUTF8("<test/>", 7, NULL)
-    l = python.PyUnicode_GET_DATA_SIZE(utext)
-    buffer = python.PyUnicode_AS_DATA(utext)
-    enc = _findEncodingName(buffer, l)
-    if enc == NULL:
-        # apparently, libxml2 can't detect UTF-16 on some systems
-        if l >= 4 and \
-               buffer[0] == c'<' and buffer[1] == c'\0' and \
-               buffer[2] == c't' and buffer[3] == c'\0':
-            enc = "UTF-16LE"
-        elif l >= 4 and \
-               buffer[0] == c'\0' and buffer[1] == c'<' and \
-               buffer[2] == c'\0' and buffer[3] == c't':
-            enc = "UTF-16BE"
-        else:
+    cdef Py_UNICODE *uchars = [c'<', c't', c'e', c's', c't', c'/', c'>']
+    cdef const_xmlChar* buffer = <const_xmlChar*>uchars
+    # apparently, libxml2 can't detect UTF-16 on some systems
+    if (buffer[0] == c'<' and buffer[1] == c'\0' and
+            buffer[2] == c't' and buffer[3] == c'\0'):
+        enc = "UTF-16LE"
+    elif (buffer[0] == c'\0' and buffer[1] == c'<' and
+            buffer[2] == c'\0' and buffer[3] == c't'):
+        enc = "UTF-16BE"
+    else:
+        # let libxml2 give it a try
+        enc = _findEncodingName(buffer, sizeof(Py_UNICODE) * 7)
+        if enc is NULL:
             # not my fault, it's YOUR broken system :)
             return 0
     enchandler = tree.xmlFindCharEncodingHandler(enc)
@@ -226,10 +223,10 @@ cdef int _setupPythonUnicode() except -1:
         _UNICODE_ENCODING = enc
     return 0
 
-cdef const_char* _findEncodingName(const_char* buffer, int size):
+cdef const_char* _findEncodingName(const_xmlChar* buffer, int size):
     u"Work around bug in libxml2: find iconv name of encoding on our own."
     cdef tree.xmlCharEncoding enc
-    enc = tree.xmlDetectCharEncoding(<const_xmlChar*>buffer, size)
+    enc = tree.xmlDetectCharEncoding(buffer, size)
     if enc == tree.XML_CHAR_ENCODING_UTF16LE:
         return "UTF-16LE"
     elif enc == tree.XML_CHAR_ENCODING_UTF16BE:
@@ -960,8 +957,9 @@ cdef class _BaseParser:
         cdef int buffer_len, c_kind
         cdef const_char* c_text
         cdef const_char* c_encoding = _UNICODE_ENCODING
-        if python.PEP393_ENABLED:
-            python.PyUnicode_READY(utext)
+        cdef bint is_pep393_string = (
+            python.PEP393_ENABLED and python.PyUnicode_IS_READY(utext))
+        if is_pep393_string:
             c_text = <const_char*>python.PyUnicode_DATA(utext)
             py_buffer_len = python.PyUnicode_GET_LENGTH(utext)
             c_kind = python.PyUnicode_KIND(utext)
@@ -1580,6 +1578,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
     cdef char* c_filename
     cdef char* c_text
     cdef Py_ssize_t c_len
+    cdef bint is_pep393_string
     if parser is None:
         parser = __GLOBAL_PARSER_CONTEXT.getDefaultParser()
     if not filename:
@@ -1588,8 +1587,9 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         filename_utf = _encodeFilenameUTF8(filename)
         c_filename = _cstr(filename_utf)
     if isinstance(text, unicode):
-        if python.PEP393_ENABLED:
-            python.PyUnicode_READY(text)
+        is_pep393_string = (
+            python.PEP393_ENABLED and python.PyUnicode_IS_READY(text))
+        if is_pep393_string:
             c_len = python.PyUnicode_GET_LENGTH(text)
             c_len *= python.PyUnicode_KIND(text)
         else:
@@ -1597,7 +1597,7 @@ cdef xmlDoc* _parseDoc(text, filename, _BaseParser parser) except NULL:
         if c_len > limits.INT_MAX:
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 StringIO(text), filename, None)
-        if _UNICODE_ENCODING is NULL and not python.PEP393_ENABLED:
+        if _UNICODE_ENCODING is NULL and not is_pep393_string:
             text = (<unicode>text).encode('utf8')
             return (<_BaseParser>parser)._parseDocFromFilelike(
                 BytesIO(text), filename, "UTF-8")
