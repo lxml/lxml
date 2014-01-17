@@ -27,13 +27,18 @@ cdef inline bint hasProxy(xmlNode* c_node):
     if c_node._private is NULL:
         return False
     if python.IS_PYPY:
-        if python.PyWeakref_LockObject(<python.PyObject*>c_node._private) is None:
-            # proxy has already died => remove weak reference
-            obj_ptr = <python.PyObject*>c_node._private
-            c_node._private = NULL
-            python.Py_XDECREF(obj_ptr)
-            return False
+        return _isProxyAliveInPypy(c_node)
     return True
+
+cdef bint _isProxyAliveInPypy(xmlNode* c_node):
+    retval = True
+    if python.PyWeakref_LockObject(<python.PyObject*>c_node._private) is None:
+        # proxy has already died => remove weak reference
+        obj_ptr = <python.PyObject*>c_node._private
+        c_node._private = NULL
+        python.Py_XDECREF(obj_ptr)
+        retval = False
+    return retval
 
 cdef inline int _registerProxy(_Element proxy, _Document doc,
                                xmlNode* c_node) except -1:
