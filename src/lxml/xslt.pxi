@@ -328,6 +328,7 @@ cdef class _XSLTQuotedStringParam:
         self.strval = _utf8(strval)
 
 
+@cython.no_gc_clear
 cdef class XSLT:
     u"""XSLT(self, xslt_input, extensions=None, regexp=True, access_control=None)
 

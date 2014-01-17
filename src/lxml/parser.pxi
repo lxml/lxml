@@ -493,6 +493,7 @@ xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_r
 ############################################################
 
 @cython.internal
+@cython.no_gc_clear
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef _ParserSchemaValidationContext _validator
