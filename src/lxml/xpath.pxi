@@ -99,9 +99,6 @@ cdef class _XPathContext(_BaseContext):
         xpath.xmlXPathRegisterVariable(
             self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
 
-    cdef void _registerVariable(self, name_utf, value):
-        xpath.xmlXPathRegisterVariable(
-            self._xpathCtxt, _xcstr(name_utf), _wrapXPathObject(value, None, None))
 
 cdef void _registerExsltFunctionsForNamespaces(
         void* _c_href, void* _ctxt, xmlChar* c_prefix):
