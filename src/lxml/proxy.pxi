@@ -49,9 +49,6 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
             return -1 # manual exception propagation
     else:
         c_node._private = <void*>proxy
-    # additional INCREF to make sure _Document is GC-ed LAST!
-    proxy._gc_doc = <python.PyObject*>doc
-    python.Py_INCREF(doc)
     return 0
 
 cdef inline int _unregisterProxy(_Element proxy) except -1:
@@ -67,22 +64,6 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
         assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
         c_node._private = NULL
     return 0
-
-cdef inline void _releaseProxy(_Element proxy):
-    u"""An additional DECREF for the document.
-    """
-    python.Py_XDECREF(proxy._gc_doc)
-    proxy._gc_doc = NULL
-
-cdef inline void _updateProxyDocument(_Element element, _Document doc):
-    u"""Replace the document reference of a proxy.
-    """
-    if element._doc is not doc:
-        old_doc = element._doc
-        element._doc = doc
-        python.Py_INCREF(doc)
-        element._gc_doc = <python.PyObject*>doc
-        python.Py_DECREF(old_doc)
 
 ################################################################################
 # temporarily make a node the root node of its document
@@ -416,7 +397,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         if proxy_count == 1 and c_start_node._private is not NULL:
             proxy = getProxy(c_start_node)
             if proxy is not None:
-                _updateProxyDocument(proxy, doc)
+                if proxy._doc is not doc:
+                    proxy._doc = doc
             else:
                 fixElementDocument(c_start_node, doc, proxy_count)
         else:
@@ -433,7 +415,8 @@ cdef void fixElementDocument(xmlNode* c_element, _Document doc,
     if c_node._private is not NULL:
         proxy = getProxy(c_node)
         if proxy is not None:
-            _updateProxyDocument(proxy, doc)
+            if proxy._doc is not doc:
+                proxy._doc = doc
             proxy_count -= 1
             if proxy_count == 0:
                 return

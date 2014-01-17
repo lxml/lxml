@@ -582,6 +582,7 @@ cdef class DocInfo:
             return _dtdFactory(self._doc._c_doc.extSubset)
 
 
+@cython.no_gc_clear
 @cython.freelist(16)
 cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     u"""Element class.
@@ -591,7 +592,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     By pointing to a Document instance, a reference is kept to
     _Document as long as there is some pointer to a node in it.
     """
-    cdef python.PyObject* _gc_doc
     cdef _Document _doc
     cdef xmlNode* _c_node
     cdef object _tag
@@ -609,7 +609,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         if self._c_node is not NULL:
             _unregisterProxy(self)
             attemptDeallocation(self._c_node)
-        _releaseProxy(self)
 
     # MANIPULATORS
 

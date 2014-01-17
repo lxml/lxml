@@ -70,6 +70,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
         # generate module cleanup code
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 3
+        Options.clear_to_none = False
     elif not OPTION_WITHOUT_CYTHON and False in c_files_exist:
         for exists, module in zip(c_files_exist, modules):
             if not exists:
