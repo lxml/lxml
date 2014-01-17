@@ -277,7 +277,7 @@ cdef class iterwalk:
                 return self._pop_event(0)
         raise StopIteration
 
-    cdef int _start_node(self, _Element node):
+    cdef int _start_node(self, _Element node) except -1:
         cdef int ns_count
         if self._event_filter & PARSE_EVENT_FILTER_START_NS:
             ns_count = _appendStartNsEvents(node._c_node, self._events)
@@ -315,7 +315,7 @@ cdef int _countNsDefs(xmlNode* c_node):
     return count
 
 
-cdef int _appendStartNsEvents(xmlNode* c_node, list event_list):
+cdef int _appendStartNsEvents(xmlNode* c_node, list event_list) except -1:
     cdef xmlNs* c_ns
     cdef int count
     count = 0

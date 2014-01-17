@@ -73,43 +73,45 @@ cdef xmlDoc* _xslt_resolve_from_python(const_xmlChar* c_uri, void* c_context,
     cdef _ResolverRegistry resolvers
     cdef _InputDocument doc_ref
     cdef xmlDoc* c_doc
+    cdef xmlDoc* c_return_doc = NULL
 
     error[0] = 0
     context = <_XSLTResolverContext>c_context
 
     # shortcut if we resolve the stylesheet itself
     c_doc = context._c_style_doc
-    if c_doc is not NULL and c_doc.URL is not NULL:
-        if tree.xmlStrcmp(c_uri, c_doc.URL) == 0:
-            return _copyDoc(c_doc, 1)
-
-    # delegate to the Python resolvers
     try:
+        if c_doc is not NULL and c_doc.URL is not NULL:
+            if tree.xmlStrcmp(c_uri, c_doc.URL) == 0:
+                c_return_doc = _copyDoc(c_doc, 1)
+                return c_return_doc  # 'goto', see 'finally' below
+
+        # delegate to the Python resolvers
         resolvers = context._resolvers
         if tree.xmlStrncmp(<unsigned char*>'string://__STRING__XSLT__/', c_uri, 26) == 0:
             c_uri += 26
         uri = _decodeFilename(c_uri)
         doc_ref = resolvers.resolve(uri, None, context)
 
-        c_doc = NULL
         if doc_ref is not None:
             if doc_ref._type == PARSER_DATA_STRING:
-                c_doc = _parseDoc(
+                c_return_doc = _parseDoc(
                     doc_ref._data_bytes, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILENAME:
-                c_doc = _parseDocFromFile(doc_ref._filename, context._parser)
+                c_return_doc = _parseDocFromFile(
+                    doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_FILE:
-                c_doc = _parseDocFromFilelike(
+                c_return_doc = _parseDocFromFilelike(
                     doc_ref._file, doc_ref._filename, context._parser)
             elif doc_ref._type == PARSER_DATA_EMPTY:
-                c_doc = _newXMLDoc()
-            if c_doc is not NULL and c_doc.URL is NULL:
-                c_doc.URL = tree.xmlStrdup(c_uri)
-        return c_doc
+                c_return_doc = _newXMLDoc()
+            if c_return_doc is not NULL and c_return_doc.URL is NULL:
+                c_return_doc.URL = tree.xmlStrdup(c_uri)
     except:
-        context._store_raised()
         error[0] = 1
-        return NULL
+        context._store_raised()
+    finally:
+        return c_return_doc  # and swallow any further exceptions
 
 cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
                                          xslt.xsltLoadType c_type) with gil:
@@ -120,7 +122,7 @@ cdef void _xslt_store_resolver_exception(const_xmlChar* c_uri, void* context,
         else:
             exception = XSLTParseError(message)
         (<_XSLTResolverContext>context)._store_exception(exception)
-    except Exception, e:
+    except BaseException as e:
         (<_XSLTResolverContext>context)._store_exception(e)
 
 cdef xmlDoc* _xslt_doc_loader(const_xmlChar* c_uri, tree.xmlDict* c_dict,

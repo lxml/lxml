@@ -14,6 +14,14 @@ Features added
 Bugs fixed
 ----------
 
+* Several error handling problems were fixed throughout the code base that
+  could previously lead to exceptions being silently swallowed or not
+  properly reported.
+
+* The C-API function ``appendChild()`` is now deprecated as it does not
+  propagate exceptions (its return type is ``void``).  The new function
+  ``appendChildToElement()`` was added as a safe replacement.
+
 * Passing a string into ``fromstringlist()`` raises an exception instead of
   parsing the string character by character.
 

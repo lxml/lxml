@@ -11,11 +11,14 @@ except ImportError:
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
     cdef xmlNode* c_child
-    print indent * u' ', <long>c_node
-    c_child = c_node.children
-    while c_child is not NULL:
-        displayNode(c_child, indent + 1)
-        c_child = c_child.next
+    try:
+        print indent * u' ', <long>c_node
+        c_child = c_node.children
+        while c_child is not NULL:
+            displayNode(c_child, indent + 1)
+            c_child = c_child.next
+    finally:
+        return  # swallow any exceptions
 
 cdef inline int _assertValidNode(_Element element) except -1:
     assert element._c_node is not NULL, u"invalid Element proxy at %s" % id(element)
@@ -607,7 +610,7 @@ cdef object _stripEncodingDeclaration(object xml_string):
     # this is a hack to remove the XML encoding declaration from unicode
     return __REPLACE_XML_ENCODING(ur'\g<1>\g<2>', xml_string)
 
-cdef bint _hasEncodingDeclaration(object xml_string):
+cdef bint _hasEncodingDeclaration(object xml_string) except -1:
     # check if a (unicode) string has an XML encoding declaration
     return __HAS_XML_ENCODING(xml_string) is not None
 
@@ -748,7 +751,7 @@ cdef int _findChildSlice(
         c_start_node[0] = _findChild(c_parent, start)
     return 0
 
-cdef bint _isFullSlice(slice sliceobject):
+cdef bint _isFullSlice(slice sliceobject) except -1:
     u"""Conservative guess if this slice is a full slice as in ``s[:]``.
     """
     cdef Py_ssize_t step = 0
@@ -1254,6 +1257,7 @@ cdef int _appendChild(_Element parent, _Element child) except -1:
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(parent._doc, c_source_doc, c_node)
+    return 0
 
 cdef int _prependChild(_Element parent, _Element child) except -1:
     u"""Prepend a new child to a parent element.
@@ -1279,6 +1283,7 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(parent._doc, c_source_doc, c_node)
+    return 0
 
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling behind an element.
@@ -1295,6 +1300,7 @@ cdef int _appendSibling(_Element element, _Element sibling) except -1:
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(element._doc, c_source_doc, c_node)
+    return 0
 
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling before an element.
@@ -1311,6 +1317,7 @@ cdef int _prependSibling(_Element element, _Element sibling) except -1:
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..
     moveNodeToDocument(element._doc, c_source_doc, c_node)
+    return 0
 
 cdef inline int isutf8(const_xmlChar* s):
     cdef xmlChar c = s[0]

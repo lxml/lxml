@@ -222,10 +222,11 @@ cdef class _BaseContext:
     
     # extension functions
 
-    cdef void _addLocalExtensionFunction(self, ns_utf, name_utf, function):
+    cdef int _addLocalExtensionFunction(self, ns_utf, name_utf, function) except -1:
         if self._extensions is None:
             self._extensions = {}
         self._extensions[(ns_utf, name_utf)] = function
+        return 0
 
     cdef registerGlobalFunctions(self, void* ctxt,
                                  _register_function reg_func):
@@ -366,7 +367,7 @@ cdef class _BaseContext:
 # libxml2 keeps these error messages in a static array in its code
 # and doesn't give us access to them ...
 
-cdef list LIBXML2_XPATH_ERROR_MESSAGES = [
+cdef tuple LIBXML2_XPATH_ERROR_MESSAGES = (
     b"Ok",
     b"Number encoding",
     b"Unfinished literal",
@@ -391,7 +392,7 @@ cdef list LIBXML2_XPATH_ERROR_MESSAGES = [
     b"Char out of XML range",
     b"Invalid or incomplete context",
     b"Stack usage error",
-    ]
+)
 
 cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) with gil:
     cdef xmlerror.xmlError error
@@ -827,24 +828,28 @@ cdef void _extension_function_call(_BaseContext context, function,
     except:
         xpath.xmlXPathErr(ctxt, xpath.XPATH_EXPR_ERROR)
         context._exc._store_raised()
+    finally:
+        return  # swallow any further exceptions
 
 # lookup the function by name and call it
 
 cdef void _xpath_function_call(xpath.xmlXPathParserContext* ctxt,
                                int nargs) with gil:
-    cdef xpath.xmlXPathContext* rctxt
     cdef _BaseContext context
-    rctxt = ctxt.context
-    context = <_BaseContext>(rctxt.userData)
-    function = context._find_cached_function(rctxt.functionURI, rctxt.function)
-    if function is not None:
-        _extension_function_call(context, function, ctxt, nargs)
-    else:
-        if rctxt.functionURI is not NULL:
-            fref = u"{%s}%s" % ((<unsigned char*>rctxt.functionURI).decode('UTF-8'),
-                                (<unsigned char*>rctxt.function).decode('UTF-8'))
+    cdef xpath.xmlXPathContext* rctxt = ctxt.context
+    context = <_BaseContext> rctxt.userData
+    try:
+        function = context._find_cached_function(rctxt.functionURI, rctxt.function)
+        if function is not None:
+            _extension_function_call(context, function, ctxt, nargs)
         else:
-            fref = (<unsigned char*>rctxt.function).decode('UTF-8')
+            xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
+            context._exc._store_exception(
+                XPathFunctionError(u"XPath function '%s' not found" %
+                _namespacedNameFromNsName(rctxt.functionURI, rctxt.function)))
+    except:
+        # may not be the right error, but we need to tell libxml2 *something*
         xpath.xmlXPathErr(ctxt, xpath.XPATH_UNKNOWN_FUNC_ERROR)
-        context._exc._store_exception(
-            XPathFunctionError(u"XPath function '%s' not found" % fref))
+        context._exc._store_raised()
+    finally:
+        return  # swallow any further exceptions

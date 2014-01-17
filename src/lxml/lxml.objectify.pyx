@@ -466,7 +466,7 @@ cdef _appendValue(_Element parent, tag, value):
         new_element = cetree.deepcopyNodeToDocument(
             parent._doc, (<_Element>value)._c_node)
         new_element.tag = tag
-        cetree.appendChild(parent, new_element)
+        cetree.appendChildToElement(parent, new_element)
     elif isinstance(value, (list, tuple)):
         for item in value:
             _appendValue(parent, tag, item)
@@ -474,7 +474,7 @@ cdef _appendValue(_Element parent, tag, value):
         new_element = cetree.makeElement(
             tag, parent._doc, None, None, None, None, None)
         _setElementValue(new_element, value)
-        cetree.appendChild(parent, new_element)
+        cetree.appendChildToElement(parent, new_element)
 
 cdef _setElementValue(_Element element, value):
     cdef python.PyObject* _pytype
@@ -570,7 +570,7 @@ cdef _setSlice(sliceobject, _Element target, items):
                 (<slice>sliceobject).start - 1)
             if c_node is NULL:
                 while pos < python.PyList_GET_SIZE(new_items):
-                    cetree.appendChild(parent, new_items[pos])
+                    cetree.appendChildToElement(parent, new_items[pos])
                     pos += 1
                 return
             item = cetree.elementFactory(parent._doc, c_node)
@@ -834,7 +834,7 @@ def __checkBool(s):
     if value == -1:
         raise ValueError
 
-cpdef bint __parseBool(s):
+cpdef bint __parseBool(s) except -1:
     cdef int value
     if s is None:
         return False
@@ -843,7 +843,7 @@ cpdef bint __parseBool(s):
         raise ValueError, u"Invalid boolean value: '%s'" % s
     return value
 
-cdef inline int __parseBoolAsInt(text):
+cdef inline int __parseBoolAsInt(text) except -2:
     if text == 'false':
         return 0
     elif text == 'true':
@@ -1142,7 +1142,7 @@ cdef class _ObjectifyElementMakerCaller:
                 _add_text(element, child)
                 has_string_value = 1
             elif isinstance(child, _Element):
-                cetree.appendChild(element, <_Element>child)
+                cetree.appendChildToElement(element, <_Element>child)
                 has_children = 1
             elif isinstance(child, _ObjectifyElementMakerCaller):
                 elementMaker = <_ObjectifyElementMakerCaller>child
@@ -1152,7 +1152,7 @@ cdef class _ObjectifyElementMakerCaller:
                 else:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
-                    cetree.appendChild(element, childElement)
+                    cetree.appendChildToElement(element, childElement)
                 has_children = 1
             elif isinstance(child, dict):
                 for name, value in child.items():

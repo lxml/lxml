@@ -259,7 +259,7 @@ cdef class _FileReaderContext:
     cdef char* _c_url
     cdef bint _close_file_after_read
 
-    def __cinit__(self, filelike, exc_context, url, encoding=None, bint close_file=False):
+    def __cinit__(self, filelike, exc_context not None, url, encoding=None, bint close_file=False):
         self._exc_context = exc_context
         self._filelike = filelike
         self._close_file_after_read = close_file
@@ -346,17 +346,20 @@ cdef class _FileReaderContext:
                     ctxt, c_read_callback, NULL, c_callback_context,
                     self._c_url, c_encoding, options)
         ctxt.options = orig_options # work around libxml2 problem
-        self._close_file()
-        return result
+        try:
+            self._close_file()
+        except:
+            self._exc_context._store_raised()
+        finally:
+            return result  # swallow any exceptions
 
     cdef int copyToBuffer(self, char* c_buffer, int c_requested):
-        cdef int c_byte_count
+        cdef int c_byte_count = 0
         cdef char* c_start
         cdef Py_ssize_t byte_count, remaining
         if self._bytes_read < 0:
             return 0
         try:
-            c_byte_count = 0
             byte_count = python.PyBytes_GET_SIZE(self._bytes)
             remaining  = byte_count - self._bytes_read
             while c_requested > remaining:
@@ -391,11 +394,15 @@ cdef class _FileReaderContext:
                 cstring_h.memcpy(c_buffer, c_start, c_requested)
                 c_byte_count += c_requested
                 self._bytes_read += c_requested
-            return c_byte_count
         except:
+            c_byte_count = -1
             self._exc_context._store_raised()
-            self._close_file()
-            return -1
+            try:
+                self._close_file()
+            except:
+                self._exc_context._store_raised()
+        finally:
+            return c_byte_count  # swallow any exceptions
 
 cdef int _readFilelikeParser(void* ctxt, char* c_buffer, int c_size) with gil:
     return (<_FileReaderContext>ctxt).copyToBuffer(c_buffer, c_size)
@@ -786,8 +793,6 @@ cdef class _BaseParser:
                     self._schema._newSaxValidator(
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newParserCtxt()
-            if pctxt is NULL:
-                raise MemoryError()
             _initParserContext(self._parser_context, self._resolvers, pctxt)
             if self._remove_comments:
                 pctxt.sax.comment = NULL
@@ -808,8 +813,6 @@ cdef class _BaseParser:
                     self._schema._newSaxValidator(
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newPushParserCtxt()
-            if pctxt is NULL:
-                raise MemoryError()
             _initParserContext(
                 self._push_parser_context, self._resolvers, pctxt)
             if self._remove_comments:
@@ -854,16 +857,19 @@ cdef class _BaseParser:
             sax._private = NULL
         return 0
 
-    cdef xmlparser.xmlParserCtxt* _newParserCtxt(self):
+    cdef xmlparser.xmlParserCtxt* _newParserCtxt(self) except NULL:
         cdef xmlparser.xmlParserCtxt* c_ctxt
         if self._for_html:
             c_ctxt = htmlparser.htmlCreateMemoryParserCtxt('dummy', 5)
-            self._registerHtmlErrorHandler(c_ctxt)
+            if c_ctxt is not NULL:
+                self._registerHtmlErrorHandler(c_ctxt)
         else:
             c_ctxt = xmlparser.xmlNewParserCtxt()
+        if c_ctxt is NULL:
+            raise MemoryError
         return c_ctxt
 
-    cdef xmlparser.xmlParserCtxt* _newPushParserCtxt(self):
+    cdef xmlparser.xmlParserCtxt* _newPushParserCtxt(self) except NULL:
         cdef xmlparser.xmlParserCtxt* c_ctxt
         cdef char* c_filename = _cstr(self._filename) if self._filename is not None else NULL
         if self._for_html:
@@ -877,6 +883,8 @@ cdef class _BaseParser:
                 NULL, NULL, NULL, 0, c_filename)
             if c_ctxt is not NULL:
                 xmlparser.xmlCtxtUseOptions(c_ctxt, self._parse_options)
+        if c_ctxt is NULL:
+            raise MemoryError()
         return c_ctxt
 
     property error_log:

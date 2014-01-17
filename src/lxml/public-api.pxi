@@ -131,7 +131,11 @@ cdef public api xmlNode* previousElement(xmlNode* c_node):
     return _previousElement(c_node)
 
 cdef public api void appendChild(_Element parent, _Element child):
+    # deprecated, use appendChildToElement() instead!
     _appendChild(parent, child)
+
+cdef public api int appendChildToElement(_Element parent, _Element child) except -1:
+    return _appendChild(parent, child)
 
 cdef public api object pyunicode(const_xmlChar* s):
     if s is NULL:
@@ -154,9 +158,11 @@ cdef public api object namespacedNameFromNsName(const_xmlChar* href, const_xmlCh
     return _namespacedNameFromNsName(href, name)
 
 cdef public api void iteratorStoreNext(_ElementIterator iterator, _Element node):
+    # deprecated!
     iterator._storeNext(node)
 
 cdef public api void initTagMatch(_ElementTagMatcher matcher, tag):
+    # deprecated!
     matcher._initTagMatch(tag)
 
 cdef public api tree.xmlNs* findOrBuildNodeNsPrefix(

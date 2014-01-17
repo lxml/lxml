@@ -18,7 +18,7 @@ cdef class _ReadOnlyProxy:
             raise ReferenceError("Proxy invalidated!")
         return 0
 
-    cdef int _raise_unsupported_type(self):
+    cdef int _raise_unsupported_type(self) except -1:
         raise TypeError("Unsupported node type: %d" % self._c_node.type)
 
     cdef void free_after_use(self):

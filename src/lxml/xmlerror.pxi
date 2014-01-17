@@ -673,7 +673,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
 ## CONSTANTS FROM "xmlerror.h" (or rather libxml-xmlerror.html)
 ################################################################################
 
-cdef void __initErrorConstants():
+cdef __initErrorConstants():
     u"Called at setup time to parse the constants and build the classes below."
     global __ERROR_LEVELS, __ERROR_DOMAINS, __PARSER_ERROR_TYPES, __RELAXNG_ERROR_TYPES
     find_constants = re.compile(ur"\s*([a-zA-Z0-9_]+)\s*=\s*([0-9]+)").findall

@@ -399,21 +399,24 @@ cdef class _FilelikeWriter:
                 raise IOError, u"File is already closed"
             py_buffer = <bytes>c_buffer[:size]
             self._filelike.write(py_buffer)
-            return size
         except:
+            size = -1
             self._exc_context._store_raised()
-            return -1
+        finally:
+            return size  # and swallow any further exceptions
 
     cdef int close(self):
+        retval = 0
         try:
             if self._close_filelike is not None:
                 self._close_filelike()
             # we should not close the file here as we didn't open it
             self._filelike = None
-            return 0
         except:
+            retval = -1
             self._exc_context._store_raised()
-            return -1
+        finally:
+            return retval  # and swallow any further exceptions
 
 cdef int _writeFilelikeWriter(void* ctxt, char* c_buffer, int length):
     return (<_FilelikeWriter>ctxt).write(c_buffer, length)

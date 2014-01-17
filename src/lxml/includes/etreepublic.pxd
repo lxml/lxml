@@ -151,7 +151,7 @@ cdef extern from "lxml.etree_api.h":
     cdef tree.xmlNode* previousElement(tree.xmlNode* c_node) nogil
 
     ##########################################################################
-    # iterators (deprecated API, don't use in new code)
+    # iterators (DEPRECATED API, don't use in new code!)
 
     cdef class lxml.etree._ElementTagMatcher [ object LxmlElementTagMatcher ]:
         cdef char* _href
@@ -215,7 +215,13 @@ cdef extern from "lxml.etree_api.h":
     cdef int setTailText(tree.xmlNode* c_node, text) except -1
 
     # append an element to the children of a parent element
+    # deprecated: don't use, does not propagate exceptions!
+    # use appendChildToElement() instead
     cdef void appendChild(_Element parent, _Element child)
+
+    # added in lxml 3.3 as a safe replacement for appendChild()
+    # return -1 for exception, 0 for ok
+    cdef int appendChildToElement(_Element parent, _Element child) except -1
 
     # recursively lookup a namespace in element or ancestors, or create it
     cdef tree.xmlNs* findOrBuildNodeNsPrefix(

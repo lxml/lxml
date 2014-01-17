@@ -239,3 +239,5 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
         xslt.xsltTransformError(c_ctxt, NULL, c_inst_node,
                                 "Error during XSLT extension element evaluation")
         context._exc._store_raised()
+    finally:
+        return  # swallow any further exceptions
