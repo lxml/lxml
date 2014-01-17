@@ -165,29 +165,24 @@ cdef int attemptDeallocation(xmlNode* c_node):
 cdef xmlNode* getDeallocationTop(xmlNode* c_node):
     u"""Return the top of the tree that can be deallocated, or NULL.
     """
-    cdef xmlNode* c_current
-    cdef xmlNode* c_top
     #print "trying to do deallocating:", c_node.type
     if hasProxy(c_node):
         #print "Not freeing: proxies still exist"
         return NULL
-    c_current = c_node.parent
-    c_top = c_node
-    while c_current is not NULL:
+    while c_node.parent is not NULL:
+        c_node = c_node.parent
         #print "checking:", c_current.type
-        if c_current.type == tree.XML_DOCUMENT_NODE or \
-               c_current.type == tree.XML_HTML_DOCUMENT_NODE:
+        if c_node.type == tree.XML_DOCUMENT_NODE or \
+               c_node.type == tree.XML_HTML_DOCUMENT_NODE:
             #print "not freeing: still in doc"
             return NULL
         # if we're still attached to the document, don't deallocate
-        if hasProxy(c_current):
+        if hasProxy(c_node):
             #print "Not freeing: proxies still exist"
             return NULL
-        c_top = c_current
-        c_current = c_current.parent
     # see whether we have children to deallocate
-    if canDeallocateChildNodes(c_top):
-        return c_top
+    if canDeallocateChildNodes(c_node):
+        return c_node
     else:
         return NULL
 
