@@ -219,7 +219,7 @@ def include_dirs(static_include_dirs):
     return result
 
 def cflags(static_cflags):
-    result = []
+    result = ['-w']
     if OPTION_DEBUG_GCC:
         result.append('-g2')
 
