@@ -164,7 +164,6 @@ cdef class _IDDict:
 
 cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
     # collect elements from ID attribute hash table
-    cdef tree.xmlID* c_id
     cdef list lst
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
@@ -174,7 +173,6 @@ cdef void _collectIdHashItemList(void* payload, void* context, xmlChar* name):
     lst.append( (funicode(name), element) )
 
 cdef void _collectIdHashKeys(void* payload, void* collect_list, xmlChar* name):
-    cdef tree.xmlID* c_id
     c_id = <tree.xmlID*>payload
     if c_id is NULL or c_id.attr is NULL or c_id.attr.parent is NULL:
         return
