@@ -2621,7 +2621,7 @@ cdef class ElementChildIterator(_ElementMatchIterator):
     u"""ElementChildIterator(self, node, tag=None, reversed=False)
     Iterates over the children of an element.
     """
-    def __cinit__(self, _Element node not None, tag=None, *, reversed=False):
+    def __cinit__(self, _Element node not None, tag=None, *, bint reversed=False):
         cdef xmlNode* c_node
         _assertValidNode(node)
         self._initTagMatcher(tag)
@@ -2643,7 +2643,7 @@ cdef class SiblingsIterator(_ElementMatchIterator):
 
     You can pass the boolean keyword ``preceding`` to specify the direction.
     """
-    def __cinit__(self, _Element node not None, tag=None, *, preceding=False):
+    def __cinit__(self, _Element node not None, tag=None, *, bint preceding=False):
         _assertValidNode(node)
         self._initTagMatcher(tag)
         if preceding:
@@ -2687,7 +2687,7 @@ cdef class ElementDepthFirstIterator:
     cdef _Element _next_node
     cdef _Element _top_node
     cdef _MultiTagMatcher _matcher
-    def __cinit__(self, _Element node not None, tag=None, *, inclusive=True):
+    def __cinit__(self, _Element node not None, tag=None, *, bint inclusive=True):
         _assertValidNode(node)
         self._top_node  = node
         self._next_node = node
@@ -2750,7 +2750,7 @@ cdef class ElementTextIterator:
     """
     cdef object _nextEvent
     cdef _Element _start_element
-    def __cinit__(self, _Element element not None, tag=None, *, with_tail=True):
+    def __cinit__(self, _Element element not None, tag=None, *, bint with_tail=True):
         _assertValidNode(element)
         if with_tail:
             events = (u"start", u"end")
