@@ -31,7 +31,7 @@ cdef class Schematron(_Validator):
     idea is to use the capabilities of XPath to put restrictions on the structure
     and the content of XML documents.  Here is a simple example::
 
-      >>> schematron = etree.Schematron(etree.XML('''
+      >>> schematron = Schematron(XML('''
       ... <schema xmlns="http://www.ascc.net/xml/schematron" >
       ...   <pattern name="id is the only permited attribute name">
       ...     <rule context="*">
@@ -43,7 +43,7 @@ cdef class Schematron(_Validator):
       ... </schema>
       ... '''))
 
-      >>> xml = etree.XML('''
+      >>> xml = XML('''
       ... <AAA name="aaa">
       ...   <BBB id="bbb"/>
       ...   <CCC color="ccc"/>
@@ -53,7 +53,7 @@ cdef class Schematron(_Validator):
       >>> schematron.validate(xml)
       0
 
-      >>> xml = etree.XML('''
+      >>> xml = XML('''
       ... <AAA id="aaa">
       ...   <BBB id="bbb"/>
       ...   <CCC/>

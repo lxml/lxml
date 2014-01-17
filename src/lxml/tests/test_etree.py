@@ -4031,6 +4031,7 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
     suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
     suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+    suite.addTests(doctest.DocTestSuite(etree))
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])
     if sys.version_info >= (2,6):

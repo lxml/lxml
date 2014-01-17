@@ -2746,7 +2746,7 @@ cdef class ElementTextIterator:
     specific tag name.
 
     You can set the ``with_tail`` keyword argument to ``False`` to skip over
-    tail text.
+    tail text (e.g. if you know that it's only whitespace from pretty-printing).
     """
     cdef object _nextEvent
     cdef _Element _start_element
@@ -2856,9 +2856,13 @@ cdef class CDATA:
     CDATA factory.  This factory creates an opaque data object that
     can be used to set Element text.  The usual way to use it is::
 
-        >>> from lxml import etree
-        >>> el = etree.Element('content')
-        >>> el.text = etree.CDATA('a string')
+        >>> el = Element('content')
+        >>> el.text = CDATA('a string')
+
+        >>> print(el.text)
+        a string
+        >>> print(tostring(el, encoding="unicode"))
+        <content><![CDATA[a string]]></content>
     """
     cdef bytes _utf8_data
     def __cinit__(self, data):
@@ -2956,7 +2960,9 @@ def XML(text, _BaseParser parser=None, *, base_url=None):
     This function can be used to embed "XML literals" in Python code,
     like in
 
-       >>> root = etree.XML("<root><test/></root>")
+       >>> root = XML("<root><test/></root>")
+       >>> print(root.tag)
+       root
 
     To override the parser with a different ``XMLParser`` you can pass it to
     the ``parser`` keyword argument.

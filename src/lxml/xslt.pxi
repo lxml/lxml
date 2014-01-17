@@ -335,8 +335,8 @@ cdef class XSLT:
 
     Calling this object on a tree or Element will execute the XSLT::
 
-      >>> transform = etree.XSLT(xsl_tree)
-      >>> result = transform(xml_tree)
+        transform = etree.XSLT(xsl_tree)
+        result = transform(xml_tree)
 
     Keyword arguments of the constructor:
 
