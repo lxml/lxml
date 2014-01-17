@@ -493,7 +493,6 @@ xmlparser.xmlSetExternalEntityLoader(<xmlparser.xmlExternalEntityLoader>_local_r
 ############################################################
 
 @cython.internal
-@cython.no_gc_clear
 cdef class _ParserContext(_ResolverContext):
     cdef _ErrorLog _error_log
     cdef _ParserSchemaValidationContext _validator
@@ -510,8 +509,6 @@ cdef class _ParserContext(_ResolverContext):
         self._error_log = _ErrorLog()
 
     def __dealloc__(self):
-        if self._validator is not None:
-            self._validator.disconnect()
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_free_lock(self._lock)
         if self._c_ctxt is not NULL:
