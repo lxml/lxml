@@ -473,21 +473,21 @@ cdef class PythonElementClassLookup(FallbackElementClassLookup):
     read-only mode.  To use it, re-implement the ``lookup(self, doc,
     root)`` method in a subclass::
 
-        >>> from lxml import etree, pyclasslookup
-        >>>
-        >>> class MyElementClass(etree.ElementBase):
-        ...     honkey = True
-        ...
-        >>> class MyLookup(pyclasslookup.PythonElementClassLookup):
-        ...     def lookup(self, doc, root):
-        ...         if root.tag == "sometag":
-        ...             return MyElementClass
-        ...         else:
-        ...             for child in root:
-        ...                 if child.tag == "someothertag":
-        ...                     return MyElementClass
-        ...         # delegate to default
-        ...         return None
+        from lxml import etree, pyclasslookup
+
+        class MyElementClass(etree.ElementBase):
+            honkey = True
+
+        class MyLookup(pyclasslookup.PythonElementClassLookup):
+            def lookup(self, doc, root):
+                if root.tag == "sometag":
+                    return MyElementClass
+                else:
+                    for child in root:
+                        if child.tag == "someothertag":
+                            return MyElementClass
+                # delegate to default
+                return None
 
     If you return None from this method, the fallback will be called.
 
