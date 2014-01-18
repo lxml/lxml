@@ -1741,7 +1741,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
     # have a _context_node.  All methods should prefer self._context_node._doc
     # to honour tree restructuring.  _doc can happily be None!
 
-    cdef _assertHasRoot(self):
+    @cython.final
+    cdef int _assertHasRoot(self) except -1:
         u"""We have to take care here: the document may not have a root node!
         This can happen if ElementTree() is called without any argument and
         the caller 'forgets' to call parse() afterwards, so this is a bug in
@@ -1749,6 +1750,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         """
         assert self._context_node is not None, \
                u"ElementTree not initialized, missing root"
+        return 0
 
     def parse(self, source, _BaseParser parser=None, *, base_url=None):
         u"""parse(self, source, parser=None, base_url=None)
