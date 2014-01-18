@@ -136,7 +136,7 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
                          _BaseParser parser, attrib, nsmap, dict extra_attrs) except -1:
     u"""Initialise a new Element object.
 
-    This is used when users instantiate a Python Element class
+    This is used when users instantiate a Python Element subclass
     directly, without it being mapped to an existing XML node.
     """
     cdef xmlDoc* c_doc
