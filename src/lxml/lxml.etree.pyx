@@ -1795,6 +1795,8 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         cdef xmlDoc* c_doc
         if self._context_node is not None:
             root = self._context_node.__copy__()
+            assert root is not None
+            _assertValidNode(root)
             _copyNonElementSiblings(self._context_node._c_node, root._c_node)
             doc = root._doc
             c_doc = self._context_node._doc._c_doc
