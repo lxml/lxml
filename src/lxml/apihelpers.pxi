@@ -76,7 +76,7 @@ cdef _Element _rootNodeOrRaise(object input):
 
 cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
                            _BaseParser parser, text, tail, attrib, nsmap,
-                           extra_attrs):
+                           dict extra_attrs):
     u"""Create a new element and initialize text content, namespaces and
     attributes.
 
@@ -133,7 +133,7 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
         raise
 
 cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
-                         _BaseParser parser, attrib, nsmap, extra_attrs) except -1:
+                         _BaseParser parser, attrib, nsmap, dict extra_attrs) except -1:
     u"""Initialise a new Element object.
 
     This is used when users instantiate a Python Element class
@@ -163,7 +163,7 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     return 0
 
 cdef _Element _makeSubElement(_Element parent, tag, text, tail,
-                              attrib, nsmap, extra_attrs):
+                              attrib, nsmap, dict extra_attrs):
     u"""Create a new child element and initialize text content, namespaces and
     attributes.
     """
