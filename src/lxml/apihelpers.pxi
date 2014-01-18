@@ -280,7 +280,7 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
 
 cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
-                             name, value, seen_tags) except -1:
+                             name, value, set seen_tags) except -1:
     ns_utf, name_utf = tag = _getNsTag(name)
     if tag in seen_tags:
         return 0
