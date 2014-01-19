@@ -36,7 +36,7 @@ cdef class _DTDElementContentDecl:
     property type:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
-           cdef tree.xmlElementContentType type = self._c_node.type
+           cdef int type = self._c_node.type
            if type == tree.XML_ELEMENT_CONTENT_PCDATA:
                return "pcdata"
            elif type == tree.XML_ELEMENT_CONTENT_ELEMENT:
@@ -51,7 +51,7 @@ cdef class _DTDElementContentDecl:
     property occur:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
-           cdef tree.xmlElementContentOccur occur = self._c_node.ocur
+           cdef int occur = self._c_node.ocur
            if occur == tree.XML_ELEMENT_CONTENT_ONCE:
                return "once"
            elif occur == tree.XML_ELEMENT_CONTENT_OPT:
@@ -114,7 +114,7 @@ cdef class _DTDAttributeDecl:
     property type:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
-           type = self._c_node.atype
+           cdef int type = self._c_node.atype
            if type == tree.XML_ATTRIBUTE_CDATA:
                return "cdata"
            elif type == tree.XML_ATTRIBUTE_ID:
@@ -141,7 +141,7 @@ cdef class _DTDAttributeDecl:
     property default:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
-           default = self._c_node.def_
+           cdef int default = self._c_node.def_
            if default == tree.XML_ATTRIBUTE_NONE:
                return "none"
            elif default == tree.XML_ATTRIBUTE_REQUIRED:
