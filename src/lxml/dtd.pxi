@@ -19,6 +19,8 @@ class DTDValidateError(DTDError):
 cdef inline int _assertValidDTDNode(node, void *c_node) except -1:
     assert c_node is not NULL, u"invalid DTD proxy at %s" % id(node)
 
+
+@cython.final
 @cython.internal
 @cython.freelist(8)
 cdef class _DTDElementContentDecl:
@@ -87,6 +89,8 @@ cdef class _DTDElementContentDecl:
            else:
                return None
 
+
+@cython.final
 @cython.internal
 @cython.freelist(8)
 cdef class _DTDAttributeDecl:
@@ -168,6 +172,8 @@ cdef class _DTDAttributeDecl:
     def values(self):
         return list(self.itervalues())
 
+
+@cython.final
 @cython.internal
 @cython.freelist(8)
 cdef class _DTDElementDecl:
@@ -229,6 +235,8 @@ cdef class _DTDElementDecl:
     def attributes(self):
         return list(self.iterattributes())
 
+
+@cython.final
 @cython.internal
 @cython.freelist(8)
 cdef class _DTDEntityDecl:
@@ -251,6 +259,7 @@ cdef class _DTDEntityDecl:
         def __get__(self):
             _assertValidDTDNode(self, self._c_node)
             return funicode(self._c_node.content) if self._c_node.content is not NULL else None
+
 
 ################################################################################
 # DTD
