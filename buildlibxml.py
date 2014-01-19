@@ -49,18 +49,37 @@ def download_and_extract_zlatkovic_binaries(destdir):
 
     return libs
 
+
+def find_top_dir_of_zipfile(zipfile):
+    topdir = None
+    files = [f.filename for f in zipfile.filelist]
+    dirs = [d for d in files if d.endswith('/')]
+    if dirs:
+        dirs.sort(key=len)
+        topdir = dirs[0]
+        topdir = topdir[:topdir.index("/")+1]
+        for path in files:
+            if not path.startswith(topdir):
+                topdir = None
+                break
+    assert topdir, (
+        "cannot determine single top-level directory in zip file %s" %
+        zipfile.filename)
+    return topdir.rstrip('/')
+
+
 def unpack_zipfile(zipfn, destdir):
     assert zipfn.endswith('.zip')
     import zipfile
     print('Unpacking %s into %s' % (os.path.basename(zipfn), destdir))
     f = zipfile.ZipFile(zipfn)
     try:
+        extracted_dir = os.path.join(destdir, find_top_dir_of_zipfile(f))
         f.extractall(path=destdir)
     finally:
         f.close()
-    edir = os.path.join(destdir, os.path.basename(zipfn)[:-len('.zip')])
-    assert os.path.exists(edir), 'missing: %s' % edir
-    return edir
+    assert os.path.exists(extracted_dir), 'missing: %s' % extracted_dir
+    return extracted_dir
 
 def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
     assert sys.platform.startswith('win')
