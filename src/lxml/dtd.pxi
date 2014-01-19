@@ -69,8 +69,8 @@ cdef class _DTDElementContentDecl:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
            c1 = self._c_node.c1
-           if c1 is not NULL:
-               node = _DTDElementContentDecl()
+           if c1:
+               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
                node._dtd = self._dtd
                node._c_node = <tree.xmlElementContent*>c1
                return node
@@ -81,8 +81,8 @@ cdef class _DTDElementContentDecl:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
            c2 = self._c_node.c2
-           if c2 is not NULL:
-               node = _DTDElementContentDecl()
+           if c2:
+               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
                node._dtd = self._dtd
                node._c_node = <tree.xmlElementContent*>c2
                return node
@@ -214,8 +214,8 @@ cdef class _DTDElementDecl:
        def __get__(self):
            _assertValidDTDNode(self, self._c_node)
            cdef tree.xmlElementContent *content = self._c_node.content
-           if content is not NULL:
-               node = _DTDElementContentDecl()
+           if content:
+               node = <_DTDElementContentDecl>_DTDElementContentDecl.__new__(_DTDElementContentDecl)
                node._dtd = self._dtd
                node._c_node = content
                return node
@@ -225,8 +225,8 @@ cdef class _DTDElementDecl:
     def iterattributes(self):
         _assertValidDTDNode(self, self._c_node)
         cdef tree.xmlAttribute *c_node = self._c_node.attributes
-        while c_node is not NULL:
-            node = _DTDAttributeDecl()
+        while c_node:
+            node = <_DTDAttributeDecl>_DTDAttributeDecl.__new__(_DTDAttributeDecl)
             node._dtd = self._dtd
             node._c_node = c_node
             yield node
