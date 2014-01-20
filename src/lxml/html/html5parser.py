@@ -2,6 +2,9 @@
 An interface to html5lib that mimics the lxml.html interface.
 """
 
+import sys
+import string
+
 from html5lib import HTMLParser as _HTMLParser
 from html5lib.treebuilders.etree_lxml import TreeBuilder
 
@@ -187,8 +190,16 @@ def parse(filename_url_or_file, guess_charset=True, parser=None):
         fp = open(filename_url_or_file, 'rb')
     return parser.parse(fp, useChardet=guess_charset)
 
+
 def _looks_like_url(str):
     scheme = urlparse(str)[0]
-    return scheme != ''
+    if not scheme:
+        return False
+    elif sys.platform == 'win32' and scheme in string.ascii_letters:
+        # looks like a 'normal' absolute path
+        return False
+    else:
+        return True
+
 
 html_parser = HTMLParser()
