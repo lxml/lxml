@@ -1,3 +1,4 @@
+import os
 import imp
 try:
     from StringIO import StringIO
@@ -303,7 +304,7 @@ class Test_parse(unittest.TestCase):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('content')
         try:
-            url = 'file://' + tmpfile.name
+            url = 'file://' + tmpfile.name.replace(os.sep, '/')
             self.assertEqual(self.call_it(url, parser=parser), 'the doc')
             fp, = parser.parse_args
             try:
