@@ -50,8 +50,10 @@ class ETreeDtdTestCase(HelperTestCase):
             fromstring(xml, parser=parser)
         except etree.XMLSyntaxError:
             e = sys.exc_info()[1]
-            errors = [ entry.message for entry in e.error_log
-                       if dtd_filename in entry.message ]
+            self.assertTrue(e.error_log)
+            self.assertTrue(parser.error_log)
+            errors = [entry.message for entry in e.error_log
+                      if dtd_filename in entry.message]
         self.assertTrue(errors)
 
     def test_dtd_parse_valid(self):
