@@ -9,7 +9,12 @@ import fnmatch
 try:
     from setuptools import setup
 except ImportError:
-    from distutils.core import setup
+    try:
+        from ez_setup import use_setuptools
+        use_setuptools()
+        from setuptools import setup
+    except ImportError:
+        from distutils.core import setup
 
 import versioninfo
 import setupinfo
