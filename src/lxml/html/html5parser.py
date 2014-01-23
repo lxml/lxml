@@ -195,7 +195,9 @@ def _looks_like_url(str):
     scheme = urlparse(str)[0]
     if not scheme:
         return False
-    elif sys.platform == 'win32' and scheme in string.ascii_letters:
+    elif (sys.platform == 'win32' and
+            scheme in string.ascii_letters
+            and len(scheme) == 1):
         # looks like a 'normal' absolute path
         return False
     else:
