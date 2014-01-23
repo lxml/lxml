@@ -2,6 +2,23 @@
 lxml changelog
 ==============
 
+Latest changes
+===============
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+* The heuristic that distinguishes file paths from URLs was tightened
+  to produce less false negatives.
+
+Other changes
+-------------
+
+
+
 3.3.0beta5 (2014-01-18)
 =======================
 

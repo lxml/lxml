@@ -1405,21 +1405,22 @@ cdef bint _isFilePath(const_xmlChar* c_path):
     # test if it looks like an absolute Unix path or a Windows network path
     if c_path[0] == c'/':
         return 1
-    # test if it looks like an absolute Windows path
+
+    # test if it looks like an absolute Windows path or URL
     if (c_path[0] >= c'a' and c_path[0] <= c'z') or \
             (c_path[0] >= c'A' and c_path[0] <= c'Z'):
-        if c_path[1] == c':':
-            return 1
-    # test if it looks like a relative path
-    while c_path[0] != c'\0':
-        c = c_path[0]
-        if c == c':':
-            return 0
-        elif c == c'/':
-            return 1
-        elif c == c'\\':
-            return 1
         c_path += 1
+        if c_path[0] == c':' and c_path[1] in b'\0\\':
+            return 1  # C: or C:\...
+
+        # test if it looks like a URL with scheme://
+        while (c_path[0] >= c'a' and c_path[0] <= c'z') or \
+                (c_path[0] >= c'A' and c_path[0] <= c'Z'):
+            c_path += 1
+        if c_path[0] == c':' and c_path[1] == c'/' and c_path[2] == c'/':
+            return 0
+
+    # assume it's a relative path
     return 1
 
 cdef object _encodeFilename(object filename):
