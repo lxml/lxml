@@ -1,6 +1,9 @@
-import unittest
+import os
 import os.path
-import re, gc, sys
+import re
+import gc
+import sys
+import unittest
 
 from lxml import etree
 
@@ -252,6 +255,9 @@ class LargeFileLikeUnicode(LargeFileLike):
 def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)
+
+def fileUrlInTestDir(name):
+    return 'file://' + fileInTestDir(name).replace(os.sep, '/')
 
 def read_file(name, mode='r'):
     f = open(name, mode)

@@ -11,7 +11,8 @@ if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
 from common_imports import etree, StringIO, BytesIO, _bytes, doctest
-from common_imports import HelperTestCase, fileInTestDir, make_doctest, skipIf
+from common_imports import HelperTestCase, make_doctest, skipIf
+from common_imports import fileInTestDir, fileUrlInTestDir
 
 class ETreeDtdTestCase(HelperTestCase):
     def test_dtd(self):
@@ -58,11 +59,23 @@ class ETreeDtdTestCase(HelperTestCase):
         xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % fileInTestDir("test.dtd")
         root = etree.fromstring(xml, parser=parser)
 
+    def test_dtd_parse_valid_file_url(self):
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = ('<!DOCTYPE a SYSTEM "%s"><a><b/></a>' %
+               fileUrlInTestDir("test.dtd"))
+        root = etree.fromstring(xml, parser=parser)
+
     def test_dtd_parse_valid_relative(self):
         parser = etree.XMLParser(dtd_validation=True)
         xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
-        root = etree.fromstring(xml, parser=parser,
-                                base_url=fileInTestDir("test.xml"))
+        root = etree.fromstring(
+            xml, parser=parser, base_url=fileInTestDir("test.xml"))
+
+    def test_dtd_parse_valid_relative_file_url(self):
+        parser = etree.XMLParser(dtd_validation=True)
+        xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
+        root = etree.fromstring(
+            xml, parser=parser, base_url=fileUrlInTestDir("test.xml"))
 
     def test_dtd_invalid(self):
         root = etree.XML("<b><a/></b>")
