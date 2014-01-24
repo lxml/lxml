@@ -741,9 +741,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         # now the same thing with a stylesheet base URL on the filesystem
         called['count'] = 0
-        expected_url = os.path.join('MY', 'BASE', 'test.xml')
-        xslt = etree.XSLT(etree.XML(stylesheet_xml, parser,
-                                    base_url=os.path.join('MY', 'BASE', 'FILE')))
+        expected_url = 'MY/BASE/test.xml'  # seems to be the same on Windows
+        xslt = etree.XSLT(etree.XML(
+            stylesheet_xml, parser,
+            base_url=os.path.join('MY', 'BASE', 'FILE')))
 
         self.assertEqual(called['count'], 0)
         result = xslt(etree.XML('<a/>'))
@@ -752,8 +753,20 @@ class ETreeXSLTTestCase(HelperTestCase):
         # now the same thing with a stylesheet base URL
         called['count'] = 0
         expected_url = 'http://server.com/BASE/DIR/test.xml'
-        xslt = etree.XSLT(etree.XML(stylesheet_xml, parser,
-                                    base_url='http://server.com/BASE/DIR/FILE'))
+        xslt = etree.XSLT(etree.XML(
+            stylesheet_xml, parser,
+            base_url='http://server.com/BASE/DIR/FILE'))
+
+        self.assertEqual(called['count'], 0)
+        result = xslt(etree.XML('<a/>'))
+        self.assertEqual(called['count'], 1)
+
+        # now the same thing with a stylesheet base file:// URL
+        called['count'] = 0
+        expected_url = 'file://BASE/DIR/test.xml'
+        xslt = etree.XSLT(etree.XML(
+            stylesheet_xml, parser,
+            base_url='file://BASE/DIR/FILE'))
 
         self.assertEqual(called['count'], 0)
         result = xslt(etree.XML('<a/>'))
