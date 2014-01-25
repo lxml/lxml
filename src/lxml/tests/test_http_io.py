@@ -102,7 +102,7 @@ class HttpIOTestCase(HelperTestCase):
             tree = self.etree.parse(
                 host_url + 'dir/test.xml',
                 parser=self.etree.XMLParser(
-                    load_dtd=True, no_network=False))
+                    load_dtd=True, no_network=False, resolve_entities=True))
             self.assertFalse(responses)  # all read
             root = tree.getroot()
             self.assertEqual('DEFINED', root.text)
@@ -113,7 +113,7 @@ class HttpIOTestCase(HelperTestCase):
                 self.etree.parse(
                     host_url + 'dir/test.xml',
                     parser=self.etree.XMLParser(
-                        load_dtd=True, no_network=True))
+                        load_dtd=True, no_network=True, resolve_entities=True))
             except self.etree.XMLSyntaxError:
                 self.assertTrue("myentity" in str(sys.exc_info()[1]))
             else:

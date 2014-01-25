@@ -1141,7 +1141,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_resolve_string_dtd(self):
         parse = self.etree.parse
-        parser = self.etree.XMLParser(dtd_validation=True)
+        parser = self.etree.XMLParser(dtd_validation=True, resolve_entities=True)
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
@@ -1161,7 +1161,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_resolve_bytes_dtd(self):
         parse = self.etree.parse
-        parser = self.etree.XMLParser(dtd_validation=True)
+        parser = self.etree.XMLParser(dtd_validation=True, resolve_entities=True)
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
@@ -1182,7 +1182,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_resolve_filelike_dtd(self):
         parse = self.etree.parse
-        parser = self.etree.XMLParser(dtd_validation=True)
+        parser = self.etree.XMLParser(dtd_validation=True, resolve_entities=True)
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
@@ -1270,7 +1270,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
     def test_resolve_empty(self):
         parse = self.etree.parse
-        parser = self.etree.XMLParser(load_dtd=True)
+        parser = self.etree.XMLParser(load_dtd=True, resolve_entities=True)
         assertEqual = self.assertEqual
         test_url = _str("__nosuch.dtd")
 
@@ -1341,6 +1341,15 @@ class ETreeOnlyTestCase(HelperTestCase):
                               ['child3', 'child2'])
             self.assertEqual(root[0][0].text, '&nbsp;')
             self.assertEqual(root[0][0].name, 'nbsp')
+
+        def test_entity_parse_entity_default(self):
+            parse = self.etree.parse
+            parser = self.etree.XMLParser()
+
+            xml = _bytes("<!DOCTYPE foo [ <!ENTITY bar SYSTEM 'file:///etc/passwd'>]><foo>&bar;</foo>")
+            tree = parse(BytesIO(xml), parser)
+            root = tree.getroot()
+            self.assertEqual(root.text, None)
 
     def test_entity_append(self):
         Entity = self.etree.Entity

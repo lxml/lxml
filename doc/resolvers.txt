@@ -83,7 +83,7 @@ Resolvers are registered local to a parser:
 
 .. sourcecode:: pycon
 
-  >>> parser = etree.XMLParser(load_dtd=True)
+  >>> parser = etree.XMLParser(load_dtd=True, resolve_entities=True)
   >>> parser.resolvers.add( DTDResolver() )
 
 Note that we instantiate a parser that loads the DTD.  This is not done by the

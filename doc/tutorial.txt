@@ -710,13 +710,14 @@ general document handling.
 
 .. sourcecode:: pycon
 
+    >>> parser = etree.XMLParser(resolve_entities=True)
     >>> root = etree.XML('''\
     ... <?xml version="1.0"?>
     ... <!DOCTYPE root SYSTEM "test" [ <!ENTITY tasty "parsnips"> ]>
     ... <root>
     ...   <a>&tasty;</a>
     ... </root>
-    ... ''')
+    ... ''', parser=parser)
 
     >>> tree = etree.ElementTree(root)
     >>> print(tree.docinfo.xml_version)

@@ -43,7 +43,7 @@ cdef class iterparse:
      - remove_pis: discard processing instructions
      - strip_cdata: replace CDATA sections by normal text content (default: True)
      - compact: safe memory for short text content (default: True)
-     - resolve_entities: replace entities by their text value (default: True)
+     - resolve_entities: replace entities by their text value (default: False)
      - huge_tree: disable security restrictions and support very deep trees
                   and very long text content (only affects libxml2 2.7+)
      - html: parse input as HTML (default: XML)
@@ -66,7 +66,7 @@ cdef class iterparse:
     def __init__(self, source, events=(u"end",), *, tag=None,
                  attribute_defaults=False, dtd_validation=False,
                  load_dtd=False, no_network=True, remove_blank_text=False,
-                 compact=True, resolve_entities=True, remove_comments=False,
+                 compact=True, resolve_entities=False, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
                  html=False, recover=None, huge_tree=False,
                  XMLSchema schema=None):
