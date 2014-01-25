@@ -999,7 +999,9 @@ Some of the most famous excessive content expansion attacks
 use XML entity references.  Luckily, entity expansion is mostly
 useless for the data commonly sent through web services and
 can simply be disabled, which rules out several types of
-denial of service attacks at once.  Consequently, version
+denial of service attacks at once.  This also involves an attack
+that reads local files from the server, as XML entities can be
+defined to expand into their content.   Consequently, version
 1.2 of the SOAP standard explicitly disallows entity references
 in the XML stream.
 
