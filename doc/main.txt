@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.3.0beta5`_, released 2014-01-18
-(`changes for 3.3.0beta5`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.3.0`_, released 2014-01-26
+(`changes for 3.3.0`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -240,15 +240,19 @@ See the web sites of lxml
 `3.2 <http://lxml.de/3.2/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.3.0beta5.pdf
+.. _`PDF documentation`: lxmldoc-3.3.0.pdf
 
-* `lxml 3.3.0beta4`_, released 2014-01-16  (`changes for 3.3.0beta4`_)
+* `lxml 3.3.0`_, released 2014-01-26 (`changes for 3.3.0`_)
 
-* `lxml 3.3.0beta3`_, released 2014-01-02  (`changes for 3.3.0beta3`_)
+* `lxml 3.3.0beta5`_, released 2014-01-18 (`changes for 3.3.0beta5`_)
 
-* `lxml 3.3.0beta2`_, released 2013-12-20  (`changes for 3.3.0beta2`_)
+* `lxml 3.3.0beta4`_, released 2014-01-12 (`changes for 3.3.0beta4`_)
 
-* `lxml 3.3.0beta1`_, released 2013-12-12  (`changes for 3.3.0beta1`_)
+* `lxml 3.3.0beta3`_, released 2014-01-02 (`changes for 3.3.0beta3`_)
+
+* `lxml 3.3.0beta2`_, released 2013-12-20 (`changes for 3.3.0beta2`_)
+
+* `lxml 3.3.0beta1`_, released 2013-12-12 (`changes for 3.3.0beta1`_)
 
 * `lxml 3.2.4`_, released 2013-11-07 (`changes for 3.2.4`_)
 
@@ -276,6 +280,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `older releases <http://lxml.de/3.0/#old-versions>`_
 
+.. _`lxml 3.3.0`: /files/lxml-3.3.0.tgz
 .. _`lxml 3.3.0beta5`: /files/lxml-3.3.0beta5.tgz
 .. _`lxml 3.3.0beta4`: /files/lxml-3.3.0beta4.tgz
 .. _`lxml 3.3.0beta3`: /files/lxml-3.3.0beta3.tgz
@@ -294,6 +299,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 3.0.1`: /files/lxml-3.0.1.tgz
 .. _`lxml 3.0`: /files/lxml-3.0.tgz
 
+.. _`changes for 3.3.0`: /changes-3.3.0.html
 .. _`changes for 3.3.0beta5`: /changes-3.3.0beta5.html
 .. _`changes for 3.3.0beta4`: /changes-3.3.0beta4.html
 .. _`changes for 3.3.0beta3`: /changes-3.3.0beta3.html
