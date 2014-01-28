@@ -268,7 +268,23 @@ class _IOTestCaseBase(HelperTestCase):
         finally:
             os.rmdir(dn)
 
-    
+    def test_parse_utf8_bom(self):
+        utext = _str('Søk på nettet')
+        uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
+        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+            "unicode_escape").encode("latin1")
+        self.assertEqual(3, len(bom))
+        f = tempfile.NamedTemporaryFile()
+        try:
+            f.write(bom)
+            f.write(uxml.encode("utf-8"))
+            f.flush()
+            tree = self.etree.parse(f.name)
+        finally:
+            f.close()
+        self.assertEqual(utext, tree.getroot().text)
+
+
 class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
 
