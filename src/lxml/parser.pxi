@@ -1184,6 +1184,27 @@ cdef class _FeedParser(_BaseParser):
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             c_filename = (_cstr(self._filename)
                           if self._filename is not None else NULL)
+
+            if c_encoding is NULL and py_buffer_len >= 2:
+                # libxml2 can't handle BOMs here, so let's try ourselves
+                if c_data[0] in b'\xfe\xef\xff':
+                    # likely a BOM, let's take a closer look
+                    c_encoding = _findEncodingName(
+                        <const_xmlChar*>c_data,
+                        4 if py_buffer_len > 4 else <int>py_buffer_len)
+                    if c_encoding is not NULL:
+                        # found it => skip over BOM (if there is one)
+                        if (c_data[0] == b'\xef' and
+                                c_data[1] == b'\xbb' and
+                                c_data[2] == b'\xbf'):
+                            c_data += 3  # UTF-8 BOM
+                            py_buffer_len -= 3
+                        elif (c_data[0] == b'\xfe' and c_data[1] == b'\xff' or
+                                c_data[0] == b'\xff' and c_data[1] == b'\xfe'):
+                            # UTF-16 BE/LE
+                            c_data += 2
+                            py_buffer_len -= 2
+
             if self._for_html:
                 error = _htmlCtxtResetPush(
                     pctxt, NULL, 0, c_filename, c_encoding,

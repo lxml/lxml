@@ -284,6 +284,44 @@ class _IOTestCaseBase(HelperTestCase):
             f.close()
         self.assertEqual(utext, tree.getroot().text)
 
+    def test_iterparse_utf8_bom(self):
+        utext = _str('Søk på nettet')
+        uxml = '<?xml version="1.0" encoding="UTF-8"?><p>%s</p>' % utext
+        bom = _bytes('\\xEF\\xBB\\xBF').decode(
+            "unicode_escape").encode("latin1")
+        self.assertEqual(3, len(bom))
+        f = tempfile.NamedTemporaryFile()
+        try:
+            f.write(bom)
+            f.write(uxml.encode("utf-8"))
+            f.flush()
+            elements = [el for _, el in self.etree.iterparse(f.name)]
+            self.assertEqual(1, len(elements))
+            root = elements[0]
+        finally:
+            f.close()
+        self.assertEqual(utext, root.text)
+
+    def test_iterparse_utf16_bom(self):
+        utext = _str('Søk på nettet')
+        uxml = '<?xml version="1.0" encoding="UTF-16"?><p>%s</p>' % utext
+        boms = _bytes('\\xFE\\xFF \\xFF\\xFE').decode(
+            "unicode_escape").encode("latin1")
+        self.assertEqual(5, len(boms))
+        xml = uxml.encode("utf-16")
+        self.assertTrue(xml[:2] in boms, repr(xml[:2]))
+
+        f = tempfile.NamedTemporaryFile()
+        try:
+            f.write(xml)
+            f.flush()
+            elements = [el for _, el in self.etree.iterparse(f.name)]
+            self.assertEqual(1, len(elements))
+            root = elements[0]
+        finally:
+            f.close()
+        self.assertEqual(utext, root.text)
+
 
 class ETreeIOTestCase(_IOTestCaseBase):
     etree = etree
