@@ -11,6 +11,11 @@ Features added
 Bugs fixed
 ----------
 
+* Building in PyPy failed due to missing support for ``PyUnicode_Compare()``
+  and ``PyByteArray_*()`` in PyPy's C-API.
+
+* Compilation in MSVC failed due to missing "stdint.h" standard header file.
+
 * iterparse() failed to parse BOM prefixed files.
 
 Other changes
