@@ -34,9 +34,9 @@ cdef bint _isProxyAliveInPypy(xmlNode* c_node):
     retval = True
     if python.PyWeakref_LockObject(<python.PyObject*>c_node._private) is None:
         # proxy has already died => remove weak reference
-        obj_ptr = <python.PyObject*>c_node._private
+        weakref_ptr = <python.PyObject*>c_node._private
         c_node._private = NULL
-        python.Py_XDECREF(obj_ptr)
+        python.Py_XDECREF(weakref_ptr)
         retval = False
     return retval
 
@@ -50,8 +50,6 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     proxy._c_node = c_node
     if python.IS_PYPY:
         c_node._private = <void*>python.PyWeakref_NewRef(proxy, NULL)
-        if c_node._private is NULL:
-            return -1 # manual exception propagation
     else:
         c_node._private = <void*>proxy
     return 0
@@ -59,12 +57,11 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
 cdef inline int _unregisterProxy(_Element proxy) except -1:
     u"""Unregister a proxy for the node it's proxying for.
     """
-    cdef xmlNode* c_node
-    c_node = proxy._c_node
+    cdef xmlNode* c_node = proxy._c_node
     if python.IS_PYPY:
-        obj_ptr = <python.PyObject*>c_node._private
+        weakref_ptr = <python.PyObject*>c_node._private
         c_node._private = NULL
-        python.Py_XDECREF(obj_ptr)
+        python.Py_XDECREF(weakref_ptr)
     else:
         assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
         c_node._private = NULL
