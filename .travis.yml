@@ -9,7 +9,7 @@ python:
   - pypy
 
 install:
-    pip install --use-mirrors cython
+    pip install --use-mirrors -r requirements.txt
 
 script:
   - python -u setup.py clean
