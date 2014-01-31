@@ -373,7 +373,8 @@ class HtmlParserTestCase(HelperTestCase):
         root = parser.close()
 
         self.assertEqual('html', root.tag)
-        # test that we parsed with a parser dict
+        # test that we find all names in the parser dict
+        self.assertEqual([root], list(root.iter('html')))
         self.assertEqual([root[0]], list(root.iter('body')))
 
     def test_html_feed_parser_chunky(self):
@@ -383,7 +384,8 @@ class HtmlParserTestCase(HelperTestCase):
         parser.feed("><")
         parser.feed("p><")
         parser.feed("strong")
-        parser.feed(">some text</strong></p><")
+        parser.feed(">some ")
+        parser.feed("text</strong></p><")
         parser.feed("/body></html>")
         root = parser.close()
 
@@ -393,6 +395,21 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual([root[0]], list(root.iter('body')))
         self.assertEqual([root[0][0]], list(root.iter('p')))
         self.assertEqual([root[0][0][0]], list(root.iter('strong')))
+
+    def test_html_feed_parser_more_tags(self):
+        parser = self.etree.HTMLParser()
+        parser.feed('<html><head>')
+        parser.feed('<title>TITLE</title><body><p>P</p></body><')
+        parser.feed("/html>")
+        root = parser.close()
+
+        self.assertEqual('html', root.tag)
+        # test that we find all names in the parser dict
+        self.assertEqual([root], list(root.iter('html')))
+        self.assertEqual([root[0]], list(root.iter('head')))
+        self.assertEqual([root[0][0]], list(root.iter('title')))
+        self.assertEqual([root[1]], list(root.iter('body')))
+        self.assertEqual([root[1][0]], list(root.iter('p')))
 
     def test_html_parser_target_tag(self):
         assertFalse  = self.assertFalse

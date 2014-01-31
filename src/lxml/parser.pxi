@@ -703,7 +703,7 @@ cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
     if c_doc is NULL:
         return 0
     c_node = c_doc.children
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 0)
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:
         if _fixHtmlDictNodeNames(c_dict, c_node) < 0:
             return -1
@@ -1246,7 +1246,7 @@ cdef class _FeedParser(_BaseParser):
                 else:
                     buffer_len = <int>py_buffer_len
                 if self._for_html:
-                    c_node = pctxt.node
+                    c_node = pctxt.node  # last node where the parser stopped
                     error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
                     # and now for the fun part: move node names to the dict
                     if pctxt.myDoc:
