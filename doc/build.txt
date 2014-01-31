@@ -23,6 +23,7 @@ Cython
 
 .. _pip: http://pypi.python.org/pypi/pip
 .. _Cython: http://cython.org
+.. _wheel: http://wheel.readthedocs.org/en/latest/
 
 The lxml.etree and lxml.objectify modules are written in Cython_.
 Since we distribute the Cython-generated .c files with lxml releases,
@@ -42,7 +43,9 @@ developer sources (e.g. to test a bug fix that has not been release
 yet) or if you want to be an lxml developer, then you do need a
 working Cython installation.  You can use pip_ to install it::
 
-    pip install "Cython>=0.20"
+    pip install -r requirements.txt
+
+https://github.com/lxml/lxml/blob/master/requirements.txt
 
 lxml currently requires at least Cython 0.20, later release versions
 should work as well.
@@ -165,25 +168,53 @@ your operating system type (Linux, Windows, MacOS-X, ...).
 .. _`mailing list`: http://lxml.de/mailinglist/
 
 
-Building an egg
----------------
+Building an egg or wheel
+------------------------
 
-This is the procedure to make an lxml egg for your platform (assuming
-that you have "setuptools" or "distribute" installed):
+This is the procedure to make an lxml egg or wheel_ for your platform.
+It assumes that you have ``setuptools`` or ``distribute`` installed, as well
+as the ``wheel`` package.
 
-* Download the lxml-x.y.tar.gz release.  This contains the pregenerated C so
-  that you can be sure you build exactly from the release sources.  Unpack
-  them and cd into the resulting directory.
+First, download the lxml-x.y.tar.gz release.  This contains the pregenerated
+C files so that you can be sure you build exactly from the release sources.
+Unpack them and ``cd`` into the resulting directory.  Then, to build a wheel,
+simply run the command
 
-* python setup.py build
+::
 
-* If you're on a unixy platform, cd into ``build/lib.your.platform`` and strip
-  any ``.so`` file you find there.  This reduces the size of the egg
-  considerably.
+  python setup.py bdist_wheel
 
-* ``python setup.py bdist_egg``
+or, to build a statically linked wheel with all of libxml2, libxslt and
+friends compiled in, run
 
-This will put the egg into the ``dist`` directory.
+  python setup.py bdist_wheel --static-deps
+
+The resulting .whl file will be written into the ``dist`` directory.
+
+To build an egg file, run
+
+::
+
+  python setup.py build_egg
+
+If you are on a Unix-like platform, you can first build the extension modules
+using
+
+::
+
+  python setup.py build
+
+and then ``cd`` into the directory ``build/lib.your.platform`` to call
+``strip`` on any ``.so`` file you find there.  This reduces the size of
+the binary distribution considerably.  Then, from the package root directory,
+call
+
+::
+
+  python setup.py bdist_egg
+
+This will quickly package the pre-built packages into an egg file and
+drop it into the ``dist`` directory.
 
 
 Building lxml on MacOS-X
