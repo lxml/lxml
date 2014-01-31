@@ -14,6 +14,9 @@ all: inplace
 inplace:
 	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON)
 
+sdist:
+	$(PYTHON) setup.py $(SETUPFLAGS) sdist $(PYTHON_WITH_CYTHON)
+
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
 
