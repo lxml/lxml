@@ -11,12 +11,16 @@ Features added
 Bugs fixed
 ----------
 
-* Building in PyPy failed due to missing support for ``PyUnicode_Compare()``
-  and ``PyByteArray_*()`` in PyPy's C-API.
+* LP#1014290: HTML documents parsed with ``parser.feed()`` failed to find
+  elements during tag iteration.
 
-* Compilation in MSVC failed due to missing "stdint.h" standard header file.
+* LP#1273709: Building in PyPy failed due to missing support for
+  ``PyUnicode_Compare()`` and ``PyByteArray_*()`` in PyPy's C-API.
 
-* iterparse() failed to parse BOM prefixed files.
+* LP#1274413: Compilation in MSVC failed due to missing "stdint.h" standard
+  header file.
+
+* LP#1274118: iterparse() failed to parse BOM prefixed files.
 
 Other changes
 -------------
