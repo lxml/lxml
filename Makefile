@@ -5,17 +5,23 @@ TESTOPTS=
 SETUPFLAGS=
 LXMLVERSION=`cat version.txt`
 
-PY2_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 
 all: inplace
 
 # Build in-place
 inplace:
-	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PY2_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON)
 
 build:
-	$(PYTHON) setup.py $(SETUPFLAGS) build $(PY2_WITH_CYTHON)
+	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
+
+wheel:
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
+
+wheel_static:
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON) --static-deps
 
 test_build: build
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
