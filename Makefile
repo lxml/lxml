@@ -14,6 +14,9 @@ all: inplace
 inplace:
 	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON)
 
+inplace3:
+	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY2_WITH_CYTHON)
+
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
 
@@ -31,8 +34,7 @@ test_inplace: inplace
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest.py
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest2.py
 
-test_inplace3: inplace
-	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
+test_inplace3: inplace3
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest2.py
@@ -122,3 +124,24 @@ realclean: clean docclean
 	find src -name '*.c' -exec rm -f {} \;
 	rm -f TAGS
 	$(PYTHON) setup.py clean -a --without-cython
+
+sdist_inplace: inplace
+	$(PYTHON) setup.py $(SETUPFLAGS) sdist
+
+bdist_wheel_inplace: inplace
+	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel
+
+bdist_wheel_inplace3: inplace3
+	$(PYTHON3) setup.py $(SETUPFLAGS) bdist_wheel
+
+upload_sdist: sdist_inplace
+	$(PYTHON) setup.py $(SETUPFLAGS) upload
+
+upload_wheel: bdist_wheel_inplace
+	$(PYTHON) setup.py $(SETUPFLAGS) upload
+
+upload_wheel3: bdist_wheel_inplace3
+	$(PYTHON3) setup.py $(SETUPFLAGS) upload
+
+upload: sdist_inplace bdist_wheel_inplace
+	$(PYTHON) setup.py $(SETUPFLAGS) upload
