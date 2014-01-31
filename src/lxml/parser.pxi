@@ -134,6 +134,7 @@ cdef class _ParserDictionaryContext:
     cdef void initParserDict(self, xmlparser.xmlParserCtxt* pctxt):
         u"Assure we always use the same string dictionary."
         self.initThreadDictRef(&pctxt.dict)
+        pctxt.dictNames = 1
 
     cdef void initXPathParserDict(self, xpath.xmlXPathContext* pctxt):
         u"Assure we always use the same string dictionary."
@@ -709,6 +710,25 @@ cdef int _fixHtmlDictNames(tree.xmlDict* c_dict, xmlDoc* c_doc) nogil:
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
     return 0
 
+cdef int _fixHtmlDictSubtreeNames(tree.xmlDict* c_dict, xmlDoc* c_doc,
+                                  xmlNode* c_start_node) nogil:
+    """
+    Move names to the dict, iterating in document order, starting at
+    c_start_node. This is used in incremental parsing after each chunk.
+    """
+    cdef xmlNode* c_node
+    if not c_doc:
+        return 0
+    if not c_start_node:
+        return _fixHtmlDictNames(c_dict, c_doc)
+    c_node = c_start_node
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(<xmlNode*>c_doc, c_node, 1)
+    if c_node.type == tree.XML_ELEMENT_NODE:
+        if _fixHtmlDictNodeNames(c_dict, c_node) < 0:
+            return -1
+    tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+    return 0
+
 cdef inline int _fixHtmlDictNodeNames(tree.xmlDict* c_dict,
                                       xmlNode* c_node) nogil:
     cdef xmlNode* c_attr
@@ -1181,7 +1201,6 @@ cdef class _FeedParser(_BaseParser):
         if not self._feed_parser_running:
             context.prepare()
             self._feed_parser_running = 1
-            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
             c_filename = (_cstr(self._filename)
                           if self._filename is not None else NULL)
 
@@ -1213,9 +1232,13 @@ cdef class _FeedParser(_BaseParser):
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
                     pctxt, NULL, 0, c_filename, c_encoding)
+            if error:
+                raise MemoryError()
+            __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
 
         #print pctxt.charset, 'NONE' if c_encoding is NULL else c_encoding
 
+        fixup_error = 0
         while py_buffer_len > 0 and (error == 0 or recover):
             with nogil:
                 if py_buffer_len > limits.INT_MAX:
@@ -1223,11 +1246,23 @@ cdef class _FeedParser(_BaseParser):
                 else:
                     buffer_len = <int>py_buffer_len
                 if self._for_html:
+                    c_node = pctxt.node
                     error = htmlparser.htmlParseChunk(pctxt, c_data, buffer_len, 0)
+                    # and now for the fun part: move node names to the dict
+                    if pctxt.myDoc:
+                        fixup_error = _fixHtmlDictSubtreeNames(
+                            pctxt.dict, pctxt.myDoc, c_node)
+                        if pctxt.myDoc.dict and pctxt.myDoc.dict is not pctxt.dict:
+                            xmlparser.xmlDictFree(pctxt.myDoc.dict)
+                            pctxt.myDoc.dict = pctxt.dict
+                            xmlparser.xmlDictReference(pctxt.dict)
                 else:
                     error = xmlparser.xmlParseChunk(pctxt, c_data, buffer_len, 0)
                 py_buffer_len -= buffer_len
                 c_data += buffer_len
+
+            if fixup_error and not context.has_raised():
+                context.store_exception(MemoryError())
 
             if error and not pctxt.replaceEntities and not pctxt.validate:
                 # in this mode, we ignore errors about undefined entities
@@ -1238,7 +1273,7 @@ cdef class _FeedParser(_BaseParser):
                 else:
                     error = 0
 
-        if not recover and (error or not pctxt.wellFormed):
+        if fixup_error or not recover and (error or not pctxt.wellFormed):
             self._feed_parser_running = 0
             try:
                 context._handleParseResult(self, pctxt.myDoc, None)
