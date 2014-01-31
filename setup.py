@@ -49,6 +49,11 @@ extra_options = {}
 if 'setuptools' in sys.modules:
     extra_options['zip_safe'] = False
 
+    import pkg_resources
+    extra_options['extra_require'] = {
+            'fast': map(str, pkg_resources.parse_requirements(open("requirements.txt", "r")))
+        }
+
 extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
