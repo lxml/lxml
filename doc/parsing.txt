@@ -517,6 +517,8 @@ iterating over the result.  This is most useful for non-blocking execution
 environments where data chunks arrive one after the other and should be
 processed as far as possible in each step.
 
+The same feature is available in lxml 3.3.
+
 The basic usage is as follows:
 
 .. sourcecode:: pycon
