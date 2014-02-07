@@ -61,7 +61,7 @@ if 'setuptools' in sys.modules:
             f.close()
         extra_options['extra_require'] = {
             'source': deps,
-            'cssselect': 'cssselect>=0.7',
+            'html': 'cssselect>=0.7',
         }
 
 extra_options.update(setupinfo.extra_setup_args())
