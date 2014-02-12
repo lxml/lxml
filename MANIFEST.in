@@ -2,7 +2,7 @@ exclude *.py
 include setup.py ez_setup.py setupinfo.py versioninfo.py buildlibxml.py
 include test.py selftest.py selftest2.py
 include update-error-constants.py
-include MANIFEST.in Makefile version.txt
+include MANIFEST.in Makefile version.txt requirements.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.rst TODO.txt
 recursive-include src *.pyx *.pxd *.pxi *.py
 recursive-include src/lxml lxml.etree.c lxml.objectify.c
