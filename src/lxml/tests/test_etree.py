@@ -24,7 +24,7 @@ if this_dir not in sys.path:
 
 from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir, read_file
 from common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
-from common_imports import canonicalize, sorted, _str, _bytes
+from common_imports import canonicalize, sorted, _str, _bytes, path2url
 
 print("")
 print("TESTED VERSION: %s" % etree.__version__)
@@ -1231,15 +1231,15 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         class MyResolver(self.etree.Resolver):
             def resolve(self, url, id, context):
-                assertEqual(url, fileInTestDir(test_url))
+                assertEqual(url, path2url(fileInTestDir(test_url)))
                 return self.resolve_filename(
-                    fileInTestDir('test.dtd'), context)
+                    path2url(fileInTestDir('test.dtd')), context)
 
         parser.resolvers.add(MyResolver())
 
         xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
         tree = parse(StringIO(xml), parser,
-                     base_url=fileInTestDir('__test.xml'))
+                     base_url=path2url(fileInTestDir('__test.xml')))
         root = tree.getroot()
         self.assertEqual(
             root.attrib,    {'default': 'valueA'})
@@ -3512,7 +3512,7 @@ class _XIncludeTestCase(HelperTestCase):
         <doc xmlns:xi="http://www.w3.org/2001/XInclude">
           <xi:include href="%s" parse="text"/>
         </doc>
-        ''' % filename))
+        ''' % path2url(filename)))
         old_text = root.text
         content = read_file(filename)
         old_tail = root[0].tail
