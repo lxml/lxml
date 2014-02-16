@@ -274,14 +274,15 @@ class _IOTestCaseBase(HelperTestCase):
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile(delete=False)
         try:
             f.write(bom)
             f.write(uxml.encode("utf-8"))
             f.flush()
+            f.close()
             tree = self.etree.parse(f.name)
         finally:
-            f.close()
+            os.unlink(f.name)
         self.assertEqual(utext, tree.getroot().text)
 
     def test_iterparse_utf8_bom(self):
@@ -290,16 +291,17 @@ class _IOTestCaseBase(HelperTestCase):
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile(delete=False)
         try:
             f.write(bom)
             f.write(uxml.encode("utf-8"))
             f.flush()
+            f.close()
             elements = [el for _, el in self.etree.iterparse(f.name)]
             self.assertEqual(1, len(elements))
             root = elements[0]
         finally:
-            f.close()
+            os.unlink(f.name)
         self.assertEqual(utext, root.text)
 
     def test_iterparse_utf16_bom(self):
@@ -311,15 +313,16 @@ class _IOTestCaseBase(HelperTestCase):
         xml = uxml.encode("utf-16")
         self.assertTrue(xml[:2] in boms, repr(xml[:2]))
 
-        f = tempfile.NamedTemporaryFile()
+        f = tempfile.NamedTemporaryFile(delete=False)
         try:
             f.write(xml)
             f.flush()
+            f.close()
             elements = [el for _, el in self.etree.iterparse(f.name)]
             self.assertEqual(1, len(elements))
             root = elements[0]
         finally:
-            f.close()
+            os.unlink(f.name)
         self.assertEqual(utext, root.text)
 
 

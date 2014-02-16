@@ -12,7 +12,7 @@ if this_dir not in sys.path:
 
 from common_imports import etree, StringIO, BytesIO, _bytes, doctest
 from common_imports import HelperTestCase, make_doctest, skipIf
-from common_imports import fileInTestDir, fileUrlInTestDir
+from common_imports import fileInTestDir, fileUrlInTestDir, path2url
 
 class ETreeDtdTestCase(HelperTestCase):
     def test_dtd(self):
@@ -40,7 +40,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
     def test_dtd_parse_file_not_found(self):
         fromstring = etree.fromstring
-        dtd_filename = fileInTestDir("__nosuch.dtd")
+        dtd_filename = path2url(fileInTestDir("__nosuch.dtd"))
         parser = etree.XMLParser(dtd_validation=True)
         xml = _bytes('<!DOCTYPE b SYSTEM "%s"><b><a/></b>' % dtd_filename)
         self.assertRaises(etree.XMLSyntaxError,
@@ -58,7 +58,7 @@ class ETreeDtdTestCase(HelperTestCase):
 
     def test_dtd_parse_valid(self):
         parser = etree.XMLParser(dtd_validation=True)
-        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % fileInTestDir("test.dtd")
+        xml = '<!DOCTYPE a SYSTEM "%s"><a><b/></a>' % path2url(fileInTestDir("test.dtd"))
         root = etree.fromstring(xml, parser=parser)
 
     def test_dtd_parse_valid_file_url(self):
@@ -71,7 +71,7 @@ class ETreeDtdTestCase(HelperTestCase):
         parser = etree.XMLParser(dtd_validation=True)
         xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
         root = etree.fromstring(
-            xml, parser=parser, base_url=fileInTestDir("test.xml"))
+            xml, parser=parser, base_url=path2url(fileInTestDir("test.xml")))
 
     def test_dtd_parse_valid_relative_file_url(self):
         parser = etree.XMLParser(dtd_validation=True)
@@ -234,7 +234,7 @@ class ETreeDtdTestCase(HelperTestCase):
             attributes)
 
     def test_dtd_attrs(self):
-        dtd = etree.DTD(fileInTestDir("test.dtd"))
+        dtd = etree.DTD(path2url(fileInTestDir("test.dtd")))
 
         # Test DTD.system_url attribute
         self.assertTrue(dtd.system_url.endswith("test.dtd"))
@@ -278,7 +278,7 @@ class ETreeDtdTestCase(HelperTestCase):
         parser = etree.XMLParser(dtd_validation=True)
         xml = '<!DOCTYPE a SYSTEM "test.dtd"><a><b/></a>'
         root = etree.fromstring(xml, parser=parser,
-                                base_url=fileInTestDir("test.xml"))
+                                base_url=path2url(fileInTestDir("test.xml")))
 
         dtd = root.getroottree().docinfo.internalDTD
         self.assertEqual(dtd.name, "a")
