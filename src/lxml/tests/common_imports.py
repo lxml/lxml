@@ -9,11 +9,13 @@ try:
     import urlparse
 except ImportError:
     import urllib.parse as urlparse 
-    
-import urllib
+
+try:
+    from urllib import pathname2url
+except:
+    from urllib.request import pathname2url
 
 from lxml import etree
-
 
 def make_version_tuple(version_string):
     l = []
@@ -266,7 +268,7 @@ def fileInTestDir(name):
 
 def path2url(path):
     return urlparse.urljoin(
-        'file:', urllib.pathname2url(path))
+        'file:', pathname2url(path))
 
 def fileUrlInTestDir(name):
     return path2url(fileInTestDir(name))
