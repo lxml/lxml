@@ -34,31 +34,14 @@ Notice below, at the bottom of this page.  Thank you for your support.
 
 .. _Donate: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=R56JE3VCPDA9N
 
-Alternatively, if you prefer expressing your appreciation in a monthy
-dose of pennies rather than a dedicated donation, you can also use
-Flattr to do so.
-
-.. class:: center
-
-  |FlattrLink|_
-
-.. _FlattrLink: https://flattr.com/thing/268156/lxml-The-Python-XML-Toolkit
-
-Note that Flattr keeps 10% of the transactions for itself, which is money
-you pay that will not reach us.  Do not send any larger amounts through
-Flattr.  Use PayPal for donations instead, or `contact Stefan Behnel`_ for
-other ways to support the lxml project, as well as commercial consulting,
-customisations and trainings on lxml and fast Python XML processing.
+Please `contact Stefan Behnel`_ for other ways to support the lxml project,
+as well as commercial consulting, customisations and trainings on lxml and
+fast Python XML processing.
 
 .. |Donate| image:: https://github.com/lxml/lxml/raw/master/doc/html/paypal_btn_donateCC_LG.gif
             :width: 160
             :height: 47
             :alt: Donate to the lxml project
-
-.. |FlattrLink| image:: https://github.com/lxml/lxml/raw/master/doc/html/flattr-badge-large.png
-                :width: 93
-                :height: 20
-                :alt: Flattr the lxml project
 
 .. _`contact Stefan Behnel`: http://consulting.behnel.de/
 .. _`doc/main.txt`: http://lxml.de/
