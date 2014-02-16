@@ -23,11 +23,14 @@ try:
 except ImportError:
     import urllib.parse as urlparse 
     
-import urllib
-
+try:
+    from urllib import pathname2url
+except:
+    from urllib.request import pathname2url
+    
 def path2url(path):
     return urlparse.urljoin(
-        'file:', urllib.pathname2url(path))
+        'file:', pathname2url(path))
 
 try:
     import html5lib
