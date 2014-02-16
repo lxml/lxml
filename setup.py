@@ -59,11 +59,13 @@ if 'setuptools' in sys.modules:
             deps = [str(req) for req in pkg_resources.parse_requirements(f)]
         finally:
             f.close()
-        extra_options['extra_require'] = {
+        extra_options['setup_requires'] = deps
+        extra_options['extras_require'] = {
             'source': deps,
             'cssselect': 'cssselect>=0.7',
+            'optional': ['BeautifulSoup', 'html5lib'],
         }
-
+        
 extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
