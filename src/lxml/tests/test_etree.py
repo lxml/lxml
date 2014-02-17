@@ -1698,7 +1698,34 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(TypeError, c.insert, 0, el)
         self.assertRaises(TypeError, c.set, "myattr", "test")
 
-    # test passing 'None' to dump
+    def test_comment_immutable_attrib(self):
+        c = self.etree.Comment()
+        self.assertEqual(0, len(c.attrib))
+
+        self.assertFalse(c.attrib.__contains__('nope'))
+        self.assertFalse('nope' in c.attrib)
+        self.assertFalse('nope' in c.attrib.keys())
+        self.assertFalse('nope' in c.attrib.values())
+        self.assertFalse(('nope', 'huhu') in c.attrib.items())
+
+        self.assertEqual([], list(c.attrib))
+        self.assertEqual([], list(c.attrib.keys()))
+        self.assertEqual([], list(c.attrib.items()))
+        self.assertEqual([], list(c.attrib.values()))
+        self.assertEqual([], list(c.attrib.iterkeys()))
+        self.assertEqual([], list(c.attrib.iteritems()))
+        self.assertEqual([], list(c.attrib.itervalues()))
+
+        self.assertEqual('HUHU', c.attrib.pop('nope', 'HUHU'))
+        self.assertRaises(KeyError, c.attrib.pop, 'nope')
+
+        self.assertRaises(KeyError, c.attrib.__getitem__, 'only')
+        self.assertRaises(KeyError, c.attrib.__getitem__, 'names')
+        self.assertRaises(KeyError, c.attrib.__getitem__, 'nope')
+        self.assertRaises(KeyError, c.attrib.__setitem__, 'nope', 'yep')
+        self.assertRaises(KeyError, c.attrib.__delitem__, 'nope')
+
+    # test passing 'None' to dump()
     def test_dump_none(self):
         self.assertRaises(TypeError, self.etree.dump, None)
 

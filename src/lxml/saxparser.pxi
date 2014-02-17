@@ -312,7 +312,7 @@ cdef void _handleSaxTargetStart(
             if c_ctxt.loadsubset & xmlparser.XML_COMPLETE_ATTRS == 0:
                 c_nb_attributes -= c_nb_defaulted
         if c_nb_attributes == 0:
-            attrib = EMPTY_READ_ONLY_DICT
+            attrib = IMMUTABLE_EMPTY_MAPPING
         else:
             attrib = {}
             for i in xrange(c_nb_attributes):
@@ -326,7 +326,7 @@ cdef void _handleSaxTargetStart(
                 attrib[name] = value
                 c_attributes += 5
         if c_nb_namespaces == 0:
-            nsmap = EMPTY_READ_ONLY_DICT
+            nsmap = IMMUTABLE_EMPTY_MAPPING
         else:
             nsmap = {}
             for i in xrange(c_nb_namespaces):
@@ -377,7 +377,7 @@ cdef void _handleSaxTargetStartNoNs(void* ctxt, const_xmlChar* c_name,
     context = <_SaxParserContext>c_ctxt._private
     try:
         if c_attributes is NULL:
-            attrib = EMPTY_READ_ONLY_DICT
+            attrib = IMMUTABLE_EMPTY_MAPPING
         else:
             attrib = {}
             while c_attributes[0] is not NULL:
@@ -386,7 +386,7 @@ cdef void _handleSaxTargetStartNoNs(void* ctxt, const_xmlChar* c_name,
                 c_attributes += 2
         element = _callTargetSaxStart(
             context, c_ctxt, funicode(c_name),
-            attrib, EMPTY_READ_ONLY_DICT)
+            attrib, IMMUTABLE_EMPTY_MAPPING)
         if context._event_filter & (PARSE_EVENT_FILTER_END |
                                     PARSE_EVENT_FILTER_START):
             _pushSaxStartEvent(context, c_ctxt, NULL, c_name, element)
@@ -738,7 +738,7 @@ cdef class TreeBuilder(_SaxParserTarget):
         Opens a new element.
         """
         if nsmap is None:
-            nsmap = EMPTY_READ_ONLY_DICT
+            nsmap = IMMUTABLE_EMPTY_MAPPING
         return self._handleSaxStart(tag, attrs, nsmap)
 
     def end(self, tag):

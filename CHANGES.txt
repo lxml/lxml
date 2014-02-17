@@ -2,6 +2,17 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+Bugs fixed
+----------
+
+* LP#1281139: ``.attrib`` value of Comments and PIs lost its mutation
+  methods in 3.3.0.  Even though it is empty and immutable, it should
+  still provide the same interface as that returned for Elements.
+
+
 3.3.1 (2014-02-12)
 ==================
 

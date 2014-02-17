@@ -94,7 +94,40 @@ from itertools import islice
 
 cdef object ITER_EMPTY = iter(())
 
-cdef object EMPTY_READ_ONLY_DICT = python.PyDictProxy_New({})
+try:
+    from collections.abc import MutableMapping  # Py3.3+
+except ImportError:
+    try:
+        from collections import MutableMapping  # Py2.6+
+    except ImportError:
+        from UserDict import UserDict as MutableMapping  # Py2.[45]
+        class MutableMapping(MutableMapping):
+            def keys(self):
+                return []
+
+class _ImmutableMapping(MutableMapping):
+    def __getitem__(self, key):
+        raise KeyError, key
+
+    def __setitem__(self, key, value):
+        raise KeyError, key
+
+    def __delitem__(self, key):
+        raise KeyError, key
+
+    def __contains__(self, key):
+        return False
+
+    def __len__(self):
+        return 0
+
+    def __iter__(self):
+        return ITER_EMPTY
+    iterkeys = itervalues = iteritems = __iter__
+
+cdef object IMMUTABLE_EMPTY_MAPPING = _ImmutableMapping()
+del MutableMapping, _ImmutableMapping
+
 
 # the rules
 # ---------
@@ -1530,7 +1563,7 @@ cdef class __ContentOnlyElement(_Element):
 
     property attrib:
         def __get__(self):
-            return EMPTY_READ_ONLY_DICT
+            return IMMUTABLE_EMPTY_MAPPING
 
     property text:
         def __get__(self):
