@@ -16,11 +16,13 @@ from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 from common_imports import read_file, write_to_file, BytesIO
 
 if sys.version_info < (2,6):
-    class NamedTemporaryFile(tempfile.NamedTemporaryFile):
+    class NamedTemporaryFile(object):
         def __init__(self, delete=True, **kwargs):
-            tempfile.NamedTemporaryFile.__init__(self, **kwargs)
+            self._tmpfile = tempfile.NamedTemporaryFile(**kwargs)
         def close(self):
             pass
+        def __getattr__(self, name):
+            return getattr(self._tmpfile, name)
 else:
     NamedTemporaryFile = tempfile.NamedTemporaryFile
 
