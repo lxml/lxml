@@ -15,6 +15,15 @@ from common_imports import etree, ElementTree, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 from common_imports import read_file, write_to_file, BytesIO
 
+if sys.version_info < (2,6):
+    class NamedTemporaryFile(tempfile.NamedTemporaryFile):
+        def __init__(self, delete=True, **kwargs):
+            tempfile.NamedTemporaryFile.__init__(self, **kwargs)
+        def close(self):
+            pass
+else:
+    NamedTemporaryFile = tempfile.NamedTemporaryFile
+
 
 class _IOTestCaseBase(HelperTestCase):
     """(c)ElementTree compatibility for IO functions/methods
@@ -274,7 +283,7 @@ class _IOTestCaseBase(HelperTestCase):
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
-        f = tempfile.NamedTemporaryFile(delete=False)
+        f = NamedTemporaryFile(delete=False)
         try:
             try:
                 f.write(bom)
@@ -292,7 +301,7 @@ class _IOTestCaseBase(HelperTestCase):
         bom = _bytes('\\xEF\\xBB\\xBF').decode(
             "unicode_escape").encode("latin1")
         self.assertEqual(3, len(bom))
-        f = tempfile.NamedTemporaryFile(delete=False)
+        f = NamedTemporaryFile(delete=False)
         try:
             try:
                 f.write(bom)
@@ -315,7 +324,7 @@ class _IOTestCaseBase(HelperTestCase):
         xml = uxml.encode("utf-16")
         self.assertTrue(xml[:2] in boms, repr(xml[:2]))
 
-        f = tempfile.NamedTemporaryFile(delete=False)
+        f = NamedTemporaryFile(delete=False)
         try:
             try:
                 f.write(xml)
