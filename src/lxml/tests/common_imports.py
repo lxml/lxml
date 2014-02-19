@@ -5,6 +5,16 @@ import gc
 import sys
 import unittest
 
+try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse 
+
+try:
+    from urllib import pathname2url
+except:
+    from urllib.request import pathname2url
+
 from lxml import etree
 
 def make_version_tuple(version_string):
@@ -256,8 +266,12 @@ def fileInTestDir(name):
     _testdir = os.path.dirname(__file__)
     return os.path.join(_testdir, name)
 
+def path2url(path):
+    return urlparse.urljoin(
+        'file:', pathname2url(path))
+
 def fileUrlInTestDir(name):
-    return 'file://' + fileInTestDir(name).replace(os.sep, '/')
+    return path2url(fileInTestDir(name))
 
 def read_file(name, mode='r'):
     f = open(name, mode)

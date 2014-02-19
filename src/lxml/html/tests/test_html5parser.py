@@ -19,6 +19,20 @@ from lxml.etree import Element, ElementTree, ParserError
 from lxml.html import html_parser, XHTML_NAMESPACE
 
 try:
+    import urlparse
+except ImportError:
+    import urllib.parse as urlparse 
+    
+try:
+    from urllib import pathname2url
+except:
+    from urllib.request import pathname2url
+    
+def path2url(path):
+    return urlparse.urljoin(
+        'file:', pathname2url(path))
+
+try:
     import html5lib
 except ImportError:
     html5lib = None
@@ -268,7 +282,7 @@ class Test_parse(unittest.TestCase):
         return parse(*args, **kwargs)
 
     def make_temp_file(self, contents=''):
-        tmpfile = tempfile.NamedTemporaryFile()
+        tmpfile = tempfile.NamedTemporaryFile(delete=False)
         try:
             tmpfile.write(contents.encode('utf8'))
             tmpfile.flush()
@@ -276,6 +290,7 @@ class Test_parse(unittest.TestCase):
             return tmpfile
         except Exception:
             tmpfile.close()
+            os.unlink(tempfile.name)
             raise
 
     def test_with_file_object(self):
@@ -290,29 +305,36 @@ class Test_parse(unittest.TestCase):
     def test_with_file_name(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('data')
+        data = tmpfile.read()
+        tmpfile.close()
         try:
             self.assertEqual(self.call_it(tmpfile.name, parser=parser), 'the doc')
             fp, = parser.parse_args
             try:
-                self.assertEqual(fp.read(), tmpfile.read())
+                self.assertEqual(fp.read(), data)
             finally:
                 fp.close()
         finally:
-            tmpfile.close()
+            os.unlink(tmpfile.name)
+            # tmpfile.close()
+
 
     def test_with_url(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('content')
+        data = tmpfile.read()
+        tmpfile.close()
         try:
-            url = 'file://' + tmpfile.name.replace(os.sep, '/')
+            url = path2url(tmpfile.name)
             self.assertEqual(self.call_it(url, parser=parser), 'the doc')
             fp, = parser.parse_args
             try:
-                self.assertEqual(fp.read(), tmpfile.read())
+                self.assertEqual(fp.read(), data)
             finally:
                 fp.close()
         finally:
-            tmpfile.close()
+            os.unlink(tmpfile.name)
+            # tmpfile.close()
 
     @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
