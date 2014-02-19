@@ -22,9 +22,10 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, StringIO, BytesIO, HelperTestCase, fileInTestDir, read_file
+from common_imports import etree, StringIO, BytesIO, HelperTestCase
+from common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
 from common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
-from common_imports import canonicalize, sorted, _str, _bytes, path2url
+from common_imports import canonicalize, sorted, _str, _bytes
 
 print("")
 print("TESTED VERSION: %s" % etree.__version__)
@@ -1231,15 +1232,15 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         class MyResolver(self.etree.Resolver):
             def resolve(self, url, id, context):
-                assertEqual(url, path2url(fileInTestDir(test_url)))
+                assertEqual(url, fileUrlInTestDir(test_url))
                 return self.resolve_filename(
-                    path2url(fileInTestDir('test.dtd')), context)
+                    fileUrlInTestDir('test.dtd'), context)
 
         parser.resolvers.add(MyResolver())
 
         xml = _str('<!DOCTYPE a SYSTEM "%s"><a><b/></a>') % test_url
         tree = parse(StringIO(xml), parser,
-                     base_url=path2url(fileInTestDir('__test.xml')))
+                     base_url=fileUrlInTestDir('__test.xml'))
         root = tree.getroot()
         self.assertEqual(
             root.attrib,    {'default': 'valueA'})
@@ -3590,6 +3591,7 @@ class _XIncludeTestCase(HelperTestCase):
         self.assertEqual(
             [("dtd", True), ("include", True), ("input", True)],
             called)
+
 
 class ETreeXIncludeTestCase(_XIncludeTestCase):
     def include(self, tree):
