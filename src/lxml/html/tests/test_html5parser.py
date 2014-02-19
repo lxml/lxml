@@ -289,8 +289,10 @@ class Test_parse(unittest.TestCase):
             tmpfile.seek(0)
             return tmpfile
         except Exception:
-            tmpfile.close()
-            os.unlink(tempfile.name)
+            try:
+                tmpfile.close()
+            finally:
+                os.unlink(tempfile.name)
             raise
 
     def test_with_file_object(self):
@@ -305,8 +307,10 @@ class Test_parse(unittest.TestCase):
     def test_with_file_name(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('data')
-        data = tmpfile.read()
-        tmpfile.close()
+        try:
+            data = tmpfile.read()
+        finally:
+            tmpfile.close()
         try:
             self.assertEqual(self.call_it(tmpfile.name, parser=parser), 'the doc')
             fp, = parser.parse_args
@@ -316,14 +320,15 @@ class Test_parse(unittest.TestCase):
                 fp.close()
         finally:
             os.unlink(tmpfile.name)
-            # tmpfile.close()
 
 
     def test_with_url(self):
         parser = DummyParser(doc='the doc')
         tmpfile = self.make_temp_file('content')
-        data = tmpfile.read()
-        tmpfile.close()
+        try:
+            data = tmpfile.read()
+        finally:
+            tmpfile.close()
         try:
             url = path2url(tmpfile.name)
             self.assertEqual(self.call_it(url, parser=parser), 'the doc')
@@ -334,7 +339,6 @@ class Test_parse(unittest.TestCase):
                 fp.close()
         finally:
             os.unlink(tmpfile.name)
-            # tmpfile.close()
 
     @skipUnless(html5lib, 'html5lib is not installed')
     def test_integration(self):
