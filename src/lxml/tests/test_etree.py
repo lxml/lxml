@@ -3249,32 +3249,22 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_tostring_method_html_with_tail(self):
         tostring = self.etree.tostring
         html = self.etree.fromstring(
-            '<p><i>Really dude<i>\r\n</i></i></p>\r\n',
+            '<div><p>Some text<i>\r\n</i></p></div>\r\n',
             parser=self.etree.HTMLParser())
-        self.assertEqual(
-           html.tag,
-           'html')
-        bodies = [e for e in html if e.tag == 'body']
-        self.assertEqual(
-            len(bodies),
-            1)
-        paragraphs = [p for p in bodies[0]]
-        self.assertEqual(
-            len(paragraphs),
-            1)
-
-        result = tostring(paragraphs[0], method='html')
+        self.assertEqual(html.tag, 'html')
+        div = html.find('.//div')
+        result = tostring(div, method='html')
         self.assertEqual(
             result,
-            _bytes("<p><i>Really dude<i>\r\n</i></i></p>\r\n"))
-        result = tostring(paragraphs[0], method='html', with_tail=True)
+            _bytes("<div><p>Some text<i>\r\n</i></p></div>\r\n"))
+        result = tostring(div, method='html', with_tail=True)
         self.assertEqual(
             result,
-            _bytes("<p><i>Really dude<i>\r\n</i></i></p>\r\n"))
-        result = tostring(paragraphs[0], method='html', with_tail=False)
+            _bytes("<div><p>Some text<i>\r\n</i></p></div>\r\n"))
+        result = tostring(div, method='html', with_tail=False)
         self.assertEqual(
             result,
-            _bytes("<p><i>Really dude<i>\r\n</i></i></p>"))
+            _bytes("<div><p>Some text<i>\r\n</i></p></div>"))
 
     def test_standalone(self):
         tostring = self.etree.tostring
