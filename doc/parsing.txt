@@ -33,6 +33,13 @@ The usual setup procedure:
 
   >>> from lxml import etree
 
+The following examples also use StringIO or BytesIO to show how to parse
+from files and file-like objects.  Both are available in the ``io`` module:
+
+.. sourcecode:: python
+
+  from io import StringIO, BytesIO
+
 ..
   >>> from lxml import usedoctest
 
