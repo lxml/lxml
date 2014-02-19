@@ -8,6 +8,9 @@ Latest changes
 Bugs fixed
 ----------
 
+* LP#1185332: ``tostring(method="html")`` did not use HTML serialisation
+  semantics for trailing tail text.
+
 * LP#1281139: ``.attrib`` value of Comments lost its mutation methods
   in 3.3.0.  Even though it is empty and immutable, it should still
   provide the same interface as that returned for Elements.
