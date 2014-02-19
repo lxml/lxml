@@ -20,7 +20,7 @@ if sys.version_info < (2,6):
         def __init__(self, delete=True, **kwargs):
             self._tmpfile = tempfile.NamedTemporaryFile(**kwargs)
         def close(self):
-            pass
+            self._tmpfile.flush()
         def __getattr__(self, name):
             return getattr(self._tmpfile, name)
 else:
