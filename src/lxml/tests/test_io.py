@@ -9,9 +9,9 @@ import tempfile, gzip, os, os.path, sys, gc, shutil
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+    sys.path.insert(0, this_dir)  # needed for Py3
 
-from common_imports import etree, ElementTree, fileInTestDir, _str, _bytes
+from common_imports import etree, ElementTree, _str, _bytes
 from common_imports import SillyFileLike, LargeFileLike, HelperTestCase
 from common_imports import read_file, write_to_file, BytesIO
 
@@ -276,10 +276,11 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
         try:
-            f.write(bom)
-            f.write(uxml.encode("utf-8"))
-            f.flush()
-            f.close()
+            try:
+                f.write(bom)
+                f.write(uxml.encode("utf-8"))
+            finally:
+                f.close()
             tree = self.etree.parse(f.name)
         finally:
             os.unlink(f.name)
@@ -293,10 +294,11 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(3, len(bom))
         f = tempfile.NamedTemporaryFile(delete=False)
         try:
-            f.write(bom)
-            f.write(uxml.encode("utf-8"))
-            f.flush()
-            f.close()
+            try:
+                f.write(bom)
+                f.write(uxml.encode("utf-8"))
+            finally:
+                f.close()
             elements = [el for _, el in self.etree.iterparse(f.name)]
             self.assertEqual(1, len(elements))
             root = elements[0]
@@ -315,9 +317,10 @@ class _IOTestCaseBase(HelperTestCase):
 
         f = tempfile.NamedTemporaryFile(delete=False)
         try:
-            f.write(xml)
-            f.flush()
-            f.close()
+            try:
+                f.write(xml)
+            finally:
+                f.close()
             elements = [el for _, el in self.etree.iterparse(f.name)]
             self.assertEqual(1, len(elements))
             root = elements[0]
