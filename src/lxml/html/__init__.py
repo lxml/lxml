@@ -1527,11 +1527,10 @@ def html_to_xhtml(html):
     except AttributeError:
         pass
     prefix = "{%s}" % XHTML_NAMESPACE
-    for el in html.iter():
+    for el in html.iter(etree.Element):
         tag = el.tag
-        if isinstance(tag, basestring):
-            if tag[0] != '{':
-                el.tag = prefix + tag
+        if tag[0] != '{':
+            el.tag = prefix + tag
 
 def xhtml_to_html(xhtml):
     """Convert all tags in an XHTML tree to HTML by removing their
