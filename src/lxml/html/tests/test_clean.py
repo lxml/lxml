@@ -3,7 +3,8 @@ from lxml.tests.common_imports import make_doctest
 from lxml.etree import LIBXML_VERSION
 
 import lxml.html
-from lxml.html.clean import Cleaner
+from lxml.html.clean import Cleaner, clean_html
+
 
 class CleanerTest(unittest.TestCase):
     def test_allow_tags(self):
@@ -59,6 +60,15 @@ class CleanerTest(unittest.TestCase):
         result = cleaner.clean_html(html)
 
         self.assertEqual(expected, result)
+
+    def test_clean_invalid_root_tag(self):
+        # onl testing that cleaning with invalid root tags works at all
+        s = lxml.html.fromstring('parent <invalid tag>child</another>')
+        self.assertEqual('parent child', clean_html(s).text_content())
+
+        s = lxml.html.fromstring('<invalid tag>child</another>')
+        self.assertEqual('child', clean_html(s).text_content())
+
 
 def test_suite():
     suite = unittest.TestSuite()
