@@ -169,6 +169,12 @@ two ways, the best being the original ISO Schematron reference
 implementation via XSLT.  libxml2 also supports loading documents
 through HTTP and FTP.
 
+For `RelaxNG Compact Syntax <http://relaxng.org/compact-tutorial-20030326.html>`_
+support, there is a tool called `rnc2rng <http://www.gnosis.cx/download/relax/>`_,
+written by David Mertz, which you might be able to use from Python.  Failing
+that, `trang <http://code.google.com/p/jing-trang/>`_ is the 'official'
+command line tool (written in Java) to do the conversion.
+
 
 Who uses lxml?
 --------------
