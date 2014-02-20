@@ -378,7 +378,6 @@ class Cleaner(object):
         for el in _remove:
             el.drop_tag()
 
-        allow_tags = self.allow_tags
         if self.remove_unknown_tags:
             if allow_tags:
                 raise ValueError(
