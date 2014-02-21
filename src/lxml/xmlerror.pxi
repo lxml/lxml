@@ -629,7 +629,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
             if c_pos[0] == b's':  # "%s"
                 format_count += 1
                 c_str = cvarargs.va_charptr(args)
-                if c_pos == msg:
+                if c_pos == msg + 1:
                     c_text = c_str  # msg == "%s..."
                 elif c_name_pos[0] == b'e':
                     if cstring_h.strncmp(c_name_pos, 'element %s', 10):
