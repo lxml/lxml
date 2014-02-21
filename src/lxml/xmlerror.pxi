@@ -644,9 +644,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
                     c_error.line = cvarargs.va_int(args)
                 else:
                     break  # unexpected format => abort
-            elif c_pos[0] == b'%':
-                pass  # "%%"
-            else:
+            elif c_pos[0] != b'%':  # "%%" == "%"
                 format_count += 1
                 break  # unexpected format => abort
         elif c_pos[0] == b' ':
