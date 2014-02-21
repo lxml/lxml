@@ -607,39 +607,57 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     cdef char* c_text
     cdef char* c_message
     cdef char* c_element
-    cdef int i, text_size, element_size
+    cdef char* c_pos
+    cdef char* c_name_pos
+    cdef int i, text_size, element_size, format_count
     if not __DEBUG or msg is NULL:
         return
     if msg[0] in b'\n\0':
         return
 
+    c_text = c_element = c_error.file = NULL
+    c_error.line = 0
+
+    # parse "NAME %s" chunks from the format string
     cvarargs.va_start(args, msg)
-    if msg[0] == '%' and msg[1] == 's':
-        c_text = cvarargs.va_charptr(args)
-    else:
-        c_text = NULL
-    if cstring_h.strstr(msg, 'file %s'):
-        c_error.file = cvarargs.va_charptr(args)
-        if c_error.file and \
-                cstring_h.strncmp(c_error.file,
-                            'string://__STRING__XSLT', 23) == 0:
-            c_error.file = '<xslt>'
-    else:
-        c_error.file = NULL
-    if cstring_h.strstr(msg, 'line %d'):
-        c_error.line = cvarargs.va_int(args)
-    else:
-        c_error.line = 0
-    if cstring_h.strstr(msg, 'element %s'):
-        c_element = cvarargs.va_charptr(args)
-    else:
-        c_element = NULL
+    c_name_pos = c_pos = msg
+    format_count = 0
+    while c_pos[0]:
+        if c_pos[0] == b'%':
+            c_pos += 1
+            if c_pos[0] == b's':
+                format_count += 1
+                if c_pos == msg:
+                    c_text = cvarargs.va_charptr(args)  # "%s..."
+                elif cstring_h.strncmp(c_name_pos, 'element %s', 10):
+                    c_element = cvarargs.va_charptr(args)
+                elif cstring_h.strncmp(c_name_pos, 'file %s', 7):
+                    c_error.file = cvarargs.va_charptr(args)
+                    if c_error.file and 0 == cstring_h.strncmp(
+                            c_error.file, 'string://__STRING__XSLT', 23):
+                        c_error.file = '<xslt>'
+                else:
+                    break  # unexpected format => abort
+            elif c_pos[0] == b'd':
+                format_count += 1
+                if cstring_h.strncmp(c_name_pos, 'line %d', 7):
+                    c_error.line = cvarargs.va_int(args)
+                else:
+                    break  # unexpected format => abort
+            elif c_pos[0] == b'%':
+                pass  # "%%"
+            else:
+                format_count += 1
+                break  # unexpected format => abort
+        elif c_pos[0] == b' ':
+            if c_pos[1] != b'%':
+                c_name_pos = c_pos + 1
+        c_pos += 1
     cvarargs.va_end(args)
 
     c_message = NULL
     if c_text is NULL:
-        if (c_element is not NULL and
-                cstring_h.strchr(msg, '%') == cstring_h.strrchr(msg, '%')):
+        if c_element is not NULL and format_count == 1:
             # special case: a single occurrence of 'element %s'
             text_size    = cstring_h.strlen(msg)
             element_size = cstring_h.strlen(c_element)
