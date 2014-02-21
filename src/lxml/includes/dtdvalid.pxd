@@ -2,7 +2,13 @@ from lxml.includes cimport tree
 from lxml.includes.tree cimport xmlDoc, xmlDtd
 
 cdef extern from "libxml/valid.h" nogil:
-    ctypedef struct xmlValidCtxt
+    ctypedef void (*xmlValidityErrorFunc)(void * ctx, const char * msg, ...)
+    ctypedef void (*xmlValidityWarningFunc)(void * ctx, const char * msg, ...)
+
+    ctypedef struct xmlValidCtxt:
+        void *userData
+        xmlValidityErrorFunc error
+        xmlValidityWarningFunc warning
 
     cdef xmlValidCtxt* xmlNewValidCtxt()
     cdef void xmlFreeValidCtxt(xmlValidCtxt* cur)

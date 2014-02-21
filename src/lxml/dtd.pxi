@@ -363,6 +363,11 @@ cdef class DTD(_Validator):
         if valid_ctxt is NULL:
             raise DTDError(u"Failed to create validation context")
 
+        # work around error reporting bug in libxml2 <= 2.9.1 (and later?)
+        # https://bugzilla.gnome.org/show_bug.cgi?id=724903
+        valid_ctxt.error = _nullGenericErrorFunc
+        valid_ctxt.userData = NULL
+
         try:
             with self._error_log:
                 c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)

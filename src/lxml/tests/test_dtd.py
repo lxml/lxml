@@ -117,6 +117,23 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertTrue(dtd)
         self.assertFalse(dtd.validate(root))
 
+    def test_dtd_invalid_duplicate_id(self):
+        root = etree.XML(_bytes('''
+        <a><b id="id1"/><b id="id2"/><b id="id1"/></a>
+        '''))
+        dtd = etree.DTD(BytesIO(_bytes("""
+        <!ELEMENT a (b*)>
+        <!ATTLIST b
+            id ID #REQUIRED
+        >
+        <!ELEMENT b EMPTY>
+        """)))
+        self.assertFalse(dtd.validate(root))
+        self.assertTrue(dtd.error_log)
+        print dtd.error_log
+        self.assertTrue([error for error in dtd.error_log
+                         if 'id1' in error.message])
+
     def test_dtd_api_internal(self):
         root = etree.XML(_bytes('''
         <!DOCTYPE b SYSTEM "none" [
