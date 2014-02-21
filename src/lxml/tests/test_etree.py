@@ -3253,6 +3253,7 @@ class ETreeOnlyTestCase(HelperTestCase):
             parser=self.etree.HTMLParser())
         self.assertEqual(html.tag, 'html')
         div = html.find('.//div')
+        self.assertEqual(div.tail, '\r\n')
         result = tostring(div, method='html')
         self.assertEqual(
             result,
