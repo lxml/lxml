@@ -609,7 +609,8 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     cdef char* c_element
     cdef char* c_pos
     cdef char* c_name_pos
-    cdef int i, text_size, element_size, format_count
+    cdef char* c_str
+    cdef int text_size, element_size, format_count, c_int
     if not __DEBUG or msg is NULL:
         return
     if msg[0] in b'\n\0':
@@ -625,28 +626,28 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     while c_pos[0]:
         if c_pos[0] == b'%':
             c_pos += 1
-            if c_pos[0] == b's':
+            if c_pos[0] == b's':  # "%s"
                 format_count += 1
+                c_str = cvarargs.va_charptr(args)
                 if c_pos == msg:
-                    c_text = cvarargs.va_charptr(args)  # "%s..."
-                elif cstring_h.strncmp(c_name_pos, 'element %s', 10):
-                    c_element = cvarargs.va_charptr(args)
-                elif cstring_h.strncmp(c_name_pos, 'file %s', 7):
-                    c_error.file = cvarargs.va_charptr(args)
-                    if c_error.file and 0 == cstring_h.strncmp(
-                            c_error.file, 'string://__STRING__XSLT', 23):
-                        c_error.file = '<xslt>'
-                else:
-                    break  # unexpected format => abort
-            elif c_pos[0] == b'd':
+                    c_text = c_str  # msg == "%s..."
+                elif c_name_pos[0] == b'e':
+                    if cstring_h.strncmp(c_name_pos, 'element %s', 10):
+                        c_element = c_str
+                elif c_name_pos[0] == b'f':
+                    if cstring_h.strncmp(c_name_pos, 'file %s', 7):
+                        if cstring_h.strncmp('string://__STRING__XSLT',
+                                             c_str, 23) == 0:
+                            c_str = '<xslt>'
+                        c_error.file = c_str
+            elif c_pos[0] == b'd':  # "%d"
                 format_count += 1
+                c_int = cvarargs.va_int(args)
                 if cstring_h.strncmp(c_name_pos, 'line %d', 7):
-                    c_error.line = cvarargs.va_int(args)
-                else:
-                    break  # unexpected format => abort
+                    c_error.line = c_int
             elif c_pos[0] != b'%':  # "%%" == "%"
                 format_count += 1
-                break  # unexpected format => abort
+                break  # unexpected format or end of string => abort
         elif c_pos[0] == b' ':
             if c_pos[1] != b'%':
                 c_name_pos = c_pos + 1
