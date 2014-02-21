@@ -62,7 +62,7 @@ class CleanerTest(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_clean_invalid_root_tag(self):
-        # onl testing that cleaning with invalid root tags works at all
+        # only testing that cleaning with invalid root tags works at all
         s = lxml.html.fromstring('parent <invalid tag>child</another>')
         self.assertEqual('parent child', clean_html(s).text_content())
 
