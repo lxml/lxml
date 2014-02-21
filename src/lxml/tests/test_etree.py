@@ -3249,7 +3249,9 @@ class ETreeOnlyTestCase(HelperTestCase):
     def test_tostring_method_html_with_tail(self):
         tostring = self.etree.tostring
         html = self.etree.fromstring(
-            '<div><p>Some text<i>\r\n</i></p></div>\r\n',
+            '<html><body>'
+            '<div><p>Some text<i>\r\n</i></p></div>\r\n'
+            '</body></html>',
             parser=self.etree.HTMLParser())
         self.assertEqual(html.tag, 'html')
         div = html.find('.//div')
