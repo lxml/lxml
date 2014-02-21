@@ -130,7 +130,6 @@ class ETreeDtdTestCase(HelperTestCase):
         """)))
         self.assertFalse(dtd.validate(root))
         self.assertTrue(dtd.error_log)
-        print dtd.error_log
         self.assertTrue([error for error in dtd.error_log
                          if 'id1' in error.message])
 
