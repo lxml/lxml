@@ -31,6 +31,38 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema = etree.XMLSchema(schema)
         self.assertTrue(schema.validate(tree_valid))
         self.assertFalse(schema.validate(tree_invalid))
+        self.assertTrue(schema.validate(tree_valid))     # retry valid
+        self.assertFalse(schema.validate(tree_invalid))  # retry invalid
+
+    def test_xmlschema_error_log(self):
+        tree_valid = self.parse('<a><b></b></a>')
+        tree_invalid = self.parse('<a><c></c></a>')
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:string" />
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        self.assertTrue(schema.validate(tree_valid))
+        self.assertFalse(schema.error_log.filter_from_errors())
+
+        self.assertFalse(schema.validate(tree_invalid))
+        self.assertTrue(schema.error_log.filter_from_errors())
+        self.assertTrue(schema.error_log.filter_types(
+            etree.ErrorTypes.SCHEMAV_ELEMENT_CONTENT))
+
+        self.assertTrue(schema.validate(tree_valid))
+        self.assertFalse(schema.error_log.filter_from_errors())
+
+        self.assertFalse(schema.validate(tree_invalid))
+        self.assertTrue(schema.error_log.filter_from_errors())
+        self.assertTrue(schema.error_log.filter_types(
+            etree.ErrorTypes.SCHEMAV_ELEMENT_CONTENT))
 
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''

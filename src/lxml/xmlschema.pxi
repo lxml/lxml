@@ -133,19 +133,21 @@ cdef class XMLSchema(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        if self._add_attribute_defaults:
-            xmlschema.xmlSchemaSetValidOptions(
-                valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
+        try:
+            if self._add_attribute_defaults:
+                xmlschema.xmlSchemaSetValidOptions(
+                    valid_ctxt, xmlschema.XML_SCHEMA_VAL_VC_I_CREATE)
 
-        xmlschema.xmlSchemaSetValidStructuredErrors(
-            valid_ctxt, _receiveError, <void*>self._error_log)
+            self._error_log.clear()
+            xmlschema.xmlSchemaSetValidStructuredErrors(
+                valid_ctxt, _receiveError, <void*>self._error_log)
 
-        c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        with nogil:
-            ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
-        _destroyFakeDoc(doc._c_doc, c_doc)
-
-        xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
+            c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            with nogil:
+                ret = xmlschema.xmlSchemaValidateDoc(valid_ctxt, c_doc)
+            _destroyFakeDoc(doc._c_doc, c_doc)
+        finally:
+            xmlschema.xmlSchemaFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
             raise XMLSchemaValidateError(
