@@ -1,6 +1,7 @@
 import sys
 import unittest
 
+from lxml import etree
 from lxml.tests.common_imports import HelperTestCase
 from lxml.doctestcompare import LXMLOutputChecker, PARSE_HTML, PARSE_XML
 
@@ -9,6 +10,22 @@ class DummyInput:
     def __init__(self, **kw):
         for name, value in kw.items():
             setattr(self, name, value)
+
+
+def indent(elem, level=0):
+    i = "\n" + level*"  "
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "  "
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            indent(elem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
 
 
 class DoctestCompareTest(HelperTestCase):
@@ -24,15 +41,43 @@ class DoctestCompareTest(HelperTestCase):
         want_doc = parse(want)
         got_doc = parse(got)
         return self._checker.collect_diff(
-            want_doc, got_doc, html, options).lstrip()
+            want_doc, got_doc, html, indent=0).lstrip()
 
     def assert_diff(self, want, got, diff, html=False):
         self.assertEqual(self.compare(want, got, html), diff)
 
     def assert_nodiff(self, want, got, html=False):
-        self.assert_diff(want, got, None, html=html)
+        root = etree.fromstring(want)
+        root.tail = '\n'
+        indent(root)
+        diff = etree.tostring(
+            root, encoding='unicode', method=html and 'html' or 'xml')
+        self.assert_diff(want, got, diff, html=html)
 
-    def test_attributes(self):
+    def test_equal_input(self):
+        self.assert_nodiff(
+            '<p title="expected">Expected</p>',
+            '<p title="expected">Expected</p>')
+
+    def test_differing_tags(self):
+        self.assert_diff(
+            '<p title="expected">Expected</p>',
+            '<b title="expected">Expected</b>',
+            '<p (got: b) title="expected">Expected</p (got: b)>\n')
+
+    def test_tags_upper_lower_case(self):
+        self.assert_diff(
+            '<p title="expected">Expected</p>',
+            '<P title="expected">Expected</P>',
+            '<p (got: P) title="expected">Expected</p (got: P)>\n')
+
+    def test_tags_upper_lower_case_html(self):
+        self.assert_nodiff(
+            '<html><body><p title="expected">Expected</p></body></html>',
+            '<HTML><BODY><P title="expected">Expected</P></BODY></HTML>',
+            html=True)
+
+    def test_differing_attributes(self):
         self.assert_diff(
             '<p title="expected">Expected</p>',
             '<p title="actual">Actual</p>',
