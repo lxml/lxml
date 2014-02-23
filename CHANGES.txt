@@ -8,6 +8,9 @@ Latest changes
 Bugs fixed
 ----------
 
+* LP#1238500: lxml.doctestcompare mixed up "expected" and "actual" in
+  attribute values.
+
 * Some file I/O tests were failing in MS-Windows due to incorrect temp file
   usage.  Initial patch by Gabi Davar.
 
