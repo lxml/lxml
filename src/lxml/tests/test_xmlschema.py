@@ -30,7 +30,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 ''')
         schema = etree.XMLSchema(schema)
         self.assertTrue(schema.validate(tree_valid))
-        self.assertTrue(not schema.validate(tree_invalid))
+        self.assertFalse(schema.validate(tree_invalid))
 
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
@@ -290,7 +290,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
 </xsd:schema>
 ''')
         self.assertTrue(tree_valid.xmlschema(schema))
-        self.assertTrue(not tree_invalid.xmlschema(schema))
+        self.assertFalse(tree_invalid.xmlschema(schema))
 
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):
