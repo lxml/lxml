@@ -365,7 +365,7 @@ cdef class DTD(_Validator):
 
         # work around error reporting bug in libxml2 <= 2.9.1 (and later?)
         # https://bugzilla.gnome.org/show_bug.cgi?id=724903
-        valid_ctxt.error = _nullGenericErrorFunc
+        valid_ctxt.error = <dtdvalid.xmlValidityErrorFunc>_nullGenericErrorFunc
         valid_ctxt.userData = NULL
 
         try:
