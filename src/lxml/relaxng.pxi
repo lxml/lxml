@@ -112,14 +112,16 @@ cdef class RelaxNG(_Validator):
         if valid_ctxt is NULL:
             raise MemoryError()
 
-        relaxng.xmlRelaxNGSetValidStructuredErrors(
-            valid_ctxt, _receiveError, <void*>self._error_log)
-        c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-        with nogil:
-            ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
-        _destroyFakeDoc(doc._c_doc, c_doc)
-
-        relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
+        try:
+            self._error_log.clear()
+            relaxng.xmlRelaxNGSetValidStructuredErrors(
+                valid_ctxt, _receiveError, <void*>self._error_log)
+            c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            with nogil:
+                ret = relaxng.xmlRelaxNGValidateDoc(valid_ctxt, c_doc)
+            _destroyFakeDoc(doc._c_doc, c_doc)
+        finally:
+            relaxng.xmlRelaxNGFreeValidCtxt(valid_ctxt)
 
         if ret == -1:
             raise RelaxNGValidateError(

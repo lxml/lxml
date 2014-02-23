@@ -8,8 +8,8 @@ Latest changes
 Bugs fixed
 ----------
 
-* LP#1222132: ``XMLSchema`` instances did not clear their error log before
-  running a validation.
+* LP#1222132: instances of ``XMLSchema``, ``Schematron`` and ``RelaxNG``
+  did not clear their local ``error_log`` before running a validation.
 
 * LP#1238500: lxml.doctestcompare mixed up "expected" and "actual" in
   attribute values.
