@@ -520,8 +520,6 @@ cdef class _ParserContext(_ResolverContext):
         if config.ENABLE_THREADING and self._lock is not NULL:
             python.PyThread_free_lock(self._lock)
         if self._c_ctxt is not NULL:
-            if self._c_ctxt.myDoc:
-                tree.xmlFreeDoc(self._c_ctxt.myDoc)
             xmlparser.xmlFreeParserCtxt(self._c_ctxt)
 
     cdef _ParserContext _copy(self):
