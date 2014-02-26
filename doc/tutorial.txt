@@ -689,11 +689,11 @@ serialisation is ASCII:
    b'HelloW\xc3\xb6rld'
 
 Here, serialising to a Python unicode string instead of a byte string
-might become handy.  Just pass the ``unicode`` type as encoding:
+might become handy.  Just pass the name ``'unicode'`` as encoding:
 
 .. sourcecode:: pycon
 
-   >>> etree.tostring(root, encoding=unicode, method='text')
+   >>> etree.tostring(root, encoding='unicode', method='text')
    u'HelloW\xf6rld'
 
 The W3C has a good `article about the Unicode character set and

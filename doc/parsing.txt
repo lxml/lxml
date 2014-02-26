@@ -983,32 +983,32 @@ number of other byte encodings if asked for:
   >>> etree.tostring(root, encoding='UTF-8', xml_declaration=False)
   b'<test> \xef\xa3\x91 + \xef\xa3\x92 </test>'
 
-As an extension, lxml.etree recognises the unicode type as an argument to the
-encoding parameter to build a Python unicode representation of a tree:
+As an extension, lxml.etree recognises the name 'unicode' as an argument
+to the encoding parameter to build a Python unicode representation of a tree:
 
 .. sourcecode:: pycon
 
-  >>> etree.tostring(root, encoding=unicode)
+  >>> etree.tostring(root, encoding='unicode')
   u'<test> \uf8d1 + \uf8d2 </test>'
 
   >>> el = etree.Element("test")
-  >>> etree.tostring(el, encoding=unicode)
+  >>> etree.tostring(el, encoding='unicode')
   u'<test/>'
 
   >>> subel = etree.SubElement(el, "subtest")
-  >>> etree.tostring(el, encoding=unicode)
+  >>> etree.tostring(el, encoding='unicode')
   u'<test><subtest/></test>'
 
   >>> tree = etree.ElementTree(el)
-  >>> etree.tostring(tree, encoding=unicode)
+  >>> etree.tostring(tree, encoding='unicode')
   u'<test><subtest/></test>'
 
-The result of ``tostring(encoding=unicode)`` can be treated like any
+The result of ``tostring(encoding='unicode')`` can be treated like any
 other Python unicode string and then passed back into the parsers.
 However, if you want to save the result to a file or pass it over the
 network, you should use ``write()`` or ``tostring()`` with a byte
 encoding (typically UTF-8) to serialize the XML.  The main reason is
-that unicode strings returned by ``tostring(encoding=unicode)`` are
+that unicode strings returned by ``tostring(encoding='unicode')`` are
 not byte streams and they never have an XML declaration to specify
 their encoding.  These strings are most likely not parsable by other
 XML libraries.

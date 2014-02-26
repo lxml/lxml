@@ -114,7 +114,7 @@ def _transform_result(typ, result):
     if issubclass(typ, bytes):
         return tostring(result, encoding='utf-8')
     elif issubclass(typ, unicode):
-        return tostring(result, encoding=unicode)
+        return tostring(result, encoding='unicode')
     else:
         return result
 
@@ -213,7 +213,7 @@ class HtmlMixin(object):
 
             >>> h = fragment_fromstring('<div>Hello <b>World!</b></div>')
             >>> h.find('.//b').drop_tag()
-            >>> print(tostring(h, encoding=unicode))
+            >>> print(tostring(h, encoding='unicode'))
             <div>Hello World!</div>
         """
         parent = self.getparent()
@@ -1086,7 +1086,8 @@ class TextareaElement(InputMixin, HtmlElement):
             serialisation_method = 'html'
         for el in self:
             # it's rare that we actually get here, so let's not use ''.join()
-            content += etree.tostring(el, method=serialisation_method, encoding=unicode)
+            content += etree.tostring(
+                el, method=serialisation_method, encoding='unicode')
         return content
     def _value__set(self, value):
         del self[:]
@@ -1564,7 +1565,7 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
     The ``encoding`` argument controls the output encoding (defauts to
     ASCII, with &#...; character references for any characters outside
     of ASCII).  Note that you can pass the name ``'unicode'`` as
-    ``encoding`` argument to serialise to a unicode string.
+    ``encoding`` argument to serialise to a Unicode string.
 
     The ``method`` argument defines the output method.  It defaults to
     'html', but can also be 'xml' for xhtml output, or 'text' to
@@ -1595,21 +1596,21 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
         >>> html.tostring(root, method='text')
         b'Helloworld!'
 
-        >>> html.tostring(root, method='text', encoding=unicode)
+        >>> html.tostring(root, method='text', encoding='unicode')
         u'Helloworld!'
 
         >>> root = html.fragment_fromstring('<div><p>Hello<br>world!</p>TAIL</div>')
-        >>> html.tostring(root[0], method='text', encoding=unicode)
+        >>> html.tostring(root[0], method='text', encoding='unicode')
         u'Helloworld!TAIL'
 
-        >>> html.tostring(root[0], method='text', encoding=unicode, with_tail=False)
+        >>> html.tostring(root[0], method='text', encoding='unicode', with_tail=False)
         u'Helloworld!'
 
         >>> doc = html.document_fromstring('<p>Hello<br>world!</p>')
-        >>> html.tostring(doc, method='html', encoding=unicode)
+        >>> html.tostring(doc, method='html', encoding='unicode')
         u'<html><body><p>Hello<br>world!</p></body></html>'
 
-        >>> print(html.tostring(doc, method='html', encoding=unicode,
+        >>> print(html.tostring(doc, method='html', encoding='unicode',
         ...          doctype='<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"'
         ...                  ' "http://www.w3.org/TR/html4/strict.dtd">'))
         <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">

@@ -3188,7 +3188,7 @@ def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
     Serialize an element to the Python unicode representation of its XML
     tree.
 
-    :deprecated: use ``tostring(el, encoding=unicode)`` instead.
+    :deprecated: use ``tostring(el, encoding='unicode')`` instead.
 
     Note that the result does not carry an XML encoding declaration and is
     therefore not necessarily suited for serialization to byte streams without

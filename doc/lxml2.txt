@@ -175,7 +175,7 @@ The following functions and methods are now deprecated.  They are
 still available in lxml 2.0 and will be removed in lxml 2.1:
 
 * The ``tounicode()`` function was replaced by the call
-  ``tostring(encoding=unicode)``.
+  ``tostring(encoding='unicode')``.
 
 * CamelCaseNamed module functions and methods were renamed to their
   underscore equivalents to follow `PEP 8`_ in naming.

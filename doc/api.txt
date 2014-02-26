@@ -262,7 +262,7 @@ breadth-first traversal, it is almost as simple if you use the
 .. sourcecode:: pycon
 
     >>> root = etree.XML('<root><a><b/><c/></a><d><e/></d></root>')
-    >>> print(etree.tostring(root, pretty_print=True, encoding=unicode))
+    >>> print(etree.tostring(root, pretty_print=True, encoding='unicode'))
     <root>
       <a>
         <b/>
