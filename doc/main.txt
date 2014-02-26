@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.3.3`_, released 2014-02-26
-(`changes for 3.3.3`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.3.2`_, released 2014-02-26
+(`changes for 3.3.2`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
