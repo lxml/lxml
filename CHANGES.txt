@@ -10,7 +10,7 @@ Bugs fixed
 
 * The properties ``resolvers`` and ``version``, as well as the methods
   ``set_element_class_lookup()`` and ``makeelement()``, were lost from
-  ``iterparse`` objects.
+  ``iterparse`` objects in 3.3.0.
 
 * LP#1222132: instances of ``XMLSchema``, ``Schematron`` and ``RelaxNG``
   did not clear their local ``error_log`` before running a validation.
@@ -18,8 +18,8 @@ Bugs fixed
 * LP#1238500: lxml.doctestcompare mixed up "expected" and "actual" in
   attribute values.
 
-* Some file I/O tests were failing in MS-Windows due to incorrect temp file
-  usage.  Initial patch by Gabi Davar.
+* Some file I/O tests were failing in MS-Windows due to non-portable temp
+  file usage.  Initial patch by Gabi Davar.
 
 * LP#910014: duplicate IDs in a document were not reported by DTD validation.
 
