@@ -862,13 +862,26 @@ lxml can add fresh whitespace to the XML tree to indent it.
 Note that the ``remove_blank_text`` option also uses a heuristic if it
 has no definite knowledge about the document's ignorable whitespace.
 It will keep blank text nodes that appear after non-blank text nodes
-at the same level.  This is to prevent document-style XML from
-breaking.
+at the same level.  This is to prevent document-style XML from loosing
+content.
 
-If you want to be sure all blank text is removed, you have to use
-either a DTD to tell the parser which whitespace it can safely ignore,
-or remove the ignorable whitespace manually after parsing, e.g. by
-setting all tail text to None:
+The HTMLParser has this structural knowledge built-in, which means that
+most whitespace that appears between tags in HTML documents will *not*
+be removed by this option, except in places where it is truly ignorable,
+e.g. in the page header, between table structure tags, etc.  Therefore,
+it is also safe to use this option with the HTMLParser, as it will keep
+content like the following intact (i.e. it will not remove the space
+that separates the two words):
+
+.. sourcecode:: html
+
+   <p><b>some</b> <em>text</em></p>
+
+If you want to be sure all blank text is removed from an XML document
+(or just more blank text than the parser does by itself), you have to
+use either a DTD to tell the parser which whitespace it can safely
+ignore, or remove the ignorable whitespace manually after parsing,
+e.g. by setting all tail text to None:
 
 .. sourcecode:: python
 
