@@ -951,8 +951,11 @@ If you really know the encoding better than the parser (e.g. when
 parsing HTML that lacks a content declaration), then instead of passing
 an encoding parameter into the file object when opening it, create a
 new instance of an XMLParser or HTMLParser and pass the encoding into
-its constructor. Afterwards, use that parser for parsing, e.g. by
-passing it into the ``etree.parse(file, parser)`` function.
+its constructor.  Afterwards, use that parser for parsing, e.g. by
+passing it into the ``etree.parse(file, parser)`` function.  Remember
+to open the file in binary mode (mode="rb"), or, if possible, prefer
+passing the file path directly into ``parse()`` instead of an opened
+Python file object.
 
 
 What is the difference between str(xslt(doc)) and xslt(doc).write() ?
