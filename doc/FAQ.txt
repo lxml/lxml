@@ -48,12 +48,12 @@ ElementTree_.
    6  Parsing and Serialisation
      6.1  Why doesn't the ``pretty_print`` option reformat my XML output?
      6.2  Why can't lxml parse my XML from unicode strings?
-     6.3  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
-     6.4  Why can't I just delete parents or clear the root node in iterparse()?
-     6.5  How do I output null characters in XML text?
-     6.6  Is lxml vulnerable to XML bombs?
-     6.7  How do I configure lxml safely as a web-service endpoint?
-     6.8  Can lxml parse from file objects opened in unicode mode?
+     6.3  Can lxml parse from file objects opened in unicode mode?
+     6.4  What is the difference between str(xslt(doc)) and xslt(doc).write() ?
+     6.5  Why can't I just delete parents or clear the root node in iterparse()?
+     6.6  How do I output null characters in XML text?
+     6.7  Is lxml vulnerable to XML bombs?
+     6.8  How do I configure lxml safely as a web-service endpoint?
    7  XPath and Document Traversal
      7.1  What are the ``findall()`` and ``xpath()`` methods on Element(Tree)?
      7.2  Why doesn't ``findall()`` support full XPath expressions?
@@ -934,6 +934,27 @@ valid encoding.
 .. _`XML specification`: http://www.w3.org/TR/REC-xml/
 
 
+Can lxml parse from file objects opened in unicode/text mode?
+-------------------------------------------------------------
+
+Technically, yes. However, you likely do not want to do that, because
+it is extremely inefficient. The text encoding that libxml2 uses
+internally is UTF-8, so parsing from a Unicode file means that Python
+first reads a chunk of data from the file, then decodes it into a new
+buffer, and then copies it into a new unicode string object, just to
+let libxml2 make yet another copy while encoding it down into UTF-8
+in order to parse it. It's clear that this involves a lot more
+recoding and copying than when parsing straight from the bytes that
+the file contains.
+
+If you really know the encoding better than the parser (e.g. when
+parsing HTML that lacks a content declaration), then instead of passing
+an encoding parameter into the file object when opening it, create a
+new instance of an XMLParser or HTMLParser and pass the encoding into
+its constructor. Afterwards, use that parser for parsing, e.g. by
+passing it into the ``etree.parse(file, parser)`` function.
+
+
 What is the difference between str(xslt(doc)) and xslt(doc).write() ?
 ---------------------------------------------------------------------
 
@@ -1061,27 +1082,6 @@ The defusedxml_ package comes with an example setup and a wrapper
 API for lxml that applies certain counter measures internally.
 
 .. _defusedxml: https://bitbucket.org/tiran/defusedxml
-
-
-Can lxml parse from file objects opened in unicode/text mode?
--------------------------------------------------------------
-
-Technically, yes. However, you likely do not want to do that, because
-it is extremely inefficient. The text encoding that libxml2 uses
-internally is UTF-8, so parsing from a Unicode file means that Python
-first reads a chunk of data from the file, then decodes it into a new
-buffer, and then copies it into a new unicode string object, just to
-let libxml2 make yet another copy while encoding it down into UTF-8
-in order to parse it. It's clear that this involves a lot more
-recoding and copying than when parsing straight from the bytes that
-the file contains.
-
-If you really know the encoding better than the parser (e.g. when
-parsing HTML that lacks a content declaration), then instead of passing
-an encoding parameter into the file object when opening it, create a
-new instance of an XMLParser or HTMLParser and pass the encoding into
-its constructor. Afterwards, use that parser for parsing, e.g. by
-passing it into the ``etree.parse(file, parser)`` function.
 
 
 XPath and Document Traversal
