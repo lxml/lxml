@@ -1381,7 +1381,7 @@ cdef class XMLParser(_FeedParser):
     - no_network         - prevent network access for related files (default: True)
     - ns_clean           - clean up redundant namespace declarations
     - recover            - try hard to parse through broken XML
-    - remove_blank_text  - discard blank text nodes
+    - remove_blank_text  - discard blank text nodes that appear ignorable
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
@@ -1564,7 +1564,7 @@ cdef class HTMLParser(_FeedParser):
 
     - recover            - try hard to parse through broken HTML (default: True)
     - no_network         - prevent network access for related files (default: True)
-    - remove_blank_text  - discard empty text nodes
+    - remove_blank_text  - discard empty text nodes that are ignorable (i.e. not actual text content)
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
