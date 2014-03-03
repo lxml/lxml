@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+Bugs fixed
+----------
+
+* Crash when using Element subtypes with ``__slots__``.
+
+Other changes
+-------------
+
+* The internal classes ``_LogEntry`` and ``_Attrib`` can no longer be
+  subclassed from Python code.
+
+
+
 3.3.2 (2014-02-26)
 ==================
 
