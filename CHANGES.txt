@@ -8,7 +8,7 @@ lxml changelog
 Bugs fixed
 ----------
 
-* Crash when using Element subtypes with ``__slots__``.
+* LP#1287118: Crash when using Element subtypes with ``__slots__``.
 
 Other changes
 -------------
