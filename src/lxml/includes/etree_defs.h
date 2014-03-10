@@ -65,6 +65,8 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #  undef PyUnicode_FromFormat
 #  define PyUnicode_FromFormat(s, a, b)      (NULL)
+#  undef PyByteArray_Check
+#  define PyByteArray_Check(o)               (0)
 #endif
 #endif
 
