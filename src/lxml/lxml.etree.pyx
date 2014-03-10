@@ -97,13 +97,7 @@ cdef object ITER_EMPTY = iter(())
 try:
     from collections.abc import MutableMapping  # Py3.3+
 except ImportError:
-    try:
-        from collections import MutableMapping  # Py2.6+
-    except ImportError:
-        from UserDict import UserDict as MutableMapping  # Py2.[45]
-        class MutableMapping(MutableMapping):
-            def keys(self):
-                return []
+    from collections import MutableMapping  # Py2.6+
 
 class _ImmutableMapping(MutableMapping):
     def __getitem__(self, key):
