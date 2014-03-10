@@ -2,6 +2,12 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+* Official end of support for Python 2.4 and 2.5.
+
+
 3.3.3 (2014-03-04)
 ==================
 
