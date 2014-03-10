@@ -30,7 +30,7 @@
 #    define IS_PYPY 0
 #endif
 
-#if PY_VERSION_HEX >= 0x03000000
+#if PY_MAJOR_VERSION >= 3
 #  define IS_PYTHON3 1
 #else
 #  define IS_PYTHON3 0
@@ -49,15 +49,15 @@
 #  define PyWeakref_LockObject(obj)          (NULL)
 #endif
 
-/* Threading can crash under Python <= 2.4.1 and is not currently supported by PyPy */
-#if PY_VERSION_HEX < 0x02040200 || IS_PYPY
+/* Threading is not currently supported by PyPy */
+#if IS_PYPY
 #  ifndef WITHOUT_THREADING
 #    define WITHOUT_THREADING
 #  endif
 #endif
 
 /* Python 3 doesn't have PyFile_*() anymore */
-#if PY_VERSION_HEX >= 0x03000000
+#if PY_MAJOR_VERSION >= 3
 #  define PyFile_AsFile(o)                   (NULL)
 #else
 #if IS_PYPY
@@ -65,20 +65,6 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #  undef PyUnicode_FromFormat
 #  define PyUnicode_FromFormat(s, a, b)      (NULL)
-#else
-#if PY_VERSION_HEX < 0x02060000
-/* Cython defines these already, but we may not be compiling in Cython code */
-#ifndef PyBytes_CheckExact
-#  define PyBytes_CheckExact(o)              PyString_CheckExact(o)
-#  define PyBytes_Check(o)                   PyString_Check(o)
-#  define PyBytes_FromStringAndSize(s, len)  PyString_FromStringAndSize(s, len)
-#  define PyBytes_FromFormat                 PyString_FromFormat
-#  define PyBytes_GET_SIZE(s)                PyString_GET_SIZE(s)
-#  define PyBytes_AS_STRING(s)               PyString_AS_STRING(s)
-#endif
-/* we currently only use three parameters - MSVC can't compile (s, ...) */
-#  define PyUnicode_FromFormat(s, a, b)      (NULL)
-#endif
 #endif
 #endif
 
