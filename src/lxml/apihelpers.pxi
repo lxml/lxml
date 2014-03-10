@@ -1386,7 +1386,7 @@ cdef bytes _utf8(object s):
     elif isinstance(s, unicode):
         utf8_string = (<unicode>s).encode('utf8')
         invalid = check_string_utf8(utf8_string) == -1 # non-XML?
-    elif isinstance(s, bytes):
+    elif isinstance(s, (bytes, bytearray)):
         utf8_string = bytes(s)
         invalid = check_string_utf8(utf8_string)
     else:

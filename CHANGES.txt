@@ -5,6 +5,8 @@ lxml changelog
 Latest changes
 ==================
 
+* Allow "bytearray" type for text input.
+
 * Official end of support for Python 2.4 and 2.5.
 
 
