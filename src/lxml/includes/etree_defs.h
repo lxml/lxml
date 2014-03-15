@@ -213,8 +213,10 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 #if PY_MAJOR_VERSION < 3
 #define _isString(obj)   (PyString_CheckExact(obj)  || \
                           PyUnicode_CheckExact(obj) || \
-                          PyObject_TypeCheck(obj, &PyBaseString_Type))
+                          PyType_IsSubtype(Py_TYPE(obj), &PyBaseString_Type))
 #else
+/* builtin subtype type checks are almost as fast as exact checks in Py2.7+
+ * and Unicode is more common in Py3 */
 #define _isString(obj)   (PyUnicode_Check(obj) || PyBytes_Check(obj))
 #endif
 
