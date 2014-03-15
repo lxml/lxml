@@ -9,6 +9,10 @@ cdef extern from "libxml/xinclude.h":
     cdef int xmlXIncludeProcessTree(xmlNode* doc) nogil
     cdef int xmlXIncludeProcessTreeFlags(xmlNode* doc, int parser_opts) nogil
 
+    # libxml2 >= 2.7.4
+    cdef int xmlXIncludeProcessTreeFlagsData(
+            xmlNode* doc, int parser_opts, void* data) nogil
+
     cdef xmlXIncludeCtxt* xmlXIncludeNewContext(xmlDoc* doc) nogil
     cdef int xmlXIncludeProcessNode(xmlXIncludeCtxt* ctxt, xmlNode* node) nogil
     cdef int xmlXIncludeSetFlags(xmlXIncludeCtxt* ctxt, int flags) nogil

@@ -122,6 +122,7 @@
 #if LIBXML_VERSION < 20704
 /* FIXME: hack to make new error reporting compile in old libxml2 versions */
 #  define xmlStructuredErrorContext NULL
+#  define xmlXIncludeProcessTreeFlagsData(n,o,d) xmlXIncludeProcessTreeFlags(n,o)
 #endif
 
 /* added to xmlsave API in libxml2 2.6.23 */

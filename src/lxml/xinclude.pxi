@@ -34,17 +34,27 @@ cdef class XInclude:
         # i.e. as a sibling, which does not conflict with traversal.
         cdef int result
         _assertValidNode(node)
-        assert self._error_log is not None, "XPath evaluator not initialised"
+        assert self._error_log is not None, "XInclude processor not initialised"
+        if node._doc._parser is not None:
+            parse_options = node._doc._parser._parse_options
+            context = node._doc._parser._getParserContext()
+            c_context = <void*>context
+        else:
+            parse_options = 0
+            context = None
+            c_context = NULL
+
         self._error_log.connect()
-        __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(
-            node._doc._parser)
+        if tree.LIBXML_VERSION < 20704 or not c_context:
+            __GLOBAL_PARSER_CONTEXT.pushImpliedContext(context)
         with nogil:
-            if node._doc._parser is not None:
-                result = xinclude.xmlXIncludeProcessTreeFlags(
-                    node._c_node, node._doc._parser._parse_options)
+            if c_context:
+                result = xinclude.xmlXIncludeProcessTreeFlagsData(
+                    node._c_node, parse_options, c_context)
             else:
                 result = xinclude.xmlXIncludeProcessTree(node._c_node)
-        __GLOBAL_PARSER_CONTEXT.popImpliedContext()
+        if tree.LIBXML_VERSION < 20704 or not c_context:
+            __GLOBAL_PARSER_CONTEXT.popImpliedContext()
         self._error_log.disconnect()
 
         if result == -1:
