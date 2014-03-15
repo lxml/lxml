@@ -15,6 +15,7 @@ import re
 import gc
 import operator
 import tempfile
+import textwrap
 import zlib
 import gzip
 
@@ -3613,6 +3614,50 @@ class _XIncludeTestCase(HelperTestCase):
         called.sort()
         self.assertEqual(
             [("dtd", True), ("include", True), ("input", True)],
+            called)
+
+    def test_xinclude_resolver_recursive(self):
+        data = textwrap.dedent('''
+        <doc xmlns:xi="http://www.w3.org/2001/XInclude">
+        <foo/>
+        <xi:include href="./test.xml" />
+        </doc>
+        ''')
+
+        class Resolver(etree.Resolver):
+            called = {}
+
+            def resolve(self, url, id, context):
+                if url.endswith("test_xinclude.xml"):
+                    assert not self.called.get("input")
+                    self.called["input"] = True
+                    return None  # delegate to default resolver
+                elif url.endswith('/test5.xml'):
+                    assert not self.called.get("DONE")
+                    self.called["DONE"] = True
+                    return self.resolve_string('<DONE/>', context)
+                else:
+                    _, filename = url.rsplit('/', 1)
+                    assert not self.called.get(filename)
+                    self.called[filename] = True
+                    next_data = data.replace(
+                        'test.xml', 'test%d.xml' % len(self.called))
+                    return self.resolve_string(next_data, context)
+
+        res_instance = Resolver()
+        parser = etree.XMLParser(load_dtd=True)
+        parser.resolvers.add(res_instance)
+
+        tree = etree.parse(fileInTestDir('include/test_xinclude.xml'),
+                           parser=parser)
+
+        self.include(tree)
+
+        called = list(res_instance.called.items())
+        called.sort()
+        self.assertEqual(
+            [("DONE", True), ("input", True), ("test.xml", True),
+             ("test2.xml", True), ("test3.xml", True), ("test4.xml", True)],
             called)
 
 
