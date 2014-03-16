@@ -620,10 +620,10 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     # FIXME: check what happens when you give html with a body, head, etc.
     if isinstance(html, bytes):
         if not _looks_like_full_html_bytes(html):
-            html = '<html><body>%s</body></html>'.encode('ascii') % html
+            html = '<html><body>'.encode('ascii') + html + '</body></html>'.encode('ascii')
     else:
         if not _looks_like_full_html_unicode(html):
-            html = '<html><body>%s</body></html>' % html
+            html = '<html><body>' + html + '</body></html>'
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert _nons(doc.tag) == 'html'
     bodies = [e for e in doc if _nons(e.tag) == 'body']
