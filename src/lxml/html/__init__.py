@@ -620,7 +620,9 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     # FIXME: check what happens when you give html with a body, head, etc.
     if isinstance(html, bytes):
         if not _looks_like_full_html_bytes(html):
-            html = '<html><body>%s</body></html>'.encode('ascii') % html
+            # can't use %-formatting in early Py3 versions
+            html = ('<html><body>'.encode('ascii') + html +
+                    '</body></html>'.encode('ascii'))
     else:
         if not _looks_like_full_html_unicode(html):
             html = '<html><body>%s</body></html>' % html
