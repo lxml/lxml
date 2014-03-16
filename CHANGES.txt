@@ -5,6 +5,14 @@ lxml changelog
 Latest changes
 ==================
 
+Bugs fixed
+----------
+
+* ``lxml.html.fragment_fromstring()`` failed for bytes input in Py3.
+
+Other changes
+-------------
+
 * Allow "bytearray" type for text input.
 
 * Official end of support for Python 2.4 and 2.5.
@@ -23,7 +31,6 @@ Other changes
 
 * The internal classes ``_LogEntry`` and ``_Attrib`` can no longer be
   subclassed from Python code.
-
 
 
 3.3.2 (2014-02-26)
