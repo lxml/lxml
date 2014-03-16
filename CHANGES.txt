@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+Bugs fixed
+----------
+
+* ``lxml.html.fragment_fromstring()`` failed for bytes input in Py3.
+
+Other changes
+-------------
+
+
 3.3.3 (2014-03-04)
 ==================
 
@@ -15,7 +24,6 @@ Other changes
 
 * The internal classes ``_LogEntry`` and ``_Attrib`` can no longer be
   subclassed from Python code.
-
 
 
 3.3.2 (2014-02-26)
