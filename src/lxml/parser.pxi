@@ -1348,7 +1348,8 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     xmlparser.XML_PARSE_NOENT   |
     xmlparser.XML_PARSE_NOCDATA |
     xmlparser.XML_PARSE_NONET   |
-    xmlparser.XML_PARSE_COMPACT
+    xmlparser.XML_PARSE_COMPACT |
+    xmlparser.XML_PARSE_BIG_LINES
     )
 
 cdef class XMLParser(_FeedParser):
