@@ -2916,6 +2916,22 @@ class ETreeOnlyTestCase(HelperTestCase):
             [2, 2, 4],
             [ el.sourceline for el in root.getiterator() ])
 
+    def test_large_sourceline_XML(self):
+        XML = self.etree.XML
+        root = XML(_bytes(
+            '<?xml version="1.0"?>\n'
+            '<root>' + '\n' * 65536 +
+            '<p>' + '\n' * 65536 + '</p>\n' +
+            '<br/>\n'
+            '</root>'))
+
+        if self.etree.LIBXML_VERSION >= (2, 9):
+            expected = [2, 131074, 131076]
+        else:
+            expected = [2, 65535, 65535]
+
+        self.assertEqual(expected, [el.sourceline for el in root.iter()])
+
     def test_sourceline_parse(self):
         parse = self.etree.parse
         tree = parse(fileInTestDir('include/test_xinclude.xml'))
