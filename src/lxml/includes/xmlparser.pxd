@@ -142,6 +142,12 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_OLD10 = 131072 # parse using XML-1.0 before update 5
         XML_PARSE_NOBASEFIX = 262144 # do not fixup XINCLUDE xml:base uris
         XML_PARSE_HUGE = 524288 # relax any hardcoded limit from the parser
+        # libxml2 2.7.3+ only:
+        XML_PARSE_OLDSAX = 1048576 # parse using SAX2 interface before 2.7.0
+        # libxml2 2.8.0+ only:
+        XML_PARSE_IGNORE_ENC = 2097152 # ignore internal document encoding hint
+        # libxml2 2.9.0+ only:
+        XML_PARSE_BIG_LINES = 4194304 # Store big lines numbers in text PSVI field
 
     cdef void xmlInitParser() nogil
     cdef void xmlCleanupParser() nogil
