@@ -5,6 +5,12 @@ lxml changelog
 Latest changes
 ==================
 
+Features added
+--------------
+
+* Source line numbers above 65535 are available on Elements when
+  using libxml2 2.9 or later.
+
 Bugs fixed
 ----------
 
