@@ -1,4 +1,3 @@
-from lxml.includes cimport tree
 from lxml.includes.tree cimport xmlDoc
 from lxml.includes.xmlerror cimport xmlStructuredErrorFunc
 

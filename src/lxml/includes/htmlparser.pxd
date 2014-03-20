@@ -1,9 +1,8 @@
 from libc.string cimport const_char
 
-from lxml.includes.tree cimport xmlDoc, xmlDict
+from lxml.includes.tree cimport xmlDoc
 from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from lxml.includes.xmlparser cimport xmlParserCtxt, xmlSAXHandler, xmlSAXHandlerV1
-from lxml.includes.xmlerror cimport xmlError
 
 cdef extern from "libxml/HTMLparser.h":
     ctypedef enum htmlParserOption:
