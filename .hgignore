@@ -5,6 +5,7 @@ syntax: glob
 __pycache__
 
 src/lxml/includes/lxml-version.h
+src/lxml/*.html
 src/lxml/lxml.etree.c
 src/lxml/lxml.etree.h
 src/lxml/lxml.etree_api.h
