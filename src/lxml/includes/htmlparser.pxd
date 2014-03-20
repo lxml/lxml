@@ -15,6 +15,12 @@ cdef extern from "libxml/HTMLparser.h":
         # libxml2 2.6.21+ only:
         HTML_PARSE_RECOVER    # Relaxed parsing
         HTML_PARSE_COMPACT    # compact small text nodes
+        # libxml2 2.7.7+ only:
+        HTML_PARSE_NOIMPLIED  # Do not add implied html/body... elements
+        # libxml2 2.7.8+ only:
+        HTML_PARSE_NODEFDTD   # do not default a doctype if not found
+        # libxml2 2.8.0+ only:
+        XML_PARSE_IGNORE_ENC  # ignore internal document encoding hint
 
     xmlSAXHandlerV1 htmlDefaultSAXHandler
 
