@@ -214,7 +214,8 @@ cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
             _uriValidOrRaise(node_ns_utf)
             doc._setNodeNs(c_node, _xcstr(node_ns_utf))
         return 0
-
+    if node_ns_utf is None and None in nsmap:
+        node_ns_utf = nsmap[None]
     nsdefs = list(nsmap.items())
     if None in nsmap and len(nsdefs) > 1:
         # Move the default namespace to the end.  This makes sure libxml2
