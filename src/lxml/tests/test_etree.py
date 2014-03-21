@@ -211,6 +211,29 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertRaises(ValueError,
                           etree.Element, "root", nsmap={'a:b' : 'testns'})
 
+
+    def test_nsmap_used_to_fill_empty_node_namespace(self):
+        etree = self.etree
+        root = etree.Element("root", nsmap={None: 'testns'})
+        self.assertEqual(root.tag, '{testns}root')
+
+        child = etree.SubElement(root, "child", nsmap={None: 'testns'})
+        self.assertEqual(child.tag, '{testns}child')
+
+        root = etree.Element("{testns}root", nsmap={None: 'testns'})
+        self.assertEqual(root.tag, '{testns}root')
+
+        root = etree.Element("{anotherns}root", nsmap={None: 'testns'})
+        self.assertEqual(root.tag, '{anotherns}root')
+
+    def test_serialization_with_nsmap(self):
+        etree = self.etree
+        root = etree.Element("root", nsmap={None: 'testns'})
+        etree.SubElement(root, "child", nsmap={None: 'testns'})
+        etree.SubElement(root, "child", nsmap={None: 'testns'})
+        serialized = etree.tostring(root)
+        self.assertEqual(serialized, '<root xmlns="testns"><child/><child/></root>')
+
     def test_attribute_has_key(self):
         # ET in Py 3.x has no "attrib.has_key()" method
         XML = self.etree.XML
