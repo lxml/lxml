@@ -88,12 +88,17 @@ def ext_modules(static_include_dirs, static_library_dirs,
         print("Building without Cython.")
 
     lib_versions = get_library_versions()
+    versions_ok = True
     if lib_versions[0]:
         print("Using build configuration of libxml2 %s and libxslt %s" % 
               lib_versions)
+        versions_ok = check_min_version(lib_versions[0], (2, 7, 0), 'libxml2')
     else:
         print("Using build configuration of libxslt %s" % 
               lib_versions[1])
+    versions_ok |= check_min_version(lib_versions[1], (1, 1, 23), 'libxslt')
+    if not versions_ok:
+        raise RuntimeError("Dependency missing")
 
     _include_dirs = include_dirs(static_include_dirs)
     _library_dirs = library_dirs(static_library_dirs)
@@ -284,10 +289,22 @@ def run_command(cmd, *args):
         print("** make sure the development packages of libxml2 and libxslt are installed **\n")
     return decode_input(stdout_data).strip()
 
+
+def check_min_version(version, min_version, error_name):
+    version = tuple(map(int, version.split('.')[:3]))
+    min_version = tuple(min_version)
+    if version < min_version:
+        print("Minimum required version of %s is %s, found %s" % (
+            error_name, '.'.join(version), '.'.join(min_version)))
+        return False
+    return True
+
+
 def get_library_versions():
     xml2_version = run_command(find_xml2_config(), "--version")
     xslt_version = run_command(find_xslt_config(), "--version")
     return xml2_version, xslt_version
+
 
 def flags(option):
     xml2_flags = run_command(find_xml2_config(), "--%s" % option)

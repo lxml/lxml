@@ -10,13 +10,23 @@
 #  error this version of lxml requires Python 2.6, 2.7, 3.2 or later
 #  endif
 #endif
+
 #include "libxml/xmlversion.h"
 #ifndef LIBXML_VERSION
 #  error the development package of libxml2 (header files etc.) is not installed correctly
+#else
+#if LIBXML_VERSION < 20700
+#  error minimum required version of libxml2 is 2.7.0
 #endif
+#endif
+
 #include "libxslt/xsltconfig.h"
 #ifndef LIBXSLT_VERSION
 #  error the development package of libxslt (header files etc.) is not installed correctly
+#else
+#if LIBXSLT_VERSION < 10123
+#  error minimum required version of libxslt is 1.1.23
+#endif
 #endif
 
 
@@ -101,54 +111,15 @@
 #  define ENABLE_THREADING 1
 #endif
 
-/* libxml2 version specific setup */
-#if LIBXML_VERSION < 20621
-/* (X|HT)ML_PARSE_COMPACT were added in libxml2 2.6.21 */
-#  define XML_PARSE_COMPACT  1 << 16
-#  define HTML_PARSE_COMPACT XML_PARSE_COMPACT
-
-/* HTML_PARSE_RECOVER was added in libxml2 2.6.21 */
-#  define HTML_PARSE_RECOVER XML_PARSE_RECOVER
-#endif
-
-#if LIBXML_VERSION < 20700
-/* These were added in libxml2 2.7.0 */
-#  define XML_PARSE_OLD10      1 << 17
-#  define XML_PARSE_NOBASEFIX  1 << 18
-#  define XML_PARSE_HUGE       1 << 19
-#  define xmlMemDisplayLast(f,d)
-#endif
-
 #if LIBXML_VERSION < 20704
 /* FIXME: hack to make new error reporting compile in old libxml2 versions */
 #  define xmlStructuredErrorContext NULL
 #  define xmlXIncludeProcessTreeFlagsData(n,o,d) xmlXIncludeProcessTreeFlags(n,o)
 #endif
 
-/* added to xmlsave API in libxml2 2.6.23 */
-#if LIBXML_VERSION < 20623
-#  define xmlSaveToBuffer(buffer, encoding, options)
-#endif
-
-/* added to xmlsave API in libxml2 2.6.22 */
-#if LIBXML_VERSION < 20622
-#  define XML_SAVE_NO_EMPTY   1<<2  /* no empty tags */
-#  define XML_SAVE_NO_XHTML   1<<3  /* disable XHTML1 specific rules */
-#endif
-
-/* added to xmlsave API in libxml2 2.6.21 */
-#if LIBXML_VERSION < 20621
-#  define XML_SAVE_NO_DECL    1<<1  /* drop the xml declaration */
-#endif
-
 /* schematron was added in libxml2 2.6.21 */
 #ifdef LIBXML_SCHEMATRON_ENABLED
 #  define ENABLE_SCHEMATRON 1
-#  if LIBXML_VERSION < 20632
-     /* schematron error reporting was added in libxml2 2.6.32 */
-#    define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
-#    define XML_SCHEMATRON_OUT_ERROR 0
-#  endif
 #else
 #  define ENABLE_SCHEMATRON 0
 #  define XML_SCHEMATRON_OUT_QUIET 0

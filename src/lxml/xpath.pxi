@@ -114,11 +114,6 @@ cdef void _registerExsltFunctionsForNamespaces(
     elif tree.xmlStrcmp(c_href, xslt.EXSLT_STRINGS_NAMESPACE) == 0:
         xslt.exsltStrXpathCtxtRegister(ctxt, c_prefix)
 
-cdef bint _XPATH_VERSION_WARNING_REQUIRED
-if _LIBXML_VERSION_INT == 20627:
-    _XPATH_VERSION_WARNING_REQUIRED = 1
-else:
-    _XPATH_VERSION_WARNING_REQUIRED = 0
 
 cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
@@ -135,12 +130,6 @@ cdef class _XPathEvaluatorBase:
 
     def __init__(self, namespaces, extensions, enable_regexp,
                  smart_strings):
-        global _XPATH_VERSION_WARNING_REQUIRED
-        if _XPATH_VERSION_WARNING_REQUIRED:
-            _XPATH_VERSION_WARNING_REQUIRED = 0
-            import warnings
-            warnings.warn(u"This version of libxml2 has a known XPath bug. "
-                          u"Use it at your own risk.")
         self._context = _XPathContext(namespaces, extensions, self._error_log,
                                       enable_regexp, None, smart_strings)
 

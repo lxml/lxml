@@ -119,11 +119,8 @@ cdef class Schematron(_Validator):
 
     def __dealloc__(self):
         schematron.xmlSchematronFree(self._c_schema)
-        if _LIBXML_VERSION_INT >= 20631:
-            # earlier libxml2 versions may have freed the document in
-            # xmlSchematronFree() already, we don't know ...
-            if self._c_schema_doc is not NULL:
-                tree.xmlFreeDoc(self._c_schema_doc)
+        if self._c_schema_doc is not NULL:
+            tree.xmlFreeDoc(self._c_schema_doc)
 
     def __call__(self, etree):
         u"""__call__(self, etree)
@@ -136,41 +133,24 @@ cdef class Schematron(_Validator):
         cdef xmlDoc* c_doc
         cdef schematron.xmlSchematronValidCtxt* valid_ctxt
         cdef int ret
-        cdef int options
 
         assert self._c_schema is not NULL, "Schematron instance not initialised"
         doc = _documentOrRaise(etree)
         root_node = _rootNodeOrRaise(etree)
 
-        if _LIBXML_VERSION_INT >= 20632 and \
-                schematron.XML_SCHEMATRON_OUT_ERROR != 0:
-            options = schematron.XML_SCHEMATRON_OUT_ERROR
-        else:
-            options = schematron.XML_SCHEMATRON_OUT_QUIET
-            # hack to switch off stderr output
-            options = options | schematron.XML_SCHEMATRON_OUT_XML
-
         valid_ctxt = schematron.xmlSchematronNewValidCtxt(
-            self._c_schema, options)
+            self._c_schema, schematron.XML_SCHEMATRON_OUT_ERROR)
         if valid_ctxt is NULL:
             raise MemoryError()
 
         try:
-            if _LIBXML_VERSION_INT >= 20632:
-                self._error_log.clear()
-                schematron.xmlSchematronSetValidStructuredErrors(
-                    valid_ctxt, _receiveError, <void*>self._error_log)
-                c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                with nogil:
-                    ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
-                _destroyFakeDoc(doc._c_doc, c_doc)
-            else:
-                ret = -1
-                with self._error_log:
-                    c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-                    with nogil:
-                        ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
-                    _destroyFakeDoc(doc._c_doc, c_doc)
+            self._error_log.clear()
+            schematron.xmlSchematronSetValidStructuredErrors(
+                valid_ctxt, _receiveError, <void*>self._error_log)
+            c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+            with nogil:
+                ret = schematron.xmlSchematronValidateDoc(valid_ctxt, c_doc)
+            _destroyFakeDoc(doc._c_doc, c_doc)
         finally:
             schematron.xmlSchematronFreeValidCtxt(valid_ctxt)
 

@@ -55,9 +55,7 @@ cdef class _MemDebug:
         if f is NULL:
             raise IOError("Failed to create file %s" % output_file.decode(sys.getfilesystemencoding()))
         try:
-            if tree.LIBXML_VERSION < 20700:
-                tree.xmlMemDisplay(f)
-            elif byte_count is None:
+            if byte_count is None:
                 tree.xmlMemDisplay(f)
             else:
                 c_count = byte_count

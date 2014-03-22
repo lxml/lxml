@@ -533,8 +533,7 @@ cdef class _ParserContext(_ResolverContext):
             if self._c_ctxt.html:
                 htmlparser.htmlCtxtReset(self._c_ctxt)
                 self._c_ctxt.disableSAX = 0 # work around bug in libxml2
-            elif self._c_ctxt.spaceTab is not NULL or \
-                    _LIBXML_VERSION_INT >= 20629: # work around bug in libxml2
+            else:
                 xmlparser.xmlClearParserCtxt(self._c_ctxt)
 
     cdef int prepare(self) except -1:
@@ -1319,11 +1318,6 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
                              const_char* c_filename, const_char* c_encoding,
                              int parse_options) except -1:
     cdef xmlparser.xmlParserInput* c_input_stream
-    # libxml2 crashes if spaceTab is not initialised
-    if _LIBXML_VERSION_INT < 20629 and c_ctxt.spaceTab is NULL:
-        c_ctxt.spaceTab = <int*>tree.xmlMalloc(10 * sizeof(int))
-        c_ctxt.spaceMax = 10
-
     # libxml2 lacks an HTML push parser setup function
     error = xmlparser.xmlCtxtResetPush(
         c_ctxt, NULL, 0, c_filename, c_encoding)

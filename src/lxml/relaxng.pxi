@@ -42,13 +42,6 @@ cdef class RelaxNG(_Validator):
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
             c_node = root_node._c_node
-            # work around for libxml2 crash bug if document is not RNG at all
-            if _LIBXML_VERSION_INT < 20624:
-                c_href = _getNs(c_node)
-                if c_href is NULL or \
-                       tree.xmlStrcmp(
-                           c_href, <unsigned char*>'http://relaxng.org/ns/structure/1.0') != 0:
-                    raise RelaxNGParseError, u"Document is not Relax NG"
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
@@ -75,12 +68,9 @@ cdef class RelaxNG(_Validator):
             parser_ctxt, _receiveError, <void*>self._error_log)
         self._c_schema = relaxng.xmlRelaxNGParse(parser_ctxt)
 
-        if _LIBXML_VERSION_INT >= 20624:
-            relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
+        relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
         if self._c_schema is NULL:
             if fake_c_doc is not NULL:
-                if _LIBXML_VERSION_INT < 20624:
-                    relaxng.xmlRelaxNGFreeParserCtxt(parser_ctxt)
                 _destroyFakeDoc(doc._c_doc, fake_c_doc)
             raise RelaxNGParseError(
                 self._error_log._buildExceptionMessage(
