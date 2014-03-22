@@ -12,8 +12,8 @@ install:
 
 script:
   - python -u setup.py clean
-  - python -u setup.py build_ext --inplace
-  - PYTHONUNBUFFERED=x make test
+  - CFLAGS="-O0 -g" python -u setup.py build_ext --inplace
+  - CFLAGS="-O0 -g" PYTHONUNBUFFERED=x make test
 
 matrix:
   allow_failures:
