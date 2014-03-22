@@ -291,6 +291,9 @@ def run_command(cmd, *args):
 
 
 def check_min_version(version, min_version, error_name):
+    if not version:
+        # this is ok for targets like sdist etc.
+        return True
     version = tuple(map(int, version.split('.')[:3]))
     min_version = tuple(min_version)
     if version < min_version:
