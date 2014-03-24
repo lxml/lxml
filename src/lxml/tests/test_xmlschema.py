@@ -324,6 +324,19 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertTrue(tree_valid.xmlschema(schema))
         self.assertFalse(tree_invalid.xmlschema(schema))
 
+    def test_xmlschema_validation_newly_created_element_with_nsmap(self):
+        """
+        test that validation passes newly created elements with missing namespace prefix but given nsmap with default namespace
+        """
+        root = etree.ElementTree(etree.Element("root", nsmap={None: 'namespace'}))
+
+        schema = self.parse('''\
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="namespace">
+<element name="root"></element>
+</schema>
+''')
+        self.assertTrue(root.xmlschema(schema))
+
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):
     resolver_schema_int = BytesIO("""\
