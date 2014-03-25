@@ -21,7 +21,11 @@ Other changes
 
 * Allow "bytearray" type for text input.
 
-* Official end of support for Python 2.4 and 2.5.
+* Requires Python 2.6, 2.7, 3.2 or later. No longer supports
+  Python 2.4, 2.5 and 3.1, use lxml 3.3.x for those.
+
+* Requires libxml2 2.7.0 or later and libxslt 1.1.23 or later,
+  use lxml 3.3.x with older versions.
 
 
 3.3.3 (2014-03-04)

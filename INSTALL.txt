@@ -17,31 +17,36 @@ MacOS-X, see the specific sections below.
 Requirements
 ------------
 
-You need Python 2.4 or later.
+You need Python 2.6 or later.
 
 Unless you are using a static binary distribution (e.g. from a
 Windows binary installer), you need to install libxml2 and libxslt,
 in particular:
 
-* libxml2 2.6.21 or later. It can be found here:
+* libxml2 2.7.0 or later. It can be found here:
   http://xmlsoft.org/downloads.html
 
-  * We recommend libxml2 2.7.8 or a later version.
-
-  * If you want to use XPath, do not use libxml2 2.6.27.
+  * We recommend libxml2 2.9.0 or a later version.
 
   * If you want to use the feed parser interface, especially when
     parsing from unicode strings, do not use libxml2 2.7.4 through
     2.7.6.
 
-* libxslt 1.1.15 or later. It can be found here:
+* libxslt 1.1.23 or later. It can be found here:
   http://xmlsoft.org/XSLT/downloads.html
 
-  * We recommend libxslt 1.1.26 or later.
+  * We recommend libxslt 1.1.26 or later. Version 1.1.25 will not
+    work.
 
 Newer versions generally contain fewer bugs and are therefore
 recommended.  XML Schema support is also still worked on in libxml2,
 so newer versions will give you better compliance with the W3C spec.
+
+To install the required development packages of these dependencies
+on Linux systems, use your distribution specific installation tool,
+e.g. apt-get on Debian/Ubuntu::
+
+  apt-get install libxml2-dev libxslt-dev
 
 .. _PyPI: http://pypi.python.org/pypi/lxml
 
