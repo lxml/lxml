@@ -5,6 +5,29 @@ lxml changelog
 Latest changes
 ==================
 
+
+Features added
+--------------
+
+Bugs fixed
+----------
+
+Other changes
+-------------
+
+* Allow "bytearray" type for text input.
+
+* Requires Python 2.6, 2.7, 3.2 or later. No longer supports
+  Python 2.4, 2.5 and 3.1, use lxml 3.3.x for those.
+
+* Requires libxml2 2.7.0 or later and libxslt 1.1.23 or later,
+  use lxml 3.3.x with older versions.
+
+
+
+3.3.4 (2014-04-03)
+==================
+
 Features added
 --------------
 
@@ -18,14 +41,6 @@ Bugs fixed
 
 Other changes
 -------------
-
-* Allow "bytearray" type for text input.
-
-* Requires Python 2.6, 2.7, 3.2 or later. No longer supports
-  Python 2.4, 2.5 and 3.1, use lxml 3.3.x for those.
-
-* Requires libxml2 2.7.0 or later and libxslt 1.1.23 or later,
-  use lxml 3.3.x with older versions.
 
 
 3.3.3 (2014-03-04)
