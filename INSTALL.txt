@@ -46,7 +46,7 @@ To install the required development packages of these dependencies
 on Linux systems, use your distribution specific installation tool,
 e.g. apt-get on Debian/Ubuntu::
 
-  apt-get install libxml2-dev libxslt-dev
+  sudo apt-get install libxml2-dev libxslt-dev python-dev
 
 .. _PyPI: http://pypi.python.org/pypi/lxml
 
