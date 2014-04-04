@@ -1407,15 +1407,13 @@ cdef bint _isFilePath(const_xmlChar* c_path):
         return 1
 
     # test if it looks like an absolute Windows path or URL
-    if (c_path[0] >= c'a' and c_path[0] <= c'z') or \
-            (c_path[0] >= c'A' and c_path[0] <= c'Z'):
+    if c'a' <= c_path[0] <= c'z' or c'A' <= c_path[0] <= c'Z':
         c_path += 1
         if c_path[0] == c':' and c_path[1] in b'\0\\':
             return 1  # C: or C:\...
 
         # test if it looks like a URL with scheme://
-        while (c_path[0] >= c'a' and c_path[0] <= c'z') or \
-                (c_path[0] >= c'A' and c_path[0] <= c'Z'):
+        while c'a' <= c_path[0] <= c'z' or c'A' <= c_path[0] <= c'Z':
             c_path += 1
         if c_path[0] == c':' and c_path[1] == c'/' and c_path[2] == c'/':
             return 0
