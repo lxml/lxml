@@ -149,11 +149,13 @@ others pay for it.
 
 Due to the additional lack of package management of this platform,
 it is best to link the library dependencies statically if you decide
-to build from sources.  For that, use the `binary distribution of
-libxml2 and libxslt <http://www.zlatkovic.com/libxml.en.html>`_.
-You need both libxml2 and libxslt, as well as iconv and zlib,
-which you can get from the same download site.  Further build
-instructions are in the `source build documentation <build.html>`_.
+to build from sources, rather than using a binary installer.  For
+that, lxml can use the `binary distribution of libxml2 and libxslt
+<http://www.zlatkovic.com/libxml.en.html>`_, which it downloads
+automatically during the static build.  It needs both libxml2 and
+libxslt, as well as iconv and zlib, which are available from the
+same download site.  Further build instructions are in the
+`source build documentation <build.html>`_.
 
 
 MacOS-X
@@ -163,20 +165,12 @@ A `macport <http://macports.org/>`_ of lxml is available.  Try
 something like ``port install py25-lxml``.
 
 If you want to use a more recent lxml release, you may have to build
-it yourself.  Apple doesn't help here, as MacOS-X is so badly maintained
-by them that the pre-installed system libraries of libxml2 and libxslt
-tend to be horribly outdated, and updating them is everything but easy.
-In any case, you cannot run lxml with the system provided libraries,
-so you have to use newer libraries.
+it yourself.  While the pre-installed system libraries of libxml2
+and libxslt are less outdated in recent MacOS-X versions than they
+used to be, so lxml should work them them out of the box, it is still
+recommended to use a static build with the most recent versions.
 
 Luckily, lxml's ``setup.py`` script has built-in support for building
 and integrating these libraries statically during the build.  Please
 read the
 `MacOS-X build instructions <build.html#building-lxml-on-macos-x>`_.
-
-A number of users also reported success with updated libraries (e.g.
-using `fink <http://finkproject.org/>`_ or macports), but needed to set
-the runtime environment variable ``DYLD_LIBRARY_PATH`` to the directory
-where fink keeps the libraries.  In any case, this method is easy to get
-wrong and everything but safe.  Unless you know what you are doing,
-follow the static build instructions above.

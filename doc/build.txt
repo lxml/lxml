@@ -280,70 +280,15 @@ Static linking on Windows
 
 Most operating systems have proper package management that makes installing
 current versions of libxml2 and libxslt easy.  The most famous exception is
-Microsoft Windows, which entirely lacks these capabilities.  It can therefore
-be interesting to statically link the external libraries into lxml.etree to
-avoid having to install them separately.
+Microsoft Windows, which entirely lacks these capabilities.  To work around
+the limits of this platform, lxml's installation can download pre-built
+packages of the dependencies and build statically against them.  Assuming
+you have a proper C compiler setup to build Python extensions, this should
+work::
 
-Download lxml and all required libraries to the same directory.  The iconv,
-libxml2, libxslt, and zlib libraries are all available from the ftp site
-ftp://ftp.zlatkovic.com/pub/libxml/.
+  python setup.py bdist_wininst --static-deps
 
-Your directory should now have the following files in it (although most likely
-different versions)::
-
-  iconv-1.9.1.win32.zip
-  libxml2-2.6.23.win32.zip
-  libxslt-1.1.15.win32.zip
-  lxml-1.0.0.tgz
-  zlib-1.2.3.win32.zip
-
-Now extract each of those files in the *same* directory.  This should give you
-something like this::
-
-  iconv-1.9.1.win32/
-  iconv-1.9.1.win32.zip
-  libxml2-2.6.23.win32/
-  libxml2-2.6.23.win32.zip
-  libxslt-1.1.15.win32/
-  libxslt-1.1.15.win32.zip
-  lxml-1.0.0/
-  lxml-1.0.0.tgz
-  zlib-1.2.3.win32/
-  zlib-1.2.3.win32.zip
-
-Go to the lxml directory and edit the file ``setup.py``.  There should
-be a section near the top that looks like this::
-
-  STATIC_INCLUDE_DIRS = []
-  STATIC_LIBRARY_DIRS = []
-  STATIC_CFLAGS = []
-
-Change this section to something like this, but take care to use the correct
-version numbers::
-
-  STATIC_INCLUDE_DIRS = [
-         "..\\libxml2-2.6.23.win32\\include",
-         "..\\libxslt-1.1.15.win32\\include",
-         "..\\zlib-1.2.3.win32\\include",
-         "..\\iconv-1.9.1.win32\\include"
-         ]
-
-  STATIC_LIBRARY_DIRS = [
-         "..\\libxml2-2.6.23.win32\\lib",
-         "..\\libxslt-1.1.15.win32\\lib",
-         "..\\zlib-1.2.3.win32\\lib",
-         "..\\iconv-1.9.1.win32\\lib"
-         ]
-
-  STATIC_CFLAGS = []
-
-Add any CFLAGS you might consider useful to the third list.  Now you
-should be able to pass the ``--static`` option to setup.py and
-everything should work well.  Try calling::
-
-  python setup.py bdist_wininst --static
-
-This will create a windows installer in the ``pkg`` directory.
+It should create a windows installer in the ``pkg`` directory.
 
 
 Building Debian packages from SVN sources
