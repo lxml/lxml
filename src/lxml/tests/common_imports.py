@@ -147,7 +147,7 @@ else:
         return unicode(s, encoding=encoding)
     def _bytes(s, encoding="UTF-8"):
         return s
-    BytesIO = StringIO
+    from io import BytesIO
 
     doctest_parser = doctest.DocTestParser()
     _fix_traceback = re.compile(r'^(\s*)(?:\w+\.)+(\w*(?:Error|Exception|Invalid):)', re.M).sub
@@ -173,12 +173,13 @@ except AttributeError:
             return _skip
         return _keep
 
+
 class HelperTestCase(unittest.TestCase):
     def tearDown(self):
         gc.collect()
 
     def parse(self, text, parser=None):
-        f = BytesIO(text)
+        f = BytesIO(text) if isinstance(text, bytes) else StringIO(text)
         return etree.parse(f, parser=parser)
     
     def _rootstring(self, tree):
@@ -190,7 +191,8 @@ class HelperTestCase(unittest.TestCase):
         unittest.TestCase.assertFalse
     except AttributeError:
         assertFalse = unittest.TestCase.failIf
-        
+
+
 class SillyFileLike:
     def __init__(self, xml_data=_bytes('<foo><bar/></foo>')):
         self.xml_data = xml_data
@@ -293,7 +295,7 @@ def readFileInTestDir(name, mode='r'):
     return read_file(fileInTestDir(name), mode)
 
 def canonicalize(xml):
-    tree = etree.parse(BytesIO(xml))
+    tree = etree.parse(BytesIO(xml) if isinstance(xml, bytes) else StringIO(xml))
     f = BytesIO()
     tree.write_c14n(f)
     return f.getvalue()
