@@ -37,6 +37,7 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    5   Error handling on exceptions
    6   Error logging
    7   Serialisation
+   8   Incremental XML generation
    8   CDATA
    9   XInclude and ElementInclude
    10  write_c14n on ElementTree
@@ -515,6 +516,34 @@ out into the XML file one after the other.  That way, they can be
 removed from memory right after their construction, which can largely
 reduce the memory footprint of an application, while keeping the
 overall XML generation easy, safe and correct.
+
+Together with Python coroutines, this can be used to generate XML
+in an asynchronous, non-blocking fashion, e.g. for a stream protocol
+like the instant messaging protocol
+`XMPP <https://en.wikipedia.org/wiki/Extensible_Messaging_and_Presence_Protocol>`_::
+
+    def writer(out_stream):
+        with xmlfile(out_stream) as xf:
+             with xf.element('{http://etherx.jabber.org/streams}stream'):
+                  try:
+                      while True:
+                          el = (yield)
+                          xf.write(el)
+                  except GeneratorExit:
+                      pass
+
+    w = writer(stream)
+    next(w)   # start writing (run up to 'yield')
+
+Then, whenever XML elements are available for writing, call
+
+::
+
+    w.send(element)
+
+And when done::
+
+    w.close()
 
 
 CDATA
