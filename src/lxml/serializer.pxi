@@ -632,10 +632,9 @@ cdef class xmlfile:
 
     def __enter__(self):
         assert self.output_file is not None
-        cdef _IncrementalFileWriter writer = _IncrementalFileWriter(
+        self.writer = _IncrementalFileWriter(
             self.output_file, self.encoding, self.compresslevel)
-        self.writer = writer
-        return writer
+        return self.writer
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.writer is not None:
