@@ -490,6 +490,14 @@ example::
   >>> print(f.getvalue().decode('utf-8'))
   <abc>text</abc>
 
+``xmlfile()`` accepts a file path as first argument, or a file(-like)
+object, as in the example above.  In the first case, it takes care to
+open and close the file itself, whereas file(-like) objects are not
+closed by default.  This is left to the code that opened them.  Since
+lxml 3.4, however, you can pass the argument ``close=True`` to make
+lxml call the object's ``.close()`` method when exiting the context
+manager.
+
 To insert pre-constructed Elements and subtrees, just pass them
 into ``write()``::
 

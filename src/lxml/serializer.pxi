@@ -375,10 +375,12 @@ cdef class _FilelikeWriter:
     cdef object _close_filelike
     cdef _ExceptionContext _exc_context
     cdef _ErrorLog error_log
-    def __cinit__(self, filelike, exc_context=None, compression=None):
+    def __cinit__(self, filelike, exc_context=None, compression=None, close=False):
         if compression is not None and compression > 0:
             filelike = GzipFile(
                 fileobj=filelike, mode='wb', compresslevel=compression)
+            self._close_filelike = filelike.close
+        elif close:
             self._close_filelike = filelike.close
         self._filelike = filelike
         if exc_context is None:
@@ -474,7 +476,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         doctype = _utf8(doctype)
         c_doctype = _xcstr(doctype)
 
-    writer = _create_output_buffer(f, c_enc, compression, &c_buffer)
+    writer = _create_output_buffer(f, c_enc, compression, &c_buffer, close=False)
     if writer is None:
         state = python.PyEval_SaveThread()
 
@@ -496,7 +498,7 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
         _raiseSerialisationError(error_result)
 
 cdef _create_output_buffer(f, const_char* c_enc, int compression,
-                           tree.xmlOutputBuffer** c_buffer_ret):
+                           tree.xmlOutputBuffer** c_buffer_ret, bint close):
     cdef tree.xmlOutputBuffer* c_buffer
     cdef _FilelikeWriter writer
     enchandler = tree.xmlFindCharEncodingHandler(c_enc)
@@ -512,7 +514,7 @@ cdef _create_output_buffer(f, const_char* c_enc, int compression,
                 return python.PyErr_SetFromErrno(IOError) # raises IOError
             writer = None
         elif hasattr(f, 'write'):
-            writer = _FilelikeWriter(f, compression=compression)
+            writer = _FilelikeWriter(f, compression=compression, close=close)
             c_buffer = writer._createOutputBuffer(enchandler)
         else:
             raise TypeError(
@@ -600,7 +602,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
 # incremental serialisation
 
 cdef class xmlfile:
-    """xmlfile(self, output_file, encoding=None, compression=None)
+    """xmlfile(self, output_file, encoding=None, compression=None, close=False)
 
     A simple mechanism for incremental XML serialisation.
 
@@ -619,21 +621,31 @@ cdef class xmlfile:
                   for element in generate_some_elements():
                       # serialise generated elements into the XML file
                       xf.write(element)
+
+    If 'output_file' is a file(-like) object, passing ``close=True`` will
+    close it when exiting the context manager.  By default, it is left
+    to the owner to do that.  When a file path is used, lxml will take care
+    of opening and closing the file itself.  Also, when a compression level
+    is set, lxml will deliberately close the file to make sure all data gets
+    compressed and written.
     """
     cdef object output_file
     cdef bytes encoding
-    cdef int compresslevel
     cdef _IncrementalFileWriter writer
+    cdef int compresslevel
+    cdef bint close
 
-    def __init__(self, output_file not None, encoding=None, compression=None):
+    def __init__(self, output_file not None, encoding=None, compression=None,
+                 close=False):
         self.output_file = output_file
         self.encoding = _utf8orNone(encoding)
         self.compresslevel = compression or 0
+        self.close = close
 
     def __enter__(self):
         assert self.output_file is not None
         self.writer = _IncrementalFileWriter(
-            self.output_file, self.encoding, self.compresslevel)
+            self.output_file, self.encoding, self.compresslevel, self.close)
         return self.writer
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -641,6 +653,9 @@ cdef class xmlfile:
             old_writer, self.writer = self.writer, None
             raise_on_error = exc_type is None
             old_writer._close(raise_on_error)
+            if self.close:
+                self.output_file = None
+
 
 cdef enum _IncrementalFileWriterStatus:
     WRITER_STARTING = 0
@@ -648,6 +663,7 @@ cdef enum _IncrementalFileWriterStatus:
     WRITER_DTD_WRITTEN = 2
     WRITER_IN_ELEMENT = 3
     WRITER_FINISHED = 4
+
 
 @cython.final
 @cython.internal
@@ -659,7 +675,7 @@ cdef class _IncrementalFileWriter:
     cdef list _element_stack
     cdef int _status
 
-    def __cinit__(self, outfile, bytes encoding, int compresslevel):
+    def __cinit__(self, outfile, bytes encoding, int compresslevel, bint close):
         self._status = WRITER_STARTING
         self._element_stack = []
         if encoding is None:
@@ -667,7 +683,7 @@ cdef class _IncrementalFileWriter:
         self._encoding = encoding
         self._c_encoding = _cstr(encoding) if encoding is not None else NULL
         self._target = _create_output_buffer(
-            outfile, self._c_encoding, compresslevel, &self._c_out)
+            outfile, self._c_encoding, compresslevel, &self._c_out, close)
 
     def __dealloc__(self):
         if self._c_out is not NULL:

@@ -203,7 +203,8 @@ class _XmlFileTestCaseBase(HelperTestCase):
         return etree.parse(self._file)
 
     def tearDown(self):
-        self._file.close()
+        if self._file is not None:
+            self._file.close()
 
     def assertXml(self, expected, encoding='utf8'):
         self.assertEqual(self._read_file().decode(encoding), expected)
@@ -213,16 +214,50 @@ class BytesIOXmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._file = BytesIO()
 
+    def test_filelike_close(self):
+        with etree.xmlfile(self._file, close=True) as xf:
+            with xf.element('test'):
+                pass
+        self.assertRaises(ValueError, self._file.getvalue)
+
+
 class TempXmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
-        self._file = tempfile.NamedTemporaryFile()
+        self._file = tempfile.TemporaryFile()
+
+
+class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
+    def setUp(self):
+        self._tmpfile = tempfile.NamedTemporaryFile()
+        self._file = self._tmpfile.name
+
+    def tearDown(self):
+        try:
+            self._tmpfile.close()
+        finally:
+            if os.path.exists(self._tmpfile.name):
+                os.unlink(self._tmpfile.name)
+
+    def _read_file(self):
+        self._tmpfile.seek(0)
+        return self._tmpfile.read()
+
+    def _parse_file(self):
+        self._tmpfile.seek(0)
+        return etree.parse(self._tmpfile)
+
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
     class SimpleFileLike(object):
         def __init__(self, target):
             self._target = target
             self.write = target.write
-            self.close = target.close
+            self.closed = False
+
+        def close(self):
+            assert not self.closed
+            self.closed = True
+            self._target.close()
 
     def setUp(self):
         self._target = BytesIO()
@@ -235,11 +270,25 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         self._target.seek(0)
         return etree.parse(self._target)
 
+    def test_filelike_not_closing(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                pass
+        self.assertFalse(self._file.closed)
+
+    def test_filelike_close(self):
+        with etree.xmlfile(self._file, close=True) as xf:
+            with xf.element('test'):
+                pass
+        self.assertTrue(self._file.closed)
+        self._file = None  # prevent closing in tearDown()
+
 
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(BytesIOXmlFileTestCase),
                     unittest.makeSuite(TempXmlFileTestCase),
+                    unittest.makeSuite(TempPathXmlFileTestCase),
                     unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
                     ])
     return suite

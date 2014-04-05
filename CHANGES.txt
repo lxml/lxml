@@ -9,6 +9,9 @@ Latest changes
 Features added
 --------------
 
+* ``xmlfile()`` accepts a new argument ``close=True`` to close file(-like)
+  objects after writing to them.
+
 Bugs fixed
 ----------
 
