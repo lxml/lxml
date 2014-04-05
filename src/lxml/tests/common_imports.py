@@ -114,6 +114,8 @@ def _get_caller_relative_path(filename, frame_depth=2):
     return os.path.normpath(os.path.join(
             os.path.dirname(getattr(module, '__file__', '')), filename))
 
+from io import StringIO
+
 if sys.version_info[0] >= 3:
     # Python 3
     from builtins import str as unicode
@@ -121,7 +123,7 @@ if sys.version_info[0] >= 3:
         return s
     def _bytes(s, encoding="UTF-8"):
         return s.encode(encoding)
-    from io import StringIO, BytesIO as _BytesIO
+    from io import BytesIO as _BytesIO
     def BytesIO(*args):
         if args and isinstance(args[0], str):
             args = (args[0].encode("UTF-8"),)
@@ -145,7 +147,6 @@ else:
         return unicode(s, encoding=encoding)
     def _bytes(s, encoding="UTF-8"):
         return s
-    from StringIO import StringIO
     BytesIO = StringIO
 
     doctest_parser = doctest.DocTestParser()

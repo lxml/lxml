@@ -43,19 +43,12 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    10  write_c14n on ElementTree
 
 ..
-  >>> try:
-  ...    from io import BytesIO
-  ...    def StringIO(s=None):
-  ...        if isinstance(s, str): s = s.encode("UTF-8")
-  ...        return BytesIO(s)
-  ... except ImportError:
-  ...    from StringIO import StringIO # Py2 <= 2.5
-  ...    BytesIO = StringIO
+  >>> from io import BytesIO
+  ... def StringIO(s=None):
+  ...     if isinstance(s, str): s = s.encode("UTF-8")
+  ...     return BytesIO(s)
 
-  >>> try: from collections import deque
-  ... except ImportError:
-  ...    class deque(list):
-  ...        def popleft(self): return self.pop(0)
+  >>> from collections import deque
 
   >>> try: unicode = unicode
   ... except NameError: unicode = str
