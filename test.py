@@ -457,8 +457,8 @@ def main(argv):
     """Main program."""
 
     # Environment
-    if sys.version_info < (2, 3):
-        stderr('%s: need Python 2.3 or later' % argv[0])
+    if sys.version_info < (2, 6):
+        stderr('%s: need Python 2.6 or later' % argv[0])
         stderr('your python is %s' % sys.version)
         return 1
 
@@ -561,18 +561,6 @@ def main(argv):
 
     # Finding and importing
     test_files = get_test_files(cfg)
-
-    if sys.version_info[:2] < (2,5):
-        # exclude tests that require the 'with' statement
-        test_files = [
-            test_file for test_file in test_files
-            if 'test_incremental_xmlfile.py' not in test_file]
-
-    if sys.version_info[:2] < (2,6):
-        # exclude tests that require recent Python features
-        test_files = [
-            test_file for test_file in test_files
-            if 'test_http_io.py' not in test_file]
 
     if cfg.list_tests or cfg.run_tests:
         test_cases = get_test_cases(test_files, cfg, tracer=tracer)
