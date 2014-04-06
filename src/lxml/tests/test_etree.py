@@ -2661,6 +2661,69 @@ class ETreeOnlyTestCase(HelperTestCase):
             [a, b, c],
             list(a.getiterator('*')))
 
+    def test_elementtree_getelementpath(self):
+        a  = etree.Element("a")
+        b  = etree.SubElement(a, "b")
+        c  = etree.SubElement(a, "c")
+        d1 = etree.SubElement(c, "d")
+        d2 = etree.SubElement(c, "d")
+        c.text = d1.text = 'TEXT'
+
+        tree = etree.ElementTree(a)
+        self.assertEqual('.', tree.getelementpath(a))
+        self.assertEqual('c/d[1]', tree.getelementpath(d1))
+        self.assertEqual('c/d[2]', tree.getelementpath(d2))
+
+        self.assertEqual(d1, tree.find(tree.getelementpath(d1)))
+        self.assertEqual(d2, tree.find(tree.getelementpath(d2)))
+
+        tree = etree.ElementTree(c)
+        self.assertEqual('.', tree.getelementpath(c))
+        self.assertEqual('d[2]', tree.getelementpath(d2))
+        self.assertEqual(d2, tree.find(tree.getelementpath(d2)))
+
+        tree = etree.ElementTree(b)  # not a parent of a/c/d1/d2
+        self.assertEqual('.', tree.getelementpath(b))
+        self.assertRaises(ValueError, tree.getelementpath, a)
+        self.assertRaises(ValueError, tree.getelementpath, c)
+        self.assertRaises(ValueError, tree.getelementpath, d2)
+
+    def test_elementtree_getelementpath_ns(self):
+        a  = etree.Element("{http://ns1/}a")
+        b  = etree.SubElement(a, "{http://ns1/}b")
+        c  = etree.SubElement(a, "{http://ns1/}c")
+        d1 = etree.SubElement(c, "{http://ns1/}d")
+        d2 = etree.SubElement(c, "{http://ns2/}d")
+        d3 = etree.SubElement(c, "{http://ns1/}d")
+
+        tree = etree.ElementTree(a)
+        self.assertEqual('.', tree.getelementpath(a))
+        self.assertEqual('{http://ns1/}c/{http://ns1/}d[1]',
+                         tree.getelementpath(d1))
+        self.assertEqual('{http://ns1/}c/{http://ns2/}d',
+                         tree.getelementpath(d2))
+        self.assertEqual('{http://ns1/}c/{http://ns1/}d[2]',
+                         tree.getelementpath(d3))
+
+        self.assertEqual(a, tree.find(tree.getelementpath(a)))
+        self.assertEqual(b, tree.find(tree.getelementpath(b)))
+        self.assertEqual(c, tree.find(tree.getelementpath(c)))
+        self.assertEqual(d1, tree.find(tree.getelementpath(d1)))
+        self.assertEqual(d2, tree.find(tree.getelementpath(d2)))
+        self.assertEqual(d3, tree.find(tree.getelementpath(d3)))
+
+        tree = etree.ElementTree(c)
+        self.assertEqual('{http://ns1/}d[1]', tree.getelementpath(d1))
+        self.assertEqual('{http://ns2/}d', tree.getelementpath(d2))
+        self.assertEqual('{http://ns1/}d[2]', tree.getelementpath(d3))
+        self.assertEqual(d1, tree.find(tree.getelementpath(d1)))
+        self.assertEqual(d2, tree.find(tree.getelementpath(d2)))
+        self.assertEqual(d3, tree.find(tree.getelementpath(d3)))
+
+        tree = etree.ElementTree(b)  # not a parent of d1/d2
+        self.assertRaises(ValueError, tree.getelementpath, d1)
+        self.assertRaises(ValueError, tree.getelementpath, d2)
+
     def test_elementtree_find_qname(self):
         XML = self.etree.XML
         ElementTree = self.etree.ElementTree

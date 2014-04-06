@@ -9,6 +9,9 @@ Latest changes
 Features added
 --------------
 
+* ``ElementTree.getelementpath(element)`` returns a structural ElementPath
+  expression for the given element, which can be used for lookups later.
+
 * ``xmlfile()`` accepts a new argument ``close=True`` to close file(-like)
   objects after writing to them.
 

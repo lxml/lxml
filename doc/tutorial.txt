@@ -1426,6 +1426,27 @@ Find Elements with a certain attribute:
     >>> print(root.findall(".//a[@y]"))
     []
 
+In lxml 3.4, there is a new helper to generate a structural ElementPath
+expression for an Element:
+
+.. sourcecode:: pycon
+
+    >>> tree = etree.ElementTree(root)
+    >>> a = root[0]
+    >>> print(tree.getelementpath(a[0]))
+    a/b[1]
+    >>> print(tree.getelementpath(a[1]))
+    a/c
+    >>> print(tree.getelementpath(a[2]))
+    a/b[2]
+    >>> tree.find(tree.getelementpath(a[2])) == a[2]
+    True
+
+As long as the tree is not modified, this path expression represents an
+identifier for a given element that can be used to find() it in the same
+tree later.  Compared to XPath, ElementPath expressions have the advantage
+of being self-contained even for documents that use namespaces.
+
 The ``.iter()`` method is a special case that only finds specific tags
 in the tree by their name, not based on a path.  That means that the
 following commands are equivalent in the success case:
