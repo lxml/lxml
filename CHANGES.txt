@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+3.3.5 (???)
+==================
+
+Bugs fixed
+----------
+
+* HTML cleaning could fail to strip javascript links that mix control
+  characters into the link scheme.
+
+
 3.3.4 (2014-04-03)
 ==================
 
