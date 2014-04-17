@@ -70,9 +70,10 @@ _css_import_re = re.compile(
 
 # All kinds of schemes besides just javascript: that can cause
 # execution:
-_javascript_scheme_re = re.compile(
-    r'\s*(?:javascript|jscript|livescript|vbscript|data|about|mocha):', re.I)
-_substitute_whitespace = re.compile(r'\s+').sub
+_is_javascript_scheme = re.compile(
+    r'(?:javascript|jscript|livescript|vbscript|data|about|mocha):',
+    re.I).search
+_substitute_whitespace = re.compile(r'[\s\x00-\x08\x0B\x0C\x0E-\x19]+').sub
 # FIXME: should data: be blocked?
 
 # FIXME: check against: http://msdn2.microsoft.com/en-us/library/ms537512.aspx
@@ -466,7 +467,7 @@ class Cleaner(object):
     def _remove_javascript_link(self, link):
         # links like "j a v a s c r i p t:" might be interpreted in IE
         new = _substitute_whitespace('', link)
-        if _javascript_scheme_re.search(new):
+        if _is_javascript_scheme(new):
             # FIXME: should this be None to delete?
             return ''
         return link

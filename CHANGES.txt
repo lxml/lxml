@@ -5,7 +5,6 @@ lxml changelog
 Latest changes
 ==================
 
-
 Features added
 --------------
 
@@ -29,6 +28,15 @@ Other changes
 * Requires libxml2 2.7.0 or later and libxslt 1.1.23 or later,
   use lxml 3.3.x with older versions.
 
+
+3.3.5 (???)
+==================
+
+Bugs fixed
+----------
+
+* HTML cleaning could fail to strip javascript links that mix control
+  characters into the link scheme.
 
 
 3.3.4 (2014-04-03)
