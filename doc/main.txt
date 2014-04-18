@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.3.4`_, released 2014-04-03
-(`changes for 3.3.4`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.3.5`_, released 2014-04-18
+(`changes for 3.3.5`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -240,7 +240,9 @@ See the web sites of lxml
 `3.2 <http://lxml.de/3.2/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.3.4.pdf
+.. _`PDF documentation`: lxmldoc-3.3.5.pdf
+
+* `lxml 3.3.5`_, released 2014-04-18 (`changes for 3.3.5`_)
 
 * `lxml 3.3.4`_, released 2014-04-03 (`changes for 3.3.4`_)
 
@@ -288,6 +290,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `older releases <http://lxml.de/3.0/#old-versions>`_
 
+.. _`lxml 3.3.5`: /files/lxml-3.3.5.tgz
 .. _`lxml 3.3.4`: /files/lxml-3.3.4.tgz
 .. _`lxml 3.3.3`: /files/lxml-3.3.3.tgz
 .. _`lxml 3.3.2`: /files/lxml-3.3.2.tgz
@@ -311,6 +314,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 3.0.1`: /files/lxml-3.0.1.tgz
 .. _`lxml 3.0`: /files/lxml-3.0.tgz
 
+.. _`changes for 3.3.5`: /changes-3.3.5.html
 .. _`changes for 3.3.4`: /changes-3.3.4.html
 .. _`changes for 3.3.3`: /changes-3.3.3.html
 .. _`changes for 3.3.2`: /changes-3.3.2.html

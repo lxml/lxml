@@ -29,7 +29,7 @@ Other changes
   use lxml 3.3.x with older versions.
 
 
-3.3.5 (???)
+3.3.5 (2014-04-18)
 ==================
 
 Bugs fixed
