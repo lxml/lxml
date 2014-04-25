@@ -416,19 +416,18 @@ class HtmlMixin(object):
                     yield (el, 'value', el.get('value'), 0)
             if tag == 'style' and el.text:
                 urls = [
-                    _unquote_match(match.group(1), match.start(1))
+                    # (start_pos, url)
+                    _unquote_match(match.group(1), match.start(1))[::-1]
                     for match in _iter_css_urls(el.text)
                     ] + [
-                    (match.group(1), match.start(1))
+                    (match.start(1), match.group(1))
                     for match in _iter_css_imports(el.text)
                     ]
                 if urls:
                     # sort by start pos to bring both match sets back into order
-                    urls = [ (start, url) for (url, start) in urls ]
-                    urls.sort()
-                    # reverse the list to report correct positions despite
+                    # and reverse the list to report correct positions despite
                     # modifications
-                    urls.reverse()
+                    urls.sort(reverse=True)
                     for start, url in urls:
                         yield (el, None, url, start)
             if 'style' in attribs:
