@@ -96,8 +96,8 @@ _forms_xpath = etree.XPath("descendant-or-self::form|descendant-or-self::x:form"
 _class_xpath = etree.XPath("descendant-or-self::*[@class and contains(concat(' ', normalize-space(@class), ' '), concat(' ', $class_name, ' '))]")
 _id_xpath = etree.XPath("descendant-or-self::*[@id=$id]")
 _collect_string_content = etree.XPath("string()")
-_css_url_re = re.compile(r'url\(('+'["][^"]*["]|'+"['][^']*[']|"+r'[^)]*)\)', re.I)
-_css_import_re = re.compile(r'@import "(.*?)"')
+_iter_css_urls = re.compile(r'url\(('+'["][^"]*["]|'+"['][^']*[']|"+r'[^)]*)\)', re.I).finditer
+_iter_css_imports = re.compile(r'@import "(.*?)"').finditer
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
@@ -417,10 +417,10 @@ class HtmlMixin(object):
             if tag == 'style' and el.text:
                 urls = [
                     _unquote_match(match.group(1), match.start(1))
-                    for match in _css_url_re.finditer(el.text)
+                    for match in _iter_css_urls(el.text)
                     ] + [
                     (match.group(1), match.start(1))
-                    for match in _css_import_re.finditer(el.text)
+                    for match in _iter_css_imports(el.text)
                     ]
                 if urls:
                     # sort by start pos to bring both match sets back into order
@@ -432,7 +432,7 @@ class HtmlMixin(object):
                     for start, url in urls:
                         yield (el, None, url, start)
             if 'style' in attribs:
-                urls = list(_css_url_re.finditer(attribs['style']))
+                urls = list(_iter_css_urls(attribs['style']))
                 if urls:
                     # return in reversed order to simplify in-place modifications
                     for match in urls[::-1]:
