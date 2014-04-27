@@ -30,6 +30,8 @@ In general
 
 * add 'nsmap' parameter to cleanup_namespaces()
 
+* fix tail text handling in addnext()/addprevious()
+
 
 Entities
 --------
