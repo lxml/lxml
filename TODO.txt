@@ -32,6 +32,8 @@ In general
 
 * fix tail text handling in addnext()/addprevious()
 
+* make Element nsmap editable to allow defining new namespaces (LP#555602)
+
 
 Entities
 --------
