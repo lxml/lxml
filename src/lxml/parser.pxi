@@ -642,9 +642,18 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         c_ctxt.myDoc = NULL
 
     if result is not NULL:
-        if context._validator is not None and \
-                not context._validator.isvalid():
-            well_formed = 0 # actually not 'valid', but anyway ...
+        if (context._validator is not None and
+                not context._validator.isvalid()):
+            well_formed = 0  # actually not 'valid', but anyway ...
+        elif (not c_ctxt.wellFormed and
+                c_ctxt.charset == tree.XML_CHAR_ENCODING_8859_1 and
+                [1 for error in context._error_log
+                 if error.type == ErrorTypes.ERR_INVALID_CHAR]):
+            # An encoding error occurred and libxml2 switched from UTF-8
+            # input to (undecoded) Latin-1, at some arbitrary point in the
+            # document.  Better raise an error than allowing for a broken
+            # tree with mixed encodings.
+            well_formed = 0
         elif recover or (c_ctxt.wellFormed and
                          c_ctxt.lastError.level < xmlerror.XML_ERR_ERROR):
             well_formed = 1

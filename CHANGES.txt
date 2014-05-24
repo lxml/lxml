@@ -14,13 +14,18 @@ Features added
 * ``xmlfile()`` accepts a new argument ``close=True`` to close file(-like)
   objects after writing to them.
 
+* Allow "bytearray" type for text input.
+
 Bugs fixed
 ----------
 
 Other changes
 -------------
 
-* Allow "bytearray" type for text input.
+* LP#400588: decoding errors have become hard errors even in recovery mode.
+  Previously, they could lead to an internal tree representation in a mixed
+  encoding state, which lead to very late errors or even silently incorrect
+  behaviour during tree traversal or serialisation.
 
 * Requires Python 2.6, 2.7, 3.2 or later. No longer supports
   Python 2.4, 2.5 and 3.1, use lxml 3.3.x for those.
