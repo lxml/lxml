@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
-import unittest, doctest, sys, os.path
+import unittest
+import sys
+import os.path
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
+    sys.path.insert(0, this_dir)  # needed for Py3
 
 from common_imports import StringIO, etree, SillyFileLike, HelperTestCase
 from common_imports import _str, _bytes
