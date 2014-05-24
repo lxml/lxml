@@ -22,15 +22,16 @@ class ParseError(LxmlSyntaxError):
 
 cdef object _ParseError = ParseError
 
+
 class XMLSyntaxError(ParseError):
     u"""Syntax error while parsing an XML document.
     """
-    pass
+
 
 class ParserError(LxmlError):
     u"""Internal lxml parser error.
     """
-    pass
+
 
 @cython.final
 @cython.internal
