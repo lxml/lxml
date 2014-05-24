@@ -645,7 +645,7 @@ cdef xmlDoc* _handleParseResult(_ParserContext context,
         if (context._validator is not None and
                 not context._validator.isvalid()):
             well_formed = 0  # actually not 'valid', but anyway ...
-        elif (not c_ctxt.wellFormed and
+        elif (not c_ctxt.wellFormed and not c_ctxt.html and
                 c_ctxt.charset == tree.XML_CHAR_ENCODING_8859_1 and
                 [1 for error in context._error_log
                  if error.type == ErrorTypes.ERR_INVALID_CHAR]):
