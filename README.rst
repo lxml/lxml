@@ -38,7 +38,7 @@ Please `contact Stefan Behnel`_ for other ways to support the lxml project,
 as well as commercial consulting, customisations and trainings on lxml and
 fast Python XML processing.
 
-.. |Donate| image:: https://github.com/lxml/lxml/raw/master/doc/html/paypal_btn_donateCC_LG.gif
+.. |Donate| image:: http://lxml.de/paypal_btn_donateCC_LG.png
             :width: 160
             :height: 47
             :alt: Donate to the lxml project
