@@ -606,7 +606,7 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
             try:
                 message = (ctxt.lastError.message).decode('utf-8')
             except UnicodeDecodeError:
-                # the filename may be in there => play safe
+                # the filename may be in there => play it safe
                 message = (ctxt.lastError.message).decode('iso8859-1')
             message = u"Error reading file '%s': %s" % (
                 filename, message.strip())
@@ -1385,7 +1385,7 @@ cdef class XMLParser(_FeedParser):
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
-    - compact            - safe memory for short text content (default: True)
+    - compact            - save memory for short text content (default: True)
     - resolve_entities   - replace entities by their text value (default: True)
     - huge_tree          - disable security restrictions and support very deep trees
                            and very long text content (only affects libxml2 2.7+)
@@ -1568,7 +1568,7 @@ cdef class HTMLParser(_FeedParser):
     - remove_comments    - discard comments
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
-    - compact            - safe memory for short text content (default: True)
+    - compact            - save memory for short text content (default: True)
 
     Other keyword arguments:
 
