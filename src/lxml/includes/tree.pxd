@@ -66,6 +66,11 @@ cdef extern from "libxml/hash.h":
     ctypedef void (*xmlHashScanner)(void* payload, void* data, const_xmlChar* name) # may require GIL!
     void xmlHashScan(xmlHashTable* table, xmlHashScanner f, void* data) nogil
     void* xmlHashLookup(xmlHashTable* table, const_xmlChar* name) nogil
+    ctypedef void (*xmlHashDeallocator)(void *payload, xmlChar *name)
+    cdef xmlHashTable* xmlHashCreate(int size)
+    cdef xmlHashTable* xmlHashCreateDict(int size, xmlDict *dict)
+    cdef int xmlHashSize(xmlHashTable* table)
+    cdef void xmlHashFree(xmlHashTable* table, xmlHashDeallocator f)
 
 cdef extern from *: # actually "libxml/dict.h"
     # libxml/dict.h appears to be broken to include in C

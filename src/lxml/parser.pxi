@@ -503,9 +503,11 @@ cdef class _ParserContext(_ResolverContext):
     cdef xmlparser.xmlParserCtxt* _c_ctxt
     cdef python.PyThread_type_lock _lock
     cdef _Document _doc
+    cdef bint _collect_ids
 
     def __cinit__(self):
         self._c_ctxt = NULL
+        self._collect_ids = True
         if not config.ENABLE_THREADING:
             self._lock = NULL
         else:
@@ -521,6 +523,7 @@ cdef class _ParserContext(_ResolverContext):
     cdef _ParserContext _copy(self):
         cdef _ParserContext context
         context = self.__class__()
+        context._collect_ids = self._collect_ids
         context._validator = self._validator.copy()
         _initParserContext(context, self._resolvers._copy(), NULL)
         return context
@@ -764,6 +767,7 @@ cdef class _BaseParser:
     cdef bint _remove_comments
     cdef bint _remove_pis
     cdef bint _strip_cdata
+    cdef bint _collect_ids
     cdef XMLSchema _schema
     cdef bytes _filename
     cdef readonly object target
@@ -771,7 +775,8 @@ cdef class _BaseParser:
     cdef tuple _events_to_collect  # (event_types, tag)
 
     def __init__(self, int parse_options, bint for_html, XMLSchema schema,
-                 remove_comments, remove_pis, strip_cdata, target, encoding):
+                 remove_comments, remove_pis, strip_cdata, collect_ids,
+                 target, encoding):
         cdef tree.xmlCharEncodingHandler* enchandler
         cdef int c_encoding
         if not isinstance(self, (XMLParser, HTMLParser)):
@@ -783,6 +788,7 @@ cdef class _BaseParser:
         self._remove_comments = remove_comments
         self._remove_pis = remove_pis
         self._strip_cdata = strip_cdata
+        self._collect_ids = collect_ids
         self._schema = schema
 
         self._resolvers = _ResolverRegistry()
@@ -812,19 +818,14 @@ cdef class _BaseParser:
         cdef xmlparser.xmlParserCtxt* pctxt
         if self._parser_context is None:
             self._parser_context = self._createContext(self.target, None)
+            self._parser_context._collect_ids = self._collect_ids
             if self._schema is not None:
                 self._parser_context._validator = \
                     self._schema._newSaxValidator(
                         self._parse_options & xmlparser.XML_PARSE_DTDATTR)
             pctxt = self._newParserCtxt()
             _initParserContext(self._parser_context, self._resolvers, pctxt)
-            if self._remove_comments:
-                pctxt.sax.comment = NULL
-            if self._remove_pis:
-                pctxt.sax.processingInstruction = NULL
-            if self._strip_cdata:
-                # hard switch-off for CDATA nodes => makes them plain text
-                pctxt.sax.cdataBlock = NULL
+            self._configureSaxContext(pctxt)
         return self._parser_context
 
     cdef _ParserContext _getPushParserContext(self):
@@ -832,6 +833,7 @@ cdef class _BaseParser:
         if self._push_parser_context is None:
             self._push_parser_context = self._createContext(
                 self.target, self._events_to_collect)
+            self._push_parser_context._collect_ids = self._collect_ids
             if self._schema is not None:
                 self._push_parser_context._validator = \
                     self._schema._newSaxValidator(
@@ -839,13 +841,7 @@ cdef class _BaseParser:
             pctxt = self._newPushParserCtxt()
             _initParserContext(
                 self._push_parser_context, self._resolvers, pctxt)
-            if self._remove_comments:
-                pctxt.sax.comment = NULL
-            if self._remove_pis:
-                pctxt.sax.processingInstruction = NULL
-            if self._strip_cdata:
-                # hard switch-off for CDATA nodes => makes them plain text
-                pctxt.sax.cdataBlock = NULL
+            self._configureSaxContext(pctxt)
         return self._push_parser_context
 
     cdef _ParserContext _createContext(self, target, events_to_collect):
@@ -862,6 +858,16 @@ cdef class _BaseParser:
             events, tag = events_to_collect
             sax_context._setEventFilter(events, tag)
         return sax_context
+
+    @cython.final
+    cdef int _configureSaxContext(self, xmlparser.xmlParserCtxt* pctxt) except -1:
+        if self._remove_comments:
+            pctxt.sax.comment = NULL
+        if self._remove_pis:
+            pctxt.sax.processingInstruction = NULL
+        if self._strip_cdata:
+            # hard switch-off for CDATA nodes => makes them plain text
+            pctxt.sax.cdataBlock = NULL
 
     cdef int _registerHtmlErrorHandler(self, xmlparser.xmlParserCtxt* c_ctxt) except -1:
         cdef xmlparser.xmlSAXHandler* sax = c_ctxt.sax
@@ -891,6 +897,7 @@ cdef class _BaseParser:
             c_ctxt = xmlparser.xmlNewParserCtxt()
         if c_ctxt is NULL:
             raise MemoryError
+        c_ctxt.sax.startDocument = _initSaxDocument
         return c_ctxt
 
     cdef xmlparser.xmlParserCtxt* _newPushParserCtxt(self) except NULL:
@@ -909,6 +916,7 @@ cdef class _BaseParser:
                 xmlparser.xmlCtxtUseOptions(c_ctxt, self._parse_options)
         if c_ctxt is NULL:
             raise MemoryError()
+        c_ctxt.sax.startDocument = _initSaxDocument
         return c_ctxt
 
     property error_log:
@@ -1140,6 +1148,40 @@ cdef class _BaseParser:
         finally:
             context.cleanup()
 
+
+cdef void _initSaxDocument(void* ctxt) with gil:
+    xmlparser.xmlSAX2StartDocument(ctxt)
+    c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    c_doc = c_ctxt.myDoc
+
+    # set up document dict
+    if c_doc and c_ctxt.dict and not c_doc.dict:
+        # I have no idea why libxml2 disables this - we need it
+        c_ctxt.dictNames = 1
+        c_doc.dict = c_ctxt.dict
+        xmlparser.xmlDictReference(c_ctxt.dict)
+
+    # set up XML ID hash table
+    if c_ctxt._private and not c_ctxt.html:
+        context = <_ParserContext>c_ctxt._private
+        if context._collect_ids:
+            # keep the global parser dict from filling up with XML IDs
+            if c_doc and not c_doc.ids:
+                # memory errors are not fatal here
+                c_dict = xmlparser.xmlDictCreate()
+                if c_dict:
+                    c_doc.ids = tree.xmlHashCreateDict(0, c_dict)
+                    xmlparser.xmlDictFree(c_dict)
+                else:
+                    c_doc.ids = tree.xmlHashCreate(0)
+        else:
+            c_ctxt.loadsubset |= xmlparser.XML_SKIP_IDS
+            if c_doc and c_doc.ids and not tree.xmlHashSize(c_doc.ids):
+                # already initialised but empty => clear
+                tree.xmlHashFree(c_doc.ids, NULL)
+                c_doc.ids = NULL
+
+
 ############################################################
 ## ET feed parser
 ############################################################
@@ -1357,7 +1399,7 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class XMLParser(_FeedParser):
-    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, XMLSchema schema=None, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, target=None, compact=True)
+    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, XMLSchema schema=None, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
 
     The XML parser.
 
@@ -1386,6 +1428,7 @@ cdef class XMLParser(_FeedParser):
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
+    - collect_ids        - create a hash table of XML IDs (default: True, always True with DTD validation)
     - resolve_entities   - replace entities by their text value (default: True)
     - huge_tree          - disable security restrictions and support very deep trees
                            and very long text content (only affects libxml2 2.7+)
@@ -1405,7 +1448,7 @@ cdef class XMLParser(_FeedParser):
                  ns_clean=False, recover=False, XMLSchema schema=None,
                  huge_tree=False, remove_blank_text=False, resolve_entities=True,
                  remove_comments=False, remove_pis=False, strip_cdata=True,
-                 target=None, compact=True):
+                 collect_ids=True, target=None, compact=True):
         cdef int parse_options
         parse_options = _XML_DEFAULT_PARSE_OPTIONS
         if load_dtd:
@@ -1436,7 +1479,7 @@ cdef class XMLParser(_FeedParser):
 
         _BaseParser.__init__(self, parse_options, 0, schema,
                              remove_comments, remove_pis, strip_cdata,
-                             target, encoding)
+                             collect_ids, target, encoding)
 
 
 cdef class XMLPullParser(XMLParser):
@@ -1595,7 +1638,7 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_COMPACT
 
         _BaseParser.__init__(self, parse_options, 1, schema,
-                             remove_comments, remove_pis, strip_cdata,
+                             remove_comments, remove_pis, strip_cdata, True,
                              target, encoding)
 
 

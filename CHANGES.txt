@@ -8,6 +8,14 @@ Latest changes
 Features added
 --------------
 
+* New ``XMLParser`` option ``collect_ids=False`` to disable ID hash table
+  creation.  This can substantially speed up parsing of documents with many
+  different IDs that are not used.
+
+* The parser uses per-document hash tables for XML IDs.  This reduces the
+  load of the global parser dict and thus speeds up parsing for documents
+  with many different IDs.
+
 * ``ElementTree.getelementpath(element)`` returns a structural ElementPath
   expression for the given element, which can be used for lookups later.
 

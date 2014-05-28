@@ -170,6 +170,10 @@ Available boolean keyword arguments:
 
 * compact - use compact storage for short text content (on by default)
 
+* collect_ids - collect XML IDs in a hash table while parsing (on by default).
+  Disabling this can substantially speed up parsing of documents with many
+  different IDs if the hash lookup is not used afterwards.
+
 Other keyword arguments:
 
 * encoding - override the document encoding

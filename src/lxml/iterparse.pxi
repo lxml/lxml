@@ -68,7 +68,7 @@ cdef class iterparse:
                  load_dtd=False, no_network=True, remove_blank_text=False,
                  compact=True, resolve_entities=True, remove_comments=False,
                  remove_pis=False, strip_cdata=True, encoding=None,
-                 html=False, recover=None, huge_tree=False,
+                 html=False, recover=None, huge_tree=False, collect_ids=True,
                  XMLSchema schema=None):
         if not hasattr(source, 'read'):
             self._filename = source
@@ -119,6 +119,7 @@ cdef class iterparse:
                 remove_comments=remove_comments,
                 remove_pis=remove_pis,
                 strip_cdata=strip_cdata,
+                collect_ids=True,
                 target=None,  # TODO
                 compact=compact)
 

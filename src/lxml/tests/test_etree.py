@@ -866,6 +866,31 @@ class ETreeOnlyTestCase(HelperTestCase):
         # FIXME: would be nice to get some errors logged ...
         #self.assertTrue(len(parser.error_log) > 0, "error log is empty")
 
+    def test_feed_parser_recover_no_id_dict(self):
+        # test that recover mode plays nicely with the no-id-dict setup
+        parser = self.etree.XMLParser(recover=True, collect_ids=False)
+
+        parser.feed('<?xml version=')
+        parser.feed('"1.0"?><ro')
+        parser.feed('ot xml:id="123"><')
+        parser.feed('a test="works" xml:id=')
+        parser.feed('"321"><othertag/></root') # <a> not closed!
+        parser.feed('>')
+
+        root = parser.close()
+
+        self.assertEqual(root.tag, "root")
+        self.assertEqual(len(root), 1)
+        self.assertEqual(root[0].tag, "a")
+        self.assertEqual(root[0].get("test"), "works")
+        self.assertEqual(root[0].attrib, {
+            'test': 'works',
+            '{http://www.w3.org/XML/1998/namespace}id': '321'})
+        self.assertEqual(len(root[0]), 1)
+        self.assertEqual(root[0][0].tag, "othertag")
+        # FIXME: would be nice to get some errors logged ...
+        #self.assertTrue(len(parser.error_log) > 0, "error log is empty")
+
     def test_elementtree_parser_target_type_error(self):
         assertEqual = self.assertEqual
         assertFalse  = self.assertFalse
@@ -944,8 +969,34 @@ class ETreeOnlyTestCase(HelperTestCase):
             done = 'value error received as expected'
 
         self.assertEqual(["start-root", "data-A", "start-a",
-                           "data-ca", "end-a", "close"],
-                          events)
+                          "data-ca", "end-a", "close"],
+                         events)
+
+    def test_parser_target_feed_no_id_dict(self):
+        # test that target parsing works nicely with the no-id-hash setup
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append("start-" + tag)
+            def end(self, tag):
+                events.append("end-" + tag)
+            def data(self, data):
+                events.append("data-" + data)
+            def comment(self, text):
+                events.append("comment-" + text)
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.XMLParser(target=Target(), collect_ids=False)
+
+        parser.feed(_bytes('<!--a--><root xml:id="123">A<!--b-->'))
+        parser.feed(_bytes('<sub xml:id="321"/>B</root>'))
+        done = parser.close()
+
+        self.assertEqual("DONE", done)
+        self.assertEqual(["comment-a", "start-root", "data-A", "comment-b",
+                          "start-sub", "end-sub", "data-B", "end-root"],
+                         events)
 
     def test_parser_target_comment(self):
         events = []
@@ -2231,6 +2282,34 @@ class ETreeOnlyTestCase(HelperTestCase):
                           self._writeElement(root2))
         expected = {}
         self._checkIDDict(dic, expected)
+
+    def test_XMLDTDID_no_id_dict(self):
+        XMLDTDID = self.etree.XMLDTDID
+        XML      = self.etree.XML
+        xml_text = _bytes('''
+        <!DOCTYPE document [
+        <!ELEMENT document (h1,p)*>
+        <!ELEMENT h1 (#PCDATA)>
+        <!ATTLIST h1 myid ID #REQUIRED>
+        <!ELEMENT p  (#PCDATA)>
+        <!ATTLIST p  someid ID #REQUIRED>
+        ]>
+        <document>
+          <h1 myid="chapter1">...</h1>
+          <p id="note1" class="note">...</p>
+          <p>Regular paragraph.</p>
+          <p xml:id="xmlid">XML:ID paragraph.</p>
+          <p someid="warn1" class="warning">...</p>
+        </document>
+        ''')
+
+        parser = etree.XMLParser(collect_ids=False)
+        root, dic = XMLDTDID(xml_text, parser=parser)
+        root2 = XML(xml_text)
+        self.assertEqual(self._writeElement(root),
+                         self._writeElement(root2))
+        self.assertFalse(dic)
+        self._checkIDDict(dic, {})
 
     def _checkIDDict(self, dic, expected):
         self.assertEqual(len(dic),

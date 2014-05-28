@@ -525,11 +525,6 @@ cdef void _handleSaxStartDocument(void* ctxt) with gil:
     context = <_SaxParserContext>c_ctxt._private
     context._origSaxStartDocument(ctxt)
     c_doc = c_ctxt.myDoc
-    if c_doc and c_ctxt.dict and not c_doc.dict:
-        # I have no idea why libxml2 disables this - we need it
-        c_ctxt.dictNames = 1
-        c_doc.dict = c_ctxt.dict
-        xmlparser.xmlDictReference(c_ctxt.dict)
     try:
         context.startDocument(c_doc)
     except:

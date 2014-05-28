@@ -1,6 +1,7 @@
 from libc.string cimport const_char
 
-from lxml.includes.tree cimport xmlDoc, xmlNode, xmlDict, xmlDtd, const_xmlChar
+from lxml.includes.tree cimport (
+    xmlDoc, xmlNode, xmlDict, xmlDtd, xmlChar, const_xmlChar)
 from lxml.includes.tree cimport xmlInputReadCallback, xmlInputCloseCallback
 from lxml.includes.xmlerror cimport xmlError, xmlStructuredErrorFunc
 
@@ -82,8 +83,14 @@ cdef extern from "libxml/tree.h":
         xmlStructuredErrorFunc          serror
         void*                           _private
 
-cdef extern from "libxml/xmlIO.h":
-    cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc) nogil
+
+cdef extern from "libxml/SAX2.h" nogil:
+    cdef void xmlSAX2StartDocument(void* ctxt)
+
+
+cdef extern from "libxml/xmlIO.h" nogil:
+    cdef xmlParserInputBuffer* xmlAllocParserInputBuffer(int enc)
+
 
 cdef extern from "libxml/parser.h":
 
@@ -92,7 +99,8 @@ cdef extern from "libxml/parser.h":
     cdef void xmlDictFree(xmlDict* sub) nogil
     cdef int xmlDictReference(xmlDict* dict) nogil
     
-    cdef int XML_COMPLETE_ATTRS # SAX option for adding DTD default attributes
+    cdef int XML_COMPLETE_ATTRS  # SAX option for adding DTD default attributes
+    cdef int XML_SKIP_IDS        # SAX option for not building an XML ID dict
 
     ctypedef struct xmlParserCtxt:
         xmlDoc* myDoc
