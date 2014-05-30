@@ -20,7 +20,8 @@ Features added
   expression for the given element, which can be used for lookups later.
 
 * ``xmlfile()`` accepts a new argument ``close=True`` to close file(-like)
-  objects after writing to them.
+  objects after writing to them.  Before, ``xmlfile()`` only closed the file
+  if it had opened it internally.
 
 * Allow "bytearray" type for text input.
 
