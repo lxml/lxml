@@ -15,6 +15,7 @@ if this_dir not in sys.path:
 
 from common_imports import HelperTestCase, BytesIO, _bytes
 
+
 class BuilderTestCase(HelperTestCase):
     etree = etree
 
@@ -27,6 +28,13 @@ class BuilderTestCase(HelperTestCase):
         class UnknownType(object):
             pass
         self.assertRaises(TypeError, E.b, UnknownType())
+
+    def test_cdata(self):
+        wrapped = E.b(etree.CDATA('Hello'))
+        self.assertEqual(_bytes('<b><![CDATA[Hello]]></b>'), etree.tostring(wrapped))
+
+    def test_cdata_solo(self):
+        self.assertRaises(ValueError, E.b, 'Hello', etree.CDATA('World'))
 
 
 def test_suite():
