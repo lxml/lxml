@@ -177,16 +177,24 @@ class ElementMaker(object):
             typemap = typemap.copy()
         else:
             typemap = {}
-        
+
         def add_text(elem, item):
             try:
                 elem[-1].tail = (elem[-1].tail or "") + item
             except IndexError:
                 elem.text = (elem.text or "") + item
+
+        def add_cdata(elem, cdata):
+            if elem.text:
+                raise ValueError("Can't add a CDATA section. Element already has some text: %r" % elem.text)
+            elem.text = cdata
+
         if str not in typemap:
             typemap[str] = add_text
         if unicode not in typemap:
             typemap[unicode] = add_text
+        if ET.CDATA not in typemap:
+            typemap[ET.CDATA] = add_cdata
 
         def add_dict(elem, item):
             attrib = elem.attrib
