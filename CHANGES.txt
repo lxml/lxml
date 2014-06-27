@@ -13,8 +13,8 @@ Features added
   different IDs that are not used.
 
 * The parser uses per-document hash tables for XML IDs.  This reduces the
-  load of the global parser dict and thus speeds up parsing for documents
-  with many different IDs.
+  load of the global parser dict and speeds up parsing for documents with
+  many different IDs.
 
 * ``ElementTree.getelementpath(element)`` returns a structural ElementPath
   expression for the given element, which can be used for lookups later.
@@ -23,7 +23,7 @@ Features added
   objects after writing to them.  Before, ``xmlfile()`` only closed the file
   if it had opened it internally.
 
-* Allow "bytearray" type for text input.
+* Allow "bytearray" type for ASCII text input.
 
 Bugs fixed
 ----------
