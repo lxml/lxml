@@ -222,7 +222,8 @@ Building lxml on MacOS-X
 
 Apple regularly ships new system releases with horribly outdated
 system libraries.  This is specifically the case for libxml2 and
-libxslt, where the system provided versions are too old to build lxml.
+libxslt, where the system provided versions used to be too old
+to even build lxml for a long time.
 
 While the Unix environment in MacOS-X makes it relatively easy to
 install Unix/Linux style package management tools and new software, it
@@ -251,13 +252,14 @@ subdirectory ``libs`` in the lxml distribution, and call ``setup.py``
 with the desired target versions like this::
 
   python setup.py build --static-deps \
-         --libxml2-version=2.7.8 \
-         --libxslt-version=1.1.27 \
+         --libxml2-version=2.9.1 \
+         --libxslt-version=1.1.28 \
 
   sudo python setup.py install
 
-Instead of ``build``, you can use any target, like ``bdist_egg`` if
-you want to use setuptools to build an installable egg.
+Instead of ``build``, you can use any target, like ``bdist_egg``
+if you want to use setuptools to build an installable egg, or
+``bdist_wheel`` for a wheel package.
 
 Note that this also works with pip_.  Since you can't pass
 command line options in this case, you have to use an environment
@@ -273,6 +275,17 @@ run the installation with "sudo"::
 The ``STATICBUILD`` environment variable is handled equivalently to
 the ``STATIC_DEPS`` variable, but is used by some other extension
 packages, too.
+
+If you decide to do a non-static build, you may also have to install
+the command line tools in addition to the XCode build environment.
+They are available as a restricted download from here:
+
+https://developer.apple.com/downloads/index.action?=command%20line%20tools#
+
+Without them, the compiler may not find the necessary header files of
+the XML libraries, according to the second comment in this ticket:
+
+https://bugs.launchpad.net/lxml/+bug/1244094
 
 
 Static linking on Windows
