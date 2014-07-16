@@ -71,7 +71,7 @@ _css_import_re = re.compile(
 # All kinds of schemes besides just javascript: that can cause
 # execution:
 _is_javascript_scheme = re.compile(
-    r'(?:javascript|jscript|livescript|vbscript|data|about|mocha):',
+    r'(?:javascript|jscript|livescript|vbscript|about|mocha):',
     re.I).search
 _substitute_whitespace = re.compile(r'[\s\x00-\x08\x0B\x0C\x0E-\x19]+').sub
 # FIXME: should data: be blocked?
