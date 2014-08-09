@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+Bugs fixed
+----------
+
+* LP#1354652: crash when traversing internally loaded documents in XSLT
+  extension functions.
+
+
 3.3.5 (2014-04-18)
 ==================
 

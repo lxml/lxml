@@ -1353,7 +1353,65 @@ class ETreeXSLTExtFuncTestCase(HelperTestCase):
 
         result = tree.xslt(style)
         self.assertEqual(self._rootstring(result),
-                          _bytes('<A>bXb</A>'))
+                         _bytes('<A>bXb</A>'))
+
+    def test_xpath_on_context_node(self):
+        tree = self.parse('<a><b>B<c/>C</b><b/></a>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:myns="testns"
+    exclude-result-prefixes="myns">
+  <xsl:template match="b">
+    <A><xsl:value-of select="myns:myext()"/></A>
+  </xsl:template>
+</xsl:stylesheet>''')
+
+        def extfunc(ctxt):
+            text_content = ctxt.context_node.xpath('text()')
+            return 'x'.join(text_content)
+
+        namespace = etree.FunctionNamespace('testns')
+        namespace['myext'] = extfunc
+
+        result = tree.xslt(style)
+        self.assertEqual(self._rootstring(result),
+                         _bytes('<A>BxC</A>'))
+
+    def test_xpath_on_foreign_context_node(self):
+        # LP ticket 1354652
+        class Resolver(etree.Resolver):
+            def resolve(self, system_url, public_id, context):
+                assert system_url == 'extdoc.xml'
+                return self.resolve_string(b'<a><b>B<c/>C</b><b/></a>', context)
+
+        parser = etree.XMLParser()
+        parser.resolvers.add(Resolver())
+
+        tree = self.parse(b'<a><b/><b/></a>')
+        transform = etree.XSLT(self.parse(b'''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:mypre="testns"
+    exclude-result-prefixes="mypre">
+  <xsl:template match="b">
+    <B><xsl:value-of select="mypre:myext()"/></B>
+  </xsl:template>
+  <xsl:template match="a">
+    <A><xsl:apply-templates select="document('extdoc.xml')//b" /></A>
+  </xsl:template>
+</xsl:stylesheet>''', parser=parser))
+
+        def extfunc(ctxt):
+            text_content = ctxt.context_node.xpath('text()')
+            return 'x'.join(text_content)
+
+        namespace = etree.FunctionNamespace('testns')
+        namespace['myext'] = extfunc
+
+        result = transform(tree)
+        self.assertEqual(self._rootstring(result),
+                         _bytes('<A><B>BxC</B><B/></A>'))
 
 
 class ETreeXSLTExtElementTestCase(HelperTestCase):

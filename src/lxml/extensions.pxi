@@ -708,11 +708,13 @@ cdef _Element _instantiateElementFromXPath(xmlNode* c_node, _Document doc,
         # not from the context document and not from a fake document
         # either => may still be from a known document, e.g. one
         # created by an extension function
-        doc = context._findDocumentForNode(c_node)
-        if doc is None:
+        node_doc = context._findDocumentForNode(c_node)
+        if node_doc is None:
             # not from a known document at all! => can only make a
             # safety copy here
             c_node = tree.xmlDocCopyNode(c_node, doc._c_doc, 1)
+        else:
+            doc = node_doc
     return _fakeDocElementFactory(doc, c_node)
 
 ################################################################################
