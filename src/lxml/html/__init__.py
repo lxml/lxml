@@ -381,32 +381,14 @@ class HtmlMixin(object):
         for el in self.iter(etree.Element):
             attribs = el.attrib
             tag = _nons(el.tag)
-            if tag == 'meta':
-                http_equiv = attribs.get('http-equiv', '').lower()
-                if http_equiv == 'refresh':
-                    content = attribs.get('content', '')
-                    i = content.find(';')
-                    url = content[i+1:] if i > -1 else content
-                    if 'url=' == url[:4].lower():
-                        url = url[4:]
-                    #else:
-                        # No "url=" means the redirect won't work, but we might
-                        # as well be permissive and return the entire string.
-                    if url:
-                        url, pos = _unquote_match(url, i + 5)
-                        yield (el, 'content', url, pos)
-            if tag != 'object':
-                for attrib in link_attrs:
-                    if attrib in attribs:
-                        yield (el, attrib, attribs[attrib], 0)
-            elif tag == 'object':
+            if tag == 'object':
                 codebase = None
                 ## <object> tags have attributes that are relative to
                 ## codebase
                 if 'codebase' in attribs:
                     codebase = el.get('codebase')
                     yield (el, 'codebase', codebase, 0)
-                for attrib in 'classid', 'data':
+                for attrib in ('classid', 'data'):
                     if attrib in attribs:
                         value = el.get(attrib)
                         if codebase is not None:
@@ -418,7 +400,25 @@ class HtmlMixin(object):
                         if codebase is not None:
                             value = urljoin(codebase, value)
                         yield (el, 'archive', value, match.start())
-            if tag == 'param':
+            else:
+                for attrib in link_attrs:
+                    if attrib in attribs:
+                        yield (el, attrib, attribs[attrib], 0)
+            if tag == 'meta':
+                http_equiv = attribs.get('http-equiv', '').lower()
+                if http_equiv == 'refresh':
+                    content = attribs.get('content', '')
+                    i = content.find(';')
+                    url = content[i+1:] if i >= 0 else content
+                    if url[:4].lower() == 'url=':
+                        url = url[4:]
+                    #else:
+                    # No "url=" means the redirect won't work, but we might
+                    # as well be permissive and return the entire string.
+                    if url:
+                        url, pos = _unquote_match(url, i + 5)
+                        yield (el, 'content', url, pos)
+            elif tag == 'param':
                 valuetype = el.get('valuetype') or ''
                 if valuetype.lower() == 'ref':
                     ## FIXME: while it's fine we *find* this link,
@@ -428,7 +428,7 @@ class HtmlMixin(object):
                     ## doesn't have a valuetype="ref" (which seems to be the norm)
                     ## http://www.w3.org/TR/html401/struct/objects.html#adef-valuetype
                     yield (el, 'value', el.get('value'), 0)
-            if tag == 'style' and el.text:
+            elif tag == 'style' and el.text:
                 urls = [
                     # (start_pos, url)
                     _unquote_match(match.group(1), match.start(1))[::-1]
