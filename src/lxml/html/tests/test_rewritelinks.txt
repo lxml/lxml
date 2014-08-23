@@ -101,6 +101,8 @@ link)``, which is awkward to test here, so we'll make a printer::
     >>> print_iter(iterlinks('''
     ... <html>
     ...  <head>
+    ...   <meta http-equiv="refresh" content="0;url=/redirect">
+    ...   <meta http-equiv="refresh" content="10;url='/quoted_url'">
     ...   <link rel="stylesheet" href="style.css">
     ...   <style type="text/css">
     ...     body {
@@ -119,9 +121,13 @@ link)``, which is awkward to test here, so we'll make a printer::
     ...    <td style="background-image: url(/td-bg.png)">
     ...      <img src="/logo.gif">
     ...      Hi world!
+    ...    </td>
+    ...    <td style="background-image: url('/quoted.png')">
     ...    </td></tr>
     ...   </table>
     ...  </body></html>'''))
+    meta content="/redirect"@6
+    meta content="/quoted_url"@8
     link href="style.css"
     style None="/other-styles.css"@69
     style None="/bg.gif"@40
@@ -130,6 +136,7 @@ link)``, which is awkward to test here, so we'll make a printer::
     a href="/other.html"
     td style="/td-bg.png"@22
     img src="/logo.gif"
+    td style="/quoted.png"@23
 
 An application of ``iterlinks()`` is ``make_links_absolute()``::
 

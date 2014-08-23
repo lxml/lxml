@@ -381,6 +381,20 @@ class HtmlMixin(object):
         for el in self.iter(etree.Element):
             attribs = el.attrib
             tag = _nons(el.tag)
+            if tag == 'meta':
+                http_equiv = attribs.get('http-equiv', '').lower()
+                if http_equiv == 'refresh':
+                    content = attribs.get('content', '')
+                    i = content.find(';')
+                    url = content[i+1:] if i > -1 else content
+                    if 'url=' == url[:4].lower():
+                        url = url[4:]
+                    #else:
+                        # No "url=" means the redirect won't work, but we might
+                        # as well be permissive and return the entire string.
+                    if url:
+                        url, pos = _unquote_match(url, i + 5)
+                        yield (el, 'content', url, pos)
             if tag != 'object':
                 for attrib in link_attrs:
                     if attrib in attribs:
