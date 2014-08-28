@@ -1288,31 +1288,31 @@ cdef int _prependChild(_Element parent, _Element child) except -1:
 cdef int _appendSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling behind an element.
     """
-    c_node = sibling._c_node
-    if element._c_node is c_node:
-        return 0  # nothing to do
-    c_source_doc = c_node.doc
-    # store possible text node
-    c_next = c_node.next
-    # move node itself
-    tree.xmlAddNextSibling(element._c_node, c_node)
-    _moveTail(c_next, c_node)
-    # uh oh, elements may be pointing to different doc when
-    # parent element has moved; change them too..
-    moveNodeToDocument(element._doc, c_source_doc, c_node)
-    return 0
+    return _addSibling(element, sibling, as_next=True)
 
 cdef int _prependSibling(_Element element, _Element sibling) except -1:
     u"""Add a new sibling before an element.
     """
+    return _addSibling(element, sibling, as_next=False)
+
+cdef int _addSibling(_Element element, _Element sibling, bint as_next) except -1:
     c_node = sibling._c_node
     if element._c_node is c_node:
         return 0  # nothing to do
     c_source_doc = c_node.doc
+    # detect cycles
+    c_parent = element._c_node.parent
+    while c_parent:
+        if c_parent is c_node:
+            raise ValueError("cannot add ancestor as sibling, please break cycle first")
+        c_parent = c_parent.parent
     # store possible text node
     c_next = c_node.next
     # move node itself
-    tree.xmlAddPrevSibling(element._c_node, c_node)
+    if as_next:
+        tree.xmlAddNextSibling(element._c_node, c_node)
+    else:
+        tree.xmlAddPrevSibling(element._c_node, c_node)
     _moveTail(c_next, c_node)
     # uh oh, elements may be pointing to different doc when
     # parent element has moved; change them too..

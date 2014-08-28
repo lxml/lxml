@@ -1490,6 +1490,48 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(['b', 'a'],
                           [c.tag for c in root])
 
+    def test_addnext_cycle(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(a, 'b')
+        # appending parent as sibling is forbidden
+        self.assertRaises(ValueError, b.addnext, a)
+        self.assertEqual(['a'], [c.tag for c in root])
+        self.assertEqual(['b'], [c.tag for c in a])
+
+    def test_addprevious_cycle(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(a, 'b')
+        # appending parent as sibling is forbidden
+        self.assertRaises(ValueError, b.addprevious, a)
+        self.assertEqual(['a'], [c.tag for c in root])
+        self.assertEqual(['b'], [c.tag for c in a])
+
+    def test_addnext_cycle_long(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(a, 'b')
+        c = SubElement(b, 'c')
+        # appending parent as sibling is forbidden
+        self.assertRaises(ValueError, c.addnext, a)
+
+    def test_addprevious_cycle_long(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        root = Element('root')
+        a = SubElement(root, 'a')
+        b = SubElement(a, 'b')
+        c = SubElement(b, 'c')
+        # appending parent as sibling is forbidden
+        self.assertRaises(ValueError, c.addprevious, a)
+
     def test_addprevious_noops(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
