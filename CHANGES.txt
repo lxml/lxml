@@ -8,6 +8,10 @@ Latest changes
 Bugs fixed
 ----------
 
+* Prevent tree cycle creation when adding Elements as siblings.
+
+* LP#1361948: crash when deallocating Element siblings without parent.
+
 * LP#1354652: crash when traversing internally loaded documents in XSLT
   extension functions.
 
