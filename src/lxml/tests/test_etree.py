@@ -3557,6 +3557,37 @@ class ETreeOnlyTestCase(HelperTestCase):
         gc.collect()
         # not really testing anything here, but it shouldn't crash
 
+    def test_proxy_collect_siblings(self):
+        root = etree.Element('parent')
+        c1 = etree.SubElement(root, 'child1')
+        c2 = etree.SubElement(root, 'child2')
+
+        root.remove(c1)
+        root.remove(c2)
+        c1.addnext(c2)
+        del c1
+        # trigger deallocation attempt of c1
+        c2.getprevious()
+        # make sure it wasn't deallocated
+        self.assertEqual('child1', c2.getprevious().tag)
+
+    def test_proxy_collect_siblings_text(self):
+        root = etree.Element('parent')
+        c1 = etree.SubElement(root, 'child1')
+        c2 = etree.SubElement(root, 'child2')
+
+        root.remove(c1)
+        root.remove(c2)
+        c1.addnext(c2)
+        c1.tail = 'abc'
+        c2.tail = 'xyz'
+        del c1
+        # trigger deallocation attempt of c1
+        c2.getprevious()
+        # make sure it wasn't deallocated
+        self.assertEqual('child1', c2.getprevious().tag)
+        self.assertEqual('abc', c2.getprevious().tail)
+
     # helper methods
 
     def _writeElement(self, element, encoding='us-ascii', compression=0):
