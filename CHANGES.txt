@@ -8,6 +8,11 @@ Latest changes
 Features added
 --------------
 
+* ``lxml.html.document_fromstring`` now accepts an ``ensure_head_body`` option.
+  If true, the resulting document will be given an empty head if it didn't
+  have one originally and an empty body if it didn't have one originally.
+  Default: false.
+
 * ``lxml.html.iterlinks`` now returns links inside meta refresh tags.
 
 * New ``XMLParser`` option ``collect_ids=False`` to disable ID hash table
