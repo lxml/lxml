@@ -607,13 +607,17 @@ _looks_like_full_html_unicode = re.compile(
 _looks_like_full_html_bytes = re.compile(
     r'^\s*<(?:html|!doctype)'.encode('ascii'), re.I).match
 
-def document_fromstring(html, parser=None, **kw):
+def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
     if parser is None:
         parser = html_parser
     value = etree.fromstring(html, parser, **kw)
     if value is None:
         raise etree.ParserError(
             "Document is empty")
+    if ensure_head_body and value.find('head') is None:
+        value.insert(0, Element('head'))
+    if ensure_head_body and value.find('body') is None:
+        value.append(Element('body'))
     return value
 
 def fragments_fromstring(html, no_leading_text=False, base_url=None,
