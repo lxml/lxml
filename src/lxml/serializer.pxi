@@ -602,7 +602,7 @@ cdef _tofilelikeC14N(f, _Element element, bint exclusive, bint with_comments,
 # incremental serialisation
 
 cdef class xmlfile:
-    """xmlfile(self, output_file, encoding=None, compression=None, close=False)
+    """xmlfile(self, output_file, encoding=None, compression=None, close=False, buffered=True)
 
     A simple mechanism for incremental XML serialisation.
 
@@ -622,30 +622,41 @@ cdef class xmlfile:
                       # serialise generated elements into the XML file
                       xf.write(element)
 
+                  # or write multiple Elements or strings at once
+                  xf.write(etree.Element('start'), "text", etree.Element('end'))
+
     If 'output_file' is a file(-like) object, passing ``close=True`` will
     close it when exiting the context manager.  By default, it is left
     to the owner to do that.  When a file path is used, lxml will take care
     of opening and closing the file itself.  Also, when a compression level
     is set, lxml will deliberately close the file to make sure all data gets
     compressed and written.
+
+    Setting ``buffered=False`` will flush the output after each operation,
+    such as opening or closing an ``xf.element()`` block or calling
+    ``xf.write()``.  Alternatively, calling ``xf.flush()`` can be used to
+    explicitly flush any pending output when buffering is enabled.
     """
     cdef object output_file
     cdef bytes encoding
     cdef _IncrementalFileWriter writer
     cdef int compresslevel
     cdef bint close
+    cdef bint buffered
 
     def __init__(self, output_file not None, encoding=None, compression=None,
-                 close=False):
+                 close=False, buffered=True):
         self.output_file = output_file
         self.encoding = _utf8orNone(encoding)
         self.compresslevel = compression or 0
         self.close = close
+        self.buffered = buffered
 
     def __enter__(self):
         assert self.output_file is not None
         self.writer = _IncrementalFileWriter(
-            self.output_file, self.encoding, self.compresslevel, self.close)
+            self.output_file, self.encoding, self.compresslevel,
+            self.close, self.buffered)
         return self.writer
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -674,14 +685,16 @@ cdef class _IncrementalFileWriter:
     cdef _FilelikeWriter _target
     cdef list _element_stack
     cdef int _status
+    cdef bint _buffered
 
-    def __cinit__(self, outfile, bytes encoding, int compresslevel, bint close):
+    def __cinit__(self, outfile, bytes encoding, int compresslevel, bint close, bint buffered):
         self._status = WRITER_STARTING
         self._element_stack = []
         if encoding is None:
             encoding = b'ASCII'
         self._encoding = encoding
         self._c_encoding = _cstr(encoding) if encoding is not None else NULL
+        self._buffered = buffered
         self._target = _create_output_buffer(
             outfile, self._c_encoding, compresslevel, &self._c_out, close)
 
@@ -712,6 +725,8 @@ cdef class _IncrementalFileWriter:
             self._status = WRITER_DTD_WRITTEN
         else:
             self._status = WRITER_DECL_WRITTEN
+        if not self._buffered:
+            tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
     def write_doctype(self, doctype):
@@ -727,6 +742,8 @@ cdef class _IncrementalFileWriter:
         doctype = _utf8(doctype)
         _writeDoctype(self._c_out, _xcstr(doctype))
         self._status = WRITER_DTD_WRITTEN
+        if not self._buffered:
+            tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
     def element(self, tag, attrib=None, nsmap=None, **_extra):
@@ -774,6 +791,8 @@ cdef class _IncrementalFileWriter:
         self._write_attributes_and_namespaces(
             attributes, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
+        if not self._buffered:
+            tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
         self._element_stack.append((ns, name, prefix, flat_namespace_map))
@@ -814,6 +833,8 @@ cdef class _IncrementalFileWriter:
 
         if not self._element_stack:
             self._status = WRITER_FINISHED
+        if not self._buffered:
+            tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
     cdef _find_prefix(self, bytes href, dict flat_namespaces_map, list new_namespaces):
@@ -874,6 +895,16 @@ cdef class _IncrementalFileWriter:
             else:
                 raise TypeError("got invalid input value of type %s, expected string or Element" % type(content))
             self._handle_error(self._c_out.error)
+        if not self._buffered:
+            tree.xmlOutputBufferFlush(self._c_out)
+
+    def flush(self):
+        """flush(self)
+
+        Write any pending content of the current output buffer to the stream.
+        """
+        assert self._c_out is not NULL
+        tree.xmlOutputBufferFlush(self._c_out)
 
     cdef _close(self, bint raise_on_error):
         if raise_on_error:

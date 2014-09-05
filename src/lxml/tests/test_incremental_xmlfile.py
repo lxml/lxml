@@ -15,8 +15,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, BytesIO
-from common_imports import HelperTestCase
+from common_imports import etree, BytesIO, HelperTestCase, skipIf
 
 class _XmlFileTestCaseBase(HelperTestCase):
     _file = None  # to be set by specific subtypes below
@@ -144,6 +143,38 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 xf.write('toast')
         self.assertXml('<test>toast</test>', encoding='utf16')
 
+    def test_buffering(self):
+        with etree.xmlfile(self._file, buffered=False) as xf:
+            with xf.element('test'):
+                self.assertEqual("<test>", self._read_file())
+                xf.write('toast')
+                self.assertEqual("<test>toast", self._read_file())
+                with xf.element('taste'):
+                    self.assertEqual("<test>toast<taste>", self._read_file())
+                    xf.write('some', etree.Element("more"), "toast")
+                    self.assertEqual("<test>toast<taste>some<more/>toast", self._read_file())
+                self.assertEqual("<test>toast<taste>some<more/>toast</taste>", self._read_file())
+                xf.write('end')
+                self.assertEqual("<test>toast<taste>some<more/>toast</taste>end",
+                                 self._read_file())
+            self.assertEqual("<test>toast<taste>some<more/>toast</taste>end</test>",
+                             self._read_file())
+        self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
+
+    def test_flush(self):
+        with etree.xmlfile(self._file, buffered=True) as xf:
+            with xf.element('test'):
+                self.assertEqual("", self._read_file())
+                xf.write('toast')
+                self.assertEqual("", self._read_file())
+                with xf.element('taste'):
+                    self.assertEqual("", self._read_file())
+                    xf.flush()
+                    self.assertEqual("<test>toast<taste>", self._read_file())
+                self.assertEqual("<test>toast<taste>", self._read_file())
+            self.assertEqual("<test>toast<taste>", self._read_file())
+        self.assertXml("<test>toast<taste></taste></test>")
+
     def test_failure_preceding_text(self):
         try:
             with etree.xmlfile(self._file) as xf:
@@ -195,12 +226,20 @@ class _XmlFileTestCaseBase(HelperTestCase):
             self.assertTrue(False)
 
     def _read_file(self):
+        pos = self._file.tell()
         self._file.seek(0)
-        return self._file.read()
+        try:
+            return self._file.read()
+        finally:
+            self._file.seek(pos)
 
     def _parse_file(self):
+        pos = self._file.tell()
         self._file.seek(0)
-        return etree.parse(self._file)
+        try:
+            return etree.parse(self._file)
+        finally:
+            self._file.seek(pos)
 
     def tearDown(self):
         if self._file is not None:
@@ -246,12 +285,22 @@ class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
         self._tmpfile.seek(0)
         return etree.parse(self._tmpfile)
 
+    @skipIf(True, "temp file behaviour is too platform specific here")
+    def test_buffering(self):
+        pass
+
+    @skipIf(True, "temp file behaviour is too platform specific here")
+    def test_flush(self):
+        pass
+
 
 class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
     class SimpleFileLike(object):
         def __init__(self, target):
             self._target = target
             self.write = target.write
+            self.tell = target.tell
+            self.seek = target.seek
             self.closed = False
 
         def close(self):
@@ -267,8 +316,12 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         return self._target.getvalue()
 
     def _parse_file(self):
+        pos = self._file.tell()
         self._target.seek(0)
-        return etree.parse(self._target)
+        try:
+            return etree.parse(self._target)
+        finally:
+            self._target.seek(pos)
 
     def test_filelike_not_closing(self):
         with etree.xmlfile(self._file) as xf:
