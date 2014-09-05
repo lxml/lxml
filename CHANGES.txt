@@ -13,10 +13,9 @@ Features added
   A new method ``xf.flush()`` can alternatively be used to explicitly flush
   the output.
 
-* ``lxml.html.document_fromstring`` now accepts an ``ensure_head_body`` option.
-  If true, the resulting document will be given an empty head if it didn't
-  have one originally and an empty body if it didn't have one originally.
-  Default: false.
+* ``lxml.html.document_fromstring`` has a new option ``ensure_head_body=True``
+  which will add an empty head and/or body element to the result document if
+  missing.
 
 * ``lxml.html.iterlinks`` now returns links inside meta refresh tags.
 
