@@ -146,33 +146,31 @@ class _XmlFileTestCaseBase(HelperTestCase):
     def test_buffering(self):
         with etree.xmlfile(self._file, buffered=False) as xf:
             with xf.element('test'):
-                self.assertEqual("<test>", self._read_file())
+                self.assertXml("<test>")
                 xf.write('toast')
-                self.assertEqual("<test>toast", self._read_file())
+                self.assertXml("<test>toast")
                 with xf.element('taste'):
-                    self.assertEqual("<test>toast<taste>", self._read_file())
+                    self.assertXml("<test>toast<taste>")
                     xf.write('some', etree.Element("more"), "toast")
-                    self.assertEqual("<test>toast<taste>some<more/>toast", self._read_file())
-                self.assertEqual("<test>toast<taste>some<more/>toast</taste>", self._read_file())
+                    self.assertXml("<test>toast<taste>some<more/>toast")
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>")
                 xf.write('end')
-                self.assertEqual("<test>toast<taste>some<more/>toast</taste>end",
-                                 self._read_file())
-            self.assertEqual("<test>toast<taste>some<more/>toast</taste>end</test>",
-                             self._read_file())
+                self.assertXml("<test>toast<taste>some<more/>toast</taste>end")
+            self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
         self.assertXml("<test>toast<taste>some<more/>toast</taste>end</test>")
 
     def test_flush(self):
         with etree.xmlfile(self._file, buffered=True) as xf:
             with xf.element('test'):
-                self.assertEqual("", self._read_file())
+                self.assertXml("")
                 xf.write('toast')
-                self.assertEqual("", self._read_file())
+                self.assertXml("")
                 with xf.element('taste'):
-                    self.assertEqual("", self._read_file())
+                    self.assertXml("")
                     xf.flush()
-                    self.assertEqual("<test>toast<taste>", self._read_file())
-                self.assertEqual("<test>toast<taste>", self._read_file())
-            self.assertEqual("<test>toast<taste>", self._read_file())
+                    self.assertXml("<test>toast<taste>")
+                self.assertXml("<test>toast<taste>")
+            self.assertXml("<test>toast<taste>")
         self.assertXml("<test>toast<taste></taste></test>")
 
     def test_failure_preceding_text(self):
