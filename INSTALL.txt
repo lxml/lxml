@@ -36,7 +36,7 @@ in particular:
   http://xmlsoft.org/XSLT/downloads.html
 
   * We recommend libxslt 1.1.26 or later. Version 1.1.25 will not
-    work.
+    work due to a missing library symbol.
 
 Newer versions generally contain fewer bugs and are therefore
 recommended.  XML Schema support is also still worked on in libxml2,
