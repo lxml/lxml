@@ -548,15 +548,17 @@ And when done::
 
     w.close()
 
-Note the additional ``xf.flush()`` call in the example above.  Normally,
-the output stream is buffered to avoid excessive I/O calls.  Whenever
-the internal buffer fills up, its content is written out.  In the case
-above, however, we want to make sure that each message that we write
-(i.e. each element subtree) is written out immediately, so we flush the
-content explicitly at the right point.
+Note the additional ``xf.flush()`` call in the example above, which is
+available since lxml 3.4.  Normally, the output stream is buffered to
+avoid excessive I/O calls.  Whenever the internal buffer fills up, its
+content is written out.  In the case above, however, we want to make
+sure that each message that we write (i.e. each element subtree) is
+written out immediately, so we flush the content explicitly at the
+right point.
 
 Alternatively, if buffering is not desired at all, it can be disabled
-by passing the flag ``buffered=False`` into ``xmlfile()``.
+by passing the flag ``buffered=False`` into ``xmlfile()`` (also since
+lxml 3.4).
 
 
 CDATA
