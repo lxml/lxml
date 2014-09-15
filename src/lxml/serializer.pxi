@@ -747,6 +747,9 @@ cdef class _IncrementalFileWriter:
 
         Write an XML declaration and (optionally) a doctype into the file.
         """
+        if self._method == OUTPUT_METHOD_HTML:
+            raise LxmlSyntaxError("Html documents have no declaration.")
+
         assert self._c_out is not NULL
         cdef const_xmlChar* c_version
         cdef int c_standalone
