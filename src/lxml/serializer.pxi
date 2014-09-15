@@ -643,6 +643,7 @@ cdef class xmlfile:
     cdef int compresslevel
     cdef bint close
     cdef bint buffered
+    cdef int method
 
     def __init__(self, output_file not None, encoding=None, compression=None,
                  close=False, buffered=True):
@@ -651,12 +652,13 @@ cdef class xmlfile:
         self.compresslevel = compression or 0
         self.close = close
         self.buffered = buffered
+        self.method = OUTPUT_METHOD_XML
 
     def __enter__(self):
         assert self.output_file is not None
         self.writer = _IncrementalFileWriter(
             self.output_file, self.encoding, self.compresslevel,
-            self.close, self.buffered, OUTPUT_METHOD_XML)
+            self.close, self.buffered, self.method)
         return self.writer
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -667,42 +669,17 @@ cdef class xmlfile:
             if self.close:
                 self.output_file = None
 
-cdef class htmlfile:
+
+cdef class htmlfile(xmlfile):
     """htmlfile(self, output_file, encoding=None, compression=None, close=False, buffered=True)
 
     A simple mechanism for incremental HTML serialisation. Works the same as
     xmlfile
     """
 
-    cdef object output_file
-    cdef bytes encoding
-    cdef _IncrementalFileWriter writer
-    cdef int compresslevel
-    cdef bint close
-    cdef bint buffered
-
-    def __init__(self, output_file not None, encoding=None, compression=None,
-                 close=False, buffered=True):
-        self.output_file = output_file
-        self.encoding = _utf8orNone(encoding)
-        self.compresslevel = compression or 0
-        self.close = close
-        self.buffered = buffered
-
-    def __enter__(self):
-        assert self.output_file is not None
-        self.writer = _IncrementalFileWriter(
-            self.output_file, self.encoding, self.compresslevel,
-            self.close, self.buffered, OUTPUT_METHOD_HTML)
-        return self.writer
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.writer is not None:
-            old_writer, self.writer = self.writer, None
-            raise_on_error = exc_type is None
-            old_writer._close(raise_on_error)
-            if self.close:
-                self.output_file = None
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.method = OUTPUT_METHOD_HTML
 
 
 cdef enum _IncrementalFileWriterStatus:
