@@ -818,7 +818,7 @@ cdef class _IncrementalFileWriter:
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
 
     cdef _write_qname(self, bytes name, bytes prefix):
-        if prefix is not None:
+        if self._method == OUTPUT_METHOD_XML and prefix is not None:
             tree.xmlOutputBufferWrite(self._c_out, len(prefix), _cstr(prefix))
             tree.xmlOutputBufferWrite(self._c_out, 1, ':')
         tree.xmlOutputBufferWrite(self._c_out, len(name), _cstr(name))
@@ -831,8 +831,15 @@ cdef class _IncrementalFileWriter:
         prefix = self._find_prefix(ns, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '<')
         self._write_qname(name, prefix)
-        self._write_attributes_and_namespaces(
-            attributes, flat_namespace_map, new_namespaces)
+
+        if self._method == OUTPUT_METHOD_XML:
+            self._write_attributes_and_namespaces(
+                attributes, flat_namespace_map, new_namespaces)
+        elif self._method == OUTPUT_METHOD_HTML:
+            self._write_attributes_list(attributes)
+        else:
+            raise Exception("hack me some more")
+
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)
