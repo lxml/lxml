@@ -335,12 +335,36 @@ class SimpleFileLikeXmlFileTestCase(_XmlFileTestCaseBase):
         self._file = None  # prevent closing in tearDown()
 
 
+class HtmlFileTestCase(_XmlFileTestCaseBase):
+    def setUp(self):
+        self._file = BytesIO()
+
+    # http://www.w3.org/TR/html5/syntax.html#elements-0
+    def test_void_elements(self):
+        for tag in ("area", "base", "br", "col", "hr", "img", "input", "link",
+                    "meta", "param"):
+            with etree.htmlfile(self._file) as xf:
+                xf.write(etree.Element(tag))
+            self.assertXml('<%s>' % tag)
+            self._file = BytesIO()
+
+    def test_write_declaration(self):
+        try:
+            with etree.htmlfile(self._file) as xf:
+                xf.write_declaration()
+        except etree.LxmlSyntaxError:
+            self.assertTrue(True)
+        else:
+            self.assertTrue(False)
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(BytesIOXmlFileTestCase),
                     unittest.makeSuite(TempXmlFileTestCase),
                     unittest.makeSuite(TempPathXmlFileTestCase),
                     unittest.makeSuite(SimpleFileLikeXmlFileTestCase),
+                    unittest.makeSuite(HtmlFileTestCase),
                     ])
     return suite
 
