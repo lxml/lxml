@@ -643,6 +643,7 @@ cdef class xmlfile:
     cdef int compresslevel
     cdef bint close
     cdef bint buffered
+    cdef int method
 
     def __init__(self, output_file not None, encoding=None, compression=None,
                  close=False, buffered=True):
@@ -651,12 +652,13 @@ cdef class xmlfile:
         self.compresslevel = compression or 0
         self.close = close
         self.buffered = buffered
+        self.method = OUTPUT_METHOD_XML
 
     def __enter__(self):
         assert self.output_file is not None
         self.writer = _IncrementalFileWriter(
             self.output_file, self.encoding, self.compresslevel,
-            self.close, self.buffered)
+            self.close, self.buffered, self.method)
         return self.writer
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -666,6 +668,18 @@ cdef class xmlfile:
             old_writer._close(raise_on_error)
             if self.close:
                 self.output_file = None
+
+
+cdef class htmlfile(xmlfile):
+    """htmlfile(self, output_file, encoding=None, compression=None, close=False, buffered=True)
+
+    A simple mechanism for incremental HTML serialisation. Works the same as
+    xmlfile
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.method = OUTPUT_METHOD_HTML
 
 
 cdef enum _IncrementalFileWriterStatus:
@@ -685,9 +699,11 @@ cdef class _IncrementalFileWriter:
     cdef _FilelikeWriter _target
     cdef list _element_stack
     cdef int _status
+    cdef int _method
     cdef bint _buffered
 
-    def __cinit__(self, outfile, bytes encoding, int compresslevel, bint close, bint buffered):
+    def __cinit__(self, outfile, bytes encoding, int compresslevel, bint close,
+                  bint buffered, int method):
         self._status = WRITER_STARTING
         self._element_stack = []
         if encoding is None:
@@ -697,6 +713,7 @@ cdef class _IncrementalFileWriter:
         self._buffered = buffered
         self._target = _create_output_buffer(
             outfile, self._c_encoding, compresslevel, &self._c_out, close)
+        self._method = method
 
     def __dealloc__(self):
         if self._c_out is not NULL:
@@ -707,6 +724,9 @@ cdef class _IncrementalFileWriter:
 
         Write an XML declaration and (optionally) a doctype into the file.
         """
+        if self._method != OUTPUT_METHOD_XML:
+            raise LxmlSyntaxError("Only XML documents need declarations.")
+
         assert self._c_out is not NULL
         cdef const_xmlChar* c_version
         cdef int c_standalone
@@ -775,7 +795,7 @@ cdef class _IncrementalFileWriter:
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
 
     cdef _write_qname(self, bytes name, bytes prefix):
-        if prefix is not None:
+        if self._method == OUTPUT_METHOD_XML and prefix is not None:
             tree.xmlOutputBufferWrite(self._c_out, len(prefix), _cstr(prefix))
             tree.xmlOutputBufferWrite(self._c_out, 1, ':')
         tree.xmlOutputBufferWrite(self._c_out, len(name), _cstr(name))
@@ -788,8 +808,15 @@ cdef class _IncrementalFileWriter:
         prefix = self._find_prefix(ns, flat_namespace_map, new_namespaces)
         tree.xmlOutputBufferWrite(self._c_out, 1, '<')
         self._write_qname(name, prefix)
-        self._write_attributes_and_namespaces(
-            attributes, flat_namespace_map, new_namespaces)
+
+        if self._method == OUTPUT_METHOD_XML:
+            self._write_attributes_and_namespaces(
+                attributes, flat_namespace_map, new_namespaces)
+        elif self._method == OUTPUT_METHOD_HTML:
+            self._write_attributes_list(attributes)
+        else:
+            raise Exception("hack me some more")
+
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         if not self._buffered:
             tree.xmlOutputBufferFlush(self._c_out)
@@ -887,7 +914,7 @@ cdef class _IncrementalFileWriter:
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")
                 _writeNodeToBuffer(self._c_out, (<_Element>content)._c_node,
-                                   self._c_encoding, NULL, OUTPUT_METHOD_XML,
+                                   self._c_encoding, NULL, self._method,
                                    False, False, pretty_print, with_tail, False)
                 if (<_Element>content)._c_node.type == tree.XML_ELEMENT_NODE:
                     if not self._element_stack:
