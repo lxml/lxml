@@ -2,6 +2,13 @@
 lxml changelog
 ==============
 
+Latest changes
+==================
+
+* New ``htmlfile`` HTML generator to accompany the incremental ``xmlfile``
+  serialisation API.  Patch by Burak Arslan.
+
+
 3.4.0 (2014-09-10)
 ==================
 
