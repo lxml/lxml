@@ -673,10 +673,9 @@ cdef class xmlfile:
 cdef class htmlfile(xmlfile):
     """htmlfile(self, output_file, encoding=None, compression=None, close=False, buffered=True)
 
-    A simple mechanism for incremental HTML serialisation. Works the same as
-    xmlfile
+    A simple mechanism for incremental HTML serialisation.  Works the same as
+    xmlfile.
     """
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.method = OUTPUT_METHOD_HTML
