@@ -339,23 +339,45 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._file = BytesIO()
 
-    # http://www.w3.org/TR/html5/syntax.html#elements-0
     def test_void_elements(self):
-        for tag in ("area", "base", "br", "col", "hr", "img", "input", "link",
-                    "meta", "param"):
+        # http://www.w3.org/TR/html5/syntax.html#elements-0
+        void_elements = set([
+            "area", "base", "br", "col", "embed", "hr", "img",
+            "input", "keygen", "link", "meta", "param",
+            "source", "track", "wbr"
+        ])
+
+        # FIXME: These don't get serialized as void elements.
+        void_elements.difference_update([
+            'area', 'embed', 'keygen', 'source', 'track', 'wbr'
+        ])
+
+        for tag in sorted(void_elements):
             with etree.htmlfile(self._file) as xf:
                 xf.write(etree.Element(tag))
             self.assertXml('<%s>' % tag)
             self._file = BytesIO()
 
     def test_write_declaration(self):
-        try:
-            with etree.htmlfile(self._file) as xf:
+        with etree.htmlfile(self._file) as xf:
+            try:
                 xf.write_declaration()
-        except etree.LxmlSyntaxError:
-            self.assertTrue(True)
-        else:
-            self.assertTrue(False)
+            except etree.LxmlSyntaxError:
+                self.assertTrue(True)
+            else:
+                self.assertTrue(False)
+            xf.write(etree.Element('html'))
+
+    def test_write_namespaced_element(self):
+        with etree.htmlfile(self._file) as xf:
+            xf.write(etree.Element('{some_ns}some_tag'))
+        self.assertXml('<ns0:some_tag xmlns:ns0="some_ns"></ns0:some_tag>')
+
+    def test_open_namespaced_element(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("{some_ns}some_tag"):
+                pass
+        self.assertXml('<ns0:some_tag xmlns:ns0="some_ns"></ns0:some_tag>')
 
 
 def test_suite():

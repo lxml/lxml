@@ -723,12 +723,11 @@ cdef class _IncrementalFileWriter:
 
         Write an XML declaration and (optionally) a doctype into the file.
         """
-        if self._method != OUTPUT_METHOD_XML:
-            raise LxmlSyntaxError("Only XML documents need declarations.")
-
         assert self._c_out is not NULL
         cdef const_xmlChar* c_version
         cdef int c_standalone
+        if self._method != OUTPUT_METHOD_XML:
+            raise LxmlSyntaxError("only XML documents have declarations")
         if self._status >= WRITER_DECL_WRITTEN:
             raise LxmlSyntaxError("XML declaration already written")
         version = _utf8orNone(version)
@@ -794,7 +793,7 @@ cdef class _IncrementalFileWriter:
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
 
     cdef _write_qname(self, bytes name, bytes prefix):
-        if self._method == OUTPUT_METHOD_XML and prefix is not None:
+        if prefix is not None:
             tree.xmlOutputBufferWrite(self._c_out, len(prefix), _cstr(prefix))
             tree.xmlOutputBufferWrite(self._c_out, 1, ':')
         tree.xmlOutputBufferWrite(self._c_out, len(name), _cstr(name))
@@ -808,13 +807,8 @@ cdef class _IncrementalFileWriter:
         tree.xmlOutputBufferWrite(self._c_out, 1, '<')
         self._write_qname(name, prefix)
 
-        if self._method == OUTPUT_METHOD_XML:
-            self._write_attributes_and_namespaces(
-                attributes, flat_namespace_map, new_namespaces)
-        elif self._method == OUTPUT_METHOD_HTML:
-            self._write_attributes_list(attributes)
-        else:
-            raise Exception("hack me some more")
+        self._write_attributes_and_namespaces(
+            attributes, flat_namespace_map, new_namespaces)
 
         tree.xmlOutputBufferWrite(self._c_out, 1, '>')
         if not self._buffered:
