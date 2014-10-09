@@ -31,6 +31,7 @@ class ElementTreeContentHandler(ContentHandler):
     """Build an lxml ElementTree from SAX events.
     """
     def __init__(self, makeelement=None):
+        ContentHandler.__init__(self)
         self._root = None
         self._root_siblings = []
         self._element_stack = []
