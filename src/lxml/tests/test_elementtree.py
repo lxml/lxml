@@ -2305,13 +2305,13 @@ class _ETreeTestCaseBase(HelperTestCase):
         s = [e, f]
         a[99:] = s
         self.assertEqual(
-            [a, b, e, f],
+            [b, c, e, f],
             list(a))
 
         s = [g, h]
         a[:0] = s
         self.assertEqual(
-            [g, h, a, b, e, f],
+            [g, h, b, c, e, f],
             list(a))
 
     def test_setslice_end_exact(self):
