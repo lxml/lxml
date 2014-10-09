@@ -2314,6 +2314,25 @@ class _ETreeTestCaseBase(HelperTestCase):
             [g, h, a, b, e, f],
             list(a))
 
+    def test_setslice_end_exact(self):
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        b = SubElement(a, 'b')
+        c = SubElement(a, 'c')
+        d = SubElement(a, 'd')
+
+        e = Element('e')
+        f = Element('f')
+        g = Element('g')
+
+        s = [e, f, g]
+        a[3:] = s
+        self.assertEqual(
+            [b, c, d, e, f, g],
+            list(a))
+
     def test_setslice_single(self):
         Element = self.etree.Element
         SubElement = self.etree.SubElement
@@ -2388,25 +2407,6 @@ class _ETreeTestCaseBase(HelperTestCase):
             [b, x, y, c, d],
             list(a))
 
-    def test_setslice_end(self):
-        Element = self.etree.Element
-        SubElement = self.etree.SubElement
-
-        a = Element('a')
-        b = SubElement(a, 'b')
-        c = SubElement(a, 'c')
-        d = SubElement(a, 'd')
-
-        e = Element('e')
-        f = Element('f')
-        g = Element('g')
-
-        s = [e, f, g]
-        a[3:] = s
-        self.assertEqual(
-            [b, c, d, e, f, g],
-            list(a))
-        
     def test_setslice_empty(self):
         Element = self.etree.Element
 

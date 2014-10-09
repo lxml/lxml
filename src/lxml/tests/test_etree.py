@@ -232,6 +232,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         root.set("attr", "TEST")
         self.assertEqual("TEST", root.get("attr"))
 
+    def test_attribute_set_nonstring(self):
+        # ElementTree accepts arbitrary attribute values
+        # lxml.etree allows only strings
+        Element = self.etree.Element
+
+        root = Element("root")
+        root.set("attr", "TEST")
+        self.assertEqual("TEST", root.get("attr"))
+        self.assertRaises(TypeError, root.set, "newattr", 5)
+
     def test_attrib_and_keywords(self):
         Element = self.etree.Element
 
@@ -565,16 +575,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         root2 = copy.deepcopy(tree1.getroot())
         self.assertEqual(_bytes("<test/>"),
                           tostring(root2))
-
-    def test_attribute_set(self):
-        # ElementTree accepts arbitrary attribute values
-        # lxml.etree allows only strings
-        Element = self.etree.Element
-
-        root = Element("root")
-        root.set("attr", "TEST")
-        self.assertEqual("TEST", root.get("attr"))
-        self.assertRaises(TypeError, root.set, "newattr", 5)
 
     def test_parse_remove_comments(self):
         fromstring = self.etree.fromstring
@@ -2874,18 +2874,6 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(root.findall(".//{X}b")), 2)
         self.assertEqual(len(root.findall(".//{X}*")), 2)
         self.assertEqual(len(root.findall(".//b")), 3)
-
-    def test_findall_different_nsmaps(self):
-        XML = self.etree.XML
-        root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>'))
-        nsmap = {'xx': 'X'}
-        self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 2)
-        self.assertEqual(len(root.findall(".//xx:*", namespaces=nsmap)), 2)
-        self.assertEqual(len(root.findall(".//b", namespaces=nsmap)), 2)
-        nsmap = {'xx': 'Y'}
-        self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 1)
-        self.assertEqual(len(root.findall(".//xx:*", namespaces=nsmap)), 1)
-        self.assertEqual(len(root.findall(".//b", namespaces=nsmap)), 2)
 
     def test_findall_different_nsmaps(self):
         XML = self.etree.XML
