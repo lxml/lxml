@@ -9,13 +9,13 @@ for IO related test cases.
 """
 
 import unittest
-import os, re, tempfile, copy, operator, gc, sys
+import os, re, tempfile, copy, operator, sys
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import StringIO, BytesIO, etree
+from common_imports import BytesIO, etree
 from common_imports import ElementTree, cElementTree, ET_VERSION, CET_VERSION
 from common_imports import filter_by_version, fileInTestDir, canonicalize, HelperTestCase
 from common_imports import _str, _bytes, unicode, next
