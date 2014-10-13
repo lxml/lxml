@@ -646,7 +646,7 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     doc = document_fromstring(html, parser=parser, base_url=base_url, **kw)
     assert _nons(doc.tag) == 'html'
     bodies = [e for e in doc if _nons(e.tag) == 'body']
-    assert len(bodies) < 2, ("too many bodies: %r in %r" % (bodies, html))
+    assert len(bodies) == 1, ("should be one body element: %r in %r" % (bodies, html))
     body = bodies[0]
     elements = []
     if no_leading_text and body.text and body.text.strip():
