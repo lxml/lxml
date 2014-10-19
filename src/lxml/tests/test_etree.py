@@ -1284,7 +1284,10 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         class MyResolver(self.etree.Resolver):
             def resolve(self, url, id, context):
-                assertEqual(url, fileUrlInTestDir(test_url))
+                expected = fileUrlInTestDir(test_url)
+                url = url.replace('file://', 'file:')  # depends on libxml2 version
+                expected = expected.replace('file://', 'file:')
+                assertEqual(url, expected)
                 return self.resolve_filename(
                     fileUrlInTestDir('test.dtd'), context)
 
