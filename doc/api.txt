@@ -38,9 +38,9 @@ lxml is extremely extensible through `XPath functions in Python`_, custom
    6   Error logging
    7   Serialisation
    8   Incremental XML generation
-   8   CDATA
-   9   XInclude and ElementInclude
-   10  write_c14n on ElementTree
+   9   CDATA
+   10  XInclude and ElementInclude
+   11  write_c14n on ElementTree
 
 ..
   >>> from io import BytesIO
@@ -463,17 +463,18 @@ correct doctype format, including the name of the root node.
 Incremental XML generation
 --------------------------
 
-Since version 3.1, lxml has an API for incrementally generating XML
-using the ``with`` statement.  It's main purpose is to freely and
-safely mix surrounding elements with pre-built in-memory trees, e.g.
-to write out large documents that consist mostly of repetitive
-subtrees (like database dumps).  But it can be useful in many cases
-where memory consumption matters or where XML is naturally generated
-sequentially.
+Since version 3.1, lxml provides an ``xmlfile`` API for incrementally
+generating XML using the ``with`` statement.  It's main purpose is to
+freely and safely mix surrounding elements with pre-built in-memory
+trees, e.g. to write out large documents that consist mostly of
+repetitive subtrees (like database dumps).  But it can be useful in
+many cases where memory consumption matters or where XML is naturally
+generated in sequential steps.  Since lxml 3.4.1, there is an equivalent
+context manager for HTML serialisation called ``htmlfile``.
 
-The API can serialise to real files (also given as file paths) as
-well as file-like objects, e.g. ``io.BytesIO()``.  Here is a simple
-example::
+The API can serialise to real files (given as file path or file
+object), as well as file-like objects, e.g. ``io.BytesIO()``.
+Here is a simple example::
 
   >>> f = BytesIO()
   >>> with etree.xmlfile(f) as xf:

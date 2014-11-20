@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.4.0`_, released 2014-09-10
-(`changes for 3.4.0`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.4.1`_, released 2014-11-20
+(`changes for 3.4.1`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -233,15 +233,17 @@ See the web sites of lxml
 `1.3 <http://lxml.de/1.3/>`_,
 `2.0 <http://lxml.de/2.0/>`_,
 `2.1 <http://lxml.de/2.1/>`_,
-`2.2 <http://lxml.de/2.2/>`_
-`2.3 <http://lxml.de/2.3/>`_
-`3.0 <http://lxml.de/3.0/>`_
-`3.1 <http://lxml.de/3.1/>`_
-`3.2 <http://lxml.de/3.2/>`_
+`2.2 <http://lxml.de/2.2/>`_,
+`2.3 <http://lxml.de/2.3/>`_,
+`3.0 <http://lxml.de/3.0/>`_,
+`3.1 <http://lxml.de/3.1/>`_,
+`3.2 <http://lxml.de/3.2/>`_,
 `3.3 <http://lxml.de/3.3/>`_
 and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.4.0.pdf
+.. _`PDF documentation`: lxmldoc-3.4.1.pdf
+
+* `lxml 3.4.1`_, released 2014-11-20 (`changes for 3.4.1`_)
 
 * `lxml 3.4.0`_, released 2014-09-10 (`changes for 3.4.0`_)
 
