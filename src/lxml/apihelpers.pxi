@@ -703,8 +703,18 @@ cdef int _setTailText(xmlNode* c_node, value) except -1:
     _removeText(c_node.next)
     if value is None:
         return 0
-    text = _utf8(value)
-    c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
+    if python._isString(value):
+        text = _utf8(value)
+        c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
+    elif isinstance(value, CDATA):
+        c_text_node = tree.xmlNewCDataBlock(
+            c_node.doc, _xcstr((<CDATA>value)._utf8_data),
+            python.PyBytes_GET_SIZE((<CDATA>value)._utf8_data))
+    else:
+        # this will raise the right error
+        _utf8(value)
+        return -1
+
     # XXX what if we're the top element?
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
