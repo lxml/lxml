@@ -225,7 +225,7 @@ Note how ``element.iterdescendants()`` does not include the element
 itself, as opposed to ``element.iter()``.  The latter effectively
 implements the 'descendant-or-self' axis in XPath.
 
-All of these iterators support one (or more, since lxml 2.4) additional
+All of these iterators support one (or more, since lxml 3.0) additional
 arguments that filter the generated elements by tag name:
 
 .. sourcecode:: pycon
