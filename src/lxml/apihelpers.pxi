@@ -673,24 +673,26 @@ cdef void _removeText(xmlNode* c_node):
         tree.xmlFreeNode(c_node)
         c_node = c_next
 
-cdef int _setNodeText(xmlNode* c_node, value) except -1:
+cdef xmlNode* _createTextNode(xmlDoc* doc, value) except NULL:
     cdef xmlNode* c_text_node
+    if isinstance(value, CDATA):
+        c_text_node = tree.xmlNewCDataBlock(
+            doc, _xcstr((<CDATA>value)._utf8_data),
+            python.PyBytes_GET_SIZE((<CDATA>value)._utf8_data))
+    else:
+        text = _utf8(value)
+        c_text_node = tree.xmlNewDocText(doc, _xcstr(text))
+    if not c_text_node:
+        raise MemoryError()
+    return c_text_node
+
+cdef int _setNodeText(xmlNode* c_node, value) except -1:
     # remove all text nodes at the start first
     _removeText(c_node.children)
     if value is None:
         return 0
     # now add new text node with value at start
-    if python._isString(value):
-        text = _utf8(value)
-        c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
-    elif isinstance(value, CDATA):
-        c_text_node = tree.xmlNewCDataBlock(
-            c_node.doc, _xcstr((<CDATA>value)._utf8_data),
-            python.PyBytes_GET_SIZE((<CDATA>value)._utf8_data))
-    else:
-        # this will raise the right error
-       _utf8(value)
-       return -1
+    c_text_node = _createTextNode(c_node.doc, value)
     if c_node.children is NULL:
         tree.xmlAddChild(c_node, c_text_node)
     else:
@@ -698,14 +700,12 @@ cdef int _setNodeText(xmlNode* c_node, value) except -1:
     return 0
 
 cdef int _setTailText(xmlNode* c_node, value) except -1:
-    cdef xmlNode* c_text_node
     # remove all text nodes at the start first
     _removeText(c_node.next)
     if value is None:
         return 0
-    text = _utf8(value)
-    c_text_node = tree.xmlNewDocText(c_node.doc, _xcstr(text))
-    # XXX what if we're the top element?
+    # now append new text node with value
+    c_text_node = _createTextNode(c_node.doc, value)
     tree.xmlAddNextSibling(c_node, c_text_node)
     return 0
 

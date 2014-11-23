@@ -1442,6 +1442,29 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(_bytes('<root><![CDATA[test]]></root>'),
                           tostring(root))
 
+    def test_cdata_tail(self):
+        CDATA = self.etree.CDATA
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+        tostring = self.etree.tostring
+
+        root = Element("root")
+        child = SubElement(root, 'child')
+        child.tail = CDATA('test')
+
+        self.assertEqual('test', child.tail)
+        self.assertEqual(_bytes('<root><child/><![CDATA[test]]></root>'),
+                         tostring(root))
+
+        '''  # FIXME: should this work? CDATA tails are currently ignored by serialiser
+        root = Element("root")
+        root.tail = CDATA('test')
+
+        self.assertEqual('test', root.tail)
+        self.assertEqual(_bytes('<root/><![CDATA[test]]>'),
+                         tostring(root))
+        '''
+
     def test_cdata_type(self):
         CDATA = self.etree.CDATA
         Element = self.etree.Element
@@ -1461,9 +1484,7 @@ class ETreeOnlyTestCase(HelperTestCase):
 
         root = Element("root")
         cdata = CDATA('test')
-        
-        self.assertRaises(TypeError,
-                          setattr, root, 'tail', cdata)
+
         self.assertRaises(TypeError,
                           root.set, 'attr', cdata)
         self.assertRaises(TypeError,

@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+Latest changes
+==============
+
+Bugs fixed
+----------
+
+* ``CDATA()`` wrapped content was rejected for tail text.
+
+
 3.4.1 (2014-11-20)
 ==================
 
