@@ -322,7 +322,8 @@ cdef void _writeTail(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                      const_char* encoding, int c_method, bint pretty_print) nogil:
     u"Write the element tail."
     c_node = c_node.next
-    while c_node and c_node.type == tree.XML_TEXT_NODE and not c_buffer.error:
+    while c_node and not c_buffer.error and c_node.type in (
+            tree.XML_TEXT_NODE, tree.XML_CDATA_SECTION_NODE):
         if c_method == OUTPUT_METHOD_HTML:
             tree.htmlNodeDumpFormatOutput(
                 c_buffer, c_node.doc, c_node, encoding, pretty_print)
