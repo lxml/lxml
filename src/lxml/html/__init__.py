@@ -666,11 +666,13 @@ def fragment_fromstring(html, create_parent=False, base_url=None,
     one element, or if anything but whitespace precedes or follows the
     element.
 
-    If create_parent is true (or is a tag name) then a parent node
-    will be created to encapsulate the HTML in a single element.  In
-    this case, leading or trailing text is allowed.
+    If ``create_parent`` is true (or is a tag name) then a parent node
+    will be created to encapsulate the HTML in a single element.  In this
+    case, leading or trailing text is also allowed, as are multiple elements
+    as result of the parsing.
 
-    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    Passing a ``base_url`` will set the document's ``base_url`` attribute
+    (and the tree's docinfo.URL).
     """
     if parser is None:
         parser = html_parser
