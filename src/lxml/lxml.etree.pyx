@@ -2069,7 +2069,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         u"""iter(self, tag=None, *tags)
 
         Creates an iterator for the root element.  The iterator loops over
-        all elements in this tree, in document order.
+        all elements in this tree, in document order.  Note that siblings
+        of the root element (comments or processing instructions) are not
+        returned by the iterator.
 
         Can be restricted to find only elements with a specific tag,
         see `_Element.iter`.
