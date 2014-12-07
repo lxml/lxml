@@ -83,6 +83,43 @@ class DoctestCompareTest(HelperTestCase):
             '<p title="actual">Actual</p>',
             '<p title="expected (got: actual)">Expected (got: Actual)</p>\n')
 
+    def test_extra_children(self):
+        # https://bugs.launchpad.net/lxml/+bug/1238503
+        self.assert_diff(
+            '<p><span>One</span></p>',
+            '<p><span>One</span><b>Two</b><em>Three</em></p>',
+            '<p>\n'
+            '  <span>One</span>\n'
+            '  +<b>Two</b>\n'
+            '  +<em>Three</em>\n'
+            '</p>\n')
+
+    def test_missing_children(self):
+        self.assert_diff(
+            '<p><span>One</span><b>Two</b><em>Three</em></p>',
+            '<p><span>One</span></p>',
+            '<p>\n'
+            '  <span>One</span>\n'
+            '  -<b>Two</b>\n'
+            '  -<em>Three</em>\n'
+            '</p>\n')
+
+    def test_extra_attributes(self):
+        self.assert_diff(
+            '<p><span class="foo">Text</span></p>',
+            '<p><span class="foo" id="bar">Text</span></p>',
+            '<p>\n'
+            '  <span class="foo" +id="bar">Text</span>\n'
+            '</p>\n')
+
+    def test_missing_attributes(self):
+        self.assert_diff(
+            '<p><span class="foo" id="bar">Text</span></p>',
+            '<p><span class="foo">Text</span></p>',
+            '<p>\n'
+            '  <span class="foo" -id="bar">Text</span>\n'
+            '</p>\n')
+
 
 def test_suite():
     suite = unittest.TestSuite()
