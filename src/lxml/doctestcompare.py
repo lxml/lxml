@@ -29,8 +29,8 @@ attribute matches any and all attributes.
 
 When a match fails, the reformatted example and gotten text is
 displayed (indented), and a rough diff-like output is given.  Anything
-marked with ``-`` is in the output but wasn't supposed to be, and
-similarly ``+`` means its in the example but wasn't in the output.
+marked with ``+`` is in the output but wasn't supposed to be, and
+similarly ``-`` means its in the example but wasn't in the output.
 
 You can disable parsing on one line with ``# doctest:+NOPARSE_MARKUP``
 """
@@ -306,10 +306,10 @@ class LXMLOutputChecker(OutputChecker):
         got_children = list(got)
         while want_children or got_children:
             if not want_children:
-                parts.append(self.format_doc(got_children.pop(0), html, indent+2, '-'))
+                parts.append(self.format_doc(got_children.pop(0), html, indent+2, '+'))
                 continue
             if not got_children:
-                parts.append(self.format_doc(want_children.pop(0), html, indent+2, '+'))
+                parts.append(self.format_doc(want_children.pop(0), html, indent+2, '-'))
                 continue
             parts.append(self.collect_diff(
                 want_children.pop(0), got_children.pop(0), html, indent+2))
@@ -331,7 +331,7 @@ class LXMLOutputChecker(OutputChecker):
         any = want.tag == 'any' or 'any' in want.attrib
         for name, value in sorted(got.attrib.items()):
             if name not in want.attrib and not any:
-                attrs.append('-%s="%s"' % (name, self.format_text(value, False)))
+                attrs.append('+%s="%s"' % (name, self.format_text(value, False)))
             else:
                 if name in want.attrib:
                     text = self.collect_diff_text(want.attrib[name], value, False)
@@ -342,7 +342,7 @@ class LXMLOutputChecker(OutputChecker):
             for name, value in sorted(want.attrib.items()):
                 if name in got.attrib:
                     continue
-                attrs.append('+%s="%s"' % (name, self.format_text(value, False)))
+                attrs.append('-%s="%s"' % (name, self.format_text(value, False)))
         if attrs:
             tag = '<%s %s>' % (tag, ' '.join(attrs))
         else:

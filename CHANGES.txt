@@ -12,6 +12,10 @@ Bugs fixed
 
 * CDATA sections were not serialised as tail text of the top-level element.
 
+* lxml.doctestcompare is now consistent with stdlib's doctest in how it
+  uses ``+`` and ``-`` to refer to unexpected and missing output
+  (LP: #1238503).
+
 
 3.4.1 (2014-11-20)
 ==================
