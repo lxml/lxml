@@ -8,6 +8,9 @@ Latest changes
 Bugs fixed
 ----------
 
+* LP#1369362: HTML cleaning failed when hitting processing instructions
+  with pseudo-attributes.
+
 * ``CDATA()`` wrapped content was rejected for tail text.
 
 * CDATA sections were not serialised as tail text of the top-level element.
