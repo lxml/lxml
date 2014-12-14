@@ -257,7 +257,7 @@ class Cleaner(object):
             kill_tags.add('script')
         if self.safe_attrs_only:
             safe_attrs = set(self.safe_attrs)
-            for el in doc.iter():
+            for el in doc.iter(etree.Element):
                 attrib = el.attrib
                 for aname in attrib.keys():
                     if aname not in safe_attrs:
@@ -266,7 +266,7 @@ class Cleaner(object):
             if not (self.safe_attrs_only and
                     self.safe_attrs == defs.safe_attrs):
                 # safe_attrs handles events attributes itself
-                for el in doc.iter():
+                for el in doc.iter(etree.Element):
                     attrib = el.attrib
                     for aname in attrib.keys():
                         if aname.startswith('on'):

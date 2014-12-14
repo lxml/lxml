@@ -8,6 +8,9 @@ Latest changes
 Bugs fixed
 ----------
 
+* LP#1369362: HTML cleaning failed when hitting processing instructions
+  with pseudo-attributes.
+
 * LP#1238503: lxml.doctestcompare is now consistent with stdlib's doctest in
   how it uses ``+`` and ``-`` to refer to unexpected and missing output.
 
