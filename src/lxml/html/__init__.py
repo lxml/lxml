@@ -31,32 +31,28 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
+import copy
 import sys
 import re
+
+from collections import MutableMapping
+
+from lxml import etree
+from lxml.html import defs
+from lxml.html._setmixin import SetMixin
+
 try:
     from urlparse import urljoin
 except ImportError:
     # Python 3
     from urllib.parse import urljoin
-import copy
-from lxml import etree
-from lxml.html import defs
-from lxml.html._setmixin import SetMixin
 try:
-    from collections import MutableMapping as DictMixin
+    from urllib import urlencode, urlopen
 except ImportError:
-    # Python < 2.6
-    from UserDict import DictMixin
-try:
-    set
-except NameError:
-    # Python 2.3
-    from sets import Set as set
-try:
-    bytes
-except NameError:
-    # Python < 2.6
-    bytes = str
+    # Python 3
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+
 try:
     unicode
 except NameError:
@@ -71,7 +67,6 @@ except NameError:
 def __fix_docstring(s):
     if not s:
         return s
-    import sys
     if sys.version_info[0] >= 3:
         sub = re.compile(r"^(\s*)u'", re.M).sub
     else:
@@ -955,11 +950,6 @@ def open_http_urllib(method, url, values):
     if not url:
         raise ValueError("cannot submit, no URL provided")
     ## FIXME: should test that it's not a relative URL or something
-    try:
-        from urllib import urlencode, urlopen
-    except ImportError: # Python 3
-        from urllib.request import urlopen
-        from urllib.parse import urlencode
     if method == 'GET':
         if '?' in url:
             url += '&'
@@ -971,7 +961,7 @@ def open_http_urllib(method, url, values):
         data = urlencode(values)
     return urlopen(url, data)
 
-class FieldsDict(DictMixin):
+class FieldsDict(MutableMapping):
 
     def __init__(self, inputs):
         self.inputs = inputs
