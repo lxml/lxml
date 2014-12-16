@@ -41,8 +41,8 @@ as well as the ability to toggle classes using a set-like interface
    ['bar', 'foo', 'quux', 'qux']
    >>> el.classes.clear()
    >>> el.get('class')
-   >>> set(el.classes)
-   set([])
+   >>> list(el.classes)
+   []
    >>> el.classes.add('a')
    >>> el.classes.add('b')
    >>> el.classes.remove('a')
