@@ -31,32 +31,27 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
+import copy
 import sys
 import re
+
+from collections import MutableMapping, MutableSet
+
+from lxml import etree
+from lxml.html import defs
+
 try:
     from urlparse import urljoin
 except ImportError:
     # Python 3
     from urllib.parse import urljoin
-import copy
-from lxml import etree
-from lxml.html import defs
-from lxml.html._setmixin import SetMixin
 try:
-    from collections import MutableMapping as DictMixin
+    from urllib import urlencode, urlopen
 except ImportError:
-    # Python < 2.6
-    from UserDict import DictMixin
-try:
-    set
-except NameError:
-    # Python 2.3
-    from sets import Set as set
-try:
-    bytes
-except NameError:
-    # Python < 2.6
-    bytes = str
+    # Python 3
+    from urllib.request import urlopen
+    from urllib.parse import urlencode
+
 try:
     unicode
 except NameError:
@@ -71,7 +66,6 @@ except NameError:
 def __fix_docstring(s):
     if not s:
         return s
-    import sys
     if sys.version_info[0] >= 3:
         sub = re.compile(r"^(\s*)u'", re.M).sub
     else:
@@ -955,11 +949,6 @@ def open_http_urllib(method, url, values):
     if not url:
         raise ValueError("cannot submit, no URL provided")
     ## FIXME: should test that it's not a relative URL or something
-    try:
-        from urllib import urlencode, urlopen
-    except ImportError: # Python 3
-        from urllib.request import urlopen
-        from urllib.parse import urlencode
     if method == 'GET':
         if '?' in url:
             url += '&'
@@ -971,7 +960,7 @@ def open_http_urllib(method, url, values):
         data = urlencode(values)
     return urlopen(url, data)
 
-class FieldsDict(DictMixin):
+class FieldsDict(MutableMapping):
 
     def __init__(self, inputs):
         self.inputs = inputs
@@ -1219,7 +1208,7 @@ class SelectElement(InputMixin, HtmlElement):
 
 HtmlElementClassLookup._default_element_classes['select'] = SelectElement
 
-class MultipleSelectOptions(SetMixin):
+class MultipleSelectOptions(MutableSet):
     """
     Represents all the selected options in a ``<select multiple>`` element.
 
@@ -1237,6 +1226,9 @@ class MultipleSelectOptions(SetMixin):
         return iter(_options_xpath(self.select))
     options = property(options)
 
+    def __contains__(self, item):
+        return any(has_item == item for has_item in self)
+
     def __iter__(self):
         for option in self.options:
             if 'selected' in option.attrib:
@@ -1246,6 +1238,9 @@ class MultipleSelectOptions(SetMixin):
                 if opt_value:
                     opt_value = opt_value.strip()
                 yield opt_value
+
+    def __len__(self):
+        return sum(1 for option in self.options if 'selected' in option.attrib)
 
     def add(self, item):
         for option in self.options:
@@ -1261,7 +1256,7 @@ class MultipleSelectOptions(SetMixin):
             raise ValueError(
                 "There is no option with the value %r" % item)
 
-    def remove(self, item):
+    def discard(self, item):
         for option in self.options:
             opt_value = option.get('value')
             if opt_value is None:
@@ -1271,13 +1266,13 @@ class MultipleSelectOptions(SetMixin):
             if opt_value == item:
                 if 'selected' in option.attrib:
                     del option.attrib['selected']
-                else:
-                    raise ValueError(
-                        "The option %r is not currently selected" % item)
                 break
-        else:
-            raise ValueError(
-                "There is not option with the value %r" % item)
+
+    # missing from MutableSet?
+    def update(self, *others):
+        for other in others:
+            for item in other:
+                self.add(item)
 
     def __repr__(self):
         return '<%s {%s} for select name=%r>' % (
@@ -1376,7 +1371,7 @@ class CheckboxGroup(list):
         return '%s(%s)' % (
             self.__class__.__name__, list.__repr__(self))
 
-class CheckboxValues(SetMixin):
+class CheckboxValues(MutableSet):
 
     """
     Represents the values of the checked checkboxes in a group of
@@ -1387,10 +1382,17 @@ class CheckboxValues(SetMixin):
         self.group = group
 
     def __iter__(self):
-        return iter([
+        return (
             el.get('value')
             for el in self.group
-            if 'checked' in el.attrib])
+            if 'checked' in el.attrib
+        )
+
+    def __contains__(self, item):
+        return any(has_item == item for item in self)
+
+    def __len__(self):
+        return sum(1 for el in self.group if 'checked' in el.attrib)
 
     def add(self, value):
         for el in self.group:
@@ -1398,20 +1400,20 @@ class CheckboxValues(SetMixin):
                 el.set('checked', '')
                 break
         else:
-            raise KeyError("No checkbox with value %r" % value)
+            raise ValueError("No checkbox with value %r" % value)
 
-    def remove(self, value):
+    def discard(self, value):
         for el in self.group:
             if el.get('value') == value:
                 if 'checked' in el.attrib:
                     del el.attrib['checked']
-                else:
-                    raise KeyError(
-                        "The checkbox with value %r was already unchecked" % value)
                 break
-        else:
-            raise KeyError(
-                "No checkbox with value %r" % value)
+
+    # missing from MutableSet?
+    def update(self, *others):
+        for other in others:
+            for item in other:
+                self.add(item)
 
     def __repr__(self):
         return '<%s {%s} for checkboxes name=%r>' % (

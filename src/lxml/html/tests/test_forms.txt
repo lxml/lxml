@@ -81,7 +81,7 @@ b'<input type="checkbox" name="check_group" value="1" checked>'
 >>> group.value.add('doesnotexist')
 Traceback (most recent call last):
     ...
-KeyError: "No checkbox with value 'doesnotexist'"
+ValueError: No checkbox with value 'doesnotexist'
 >>> textarea = f.inputs['textarea_field']
 >>> textarea.value
 'some text'
