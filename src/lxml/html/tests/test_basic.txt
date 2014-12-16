@@ -29,6 +29,60 @@ lxml.html adds a find_class method to elements::
     >>> print([e.text for e in h.find_class('vcard')])
     ['P1', 'P2']
 
+as well as the ability to toggle classes using a set-like interface
+
+   >>> el = fragment_fromstring('<span class="foo bar"></span>')
+   >>> 'foo' in el.classes
+   True
+   >>> 'f00' in el.classes
+   False
+   >>> el.classes.update(('qux', 'quux'))
+   >>> sorted(el.get('class').split())
+   ['bar', 'foo', 'quux', 'qux']
+   >>> el.classes.clear()
+   >>> el.get('class')
+   >>> set(el.classes)
+   set([])
+   >>> el.classes.add('a')
+   >>> el.classes.add('b')
+   >>> el.classes.remove('a')
+   >>> el.classes.remove('c')
+   Traceback (most recent call last):
+       ...
+   KeyError: 'c'
+   >>> el.classes.discard('c')
+   >>> el.get('class')
+   'b'
+   >>> el.classes.add('b')
+   >>> el.get('class')
+   'b'
+
+with an extra toggle method matching DOMTokenList
+
+   >>> el.classes.toggle('b')
+   False
+   >>> el.get('class')
+   >>> el.classes.toggle('foo', False)
+   False
+   >>> el.get('class')
+   >>> el.classes.toggle('foo', True)
+   True
+   >>> el.classes.toggle('foo', True)
+   True
+   >>> el.get('class')
+   'foo'
+   >>> el.classes.toggle('foo')
+   False
+   >>> el.get('class')
+   >>> el.classes.add("foo\n")
+   Traceback (most recent call last):
+       ...
+   ValueError: Classes can not contain whitespace
+   >>> el.classes.remove("foo ")
+   Traceback (most recent call last):
+       ...
+   ValueError: Classes can not contain whitespace
+
 Also added is a get_rel_links, which you can use to search for links
 like ``<a rel="$something">``::
 
