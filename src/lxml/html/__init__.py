@@ -37,9 +37,9 @@ import re
 
 from collections import MutableMapping
 
-from lxml import etree
-from lxml.html import defs
-from lxml.html._setmixin import SetMixin
+from .. import etree
+from . import defs
+from ._setmixin import SetMixin
 
 try:
     from urlparse import urljoin
