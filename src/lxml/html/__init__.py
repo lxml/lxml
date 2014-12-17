@@ -31,6 +31,8 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
+from __future__ import absolute_import
+
 import copy
 import sys
 import re
