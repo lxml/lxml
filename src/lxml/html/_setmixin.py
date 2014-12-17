@@ -1,4 +1,6 @@
-class SetMixin(object):
+from collections import MutableSet
+
+class SetMixin(MutableSet):
 
     """
     Mix-in for sets.  You must define __iter__, add, remove
@@ -16,93 +18,28 @@ class SetMixin(object):
                 return True
         return False
 
-    def issubset(self, other):
-        for item in other:
-            if item not in self:
-                return False
-        return True
+    issubset = MutableSet.__le__
+    issuperset = MutableSet.__ge__
 
-    __le__ = issubset
-
-    def issuperset(self, other):
-        for item in self:
-            if item not in other:
-                return False
-        return True
-
-    __ge__ = issuperset
-
-    def union(self, other):
-        return self | other
-
-    def __or__(self, other):
-        new = self.copy()
-        new |= other
-        return new
-    
-    def intersection(self, other):
-        return self & other
-
-    def __and__(self, other):
-        new = self.copy()
-        new &= other
-        return new
-
-    def difference(self, other):
-        return self - other
-
-    def __sub__(self, other):
-        new = self.copy()
-        new -= other
-        return new
-
-    def symmetric_difference(self, other):
-        return self ^ other
-
-    def __xor__(self, other):
-        new = self.copy()
-        new ^= other
-        return new
+    union = MutableSet.__or__
+    intersection = MutableSet.__and__
+    difference = MutableSet.__sub__
+    symmetric_difference = MutableSet.__xor__
 
     def copy(self):
         return set(self)
 
     def update(self, other):
-        for item in other:
-            self.add(item)
-
-    def __ior__(self, other):
-        self.update(other)
-        return self
+        self |= other
 
     def intersection_update(self, other):
-        for item in self:
-            if item not in other:
-                self.remove(item)
-
-    def __iand__(self, other):
-        self.intersection_update(other)
-        return self
+        self &= other
 
     def difference_update(self, other):
-        for item in other:
-            if item in self:
-                self.remove(item)
-
-    def __isub__(self, other):
-        self.difference_update(other)
-        return self
+        self -= other
 
     def symmetric_difference_update(self, other):
-        for item in other:
-            if item in self:
-                self.remove(item)
-            else:
-                self.add(item)
-
-    def __ixor__(self, other):
-        self.symmetric_difference_update(other)
-        return self
+        self ^= other
 
     def discard(self, item):
         try:
@@ -110,6 +47,6 @@ class SetMixin(object):
         except KeyError:
             pass
 
-    def clear(self):
-        for item in list(self):
-            self.remove(item)
+    @classmethod
+    def _from_iterable(cls, it):
+        return set(it)
