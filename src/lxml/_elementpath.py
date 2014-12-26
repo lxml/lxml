@@ -230,6 +230,8 @@ _cache = {}
 
 def _build_path_iterator(path, namespaces):
     """compile selector pattern"""
+    if namespaces and (None in namespaces or '' in namespaces):
+        raise ValueError("empty namespace prefix is not supported in ElementPath")
     if path[-1:] == "/":
         path += "*"  # implicit all (FIXME: keep this?)
     try:

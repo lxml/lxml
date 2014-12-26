@@ -11,6 +11,9 @@ Bugs fixed
 * LP#1238503: lxml.doctestcompare is now consistent with stdlib's doctest in
   how it uses ``+`` and ``-`` to refer to unexpected and missing output.
 
+* Empty prefixes are explicitly rejected when a namespace mapping is used
+  with ElementPath to avoid hiding bugs in user code.
+
 
 3.4.2 (?)
 ==================
