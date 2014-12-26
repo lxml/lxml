@@ -227,6 +227,7 @@ ops = {
 
 _cache = {}
 
+
 def _build_path_iterator(path, namespaces):
     """compile selector pattern"""
     if path[-1:] == "/":
@@ -265,6 +266,7 @@ def _build_path_iterator(path, namespaces):
     _cache[path] = selector
     return selector
 
+
 ##
 # Iterate over the matching nodes
 
@@ -274,6 +276,7 @@ def iterfind(elem, path, namespaces=None):
     for select in selector:
         result = select(result)
     return result
+
 
 ##
 # Find first matching object.
@@ -290,11 +293,13 @@ def find(elem, path, namespaces=None):
     except StopIteration:
         return None
 
+
 ##
 # Find all matching objects.
 
 def findall(elem, path, namespaces=None):
     return list(iterfind(elem, path, namespaces))
+
 
 ##
 # Find text for first matching object.
