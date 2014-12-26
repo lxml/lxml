@@ -2909,6 +2909,16 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(len(root.findall(".//xx:*", namespaces=nsmap)), 1)
         self.assertEqual(len(root.findall(".//b", namespaces=nsmap)), 2)
 
+    def test_findall_empty_prefix(self):
+        XML = self.etree.XML
+        root = XML(_bytes('<a xmlns:x="X" xmlns:y="Y"><x:b><c/></x:b><b/><c><x:b/><b/></c><y:b/></a>'))
+        nsmap = {'xx': 'X'}
+        self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 2)
+        nsmap = {'xx': 'X', None: 'Y'}
+        self.assertRaises(ValueError, root.findall, ".//xx:b", namespaces=nsmap)
+        nsmap = {'xx': 'X', '': 'Y'}
+        self.assertRaises(ValueError, root.findall, ".//xx:b", namespaces=nsmap)
+
     def test_findall_syntax_error(self):
         XML = self.etree.XML
         root = XML(_bytes('<a><b><c/></b><b/><c><b/><b/></c><b/></a>'))
