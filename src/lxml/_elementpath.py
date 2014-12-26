@@ -220,16 +220,17 @@ ops = {
     "..": prepare_parent,
     "//": prepare_descendant,
     "[": prepare_predicate,
-    }
+}
 
-_cache = {}
 
 # --------------------------------------------------------------------
 
+_cache = {}
+
 def _build_path_iterator(path, namespaces):
-    # compile selector pattern
+    """compile selector pattern"""
     if path[-1:] == "/":
-        path = path + "*" # implicit all (FIXME: keep this?)
+        path += "*"  # implicit all (FIXME: keep this?)
     try:
         return _cache[(path, namespaces and tuple(sorted(namespaces.items())) or None)]
     except KeyError:
