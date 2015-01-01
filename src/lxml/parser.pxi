@@ -975,12 +975,22 @@ cdef class _BaseParser:
         """
         return self._copy()
 
-    def makeelement(self, _tag, attrib=None, nsmap=None, **_extra):
+    def makeelement(self, _tag, attrib=None, nsmap=None,
+                    URI=None, ExternalID=None, **_extra):
         u"""makeelement(self, _tag, attrib=None, nsmap=None, **_extra)
 
         Creates a new element associated with this parser.
         """
-        return _makeElement(_tag, NULL, None, self, None, None,
+        if URI is not None and ExternalID is None:
+            raise Exception('Doctype ExternalID cannot be None when URI is specified.')
+        if ExternalID is not None:
+            if URI == None:
+                c_doc = _newHTMLDoc(NULL, ExternalID)
+            else:
+                c_doc = _newHTMLDoc(URI, ExternalID)
+        else:
+            c_doc = NULL
+        return _makeElement(_tag, c_doc, None, self, None, None,
                             attrib, nsmap, _extra)
 
     # internal parser methods
@@ -1736,9 +1746,10 @@ cdef xmlDoc* _newXMLDoc() except NULL:
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
-cdef xmlDoc* _newHTMLDoc() except NULL:
+cdef xmlDoc* _newHTMLDoc(const_xmlChar* URI=NULL,
+    const_xmlChar* ExternalID=NULL) except NULL:
     cdef xmlDoc* result
-    result = tree.htmlNewDoc(NULL, NULL)
+    result = tree.htmlNewDoc(URI, ExternalID)
     if result is NULL:
         raise MemoryError()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
