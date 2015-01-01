@@ -182,7 +182,6 @@ def _convert_children(parent, beautiful_soup_tree, makeelement):
                     *child.split(' ', 1)))
             elif isinstance(child, Declaration):
                 raise Exception('Document type declaration in the wrong place.')
-                pass
             else: # CData
                 _append_text(parent, et_child, unescape(child))
 
