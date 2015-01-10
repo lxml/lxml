@@ -1379,8 +1379,9 @@ cdef bytes _utf8(object s):
         valid = valid_xml_ascii(s)
         utf8_string = <bytes>s
     elif isinstance(s, unicode):
+        s = unicode(s)
         valid = valid_xml_unicode(s)
-        utf8_string = (<unicode>s).encode('utf8')
+        utf8_string = s.encode('utf8')
     elif isinstance(s, (bytes, bytearray)):
         utf8_string = bytes(s)
         valid = valid_xml_ascii(utf8_string)
