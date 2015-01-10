@@ -105,8 +105,8 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     if isinstance(decl, Declaration):
         m = declaration_re.match(decl.string)
         if not m:
-            # Could not parse doctype. Should we raise an exception?
-            # Print a warning message? Just let it pass?
+            # Something is wrong if we end up in here. Since soupparser should
+            # tolerate errors, do not raise Exception, just let it pass.
             pass
         else:
             g = m.groups()
@@ -121,11 +121,11 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     if len(root) == 1 and root[0].name.lower() == 'html':
         res_root = makeelement(root[0].name,
                                attrib = dict(root[0].attrs),
-                               URI=uri, ExternalID=extid)
+                               doctype_uri=uri, external_id=extid)
         root = root[0].contents
     else:
         # Wrap all elements under a <html> tag, and process them.
-        res_root = makeelement('html', URI=uri, ExternalID=extid)
+        res_root = makeelement('html', doctype_uri=uri, external_id=extid)
 
     # Process descendants of the root
     _convert_children(res_root, root, makeelement)
@@ -144,7 +144,10 @@ def _convert_tree(beautiful_soup_tree, makeelement):
         elif isinstance(e, NavigableString) and e.string.strip() == '':
             pass
         else:
-            raise Exception('Invalid pre-root element %r' % e)
+            # Something is wrong if we end up in here. Since soupparser should
+            # tolerate errors, do not raise Exception, just let it pass.
+            pass
+
 
     # ditto for post_root
     prev = res_root
@@ -160,7 +163,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
         elif isinstance(e, NavigableString) and e.string.strip() == '':
             pass
         else:
-            raise Exception('Invalid post-root element %r' % e)
+            pass
 
     return res_root
 
@@ -181,7 +184,10 @@ def _convert_children(parent, beautiful_soup_tree, makeelement):
                 parent.append(etree.ProcessingInstruction(
                     *child.split(' ', 1)))
             elif isinstance(child, Declaration):
-                raise Exception('Document type declaration in the wrong place.')
+                # Something is wrong if we end up in here. Since
+                # soupparser should tolerate errors, do not raise
+                # Exception, just let it pass.
+                pass
             else: # CData
                 _append_text(parent, et_child, unescape(child))
 
