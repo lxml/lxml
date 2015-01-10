@@ -1382,8 +1382,8 @@ cdef bytes _utf8(object s):
         valid = valid_xml_unicode(s)
         utf8_string = (<unicode>s).encode('utf8')
     elif isinstance(s, (bytes, bytearray)):
-        valid = valid_xml_ascii(s)
         utf8_string = bytes(s)
+        valid = valid_xml_ascii(utf8_string)
     else:
         raise TypeError("Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
     if not valid:
