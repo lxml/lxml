@@ -8,7 +8,7 @@ cimport cython
 
 from lxml.includes.etreepublic cimport _Document, _Element, ElementBase, ElementClassLookup
 from lxml.includes.etreepublic cimport elementFactory, import_lxml__etree, textOf, pyunicode
-from lxml.includes.tree cimport xmlChar, const_xmlChar, _xcstr
+from lxml.includes.tree cimport const_xmlChar, _xcstr
 from lxml cimport python
 from lxml.includes cimport tree
 
@@ -423,7 +423,7 @@ cdef object _lookupChild(_Element parent, tag):
         return None # not in the hash map => not in the tree
     if ns is None:
         # either inherit ns from parent or use empty (i.e. no) namespace
-        c_href = tree._getNs(c_node) or <tree.const_xmlChar*>''
+        c_href = tree._getNs(c_node) or <const_xmlChar*>''
     else:
         c_href = _xcstr(ns)
     c_result = _findFollowingSibling(c_node.children, c_href, c_tag, 0)
