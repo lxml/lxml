@@ -43,7 +43,7 @@ cdef class XMLSchema(_Validator):
         self._has_default_attributes = True # play it safe
         self._add_attribute_defaults = False
 
-    def __init__(self, etree=None, *, file=None, attribute_defaults=False):
+    def __init__(self, etree=None, *, file=None, bint attribute_defaults=False):
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
         cdef xmlDoc* c_doc
 
@@ -91,8 +91,7 @@ cdef class XMLSchema(_Validator):
 
         if self._doc is not None:
             self._has_default_attributes = _check_for_default_attributes(self._doc)
-        self._add_attribute_defaults = attribute_defaults and \
-                                       self._has_default_attributes
+        self._add_attribute_defaults = attribute_defaults and self._has_default_attributes
 
     def __dealloc__(self):
         xmlschema.xmlSchemaFree(self._c_schema)
