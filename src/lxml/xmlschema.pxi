@@ -23,6 +23,7 @@ cdef XPath _check_for_default_attributes = XPath(
     u"boolean(//xs:attribute[@default or @fixed][1])",
     namespaces={u'xs': u'http://www.w3.org/2001/XMLSchema'})
 
+
 cdef class XMLSchema(_Validator):
     u"""XMLSchema(self, etree=None, file=None)
     Turn a document into an XML Schema validator.
@@ -34,57 +35,53 @@ cdef class XMLSchema(_Validator):
     schema insert default/fixed attributes into validated documents.
     """
     cdef xmlschema.xmlSchema* _c_schema
+    cdef _Document _doc
     cdef bint _has_default_attributes
     cdef bint _add_attribute_defaults
+
     def __cinit__(self):
-        self._c_schema = NULL
-        self._has_default_attributes = True # play safe
+        self._has_default_attributes = True # play it safe
         self._add_attribute_defaults = False
 
     def __init__(self, etree=None, *, file=None, attribute_defaults=False):
-        cdef _Document doc
-        cdef _Element root_node
-        cdef xmlDoc* fake_c_doc
-        cdef xmlNode* c_node
         cdef xmlschema.xmlSchemaParserCtxt* parser_ctxt
+        cdef xmlDoc* c_doc
 
         self._add_attribute_defaults = attribute_defaults
         _Validator.__init__(self)
-        fake_c_doc = NULL
+        c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
-            parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(fake_c_doc)
+            c_doc = _copyDocRoot(doc._c_doc, root_node._c_node)
+            self._doc = _documentFactory(c_doc, doc._parser)
+            parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(c_doc)
         elif file is not None:
             if _isString(file):
-                doc = None
                 filename = _encodeFilename(file)
                 parser_ctxt = xmlschema.xmlSchemaNewParserCtxt(_cstr(filename))
             else:
-                doc = _parseDocument(file, None, None)
-                parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(doc._c_doc)
+                self._doc = _parseDocument(file, None, None)
+                parser_ctxt = xmlschema.xmlSchemaNewDocParserCtxt(self._doc._c_doc)
         else:
             raise XMLSchemaParseError, u"No tree or file given"
 
-        if parser_ctxt is not NULL:
-            xmlschema.xmlSchemaSetParserStructuredErrors(
-                parser_ctxt, _receiveError, <void*>self._error_log)
-            if doc is None:
-                with nogil:
-                    self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-            else:
-                # calling xmlSchemaParse on a schema with imports or
-                # includes will cause libxml2 to create an internal
-                # context for parsing, so push an implied context to route
-                # resolve requests to the document's parser
-                __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(doc._parser)
-                self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
-                __GLOBAL_PARSER_CONTEXT.popImpliedContext()
-            xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
+        if parser_ctxt is NULL:
+            raise MemoryError()
 
-        if fake_c_doc is not NULL:
-            _destroyFakeDoc(doc._c_doc, fake_c_doc)
+        xmlschema.xmlSchemaSetParserStructuredErrors(
+            parser_ctxt, _receiveError, <void*>self._error_log)
+        if self._doc is not None:
+            # calling xmlSchemaParse on a schema with imports or
+            # includes will cause libxml2 to create an internal
+            # context for parsing, so push an implied context to route
+            # resolve requests to the document's parser
+            __GLOBAL_PARSER_CONTEXT.pushImpliedContextFromParser(self._doc._parser)
+        with nogil:
+            self._c_schema = xmlschema.xmlSchemaParse(parser_ctxt)
+        if self._doc is not None:
+            __GLOBAL_PARSER_CONTEXT.popImpliedContext()
+        xmlschema.xmlSchemaFreeParserCtxt(parser_ctxt)
 
         if self._c_schema is NULL:
             raise XMLSchemaParseError(
@@ -92,8 +89,8 @@ cdef class XMLSchema(_Validator):
                     u"Document is not valid XML Schema"),
                 self._error_log)
 
-        if doc is not None:
-            self._has_default_attributes = _check_for_default_attributes(doc)
+        if self._doc is not None:
+            self._has_default_attributes = _check_for_default_attributes(self._doc)
         self._add_attribute_defaults = attribute_defaults and \
                                        self._has_default_attributes
 

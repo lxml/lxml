@@ -324,6 +324,26 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertTrue(tree_valid.xmlschema(schema))
         self.assertFalse(tree_invalid.xmlschema(schema))
 
+    def test_create_from_partial_doc(self):
+        # this used to crash because the schema part was not properly copied out
+        wsdl = self.parse('''\
+<wsdl:definitions
+   xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+   xmlns:xs="http://www.w3.org/2001/XMLSchema">
+ <wsdl:types>
+  <xs:schema>
+  </xs:schema>
+ </wsdl:types>
+</wsdl:definitions>
+        ''')
+        schema_element = wsdl.find(
+            "{http://schemas.xmlsoap.org/wsdl/}types/"
+            "{http://www.w3.org/2001/XMLSchema}schema"
+        )
+        etree.XMLSchema(schema_element)
+        etree.XMLSchema(schema_element)
+        etree.XMLSchema(schema_element)
+
 
 class ETreeXMLSchemaResolversTestCase(HelperTestCase):
     resolver_schema_int = BytesIO("""\
