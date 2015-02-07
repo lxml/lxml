@@ -21,6 +21,9 @@ Bugs fixed
 Bugs fixed
 ----------
 
+* LP#1415907: Crash when creating an XMLSchema from a non-root element
+  of an XML document.
+
 * LP#1369362: HTML cleaning failed when hitting processing instructions
   with pseudo-attributes.
 
