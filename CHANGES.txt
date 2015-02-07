@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-3.4.2 (2015-02-07)
-==================
+Latest changes
+==============
 
 Bugs fixed
 ----------
@@ -15,7 +15,7 @@ Bugs fixed
   with ElementPath to avoid hiding bugs in user code.
 
 
-3.4.2 (?)
+3.4.2 (2015-02-07)
 ==================
 
 Bugs fixed
