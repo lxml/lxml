@@ -2,6 +2,16 @@
 lxml changelog
 ==============
 
+3.4.3 (?)
+==================
+
+Bugs fixed
+----------
+
+* LP#1419354: meta-redirect URLs were incorrectly processed by
+  ``iterlinks()`` if preceded by whitespace.
+
+
 3.4.2 (2015-02-07)
 ==================
 
