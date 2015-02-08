@@ -92,6 +92,9 @@ _iter_css_imports = re.compile(r'@import "(.*?)"').finditer
 _label_xpath = etree.XPath("//label[@for=$id]|//x:label[@for=$id]",
                            namespaces={'x':XHTML_NAMESPACE})
 _archive_re = re.compile(r'[^ ]+')
+_parse_meta_refresh_url = re.compile(
+    r'[^;=]*;\s*(?:url\s*=\s*)?(?P<url>.*)$', re.I).search
+
 
 def _unquote_match(s, pos):
     if s[:1] == '"' and s[-1:] == '"' or s[:1] == "'" and s[-1:] == "'":
@@ -399,15 +402,13 @@ class HtmlMixin(object):
                 http_equiv = attribs.get('http-equiv', '').lower()
                 if http_equiv == 'refresh':
                     content = attribs.get('content', '')
-                    i = content.find(';')
-                    url = content[i+1:] if i >= 0 else content
-                    if url[:4].lower() == 'url=':
-                        url = url[4:]
-                    #else:
-                    # No "url=" means the redirect won't work, but we might
+                    match = _parse_meta_refresh_url(content)
+                    url = (match.group('url') if match else content).strip()
+                    # unexpected content means the redirect won't work, but we might
                     # as well be permissive and return the entire string.
                     if url:
-                        url, pos = _unquote_match(url, i + 5)
+                        url, pos = _unquote_match(
+                            url, match.start('url') if match else content.find(url))
                         yield (el, 'content', url, pos)
             elif tag == 'param':
                 valuetype = el.get('valuetype') or ''
