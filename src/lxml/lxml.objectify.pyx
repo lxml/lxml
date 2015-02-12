@@ -1267,7 +1267,7 @@ cdef class ElementMaker:
         return element_maker
 
     def __getattr__(self, tag):
-        element_maker = self._cache.get(tag, None)
+        element_maker = self._cache.get(tag)
         if element_maker is None:
             if is_special_method(tag):
                 return object.__getattr__(self, tag)
@@ -1275,7 +1275,7 @@ cdef class ElementMaker:
         return element_maker
 
     def __call__(self, tag, *args, **kwargs):
-        element_maker = self._cache.get(tag, None)
+        element_maker = self._cache.get(tag)
         if element_maker is None:
             element_maker = self._build_element_maker(tag)
         return element_maker(*args, **kwargs)
