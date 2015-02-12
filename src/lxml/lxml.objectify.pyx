@@ -1251,7 +1251,7 @@ cdef class ElementMaker:
         self._cache = {}
 
     @cython.final
-    cdef _build_element_maker(self, tag):
+    cdef _build_element_maker(self, tag, bint caching):
         cdef _ObjectifyElementMakerCaller element_maker
         element_maker = _ObjectifyElementMakerCaller.__new__(_ObjectifyElementMakerCaller)
         if self._namespace is not None and tag[0] != u"{":
@@ -1261,9 +1261,10 @@ cdef class ElementMaker:
         element_maker._nsmap = self._nsmap
         element_maker._annotate = self._annotate
         element_maker._element_factory = self._makeelement
-        if len(self._cache) > 200:
-            self._cache.clear()
-        self._cache[tag] = element_maker
+        if caching:
+            if len(self._cache) > 200:
+                self._cache.clear()
+            self._cache[tag] = element_maker
         return element_maker
 
     def __getattr__(self, tag):
@@ -1271,13 +1272,14 @@ cdef class ElementMaker:
         if element_maker is None:
             if is_special_method(tag):
                 return object.__getattr__(self, tag)
-            return self._build_element_maker(tag)
+            return self._build_element_maker(tag, caching=True)
         return element_maker
 
     def __call__(self, tag, *args, **kwargs):
         element_maker = self._cache.get(tag)
         if element_maker is None:
-            element_maker = self._build_element_maker(tag)
+            element_maker = self._build_element_maker(
+                tag, caching=not is_special_method(tag))
         return element_maker(*args, **kwargs)
 
 ################################################################################
