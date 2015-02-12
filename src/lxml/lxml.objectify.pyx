@@ -1241,7 +1241,10 @@ cdef class ElementMaker:
         self._namespace = None if namespace is None else u"{%s}" % namespace
         self._annotate = annotate
         if makeelement is not None:
-            assert callable(makeelement)
+            if not callable(makeelement):
+                raise TypeError(
+                    "argument of 'makeelement' parameter must be callable, got %s" %
+                    type(makeelement))
             self._makeelement = makeelement
         else:
             self._makeelement = None
