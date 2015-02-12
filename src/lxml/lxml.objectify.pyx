@@ -1131,19 +1131,19 @@ cdef class _ObjectifyElementMakerCaller:
             element = self._element_factory(self._tag, attrib, self._nsmap)
 
         pytype_name = None
-        has_children = 0
-        has_string_value = 0
+        has_children = False
+        has_string_value = False
         for child in children:
             if child is None:
-                if python.PyTuple_GET_SIZE(children) == 1:
+                if len(children) == 1:
                     cetree.setAttributeValue(
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, u"true")
             elif python._isString(child):
                 _add_text(element, child)
-                has_string_value = 1
+                has_string_value = True
             elif isinstance(child, _Element):
                 cetree.appendChildToElement(element, <_Element>child)
-                has_children = 1
+                has_children = True
             elif isinstance(child, _ObjectifyElementMakerCaller):
                 elementMaker = <_ObjectifyElementMakerCaller>child
                 if elementMaker._element_factory is None:
@@ -1153,7 +1153,7 @@ cdef class _ObjectifyElementMakerCaller:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
                     cetree.appendChildToElement(element, childElement)
-                has_children = 1
+                has_children = True
             elif isinstance(child, dict):
                 for name, value in child.items():
                     # keyword arguments in attrib take precedence
@@ -1168,13 +1168,13 @@ cdef class _ObjectifyElementMakerCaller:
             else:
                 if pytype_name is not None:
                     # concatenation always makes the result a string
-                    has_string_value = 1
+                    has_string_value = True
                 pytype_name = _typename(child)
                 pytype = _PYTYPE_DICT.get(_typename(child))
                 if pytype is not None:
                     _add_text(element, (<PyType>pytype).stringify(child))
                 else:
-                    has_string_value = 1
+                    has_string_value = True
                     child = unicode(child)
                     _add_text(element, child)
 
