@@ -3,9 +3,11 @@ __doc__ = """External interface to the BeautifulSoup HTML parser.
 
 __all__ = ["fromstring", "parse", "convert_tree"]
 
+import re
 from lxml import etree, html
 from BeautifulSoup import \
-     BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString
+     BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
+     Declaration
 
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
@@ -45,8 +47,6 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
     You can pass a different Element factory through the `makeelement`
     keyword.
     """
-    if makeelement is None:
-        makeelement = html.html_parser.makeelement
     root = _convert_tree(beautiful_soup_tree, makeelement)
     children = root.getchildren()
     for child in children:
@@ -59,8 +59,6 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if makeelement is None:
-        makeelement = html.html_parser.makeelement
     if 'convertEntities' not in bsargs:
         bsargs['convertEntities'] = 'html'
     tree = beautifulsoup(source, **bsargs)
@@ -71,36 +69,140 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
     root.tag = "html"
     return root
 
+declaration_re = re.compile(r'DOCTYPE\s*HTML(?:\s+PUBLIC)?'
+'(?:\s+(\'[^\']*\'|"[^"]*"))?'  '(?:\s+(\'[^\']*\'|"[^"]*"))?', re.IGNORECASE)
+
+class Pseudotag:
+    # Minimal imitation of BeautifulSoup.Tag
+    def __init__(self, contents):
+        self.name = 'html'
+        self.attrs = [ ]
+        self.contents = contents
+
+    def __iter__(self):
+        return self.contents.__iter__()
+
 def _convert_tree(beautiful_soup_tree, makeelement):
-    root = makeelement(beautiful_soup_tree.name,
-                       attrib=dict(beautiful_soup_tree.attrs))
-    _convert_children(root, beautiful_soup_tree, makeelement)
-    return root
+    if makeelement is None:
+        makeelement = html.html_parser.makeelement
 
-def _convert_children(parent, beautiful_soup_tree, makeelement):
-    SubElement = etree.SubElement
-    et_child = None
-    for child in beautiful_soup_tree:
-        if isinstance(child, Tag):
-            et_child = SubElement(parent, child.name, attrib=dict(
-                [(k, unescape(v)) for (k,v) in child.attrs]))
-            _convert_children(et_child, child, makeelement)
-        elif type(child) is NavigableString:
-            _append_text(parent, et_child, unescape(child))
+    # Split the tree into three parts:
+    # i) everything before the root element: document type
+    # declaration, comments, processing instructions, whitespace
+    # ii) the root(s),
+    # iii) everything after the root: comments, processing
+    # instructions, whitespace
+    first_element_idx, last_element_idx = None, None
+    html_root = None
+    declaration_found = False
+    for i, e in enumerate(beautiful_soup_tree):
+        if isinstance(e, Tag):
+            if first_element_idx is None:
+                first_element_idx = i
+            last_element_idx = i
+
+            if e.name.lower() == 'html' and html_root is None:
+                html_root = e
+
+        if not isinstance(e, Declaration):
+            continue
+        m = declaration_re.match(e.string)
+        if not m:
+            # Something is wrong if we end up in here. Since soupparser should
+            # tolerate errors, do not raise Exception, just let it pass.
+            pass
         else:
-            if isinstance(child, Comment):
-                parent.append(etree.Comment(child))
-            elif isinstance(child, ProcessingInstruction):
-                parent.append(etree.ProcessingInstruction(
-                    *child.split(' ', 1)))
-            else: # CData
-                _append_text(parent, et_child, unescape(child))
+            external_id, sys_uri = None, None
+            declaration_found = True
+            g = m.groups()
+            if len(g) >= 1 and g[0] is not None:
+                external_id = g[0][1:-1] # [1:-1] strips quotes
+            if len(g) >= 2 and g[1] is not None:
+                sys_uri = g[1][1:-1] # [1:-1] strips quotes
 
-def _append_text(parent, element, text):
-    if element is None:
+    # For a nice, well-formatted document, the variable roots below is
+    # a list consisting of a single <html> element. However, the document
+    # may be a soup like '<meta><head><title>Hello</head><body>Hi
+    # all<\p>'. In this example roots is a list containing meta, head
+    # and body elements.
+    pre_root = beautiful_soup_tree.contents[:first_element_idx]
+    roots = beautiful_soup_tree.contents[first_element_idx:last_element_idx+1]
+    post_root = beautiful_soup_tree.contents[last_element_idx+1:]
+
+    # Reorganize so that there is one <html> root...
+    if html_root is not None:
+        # ... use existing one if possible, ...
+        i = roots.index(html_root)
+        html_root.contents = roots[:i] + html_root.contents + roots[i+1:]
+        root_name = html_root.name
+    else:
+        # ... otherwise create a new one.
+        html_root = Pseudotag(roots)
+
+    # Process pre_root
+    res_root = _convert_node(None, html_root, makeelement)
+    prev = res_root
+    for e in reversed(pre_root):
+        converted = _convert_node(None, e, None)
+        if converted is not None:
+            prev.addprevious(converted)
+            prev = converted
+
+    # ditto for post_root
+    prev = res_root
+    for e in post_root:
+        converted = _convert_node(None, e, None)
+        if converted is not None:
+            prev.addnext(converted)
+            prev = converted
+
+    # Fix declaration.
+    if declaration_found:
+        doc = res_root.getroottree()
+        docinfo = res_root.getroottree().docinfo
+        docinfo.public_id = external_id
+        docinfo.system_url = sys_uri
+
+    return res_root
+
+def _convert_node(parent, bs_node, makeelement):
+    SubElement = etree.SubElement
+    res = None
+    if isinstance(bs_node, Tag) or isinstance(bs_node, Pseudotag):
+        if parent is not None:
+            res = SubElement(parent, bs_node.name, attrib=dict(
+                [(k, unescape(v)) for (k,v) in bs_node.attrs]))
+        else:
+            res = makeelement(bs_node.name, attrib=dict(
+                [(k, unescape(v)) for (k,v) in bs_node.attrs]))
+        for child in bs_node:
+            _convert_node(res, child, None)
+    elif type(bs_node) is NavigableString:
+        if parent is None: return None
+        _append_text(parent, unescape(bs_node))
+    elif isinstance(bs_node, Comment):
+        res = etree.Comment(bs_node)
+        if parent is not None:
+            parent.append(res)
+    elif isinstance(bs_node, ProcessingInstruction):
+        if bs_node.endswith('?'):
+            # The PI is of XML style (<?as df?>) but BeautifulSoup
+            # interpreted it as being SGML style (<?as df>). Fix.
+            bs_node = bs_node[:-1]
+        res = etree.ProcessingInstruction(*bs_node.split(' ', 1))
+        if parent is not None:
+            parent.append(res)
+    elif isinstance(bs_node, Declaration):
+        pass
+    else: # CData
+        _append_text(parent, unescape(child))
+    return res
+
+def _append_text(parent, text):
+    if len(parent) == 0:
         parent.text = (parent.text or '') + text
     else:
-        element.tail = (element.tail or '') + text
+        parent[-1].tail = (parent[-1].tail or '') + text
 
 
 # copied from ET's ElementSoup
@@ -109,7 +211,6 @@ try:
     from html.entities import name2codepoint # Python 3
 except ImportError:
     from htmlentitydefs import name2codepoint
-import re
 
 handle_entities = re.compile("&(\w+);").sub
 
