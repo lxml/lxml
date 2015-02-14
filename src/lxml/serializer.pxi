@@ -218,7 +218,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     # write internal DTD subset, preceding PIs/comments, etc.
     if write_complete_document and not c_buffer.error:
         if c_doctype is NULL:
-            _writeDtdToBuffer(c_buffer, c_doc, c_node.name, encoding)
+            _writeDtdToBuffer(c_buffer, c_doc, c_node.name, c_method, encoding)
         _writePrevSiblings(c_buffer, c_node, encoding, pretty_print)
 
     c_nsdecl_node = c_node
@@ -277,32 +277,51 @@ cdef void _writeDeclarationToBuffer(tree.xmlOutputBuffer* c_buffer,
 
 cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             xmlDoc* c_doc, const_xmlChar* c_root_name,
-                            const_char* encoding) nogil:
+                            int c_method, const_char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
     cdef char* quotechar
     c_dtd = c_doc.intSubset
     if not c_dtd or not c_dtd.name:
         return
-    if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
-        return
+
+    # Name in document type declaration must match the root element tag.
+    # For XML, case sensitive match, for HTML insensitive.
+    if c_method == OUTPUT_METHOD_HTML:
+        if tree.xmlStrcasecmp(c_root_name, c_dtd.name) != 0:
+            return
+    else:
+        if tree.xmlStrcmp(c_root_name, c_dtd.name) != 0:
+            return
+
     tree.xmlOutputBufferWrite(c_buffer, 10, "<!DOCTYPE ")
     tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.name)
-    if c_dtd.SystemID and c_dtd.SystemID[0] != c'\0':
-        if c_dtd.ExternalID != NULL and c_dtd.ExternalID[0] != c'\0':
-            tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
-            tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.ExternalID)
-            tree.xmlOutputBufferWrite(c_buffer, 2, '" ')
-        else:
-            tree.xmlOutputBufferWrite(c_buffer, 8, ' SYSTEM ')
 
-        if tree.xmlStrchr(<const_xmlChar*>c_dtd.SystemID, c'"'):
+    cdef const_xmlChar* public_id = c_dtd.ExternalID
+    cdef const_xmlChar* sys_url = c_dtd.SystemID
+    if public_id != NULL and public_id[0] == c'\0':
+        public_id = NULL
+    if sys_url != NULL and sys_url[0] == c'\0':
+        sys_url = NULL
+
+    if public_id != NULL:
+        tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
+        tree.xmlOutputBufferWriteString(c_buffer, <const_char*>public_id)
+        tree.xmlOutputBufferWrite(c_buffer, 1, '"')
+        if sys_url != NULL:
+            tree.xmlOutputBufferWrite(c_buffer, 1, ' ')
+    elif sys_url != NULL:
+        tree.xmlOutputBufferWrite(c_buffer, 8, ' SYSTEM ')
+
+    if sys_url != NULL:
+        if tree.xmlStrchr(<const_xmlChar*>sys_url, c'"'):
             quotechar = '\''
         else:
             quotechar = '"'
         tree.xmlOutputBufferWrite(c_buffer, 1, quotechar)
-        tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.SystemID)
+        tree.xmlOutputBufferWriteString(c_buffer, <const_char*>sys_url)
         tree.xmlOutputBufferWrite(c_buffer, 1, quotechar)
+
     if not c_dtd.entities and not c_dtd.elements and \
            not c_dtd.attributes and not c_dtd.notations and \
            not c_dtd.pentities:

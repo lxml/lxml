@@ -16,6 +16,7 @@ cdef extern from "libxml/xmlstring.h":
     cdef xmlChar* xmlStrdup(const_xmlChar* cur) nogil
     cdef int xmlStrncmp(const_xmlChar* str1, const_xmlChar* str2, int length) nogil
     cdef int xmlStrcmp(const_xmlChar* str1, const_xmlChar* str2) nogil
+    cdef int xmlStrcasecmp(const xmlChar *str1, const xmlChar *str2) nogil
     cdef const_xmlChar* xmlStrstr(const_xmlChar* str1, const_xmlChar* str2) nogil
     cdef const_xmlChar* xmlStrchr(const_xmlChar* str1, xmlChar ch) nogil
     cdef const_xmlChar* _xcstr "(const xmlChar*)PyBytes_AS_STRING" (object s)
