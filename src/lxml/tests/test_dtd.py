@@ -10,7 +10,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir)  # needed for Py3
 
-from common_imports import etree, BytesIO, _bytes
+from common_imports import etree, html, BytesIO, _bytes, _str
 from common_imports import HelperTestCase, make_doctest, skipIf
 from common_imports import fileInTestDir, fileUrlInTestDir
 
@@ -336,6 +336,62 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
         self.assertEqual(etree.tostring(doc, method='html'), _bytes(html))
+
+    def test_set_decl_public(self):
+        doc = etree.Element('test').getroottree()
+        doc.docinfo.public_id = 'bar'
+        doc.docinfo.system_url = 'baz'
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE test PUBLIC "bar" "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('<!DOCTYPE test PUBLIC "bar" "baz">\n<test/>'))
+
+    def test_html_decl(self):
+        # Slightly different to one above: when we create an html element,
+        # we do not start with a blank slate.
+        doc = html.Element('html').getroottree()
+        doc.docinfo.public_id = 'bar'
+        doc.docinfo.system_url = 'baz'
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE html PUBLIC "bar" "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('<!DOCTYPE html PUBLIC "bar" "baz">\n<html/>'))
+
+    def test_clean_doctype(self):
+        doc = html.Element('html').getroottree()
+        self.assertTrue(doc.docinfo.doctype != '')
+        doc.docinfo.clear()
+        self.assertTrue(doc.docinfo.doctype == '')
+
+    def test_set_decl_system(self):
+        doc = etree.Element('test').getroottree()
+        doc.docinfo.system_url = 'baz'
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE test SYSTEM "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('<!DOCTYPE test SYSTEM "baz">\n<test/>'))
+
+    def test_empty_decl(self):
+        doc = etree.Element('test').getroottree()
+        doc.docinfo.public_id = None
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE test>')
+        self.assertTrue(doc.docinfo.public_id is None)
+        self.assertTrue(doc.docinfo.system_url is None)
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('<!DOCTYPE test>\n<test/>'))
+
+    def test_invalid_decl_1(self):
+        doc = etree.Element('test').getroottree()
+        def setpublicid():
+            doc.docinfo.public_id = _str('ä')
+        self.assertRaises(ValueError, setpublicid)
+
+    def test_invalid_decl_2(self):
+        doc = etree.Element('test').getroottree()
+        def setsystemurl():
+            doc.docinfo.system_url = '\'"'
+        self.assertRaises(ValueError, setsystemurl)
 
 def test_suite():
     suite = unittest.TestSuite()

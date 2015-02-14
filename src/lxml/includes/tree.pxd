@@ -373,6 +373,8 @@ cdef extern from "libxml/tree.h":
     cdef size_t xmlBufUse(xmlBuf* buf) nogil # new in libxml2 2.9
     cdef int xmlKeepBlanksDefault(int val) nogil
     cdef xmlChar* xmlNodeGetBase(xmlDoc* doc, xmlNode* node) nogil
+    cdef xmlDtd* xmlCreateIntSubset(xmlDoc* doc, const_xmlChar* name,
+                                    const_xmlChar* ExternalID, const_xmlChar* SystemID) nogil
     cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri) nogil
     cdef int xmlValidateNCName(const_xmlChar* value, int space) nogil
 
