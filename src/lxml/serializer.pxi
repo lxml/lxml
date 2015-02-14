@@ -280,6 +280,7 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
                             const_char* encoding) nogil:
     cdef tree.xmlDtd* c_dtd
     cdef xmlNode* c_node
+    cdef char* quotechar
     c_dtd = c_doc.intSubset
     if not c_dtd or not c_dtd.name:
         return
@@ -291,11 +292,17 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         if c_dtd.ExternalID != NULL and c_dtd.ExternalID[0] != c'\0':
             tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
             tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.ExternalID)
-            tree.xmlOutputBufferWrite(c_buffer, 3, '" "')
+            tree.xmlOutputBufferWrite(c_buffer, 2, '" ')
         else:
-            tree.xmlOutputBufferWrite(c_buffer, 9, ' SYSTEM "')
+            tree.xmlOutputBufferWrite(c_buffer, 8, ' SYSTEM ')
+
+        if tree.xmlStrchr(<const_xmlChar*>c_dtd.SystemID, c'"'):
+            quotechar = '\''
+        else:
+            quotechar = '"'
+        tree.xmlOutputBufferWrite(c_buffer, 1, quotechar)
         tree.xmlOutputBufferWriteString(c_buffer, <const_char*>c_dtd.SystemID)
-        tree.xmlOutputBufferWrite(c_buffer, 1, '"')
+        tree.xmlOutputBufferWrite(c_buffer, 1, quotechar)
     if not c_dtd.entities and not c_dtd.elements and \
            not c_dtd.attributes and not c_dtd.notations and \
            not c_dtd.pentities:
