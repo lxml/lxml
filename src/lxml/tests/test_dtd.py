@@ -303,6 +303,31 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(dtd.name, "a")
         self.assertEqual(dtd.system_url, "test.dtd")
 
+    def test_declaration_escape_quote_pid(self):
+        # Standard allows quotes in systemliteral, but in that case
+        # systemliteral must be escaped with hyphens, not quotes.
+        # See http://www.w3.org/TR/REC-xml/#sec-prolog-dtd.
+        root = etree.XML('''<!DOCTYPE a PUBLIC 'foo' '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype,
+                         u'''<!DOCTYPE a PUBLIC "foo" '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a PUBLIC "foo" '"'>\n<a/>''')
+
+    def test_declaration_escape_quote_withoutpid(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, u'''<!DOCTYPE a SYSTEM '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a SYSTEM '"'>\n<a/>''')
+
+    def test_declaration_escape_hyphen(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM "'"><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, u'''<!DOCTYPE a SYSTEM "'">''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a SYSTEM "'">\n<a/>''')
+
 
 def test_suite():
     suite = unittest.TestSuite()

@@ -577,16 +577,26 @@ cdef class DocInfo:
         u"Returns a DOCTYPE declaration string for the document."
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
+            if system_url:
+                # If system_url contains a quote, we must escape it
+                # with hyphens, otherwise escape with quotes. If url
+                # contains both quote and a hyphen, XML standard is
+                # being violated.
+                if system_url.find('"') != -1:
+                   escaped_system_url = u"'%s'" % system_url
+                else:
+                    escaped_system_url = u'"%s"' % system_url
             if public_id:
                 if system_url:
-                    return u'<!DOCTYPE %s PUBLIC "%s" "%s">' % (
-                        root_name, public_id, system_url)
+                    return u'<!DOCTYPE %s PUBLIC "%s" %s>' % (
+                        root_name, public_id, escaped_system_url)
+
                 else:
                     return u'<!DOCTYPE %s PUBLIC "%s">' % (
                         root_name, public_id)
             elif system_url:
-                return u'<!DOCTYPE %s SYSTEM "%s">' % (
-                    root_name, system_url)
+                return u'<!DOCTYPE %s SYSTEM %s>' % (
+                    root_name, escaped_system_url)
             elif self._doc.hasdoctype():
                 return u'<!DOCTYPE %s>' % root_name
             else:
