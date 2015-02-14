@@ -1,7 +1,7 @@
 import sys, os, os.path
 from distutils.core import Extension
 from distutils.errors import DistutilsOptionError
-from versioninfo import get_base_dir, split_version
+from versioninfo import get_base_dir
 
 try:
     from Cython.Distutils import build_ext as build_pyx
