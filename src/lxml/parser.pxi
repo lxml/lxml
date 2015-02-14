@@ -3,12 +3,17 @@
 from lxml.includes cimport xmlparser
 from lxml.includes cimport htmlparser
 
+import string
+
 cdef class _ParserContext(_ResolverContext)
 cdef class _SaxParserContext(_ParserContext)
 cdef class _TargetParserContext(_SaxParserContext)
 cdef class _ParserSchemaValidationContext
 cdef class _Validator
 cdef class XMLSchema(_Validator)
+
+pubid_allowed_charaters = set("\x20\0xD\x0A-'()+,./:=?;!*#@$_%" +
+    string.ascii_letters + string.digits)
 
 class ParseError(LxmlSyntaxError):
     u"""Syntax error while parsing an XML document.
@@ -983,6 +988,7 @@ cdef class _BaseParser:
         return _makeElement(_tag, NULL, None, self, None, None,
                             attrib, nsmap, _extra)
 
+
     # internal parser methods
 
     cdef xmlDoc* _parseUnicodeDoc(self, utext, char* c_filename) except NULL:
@@ -1641,6 +1647,34 @@ cdef class HTMLParser(_FeedParser):
                              remove_comments, remove_pis, strip_cdata, True,
                              target, encoding)
 
+    def makehtmldocument(self, public_id, sys_url):
+        u"""makehtmldocument(self, public_id, sys_url)
+
+        Return a new HTML document (_ElementTree object) with
+	given document type declaration public ID and System URL.
+	"""
+
+        cdef const_xmlChar *c_public_id, *c_sys_url
+        if public_id is not None:
+            for ch in public_id:
+                if ch not in pubid_allowed_charaters:
+                    raise ValueError(u"Forbidden character %r in public_id." % ch)
+
+            c_public_id = public_id
+        else:
+            c_public_id = NULL
+
+        if sys_url is not None:
+            c_sys_url = sys_url
+            if sys_url.find("'") != -1 and sys_url.find('"') != -1:
+                raise ValueError('System URL may not contain both a hyphen (\') and a quote (").')
+        else:
+            c_sys_url = NULL
+
+        c_doc = _newHTMLDoc(c_public_id, c_sys_url)
+        root = _makeElement('html', c_doc, None, self, None, None,
+                            None, None, None)
+        return root.getroottree()
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
 __DEFAULT_HTML_PARSER = HTMLParser()
@@ -1736,9 +1770,10 @@ cdef xmlDoc* _newXMLDoc() except NULL:
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)
     return result
 
-cdef xmlDoc* _newHTMLDoc() except NULL:
+cdef xmlDoc* _newHTMLDoc(const_xmlChar* public_id=NULL,
+                         const_xmlChar* sys_url=NULL) except NULL:
     cdef xmlDoc* result
-    result = tree.htmlNewDoc(NULL, NULL)
+    result = tree.htmlNewDoc(sys_url, public_id)
     if result is NULL:
         raise MemoryError()
     __GLOBAL_PARSER_CONTEXT.initDocDict(result)

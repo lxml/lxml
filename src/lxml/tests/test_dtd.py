@@ -337,6 +337,32 @@ class ETreeDtdTestCase(HelperTestCase):
                          u'<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
         self.assertEqual(etree.tostring(doc, method='html'), html)
 
+    def test_set_decl_public(self):
+        doc = etree.Element('test').getroottree()
+        doc.setdoctype('bar', 'baz')
+        self.assertEqual(doc.docinfo.doctype,
+                         u'<!DOCTYPE test PUBLIC "bar" "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         u'<!DOCTYPE test PUBLIC "bar" "baz">\n<test/>')
+
+    def test_set_decl_system(self):
+        doc = etree.Element('test').getroottree()
+        doc.setdoctype(None, 'baz')
+        self.assertEqual(doc.docinfo.doctype,
+                         u'<!DOCTYPE test SYSTEM "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         u'<!DOCTYPE test SYSTEM "baz">\n<test/>')
+
+    def test_invalid_decl_1(self):
+        doc = etree.Element('test').getroottree()
+        with self.assertRaises(ValueError):
+            doc.setdoctype(u'\xe4', 'a')
+
+    def test_invalid_decl_2(self):
+        doc = etree.Element('test').getroottree()
+        with self.assertRaises(ValueError):
+            doc.setdoctype(u'a', '\'"')
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
