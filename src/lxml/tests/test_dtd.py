@@ -303,6 +303,31 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(dtd.name, "a")
         self.assertEqual(dtd.system_url, "test.dtd")
 
+    def test_declaration_escape_quote_pid(self):
+        # Standard allows quotes in systemliteral, but in that case
+        # systemliteral must be escaped with single quotes.
+        # See http://www.w3.org/TR/REC-xml/#sec-prolog-dtd.
+        root = etree.XML('''<!DOCTYPE a PUBLIC 'foo' '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype,
+                         '''<!DOCTYPE a PUBLIC "foo" '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('''<!DOCTYPE a PUBLIC "foo" '"'>\n<a/>'''))
+
+    def test_declaration_quote_withoutpid(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, '''<!DOCTYPE a SYSTEM '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('''<!DOCTYPE a SYSTEM '"'>\n<a/>'''))
+
+    def test_declaration_apos(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM "'"><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, '''<!DOCTYPE a SYSTEM "'">''')
+        self.assertEqual(etree.tostring(doc),
+                         _bytes('''<!DOCTYPE a SYSTEM "'">\n<a/>'''))
+
 
 def test_suite():
     suite = unittest.TestSuite()
