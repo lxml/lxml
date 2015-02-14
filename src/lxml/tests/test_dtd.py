@@ -303,6 +303,65 @@ class ETreeDtdTestCase(HelperTestCase):
         self.assertEqual(dtd.name, "a")
         self.assertEqual(dtd.system_url, "test.dtd")
 
+    def test_declaration_escape_quote_pid(self):
+        # Standard allows quotes in systemliteral, but in that case
+        # systemliteral must be escaped with hyphens, not quotes.
+        # See http://www.w3.org/TR/REC-xml/#sec-prolog-dtd.
+        root = etree.XML('''<!DOCTYPE a PUBLIC 'foo' '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype,
+                         u'''<!DOCTYPE a PUBLIC "foo" '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a PUBLIC "foo" '"'>\n<a/>''')
+
+    def test_declaration_escape_quote_withoutpid(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM '"'><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, u'''<!DOCTYPE a SYSTEM '"'>''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a SYSTEM '"'>\n<a/>''')
+
+    def test_declaration_escape_hyphen(self):
+        root = etree.XML('''<!DOCTYPE a SYSTEM "'"><a/>''')
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype, u'''<!DOCTYPE a SYSTEM "'">''')
+        self.assertEqual(etree.tostring(doc),
+                         '''<!DOCTYPE a SYSTEM "'">\n<a/>''')
+
+    def test_ietf_decl(self):
+        html = u'<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">\n' \
+            u'<html></html>'
+        root = etree.HTML(html)
+        doc = root.getroottree()
+        self.assertEqual(doc.docinfo.doctype,
+                         u'<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
+        self.assertEqual(etree.tostring(doc, method='html'), html)
+
+    def test_set_decl_public(self):
+        doc = etree.Element('test').getroottree()
+        doc.setdoctype('bar', 'baz')
+        self.assertEqual(doc.docinfo.doctype,
+                         u'<!DOCTYPE test PUBLIC "bar" "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         u'<!DOCTYPE test PUBLIC "bar" "baz">\n<test/>')
+
+    def test_set_decl_system(self):
+        doc = etree.Element('test').getroottree()
+        doc.setdoctype(None, 'baz')
+        self.assertEqual(doc.docinfo.doctype,
+                         u'<!DOCTYPE test SYSTEM "baz">')
+        self.assertEqual(etree.tostring(doc),
+                         u'<!DOCTYPE test SYSTEM "baz">\n<test/>')
+
+    def test_invalid_decl_1(self):
+        doc = etree.Element('test').getroottree()
+        with self.assertRaises(ValueError):
+            doc.setdoctype(u'\xe4', 'a')
+
+    def test_invalid_decl_2(self):
+        doc = etree.Element('test').getroottree()
+        with self.assertRaises(ValueError):
+            doc.setdoctype(u'a', '\'"')
 
 def test_suite():
     suite = unittest.TestSuite()

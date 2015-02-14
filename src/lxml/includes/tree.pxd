@@ -16,6 +16,7 @@ cdef extern from "libxml/xmlstring.h":
     cdef xmlChar* xmlStrdup(const_xmlChar* cur) nogil
     cdef int xmlStrncmp(const_xmlChar* str1, const_xmlChar* str2, int length) nogil
     cdef int xmlStrcmp(const_xmlChar* str1, const_xmlChar* str2) nogil
+    cdef int xmlStrcasecmp(const xmlChar *str1, const xmlChar *str2) nogil
     cdef const_xmlChar* xmlStrstr(const_xmlChar* str1, const_xmlChar* str2) nogil
     cdef const_xmlChar* xmlStrchr(const_xmlChar* str1, xmlChar ch) nogil
     cdef const_xmlChar* _xcstr "(const xmlChar*)PyBytes_AS_STRING" (object s)
@@ -372,6 +373,8 @@ cdef extern from "libxml/tree.h":
     cdef size_t xmlBufUse(xmlBuf* buf) nogil # new in libxml2 2.9
     cdef int xmlKeepBlanksDefault(int val) nogil
     cdef xmlChar* xmlNodeGetBase(xmlDoc* doc, xmlNode* node) nogil
+    cdef xmlDtd* xmlCreateIntSubset(xmlDoc* doc, const_xmlChar* name,
+                                    const_xmlChar* ExternalID, const_xmlChar* SystemID) nogil
     cdef void xmlNodeSetBase(xmlNode* node, const_xmlChar* uri) nogil
     cdef int xmlValidateNCName(const_xmlChar* value, int space) nogil
 

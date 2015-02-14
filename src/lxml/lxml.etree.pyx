@@ -3,6 +3,7 @@ for XML.
 """
 
 from __future__ import absolute_import
+import string
 
 __docformat__ = u"restructuredtext en"
 
@@ -577,16 +578,26 @@ cdef class DocInfo:
         u"Returns a DOCTYPE declaration string for the document."
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
+            if system_url:
+                # If system_url contains a quote, we must escape it
+                # with hyphens, otherwise escape with quotes. If url
+                # contains both quote and a hyphen, XML standard is
+                # being violated.
+                if system_url.find('"') != -1:
+                   escaped_system_url = u"'%s'" % system_url
+                else:
+                    escaped_system_url = u'"%s"' % system_url
             if public_id:
                 if system_url:
-                    return u'<!DOCTYPE %s PUBLIC "%s" "%s">' % (
-                        root_name, public_id, system_url)
+                    return u'<!DOCTYPE %s PUBLIC "%s" %s>' % (
+                        root_name, public_id, escaped_system_url)
+
                 else:
                     return u'<!DOCTYPE %s PUBLIC "%s">' % (
                         root_name, public_id)
             elif system_url:
-                return u'<!DOCTYPE %s SYSTEM "%s">' % (
-                    root_name, system_url)
+                return u'<!DOCTYPE %s SYSTEM %s>' % (
+                    root_name, escaped_system_url)
             elif self._doc.hasdoctype():
                 return u'<!DOCTYPE %s>' % root_name
             else:
@@ -2272,6 +2283,39 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
         _tofilelikeC14N(file, self._context_node, exclusive, with_comments,
                         compression, inclusive_ns_prefixes)
+
+    def setdoctype(self, public_id, sys_url):
+        u"""setdoctype(self, public_id, sys_url)
+
+        Set document type declaration for a document. This only sets
+        declaration for a document which does not have one. If a
+        declaration exists, it cannot be changed.
+        """
+
+        self._assertHasRoot()
+        cdef xmlDoc* c_doc = self._context_node._c_node.doc
+
+        if c_doc is NULL: # unnecessary?
+            raise Exception('Document missing.')
+        if c_doc.intSubset is not NULL:
+            raise Exception('Document type already set.')
+
+        cdef const_xmlChar* c_public_id = NULL
+        if public_id is not None:
+            for ch in public_id:
+                if ch not in pubid_allowed_charaters:
+                    raise ValueError(u"Forbidden character %r in public_id." % ch)
+
+            c_public_id = public_id
+
+        # sys_url may be any valid unicode string that can be enclosed in
+        # hyphens or quotes.
+        if sys_url.find("'") != -1 and sys_url.find('"') != -1:
+            raise ValueError('System URL may not contain both a hyphen (\') and a quote (").')
+        sys_url = _utf8(sys_url)
+
+        root_name = self._context_node.tag
+        tree.xmlCreateIntSubset(c_doc, root_name, c_public_id, sys_url)
 
 cdef _ElementTree _elementTreeFactory(_Document doc, _Element context_node):
     return _newElementTree(doc, context_node, _ElementTree)
