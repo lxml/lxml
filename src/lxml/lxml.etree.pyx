@@ -506,8 +506,9 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     return result
 
 
-nonwellformed_public_id = re.compile(
-                          "[^\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#@$_%-]+")
+cdef object _find_invalid_public_id_characters = re.compile(
+    ur"([^\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#@$_%-]+)").match
+
 
 cdef class DocInfo:
     u"Document information provided by parser and DTD."
@@ -526,90 +527,86 @@ cdef class DocInfo:
             return root_name
 
     @cython.final
-    cdef tree.xmlDtd* get_c_dtd(self):
+    cdef tree.xmlDtd* _get_c_dtd(self):
         u"""Return the DTD. Create it if it does not yet exist."""
         cdef xmlDoc* c_doc = self._doc._c_doc
         cdef xmlNode* c_root_node
         cdef const_xmlChar* c_name
 
-        if c_doc.intSubset == NULL:
-            c_root_node = tree.xmlDocGetRootElement(c_doc)
-            if c_root_node is NULL:
-                c_name = NULL
-            else:
-                name = _utf8(c_root_node.name)
-                c_name = _xcstr(name)
-            if tree.xmlCreateIntSubset(c_doc, c_name, NULL, NULL) is NULL:
-                raise MemoryError()
-        return c_doc.intSubset
+        if c_doc.intSubset:
+            return c_doc.intSubset
+
+        c_root_node = tree.xmlDocGetRootElement(c_doc)
+        c_name = c_root_node.name if c_root_node else NULL
+        return  tree.xmlCreateIntSubset(c_doc, c_name, NULL, NULL)
 
     def clear(self):
-        u"""Removes the DOCTYPE from the document."""
+        u"""Removes DOCTYPE and internal subset from the document."""
         cdef xmlDoc* c_doc = self._doc._c_doc
-        cdef tree.xmlDtd* c_dtd = c_doc.intSubset
+        cdef tree.xmlNode* c_dtd = <xmlNode*>c_doc.intSubset
         if c_dtd is NULL:
             return
-        tree.xmlUnlinkNode(<xmlNode*>c_dtd)
-        tree.xmlFreeNode(<xmlNode*>c_dtd)
+        tree.xmlUnlinkNode(c_dtd)
+        tree.xmlFreeNode(c_dtd)
 
     property public_id:
         u"""Public ID of the DOCTYPE.
 
-	Mutable. May be set to a valid string or None. If a DTD does not
-	exist, setting this variable (even to None) will create one.
+        Mutable.  May be set to a valid string or None.  If a DTD does not
+        exist, setting this variable (even to None) will create one.
         """
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
             return public_id
 
         def __set__(self, value):
-            cdef tree.xmlDtd* c_dtd = self.get_c_dtd()
             cdef const_xmlChar* c_value = NULL
-
             if value is not None:
-                m = nonwellformed_public_id.match(value)
-                if m:
-                    raise ValueError('Invalid character(s) %r in public_id.' %
-                        m.group(0))
+                match = _find_invalid_public_id_characters(value)
+                if match:
+                    raise ValueError('Invalid character(s) %r in public_id.' % match.group(1))
                 value = _utf8(value)
                 c_value = tree.xmlStrdup(_xcstr(value))
-                if c_value == NULL:
+                if not c_value:
                     raise MemoryError()
 
-            if c_dtd.ExternalID != NULL:
+            c_dtd = self._get_c_dtd()
+            if not c_dtd:
+                tree.xmlFree(c_value)
+                raise MemoryError()
+            if c_dtd.ExternalID:
                 tree.xmlFree(c_dtd.ExternalID)
-
             c_dtd.ExternalID = c_value
 
     property system_url:
         u"""System ID of the DOCTYPE.
 
-	Mutable. May be set to a valid string or None. If a DTD does not
-	exist, setting this variable (even to None) will create one.
+        Mutable.  May be set to a valid string or None.  If a DTD does not
+        exist, setting this variable (even to None) will create one.
         """
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
             return system_url
 
         def __set__(self, value):
-            cdef tree.xmlDtd* c_dtd = self.get_c_dtd()
             cdef const_xmlChar* c_value = NULL
-
             if value is not None:
+                bvalue = _utf8(value)
                 # sys_url may be any valid unicode string that can be
                 # enclosed in single quotes or quotes.
-                if "'" in value and '"' in value:
-                    raise ValueError('System URL may not contain both a '
-                        'single quote (\') and a quote (").')
-
-                value = _utf8(value)
-                c_value = tree.xmlStrdup(_xcstr(value))
-                if c_value == NULL:
+                if b"'" in bvalue and b'"' in bvalue:
+                    raise ValueError(
+                        'System URL may not contain both single (\') and double quotes (").')
+                c_value = tree.xmlStrdup(_xcstr(bvalue))
+                if not c_value:
                     raise MemoryError()
 
-            if c_dtd.SystemID != NULL:
+            c_dtd = self._get_c_dtd()
+            if not c_dtd:
+                tree.xmlFree(c_value)
+                raise MemoryError()
+            if c_dtd.SystemID:
                 tree.xmlFree(c_dtd.SystemID)
-
             c_dtd.SystemID = c_value
 
     property xml_version:
@@ -660,7 +657,7 @@ cdef class DocInfo:
                 # quotes, otherwise escape with double quotes. If url
                 # contains both a single quote and a double quote, XML
                 # standard is being violated.
-                if system_url.find('"') != -1:
+                if '"' in system_url:
                     quoted_system_url = u"'%s'" % system_url
                 else:
                     quoted_system_url = u'"%s"' % system_url

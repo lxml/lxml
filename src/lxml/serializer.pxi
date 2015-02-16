@@ -304,22 +304,23 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
 
     cdef const_xmlChar* public_id = c_dtd.ExternalID
     cdef const_xmlChar* sys_url = c_dtd.SystemID
-    if public_id != NULL and public_id[0] == c'\0':
+    if public_id and public_id[0] == b'\0':
         public_id = NULL
-    if sys_url != NULL and sys_url[0] == c'\0':
+    if sys_url and sys_url[0] == b'\0':
         sys_url = NULL
 
-    if public_id != NULL:
+    if public_id:
         tree.xmlOutputBufferWrite(c_buffer, 9, ' PUBLIC "')
         tree.xmlOutputBufferWriteString(c_buffer, <const_char*>public_id)
-        tree.xmlOutputBufferWrite(c_buffer, 1, '"')
-        if sys_url != NULL:
-            tree.xmlOutputBufferWrite(c_buffer, 1, ' ')
-    elif sys_url != NULL:
+        if sys_url:
+            tree.xmlOutputBufferWrite(c_buffer, 2, '" ')
+        else:
+            tree.xmlOutputBufferWrite(c_buffer, 1, '"')
+    elif sys_url:
         tree.xmlOutputBufferWrite(c_buffer, 8, ' SYSTEM ')
 
-    if sys_url != NULL:
-        if tree.xmlStrchr(<const_xmlChar*>sys_url, c'"'):
+    if sys_url:
+        if tree.xmlStrchr(sys_url, b'"'):
             quotechar = '\''
         else:
             quotechar = '"'
@@ -327,11 +328,12 @@ cdef void _writeDtdToBuffer(tree.xmlOutputBuffer* c_buffer,
         tree.xmlOutputBufferWriteString(c_buffer, <const_char*>sys_url)
         tree.xmlOutputBufferWrite(c_buffer, 1, quotechar)
 
-    if not c_dtd.entities and not c_dtd.elements and \
-           not c_dtd.attributes and not c_dtd.notations and \
-           not c_dtd.pentities:
+    if (not c_dtd.entities and not c_dtd.elements and
+           not c_dtd.attributes and not c_dtd.notations and
+           not c_dtd.pentities):
         tree.xmlOutputBufferWrite(c_buffer, 2, '>\n')
         return
+
     tree.xmlOutputBufferWrite(c_buffer, 3, ' [\n')
     if c_dtd.notations and not c_buffer.error:
         c_buf = tree.xmlBufferCreate()
