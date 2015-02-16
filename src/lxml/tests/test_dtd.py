@@ -329,13 +329,14 @@ class ETreeDtdTestCase(HelperTestCase):
                          _bytes('''<!DOCTYPE a SYSTEM "'">\n<a/>'''))
 
     def test_ietf_decl(self):
-        html = '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">\n' \
-            '<html></html>'
-        root = etree.HTML(html)
+        html_data = (
+            '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">\n'
+            '<html></html>')
+        root = etree.HTML(html_data)
         doc = root.getroottree()
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
-        self.assertEqual(etree.tostring(doc, method='html'), _bytes(html))
+        self.assertEqual(etree.tostring(doc, method='html'), _bytes(html_data))
 
     def test_set_decl_public(self):
         doc = etree.Element('test').getroottree()
