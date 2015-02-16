@@ -69,18 +69,24 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
     root.tag = "html"
     return root
 
-declaration_re = re.compile(r'DOCTYPE\s*HTML(?:\s+PUBLIC)?'
-'(?:\s+(\'[^\']*\'|"[^"]*"))?'  '(?:\s+(\'[^\']*\'|"[^"]*"))?', re.IGNORECASE)
 
-class Pseudotag:
+_parse_doctype_declaration = re.compile(
+    r'DOCTYPE\s*HTML'
+    r'(?:\s+PUBLIC)?(?:\s+(\'[^\']*\'|"[^"]*"))?'
+    r'(?:\s+(\'[^\']*\'|"[^"]*"))?',
+    re.IGNORECASE).match
+
+
+class _PseudoTag:
     # Minimal imitation of BeautifulSoup.Tag
     def __init__(self, contents):
         self.name = 'html'
-        self.attrs = [ ]
+        self.attrs = []
         self.contents = contents
 
     def __iter__(self):
         return self.contents.__iter__()
+
 
 def _convert_tree(beautiful_soup_tree, makeelement):
     if makeelement is None:
@@ -92,33 +98,17 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     # ii) the root(s),
     # iii) everything after the root: comments, processing
     # instructions, whitespace
-    first_element_idx, last_element_idx = None, None
-    html_root = None
-    declaration_found = False
+    first_element_idx = last_element_idx = None
+    html_root = declaration = None
     for i, e in enumerate(beautiful_soup_tree):
         if isinstance(e, Tag):
             if first_element_idx is None:
                 first_element_idx = i
             last_element_idx = i
-
-            if e.name.lower() == 'html' and html_root is None:
+            if html_root is None and e.name and e.name.lower() == 'html':
                 html_root = e
-
-        if not isinstance(e, Declaration):
-            continue
-        m = declaration_re.match(e.string)
-        if not m:
-            # Something is wrong if we end up in here. Since soupparser should
-            # tolerate errors, do not raise Exception, just let it pass.
-            pass
-        else:
-            external_id, sys_uri = None, None
-            declaration_found = True
-            g = m.groups()
-            if len(g) >= 1 and g[0] is not None:
-                external_id = g[0][1:-1] # [1:-1] strips quotes
-            if len(g) >= 2 and g[1] is not None:
-                sys_uri = g[1][1:-1] # [1:-1] strips quotes
+        elif declaration is None and isinstance(e, Declaration):
+            declaration = e
 
     # For a nice, well-formatted document, the variable roots below is
     # a list consisting of a single <html> element. However, the document
@@ -134,16 +124,15 @@ def _convert_tree(beautiful_soup_tree, makeelement):
         # ... use existing one if possible, ...
         i = roots.index(html_root)
         html_root.contents = roots[:i] + html_root.contents + roots[i+1:]
-        root_name = html_root.name
     else:
         # ... otherwise create a new one.
-        html_root = Pseudotag(roots)
+        html_root = _PseudoTag(roots)
 
     # Process pre_root
-    res_root = _convert_node(None, html_root, makeelement)
+    res_root = _convert_node(html_root, None, makeelement)
     prev = res_root
     for e in reversed(pre_root):
-        converted = _convert_node(None, e, None)
+        converted = _convert_node(e)
         if converted is not None:
             prev.addprevious(converted)
             prev = converted
@@ -151,34 +140,40 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     # ditto for post_root
     prev = res_root
     for e in post_root:
-        converted = _convert_node(None, e, None)
+        converted = _convert_node(e)
         if converted is not None:
             prev.addnext(converted)
             prev = converted
 
-    # Fix declaration.
-    if declaration_found:
-        doc = res_root.getroottree()
-        docinfo = res_root.getroottree().docinfo
-        docinfo.public_id = external_id
-        docinfo.system_url = sys_uri
+    if declaration is not None:
+        match = _parse_doctype_declaration(declaration.string)
+        if not match:
+            # Something is wrong if we end up in here. Since soupparser should
+            # tolerate errors, do not raise Exception, just let it pass.
+            pass
+        else:
+            external_id, sys_uri = match.groups()
+            docinfo = res_root.getroottree().docinfo
+            # strip quotes and update DOCTYPE values (any of None, '', '...')
+            docinfo.public_id = external_id and external_id[1:-1]
+            docinfo.system_url = sys_uri and sys_uri[1:-1]
 
     return res_root
 
-def _convert_node(parent, bs_node, makeelement):
-    SubElement = etree.SubElement
+
+def _convert_node(bs_node, parent=None, makeelement=None):
     res = None
-    if isinstance(bs_node, Tag) or isinstance(bs_node, Pseudotag):
+    if isinstance(bs_node, (Tag, _PseudoTag)):
+        attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
         if parent is not None:
-            res = SubElement(parent, bs_node.name, attrib=dict(
-                [(k, unescape(v)) for (k,v) in bs_node.attrs]))
+            res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
-            res = makeelement(bs_node.name, attrib=dict(
-                [(k, unescape(v)) for (k,v) in bs_node.attrs]))
+            res = makeelement(bs_node.name, attrib=attribs)
         for child in bs_node:
-            _convert_node(res, child, None)
+            _convert_node(child, res)
     elif type(bs_node) is NavigableString:
-        if parent is None: return None
+        if parent is None:
+            return None
         _append_text(parent, unescape(bs_node))
     elif isinstance(bs_node, Comment):
         res = etree.Comment(bs_node)
@@ -194,9 +189,10 @@ def _convert_node(parent, bs_node, makeelement):
             parent.append(res)
     elif isinstance(bs_node, Declaration):
         pass
-    else: # CData
-        _append_text(parent, unescape(child))
+    else:  # CData
+        _append_text(parent, unescape(bs_node))
     return res
+
 
 def _append_text(parent, text):
     if len(parent) == 0:
@@ -208,11 +204,13 @@ def _append_text(parent, text):
 # copied from ET's ElementSoup
 
 try:
-    from html.entities import name2codepoint # Python 3
+    from html.entities import name2codepoint  # Python 3
 except ImportError:
     from htmlentitydefs import name2codepoint
 
+
 handle_entities = re.compile("&(\w+);").sub
+
 
 def unescape(string):
     if not string:
@@ -222,5 +220,5 @@ def unescape(string):
         try:
             return unichr(name2codepoint[m.group(1)])
         except KeyError:
-            return m.group(0) # use as is
+            return m.group(0)  # use as is
     return handle_entities(unescape_entity, string)
