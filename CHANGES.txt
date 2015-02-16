@@ -8,6 +8,9 @@ lxml changelog
 Bugs fixed
 ----------
 
+* LP#1421927: DOCTYPE system URLs were incorrectly quoted when containing
+  double quotes.  Patch by Olli Pottonen.
+
 * LP#1419354: meta-redirect URLs were incorrectly processed by
   ``iterlinks()`` if preceded by whitespace.
 
