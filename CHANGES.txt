@@ -25,9 +25,6 @@ Bugs fixed
 * LP#659367: Some HTML DOCTYPE declarations were not serialised.
   Patch by Olli Pottonen.
 
-* LP#1421927: DOCTYPE system URLs were incorrectly quoted when containing
-  double quotes.  Patch by Olli Pottonen.
-
 * LP#1238503: lxml.doctestcompare is now consistent with stdlib's doctest
   in how it uses ``+`` and ``-`` to refer to unexpected and missing output.
 
@@ -40,6 +37,9 @@ Bugs fixed
 
 Bugs fixed
 ----------
+
+* LP#1421927: DOCTYPE system URLs were incorrectly quoted when containing
+  double quotes.  Patch by Olli Pottonen.
 
 * LP#1419354: meta-redirect URLs were incorrectly processed by
   ``iterlinks()`` if preceded by whitespace.
