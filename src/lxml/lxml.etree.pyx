@@ -582,7 +582,7 @@ cdef class DocInfo:
                 # quotes, otherwise escape with double quotes. If url
                 # contains both a single quote and a double quote, XML
                 # standard is being violated.
-                if system_url.find('"') != -1:
+                if '"' in system_url:
                     quoted_system_url = u"'%s'" % system_url
                 else:
                     quoted_system_url = u'"%s"' % system_url
