@@ -506,6 +506,9 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
     return result
 
 
+nonwellformed_public_id = re.compile(
+                          "[^\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#@$_%-]+")
+
 cdef class DocInfo:
     u"Document information provided by parser and DTD."
     cdef _Document _doc
@@ -522,17 +525,92 @@ cdef class DocInfo:
             root_name, public_id, system_url = self._doc.getdoctype()
             return root_name
 
+    @cython.final
+    cdef tree.xmlDtd* get_c_dtd(self):
+        u"""Return the DTD. Create it if it does not yet exist."""
+        cdef xmlDoc* c_doc = self._doc._c_doc
+        cdef xmlNode* c_root_node
+        cdef const_xmlChar* c_name
+
+        if c_doc.intSubset == NULL:
+            c_root_node = tree.xmlDocGetRootElement(c_doc)
+            if c_root_node is NULL:
+                c_name = NULL
+            else:
+                name = _utf8(c_root_node.name)
+                c_name = _xcstr(name)
+            if tree.xmlCreateIntSubset(c_doc, c_name, NULL, NULL) is NULL:
+                raise MemoryError()
+        return c_doc.intSubset
+
+    def clear(self):
+        u"""Removes the DOCTYPE from the document."""
+        cdef xmlDoc* c_doc = self._doc._c_doc
+        cdef tree.xmlDtd* c_dtd = c_doc.intSubset
+        if c_dtd is NULL:
+            return
+        tree.xmlUnlinkNode(<xmlNode*>c_dtd)
+        tree.xmlFreeNode(<xmlNode*>c_dtd)
+
     property public_id:
-        u"Returns the public ID of the DOCTYPE."
+        u"""Public ID of the DOCTYPE.
+
+	Mutable. May be set to a valid string or None. If a DTD does not
+	exist, setting this variable (even to None) will create one.
+        """
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
             return public_id
 
+        def __set__(self, value):
+            cdef tree.xmlDtd* c_dtd = self.get_c_dtd()
+            cdef const_xmlChar* c_value = NULL
+
+            if value is not None:
+                m = nonwellformed_public_id.match(value)
+                if m:
+                    raise ValueError('Invalid character(s) %r in public_id.' %
+                        m.group(0))
+                value = _utf8(value)
+                c_value = tree.xmlStrdup(_xcstr(value))
+                if c_value == NULL:
+                    raise MemoryError()
+
+            if c_dtd.ExternalID != NULL:
+                tree.xmlFree(c_dtd.ExternalID)
+
+            c_dtd.ExternalID = c_value
+
     property system_url:
-        u"Returns the system ID of the DOCTYPE."
+        u"""System ID of the DOCTYPE.
+
+	Mutable. May be set to a valid string or None. If a DTD does not
+	exist, setting this variable (even to None) will create one.
+        """
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
             return system_url
+
+        def __set__(self, value):
+            cdef tree.xmlDtd* c_dtd = self.get_c_dtd()
+            cdef const_xmlChar* c_value = NULL
+
+            if value is not None:
+                # sys_url may be any valid unicode string that can be
+                # enclosed in single quotes or quotes.
+                if "'" in value and '"' in value:
+                    raise ValueError('System URL may not contain both a '
+                        'single quote (\') and a quote (").')
+
+                value = _utf8(value)
+                c_value = tree.xmlStrdup(_xcstr(value))
+                if c_value == NULL:
+                    raise MemoryError()
+
+            if c_dtd.SystemID != NULL:
+                tree.xmlFree(c_dtd.SystemID)
+
+            c_dtd.SystemID = c_value
 
     property xml_version:
         u"Returns the XML version as declared by the document."
@@ -577,16 +655,25 @@ cdef class DocInfo:
         u"Returns a DOCTYPE declaration string for the document."
         def __get__(self):
             root_name, public_id, system_url = self._doc.getdoctype()
+            if system_url:
+                # If '"' in system_url, we must escape it with single
+                # quotes, otherwise escape with double quotes. If url
+                # contains both a single quote and a double quote, XML
+                # standard is being violated.
+                if system_url.find('"') != -1:
+                    quoted_system_url = u"'%s'" % system_url
+                else:
+                    quoted_system_url = u'"%s"' % system_url
             if public_id:
                 if system_url:
-                    return u'<!DOCTYPE %s PUBLIC "%s" "%s">' % (
-                        root_name, public_id, system_url)
+                    return u'<!DOCTYPE %s PUBLIC "%s" %s>' % (
+                        root_name, public_id, quoted_system_url)
                 else:
                     return u'<!DOCTYPE %s PUBLIC "%s">' % (
                         root_name, public_id)
             elif system_url:
-                return u'<!DOCTYPE %s SYSTEM "%s">' % (
-                    root_name, system_url)
+                return u'<!DOCTYPE %s SYSTEM %s>' % (
+                    root_name, quoted_system_url)
             elif self._doc.hasdoctype():
                 return u'<!DOCTYPE %s>' % root_name
             else:

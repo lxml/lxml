@@ -11,7 +11,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, StringIO, BytesIO, fileInTestDir, _bytes, _str
+from common_imports import etree, html, StringIO, BytesIO, fileInTestDir, _bytes, _str
 from common_imports import SillyFileLike, HelperTestCase, write_to_file, next
 
 try:
@@ -506,6 +506,37 @@ class HtmlParserTestCase(HelperTestCase):
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)
 
+    def test_set_decl_html(self):
+        doc = html.Element('html').getroottree()
+        doc.docinfo.public_id = "-//W3C//DTD XHTML 1.0 Strict//EN"
+        doc.docinfo.system_url = \
+            "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">')
+        self.assertEqual(self.etree.tostring(doc),
+                         _bytes('''<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"></html>'''))
+
+    def test_html5_doctype(self):
+        # document type declaration with neither public if nor system url
+        doc = html.Element('html').getroottree()
+        doc.docinfo.public_id = None
+        doc.docinfo.system_url = None
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE html>')
+        self.assertTrue(doc.docinfo.public_id is None)
+        self.assertEqual(self.etree.tostring(doc),
+                         _bytes('<!DOCTYPE html>\n<html/>'))
+
+    def test_ietf_decl(self):
+        # legacy declaration with public id, no system url
+        doc = html.Element('html').getroottree()
+        doc.docinfo.public_id = '-//IETF//DTD HTML//EN'
+        doc.docinfo.system_url = None
+        self.assertEqual(doc.docinfo.doctype,
+                         '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
+        self.assertEqual(self.etree.tostring(doc),
+                         _bytes('<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">\n<html/>'))
 
 def test_suite():
     suite = unittest.TestSuite()
