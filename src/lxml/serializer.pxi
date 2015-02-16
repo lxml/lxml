@@ -213,6 +213,11 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
     cdef xmlDoc* c_doc = c_node.doc
     if write_xml_declaration and c_method == OUTPUT_METHOD_XML:
         _writeDeclarationToBuffer(c_buffer, c_doc.version, encoding, standalone)
+
+    # comments/processing instructions before doctype declaration
+    if write_complete_document and not c_buffer.error and c_doc.intSubset:
+        _writePrevSiblings(c_buffer, <xmlNode*>c_doc.intSubset, encoding, pretty_print)
+
     if c_doctype:
         _writeDoctype(c_buffer, c_doctype)
     # write internal DTD subset, preceding PIs/comments, etc.

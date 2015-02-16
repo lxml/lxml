@@ -393,6 +393,13 @@ class ETreeDtdTestCase(HelperTestCase):
             doc.docinfo.system_url = '\'"'
         self.assertRaises(ValueError, setsystemurl)
 
+    def test_comment_before_dtd(self):
+        data = '<!--comment--><!DOCTYPE test>\n<!-- --><test/>'
+        doc = etree.fromstring(data).getroottree()
+        self.assertEqual(etree.tostring(doc),
+                         _bytes(data))
+
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(ETreeDtdTestCase)])
