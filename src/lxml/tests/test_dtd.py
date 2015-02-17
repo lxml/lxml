@@ -388,7 +388,7 @@ class ETreeDtdTestCase(HelperTestCase):
         def set_public_id(value):
             docinfo.public_id = value
         self.assertRaises(ValueError, set_public_id, _str('ä'))
-        self.assertRaises(ValueError, set_public_id, _str('qwerty \xe4\xf6 asdf'))
+        self.assertRaises(ValueError, set_public_id, _str('qwerty ä asdf'))
 
     def test_invalid_decl_2(self):
         docinfo = etree.Element('test').getroottree().docinfo
