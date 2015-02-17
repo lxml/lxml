@@ -383,16 +383,21 @@ class ETreeDtdTestCase(HelperTestCase):
                          _bytes('<!DOCTYPE test>\n<test/>'))
 
     def test_invalid_decl_1(self):
-        doc = etree.Element('test').getroottree()
-        def setpublicid():
-            doc.docinfo.public_id = _str('ä')
-        self.assertRaises(ValueError, setpublicid)
+        docinfo = etree.Element('test').getroottree().docinfo
+
+        def set_public_id(value):
+            docinfo.public_id = value
+        self.assertRaises(ValueError, set_public_id, _str('ä'))
+        self.assertRaises(ValueError, set_public_id, u'qwerty \xe4\xf6 asdf')
 
     def test_invalid_decl_2(self):
-        doc = etree.Element('test').getroottree()
-        def setsystemurl():
-            doc.docinfo.system_url = '\'"'
-        self.assertRaises(ValueError, setsystemurl)
+        docinfo = etree.Element('test').getroottree().docinfo
+
+        def set_system_url(value):
+            docinfo.system_url = value
+        self.assertRaises(ValueError, set_system_url, '\'"')
+        self.assertRaises(ValueError, set_system_url, '"\'')
+        self.assertRaises(ValueError, set_system_url, '  "  \'  ')
 
     def test_comment_before_dtd(self):
         data = '<!--comment--><!DOCTYPE test>\n<!-- --><test/>'

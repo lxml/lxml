@@ -507,7 +507,7 @@ cdef _Document _documentFactory(xmlDoc* c_doc, _BaseParser parser):
 
 
 cdef object _find_invalid_public_id_characters = re.compile(
-    ur"([^\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#@$_%-]+)").match
+    ur"[^\x20\x0D\x0Aa-zA-Z0-9'()+,./:=?;!*#@$_%-]+").search
 
 
 cdef class DocInfo:
@@ -564,7 +564,7 @@ cdef class DocInfo:
             if value is not None:
                 match = _find_invalid_public_id_characters(value)
                 if match:
-                    raise ValueError('Invalid character(s) %r in public_id.' % match.group(1))
+                    raise ValueError('Invalid character(s) %r in public_id.' % match.group(0))
                 value = _utf8(value)
                 c_value = tree.xmlStrdup(_xcstr(value))
                 if not c_value:
