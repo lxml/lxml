@@ -31,6 +31,13 @@
 """The ``lxml.html`` tool set for HTML handling.
 """
 
+__all__ = [
+    'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
+    'tostring', 'Element', 'defs', 'open_in_browser', 'submit_form',
+    'find_rel_links', 'find_class', 'make_links_absolute',
+    'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser', 'parse']
+
+
 from __future__ import absolute_import
 
 import copy
@@ -60,6 +67,7 @@ except NameError:
     # Python 3
     basestring = (str, bytes)
 
+
 def __fix_docstring(s):
     if not s:
         return s
@@ -69,11 +77,6 @@ def __fix_docstring(s):
         sub = re.compile(r"^(\s*)b'", re.M).sub
     return sub(r"\1'", s)
 
-__all__ = [
-    'document_fromstring', 'fragment_fromstring', 'fragments_fromstring', 'fromstring',
-    'tostring', 'Element', 'defs', 'open_in_browser', 'submit_form',
-    'find_rel_links', 'find_class', 'make_links_absolute',
-    'resolve_base_href', 'iterlinks', 'rewrite_links', 'open_in_browser', 'parse']
 
 XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml"
 
@@ -102,6 +105,7 @@ def _unquote_match(s, pos):
     else:
         return s,pos
 
+
 def _transform_result(typ, result):
     """Convert the result back into the input type.
     """
@@ -112,11 +116,13 @@ def _transform_result(typ, result):
     else:
         return result
 
+
 def _nons(tag):
     if isinstance(tag, basestring):
         if tag[0] == '{' and tag[1:len(XHTML_NAMESPACE)+1] == XHTML_NAMESPACE:
             return tag.split('}')[-1]
     return tag
+
 
 class HtmlMixin(object):
 
@@ -529,6 +535,7 @@ class _MethodFunc(object):
         else:
             return result
 
+
 find_rel_links = _MethodFunc('find_rel_links', copy=False)
 find_class = _MethodFunc('find_class', copy=False)
 make_links_absolute = _MethodFunc('make_links_absolute', copy=True)
@@ -536,14 +543,18 @@ resolve_base_href = _MethodFunc('resolve_base_href', copy=True)
 iterlinks = _MethodFunc('iterlinks', copy=False)
 rewrite_links = _MethodFunc('rewrite_links', copy=True)
 
+
 class HtmlComment(etree.CommentBase, HtmlMixin):
     pass
+
 
 class HtmlElement(etree.ElementBase, HtmlMixin):
     pass
 
+
 class HtmlProcessingInstruction(etree.PIBase, HtmlMixin):
     pass
+
 
 class HtmlEntity(etree.EntityBase, HtmlMixin):
     pass
@@ -590,6 +601,7 @@ class HtmlElementClassLookup(etree.CustomElementClassLookup):
         # Otherwise normal lookup
         return None
 
+
 ################################################################################
 # parsing
 ################################################################################
@@ -598,6 +610,7 @@ _looks_like_full_html_unicode = re.compile(
     unicode(r'^\s*<(?:html|!doctype)'), re.I).match
 _looks_like_full_html_bytes = re.compile(
     r'^\s*<(?:html|!doctype)'.encode('ascii'), re.I).match
+
 
 def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
     if parser is None:
@@ -611,6 +624,7 @@ def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
     if ensure_head_body and value.find('body') is None:
         value.append(Element('body'))
     return value
+
 
 def fragments_fromstring(html, no_leading_text=False, base_url=None,
                          parser=None, **kw):
@@ -650,6 +664,7 @@ def fragments_fromstring(html, no_leading_text=False, base_url=None,
     # FIXME: removing the reference to the parent artificial document
     # would be nice
     return elements
+
 
 def fragment_fromstring(html, create_parent=False, base_url=None,
                         parser=None, **kw):
@@ -698,6 +713,7 @@ def fragment_fromstring(html, create_parent=False, base_url=None,
             "Element followed by text: %r" % el.tail)
     el.tail = None
     return el
+
 
 def fromstring(html, base_url=None, parser=None, **kw):
     """
@@ -766,6 +782,7 @@ def fromstring(html, base_url=None, parser=None, **kw):
         body.tag = 'span'
     return body
 
+
 def parse(filename_or_url, parser=None, base_url=None, **kw):
     """
     Parse a filename, URL, or file-like object into an HTML document
@@ -779,6 +796,7 @@ def parse(filename_or_url, parser=None, base_url=None, **kw):
         parser = html_parser
     return etree.parse(filename_or_url, parser, base_url=base_url, **kw)
 
+
 def _contains_block_level_tag(el):
     # FIXME: I could do this with XPath, but would that just be
     # unnecessarily slow?
@@ -787,6 +805,7 @@ def _contains_block_level_tag(el):
             return True
     return False
 
+
 def _element_name(el):
     if isinstance(el, etree.CommentBase):
         return 'comment'
@@ -794,6 +813,7 @@ def _element_name(el):
         return 'string'
     else:
         return _nons(el.tag)
+
 
 ################################################################################
 # form handling
@@ -904,7 +924,9 @@ class FormElement(HtmlElement):
         self.set('method', value.upper())
     method = property(_method__get, _method__set, doc=_method__get.__doc__)
 
+
 HtmlElementClassLookup._default_element_classes['form'] = FormElement
+
 
 def submit_form(form, extra_values=None, open_http=None):
     """
@@ -943,6 +965,7 @@ def submit_form(form, extra_values=None, open_http=None):
         url = form.base_url
     return open_http(form.method, url, values)
 
+
 def open_http_urllib(method, url, values):
     if not url:
         raise ValueError("cannot submit, no URL provided")
@@ -962,6 +985,7 @@ def open_http_urllib(method, url, values):
     else:
         data = urlencode(values)
     return urlopen(url, data)
+
 
 class FieldsDict(MutableMapping):
 
@@ -987,6 +1011,7 @@ class FieldsDict(MutableMapping):
         return '<%s for form %s>' % (
             self.__class__.__name__,
             self.inputs.form._name())
+
 
 class InputGetter(object):
 
@@ -1054,6 +1079,7 @@ class InputGetter(object):
         ## to have it likely turned back into a list again :(
         return iter(self._all_xpath(self.form))
 
+
 class InputMixin(object):
 
     """
@@ -1081,6 +1107,7 @@ class InputMixin(object):
             type = ''
         return '<%s %x name=%r%s>' % (
             self.__class__.__name__, id(self), self.name, type)
+
 
 class TextareaElement(InputMixin, HtmlElement):
     """
@@ -1110,7 +1137,9 @@ class TextareaElement(InputMixin, HtmlElement):
         del self[:]
     value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
 
+
 HtmlElementClassLookup._default_element_classes['textarea'] = TextareaElement
+
 
 class SelectElement(InputMixin, HtmlElement):
     """
@@ -1209,7 +1238,9 @@ class SelectElement(InputMixin, HtmlElement):
             del self.attrib['multiple']
     multiple = property(_multiple__get, _multiple__set, doc=_multiple__get.__doc__)
 
+
 HtmlElementClassLookup._default_element_classes['select'] = SelectElement
+
 
 class MultipleSelectOptions(SetMixin):
     """
@@ -1277,6 +1308,7 @@ class MultipleSelectOptions(SetMixin):
             ', '.join([repr(v) for v in self]),
             self.select.name)
 
+
 class RadioGroup(list):
     """
     This object represents several ``<input type=radio>`` elements
@@ -1329,6 +1361,7 @@ class RadioGroup(list):
             self.__class__.__name__,
             list.__repr__(self))
 
+
 class CheckboxGroup(list):
     """
     Represents a group of checkboxes (``<input type=checkbox>``) that
@@ -1367,6 +1400,7 @@ class CheckboxGroup(list):
     def __repr__(self):
         return '%s(%s)' % (
             self.__class__.__name__, list.__repr__(self))
+
 
 class CheckboxValues(SetMixin):
 
@@ -1410,6 +1444,7 @@ class CheckboxValues(SetMixin):
             self.__class__.__name__,
             ', '.join([repr(v) for v in self]),
             self.group.name)
+
 
 class InputElement(InputMixin, HtmlElement):
     """
@@ -1495,7 +1530,9 @@ class InputElement(InputMixin, HtmlElement):
                 del self.attrib['checked']
     checked = property(_checked__get, _checked__set, doc=_checked__get.__doc__)
 
+
 HtmlElementClassLookup._default_element_classes['input'] = InputElement
+
 
 class LabelElement(HtmlElement):
     """
@@ -1526,7 +1563,9 @@ class LabelElement(HtmlElement):
     for_element = property(_for_element__get, _for_element__set, _for_element__del,
                            doc=_for_element__get.__doc__)
 
+
 HtmlElementClassLookup._default_element_classes['label'] = LabelElement
+
 
 ############################################################
 ## Serialization
@@ -1546,6 +1585,7 @@ def html_to_xhtml(html):
         if tag[0] != '{':
             el.tag = prefix + tag
 
+
 def xhtml_to_html(xhtml):
     """Convert all tags in an XHTML tree to HTML by removing their
     XHTML namespace.
@@ -1559,12 +1599,14 @@ def xhtml_to_html(xhtml):
     for el in xhtml.iter(prefix + "*"):
         el.tag = el.tag[prefix_len:]
 
+
 # This isn't a general match, but it's a match for what libxml2
 # specifically serialises:
 __str_replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type"[^>]*>').sub
 __bytes_replace_meta_content_type = re.compile(
     r'<meta http-equiv="Content-Type"[^>]*>'.encode('ASCII')).sub
+
 
 def tostring(doc, pretty_print=False, include_meta_content_type=False,
              encoding=None, method="html", with_tail=True, doctype=None):
@@ -1639,7 +1681,9 @@ def tostring(doc, pretty_print=False, include_meta_content_type=False,
             html = __bytes_replace_meta_content_type(bytes(), html)
     return html
 
+
 tostring.__doc__ = __fix_docstring(tostring.__doc__)
+
 
 def open_in_browser(doc, encoding=None):
     """
@@ -1663,6 +1707,7 @@ def open_in_browser(doc, encoding=None):
     print(url)
     webbrowser.open(url)
 
+
 ################################################################################
 # configure Element class lookup
 ################################################################################
@@ -1674,6 +1719,7 @@ class HTMLParser(etree.HTMLParser):
     def __init__(self, **kwargs):
         super(HTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
+
 
 class XHTMLParser(etree.XMLParser):
     """An XML parser that is configured to return lxml.html Element
@@ -1696,6 +1742,7 @@ class XHTMLParser(etree.XMLParser):
         super(XHTMLParser, self).__init__(**kwargs)
         self.set_element_class_lookup(HtmlElementClassLookup())
 
+
 def Element(*args, **kw):
     """Create a new HTML Element.
 
@@ -1703,6 +1750,7 @@ def Element(*args, **kw):
     """
     v = html_parser.makeelement(*args, **kw)
     return v
+
 
 html_parser = HTMLParser()
 xhtml_parser = XHTMLParser()
