@@ -724,6 +724,11 @@ general document handling.
     >>> print(tree.docinfo.doctype)
     <!DOCTYPE root SYSTEM "test">
 
+    >>> tree.docinfo.public_id = '-//W3C//DTD XHTML 1.0 Transitional//EN'
+    >>> tree.docinfo.system_url = 'file://local.dtd'
+    >>> print(tree.docinfo.doctype)
+    <!DOCTYPE root PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "file://local.dtd">
+
 An ``ElementTree`` is also what you get back when you call the
 ``parse()`` function to parse files or file-like objects (see the
 parsing section below).
@@ -736,7 +741,7 @@ as a DOCTYPE and other DTD content in the document:
 .. sourcecode:: pycon
 
     >>> print(etree.tostring(tree))  # lxml 1.3.4 and later
-    <!DOCTYPE root SYSTEM "test" [
+    <!DOCTYPE root PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "file://local.dtd" [
     <!ENTITY tasty "parsnips">
     ]>
     <root>

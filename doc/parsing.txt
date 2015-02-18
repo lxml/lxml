@@ -305,7 +305,7 @@ Doctype information
 The use of the libxml2 parsers makes some additional information available at
 the API level.  Currently, ElementTree objects can access the DOCTYPE
 information provided by a parsed document, as well as the XML version and the
-original encoding:
+original encoding.  Since lxml 3.5, the doctype references are mutable.
 
 .. sourcecode:: pycon
 
@@ -328,6 +328,12 @@ original encoding:
   1.0
   >>> print(docinfo.encoding)
   ascii
+
+  >>> docinfo.system_url = None
+  >>> docinfo.public_id = None
+  >>> print(etree.tostring(tree))
+  <!DOCTYPE html>
+  <html><body/></html>
 
 
 The target parser interface
