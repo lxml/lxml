@@ -8,6 +8,10 @@ Latest changes
 Features added
 --------------
 
+* LP#1243600: Elements in ``lxml.html`` gained a ``classes`` property
+  that provides a set-like interface to the ``class`` attribute.
+  Original patch by masklinn.
+
 * LP#1341964: The soupparser now handles DOCTYPE declarations, comments
   and processing instructions outside of the root element.
   Patch by Olli Pottonen.
