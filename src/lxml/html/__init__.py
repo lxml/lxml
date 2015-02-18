@@ -255,6 +255,7 @@ class HtmlMixin(object):
         elif self.get('class') is not None:
             del self.attrib['class']
 
+    @property
     def base_url(self):
         """
         Returns the base URL, given when the page was parsed.
@@ -263,32 +264,32 @@ class HtmlMixin(object):
         absolute URLs.
         """
         return self.getroottree().docinfo.URL
-    base_url = property(base_url, doc=base_url.__doc__)
 
+    @property
     def forms(self):
         """
         Return a list of all the forms
         """
         return _forms_xpath(self)
-    forms = property(forms, doc=forms.__doc__)
 
+    @property
     def body(self):
         """
         Return the <body> element.  Can be called from a child element
         to get the document's head.
         """
         return self.xpath('//body|//x:body', namespaces={'x':XHTML_NAMESPACE})[0]
-    body = property(body, doc=body.__doc__)
 
+    @property
     def head(self):
         """
         Returns the <head> element.  Can be called from a child
         element to get the document's head.
         """
         return self.xpath('//head|//x:head', namespaces={'x':XHTML_NAMESPACE})[0]
-    head = property(head, doc=head.__doc__)
 
-    def _label__get(self):
+    @property
+    def label(self):
         """
         Get or set any <label> element associated with this element.
         """
@@ -300,7 +301,9 @@ class HtmlMixin(object):
             return None
         else:
             return result[0]
-    def _label__set(self, label):
+
+    @label.setter
+    def label(self, label):
         id = self.get('id')
         if not id:
             raise TypeError(
@@ -311,11 +314,12 @@ class HtmlMixin(object):
                 "You can only assign label to a label element (not %r)"
                 % label)
         label.set('for', id)
-    def _label__del(self):
+
+    @label.deleter
+    def label(self):
         label = self.label
         if label is not None:
             del label.attrib['for']
-    label = property(_label__get, _label__set, _label__del, doc=_label__get.__doc__)
 
     def drop_tree(self):
         """
@@ -953,6 +957,7 @@ class FormElement(HtmlElement):
     Represents a <form> element.
     """
 
+    @property
     def inputs(self):
         """
         Returns an accessor for all the input elements in the form.
@@ -960,38 +965,40 @@ class FormElement(HtmlElement):
         See `InputGetter` for more information about the object.
         """
         return InputGetter(self)
-    inputs = property(inputs, doc=inputs.__doc__)
 
-    def _fields__get(self):
+    @property
+    def fields(self):
         """
         Dictionary-like object that represents all the fields in this
         form.  You can set values in this dictionary to effect the
         form.
         """
         return FieldsDict(self.inputs)
-    def _fields__set(self, value):
-        prev_keys = self.fields.keys()
+
+    @fields.setter
+    def fields(self, value):
+        fields = self.fields
+        prev_keys = fields.keys()
         for key, value in value.items():
             if key in prev_keys:
                 prev_keys.remove(key)
-            self.fields[key] = value
+            fields[key] = value
         for key in prev_keys:
             if key is None:
                 # Case of an unnamed input; these aren't really
                 # expressed in form_values() anyway.
                 continue
-            self.fields[key] = None
-
-    fields = property(_fields__get, _fields__set, doc=_fields__get.__doc__)
+            fields[key] = None
 
     def _name(self):
         if self.get('name'):
             return self.get('name')
         elif self.get('id'):
             return '#' + self.get('id')
-        forms = list(self.body.iter('form'))
+        iter_tags = self.body.iter
+        forms = list(iter_tags('form'))
         if not forms:
-            forms = list(self.body.iter('{%s}form' % XHTML_NAMESPACE))
+            forms = list(iter_tags('{%s}form' % XHTML_NAMESPACE))
         return str(forms.index(self))
 
     def form_values(self):
@@ -1026,7 +1033,8 @@ class FormElement(HtmlElement):
                     results.append((name, el.value))
         return results
 
-    def _action__get(self):
+    @property
+    def action(self):
         """
         Get/set the form's ``action`` attribute.
         """
@@ -1036,22 +1044,28 @@ class FormElement(HtmlElement):
             return urljoin(base_url, action)
         else:
             return action
-    def _action__set(self, value):
-        self.set('action', value)
-    def _action__del(self):
-        if 'action' in self.attrib:
-            del self.attrib['action']
-    action = property(_action__get, _action__set, _action__del, doc=_action__get.__doc__)
 
-    def _method__get(self):
+    @action.setter
+    def action(self, value):
+        self.set('action', value)
+
+    @action.deleter
+    def action(self):
+        attrib = self.attrib
+        if 'action' in attrib:
+            del attrib['action']
+
+    @property
+    def method(self):
         """
         Get/set the form's method.  Always returns a capitalized
         string, and defaults to ``'GET'``
         """
         return self.get('method', 'GET').upper()
-    def _method__set(self, value):
+
+    @method.setter
+    def method(self, value):
         self.set('method', value.upper())
-    method = property(_method__get, _method__set, doc=_method__get.__doc__)
 
 
 HtmlElementClassLookup._default_element_classes['form'] = FormElement
@@ -1210,32 +1224,34 @@ class InputGetter(object):
 
 
 class InputMixin(object):
-
     """
     Mix-in for all input elements (input, select, and textarea)
     """
-
-
-    def _name__get(self):
+    @property
+    def name(self):
         """
         Get/set the name of the element
         """
         return self.get('name')
-    def _name__set(self, value):
+
+    @name.setter
+    def name(self, value):
         self.set('name', value)
-    def _name__del(self):
-        if 'name' in self.attrib:
-            del self.attrib['name']
-    name = property(_name__get, _name__set, _name__del, doc=_name__get.__doc__)
+
+    @name.deleter
+    def name(self):
+        attrib = self.attrib
+        if 'name' in attrib:
+            del attrib['name']
 
     def __repr__(self):
-        type = getattr(self, 'type', None)
-        if type:
-            type = ' type=%r' % type
+        type_name = getattr(self, 'type', None)
+        if type_name:
+            type_name = ' type=%r' % type_name
         else:
-            type = ''
+            type_name = ''
         return '<%s %x name=%r%s>' % (
-            self.__class__.__name__, id(self), self.name, type)
+            self.__class__.__name__, id(self), self.name, type_name)
 
 
 class TextareaElement(InputMixin, HtmlElement):
@@ -1243,8 +1259,8 @@ class TextareaElement(InputMixin, HtmlElement):
     ``<textarea>`` element.  You can get the name with ``.name`` and
     get/set the value with ``.value``
     """
-
-    def _value__get(self):
+    @property
+    def value(self):
         """
         Get/set the value (which is the contents of this element)
         """
@@ -1258,13 +1274,16 @@ class TextareaElement(InputMixin, HtmlElement):
             content += etree.tostring(
                 el, method=serialisation_method, encoding='unicode')
         return content
-    def _value__set(self, value):
+
+    @value.setter
+    def value(self, value):
         del self[:]
         self.text = value
-    def _value__del(self):
+
+    @value.deleter
+    def value(self):
         self.text = ''
         del self[:]
-    value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
 
 
 HtmlElementClassLookup._default_element_classes['textarea'] = TextareaElement
@@ -1282,8 +1301,8 @@ class SelectElement(InputMixin, HtmlElement):
     The boolean attribute ``.multiple`` shows if this is a
     multi-select.
     """
-
-    def _value__get(self):
+    @property
+    def value(self):
         """
         Get/set the value of this select (the selected option).
 
@@ -1302,14 +1321,16 @@ class SelectElement(InputMixin, HtmlElement):
                 return value
         return None
 
-    def _value__set(self, value):
+    @value.setter
+    def value(self, value):
         if self.multiple:
             if isinstance(value, basestring):
-                raise TypeError(
-                    "You must pass in a sequence")
-            self.value.clear()
-            self.value.update(value)
+                raise TypeError("You must pass in a sequence")
+            values = self.value
+            values.clear()
+            values.update(value)
             return
+        checked_option = None
         if value is not None:
             value = value.strip()
             for el in _options_xpath(self):
@@ -1327,18 +1348,18 @@ class SelectElement(InputMixin, HtmlElement):
         for el in _options_xpath(self):
             if 'selected' in el.attrib:
                 del el.attrib['selected']
-        if value is not None:
+        if checked_option is not None:
             checked_option.set('selected', '')
 
-    def _value__del(self):
+    @value.deleter
+    def value(self):
         # FIXME: should del be allowed at all?
         if self.multiple:
             self.value.clear()
         else:
             self.value = None
 
-    value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
-
+    @property
     def value_options(self):
         """
         All the possible values this select can have (the ``value``
@@ -1353,19 +1374,20 @@ class SelectElement(InputMixin, HtmlElement):
                 value = value.strip()
             options.append(value)
         return options
-    value_options = property(value_options, doc=value_options.__doc__)
 
-    def _multiple__get(self):
+    @property
+    def multiple(self):
         """
         Boolean attribute: is there a ``multiple`` attribute on this element.
         """
         return 'multiple' in self.attrib
-    def _multiple__set(self, value):
+
+    @multiple.setter
+    def multiple(self, value):
         if value:
             self.set('multiple', '')
         elif 'multiple' in self.attrib:
             del self.attrib['multiple']
-    multiple = property(_multiple__get, _multiple__set, doc=_multiple__get.__doc__)
 
 
 HtmlElementClassLookup._default_element_classes['select'] = SelectElement
@@ -1382,12 +1404,12 @@ class MultipleSelectOptions(SetMixin):
     def __init__(self, select):
         self.select = select
 
+    @property
     def options(self):
         """
         Iterator of all the ``<option>`` elements.
         """
         return iter(_options_xpath(self.select))
-    options = property(options)
 
     def __iter__(self):
         for option in self.options:
@@ -1447,8 +1469,8 @@ class RadioGroup(list):
     ``.value`` to check/uncheck inputs.  Also you can use
     ``.value_options`` to get the possible values.
     """
-
-    def _value__get(self):
+    @property
+    def value(self):
         """
         Get/set the value, which checks the radio with that value (and
         unchecks any other value).
@@ -1458,32 +1480,32 @@ class RadioGroup(list):
                 return el.get('value')
         return None
 
-    def _value__set(self, value):
+    @value.setter
+    def value(self, value):
+        checked_option = None
         if value is not None:
             for el in self:
                 if el.get('value') == value:
                     checked_option = el
                     break
             else:
-                raise ValueError(
-                    "There is no radio input with the value %r" % value)
+                raise ValueError("There is no radio input with the value %r" % value)
         for el in self:
             if 'checked' in el.attrib:
                 del el.attrib['checked']
-        if value is not None:
+        if checked_option is not None:
             checked_option.set('checked', '')
 
-    def _value__del(self):
+    @value.deleter
+    def value(self):
         self.value = None
 
-    value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
-
+    @property
     def value_options(self):
         """
         Returns a list of all the possible values.
         """
         return [el.get('value') for el in self]
-    value_options = property(value_options, doc=value_options.__doc__)
 
     def __repr__(self):
         return '%s(%s)' % (
@@ -1501,30 +1523,34 @@ class CheckboxGroup(list):
     check and uncheck checkboxes.  You can also use ``.value_options``
     to get the possible values.
     """
-
-    def _value__get(self):
+    @property
+    def value(self):
         """
         Return a set-like object that can be modified to check or
         uncheck individual checkboxes according to their value.
         """
         return CheckboxValues(self)
-    def _value__set(self, value):
-        self.value.clear()
+
+    @value.setter
+    def value(self, value):
+        values = self.value
+        values.clear()
         if not hasattr(value, '__iter__'):
             raise ValueError(
                 "A CheckboxGroup (name=%r) must be set to a sequence (not %r)"
                 % (self[0].name, value))
-        self.value.update(value)
-    def _value__del(self):
-        self.value.clear()
-    value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
+        values.update(value)
 
+    @value.deleter
+    def value(self):
+        self.value.clear()
+
+    @property
     def value_options(self):
         """
         Returns a list of all the possible values.
         """
         return [el.get('value') for el in self]
-    value_options = property(value_options, doc=value_options.__doc__)
 
     def __repr__(self):
         return '%s(%s)' % (
@@ -1532,7 +1558,6 @@ class CheckboxGroup(list):
 
 
 class CheckboxValues(SetMixin):
-
     """
     Represents the values of the checked checkboxes in a group of
     checkboxes with the same name.
@@ -1591,7 +1616,8 @@ class InputElement(InputMixin, HtmlElement):
     """
 
     ## FIXME: I'm a little uncomfortable with the use of .checked
-    def _value__get(self):
+    @property
+    def value(self):
         """
         Get/set the value of this element, using the ``value`` attribute.
 
@@ -1605,7 +1631,9 @@ class InputElement(InputMixin, HtmlElement):
             else:
                 return None
         return self.get('value')
-    def _value__set(self, value):
+
+    @value.setter
+    def value(self, value):
         if self.checkable:
             if not value:
                 self.checked = False
@@ -1615,31 +1643,35 @@ class InputElement(InputMixin, HtmlElement):
                     self.set('value', value)
         else:
             self.set('value', value)
-    def _value__del(self):
+
+    @value.deleter
+    def value(self):
         if self.checkable:
             self.checked = False
         else:
             if 'value' in self.attrib:
                 del self.attrib['value']
-    value = property(_value__get, _value__set, _value__del, doc=_value__get.__doc__)
 
-    def _type__get(self):
+    @property
+    def type(self):
         """
         Return the type of this element (using the type attribute).
         """
         return self.get('type', 'text').lower()
-    def _type__set(self, value):
-        self.set('type', value)
-    type = property(_type__get, _type__set, doc=_type__get.__doc__)
 
+    @type.setter
+    def type(self, value):
+        self.set('type', value)
+
+    @property
     def checkable(self):
         """
         Boolean: can this element be checked?
         """
-        return self.type in ['checkbox', 'radio']
-    checkable = property(checkable, doc=checkable.__doc__)
+        return self.type in ('checkbox', 'radio')
 
-    def _checked__get(self):
+    @property
+    def checked(self):
         """
         Boolean attribute to get/set the presence of the ``checked``
         attribute.
@@ -1649,15 +1681,17 @@ class InputElement(InputMixin, HtmlElement):
         if not self.checkable:
             raise AttributeError('Not a checkable input type')
         return 'checked' in self.attrib
-    def _checked__set(self, value):
+
+    @checked.setter
+    def checked(self, value):
         if not self.checkable:
             raise AttributeError('Not a checkable input type')
         if value:
             self.set('checked', '')
         else:
-            if 'checked' in self.attrib:
-                del self.attrib['checked']
-    checked = property(_checked__get, _checked__set, doc=_checked__get.__doc__)
+            attrib = self.attrib
+            if 'checked' in attrib:
+                del attrib['checked']
 
 
 HtmlElementClassLookup._default_element_classes['input'] = InputElement
@@ -1670,8 +1704,8 @@ class LabelElement(HtmlElement):
     Label elements are linked to other elements with their ``for``
     attribute.  You can access this element with ``label.for_element``.
     """
-
-    def _for_element__get(self):
+    @property
+    def for_element(self):
         """
         Get/set the element this label points to.  Return None if it
         can't be found.
@@ -1680,17 +1714,20 @@ class LabelElement(HtmlElement):
         if not id:
             return None
         return self.body.get_element_by_id(id)
-    def _for_element__set(self, other):
+
+    @for_element.setter
+    def for_element(self, other):
         id = other.get('id')
         if not id:
             raise TypeError(
                 "Element %r has no id attribute" % other)
         self.set('for', id)
-    def _for_element__del(self):
-        if 'id' in self.attrib:
-            del self.attrib['id']
-    for_element = property(_for_element__get, _for_element__set, _for_element__del,
-                           doc=_for_element__get.__doc__)
+
+    @for_element.deleter
+    def for_element(self):
+        attrib = self.attrib
+        if 'id' in attrib:
+            del attrib['id']
 
 
 HtmlElementClassLookup._default_element_classes['label'] = LabelElement
