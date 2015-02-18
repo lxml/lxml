@@ -1131,19 +1131,19 @@ cdef class _ObjectifyElementMakerCaller:
             element = self._element_factory(self._tag, attrib, self._nsmap)
 
         pytype_name = None
-        has_children = 0
-        has_string_value = 0
+        has_children = False
+        has_string_value = False
         for child in children:
             if child is None:
-                if python.PyTuple_GET_SIZE(children) == 1:
+                if len(children) == 1:
                     cetree.setAttributeValue(
                         element, XML_SCHEMA_INSTANCE_NIL_ATTR, u"true")
             elif python._isString(child):
                 _add_text(element, child)
-                has_string_value = 1
+                has_string_value = True
             elif isinstance(child, _Element):
                 cetree.appendChildToElement(element, <_Element>child)
-                has_children = 1
+                has_children = True
             elif isinstance(child, _ObjectifyElementMakerCaller):
                 elementMaker = <_ObjectifyElementMakerCaller>child
                 if elementMaker._element_factory is None:
@@ -1153,7 +1153,7 @@ cdef class _ObjectifyElementMakerCaller:
                     childElement = elementMaker._element_factory(
                         elementMaker._tag)
                     cetree.appendChildToElement(element, childElement)
-                has_children = 1
+                has_children = True
             elif isinstance(child, dict):
                 for name, value in child.items():
                     # keyword arguments in attrib take precedence
@@ -1168,13 +1168,13 @@ cdef class _ObjectifyElementMakerCaller:
             else:
                 if pytype_name is not None:
                     # concatenation always makes the result a string
-                    has_string_value = 1
+                    has_string_value = True
                 pytype_name = _typename(child)
                 pytype = _PYTYPE_DICT.get(_typename(child))
                 if pytype is not None:
                     _add_text(element, (<PyType>pytype).stringify(child))
                 else:
-                    has_string_value = 1
+                    has_string_value = True
                     child = unicode(child)
                     _add_text(element, child)
 
@@ -1241,14 +1241,17 @@ cdef class ElementMaker:
         self._namespace = None if namespace is None else u"{%s}" % namespace
         self._annotate = annotate
         if makeelement is not None:
-            assert callable(makeelement)
+            if not callable(makeelement):
+                raise TypeError(
+                    "argument of 'makeelement' parameter must be callable, got %s" %
+                    type(makeelement))
             self._makeelement = makeelement
         else:
             self._makeelement = None
         self._cache = {}
 
     @cython.final
-    cdef _build_element_maker(self, tag):
+    cdef _build_element_maker(self, tag, bint caching):
         cdef _ObjectifyElementMakerCaller element_maker
         element_maker = _ObjectifyElementMakerCaller.__new__(_ObjectifyElementMakerCaller)
         if self._namespace is not None and tag[0] != u"{":
@@ -1258,23 +1261,25 @@ cdef class ElementMaker:
         element_maker._nsmap = self._nsmap
         element_maker._annotate = self._annotate
         element_maker._element_factory = self._makeelement
-        if len(self._cache) > 200:
-            self._cache.clear()
-        self._cache[tag] = element_maker
+        if caching:
+            if len(self._cache) > 200:
+                self._cache.clear()
+            self._cache[tag] = element_maker
         return element_maker
 
     def __getattr__(self, tag):
-        element_maker = self._cache.get(tag, None)
+        element_maker = self._cache.get(tag)
         if element_maker is None:
             if is_special_method(tag):
                 return object.__getattr__(self, tag)
-            return self._build_element_maker(tag)
+            return self._build_element_maker(tag, caching=True)
         return element_maker
 
     def __call__(self, tag, *args, **kwargs):
-        element_maker = self._cache.get(tag, None)
+        element_maker = self._cache.get(tag)
         if element_maker is None:
-            element_maker = self._build_element_maker(tag)
+            element_maker = self._build_element_maker(
+                tag, caching=not is_special_method(tag))
         return element_maker(*args, **kwargs)
 
 ################################################################################

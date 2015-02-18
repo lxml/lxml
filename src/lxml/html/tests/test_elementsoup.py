@@ -26,21 +26,21 @@ if BS_INSTALLED:
             html = '''<body><p>test</p></body>'''
             res = '''<html><body><p>test</p></body></html>'''
             tree = self.soupparser.fromstring(html)
-            self.assertEquals(tostring(tree), res)
+            self.assertEqual(tostring(tree), res)
 
         def test_head_body(self):
             # HTML tag missing, parser should fix that
             html = '<head><title>test</title></head><body><p>test</p></body>'
             res = '<html><head><title>test</title></head><body><p>test</p></body></html>'
             tree = self.soupparser.fromstring(html)
-            self.assertEquals(tostring(tree), res)
+            self.assertEqual(tostring(tree), res)
 
         def test_wrap_html(self):
             # <head> outside <html>, parser should fix that
             html = '<head><title>title</test></head><html><body/></html>'
             res = '<html><head><title>title</title></head><body></body></html>'
             tree = self.soupparser.fromstring(html)
-            self.assertEquals(tostring(tree), res)
+            self.assertEqual(tostring(tree), res)
 
         def test_comment_pi(self):
             html = '''<!-- comment -->
@@ -50,7 +50,7 @@ if BS_INSTALLED:
             res = '''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <!-- comment --><?test asdf?><html><head><title>test</title></head><body><p>test</p></body></html><!-- another comment -->'''
             tree = self.soupparser.fromstring(html).getroottree()
-            self.assertEquals(tostring(tree, method='html'), res)
+            self.assertEqual(tostring(tree, method='html'), res)
 
         def test_doctype1(self):
             # Test document type declaration, comments and PI's
@@ -64,17 +64,31 @@ if BS_INSTALLED:
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             tree = self.soupparser.fromstring(html).getroottree()
-            self.assertEquals(tree.docinfo.public_id,
-                              "-//W3C//DTD HTML 4.01//EN")
-            self.assertEquals(tostring(tree), res)
+            self.assertEqual(tree.docinfo.public_id, "-//W3C//DTD HTML 4.01//EN")
+            self.assertEqual(tostring(tree), res)
 
         def test_doctype2(self):
+            # Test document type declaration, comments and PI's
+            # outside the root
+            html = \
+'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+<!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
+
+            res = \
+'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+<!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
+
+            tree = self.soupparser.fromstring(html).getroottree()
+            self.assertEqual(tree.docinfo.public_id, "-//IETF//DTD HTML//EN")
+            self.assertEqual(tostring(tree), res)
+
+        def test_doctype_html5(self):
             # html 5 doctype declaration
             html = '<!DOCTYPE html>\n<html lang="en"></html>'
 
             tree = self.soupparser.fromstring(html).getroottree()
             self.assertTrue(tree.docinfo.public_id is None)
-            self.assertEquals(tostring(tree), html)
+            self.assertEqual(tostring(tree), html)
 
 def test_suite():
     suite = unittest.TestSuite()

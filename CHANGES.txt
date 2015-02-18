@@ -5,11 +5,28 @@ lxml changelog
 Latest changes
 ==============
 
+Features added
+--------------
+
+* LP#1341964: The soupparser now handles DOCTYPE declarations, comments
+  and processing instructions outside of the root element.
+  Patch by Olli Pottonen.
+
+* LP#1421512: The ``docinfo`` of a tree was made editable to allow
+  setting and removing the public ID and system ID of the DOCTYPE.
+  Patch by Olli Pottonen.
+
 Bugs fixed
 ----------
 
-* LP#1238503: lxml.doctestcompare is now consistent with stdlib's doctest in
-  how it uses ``+`` and ``-`` to refer to unexpected and missing output.
+* LP#1421921: Comments/PIs before the DOCTYPE declaration were not
+  serialised.  Patch by Olli Pottonen.
+
+* LP#659367: Some HTML DOCTYPE declarations were not serialised.
+  Patch by Olli Pottonen.
+
+* LP#1238503: lxml.doctestcompare is now consistent with stdlib's doctest
+  in how it uses ``+`` and ``-`` to refer to unexpected and missing output.
 
 * Empty prefixes are explicitly rejected when a namespace mapping is used
   with ElementPath to avoid hiding bugs in user code.
@@ -20,6 +37,9 @@ Bugs fixed
 
 Bugs fixed
 ----------
+
+* LP#1421927: DOCTYPE system URLs were incorrectly quoted when containing
+  double quotes.  Patch by Olli Pottonen.
 
 * LP#1419354: meta-redirect URLs were incorrectly processed by
   ``iterlinks()`` if preceded by whitespace.

@@ -6,7 +6,6 @@ def cleanup_namespaces(tree_or_element):
     Remove all namespace declarations from a subtree that are not used
     by any of the elements or attributes in that tree.
     """
-    cdef _Element element
     element = _rootNodeOrRaise(tree_or_element)
     _removeUnusedNamespaceDeclarations(element._c_node)
 
@@ -26,8 +25,6 @@ def strip_attributes(tree_or_element, *attribute_names):
                          '{http://other/ns}*')
     """
     cdef _MultiTagMatcher matcher
-    cdef _Element element
-
     element = _rootNodeOrRaise(tree_or_element)
     if not attribute_names:
         return
@@ -77,13 +74,6 @@ def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
             )
     """
     cdef _MultiTagMatcher matcher
-    cdef _Element element
-    cdef _Document doc
-    cdef list ns_tags
-    cdef qname* c_ns_tags
-    cdef Py_ssize_t c_tag_count
-    cdef bint strip_comments = 0, strip_pis = 0, strip_entities = 0
-
     doc = _documentOrRaise(tree_or_element)
     element = _rootNodeOrRaise(tree_or_element)
     if not tag_names:
@@ -154,13 +144,6 @@ def strip_tags(tree_or_element, *tag_names):
             )
     """
     cdef _MultiTagMatcher matcher
-    cdef _Element element
-    cdef _Document doc
-    cdef list ns_tags
-    cdef bint strip_comments = 0, strip_pis = 0, strip_entities = 0
-    cdef char** c_ns_tags
-    cdef Py_ssize_t c_tag_count
-
     doc = _documentOrRaise(tree_or_element)
     element = _rootNodeOrRaise(tree_or_element)
     if not tag_names:
@@ -182,7 +165,6 @@ def strip_tags(tree_or_element, *tag_names):
 cdef _strip_tags(_Document doc, xmlNode* c_node, _MultiTagMatcher matcher):
     cdef xmlNode* c_child
     cdef xmlNode* c_next
-    cdef Py_ssize_t i
 
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_node, c_node, 1)
     if c_node.type == tree.XML_ELEMENT_NODE:

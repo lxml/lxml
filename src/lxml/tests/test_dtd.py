@@ -329,13 +329,14 @@ class ETreeDtdTestCase(HelperTestCase):
                          _bytes('''<!DOCTYPE a SYSTEM "'">\n<a/>'''))
 
     def test_ietf_decl(self):
-        html = '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">\n' \
-            '<html></html>'
-        root = etree.HTML(html)
+        html_data = (
+            '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">\n'
+            '<html></html>')
+        root = etree.HTML(html_data)
         doc = root.getroottree()
         self.assertEqual(doc.docinfo.doctype,
                          '<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">')
-        self.assertEqual(etree.tostring(doc, method='html'), _bytes(html))
+        self.assertEqual(etree.tostring(doc, method='html'), _bytes(html_data))
 
     def test_set_decl_public(self):
         doc = etree.Element('test').getroottree()
@@ -382,16 +383,21 @@ class ETreeDtdTestCase(HelperTestCase):
                          _bytes('<!DOCTYPE test>\n<test/>'))
 
     def test_invalid_decl_1(self):
-        doc = etree.Element('test').getroottree()
-        def setpublicid():
-            doc.docinfo.public_id = _str('ä')
-        self.assertRaises(ValueError, setpublicid)
+        docinfo = etree.Element('test').getroottree().docinfo
+
+        def set_public_id(value):
+            docinfo.public_id = value
+        self.assertRaises(ValueError, set_public_id, _str('ä'))
+        self.assertRaises(ValueError, set_public_id, _str('qwerty ä asdf'))
 
     def test_invalid_decl_2(self):
-        doc = etree.Element('test').getroottree()
-        def setsystemurl():
-            doc.docinfo.system_url = '\'"'
-        self.assertRaises(ValueError, setsystemurl)
+        docinfo = etree.Element('test').getroottree().docinfo
+
+        def set_system_url(value):
+            docinfo.system_url = value
+        self.assertRaises(ValueError, set_system_url, '\'"')
+        self.assertRaises(ValueError, set_system_url, '"\'')
+        self.assertRaises(ValueError, set_system_url, '  "  \'  ')
 
     def test_comment_before_dtd(self):
         data = '<!--comment--><!DOCTYPE test>\n<!-- --><test/>'

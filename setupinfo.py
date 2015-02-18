@@ -1,7 +1,7 @@
 import sys, os, os.path
 from distutils.core import Extension
 from distutils.errors import DistutilsOptionError
-from versioninfo import get_base_dir, split_version
+from versioninfo import get_base_dir
 
 try:
     from Cython.Distutils import build_ext as build_pyx
@@ -37,6 +37,13 @@ def env_var(name):
             return value.split()
     else:
         return []
+
+
+def _prefer_reldirs(base_dir, dirs):
+    return [
+        os.path.relpath(path) if path.startswith(base_dir) else path
+        for path in dirs
+    ]
 
 def ext_modules(static_include_dirs, static_library_dirs,
                 static_cflags, static_binaries):
@@ -100,13 +107,13 @@ def ext_modules(static_include_dirs, static_library_dirs,
     if not versions_ok:
         raise RuntimeError("Dependency missing")
 
-    _include_dirs = include_dirs(static_include_dirs)
-    _library_dirs = library_dirs(static_library_dirs)
+    base_dir = get_base_dir()
+    _include_dirs = _prefer_reldirs(
+        base_dir, include_dirs(static_include_dirs) + [INCLUDE_PACKAGE_PATH])
+    _library_dirs = _prefer_reldirs(base_dir, library_dirs(static_library_dirs))
     _cflags = cflags(static_cflags)
     _define_macros = define_macros()
     _libraries = libraries()
-
-    _include_dirs.append(os.path.join(get_base_dir(), INCLUDE_PACKAGE_PATH))
 
     if _library_dirs:
         message = "Building against libxml2/libxslt in "
@@ -154,25 +161,32 @@ def ext_modules(static_include_dirs, static_library_dirs,
 
     return result
 
+
 def find_dependencies(module):
     if not CYTHON_INSTALLED:
         return []
     base_dir = get_base_dir()
     package_dir = os.path.join(base_dir, PACKAGE_PATH)
     includes_dir = os.path.join(base_dir, INCLUDE_PACKAGE_PATH)
-    pxd_files = [ os.path.join(includes_dir, filename)
-                  for filename in os.listdir(includes_dir)
-                  if filename.endswith('.pxd') ]
+
+    pxd_files = [
+        os.path.join(INCLUDE_PACKAGE_PATH, filename)
+        for filename in os.listdir(includes_dir)
+        if filename.endswith('.pxd')
+    ]
 
     if 'etree' in module:
-        pxi_files = [ os.path.join(PACKAGE_PATH, filename)
-                      for filename in os.listdir(package_dir)
-                      if filename.endswith('.pxi')
-                      and 'objectpath' not in filename ]
-        pxd_files = [ filename for filename in pxd_files
-                      if 'etreepublic' not in filename ]
+        pxi_files = [
+            os.path.join(PACKAGE_PATH, filename)
+            for filename in os.listdir(package_dir)
+            if filename.endswith('.pxi') and 'objectpath' not in filename
+        ]
+        pxd_files = [
+            filename for filename in pxd_files
+            if 'etreepublic' not in filename
+        ]
     elif 'objectify' in module:
-        pxi_files = [ os.path.join(PACKAGE_PATH, 'objectpath.pxi') ]
+        pxi_files = [os.path.join(PACKAGE_PATH, 'objectpath.pxi')]
     else:
         pxi_files = []
 
