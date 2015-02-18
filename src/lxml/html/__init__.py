@@ -168,7 +168,7 @@ class Classes(MutableSet):
         """
         Remove a class if it is currently present.
 
-        If the element is not present, do nothing.
+        If the class is not present, do nothing.
         """
         if not value or re.search(r'\s', value):
             raise ValueError("Invalid class name: %r" % value)
@@ -176,7 +176,7 @@ class Classes(MutableSet):
                    if name != value]
         if classes:
             self._attributes['class'] = ' '.join(classes)
-        else:
+        elif 'class' in self._attributes:
             del self._attributes['class']
 
     def remove(self, value):
