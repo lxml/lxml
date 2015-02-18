@@ -1921,13 +1921,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             # so what ...
             return self
 
-    # not in ElementTree, read-only
+    # not in ElementTree
     property docinfo:
-        u"""Information about the document provided by parser and DTD.  This
-        value is only defined for ElementTree objects based on the root node
-        of a parsed document (e.g.  those returned by the parse functions),
-        not for trees that were built manually.
-        """
+        u"""Information about the document provided by parser and DTD."""
         def __get__(self):
             self._assertHasRoot()
             return DocInfo(self._context_node._doc)
