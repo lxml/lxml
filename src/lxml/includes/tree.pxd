@@ -61,6 +61,7 @@ cdef extern from "libxml/encoding.h":
 
 cdef extern from "libxml/chvalid.h":
     cdef int xmlIsChar_ch(char c) nogil
+    cdef int xmlIsCharQ(long c) nogil
 
 cdef extern from "libxml/hash.h":
     ctypedef struct xmlHashTable
