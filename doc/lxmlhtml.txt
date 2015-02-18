@@ -145,6 +145,11 @@ also include some extra methods:
     This attribute is not settable.  Is None when no base URL was
     saved.
 
+``.classes``:
+    Returns a set-like object that allows accessing and modifying the
+    names in the 'class' attribute of the element.  (New in lxml 3.5).
+
+
 Running HTML doctests
 =====================
 
