@@ -118,7 +118,58 @@ def _nons(tag):
             return tag.split('}')[-1]
     return tag
 
+class Classes(SetMixin):
+    """ Provides access to the element's classes as a standard set.
+
+    Has an additional ``toggle`` method matching ``DOMTokenList.toggle``'s
+    semantics
+    """
+    def __init__(self, instance):
+        self._instance = instance
+
+    def __iter__(self):
+        classes = self._instance.get('class')
+        if not classes:
+            return iter(())
+        return iter(classes.split(' '))
+
+    def add(self, item):
+        if re.search('\s', item):
+            raise ValueError("Classes can not contain whitespace")
+        if item in self:
+            return
+        classes = self._instance.get('class', '').split()
+        classes.append(item)
+        self._instance.set('class', ' '.join(classes))
+
+    def remove(self, item):
+        if re.search('\s', item):
+            raise ValueError("Classes can not contain whitespace")
+        if item not in self:
+            raise KeyError(item)
+
+        classes = ' '.join(cls for cls in self if cls != item)
+        if classes:
+            self._instance.set('class', classes)
+        else:
+            del self._instance.attrib['class']
+
+    def toggle(self, item, force=None):
+        if re.search('\s', item):
+            raise ValueError("Classes can not contain whitespace")
+        if item in self:
+            if force is True:
+                return True
+            self.discard(item)
+            return False
+        else:
+            if force is False:
+                return False
+            self.add(item)
+            return True
+
 class HtmlMixin(object):
+    classes = property(Classes)
 
     def base_url(self):
         """
