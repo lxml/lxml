@@ -1900,12 +1900,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             assert root is not None
             _assertValidNode(root)
             _copyNonElementSiblings(self._context_node._c_node, root._c_node)
-            doc = root._doc
-            c_doc = self._context_node._doc._c_doc
-            if c_doc.intSubset is not NULL and doc._c_doc.intSubset is NULL:
-                doc._c_doc.intSubset = _copyDtd(c_doc.intSubset)
-            if c_doc.extSubset is not NULL and not doc._c_doc.extSubset is NULL:
-                doc._c_doc.extSubset = _copyDtd(c_doc.extSubset)
             return _elementTreeFactory(None, root)
         elif self._doc is not None:
             _assertValidDoc(self._doc)
@@ -1918,13 +1912,9 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             # so what ...
             return self
 
-    # not in ElementTree, read-only
+    # not in ElementTree
     property docinfo:
-        u"""Information about the document provided by parser and DTD.  This
-        value is only defined for ElementTree objects based on the root node
-        of a parsed document (e.g.  those returned by the parse functions),
-        not for trees that were built manually.
-        """
+        u"""Information about the document provided by parser and DTD."""
         def __get__(self):
             self._assertHasRoot()
             return DocInfo(self._context_node._doc)

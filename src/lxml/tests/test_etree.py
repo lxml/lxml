@@ -576,6 +576,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         self.assertEqual(_bytes("<test/>"),
                           tostring(root2))
 
+    def test_deepcopy_pi_dtd(self):
+        XML = self.etree.XML
+        tostring = self.etree.tostring
+        xml = _bytes('<!-- comment --><!DOCTYPE test [\n<!ENTITY entity "tasty">\n]>\n<test/>')
+        root = XML(xml)
+        tree1 = self.etree.ElementTree(root)
+        self.assertEqual(xml, tostring(tree1))
+
+        tree2 = copy.deepcopy(tree1)
+        self.assertEqual(xml, tostring(tree2))
+
     def test_parse_remove_comments(self):
         fromstring = self.etree.fromstring
         tostring = self.etree.tostring

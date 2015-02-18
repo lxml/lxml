@@ -1069,13 +1069,21 @@ cdef int _copyNonElementSiblings(xmlNode* c_node, xmlNode* c_target) except -1:
     cdef xmlNode* c_copy
     cdef xmlNode* c_sibling = c_node
     while c_sibling.prev != NULL and \
-            (c_sibling.prev.type == tree.XML_PI_NODE or \
-                 c_sibling.prev.type == tree.XML_COMMENT_NODE):
+            (c_sibling.prev.type == tree.XML_PI_NODE or
+             c_sibling.prev.type == tree.XML_COMMENT_NODE or
+             c_sibling.prev.type == tree.XML_DTD_NODE):
         c_sibling = c_sibling.prev
     while c_sibling != c_node:
-        c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
-        if c_copy is NULL:
-            raise MemoryError()
+        if c_sibling.type == tree.XML_DTD_NODE:
+            c_copy = <xmlNode*>_copyDtd(<tree.xmlDtd*>c_sibling)
+            if c_sibling == <xmlNode*>c_node.doc.intSubset:
+                c_target.doc.intSubset = <tree.xmlDtd*>c_copy
+            else: # c_sibling == c_node.doc.extSubset
+                c_target.doc.extSubset = <tree.xmlDtd*>c_copy
+        else:
+            c_copy = tree.xmlDocCopyNode(c_sibling, c_target.doc, 1)
+            if c_copy is NULL:
+                raise MemoryError()
         tree.xmlAddPrevSibling(c_target, c_copy)
         c_sibling = c_sibling.next
     while c_sibling.next != NULL and \
