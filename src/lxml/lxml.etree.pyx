@@ -1903,12 +1903,6 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
             assert root is not None
             _assertValidNode(root)
             _copyNonElementSiblings(self._context_node._c_node, root._c_node)
-            doc = root._doc
-            c_doc = self._context_node._doc._c_doc
-            if c_doc.intSubset is not NULL and doc._c_doc.intSubset is NULL:
-                doc._c_doc.intSubset = _copyDtd(c_doc.intSubset)
-            if c_doc.extSubset is not NULL and not doc._c_doc.extSubset is NULL:
-                doc._c_doc.extSubset = _copyDtd(c_doc.extSubset)
             return _elementTreeFactory(None, root)
         elif self._doc is not None:
             _assertValidDoc(self._doc)
