@@ -1134,7 +1134,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     # ACCESSORS
     def __repr__(self):
         u"__repr__(self)"
-        return u"<Element %s at 0x%x>" % (self.tag, id(self))
+        return "<Element %s at 0x%x>" % (stringrepr(self.tag), id(self))
 
     def __getitem__(self, x):
         u"""Returns the subelement at the given position or the requested
@@ -1685,7 +1685,7 @@ cdef class _Comment(__ContentOnlyElement):
             return Comment
 
     def __repr__(self):
-        return u"<!--%s-->" % self.text
+        return "<!--%s-->" % stringrepr(self.text)
     
 cdef class _ProcessingInstruction(__ContentOnlyElement):
     property tag:
@@ -1707,9 +1707,10 @@ cdef class _ProcessingInstruction(__ContentOnlyElement):
     def __repr__(self):
         text = self.text
         if text:
-            return u"<?%s %s?>" % (self.target, text)
+            return "<?%s %s?>" % (stringrepr(self.target),
+                                  stringrepr(text))
         else:
-            return u"<?%s?>" % self.target
+            return "<?%s?>" % stringrepr(self.target)
 
     def get(self, key, default=None):
         u"""get(self, key, default=None)
@@ -1763,7 +1764,7 @@ cdef class _Entity(__ContentOnlyElement):
             return u'&%s;' % funicode(self._c_node.name)
 
     def __repr__(self):
-        return u"&%s;" % self.name
+        return "&%s;" % stringrepr(self.name)
 
 
 cdef class QName:

@@ -1424,6 +1424,15 @@ cdef bytes _utf8(object s):
 cdef bytes _utf8orNone(object s):
     return _utf8(s) if s is not None else None
 
+cdef inline stringrepr(s):
+    """Give an representation of strings which we can use in __repr__
+    methods, e.g. _Element.__repr__().
+    """
+    if python.IS_PYTHON3:
+        return s
+    else:
+        return s.encode('unicode-escape')
+
 cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"
     cdef xmlChar c

@@ -3818,6 +3818,23 @@ class ETreeOnlyTestCase(HelperTestCase):
             data = zlib.decompress(data)
         return canonicalize(data)
 
+    def test_unicode_repr1(self):
+        x = self.etree.Element(_str('å'))
+        # must not raise UnicodeEncodeError
+        repr(x)
+
+    def test_unicode_repr2(self):
+        x = self.etree.Comment(_str('ö'))
+        repr(x)
+
+    def test_unicode_repr3(self):
+        x = self.etree.ProcessingInstruction(_str('Å'), _str('\u0131'))
+        repr(x)
+
+    def test_unicode_repr4(self):
+        x = self.etree.Entity(_str('ä'))
+        repr(x)
+
     def test_unicode(self):
         e  = self.etree.Element('e')
         def settext(text):

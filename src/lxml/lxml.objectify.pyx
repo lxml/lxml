@@ -39,6 +39,17 @@ import re
 cdef tuple IGNORABLE_ERRORS = (ValueError, TypeError)
 cdef object is_special_method = re.compile(u'__.*__$').match
 
+# Duplicated from apihelpers.pxi, since dependencies obstruct
+# including apihelpers.pxi.
+cdef inline stringrepr(s):
+    """Give an representation of strings which we can use in __repr__
+    methods, e.g. _Element.__repr__().
+    """
+    if python.IS_PYTHON3:
+        return s
+    else:
+        return s.encode('unicode-escape')
+
 cdef object _typename(object t):
     cdef const_char* c_name
     c_name = python._fqtypename(t)
@@ -592,10 +603,10 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
             return textOf(self._c_node)
 
     def __str__(self):
-        return textOf(self._c_node) or u''
+        return textOf(self._c_node) or ''
 
     def __repr__(self):
-        return textOf(self._c_node) or u''
+        return stringrepr(textOf(self._c_node) or '')
 
     def _setText(self, s):
         u"""For use in subclasses only. Don't use unless you know what you are
@@ -779,7 +790,7 @@ cdef class NoneElement(ObjectifiedDataElement):
         return u"None"
 
     def __repr__(self):
-        return u"None"
+        return "None"
 
     def __nonzero__(self):
         return False
@@ -927,7 +938,7 @@ cdef class PyType:
         self._schema_types = []
 
     def __repr__(self):
-        return u"PyType(%s, %s)" % (self.name, self._type.__name__)
+        return "PyType(%s, %s)" % (self.name, self._type.__name__)
 
     def register(self, before=None, after=None):
         u"""register(self, before=None, after=None)
