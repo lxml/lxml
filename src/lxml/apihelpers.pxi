@@ -1566,13 +1566,13 @@ cdef tuple __getNsTag(tag, bint empty_ns):
     return ns, tag
 
 cdef inline int _pyXmlNameIsValid(name_utf8):
-    return _xmlNameIsValid(_xcstr(name_utf8))
+    return _xmlNameIsValid(_xcstr(name_utf8)) and b':' not in name_utf8
 
 cdef inline int _pyHtmlNameIsValid(name_utf8):
     return _htmlNameIsValid(_xcstr(name_utf8))
 
 cdef inline int _xmlNameIsValid(const_xmlChar* c_name):
-    return tree.xmlValidateNCName(c_name, 0) == 0
+    return tree.xmlValidateNameValue(c_name)
 
 cdef int _htmlNameIsValid(const_xmlChar* c_name):
     if c_name is NULL or c_name[0] == c'\0':

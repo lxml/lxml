@@ -3858,6 +3858,17 @@ class ETreeOnlyTestCase(HelperTestCase):
         # should not Raise
         settext(_bytes('\x09\x0A\x0D\x20\x60\x7f'))
 
+    def test_uniname(self):
+        Element = self.etree.Element
+        def el(name):
+            return Element(name)
+
+        self.assertRaises(ValueError, el, ':')
+        self.assertRaises(ValueError, el, '0a')
+        self.assertRaises(ValueError, el, _str('\u203f'))
+        # should not Raise
+        el(_str('\u0132'))
+
 class _XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')

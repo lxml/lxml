@@ -391,6 +391,7 @@ cdef extern from "libxml/valid.h":
     cdef xmlAttr* xmlGetID(xmlDoc* doc, const_xmlChar* ID) nogil
     cdef void xmlDumpNotationTable(xmlBuffer* buffer,
                                    xmlNotationTable* table) nogil
+    cdef int xmlValidateNameValue(const_xmlChar* value) nogil
 
 cdef extern from "libxml/xmlIO.h":
     cdef int xmlOutputBufferWrite(xmlOutputBuffer* out,
