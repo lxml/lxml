@@ -560,7 +560,7 @@ cdef class DocInfo:
             return public_id
 
         def __set__(self, value):
-            cdef const_xmlChar* c_value = NULL
+            cdef xmlChar* c_value = NULL
             if value is not None:
                 match = _find_invalid_public_id_characters(value)
                 if match:
@@ -575,7 +575,7 @@ cdef class DocInfo:
                 tree.xmlFree(c_value)
                 raise MemoryError()
             if c_dtd.ExternalID:
-                tree.xmlFree(c_dtd.ExternalID)
+                tree.xmlFree(<void*>c_dtd.ExternalID)
             c_dtd.ExternalID = c_value
 
     property system_url:
@@ -589,7 +589,7 @@ cdef class DocInfo:
             return system_url
 
         def __set__(self, value):
-            cdef const_xmlChar* c_value = NULL
+            cdef xmlChar* c_value = NULL
             if value is not None:
                 bvalue = _utf8(value)
                 # sys_url may be any valid unicode string that can be
@@ -606,7 +606,7 @@ cdef class DocInfo:
                 tree.xmlFree(c_value)
                 raise MemoryError()
             if c_dtd.SystemID:
-                tree.xmlFree(c_dtd.SystemID)
+                tree.xmlFree(<void*>c_dtd.SystemID)
             c_dtd.SystemID = c_value
 
     property xml_version:
