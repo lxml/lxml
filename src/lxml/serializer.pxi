@@ -512,11 +512,28 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
 
     writer = _create_output_buffer(f, c_enc, compression, &c_buffer, close=False)
     if writer is None:
-        state = python.PyEval_SaveThread()
+        with nogil:
+            error_result = _serialise_node(
+                c_buffer, c_doctype, c_enc, element._c_node, c_method,
+                write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
+    else:
+        error_result = _serialise_node(
+            c_buffer, c_doctype, c_enc, element._c_node, c_method,
+            write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
 
-    _writeNodeToBuffer(c_buffer, element._c_node, c_enc, c_doctype, c_method,
-                       write_xml_declaration, write_doctype,
-                       pretty_print, with_tail, standalone)
+    if writer is not None:
+        writer._exc_context._raise_if_stored()
+    if error_result != xmlerror.XML_ERR_OK:
+        _raiseSerialisationError(error_result)
+
+
+cdef int _serialise_node(tree.xmlOutputBuffer* c_buffer, const_xmlChar* c_doctype,
+                         const_char* c_enc, xmlNode* c_node, int c_method,
+                         bint write_xml_declaration, bint write_doctype, bint pretty_print,
+                         bint with_tail, int standalone) nogil:
+    _writeNodeToBuffer(
+        c_buffer, c_node, c_enc, c_doctype, c_method,
+        write_xml_declaration, write_doctype, pretty_print, with_tail, standalone)
     error_result = c_buffer.error
     if error_result == xmlerror.XML_ERR_OK:
         error_result = tree.xmlOutputBufferClose(c_buffer)
@@ -524,12 +541,8 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
             error_result = xmlerror.XML_ERR_OK
     else:
         tree.xmlOutputBufferClose(c_buffer)
-    if writer is None:
-        python.PyEval_RestoreThread(state)
-    else:
-        writer._exc_context._raise_if_stored()
-    if error_result != xmlerror.XML_ERR_OK:
-        _raiseSerialisationError(error_result)
+    return error_result
+
 
 cdef _create_output_buffer(f, const_char* c_enc, int compression,
                            tree.xmlOutputBuffer** c_buffer_ret, bint close):
