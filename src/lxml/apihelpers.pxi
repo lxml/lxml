@@ -1334,7 +1334,7 @@ cdef inline int isutf8(const_xmlChar* s):
         c = s[0]
     return 0
 
-cdef int valid_xml_ascii(bytes pystring):
+cdef int _is_valid_xml_ascii(bytes pystring):
     """Check if a string is XML ascii content."""
     cdef signed char ch
     # When ch is a *signed* char, non-ascii characters are negative integers
@@ -1344,15 +1344,16 @@ cdef int valid_xml_ascii(bytes pystring):
             return 0
     return 1
 
-def valid_xml_utf8(bytes pystring):
+cdef bint _is_valid_xml_utf8(bytes pystring):
     u"""Check if a string is like valid UTF-8 XML content."""
     cdef const_xmlChar* s = _xcstr(pystring)
     cdef const_xmlChar* c_end = s + len(pystring)
     cdef unsigned long next3 = 0
-    if s+2 < c_end:
-        next3 = (s[0] << 16) | (s[1] << 8) | (s[2])
+    if s < c_end - 2:
+        next3 = (s[0] << 8) | (s[1])
 
-    while s < c_end:
+    while s < c_end - 2:
+        next3 = 0x00ffffff & ((next3 << 8) | s[2])
         if s[0] & 0x80:
             # 0xefbfbe and 0xefbfbf are utf-8 encodings of
             # forbidden characters \ufffe and \uffff
@@ -1361,15 +1362,17 @@ def valid_xml_utf8(bytes pystring):
             # 0xeda080 and 0xedbfbf are utf-8 encodings of
             # \ud800 and \udfff. Anything between them (inclusive)
             # is forbidden, because they are surrogate blocks in utf-16.
-            if next3 >= 0x00eda080 and next3 <= 0x00edbfbf:
+            if 0x00eda080 <= next3 <= 0x00edbfbf:
                 return 0
-        else:
-            if not tree.xmlIsChar_ch(s[0]):
-                return 0 # invalid ascii char
-
+        elif not tree.xmlIsChar_ch(s[0]):
+            return 0  # invalid ascii char
         s += 1
-        if s+2 < c_end:
-            next3 = 0x00ffffff & ((next3 << 8) | s[2])
+
+    while s < c_end:
+        if not s[0] & 0x80 and not tree.xmlIsChar_ch(s[0]):
+            return 0  # invalid ascii char
+        s += 1
+
     return 1
 
 cdef inline object funicodeOrNone(const_xmlChar* s):
@@ -1407,13 +1410,13 @@ cdef bytes _utf8(object s):
     cdef bytes utf8_string
     if not python.IS_PYTHON3 and type(s) is bytes:
         utf8_string = <bytes>s
-        valid = valid_xml_ascii(utf8_string)
+        valid = _is_valid_xml_ascii(utf8_string)
     elif isinstance(s, unicode):
         utf8_string = (<unicode>s).encode('utf8')
-        valid = valid_xml_utf8(utf8_string)
+        valid = _is_valid_xml_utf8(utf8_string)
     elif isinstance(s, (bytes, bytearray)):
         utf8_string = bytes(s)
-        valid = valid_xml_ascii(utf8_string)
+        valid = _is_valid_xml_ascii(utf8_string)
     else:
         raise TypeError("Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
     if not valid:
@@ -1421,17 +1424,17 @@ cdef bytes _utf8(object s):
             "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters")
     return utf8_string
 
+
 cdef bytes _utf8orNone(object s):
     return _utf8(s) if s is not None else None
 
-cdef inline stringrepr(s):
-    """Give an representation of strings which we can use in __repr__
+
+cdef strrepr(s):
+    """Build a representation of strings which we can use in __repr__
     methods, e.g. _Element.__repr__().
     """
-    if python.IS_PYTHON3:
-        return s
-    else:
-        return s.encode('unicode-escape')
+    return s if python.IS_PYTHON3 else s.encode('unicode-escape')
+
 
 cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"

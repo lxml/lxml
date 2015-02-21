@@ -3818,56 +3818,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             data = zlib.decompress(data)
         return canonicalize(data)
 
-    def test_unicode_repr1(self):
-        x = self.etree.Element(_str('å'))
-        # must not raise UnicodeEncodeError
-        repr(x)
-
-    def test_unicode_repr2(self):
-        x = self.etree.Comment(_str('ö'))
-        repr(x)
-
-    def test_unicode_repr3(self):
-        x = self.etree.ProcessingInstruction(_str('Å'), _str('\u0131'))
-        repr(x)
-
-    def test_unicode_repr4(self):
-        x = self.etree.Entity(_str('ä'))
-        repr(x)
-
-    def test_unicode(self):
-        e  = self.etree.Element('e')
-        def settext(text):
-            e.text = text
-
-        self.assertRaises(ValueError, settext, _str('ab\ufffe'))
-        self.assertRaises(ValueError, settext, _str('ö\ffff'))
-        self.assertRaises(ValueError, settext, _str('\u0123\ud800'))
-        self.assertRaises(ValueError, settext, _str('x\ud8ff'))
-        self.assertRaises(ValueError, settext, _str('\U00010000\udfff'))
-        self.assertRaises(ValueError, settext, _str('abd\x00def'))
-        # should not Raise
-        settext(_str('\ud7ff\ue000\U00010000\U0010FFFFäöas'))
-
-        self.assertRaises(ValueError, settext, _bytes('\xe4'))
-        self.assertRaises(ValueError, settext, _bytes('\x80'))
-        self.assertRaises(ValueError, settext, _bytes('\xff'))
-        self.assertRaises(ValueError, settext, _bytes('\x08'))
-        self.assertRaises(ValueError, settext, _bytes('\x19'))
-        self.assertRaises(ValueError, settext, _bytes('\x20\x00'))
-        # should not Raise
-        settext(_bytes('\x09\x0A\x0D\x20\x60\x7f'))
-
-    def test_uniname(self):
-        Element = self.etree.Element
-        def el(name):
-            return Element(name)
-
-        self.assertRaises(ValueError, el, ':')
-        self.assertRaises(ValueError, el, '0a')
-        self.assertRaises(ValueError, el, _str('\u203f'))
-        # should not Raise
-        el(_str('\u0132'))
 
 class _XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):

@@ -39,16 +39,15 @@ import re
 cdef tuple IGNORABLE_ERRORS = (ValueError, TypeError)
 cdef object is_special_method = re.compile(u'__.*__$').match
 
+
 # Duplicated from apihelpers.pxi, since dependencies obstruct
 # including apihelpers.pxi.
-cdef inline stringrepr(s):
-    """Give an representation of strings which we can use in __repr__
+cdef strrepr(s):
+    """Build a representation of strings which we can use in __repr__
     methods, e.g. _Element.__repr__().
     """
-    if python.IS_PYTHON3:
-        return s
-    else:
-        return s.encode('unicode-escape')
+    return s if python.IS_PYTHON3 else s.encode('unicode-escape')
+
 
 cdef object _typename(object t):
     cdef const_char* c_name
@@ -57,6 +56,7 @@ cdef object _typename(object t):
     if s is not NULL:
         c_name = s + 1
     return pyunicode(<const_xmlChar*>c_name)
+
 
 # namespace/name for "pytype" hint attribute
 cdef object PYTYPE_NAMESPACE
@@ -606,7 +606,7 @@ cdef class ObjectifiedDataElement(ObjectifiedElement):
         return textOf(self._c_node) or ''
 
     def __repr__(self):
-        return stringrepr(textOf(self._c_node) or '')
+        return strrepr(textOf(self._c_node) or '')
 
     def _setText(self, s):
         u"""For use in subclasses only. Don't use unless you know what you are
