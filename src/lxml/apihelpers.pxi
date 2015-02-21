@@ -1334,24 +1334,43 @@ cdef inline int isutf8(const_xmlChar* s):
         c = s[0]
     return 0
 
-cdef int check_string_utf8(bytes pystring):
-    u"""Check if a string looks like valid UTF-8 XML content.  Returns 0
-    for ASCII, 1 for UTF-8 and -1 in the case of errors, such as NULL
-    bytes or ASCII control characters.
-    """
+cdef int valid_xml_ascii(bytes pystring):
+    """Check if a string is XML ascii content."""
+    cdef signed char ch
+    # When ch is a *signed* char, non-ascii characters are negative integers
+    # and xmlIsChar_ch does not accept them.
+    for ch in pystring:
+        if not tree.xmlIsChar_ch(ch):
+            return 0
+    return 1
+
+def valid_xml_utf8(bytes pystring):
+    u"""Check if a string is like valid UTF-8 XML content."""
     cdef const_xmlChar* s = _xcstr(pystring)
     cdef const_xmlChar* c_end = s + len(pystring)
-    cdef bint is_non_ascii = 0
+    cdef unsigned long next3 = 0
+    if s+2 < c_end:
+        next3 = (s[0] << 16) | (s[1] << 8) | (s[2])
+
     while s < c_end:
         if s[0] & 0x80:
-            # skip over multi byte sequences
-            while s < c_end and s[0] & 0x80:
-                s += 1
-            is_non_ascii = 1
-        if  s < c_end and not tree.xmlIsChar_ch(s[0]):
-            return -1 # invalid!
+            # 0xefbfbe and 0xefbfbf are utf-8 encodings of
+            # forbidden characters \ufffe and \uffff
+            if next3 == 0x00efbfbe or next3 == 0x00efbfbf:
+                return 0
+            # 0xeda080 and 0xedbfbf are utf-8 encodings of
+            # \ud800 and \udfff. Anything between them (inclusive)
+            # is forbidden, because they are surrogate blocks in utf-16.
+            if next3 >= 0x00eda080 and next3 <= 0x00edbfbf:
+                return 0
+        else:
+            if not tree.xmlIsChar_ch(s[0]):
+                return 0 # invalid ascii char
+
         s += 1
-    return is_non_ascii
+        if s+2 < c_end:
+            next3 = 0x00ffffff & ((next3 << 8) | s[2])
+    return 1
 
 cdef inline object funicodeOrNone(const_xmlChar* s):
     return funicode(s) if s is not NULL else None
@@ -1384,26 +1403,35 @@ cdef bytes _utf8(object s):
     Reject all bytes/unicode input that contains non-XML characters.
     Reject all bytes input that contains non-ASCII characters.
     """
-    cdef int invalid
+    cdef int valid
     cdef bytes utf8_string
     if not python.IS_PYTHON3 and type(s) is bytes:
         utf8_string = <bytes>s
-        invalid = check_string_utf8(utf8_string)
+        valid = valid_xml_ascii(utf8_string)
     elif isinstance(s, unicode):
         utf8_string = (<unicode>s).encode('utf8')
-        invalid = check_string_utf8(utf8_string) == -1 # non-XML?
+        valid = valid_xml_utf8(utf8_string)
     elif isinstance(s, (bytes, bytearray)):
         utf8_string = bytes(s)
-        invalid = check_string_utf8(utf8_string)
+        valid = valid_xml_ascii(utf8_string)
     else:
         raise TypeError("Argument must be bytes or unicode, got '%.200s'" % type(s).__name__)
-    if invalid:
+    if not valid:
         raise ValueError(
             "All strings must be XML compatible: Unicode or ASCII, no NULL bytes or control characters")
     return utf8_string
 
 cdef bytes _utf8orNone(object s):
     return _utf8(s) if s is not None else None
+
+cdef inline stringrepr(s):
+    """Give an representation of strings which we can use in __repr__
+    methods, e.g. _Element.__repr__().
+    """
+    if python.IS_PYTHON3:
+        return s
+    else:
+        return s.encode('unicode-escape')
 
 cdef bint _isFilePath(const_xmlChar* c_path):
     u"simple heuristic to see if a path is a filename"
@@ -1474,7 +1502,7 @@ cdef object _encodeFilenameUTF8(object filename):
     if filename is None:
         return None
     elif isinstance(filename, bytes):
-        if not check_string_utf8(<bytes>filename):
+        if not isutf8(<bytes>filename):
             # plain ASCII!
             return filename
         c_filename = _cstr(<bytes>filename)
@@ -1538,13 +1566,13 @@ cdef tuple __getNsTag(tag, bint empty_ns):
     return ns, tag
 
 cdef inline int _pyXmlNameIsValid(name_utf8):
-    return _xmlNameIsValid(_xcstr(name_utf8))
+    return _xmlNameIsValid(_xcstr(name_utf8)) and b':' not in name_utf8
 
 cdef inline int _pyHtmlNameIsValid(name_utf8):
     return _htmlNameIsValid(_xcstr(name_utf8))
 
 cdef inline int _xmlNameIsValid(const_xmlChar* c_name):
-    return tree.xmlValidateNCName(c_name, 0) == 0
+    return tree.xmlValidateNameValue(c_name)
 
 cdef int _htmlNameIsValid(const_xmlChar* c_name):
     if c_name is NULL or c_name[0] == c'\0':
