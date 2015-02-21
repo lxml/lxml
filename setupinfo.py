@@ -134,6 +134,10 @@ def ext_modules(static_include_dirs, static_library_dirs,
         from Cython.Compiler import Errors
         Errors.LEVEL = 0
 
+    cythonize_options = {}
+    if OPTION_WITH_COVERAGE:
+        cythonize_options['compiler_directives'] = {'linetrace': True}
+
     result = []
     for module in modules:
         main_module_source = PACKAGE_PATH + module + source_extension
@@ -157,7 +161,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
     if CYTHON_INSTALLED and source_extension == '.pyx':
         # build .c files right now and convert Extension() objects
         from Cython.Build import cythonize
-        result = cythonize(result)
+        result = cythonize(result, **cythonize_options)
 
     return result
 
@@ -274,6 +278,8 @@ def define_macros():
         macros.append(('CYTHON_REFNANNY', None))
     if OPTION_WITH_UNICODE_STRINGS:
         macros.append(('LXML_UNICODE_STRINGS', '1'))
+    if OPTION_WITH_COVERAGE:
+        macros.append(('CYTHON_TRACE', '1'))
     return macros
 
 _ERROR_PRINTED = False
@@ -405,6 +411,7 @@ OPTION_WITHOUT_CYTHON = has_option('without-cython')
 OPTION_WITH_CYTHON = has_option('with-cython')
 OPTION_WITH_CYTHON_GDB = has_option('cython-gdb')
 OPTION_WITH_REFNANNY = has_option('with-refnanny')
+OPTION_WITH_COVERAGE = has_option('with-coverage')
 if OPTION_WITHOUT_CYTHON:
     CYTHON_INSTALLED = False
 OPTION_STATIC = staticbuild or has_option('static')
