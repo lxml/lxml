@@ -23,6 +23,9 @@ Features added
 Bugs fixed
 ----------
 
+* GH#159: Validity checks for names and string content were tightened
+  to detect the use of illegal characters early.  Patch by Olli Pottonen.
+
 * LP#1421921: Comments/PIs before the DOCTYPE declaration were not
   serialised.  Patch by Olli Pottonen.
 
