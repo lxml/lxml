@@ -11,6 +11,7 @@
 # on access that the object really is still alive and delete the
 # weak-ref if it isn't.
 
+@cython.linetrace(False)
 cdef inline _Element getProxy(xmlNode* c_node):
     u"""Get a proxy for a given node.
     """
@@ -23,6 +24,8 @@ cdef inline _Element getProxy(xmlNode* c_node):
     else:
         return None
 
+
+@cython.linetrace(False)
 cdef inline bint hasProxy(xmlNode* c_node):
     if c_node._private is NULL:
         return False
@@ -30,6 +33,8 @@ cdef inline bint hasProxy(xmlNode* c_node):
         return _isProxyAliveInPypy(c_node)
     return True
 
+
+@cython.linetrace(False)
 cdef bint _isProxyAliveInPypy(xmlNode* c_node):
     retval = True
     if python.PyWeakref_LockObject(<python.PyObject*>c_node._private) is None:
@@ -40,6 +45,8 @@ cdef bint _isProxyAliveInPypy(xmlNode* c_node):
         retval = False
     return retval
 
+
+@cython.linetrace(False)
 cdef inline int _registerProxy(_Element proxy, _Document doc,
                                xmlNode* c_node) except -1:
     u"""Register a proxy and type for the node it's proxying for.
@@ -54,6 +61,8 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
         c_node._private = <void*>proxy
     return 0
 
+
+@cython.linetrace(False)
 cdef inline int _unregisterProxy(_Element proxy) except -1:
     u"""Unregister a proxy for the node it's proxying for.
     """
@@ -66,6 +75,7 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
         assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
         c_node._private = NULL
     return 0
+
 
 ################################################################################
 # temporarily make a node the root node of its document

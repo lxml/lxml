@@ -1586,6 +1586,8 @@ cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
     cdef object NEW_ELEMENT "PY_NEW" (object t)
 
+
+@cython.linetrace(False)
 cdef _Element _elementFactory(_Document doc, xmlNode* c_node):
     cdef _Element result
     result = getProxy(c_node)
