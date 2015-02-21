@@ -64,15 +64,16 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 multicore=OPTION_MULTICORE)
 
     if OPTION_WITHOUT_OBJECTIFY:
-        modules = [ entry for entry in EXT_MODULES
-                    if 'objectify' not in entry ]
+        modules = [entry for entry in EXT_MODULES
+                   if 'objectify' not in entry]
     else:
         modules = EXT_MODULES
 
-    c_files_exist = [ os.path.exists('%s%s.c' % (PACKAGE_PATH, module)) for module in modules ]
+    c_files_exist = [os.path.exists('%s%s.c' % (PACKAGE_PATH, module))
+                     for module in modules]
 
+    source_extension = ".pyx"
     if CYTHON_INSTALLED and (OPTION_WITH_CYTHON or False in c_files_exist):
-        source_extension = ".pyx"
         print("Building with Cython %s." % Cython.Compiler.Version.version)
         # generate module cleanup code
         from Cython.Compiler import Options
