@@ -142,9 +142,14 @@ if sys.version_info[0] >= 3:
                 doctests, {}, os.path.basename(filename), filename, 0))
 else:
     # Python 2
+    unichr_escape = re.compile(r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}')
+
     from __builtin__ import unicode
     def _str(s, encoding="UTF-8"):
-        return unicode(s, encoding=encoding)
+        s = unicode(s, encoding=encoding)
+        return unichr_escape.sub(lambda x:
+                                     x.group(0).decode('unicode-escape'),
+                                 s)
     def _bytes(s, encoding="UTF-8"):
         return s
     from io import BytesIO

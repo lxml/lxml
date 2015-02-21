@@ -3818,7 +3818,6 @@ class ETreeOnlyTestCase(HelperTestCase):
             data = zlib.decompress(data)
         return canonicalize(data)
 
-
 class _XIncludeTestCase(HelperTestCase):
     def test_xinclude_text(self):
         filename = fileInTestDir('test_broken.xml')

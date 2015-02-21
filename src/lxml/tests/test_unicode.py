@@ -28,6 +28,12 @@ uxml = _bytes("<test><title>test \\xc3\\xa1\\u3120</title><h1>page \\xc3\\xa1\\u
 
 
 class UnicodeTestCase(HelperTestCase):
+    def test__str(self):
+        # test the testing framework, namely _str from common_imports
+        self.assertEqual(_str('\x10'), _str('\u0010'))
+        self.assertEqual(_str('\x10'), _str('\U00000010'))
+        self.assertEqual(_str('\u1234'), _str('\U00001234'))
+
     def test_unicode_xml(self):
         tree = etree.XML('<p>%s</p>' % uni)
         self.assertEqual(uni, tree.text)
