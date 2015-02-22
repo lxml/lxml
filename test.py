@@ -589,11 +589,19 @@ def main(argv):
         del run_result
 
     if cov is not None:
-        from glob import iglob
+        traced_file_types = ('.py', '.pyx', '.pxi', '.pxd')
         modules = []
-        source_dir = os.path.abspath(os.path.join('src', 'lxml'))
-        for file_type in ['py', 'pyx', 'pxi', 'pxd']:
-            modules.extend(iglob(os.path.join(source_dir, '*.' + file_type)))
+        if cfg.follow_symlinks:
+            walker = walk_with_symlinks
+        else:
+            walker = os.path.walk
+
+        def add_file(_, path, files):
+            for filename in files:
+                if filename.endswith(traced_file_types):
+                    modules.append(os.path.join(path, filename))
+
+        walker(os.path.abspath(cfg.basedir), add_file, None)
         try:
             cov.xml_report(modules, outfile='coverage.xml')
             if cfg.coverdir:
