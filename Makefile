@@ -5,14 +5,16 @@ TESTOPTS=
 SETUPFLAGS=
 LXMLVERSION=`cat version.txt`
 
-PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
-PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Compiler' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
+CYTHON_WITH_COVERAGE=$(shell $(PYTHON) -c 'import Cython.Coverage' >/dev/null 2>/dev/null && echo " --coverage" || true)
+CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 all: inplace
 
 # Build in-place
 inplace:
-	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings
+	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings --with-coverage
 
 sdist:
 	$(PYTHON) setup.py $(SETUPFLAGS) sdist $(PYTHON_WITH_CYTHON)
@@ -30,13 +32,13 @@ test_build: build
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
 
 test_inplace: inplace
-	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS)
+	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest.py
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest2.py
 
 test_inplace3: inplace
 	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
-	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS)
+	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
 	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest2.py
 
