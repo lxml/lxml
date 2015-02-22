@@ -44,6 +44,7 @@ except NameError:
     # Python 3
     _unicode = str
 
+
 class ETreeOnlyTestCase(HelperTestCase):
     """Tests only for etree, not ElementTree"""
     etree = etree
@@ -67,6 +68,14 @@ class ETreeOnlyTestCase(HelperTestCase):
         else:
             # older C-API mechanism
             self.assertTrue(hasattr(self.etree, '_import_c_api'))
+
+    def test_include_paths(self):
+        import lxml
+        includes = lxml.get_include()
+        self.assertTrue(includes)
+        self.assertTrue(len(includes) >= 2)
+        self.assertTrue(os.path.join(os.path.dirname(lxml.__file__), 'includes') in includes,
+                        includes)
 
     def test_element_names(self):
         Element = self.etree.Element
