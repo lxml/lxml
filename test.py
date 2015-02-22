@@ -589,17 +589,18 @@ def main(argv):
         del run_result
 
     if cov is not None:
-        from glob import glob
-        modules = (
-            glob('src/lxml/*.py') +
-            glob('src/lxml/*.pyx') +
-            glob('src/lxml/*.pxi') +
-            glob('src/lxml/*.pxd')
-        )
-        cov.report()
-        if cfg.coverdir:
+        from glob import iglob
+        modules = []
+        source_dir = os.path.abspath(os.path.join('src', 'lxml'))
+        for file_type in ['py', 'pyx', 'pxi', 'pxd']:
+            modules.extend(iglob(os.path.join(source_dir, '*.' + file_type)))
+        try:
             cov.xml_report(modules, outfile='coverage.xml')
-            cov.html_report(modules, directory=cfg.coverdir)
+            if cfg.coverdir:
+                cov.html_report(modules, directory=cfg.coverdir)
+        finally:
+            # test runs can take a while, so at least try to print something
+            cov.report()
 
     # That's all
     if success:
