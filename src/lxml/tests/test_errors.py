@@ -15,6 +15,7 @@ if this_dir not in sys.path:
 
 from common_imports import HelperTestCase
 
+
 class ErrorTestCase(HelperTestCase):
     etree = etree
 
@@ -29,17 +30,25 @@ class ErrorTestCase(HelperTestCase):
     def test_element_cyclic_gc_none(self):
         # test if cyclic reference can crash etree
         Element = self.etree.Element
-        gc.collect()
 
-        count = sys.getrefcount(None)
+        # must disable tracing as it could change the refcounts
+        trace_func = sys.gettrace()
+        try:
+            sys.settrace(None)
+            gc.collect()
 
-        l = [Element('name'), Element('name')]
-        l.append(l)
+            count = sys.getrefcount(None)
 
-        del l
-        gc.collect()
+            l = [Element('name'), Element('name')]
+            l.append(l)
 
-        self.assertEqual(sys.getrefcount(None), count)
+            del l
+            gc.collect()
+
+            self.assertEqual(sys.getrefcount(None), count)
+        finally:
+            sys.settrace(trace_func)
+
 
 def test_suite():
     suite = unittest.TestSuite()
