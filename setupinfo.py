@@ -280,7 +280,7 @@ def define_macros():
     if OPTION_WITH_UNICODE_STRINGS:
         macros.append(('LXML_UNICODE_STRINGS', '1'))
     if OPTION_WITH_COVERAGE:
-        macros.append(('CYTHON_TRACE', '1'))
+        macros.append(('CYTHON_TRACE_NOGIL', '1'))
     return macros
 
 _ERROR_PRINTED = False
