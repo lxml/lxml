@@ -550,7 +550,7 @@ def main(argv):
     cov = None
     if cfg.run_tests and cfg.coverage:
         from coverage import coverage
-        cov = coverage()
+        cov = coverage(omit=['test.py'])
 
     # Finding and importing
     test_files = get_test_files(cfg)
@@ -591,17 +591,20 @@ def main(argv):
     if cov is not None:
         traced_file_types = ('.py', '.pyx', '.pxi', '.pxd')
         modules = []
-        if cfg.follow_symlinks:
-            walker = walk_with_symlinks
-        else:
-            walker = os.path.walk
 
         def add_file(_, path, files):
+            if 'tests' in os.path.relpath(path, cfg.basedir).split(os.sep):
+                return
             for filename in files:
                 if filename.endswith(traced_file_types):
                     modules.append(os.path.join(path, filename))
 
+        if cfg.follow_symlinks:
+            walker = walk_with_symlinks
+        else:
+            walker = os.path.walk
         walker(os.path.abspath(cfg.basedir), add_file, None)
+
         try:
             cov.xml_report(modules, outfile='coverage.xml')
             if cfg.coverdir:
