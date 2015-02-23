@@ -1,5 +1,8 @@
-u"""The ``lxml.objectify`` module implements a Python object API for
-XML.  It is based on `lxml.etree`.
+# cython: binding=True
+
+"""
+The ``lxml.objectify`` module implements a Python object API for XML.
+It is based on `lxml.etree`.
 """
 
 from __future__ import absolute_import

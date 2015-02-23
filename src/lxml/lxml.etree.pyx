@@ -1,5 +1,7 @@
-u"""The ``lxml.etree`` module implements the extended ElementTree API
-for XML.
+# cython: binding=True
+
+"""
+The ``lxml.etree`` module implements the extended ElementTree API for XML.
 """
 
 from __future__ import absolute_import
