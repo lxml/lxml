@@ -307,24 +307,26 @@ class ThreadPipelineTestCase(HelperTestCase):
                 put(handle(get()))
 
     class ParseWorker(Worker):
-        XML = etree.XML
-        def handle(self, xml):
-            return self.XML(xml)
+        def handle(self, xml, _fromstring=etree.fromstring):
+            return _fromstring(xml)
+
     class RotateWorker(Worker):
         def handle(self, element):
             first = element[0]
             element[:] = element[1:]
             element.append(first)
             return element
+
     class ReverseWorker(Worker):
         def handle(self, element):
             element[:] = element[::-1]
             return element
+
     class ParseAndExtendWorker(Worker):
-        XML = etree.XML
-        def handle(self, element):
-            element.extend(self.XML(self.xml))
+        def handle(self, element, _fromstring=etree.fromstring):
+            element.extend(_fromstring(self.xml))
             return element
+
     class SerialiseWorker(Worker):
         def handle(self, element):
             return etree.tostring(element)
