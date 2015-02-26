@@ -226,7 +226,7 @@ class Schematron(_etree._Validator):
     def __init__(self, etree=None, file=None, include=True, expand=True,
                  include_params={}, expand_params={}, compile_params={},
                  store_schematron=False, store_xslt=False, store_report=False,
-                 phase=None, fail_on_report=True):
+                 phase=None, fail_on_report=False):
         super(Schematron, self).__init__()
 
         self._store_report = store_report
