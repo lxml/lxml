@@ -14,6 +14,7 @@ if this_dir not in sys.path:
 from common_imports import etree, HelperTestCase, fileInTestDir
 from common_imports import doctest, make_doctest
 
+
 class ETreeISOSchematronTestCase(HelperTestCase):
     def test_schematron(self):
         tree_valid = self.parse('<AAA><BBB/><CCC/></AAA>')
@@ -37,6 +38,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
     </pattern>
 </schema>
 ''')
+
         schema = isoschematron.Schematron(schema)
         self.assertTrue(schema.validate(tree_valid))
         self.assertTrue(not schema.validate(tree_invalid))
@@ -838,6 +840,26 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertTrue(not schema.validate(tree_invalid))
 
     #TODO: test xslt parameters for inclusion, expand & compile steps (?)
+
+    def test_schematron_fail_on_report(self):
+        tree_valid = self.parse('<AAA><BBB/><CCC/></AAA>')
+        tree_invalid = self.parse('<AAA><BBB/><CCC/><DDD/></AAA>')
+        schema = self.parse('''\
+<schema xmlns="http://purl.oclc.org/dsdl/schematron" >
+    <pattern id="OpenModel">
+        <title>Simple Report</title>
+        <rule context="AAA">
+            <report test="DDD"> DDD element must not be present</report>
+        </rule>
+    </pattern>
+</schema>
+''')
+        schema_report = isoschematron.Schematron(schema, fail_on_report=True)
+        schema_no_report = isoschematron.Schematron(schema)
+        self.assertTrue(schema_report.validate(tree_valid))
+        self.assertTrue(not schema_report.validate(tree_invalid))
+        self.assertTrue(schema_no_report.validate(tree_valid))
+        self.assertTrue(schema_no_report.validate(tree_invalid))
 
 
 def test_suite():

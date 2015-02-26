@@ -65,6 +65,9 @@ iso_svrl_for_xslt1 = _etree.XSLT(_etree.parse(
 # svrl result accessors
 svrl_validation_errors = _etree.XPath(
     '//svrl:failed-assert', namespaces={'svrl': SVRL_NS})
+    
+svrl_validation_errors_complete = _etree.XPath(
+    '//svrl:failed-assert | //svrl:successful-report', namespaces={'svrl': SVRL_NS})
 
 
 # RelaxNG validator for schematron schemas
@@ -148,7 +151,10 @@ class Schematron(_etree._Validator):
 
     Schematron is a less well known, but very powerful schema language.  The main
     idea is to use the capabilities of XPath to put restrictions on the structure
-    and the content of XML documents.  Here is a simple example::
+    and the content of XML documents.
+    Notice that standard behaviour is to fail only on assert. To also cause a 
+    failed validation with report element ``fail_on_report`` must be set to True.
+    Here is a simple example::
 
       >>> from lxml import isoschematron
       >>> schematron = isoschematron.Schematron(etree.XML('''
@@ -162,7 +168,7 @@ class Schematron(_etree._Validator):
       ...     </rule>
       ...   </pattern>
       ... </schema>
-      ... '''))
+      ... '''), fail_on_report=True)
 
       >>> xml = etree.XML('''
       ... <AAA name="aaa">
@@ -172,7 +178,7 @@ class Schematron(_etree._Validator):
       ... ''')
 
       >>> schematron.validate(xml)
-      0
+      False
 
       >>> xml = etree.XML('''
       ... <AAA id="aaa">
@@ -182,7 +188,7 @@ class Schematron(_etree._Validator):
       ... ''')
 
       >>> schematron.validate(xml)
-      1
+      True
     """
 
     # libxml2 error categorization for validation errors
@@ -220,7 +226,7 @@ class Schematron(_etree._Validator):
     def __init__(self, etree=None, file=None, include=True, expand=True,
                  include_params={}, expand_params={}, compile_params={},
                  store_schematron=False, store_xslt=False, store_report=False,
-                 phase=None):
+                 phase=None, fail_on_report=False):
         super(Schematron, self).__init__()
 
         self._store_report = store_report
@@ -269,6 +275,8 @@ class Schematron(_etree._Validator):
         if store_xslt:
             self._validator_xslt = validator_xslt
         self._validator = _etree.XSLT(validator_xslt)
+        if fail_on_report:
+            self._validation_errors = svrl_validation_errors_complete
         
     def __call__(self, etree):
         """Validate doc using Schematron.
