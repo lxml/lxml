@@ -13,6 +13,9 @@ Features added
   is that the functions now bind as methods when assigned to a class
   variable.  A quick fix is to wrap them in ``staticmethod()``.
 
+* ISO-Schematron support gained an option ``fail_on_report()`` to also
+  fail the validation when issuing reports (not just asserts).
+
 * LP#1243600: Elements in ``lxml.html`` gained a ``classes`` property
   that provides a set-like interface to the ``class`` attribute.
   Original patch by masklinn.
