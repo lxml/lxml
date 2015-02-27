@@ -156,7 +156,8 @@ class Schematron(_etree._Validator):
     failed validation with report element ``fail_on_report`` must be set to True.
     Here is a simple example::
 
-      >>> from lxml import isoschematron
+      >>> from lxml import etree, isoschematron
+
       >>> schematron = isoschematron.Schematron(etree.XML('''
       ... <schema xmlns="http://purl.oclc.org/dsdl/schematron" >
       ...   <pattern id="id_only_attribute">
@@ -236,6 +237,7 @@ class Schematron(_etree._Validator):
 
         # parse schema document, may be a schematron schema or an XML Schema or
         # a RelaxNG schema with embedded schematron rules
+        root = None
         try:
             if etree is not None:
                 if isinstance(etree, _etree._Element):
@@ -302,23 +304,23 @@ class Schematron(_etree._Validator):
             return False
         return True
 
+    @property
     def schematron(self):
         """ISO-schematron schema document (None if object has been initialized
         with store_schematron=False).
         """
         return self._schematron
-    schematron = property(schematron, doc=schematron.__doc__)
 
+    @property
     def validator_xslt(self):
         """ISO-schematron skeleton implementation XSLT validator document (None
         if object has been initialized with store_xslt=False). 
         """
         return self._validator_xslt
-    validator_xslt = property(validator_xslt, doc=validator_xslt.__doc__)
 
+    @property
     def validation_report(self):
         """ISO-schematron validation result report (None if result-storing has
         been turned off).
         """
         return self._validation_report
-    validation_report = property(validation_report, doc=validation_report.__doc__)
