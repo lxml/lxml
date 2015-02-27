@@ -216,6 +216,7 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     """
     cdef xmlNs* c_ns
     cdef list nsdefs
+    cdef Py_ssize_t pos
     if not nsmap:
         if node_ns_utf is not None:
             _uriValidOrRaise(node_ns_utf)
@@ -223,16 +224,17 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
         return 0
 
     nsdefs = list(nsmap.items())
-    if None in nsmap and len(nsdefs) > 1:
+    if None in nsmap:
         # Move the default namespace to the end.  This makes sure libxml2
         # prefers a prefix if the ns is defined redundantly on the same
         # element.  That way, users can work around a problem themselves
         # where default namespace attributes on non-default namespaced
         # elements serialise without prefix (i.e. into the non-default
         # namespace).
-        item = (None, nsmap[None])
-        nsdefs.remove(item)
-        nsdefs.append(item)
+        for pos in range(len(nsdefs) - 1):
+            if nsdefs[pos][0] is None:
+                nsdefs[pos], nsdefs[-1] = nsdefs[-1], nsdefs[pos]
+                break
 
     for prefix, href in nsdefs:
         href_utf = _utf8(href)
