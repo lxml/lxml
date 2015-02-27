@@ -66,7 +66,7 @@ iso_svrl_for_xslt1 = _etree.XSLT(_etree.parse(
 svrl_validation_errors = _etree.XPath(
     '//svrl:failed-assert', namespaces={'svrl': SVRL_NS})
     
-svrl_validation_errors_complete = _etree.XPath(
+svrl_validation_errors_and_reports = _etree.XPath(
     '//svrl:failed-assert | //svrl:successful-report', namespaces={'svrl': SVRL_NS})
 
 
@@ -276,7 +276,7 @@ class Schematron(_etree._Validator):
             self._validator_xslt = validator_xslt
         self._validator = _etree.XSLT(validator_xslt)
         if fail_on_report:
-            self._validation_errors = svrl_validation_errors_complete
+            self._validation_errors = svrl_validation_errors_and_reports
         
     def __call__(self, etree):
         """Validate doc using Schematron.
