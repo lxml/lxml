@@ -8,13 +8,17 @@ Latest changes
 Features added
 --------------
 
+* ``cleanup_namespaces()`` accepts a new argument ``top_nsmap`` that
+  moves definitions of the provided prefix-namespace mapping to the
+  top of the tree.
+
 * API functions and methods behave and look more like Python functions,
   which allows introspection on them etc.  One side effect to be aware of
   is that the functions now bind as methods when assigned to a class
   variable.  A quick fix is to wrap them in ``staticmethod()`` (as for
   normal Python functions).
 
-* ISO-Schematron support gained an option ``fail_on_report()`` to also
+* ISO-Schematron support gained an option ``fail_on_report`` to also
   fail the validation when issuing reports (not just asserts).
 
 * LP#1243600: Elements in ``lxml.html`` gained a ``classes`` property
