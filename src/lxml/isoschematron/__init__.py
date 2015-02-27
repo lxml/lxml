@@ -299,7 +299,8 @@ class Schematron(_etree._Validator):
                 # Does svrl report the line number, anywhere? Don't think so.
                 self._append_log_message(
                     domain=self._domain, type=self._error_type,
-                    level=self._level, line=0, message=_etree.tounicode(error),
+                    level=self._level, line=0,
+                    message=_etree.tostring(error, encoding='unicode'),
                     filename=fname)
             return False
         return True
