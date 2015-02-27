@@ -2610,13 +2610,57 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(two))
 
     def test_namespace_cleanup(self):
-        xml = _bytes('<foo xmlns="F" xmlns:x="x"><bar xmlns:ns="NS" xmlns:b="b" xmlns="B"><ns:baz/></bar></foo>')
+        xml = _bytes(
+            '<foo xmlns="F" xmlns:x="x">'
+            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            '<ns:baz/>'
+            '</bar></foo>'
+        )
         root = self.etree.fromstring(xml)
-        self.assertEqual(xml,
-                          self.etree.tostring(root))
+        self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root)
         self.assertEqual(
             _bytes('<foo xmlns="F"><bar xmlns:ns="NS" xmlns="B"><ns:baz/></bar></foo>'),
+            self.etree.tostring(root))
+
+    def test_namespace_cleanup_attributes(self):
+        xml = _bytes(
+            '<foo xmlns="F" xmlns:x="X" xmlns:a="A">'
+            '<bar xmlns:ns="NS" xmlns:b="b" xmlns="B">'
+            '<ns:baz a:test="attr"/>'
+            '</bar></foo>'
+        )
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root)
+        self.assertEqual(
+            _bytes('<foo xmlns="F" xmlns:a="A">'
+                   '<bar xmlns:ns="NS" xmlns="B">'
+                   '<ns:baz a:test="attr"/>'
+                   '</bar></foo>'),
+            self.etree.tostring(root))
+
+    def test_namespace_cleanup_many(self):
+        xml = ('<n12:foo ' +
+               ' '.join('xmlns:n{n}="NS{n}"'.format(n=i) for i in range(100)) +
+               '><n68:a/></n12:foo>').encode('utf8')
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root)
+        self.assertEqual(
+            b'<n12:foo xmlns:n12="NS12" xmlns:n68="NS68"><n68:a/></n12:foo>',
+            self.etree.tostring(root))
+
+    def test_namespace_cleanup_deep(self):
+        xml = ('<root>' +
+               ''.join('<a xmlns:n{n}="NS{n}">'.format(n=i) for i in range(100)) +
+               '<n64:x/>' + '</a>'*100 + '</root>').encode('utf8')
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root)
+        self.assertEqual(
+            b'<root>' + b'<a>'*64 + b'<a xmlns:n64="NS64">' + b'<a>'*35 +
+            b'<n64:x/>' + b'</a>'*100 + b'</root>',
             self.etree.tostring(root))
 
     def test_element_nsmap(self):
