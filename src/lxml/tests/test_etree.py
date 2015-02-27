@@ -2663,6 +2663,20 @@ class ETreeOnlyTestCase(HelperTestCase):
             b'<n64:x/>' + b'</a>'*100 + b'</root>',
             self.etree.tostring(root))
 
+    def test_namespace_cleanup_deep_to_top(self):
+        xml = ('<root>' +
+               ''.join('<a xmlns:n{n}="NS{n}">'.format(n=i) for i in range(100)) +
+               '<n64:x xmlns:a="A" a:attr="X"/>' +
+               '</a>'*100 +
+               '</root>').encode('utf8')
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(root, top_nsmap={'n64': 'NS64'})
+        self.assertEqual(
+            b'<root xmlns:n64="NS64">' + b'<a>'*100 +
+            b'<n64:x xmlns:a="A" a:attr="X"/>' + b'</a>'*100 + b'</root>',
+            self.etree.tostring(root))
+
     def test_element_nsmap(self):
         etree = self.etree
 
