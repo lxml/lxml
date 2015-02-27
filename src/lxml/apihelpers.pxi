@@ -313,8 +313,8 @@ ctypedef struct _ns_node_ref:
 cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
                         size_t *_c_ns_list_len, size_t *_c_ns_list_size) except -1:
     c_ns_list = _c_ns_list[0]
-    c_ns_list_len = _c_ns_list_len[0]
-    c_ns_list_size = _c_ns_list_size[0]
+    cdef size_t c_ns_list_len = _c_ns_list_len[0]
+    cdef size_t c_ns_list_size = _c_ns_list_size[0]
 
     c_nsdef = c_element.nsDef
     while c_nsdef is not NULL:
