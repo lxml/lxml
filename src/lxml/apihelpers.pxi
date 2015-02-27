@@ -124,7 +124,7 @@ cdef _Element _makeElement(tag, xmlDoc* c_doc, _Document doc,
         if tail is not None:
             _setTailText(c_node, tail)
         # add namespaces to node if necessary
-        _initNodeNamespaces(c_node, doc, ns_utf, nsmap)
+        _setNodeNamespaces(c_node, doc, ns_utf, nsmap)
         _initNodeAttributes(c_node, doc, attrib, extra_attrs)
         return _elementFactory(doc, c_node)
     except:
@@ -163,7 +163,7 @@ cdef int _initNewElement(_Element element, bint is_html, name_utf, ns_utf,
     tree.xmlDocSetRootElement(c_doc, c_node)
     doc = _documentFactory(c_doc, parser)
     # add namespaces to node if necessary
-    _initNodeNamespaces(c_node, doc, ns_utf, nsmap)
+    _setNodeNamespaces(c_node, doc, ns_utf, nsmap)
     _initNodeAttributes(c_node, doc, attrib, extra_attrs)
     _registerProxy(element, doc, c_node)
     element._init()
@@ -199,7 +199,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
             _setTailText(c_node, tail)
 
         # add namespaces to node if necessary
-        _initNodeNamespaces(c_node, parent._doc, ns_utf, nsmap)
+        _setNodeNamespaces(c_node, parent._doc, ns_utf, nsmap)
         _initNodeAttributes(c_node, parent._doc, attrib, extra_attrs)
         return _elementFactory(parent._doc, c_node)
     except:
@@ -207,12 +207,12 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         _removeNode(parent._doc, c_node)
         raise
 
-cdef int _initNodeNamespaces(xmlNode* c_node, _Document doc,
-                             object node_ns_utf, object nsmap) except -1:
+cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
+                            object node_ns_utf, object nsmap) except -1:
     u"""Lookup current namespace prefixes, then set namespace structure for
-    node and register new ns-prefix mappings.
+    node (if 'node_ns_utf' was provided) and register new ns-prefix mappings.
 
-    This only works for a newly created node!
+    'node_ns_utf' should only be passed for a newly created node.
     """
     cdef xmlNs* c_ns
     cdef list nsdefs
