@@ -937,6 +937,8 @@ And now we can take the resulting in-memory tree and iterate over it
 using ``iterwalk()`` to get the exact same events without parsing the
 input again:
 
+.. sourcecode:: pycon
+
   >>> context = etree.iterwalk(
   ...             root, events=("start", "end"), tag="element")
 
