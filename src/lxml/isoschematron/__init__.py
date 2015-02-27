@@ -9,11 +9,6 @@ from lxml import etree as _etree # due to validator __init__ signature
 
 # some compat stuff, borrowed from lxml.html
 try:
-    bytes
-except NameError:
-    # Python < 2.6
-    bytes = str
-try:
     unicode
 except NameError:
     # Python 3
@@ -240,7 +235,7 @@ class Schematron(_etree._Validator):
         root = None
         try:
             if etree is not None:
-                if isinstance(etree, _etree._Element):
+                if _etree.iselement(etree):
                     root = etree
                 else:
                     root = etree.getroot()
@@ -291,7 +286,7 @@ class Schematron(_etree._Validator):
             self._validation_report = result
         errors = self._validation_errors(result)
         if errors:
-            if isinstance(etree, _etree._Element):
+            if _etree.iselement(etree):
                 fname = etree.getroottree().docinfo.URL or '<file>'
             else:
                 fname = etree.docinfo.URL or '<file>'
