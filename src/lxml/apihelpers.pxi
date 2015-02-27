@@ -304,51 +304,18 @@ cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
                           _xcstr(name_utf), _xcstr(value_utf))
     return 0
 
+
 ctypedef struct _ns_node_ref:
     xmlNs* ns
     xmlNode* node
 
-cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
-    u"""Remove any namespace declarations from a subtree that are not used by
-    any of its elements (or attributes).
-    """
-    cdef _ns_node_ref* c_ns_list
-    cdef _ns_node_ref* c_nsref_ptr
-    cdef xmlNs* c_nsdef
-    cdef xmlNode* c_node
-    cdef size_t c_ns_list_size
-    cdef size_t c_ns_list_len
-    cdef size_t i
 
-    c_ns_list = NULL
-    c_ns_list_size = 0
-    c_ns_list_len  = 0
+cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
+                        size_t *_c_ns_list_len, size_t *_c_ns_list_size) except -1:
+    c_ns_list = _c_ns_list[0]
+    c_ns_list_len = _c_ns_list_len[0]
+    c_ns_list_size = _c_ns_list_size[0]
 
-    if c_element.parent is not NULL and \
-            c_element.parent.type == tree.XML_DOCUMENT_NODE:
-        # include the document node
-        c_nsdef = c_element.parent.nsDef
-        while c_nsdef is not NULL:
-            if c_ns_list_len >= c_ns_list_size:
-                if c_ns_list is NULL:
-                    c_ns_list_size = 20
-                else:
-                    c_ns_list_size *= 2
-                c_nsref_ptr = <_ns_node_ref*> stdlib.realloc(
-                    c_ns_list, c_ns_list_size * sizeof(_ns_node_ref))
-                if c_nsref_ptr is NULL:
-                    if c_ns_list is not NULL:
-                        stdlib.free(c_ns_list)
-                    raise MemoryError()
-                c_ns_list = c_nsref_ptr
-
-            c_ns_list[c_ns_list_len].ns   = c_nsdef
-            c_ns_list[c_ns_list_len].node = c_element.parent
-            c_ns_list_len += 1
-            c_nsdef = c_nsdef.next
-
-    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
-    # collect all new namespace declarations into the ns list
     c_nsdef = c_element.nsDef
     while c_nsdef is not NULL:
         if c_ns_list_len >= c_ns_list_size:
@@ -361,13 +328,36 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
             if c_nsref_ptr is NULL:
                 if c_ns_list is not NULL:
                     stdlib.free(c_ns_list)
+                    _c_ns_list[0] = NULL
                 raise MemoryError()
             c_ns_list = c_nsref_ptr
 
-        c_ns_list[c_ns_list_len].ns   = c_nsdef
-        c_ns_list[c_ns_list_len].node = c_element
+        c_ns_list[c_ns_list_len] = _ns_node_ref(c_nsdef, c_element)
         c_ns_list_len += 1
         c_nsdef = c_nsdef.next
+
+    _c_ns_list_size[0] = c_ns_list_size
+    _c_ns_list_len[0] = c_ns_list_len
+    _c_ns_list[0] = c_ns_list
+
+
+cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
+    u"""Remove any namespace declarations from a subtree that are not used by
+    any of its elements (or attributes).
+    """
+    cdef xmlNode* c_node
+    cdef _ns_node_ref* c_ns_list = NULL
+    cdef size_t c_ns_list_size = 0
+    cdef size_t c_ns_list_len = 0
+    cdef size_t i
+
+    if c_element.parent and c_element.parent.type == tree.XML_DOCUMENT_NODE:
+        # include declarations on the document node
+        _collectNsDefs(c_element.parent, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
+
+    tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
+    # collect all new namespace declarations into the ns list
+    _collectNsDefs(c_element, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
 
     # remove all namespace declarations from the list that are referenced
     if c_element.type == tree.XML_ELEMENT_NODE:
@@ -377,10 +367,8 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
                 for i in range(c_ns_list_len):
                     if c_node.ns is c_ns_list[i].ns:
                         c_ns_list_len -= 1
-                        c_ns_list[i].ns   = c_ns_list[c_ns_list_len].ns
-                        c_ns_list[i].node = c_ns_list[c_ns_list_len].node
-                        c_ns_list[c_ns_list_len].ns   = NULL
-                        c_ns_list[c_ns_list_len].node = NULL
+                        c_ns_list[i] = c_ns_list[c_ns_list_len]
+                        #c_ns_list[c_ns_list_len] = _ns_node_ref(NULL, NULL)
                         break
             if c_node is c_element:
                 # continue with attributes
@@ -393,6 +381,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         return 0
 
     # free all namespace declarations that remained in the list
+    cdef xmlNs* c_nsdef
     for i in range(c_ns_list_len):
         c_node = c_ns_list[i].node
         c_nsdef = c_node.nsDef
