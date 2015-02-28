@@ -276,8 +276,8 @@ cdef inline int _appendToNsCache(_nscache* c_ns_cache,
     c_ns_cache.last += 1
 
 
-cdef int _stripRedundantNamespaceDeclarations(
-    xmlNode* c_element, _nscache* c_ns_cache, xmlNs** c_del_ns_list) except -1:
+cdef int _stripRedundantNamespaceDeclarations(xmlNode* c_element, _nscache* c_ns_cache,
+                                              xmlNs** c_del_ns_list) except -1:
     u"""Removes namespace declarations from an element that are already
     defined in its parents.  Does not free the xmlNs's, just prepends
     them to the c_del_ns_list.
@@ -303,6 +303,24 @@ cdef int _stripRedundantNamespaceDeclarations(
             c_del_ns_list[0] = c_nsdef[0]
             c_nsdef[0] = c_ns_next
     return 0
+
+
+cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
+                                          _nscache* c_ns_cache, xmlNs* c_del_ns_list):
+    # Try to recover from exceptions with really bad timing.  We were in the middle
+    # of ripping out xmlNS-es and likely ran out of memory.  Try to fix up the tree
+    # by re-adding the original xmlNs declarations (which might still be used in some
+    # places).
+    if c_ns_cache.ns_map:
+        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
+    if c_del_ns_list:
+        if not c_start_node.nsDef:
+            c_start_node.nsDef = c_del_ns_list
+        else:
+            c_ns = c_start_node.nsDef
+            while c_ns.next:
+                c_ns = c_ns.next
+            c_ns.next = c_del_ns_list
 
 
 cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
@@ -360,8 +378,11 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         # 1) cut out namespaces defined here that are already known by
         #    the ancestors
         if c_element.nsDef is not NULL:
-            _stripRedundantNamespaceDeclarations(
-                c_element, &c_ns_cache, &c_del_ns_list)
+            try:
+                _stripRedundantNamespaceDeclarations(c_element, &c_ns_cache, &c_del_ns_list)
+            except:
+                _cleanUpFromNamespaceAdaptation(c_start_node, &c_ns_cache, c_del_ns_list)
+                raise
 
         # 2) make sure the namespaces of an element and its attributes
         #    are declared in this document (i.e. on the node or its parents)
@@ -378,14 +399,20 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                         c_ns = c_ns_cache.ns_map[i].new
                         break
 
-                if not c_ns:
+                if c_ns:
+                    c_node.ns = c_ns
+                else:
                     # not in cache or not acceptable
                     # => find a replacement from this document
-                    c_ns = doc._findOrBuildNodeNs(
-                        c_start_node, c_node.ns.href, c_node.ns.prefix,
-                        c_node.type == tree.XML_ATTRIBUTE_NODE)
-                    _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
-                c_node.ns = c_ns
+                    try:
+                        c_ns = doc._findOrBuildNodeNs(
+                            c_start_node, c_node.ns.href, c_node.ns.prefix,
+                            c_node.type == tree.XML_ATTRIBUTE_NODE)
+                        c_node.ns = c_ns
+                        _appendToNsCache(&c_ns_cache, c_node.ns, c_ns)
+                    except:
+                        _cleanUpFromNamespaceAdaptation(c_start_node, &c_ns_cache, c_del_ns_list)
+                        raise
 
             if c_node is c_element:
                 # after the element, continue with its attributes
