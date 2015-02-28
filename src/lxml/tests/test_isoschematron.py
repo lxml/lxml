@@ -57,7 +57,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 ''')
         schema = isoschematron.Schematron(schema)
         self.assertTrue(schema)
-        
+
     def test_schematron_invalid_schema_empty(self):
         schema = self.parse('''\
 <schema xmlns="http://purl.oclc.org/dsdl/schematron" />
@@ -293,7 +293,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         schematron = isoschematron.Schematron(schema)
         self.assertTrue(schematron.validator_xslt is None)
 
-        schematron = isoschematron.Schematron(schema, store_schematron=True) 
+        schematron = isoschematron.Schematron(schema, store_schematron=True)
         self.assertTrue(isinstance(schematron.schematron, etree._ElementTree),
                      'expected schematron schema to be stored')
 
@@ -311,10 +311,10 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         schematron = isoschematron.Schematron(schema)
         self.assertTrue(schematron.validator_xslt is None)
 
-        schematron = isoschematron.Schematron(schema, store_xslt=True) 
+        schematron = isoschematron.Schematron(schema, store_xslt=True)
         self.assertTrue(isinstance(schematron.validator_xslt, etree._ElementTree),
                      'expected validator xslt to be stored')
-       
+
     def test_schematron_abstract(self):
         schema = self.parse('''\
 <sch:schema xmlns:sch="http://purl.oclc.org/dsdl/schematron">
@@ -324,7 +324,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 
   <!-- of course, these only really make sense when combined with a schema that
        ensures datatype xs:dateTime -->
-       
+
   <sch:pattern abstract="true" id="abstract.dateTime.tz_utc">
     <sch:rule context="$datetime">
       <sch:let name="tz" value="concat(substring-after(substring-after(./text(), 'T'), '+'), substring-after(substring-after(./text(), 'T'), '-'))"/>
@@ -371,7 +371,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 </root>
 '''),
             ]
-                       
+
         schematron = isoschematron.Schematron(schema)
         for tree_valid in valid_trees:
             self.assertTrue(schematron(tree_valid), schematron.error_log)
@@ -428,7 +428,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 
   <!-- of course, these only really make sense when combined with a schema that
        ensures datatype xs:dateTime -->
-  
+
   <sch:pattern abstract="true" id="abstract.dateTime.tz_utc">
     <sch:rule context="$datetime">
       <sch:let name="tz" value="concat(substring-after(substring-after(./text(), 'T'), '+'), substring-after(substring-after(./text(), 'T'), '-'))"/>
@@ -528,7 +528,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
             len(schematron.error_log), expected,
             'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
-                                      
+
     def test_schematron_phases_kwarg(self):
         schema = self.parse('''\
 <sch:schema xmlns:sch="http://purl.oclc.org/dsdl/schematron">
@@ -553,7 +553,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
 
   <!-- of course, these only really make sense when combined with a schema that
        ensures datatype xs:dateTime -->
-  
+
   <sch:pattern abstract="true" id="abstract.dateTime.tz_utc">
     <sch:rule context="$datetime">
       <sch:let name="tz" value="concat(substring-after(substring-after(./text(), 'T'), '+'), substring-after(substring-after(./text(), 'T'), '-'))"/>
@@ -649,7 +649,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         self.assertEqual(
             len(schematron.error_log), expected, 'expected %s errors: %s (%s errors)' %
             (expected, schematron.error_log, len(schematron.error_log)))
-                                      
+
     def test_schematron_xmlschema_embedded(self):
         schema = self.parse('''\
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
@@ -787,13 +787,13 @@ class ETreeISOSchematronTestCase(HelperTestCase):
                     namespaces={'sch': "http://purl.oclc.org/dsdl/schematron"})
                     or [None])[0]
                 return schematron
-                              
+
             def _include(self, schematron, **kwargs):
                 raise RuntimeError('inclusion unsupported')
-            
+
             def _expand(self, schematron, **kwargs):
                 raise RuntimeError('expansion unsupported')
-            
+
             def _validation_errors(self, validationReport):
                 valid = etree.XPath(
                     'count(//svrl:successful-report[@flag="critical"])=1',
@@ -833,7 +833,7 @@ class ETreeISOSchematronTestCase(HelperTestCase):
         # check if overridden _expand is run
         self.assertRaises(RuntimeError, MySchematron, schema, store_report=True,
                           include=False)
-        
+
         schema = MySchematron(schema, store_report=True, include=False,
                               expand=False)
         self.assertTrue(schema.validate(tree_valid))
@@ -854,7 +854,8 @@ class ETreeISOSchematronTestCase(HelperTestCase):
     </pattern>
 </schema>
 ''')
-        schema_report = isoschematron.Schematron(schema, fail_on_report=True)
+        schema_report = isoschematron.Schematron(schema,
+                                                 validation_errors=isoschematron.Schematron.FAIL_ON_ASSERT_AND_REPORT)
         schema_no_report = isoschematron.Schematron(schema)
         self.assertTrue(schema_report.validate(tree_valid))
         self.assertTrue(not schema_report.validate(tree_invalid))

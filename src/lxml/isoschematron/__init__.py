@@ -23,7 +23,7 @@ except NameError:
 __all__ = ['extract_xsd', 'extract_rng', 'iso_dsdl_include',
            'iso_abstract_expand', 'iso_svrl_for_xslt1',
            'svrl_validation_errors', 'schematron_schema_valid',
-           'stylesheet_params', 'Schematron'] 
+           'stylesheet_params', 'Schematron']
 
 
 # some namespaces
@@ -60,9 +60,6 @@ iso_svrl_for_xslt1 = _etree.XSLT(_etree.parse(
 # svrl result accessors
 svrl_validation_errors = _etree.XPath(
     '//svrl:failed-assert', namespaces={'svrl': SVRL_NS})
-    
-svrl_validation_errors_and_reports = _etree.XPath(
-    '//svrl:failed-assert | //svrl:successful-report', namespaces={'svrl': SVRL_NS})
 
 
 # RelaxNG validator for schematron schemas
@@ -110,7 +107,7 @@ def _stylesheet_param_dict(paramsDict, kwargsDict):
             paramsDict[k] = v
     paramsDict = stylesheet_params(**paramsDict)
     return paramsDict
-    
+
 
 class Schematron(_etree._Validator):
     """An ISO Schematron validator.
@@ -144,11 +141,14 @@ class Schematron(_etree._Validator):
     report document gets stored and can be accessed as the ``validation_report``
     property.
 
-    Schematron is a less well known, but very powerful schema language.  The main
-    idea is to use the capabilities of XPath to put restrictions on the structure
-    and the content of XML documents.
-    Notice that standard behaviour is to fail only on assert. To also cause a 
-    failed validation with report element ``fail_on_report`` must be set to True.
+    Schematron is a less well known, but very powerful schema language. The main
+    idea is to use the capabilities of XPath to put restrictions on the
+    structure and the content of XML documents.
+    The standard behaviour is to fail on assert only. To change this you can
+    either pass a XPath element to the constructor using the
+    ``validation_errors`` parameter or subclass isoschematron.Schematron
+    for complete control of the validation process.
+
     Here is a simple example::
 
       >>> from lxml import etree, isoschematron
@@ -164,7 +164,7 @@ class Schematron(_etree._Validator):
       ...     </rule>
       ...   </pattern>
       ... </schema>
-      ... '''), fail_on_report=True)
+      ... '''), validation_errors=Schematron.FAIL_ON_ASSERT_AND_REPORT)
 
       >>> xml = etree.XML('''
       ... <AAA name="aaa">
@@ -192,6 +192,12 @@ class Schematron(_etree._Validator):
     _level = _etree.ErrorLevels.ERROR
     _error_type = _etree.ErrorTypes.SCHEMATRONV_ASSERT
 
+    # Convenience definitions for common behaviours
+    FAIL_ON_ASSERT_ONLY = svrl_validation_errors # Default
+    FAIL_ON_ASSERT_AND_REPORT = _etree.XPath('//svrl:failed-assert | //svrl:successful-report',
+                                              namespaces={'svrl': SVRL_NS})
+
+
     def _extract(self, element):
         """Extract embedded schematron schema from non-schematron host schema.
         This method will only be called by __init__ if the given schema document
@@ -205,7 +211,7 @@ class Schematron(_etree._Validator):
             # RelaxNG does not have a single unique root element
             schematron = self._extract_rng(element)
         return schematron
-    
+
     # customization points
     # etree.XSLT objects that provide the extract, include, expand, compile
     # steps
@@ -214,21 +220,24 @@ class Schematron(_etree._Validator):
     _include = iso_dsdl_include
     _expand = iso_abstract_expand
     _compile = iso_svrl_for_xslt1
-    # etree.XPath object that determines input document validity when applied to
+
+    # etree.xpath object that determines input document validity when applied to
     # the svrl result report; must return a list of result elements (empty if
     # valid)
     _validation_errors = svrl_validation_errors
-    
+
     def __init__(self, etree=None, file=None, include=True, expand=True,
                  include_params={}, expand_params={}, compile_params={},
                  store_schematron=False, store_xslt=False, store_report=False,
-                 phase=None, fail_on_report=False):
+                 phase=None, validation_errors=FAIL_ON_ASSERT_ONLY):
         super(Schematron, self).__init__()
 
         self._store_report = store_report
         self._schematron = None
         self._validator_xslt = None
         self._validation_report = None
+        if not validation_errors == Schematron.FAIL_ON_ASSERT_ONLY:
+            self._validation_errors = validation_errors
 
         # parse schema document, may be a schematron schema or an XML Schema or
         # a RelaxNG schema with embedded schematron rules
@@ -272,9 +281,7 @@ class Schematron(_etree._Validator):
         if store_xslt:
             self._validator_xslt = validator_xslt
         self._validator = _etree.XSLT(validator_xslt)
-        if fail_on_report:
-            self._validation_errors = svrl_validation_errors_and_reports
-        
+
     def __call__(self, etree):
         """Validate doc using Schematron.
 
@@ -310,7 +317,7 @@ class Schematron(_etree._Validator):
     @property
     def validator_xslt(self):
         """ISO-schematron skeleton implementation XSLT validator document (None
-        if object has been initialized with store_xslt=False). 
+        if object has been initialized with store_xslt=False).
         """
         return self._validator_xslt
 
