@@ -18,8 +18,8 @@ Features added
   variable.  A quick fix is to wrap them in ``staticmethod()`` (as for
   normal Python functions).
 
-* ISO-Schematron support gained an option ``fail_on_report`` to also
-  fail the validation when issuing reports (not just asserts).
+* ISO-Schematron support gained an option ``error_finder`` that allows
+  passing a filter function for picking validation errors from reports.
 
 * LP#1243600: Elements in ``lxml.html`` gained a ``classes`` property
   that provides a set-like interface to the ``class`` attribute.

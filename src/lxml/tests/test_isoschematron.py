@@ -854,8 +854,8 @@ class ETreeISOSchematronTestCase(HelperTestCase):
     </pattern>
 </schema>
 ''')
-        schema_report = isoschematron.Schematron(schema,
-                                                 validation_errors=isoschematron.Schematron.FAIL_ON_ASSERT_AND_REPORT)
+        schema_report = isoschematron.Schematron(
+            schema, error_finder=isoschematron.Schematron.ASSERTS_AND_REPORTS)
         schema_no_report = isoschematron.Schematron(schema)
         self.assertTrue(schema_report.validate(tree_valid))
         self.assertTrue(not schema_report.validate(tree_invalid))
