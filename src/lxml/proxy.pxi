@@ -240,39 +240,41 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
             c_new_ns = c_new_ns.next
         c_parent = c_parent.parent
 
+
+ctypedef struct _ns_update_map:
+    xmlNs* old
+    xmlNs* new
+
+
 ctypedef struct _nscache:
-    xmlNs** new
-    xmlNs** old
+    _ns_update_map* ns_map
     size_t size
     size_t last
 
+
 cdef int _growNsCache(_nscache* c_ns_cache) except -1:
-    cdef xmlNs** c_ns_ptr
+    cdef _ns_update_map* ns_map_ptr
     if c_ns_cache.size == 0:
         c_ns_cache.size = 20
     else:
         c_ns_cache.size *= 2
-    c_ns_ptr = <xmlNs**> stdlib.realloc(
-        c_ns_cache.new, c_ns_cache.size * sizeof(xmlNs*))
-    if c_ns_ptr is not NULL:
-        c_ns_cache.new = c_ns_ptr
-        c_ns_ptr = <xmlNs**> stdlib.realloc(
-            c_ns_cache.old, c_ns_cache.size * sizeof(xmlNs*))
-    if c_ns_ptr is not NULL:
-        c_ns_cache.old = c_ns_ptr
-    else:
-        stdlib.free(c_ns_cache.new)
-        stdlib.free(c_ns_cache.old)
+    ns_map_ptr = <_ns_update_map*> cpython.mem.PyMem_Realloc(
+        c_ns_cache.ns_map, c_ns_cache.size * sizeof(_ns_update_map))
+    if not ns_map_ptr:
+        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
+        c_ns_cache.ns_map = NULL
         raise MemoryError()
+    c_ns_cache.ns_map = ns_map_ptr
     return 0
+
 
 cdef inline int _appendToNsCache(_nscache* c_ns_cache,
                                  xmlNs* c_old_ns, xmlNs* c_new_ns) except -1:
     if c_ns_cache.last >= c_ns_cache.size:
         _growNsCache(c_ns_cache)
-    c_ns_cache.old[c_ns_cache.last] = c_old_ns
-    c_ns_cache.new[c_ns_cache.last] = c_new_ns
+    c_ns_cache.ns_map[c_ns_cache.last] = _ns_update_map(old=c_old_ns, new=c_new_ns)
     c_ns_cache.last += 1
+
 
 cdef int _stripRedundantNamespaceDeclarations(
     xmlNode* c_element, _nscache* c_ns_cache, xmlNs** c_del_ns_list) except -1:
@@ -301,6 +303,7 @@ cdef int _stripRedundantNamespaceDeclarations(
             c_del_ns_list[0] = c_nsdef[0]
             c_nsdef[0] = c_ns_next
     return 0
+
 
 cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
                             xmlNode* c_element) except -1:
@@ -336,23 +339,18 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
     cdef xmlNode* c_start_node
     cdef xmlNode* c_node
     cdef char* c_name
-    cdef _nscache c_ns_cache
+    cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef xmlNs* c_ns
     cdef xmlNs* c_ns_next
     cdef xmlNs* c_nsdef
-    cdef xmlNs* c_del_ns_list
+    cdef xmlNs* c_del_ns_list = NULL
     cdef size_t i, proxy_count = 0
+    cdef bint is_prefixed_attr
 
     if not tree._isElementOrXInclude(c_element):
         return 0
 
     c_start_node = c_element
-    c_del_ns_list = NULL
-
-    c_ns_cache.new = NULL
-    c_ns_cache.old = NULL
-    c_ns_cache.size = 0
-    c_ns_cache.last = 0
 
     tree.BEGIN_FOR_EACH_FROM(c_element, c_element, 1)
     if tree._isElementOrXInclude(c_element):
@@ -371,14 +369,13 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         while c_node is not NULL:
             if c_node.ns is not NULL:
                 c_ns = NULL
+                is_prefixed_attr = (c_node.type == tree.XML_ATTRIBUTE_NODE and c_node.ns.prefix)
                 for i in range(c_ns_cache.last):
-                    if c_node.ns is c_ns_cache.old[i]:
-                        if (c_node.type == tree.XML_ATTRIBUTE_NODE
-                                and c_node.ns.prefix
-                                and not c_ns_cache.new[i].prefix):
+                    if c_node.ns is c_ns_cache.ns_map[i].old:
+                        if is_prefixed_attr and not c_ns_cache.ns_map[i].new.prefix:
                             # avoid dropping prefix from attributes
                             continue
-                        c_ns = c_ns_cache.new[i]
+                        c_ns = c_ns_cache.ns_map[i].new
                         break
 
                 if not c_ns:
@@ -402,10 +399,8 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
         tree.xmlFreeNsList(c_del_ns_list)
 
     # cleanup
-    if c_ns_cache.new is not NULL:
-        stdlib.free(c_ns_cache.new)
-    if c_ns_cache.old is not NULL:
-        stdlib.free(c_ns_cache.old)
+    if c_ns_cache.ns_map is not NULL:
+        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
 
     # 3) fix the names in the tree if we moved it from a different thread
     if doc._c_doc.dict is not c_source_doc.dict:
