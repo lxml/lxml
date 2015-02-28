@@ -36,6 +36,9 @@ Features added
 Bugs fixed
 ----------
 
+* Memory errors that occur during tree adaptations (e.g. moving subtrees
+  to foreign documents) could leave the tree in a crash prone state.
+
 * GH#159: Validity checks for names and string content were tightened
   to detect the use of illegal characters early.  Patch by Olli Pottonen.
 
