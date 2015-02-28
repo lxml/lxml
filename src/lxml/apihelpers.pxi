@@ -207,6 +207,7 @@ cdef _Element _makeSubElement(_Element parent, tag, text, tail,
         _removeNode(parent._doc, c_node)
         raise
 
+
 cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
                             object node_ns_utf, object nsmap) except -1:
     u"""Lookup current namespace prefixes, then set namespace structure for
@@ -217,48 +218,46 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     cdef xmlNs* c_ns
     cdef list nsdefs
     cdef Py_ssize_t pos
-    if not nsmap:
-        if node_ns_utf is not None:
-            _uriValidOrRaise(node_ns_utf)
-            doc._setNodeNs(c_node, _xcstr(node_ns_utf))
-        return 0
 
-    nsdefs = list(nsmap.items())
-    if None in nsmap:
-        # Move the default namespace to the end.  This makes sure libxml2
-        # prefers a prefix if the ns is defined redundantly on the same
-        # element.  That way, users can work around a problem themselves
-        # where default namespace attributes on non-default namespaced
-        # elements serialise without prefix (i.e. into the non-default
-        # namespace).
-        for pos in range(len(nsdefs) - 1):
-            if nsdefs[pos][0] is None:
-                nsdefs[pos], nsdefs[-1] = nsdefs[-1], nsdefs[pos]
-                break
+    if nsmap:
+        nsdefs = list(nsmap.items())
+        if None in nsmap:
+            # Move the default namespace to the end.  This makes sure libxml2
+            # prefers a prefix if the ns is defined redundantly on the same
+            # element.  That way, users can work around a problem themselves
+            # where default namespace attributes on non-default namespaced
+            # elements serialise without prefix (i.e. into the non-default
+            # namespace).
+            for pos in range(len(nsdefs) - 1):
+                if nsdefs[pos][0] is None:
+                    nsdefs[pos], nsdefs[-1] = nsdefs[-1], nsdefs[pos]
+                    break
 
-    for prefix, href in nsdefs:
-        href_utf = _utf8(href)
-        _uriValidOrRaise(href_utf)
-        c_href = _xcstr(href_utf)
-        if prefix is not None:
-            prefix_utf = _utf8(prefix)
-            _prefixValidOrRaise(prefix_utf)
-            c_prefix = _xcstr(prefix_utf)
-        else:
-            c_prefix = <const_xmlChar*>NULL
-        # add namespace with prefix if it is not already known
-        c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
-        if c_ns is NULL or \
-                c_ns.href is NULL or \
-                tree.xmlStrcmp(c_ns.href, c_href) != 0:
-            c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
-        if href_utf == node_ns_utf:
-            tree.xmlSetNs(c_node, c_ns)
-            node_ns_utf = None
+        for prefix, href in nsdefs:
+            href_utf = _utf8(href)
+            _uriValidOrRaise(href_utf)
+            c_href = _xcstr(href_utf)
+            if prefix is not None:
+                prefix_utf = _utf8(prefix)
+                _prefixValidOrRaise(prefix_utf)
+                c_prefix = _xcstr(prefix_utf)
+            else:
+                c_prefix = <const_xmlChar*>NULL
+            # add namespace with prefix if it is not already known
+            c_ns = tree.xmlSearchNs(doc._c_doc, c_node, c_prefix)
+            if c_ns is NULL or \
+                    c_ns.href is NULL or \
+                    tree.xmlStrcmp(c_ns.href, c_href) != 0:
+                c_ns = tree.xmlNewNs(c_node, c_href, c_prefix)
+            if href_utf == node_ns_utf:
+                tree.xmlSetNs(c_node, c_ns)
+                node_ns_utf = None
 
     if node_ns_utf is not None:
+        _uriValidOrRaise(node_ns_utf)
         doc._setNodeNs(c_node, _xcstr(node_ns_utf))
     return 0
+
 
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     u"""Initialise the attributes of an element node.
