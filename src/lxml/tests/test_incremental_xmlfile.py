@@ -129,6 +129,18 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 pass
         self.assertXml('<test k="v"></test>')
 
+    def test_attribute_extra(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test', attrib={'k': 'v'}, n='N'):
+                pass
+        self.assertXml('<test k="v" n="N"></test>')
+
+    def test_attribute_extra_duplicate(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test', attrib={'k': 'v'}, k='V'):
+                pass
+        self.assertXml('<test k="V"></test>')
+
     def test_escaping(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):
