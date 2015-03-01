@@ -2728,7 +2728,7 @@ cdef class _MultiTagMatcher:
             self._cached_size = dict_size
             return 0
         if not self._cached_tags:
-            self._cached_tags = <qname*>cpython.mem.PyMem_Malloc(len(self._py_tags) * sizeof(qname))
+            self._cached_tags = <qname*>python.lxml_malloc(len(self._py_tags), sizeof(qname))
             if not self._cached_tags:
                 self._cached_doc = None
                 raise MemoryError()

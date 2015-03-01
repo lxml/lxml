@@ -164,8 +164,7 @@ cdef list _parse_object_path_list(path):
 cdef _ObjectPath* _build_object_path_segments(list path_list) except NULL:
     cdef _ObjectPath* c_path
     cdef _ObjectPath* c_path_segments
-    c_path_segments = <_ObjectPath*>python.PyMem_Malloc(
-        sizeof(_ObjectPath) * len(path_list))
+    c_path_segments = <_ObjectPath*>python.lxml_malloc(len(path_list), sizeof(_ObjectPath))
     if c_path_segments is NULL:
         raise MemoryError()
     c_path = c_path_segments

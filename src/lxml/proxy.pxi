@@ -258,8 +258,8 @@ cdef int _growNsCache(_nscache* c_ns_cache) except -1:
         c_ns_cache.size = 20
     else:
         c_ns_cache.size *= 2
-    ns_map_ptr = <_ns_update_map*> cpython.mem.PyMem_Realloc(
-        c_ns_cache.ns_map, c_ns_cache.size * sizeof(_ns_update_map))
+    ns_map_ptr = <_ns_update_map*> python.lxml_realloc(
+        c_ns_cache.ns_map, c_ns_cache.size, sizeof(_ns_update_map))
     if not ns_map_ptr:
         cpython.mem.PyMem_Free(c_ns_cache.ns_map)
         c_ns_cache.ns_map = NULL

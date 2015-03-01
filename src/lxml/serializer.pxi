@@ -576,7 +576,7 @@ cdef _create_output_buffer(f, const_char* c_enc, int compression,
 cdef xmlChar **_convert_ns_prefixes(tree.xmlDict* c_dict, ns_prefixes) except NULL:
     cdef size_t i, num_ns_prefixes = len(ns_prefixes)
     # Need to allocate one extra memory block to handle last NULL entry
-    c_ns_prefixes = <xmlChar **>python.PyMem_Malloc(sizeof(xmlChar*) * (num_ns_prefixes + 1))
+    c_ns_prefixes = <xmlChar **>python.lxml_malloc(num_ns_prefixes + 1, sizeof(xmlChar*))
     i = 0
     try:
         for prefix in ns_prefixes:

@@ -185,6 +185,14 @@ long _ftol2( double dblSource ) { return _ftol( dblSource ); }
 
 #define _fqtypename(o)  ((Py_TYPE(o))->tp_name)
 
+#define lxml_malloc(count, item_size) \
+    (unlikely_condition((size_t)(count) > (size_t) (PY_SSIZE_T_MAX / item_size)) ? NULL : \
+     (PyMem_Malloc((count) * item_size)))
+
+#define lxml_realloc(mem, count, item_size) \
+    (unlikely_condition((size_t)(count) > (size_t) (PY_SSIZE_T_MAX / item_size)) ? NULL : \
+     (PyMem_Realloc(mem, (count) * item_size)))
+
 #if PY_MAJOR_VERSION < 3
 #define _isString(obj)   (PyString_CheckExact(obj)  || \
                           PyUnicode_CheckExact(obj) || \
