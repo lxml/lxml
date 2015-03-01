@@ -2441,6 +2441,17 @@ class ETreeOnlyTestCase(HelperTestCase):
             _bytes('<bar xmlns="http://ns.infrae.com/foo"></bar>'),
             self._writeElement(e))
 
+    def test_namespaces_default_and_other(self):
+        etree = self.etree
+
+        r = {None: 'http://ns.infrae.com/foo', 'p': 'http://test/'}
+        e = etree.Element('{http://ns.infrae.com/foo}bar', nsmap=r)
+        self.assertEqual(None, e.prefix)
+        self.assertEqual('{http://ns.infrae.com/foo}bar', e.tag)
+        self.assertEqual(
+            _bytes('<bar xmlns="http://ns.infrae.com/foo" xmlns:p="http://test/"></bar>'),
+            self._writeElement(e))
+
     def test_namespaces_default_and_attr(self):
         etree = self.etree
 

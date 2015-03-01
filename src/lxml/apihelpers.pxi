@@ -2,11 +2,6 @@
 
 from lxml.includes cimport uri
 
-cdef object OrderedDict = None
-try:
-    from collections import OrderedDict
-except ImportError:
-    pass
 
 cdef void displayNode(xmlNode* c_node, indent):
     # to help with debugging
@@ -217,23 +212,9 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     """
     cdef xmlNs* c_ns
     cdef list nsdefs
-    cdef Py_ssize_t pos
 
     if nsmap:
-        nsdefs = list(nsmap.items())
-        if None in nsmap:
-            # Move the default namespace to the end.  This makes sure libxml2
-            # prefers a prefix if the ns is defined redundantly on the same
-            # element.  That way, users can work around a problem themselves
-            # where default namespace attributes on non-default namespaced
-            # elements serialise without prefix (i.e. into the non-default
-            # namespace).
-            for pos in range(len(nsdefs) - 1):
-                if nsdefs[pos][0] is None:
-                    nsdefs[pos], nsdefs[-1] = nsdefs[-1], nsdefs[pos]
-                    break
-
-        for prefix, href in nsdefs:
+        for prefix, href in _iter_nsmap(nsmap):
             href_utf = _utf8(href)
             _uriValidOrRaise(href_utf)
             c_href = _xcstr(href_utf)
@@ -259,6 +240,51 @@ cdef int _setNodeNamespaces(xmlNode* c_node, _Document doc,
     return 0
 
 
+cdef _iter_nsmap(nsmap):
+    """
+    Create a reproducibly ordered iterable from an nsmap mapping.
+    Tries to preserve an existing order and sorts if it assumes no order.
+
+    The difference to _iter_attrib() is that None doesn't sort with strings
+    in Py3.x.
+    """
+    if len(nsmap) <= 1:
+        return nsmap.items()
+    # nsmap will usually be a plain unordered dict => avoid type checking overhead
+    if OrderedDict is not None and type(nsmap) is not dict and isinstance(nsmap, OrderedDict):
+        return nsmap.items()  # keep existing order
+    if None not in nsmap:
+        return sorted(nsmap.items())
+
+    # Move the default namespace to the end.  This makes sure libxml2
+    # prefers a prefix if the ns is defined redundantly on the same
+    # element.  That way, users can work around a problem themselves
+    # where default namespace attributes on non-default namespaced
+    # elements serialise without prefix (i.e. into the non-default
+    # namespace).
+    default_ns = nsmap[None]
+    nsdefs = [(k, v) for k, v in nsmap.items() if k is not None]
+    nsdefs.sort()
+    nsdefs.append((None, default_ns))
+    return nsdefs
+
+
+cdef _iter_attrib(attrib):
+    """
+    Create a reproducibly ordered iterable from an attrib mapping.
+    Tries to preserve an existing order and sorts if it assumes no order.
+    """
+    # attrib will usually be a plain unordered dict
+    if type(attrib) is dict:
+        return sorted(attrib.items())
+    elif isinstance(attrib, _Attrib) or (
+            OrderedDict is not None and isinstance(attrib, OrderedDict)):
+        return attrib.items()
+    else:
+        # assume it's an unordered mapping of some kind
+        return sorted(attrib.items())
+
+
 cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     u"""Initialise the attributes of an element node.
     """
@@ -277,22 +303,6 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
     if attrib:
         for name, value in _iter_attrib(attrib):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
-
-
-cdef _iter_attrib(attrib):
-    """
-    Create a reproducibly ordered iterable from an attrib mapping.
-    Tries to preserve an existing order and sorts if it assumes no order.
-    """
-    # attrib will usually be a plain unordered dict
-    if type(attrib) is dict:
-        return sorted(attrib.items())
-    elif isinstance(attrib, _Attrib) or (
-            OrderedDict is not None and isinstance(attrib, OrderedDict)):
-        return attrib.items()
-    else:
-        # assume it's an unordered mapping of some kind
-        return sorted(attrib.items())
 
 
 cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,

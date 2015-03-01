@@ -82,6 +82,12 @@ try:
 except (ImportError, AttributeError):
     from StringIO import StringIO, StringIO as BytesIO
 
+cdef object OrderedDict = None
+try:
+    from collections import OrderedDict
+except ImportError:
+    pass
+
 cdef object _elementpath
 from lxml import _elementpath
 
