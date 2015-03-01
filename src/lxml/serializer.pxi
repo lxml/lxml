@@ -801,7 +801,7 @@ cdef class _IncrementalFileWriter:
         return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
 
     cdef _write_qname(self, bytes name, bytes prefix):
-        if prefix is not None:
+        if prefix:  # empty bytes for no prefix (not None to allow sorting)
             tree.xmlOutputBufferWrite(self._c_out, len(prefix), _cstr(prefix))
             tree.xmlOutputBufferWrite(self._c_out, 1, ':')
         tree.xmlOutputBufferWrite(self._c_out, len(name), _cstr(name))
@@ -887,7 +887,8 @@ cdef class _IncrementalFileWriter:
         for ns, prefix in nsmap.iteritems():
             flat_namespaces_map[ns] = prefix
             if prefix is None:
-                new_namespaces.append((None, b'xmlns', ns))
+                # use empty bytes rather than None to allow sorting
+                new_namespaces.append((b'', b'xmlns', ns))
             else:
                 new_namespaces.append((b'xmlns', prefix, ns))
         # merge in flat namespace map of parent

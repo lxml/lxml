@@ -8,6 +8,9 @@ lxml changelog
 Bugs fixed
 ----------
 
+* LP#1426868: Passing a default namespace and a prefixed namespace mapping
+  as nsmap into ``xmlfile.element()`` raised a ``TypeError``.
+
 * LP#1421927: DOCTYPE system URLs were incorrectly quoted when containing
   double quotes.  Patch by Olli Pottonen.
 
