@@ -2667,7 +2667,7 @@ cdef class _MultiTagMatcher:
         if self._cached_tags:
             for i in xrange(count):
                 cpython.ref.Py_XDECREF(self._cached_tags[i].href)
-            cpython.mem.PyMem_Free(self._cached_tags)
+            python.lxml_free(self._cached_tags)
             self._cached_tags = NULL
 
     cdef initTagMatch(self, tags):

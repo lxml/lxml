@@ -342,11 +342,11 @@ cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
                 c_ns_list_size = 20
             else:
                 c_ns_list_size *= 2
-            c_nsref_ptr = <_ns_node_ref*> stdlib.realloc(
-                c_ns_list, c_ns_list_size * sizeof(_ns_node_ref))
+            c_nsref_ptr = <_ns_node_ref*> python.lxml_realloc(
+                c_ns_list, c_ns_list_size, sizeof(_ns_node_ref))
             if c_nsref_ptr is NULL:
                 if c_ns_list is not NULL:
-                    stdlib.free(c_ns_list)
+                    python.lxml_free(c_ns_list)
                     _c_ns_list[0] = NULL
                 raise MemoryError()
             c_ns_list = c_nsref_ptr
@@ -413,7 +413,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
         tree.xmlFreeNs(c_ns_list[i].ns)
     
     if c_ns_list is not NULL:
-        stdlib.free(c_ns_list)
+        python.lxml_free(c_ns_list)
     return 0
 
 cdef xmlNs* _searchNsByHref(xmlNode* c_node, const_xmlChar* c_href, bint is_attribute):

@@ -261,7 +261,7 @@ cdef int _growNsCache(_nscache* c_ns_cache) except -1:
     ns_map_ptr = <_ns_update_map*> python.lxml_realloc(
         c_ns_cache.ns_map, c_ns_cache.size, sizeof(_ns_update_map))
     if not ns_map_ptr:
-        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
+        python.lxml_free(c_ns_cache.ns_map)
         c_ns_cache.ns_map = NULL
         raise MemoryError()
     c_ns_cache.ns_map = ns_map_ptr
@@ -312,7 +312,7 @@ cdef void _cleanUpFromNamespaceAdaptation(xmlNode* c_start_node,
     # by re-adding the original xmlNs declarations (which might still be used in some
     # places).
     if c_ns_cache.ns_map:
-        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
+        python.lxml_free(c_ns_cache.ns_map)
     if c_del_ns_list:
         if not c_start_node.nsDef:
             c_start_node.nsDef = c_del_ns_list
@@ -427,7 +427,7 @@ cdef int moveNodeToDocument(_Document doc, xmlDoc* c_source_doc,
 
     # cleanup
     if c_ns_cache.ns_map is not NULL:
-        cpython.mem.PyMem_Free(c_ns_cache.ns_map)
+        python.lxml_free(c_ns_cache.ns_map)
 
     # 3) fix the names in the tree if we moved it from a different thread
     if doc._c_doc.dict is not c_source_doc.dict:

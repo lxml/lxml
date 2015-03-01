@@ -34,7 +34,7 @@ cdef class ObjectPath:
 
     def __dealloc__(self):
         if self._c_path is not NULL:
-            python.PyMem_Free(self._c_path)
+            python.lxml_free(self._c_path)
 
     def __str__(self):
         return self._path_str

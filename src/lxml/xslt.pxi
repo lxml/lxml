@@ -554,7 +554,7 @@ cdef class XSLT:
                 c_doc, params, context, transform_ctxt)
             if params is not NULL:
                 # deallocate space for parameters
-                python.PyMem_Free(params)
+                python.lxml_free(params)
 
             if transform_ctxt.state != xslt.XSLT_STATE_OK:
                 if c_result is not NULL:
@@ -669,7 +669,7 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
                 params[i] = <const_char*>tree.xmlDictLookup(c_dict, _xcstr(v), len(v))
                 i += 1
     except:
-        python.PyMem_Free(params)
+        python.lxml_free(params)
         raise
     params[i] = NULL
     params_ptr[0] = params
