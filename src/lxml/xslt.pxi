@@ -649,6 +649,8 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
     # * 2 as we want an entry for both key and value,
     # and + 1 as array is NULL terminated
     params = <const_char**>python.lxml_malloc(parameter_count * 2 + 1, sizeof(const_char*))
+    if not params:
+        raise MemoryError()
     try:
         i = 0
         for key, value in parameters.iteritems():
