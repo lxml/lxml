@@ -11,7 +11,7 @@ cdef extern from "libxml/xmlversion.h":
 
 cdef extern from "libxml/xmlstring.h":
     ctypedef unsigned char xmlChar
-    ctypedef unsigned char const_xmlChar "const xmlChar"
+    ctypedef const xmlChar const_xmlChar "const xmlChar"
     cdef int xmlStrlen(const_xmlChar* str) nogil
     cdef xmlChar* xmlStrdup(const_xmlChar* cur) nogil
     cdef int xmlStrncmp(const_xmlChar* str1, const_xmlChar* str2, int length) nogil
