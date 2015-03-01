@@ -819,9 +819,7 @@ cdef class _IncrementalFileWriter:
         assert self._c_out is not NULL
         attributes = []
         if attrib is not None:
-            if isinstance(attrib, (dict, _Attrib)):
-                attrib = attrib.items()
-            for name, value in attrib:
+            for name, value in _iter_attrib(attrib):
                 if name not in _extra:
                     ns, name = _getNsTag(name)
                     attributes.append((ns, name, _utf8(value)))

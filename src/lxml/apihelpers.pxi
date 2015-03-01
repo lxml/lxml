@@ -275,17 +275,25 @@ cdef _initNodeAttributes(xmlNode* c_node, _Document doc, attrib, dict extra):
         for name, value in sorted(extra.items()):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
     if attrib:
-        # attrib will usually be a plain unordered dict
-        if type(attrib) is dict:
-            attrib = sorted(attrib.items())
-        elif isinstance(attrib, _Attrib) or (
-                OrderedDict is not None and isinstance(attrib, OrderedDict)):
-            attrib = attrib.items()
-        else:
-            # assume it's an unordered mapping of some kind
-            attrib = sorted(attrib.items())
-        for name, value in attrib:
+        for name, value in _iter_attrib(attrib):
             _addAttributeToNode(c_node, doc, is_html, name, value, seen)
+
+
+cdef _iter_attrib(attrib):
+    """
+    Create a reproducibly ordered iterable from an attrib mapping.
+    Tries to preserve an existing order and sorts if it assumes no order.
+    """
+    # attrib will usually be a plain unordered dict
+    if type(attrib) is dict:
+        return sorted(attrib.items())
+    elif isinstance(attrib, _Attrib) or (
+            OrderedDict is not None and isinstance(attrib, OrderedDict)):
+        return attrib.items()
+    else:
+        # assume it's an unordered mapping of some kind
+        return sorted(attrib.items())
+
 
 cdef int _addAttributeToNode(xmlNode* c_node, _Document doc, bint is_html,
                              name, value, set seen_tags) except -1:
