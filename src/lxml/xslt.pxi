@@ -650,6 +650,8 @@ cdef _convert_xslt_parameters(xslt.xsltTransformContext* transform_ctxt,
     # and + 1 as array is NULL terminated
     params = <const_char**>python.PyMem_Malloc(
         sizeof(const_char*) * (parameter_count * 2 + 1))
+    if not params:
+        raise MemoryError()
     try:
         i = 0
         for key, value in parameters.iteritems():
