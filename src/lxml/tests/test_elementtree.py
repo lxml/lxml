@@ -893,9 +893,24 @@ class _ETreeTestCaseBase(HelperTestCase):
     def test_element_with_attributes(self):
         Element = self.etree.Element
         
-        el = Element('tag', {'foo':'Foo', 'bar':'Bar'})
+        el = Element('tag', {'foo': 'Foo', 'bar': 'Bar'})
         self.assertEqual('Foo', el.attrib['foo'])
         self.assertEqual('Bar', el.attrib['bar'])
+
+    def test_element_with_attributes_extra(self):
+        Element = self.etree.Element
+
+        el = Element('tag', {'foo': 'Foo', 'bar': 'Bar'}, baz='Baz')
+        self.assertEqual('Foo', el.attrib['foo'])
+        self.assertEqual('Bar', el.attrib['bar'])
+        self.assertEqual('Baz', el.attrib['baz'])
+
+    def test_element_with_attributes_extra_duplicate(self):
+        Element = self.etree.Element
+
+        el = Element('tag', {'foo': 'Foo', 'bar': 'Bar'}, bar='Baz')
+        self.assertEqual('Foo', el.attrib['foo'])
+        self.assertEqual('Baz', el.attrib['bar'])
 
     def test_element_with_attributes_ns(self):
         Element = self.etree.Element
