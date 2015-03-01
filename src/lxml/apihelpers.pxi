@@ -376,13 +376,14 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
 
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_element, c_element, 1)
     # collect all new namespace declarations into the ns list
-    _collectNsDefs(c_element, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
+    if c_element.nsDef:
+        _collectNsDefs(c_element, &c_ns_list, &c_ns_list_len, &c_ns_list_size)
 
     # remove all namespace declarations from the list that are referenced
-    if c_element.type == tree.XML_ELEMENT_NODE:
+    if c_ns_list_len and c_element.type == tree.XML_ELEMENT_NODE:
         c_node = c_element
-        while c_node is not NULL:
-            if c_node.ns is not NULL:
+        while c_node and c_ns_list_len:
+            if c_node.ns:
                 for i in range(c_ns_list_len):
                     if c_node.ns is c_ns_list[i].ns:
                         c_ns_list_len -= 1
