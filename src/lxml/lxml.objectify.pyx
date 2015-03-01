@@ -373,7 +373,8 @@ cdef class ObjectifiedElement(ElementBase):
         """
         if prefix is not None and not python._isString(prefix):
             prefix = u'.'.join(prefix)
-        return _buildDescendantPaths(self._c_node, prefix)
+        return _build_descendant_paths(self._c_node, prefix)
+
 
 cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_xmlChar* c_name):
     if c_node.name != c_name:
@@ -384,6 +385,7 @@ cdef inline bint _tagMatches(tree.xmlNode* c_node, const_xmlChar* c_href, const_
     if c_node_href == NULL:
         return c_href[0] == c'\0'
     return tree.xmlStrcmp(c_node_href, c_href) == 0
+
 
 cdef Py_ssize_t _countSiblings(tree.xmlNode* c_start_node):
     cdef tree.xmlNode* c_node
