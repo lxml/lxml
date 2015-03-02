@@ -112,8 +112,6 @@ cdef class _ParserDictionaryContext:
         return context._c_dict
 
     cdef void initThreadDictRef(self, tree.xmlDict** c_dict_ref):
-        cdef tree.xmlDict* c_dict
-        cdef tree.xmlDict* c_thread_dict
         c_dict = c_dict_ref[0]
         c_thread_dict = self._getThreadDict(c_dict)
         if c_dict is c_thread_dict:
