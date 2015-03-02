@@ -60,16 +60,12 @@ cdef class _ParserDictionaryContext:
     cdef void initMainParserContext(self):
         u"""Put the global context into the thread dictionary of the main
         thread.  To be called once and only in the main thread."""
-        cdef python.PyObject* thread_dict
-        cdef python.PyObject* result
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is not NULL:
             (<dict>thread_dict)[u"_ParserDictionaryContext"] = self
 
     cdef _ParserDictionaryContext _findThreadParserContext(self):
         u"Find (or create) the _ParserDictionaryContext object for the current thread"
-        cdef python.PyObject* thread_dict
-        cdef python.PyObject* result
         cdef _ParserDictionaryContext context
         thread_dict = python.PyThreadState_GetDict()
         if thread_dict is NULL:
@@ -78,7 +74,7 @@ cdef class _ParserDictionaryContext:
         result = python.PyDict_GetItem(d, u"_ParserDictionaryContext")
         if result is not NULL:
             return <object>result
-        context = _ParserDictionaryContext()
+        context = <_ParserDictionaryContext>_ParserDictionaryContext.__new__(_ParserDictionaryContext)
         d[u"_ParserDictionaryContext"] = context
         return context
 
@@ -178,8 +174,7 @@ cdef class _ParserDictionaryContext:
         context = self._findThreadParserContext()
         context._implied_parser_contexts.pop()
 
-cdef _ParserDictionaryContext __GLOBAL_PARSER_CONTEXT
-__GLOBAL_PARSER_CONTEXT = _ParserDictionaryContext()
+cdef _ParserDictionaryContext __GLOBAL_PARSER_CONTEXT = _ParserDictionaryContext()
 __GLOBAL_PARSER_CONTEXT.initMainParserContext()
 
 ############################################################
