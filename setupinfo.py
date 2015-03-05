@@ -63,23 +63,21 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 libxslt_version=OPTION_LIBXSLT_VERSION,
                 multicore=OPTION_MULTICORE)
 
+    modules = EXT_MODULES
     if OPTION_WITHOUT_OBJECTIFY:
-        modules = [entry for entry in EXT_MODULES
-                   if 'objectify' not in entry]
-    else:
-        modules = EXT_MODULES
+        modules = [entry for entry in modules if 'objectify' not in entry]
 
     c_files_exist = [os.path.exists('%s%s.c' % (PACKAGE_PATH, module))
                      for module in modules]
 
     source_extension = ".pyx"
-    if CYTHON_INSTALLED and (OPTION_WITH_CYTHON or False in c_files_exist):
+    if CYTHON_INSTALLED and (OPTION_WITH_CYTHON or not all(c_files_exist)):
         print("Building with Cython %s." % Cython.Compiler.Version.version)
         # generate module cleanup code
         from Cython.Compiler import Options
         Options.generate_cleanup_code = 3
         Options.clear_to_none = False
-    elif not OPTION_WITHOUT_CYTHON and False in c_files_exist:
+    elif not OPTION_WITHOUT_CYTHON and not all(c_files_exist):
         for exists, module in zip(c_files_exist, modules):
             if not exists:
                 raise RuntimeError(
@@ -87,7 +85,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                     "is not available (pass --without-cython to ignore this error)." % (
                         PACKAGE_PATH, module))
     else:
-        if False in c_files_exist:
+        if not all(c_files_exist):
             for exists, module in zip(c_files_exist, modules):
                 if not exists:
                     print("WARNING: Trying to build without Cython, but pre-generated "
