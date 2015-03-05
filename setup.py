@@ -180,7 +180,11 @@ setup(
     maintainer_email="lxml-dev@lxml.de",
     url="http://lxml.de/",
     download_url="http://pypi.python.org/packages/source/l/lxml/lxml-%s.tar.gz" % lxml_version,
-    bugtrack_url="https://bugs.launchpad.net/lxml",
+
+    # Commented out because this causes distutils to emit warnings
+    # `Unknown distribution option: 'bugtrack_url'`
+    # which distract folks from real causes of problems when troubleshooting
+    # bugtrack_url="https://bugs.launchpad.net/lxml",
 
     description="Powerful and Pythonic XML processing library combining libxml2/libxslt with the ElementTree API.",
 
