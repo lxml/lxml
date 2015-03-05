@@ -1,6 +1,6 @@
 import sys, os, os.path
 from distutils.core import Extension
-from distutils.errors import DistutilsOptionError
+from distutils.errors import CompileError, DistutilsOptionError
 from versioninfo import get_base_dir
 
 try:
@@ -200,8 +200,32 @@ def find_dependencies(module):
 def extra_setup_args():
     result = {}
     if CYTHON_INSTALLED:
-        result['cmdclass'] = {'build_ext': build_pyx}
+        class CheckLibxml2BuildExt(build_pyx):
+            """Subclass to check whether libxml2 is available"""
+
+            def run(self):
+                try:
+                    build_pyx.run(self)
+                except CompileError as e:
+                    print('Compile failed: %s' % e)
+                    if not has_libxml2():
+                        sys.stderr.write('*********************************************************************************\n')
+                        sys.stderr.write('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?\n')
+                        if sys.platform in ('darwin',):
+                            sys.stderr.write('Perhaps try: xcode-select --install\n')
+                        sys.stderr.write('*********************************************************************************\n')
+                        raise
+
+        result['cmdclass'] = {'build_ext': CheckLibxml2BuildExt}
     return result
+
+def has_libxml2():
+    from distutils import ccompiler
+    compiler = ccompiler.new_compiler()
+    return compiler.has_function(
+        'xmlXPathInit',
+        include_dirs=['/usr/include/libxml2'], includes=['libxml/xpath.h'],
+        libraries=['xml2'])
 
 def libraries():
     if sys.platform in ('win32',):
