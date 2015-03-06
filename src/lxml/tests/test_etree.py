@@ -7,6 +7,8 @@ Tests that apply to the general ElementTree API should go into
 test_elementtree
 """
 
+from __future__ import absolute_import
+
 import os.path
 import unittest
 import copy
@@ -19,14 +21,10 @@ import textwrap
 import zlib
 import gzip
 
-this_dir = os.path.dirname(__file__)
-if this_dir not in sys.path:
-    sys.path.insert(0, this_dir) # needed for Py3
-
-from common_imports import etree, StringIO, BytesIO, HelperTestCase
-from common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
-from common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
-from common_imports import canonicalize, sorted, _str, _bytes
+from .common_imports import etree, StringIO, BytesIO, HelperTestCase
+from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
+from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
+from .common_imports import canonicalize, sorted, _str, _bytes
 
 print("")
 print("TESTED VERSION: %s" % etree.__version__)
@@ -4468,6 +4466,13 @@ def test_suite():
     suite.addTests([unittest.makeSuite(ETreeWriteTestCase)])
     suite.addTests([unittest.makeSuite(ETreeErrorLogTest)])
     suite.addTests([unittest.makeSuite(XMLPullParserTest)])
+
+    # add original doctests from ElementTree selftest modules
+    from . import selftest, selftest2
+    suite.addTests(doctest.DocTestSuite(selftest))
+    suite.addTests(doctest.DocTestSuite(selftest2))
+
+    # add doctests
     suite.addTests(doctest.DocTestSuite(etree))
     suite.addTests(
         [make_doctest('../../../doc/tutorial.txt')])

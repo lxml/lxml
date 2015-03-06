@@ -33,14 +33,10 @@ test_build: build
 
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
-	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest.py
-	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON) selftest2.py
 
 test_inplace3: inplace
 	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
-	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest.py
-	PYTHONPATH=src:$(PYTHONPATH) $(PYTHON3) selftest2.py
 
 valgrind_test_inplace: inplace
 	valgrind --tool=memcheck --leak-check=full --num-callers=30 --suppressions=valgrind-python.supp \
