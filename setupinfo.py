@@ -1,10 +1,10 @@
 import sys, os, os.path
 from distutils.core import Extension
 from distutils.errors import CompileError, DistutilsOptionError
+from distutils.command import build_ext as _build_ext
 from versioninfo import get_base_dir
 
 try:
-    from Cython.Distutils import build_ext as build_pyx
     import Cython.Compiler.Version
     CYTHON_INSTALLED = True
 except ImportError:
@@ -195,27 +195,25 @@ def find_dependencies(module):
 
     return pxd_files + pxi_files
 
+
 def extra_setup_args():
     result = {}
     if CYTHON_INSTALLED:
-        class CheckLibxml2BuildExt(build_pyx):
-            """Subclass to check whether libxml2 is available"""
+        class CheckLibxml2BuildExt(_build_ext):
+            """Subclass to check whether libxml2 is really available if the build fails"""
 
             def run(self):
                 try:
-                    build_pyx.run(self)
+                    super(CheckLibxml2BuildExt, self).run(self)
                 except CompileError as e:
                     print('Compile failed: %s' % e)
                     if not has_libxml2():
-                        sys.stderr.write('*********************************************************************************\n')
-                        sys.stderr.write('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?\n')
-                        if sys.platform in ('darwin',):
-                            sys.stderr.write('Perhaps try: xcode-select --install\n')
-                        sys.stderr.write('*********************************************************************************\n')
+                        print_libxml_error()
                     raise
 
         result['cmdclass'] = {'build_ext': CheckLibxml2BuildExt}
     return result
+
 
 def has_libxml2():
     from distutils import ccompiler
@@ -224,6 +222,15 @@ def has_libxml2():
         'xmlXPathInit',
         include_dirs=['/usr/include/libxml2'], includes=['libxml/xpath.h'],
         libraries=['xml2'])
+
+
+def print_libxml_error():
+    print('*********************************************************************************')
+    print('Could not find function xmlCheckVersion in library libxml2. Is libxml2 installed?')
+    if sys.platform in ('darwin',):
+        print('Perhaps try: xcode-select --install')
+    print('*********************************************************************************')
+
 
 def libraries():
     if sys.platform in ('win32',):
