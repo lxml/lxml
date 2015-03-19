@@ -212,7 +212,7 @@ def extra_setup_args():
                         if sys.platform in ('darwin',):
                             sys.stderr.write('Perhaps try: xcode-select --install\n')
                         sys.stderr.write('*********************************************************************************\n')
-                        raise
+                    raise
 
         result['cmdclass'] = {'build_ext': CheckLibxml2BuildExt}
     return result
