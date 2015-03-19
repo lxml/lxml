@@ -207,7 +207,7 @@ def extra_setup_args():
                     super(CheckLibxml2BuildExt, self).run(self)
                 except CompileError as e:
                     print('Compile failed: %s' % e)
-                    if not has_libxml2():
+                    if not seems_to_have_libxml2():
                         print_libxml_error()
                     raise
 
@@ -215,12 +215,14 @@ def extra_setup_args():
     return result
 
 
-def has_libxml2():
+def seems_to_have_libxml2():
     from distutils import ccompiler
     compiler = ccompiler.new_compiler()
     return compiler.has_function(
         'xmlXPathInit',
-        include_dirs=['/usr/include/libxml2'], includes=['libxml/xpath.h'],
+        include_dirs=include_dirs([]) + ['/usr/include/libxml2'],
+        includes=['libxml/xpath.h'],
+        library_dirs=library_dirs([]),
         libraries=['xml2'])
 
 
