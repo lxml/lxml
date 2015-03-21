@@ -300,6 +300,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.in_count = in_count
             self.out_queue = Queue(in_count)
             self.__dict__.update(kwargs)
+
         def run(self):
             get, put = self.in_queue.get, self.out_queue.put
             handle = self.handle
@@ -363,7 +364,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.ReverseWorker,
             self.ParseAndExtendWorker,
             self.SerialiseWorker,
-            xml = self.xml)
+            xml=self.xml)
 
         # fill the queue
         put = start.in_queue.put
@@ -373,11 +374,11 @@ class ThreadPipelineTestCase(HelperTestCase):
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60) # time out after 60 seconds
+        last.join(60)  # time out after 60 seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [ get() for _ in range(item_count) ]
+        results = [get() for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
@@ -393,7 +394,7 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.ReverseWorker,
             self.ParseAndExtendWorker,
             self.SerialiseWorker,
-            xml = self.xml)
+            xml=self.xml)
 
         # fill the queue
         put = start.in_queue.put
@@ -403,11 +404,11 @@ class ThreadPipelineTestCase(HelperTestCase):
         # start the first thread and thus everything
         start.start()
         # make sure the last thread has terminated
-        last.join(60) # time out after 90 seconds
+        last.join(60)  # time out after 90 seconds
         self.assertEqual(item_count, last.out_queue.qsize())
         # read the results
         get = last.out_queue.get
-        results = [ get() for _ in range(item_count) ]
+        results = [get() for _ in range(item_count)]
 
         comparison = results[0]
         for i, result in enumerate(results[1:]):
