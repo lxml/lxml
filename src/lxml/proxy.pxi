@@ -519,7 +519,7 @@ cdef inline void fixThreadDictNameForNode(xmlNode* c_node,
     if c_name is not NULL and \
            c_node.type != tree.XML_TEXT_NODE and \
            c_node.type != tree.XML_COMMENT_NODE:
-        if tree.xmlDictOwns(c_src_dict, c_node.name):
+        if tree.xmlDictOwns(c_src_dict, c_name):
             # c_name can be NULL on memory error, but we don't handle that here
             c_name = tree.xmlDictLookup(c_dict, c_name, -1)
             if c_name is not NULL:
