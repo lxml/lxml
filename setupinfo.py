@@ -197,21 +197,17 @@ def find_dependencies(module):
 
 
 def extra_setup_args():
-    result = {}
-    if CYTHON_INSTALLED:
-        class CheckLibxml2BuildExt(_build_ext):
-            """Subclass to check whether libxml2 is really available if the build fails"""
-
-            def run(self):
-                try:
-                    super(CheckLibxml2BuildExt, self).run(self)
-                except CompileError as e:
-                    print('Compile failed: %s' % e)
-                    if not seems_to_have_libxml2():
-                        print_libxml_error()
-                    raise
-
-        result['cmdclass'] = {'build_ext': CheckLibxml2BuildExt}
+    class CheckLibxml2BuildExt(_build_ext):
+        """Subclass to check whether libxml2 is really available if the build fails"""
+        def run(self):
+            try:
+                _build_ext.run(self)  # old-style class in Py2
+            except CompileError as e:
+                print('Compile failed: %s' % e)
+                if not seems_to_have_libxml2():
+                    print_libxml_error()
+                raise
+    result = {'cmdclass': {'build_ext': CheckLibxml2BuildExt}}
     return result
 
 
