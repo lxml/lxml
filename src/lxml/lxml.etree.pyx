@@ -324,12 +324,9 @@ cdef class _ExceptionContext:
             raise type, value, traceback
 
 
-# forward declarations
-cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]
-cdef public class _Element [ type LxmlElementType, object LxmlElement ]
-cdef class _BaseParser
-cdef class QName
+# type of a function that steps from node to node
 ctypedef public xmlNode* (*_node_to_node_function)(xmlNode*)
+
 
 ################################################################################
 # Include submodules
