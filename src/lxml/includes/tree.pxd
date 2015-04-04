@@ -288,6 +288,7 @@ cdef extern from "libxml/tree.h":
 
     ctypedef struct xmlID:
         const_xmlChar* value
+        const_xmlChar* name
         xmlAttr* attr
         xmlDoc* doc
         

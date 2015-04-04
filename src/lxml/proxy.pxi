@@ -464,6 +464,7 @@ cdef void fixElementDocument(xmlNode* c_element, _Document doc,
                 return
     tree.END_FOR_EACH_FROM(c_node)
 
+
 cdef void fixThreadDictNames(xmlNode* c_element,
                              tree.xmlDict* c_src_dict,
                              tree.xmlDict* c_dict) nogil:
@@ -475,6 +476,10 @@ cdef void fixThreadDictNames(xmlNode* c_element,
             c_element.type == tree.XML_HTML_DOCUMENT_NODE:
         # may define "xml" namespace
         fixThreadDictNsForNode(c_element, c_src_dict, c_dict)
+        if c_element.doc.extSubset:
+            fixThreadDictNamesForDtd(c_element.doc.extSubset, c_src_dict, c_dict)
+        if c_element.doc.intSubset:
+            fixThreadDictNamesForDtd(c_element.doc.intSubset, c_src_dict, c_dict)
         c_element = c_element.children
         while c_element is not NULL:
             fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
@@ -482,21 +487,37 @@ cdef void fixThreadDictNames(xmlNode* c_element,
     elif tree._isElementOrXInclude(c_element):
         fixThreadDictNamesForNode(c_element, c_src_dict, c_dict)
 
+
+cdef inline void _fixThreadDictPtr(const_xmlChar** c_ptr,
+                                   tree.xmlDict* c_src_dict,
+                                   tree.xmlDict* c_dict) nogil:
+    c_str = c_ptr[0]
+    if c_str and tree.xmlDictOwns(c_src_dict, c_str):
+        # return value can be NULL on memory error, but we don't handle that here
+        c_str = tree.xmlDictLookup(c_dict, c_str, -1)
+        if c_str:
+            c_ptr[0] = c_str
+
+
 cdef void fixThreadDictNamesForNode(xmlNode* c_element,
                                     tree.xmlDict* c_src_dict,
                                     tree.xmlDict* c_dict) nogil:
     cdef xmlNode* c_node = c_element
     tree.BEGIN_FOR_EACH_FROM(c_element, c_node, 1)
-    if c_node.name is not NULL:
-        fixThreadDictNameForNode(c_node, c_src_dict, c_dict)
     if c_node.type in (tree.XML_ELEMENT_NODE, tree.XML_XINCLUDE_START):
         fixThreadDictNamesForAttributes(
             c_node.properties, c_src_dict, c_dict)
         fixThreadDictNsForNode(c_node, c_src_dict, c_dict)
+        _fixThreadDictPtr(&c_node.name, c_src_dict, c_dict)
     elif c_node.type == tree.XML_TEXT_NODE:
         # libxml2's SAX2 parser interns some indentation space
         fixThreadDictContentForNode(c_node, c_src_dict, c_dict)
+    elif c_node.type == tree.XML_COMMENT_NODE:
+        pass  # don't touch c_node.name
+    else:
+        _fixThreadDictPtr(&c_node.name, c_src_dict, c_dict)
     tree.END_FOR_EACH_FROM(c_node)
+
 
 cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
                                                  tree.xmlDict* c_src_dict,
@@ -504,7 +525,8 @@ cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
     cdef xmlNode* c_child
     cdef xmlNode* c_node = <xmlNode*>c_attr
     while c_node is not NULL:
-        fixThreadDictNameForNode(c_node, c_src_dict, c_dict)
+        if c_node.type not in (tree.XML_TEXT_NODE, tree.XML_COMMENT_NODE):
+            _fixThreadDictPtr(&c_node.name, c_src_dict, c_dict)
         # libxml2 keeps some (!) attribute values in the dict
         c_child = c_node.children
         while c_child is not NULL:
@@ -512,18 +534,6 @@ cdef inline void fixThreadDictNamesForAttributes(tree.xmlAttr* c_attr,
             c_child = c_child.next
         c_node = c_node.next
 
-cdef inline void fixThreadDictNameForNode(xmlNode* c_node,
-                                          tree.xmlDict* c_src_dict,
-                                          tree.xmlDict* c_dict) nogil:
-    cdef const_xmlChar* c_name = c_node.name
-    if c_name is not NULL and \
-           c_node.type != tree.XML_TEXT_NODE and \
-           c_node.type != tree.XML_COMMENT_NODE:
-        if tree.xmlDictOwns(c_src_dict, c_name):
-            # c_name can be NULL on memory error, but we don't handle that here
-            c_name = tree.xmlDictLookup(c_dict, c_name, -1)
-            if c_name is not NULL:
-                c_node.name = c_name
 
 cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
                                              tree.xmlDict* c_src_dict,
@@ -534,15 +544,43 @@ cdef inline void fixThreadDictContentForNode(xmlNode* c_node,
             # result can be NULL on memory error, but we don't handle that here
             c_node.content = <xmlChar*>tree.xmlDictLookup(c_dict, c_node.content, -1)
 
+
 cdef inline void fixThreadDictNsForNode(xmlNode* c_node,
                                         tree.xmlDict* c_src_dict,
                                         tree.xmlDict* c_dict) nogil:
     cdef xmlNs* c_ns = c_node.nsDef
     while c_ns is not NULL:
-        if c_ns.href is not NULL:
-            if tree.xmlDictOwns(c_src_dict, c_ns.href):
-                c_ns.href = tree.xmlDictLookup(c_dict, c_ns.href, -1)
-        if c_ns.prefix is not NULL:
-            if tree.xmlDictOwns(c_src_dict, c_ns.prefix):
-                c_ns.prefix = tree.xmlDictLookup(c_dict, c_ns.prefix, -1)
+        _fixThreadDictPtr(&c_ns.href, c_src_dict, c_dict)
+        _fixThreadDictPtr(&c_ns.prefix, c_src_dict, c_dict)
         c_ns = c_ns.next
+
+
+cdef void fixThreadDictNamesForDtd(tree.xmlDtd* c_dtd,
+                                   tree.xmlDict* c_src_dict,
+                                   tree.xmlDict* c_dict) nogil:
+    cdef xmlNode* c_node
+    cdef tree.xmlElement* c_element
+    cdef tree.xmlAttribute* c_attribute
+    cdef tree.xmlEntity* c_entity
+
+    c_node = c_dtd.children
+    while c_node:
+        if c_node.type == tree.XML_ELEMENT_DECL:
+            c_element = <tree.xmlElement*>c_node
+            if c_element.content:
+                _fixThreadDictPtr(&c_element.content.name, c_src_dict, c_dict)
+                _fixThreadDictPtr(&c_element.content.prefix, c_src_dict, c_dict)
+            c_attribute = c_element.attributes
+            while c_attribute:
+                _fixThreadDictPtr(&c_attribute.defaultValue, c_src_dict, c_dict)
+                _fixThreadDictPtr(&c_attribute.name, c_src_dict, c_dict)
+                _fixThreadDictPtr(&c_attribute.prefix, c_src_dict, c_dict)
+                _fixThreadDictPtr(&c_attribute.elem, c_src_dict, c_dict)
+                c_attribute = c_attribute.nexth
+        elif c_node.type == tree.XML_ENTITY_DECL:
+            c_entity = <tree.xmlEntity*>c_node
+            _fixThreadDictPtr(&c_entity.name, c_src_dict, c_dict)
+            _fixThreadDictPtr(&c_entity.ExternalID, c_src_dict, c_dict)
+            _fixThreadDictPtr(&c_entity.SystemID, c_src_dict, c_dict)
+            _fixThreadDictPtr(<const_xmlChar**>&c_entity.content, c_src_dict, c_dict)
+        c_node = c_node.next
