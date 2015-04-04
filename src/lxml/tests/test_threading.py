@@ -291,7 +291,7 @@ class ThreadPipelineTestCase(HelperTestCase):
     """Threading tests based on a thread worker pipeline.
     """
     etree = etree
-    item_count = 20
+    item_count = 40
 
     class Worker(threading.Thread):
         def __init__(self, in_queue, in_count, **kwargs):
@@ -306,6 +306,9 @@ class ThreadPipelineTestCase(HelperTestCase):
             handle = self.handle
             for _ in range(self.in_count):
                 put(handle(get()))
+
+        def handle(self, data):
+            raise NotImplementedError()
 
     class ParseWorker(Worker):
         def handle(self, xml, _fromstring=etree.fromstring):
@@ -328,21 +331,48 @@ class ThreadPipelineTestCase(HelperTestCase):
             element.extend(_fromstring(self.xml))
             return element
 
+    class ParseAndInjectWorker(Worker):
+        def handle(self, element, _fromstring=etree.fromstring):
+            root = _fromstring(self.xml)
+            root.extend(element)
+            return root
+
+    class Validate(Worker):
+        def handle(self, element):
+            element.getroottree().docinfo.internalDTD.assertValid(element)
+            return element
+
     class SerialiseWorker(Worker):
         def handle(self, element):
             return etree.tostring(element)
 
-    xml = _bytes('''\
-<xsl:stylesheet
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-    version="1.0">
-  <xsl:output method="xml" />
-  <xsl:template match="/">
-     <div id="test">
-       <xsl:apply-templates/>
-     </div>
-  </xsl:template>
-</xsl:stylesheet>''')
+    xml = (b'''\
+<!DOCTYPE threadtest [
+    <!ELEMENT threadtest (thread-tag1,thread-tag2)+>
+    <!ATTLIST threadtest
+        version    CDATA  "1.0"
+    >
+    <!ELEMENT thread-tag1 EMPTY>
+    <!ELEMENT thread-tag2 (div)>
+    <!ELEMENT div (threaded)>
+    <!ATTLIST div
+        huhu  CDATA  #IMPLIED
+    >
+    <!ELEMENT threaded EMPTY>
+    <!ATTLIST threaded
+        host  CDATA  #REQUIRED
+    >
+]>
+<threadtest version="123">
+''' + (b'''
+  <thread-tag1 />
+  <thread-tag2>
+    <div huhu="true">
+       <threaded host="here" />
+    </div>
+  </thread-tag2>
+''') * 20 + b'''
+</threadtest>''')
 
     def _build_pipeline(self, item_count, *classes, **kwargs):
         in_queue = Queue(item_count)
@@ -356,6 +386,8 @@ class ThreadPipelineTestCase(HelperTestCase):
 
     def test_thread_pipeline_thread_parse(self):
         item_count = self.item_count
+        xml = self.xml.replace(b'thread', b'THREAD')  # use fresh tag names
+
         # build and start the pipeline
         in_queue, start, last = self._build_pipeline(
             item_count,
@@ -363,13 +395,15 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.RotateWorker,
             self.ReverseWorker,
             self.ParseAndExtendWorker,
+            self.Validate,
+            self.ParseAndInjectWorker,
             self.SerialiseWorker,
-            xml=self.xml)
+            xml=xml)
 
         # fill the queue
         put = start.in_queue.put
         for _ in range(item_count):
-            put(self.xml)
+            put(xml)
 
         # start the first thread and thus everything
         start.start()
@@ -386,6 +420,7 @@ class ThreadPipelineTestCase(HelperTestCase):
 
     def test_thread_pipeline_global_parse(self):
         item_count = self.item_count
+        xml = self.xml.replace(b'thread', b'GLOBAL')  # use fresh tag names
         XML = self.etree.XML
         # build and start the pipeline
         in_queue, start, last = self._build_pipeline(
@@ -393,13 +428,14 @@ class ThreadPipelineTestCase(HelperTestCase):
             self.RotateWorker,
             self.ReverseWorker,
             self.ParseAndExtendWorker,
+            self.Validate,
             self.SerialiseWorker,
-            xml=self.xml)
+            xml=xml)
 
         # fill the queue
         put = start.in_queue.put
         for _ in range(item_count):
-            put(XML(self.xml))
+            put(XML(xml))
 
         # start the first thread and thus everything
         start.start()
