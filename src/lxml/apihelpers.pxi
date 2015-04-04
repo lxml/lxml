@@ -1238,7 +1238,7 @@ cdef int _replaceSlice(_Element parent, xmlNode* c_node,
 
             # stop at the end of the slice
             if slicelength > 0:
-                slicelength = slicelength - 1
+                slicelength -= 1
                 for i in range(step):
                     c_node = next_element(c_node)
                 if c_node is NULL:
