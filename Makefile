@@ -7,8 +7,8 @@ LXMLVERSION=`cat version.txt`
 
 PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
-CYTHON_WITH_COVERAGE=$(shell $(PYTHON) -c 'import Cython.Coverage' >/dev/null 2>/dev/null && echo " --coverage" || true)
-CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage' >/dev/null 2>/dev/null && echo " --coverage" || true)
+CYTHON_WITH_COVERAGE=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
+CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
 all: inplace
 
