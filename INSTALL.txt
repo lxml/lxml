@@ -1,17 +1,41 @@
 Installing lxml
 ===============
 
-For special installation instructions regarding MS Windows and
-MacOS-X, see the specific sections below.
-
-.. contents::
+.. contents::  :depth: 1
 ..
-   1  Requirements
-   2  Installation
-   3  Building lxml from sources
-   4  Using lxml with python-libxml2
-   5  MS Windows
-   6  MacOS-X
+   1  Where to get it
+   2  Requirements
+   3  Installation
+   4  Building lxml from dev sources
+   5  Using lxml with python-libxml2
+   6  Source builds on MS Windows
+   7  Source builds on MacOS-X
+
+
+Where to get it
+---------------
+
+lxml is generally distributed through PyPI_.
+
+.. _PyPI: http://pypi.python.org/pypi/lxml
+
+Most **Linux** platforms come with some version of lxml readily
+packaged, usually named ``python-lxml`` for the Python 2.x version
+and ``python3-lxml`` for Python 3.x.  If you can use that version,
+the quickest way to install lxml is to use the system package
+manager, e.g. ``apt-get`` on Debian/Ubuntu::
+
+   sudo apt-get install python3-lxml
+
+For **MacOS-X**, a `macport <http://macports.org/>`_ of lxml is available.
+Try something like
+
+::
+
+   port install py27-lxml
+
+To install a newer version or to install lxml on other systems,
+see below.
 
 
 Requirements
@@ -20,11 +44,10 @@ Requirements
 You need Python 2.6 or later.
 
 Unless you are using a static binary distribution (e.g. from a
-Windows binary installer), you need to install libxml2 and libxslt,
-in particular:
+Windows binary installer), lxml requires libxml2 and libxslt to
+be installed, in particular:
 
-* libxml2 2.7.0 or later. It can be found here:
-  http://xmlsoft.org/downloads.html
+* `libxml2 <http://xmlsoft.org/>`_ version 2.7.0 or later.
 
   * We recommend libxml2 2.9.0 or a later version.
 
@@ -32,8 +55,7 @@ in particular:
     parsing from unicode strings, do not use libxml2 2.7.4 through
     2.7.6.
 
-* libxslt 1.1.23 or later. It can be found here:
-  http://xmlsoft.org/XSLT/downloads.html
+* `libxslt <http://xmlsoft.org/XSLT/>`_ version 1.1.23 or later.
 
   * We recommend libxslt 1.1.26 or later. Version 1.1.25 will not
     work due to a missing library symbol.
@@ -48,22 +70,34 @@ e.g. apt-get on Debian/Ubuntu::
 
   sudo apt-get install libxml2-dev libxslt-dev python-dev
 
-.. _PyPI: http://pypi.python.org/pypi/lxml
+For Debian based systems, it should be enough to install the known
+build dependencies of the provided lxml package, e.g.
+
+::
+
+    sudo apt-get build-dep python3-lxml
 
 
 Installation
 ------------
 
-The best way to install lxml is to get the pip_ package management
-tool and run the following as super-user (or administrator)::
+If your system does not provide binary packages or you want to install
+a newer version, the best way is to get the pip_ package management tool
+(or use a `virtualenv <https://pypi.python.org/pypi/virtualenv>`_) and
+run the following::
 
   pip install lxml
+
+If you are not using pip in a virtualenv and want to install lxml globally
+instead, you have to run the above command as admin, e.g. on Linux::
+
+  sudo pip install lxml
 
 To install a specific version, either download the distribution
 manually and let pip install that, or pass the desired version
 to pip::
 
-  pip install lxml==3.1.2
+  pip install lxml==3.4.2
 
 .. _pip: http://pypi.python.org/pypi/pip
 
@@ -73,33 +107,46 @@ the ``CFLAGS`` environment variable::
 
   CFLAGS="-O0"  pip install lxml
 
-* For **MS Windows**, recent lxml releases feature community donated
-  binary distributions, although you might still want to take a look
-  at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
-  If you fail to build lxml on your MS Windows system from the signed
-  and tested sources that we release, consider using the binary builds
-  from PyPI or the `unofficial Windows binaries
-  <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
-  that Christoph Gohlke generously provides.
+(The option reads "minus Oh Zero", i.e. zero optimisations.)
 
-* On **Linux** (and most other well-behaved operating systems),
-  ``pip`` will manage to build the source distribution as
-  long as libxml2 and libxslt are properly installed, including
-  development packages, i.e. header files, etc.  Use your package
-  management tool to look for packages like ``libxml2-dev`` or
-  ``libxslt-devel`` if the build fails, and make sure they are
-  installed.  Alternatively, setting ``STATIC_DEPS=true`` will
-  download and build both libraries automatically.
+MS Windows
+..........
 
-* On **MacOS-X**, use the following to build the source distribution,
-  and make sure you have a working Internet connection, as this will
-  download libxml2 and libxslt in order to build them::
+For MS Windows, recent lxml releases feature community donated
+binary distributions, although you might still want to take a look
+at the related `FAQ entry <FAQ.html#where-are-the-binary-builds>`_.
+If you fail to build lxml on your MS Windows system from the signed
+and tested sources that we release, consider using the binary builds
+from PyPI or the `unofficial Windows binaries
+<http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
+that Christoph Gohlke generously provides.
 
-   STATIC_DEPS=true sudo pip install lxml
+Linux
+.....
+
+On Linux (and most other well-behaved operating systems), ``pip`` will
+manage to build the source distribution as long as libxml2 and libxslt
+are properly installed, including development packages, i.e. header files,
+etc.  See the requirements section above and use your system package
+management tool to look for packages like ``libxml2-dev`` or
+``libxslt-devel``.  If the build fails, make sure they are installed.
+
+Alternatively, setting ``STATIC_DEPS=true`` will download and build
+both libraries automatically in their latest version, e.g.
+``STATIC_DEPS=true pip install lxml``.
+
+MacOS-X
+.......
+
+On MacOS-X, use the following to build the source distribution,
+and make sure you have a working Internet connection, as this will
+download libxml2 and libxslt in order to build them::
+
+  STATIC_DEPS=true sudo pip install lxml
 
 
-Building lxml from sources
---------------------------
+Building lxml from dev sources
+------------------------------
 
 If you want to build lxml from the GitHub repository, you should read
 `how to build lxml from source`_ (or the file ``doc/build.txt`` in the
@@ -142,8 +189,8 @@ the ``STATIC_DEPS`` variable, but is used by some other extension
 packages, too.
 
 
-MS Windows
-----------
+Source builds on MS Windows
+---------------------------
 
 Most MS Windows systems lack the necessarily tools to build software,
 starting with a C compiler already.  Microsoft leaves it to users to
@@ -163,17 +210,15 @@ same download site.  Further build instructions are in the
 `source build documentation <build.html>`_.
 
 
-MacOS-X
--------
+Source builds on MacOS-X
+------------------------
 
-A `macport <http://macports.org/>`_ of lxml is available.  Try
-something like ``port install py25-lxml``.
-
-If you want to use a more recent lxml release, you may have to build
-it yourself.  While the pre-installed system libraries of libxml2
-and libxslt are less outdated in recent MacOS-X versions than they
-used to be, so lxml should work them them out of the box, it is still
-recommended to use a static build with the most recent versions.
+If you are not using macports or want to use a more recent lxml
+release, you have to build it yourself.  While the pre-installed system
+libraries of libxml2 and libxslt are less outdated in recent MacOS-X
+versions than they used to be, so lxml should work them them out of the
+box, it is still recommended to use a static build with the most recent
+library versions.
 
 Luckily, lxml's ``setup.py`` script has built-in support for building
 and integrating these libraries statically during the build.  Please
