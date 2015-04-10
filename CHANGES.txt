@@ -33,6 +33,8 @@ Features added
   setting and removing the public ID and system ID of the DOCTYPE.
   Patch by Olli Pottonen.
 
+* LP#1442427: More work-arounds for quirks and bugs in pypy and pypy3.
+
 Bugs fixed
 ----------
 
