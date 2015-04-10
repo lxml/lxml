@@ -481,7 +481,8 @@ def main(argv):
             cols = curses.tigetnum('cols')
             if cols > 0:
                 cfg.screen_width = cols
-        except curses.error:
+        except (curses.error, TypeError):
+            # tigetnum() is broken in PyPy3 and raises TypeError
             pass
 
     # Option processing
