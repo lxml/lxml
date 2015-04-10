@@ -107,7 +107,7 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
         Py_DECREF(string);
         string = bstring;
     }
-    if (string && !PyBytes_Check(string)) {
+    if (string && !PyBytes_CheckExact(string)) {
         Py_DECREF(string);
         string = NULL;
         PyErr_SetString(PyExc_TypeError, "String formatting and encoding failed to return bytes object");
