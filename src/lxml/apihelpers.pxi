@@ -1652,7 +1652,7 @@ cdef inline object _namespacedName(xmlNode* c_node):
 cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     if href is NULL:
         return funicode(name)
-    elif python.LXML_UNICODE_STRINGS and not python.IS_PYPY:
+    elif python.LXML_UNICODE_STRINGS and (not python.IS_PYPY or python.IS_PYTHON3):
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
