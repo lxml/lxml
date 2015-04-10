@@ -69,8 +69,6 @@
 #if IS_PYPY
 #  undef PyFile_AsFile
 #  define PyFile_AsFile(o)                   (NULL)
-#  undef PyUnicode_FromFormat
-#  define PyUnicode_FromFormat(s, a, b)      (NULL)
 #  undef PyByteArray_Check
 #  define PyByteArray_Check(o)               (0)
 #elif IS_PYTHON3
@@ -83,6 +81,41 @@
   #define PyUnicode_GET_LENGTH(u)   PyUnicode_GET_SIZE(u)
   #define PyUnicode_KIND(u)         (sizeof(Py_UNICODE))
   #define PyUnicode_DATA(u)         ((void*)PyUnicode_AS_UNICODE(u))
+#endif
+
+#if IS_PYPY
+#  ifndef PyUnicode_FromFormat
+#    define PyUnicode_FromFormat  PyString_FromFormat
+#  endif
+#  if IS_PYTHON3 && !defined(PyBytes_FromFormat)
+#    ifdef PyString_FromFormat
+#      define PyBytes_FromFormat  PyString_FromFormat
+#    else
+#include <stdarg.h>
+static PyObject* PyBytes_FromFormat(const char* format, ...) {
+    PyObject *string;
+    va_list vargs;
+#ifdef HAVE_STDARG_PROTOTYPES
+    va_start(vargs, format);
+#else
+    va_start(vargs);
+#endif
+    string = PyUnicode_FromFormatV(format, vargs);
+    va_end(vargs);
+    if (string && PyUnicode_Check(string)) {
+        PyObject *bstring = PyUnicode_AsUTF8String(string);
+        Py_DECREF(string);
+        string = bstring;
+    }
+    if (string && !PyBytes_Check(string)) {
+        Py_DECREF(string);
+        string = NULL;
+        PyErr_SetString(PyExc_TypeError, "String formatting and encoding failed to return bytes object");
+    }
+    return string;
+}
+#    endif
+#  endif
 #endif
 
 /* PySlice_GetIndicesEx() has wrong signature in Py<=3.1 */
