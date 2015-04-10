@@ -66,10 +66,6 @@
 #  endif
 #endif
 
-/* Python 3 doesn't have PyFile_*() anymore */
-#if PY_MAJOR_VERSION >= 3
-#  define PyFile_AsFile(o)                   (NULL)
-#else
 #if IS_PYPY
 #  undef PyFile_AsFile
 #  define PyFile_AsFile(o)                   (NULL)
@@ -77,7 +73,9 @@
 #  define PyUnicode_FromFormat(s, a, b)      (NULL)
 #  undef PyByteArray_Check
 #  define PyByteArray_Check(o)               (0)
-#endif
+#elif IS_PYTHON3
+   /* Python 3 doesn't have PyFile_*() anymore */
+#  define PyFile_AsFile(o)                   (NULL)
 #endif
 
 #if PY_VERSION_HEX <= 0x03030000 && !(defined(CYTHON_PEP393_ENABLED) && CYTHON_PEP393_ENABLED)
@@ -95,14 +93,18 @@
 #endif
 
 #ifdef WITHOUT_THREADING
+#  undef PyEval_SaveThread
 #  define PyEval_SaveThread() (NULL)
-#  define PyEval_RestoreThread(state)
+#  undef PyEval_RestoreThread
+#  define PyEval_RestoreThread(state)  if (state); else {}
+#  undef PyGILState_Ensure
 #  define PyGILState_Ensure() (PyGILState_UNLOCKED)
-#  define PyGILState_Release(state)
+#  undef PyGILState_Release
+#  define PyGILState_Release(state)  if (state); else {}
 #  undef  Py_UNBLOCK_THREADS
-#  define Py_UNBLOCK_THREADS
+#  define Py_UNBLOCK_THREADS  _save = NULL;
 #  undef  Py_BLOCK_THREADS
-#  define Py_BLOCK_THREADS
+#  define Py_BLOCK_THREADS  if (_save); else {}
 #endif
 
 #ifdef WITHOUT_THREADING

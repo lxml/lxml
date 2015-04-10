@@ -468,7 +468,6 @@ cdef _tofilelike(f, _Element element, encoding, doctype, method,
                  bint write_xml_declaration, bint write_doctype,
                  bint pretty_print, bint with_tail, int standalone,
                  int compression):
-    cdef python.PyThreadState* state = NULL
     cdef _FilelikeWriter writer = None
     cdef tree.xmlOutputBuffer* c_buffer
     cdef tree.xmlCharEncodingHandler* enchandler
