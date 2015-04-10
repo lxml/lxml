@@ -32,7 +32,7 @@ Try something like
 
 ::
 
-   port install py27-lxml
+   sudo port install py27-lxml
 
 To install a newer version or to install lxml on other systems,
 see below.
