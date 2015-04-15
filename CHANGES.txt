@@ -63,6 +63,8 @@ Bugs fixed
 Bugs fixed
 ----------
 
+* Expression cache in ElementPath was ignored.  Fix by Changaco.
+
 * LP#1426868: Passing a default namespace and a prefixed namespace mapping
   as nsmap into ``xmlfile.element()`` raised a ``TypeError``.
 
