@@ -304,6 +304,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 * `older releases <http://lxml.de/3.0/#old-versions>`_
 
 .. _`lxml 3.4.3`: /files/lxml-3.4.3.tgz
+.. _`lxml 3.4.2`: /files/lxml-3.4.2.tgz
 .. _`lxml 3.4.1`: /files/lxml-3.4.1.tgz
 .. _`lxml 3.4.0`: /files/lxml-3.4.0.tgz
 .. _`lxml 3.4.0beta1`: /files/lxml-3.4.0beta1.tgz
