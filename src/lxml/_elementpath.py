@@ -229,9 +229,10 @@ _cache = {}
 def _build_path_iterator(path, namespaces):
     # compile selector pattern
     if path[-1:] == "/":
-        path = path + "*" # implicit all (FIXME: keep this?)
+        path += "*"  # implicit all (FIXME: keep this?)
+    cache_key = (path, namespaces and tuple(sorted(namespaces.items())) or None)
     try:
-        return _cache[(path, namespaces and tuple(sorted(namespaces.items())) or None)]
+        return _cache[cache_key]
     except KeyError:
         pass
     if len(_cache) > 100:
@@ -261,7 +262,7 @@ def _build_path_iterator(path, namespaces):
                 token = _next()
         except StopIteration:
             break
-    _cache[path] = selector
+    _cache[cache_key] = selector
     return selector
 
 ##
