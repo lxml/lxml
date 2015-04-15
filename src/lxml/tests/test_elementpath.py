@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tests for the ElementTree API
-
-Only test cases that apply equally well to etree and ElementTree
-belong here. Note that there is a second test module called test_io.py
-for IO related test cases.
+Tests for the ElementPath implementation.
 """
 
 from __future__ import absolute_import
