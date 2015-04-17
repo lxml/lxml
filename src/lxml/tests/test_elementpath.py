@@ -31,15 +31,15 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertEqual(2, len(self._elementpath._cache))
 
 
-class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
-    import xml.etree.ElementTree as etree
-    import xml.etree.ElementPath as _elementpath
+#class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
+#    import xml.etree.ElementTree as etree
+#    import xml.etree.ElementPath as _elementpath
 
 
 def test_suite():
     suite = unittest.TestSuite()
-    suite.addTests([unittest.makeSuite(ElementTreeElementPathTestCase)])
     suite.addTests([unittest.makeSuite(EtreeElementPathTestCase)])
+    #suite.addTests([unittest.makeSuite(ElementTreeElementPathTestCase)])
     return suite
 
 
