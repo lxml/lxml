@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Latest changes
-==============
+3.5.0 beta 1 (2015-04-25)
+=========================
 
 Features added
 --------------
@@ -59,6 +59,8 @@ Bugs fixed
 
 * Empty prefixes are explicitly rejected when a namespace mapping is used
   with ElementPath to avoid hiding bugs in user code.
+
+* Several problems with PyPy were fixed by switching to Cython 0.23.
 
 
 3.4.4 (2015-04-25)
