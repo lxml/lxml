@@ -1824,45 +1824,6 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
         extensions = { ('testns', 'myext') : MyExt() }
         self.assertRaises(MyError, tree.xslt, style, extensions=extensions)
 
-    def test_multiple_extension_elements_with_output_parent(self):
-        tree = self.parse("""\
-<text>
-  <par>This is <format>arbitrary</format> text in a paragraph</par>
-</text>""")
-        style = self.parse("""\
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:my="my" extension-element-prefixes="my" version="1.0">
-  <xsl:template match="par">
-    <my:par><xsl:apply-templates /></my:par>
-  </xsl:template>
-  <xsl:template match="format">
-    <my:format><xsl:apply-templates /></my:format>
-  </xsl:template>
-</xsl:stylesheet>
-""")
-        test = self
-
-        class ExtMyPar(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                p = etree.Element("p")
-                p.attrib["style"] = "color:red"
-                self.process_children(context, p)
-                output_parent.append(p)
-
-        class ExtMyFormat(etree.XSLTExtension):
-            def execute(self, context, self_node, input_node, output_parent):
-                content = self.process_children(context)
-                test.assertEqual(1, len(content))
-                test.assertEqual('arbitrary', content[0])
-                test.assertEqual('This is ', output_parent.text)
-                output_parent.text += '*-%s-*' % content[0]
-
-        extensions = {("my", "par"): ExtMyPar(), ("my", "format"): ExtMyFormat()}
-        transform = etree.XSLT(style, extensions=extensions)
-        result = transform(tree)
-        self.assertEqual(
-            b'<p style="color:red">This is *-arbitrary-* text in a paragraph</p>\n',
-            etree.tostring(result))
-
 
 class Py3XSLTTestCase(HelperTestCase):
     """XSLT tests for etree under Python 3"""
