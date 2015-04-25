@@ -2,20 +2,6 @@
 lxml changelog
 ==============
 
-3.4.4 (2015-04-17)
-==================
-
-Bugs fixed
-----------
-
-* Calling ``process_children()`` in an XSLT extension element without
-  an ``output_parent`` argument failed with a ``TypeError``.
-  Fix by Jens Tröger.
-
-* An ElementTree compatibility test added in lxml 3.4.3 that failed in
-  Python 3.4+ was removed again.
-
-
 3.4.3 (2015-04-15)
 ==================
 
