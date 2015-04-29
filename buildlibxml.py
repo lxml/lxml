@@ -381,9 +381,10 @@ def build_libxml2xslt(download_dir, build_dir,
             os.path.join(prefix, 'include', 'libexslt')])
     static_library_dirs.append(lib_dir)
 
-    for filename in os.listdir(lib_dir):
-        if [l for l in ['iconv', 'libxml2', 'libxslt', 'libexslt'] if l in filename]:
-            if [ext for ext in ['.a'] if filename.endswith(ext)]:
-                static_binaries.append(os.path.join(lib_dir,filename))
+    listdir = os.listdir(lib_dir)
+    static_binaries += [os.path.join(lib_dir, filename)
+        for lib in ['libxml2', 'libexslt', 'libxslt', 'iconv']
+        for filename in listdir
+        if lib in filename and filename.endswith('.a')]
 
     return (xml2_config, xslt_config)
