@@ -366,7 +366,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_nsmap) exce
 
     If a 'keep_nsmap' is provided, it must be a mapping from prefixes
     to namespace URIs.  These namespaces will not be removed as part
-    of the cleanup and be declared on the top of the tree.
+    of the cleanup.
     """
     cdef xmlNode* c_node
     cdef _ns_node_ref* c_ns_list = NULL
