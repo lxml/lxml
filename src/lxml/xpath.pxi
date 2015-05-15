@@ -190,18 +190,18 @@ cdef class _XPathEvaluatorBase:
         if config.ENABLE_THREADING and self._eval_lock != NULL:
             python.PyThread_release_lock(self._eval_lock)
 
-    cdef _raise_parse_error(self):
+    cdef _build_parse_error(self):
         cdef _BaseErrorLog entries
         entries = self._error_log.filter_types(_XPATH_SYNTAX_ERRORS)
         if entries:
             message = entries._buildExceptionMessage(None)
             if message is not None:
-                raise XPathSyntaxError(message, self._error_log)
-        raise XPathSyntaxError(self._error_log._buildExceptionMessage(
-                u"Error in xpath expression"),
-                               self._error_log)
+                return XPathSyntaxError(message, self._error_log)
+        return XPathSyntaxError(
+            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log)
 
-    cdef _raise_eval_error(self):
+    cdef _build_eval_error(self):
         cdef _BaseErrorLog entries
         entries = self._error_log.filter_types(_XPATH_EVAL_ERRORS)
         if not entries:
@@ -209,10 +209,10 @@ cdef class _XPathEvaluatorBase:
         if entries:
             message = entries._buildExceptionMessage(None)
             if message is not None:
-                raise XPathEvalError(message, self._error_log)
-        raise XPathEvalError(self._error_log._buildExceptionMessage(
-                u"Error in xpath expression"),
-                             self._error_log)
+                return XPathEvalError(message, self._error_log)
+        return XPathEvalError(
+            self._error_log._buildExceptionMessage(u"Error in xpath expression"),
+            self._error_log)
 
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
@@ -224,7 +224,7 @@ cdef class _XPathEvaluatorBase:
 
         if xpathObj is NULL:
             self._context._release_temp_refs()
-            self._raise_eval_error()
+            raise self._build_eval_error()
 
         try:
             result = _unwrapXPathObject(xpathObj, doc, self._context)
@@ -420,7 +420,7 @@ cdef class XPath(_XPathEvaluatorBase):
         self.set_context(xpathCtxt)
         self._xpath = xpath.xmlXPathCtxtCompile(xpathCtxt, _xcstr(self._path))
         if self._xpath is NULL:
-            self._raise_parse_error()
+            raise self._build_parse_error()
 
     def __call__(self, _etree_or_element, **_variables):
         u"__call__(self, _etree_or_element, **_variables)"

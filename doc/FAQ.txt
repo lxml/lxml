@@ -201,6 +201,8 @@ not take advantage of lxml's enhanced feature set.
   a secure HTTP proxy
 * `lwebstring <http://pypi.python.org/pypi/lwebstring>`_,
   an XML template engine
+* `openpyxl <https://openpyxl.readthedocs.org/>`_,
+  a library to read/write MS Excel 2007 files
 * `OpenXMLlib <http://permalink.gmane.org/gmane.comp.python.lxml.devel/3250>`_,
   a library for handling OpenXML document meta data
 * `PsychoPy <http://www.psychopy.org/>`_,

@@ -49,7 +49,7 @@ be installed, in particular:
 
 * `libxml2 <http://xmlsoft.org/>`_ version 2.7.0 or later.
 
-  * We recommend libxml2 2.9.0 or a later version.
+  * We recommend libxml2 2.9.2 or a later version.
 
   * If you want to use the feed parser interface, especially when
     parsing from unicode strings, do not use libxml2 2.7.4 through
@@ -57,7 +57,7 @@ be installed, in particular:
 
 * `libxslt <http://xmlsoft.org/XSLT/>`_ version 1.1.23 or later.
 
-  * We recommend libxslt 1.1.26 or later. Version 1.1.25 will not
+  * We recommend libxslt 1.1.28 or later. Version 1.1.25 will not
     work due to a missing library symbol.
 
 Newer versions generally contain fewer bugs and are therefore

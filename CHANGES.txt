@@ -2,8 +2,8 @@
 lxml changelog
 ==============
 
-Latest changes
-==============
+3.5.0 beta 1 (2015-??)
+=========================
 
 Features added
 --------------
@@ -45,6 +45,10 @@ Bugs fixed
 * Memory errors that occur during tree adaptations (e.g. moving subtrees
   to foreign documents) could leave the tree in a crash prone state.
 
+* Calling ``process_children()`` in an XSLT extension element without
+  an ``output_parent`` argument failed with a ``TypeError``.
+  Fix by Jens Tröger.
+
 * GH#159: Validity checks for names and string content were tightened
   to detect the use of illegal characters early.  Patch by Olli Pottonen.
 
@@ -60,16 +64,14 @@ Bugs fixed
 * Empty prefixes are explicitly rejected when a namespace mapping is used
   with ElementPath to avoid hiding bugs in user code.
 
+* Several problems with PyPy were fixed by switching to Cython 0.23.
 
-3.4.4 (2015-04-17)
+
+3.4.4 (2015-04-25)
 ==================
 
 Bugs fixed
 ----------
-
-* Calling ``process_children()`` in an XSLT extension element without
-  an ``output_parent`` argument failed with a ``TypeError``.
-  Fix by Jens Tröger.
 
 * An ElementTree compatibility test added in lxml 3.4.3 that failed in
   Python 3.4+ was removed again.
