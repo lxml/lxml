@@ -207,6 +207,8 @@ not take advantage of lxml's enhanced feature set.
   psychology software in Python
 * `Pycoon <http://pypi.python.org/pypi/pycoon>`_,
   a WSGI web development framework based on XML pipelines
+* `pycsw <http://pycsw.org>`_,
+  an `OGC CSW <http://opengeospatial.org/standards/cat>`_ server implementation written in Python
 * `PyQuery <http://pypi.python.org/pypi/pyquery>`_,
   a query framework for XML/HTML, similar to jQuery for JavaScript
 * `python-docx <http://github.com/mikemaccana/python-docx>`_,
