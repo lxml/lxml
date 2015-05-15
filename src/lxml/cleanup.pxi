@@ -13,7 +13,7 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_nsmap=None):
 
     If a 'keep_nsmap' is provided, it must be a mapping from prefixes
     to namespace URIs.  These namespaces will not be removed as part
-    of the cleanup and be declared on the top of the tree.
+    of the cleanup.
     """
     element = _rootNodeOrRaise(tree_or_element)
     c_element = element._c_node
@@ -22,9 +22,7 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_nsmap=None):
         # declare namespaces from nsmap, then apply them to the subtree
         _setNodeNamespaces(c_element, doc, None, top_nsmap)
         moveNodeToDocument(doc, c_element.doc, c_element)
-    _removeUnusedNamespaceDeclarations(c_element)
-    if keep_nsmap:
-        _setNodeNamespaces(c_element, doc, None, keep_nsmap)
+    _removeUnusedNamespaceDeclarations(c_element, keep_nsmap)
 
 def strip_attributes(tree_or_element, *attribute_names):
     u"""strip_attributes(tree_or_element, *attribute_names)

@@ -360,9 +360,13 @@ cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
     _c_ns_list[0] = c_ns_list
 
 
-cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element) except -1:
+cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_nsmap) except -1:
     u"""Remove any namespace declarations from a subtree that are not used by
     any of its elements (or attributes).
+
+    If a 'keep_nsmap' is provided, it must be a mapping from prefixes
+    to namespace URIs.  These namespaces will not be removed as part
+    of the cleanup and be declared on the top of the tree.
     """
     cdef xmlNode* c_node
     cdef _ns_node_ref* c_ns_list = NULL
