@@ -1,7 +1,7 @@
 # functions for tree cleanup and removing elements from subtrees
 
-def cleanup_namespaces(tree_or_element, top_nsmap=None):
-    u"""cleanup_namespaces(tree_or_element, top_nsmap=None)
+def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_nsmap=None):
+    u"""cleanup_namespaces(tree_or_element, top_nsmap=None, keep_nsmap=None)
 
     Remove all namespace declarations from a subtree that are not used
     by any of the elements or attributes in that tree.
@@ -10,6 +10,10 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None):
     to namespace URIs.  These namespaces will be declared on the top
     element of the subtree before running the cleanup, which allows
     moving namespace declarations to the top of the tree.
+
+    If a 'keep_nsmap' is provided, it must be a mapping from prefixes
+    to namespace URIs.  These namespaces will not be removed as part
+    of the cleanup and be declared on the top of the tree.
     """
     element = _rootNodeOrRaise(tree_or_element)
     c_element = element._c_node
@@ -19,6 +23,8 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None):
         _setNodeNamespaces(c_element, doc, None, top_nsmap)
         moveNodeToDocument(doc, c_element.doc, c_element)
     _removeUnusedNamespaceDeclarations(c_element)
+    if keep_nsmap:
+        _setNodeNamespaces(c_element, doc, None, keep_nsmap)
 
 def strip_attributes(tree_or_element, *attribute_names):
     u"""strip_attributes(tree_or_element, *attribute_names)
