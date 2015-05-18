@@ -2687,20 +2687,16 @@ class ETreeOnlyTestCase(HelperTestCase):
             self.etree.tostring(root))
 
     def test_namespace_cleanup_deep_keep_to_top(self):
-        xml = ('<root xmlns:foo="FOO">' +
-               ''.join('<a xmlns:n{n}="NS{n}">'.format(n=i) for i in range(100)) +
-               '<n64:x xmlns:a="A" a:attr="X"/>' +
-               '</a>'*100 +
-               '<foo>foo:bar</foo>' +
+        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO">' +
+               '<a><n64:x xmlns:a="A" a:attr="X"/>' +
+               '</a><foo>foo:bar</foo>' +
                '</root>').encode('utf8')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
-        self.etree.cleanup_namespaces(root,
-                                      top_nsmap={'n64': 'NS64'},
-                                      keep_nsmap={'foo': 'FOO'})
+        self.etree.cleanup_namespaces(root, keep_nsmap={'foo': 'FOO'})
         self.assertEqual(
-            b'<root xmlns:n64="NS64" xmlns:foo="FOO">' + b'<a>'*100 +
-            b'<n64:x xmlns:a="A" a:attr="X"/>' + b'</a>'*100 +
+            b'<root xmlns:n64="NS64" xmlns:foo="FOO">' +
+            b'<a><n64:x xmlns:a="A" a:attr="X"/></a>' +
             b'<foo>foo:bar</foo>' + b'</root>',
             self.etree.tostring(root))
 
