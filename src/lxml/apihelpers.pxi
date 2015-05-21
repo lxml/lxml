@@ -389,7 +389,8 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_nsmap) exce
         while c_node and c_ns_list_len:
             if c_node.ns:
                 for i in range(c_ns_list_len):
-                    if c_node.ns is c_ns_list[i].ns:
+                    if (c_node.ns is c_ns_list[i].ns or
+                        (keep_nsmap is not None and c_ns_list[i].ns.href in keep_nsmap.values())):
                         c_ns_list_len -= 1
                         c_ns_list[i] = c_ns_list[c_ns_list_len]
                         #c_ns_list[c_ns_list_len] = _ns_node_ref(NULL, NULL)
