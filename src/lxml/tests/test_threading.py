@@ -4,7 +4,11 @@
 Tests for thread usage in lxml.etree.
 """
 
-import unittest, threading, sys, os.path
+import re
+import sys
+import os.path
+import unittest
+import threading
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -277,17 +281,24 @@ class ThreadingTestCase(HelperTestCase):
         SubElement = self.etree.SubElement
         names = list('abcdefghijklmnop')
         runs_per_name = range(50)
+        result_matches = re.compile(
+            br'<thread_root>'
+            br'(?:<[a-p]{5} thread_attr_[a-p]="value" thread_attr2_[a-p]="value2"\s?/>)+'
+            br'</thread_root>').match
 
         def testrun():
             for _ in range(3):
                 root = self.etree.Element('thread_root')
                 for name in names:
+                    tag_name = name * 5
                     new = []
                     for _ in runs_per_name:
-                        el = SubElement(root, name, {'thread_attr_' + name: 'value'})
+                        el = SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
                         new.append(el)
                     for el in new:
                         el.set('thread_attr2_' + name, 'value2')
+                s = etree.tostring(root)
+                self.assertTrue(result_matches(s))
 
         # first, run only in sub-threads
         self._run_threads(10, testrun)
