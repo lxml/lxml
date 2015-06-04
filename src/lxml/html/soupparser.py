@@ -5,9 +5,15 @@ __all__ = ["fromstring", "parse", "convert_tree"]
 
 import re
 from lxml import etree, html
-from BeautifulSoup import \
-     BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
-     Declaration
+try:
+    from BeautifulSoup import \
+         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
+         Declaration, CData
+except ImportError:
+    from bs4 import \
+         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
+         Declaration, CData
+
 
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
@@ -59,8 +65,9 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if 'convertEntities' not in bsargs:
-        bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "HTML_ENTITIES"): # not bs4
+        if 'convertEntities' not in bsargs:
+            bsargs['convertEntities'] = 'html'
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -164,7 +171,14 @@ def _convert_tree(beautiful_soup_tree, makeelement):
 def _convert_node(bs_node, parent=None, makeelement=None):
     res = None
     if isinstance(bs_node, (Tag, _PseudoTag)):
-        attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
+        if isinstance(bs_node.attrs, dict): # bs4
+            attribs = {}
+            for k, v in bs_node.attrs.items():
+                if isinstance(v, list):
+                    v = " ".join(v)
+                attribs[k] = unescape(v)
+        else:
+            attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
         if parent is not None:
             res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
@@ -189,7 +203,7 @@ def _convert_node(bs_node, parent=None, makeelement=None):
             parent.append(res)
     elif isinstance(bs_node, Declaration):
         pass
-    else:  # CData
+    elif isinstance(bs_node, CData):
         _append_text(parent, unescape(bs_node))
     return res
 
