@@ -41,7 +41,7 @@ class ThreadingTestCase(HelperTestCase):
                 started = counter['started'] + 1
                 counter['started'] = started
             if started < count + (main_func is not None):
-                sync.wait(2)  # wait until the other threads have started up
+                sync.wait(4)  # wait until the other threads have started up
                 assert sync.is_set()
             sync.set()  # all waiting => go!
             try:
