@@ -11,6 +11,7 @@ python:
 
 install:
     pip install --install-option="--no-cython-compile" -r requirements.txt
+    pip install beautifulsoup4
 
 script:
   - python -u setup.py clean
