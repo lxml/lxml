@@ -1,17 +1,20 @@
 import unittest, sys
 from lxml.tests.common_imports import make_doctest, HelperTestCase
 
-BS_INSTALLED = True
 try:
     import lxml.html.soupparser
+    BS_INSTALLED = True
 except ImportError:
+    if 'bs4' in sys.modules or 'BeautifulSoup' in sys.modules:
+        raise  # seems we managed to import BS but not soupparser
     BS_INSTALLED = False
 
 from lxml.html import tostring
 
+
 if BS_INSTALLED:
     class SoupParserTestCase(HelperTestCase):
-        from lxml.html import soupparser
+        soupparser = lxml.html.soupparser
 
         def test_broken_attribute(self):
             html = """\
@@ -90,15 +93,6 @@ b'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
             self.assertTrue(tree.docinfo.public_id is None)
             self.assertEqual(tostring(tree), html)
 
-else:
-    class SoupNotInstalledTestCase(HelperTestCase):
-
-        def test_beautifulsoup_not_installed(self):
-            # If BS_INSTALLED failed, beautifulsoup should not exist
-            with self.assertRaises(ImportError):
-                import bs4
-            with self.assertRaises(ImportError):
-                import BeautifulSoup
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -106,9 +100,8 @@ def test_suite():
         suite.addTests([unittest.makeSuite(SoupParserTestCase)])
         if sys.version_info[0] < 3:
             suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
-    else:
-        suite.addTests([unittest.makeSuite(SoupNotInstalledTestCase)])
     return suite
+
 
 if __name__ == '__main__':
     unittest.main()
