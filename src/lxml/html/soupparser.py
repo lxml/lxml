@@ -202,6 +202,7 @@ def _init_node_converters(makeelement):
         return None
 
     def convert_node(bs_node, parent=None):
+        # duplicated in convert_tag() below
         try:
             handler = converters[type(bs_node)]
         except KeyError:
@@ -238,7 +239,17 @@ def _init_node_converters(makeelement):
         else:
             attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
+
         for child in bs_node:
+            # avoid double recursion by inlining convert_node(), see above
+            try:
+                handler = converters[type(child)]
+            except KeyError:
+                pass
+            else:
+                if handler is not None:
+                    handler(child, res)
+                continue
             convert_node(child, res)
         return res
 
