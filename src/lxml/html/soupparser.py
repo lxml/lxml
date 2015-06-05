@@ -142,11 +142,13 @@ def _convert_tree(beautiful_soup_tree, makeelement):
         # ... otherwise create a new one.
         html_root = _PseudoTag(roots)
 
+    convert_node = _init_node_converters(makeelement)
+
     # Process pre_root
-    res_root = _convert_node(html_root, None, makeelement)
+    res_root = convert_node(html_root)
     prev = res_root
     for e in reversed(pre_root):
-        converted = _convert_node(e)
+        converted = convert_node(e)
         if converted is not None:
             prev.addprevious(converted)
             prev = converted
@@ -154,7 +156,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     # ditto for post_root
     prev = res_root
     for e in post_root:
-        converted = _convert_node(e)
+        converted = convert_node(e)
         if converted is not None:
             prev.addnext(converted)
             prev = converted
@@ -181,10 +183,34 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     return res_root
 
 
-def _convert_node(bs_node, parent=None, makeelement=None):
-    res = None
-    if isinstance(bs_node, (Tag, _PseudoTag)):
-        bs_attrs = bs_node.attrs
+def _init_node_converters(makeelement):
+    converters = {}
+    ordered_node_types = []
+
+    def converter(*types):
+        def add(handler):
+            for t in types:
+                converters[t] = handler
+                ordered_node_types.append(t)
+            return handler
+        return add
+
+    def find_best_converter(node):
+        for t in ordered_node_types:
+            if isinstance(node, t):
+                return converters[t]
+        return None
+
+    def convert_node(bs_node, parent=None):
+        try:
+            handler = converters[type(bs_node)]
+        except KeyError:
+            handler = converters[type(bs_node)] = find_best_converter(bs_node)
+        if handler is None:
+            return None
+        return handler(bs_node, parent)
+
+    def map_attrs(bs_attrs):
         if isinstance(bs_attrs, dict):  # bs4
             attribs = {}
             for k, v in bs_attrs.items():
@@ -193,22 +219,38 @@ def _convert_node(bs_node, parent=None, makeelement=None):
                 attribs[k] = unescape(v)
         else:
             attribs = dict((k, unescape(v)) for k, v in bs_attrs)
+        return attribs
+
+    def append_text(parent, text):
+        if len(parent) == 0:
+            parent.text = (parent.text or '') + text
+        else:
+            parent[-1].tail = (parent[-1].tail or '') + text
+
+    # converters are tried in order of their definition
+
+    @converter(Tag, _PseudoTag)
+    def convert_tag(bs_node, parent):
+        attrs = bs_node.attrs
         if parent is not None:
+            attribs = map_attrs(attrs) if attrs else None
             res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
+            attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
         for child in bs_node:
-            _convert_node(child, res)
+            convert_node(child, res)
+        return res
 
-    elif type(bs_node) is NavigableString:
-        if parent is None:
-            return None
-        _append_text(parent, unescape(bs_node))
-    elif isinstance(bs_node, Comment):
+    @converter(Comment)
+    def convert_comment(bs_node, parent):
         res = etree.Comment(bs_node)
         if parent is not None:
             parent.append(res)
-    elif isinstance(bs_node, ProcessingInstruction):
+        return res
+
+    @converter(ProcessingInstruction)
+    def convert_pi(bs_node, parent):
         if bs_node.endswith('?'):
             # The PI is of XML style (<?as df?>) but BeautifulSoup
             # interpreted it as being SGML style (<?as df>). Fix.
@@ -216,18 +258,15 @@ def _convert_node(bs_node, parent=None, makeelement=None):
         res = etree.ProcessingInstruction(*bs_node.split(' ', 1))
         if parent is not None:
             parent.append(res)
-    elif isinstance(bs_node, NavigableString):
-        if parent is None:
-            return None
-        _append_text(parent, unescape(bs_node))
-    return res
+        return res
 
+    @converter(NavigableString)
+    def convert_text(bs_node, parent):
+        if parent is not None:
+            append_text(parent, unescape(bs_node))
+        return None
 
-def _append_text(parent, text):
-    if len(parent) == 0:
-        parent.text = (parent.text or '') + text
-    else:
-        parent[-1].tail = (parent[-1].tail or '') + text
+    return convert_node
 
 
 # copied from ET's ElementSoup
