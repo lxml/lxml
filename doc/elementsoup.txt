@@ -193,7 +193,7 @@ BeautifulSoup's `support for encoding detection`_ in the
     ...    from BeautifulSoup import UnicodeDammit
 
     >>> def decode_html(html_string):
-    ...     converted = UnicodeDammit(html_string, isHTML=True)
+    ...     converted = UnicodeDammit(html_string)
     ...     if not converted.unicode:
     ...         raise UnicodeDecodeError(
     ...             "Failed to detect encoding, tried [%s]",
