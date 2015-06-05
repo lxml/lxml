@@ -3,12 +3,9 @@ from lxml.tests.common_imports import make_doctest, HelperTestCase
 
 BS_INSTALLED = True
 try:
-    import BeautifulSoup
+    import lxml.html.soupparser
 except ImportError:
-    try:
-        import bs4
-    except ImportError:
-        BS_INSTALLED = False
+    BS_INSTALLED = False
 
 from lxml.html import tostring
 
@@ -93,12 +90,24 @@ b'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
             self.assertTrue(tree.docinfo.public_id is None)
             self.assertEqual(tostring(tree), html)
 
+else:
+    class SoupNotInstalledTestCase(HelperTestCase):
+
+        def test_beautifulsoup_not_installed(self):
+            # If BS_INSTALLED failed, beautifulsoup should not exist
+            with self.assertRaises(ImportError):
+                import bs4
+            with self.assertRaises(ImportError):
+                import BeautifulSoup
+
 def test_suite():
     suite = unittest.TestSuite()
     if BS_INSTALLED:
         suite.addTests([unittest.makeSuite(SoupParserTestCase)])
         if sys.version_info[0] < 3:
             suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
+    else:
+        suite.addTests([unittest.makeSuite(SoupNotInstalledTestCase)])
     return suite
 
 if __name__ == '__main__':
