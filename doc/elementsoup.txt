@@ -187,7 +187,10 @@ BeautifulSoup's `support for encoding detection`_ in the
 
 .. sourcecode:: pycon
 
-    >>> from BeautifulSoup import UnicodeDammit
+    >>> try:
+    ...    from bs4 import UnicodeDammit
+    ... except ImportError:
+    ...    from BeautifulSoup import UnicodeDammit
 
     >>> def decode_html(html_string):
     ...     converted = UnicodeDammit(html_string, isHTML=True)
