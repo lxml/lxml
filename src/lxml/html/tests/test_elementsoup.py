@@ -1,9 +1,9 @@
 import unittest, sys
 from lxml.tests.common_imports import make_doctest, HelperTestCase
 
+BS_INSTALLED = True
 try:
-    import BeautifulSoup
-    BS_INSTALLED = True
+    import lxml.html.soupparser
 except ImportError:
     BS_INSTALLED = False
 
@@ -24,21 +24,21 @@ if BS_INSTALLED:
 
         def test_body(self):
             html = '''<body><p>test</p></body>'''
-            res = '''<html><body><p>test</p></body></html>'''
+            res = b'''<html><body><p>test</p></body></html>'''
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
         def test_head_body(self):
             # HTML tag missing, parser should fix that
             html = '<head><title>test</title></head><body><p>test</p></body>'
-            res = '<html><head><title>test</title></head><body><p>test</p></body></html>'
+            res = b'<html><head><title>test</title></head><body><p>test</p></body></html>'
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
         def test_wrap_html(self):
             # <head> outside <html>, parser should fix that
             html = '<head><title>title</test></head><html><body/></html>'
-            res = '<html><head><title>title</title></head><body></body></html>'
+            res = b'<html><head><title>title</title></head><body></body></html>'
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
@@ -47,7 +47,7 @@ if BS_INSTALLED:
 <?test asdf?>
 <head><title>test</title></head><body><p>test</p></body>
 <!-- another comment -->'''
-            res = '''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+            res = b'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <!-- comment --><?test asdf?><html><head><title>test</title></head><body><p>test</p></body></html><!-- another comment -->'''
             tree = self.soupparser.fromstring(html).getroottree()
             self.assertEqual(tostring(tree, method='html'), res)
@@ -60,7 +60,7 @@ if BS_INSTALLED:
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar>'''
 
             res = \
-'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+b'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             tree = self.soupparser.fromstring(html).getroottree()
@@ -75,7 +75,7 @@ if BS_INSTALLED:
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             res = \
-'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+b'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             tree = self.soupparser.fromstring(html).getroottree()
@@ -84,11 +84,21 @@ if BS_INSTALLED:
 
         def test_doctype_html5(self):
             # html 5 doctype declaration
-            html = '<!DOCTYPE html>\n<html lang="en"></html>'
+            html = b'<!DOCTYPE html>\n<html lang="en"></html>'
 
             tree = self.soupparser.fromstring(html).getroottree()
             self.assertTrue(tree.docinfo.public_id is None)
             self.assertEqual(tostring(tree), html)
+
+else:
+    class SoupNotInstalledTestCase(HelperTestCase):
+
+        def test_beautifulsoup_not_installed(self):
+            # If BS_INSTALLED failed, beautifulsoup should not exist
+            with self.assertRaises(ImportError):
+                import bs4
+            with self.assertRaises(ImportError):
+                import BeautifulSoup
 
 def test_suite():
     suite = unittest.TestSuite()
@@ -96,6 +106,8 @@ def test_suite():
         suite.addTests([unittest.makeSuite(SoupParserTestCase)])
         if sys.version_info[0] < 3:
             suite.addTests([make_doctest('../../../../doc/elementsoup.txt')])
+    else:
+        suite.addTests([unittest.makeSuite(SoupNotInstalledTestCase)])
     return suite
 
 if __name__ == '__main__':

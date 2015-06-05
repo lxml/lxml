@@ -8,11 +8,12 @@ from lxml import etree, html
 
 try:
     from bs4 import (
-        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration)
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration, CData, Doctype)
 except ImportError:
     from BeautifulSoup import (
-        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration)
-
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration, CData)
+    class Doctype:
+        pass
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a string of HTML data into an Element tree using the
@@ -65,8 +66,12 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if 'convertEntities' not in bsargs:
-        bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "HTML_ENTITIES"): # bs3
+        if 'convertEntities' not in bsargs:
+            bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"): # bs4
+        if 'features' not in bsargs:
+            bsargs['features'] = ['html.parser'] # force bs html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -113,7 +118,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             last_element_idx = i
             if html_root is None and e.name and e.name.lower() == 'html':
                 html_root = e
-        elif declaration is None and isinstance(e, Declaration):
+        elif declaration is None and isinstance(e, (Declaration, Doctype)):
             declaration = e
 
     # For a nice, well-formatted document, the variable roots below is
@@ -152,7 +157,12 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             prev = converted
 
     if declaration is not None:
-        match = _parse_doctype_declaration(declaration.string)
+        if hasattr(declaration, "output_ready"):
+            # bs4, got full Doctype string
+            doctype_string = declaration.output_ready().strip().strip("<!>")
+        else:
+            doctype_string = declaration.string
+        match = _parse_doctype_declaration(doctype_string)
         if not match:
             # Something is wrong if we end up in here. Since soupparser should
             # tolerate errors, do not raise Exception, just let it pass.
@@ -170,7 +180,14 @@ def _convert_tree(beautiful_soup_tree, makeelement):
 def _convert_node(bs_node, parent=None, makeelement=None):
     res = None
     if isinstance(bs_node, (Tag, _PseudoTag)):
-        attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
+        if isinstance(bs_node.attrs, dict): # bs4
+            attribs = {}
+            for k, v in bs_node.attrs.items():
+                if isinstance(v, list):
+                    v = " ".join(v)
+                attribs[k] = unescape(v)
+        else:
+            attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
         if parent is not None:
             res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
@@ -195,7 +212,7 @@ def _convert_node(bs_node, parent=None, makeelement=None):
             parent.append(res)
     elif isinstance(bs_node, Declaration):
         pass
-    else:  # CData
+    elif isinstance(bs_node, CData):
         _append_text(parent, unescape(bs_node))
     return res
 
