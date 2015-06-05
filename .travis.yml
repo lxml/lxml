@@ -11,7 +11,7 @@ python:
 
 install:
     - pip install --install-option="--no-cython-compile" -r requirements.txt
-    - pip install beautifulsoup4
+    - pip install beautifulsoup4 cssselect
 
 script:
   - python -u setup.py clean
