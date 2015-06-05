@@ -8,12 +8,16 @@ from lxml import etree, html
 
 try:
     from bs4 import (
-        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration, CData, Doctype)
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
+        Declaration, CData, Doctype)
 except ImportError:
     from BeautifulSoup import (
-        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration, CData)
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
+        Declaration, CData)
+
     class Doctype:
         pass
+
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a string of HTML data into an Element tree using the
@@ -66,12 +70,12 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if hasattr(beautifulsoup, "HTML_ENTITIES"): # bs3
+    if hasattr(beautifulsoup, "HTML_ENTITIES"):  # bs3
         if 'convertEntities' not in bsargs:
             bsargs['convertEntities'] = 'html'
-    if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"): # bs4
+    if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):  # bs4
         if 'features' not in bsargs:
-            bsargs['features'] = ['html.parser'] # force bs html parser
+            bsargs['features'] = ['html.parser']  # force bs html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
