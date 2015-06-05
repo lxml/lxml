@@ -9,10 +9,12 @@ try:
     from BeautifulSoup import \
          BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
          Declaration, CData
+    class Doctype:
+        pass
 except ImportError:
     from bs4 import \
          BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
-         Declaration, CData
+         Declaration, CData, Doctype
 
 
 
@@ -65,9 +67,12 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if hasattr(beautifulsoup, "HTML_ENTITIES"): # not bs4
+    if hasattr(beautifulsoup, "HTML_ENTITIES"): # bs3
         if 'convertEntities' not in bsargs:
             bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"): # bs4
+        if 'features' not in bsargs:
+            bsargs['features'] = ['html.parser'] # force bs html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -114,7 +119,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             last_element_idx = i
             if html_root is None and e.name and e.name.lower() == 'html':
                 html_root = e
-        elif declaration is None and isinstance(e, Declaration):
+        elif declaration is None and isinstance(e, (Declaration, Doctype)):
             declaration = e
 
     # For a nice, well-formatted document, the variable roots below is
@@ -153,7 +158,12 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             prev = converted
 
     if declaration is not None:
-        match = _parse_doctype_declaration(declaration.string)
+        try:
+            # bs4, got full Doctype string
+            doctype_string = declaration.output_ready().strip().strip("<!>")
+        except AttributeError:
+            doctype_string = declaration.string
+        match = _parse_doctype_declaration(doctype_string)
         if not match:
             # Something is wrong if we end up in here. Since soupparser should
             # tolerate errors, do not raise Exception, just let it pass.

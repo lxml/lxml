@@ -1,11 +1,14 @@
 import unittest, sys
 from lxml.tests.common_imports import make_doctest, HelperTestCase
 
+BS_INSTALLED = True
 try:
     import BeautifulSoup
-    BS_INSTALLED = True
 except ImportError:
-    BS_INSTALLED = False
+    try:
+        import bs4
+    except ImportError:
+        BS_INSTALLED = False
 
 from lxml.html import tostring
 
@@ -24,21 +27,21 @@ if BS_INSTALLED:
 
         def test_body(self):
             html = '''<body><p>test</p></body>'''
-            res = '''<html><body><p>test</p></body></html>'''
+            res = b'''<html><body><p>test</p></body></html>'''
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
         def test_head_body(self):
             # HTML tag missing, parser should fix that
             html = '<head><title>test</title></head><body><p>test</p></body>'
-            res = '<html><head><title>test</title></head><body><p>test</p></body></html>'
+            res = b'<html><head><title>test</title></head><body><p>test</p></body></html>'
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
         def test_wrap_html(self):
             # <head> outside <html>, parser should fix that
             html = '<head><title>title</test></head><html><body/></html>'
-            res = '<html><head><title>title</title></head><body></body></html>'
+            res = b'<html><head><title>title</title></head><body></body></html>'
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
@@ -47,7 +50,7 @@ if BS_INSTALLED:
 <?test asdf?>
 <head><title>test</title></head><body><p>test</p></body>
 <!-- another comment -->'''
-            res = '''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
+            res = b'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd">
 <!-- comment --><?test asdf?><html><head><title>test</title></head><body><p>test</p></body></html><!-- another comment -->'''
             tree = self.soupparser.fromstring(html).getroottree()
             self.assertEqual(tostring(tree, method='html'), res)
@@ -60,7 +63,7 @@ if BS_INSTALLED:
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar>'''
 
             res = \
-'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+b'''<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             tree = self.soupparser.fromstring(html).getroottree()
@@ -75,7 +78,7 @@ if BS_INSTALLED:
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             res = \
-'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
+b'''<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">
 <!--another comment--><html><head><title>My first HTML document</title></head><body><p>Hello world!</p></body></html><?foo bar?>'''
 
             tree = self.soupparser.fromstring(html).getroottree()
@@ -84,7 +87,7 @@ if BS_INSTALLED:
 
         def test_doctype_html5(self):
             # html 5 doctype declaration
-            html = '<!DOCTYPE html>\n<html lang="en"></html>'
+            html = b'<!DOCTYPE html>\n<html lang="en"></html>'
 
             tree = self.soupparser.fromstring(html).getroottree()
             self.assertTrue(tree.docinfo.public_id is None)
