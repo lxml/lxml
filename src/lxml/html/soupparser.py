@@ -5,12 +5,14 @@ __all__ = ["fromstring", "parse", "convert_tree"]
 
 import re
 from lxml import etree, html
+
 try:
-    from BeautifulSoup import BeautifulSoup, Tag, Comment,\
-            ProcessingInstruction, NavigableString, Declaration
-except:
-    from bs4 import  BeautifulSoup, Tag, Comment,\
-            ProcessingInstruction, NavigableString, Declaration
+    from bs4 import (
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration)
+except ImportError:
+    from BeautifulSoup import (
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, Declaration)
+
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a string of HTML data into an Element tree using the
@@ -26,6 +28,7 @@ def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """
     return _parse(data, beautifulsoup, makeelement, **bsargs)
 
+
 def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a file into an ElemenTree using the BeautifulSoup parser.
 
@@ -39,6 +42,7 @@ def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
         file = open(file)
     root = _parse(file, beautifulsoup, makeelement, **bsargs)
     return etree.ElementTree(root)
+
 
 def convert_tree(beautiful_soup_tree, makeelement=None):
     """Convert a BeautifulSoup tree to a list of Element trees.
