@@ -157,10 +157,10 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             prev = converted
 
     if declaration is not None:
-        try:
+        if hasattr(declaration, "output_ready"):
             # bs4, got full Doctype string
             doctype_string = declaration.output_ready().strip().strip("<!>")
-        except AttributeError:
+        else:
             doctype_string = declaration.string
         match = _parse_doctype_declaration(doctype_string)
         if not match:
