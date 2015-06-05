@@ -1,4 +1,4 @@
-__doc__ = """External interface to the BeautifulSoup HTML parser.
+"""External interface to the BeautifulSoup HTML parser.
 """
 
 __all__ = ["fromstring", "parse", "convert_tree"]
@@ -10,13 +10,12 @@ try:
     from bs4 import (
         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
         Declaration, CData, Doctype)
+    _DECLARATION_OR_DOCTYPE = (Declaration, Doctype)
 except ImportError:
     from BeautifulSoup import (
         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
         Declaration, CData)
-
-    class Doctype:
-        pass
+    _DECLARATION_OR_DOCTYPE = Declaration
 
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
@@ -75,7 +74,7 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
             bsargs['convertEntities'] = 'html'
     if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):  # bs4
         if 'features' not in bsargs:
-            bsargs['features'] = ['html.parser']  # force bs html parser
+            bsargs['features'] = ['html.parser']  # use Python html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -86,7 +85,7 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
 
 
 _parse_doctype_declaration = re.compile(
-    r'DOCTYPE\s*HTML'
+    r'(?:\s|[<!])*DOCTYPE\s*HTML'
     r'(?:\s+PUBLIC)?(?:\s+(\'[^\']*\'|"[^"]*"))?'
     r'(?:\s+(\'[^\']*\'|"[^"]*"))?',
     re.IGNORECASE).match
@@ -122,7 +121,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             last_element_idx = i
             if html_root is None and e.name and e.name.lower() == 'html':
                 html_root = e
-        elif declaration is None and isinstance(e, (Declaration, Doctype)):
+        elif declaration is None and isinstance(e, _DECLARATION_OR_DOCTYPE):
             declaration = e
 
     # For a nice, well-formatted document, the variable roots below is
@@ -161,11 +160,12 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             prev = converted
 
     if declaration is not None:
-        if hasattr(declaration, "output_ready"):
-            # bs4, got full Doctype string
-            doctype_string = declaration.output_ready().strip().strip("<!>")
-        else:
+        try:
+            # bs4 provides full Doctype string
+            doctype_string = declaration.output_ready()
+        except AttributeError:
             doctype_string = declaration.string
+
         match = _parse_doctype_declaration(doctype_string)
         if not match:
             # Something is wrong if we end up in here. Since soupparser should
@@ -184,20 +184,22 @@ def _convert_tree(beautiful_soup_tree, makeelement):
 def _convert_node(bs_node, parent=None, makeelement=None):
     res = None
     if isinstance(bs_node, (Tag, _PseudoTag)):
-        if isinstance(bs_node.attrs, dict): # bs4
+        bs_attrs = bs_node.attrs
+        if isinstance(bs_attrs, dict):  # bs4
             attribs = {}
-            for k, v in bs_node.attrs.items():
+            for k, v in bs_attrs.items():
                 if isinstance(v, list):
                     v = " ".join(v)
                 attribs[k] = unescape(v)
         else:
-            attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
+            attribs = dict((k, unescape(v)) for k, v in bs_attrs)
         if parent is not None:
             res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
             res = makeelement(bs_node.name, attrib=attribs)
         for child in bs_node:
             _convert_node(child, res)
+
     elif type(bs_node) is NavigableString:
         if parent is None:
             return None
@@ -214,9 +216,9 @@ def _convert_node(bs_node, parent=None, makeelement=None):
         res = etree.ProcessingInstruction(*bs_node.split(' ', 1))
         if parent is not None:
             parent.append(res)
-    elif isinstance(bs_node, Declaration):
-        pass
-    elif isinstance(bs_node, CData):
+    elif isinstance(bs_node, NavigableString):
+        if parent is None:
+            return None
         _append_text(parent, unescape(bs_node))
     return res
 
