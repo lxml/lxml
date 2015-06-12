@@ -10,7 +10,8 @@ python:
   - pypy3
 
 install:
-    pip install --install-option="--no-cython-compile" -r requirements.txt
+    - pip install --install-option="--no-cython-compile" -r requirements.txt
+    - pip install beautifulsoup4 cssselect
 
 script:
   - python -u setup.py clean

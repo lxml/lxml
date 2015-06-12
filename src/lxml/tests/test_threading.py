@@ -4,7 +4,11 @@
 Tests for thread usage in lxml.etree.
 """
 
-import unittest, threading, sys, os.path
+import re
+import sys
+import os.path
+import unittest
+import threading
 
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
@@ -17,6 +21,7 @@ try:
 except ImportError:
     from queue import Queue # Py3
 
+
 class ThreadingTestCase(HelperTestCase):
     """Threading tests"""
     etree = etree
@@ -25,6 +30,40 @@ class ThreadingTestCase(HelperTestCase):
         thread = threading.Thread(target=func)
         thread.start()
         thread.join()
+
+    def _run_threads(self, count, func, main_func=None):
+        sync = threading.Event()
+        lock = threading.Lock()
+        counter = dict(started=0, finished=0, failed=0)
+
+        def sync_start(func):
+            with lock:
+                started = counter['started'] + 1
+                counter['started'] = started
+            if started < count + (main_func is not None):
+                sync.wait(4)  # wait until the other threads have started up
+                assert sync.is_set()
+            sync.set()  # all waiting => go!
+            try:
+                func()
+            except:
+                with lock:
+                    counter['failed'] += 1
+                raise
+            else:
+                with lock:
+                    counter['finished'] += 1
+
+        threads = [threading.Thread(target=sync_start, args=(func,)) for _ in range(count)]
+        for thread in threads:
+            thread.start()
+        if main_func is not None:
+            sync_start(main_func)
+        for thread in threads:
+            thread.join()
+
+        self.assertEqual(0, counter['failed'])
+        self.assertEqual(counter['finished'], counter['started'])
 
     def test_subtree_copy_thread(self):
         tostring = self.etree.tostring
@@ -238,6 +277,35 @@ class ThreadingTestCase(HelperTestCase):
             _bytes('<ns0:root xmlns:ns0="myns" att="someval"/>'),
             tostring(result))
 
+    def test_concurrent_attribute_names_in_dicts(self):
+        SubElement = self.etree.SubElement
+        names = list('abcdefghijklmnop')
+        runs_per_name = range(50)
+        result_matches = re.compile(
+            br'<thread_root>'
+            br'(?:<[a-p]{5} thread_attr_[a-p]="value" thread_attr2_[a-p]="value2"\s?/>)+'
+            br'</thread_root>').match
+
+        def testrun():
+            for _ in range(3):
+                root = self.etree.Element('thread_root')
+                for name in names:
+                    tag_name = name * 5
+                    new = []
+                    for _ in runs_per_name:
+                        el = SubElement(root, tag_name, {'thread_attr_' + name: 'value'})
+                        new.append(el)
+                    for el in new:
+                        el.set('thread_attr2_' + name, 'value2')
+                s = etree.tostring(root)
+                self.assertTrue(result_matches(s))
+
+        # first, run only in sub-threads
+        self._run_threads(10, testrun)
+
+        # then, additionally include the main thread (and its parent dict)
+        self._run_threads(10, testrun, main_func=testrun)
+
     def test_concurrent_proxies(self):
         XML = self.etree.XML
         root = XML(_bytes('<root><a>A</a><b xmlns="test">B</b><c/></root>'))
@@ -246,12 +314,7 @@ class ThreadingTestCase(HelperTestCase):
             for i in range(10000):
                 el = root[i%child_count]
                 del el
-        threads = [ threading.Thread(target=testrun)
-                    for _ in range(10) ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        self._run_threads(10, testrun)
 
     def test_concurrent_class_lookup(self):
         XML = self.etree.XML
@@ -279,12 +342,7 @@ class ThreadingTestCase(HelperTestCase):
             for i in range(1000):
                 el = root[i%child_count]
                 del el
-        threads = [ threading.Thread(target=testrun)
-                    for _ in range(10) ]
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        self._run_threads(10, testrun)
 
 
 class ThreadPipelineTestCase(HelperTestCase):

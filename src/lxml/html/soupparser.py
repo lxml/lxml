@@ -1,13 +1,21 @@
-__doc__ = """External interface to the BeautifulSoup HTML parser.
+"""External interface to the BeautifulSoup HTML parser.
 """
 
 __all__ = ["fromstring", "parse", "convert_tree"]
 
 import re
 from lxml import etree, html
-from BeautifulSoup import \
-     BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString, \
-     Declaration
+
+try:
+    from bs4 import (
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
+        Declaration, CData, Doctype)
+    _DECLARATION_OR_DOCTYPE = (Declaration, Doctype)
+except ImportError:
+    from BeautifulSoup import (
+        BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
+        Declaration, CData)
+    _DECLARATION_OR_DOCTYPE = Declaration
 
 
 def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
@@ -24,6 +32,7 @@ def fromstring(data, beautifulsoup=None, makeelement=None, **bsargs):
     """
     return _parse(data, beautifulsoup, makeelement, **bsargs)
 
+
 def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
     """Parse a file into an ElemenTree using the BeautifulSoup parser.
 
@@ -37,6 +46,7 @@ def parse(file, beautifulsoup=None, makeelement=None, **bsargs):
         file = open(file)
     root = _parse(file, beautifulsoup, makeelement, **bsargs)
     return etree.ElementTree(root)
+
 
 def convert_tree(beautiful_soup_tree, makeelement=None):
     """Convert a BeautifulSoup tree to a list of Element trees.
@@ -59,8 +69,12 @@ def convert_tree(beautiful_soup_tree, makeelement=None):
 def _parse(source, beautifulsoup, makeelement, **bsargs):
     if beautifulsoup is None:
         beautifulsoup = BeautifulSoup
-    if 'convertEntities' not in bsargs:
-        bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "HTML_ENTITIES"):  # bs3
+        if 'convertEntities' not in bsargs:
+            bsargs['convertEntities'] = 'html'
+    if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):  # bs4
+        if 'features' not in bsargs:
+            bsargs['features'] = ['html.parser']  # use Python html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -71,7 +85,7 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
 
 
 _parse_doctype_declaration = re.compile(
-    r'DOCTYPE\s*HTML'
+    r'(?:\s|[<!])*DOCTYPE\s*HTML'
     r'(?:\s+PUBLIC)?(?:\s+(\'[^\']*\'|"[^"]*"))?'
     r'(?:\s+(\'[^\']*\'|"[^"]*"))?',
     re.IGNORECASE).match
@@ -107,7 +121,7 @@ def _convert_tree(beautiful_soup_tree, makeelement):
             last_element_idx = i
             if html_root is None and e.name and e.name.lower() == 'html':
                 html_root = e
-        elif declaration is None and isinstance(e, Declaration):
+        elif declaration is None and isinstance(e, _DECLARATION_OR_DOCTYPE):
             declaration = e
 
     # For a nice, well-formatted document, the variable roots below is
@@ -128,11 +142,13 @@ def _convert_tree(beautiful_soup_tree, makeelement):
         # ... otherwise create a new one.
         html_root = _PseudoTag(roots)
 
+    convert_node = _init_node_converters(makeelement)
+
     # Process pre_root
-    res_root = _convert_node(html_root, None, makeelement)
+    res_root = convert_node(html_root)
     prev = res_root
     for e in reversed(pre_root):
-        converted = _convert_node(e)
+        converted = convert_node(e)
         if converted is not None:
             prev.addprevious(converted)
             prev = converted
@@ -140,13 +156,19 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     # ditto for post_root
     prev = res_root
     for e in post_root:
-        converted = _convert_node(e)
+        converted = convert_node(e)
         if converted is not None:
             prev.addnext(converted)
             prev = converted
 
     if declaration is not None:
-        match = _parse_doctype_declaration(declaration.string)
+        try:
+            # bs4 provides full Doctype string
+            doctype_string = declaration.output_ready()
+        except AttributeError:
+            doctype_string = declaration.string
+
+        match = _parse_doctype_declaration(doctype_string)
         if not match:
             # Something is wrong if we end up in here. Since soupparser should
             # tolerate errors, do not raise Exception, just let it pass.
@@ -161,25 +183,85 @@ def _convert_tree(beautiful_soup_tree, makeelement):
     return res_root
 
 
-def _convert_node(bs_node, parent=None, makeelement=None):
-    res = None
-    if isinstance(bs_node, (Tag, _PseudoTag)):
-        attribs = dict((k, unescape(v)) for k, v in bs_node.attrs)
+def _init_node_converters(makeelement):
+    converters = {}
+    ordered_node_types = []
+
+    def converter(*types):
+        def add(handler):
+            for t in types:
+                converters[t] = handler
+                ordered_node_types.append(t)
+            return handler
+        return add
+
+    def find_best_converter(node):
+        for t in ordered_node_types:
+            if isinstance(node, t):
+                return converters[t]
+        return None
+
+    def convert_node(bs_node, parent=None):
+        # duplicated in convert_tag() below
+        try:
+            handler = converters[type(bs_node)]
+        except KeyError:
+            handler = converters[type(bs_node)] = find_best_converter(bs_node)
+        if handler is None:
+            return None
+        return handler(bs_node, parent)
+
+    def map_attrs(bs_attrs):
+        if isinstance(bs_attrs, dict):  # bs4
+            attribs = {}
+            for k, v in bs_attrs.items():
+                if isinstance(v, list):
+                    v = " ".join(v)
+                attribs[k] = unescape(v)
+        else:
+            attribs = dict((k, unescape(v)) for k, v in bs_attrs)
+        return attribs
+
+    def append_text(parent, text):
+        if len(parent) == 0:
+            parent.text = (parent.text or '') + text
+        else:
+            parent[-1].tail = (parent[-1].tail or '') + text
+
+    # converters are tried in order of their definition
+
+    @converter(Tag, _PseudoTag)
+    def convert_tag(bs_node, parent):
+        attrs = bs_node.attrs
         if parent is not None:
+            attribs = map_attrs(attrs) if attrs else None
             res = etree.SubElement(parent, bs_node.name, attrib=attribs)
         else:
+            attribs = map_attrs(attrs) if attrs else {}
             res = makeelement(bs_node.name, attrib=attribs)
+
         for child in bs_node:
-            _convert_node(child, res)
-    elif type(bs_node) is NavigableString:
-        if parent is None:
-            return None
-        _append_text(parent, unescape(bs_node))
-    elif isinstance(bs_node, Comment):
+            # avoid double recursion by inlining convert_node(), see above
+            try:
+                handler = converters[type(child)]
+            except KeyError:
+                pass
+            else:
+                if handler is not None:
+                    handler(child, res)
+                continue
+            convert_node(child, res)
+        return res
+
+    @converter(Comment)
+    def convert_comment(bs_node, parent):
         res = etree.Comment(bs_node)
         if parent is not None:
             parent.append(res)
-    elif isinstance(bs_node, ProcessingInstruction):
+        return res
+
+    @converter(ProcessingInstruction)
+    def convert_pi(bs_node, parent):
         if bs_node.endswith('?'):
             # The PI is of XML style (<?as df?>) but BeautifulSoup
             # interpreted it as being SGML style (<?as df>). Fix.
@@ -187,18 +269,15 @@ def _convert_node(bs_node, parent=None, makeelement=None):
         res = etree.ProcessingInstruction(*bs_node.split(' ', 1))
         if parent is not None:
             parent.append(res)
-    elif isinstance(bs_node, Declaration):
-        pass
-    else:  # CData
-        _append_text(parent, unescape(bs_node))
-    return res
+        return res
 
+    @converter(NavigableString)
+    def convert_text(bs_node, parent):
+        if parent is not None:
+            append_text(parent, unescape(bs_node))
+        return None
 
-def _append_text(parent, text):
-    if len(parent) == 0:
-        parent.text = (parent.text or '') + text
-    else:
-        parent[-1].tail = (parent[-1].tail or '') + text
+    return convert_node
 
 
 # copied from ET's ElementSoup

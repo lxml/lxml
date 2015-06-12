@@ -39,6 +39,9 @@ Features added
 
 * LP#1442427: More work-arounds for quirks and bugs in pypy and pypy3.
 
+* ``lxml.html.soupparser`` now uses BeautifulSoup version 4 instead
+  of version 3 if available.
+
 Bugs fixed
 ----------
 
