@@ -1840,9 +1840,11 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
 </xsl:stylesheet>
 """)
         test = self
+        calls = []
 
         class ExtMyPar(etree.XSLTExtension):
             def execute(self, context, self_node, input_node, output_parent):
+                calls.append('par')
                 p = etree.Element("p")
                 p.attrib["style"] = "color:red"
                 self.process_children(context, p)
@@ -1850,6 +1852,7 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
 
         class ExtMyFormat(etree.XSLTExtension):
             def execute(self, context, self_node, input_node, output_parent):
+                calls.append('format')
                 content = self.process_children(context)
                 test.assertEqual(1, len(content))
                 test.assertEqual('arbitrary', content[0])
@@ -1859,6 +1862,7 @@ class ETreeXSLTExtElementTestCase(HelperTestCase):
         extensions = {("my", "par"): ExtMyPar(), ("my", "format"): ExtMyFormat()}
         transform = etree.XSLT(style, extensions=extensions)
         result = transform(tree)
+        self.assertEqual(['par', 'format'], calls)
         self.assertEqual(
             b'<p style="color:red">This is *-arbitrary-* text in a paragraph</p>\n',
             etree.tostring(result))

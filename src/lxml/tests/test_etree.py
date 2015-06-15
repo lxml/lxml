@@ -2693,7 +2693,7 @@ class ETreeOnlyTestCase(HelperTestCase):
                '</root>').encode('utf8')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
-        self.etree.cleanup_namespaces(root, keep_nsmap={'foo': 'FOO'})
+        self.etree.cleanup_namespaces(root, keep_ns_prefixes=['foo'])
         self.assertEqual(
             b'<root xmlns:n64="NS64" xmlns:foo="FOO">' +
             b'<a><n64:x xmlns:a="A" a:attr="X"/></a>' +

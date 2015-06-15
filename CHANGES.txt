@@ -8,9 +8,9 @@ lxml changelog
 Features added
 --------------
 
-* ``cleanup_namespaces()`` accepts a new argument ``keep_nsmap`` that
-  does not remove definitions of the provided prefix-namespace mapping
-  from the tree.
+* ``cleanup_namespaces()`` accepts a new argument ``keep_ns_prefixes``
+  that does not remove definitions of the provided prefix-namespace
+  mapping from the tree.
 
 * ``cleanup_namespaces()`` accepts a new argument ``top_nsmap`` that
   moves definitions of the provided prefix-namespace mapping to the
@@ -38,6 +38,9 @@ Features added
   Patch by Olli Pottonen.
 
 * LP#1442427: More work-arounds for quirks and bugs in pypy and pypy3.
+
+* ``lxml.html.soupparser`` now uses BeautifulSoup version 4 instead
+  of version 3 if available.
 
 Bugs fixed
 ----------
