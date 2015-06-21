@@ -2998,6 +2998,9 @@ def Comment(text=None):
         text = b''
     else:
         text = _utf8(text)
+    if '--' in text or text.endswith('-'):
+        raise ValueError("Comment may not contain '--' or end with '-'")
+
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createComment(c_doc, _xcstr(text))
@@ -3014,6 +3017,12 @@ def ProcessingInstruction(target, text=None):
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
     target = _utf8(target)
+    _tagValidOrRaise(target)
+    if target.lower() == 'xml':
+        raise ValueError("Invalid PI name '%s'" % target)
+    if text is not None and '?>' in text:
+        raise ValueError("PI text may not contain end tag '?>")
+
     if text is None:
         text = b''
     else:
@@ -3043,6 +3052,8 @@ cdef class CDATA:
     cdef bytes _utf8_data
     def __cinit__(self, data):
         self._utf8_data = _utf8(data)
+        if ']]>' in data:
+            raise ValueError("End tag ']]>' not allowed inside CDATA")
 
 def Entity(name):
     u"""Entity(name)
