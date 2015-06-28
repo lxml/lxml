@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 
@@ -37,7 +38,7 @@ def changes():
     """Extract part of changelog pertaining to version.
     """
     _version = version()
-    with open(os.path.join(get_base_dir(), "CHANGES.txt"), 'r') as f:
+    with io.open(os.path.join(get_base_dir(), "CHANGES.txt"), 'r', encoding='utf8') as f:
         lines = []
         for line in f:
             if line.startswith('====='):
