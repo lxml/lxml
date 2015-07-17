@@ -10,8 +10,9 @@ python:
   - pypy3
 
 install:
+    - pip install -U pip wheel
     - pip install --install-option="--no-cython-compile" -r requirements.txt
-    - pip install beautifulsoup4 cssselect
+    - pip install -U beautifulsoup4 cssselect
 
 script:
   - python -u setup.py clean
@@ -22,3 +23,7 @@ matrix:
   allow_failures:
     - python: pypy
     - python: pypy3
+
+cache:
+  directories:
+    - $HOME/.cache/pip
