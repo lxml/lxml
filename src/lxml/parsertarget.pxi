@@ -1,7 +1,11 @@
 # Parser target context (ET target interface)
 
 cdef object inspect_getargspec
-from inspect import getargspec as inspect_getargspec
+try:
+    from inspect import getargspec as inspect_getargspec
+except ImportError:
+    from inspect import getfullargspec as inspect_getargspec
+
 
 class _TargetParserResult(Exception):
     # Admittedly, this is somewhat ugly, but it's the easiest way
@@ -9,6 +13,7 @@ class _TargetParserResult(Exception):
     # machinery towards the API level functions
     def __init__(self, result):
         self.result = result
+
 
 @cython.final
 @cython.internal
