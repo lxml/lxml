@@ -140,8 +140,8 @@ in the XPath expression to namespace URIs:
   ... ''')
   >>> doc = etree.parse(f)
 
-  >>> r = doc.xpath('/t:foo/b:bar',
-  ...               namespaces={'t': 'http://codespeak.net/ns/test1', 
+  >>> r = doc.xpath('/a:foo/b:bar',
+  ...               namespaces={'a': 'http://codespeak.net/ns/test1',
   ...                           'b': 'http://codespeak.net/ns/test2'})
   >>> len(r)
   1
