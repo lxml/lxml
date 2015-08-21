@@ -64,7 +64,7 @@ cdef _Element _rootNodeOrRaise(object input):
             python._fqtypename(input).decode('utf8')
     if (node is None or not node._c_node or
             node._c_node.type != tree.XML_ELEMENT_NODE):
-        raise ValueError, u"Input object has no element: %s" % \
+        raise ValueError, u"Input object is not an XML element: %s" % \
             python._fqtypename(input).decode('utf8')
     _assertValidNode(node)
     return node
