@@ -48,6 +48,11 @@ Bugs fixed
   an ``output_parent`` argument failed with a ``TypeError``.
   Fix by Jens Tröger.
 
+* GH#166: Static build could link libraries in wrong order.
+
+* GH#172: Rely a bit more on libxml2 for encoding detection rather than
+  rolling our own in some cases.  Patch by Olli Pottonen.
+
 * GH#159: Validity checks for names and string content were tightened
   to detect the use of illegal characters early.  Patch by Olli Pottonen.
 
