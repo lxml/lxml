@@ -1243,34 +1243,24 @@ cdef class _FeedParser(_BaseParser):
             c_filename = (_cstr(self._filename)
                           if self._filename is not None else NULL)
 
-            if c_encoding is NULL and py_buffer_len >= 2:
-                # libxml2 can't handle BOMs here, so let's try ourselves
-                if c_data[0] in b'\xfe\xef\xff':
-                    # likely a BOM, let's take a closer look
-                    c_encoding = _findEncodingName(
-                        <const_xmlChar*>c_data,
-                        4 if py_buffer_len > 4 else <int>py_buffer_len)
-                    if c_encoding is not NULL:
-                        # found it => skip over BOM (if there is one)
-                        if (c_data[0] == b'\xef' and
-                                c_data[1] == b'\xbb' and
-                                c_data[2] == b'\xbf'):
-                            c_data += 3  # UTF-8 BOM
-                            py_buffer_len -= 3
-                        elif (c_data[0] == b'\xfe' and c_data[1] == b'\xff' or
-                                c_data[0] == b'\xff' and c_data[1] == b'\xfe'):
-                            # UTF-16 BE/LE
-                            c_data += 2
-                            py_buffer_len -= 2
-
+            # We have to give *mlCtxtResetPush() enough input to figure
+            # out the character encoding (at least four bytes),
+            # however if we give it all we got, we'll have nothing for
+            # *mlParseChunk() and things go wrong.
+            if py_buffer_len > 4:
+                buffer_len = 4
+            else:
+                buffer_len = <int>py_buffer_len
             if self._for_html:
                 error = _htmlCtxtResetPush(
-                    pctxt, NULL, 0, c_filename, c_encoding,
+                    pctxt, c_data, buffer_len, c_filename, c_encoding,
                     self._parse_options)
             else:
                 xmlparser.xmlCtxtUseOptions(pctxt, self._parse_options)
                 error = xmlparser.xmlCtxtResetPush(
-                    pctxt, NULL, 0, c_filename, c_encoding)
+                    pctxt, c_data, buffer_len, c_filename, c_encoding)
+            py_buffer_len -= buffer_len
+            c_data += buffer_len
             if error:
                 raise MemoryError()
             __GLOBAL_PARSER_CONTEXT.initParserDict(pctxt)
@@ -1365,7 +1355,7 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
     cdef xmlparser.xmlParserInput* c_input_stream
     # libxml2 lacks an HTML push parser setup function
     error = xmlparser.xmlCtxtResetPush(
-        c_ctxt, NULL, 0, c_filename, c_encoding)
+        c_ctxt, c_data, buffer_len, c_filename, c_encoding)
     if error:
         return error
 
@@ -1374,8 +1364,6 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
     c_ctxt.html = 1
     htmlparser.htmlCtxtUseOptions(c_ctxt, parse_options)
 
-    if c_data is not NULL and buffer_len > 0:
-        return htmlparser.htmlParseChunk(c_ctxt, c_data, buffer_len, 0)
     return 0
 
 ############################################################
