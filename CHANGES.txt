@@ -16,6 +16,9 @@ Features added
   moves definitions of the provided prefix-namespace mapping to the
   top of the tree.
 
+* LP#1490451: ``Element`` objects gained a ``cssselect()`` method as
+  known from ``lxml.html``.  Patch by Simon Sapin.
+
 * API functions and methods behave and look more like Python functions,
   which allows introspection on them etc.  One side effect to be aware of
   is that the functions now bind as methods when assigned to a class
@@ -51,6 +54,9 @@ Bugs fixed
 * Calling ``process_children()`` in an XSLT extension element without
   an ``output_parent`` argument failed with a ``TypeError``.
   Fix by Jens Tröger.
+
+* GH#162: Image data in HTML ``data`` URLs is considered safe and
+  no longer removed by ``lxml.html.clean`` JavaScript cleaner.
 
 * GH#166: Static build could link libraries in wrong order.
 
