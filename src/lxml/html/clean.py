@@ -70,9 +70,16 @@ _css_import_re = re.compile(
 
 # All kinds of schemes besides just javascript: that can cause
 # execution:
-_is_javascript_scheme = re.compile(
+_is_image_dataurl = re.compile(
+    r'^data:image/.+;base64', re.I).search
+_is_possibly_malicious_scheme = re.compile(
     r'(?:javascript|jscript|livescript|vbscript|data|about|mocha):',
     re.I).search
+def _is_javascript_scheme(s):
+    if _is_image_dataurl(s):
+        return None
+    return _is_possibly_malicious_scheme(s)
+
 _substitute_whitespace = re.compile(r'[\s\x00-\x08\x0B\x0C\x0E-\x19]+').sub
 # FIXME: should data: be blocked?
 
