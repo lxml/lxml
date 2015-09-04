@@ -2985,6 +2985,7 @@ def Element(_tag, attrib=None, nsmap=None, **_extra):
     return _makeElement(_tag, NULL, None, None, None, None,
                         attrib, nsmap, _extra)
 
+
 def Comment(text=None):
     u"""Comment(text=None)
 
@@ -2994,18 +2995,20 @@ def Comment(text=None):
     cdef _Document doc
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
+
     if text is None:
         text = b''
     else:
         text = _utf8(text)
-    if b'--' in text or text.endswith(b'-'):
-        raise ValueError("Comment may not contain '--' or end with '-'")
+        if b'--' in text or text.endswith(b'-'):
+            raise ValueError("Comment may not contain '--' or end with '-'")
 
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createComment(c_doc, _xcstr(text))
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
+
 
 def ProcessingInstruction(target, text=None):
     u"""ProcessingInstruction(target, text=None)
@@ -3016,16 +3019,19 @@ def ProcessingInstruction(target, text=None):
     cdef _Document doc
     cdef xmlNode*  c_node
     cdef xmlDoc*   c_doc
+
     target = _utf8(target)
     _tagValidOrRaise(target)
     if target.lower() == b'xml':
         raise ValueError("Invalid PI name '%s'" % target)
+
     if text is None:
         text = b''
     else:
         text = _utf8(text)
-    if text is not None and b'?>' in text:
-        raise ValueError("PI text may not contain end tag '?>")
+        if b'?>' in text:
+            raise ValueError("PI text must not contain '?>'")
+
     c_doc = _newXMLDoc()
     doc = _documentFactory(c_doc, None)
     c_node = _createPI(c_doc, _xcstr(target), _xcstr(text))
@@ -3033,6 +3039,7 @@ def ProcessingInstruction(target, text=None):
     return _elementFactory(doc, c_node)
 
 PI = ProcessingInstruction
+
 
 cdef class CDATA:
     u"""CDATA(data)
@@ -3052,8 +3059,9 @@ cdef class CDATA:
     def __cinit__(self, data):
         _utf8_data = _utf8(data)
         if b']]>' in _utf8_data:
-            raise ValueError("End tag ']]>' not allowed inside CDATA")
+            raise ValueError("']]>' not allowed inside CDATA")
         self._utf8_data = _utf8_data
+
 
 def Entity(name):
     u"""Entity(name)
@@ -3080,6 +3088,7 @@ def Entity(name):
     tree.xmlAddChild(<xmlNode*>c_doc, c_node)
     return _elementFactory(doc, c_node)
 
+
 def SubElement(_Element _parent not None, _tag,
                attrib=None, nsmap=None, **_extra):
     u"""SubElement(_parent, _tag, attrib=None, nsmap=None, **_extra)
@@ -3088,6 +3097,7 @@ def SubElement(_Element _parent not None, _tag,
     appends it to an existing element.
     """
     return _makeSubElement(_parent, _tag, None, None, attrib, nsmap, _extra)
+
 
 def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
     u"""ElementTree(element=None, file=None, parser=None)
@@ -3114,6 +3124,7 @@ def ElementTree(_Element element=None, *, file=None, _BaseParser parser=None):
 
     return _elementTreeFactory(doc, element)
 
+
 def HTML(text, _BaseParser parser=None, *, base_url=None):
     u"""HTML(text, parser=None, base_url=None)
 
@@ -3138,6 +3149,7 @@ def HTML(text, _BaseParser parser=None, *, base_url=None):
         return doc.getroot()
     except _TargetParserResult as result_container:
         return result_container.result
+
 
 def XML(text, _BaseParser parser=None, *, base_url=None):
     u"""XML(text, parser=None, base_url=None)
@@ -3169,6 +3181,7 @@ def XML(text, _BaseParser parser=None, *, base_url=None):
     except _TargetParserResult as result_container:
         return result_container.result
 
+
 def fromstring(text, _BaseParser parser=None, *, base_url=None):
     u"""fromstring(text, parser=None, base_url=None)
 
@@ -3188,6 +3201,7 @@ def fromstring(text, _BaseParser parser=None, *, base_url=None):
         return doc.getroot()
     except _TargetParserResult as result_container:
         return result_container.result
+
 
 def fromstringlist(strings, _BaseParser parser=None):
     u"""fromstringlist(strings, parser=None)
@@ -3209,12 +3223,14 @@ def fromstringlist(strings, _BaseParser parser=None):
         feed(data)
     return parser.close()
 
+
 def iselement(element):
     u"""iselement(element)
 
     Checks if an object appears to be a valid element object.
     """
     return isinstance(element, _Element) and (<_Element>element)._c_node is not NULL
+
 
 def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
     u"""dump(elem, pretty_print=True, with_tail=True)
@@ -3227,6 +3243,7 @@ def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
     if not pretty_print:
         xml += '\n'
     sys.stdout.write(xml)
+
 
 def tostring(element_or_tree, *, encoding=None, method=u"xml",
              xml_declaration=None, bint pretty_print=False, bint with_tail=True,
@@ -3320,6 +3337,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
         raise TypeError, u"Type '%s' cannot be serialized." % \
             python._fqtypename(element_or_tree).decode('utf8')
 
+
 def tostringlist(element_or_tree, *args, **kwargs):
     u"""tostringlist(element_or_tree, *args, **kwargs)
 
@@ -3330,6 +3348,7 @@ def tostringlist(element_or_tree, *args, **kwargs):
     single string wrapped in a list.
     """
     return [tostring(element_or_tree, *args, **kwargs)]
+
 
 def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
               bint with_tail=True, doctype=None):
@@ -3364,6 +3383,7 @@ def tounicode(element_or_tree, *, method=u"xml", bint pretty_print=False,
     else:
         raise TypeError, u"Type '%s' cannot be serialized." % \
             type(element_or_tree)
+
 
 def parse(source, _BaseParser parser=None, *, base_url=None):
     u"""parse(source, parser=None, base_url=None)

@@ -1247,10 +1247,7 @@ cdef class _FeedParser(_BaseParser):
             # out the character encoding (at least four bytes),
             # however if we give it all we got, we'll have nothing for
             # *mlParseChunk() and things go wrong.
-            if py_buffer_len > 4:
-                buffer_len = 4
-            else:
-                buffer_len = <int>py_buffer_len
+            buffer_len = 4 if py_buffer_len > 4 else <int>py_buffer_len
             if self._for_html:
                 error = _htmlCtxtResetPush(
                     pctxt, c_data, buffer_len, c_filename, c_encoding,
@@ -1348,6 +1345,7 @@ cdef class _FeedParser(_BaseParser):
         else:
             return result
 
+
 cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
                              const_char* c_data, int buffer_len,
                              const_char* c_filename, const_char* c_encoding,
@@ -1365,6 +1363,7 @@ cdef int _htmlCtxtResetPush(xmlparser.xmlParserCtxt* c_ctxt,
     htmlparser.htmlCtxtUseOptions(c_ctxt, parse_options)
 
     return 0
+
 
 ############################################################
 ## XML parser
