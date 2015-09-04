@@ -8,6 +8,10 @@ lxml changelog
 Features added
 --------------
 
+* ``cleanup_namespaces()`` accepts a new argument ``keep_ns_prefixes``
+  that does not remove definitions of the provided prefix-namespace
+  mapping from the tree.
+
 * ``cleanup_namespaces()`` accepts a new argument ``top_nsmap`` that
   moves definitions of the provided prefix-namespace mapping to the
   top of the tree.
