@@ -1600,7 +1600,6 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         return CSSSelector(expr, translator=translator)(self)
 
 
-
 cdef extern from "etree_defs.h":
     # macro call to 't->tp_new()' for fast instantiation
     cdef object NEW_ELEMENT "PY_NEW" (object t)
