@@ -11,21 +11,24 @@ def cleanup_namespaces(tree_or_element, top_nsmap=None, keep_ns_prefixes=None):
     element of the subtree before running the cleanup, which allows
     moving namespace declarations to the top of the tree.
 
-    If a 'keep_ns_prefixes' is provided, it must be a list of prefixes
+    If a 'keep_ns_prefixes' is provided, it must be a list of prefixes.
     These prefixes will not be removed as part of the cleanup.
     """
     element = _rootNodeOrRaise(tree_or_element)
     c_element = element._c_node
-    ns_prefixes = []
 
     if top_nsmap:
         doc = element._doc
         # declare namespaces from nsmap, then apply them to the subtree
         _setNodeNamespaces(c_element, doc, None, top_nsmap)
         moveNodeToDocument(doc, c_element.doc, c_element)
-    if keep_ns_prefixes:
-        ns_prefixes = keep_ns_prefixes
-    _removeUnusedNamespaceDeclarations(c_element, ns_prefixes)
+
+    keep_ns_prefixes = (
+        set([_utf8(prefix) for prefix in keep_ns_prefixes])
+        if keep_ns_prefixes else None)
+
+    _removeUnusedNamespaceDeclarations(c_element, keep_ns_prefixes)
+
 
 def strip_attributes(tree_or_element, *attribute_names):
     u"""strip_attributes(tree_or_element, *attribute_names)
@@ -53,6 +56,7 @@ def strip_attributes(tree_or_element, *attribute_names):
         return
     _strip_attributes(element._c_node, matcher)
 
+
 cdef _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher):
     cdef xmlAttr* c_attr
     cdef xmlAttr* c_next_attr
@@ -65,6 +69,7 @@ cdef _strip_attributes(xmlNode* c_node, _MultiTagMatcher matcher):
                 tree.xmlRemoveProp(c_attr)
             c_attr = c_next_attr
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
+
 
 def strip_elements(tree_or_element, *tag_names, bint with_tail=True):
     u"""strip_elements(tree_or_element, *tag_names, with_tail=True)

@@ -2686,18 +2686,41 @@ class ETreeOnlyTestCase(HelperTestCase):
             b'<n64:x xmlns:a="A" a:attr="X"/>' + b'</a>'*100 + b'</root>',
             self.etree.tostring(root))
 
-    def test_namespace_cleanup_deep_keep_to_top(self):
-        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO">' +
-               '<a><n64:x xmlns:a="A" a:attr="X"/>' +
-               '</a><foo>foo:bar</foo>' +
+    def test_namespace_cleanup_keep_prefixes(self):
+        xml = ('<root xmlns:n64="NS64" xmlns:foo="FOO" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               '<foo>foo:bar</foo>'
                '</root>').encode('utf8')
         root = self.etree.fromstring(xml)
         self.assertEqual(xml, self.etree.tostring(root))
         self.etree.cleanup_namespaces(root, keep_ns_prefixes=['foo'])
         self.assertEqual(
-            b'<root xmlns:n64="NS64" xmlns:foo="FOO">' +
-            b'<a><n64:x xmlns:a="A" a:attr="X"/></a>' +
-            b'<foo>foo:bar</foo>' + b'</root>',
+            b'<root xmlns:n64="NS64" xmlns:foo="FOO">'
+            b'<a><n64:x xmlns:a="A" a:attr="X"/></a>'
+            b'<foo>foo:bar</foo>'
+            b'</root>',
+            self.etree.tostring(root))
+
+    def test_namespace_cleanup_keep_prefixes_top(self):
+        xml = ('<root xmlns:n64="NS64" xmlns:unused1="UNUSED" xmlns:no="NO">'
+               '<sub xmlns:foo="FOO">'
+               '<a xmlns:unused2="UNUSED"><n64:x xmlns:a="A" a:attr="X"/></a>'
+               '<foo>foo:bar</foo>'
+               '</sub>'
+               '</root>').encode('utf8')
+        root = self.etree.fromstring(xml)
+        self.assertEqual(xml, self.etree.tostring(root))
+        self.etree.cleanup_namespaces(
+            root,
+            top_nsmap={'foo': 'FOO', 'unused1': 'UNUSED'},
+            keep_ns_prefixes=['foo'])
+        self.assertEqual(
+            b'<root xmlns:n64="NS64" xmlns:foo="FOO">'
+            b'<sub>'
+            b'<a><n64:x xmlns:a="A" a:attr="X"/></a>'
+            b'<foo>foo:bar</foo>'
+            b'</sub>'
+            b'</root>',
             self.etree.tostring(root))
 
     def test_element_nsmap(self):

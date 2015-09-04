@@ -360,13 +360,12 @@ cdef int _collectNsDefs(xmlNode* c_element, _ns_node_ref **_c_ns_list,
     _c_ns_list[0] = c_ns_list
 
 
-cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_ns_prefixes) except -1:
+cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, set prefixes_to_keep) except -1:
     u"""Remove any namespace declarations from a subtree that are not used by
     any of its elements (or attributes).
 
-    If a 'keep_ns_prefixes' is provided, it must be a list mapping from prefixes
-    to namespace URIs.  These namespaces will not be removed as part
-    of the cleanup.
+    If a 'prefixes_to_keep' is provided, it must be a set of prefixes.
+    Any corresponding namespace mappings will not be removed as part of the cleanup.
     """
     cdef xmlNode* c_node
     cdef _ns_node_ref* c_ns_list = NULL
@@ -389,8 +388,7 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_ns_prefixes
         while c_node and c_ns_list_len:
             if c_node.ns:
                 for i in range(c_ns_list_len):
-                    if (c_node.ns is c_ns_list[i].ns or
-                        c_ns_list[i].ns.prefix in keep_ns_prefixes):
+                    if c_node.ns is c_ns_list[i].ns:
                         c_ns_list_len -= 1
                         c_ns_list[i] = c_ns_list[c_ns_list_len]
                         #c_ns_list[c_ns_list_len] = _ns_node_ref(NULL, NULL)
@@ -405,12 +403,16 @@ cdef int _removeUnusedNamespaceDeclarations(xmlNode* c_element, keep_ns_prefixes
     if c_ns_list is NULL:
         return 0
 
-    # free all namespace declarations that remained in the list
+    # free all namespace declarations that remained in the list,
+    # except for those we should keep explicitly
     cdef xmlNs* c_nsdef
     for i in range(c_ns_list_len):
+        if prefixes_to_keep is not None:
+            if c_ns_list[i].ns.prefix and c_ns_list[i].ns.prefix in prefixes_to_keep:
+                continue
         c_node = c_ns_list[i].node
         c_nsdef = c_node.nsDef
-        if c_nsdef is c_ns_list[i].ns and c_nsdef.prefix not in keep_ns_prefixes:
+        if c_nsdef is c_ns_list[i].ns:
             c_node.nsDef = c_node.nsDef.next
         else:
             while c_nsdef.next is not c_ns_list[i].ns:
