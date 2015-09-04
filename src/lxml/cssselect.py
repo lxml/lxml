@@ -6,17 +6,16 @@ See the `CSSSelector` class for details.
 This is a thin wrapper around cssselect 0.7 or later.
 """
 
-import sys
-from lxml import etree
+from __future__ import absolute_import
 
-## Work-around the lack of absolute import in Python 2.4
-#from __future__ import absolute_import
-#from cssselect import ...
+from . import etree
 try:
-    external_cssselect = __import__('cssselect')
+    import cssselect as external_cssselect
 except ImportError:
-    raise ImportError('cssselect seems not to be installed. '
-                      'See http://packages.python.org/cssselect/')
+    raise ImportError(
+        'cssselect does not seem to be installed. '
+        'See http://packages.python.org/cssselect/')
+
 
 SelectorSyntaxError = external_cssselect.SelectorSyntaxError
 ExpressionError = external_cssselect.ExpressionError
