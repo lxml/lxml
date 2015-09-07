@@ -17,6 +17,8 @@ to the ``lxml.html`` module by providing ``fromstring()``,
 ``fragments_fromstring()`` that work like the regular html parsing
 functions.
 
+Note that, as with the ``lxml.html`` module, this module also ignores
+namespaces.
 
 Differences to regular HTML parsing
 ===================================
