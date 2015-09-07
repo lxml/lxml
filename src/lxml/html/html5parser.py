@@ -29,7 +29,7 @@ class HTMLParser(_HTMLParser):
     """An html5lib HTML parser with lxml as tree."""
 
     def __init__(self, strict=False, **kwargs):
-        _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder, **kwargs)
+        _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder, namespaceHTMLElements=False, **kwargs)
 
 
 try:
