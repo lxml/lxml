@@ -179,8 +179,6 @@ setup(
     maintainer="lxml dev team",
     maintainer_email="lxml-dev@lxml.de",
     url="http://lxml.de/",
-    download_url="http://pypi.python.org/packages/source/l/lxml/lxml-%s.tar.gz" % lxml_version,
-
     # Commented out because this causes distutils to emit warnings
     # `Unknown distribution option: 'bugtrack_url'`
     # which distract folks from real causes of problems when troubleshooting

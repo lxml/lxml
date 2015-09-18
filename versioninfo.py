@@ -19,16 +19,14 @@ def branch_version():
 
 def is_pre_release():
     version_string = version()
-    return "dev" in version_string or "alpha" in version_string or "beta" in version_string
+    return "a" in version_string or "b" in version_string
 
 
 def dev_status():
     _version = version()
-    if 'dev' in _version:
+    if 'a' in _version:
         return 'Development Status :: 3 - Alpha'
-    elif 'alpha' in _version:
-        return 'Development Status :: 3 - Alpha'
-    elif 'beta' in _version:
+    elif 'b' in _version or 'c' in _version:
         return 'Development Status :: 4 - Beta'
     else:
         return 'Development Status :: 5 - Production/Stable'
@@ -59,7 +57,7 @@ def create_version_h():
     parts = lxml_version.split('-')
     while parts[0].count('.') < 2:
         parts[0] += '.0'
-    lxml_version = '-'.join(parts)
+    lxml_version = '-'.join(parts).replace('a', '.alpha').replace('b', '.beta')
 
     version_h = open(
         os.path.join(get_base_dir(), 'src', 'lxml', 'includes', 'lxml-version.h'),
