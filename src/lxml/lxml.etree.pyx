@@ -270,7 +270,7 @@ try:
     _LIBXML_VERSION_INT = int(
         re.match(u'[0-9]+', (<unsigned char*>tree.xmlParserVersion).decode("ascii")).group(0))
 except Exception:
-    print u"Unknown libxml2 version: %s" % (<unsigned char*>tree.xmlParserVersion).decode("ascii")
+    print u"Unknown libxml2 version: %s" % (<unsigned char*>tree.xmlParserVersion).decode("latin1")
     _LIBXML_VERSION_INT = 0
 
 LIBXML_VERSION = __unpackIntVersion(_LIBXML_VERSION_INT)
