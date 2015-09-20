@@ -39,7 +39,10 @@ from lxml import etree
 import sys
 import re
 import doctest
-import cgi
+try:
+    from html import escape as html_escape
+except ImportError:
+    from cgi import escape as html_escape
 
 __all__ = ['PARSE_HTML', 'PARSE_XML', 'NOPARSE_MARKUP', 'LXMLOutputChecker',
            'LHTMLOutputChecker', 'install', 'temp_install']
@@ -265,7 +268,7 @@ class LXMLOutputChecker(OutputChecker):
             return ''
         if strip:
             text = text.strip()
-        return cgi.escape(text, 1)
+        return html_escape(text, 1)
 
     def format_tag(self, el):
         attrs = []
