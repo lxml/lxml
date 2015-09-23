@@ -2,6 +2,18 @@
 lxml changelog
 ==============
 
+3.5.0b2 (2015-09-??)
+====================
+
+Bugs fixed
+----------
+
+* LP#1497051: HTML target parser failed to terminate on exceptions
+  and continued parsing instead.
+
+* Deprecated API usage in doctestcompare.
+
+
 3.5.0b1 (2015-09-18)
 ====================
 

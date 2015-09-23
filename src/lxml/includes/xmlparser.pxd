@@ -102,6 +102,27 @@ cdef extern from "libxml/parser.h":
     cdef int XML_COMPLETE_ATTRS  # SAX option for adding DTD default attributes
     cdef int XML_SKIP_IDS        # SAX option for not building an XML ID dict
 
+    ctypedef enum xmlParserInputState:
+        XML_PARSER_EOF = -1  # nothing is to be parsed
+        XML_PARSER_START = 0  # nothing has been parsed
+        XML_PARSER_MISC = 1  # Misc* before int subset
+        XML_PARSER_PI = 2  # Within a processing instruction
+        XML_PARSER_DTD = 3  # within some DTD content
+        XML_PARSER_PROLOG = 4  # Misc* after internal subset
+        XML_PARSER_COMMENT = 5  # within a comment
+        XML_PARSER_START_TAG = 6  # within a start tag
+        XML_PARSER_CONTENT = 7  # within the content
+        XML_PARSER_CDATA_SECTION = 8  # within a CDATA section
+        XML_PARSER_END_TAG = 9  # within a closing tag
+        XML_PARSER_ENTITY_DECL = 10  # within an entity declaration
+        XML_PARSER_ENTITY_VALUE = 11  # within an entity value in a decl
+        XML_PARSER_ATTRIBUTE_VALUE = 12  # within an attribute value
+        XML_PARSER_SYSTEM_LITERAL = 13  # within a SYSTEM value
+        XML_PARSER_EPILOG = 14  # the Misc* after the last end tag
+        XML_PARSER_IGNORE = 15  # within an IGNORED section
+        XML_PARSER_PUBLIC_LITERAL = 16  # within a PUBLIC value
+
+
     ctypedef struct xmlParserCtxt:
         xmlDoc* myDoc
         xmlDict* dict
@@ -112,6 +133,7 @@ cdef extern from "libxml/parser.h":
         int options
         bint disableSAX
         int errNo
+        xmlParserInputState instate
         bint replaceEntities
         int loadsubset  # != 0 if enabled, int value == why
         bint validate

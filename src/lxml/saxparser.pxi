@@ -214,6 +214,7 @@ cdef class _SaxParserContext(_ParserContext):
         # stop parsing immediately
         c_ctxt.wellFormed = 0
         c_ctxt.disableSAX = 1
+        c_ctxt.instate = xmlparser.XML_PARSER_EOF
         self._store_raised()
 
 
@@ -266,7 +267,7 @@ cdef void _handleSaxStart(
     cdef int i
     cdef size_t c_len
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -300,7 +301,7 @@ cdef void _handleSaxTargetStart(
     cdef int i
     cdef size_t c_len
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -353,7 +354,7 @@ cdef void _handleSaxTargetStart(
 cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
                               const_xmlChar** c_attributes) with gil:
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -372,7 +373,7 @@ cdef void _handleSaxStartNoNs(void* ctxt, const_xmlChar* c_name,
 cdef void _handleSaxTargetStartNoNs(void* ctxt, const_xmlChar* c_name,
                                     const_xmlChar** c_attributes) with gil:
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -429,7 +430,7 @@ cdef void _handleSaxEnd(void* ctxt, const_xmlChar* c_localname,
                         const_xmlChar* c_prefix,
                         const_xmlChar* c_namespace) with gil:
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -449,7 +450,7 @@ cdef void _handleSaxEnd(void* ctxt, const_xmlChar* c_localname,
 
 cdef void _handleSaxEndNoNs(void* ctxt, const_xmlChar* c_name) with gil:
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -508,6 +509,8 @@ cdef void _handleSaxTargetDoctype(void* ctxt, const_xmlChar* c_name,
                                   const_xmlChar* c_system) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
+        return
     context = <_SaxParserContext>c_ctxt._private
     try:
         context._target._handleSaxDoctype(
@@ -522,6 +525,8 @@ cdef void _handleSaxTargetDoctype(void* ctxt, const_xmlChar* c_name,
 
 cdef void _handleSaxStartDocument(void* ctxt) with gil:
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
+        return
     context = <_SaxParserContext>c_ctxt._private
     context._origSaxStartDocument(ctxt)
     c_doc = c_ctxt.myDoc
@@ -537,7 +542,7 @@ cdef void _handleSaxPI(void* ctxt, const_xmlChar* c_target,
                        const_xmlChar* c_data) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -556,6 +561,8 @@ cdef void _handleSaxPIEvent(void* ctxt, const_xmlChar* target,
                             const_xmlChar* data) with gil:
     # can only be called when collecting pi events
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
+        return
     context = <_SaxParserContext>c_ctxt._private
     context._origSaxPI(ctxt, target, data)
     c_node = _findLastEventNode(c_ctxt)
@@ -572,7 +579,7 @@ cdef void _handleSaxPIEvent(void* ctxt, const_xmlChar* target,
 cdef void _handleSaxTargetComment(void* ctxt, const_xmlChar* c_data) with gil:
     # can only be called if parsing with a target
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
-    if c_ctxt._private is NULL:
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
         return
     context = <_SaxParserContext>c_ctxt._private
     try:
@@ -588,6 +595,8 @@ cdef void _handleSaxTargetComment(void* ctxt, const_xmlChar* c_data) with gil:
 cdef void _handleSaxComment(void* ctxt, const_xmlChar* text) with gil:
     # can only be called when collecting comment events
     c_ctxt = <xmlparser.xmlParserCtxt*>ctxt
+    if c_ctxt._private is NULL or c_ctxt.disableSAX:
+        return
     context = <_SaxParserContext>c_ctxt._private
     context._origSaxComment(ctxt, text)
     c_node = _findLastEventNode(c_ctxt)

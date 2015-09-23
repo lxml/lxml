@@ -1287,8 +1287,14 @@ cdef class _FeedParser(_BaseParser):
                 py_buffer_len -= buffer_len
                 c_data += buffer_len
 
-            if fixup_error and not context.has_raised():
+            if fixup_error:
                 context.store_exception(MemoryError())
+
+            if context._has_raised():
+                # propagate Python exceptions immediately
+                recover = 0
+                error = 1
+                break
 
             if error and not pctxt.replaceEntities and not pctxt.validate:
                 # in this mode, we ignore errors about undefined entities
@@ -1298,6 +1304,11 @@ cdef class _FeedParser(_BaseParser):
                         break
                 else:
                     error = 0
+
+        if not pctxt.wellFormed and pctxt.disableSAX and context._has_raised():
+            # propagate Python exceptions immediately
+            recover = 0
+            error = 1
 
         if fixup_error or not recover and (error or not pctxt.wellFormed):
             self._feed_parser_running = 0

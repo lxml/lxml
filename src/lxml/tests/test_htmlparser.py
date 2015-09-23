@@ -19,6 +19,7 @@ try:
 except NameError:
     unicode = str
 
+
 class HtmlParserTestCase(HelperTestCase):
     """HTML parser test cases
     """
@@ -506,6 +507,59 @@ class HtmlParserTestCase(HelperTestCase):
             ("start", "html"), ("start", "body"),
             ("end", "body"), ("end", "html")], events)
 
+    def test_html_parser_target_exceptions(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                raise ValueError("START")
+            def end(self, tag):
+                events.append(("end", tag))
+                raise TypeError("END")
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+        try:
+            parser.feed('<html><body>')
+            parser.feed('</body></html>')
+        except ValueError as exc:
+            assert "START" in str(exc)
+        except TypeError as exc:
+            assert "END" in str(exc)
+            self.assertTrue(False, "wrong exception raised")
+        else:
+            self.assertTrue(False, "no exception raised")
+
+        self.assertTrue(("start", "html") in events, events)
+        self.assertTrue(("end", "html") not in events, events)
+
+    def test_html_fromstring_target_exceptions(self):
+        events = []
+        class Target(object):
+            def start(self, tag, attrib):
+                events.append(("start", tag))
+                raise ValueError("START")
+            def end(self, tag):
+                events.append(("end", tag))
+                raise TypeError("END")
+            def close(self):
+                return "DONE"
+
+        parser = self.etree.HTMLParser(target=Target())
+        try:
+            self.etree.fromstring('<html><body></body></html>', parser)
+        except ValueError as exc:
+            assert "START" in str(exc), str(exc)
+        except TypeError as exc:
+            assert "END" in str(exc), str(exc)
+            self.assertTrue(False, "wrong exception raised")
+        else:
+            self.assertTrue(False, "no exception raised")
+
+        self.assertTrue(("start", "html") in events, events)
+        self.assertTrue(("end", "html") not in events, events)
+
     def test_set_decl_html(self):
         doc = html.Element('html').getroottree()
         doc.docinfo.public_id = "-//W3C//DTD XHTML 1.0 Strict//EN"
@@ -538,10 +592,12 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(self.etree.tostring(doc),
                          _bytes('<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">\n<html/>'))
 
+
 def test_suite():
     suite = unittest.TestSuite()
     suite.addTests([unittest.makeSuite(HtmlParserTestCase)])
     return suite
+
 
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)
