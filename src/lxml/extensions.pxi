@@ -733,6 +733,13 @@ cdef class _ElementUnicodeResult(unicode):
     def getparent(self):
         return self._parent
 
+cdef object _PyElementUnicodeResult
+if python.IS_PYPY:
+    class _PyElementUnicodeResult(unicode):
+        # we need to use a Python class here, or PyPy will crash on creation
+        def getparent(self):
+            return self._parent
+
 class _ElementStringResult(bytes):
     # we need to use a Python class here, bytes cannot be C-subclassed
     # in Pyrex/Cython
@@ -751,6 +758,14 @@ cdef object _elementStringResultFactory(string_value, _Element parent,
 
     if type(string_value) is bytes:
         result = _ElementStringResult(string_value)
+        result._parent = parent
+        result.is_attribute = is_attribute
+        result.is_tail = is_tail
+        result.is_text = is_text
+        result.attrname = attrname
+        return result
+    elif python.IS_PYPY:
+        result = _PyElementUnicodeResult(string_value)
         result._parent = parent
         result.is_attribute = is_attribute
         result.is_tail = is_tail

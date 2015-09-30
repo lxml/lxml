@@ -8,6 +8,8 @@ lxml changelog
 Bugs fixed
 ----------
 
+* Unicode string results failed XPath queries in PyPy.
+
 * LP#1497051: HTML target parser failed to terminate on exceptions
   and continued parsing instead.
 
