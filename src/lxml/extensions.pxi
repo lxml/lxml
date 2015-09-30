@@ -737,6 +737,7 @@ cdef object _PyElementUnicodeResult
 if python.IS_PYPY:
     class _PyElementUnicodeResult(unicode):
         # we need to use a Python class here, or PyPy will crash on creation
+        # https://bitbucket.org/pypy/pypy/issues/2021/pypy3-pytype_ready-crashes-for-extension
         def getparent(self):
             return self._parent
 
