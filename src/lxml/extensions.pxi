@@ -392,6 +392,8 @@ cdef tuple LIBXML2_XPATH_ERROR_MESSAGES = (
     b"Char out of XML range",
     b"Invalid or incomplete context",
     b"Stack usage error",
+    b"Forbidden variable\n",
+    b"?? Unknown error ??\n",
 )
 
 cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) with gil:
