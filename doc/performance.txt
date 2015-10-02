@@ -67,7 +67,7 @@ and the internal tree structure of libxml2 results in a higher maintenance
 overhead than the simpler top-down structure of ElementTree.  What this means
 is: the more of your code runs in Python, the less you can benefit from the
 speed of lxml and libxml2.  Note, however, that this is true for most
-performance critical Python applications.  No one would implement fourier
+performance critical Python applications.  No one would implement Fourier
 transformations in pure Python when you can use NumPy.
 
 The up side then is that lxml provides powerful tools like tree iterators,
@@ -533,7 +533,7 @@ This translates directly into similar timings for ``Element.findall()``::
 Note that all three libraries currently use the same Python
 implementation for ``.findall()``, except for their native tree
 iterator (``element.iter()``).  In general, lxml is very fast
-for iteration, but looses ground against cET when many Elements
+for iteration, but loses ground against cET when many Elements
 are found and need to be instantiated.  So, the more selective
 your search is, the faster lxml will run.
 
@@ -743,7 +743,7 @@ So, what have we learned?
   up the operations, we can see that lxml is slightly slower than cElementTree
   on ``parse()`` (both about 0.06 seconds), but more visibly slower on
   ``iterparse()``: 0.07 versus 0.10 seconds.  However, tree iteration in lxml
-  is increadibly fast, so it can be better to parse the whole tree and then
+  is incredibly fast, so it can be better to parse the whole tree and then
   iterate over it rather than using ``iterparse()`` to do both in one step.
   Or, you can just wait for the lxml developers to optimise iterparse in one
   of the next releases...
@@ -848,7 +848,7 @@ Here are some more things to try if optimisation is required:
   elements in the tree.  If you often work in subtrees, do what you would also
   do with deep Python objects: assign the parent of the subtree to a variable
   or pass it into functions instead of starting at the root.  This allows
-  accessing its descendents more directly.
+  accessing its descendants more directly.
 
 * Try assigning data values directly to attributes instead of passing them
   through DataElement.

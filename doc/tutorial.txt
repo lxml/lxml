@@ -1215,7 +1215,7 @@ Namespaces on attributes work alike, but as of version 2.3, ``lxml.etree``
 will ensure that the attribute uses a prefixed namespace
 declaration.  This is because unprefixed attribute names are not
 considered being in a namespace by the XML namespace specification
-(`section 6.2`_), so they may end up loosing their namespace on a
+(`section 6.2`_), so they may end up losing their namespace on a
 serialise-parse roundtrip, even if they appear in a namespaced
 element.
 

@@ -503,7 +503,7 @@ Besides enhancing the code, there are a lot of places where you can help the
 project and its user base.  You can
 
 * spread the word and write about lxml.  Many users (especially new Python
-  users) have not yet heared about lxml, although our user base is constantly
+  users) have not yet heard about lxml, although our user base is constantly
   growing.  If you write your own blog and feel like saying something about
   lxml, go ahead and do so.  If we think your contribution or criticism is
   valuable to other users, we may even put a link or a quote on the project
@@ -528,7 +528,7 @@ project and its user base.  You can
 
 * help with the tutorial.  A tutorial is the most important stating point for
   new users, so it is important for us to provide an easy to understand guide
-  into lxml.  As allo documentation, the tutorial is work in progress, so we
+  into lxml.  As all documentation, the tutorial is work in progress, so we
   appreciate every helping hand.
 
 * improve the docstrings.  lxml uses docstrings to support Python's integrated
@@ -866,7 +866,7 @@ lxml can add fresh whitespace to the XML tree to indent it.
 Note that the ``remove_blank_text`` option also uses a heuristic if it
 has no definite knowledge about the document's ignorable whitespace.
 It will keep blank text nodes that appear after non-blank text nodes
-at the same level.  This is to prevent document-style XML from loosing
+at the same level.  This is to prevent document-style XML from losing
 content.
 
 The HTMLParser has this structural knowledge built-in, which means that
