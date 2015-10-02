@@ -1154,7 +1154,7 @@ Bugs fixed
   file.
 
 * Work-around for libxml2 bug that can leave the HTML parser in a
-  non-functional state after parsing a severly broken document (fixed
+  non-functional state after parsing a severely broken document (fixed
   in libxml2 2.7.8).
 
 * ``marque`` tag in HTML cleanup code is correctly named ``marquee``.
@@ -1459,7 +1459,7 @@ Bugs fixed
 * The ``ElementMaker`` in lxml.objectify no longer defines the default
   namespaces when annotation is disabled.
 
-* Feed parser failed to honout the 'recover' option on parse errors.
+* Feed parser failed to honour the 'recover' option on parse errors.
 
 * Diverting the error logging to Python's logging system was broken.
 
@@ -2567,7 +2567,7 @@ Other changes
   (which can crash on certain XPath errors)
 
 * Type annotation in objectify now preserves the already annotated type by
-  default to prevent loosing type information that is already there.
+  default to prevent losing type information that is already there.
 
 * ``element.getiterator()`` returns a list, use ``element.iter()`` to retrieve
   an iterator (ElementTree 1.3 compatible behaviour)
@@ -2770,7 +2770,7 @@ Features added
 Bugs fixed
 ----------
 
-* Removing Elements from a tree could make them loose their namespace
+* Removing Elements from a tree could make them lose their namespace
   declarations
 
 * ``ElementInclude`` didn't honour base URL of original document
@@ -2865,7 +2865,7 @@ Other changes
 
 * code cleanup: redundant _NodeBase super class merged into _Element class
   Note: although the impact should be zero in most cases, this change breaks
-  the compatibiliy of the public C-API
+  the compatibility of the public C-API
 
 
 1.1.2 (2006-10-30)
@@ -2945,7 +2945,7 @@ Bugs fixed
 Features added
 --------------
 
-* Comments and processing instructions return '<!-- coment -->' and
+* Comments and processing instructions return '<!-- comment -->' and
   '<?pi-target content?>' for repr()
 
 * Parsers are now the preferred (and default) place where element class lookup
@@ -3125,7 +3125,7 @@ Bugs fixed
 * Extension function calls in XSLT variable declarations could break the
   stylesheet and crash on repeated calls
 
-* Deep copying Elements could loose namespaces declared in parents
+* Deep copying Elements could lose namespaces declared in parents
 
 * Deep copying Elements did not copy tail
 

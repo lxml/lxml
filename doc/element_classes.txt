@@ -120,7 +120,7 @@ The semantics of ``_init()`` are as follows:
   value or by removing or adding a specific child node and then verifying this
   before running through the init process.
 
-* Any exceptions raised in ``_init()`` will be propagated throught the API
+* Any exceptions raised in ``_init()`` will be propagated through the API
   call that lead to the creation of the Element.  So be careful with the code
   you write here as its exceptions may turn up in various unexpected places.
 
