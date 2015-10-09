@@ -182,54 +182,6 @@ def download_library(dest_dir, location, name, version_re, filename,
         urlretrieve(full_url, dest_filename)
     return dest_filename
 
-## Backported method of tarfile.TarFile.extractall (doesn't exist in 2.4):
-def _extractall(self, path=".", members=None):
-    """Extract all members from the archive to the current working
-       directory and set owner, modification time and permissions on
-       directories afterwards. `path' specifies a different directory
-       to extract to. `members' is optional and must be a subset of the
-       list returned by getmembers().
-    """
-    import copy
-    is_ignored_file = re.compile(
-        r'''[\\/]((test|results?)[\\/]
-                  |doc[\\/].*(Log|[.](out|imp|err|ent|gif|tif|pdf))$
-                  |tests[\\/](.*[\\/])?(?!Makefile)[^\\/]*$
-                  |python[\\/].*[.]py$
-                 )
-        ''', re.X).search
-
-    directories = []
-
-    if members is None:
-        members = self
-
-    for tarinfo in members:
-        if is_ignored_file(tarinfo.name):
-            continue
-        if tarinfo.isdir():
-            # Extract directories with a safe mode.
-            directories.append((tarinfo.name, tarinfo))
-            tarinfo = copy.copy(tarinfo)
-            tarinfo.mode = 448 # 0700
-        self.extract(tarinfo, path)
-
-    # Reverse sort directories.
-    directories.sort()
-    directories.reverse()
-
-    # Set correct owner, mtime and filemode on directories.
-    for name, tarinfo in directories:
-        dirpath = os.path.join(path, name)
-        try:
-            self.chown(tarinfo, dirpath)
-            self.utime(tarinfo, dirpath)
-            self.chmod(tarinfo, dirpath)
-        except tarfile.ExtractError:
-            if self.errorlevel > 1:
-                raise
-            else:
-                self._dbg(1, "tarfile: %s" % sys.exc_info()[1])
 
 def unpack_tarball(tar_filename, dest):
     print('Unpacking %s into %s' % (os.path.basename(tar_filename), dest))
@@ -242,9 +194,10 @@ def unpack_tarball(tar_filename, dest):
         else:
             if base_dir != base_name:
                 print('Unexpected path in %s: %s' % (tar_filename, base_name))
-    _extractall(tar, dest)
+    tar.extractall(dest)
     tar.close()
     return os.path.join(dest, base_dir)
+
 
 def call_subprocess(cmd, **kw):
     try:
