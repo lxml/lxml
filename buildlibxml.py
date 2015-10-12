@@ -224,7 +224,12 @@ def _extractall(self, path=".", members=None):
         try:
             self.chown(tarinfo, dirpath)
             self.utime(tarinfo, dirpath)
-            self.chmod(tarinfo, dirpath)
+            try:
+                self.chmod(tarinfo, dirpath)
+            except TypeError:
+                # In Python 3.5 tarfile.TarFile.chmod gained an additional
+                # required argument, numeric_owner.
+                self.chmod(tarinfo, dirpath, False)
         except tarfile.ExtractError:
             if self.errorlevel > 1:
                 raise
