@@ -11,6 +11,7 @@ try:
 except NameError:
     from sets import Set as frozenset
 
+from lxml import etree
 
 empty_tags = frozenset([
     'area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
@@ -131,7 +132,8 @@ html5_tags = frozenset([
 # These tags aren't standard
 nonstandard_tags = frozenset(['blink', 'marquee'])
 
+comment_tag = frozenset([etree.Comment])
 
 tags = (top_level_tags | head_tags | general_block_tags | list_tags
         | table_tags | form_tags | special_inline_tags | phrase_tags
-        | font_style_tags | nonstandard_tags | html5_tags)
+        | font_style_tags | nonstandard_tags | html5_tags | comment_tag)
