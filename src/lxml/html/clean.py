@@ -109,7 +109,8 @@ class Cleaner(object):
         as they could contain Javascript.
 
     ``comments``:
-        Removes any comments.
+        Removes any comments. If you set it to False, keep in mind that 
+        ``processing_instructions`` also removes comments).
 
     ``style``:
         Removes any style tags or attributes.
