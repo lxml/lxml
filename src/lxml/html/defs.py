@@ -119,7 +119,7 @@ font_style_tags = frozenset([
 frame_tags = frozenset([
     'frameset', 'frame', 'noframes',
     ])
-    
+
 html5_tags = frozenset([
     'article', 'aside', 'audio', 'canvas', 'command', 'datalist',
     'details', 'embed', 'figcaption', 'figure', 'footer', 'header',
