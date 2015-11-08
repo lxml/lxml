@@ -124,6 +124,7 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef object PY_NEW(object t)
     cdef bint LXML_UNICODE_STRINGS
     cdef bint IS_PYTHON3
+    cdef bint IS_PYPY26
     cdef bint IS_PYPY
 
 cdef extern from "lxml_endian.h":

@@ -36,8 +36,25 @@
 
 #ifdef PYPY_VERSION
 #    define IS_PYPY 1
+/*
+PyPy 4.0 contains some important cpyext fixes and identifies as Python 2.7.10 or 3.2.5,
+just like PyPy 2.6.1, which does not have these fixes.
+*/
+#    if (PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION < 7 || \
+         PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 7 && PY_MICRO_VERSION < 10 || \
+         PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION < 2 || \
+         PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION == 2 && PY_MICRO_VERSION < 5)
+     #define IS_PYPY26 1
+#    elif (PY_MAJOR_VERSION == 2 && PY_MINOR_VERSION == 7 && PY_MICRO_VERSION == 10 || \
+           PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION == 2 && PY_MICRO_VERSION == 5)
+#    include "string.h"
+     #define IS_PYPY26  (strncmp(PYPY_VERSION, "2.", 2) == 0)
+#    else
+     #define IS_PYPY26 0
+#    endif
 #else
 #    define IS_PYPY 0
+#    define IS_PYPY26 0
 #endif
 
 #if PY_MAJOR_VERSION >= 3
