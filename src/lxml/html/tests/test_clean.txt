@@ -122,7 +122,7 @@
   </body>
 </html>
 
->>> print(Cleaner(style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False).clean_html(doc))
+>>> print(Cleaner(style=True, inline_style=True, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False).clean_html(doc))
 <html>
   <head>
   </head>
@@ -133,6 +133,26 @@
     <a href="#">another link</a>
     <p>a paragraph</p>
     <div>secret EVIL!</div>
+    of EVIL!
+    Password:
+    <a href="evil-site" rel="nofollow">spam spam SPAM!</a>
+    <a href="http://example.com" rel="author nofollow">Author</a>
+    <a href="http://example.com" rel="nofollow">Text</a>
+    <img src="evil!">
+  </body>
+</html>
+
+>>> print(Cleaner(style=True, inline_style=False, links=True, add_nofollow=True, page_structure=False, safe_attrs_only=False).clean_html(doc))
+<html>
+  <head>
+  </head>
+  <body>
+    <a href="">a link</a>
+    <a href="">a control char link</a>
+    <a href="">data</a>
+    <a href="#">another link</a>
+    <p>a paragraph</p>
+    <div style="display: none">secret EVIL!</div>
     of EVIL!
     Password:
     <a href="evil-site" rel="nofollow">spam spam SPAM!</a>
@@ -165,4 +185,3 @@
     <img src="evil!">
   </body>
 </html>
-
