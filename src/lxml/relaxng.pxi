@@ -1,25 +1,30 @@
 # support for RelaxNG validation
 from lxml.includes cimport relaxng
 
+cdef object _rnc2rng
 try:
-    import rnc2rng
+    import rnc2rng as _rnc2rng
 except ImportError:
-    rnc2rng = None
+    _rnc2rng = None
+
 
 class RelaxNGError(LxmlError):
     u"""Base class for RelaxNG errors.
     """
     pass
 
+
 class RelaxNGParseError(RelaxNGError):
     u"""Error while parsing an XML document as RelaxNG.
     """
     pass
 
+
 class RelaxNGValidateError(RelaxNGError):
     u"""Error while validating an XML document with a RelaxNG schema.
     """
     pass
+
 
 ################################################################################
 # RelaxNG
@@ -38,36 +43,32 @@ cdef class RelaxNG(_Validator):
     def __init__(self, etree=None, *, file=None):
         cdef _Document doc
         cdef _Element root_node
-        cdef xmlNode* c_node
-        cdef xmlDoc* fake_c_doc
+        cdef xmlDoc* fake_c_doc = NULL
         cdef relaxng.xmlRelaxNGParserCtxt* parser_ctxt
         _Validator.__init__(self)
-        fake_c_doc = NULL
         if etree is not None:
             doc = _documentOrRaise(etree)
             root_node = _rootNodeOrRaise(etree)
-            c_node = root_node._c_node
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
-            if _isString(file) and file.endswith('.rnc'):
-                if rnc2rng is None:
-                    msg = 'compact syntax not supported (please install rnc2rng)'
-                    raise RelaxNGParseError(msg)
-                else:
-                    etree = fromstring(rnc2rng.dumps(rnc2rng.load(file)))
-                    doc = _documentOrRaise(etree)
-                    root_node = _rootNodeOrRaise(etree)
-                    c_node = root_node._c_node
+            if _isString(file):
+                if file.lower().endswith('.rnc'):
+                    if _rnc2rng is None:
+                        raise RelaxNGParseError(
+                            'compact syntax not supported (please install rnc2rng)')
+                    rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
+                    doc = _parseMemoryDocument(rng_data, parser=None, url=None)
+                    root_node = doc.getroot()
                     fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
                     parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
-            elif _isString(file):
-                doc = None
-                filename = _encodeFilename(file)
-                with self._error_log:
-                    parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+                else:
+                    doc = None
+                    filename = _encodeFilename(file)
+                    with self._error_log:
+                        parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
             else:
-                doc = _parseDocument(file, None, None)
+                doc = _parseDocument(file, parser=None, base_url=None)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
         else:
             raise RelaxNGParseError, u"No tree or file given"
