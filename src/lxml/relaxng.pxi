@@ -1,6 +1,11 @@
 # support for RelaxNG validation
 from lxml.includes cimport relaxng
 
+try:
+    import rnc2rng
+except ImportError:
+    rnc2rng = None
+
 class RelaxNGError(LxmlError):
     u"""Base class for RelaxNG errors.
     """
@@ -45,7 +50,18 @@ cdef class RelaxNG(_Validator):
             fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
-            if _isString(file):
+            if _isString(file) and file.endswith('.rnc'):
+                if rnc2rng is None:
+                    msg = 'compact syntax not supported (please install rnc2rng)'
+                    raise RelaxNGParseError(msg)
+                else:
+                    etree = fromstring(rnc2rng.dumps(rnc2rng.load(file)))
+                    doc = _documentOrRaise(etree)
+                    root_node = _rootNodeOrRaise(etree)
+                    c_node = root_node._c_node
+                    fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+                    parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
+            elif _isString(file):
                 doc = None
                 filename = _encodeFilename(file)
                 with self._error_log:
