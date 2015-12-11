@@ -138,3 +138,8 @@ cdef class RelaxNG(_Validator):
             return True
         else:
             return False
+
+    @classmethod
+    def from_rnc_string(cls, src):
+        rng_str = _rnc2rng.dumps(_rnc2rng.loads(src))
+        return cls(_parseMemoryDocument(rng_str, parser=None, url=None))
