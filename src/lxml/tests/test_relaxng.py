@@ -185,6 +185,13 @@ class RelaxNGCompactTestCase(HelperTestCase):
         self.assertTrue(schema.validate(tree_valid))
         self.assertFalse(schema.validate(tree_invalid))
 
+    def test_relaxng_compact_file_obj(self):
+        f = open(fileInTestDir('test.rnc'), 'rb')
+        try:
+            schema = etree.RelaxNG(file=f)
+        finally:
+            f.close()
+
     def test_relaxng_compact_str(self):
         tree_valid = self.parse('<a><b>B</b></a>')
         rnc_str = 'element a { element b { "B" } }'
