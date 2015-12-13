@@ -1,4 +1,5 @@
 .. image:: https://img.shields.io/travis/lxml/lxml.svg
+    :target: https://travis-ci.org/lxml/lxml
 
 What is lxml?
 =============
