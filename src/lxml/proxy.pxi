@@ -233,7 +233,7 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
     cdef int prefix_known
     c_parent = c_from_node.parent
     cdef _nscache c_ns_cache = [NULL, 0, 0]
-    cdef size_t i
+    cdef _ns_update_map c_ns_entry
 
     # Build up a cache for each of the ns prefixes used in the elements we will
     # copy over, then use prescence in the cache as a basis for allowing the
@@ -242,9 +242,9 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
     tree.BEGIN_FOR_EACH_ELEMENT_FROM(c_from_node, c_node, 1)
     if c_node.ns is not NULL:
         c_ns = NULL
-        for i in range(int(c_ns_cache.last)):
-            if c_node.ns is c_ns_cache.ns_map[i].old:
-                c_ns = c_ns_cache.ns_map[i].old
+        for c_ns_entry in c_ns_cache.ns_map[:c_ns_cache.last]:
+            if c_node.ns is c_ns_entry.old:
+                c_ns = c_ns_entry.old
                 break
 
         if c_ns is NULL:
@@ -256,8 +256,8 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
         c_new_ns = c_parent.nsDef
         while c_new_ns:
             ns_in_use = 0
-            for i in range(c_ns_cache.last):
-                if c_new_ns is c_ns_cache.ns_map[i].old:
+            for c_ns_entry in c_ns_cache.ns_map[:c_ns_cache.last]:
+                if c_new_ns is c_ns_entry.old:
                     ns_in_use = 1
                     break
 
