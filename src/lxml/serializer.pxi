@@ -159,7 +159,7 @@ cdef bytes _tostringC14N(element_or_tree, bint exclusive, bint with_comments, in
     if isinstance(element_or_tree, _Element):
         _assertValidNode(<_Element>element_or_tree)
         doc = (<_Element>element_or_tree)._doc
-        c_doc = _plainFakeRootDoc(doc._c_doc, (<_Element>element_or_tree)._c_node, 0)
+        c_doc = _plainFakeRootDoc(doc._c_doc, (<_Element>element_or_tree)._c_node, 0, 1)
     else:
         doc = _documentOrRaise(element_or_tree)
         _assertValidDoc(doc)
@@ -234,7 +234,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         if not c_nsdecl_node:
             c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
             return
-        _copyParentNamespaces(c_node, c_nsdecl_node)
+        _copyParentNamespaces(c_node, c_nsdecl_node, 0)
 
         c_nsdecl_node.parent = c_node.parent
         c_nsdecl_node.children = c_node.children
