@@ -234,8 +234,7 @@ cdef void _writeNodeToBuffer(tree.xmlOutputBuffer* c_buffer,
         if not c_nsdecl_node:
             c_buffer.error = xmlerror.XML_ERR_NO_MEMORY
             return
-        with gil:
-            _copyParentNamespaces(c_node, c_nsdecl_node)
+        _copyParentNamespaces(c_node, c_nsdecl_node)
 
         c_nsdecl_node.parent = c_node.parent
         c_nsdecl_node.children = c_node.children

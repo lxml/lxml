@@ -223,7 +223,7 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
-cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node) nogil:
     u"""Copy the namespaces of all ancestors of c_from_node to c_to_node that are used by c_to_node.
     """
     cdef xmlNode* c_parent
@@ -248,7 +248,8 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node):
                 break
 
         if c_ns is NULL:
-            _appendToNsCache(&c_ns_cache, c_node.ns, NULL)
+            with gil:
+                _appendToNsCache(&c_ns_cache, c_node.ns, NULL)
     tree.END_FOR_EACH_ELEMENT_FROM(c_node)
 
     while c_parent and (tree._isElementOrXInclude(c_parent) or
