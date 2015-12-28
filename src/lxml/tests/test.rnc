@@ -1,0 +1,8 @@
+element a {
+  element b {
+    "B"
+  },
+  element c {
+    "C"
+  }
+}

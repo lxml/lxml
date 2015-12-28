@@ -67,6 +67,12 @@ cdef class RelaxNG(_Validator):
                     filename = _encodeFilename(file)
                     with self._error_log:
                         parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
+            elif (_getFilenameForFile(file) or '').lower().endswith('.rnc'):
+                rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
+                doc = _parseMemoryDocument(rng_data, parser=None, url=None)
+                root_node = doc.getroot()
+                fake_c_doc = _fakeRootDoc(doc._c_doc, root_node._c_node)
+                parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
             else:
                 doc = _parseDocument(file, parser=None, base_url=None)
                 parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(doc._c_doc)
@@ -138,3 +144,8 @@ cdef class RelaxNG(_Validator):
             return True
         else:
             return False
+
+    @classmethod
+    def from_rnc_string(cls, src):
+        rng_str = _rnc2rng.dumps(_rnc2rng.loads(src))
+        return cls(_parseMemoryDocument(rng_str, parser=None, url=None))
