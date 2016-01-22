@@ -81,7 +81,8 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
 # temporarily make a node the root node of its document
 
 cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
-    return _plainFakeRootDoc(c_base_doc, c_node, 1, 0)
+    return _plainFakeRootDoc(c_base_doc=c_base_doc, c_node=c_node,
+                with_siblings=1, used_only=0)
 
 cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
                                bint with_siblings, bint used_only=1) except NULL:
