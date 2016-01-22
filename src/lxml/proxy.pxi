@@ -84,7 +84,7 @@ cdef xmlDoc* _fakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node) except NULL:
     return _plainFakeRootDoc(c_base_doc, c_node, 1, 0)
 
 cdef xmlDoc* _plainFakeRootDoc(xmlDoc* c_base_doc, xmlNode* c_node,
-                               bint with_siblings, bint used_only) except NULL:
+                               bint with_siblings, bint used_only=1) except NULL:
     # build a temporary document that has the given node as root node
     # note that copy and original must not be modified during its lifetime!!
     # always call _destroyFakeDoc() after use!
@@ -223,7 +223,7 @@ cdef int canDeallocateChildNodes(xmlNode* c_parent):
 ################################################################################
 # fix _Document references and namespaces when a node changes documents
 
-cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node, bint used_only) nogil:
+cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node, bint used_only=1) nogil:
     u"""Copy the namespaces of all ancestors of c_from_node to c_to_node that are used by c_to_node.
     """
     cdef xmlNode* c_parent
