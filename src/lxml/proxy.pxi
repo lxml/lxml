@@ -233,7 +233,7 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node, bint u
     c_parent = c_from_node.parent
     cdef _nscache c_ns_cache = [NULL, 0, 0]
     cdef _ns_update_map c_ns_entry
-    cdef bint apply_ns = 0
+    cdef bint should_copy = 0
 
     if used_only:
         # Build up a cache for each of the ns prefixes used in the elements we will
@@ -258,13 +258,13 @@ cdef void _copyParentNamespaces(xmlNode* c_from_node, xmlNode* c_to_node, bint u
         c_new_ns = c_parent.nsDef
         while c_new_ns:
             if used_only:
-                apply_ns = 0
+                should_copy = 0
                 for c_ns_entry in c_ns_cache.ns_map[:c_ns_cache.last]:
                     if c_new_ns is c_ns_entry.old:
-                        apply_ns = 1
+                        should_copy = 1
                         break
 
-            if not used_only or apply_ns:
+            if not used_only or should_copy:
                 # libxml2 will check if the prefix is already defined
                 tree.xmlNewNs(c_to_node, c_new_ns.href, c_new_ns.prefix)
             c_new_ns = c_new_ns.next
