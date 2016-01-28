@@ -166,7 +166,7 @@ _initThreadLogging()
 xmlparser.xmlInitParser()
 
 # filename encoding
-cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode(u"UTF-8")
+cdef bytes _FILENAME_ENCODING = (sys.getfilesystemencoding() or sys.getdefaultencoding() or 'ascii').encode("UTF-8")
 cdef char* _C_FILENAME_ENCODING = _cstr(_FILENAME_ENCODING)
 
 # set up some default namespace prefixes
@@ -351,7 +351,7 @@ cdef public class _Document [ type LxmlDocumentType, object LxmlDocument ]:
     cdef bytes _prefix_tail
     cdef xmlDoc* _c_doc
     cdef _BaseParser _parser
-    
+
     def __dealloc__(self):
         # if there are no more references to the document, it is safe
         # to clean the whole thing up, as all nodes have a reference to
@@ -795,7 +795,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
     def __deepcopy__(self, memo):
         u"__deepcopy__(self, memo)"
         return self.__copy__()
-        
+
     def __copy__(self):
         u"__copy__(self)"
         cdef xmlDoc* c_doc
@@ -981,7 +981,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         moveNodeToDocument(self._doc, c_source_doc, c_new_node)
         # fix namespace declarations
         moveNodeToDocument(self._doc, c_old_node.doc, c_old_node)
-        
+
     # PROPERTIES
     property tag:
         u"""Element tag
@@ -992,7 +992,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             _assertValidNode(self)
             self._tag = _namespacedName(self._c_node)
             return self._tag
-    
+
         def __set__(self, value):
             cdef _BaseParser parser
             _assertValidNode(self)
@@ -1017,7 +1017,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             return _Attrib.__new__(_Attrib, self)
 
     property text:
-        u"""Text before the first subelement. This is either a string or 
+        u"""Text before the first subelement. This is either a string or
         the value None, if there was no text.
         """
         def __get__(self):
@@ -1042,7 +1042,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
         def __get__(self):
             _assertValidNode(self)
             return _collectText(self._c_node.next)
-           
+
         def __set__(self, value):
             _assertValidNode(self)
             _setTailText(self._c_node, value)
@@ -1177,7 +1177,7 @@ cdef public class _Element [ type LxmlElementType, object LxmlElement ]:
             if c_node is NULL:
                 raise IndexError, u"list index out of range"
             return _elementFactory(self._doc, c_node)
-            
+
     def __len__(self):
         u"""__len__(self)
 
@@ -1690,7 +1690,7 @@ cdef class __ContentOnlyElement(_Element):
     def keys(self):
         u"keys(self)"
         return []
-    
+
     def items(self):
         u"items(self)"
         return []
@@ -1706,7 +1706,7 @@ cdef class _Comment(__ContentOnlyElement):
 
     def __repr__(self):
         return "<!--%s-->" % strrepr(self.text)
-    
+
 cdef class _ProcessingInstruction(__ContentOnlyElement):
     property tag:
         def __get__(self):
@@ -2255,7 +2255,7 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         ``namespaces`` is an optional dictionary with prefix to namespace URI
         mappings, used by XPath.  ``extensions`` defines additional extension
         functions.
-        
+
         Returns a list (nodeset), or bool, float or string.
 
         In case of a list result, return Element for element nodes,
@@ -2482,7 +2482,7 @@ cdef class _Attrib:
     def __iter__(self):
         _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 1))
-    
+
     def iterkeys(self):
         _assertValidNode(self._element)
         return iter(_collectAttributes(self._element._c_node, 1))
@@ -3508,7 +3508,7 @@ cdef class _Validator:
 
     cpdef _clear_error_log(self):
         self._error_log.clear()
-        
+
     property error_log:
         u"The log of validation errors and warnings."
         def __get__(self):
