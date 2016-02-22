@@ -291,6 +291,13 @@ except ImportError:
 handle_entities = re.compile("&(\w+);").sub
 
 
+try:
+    unichr
+except NameError:
+    # Python 3
+    unichr = chr
+
+
 def unescape(string):
     if not string:
         return ''
