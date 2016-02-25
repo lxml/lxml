@@ -17,10 +17,7 @@ cdef inline _Element getProxy(xmlNode* c_node):
     """
     #print "getProxy for:", <int>c_node
     if c_node is not NULL and c_node._private is not NULL:
-        if python.IS_PYPY:
-            return <_Element>python.PyWeakref_LockObject(<python.PyObject*>c_node._private)
-        else:
-            return <_Element>c_node._private
+        return <_Element>c_node._private
     else:
         return None
 
@@ -29,21 +26,7 @@ cdef inline _Element getProxy(xmlNode* c_node):
 cdef inline bint hasProxy(xmlNode* c_node):
     if c_node._private is NULL:
         return False
-    if python.IS_PYPY:
-        return _isProxyAliveInPypy(c_node)
     return True
-
-
-@cython.linetrace(False)
-cdef bint _isProxyAliveInPypy(xmlNode* c_node):
-    retval = True
-    if python.PyWeakref_LockObject(<python.PyObject*>c_node._private) is None:
-        # proxy has already died => remove weak reference
-        weakref_ptr = <python.PyObject*>c_node._private
-        c_node._private = NULL
-        python.Py_XDECREF(weakref_ptr)
-        retval = False
-    return retval
 
 
 @cython.linetrace(False)
@@ -55,10 +38,7 @@ cdef inline int _registerProxy(_Element proxy, _Document doc,
     assert not hasProxy(c_node), u"double registering proxy!"
     proxy._doc = doc
     proxy._c_node = c_node
-    if python.IS_PYPY:
-        c_node._private = <void*>python.PyWeakref_NewRef(proxy, NULL)
-    else:
-        c_node._private = <void*>proxy
+    c_node._private = <void*>proxy
     return 0
 
 
@@ -67,13 +47,8 @@ cdef inline int _unregisterProxy(_Element proxy) except -1:
     u"""Unregister a proxy for the node it's proxying for.
     """
     cdef xmlNode* c_node = proxy._c_node
-    if python.IS_PYPY:
-        weakref_ptr = <python.PyObject*>c_node._private
-        c_node._private = NULL
-        python.Py_XDECREF(weakref_ptr)
-    else:
-        assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
-        c_node._private = NULL
+    assert c_node._private is <void*>proxy, u"Tried to unregister unknown proxy"
+    c_node._private = NULL
     return 0
 
 
