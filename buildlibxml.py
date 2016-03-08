@@ -120,7 +120,9 @@ def ftp_listdir(url):
 def parse_text_ftplist(s):
     for line in s.splitlines():
         if not line.startswith('d'):
-            yield line[54:].strip()
+            # -rw-r--r--   1 ftp      ftp           476 Sep  1  2011 md5sum.txt
+            # Last (9th) element is 'md5sum.txt' in the above example.
+            yield line.split(None, 9)[-1]
 
 def parse_html_ftplist(s):
     re_href = re.compile(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)[;\?"\']', re.I|re.M)
