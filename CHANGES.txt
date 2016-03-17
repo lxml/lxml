@@ -2,6 +2,25 @@
 lxml changelog
 ==============
 
+3.6.0 (2016-03-17)
+==================
+
+* GH#189: Static builds honour FTP proxy configurations when downloading
+  the external libs.  Patch by Youhei Sakurai.
+
+* GH#187: Now supports (only) version 5.x and later of PyPy.
+  Patch by Armin Rigo.
+
+* GH#186: Soupparser failed to process entities in Python 3.x.
+  Patch by Duncan Morris.
+
+* GH#185: Rare encoding related `TypeError` on import was fixed.
+  Patch by Petr Demin.
+
+* GH#181: Direct support for `.rnc` files in `RelaxNG()` if `rnc2rng`
+  is installed.  Patch by Dirkjan Ochtman.
+
+
 3.5.0 (2015-11-13)
 ==================
 
