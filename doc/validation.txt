@@ -341,10 +341,16 @@ do one-shot RelaxNG validation:
   False
 
 libxml2 does not currently support the `RelaxNG Compact Syntax`_.
-However, the trang_ translator can convert the compact syntax to the
-XML syntax, which can then be used with lxml.
+However, if `rnc2rng`_ is installed, lxml 3.6 and later can use it
+internally to parse the input schema.  It recognises the `.rnc` file
+extension and also allows parsing an RNC schema from a string using
+`RelaxNG.from_rnc_string()`.
 
-.. _`RelaxNG Compact Syntax`: 
+Alternatively, the trang_ translator can convert the compact syntax
+to the XML syntax, which can then be used with lxml.
+
+.. _`rnc2rng`: https://pypi.python.org/pypi/rnc2rng
+.. _`RelaxNG Compact Syntax`: http://relaxng.org/compact-tutorial.html
 .. _trang: http://www.thaiopensource.com/relaxng/trang.html
 
 
