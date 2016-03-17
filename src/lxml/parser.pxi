@@ -1390,7 +1390,7 @@ _XML_DEFAULT_PARSE_OPTIONS = (
     )
 
 cdef class XMLParser(_FeedParser):
-    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, XMLSchema schema=None, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
+    u"""XMLParser(self, encoding=None, attribute_defaults=False, dtd_validation=False, load_dtd=False, no_network=True, ns_clean=False, recover=False, schema: XMLSchema =None, remove_blank_text=False, resolve_entities=True, remove_comments=False, remove_pis=False, strip_cdata=True, collect_ids=True, target=None, compact=True)
 
     The XML parser.
 
@@ -1584,7 +1584,7 @@ _HTML_DEFAULT_PARSE_OPTIONS = (
 cdef class HTMLParser(_FeedParser):
     u"""HTMLParser(self, encoding=None, remove_blank_text=False, \
                    remove_comments=False, remove_pis=False, strip_cdata=True, \
-                   no_network=True, target=None, XMLSchema schema=None, \
+                   no_network=True, target=None, schema: XMLSchema =None, \
                    recover=True, compact=True)
 
     The HTML parser.
