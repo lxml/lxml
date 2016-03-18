@@ -662,7 +662,10 @@ class ETreeXSLTTestCase(HelperTestCase):
 
         self.assertTrue(len(errors))
         for error in errors:
-            self.assertTrue(':ERROR:XSLT:' in str(error))
+            if ':ERROR:XSLT:' in str(error):
+                break
+        else:
+            self.assertFalse(True, 'No XSLT errors found in error log:\n%s' % errors)
 
     def test_xslt_document_XML_resolver(self):
         # make sure document('') works when custom resolvers are in use
