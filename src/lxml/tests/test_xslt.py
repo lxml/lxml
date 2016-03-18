@@ -264,14 +264,12 @@ class ETreeXSLTTestCase(HelperTestCase):
             etree.XSLT(style)
         except etree.XSLTParseError as e:
             exc = e
+        else:
+            self.assertFalse(True, "XSLT processing should have failed but didn't")
         self.assertTrue(exc is not None)
-        self.assertTrue(len(e.error_log) == 4)
-
-        errors = '''<string>:0:0:ERROR:XSLT:ERR_OK: compilation error
-<string>:0:0:ERROR:XSLT:ERR_OK: xsltStylePreCompute: unknown xsl:foo
-<string>:0:0:ERROR:XSLT:ERR_OK: compilation error
-<string>:0:0:ERROR:XSLT:ERR_OK: xsltParseStylesheetTop: unknown foo element'''
-        self.assertEqual(str(e.error_log), errors)
+        self.assertTrue(len(exc.error_log))
+        for error in exc.error_log:
+            self.assertTrue(':ERROR:XSLT:' in str(error))
 
     def test_xslt_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
@@ -658,7 +656,18 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:template>
 </xsl:stylesheet>
 """))
-        self.assertRaises(etree.XSLTApplyError, xslt, etree.XML('<a/>'))
+
+        errors = None
+        try:
+            xslt(etree.XML('<a/>'))
+        except etree.XSLTApplyError as exc:
+            errors = exc.error_log
+        else:
+            self.assertFalse(True, "XSLT processing should have failed but didn't")
+
+        self.assertTrue(len(errors))
+        for error in errors:
+            self.assertTrue(':ERROR:XSLT:' in str(error))
 
     def test_xslt_document_XML_resolver(self):
         # make sure document('') works when custom resolvers are in use
