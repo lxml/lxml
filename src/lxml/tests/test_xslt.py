@@ -53,19 +53,16 @@ class ETreeXSLTTestCase(HelperTestCase):
     def test_xslt_input_none(self):
         self.assertRaises(TypeError, etree.XSLT, None)
 
-    if False and etree.LIBXSLT_VERSION >= (1,1,15):
-        # earlier versions generate no error
-        if etree.LIBXSLT_VERSION > (1,1,17):
-            def test_xslt_invalid_stylesheet(self):
-                style = self.parse('''\
+    def test_xslt_invalid_stylesheet(self):
+        style = self.parse('''\
 <xsl:stylesheet version="1.0"
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
-  <xsl:stylesheet />
+        xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:stylesheet />
 </xsl:stylesheet>''')
 
-                self.assertRaises(
-                    etree.XSLTParseError, etree.XSLT, style)
-        
+        self.assertRaises(
+            etree.XSLTParseError, etree.XSLT, style)
+
     def test_xslt_copy(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\
@@ -1038,28 +1035,26 @@ class ETreeEXSLTTestCase(HelperTestCase):
 ''',
                           str(res))
 
-    if etree.LIBXSLT_VERSION >= (1,1,21):
-        def test_exslt_str_attribute_replace(self):
-            tree = self.parse('<a><b>B</b><c>C</c></a>')
-            style = self.parse('''\
-      <xsl:stylesheet version = "1.0"
-          xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
-          xmlns:str="http://exslt.org/strings"
-          extension-element-prefixes="str">
+    def test_exslt_str_attribute_replace(self):
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
+          <xsl:stylesheet version = "1.0"
+              xmlns:xsl='http://www.w3.org/1999/XSL/Transform'
+              xmlns:str="http://exslt.org/strings"
+              extension-element-prefixes="str">
 
-          <xsl:template match="/">
-            <h1 class="{str:replace('abc', 'b', 'x')}">test</h1>
-          </xsl:template>
+              <xsl:template match="/">
+                <h1 class="{str:replace('abc', 'b', 'x')}">test</h1>
+              </xsl:template>
 
-      </xsl:stylesheet>''')
+          </xsl:stylesheet>''')
 
-            st = etree.XSLT(style)
-            res = st(tree)
-            self.assertEqual('''\
+        st = etree.XSLT(style)
+        res = st(tree)
+        self.assertEqual(str(res), '''\
 <?xml version="1.0"?>
 <h1 class="axc">test</h1>
-''',
-                              str(res))
+''')
 
     def test_exslt_math(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
