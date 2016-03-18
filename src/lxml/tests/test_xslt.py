@@ -321,12 +321,10 @@ class ETreeXSLTTestCase(HelperTestCase):
         res = self.assertRaises(etree.XSLTApplyError,
                                 st, tree, bar="....")
 
-    if etree.LIBXSLT_VERSION < (1,1,18):
-        # later versions produce no error
-        def test_xslt_parameter_missing(self):
-            # apply() without needed parameter will lead to XSLTApplyError
-            tree = self.parse('<a><b>B</b><c>C</c></a>')
-            style = self.parse('''\
+    def test_xslt_parameter_missing(self):
+        # apply() without needed parameter will lead to XSLTApplyError
+        tree = self.parse('<a><b>B</b><c>C</c></a>')
+        style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:template match="/">
@@ -334,9 +332,9 @@ class ETreeXSLTTestCase(HelperTestCase):
   </xsl:template>
 </xsl:stylesheet>''')
 
-            st = etree.XSLT(style)
-            self.assertRaises(etree.XSLTApplyError,
-                              st.apply, tree)
+        st = etree.XSLT(style)
+        # at least libxslt 1.1.28 produces this error, earlier ones (e.g. 1.1.18) might not ...
+        self.assertRaises(etree.XSLTApplyError, st.apply, tree)
 
     def test_xslt_multiple_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
