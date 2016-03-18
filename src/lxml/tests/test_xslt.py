@@ -259,6 +259,20 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
 
+        exc = None
+        try:
+            etree.XSLT(style)
+        except etree.XSLTParseError as e:
+            exc = e
+        self.assertTrue(exc is not None)
+        self.assertTrue(len(e.error_log) == 4)
+
+        errors = '''<string>:0:0:ERROR:XSLT:ERR_OK: compilation error
+<string>:0:0:ERROR:XSLT:ERR_OK: xsltStylePreCompute: unknown xsl:foo
+<string>:0:0:ERROR:XSLT:ERR_OK: compilation error
+<string>:0:0:ERROR:XSLT:ERR_OK: xsltParseStylesheetTop: unknown foo element'''
+        self.assertEqual(str(e.error_log), errors)
+
     def test_xslt_parameters(self):
         tree = self.parse('<a><b>B</b><c>C</c></a>')
         style = self.parse('''\

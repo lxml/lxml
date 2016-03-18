@@ -378,6 +378,7 @@ cdef class _ErrorLogContext:
     recursively stacked log contexts.
     """
     cdef xmlerror.xmlStructuredErrorFunc old_error_func
+    cdef xmlerror.xmlGenericErrorFunc old_xslt_error_func
     cdef void* old_error_context
 
 cdef class _ErrorLog(_ListErrorLog):
@@ -407,6 +408,8 @@ cdef class _ErrorLog(_ListErrorLog):
         self._logContexts.append(context)
         xmlerror.xmlSetStructuredErrorFunc(
             <void*>self, <xmlerror.xmlStructuredErrorFunc>_receiveError)
+        xslt.xsltSetGenericErrorFunc(
+	    <void*>self, <xmlerror.xmlGenericErrorFunc>_receiveXSLTError)
         return 0
 
     @cython.final
@@ -414,6 +417,8 @@ cdef class _ErrorLog(_ListErrorLog):
         cdef _ErrorLogContext context = self._logContexts.pop()
         xmlerror.xmlSetStructuredErrorFunc(
             context.old_error_context, context.old_error_func)
+        xslt.xsltSetGenericErrorFunc(
+            context.old_error_context, context.old_xslt_error_func)
         return 0
 
     cpdef clear(self):
