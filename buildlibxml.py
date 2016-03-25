@@ -140,14 +140,14 @@ def tryint(s):
 
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'^LATEST_LIBXML2_IS_([0-9.]+[0-9])')
+    version_re = re.compile(r'LATEST_LIBXML2_IS_([0-9.]+[0-9])')
     filename = 'libxml2-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
                             version_re, filename, version=version)
 
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'^LATEST_LIBXSLT_IS_([0-9.]+[0-9])')
+    version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9])')
     filename = 'libxslt-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
