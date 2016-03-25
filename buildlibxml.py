@@ -121,8 +121,9 @@ def parse_text_ftplist(s):
     for line in s.splitlines():
         if not line.startswith('d'):
             # -rw-r--r--   1 ftp      ftp           476 Sep  1  2011 md5sum.txt
-            # Last (9th) element is 'md5sum.txt' in the above example.
-            yield line.split(None, 9)[-1]
+            # Last (9th) element is 'md5sum.txt' in the above example, but there
+            # may be variations, so we discard only the first 8 entries.
+            yield line.split(None, 8)[-1]
 
 def parse_html_ftplist(s):
     re_href = re.compile(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)[;\?"\']', re.I|re.M)
@@ -139,14 +140,14 @@ def tryint(s):
 
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'^LATEST_LIBXML2_IS_(.*)$')
+    version_re = re.compile(r'^LATEST_LIBXML2_IS_([0-9.]+[0-9])')
     filename = 'libxml2-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
                             version_re, filename, version=version)
 
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
-    version_re = re.compile(r'^LATEST_LIBXSLT_IS_(.*)$')
+    version_re = re.compile(r'^LATEST_LIBXSLT_IS_([0-9.]+[0-9])')
     filename = 'libxslt-%s.tar.gz'
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
