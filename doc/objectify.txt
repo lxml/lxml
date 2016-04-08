@@ -308,7 +308,7 @@ To simplify the generation of trees even further, you can use the E-factory:
     >>> E = objectify.E
     >>> root = E.root(
     ...   E.a(5),
-    ...   E.b(6.1),
+    ...   E.b(6.21),
     ...   E.c(True),
     ...   E.d("how", tell="me")
     ... )
@@ -316,7 +316,7 @@ To simplify the generation of trees even further, you can use the E-factory:
     >>> print(etree.tostring(root, pretty_print=True))
     <root xmlns:py="http://codespeak.net/lxml/objectify/pytype">
       <a py:pytype="int">5</a>
-      <b py:pytype="float">6.1</b>
+      <b py:pytype="float">6.21</b>
       <c py:pytype="bool">true</c>
       <d py:pytype="str" tell="me">how</d>
     </root>
