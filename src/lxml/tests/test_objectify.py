@@ -1016,6 +1016,50 @@ class ObjectifyTestCase(HelperTestCase):
         value = objectify.DataElement(5.5)
         self.assertEqual(hash(value), hash(5.5))
 
+    def test_type_float_precision(self):
+        # test not losing precision by shortened float str() value
+        # repr(2.305064300557): '2.305064300557'
+        # str(2.305064300557): '2.30506430056'
+        # "%57.54f" % 2.305064300557:
+        #     ' 2.305064300556999956626214043353684246540069580078125000'
+        Element = self.Element
+        root = Element("{objectified}root")
+        s = "2.305064300557"
+        root.f = float(s)
+        self.assertTrue(isinstance(root.f, objectify.FloatElement))
+        self.assertEqual(root.f.text, s)
+        self.assertEqual(root.f.pyval, float(s))
+
+    def test_type_float_instantiation_precision(self):
+        # test precision preservation for FloatElement instantiation
+        s = "2.305064300557"
+        self.assertEqual(objectify.FloatElement(s), float(s))
+  
+    def test_type_float_precision_consistency(self):
+        # test consistent FloatElement values for the different instantiation
+        # possibilities
+        Element = self.Element
+        root = Element("{objectified}root")
+        s = "2.305064300557"
+        f = float(s)
+        float_elem = objectify.FloatElement(s)
+        float_data_elem = objectify.DataElement(f)
+        root.float_child = float(f)
+        self.assertTrue(f == float_elem == float_data_elem == root.float_child)
+
+    def test_data_element_float_precision(self):
+        # test not losing precision by shortened float str() value
+        f = 2305064300557.0
+        value = objectify.DataElement(f)
+        self.assertTrue(isinstance(value, objectify.FloatElement))
+        self.assertEqual(value, f)
+
+    def test_data_element_float_hash_repr(self):
+        # test not losing precision by shortened float str() value
+        f = 2305064300557.0
+        value = objectify.DataElement(f)
+        self.assertEqual(hash(value), hash(f))
+
     def test_data_element_xsitypes(self):
         for xsi, objclass in xsitype2objclass.items():
             # 1 is a valid value for all ObjectifiedDataElement classes

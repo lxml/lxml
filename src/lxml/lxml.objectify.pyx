@@ -896,11 +896,14 @@ cdef class PyType:
     u"""PyType(self, name, type_check, type_class, stringify=None)
     User defined type.
 
-    Named type that contains a type check function and a type class that
-    inherits from ObjectifiedDataElement.  The type check must take a string
-    as argument and raise ValueError or TypeError if it cannot handle the
-    string value.  It may be None in which case it is not considered for type
-    guessing.
+    Named type that contains a type check function, a type class that
+    inherits from ObjectifiedDataElement and an optional "stringification"
+    function.  The type check must take a string as argument and raise
+    ValueError or TypeError if it cannot handle the string value.  It may be
+    None in which case it is not considered for type guessing.  For registered
+    named types, the 'stringify' function (or unicode() if None) is used to
+    convert a Python object with type name 'name' to the string representation
+    stored in the XML tree.
 
     Example::
 
@@ -1031,7 +1034,7 @@ cdef _registerPyTypes():
     pytype = PyType(u'long', None, IntElement)
     pytype.register()
 
-    pytype = PyType(u'float', float, FloatElement)
+    pytype = PyType(u'float', float, FloatElement, repr)
     pytype.xmlSchemaTypes = (u"double", u"float")
     pytype.register()
 
