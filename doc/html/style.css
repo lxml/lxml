@@ -1,16 +1,12 @@
 body {
-    font: 13px Arial, Verdana, Helvetica, sans-serif;
+    font: 11pt Arial, Verdana, Helvetica, sans-serif;
     text-align: center;
 }
 
-@media screen and (min-width: 960px) and (min-height: 700px) {
+@media screen and (min-width: 960px) and (min-height: 720px) and (max-resolution: 150dpi),
+       screen and (min-width: 1280px) and (min-height: 720px) {
     body {
-        padding: 1em 1em 1em 21em;
-    }
-
-    div.document, div.footer {
-        width: 45em;
-        background-color: white;
+        padding: 1em 1em 1em 22em;
     }
 }
 
@@ -67,7 +63,8 @@ div.contents.topic > p > a {
 
 /*** side menu ***/
 
-@media (min-width: 960px) and (min-height: 700px) {
+@media (min-width: 1280px) and (min-height: 720px),
+       (min-width: 960px) and (min-height: 720px) and (max-resolution: 150dpi) {
     div.sidemenu .menutrigger {
         display: none;
     }
@@ -77,7 +74,7 @@ div.contents.topic > p > a {
         top: 0;
         left: 0;
         width: 26em;
-        font-size: 10px;
+        font-size: 8pt;
         text-align: left;
         border-right: groove gray;
         border-bottom: groove gray;
@@ -91,7 +88,7 @@ div.contents.topic > p > a {
     }
 }
 
-@media (max-width: 959px), (max-height: 699px) {
+@media (max-width: 959px), (max-height: 719px), (max-width: 1279px) and (min-resolution: 151dpi) {
     div.sidemenu > div.menutrigger {
         display: block;
         border: solid darkgreen 2px;
@@ -104,10 +101,9 @@ div.contents.topic > p > a {
         display: none;
         position: absolute;
         z-index: 999;
-        font-size: 10px;
+        font-size: 9pt;
         text-align: left;
-        border-right: groove gray;
-        border-bottom: groove gray;
+        border: groove gray;
         padding-right: 1ex;
         background: #FFFAFA url(python-xml.png) no-repeat top right;
     }
