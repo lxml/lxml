@@ -1,3 +1,5 @@
+from __future__ import absolute_import
+
 from docstructure import SITE_STRUCTURE, HREF_MAP, BASENAME_MAP
 from lxml.etree import (parse, fromstring, ElementTree,
                         Element, SubElement, XPath, XML)
@@ -6,6 +8,7 @@ import re
 import sys
 import copy
 import shutil
+import textwrap
 import subprocess
 
 try:
@@ -21,8 +24,9 @@ RST2HTML_OPTIONS = " ".join([
     ])
 
 XHTML_NS = 'http://www.w3.org/1999/xhtml'
-htmlnsmap = {"h" : XHTML_NS}
+htmlnsmap = {"h": XHTML_NS}
 
+find_head = XPath("/h:html/h:head[1]", namespaces=htmlnsmap)
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
 find_title_tag = XPath("/h:html/h:head/h:title", namespaces=htmlnsmap)
 find_headings = XPath("//h:h1[not(@class)]//text()", namespaces=htmlnsmap)
@@ -32,6 +36,7 @@ find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
 find_words = re.compile('(\w+)').findall
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
+
 
 def make_menu_section_head(section, menuroot):
     section_id = section + '-section'
@@ -45,6 +50,7 @@ def make_menu_section_head(section, menuroot):
         section_head = section_head[0]
     return section_head
 
+
 def build_menu(tree, basename, section_head):
     page_title = find_title(tree)
     if page_title:
@@ -53,6 +59,7 @@ def build_menu(tree, basename, section_head):
         page_title = replace_invalid('', basename.capitalize())
     build_menu_entry(page_title, basename+".html", section_head,
                      headings=find_headings(tree))
+
 
 def build_menu_entry(page_title, url, section_head, headings=None):
     page_id = replace_invalid(' ', os.path.splitext(url)[0]) + '-menu'
@@ -75,6 +82,7 @@ def build_menu_entry(page_title, url, section_head, headings=None):
             a  = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 
+
 def merge_menu(tree, menu, name):
     menu_root = copy.deepcopy(menu)
     tree.getroot()[1][0].insert(0, menu_root) # html->body->div[class=document]
@@ -92,6 +100,7 @@ def merge_menu(tree, menu, name):
             submenu.set("class", submenu.get("class", "").
                         replace("foreign", "current"))
     return tree
+
 
 def inject_flatter_button(tree):
     head = tree.xpath('h:head[1]', namespaces=htmlnsmap)[0]
@@ -116,6 +125,7 @@ def inject_flatter_button(tree):
         '</p>'
         ))
 
+
 def inject_donate_buttons(lxml_path, rst2html_script, tree):
     command = ([sys.executable, rst2html_script]
                + RST2HTML_OPTIONS.split() + [os.path.join(lxml_path, 'README.rst')])
@@ -134,11 +144,13 @@ def inject_donate_buttons(lxml_path, rst2html_script, tree):
     last_div = tree.xpath('h:body//h:div//h:div', namespaces=htmlnsmap)[-1]
     last_div.addnext(legal)
 
+
 def rest2html(script, source_path, dest_path, stylesheet_url):
     command = ('%s %s %s --stylesheet=%s --link-stylesheet %s > %s' %
                (sys.executable, script, RST2HTML_OPTIONS,
                 stylesheet_url, source_path, dest_path))
     subprocess.call(command, shell=True)
+
 
 def convert_changelog(lxml_path, changelog_file_path, rst2html_script, stylesheet_url):
     f = open_file(os.path.join(lxml_path, 'CHANGES.txt'), 'r', encoding='utf-8')
@@ -164,6 +176,7 @@ def convert_changelog(lxml_path, changelog_file_path, rst2html_script, styleshee
     finally:
         out_file.close()
 
+
 def publish(dirname, lxml_path, release):
     if not os.path.exists(dirname):
         os.mkdir(dirname)
@@ -179,11 +192,25 @@ def publish(dirname, lxml_path, release):
     changelog_basename = 'changes-%s' % release
     href_map['Release Changelog'] = changelog_basename + '.html'
 
+    menu_js = textwrap.dedent('''
+    function trigger_menu() {
+        var sidemenu = document.getElementById("sidemenu");
+        var classes = sidemenu.getAttribute("class");
+        if (classes.indexOf(" visible") === -1) {
+            sidemenu.setAttribute("class", classes + " visible");
+        } else {
+            sidemenu.setAttribute("class", classes.replace(" visible", ""));
+        }
+    }
+    ''')
+
     trees = {}
-    menu = Element("div", {"class":"sidemenu"})
+    menu = Element("div", {'class': 'sidemenu', 'id': 'sidemenu'})
+    SubElement(SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu()'}), 'a').text = "Menu"
+    menu_div = SubElement(menu, 'div', {'class': 'menu'})
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
-        section_head = make_menu_section_head(section, menu)
+        section_head = make_menu_section_head(section, menu_div)
         for filename in text_files:
             if filename.startswith('@'):
                 # special menu entry
@@ -213,7 +240,7 @@ def publish(dirname, lxml_path, release):
                       script, stylesheet_url)
 
     # generate sitemap from menu
-    sitemap = XML('''\
+    sitemap = XML(textwrap.dedent('''\
     <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
     <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
       <head>
@@ -228,17 +255,19 @@ def publish(dirname, lxml_path, release):
         <h1>Sitemap of lxml.de - Processing XML and HTML with Python</h1>
       </body>
     </html>
-    '''.replace('    ', ' '))
+    '''))
     sitemap_menu = copy.deepcopy(menu)
     SubElement(SubElement(sitemap_menu[-1], 'li'), 'a', href='http://lxml.de/files/').text = 'Download files'
-    sitemap[-1].append(sitemap_menu) # append to body
+    sitemap[-1].append(sitemap_menu)  # append to body
     ElementTree(sitemap).write(os.path.join(dirname, 'sitemap.html'))
 
     # integrate sitemap into the menu
-    SubElement(SubElement(menu[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
+    SubElement(SubElement(menu_div[-1], 'li'), 'a', href='http://lxml.de/sitemap.html').text = 'Sitemap'
 
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
+        head = find_head(tree)[0]
+        SubElement(head, 'script', type='text/javascript').text = menu_js
         new_tree = merge_menu(tree, menu, basename)
         title = find_title_tag(new_tree)
         if title and title[0].text == 'lxml':
@@ -247,6 +276,7 @@ def publish(dirname, lxml_path, release):
             if heading:
                 heading[0].text = "lxml - XML and HTML with Python"
         new_tree.write(outpath)
+
 
 if __name__ == '__main__':
     publish(sys.argv[1], sys.argv[2], sys.argv[3])
