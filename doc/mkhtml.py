@@ -80,13 +80,13 @@ def build_menu_entry(page_title, url, section_head, headings=None):
                 ref = None
             if ref is None:
                 ref = '-'.join(find_words(replace_invalid(' ', heading.lower())))
-            a  = SubElement(li, "a", href=url+'#'+ref)
+            a = SubElement(li, "a", href=url+'#'+ref)
             a.text = heading
 
 
 def merge_menu(tree, menu, name):
     menu_root = copy.deepcopy(menu)
-    tree.getroot()[1][0].insert(0, menu_root) # html->body->div[class=document]
+    tree.getroot()[1][0].insert(0, menu_root)  # html->body->div[class=document]
     for el in menu_root.iter():
         tag = el.tag
         if tag[0] != '{':
@@ -274,8 +274,10 @@ def publish(dirname, lxml_path, release):
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
         head = find_head(tree)[0]
-        find_body(tree)[0].set('onclick', 'hide_menu()')
         SubElement(head, 'script', type='text/javascript').text = menu_js
+        SubElement(head, 'meta', name='viewport', content="width=device-width, initial-scale=1")
+        find_body(tree)[0].set('onclick', 'hide_menu()')
+
         new_tree = merge_menu(tree, menu, basename)
         title = find_title_tag(new_tree)
         if title and title[0].text == 'lxml':
