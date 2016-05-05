@@ -240,9 +240,14 @@ dt:before {
     content: "\00BB" " ";
 }
 
-ul {
+div.section ul {
     line-height: 1.5em;
-    margin-left: 1em;
+    padding-left: 1ex;
+    margin-left: 1.5em;
+}
+
+div.section li {
+    padding-left: 0;
 }
 
 ol {
