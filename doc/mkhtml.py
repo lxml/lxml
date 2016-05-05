@@ -27,6 +27,7 @@ XHTML_NS = 'http://www.w3.org/1999/xhtml'
 htmlnsmap = {"h": XHTML_NS}
 
 find_head = XPath("/h:html/h:head[1]", namespaces=htmlnsmap)
+find_body = XPath("/h:html/h:body[1]", namespaces=htmlnsmap)
 find_title = XPath("/h:html/h:head/h:title/text()", namespaces=htmlnsmap)
 find_title_tag = XPath("/h:html/h:head/h:title", namespaces=htmlnsmap)
 find_headings = XPath("//h:h1[not(@class)]//text()", namespaces=htmlnsmap)
@@ -193,12 +194,18 @@ def publish(dirname, lxml_path, release):
     href_map['Release Changelog'] = changelog_basename + '.html'
 
     menu_js = textwrap.dedent('''
-    function trigger_menu() {
+    function trigger_menu(event) {
         var sidemenu = document.getElementById("sidemenu");
         var classes = sidemenu.getAttribute("class");
-        if (classes.indexOf(" visible") === -1) {
-            sidemenu.setAttribute("class", classes + " visible");
-        } else {
+        classes = (classes.indexOf(" visible") === -1) ? classes + " visible" : classes.replace(" visible", "");
+        sidemenu.setAttribute("class", classes);
+        event.preventDefault();
+        event.stopPropagation();
+    }
+    function hide_menu() {
+        var sidemenu = document.getElementById("sidemenu");
+        var classes = sidemenu.getAttribute("class");
+        if (classes.indexOf(" visible") !== -1) {
             sidemenu.setAttribute("class", classes.replace(" visible", ""));
         }
     }
@@ -206,7 +213,7 @@ def publish(dirname, lxml_path, release):
 
     trees = {}
     menu = Element("div", {'class': 'sidemenu', 'id': 'sidemenu'})
-    SubElement(SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu()'}), 'a').text = "Menu"
+    SubElement(menu, 'div', {'class': 'menutrigger', 'onclick': 'trigger_menu(event)'}).text = "Menu"
     menu_div = SubElement(menu, 'div', {'class': 'menu'})
     # build HTML pages and parse them back
     for section, text_files in SITE_STRUCTURE:
@@ -267,6 +274,7 @@ def publish(dirname, lxml_path, release):
     # integrate menu into web pages
     for tree, basename, outpath in trees.itervalues():
         head = find_head(tree)[0]
+        find_body(tree)[0].set('onclick', 'hide_menu()')
         SubElement(head, 'script', type='text/javascript').text = menu_js
         new_tree = merge_menu(tree, menu, basename)
         title = find_title_tag(new_tree)
