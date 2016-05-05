@@ -3,13 +3,20 @@ body {
     text-align: center;
 }
 
-@media screen {
+@media screen and (min-width: 960px) and (min-height: 700px) {
     body {
         padding: 1em 1em 1em 21em;
     }
 
     div.document, div.footer {
         width: 45em;
+        background-color: white;
+    }
+}
+
+@media screen {
+    div.document, div.footer {
+        max-width: 45em;
         background-color: white;
     }
 }
@@ -60,48 +67,81 @@ div.contents.topic > p > a {
 
 /*** side menu ***/
 
-div.sidemenu {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 26em;
-    font-size: 10px;
-    text-align: left;
-    border-right: groove gray;
-    border-bottom: groove gray;
-    padding-right: 1ex;
-    background: #FFFAFA url(python-xml.png) no-repeat top right;
+@media (min-width: 960px) and (min-height: 700px) {
+    div.sidemenu .menutrigger {
+        display: none;
+    }
+
+    div.sidemenu {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 26em;
+        font-size: 10px;
+        text-align: left;
+        border-right: groove gray;
+        border-bottom: groove gray;
+        padding-right: 1ex;
+        background: #FFFAFA url(python-xml.png) no-repeat top right;
+    }
+
+    html > body div.sidemenu {
+        /* ignored by IE -> everyone else knows 'fixed', right?  */
+        position: fixed;
+    }
 }
 
-html > body div.sidemenu {
-    /* ignored by IE -> everyone else knows 'fixed', right?  */
-    position: fixed;
+@media (max-width: 959px), (max-height: 699px) {
+    div.sidemenu > div.menutrigger {
+        display: block;
+        border: solid darkgreen 2px;
+        padding: 2px;
+        text-align: center;
+        width: 6ex;
+    }
+
+    div.sidemenu > div.menu {
+        display: none;
+        position: absolute;
+        z-index: 999;
+        font-size: 10px;
+        text-align: left;
+        border-right: groove gray;
+        border-bottom: groove gray;
+        padding-right: 1ex;
+        background: #FFFAFA url(python-xml.png) no-repeat top right;
+    }
+
+    div.sidemenu:hover > div.menu,
+    div.sidemenu.visible > div.menu {
+        display: block;
+    }
 }
 
-div.sidemenu span.section.title {
+div.sidemenu > div.menu span.section.title {
     line-height: 1.2em;
     font-size: 130%;
 }
 
-div.sidemenu ul.menu.current li {
+div.sidemenu > div.menu ul.menu.current li {
     color: #CC0000;
     font-size: 105%;
 }
 
-div.sidemenu ul.menu.current > li > a {
+div.sidemenu > div.menu ul.menu.current > li > a {
     color: #CC0000;
 }
 
-div.sidemenu ul.menu.current ul.submenu {
+div.sidemenu > div.menu ul.menu.current ul.submenu {
     display: block;
 }
 
-div.sidemenu ul.menu.foreign ul.submenu li {
+div.sidemenu > div.menu ul.menu.foreign ul.submenu li {
     padding-top: 2px;
     padding-bottom: 2px;
 }
 
-div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
+div.sidemenu > div.menu ul.menu.foreign li.menu:hover ul.submenu {
     display: block;
     position: absolute;
     border: groove #990000;
@@ -113,11 +153,11 @@ div.sidemenu ul.menu.foreign li.menu:hover ul.submenu {
     background-color: white;
 }
 
-div.sidemenu ul.submenu {
+div.sidemenu > div.menu ul.submenu {
     display: none;
 }
 
-div.sidemenu ul {
+div.sidemenu > div.menu ul {
     line-height: 1em;
     margin: 1ex;
     padding-left: 1em;
@@ -128,7 +168,7 @@ div.sidemenu ul {
 h1.title {
     background: url(python-xml-title.png) no-repeat;
     padding: 20px 0 0 160px;
-    height: 60px;
+    min-height: 60px;
     font-size: 200%;
 }
 
@@ -224,8 +264,8 @@ div.eyecatcher, p.eyecatcher {
     text-align: center;
     font-size: 140%;
     line-height: 1.2em;
-    margin-left: 9em;
-    margin-right: 9em;
+    margin-left: 12%;
+    margin-right: 12%;
 }
 
 div.pagequote {
