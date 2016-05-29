@@ -23,7 +23,7 @@ Cython
 
 .. _pip: http://pypi.python.org/pypi/pip
 .. _Cython: http://cython.org
-.. _wheel: http://wheel.readthedocs.org/en/latest/
+.. _wheel: https://wheel.readthedocs.io/en/latest/
 
 The lxml.etree and lxml.objectify modules are written in Cython_.
 Since we distribute the Cython-generated .c files with lxml releases,
