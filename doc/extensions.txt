@@ -277,7 +277,7 @@ and use the ``Extension`` helper:
   >>> print(e('l:function1(string(b))'))
   1Haegar
 
-The optional second argument to ``Extension`` can either be be a
+The optional second argument to ``Extension`` can either be a
 sequence of names to select from the module, a dictionary that
 explicitly maps function names to their XPath alter-ego or ``None``
 (explicitly passed) to take all available functions under their

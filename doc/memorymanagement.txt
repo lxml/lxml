@@ -31,7 +31,7 @@ This is the case when:
 
 This means that the whole tree in such a condition can be freed.
 
-Detecting whether a Node is in a tree thas has no Proxies connected to
+Detecting whether a Node is in a tree that has no Proxies connected to
 it can be done by relying on Python's garbage collection
 algorithm. Each Proxy can have a reference to the Proxy that points to
 the top of the tree. In case of a document tree, this reference is to

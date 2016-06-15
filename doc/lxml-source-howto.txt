@@ -204,7 +204,7 @@ parser.pxi
     Parsers for XML and HTML.  This is the main parser engine.  It's
     the reason why you can parse a document from various sources in
     two lines of Python code.  It's definitely not the right place to
-    start reading lxml's soure code.
+    start reading lxml's source code.
 
 parsertarget.pxi
     An ElementTree compatible parser target implementation based on

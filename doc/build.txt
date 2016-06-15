@@ -321,7 +321,7 @@ Building Debian packages from SVN sources
   increase the debian version number so apt/dpkg won't get confused
 * run ``dpkg-buildpackage -rfakeroot -us -uc`` to build the package
 
-In case ``dpkg-buildpackage`` tells you that some dependecies are missing, you
+In case ``dpkg-buildpackage`` tells you that some dependencies are missing, you
 can either install them manually or run ``apt-get build-dep lxml``.
 
 That will give you .deb packages in the parent directory which can be
