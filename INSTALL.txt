@@ -216,7 +216,7 @@ Source builds on MacOS-X
 If you are not using macports or want to use a more recent lxml
 release, you have to build it yourself.  While the pre-installed system
 libraries of libxml2 and libxslt are less outdated in recent MacOS-X
-versions than they used to be, so lxml should work them them out of the
+versions than they used to be, so lxml should work with them out of the
 box, it is still recommended to use a static build with the most recent
 library versions.
 

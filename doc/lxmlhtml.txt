@@ -63,7 +63,7 @@ There are several functions available to parse HTML:
 ``fragment_fromstring(string, create_parent=False)``:
     Returns an HTML fragment from a string.  The fragment must contain
     just a single element, unless ``create_parent`` is given;
-    e.g,. ``fragment_fromstring(string, create_parent='div')`` will
+    e.g., ``fragment_fromstring(string, create_parent='div')`` will
     wrap the element in a ``<div>``.
 
 ``fragments_fromstring(string)``:

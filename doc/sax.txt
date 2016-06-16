@@ -118,7 +118,7 @@ Interfacing with pulldom/minidom
 
 lxml.sax is a simple way to interface with the standard XML support in the
 Python library.  Note, however, that this is a one-way solution, as Python's
-DOM implementation connot generate SAX events from a DOM tree.
+DOM implementation cannot generate SAX events from a DOM tree.
 
 You can use xml.dom.pulldom to build a minidom from lxml:
 

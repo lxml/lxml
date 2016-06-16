@@ -60,7 +60,7 @@ from pygments import highlight
 from pygments.lexers import get_lexer_by_name, TextLexer
 
 class Pygments(Directive):
-    """ Source code syntax hightlighting.
+    """ Source code syntax highlighting.
     """
     required_arguments = 1
     optional_arguments = 0

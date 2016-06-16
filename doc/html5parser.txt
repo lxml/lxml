@@ -53,7 +53,7 @@ Function Reference
 ``fragment_fromstring(string, create_parent=False, guess_charset=False)``:
     Returns an HTML fragment from a string.  The fragment must contain
     just a single element, unless ``create_parent`` is given;
-    e.g,. ``fragment_fromstring(string, create_parent='div')`` will
+    e.g., ``fragment_fromstring(string, create_parent='div')`` will
     wrap the element in a ``<div>``.  If ``create_parent`` is true the
     default parent tag (div) is used.
 

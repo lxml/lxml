@@ -69,7 +69,7 @@ DTD from the parsed document using the ``docinfo`` property of the
 result ElementTree object.  The internal subset is available as
 ``internalDTD``, the external subset is provided as ``externalDTD``.
 
-The third way way to activate DTD loading is with the
+The third way to activate DTD loading is with the
 ``attribute_defaults`` option, which loads the DTD and weaves
 attribute default values into the document.  Again, no validation is
 performed unless explicitly requested.
