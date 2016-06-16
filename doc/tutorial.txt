@@ -580,7 +580,7 @@ make sure only Element objects are returned, you can pass the
     >>> root.append(etree.Comment("some comment"))
 
     >>> for element in root.iter():
-    ...     if isinstance(element.tag, basestring):
+    ...     if hasattr(element.tag, 'startswith'):
     ...         print("%s - %s" % (element.tag, element.text))
     ...     else:
     ...         print("SPECIAL: %s - %s" % (element, element.text))
