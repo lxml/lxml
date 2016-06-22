@@ -4,7 +4,10 @@
 __all__ = ["fromstring", "parse", "convert_tree"]
 
 import re
+from six import unichr
+
 from lxml import etree, html
+
 
 try:
     from bs4 import (
@@ -290,12 +293,6 @@ except ImportError:
 
 handle_entities = re.compile("&(\w+);").sub
 
-
-try:
-    unichr
-except NameError:
-    # Python 3
-    unichr = chr
 
 
 def unescape(string):
