@@ -39,12 +39,12 @@ def download_and_extract_zlatkovic_binaries(destdir):
                     assert fn.endswith('.win32.zip')
                     libs[libname] = fn
     else:
-        url = "https://github.com/mhils/libxml2-win-binaries/releases/download/2016.06.27/"
+        url = "https://github.com/mhils/libxml2-win-binaries/releases/download/lxml/"
         libs = dict(
-            libxml2  = "libxml2-2.9.4.win32.zip",
-            libxslt  = "libxslt-1.1.27.win32.zip",
-            zlib     = "zlib-1.2.5.win32.zip",
-            iconv    = "iconv-1.14.win32.zip",
+            libxml2  = "libxml2-latest.win32.zip",
+            libxslt  = "libxslt-latest.win32.zip",
+            zlib     = "zlib-latest.win32.zip",
+            iconv    = "iconv-latest.win32.zip",
         )
 
     if not os.path.exists(destdir): os.makedirs(destdir)
