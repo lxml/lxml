@@ -24,19 +24,28 @@ except:
 # use pre-built libraries on Windows
 
 def download_and_extract_zlatkovic_binaries(destdir):
-    url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
-    libs = dict(
-        libxml2  = None,
-        libxslt  = None,
-        zlib     = None,
-        iconv    = None,
-    )
-    for fn in ftp_listdir(url):
-        for libname in libs:
-            if fn.startswith(libname):
-                assert libs[libname] is None, 'duplicate listings?'
-                assert fn.endswith('.win32.zip')
-                libs[libname] = fn
+    if sys.version_info < (3, 5):
+        url = 'ftp://ftp.zlatkovic.com/pub/libxml/'
+        libs = dict(
+            libxml2  = None,
+            libxslt  = None,
+            zlib     = None,
+            iconv    = None,
+        )
+        for fn in ftp_listdir(url):
+            for libname in libs:
+                if fn.startswith(libname):
+                    assert libs[libname] is None, 'duplicate listings?'
+                    assert fn.endswith('.win32.zip')
+                    libs[libname] = fn
+    else:
+        url = "https://github.com/mhils/libxml2-win-binaries/releases/download/2016.06.27/"
+        libs = dict(
+            libxml2  = "libxml2-2.9.4.win32.zip",
+            libxslt  = "libxslt-1.1.27.win32.zip",
+            zlib     = "zlib-1.2.5.win32.zip",
+            iconv    = "iconv-1.14.win32.zip",
+        )
 
     if not os.path.exists(destdir): os.makedirs(destdir)
     for libname, libfn in libs.items():
