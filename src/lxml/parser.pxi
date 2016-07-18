@@ -447,6 +447,8 @@ cdef xmlparser.xmlParserInput* _local_resolver(const_char* c_url, const_char* c_
             data = doc_ref._data_bytes
             c_input = xmlparser.xmlNewInputStream(c_context)
             if c_input is not NULL:
+                if doc_ref._filename:
+                    c_input.filename = <char *>tree.xmlStrdup(_xcstr(doc_ref._filename))
                 c_input.base = _xcstr(data)
                 c_input.length = python.PyBytes_GET_SIZE(data)
                 c_input.cur = c_input.base
