@@ -56,6 +56,7 @@ cdef extern from "libxml/tree.h":
         const_xmlChar* base
         const_xmlChar* cur
         const_xmlChar* end
+        const_char *filename
 
     ctypedef struct xmlParserInputBuffer:
         void* context
