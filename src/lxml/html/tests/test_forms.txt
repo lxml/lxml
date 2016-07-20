@@ -28,6 +28,7 @@
 ...     <option value="3">number 3</option>
 ...     <option>number 4</option>
 ...   </select>
+...   <input type="file" name="file_field" value="nonsense_value">
 ...   <input type="submit" name="submit1" value="submit">
 ...   <input type="submit" name="submit2" value="submit">
 ...   <input type="reset" name="reset1">linksys
@@ -142,6 +143,7 @@ hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2
 >>> for name, value in sorted(fields.items()):
 ...     print('%s: %r' % (name, value))
 check_group: <CheckboxValues {'1', '2', '3'} for checkboxes name='check_group'>
+file_field: 'nonsense_value'
 hidden_field: 'new value'
 radios: None
 reset1: None
