@@ -1027,7 +1027,7 @@ class FormElement(HtmlElement):
                     "Unexpected tag: %r" % el)
                 if el.checkable and not el.checked:
                     continue
-                if el.type in ('submit', 'image', 'reset'):
+                if el.type in ('submit', 'image', 'reset', 'file'):
                     continue
                 value = el.value
                 if value is not None:
