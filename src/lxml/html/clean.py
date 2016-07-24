@@ -112,7 +112,10 @@ class Cleaner(object):
         Removes any comments.
 
     ``style``:
-        Removes any style tags or attributes.
+        Removes any style tags.
+
+    ``inline_style``
+        Removes any style attributes.
 
     ``links``:
         Removes any ``<link>`` tags
@@ -191,6 +194,7 @@ class Cleaner(object):
     javascript = True
     comments = True
     style = False
+    inline_style = False
     links = True
     meta = True
     page_structure = True
@@ -314,6 +318,7 @@ class Cleaner(object):
             kill_tags.add(etree.ProcessingInstruction)
         if self.style:
             kill_tags.add('style')
+        if self.inline_style:
             etree.strip_attributes(doc, 'style')
         if self.links:
             kill_tags.add('link')
