@@ -90,6 +90,7 @@ def unpack_zipfile(zipfn, destdir):
     assert os.path.exists(extracted_dir), 'missing: %s' % extracted_dir
     return extracted_dir
 
+
 def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_dirs):
     assert sys.platform.startswith('win')
     libs = download_and_extract_zlatkovic_binaries(download_dir)
@@ -107,6 +108,7 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
 LIBICONV_LOCATION = 'ftp://ftp.gnu.org/pub/gnu/libiconv/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
+
 
 def ftp_listdir(url):
     assert url.lower().startswith('ftp://')
@@ -126,6 +128,7 @@ def ftp_listdir(url):
     res.close()
     return files
 
+
 def parse_text_ftplist(s):
     for line in s.splitlines():
         if not line.startswith('d'):
@@ -134,6 +137,7 @@ def parse_text_ftplist(s):
             # may be variations, so we discard only the first 8 entries.
             yield line.split(None, 8)[-1]
 
+
 def parse_html_ftplist(s):
     re_href = re.compile(r'<a\s+(?:[^>]*?\s+)?href=["\'](.*?)[;\?"\']', re.I|re.M)
     links = set(re_href.findall(s))
@@ -141,11 +145,13 @@ def parse_html_ftplist(s):
         if not link.endswith('/'):
             yield unquote(link)
 
+
 def tryint(s):
     try:
         return int(s)
     except ValueError:
         return s
+
 
 def download_libxml2(dest_dir, version=None):
     """Downloads libxml2, returning the filename where the library was downloaded"""
@@ -154,6 +160,7 @@ def download_libxml2(dest_dir, version=None):
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxml2',
                             version_re, filename, version=version)
 
+
 def download_libxslt(dest_dir, version=None):
     """Downloads libxslt, returning the filename where the library was downloaded"""
     version_re = re.compile(r'LATEST_LIBXSLT_IS_([0-9.]+[0-9])')
@@ -161,12 +168,14 @@ def download_libxslt(dest_dir, version=None):
     return download_library(dest_dir, LIBXML2_LOCATION, 'libxslt',
                             version_re, filename, version=version)
 
+
 def download_libiconv(dest_dir, version=None):
     """Downloads libiconv, returning the filename where the library was downloaded"""
     version_re = re.compile(r'^libiconv-([0-9.]+[0-9]).tar.gz$')
     filename = 'libiconv-%s.tar.gz'
     return download_library(dest_dir, LIBICONV_LOCATION, 'libiconv',
                             version_re, filename, version=version)
+
 
 def download_library(dest_dir, location, name, version_re, filename,
                      version=None):
@@ -253,9 +262,11 @@ def call_subprocess(cmd, **kw):
     if returncode:
         raise Exception('Command "%s" returned code %s' % (cmd_desc, returncode))
 
+
 def safe_mkdir(dir):
     if not os.path.exists(dir):
         os.makedirs(dir)
+
 
 def cmmi(configure_cmd, build_dir, multicore=None, **call_setup):
     print('Starting build in %s' % build_dir)
@@ -272,6 +283,7 @@ def cmmi(configure_cmd, build_dir, multicore=None, **call_setup):
     call_subprocess(
         ['make'] + make_jobs + ['install'],
         cwd=build_dir, **call_setup)
+
 
 def configure_darwin_env(env_setup):
     import platform
@@ -293,19 +305,20 @@ def configure_darwin_env(env_setup):
             arch_string = "-arch ppc "
         if minor_version < 6:
             env_default = {
-                'CFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
-                'LDFLAGS' : arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
-                'MACOSX_DEPLOYMENT_TARGET' : "10.3"
+                'CFLAGS': arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -O2",
+                'LDFLAGS': arch_string + "-arch i386 -isysroot /Developer/SDKs/MacOSX10.4u.sdk",
+                'MACOSX_DEPLOYMENT_TARGET': "10.3"
             }
         else:
             env_default = {
-                'CFLAGS' : arch_string + "-arch i386 -arch x86_64 -O2",
-                'LDFLAGS' : arch_string + "-arch i386 -arch x86_64",
-                'MACOSX_DEPLOYMENT_TARGET' : "10.6"
+                'CFLAGS': arch_string + "-arch i386 -arch x86_64 -O2",
+                'LDFLAGS': arch_string + "-arch i386 -arch x86_64",
+                'MACOSX_DEPLOYMENT_TARGET': "10.6"
             }
         env = os.environ.copy()
         env_default.update(env)
         env_setup['env'] = env_default
+
 
 def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
