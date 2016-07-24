@@ -2,6 +2,32 @@
 lxml changelog
 ==============
 
+3.6.1 (2016-07-24)
+==================
+
+Features added
+--------------
+
+* GH#180: Separate option ``inline_style`` for Cleaner that only removes ``style``
+  attributes instead of all styles.  Patch by Christian Pedersen.
+
+* GH#196: Windows build support for Python 3.5.  Contribution by Maximilian Hils.
+
+Bugs fixed
+----------
+
+* GH#199: Exclude ``file`` fields from ``FormElement.form_values`` (as browsers do).
+  Patch by Tomas Divis.
+
+* GH#198, LP#1568167: Try to provide base URL from ``Resolver.resolve_string()``.
+  Patch by Michael van Tellingen.
+
+* GH#191: More accurate float serialisation in ``objectify.FloatElement``.
+  Patch by Holger Joukl.
+
+* LP#1551797: Repair XSLT error logging. Patch by Marcus Brinkmann.
+
+
 3.6.0 (2016-03-17)
 ==================
 
@@ -11,7 +37,7 @@ Features added
 * GH#187: Now supports (only) version 5.x and later of PyPy.
   Patch by Armin Rigo.
 
-* GH#181: Direct support for `.rnc` files in `RelaxNG()` if `rnc2rng`
+* GH#181: Direct support for ``.rnc`` files in `RelaxNG()` if ``rnc2rng``
   is installed.  Patch by Dirkjan Ochtman.
 
 Bugs fixed
@@ -23,7 +49,7 @@ Bugs fixed
 * GH#186: Soupparser failed to process entities in Python 3.x.
   Patch by Duncan Morris.
 
-* GH#185: Rare encoding related `TypeError` on import was fixed.
+* GH#185: Rare encoding related ``TypeError`` on import was fixed.
   Patch by Petr Demin.
 
 
