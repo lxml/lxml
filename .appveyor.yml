@@ -1,0 +1,17 @@
+environment:
+  matrix:
+    - python: 27
+    - python: 35
+#   - python: 35-x64
+
+install:
+  - "SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%"
+  - python -m pip install -U pip wheel setuptools
+  - pip install -r requirements.txt
+
+build: false
+
+test_script:
+  - python -u setup.py clean
+  - python -u setup.py bdist_wheel --static-deps
+  - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
