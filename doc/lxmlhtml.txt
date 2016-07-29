@@ -149,6 +149,12 @@ also include some extra methods:
     Returns a set-like object that allows accessing and modifying the
     names in the 'class' attribute of the element.  (New in lxml 3.5).
 
+``.set('attribute', None)``:
+    Creates a boolean attribute, like ``<form novalidate></form>``
+    or ``<div custom-attribute></div>``.  In XML attributes must
+    have at least the empty string as their value like ``<form
+    novalidate=""></form>``, but HTML boolean attributes can be either
+    present or absent from an element.
 
 Running HTML doctests
 =====================
