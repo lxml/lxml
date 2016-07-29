@@ -561,10 +561,11 @@ cdef inline object _getAttributeValue(_Element element, key, default):
 cdef int _setAttributeValue(_Element element, key, value) except -1:
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(key)
-    if not element._doc._parser._for_html:
+    is_html = element._doc._parser._for_html
+    if not is_html:
         _attributeValidOrRaise(tag)
     c_tag = _xcstr(tag)
-    if value is None:
+    if value is None and is_html:
         c_value = NULL
     else:
         if isinstance(value, QName):

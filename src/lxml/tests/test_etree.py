@@ -291,12 +291,8 @@ class ETreeOnlyTestCase(HelperTestCase):
         root = Element("root")
         self.assertRaises(TypeError, root.set, "newattr", 5)
         self.assertRaises(TypeError, root.set, "newattr", object)
-
-    def test_attribute_set_none(self):
-        # lxml.etree allows None to represent (html5) boolean attributes
-        Element = self.etree.Element
-        root = Element("root")
-        root.set("boolean-attribute", None)
+        self.assertRaises(TypeError, root.set, "newattr", None)
+        self.assertRaises(TypeError, root.set, "newattr")
 
     def test_strip_attributes(self):
         XML = self.etree.XML
