@@ -5,6 +5,13 @@ lxml changelog
 3.7.0 (2016-??-??)
 ==================
 
+Features added
+--------------
+
+* GH#201: Calling the method ``.set('attrname')`` without value argument
+  (or ``None``) on HTML elements creates an attribute without value that
+  serialises like ``<div attrname></div>``.  Patch by Daniel Holth.
+
 Other changes
 -------------
 
