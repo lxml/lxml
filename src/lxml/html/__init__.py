@@ -239,6 +239,15 @@ class Classes(MutableSet):
 
 class HtmlMixin(object):
 
+    def set(self, key, value=None):
+        """set(self, key, value=None)
+
+        Sets an element attribute.  If no value is provided, or if the value is None,
+        creates a 'boolean' attribute without value, e.g. "<form novalidate></form>"
+        for ``form.set('novalidate')``.
+        """
+        super(HtmlElement, self).set(key, value)
+
     @property
     def classes(self):
         """
@@ -682,8 +691,9 @@ class HtmlComment(etree.CommentBase, HtmlMixin):
 
 
 class HtmlElement(etree.ElementBase, HtmlMixin):
-    # Override etree.ElementBase.cssselect, despite the MRO
+    # Override etree.ElementBase.cssselect() and set(), despite the MRO (FIXME: change base order?)
     cssselect = HtmlMixin.cssselect
+    set = HtmlMixin.set
 
 
 class HtmlProcessingInstruction(etree.PIBase, HtmlMixin):

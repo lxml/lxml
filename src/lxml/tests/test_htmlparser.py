@@ -596,20 +596,23 @@ class HtmlParserTestCase(HelperTestCase):
         # ability to serialize boolean attribute by setting value to None
         form = html.Element('form')
         form.set('novalidate', None)
-        self.assertEqual(html.tostring(form), 
-                _bytes('<form novalidate></form>'))
+        self.assertEqual(html.tostring(form),
+                         _bytes('<form novalidate></form>'))
+        form.set('custom')
+        self.assertEqual(html.tostring(form),
+                         _bytes('<form novalidate custom></form>'))
 
     def test_boolean_attribute_round_trip(self):
         # ability to pass boolean attributes unmodified
         fragment = '<tag attribute></tag>'
         self.assertEqual(html.tostring(html.fragment_fromstring(fragment)),
-                _bytes(fragment))
+                         _bytes(fragment))
 
     def test_boolean_attribute_xml_adds_empty_string(self):
         # html serialized as xml converts boolean attributes to empty strings
         fragment = '<tag attribute></tag>'
         self.assertEqual(self.etree.tostring(html.fragment_fromstring(fragment)),
-                _bytes('<tag attribute=""/>'))
+                         _bytes('<tag attribute=""/>'))
 
 
 def test_suite():
