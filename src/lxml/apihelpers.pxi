@@ -564,11 +564,14 @@ cdef int _setAttributeValue(_Element element, key, value) except -1:
     if not element._doc._parser._for_html:
         _attributeValidOrRaise(tag)
     c_tag = _xcstr(tag)
-    if isinstance(value, QName):
-        value = _resolveQNameText(element, value)
+    if value is None:
+        c_value = NULL
     else:
-        value = _utf8(value)
-    c_value = _xcstr(value)
+        if isinstance(value, QName):
+            value = _resolveQNameText(element, value)
+        else:
+            value = _utf8(value)
+        c_value = _xcstr(value)
     if ns is None:
         c_ns = NULL
     else:

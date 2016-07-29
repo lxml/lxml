@@ -592,6 +592,13 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(self.etree.tostring(doc),
                          _bytes('<!DOCTYPE html PUBLIC "-//IETF//DTD HTML//EN">\n<html/>'))
 
+    def test_boolean_attribute(self):
+        # ability to serialize boolean attribute by setting value to None
+        form = html.Element('form')
+        form.set('novalidate', None)
+        self.assertEqual(html.tostring(form), 
+                _bytes('<form novalidate></form>'))
+
 
 def test_suite():
     suite = unittest.TestSuite()
