@@ -599,6 +599,18 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(html.tostring(form), 
                 _bytes('<form novalidate></form>'))
 
+    def test_boolean_attribute_round_trip(self):
+        # ability to pass boolean attributes unmodified
+        fragment = '<tag attribute></tag>'
+        self.assertEqual(html.tostring(html.fragment_fromstring(fragment)),
+                _bytes(fragment))
+
+    def test_boolean_attribute_xml_adds_empty_string(self):
+        # html serialized as xml converts boolean attributes to empty strings
+        fragment = '<tag attribute></tag>'
+        self.assertEqual(self.etree.tostring(html.fragment_fromstring(fragment)),
+                _bytes('<tag attribute=""/>'))
+
 
 def test_suite():
     suite = unittest.TestSuite()
