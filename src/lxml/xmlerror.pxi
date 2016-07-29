@@ -55,8 +55,8 @@ cdef class _LogEntry:
     cdef readonly int level
     cdef readonly int line
     cdef readonly int column
-    cdef object _message
-    cdef object _filename
+    cdef basestring _message
+    cdef basestring _filename
     cdef char* _c_message
     cdef xmlChar* _c_filename
 
