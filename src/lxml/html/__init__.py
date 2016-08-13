@@ -772,15 +772,14 @@ def document_fromstring(html, parser=None, ensure_head_body=False, **kw):
 
 def fragments_fromstring(html, no_leading_text=False, base_url=None,
                          parser=None, **kw):
-    """
-    Parses several HTML elements, returning a list of elements.
+    """Parses several HTML elements, returning a list of elements.
 
-    The first item in the list may be a string (though leading
-    whitespace is removed).  If no_leading_text is true, then it will
-    be an error if there is leading text, and it will always be a list
-    of only elements.
+    The first item in the list may be a string.
+    If no_leading_text is true, then it will be an error if there is
+    leading text, and it will always be a list of only elements.
 
-    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    base_url will set the document's base_url attribute
+    (and the tree's docinfo.URL).
     """
     if parser is None:
         parser = html_parser
