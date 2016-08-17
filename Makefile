@@ -10,6 +10,8 @@ PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/n
 CYTHON_WITH_COVERAGE=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
+MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
+
 all: inplace
 
 # Build in-place
@@ -21,6 +23,12 @@ sdist:
 
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
+
+wheel_manylinux:
+	docker run --rm -t \
+		-v $(shell pwd):/io \
+		$(MANYLINUX_IMAGE_X86_64) \
+		bash /io/tools/manylinux/build-wheels.sh
 
 wheel:
 	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
