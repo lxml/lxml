@@ -26,7 +26,7 @@ assert_importable() {
     for PYBIN in /opt/python/*/bin/; do
         ${PYBIN}/pip install lxml --no-index -f $WHEELHOUSE
 
-        (cd $HOME; ${PYBIN}/python -c 'import lxml')
+        (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
     done
 }
 
