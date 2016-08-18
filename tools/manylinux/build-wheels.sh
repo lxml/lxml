@@ -26,7 +26,7 @@ assert_importable() {
     for PYBIN in /opt/python/*/bin/; do
         ${PYBIN}/pip install lxml --no-index -f $WHEELHOUSE
 
-        (cd $HOME; ${PYBIN}/python -c 'import lxml')
+        (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
     done
 }
 
@@ -39,12 +39,18 @@ prepare_system() {
 build_wheels() {
     # Compile wheels for all python versions
     test -e "$SDIST" && source="$SDIST" || source=
+    FIRST=
+    SECOND=
     for PYBIN in /opt/python/*/bin; do
         # Install build requirements if we need them and file exists
         test -n "$source" -o ! -e "$REQUIREMENTS" \
             || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
-        build_wheel "$source"
+        build_wheel "$source" &
+        SECOND=$!
+
+        [ -z "$FIRST" ] || wait ${FIRST}
+        FIRST=$SECOND
     done
 }
 
