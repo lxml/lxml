@@ -20,6 +20,12 @@ Other changes
   and file name.
 
 
+3.6.3 (2016-08-18)
+==================
+
+* release without source changes to provide cleanly built Linux wheels
+
+
 3.6.2 (2016-08-18)
 ==================
 

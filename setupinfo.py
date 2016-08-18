@@ -237,9 +237,9 @@ def libraries():
             libs = ['%s_a' % lib for lib in libs]
         libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
-        libs = ['z', 'm']
+        libs = ['rt', 'z', 'm']
     else:
-        libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
+        libs = ['xslt', 'exslt', 'rt', 'xml2', 'z', 'm']
     return libs
 
 def library_dirs(static_library_dirs):
