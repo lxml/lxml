@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.6.2`_, released 2016-08-18
-(`changes for 3.6.2`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.6.3`_, released 2016-08-18
+(`changes for 3.6.3`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -245,6 +245,8 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 .. _`PDF documentation`: lxmldoc-3.6.1.pdf
 
+* `lxml 3.6.3`_, released 2016-08-18 (`changes for 3.6.3`_)
+
 * `lxml 3.6.2`_, released 2016-08-18 (`changes for 3.6.2`_)
 
 * `lxml 3.6.1`_, released 2016-07-24 (`changes for 3.6.1`_)
@@ -267,6 +269,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `older releases <http://lxml.de/3.4/#old-versions>`_
 
+.. _`lxml 3.6.3`: /files/lxml-3.6.3.tgz
 .. _`lxml 3.6.2`: /files/lxml-3.6.2.tgz
 .. _`lxml 3.6.1`: /files/lxml-3.6.1.tgz
 .. _`lxml 3.6.0`: /files/lxml-3.6.0.tgz
@@ -278,6 +281,7 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 3.4.1`: /files/lxml-3.4.1.tgz
 .. _`lxml 3.4.0`: /files/lxml-3.4.0.tgz
 
+.. _`changes for 3.6.3`: /changes-3.6.3.html
 .. _`changes for 3.6.2`: /changes-3.6.2.html
 .. _`changes for 3.6.1`: /changes-3.6.1.html
 .. _`changes for 3.6.0`: /changes-3.6.0.html
