@@ -3,7 +3,7 @@ PYTHON3?=python3
 TESTFLAGS=-p -v
 TESTOPTS=
 SETUPFLAGS=
-LXMLVERSION=`cat version.txt`
+LXMLVERSION=$(shell cat version.txt)
 
 PYTHON_WITH_CYTHON=$(shell $(PYTHON)  -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
 PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/null 2>/dev/null && echo " --with-cython" || true)
@@ -12,29 +12,38 @@ CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys;
 
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 
+.PHONY: all inplace rebuild-sdist sdist build require-cython wheel_manylinux wheel
+
 all: inplace
 
 # Build in-place
 inplace:
 	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings --with-coverage
 
-sdist:
+rebuild-sdist: require-cython
+	rm -f dist/lxml-$(LXMLVERSION).tar.gz
+	find src -name '*.c' -exec rm -f {} \;
+	$(MAKE) dist/lxml-$(LXMLVERSION).tar.gz
+
+dist/lxml-$(LXMLVERSION).tar.gz:
 	$(PYTHON) setup.py $(SETUPFLAGS) sdist $(PYTHON_WITH_CYTHON)
+
+sdist: dist/lxml-$(LXMLVERSION).tar.gz
 
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
 
 require-cython:
 	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
-	    echo "NOTE: missing Cython - please use '$(PYTHON) -m pip install Cython' to install it"; false; }
+	    echo "NOTE: missing Cython - please use this command to install it: $(PYTHON) -m pip install Cython"; false; }
 
-wheel_manylinux: require-cython sdist
+wheel_manylinux: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
 		-e CFLAGS="$(CFLAGS)" \
 		-e LDFLAGS="$(LDFLAGS)" \
 		$(MANYLINUX_IMAGE_X86_64) \
-		bash /io/tools/manylinux/build-wheels.sh /io/dist/lxml-$(LXMLVERSION).tar.gz
+		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
 wheel:
 	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)
