@@ -1,4 +1,4 @@
-#/!/bin/bash
+#!/bin/bash
 #
 # Called inside the manylinux image
 echo "Started $0 $@"
