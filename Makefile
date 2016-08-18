@@ -24,11 +24,17 @@ sdist:
 build:
 	$(PYTHON) setup.py $(SETUPFLAGS) build $(PYTHON_WITH_CYTHON)
 
-wheel_manylinux:
+require-cython:
+	@[ -n "$(PYTHON_WITH_CYTHON)" ] || { \
+	    echo "NOTE: missing Cython - please use '$(PYTHON) -m pip install Cython' to install it"; false; }
+
+wheel_manylinux: require-cython sdist
 	docker run --rm -t \
 		-v $(shell pwd):/io \
+		-e CFLAGS="$(CFLAGS)" \
+		-e LDFLAGS="$(LDFLAGS)" \
 		$(MANYLINUX_IMAGE_X86_64) \
-		bash /io/tools/manylinux/build-wheels.sh
+		bash /io/tools/manylinux/build-wheels.sh /io/dist/lxml-$(LXMLVERSION).tar.gz
 
 wheel:
 	$(PYTHON) setup.py $(SETUPFLAGS) bdist_wheel $(PYTHON_WITH_CYTHON)

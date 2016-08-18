@@ -6,14 +6,18 @@ echo "Started $0 $@"
 set -e -x
 REQUIREMENTS=/io/requirements.txt
 WHEELHOUSE=/io/wheelhouse
+SDIST=$1
 
 build_wheel() {
+    source="$1"
+    [ -n "$source" ] || source=/io
+
     env STATIC_DEPS=true \
         LDFLAGS="$LDFLAGS -fPIC" \
         CFLAGS="$CFLAGS -fPIC" \
         ${PYBIN}/pip \
             wheel \
-            /io \
+            "$source" \
             -w $WHEELHOUSE
 }
 
@@ -29,17 +33,18 @@ assert_importable() {
 prepare_system() {
     yum install -y zlib-devel
     # Remove Python 2.6 symlinks
-    rm /opt/python/cp26*
+    rm -f /opt/python/cp26*
 }
 
 build_wheels() {
     # Compile wheels for all python versions
     for PYBIN in /opt/python/*/bin; do
-        # Install requirements if file exists
-        test ! -e $REQUIREMENTS \
-            || ${PYBIN}/pip install -r $REQUIREMENTS
+        test -e "$SDIST" && source="$SDIST" || source=
+        # Install build requirements if we need them and file exists
+        test -z "$SDIST" -a -e "$REQUIREMENTS" \
+            && ${PYBIN}/pip install -r "$REQUIREMENTS"
 
-        build_wheel
+        build_wheel "$source"
     done
 }
 
