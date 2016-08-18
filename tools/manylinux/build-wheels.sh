@@ -38,11 +38,11 @@ prepare_system() {
 
 build_wheels() {
     # Compile wheels for all python versions
+    test -e "$SDIST" && source="$SDIST" || source=
     for PYBIN in /opt/python/*/bin; do
-        test -e "$SDIST" && source="$SDIST" || source=
         # Install build requirements if we need them and file exists
-        test -z "$SDIST" -a -e "$REQUIREMENTS" \
-            && ${PYBIN}/pip install -r "$REQUIREMENTS"
+        test -n "$source" -o ! -e "$REQUIREMENTS" \
+            || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
         build_wheel "$source"
     done
