@@ -29,7 +29,7 @@ require-cython:
 	    echo "NOTE: missing Cython - please use '$(PYTHON) -m pip install Cython' to install it"; false; }
 
 wheel_manylinux: require-cython sdist
-	docker run --rm -t \
+	time docker run --rm -t \
 		-v $(shell pwd):/io \
 		-e CFLAGS="$(CFLAGS)" \
 		-e LDFLAGS="$(LDFLAGS)" \
