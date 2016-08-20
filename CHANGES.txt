@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#203: New option ``default_doctype`` in ``HTMLParser`` that allows
+  disabling the automatic doctype creation.
+
 * GH#201: Calling the method ``.set('attrname')`` without value argument
   (or ``None``) on HTML elements creates an attribute without value that
   serialises like ``<div attrname></div>``.  Patch by Daniel Holth.
