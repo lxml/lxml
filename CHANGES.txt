@@ -9,11 +9,14 @@ Features added
 --------------
 
 * GH#203: New option ``default_doctype`` in ``HTMLParser`` that allows
-  disabling the automatic doctype creation.
+  disabling the automatic doctype creation.  Patch by Shadab Zafar.
 
 * GH#201: Calling the method ``.set('attrname')`` without value argument
   (or ``None``) on HTML elements creates an attribute without value that
   serialises like ``<div attrname></div>``.  Patch by Daniel Holth.
+
+* GH#197: Ignore form input fields in ``form_values()`` when they are
+  marked as ``disabled`` in HTML.  Patch by Kristian Klemon.
 
 Other changes
 -------------
