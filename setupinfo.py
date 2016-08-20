@@ -231,17 +231,17 @@ def print_libxml_error():
 
 
 def libraries():
+    librt = ['rt'] if 'linux' in sys.platform else []
+
     if sys.platform in ('win32',):
         libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
         if OPTION_STATIC:
             libs = ['%s_a' % lib for lib in libs]
         libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
-        libs = ['rt', 'z', 'm']
-    elif sys.platform in ('darwin',):
-        libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
+        libs = librt + ['z', 'm']
     else:
-        libs = ['xslt', 'exslt', 'rt', 'xml2', 'z', 'm']
+        libs = ['xslt', 'exslt'] + librt + ['xml2', 'z', 'm']
     return libs
 
 def library_dirs(static_library_dirs):
