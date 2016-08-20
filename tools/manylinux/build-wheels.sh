@@ -9,13 +9,14 @@ WHEELHOUSE=/io/wheelhouse
 SDIST=$1
 
 build_wheel() {
-    source="$1"
+    pybin="$1"
+    source="$2"
     [ -n "$source" ] || source=/io
 
     env STATIC_DEPS=true \
         LDFLAGS="$LDFLAGS -fPIC" \
         CFLAGS="$CFLAGS -fPIC" \
-        ${PYBIN}/pip \
+        ${pybin}/pip \
             wheel \
             "$source" \
             -w $WHEELHOUSE
@@ -31,7 +32,7 @@ assert_importable() {
 }
 
 prepare_system() {
-    yum install -y zlib-devel
+    #yum install -y zlib-devel
     # Remove Python 2.6 symlinks
     rm -f /opt/python/cp26*
 }
@@ -46,7 +47,7 @@ build_wheels() {
         test -n "$source" -o ! -e "$REQUIREMENTS" \
             || ${PYBIN}/pip install -r "$REQUIREMENTS"
 
-        build_wheel "$source" &
+        build_wheel "$PYBIN" "$source" &
         SECOND=$!
 
         [ -z "$FIRST" ] || wait ${FIRST}

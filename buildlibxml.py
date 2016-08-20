@@ -1,6 +1,7 @@
 import os, re, sys, subprocess
 import tarfile
 from distutils import log, sysconfig, version
+from contextlib import closing
 
 try:
     from urlparse import urlsplit, urljoin, unquote
@@ -107,25 +108,42 @@ def get_prebuilt_libxml2xslt(download_dir, static_include_dirs, static_library_d
 
 LIBXML2_LOCATION = 'ftp://xmlsoft.org/libxml2/'
 LIBICONV_LOCATION = 'ftp://ftp.gnu.org/pub/gnu/libiconv/'
+ZLIB_LOCATION = 'http://zlib.net/'
 match_libfile_version = re.compile('^[^-]*-([.0-9-]+)[.].*').match
+
+
+def _find_content_encoding(response, default='iso8859-1'):
+    from email.message import Message
+    content_type = response.headers.get('Content-Type')
+    if content_type:
+        msg = Message()
+        msg.add_header('Content-Type', content_type)
+        charset = msg.get_content_charset(default)
+    else:
+        charset = default
+    return charset
 
 
 def ftp_listdir(url):
     assert url.lower().startswith('ftp://')
-    from email.message import Message
-    res = urlopen(url)
-    content_type = res.headers.get('Content-Type')
-    if content_type:
-        msg = Message()
-        msg.add_header('Content-Type', content_type)
-        charset = msg.get_content_charset('utf-8')
-    else:
-        charset = 'utf-8'
+    with closing(urlopen(url)) as res:
+        charset = _find_content_encoding(res)
+        content_type = res.headers.get('Content-Type')
+        data = res.read()
+
+    data = data.decode(charset)
     if content_type and content_type.startswith('text/html'):
-        files = parse_html_ftplist(res.read().decode(charset))
+        files = parse_html_ftplist(data)
     else:
-        files = parse_text_ftplist(res.read().decode(charset))
-    res.close()
+        files = parse_text_ftplist(data)
+    return files
+
+
+def http_listfiles(url, re_pattern):
+    with closing(urlopen(url)) as res:
+        charset = _find_content_encoding(res)
+        data = res.read()
+    files = re.findall(re_pattern, data.decode(charset))
     return files
 
 
@@ -177,11 +195,21 @@ def download_libiconv(dest_dir, version=None):
                             version_re, filename, version=version)
 
 
-def download_library(dest_dir, location, name, version_re, filename,
-                     version=None):
+def download_zlib(dest_dir, version):
+    """Downloads zlib, returning the filename where the library was downloaded"""
+    version_re = re.compile(r'zlib-([0-9.]+[0-9]).tar.gz')
+    filename = 'zlib-%s.tar.gz'
+    return download_library(dest_dir, ZLIB_LOCATION, 'zlib',
+                            version_re, filename, version=version)
+
+
+def download_library(dest_dir, location, name, version_re, filename, version=None):
     if version is None:
         try:
-            fns = ftp_listdir(location)
+            if location.startswith('ftp://'):
+                fns = ftp_listdir(location)
+            else:
+                fns = http_listfiles(location, filename.replace('%s', '(?:[0-9.]+[0-9])'))
             versions = []
             for fn in fns:
                 match = version_re.search(fn)
@@ -324,9 +352,11 @@ def build_libxml2xslt(download_dir, build_dir,
                       static_include_dirs, static_library_dirs,
                       static_cflags, static_binaries,
                       libxml2_version=None, libxslt_version=None, libiconv_version=None,
+                      zlib_version=None,
                       multicore=None):
     safe_mkdir(download_dir)
     safe_mkdir(build_dir)
+    zlib_dir = unpack_tarball(download_zlib(download_dir, zlib_version), build_dir)
     libiconv_dir = unpack_tarball(download_libiconv(download_dir, libiconv_version), build_dir)
     libxml2_dir  = unpack_tarball(download_libxml2(download_dir, libxml2_version), build_dir)
     libxslt_dir  = unpack_tarball(download_libxslt(download_dir, libxslt_version), build_dir)
@@ -343,13 +373,22 @@ def build_libxml2xslt(download_dir, build_dir,
                      '--prefix=%s' % prefix,
                      ]
 
+    # build zlib
+    zlib_configure_cmd = [
+        './configure',
+        '--prefix=%s' % prefix,
+    ]
+    cmmi(zlib_configure_cmd, zlib_dir, multicore, **call_setup)
+
     # build libiconv
     cmmi(configure_cmd, libiconv_dir, multicore, **call_setup)
 
     # build libxml2
     libxml2_configure_cmd = configure_cmd + [
         '--without-python',
-        '--with-iconv=%s' % prefix]
+        '--with-iconv=%s' % prefix,
+        '--with-zlib=%s' % prefix,
+    ]
     try:
         if libxml2_version and tuple(map(tryint, libxml2_version.split('.'))) >= (2,7,3):
             libxml2_configure_cmd.append('--enable-rebuild-docs=no')
@@ -382,7 +421,7 @@ def build_libxml2xslt(download_dir, build_dir,
 
     listdir = os.listdir(lib_dir)
     static_binaries += [os.path.join(lib_dir, filename)
-        for lib in ['libxml2', 'libexslt', 'libxslt', 'iconv']
+        for lib in ['libxml2', 'libexslt', 'libxslt', 'iconv', 'libz']
         for filename in listdir
         if lib in filename and filename.endswith('.a')]
 

@@ -61,6 +61,7 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 libiconv_version=OPTION_LIBICONV_VERSION,
                 libxml2_version=OPTION_LIBXML2_VERSION,
                 libxslt_version=OPTION_LIBXSLT_VERSION,
+                zlib_version=OPTION_ZLIB_VERSION,
                 multicore=OPTION_MULTICORE)
 
     modules = EXT_MODULES
@@ -231,7 +232,12 @@ def print_libxml_error():
 
 
 def libraries():
-    librt = ['rt'] if 'linux' in sys.platform else []
+    standard_libs = []
+    if 'linux' in sys.platform:
+        standard_libs.append('rt')
+    if not OPTION_BUILD_LIBXML2XSLT:
+        standard_libs.append('z')
+    standard_libs.append('m')
 
     if sys.platform in ('win32',):
         libs = ['libxslt', 'libexslt', 'libxml2', 'iconv']
@@ -239,9 +245,9 @@ def libraries():
             libs = ['%s_a' % lib for lib in libs]
         libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
-        libs = librt + ['z', 'm']
+        libs = standard_libs
     else:
-        libs = ['xslt', 'exslt'] + librt + ['xml2', 'z', 'm']
+        libs = ['xslt', 'exslt', 'xml2'] + standard_libs
     return libs
 
 def library_dirs(static_library_dirs):
@@ -454,6 +460,7 @@ if OPTION_BUILD_LIBXML2XSLT:
 OPTION_LIBXML2_VERSION = option_value('libxml2-version')
 OPTION_LIBXSLT_VERSION = option_value('libxslt-version')
 OPTION_LIBICONV_VERSION = option_value('libiconv-version')
+OPTION_ZLIB_VERSION = option_value('zlib-version')
 OPTION_MULTICORE = option_value('multicore')
 OPTION_DOWNLOAD_DIR = option_value('download-dir')
 if OPTION_DOWNLOAD_DIR is None:
