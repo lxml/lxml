@@ -1019,7 +1019,7 @@ class FormElement(HtmlElement):
         results = []
         for el in self.inputs:
             name = el.name
-            if not name:
+            if not name or 'disabled' in el.attrib:
                 continue
             tag = _nons(el.tag)
             if tag == 'textarea':

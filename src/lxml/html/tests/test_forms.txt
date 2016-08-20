@@ -160,7 +160,7 @@ textarea_field: 'some text'
 >>> tree = lxml.html.fromstring('''
 ... <html><body>
 ...  <form>
-...   <input name="foo" value="bar"/>
+...   <input name="foo" value="bar" disabled/>
 ...   <input type="submit" />
 ...  </form>
 ... </body></html>
@@ -178,6 +178,8 @@ textarea_field: 'some text'
 >>> list(tree.forms[0].fields.values())
 ['bar']
 
+>>> ('foo', 'bar') not in tree.forms[0].form_values()
+True
 >>> tree = lxml.html.fromstring('''
 ... <html><body>
 ...  <form>
