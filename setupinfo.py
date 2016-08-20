@@ -238,6 +238,8 @@ def libraries():
         libs.extend(['zlib', 'WS2_32'])
     elif OPTION_STATIC:
         libs = ['rt', 'z', 'm']
+    elif sys.platform in ('darwin',):
+        libs = ['xslt', 'exslt', 'xml2', 'z', 'm']
     else:
         libs = ['xslt', 'exslt', 'rt', 'xml2', 'z', 'm']
     return libs
