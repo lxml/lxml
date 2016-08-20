@@ -4196,14 +4196,14 @@ class ETreeC14NTestCase(HelperTestCase):
                           s)
 
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=False)
-        self.assertEqual(_bytes('<z:b xmlns:z="http://cde"></z:b>'),
+        self.assertEqual(_bytes('<z:b xmlns="http://abc" xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
                           s)
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=True)
         self.assertEqual(_bytes('<z:b xmlns:z="http://cde"></z:b>'),
                           s)
 
         s = etree.tostring(tree.getroot()[0], method='c14n', exclusive=True, inclusive_ns_prefixes=['y'])
-        self.assertEqual(_bytes('<z:b xmlns:z="http://cde"></z:b>'),
+        self.assertEqual(_bytes('<z:b xmlns:y="http://bcd" xmlns:z="http://cde"></z:b>'),
                           s)
 
     def test_c14n_tostring_inclusive_ns_prefixes(self):
