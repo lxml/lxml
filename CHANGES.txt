@@ -18,6 +18,8 @@ Other changes
 * Log entries no longer allow anything but plain string objects as message text
   and file name.
 
+* ``zlib`` is included in the list of statically built libraries.
+
 
 3.6.4 (2016-08-20)
 ==================
