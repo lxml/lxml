@@ -2,7 +2,6 @@
 lxml changelog
 ==============
 
-
 3.7.0 (2016-??-??)
 ==================
 
@@ -20,16 +19,22 @@ Other changes
   and file name.
 
 
+3.6.4 (2016-08-20)
+==================
+
+* GH#204, LP#1614693: build fix for MacOS-X.
+
+
 3.6.3 (2016-08-18)
 ==================
 
-* release without source changes to provide cleanly built Linux wheels
+* LP#1614603: change linker flags to build multi-linux wheels
 
 
 3.6.2 (2016-08-18)
 ==================
 
-* release without source changes to provide cleanly built Linux wheels
+* LP#1614603: release without source changes to provide cleanly built Linux wheels
 
 
 3.6.1 (2016-07-24)
