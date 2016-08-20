@@ -52,6 +52,7 @@ build_wheels() {
         [ -z "$FIRST" ] || wait ${FIRST}
         FIRST=$SECOND
     done
+    wait
 }
 
 repair_wheels() {
