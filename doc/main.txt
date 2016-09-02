@@ -175,11 +175,11 @@ The latest installable developer sources should usually be available from the
 the latest development version of lxml from github directly, using a command
 like this (assuming you use hg and have hg-git installed)::
 
-  hg clone git://github.com/lxml/lxml.git lxml
+  hg clone git+ssh://git@github.com/lxml/lxml.git lxml
 
 Alternatively, if you use git, this should work as well::
 
-  git clone git://github.com/lxml/lxml.git lxml
+  git clone https://github.com/lxml/lxml.git lxml
 
 You can browse the `source repository`_ and its history through
 the web.  Please read `how to build lxml from source <build.html>`_

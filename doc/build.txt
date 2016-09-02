@@ -58,7 +58,7 @@ The lxml package is developed in a repository on Github_ using
 Mercurial_ and the `hg-git`_ plugin.  You can retrieve the current
 developer version using::
 
-  hg clone git://github.com/lxml/lxml.git lxml
+  hg clone git+ssh://git@github.com/lxml/lxml.git lxml
 
 This will create a directory ``lxml`` and download the source into it,
 including the complete development history.  Don't be afraid, the
