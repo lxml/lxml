@@ -179,6 +179,14 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertRaises(self.etree.XMLSyntaxError,
                           parse, f, parser)
 
+    def test_module_parse_html_default_doctype(self):
+        parser = self.etree.HTMLParser(default_doctype=False)
+        d = html.fromstring('<!DOCTYPE html><h1>S</h1></html>', parser=parser)
+        self.assertEqual(d.getroottree().docinfo.doctype, '<!DOCTYPE html>')
+
+        d = html.fromstring('<html><h1>S</h1></html>', parser=parser)
+        self.assertEqual(d.getroottree().docinfo.doctype, '')
+
     def test_parse_encoding_8bit_explicit(self):
         text = _str('Søk på nettet')
         html_latin1 = (_str('<p>%s</p>') % text).encode('iso-8859-1')
