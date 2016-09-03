@@ -174,6 +174,9 @@ static PyObject* PyBytes_FromFormat(const char* format, ...) {
 #  define xmlSchematronSetValidStructuredErrors(ctxt, errorfunc, data)
 #endif
 
+#if LIBXML_VERSION < 20708
+#  define HTML_PARSE_NODEFDTD 4
+#endif
 #if LIBXML_VERSION < 20900
 #  define XML_PARSE_BIG_LINES 4194304
 #endif
