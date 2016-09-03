@@ -1663,11 +1663,11 @@ cdef inline object _namespacedName(xmlNode* c_node):
 cdef object _namespacedNameFromNsName(const_xmlChar* href, const_xmlChar* name):
     if href is NULL:
         return funicode(name)
-    elif python.LXML_UNICODE_STRINGS and (not python.IS_PYPY or python.IS_PYTHON3):
+    elif not python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8(name) or isutf8(href)):
         return python.PyUnicode_FromFormat("{%s}%s", href, name)
     else:
         s = python.PyBytes_FromFormat("{%s}%s", href, name)
-        if python.LXML_UNICODE_STRINGS or isutf8(_xcstr(s)):
+        if python.IS_PYPY and (python.LXML_UNICODE_STRINGS or isutf8(_xcstr(s))):
             return (<bytes>s).decode('utf8')
         else:
             return s
