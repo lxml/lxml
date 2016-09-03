@@ -49,7 +49,7 @@ cdef strrepr(s):
     """Build a representation of strings which we can use in __repr__
     methods, e.g. _Element.__repr__().
     """
-    return s if python.IS_PYTHON3 else s.encode('unicode-escape')
+    return s.encode('unicode-escape') if python.IS_PYTHON2 else s
 
 
 cdef object _typename(object t):
@@ -1354,10 +1354,10 @@ def __unpickleElementTree(data):
     return etree.ElementTree(fromstring(data))
 
 cdef _setupPickle(elementTreeReduceFunction):
-    if python.IS_PYTHON3:
-        import copyreg
-    else:
+    if python.IS_PYTHON2:
         import copy_reg as copyreg
+    else:
+        import copyreg
     copyreg.pickle(etree._ElementTree,
                    elementTreeReduceFunction, __unpickleElementTree)
 

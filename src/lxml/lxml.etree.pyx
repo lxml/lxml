@@ -3252,13 +3252,13 @@ def dump(_Element elem not None, *, bint pretty_print=True, with_tail=True):
     should be used for debugging only.
     """
     xml = tostring(elem, pretty_print=pretty_print, with_tail=with_tail,
-                   encoding=u'unicode' if python.IS_PYTHON3 else None)
+                   encoding=None if python.IS_PYTHON2 else 'unicode')
     if not pretty_print:
         xml += '\n'
     sys.stdout.write(xml)
 
 
-def tostring(element_or_tree, *, encoding=None, method=u"xml",
+def tostring(element_or_tree, *, encoding=None, method="xml",
              xml_declaration=None, bint pretty_print=False, bint with_tail=True,
              standalone=None, doctype=None,
              bint exclusive=False, bint with_comments=True, inclusive_ns_prefixes=None):
@@ -3315,7 +3315,7 @@ def tostring(element_or_tree, *, encoding=None, method=u"xml",
         return _tostringC14N(element_or_tree, exclusive, with_comments, inclusive_ns_prefixes)
     if not with_comments:
         raise ValueError("Can only discard comments in C14N serialisation")
-    if encoding is _unicode or (encoding is not None and encoding.upper() == 'UNICODE'):
+    if encoding is _unicode or (encoding is not None and encoding.lower() == 'unicode'):
         if xml_declaration:
             raise ValueError, \
                 u"Serialisation to unicode must not request an XML declaration"

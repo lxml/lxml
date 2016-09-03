@@ -41,18 +41,20 @@
 #endif
 
 #if PY_MAJOR_VERSION >= 3
-#  define IS_PYTHON3 1
+#  define IS_PYTHON2 0  /* prefer for special casing Python 2.x */
+#  define IS_PYTHON3 1  /* avoid */
 #else
+#  define IS_PYTHON2 1
 #  define IS_PYTHON3 0
 #endif
 
-#if IS_PYTHON3
-#undef LXML_UNICODE_STRINGS
-#define LXML_UNICODE_STRINGS 1
-#else
+#if IS_PYTHON2
 #ifndef LXML_UNICODE_STRINGS
 #define LXML_UNICODE_STRINGS 0
 #endif
+#else
+#undef LXML_UNICODE_STRINGS
+#define LXML_UNICODE_STRINGS 1
 #endif
 
 #if !IS_PYPY
@@ -71,8 +73,8 @@
 #  define PyFile_AsFile(o)                   (NULL)
 #  undef PyByteArray_Check
 #  define PyByteArray_Check(o)               (0)
-#elif IS_PYTHON3
-   /* Python 3 doesn't have PyFile_*() anymore */
+#elif !IS_PYTHON2
+   /* Python 3+ doesn't have PyFile_*() anymore */
 #  define PyFile_AsFile(o)                   (NULL)
 #endif
 
@@ -87,7 +89,7 @@
 #  ifndef PyUnicode_FromFormat
 #    define PyUnicode_FromFormat  PyString_FromFormat
 #  endif
-#  if IS_PYTHON3 && !defined(PyBytes_FromFormat)
+#  if !IS_PYTHON2 && !defined(PyBytes_FromFormat)
 #    ifdef PyString_FromFormat
 #      define PyBytes_FromFormat  PyString_FromFormat
 #    else

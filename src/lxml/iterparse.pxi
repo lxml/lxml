@@ -72,7 +72,7 @@ cdef class iterparse:
                  XMLSchema schema=None):
         if not hasattr(source, 'read'):
             self._filename = source
-            if not python.IS_PYTHON3:
+            if python.IS_PYTHON2:
                 source = _encodeFilename(source)
             source = open(source, 'rb')
             self._close_source_after_read = True

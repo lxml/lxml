@@ -1428,7 +1428,7 @@ cdef bytes _utf8(object s):
     """
     cdef int valid
     cdef bytes utf8_string
-    if not python.IS_PYTHON3 and type(s) is bytes:
+    if python.IS_PYTHON2 and type(s) is bytes:
         utf8_string = <bytes>s
         valid = _is_valid_xml_ascii(utf8_string)
     elif isinstance(s, unicode):
@@ -1453,7 +1453,7 @@ cdef strrepr(s):
     """Build a representation of strings which we can use in __repr__
     methods, e.g. _Element.__repr__().
     """
-    return s if python.IS_PYTHON3 else s.encode('unicode-escape')
+    return s.encode('unicode-escape') if python.IS_PYTHON2 else s
 
 
 cdef bint _isFilePath(const_xmlChar* c_path):
