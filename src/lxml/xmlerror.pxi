@@ -73,7 +73,9 @@ cdef class _LogEntry:
         self.column   = error.int2
         self._c_message = NULL
         self._c_filename = NULL
-        if error.message is NULL or error.message[0] in b'\n\0':
+        if (error.message is NULL or
+                error.message[0] == b'\0' or
+                error.message[0] == b'\n' and error.message[1] == b'\0'):
             self._message = u"unknown error"
         else:
             self._message = None
