@@ -40,12 +40,16 @@ def download_and_extract_zlatkovic_binaries(destdir):
                     assert fn.endswith('.win32.zip')
                     libs[libname] = fn
     else:
+        if sys.maxsize > 2147483647:
+            arch = "win64"
+        else:
+            arch = "win32"
         url = "https://github.com/mhils/libxml2-win-binaries/releases/download/lxml/"
         libs = dict(
-            libxml2  = "libxml2-latest.win32.zip",
-            libxslt  = "libxslt-latest.win32.zip",
-            zlib     = "zlib-latest.win32.zip",
-            iconv    = "iconv-latest.win32.zip",
+            libxml2  = "libxml2-latest.{}.zip".format(arch),
+            libxslt  = "libxslt-latest.{}.zip".format(arch),
+            zlib     = "zlib-latest.{}.zip".format(arch),
+            iconv    = "iconv-latest.{}.zip".format(arch),
         )
 
     if not os.path.exists(destdir): os.makedirs(destdir)
