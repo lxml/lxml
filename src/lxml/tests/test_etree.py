@@ -3616,6 +3616,42 @@ class ETreeOnlyTestCase(HelperTestCase):
             result,
             _bytes("<div><p>Some text<i>\r\n</i></p></div>"))
 
+    def test_remove_tail(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.text = "aTEXT"
+        a.tail = "aTAIL"
+        b = SubElement(a, 'b')
+        b.text = "bTEXT"
+        b.tail = "bTAIL"
+
+        a.remove(b)
+
+        result = tostring(a, with_tail=True)
+        self.assertEquals(result, _bytes("<a>aTEXTbTAIL</a>aTAIL"))
+
+    def test_remove_nested_tail(self):
+        tostring = self.etree.tostring
+        Element = self.etree.Element
+        SubElement = self.etree.SubElement
+
+        a = Element('a')
+        a.tail = "aTAIL"
+        b = SubElement(a, 'b')
+        b.text = "bTEXT"
+        b.tail = "bTAIL"
+        c = SubElement(a, 'c')
+        c.text = "cTEXT"
+        c.tail = "cTAIL"
+
+        a.remove(b)
+
+        result = tostring(a, with_tail=True)
+        self.assertEquals(result, _bytes("<a>bTAIL<c>cTEXT</c>cTAIL</a>aTAIL"))
+
     def test_standalone(self):
         tostring = self.etree.tostring
         XML = self.etree.XML
