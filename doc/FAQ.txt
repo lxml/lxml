@@ -526,7 +526,7 @@ project and its user base.  You can
   top-ranked when searching the web for "Python and XML", so maybe you
   have an idea how to improve that.
 
-* help with the tutorial.  A tutorial is the most important stating point for
+* help with the tutorial.  A tutorial is the most important starting point for
   new users, so it is important for us to provide an easy to understand guide
   into lxml.  As all documentation, the tutorial is work in progress, so we
   appreciate every helping hand.
