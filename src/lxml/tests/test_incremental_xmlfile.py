@@ -401,6 +401,23 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             '</root>')
         self._file = BytesIO()
 
+    def test_xml_mode_element_inside_html(self):
+        # The htmlfile already outputs in xml mode for .element calls. This
+        # test actually illustrates a bug
+
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("root"):
+                with xf.element('foo', attrib={'selected': 'bar'}):
+                    pass
+
+        self.assertXml(
+            '<root>'
+              # '<foo selected></foo>'  # FIXME: this is the correct output
+                                        # in html mode
+              '<foo selected="bar"></foo>'
+            '</root>')
+        self._file = BytesIO()
+
     def test_write_declaration(self):
         with etree.htmlfile(self._file) as xf:
             try:
