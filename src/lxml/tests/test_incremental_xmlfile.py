@@ -380,6 +380,27 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             self.assertXml('<%s>' % tag)
             self._file = BytesIO()
 
+    def test_xml_mode_write_inside_html(self):
+        elt = etree.Element("foo", attrib={'selected': 'bar'})
+
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("root"):
+                xf.write(elt)  # 1
+
+                assert elt.text is None
+                xf.write(elt, method='xml')  # 2
+
+                elt.text = ""
+                xf.write(elt, method='xml')  # 3
+
+        self.assertXml(
+            '<root>'
+                '<foo selected></foo>'  # 1
+                '<foo selected="bar"/>'  # 2
+                '<foo selected="bar"></foo>'  # 3
+            '</root>')
+        self._file = BytesIO()
+
     def test_write_declaration(self):
         with etree.htmlfile(self._file) as xf:
             try:
