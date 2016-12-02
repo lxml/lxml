@@ -941,8 +941,11 @@ cdef class _IncrementalFileWriter:
                                                                    method=None):
         """write(self, *args, with_tail=True, pretty_print=False, method=None)
 
-        Write subtrees or strings into the file.
+        Write subtrees or strings into the file. If method is not None, it
+        should be one of ('html', 'xml') to temporarily override the output
+        method.
         """
+
         assert self._c_out is not NULL
 
         if method is None:
