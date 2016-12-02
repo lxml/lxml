@@ -192,7 +192,7 @@ possible:
 
     >>> children = list(root)
 
-    >>> for child in root:
+    >>> for child in children:
     ...     print(child.tag)
     child1
     child2
