@@ -686,7 +686,7 @@ serialisation is ASCII:
    UnicodeEncodeError: 'ascii' codec can't encode character u'\xf6' ...
 
    >>> etree.tostring(root, method='text', encoding="UTF-8")
-   b'HelloW\xc3\xb6rld'
+   b'HelloWörld'
 
 Here, serialising to a Python unicode string instead of a byte string
 might become handy.  Just pass the name ``'unicode'`` as encoding:
@@ -806,6 +806,14 @@ commonly used to write XML literals right into the source:
     b'<root>data</root>'
 
 There is also a corresponding function ``HTML()`` for HTML literals.
+
+.. sourcecode:: pycon
+
+    >>> root = etree.HTML("<root>data</root>")
+    >>> print(root.tag)
+    root
+    >>> etree.tostring(root)
+    b'<html><body><root>data</root></body></html>'
 
 
 The parse() function
