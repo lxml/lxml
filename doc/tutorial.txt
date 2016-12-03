@@ -867,7 +867,7 @@ Parser objects
 --------------
 
 By default, ``lxml.etree`` uses a standard parser with a default setup.  If
-you want to configure the parser, you can create a you instance:
+you want to configure the parser, you can create a new instance:
 
 .. sourcecode:: pycon
 
