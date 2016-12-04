@@ -822,7 +822,8 @@ doing this all together and use the string parsing functions above.
 
 .. sourcecode:: pycon
 
-    >>> some_file_like_object = BytesIO("<root>data</root>")
+    >>> from io import BytesIO
+    >>> some_file_like_object = BytesIO(b"<root>data</root>")
 
     >>> tree = etree.parse(some_file_like_object)
 
