@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#210: Allow specifying a serialisation method in ``xmlfile.write()``.
+  Patch by Burak Arslan.
+
 * GH#203: New option ``default_doctype`` in ``HTMLParser`` that allows
   disabling the automatic doctype creation.  Patch by Shadab Zafar.
 
@@ -17,6 +20,12 @@ Features added
 
 * GH#197: Ignore form input fields in ``form_values()`` when they are
   marked as ``disabled`` in HTML.  Patch by Kristian Klemon.
+
+Bugs fixed
+----------
+
+* GH#206: File name and line number were missing from XSLT error messages.
+  Patch by Marcus Brinkmann.
 
 Other changes
 -------------
