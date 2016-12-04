@@ -42,13 +42,6 @@ documentation`_.
 
 
 ..
-  >>> try: from StringIO import StringIO as BytesIO
-  ... except ImportError:
-  ...    from io import BytesIO
-  ...    def BytesIO(s, BytesIO=BytesIO):
-  ...        if isinstance(s, str): s = s.encode("UTF-8")
-  ...        return BytesIO(s)
-
   >>> try: unicode = unicode
   ... except (NameError, KeyError): unicode = str
 
@@ -823,9 +816,9 @@ doing this all together and use the string parsing functions above.
 .. sourcecode:: pycon
 
     >>> from io import BytesIO
-    >>> some_file_like_object = BytesIO(b"<root>data</root>")
+    >>> some_file_or_file_like_object = BytesIO(b"<root>data</root>")
 
-    >>> tree = etree.parse(some_file_like_object)
+    >>> tree = etree.parse(some_file_or_file_like_object)
 
     >>> etree.tostring(tree)
     b'<root>data</root>'
@@ -976,7 +969,7 @@ Here is a simple ``iterparse()`` example:
 
 .. sourcecode:: pycon
 
-    >>> some_file_like = BytesIO("<root><a>data</a></root>")
+    >>> some_file_like = BytesIO(b"<root><a>data</a></root>")
 
     >>> for event, element in etree.iterparse(some_file_like):
     ...     print("%s, %4s, %s" % (event, element.tag, element.text))
@@ -988,7 +981,7 @@ element, but you can control this through the ``events`` keyword argument:
 
 .. sourcecode:: pycon
 
-    >>> some_file_like = BytesIO("<root><a>data</a></root>")
+    >>> some_file_like = BytesIO(b"<root><a>data</a></root>")
 
     >>> for event, element in etree.iterparse(some_file_like,
     ...                                       events=("start", "end")):
@@ -1010,7 +1003,7 @@ need:
 .. sourcecode:: pycon
 
     >>> some_file_like = BytesIO(
-    ...     "<root><a><b>data</b></a><a><b/></a></root>")
+    ...     b"<root><a><b>data</b></a><a><b/></a></root>")
 
     >>> for event, element in etree.iterparse(some_file_like):
     ...     if element.tag == 'b':
@@ -1033,7 +1026,7 @@ for data extraction.
 
 .. sourcecode:: pycon
 
-    >>> xml_file = BytesIO('''\
+    >>> xml_file = BytesIO(b'''\
     ... <root>
     ...   <a><b>ABC</b><c>abc</c></a>
     ...   <a><b>MORE DATA</b><c>more data</c></a>
