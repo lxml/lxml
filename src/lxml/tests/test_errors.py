@@ -49,6 +49,24 @@ class ErrorTestCase(HelperTestCase):
         finally:
             sys.settrace(trace_func)
 
+    def test_xmlsyntaxerror_has_info(self):
+        broken_xml_name = 'test_broken.xml'
+        broken_xml_path = os.path.join(this_dir, broken_xml_name)
+        fail_msg = 'test_broken.xml should raise an etree.XMLSyntaxError'
+        try:
+            etree.parse(broken_xml_path)
+        except etree.XMLSyntaxError as e:
+            # invariant
+            self.assertEqual(e.position, (e.lineno, e.offset + 1), 'position and lineno/offset out of sync')
+            # SyntaxError info derived from file & contents
+            self.assertTrue(e.filename.endswith(broken_xml_name), 'filename must be preserved')
+            self.assertEqual(e.lineno, 1)
+            self.assertEqual(e.offset, 10)
+        except Exception as e:
+            self.fail('{}, not {}'.format(fail_msg, type(e)))
+        else:
+            self.fail('test_broken.xml should raise an etree.XMLSyntaxError')
+
 
 def test_suite():
     suite = unittest.TestSuite()
