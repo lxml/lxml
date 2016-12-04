@@ -679,7 +679,7 @@ serialisation is ASCII:
    UnicodeEncodeError: 'ascii' codec can't encode character u'\xf6' ...
 
    >>> etree.tostring(root, method='text', encoding="UTF-8")
-   b'HelloWörld'
+   b'HelloW\xc3\xb6rld'
 
 Here, serialising to a Python unicode string instead of a byte string
 might become handy.  Just pass the name ``'unicode'`` as encoding:
