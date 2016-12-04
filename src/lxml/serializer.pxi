@@ -937,12 +937,22 @@ cdef class _IncrementalFileWriter:
                     flat_namespaces_map[ns] = prefix
         return flat_namespaces_map, new_namespaces
 
-    def write(self, *args, bint with_tail=True, bint pretty_print=False):
-        """write(self, *args, with_tail=True, pretty_print=False)
+    def write(self, *args, bint with_tail=True, bint pretty_print=False,
+                                                                   method=None):
+        """write(self, *args, with_tail=True, pretty_print=False, method=None)
 
-        Write subtrees or strings into the file.
+        Write subtrees or strings into the file. If method is not None, it
+        should be one of ('html', 'xml') to temporarily override the output
+        method.
         """
+
         assert self._c_out is not NULL
+
+        if method is None:
+            method_c = self._method
+        else:
+            method_c = _findOutputMethod(method)
+
         for content in args:
             if _isString(content):
                 if self._status != WRITER_IN_ELEMENT:
@@ -954,7 +964,7 @@ cdef class _IncrementalFileWriter:
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")
                 _writeNodeToBuffer(self._c_out, (<_Element>content)._c_node,
-                                   self._c_encoding, NULL, self._method,
+                                   self._c_encoding, NULL, method_c,
                                    False, False, pretty_print, with_tail, False)
                 if (<_Element>content)._c_node.type == tree.XML_ELEMENT_NODE:
                     if not self._element_stack:
