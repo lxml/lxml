@@ -15,10 +15,20 @@ class ParseError(LxmlSyntaxError):
 
     For compatibility with ElementTree 1.3 and later.
     """
-    def __init__(self, message, code, line, column):
+    def __init__(self, message, code, line, column, filename = None):
         super(_ParseError, self).__init__(message)
-        self.position = (line, column)
+        self.lineno, self.offset = (line, column - 1)
         self.code = code
+        self.filename = filename
+
+    @property
+    def position(self):
+        return self.lineno, self.offset + 1
+
+    @position.setter
+    def position(self, new_pos):
+        self.lineno, column = new_pos
+        self.offset = column - 1
 
 cdef object _ParseError = ParseError
 
@@ -630,9 +640,10 @@ cdef int _raiseParseError(xmlparser.xmlParserCtxt* ctxt, filename,
         column = ctxt.lastError.int2
         if ctxt.lastError.line > 0:
             message = u"line %d: %s" % (line, message)
-        raise XMLSyntaxError(message, code, line, column)
+        raise XMLSyntaxError(message, code, line, column, filename)
     else:
-        raise XMLSyntaxError(None, xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0)
+        raise XMLSyntaxError(None, xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0,
+                             filename)
 
 cdef xmlDoc* _handleParseResult(_ParserContext context,
                                 xmlparser.xmlParserCtxt* c_ctxt,
@@ -1341,7 +1352,8 @@ cdef class _FeedParser(_BaseParser):
         """
         if not self._feed_parser_running:
             raise XMLSyntaxError(u"no element found",
-                                 xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0)
+                                 xmlerror.XML_ERR_INTERNAL_ERROR, 0, 0,
+                                 self._filename)
 
         context = self._getPushParserContext()
         pctxt = context._c_ctxt

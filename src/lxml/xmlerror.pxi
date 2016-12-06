@@ -231,12 +231,13 @@ cdef class _BaseErrorLog:
             message = default_message
         line = self._first_error.line
         column = self._first_error.column
+        filename = self._first_error.filename
         if line > 0:
             if column > 0:
                 message = u"%s, line %d, column %d" % (message, line, column)
             else:
                 message = u"%s, line %d" % (message, line)
-        return exctype(message, code, line, column)
+        return exctype(message, code, line, column, filename)
 
     @cython.final
     cdef _buildExceptionMessage(self, default_message):
