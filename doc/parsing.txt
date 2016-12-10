@@ -199,7 +199,7 @@ warnings of the last parser run:
   >>> tree = etree.XML("<root>\n</b>", parser)
   Traceback (most recent call last):
     ...
-  lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 2, column 5
+  lxml.etree.XMLSyntaxError: Opening and ending tag mismatch: root line 1 and b, line 2, column 5 (line 2)
 
   >>> print(len(parser.error_log))
   1
