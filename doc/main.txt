@@ -158,7 +158,7 @@ that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
 The latest version is `lxml 3.7.0`_, released 2016-12-10
-(`changes for 3.7`_).  `Older versions <#old-versions>`_
+(`changes for 3.7.0`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
