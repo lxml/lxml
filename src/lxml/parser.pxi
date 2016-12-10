@@ -1608,7 +1608,7 @@ cdef class HTMLParser(_FeedParser):
     u"""HTMLParser(self, encoding=None, remove_blank_text=False, \
                    remove_comments=False, remove_pis=False, strip_cdata=True, \
                    no_network=True, target=None, schema: XMLSchema =None, \
-                   recover=True, compact=True)
+                   recover=True, compact=True, collect_ids=True)
 
     The HTML parser.
 
@@ -1627,6 +1627,7 @@ cdef class HTMLParser(_FeedParser):
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
     - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
+    - collect_ids        - Set this to False to avoid ever-growing id cache to make ID lookups work.
 
     Other keyword arguments:
 
@@ -1640,7 +1641,8 @@ cdef class HTMLParser(_FeedParser):
     def __init__(self, *, encoding=None, remove_blank_text=False,
                  remove_comments=False, remove_pis=False, strip_cdata=True,
                  no_network=True, target=None, XMLSchema schema=None,
-                 recover=True, compact=True, default_doctype=True):
+                 recover=True, compact=True, default_doctype=True,
+                 collect_ids=True):
         cdef int parse_options
         parse_options = _HTML_DEFAULT_PARSE_OPTIONS
         if remove_blank_text:
@@ -1655,8 +1657,8 @@ cdef class HTMLParser(_FeedParser):
             parse_options = parse_options ^ htmlparser.HTML_PARSE_NODEFDTD
 
         _BaseParser.__init__(self, parse_options, 1, schema,
-                             remove_comments, remove_pis, strip_cdata, True,
-                             target, encoding)
+                             remove_comments, remove_pis, strip_cdata,
+                             collect_ids, target, encoding)
 
 
 cdef HTMLParser __DEFAULT_HTML_PARSER
