@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#216: ``HTMLParser()`` now supports the same ``collect_ids`` parameter
+  as ``XMLParser()``.  Patch by Burak Arslan.
+
 * GH#210: Allow specifying a serialisation method in ``xmlfile.write()``.
   Patch by Burak Arslan.
 

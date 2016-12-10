@@ -1177,7 +1177,7 @@ cdef void _initSaxDocument(void* ctxt) with gil:
         xmlparser.xmlDictReference(c_ctxt.dict)
 
     # set up XML ID hash table
-    if c_ctxt._private and not c_ctxt.html:
+    if c_ctxt._private:
         context = <_ParserContext>c_ctxt._private
         if context._collect_ids:
             # keep the global parser dict from filling up with XML IDs
@@ -1442,7 +1442,7 @@ cdef class XMLParser(_FeedParser):
     - remove_pis         - discard processing instructions
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
-    - collect_ids        - create a hash table of XML IDs (default: True, always True with DTD validation)
+    - collect_ids        - use a hash table of XML IDs for fast access (default: True, always True with DTD validation)
     - resolve_entities   - replace entities by their text value (default: True)
     - huge_tree          - disable security restrictions and support very deep trees
                            and very long text content (only affects libxml2 2.7+)
@@ -1627,7 +1627,7 @@ cdef class HTMLParser(_FeedParser):
     - strip_cdata        - replace CDATA sections by normal text content (default: True)
     - compact            - save memory for short text content (default: True)
     - default_doctype    - add a default doctype even if it is not found in the HTML (default: True)
-    - collect_ids        - Set this to False to avoid ever-growing id cache to make ID lookups work.
+    - collect_ids        - use a hash table of XML IDs for fast access (default: True)
 
     Other keyword arguments:
 

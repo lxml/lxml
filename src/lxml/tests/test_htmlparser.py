@@ -66,6 +66,22 @@ class HtmlParserTestCase(HelperTestCase):
         self.assertEqual(_bytes('\\U00026007').decode('unicode_escape'),
                          p_text)
 
+    def test_html_ids(self):
+        parser = self.etree.HTMLParser(recover=False)
+        fromstring = self.etree.fromstring
+        html = fromstring('''
+            <html><body id="bodyID"><p id="pID"></p></body></html>
+        ''', parser=parser)
+        self.assertEqual(len(html.xpath('//p[@id="pID"]')), 1)
+
+    def test_html_ids_no_collect_ids(self):
+        parser = self.etree.HTMLParser(recover=False, collect_ids=False)
+        fromstring = self.etree.fromstring
+        html = fromstring('''
+            <html><body id="bodyID"><p id="pID"></p></body></html>
+        ''', parser=parser)
+        self.assertEqual(len(html.xpath('//p[@id="pID"]')), 1)
+
     def test_module_HTML_pretty_print(self):
         element = self.etree.HTML(self.html_str)
         self.assertEqual(self.etree.tostring(element, method="html", pretty_print=True),
