@@ -94,9 +94,9 @@ will raise an exception:
 
 .. sourcecode:: pycon
 
-  >>> root = etree.fromstring("<a>no int</a>", parser)
+  >>> root = etree.fromstring("<a>no int</a>", parser)  # doctest: +ELLIPSIS
   Traceback (most recent call last):
-  lxml.etree.XMLSyntaxError: Element 'a': 'no int' is not a valid value of the atomic type 'xs:integer'. (line 0)
+  lxml.etree.XMLSyntaxError: Element 'a': 'no int' is not a valid value of the atomic type 'xs:integer'...
 
 If you want the parser to succeed regardless of the outcome of the
 validation, you should use a non validating parser and run the

@@ -505,9 +505,9 @@ Or an invalid document:
 .. sourcecode:: pycon
 
     >>> xml = b"<a><b>test</b><c/></a>"
-    >>> a = objectify.fromstring(xml, parser)
+    >>> a = objectify.fromstring(xml, parser)  # doctest: +ELLIPSIS
     Traceback (most recent call last):
-    lxml.etree.XMLSyntaxError: Element 'c': This element is not expected. (line 0)
+    lxml.etree.XMLSyntaxError: Element 'c': This element is not expected...
 
 Note that the same works for parse-time DTD validation, except that
 DTDs do not support any data types by design.
