@@ -802,11 +802,9 @@ There is also a corresponding function ``HTML()`` for HTML literals.
 
 .. sourcecode:: pycon
 
-    >>> root = etree.HTML("<root>data</root>")
-    >>> print(root.tag)
-    root
+    >>> root = etree.HTML("<p>data</p>")
     >>> etree.tostring(root)
-    b'<html><body><root>data</root></body></html>'
+    b'<html><body><p>data</p></body></html>'
 
 
 The parse() function
