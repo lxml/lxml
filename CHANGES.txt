@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#217: ``XMLSyntaxError`` now behaves more like its ``SyntaxError``
+  baseclass.  Patch by Philipp A.
+
 * GH#216: ``HTMLParser()`` now supports the same ``collect_ids`` parameter
   as ``XMLParser()``.  Patch by Burak Arslan.
 
