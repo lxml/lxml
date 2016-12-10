@@ -10,12 +10,13 @@ cdef class _ParserSchemaValidationContext
 cdef class _Validator
 cdef class XMLSchema(_Validator)
 
+
 class ParseError(LxmlSyntaxError):
     u"""Syntax error while parsing an XML document.
 
     For compatibility with ElementTree 1.3 and later.
     """
-    def __init__(self, message, code, line, column, filename = None):
+    def __init__(self, message, code, line, column, filename=None):
         super(_ParseError, self).__init__(message)
         self.lineno, self.offset = (line, column - 1)
         self.code = code
