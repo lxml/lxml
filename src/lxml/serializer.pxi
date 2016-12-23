@@ -954,7 +954,14 @@ cdef class _IncrementalFileWriter:
                     if self._status > WRITER_IN_ELEMENT or content.strip():
                         raise LxmlSyntaxError("not in an element")
                 content = _utf8(content)
-                tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
+
+                ns, name, _, _ = self._element_stack[-1]
+                if c_method == OUTPUT_METHOD_HTML and \
+                        ns in (None, 'http://www.w3.org/1999/xhtml') and name in ('script', 'style'):
+                    tree.xmlOutputBufferWrite(self._c_out, len(content), content)
+                else:
+                    tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
+
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")
