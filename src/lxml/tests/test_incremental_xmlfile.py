@@ -418,6 +418,20 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             '</root>')
         self._file = BytesIO()
 
+    def test_unescaped_script(self):
+        with etree.htmlfile(self._file) as xf:
+            elt = etree.Element('script')
+            elt.text = "if (a < b);"
+            xf.write(elt)
+        self.assertXml('<script>if (a < b);</script>')
+
+    def test_unescaped_script_incremental(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element('script'):
+                xf.write("if (a < b);")
+
+        self.assertXml('<script>if (a < b);</script>')
+
     def test_write_declaration(self):
         with etree.htmlfile(self._file) as xf:
             try:
