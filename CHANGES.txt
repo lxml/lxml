@@ -2,6 +2,13 @@
 lxml changelog
 ==============
 
+3.7.1 (2016-12-23)
+==================
+
+* No source changes, issued only to solve problems with the
+  binary packages released for 3.7.0.
+
+
 3.7.0 (2016-12-10)
 ==================
 
