@@ -10,6 +10,8 @@ PY3_WITH_CYTHON=$(shell $(PYTHON3) -c 'import Cython.Build.Dependencies' >/dev/n
 CYTHON_WITH_COVERAGE=$(shell $(PYTHON) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 CYTHON3_WITH_COVERAGE=$(shell $(PYTHON3) -c 'import Cython.Coverage; import sys; assert not hasattr(sys, "pypy_version_info")' >/dev/null 2>/dev/null && echo " --coverage" || true)
 
+MANYLINUX_LIBXML2_VERSION=2.9.3
+MANYLINUX_LIBXSLT_VERSION=1.1.29
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 
 .PHONY: all inplace rebuild-sdist sdist build require-cython wheel_manylinux wheel
@@ -40,8 +42,10 @@ require-cython:
 wheel_manylinux: dist/lxml-$(LXMLVERSION).tar.gz
 	time docker run --rm -t \
 		-v $(shell pwd):/io \
-		-e CFLAGS="$(CFLAGS)" \
+		-e CFLAGS="-O3 -mtune=generic -pipe -fPIC" \
 		-e LDFLAGS="$(LDFLAGS)" \
+		-e LIBXML2_VERSION="$(MANYLINUX_LIBXML2_VERSION)" \
+		-e LIBXSLT_VERSION="$(MANYLINUX_LIBXSLT_VERSION)" \
 		$(MANYLINUX_IMAGE_X86_64) \
 		bash /io/tools/manylinux/build-wheels.sh /io/$<
 
