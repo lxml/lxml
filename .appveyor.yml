@@ -9,7 +9,7 @@ install:
   - python -m pip install -U pip wheel setuptools
   - pip install -r requirements.txt
 
-build: false
+build: off
 
 test_script:
   - python -u setup.py clean
