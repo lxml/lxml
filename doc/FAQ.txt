@@ -424,11 +424,11 @@ see when (or if) a specific bug has been fixed.
 Where are the binary builds?
 ----------------------------
 
-Thanks to the help by Joar Wandborg, we try to make "manylinux" binary
+Thanks to the help by Joar Wandborg, we try to make "manylinux_" binary
 builds for Linux available shortly after each source release, as they
 are very frequently used by continuous integration and/or build servers.
 
-Thanks for the help by Maximilian Hils and the Appveyor build service,
+Thanks to the help by Maximilian Hils and the Appveyor build service,
 we also try to serve the frequent requests for binary builds available
 for Microsoft Windows in a timely fashion, since users of that platform
 usually fail to build lxml themselves.  Two of the major design issues
@@ -439,6 +439,8 @@ Besides that, Christoph Gohlke generously provides `unofficial lxml binary
 builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
 that are usually very up to date.  Consider using them if you prefer a
 binary build over a signed official source release.
+
+.. _manylinux: https://www.python.org/dev/peps/pep-0513
 
 
 Why do I get errors about missing UCS4 symbols when installing lxml?
@@ -466,7 +468,7 @@ memory, usually more than half a GB, which can pose problems especially on
 shared/cloud build systems.
 
 If your C compiler crashes while building lxml from sources, consider
-using one of the binary wheels that we provide.  The "manylinux" binaries
+using one of the binary wheels that we provide.  The "manylinux_" binaries
 should generally work well on most build systems and install substantially
 faster than a source build.
 
