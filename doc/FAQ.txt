@@ -31,6 +31,7 @@ ElementTree_.
      2.1  Which version of libxml2 and libxslt should I use or require?
      2.2  Where are the binary builds?
      2.3  Why do I get errors about missing UCS4 symbols when installing lxml?
+     2.4  My C compiler crashes on installation
    3  Contributing
      3.1  Why is lxml not written in Python?
      3.2  How can I contribute?
@@ -423,12 +424,17 @@ see when (or if) a specific bug has been fixed.
 Where are the binary builds?
 ----------------------------
 
-Binary builds are most often requested by users of Microsoft Windows.
-Two of the major design issues of this operating system make it
-non-trivial for its users to build lxml: the lack of a pre-installed
-standard compiler and the missing package management.
+Thanks to the help by Joar Wandborg, we try to make "manylinux" binary
+builds for Linux available shortly after each source release, as they
+are very frequently used by continuous integration and/or build servers.
 
-For recent lxml releases, PyPI provides community donated Windows binaries.
+Thanks for the help by Maximilian Hils and the Appveyor build service,
+we also try to serve the frequent requests for binary builds available
+for Microsoft Windows in a timely fashion, since users of that platform
+usually fail to build lxml themselves.  Two of the major design issues
+of this operating system make this non-trivial for its users: the lack
+of a pre-installed standard compiler and the missing package management.
+
 Besides that, Christoph Gohlke generously provides `unofficial lxml binary
 builds for Windows <http://www.lfd.uci.edu/~gohlke/pythonlibs/#lxml>`_
 that are usually very up to date.  Consider using them if you prefer a
@@ -449,6 +455,20 @@ This means that you have to compile lxml from sources for your system.  Note
 that you do not need Cython for this, the lxml source distribution is directly
 compilable on both platform types.  See the `build instructions`_ on how to do
 this.
+
+
+My C compiler crashes on installation
+-------------------------------------
+
+lxml consists of a relatively large amount of (Cython) generated C code
+in a single source module.  Compiling this module requires a lot of free
+memory, usually more than half a GB, which can pose problems especially on
+shared/cloud build systems.
+
+If your C compiler crashes while building lxml from sources, consider
+using one of the binary wheels that we provide.  The "manylinux" binaries
+should generally work well on most build systems and install substantially
+faster than a source build.
 
 
 Contributing
@@ -477,7 +497,7 @@ is written entirely in Python.
 
 Please contact the `mailing list`_ if you need any help.
 
-.. _Cython: http://www.cython.org/
+.. _Cython: http://cython.org/
 .. _`code that Cython accepts`: http://docs.cython.org/docs/tutorial.html
 
 
@@ -485,9 +505,9 @@ How can I contribute?
 ---------------------
 
 If you find something that you would like lxml to do (or do better),
-then please tell us about it on the `mailing list`_.  Patches are
-always appreciated, especially when accompanied by unit tests and
-documentation (doctests would be great).  See the ``tests``
+then please tell us about it on the `mailing list`_.  Pull requests
+on github are always appreciated, especially when accompanied by unit
+tests and documentation (doctests would be great).  See the ``tests``
 subdirectories in the lxml source tree (below the ``src`` directory)
 and the ReST_ `text files`_ in the ``doc`` directory.
 
