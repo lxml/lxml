@@ -883,7 +883,7 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
             self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
-            tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(value), NULL)
+            tree.xmlBufAttrSerializeTxtContent(self._c_out, NULL, NULL, _xcstr(value))
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
     cdef _write_end_element(self, element_config):
