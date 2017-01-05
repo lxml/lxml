@@ -812,7 +812,7 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
-    def element(self, tag, attrib=None, nsmap=None, **_extra):
+    def element(self, tag, attrib=None, nsmap=None, method=None, **_extra):
         """element(self, tag, attrib=None, nsmap=None, **_extra)
 
         Returns a context manager that writes an opening and closing tag.
@@ -836,7 +836,10 @@ cdef class _IncrementalFileWriter:
                     _prefixValidOrRaise(prefix)
                 reversed_nsmap[_utf8(ns)] = prefix
         ns, name = _getNsTag(tag)
-        return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap))
+
+        c_method = self._method if method is None else _findOutputMethod(method)
+
+        return _FileWriterElement(self, (ns, name, attributes, reversed_nsmap), c_method)
 
     cdef _write_qname(self, bytes name, bytes prefix):
         if prefix:  # empty bytes for no prefix (not None to allow sorting)
@@ -1015,14 +1018,20 @@ cdef class _IncrementalFileWriter:
 @cython.freelist(8)
 cdef class _FileWriterElement:
     cdef object _element
+    cdef int _new_method
+    cdef int _old_method
     cdef _IncrementalFileWriter _writer
 
-    def __cinit__(self, _IncrementalFileWriter writer not None, element_config):
+    def __cinit__(self, _IncrementalFileWriter writer not None, element_config, int method):
         self._writer = writer
         self._element = element_config
+        self._new_method = method
+        self._old_method = writer._method
 
     def __enter__(self):
+        self._writer._method = self._new_method
         self._writer._write_start_element(self._element)
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._writer._write_end_element(self._element)
+        self._writer._method = self._old_method

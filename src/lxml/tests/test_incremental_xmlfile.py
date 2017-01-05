@@ -381,7 +381,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             self._file = BytesIO()
 
     def test_xml_mode_write_inside_html(self):
-        elt = etree.Element("foo", attrib={'selected': 'bar'})
+        tag = 'foo'
+        attrib = {'selected': 'bar'}
+        elt = etree.Element(tag, attrib=attrib)
 
         with etree.htmlfile(self._file) as xf:
             with xf.element("root"):
@@ -393,11 +395,18 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
                 elt.text = ""
                 xf.write(elt, method='xml')  # 3
 
+                with xf.element(tag, attrib=attrib, method='xml'):
+                    pass # 4
+
+                xf.write(elt)  # 5
+
         self.assertXml(
             '<root>'
                 '<foo selected></foo>'  # 1
                 '<foo selected="bar"/>'  # 2
                 '<foo selected="bar"></foo>'  # 3
+                '<foo selected="bar"></foo>'  # 4
+                '<foo selected></foo>'  # 5
             '</root>')
         self._file = BytesIO()
 
