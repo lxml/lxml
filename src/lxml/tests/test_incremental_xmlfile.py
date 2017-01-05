@@ -400,6 +400,9 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
 
                 xf.write(elt)  # 5
 
+                with xf.method('xml'):
+                    xf.write(elt)  # 6
+
         self.assertXml(
             '<root>'
                 '<foo selected></foo>'  # 1
@@ -407,6 +410,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
                 '<foo selected="bar"></foo>'  # 3
                 '<foo selected="bar"></foo>'  # 4
                 '<foo selected></foo>'  # 5
+                '<foo selected="bar"></foo>'  # 6
             '</root>')
         self._file = BytesIO()
 

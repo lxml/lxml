@@ -812,10 +812,21 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferFlush(self._c_out)
         self._handle_error(self._c_out.error)
 
+    def method(self, method):
+        """method(self, method)
+
+        Returns a context manager that overrides and restores the output method.
+        method is one of (None, 'xml', 'html') where None means 'xml'.
+        """
+        assert self._c_out is not NULL
+        c_method = self._method if method is None else _findOutputMethod(method)
+        return _MethodChanger(self, c_method)
+
     def element(self, tag, attrib=None, nsmap=None, method=None, **_extra):
-        """element(self, tag, attrib=None, nsmap=None, **_extra)
+        """element(self, tag, attrib=None, nsmap=None, method, **_extra)
 
         Returns a context manager that writes an opening and closing tag.
+        method is one of (None, 'xml', 'html') where None means 'xml'.
         """
         assert self._c_out is not NULL
         attributes = []
@@ -1034,4 +1045,23 @@ cdef class _FileWriterElement:
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self._writer._write_end_element(self._element)
+        self._writer._method = self._old_method
+
+@cython.final
+@cython.internal
+@cython.freelist(8)
+cdef class _MethodChanger:
+    cdef int _new_method
+    cdef int _old_method
+    cdef _IncrementalFileWriter _writer
+
+    def __cinit__(self, _IncrementalFileWriter writer not None, int method):
+        self._writer = writer
+        self._new_method = method
+        self._old_method = writer._method
+
+    def __enter__(self):
+        self._writer._method = self._new_method
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
         self._writer._method = self._old_method
