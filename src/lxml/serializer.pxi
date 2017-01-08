@@ -553,7 +553,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 
             if (cur[0] < 0xC0):
                 # invalid UTF-8 sequence
-                val = char[0]
+                val = cur[0]
                 l = 1
 
             elif (cur[0] < 0xE0):
@@ -581,7 +581,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 l = 4
             else:
                 # invalid UTF-8 sequence
-                val = char[0]
+                val = cur[0]
                 l = 1
 
             if ((l == 1) or (not tree.xmlIsCharQ(val))):
