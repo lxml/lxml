@@ -2,6 +2,19 @@
 lxml changelog
 ==============
 
+Latest
+==================
+
+Bugs fixed
+----------
+
+* GH#219: ``xmlfile.element()`` was not properly quoting attribute values.
+  Patch by Burak Arslan.
+
+* GH#218: ``xmlfile.element()`` was not properly escaping text content of
+  script/style tags.  Patch by Burak Arslan.
+
+
 3.7.1 (2016-12-23)
 ==================
 

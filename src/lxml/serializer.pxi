@@ -399,6 +399,208 @@ cdef void _writeNextSiblings(tree.xmlOutputBuffer* c_buffer, xmlNode* c_node,
                                pretty_print, encoding)
         c_sibling = c_sibling.next
 
+
+# copied and adapted from libxml2
+cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
+    cdef xmlChar *ptr
+    cdef xmlChar c
+
+    out[0] = '&'
+    out += 1
+
+    out[0] = '#'
+    out += 1
+
+    out[0] = 'x'
+    out += 1
+
+    if (val < 0x10):
+        ptr = out
+    elif (val < 0x100):
+        ptr = out + 1
+    elif (val < 0x1000):
+        ptr = out + 2
+    elif (val < 0x10000):
+        ptr = out + 3
+    elif (val < 0x100000):
+        ptr = out + 4
+    else:
+        ptr = out + 5
+
+    out = ptr + 1
+    while val > 0:
+        c = (val & 0xF)
+
+        if c == 0:
+            ptr[0] = '0'
+        elif c == 1:
+            ptr[0] = '1'
+        elif c == 2:
+            ptr[0] = '2'
+        elif c == 3:
+            ptr[0] = '3'
+        elif c == 4:
+            ptr[0] = '4'
+        elif c == 5:
+            ptr[0] = '5'
+        elif c == 6:
+            ptr[0] = '6'
+        elif c == 7:
+            ptr[0] = '7'
+        elif c == 8:
+            ptr[0] = '8'
+        elif c == 9:
+            ptr[0] = '9'
+        elif c == 0xA:
+            ptr[0] = 'A'
+        elif c == 0xB:
+            ptr[0] = 'B'
+        elif c == 0xC:
+            ptr[0] = 'C'
+        elif c == 0xD:
+            ptr[0] = 'D'
+        elif c == 0xE:
+            ptr[0] = 'E'
+        elif c == 0xF:
+            ptr[0] = 'F'
+        else:
+            ptr[0] = '0'
+
+        ptr -= 1
+
+        val >>= 4
+
+    out[0] = ';'
+    out += 1
+    out[0] = 0
+
+    return out
+
+
+# copied and adapted from libxml2 (xmlBufAttrSerializeTxtContent())
+cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
+    cdef const char *base
+    cdef const char *cur
+
+    cdef unsigned char tmp[12]
+    cdef int val = 0
+    cdef int l
+
+    if string == NULL:
+        return
+
+    base = cur = <const char*>string
+    while (cur[0] != 0):
+        if (cur[0] == '\n'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 5, "&#10;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] == '\r'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 5, "&#13;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] == '\t'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 4, "&#9;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] == '"'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 6, "&quot;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] == '<'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 4, "&lt;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] == '>'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 4, "&gt;")
+            cur += 1
+            base = cur
+        elif (cur[0] == '&'):
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            tree.xmlOutputBufferWrite(buf, 5, "&amp;")
+            cur += 1
+            base = cur
+
+        elif (cur[0] >= 0x80) and (cur[1] != 0):
+
+            if (base != cur):
+                tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+            if (cur[0] < 0xC0):
+                # invalid UTF-8 sequence
+                val = char[0]
+                l = 1
+
+            elif (cur[0] < 0xE0):
+                val = (cur[0]) & 0x1F
+                val <<= 6
+                val |= (cur[1]) & 0x3F
+                l = 2
+
+            elif ((cur[0] < 0xF0) and (cur[2] != 0)):
+                val = (cur[0]) & 0x0F
+                val <<= 6
+                val |= (cur[1]) & 0x3F
+                val <<= 6
+                val |= (cur[2]) & 0x3F
+                l = 3
+
+            elif ((cur[0] < 0xF8) and (cur[2] != 0) and (cur[3] != 0)):
+                val = (cur[0]) & 0x07
+                val <<= 6
+                val |= (cur[1]) & 0x3F
+                val <<= 6
+                val |= (cur[2]) & 0x3F
+                val <<= 6
+                val |= (cur[3]) & 0x3F
+                l = 4
+            else:
+                # invalid UTF-8 sequence
+                val = char[0]
+                l = 1
+
+            if ((l == 1) or (not tree.xmlIsCharQ(val))):
+                raise ValueError("Invalid character: %X" % val)
+
+            # We could do multiple things here. Just save
+            # as a char ref
+            xmlSerializeHexCharRef(tmp, val)
+            tree.xmlOutputBufferWrite(buf, -1, <const char*> tmp)
+            cur += l
+            base = cur
+
+        else:
+            cur += 1
+
+    if (base != cur):
+        tree.xmlOutputBufferWrite(buf, cur - base, base)
+
+
 ############################################################
 # output to file-like objects
 
@@ -883,7 +1085,8 @@ cdef class _IncrementalFileWriter:
             tree.xmlOutputBufferWrite(self._c_out, 1, ' ')
             self._write_qname(name, prefix)
             tree.xmlOutputBufferWrite(self._c_out, 2, '="')
-            tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(value), NULL)
+            _write_attr_string(self._c_out, _cstr(value))
+
             tree.xmlOutputBufferWrite(self._c_out, 1, '"')
 
     cdef _write_end_element(self, element_config):
@@ -954,7 +1157,14 @@ cdef class _IncrementalFileWriter:
                     if self._status > WRITER_IN_ELEMENT or content.strip():
                         raise LxmlSyntaxError("not in an element")
                 content = _utf8(content)
-                tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
+
+                ns, name, _, _ = self._element_stack[-1]
+                if c_method == OUTPUT_METHOD_HTML and \
+                        ns in (None, 'http://www.w3.org/1999/xhtml') and name in ('script', 'style'):
+                    tree.xmlOutputBufferWrite(self._c_out, len(content), content)
+                else:
+                    tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
+
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
                     raise LxmlSyntaxError("cannot append trailing element to complete XML document")

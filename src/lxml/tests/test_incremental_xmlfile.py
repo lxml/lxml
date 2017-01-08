@@ -15,7 +15,8 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, BytesIO, HelperTestCase, skipIf
+from common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
+
 
 class _XmlFileTestCaseBase(HelperTestCase):
     _file = None  # to be set by specific subtypes below
@@ -417,6 +418,34 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
               '<foo selected="bar"></foo>'
             '</root>')
         self._file = BytesIO()
+
+    def test_attribute_quoting(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("tagname", attrib={"attr": '"misquoted"'}):
+                xf.write("foo")
+
+        self.assertXml('<tagname attr="&quot;misquoted&quot;">foo</tagname>')
+
+    def test_attribute_quoting_unicode(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("tagname", attrib={"attr": _str('"misquöted\\u3344\\U00013344"')}):
+                xf.write("foo")
+
+        self.assertXml('<tagname attr="&quot;misqu&#246;ted&#13124;&#78660;&quot;">foo</tagname>')
+
+    def test_unescaped_script(self):
+        with etree.htmlfile(self._file) as xf:
+            elt = etree.Element('script')
+            elt.text = "if (a < b);"
+            xf.write(elt)
+        self.assertXml('<script>if (a < b);</script>')
+
+    def test_unescaped_script_incremental(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element('script'):
+                xf.write("if (a < b);")
+
+        self.assertXml('<script>if (a < b);</script>')
 
     def test_write_declaration(self):
         with etree.htmlfile(self._file) as xf:
