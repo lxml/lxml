@@ -65,7 +65,8 @@ repair_wheels() {
 }
 
 show_wheels() {
-    ls -l $WHEELHOUSE
+    filename=${SDIST##*/}
+    ls -l $WHEELHOUSE/${filename%%.tar.gz}
 }
 
 prepare_system
