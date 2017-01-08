@@ -418,6 +418,13 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             '</root>')
         self._file = BytesIO()
 
+    def test_attribute_quoting(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element("tagname", attrib={"attr": '"misquoted"'}):
+                xf.write("foo")
+
+        self.assertXml('<tagname attr="&quot;misquoted&quot;">foo</tagname>')
+
     def test_unescaped_script(self):
         with etree.htmlfile(self._file) as xf:
             elt = etree.Element('script')
