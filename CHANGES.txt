@@ -2,11 +2,14 @@
 lxml changelog
 ==============
 
-Latest
+3.7.2 (2017-01-08)
 ==================
 
 Bugs fixed
 ----------
+
+* Work around installation problems in recent Python 2.7 versions
+  due to FTP download failures.
 
 * GH#219: ``xmlfile.element()`` was not properly quoting attribute values.
   Patch by Burak Arslan.
