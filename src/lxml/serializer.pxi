@@ -478,7 +478,7 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
 
 
 # copied and adapted from libxml2 (xmlBufAttrSerializeTxtContent())
-cdef void _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
+cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
     cdef const char *base
     cdef const char *cur
 
