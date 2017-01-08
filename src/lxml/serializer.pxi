@@ -484,7 +484,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
 
     cdef unsigned char tmp[12]
     cdef int val = 0
-    cdef int l = 1
+    cdef int l
 
     if string == NULL:
         return
@@ -552,7 +552,9 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
             if (cur[0] < 0xC0):
-                raise ValueError("Not utf8")
+                # invalid UTF-8 sequence
+                val = char[0]
+                l = 1
 
             elif (cur[0] < 0xE0):
                 val = (cur[0]) & 0x1F
@@ -577,9 +579,13 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
                 val <<= 6
                 val |= (cur[3]) & 0x3F
                 l = 4
+            else:
+                # invalid UTF-8 sequence
+                val = char[0]
+                l = 1
 
-            if ((l == 1) or (not tree.xmlIsChar_ch(val))):
-                raise ValueError(val)
+            if ((l == 1) or (not tree.xmlIsCharQ(val))):
+                raise ValueError("Invalid character: %X" % val)
 
             # We could do multiple things here. Just save
             # as a char ref
