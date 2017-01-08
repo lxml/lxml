@@ -3,6 +3,7 @@
 .idea
 build
 dist
+wheelhouse
 doc/html
 libs
 *.egg-info

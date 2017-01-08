@@ -13,6 +13,7 @@ src/lxml/lxml.objectify.c
 
 build/
 dist/
+wheelhouse/
 doc/html/
 cython_debug/
 .idea/
@@ -30,3 +31,4 @@ funding.txt
 *.o
 *.pyd
 *~
+*.egg-info
