@@ -969,7 +969,11 @@ cdef class _IncrementalFileWriter:
                         raise LxmlSyntaxError("not in an element")
                 content = _utf8(content)
 
-                ns, name, _, _ = self._element_stack[-1]
+                if len(self._element_stack) > 0:
+                    ns, name, _, _ = self._element_stack[-1]
+                else:
+                    ns, name = None, None
+
                 if c_method == OUTPUT_METHOD_HTML and \
                         ns in (None, 'http://www.w3.org/1999/xhtml') and name in ('script', 'style'):
                     tree.xmlOutputBufferWrite(self._c_out, len(content), content)
@@ -1053,15 +1057,27 @@ cdef class _FileWriterElement:
 cdef class _MethodChanger:
     cdef int _new_method
     cdef int _old_method
+    cdef bint _entered
+    cdef bint _exited
     cdef _IncrementalFileWriter _writer
 
     def __cinit__(self, _IncrementalFileWriter writer not None, int method):
         self._writer = writer
         self._new_method = method
         self._old_method = writer._method
+        self._entered = False
+        self._exited = False
 
     def __enter__(self):
+        if self._entered:
+            raise LxmlSyntaxError("Inconsistent enter action in context manager")
         self._writer._method = self._new_method
+        self._entered = True
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._exited:
+            raise LxmlSyntaxError("Inconsistent exit action in context manager")
+        if self._writer._method != self._new_method:
+            raise LxmlSyntaxError("Method changed outside of context manager")
         self._writer._method = self._old_method
+        self._exited = True
