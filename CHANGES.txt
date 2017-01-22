@@ -2,6 +2,22 @@
 lxml changelog
 ==============
 
+3.8.0 (2017-??-??)
+==================
+
+Features added
+--------------
+
+* ``ElementTree.write()`` has a new option ``doctype`` that writes out a
+  doctype string before the serialisation, in the same way as ``tostring()``.
+
+Other changes
+-------------
+
+* The previously undocumented ``docstring`` option in ``ElementTree.write()``
+  produces a deprecation warning and will eventually be removed.
+
+
 3.7.2 (2017-01-08)
 ==================
 
