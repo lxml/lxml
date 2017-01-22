@@ -117,12 +117,15 @@ def _get_caller_relative_path(filename, frame_depth=2):
 
 from io import StringIO
 
+unichr_escape = re.compile(r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}')
+
 if sys.version_info[0] >= 3:
     # Python 3
     from builtins import str as unicode
+    from codecs import unicode_escape_decode
     _chr = chr
     def _str(s, encoding="UTF-8"):
-        return s
+        return unichr_escape.sub(lambda x: unicode_escape_decode(x.group(0))[0], s)
     def _bytes(s, encoding="UTF-8"):
         return s.encode(encoding)
     from io import BytesIO as _BytesIO
@@ -144,8 +147,6 @@ if sys.version_info[0] >= 3:
                 doctests, {}, os.path.basename(filename), filename, 0))
 else:
     # Python 2
-    unichr_escape = re.compile(r'\\u[0-9a-fA-F]{4}|\\U[0-9a-fA-F]{8}')
-
     from __builtin__ import unicode
     _chr = unichr
     def _str(s, encoding="UTF-8"):
