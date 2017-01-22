@@ -2,11 +2,9 @@
 
 """
 Tests for the incremental XML serialisation API.
-
-Tests require Python 2.5 or later.
 """
 
-from __future__ import with_statement
+from __future__ import with_statement, absolute_import
 
 import unittest
 import tempfile, os, sys
@@ -15,7 +13,7 @@ this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
 
-from common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
+from .common_imports import etree, BytesIO, HelperTestCase, skipIf, _str
 
 
 class _XmlFileTestCaseBase(HelperTestCase):

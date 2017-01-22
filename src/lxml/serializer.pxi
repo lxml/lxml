@@ -1159,9 +1159,10 @@ cdef class _IncrementalFileWriter:
                 content = _utf8(content)
 
                 ns, name, _, _ = self._element_stack[-1]
-                if c_method == OUTPUT_METHOD_HTML and \
-                        ns in (None, 'http://www.w3.org/1999/xhtml') and name in ('script', 'style'):
-                    tree.xmlOutputBufferWrite(self._c_out, len(content), content)
+                if (c_method == OUTPUT_METHOD_HTML and
+                        ns in (None, b'http://www.w3.org/1999/xhtml') and
+                        name in (b'script', b'style')):
+                    tree.xmlOutputBufferWrite(self._c_out, len(content), _cstr(content))
                 else:
                     tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
 
