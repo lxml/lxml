@@ -1954,11 +1954,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
 
     def write(self, file, *, encoding=None, method=u"xml",
               pretty_print=False, xml_declaration=None, with_tail=True,
-              standalone=None, docstring=None, compression=0,
-              exclusive=False, with_comments=True, inclusive_ns_prefixes=None):
+              standalone=None, doctype=None, compression=0,
+              exclusive=False, with_comments=True, inclusive_ns_prefixes=None,
+              docstring=None):
         u"""write(self, file, encoding=None, method="xml",
                   pretty_print=False, xml_declaration=None, with_tail=True,
-                  standalone=None, compression=0,
+                  standalone=None, doctype=None, compression=0,
                   exclusive=False, with_comments=True, inclusive_ns_prefixes=None)
 
         Write the tree to a filename, file or file-like object.
@@ -1975,6 +1976,12 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         Passing a boolean value to the ``standalone`` option will
         output an XML declaration with the corresponding
         ``standalone`` flag.
+
+        The ``doctype`` option allows passing in a plain string that will
+        be serialised before the XML tree.  Note that passing in non
+        well-formed content here will make the XML output non well-formed.
+        Also, an existing doctype in the document tree will not be removed
+        when serialising an ElementTree instance.
 
         The ``compression`` option enables GZip compression level 1-9.
 
@@ -2030,7 +2037,15 @@ cdef public class _ElementTree [ type LxmlElementTreeType,
         else:
             write_declaration = 1
             is_standalone = 0
-        _tofilelike(file, self._context_node, encoding, docstring, method,
+
+        if docstring is not None and doctype is None:
+            import warnings
+            warnings.warn(
+                "The 'docstring' option is deprecated. Use 'doctype' instead.",
+                DeprecationWarning)
+            doctype = docstring
+
+        _tofilelike(file, self._context_node, encoding, doctype, method,
                     write_declaration, 1, pretty_print, with_tail,
                     is_standalone, compression)
 

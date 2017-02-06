@@ -35,6 +35,7 @@ prepare_system() {
     #yum install -y zlib-devel
     # Remove Python 2.6 symlinks
     rm -f /opt/python/cp26*
+    echo "Python versions found: $(cd /opt/python && echo cp* | sed -e 's|[^ ]*-||g')"
 }
 
 build_wheels() {
@@ -64,7 +65,8 @@ repair_wheels() {
 }
 
 show_wheels() {
-    ls -l $WHEELHOUSE
+    filename=${SDIST##*/}
+    ls -l $WHEELHOUSE/${filename%%.tar.gz}
 }
 
 prepare_system

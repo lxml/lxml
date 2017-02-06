@@ -35,7 +35,7 @@ libxml2_ and libxslt_.  It is unique in that it combines the speed and
 XML feature completeness of these libraries with the simplicity of a
 native Python API, mostly compatible but superior to the well-known
 ElementTree_ API.  The latest release works with all CPython versions
-from 2.6 to 3.5.  See the introduction_ for more information about
+from 2.6 to 3.6.  See the introduction_ for more information about
 background and goals of the lxml project.  Some common questions are
 answered in the FAQ_.
 
@@ -157,8 +157,8 @@ Index <http://pypi.python.org/pypi/lxml/>`_ (PyPI).  It has the source
 that compiles on various platforms.  The source distribution is signed
 with `this key <pubkey.asc>`_.
 
-The latest version is `lxml 3.7.1`_, released 2016-12-23
-(`changes for 3.7.1`_).  `Older versions <#old-versions>`_
+The latest version is `lxml 3.7.2`_, released 2017-01-08
+(`changes for 3.7.2`_).  `Older versions <#old-versions>`_
 are listed below.
 
 Please take a look at the
@@ -229,7 +229,7 @@ obstacle to using lxml in your codebase.
 Old Versions
 ------------
 
-See the web sites of lxml
+See the websites of lxml
 `1.3 <http://lxml.de/1.3/>`_,
 `2.0 <http://lxml.de/2.0/>`_,
 `2.1 <http://lxml.de/2.1/>`_,
@@ -238,13 +238,17 @@ See the web sites of lxml
 `3.0 <http://lxml.de/3.0/>`_,
 `3.1 <http://lxml.de/3.1/>`_,
 `3.2 <http://lxml.de/3.2/>`_,
-`3.3 <http://lxml.de/3.3/>`_
-`3.4 <http://lxml.de/3.4/>`_
-`3.5 <http://lxml.de/3.5/>`_
+`3.3 <http://lxml.de/3.3/>`_,
+`3.4 <http://lxml.de/3.4/>`_,
+`3.5 <http://lxml.de/3.5/>`_,
 `3.6 <http://lxml.de/3.6/>`_
-and the `latest in-development version <http://lxml.de/dev/>`_.
 
-.. _`PDF documentation`: lxmldoc-3.7.0.pdf
+..
+   and the `latest in-development version <http://lxml.de/dev/>`_.
+
+.. _`PDF documentation`: lxmldoc-3.7.2.pdf
+
+* `lxml 3.7.2`_, released 2017-01-08 (`changes for 3.7.2`_)
 
 * `lxml 3.7.1`_, released 2016-12-22 (`changes for 3.7.1`_)
 
@@ -260,22 +264,9 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 
 * `lxml 3.6.0`_, released 2016-03-17 (`changes for 3.6.0`_)
 
-* `lxml 3.5.0`_, released 2015-11-13 (`changes for 3.5.0`_)
+* `older releases <http://lxml.de/3.6/#old-versions>`_
 
-* `lxml 3.5.0b1`_, released 2015-09-18 (`changes for 3.5.0b1`_)
-
-* `lxml 3.4.4`_, released 2015-04-25 (`changes for 3.4.4`_)
-
-* `lxml 3.4.3`_, released 2015-04-15 (`changes for 3.4.3`_)
-
-* `lxml 3.4.2`_, released 2015-02-07 (`changes for 3.4.2`_)
-
-* `lxml 3.4.1`_, released 2014-11-20 (`changes for 3.4.1`_)
-
-* `lxml 3.4.0`_, released 2014-09-10 (`changes for 3.4.0`_)
-
-* `older releases <http://lxml.de/3.4/#old-versions>`_
-
+.. _`lxml 3.7.2`: /files/lxml-3.7.2.tgz
 .. _`lxml 3.7.1`: /files/lxml-3.7.1.tgz
 .. _`lxml 3.7.0`: /files/lxml-3.7.0.tgz
 .. _`lxml 3.6.4`: /files/lxml-3.6.4.tgz
@@ -283,14 +274,8 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`lxml 3.6.2`: /files/lxml-3.6.2.tgz
 .. _`lxml 3.6.1`: /files/lxml-3.6.1.tgz
 .. _`lxml 3.6.0`: /files/lxml-3.6.0.tgz
-.. _`lxml 3.5.0`: /files/lxml-3.5.0.tgz
-.. _`lxml 3.5.0b1`: /files/lxml-3.5.0b1.tgz
-.. _`lxml 3.4.4`: /files/lxml-3.4.4.tgz
-.. _`lxml 3.4.3`: /files/lxml-3.4.3.tgz
-.. _`lxml 3.4.2`: /files/lxml-3.4.2.tgz
-.. _`lxml 3.4.1`: /files/lxml-3.4.1.tgz
-.. _`lxml 3.4.0`: /files/lxml-3.4.0.tgz
 
+.. _`changes for 3.7.2`: /changes-3.7.2.html
 .. _`changes for 3.7.1`: /changes-3.7.1.html
 .. _`changes for 3.7.0`: /changes-3.7.0.html
 .. _`changes for 3.6.4`: /changes-3.6.4.html
@@ -298,10 +283,3 @@ and the `latest in-development version <http://lxml.de/dev/>`_.
 .. _`changes for 3.6.2`: /changes-3.6.2.html
 .. _`changes for 3.6.1`: /changes-3.6.1.html
 .. _`changes for 3.6.0`: /changes-3.6.0.html
-.. _`changes for 3.5.0`: /changes-3.5.0.html
-.. _`changes for 3.5.0b1`: /changes-3.5.0b1.html
-.. _`changes for 3.4.4`: /changes-3.4.4.html
-.. _`changes for 3.4.3`: /changes-3.4.3.html
-.. _`changes for 3.4.2`: /changes-3.4.2.html
-.. _`changes for 3.4.1`: /changes-3.4.1.html
-.. _`changes for 3.4.0`: /changes-3.4.0.html

@@ -20,6 +20,7 @@ import tempfile
 import textwrap
 import zlib
 import gzip
+from contextlib import closing, contextmanager
 
 from .common_imports import etree, StringIO, BytesIO, HelperTestCase
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
@@ -41,6 +42,16 @@ try:
 except NameError:
     # Python 3
     _unicode = str
+
+
+@contextmanager
+def tmpfile():
+    handle, filename = tempfile.mkstemp()
+    try:
+        yield filename
+    finally:
+        os.close(handle)
+        os.remove(filename)
 
 
 class ETreeOnlyTestCase(HelperTestCase):
@@ -4062,39 +4073,25 @@ class ETreeC14NTestCase(HelperTestCase):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
         f = BytesIO()
         tree.write_c14n(f, compression=9)
-        gzfile = gzip.GzipFile(fileobj=BytesIO(f.getvalue()))
-        try:
+        with closing(gzip.GzipFile(fileobj=BytesIO(f.getvalue()))) as gzfile:
             s = gzfile.read()
-        finally:
-            gzfile.close()
         self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           s)
 
     def test_c14n_file(self):
         tree = self.parse(_bytes('<a><b/></a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write_c14n(filename)
             data = read_file(filename, 'rb')
-        finally:
-            os.close(handle)
-            os.remove(filename)
         self.assertEqual(_bytes('<a><b></b></a>'),
                           data)
 
     def test_c14n_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write_c14n(filename, compression=9)
-            f = gzip.open(filename, 'rb')
-            try:
+            with closing(gzip.open(filename, 'rb')) as f:
                 data = f.read()
-            finally:
-                f.close()
-        finally:
-            os.close(handle)
-            os.remove(filename)
         self.assertEqual(_bytes('<a>'+'<b></b>'*200+'</a>'),
                           data)
 
@@ -4225,16 +4222,30 @@ class ETreeWriteTestCase(HelperTestCase):
         self.assertEqual(_bytes('<a><b/></a>'),
                           s)
 
+    def test_write_doctype(self):
+        tree = self.parse(_bytes('<a><b/></a>'))
+        f = BytesIO()
+        tree.write(f, doctype='HUHU')
+        s = f.getvalue()
+        self.assertEqual(_bytes('HUHU\n<a><b/></a>'),
+                          s)
+
     def test_write_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
         f = BytesIO()
         tree.write(f, compression=9)
-        gzfile = gzip.GzipFile(fileobj=BytesIO(f.getvalue()))
-        try:
+        with closing(gzip.GzipFile(fileobj=BytesIO(f.getvalue()))) as gzfile:
             s = gzfile.read()
-        finally:
-            gzfile.close()
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
+                          s)
+
+    def test_write_gzip_doctype(self):
+        tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
+        f = BytesIO()
+        tree.write(f, compression=9, doctype='<!DOCTYPE a>')
+        with closing(gzip.GzipFile(fileobj=BytesIO(f.getvalue()))) as gzfile:
+            s = gzfile.read()
+        self.assertEqual(_bytes('<!DOCTYPE a>\n<a>'+'<b/>'*200+'</a>'),
                           s)
 
     def test_write_gzip_level(self):
@@ -4251,21 +4262,15 @@ class ETreeWriteTestCase(HelperTestCase):
         tree.write(f, compression=1)
         s = f.getvalue()
         self.assertTrue(len(s) <= len(s0))
-        gzfile = gzip.GzipFile(fileobj=BytesIO(s))
-        try:
+        with closing(gzip.GzipFile(fileobj=BytesIO(s))) as gzfile:
             s1 = gzfile.read()
-        finally:
-            gzfile.close()
 
         f = BytesIO()
         tree.write(f, compression=9)
         s = f.getvalue()
         self.assertTrue(len(s) <= len(s0))
-        gzfile = gzip.GzipFile(fileobj=BytesIO(s))
-        try:
+        with closing(gzip.GzipFile(fileobj=BytesIO(s))) as gzfile:
             s9 = gzfile.read()
-        finally:
-            gzfile.close()
 
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           s0)
@@ -4276,56 +4281,38 @@ class ETreeWriteTestCase(HelperTestCase):
 
     def test_write_file(self):
         tree = self.parse(_bytes('<a><b/></a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write(filename)
             data = read_file(filename, 'rb')
-        finally:
-            os.close(handle)
-            os.remove(filename)
         self.assertEqual(_bytes('<a><b/></a>'),
                           data)
 
     def test_write_file_gzip(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write(filename, compression=9)
-            f = gzip.open(filename, 'rb')
-            try:
+            with closing(gzip.open(filename, 'rb')) as f:
                 data = f.read()
-            finally:
-                f.close()
-        finally:
-            os.close(handle)
-            os.remove(filename)
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
 
     def test_write_file_gzip_parse(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write(filename, compression=9)
             data = etree.tostring(etree.parse(filename))
-        finally:
-            os.close(handle)
-            os.remove(filename)
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
 
     def test_write_file_gzipfile_parse(self):
         tree = self.parse(_bytes('<a>'+'<b/>'*200+'</a>'))
-        handle, filename = tempfile.mkstemp()
-        try:
+        with tmpfile() as filename:
             tree.write(filename, compression=9)
-            data = etree.tostring(etree.parse(
-                gzip.GzipFile(filename)))
-        finally:
-            os.close(handle)
-            os.remove(filename)
+            with closing(gzip.GzipFile(filename)) as f:
+                data = etree.tostring(etree.parse(f))
         self.assertEqual(_bytes('<a>'+'<b/>'*200+'</a>'),
                           data)
+
 
 class ETreeErrorLogTest(HelperTestCase):
     etree = etree
@@ -4526,6 +4513,7 @@ def test_suite():
     suite.addTests(
         [make_doctest('../../../doc/resolvers.txt')])
     return suite
+
 
 if __name__ == '__main__':
     print('to test use test.py %s' % __file__)

@@ -1,14 +1,14 @@
 import os, re, sys, subprocess
 import tarfile
-from distutils import log, sysconfig, version
+from distutils import log, version
 from contextlib import closing
 
 try:
     from urlparse import urlsplit, urljoin, unquote
-    from urllib import urlretrieve, urlopen
+    from urllib import urlretrieve, urlopen, urlcleanup
 except ImportError:
     from urllib.parse import urlsplit, urljoin, unquote
-    from urllib.request import urlretrieve, urlopen
+    from urllib.request import urlretrieve, urlopen, urlcleanup
 
 multi_make_options = []
 try:
@@ -253,6 +253,7 @@ def download_library(dest_dir, location, name, version_re, filename, version=Non
               % (name, dest_filename))
     else:
         print('Downloading %s into %s' % (name, dest_filename))
+        urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
         urlretrieve(full_url, dest_filename)
     return dest_filename
 

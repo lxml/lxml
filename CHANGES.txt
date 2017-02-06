@@ -2,6 +2,47 @@
 lxml changelog
 ==============
 
+3.8.0 (2017-??-??)
+==================
+
+Features added
+--------------
+
+* ``ElementTree.write()`` has a new option ``doctype`` that writes out a
+  doctype string before the serialisation, in the same way as ``tostring()``.
+
+Other changes
+-------------
+
+* The previously undocumented ``docstring`` option in ``ElementTree.write()``
+  produces a deprecation warning and will eventually be removed.
+
+
+3.7.3 (2017-??-??)
+==================
+
+Bugs fixed
+----------
+
+* GH#218 was ineffective in Python 3.
+
+
+3.7.2 (2017-01-08)
+==================
+
+Bugs fixed
+----------
+
+* Work around installation problems in recent Python 2.7 versions
+  due to FTP download failures.
+
+* GH#219: ``xmlfile.element()`` was not properly quoting attribute values.
+  Patch by Burak Arslan.
+
+* GH#218: ``xmlfile.element()`` was not properly escaping text content of
+  script/style tags.  Patch by Burak Arslan.
+
+
 3.7.1 (2016-12-23)
 ==================
 

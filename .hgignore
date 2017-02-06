@@ -13,6 +13,7 @@ src/lxml/lxml.objectify.c
 
 build/
 dist/
+wheelhouse/
 doc/html/
 cython_debug/
 .idea/
@@ -20,6 +21,7 @@ cython_debug/
 .gitrev
 .coverage
 funding.txt
+MANIFEST
 .tox
 *.orig
 *.rej
@@ -30,3 +32,4 @@ funding.txt
 *.o
 *.pyd
 *~
+*.egg-info

@@ -3,6 +3,7 @@
 .idea
 build
 dist
+wheelhouse
 doc/html
 libs
 *.egg-info
@@ -10,6 +11,7 @@ libs
 *.so
 *.o
 *.pyd
+MANIFEST
 
 src/lxml/includes/lxml-version.h
 src/lxml/*.html
