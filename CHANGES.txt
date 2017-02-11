@@ -11,6 +11,9 @@ Features added
 * ``ElementTree.write()`` has a new option ``doctype`` that writes out a
   doctype string before the serialisation, in the same way as ``tostring()``.
 
+* GH#220: ``xmlfile`` allows switching output methods at an element level.
+  Patch by Burak Arslan.
+
 Bugs fixed
 ----------
 
