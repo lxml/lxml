@@ -393,14 +393,12 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
                 cm2.__enter__()
                 cm2.__exit__(None, None, None)
 
-                with self.assertRaises(LxmlSyntaxError):
-                    cm2.__exit__(None, None, None)
+                self.assertRaises(LxmlSyntaxError, cm2.__exit__, None, None, None)
 
                 cm3 = xf.method('xml')
                 cm3.__enter__()
                 with xf.method('html'):
-                    with  self.assertRaises(LxmlSyntaxError):
-                        cm3.__exit__(None, None, None)
+                    self.assertRaises(LxmlSyntaxError, cm3.__exit__, None, None, None)
 
     def test_xml_mode_write_inside_html(self):
         tag = 'foo'
