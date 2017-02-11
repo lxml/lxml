@@ -9,6 +9,8 @@ from __future__ import with_statement, absolute_import
 import unittest
 import tempfile, os, sys
 
+from lxml.etree import LxmlSyntaxError
+
 this_dir = os.path.dirname(__file__)
 if this_dir not in sys.path:
     sys.path.insert(0, this_dir) # needed for Py3
@@ -379,8 +381,31 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             self.assertXml('<%s>' % tag)
             self._file = BytesIO()
 
+    def test_method_context_manager_misuse(self):
+        with etree.htmlfile(self._file) as xf:
+            with xf.element('foo'):
+                cm = xf.method('xml')
+                cm.__enter__()
+
+                self.assertRaises(LxmlSyntaxError, cm.__enter__)
+
+                cm2 = xf.method('xml')
+                cm2.__enter__()
+                cm2.__exit__(None, None, None)
+
+                with self.assertRaises(LxmlSyntaxError):
+                    cm2.__exit__(None, None, None)
+
+                cm3 = xf.method('xml')
+                cm3.__enter__()
+                with xf.method('html'):
+                    with  self.assertRaises(LxmlSyntaxError):
+                        cm3.__exit__(None, None, None)
+
     def test_xml_mode_write_inside_html(self):
-        elt = etree.Element("foo", attrib={'selected': 'bar'})
+        tag = 'foo'
+        attrib = {'selected': 'bar'}
+        elt = etree.Element(tag, attrib=attrib)
 
         with etree.htmlfile(self._file) as xf:
             with xf.element("root"):
@@ -392,11 +417,22 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
                 elt.text = ""
                 xf.write(elt, method='xml')  # 3
 
+                with xf.element(tag, attrib=attrib, method='xml'):
+                    pass # 4
+
+                xf.write(elt)  # 5
+
+                with xf.method('xml'):
+                    xf.write(elt)  # 6
+
         self.assertXml(
             '<root>'
                 '<foo selected></foo>'  # 1
                 '<foo selected="bar"/>'  # 2
                 '<foo selected="bar"></foo>'  # 3
+                '<foo selected="bar"></foo>'  # 4
+                '<foo selected></foo>'  # 5
+                '<foo selected="bar"></foo>'  # 6
             '</root>')
         self._file = BytesIO()
 
