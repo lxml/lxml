@@ -9,18 +9,15 @@ environment:
   - python: 36-x64
 
 install:
-  - cmd: >-
-      SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
+    - SET PATH=C:\\Python%PYTHON%;c:\\Python%PYTHON%\\scripts;%PATH%
+    - python -m pip install -U pip wheel setuptools
+    - pip install -r requirements.txt --install-option="--no-cython-compile"
 
-      python -m pip install -U pip wheel setuptools
-
-      pip install -r requirements.txt --install-option="--no-cython-compile"
-
+build: off
 build_script:
-  - cmd: >-
-      python -u setup.py clean
+    - python -u setup.py clean
+    - python -u setup.py bdist_wheel --static-deps
 
-      python -u setup.py bdist_wheel --static-deps
-
+test: off
 test_script:
   - ps: Get-ChildItem dist\*.whl | % { Push-AppveyorArtifact $_.FullName -FileName $_.Name }
