@@ -11,6 +11,12 @@ Features added
 * ``ElementTree.write()`` has a new option ``doctype`` that writes out a
   doctype string before the serialisation, in the same way as ``tostring()``.
 
+Bugs fixed
+----------
+
+* GH#222: ``lxml.html.submit_form()`` failed in Python 3.
+  Patch by Jakub Wilk.
+
 Other changes
 -------------
 
