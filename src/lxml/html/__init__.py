@@ -1137,6 +1137,8 @@ def open_http_urllib(method, url, values):
         data = None
     else:
         data = urlencode(values)
+        if not isinstance(data, bytes):
+            data = data.encode('ASCII')
     return urlopen(url, data)
 
 
