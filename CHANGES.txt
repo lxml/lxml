@@ -14,12 +14,6 @@ Features added
 * GH#220: ``xmlfile`` allows switching output methods at an element level.
   Patch by Burak Arslan.
 
-Bugs fixed
-----------
-
-* GH#222: ``lxml.html.submit_form()`` failed in Python 3.
-  Patch by Jakub Wilk.
-
 Other changes
 -------------
 
@@ -35,9 +29,15 @@ Bugs fixed
 
 * GH#218 was ineffective in Python 3.
 
+* GH#222: ``lxml.html.submit_form()`` failed in Python 3.
+  Patch by Jakub Wilk.
+
 
 3.7.2 (2017-01-08)
 ==================
+
+* GH#220: ``xmlfile`` allows switching output methods at an element level.
+  Patch by Burak Arslan.
 
 Bugs fixed
 ----------
