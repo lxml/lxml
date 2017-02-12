@@ -284,6 +284,7 @@ class TempXmlFileTestCase(_XmlFileTestCaseBase):
         self._file = tempfile.TemporaryFile()
 
 
+@skipIf(sys.platform.startswith("win"), "Can't reopen temporary files on Windows")
 class TempPathXmlFileTestCase(_XmlFileTestCaseBase):
     def setUp(self):
         self._tmpfile = tempfile.NamedTemporaryFile()
