@@ -175,12 +175,16 @@ else:
 try:
     skipIf = unittest.skipIf
 except AttributeError:
-    def skipIf(condition, why,
-               _skip=lambda test_method: None,
-               _keep=lambda test_method: test_method):
+    def skipIf(condition, why):
+        def _skip(thing):
+            import types
+            if isinstance(thing, (type, types.ClassType)):
+                return type(thing.__name__, (object,), {})
+            else:
+                return None
         if condition:
             return _skip
-        return _keep
+        return lambda thing: thing
 
 
 class HelperTestCase(unittest.TestCase):
