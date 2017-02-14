@@ -1210,7 +1210,7 @@ Bugs fixed
   previously worked in 2.3.1.
 
 * Fixed parsing of some selectors in cssselect. Whitespace after combinators
-  ">", "+" and "~" is now correctly ignored. Previously is was parsed as
+  ">", "+" and "~" is now correctly ignored. Previously it was parsed as
   a descendant combinator. For example, "div> .foo" was parsed the same as
   "div>* .foo" instead of "div>.foo". Patch by Simon Sapin.
 
@@ -2907,7 +2907,7 @@ Features added
 
 * ``ElementMaker`` XML generator by Fredrik Lundh in ``lxml.builder.E``
 
-* Support for pickeling ``objectify.ObjectifiedElement`` objects to XML
+* Support for pickling ``objectify.ObjectifiedElement`` objects to XML
 
 * ``update()`` method on Element.attrib
 

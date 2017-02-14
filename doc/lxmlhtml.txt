@@ -178,7 +178,7 @@ most easily used by importing the ``usedoctest`` module in a doctest:
 
     >>> import lxml.html.usedoctest
 
-Now, if you have a HTML document and want to compare it to an expected result
+Now, if you have an HTML document and want to compare it to an expected result
 document in a doctest, you can do the following:
 
 .. sourcecode:: pycon
