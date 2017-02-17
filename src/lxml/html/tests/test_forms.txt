@@ -28,6 +28,14 @@
 ...     <option value="3">number 3</option>
 ...     <option>number 4</option>
 ...   </select>
+...   <select name="select3">
+...     <option value="01 " selected>text 1</option>
+...     <option value=" 02">text 2</option>
+...   </select>
+...   <select name="select4" multiple>
+...     <option value="01 " selected>text 1</option>
+...     <option value=" 02">text 2</option>
+...   </select>
 ...   <input type="file" name="file_field" value="nonsense_value">
 ...   <input type="submit" name="submit1" value="submit">
 ...   <input type="submit" name="submit2" value="submit">
@@ -133,10 +141,24 @@ ValueError: There is no option with the value 'asdf'
 >>> select.value.remove('number 4')
 >>> select.value_options
 ['1', '2', '3', 'number 4']
+>>> select = f.inputs['select3']
+>>> select.value
+'01 '
+>>> select.value_options
+['01 ', ' 02']
+>>> select.value = " 02"
+>>> select.value
+' 02'
+>>> select = f.inputs['select4']
+>>> select.value # doctest:+NOPARSE_MARKUP
+<MultipleSelectOptions {'01 '} for select name='select4'>
+>>> select.value.add(' 02')
+>>> select.value # doctest:+NOPARSE_MARKUP
+<MultipleSelectOptions {'01 ', ' 02'} for select name='select4'>
 >>> try: from urllib import urlencode
 ... except ImportError: from urllib.parse import urlencode
 >>> print(urlencode(f.form_values()))
-hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=No+value&select2=2
+hidden_field=new+value&text_field=text_value&single_checkbox=on&single_checkbox2=good&check_group=1&check_group=2&check_group=3&textarea_field=some+text&select1=No+value&select2=2&select3=+02&select4=01+&select4=+02
 >>> fields = f.fields
 >>> fields # doctest:+NOPARSE_MARKUP
 <FieldsDict for form 0>
@@ -149,6 +171,8 @@ radios: None
 reset1: None
 select1: 'No value'
 select2: <MultipleSelectOptions {'2'} for select name='select2'>
+select3: ' 02'
+select4: <MultipleSelectOptions {'01 ', ' 02'} for select name='select4'>
 single_checkbox: 'on'
 single_checkbox2: 'good'
 submit1: 'submit'
