@@ -56,9 +56,12 @@ def download_and_extract_zlatkovic_binaries(destdir):
     for libname, libfn in libs.items():
         srcfile = urljoin(url, libfn)
         destfile = os.path.join(destdir, libfn)
-        print('Retrieving "%s" to "%s"' % (srcfile, destfile))
-        urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
-        urlretrieve(srcfile, destfile)
+        if os.path.exists(destfile + ".keep"):
+            print('Using local copy of  "{}"'.format(srcfile))
+        else:
+            print('Retrieving "%s" to "%s"' % (srcfile, destfile))
+            urlcleanup()  # work around FTP bug 27973 in Py2.7.12+
+            urlretrieve(srcfile, destfile)
         d = unpack_zipfile(destfile, destdir)
         libs[libname] = d
 
