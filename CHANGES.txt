@@ -28,7 +28,7 @@ Other changes
   produces a deprecation warning and will eventually be removed.
 
 
-3.7.3 (2017-??-??)
+3.7.3 (2017-02-18)
 ==================
 
 Bugs fixed
