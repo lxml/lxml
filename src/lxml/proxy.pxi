@@ -552,3 +552,34 @@ cdef void fixThreadDictNamesForDtd(tree.xmlDtd* c_dtd,
             _fixThreadDictPtr(&c_entity.SystemID, c_src_dict, c_dict)
             _fixThreadDictPtr(<const_xmlChar**>&c_entity.content, c_src_dict, c_dict)
         c_node = c_node.next
+
+
+################################################################################
+# adopt an xmlDoc from an external libxml2 document source
+
+cdef _Document _adoptForeignDoc(xmlDoc* c_doc, _BaseParser parser=None, bint is_owned=True):
+    """Convert and wrap an externally produced xmlDoc for use in lxml.
+    Assures that all '_private' pointers are NULL to prevent accidental
+    dereference into lxml proxy objects.
+    """
+    if c_doc is NULL:
+        raise ValueError("Illegal document provided: NULL")
+    if c_doc.type not in (tree.XML_DOCUMENT_NODE, tree.XML_HTML_DOCUMENT_NODE):
+        doc_type = c_doc.type
+        if is_owned:
+            tree.xmlFreeDoc(c_doc)
+        raise ValueError("Illegal document provided: expected XML or HTML, found %s" % doc_type)
+
+    cdef xmlNode* c_node = <xmlNode*>c_doc
+
+    if is_owned:
+        tree.BEGIN_FOR_EACH_FROM(<xmlNode*>c_doc, c_node, 1)
+        c_node._private = NULL
+        tree.END_FOR_EACH_FROM(c_node)
+    else:
+        # create a fresh copy that lxml owns
+        c_doc = tree.xmlCopyDoc(c_doc, 1)
+        if c_doc is NULL:
+            raise MemoryError()
+
+    return _documentFactory(c_doc, parser)

@@ -119,6 +119,7 @@ cdef extern from "etree_defs.h": # redefines some functions as macros
     cdef void* lxml_malloc(size_t count, size_t item_size)
     cdef void* lxml_realloc(void* mem, size_t count, size_t item_size)
     cdef void lxml_free(void* mem)
+    cdef void* lxml_unpack_xmldoc_capsule(object capsule, bint* is_owned) except? NULL
     cdef bint _isString(object obj)
     cdef const_char* _fqtypename(object t)
     cdef object PY_NEW(object t)

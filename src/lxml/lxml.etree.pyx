@@ -3445,6 +3445,45 @@ def parse(source, _BaseParser parser=None, *, base_url=None):
         return result_container.result
 
 
+def adopt_external_document(capsule, _BaseParser parser=None):
+    """adopt_external_document(capsule, parser=None)
+
+    Unpack a libxml2 document pointer from a PyCapsule and wrap it in an
+    lxml ElementTree object.
+
+    This allows external libraries to build XML/HTML trees using libxml2
+    and then pass them efficiently into lxml for further processing.
+    Requires Python 2.7 or later.
+
+    If a ``parser`` is provided, it will be used for configuring the
+    lxml document.  No parsing will be done.
+
+    The capsule must have the name ``"libxml2:xmlDoc"`` and its pointer
+    value must reference a correct libxml2 document of type ``xmlDoc*``.
+    The creator of the capsule must take care to correctly clean up the
+    document using an appropriate capsule destructor.  By default, the
+    libxml2 document will be copied to let lxml safely own the memory
+    of the internal tree that it uses.
+
+    If the capsule context is non-NULL, it must point to a C string that
+    can be compared using ``strcmp()``.  If the context string equals
+    ``"destructor:xmlFreeDoc"``, the libxml2 document will not be copied
+    but the capsule invalidated instead by clearing its destructor and
+    name.  That way, lxml takes ownership of the libxml2 document in memory
+    without creating a copy first, and the capsule destructor will not be
+    called.  The document will then eventually be cleaned up by lxml using
+    the libxml2 API function ``xmlFreeDoc()`` once it is no longer used.
+    """
+    if python.PY_VERSION_HEX < 0x02070000:
+        raise NotImplementedError("PyCapsule usage requires Python 2.7+")
+
+    cdef xmlDoc* c_doc
+    cdef bint is_owned = False
+    c_doc = <xmlDoc*> python.lxml_unpack_xmldoc_capsule(capsule, &is_owned)
+    doc = _adoptForeignDoc(c_doc, parser, is_owned)
+    return _elementTreeFactory(doc, None)
+
+
 ################################################################################
 # Include submodules
 
