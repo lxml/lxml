@@ -3,17 +3,19 @@
 Test cases related to direct loading of external libxml2 documents
 """
 
+from __future__ import absolute_import
+
 import sys
 import unittest
 
-from common_imports import HelperTestCase, etree
+from .common_imports import HelperTestCase, etree, skipIf
 
 DOC_NAME = b'libxml2:xmlDoc'
 DESTRUCTOR_NAME = b'destructor:xmlFreeDoc'
 
 
-@unittest.skipIf(sys.version_info[:2] < (2, 7),
-                 'Not supported for python < 2.7')
+@skipIf(sys.version_info[:2] < (2, 7),
+        'Not supported for python < 2.7')
 class ExternalDocumentTestCase(HelperTestCase):
     def setUp(self):
         import ctypes
