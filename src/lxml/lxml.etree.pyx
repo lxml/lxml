@@ -3473,6 +3473,9 @@ def adopt_external_document(capsule, _BaseParser parser=None):
     without creating a copy first, and the capsule destructor will not be
     called.  The document will then eventually be cleaned up by lxml using
     the libxml2 API function ``xmlFreeDoc()`` once it is no longer used.
+
+    If no copy is made, later modifications of the tree outside of lxml
+    should not be attempted after transferring the ownership.
     """
     if python.PY_VERSION_HEX < 0x02070000:
         raise NotImplementedError("PyCapsule usage requires Python 2.7+")
