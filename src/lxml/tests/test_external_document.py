@@ -60,7 +60,7 @@ class ExternalDocumentTestCase(HelperTestCase):
     def as_capsule(self, text, capsule_name=DOC_NAME):
         if not isinstance(text, bytes):
             text = text.encode('utf-8')
-        doc = self.create_doc(text, len(text), 'base.xml', 'utf-8', 0)
+        doc = self.create_doc(text, len(text), b'base.xml', b'utf-8', 0)
         ans = self.new_capsule(doc, capsule_name, None)
         self.set_capsule_context(ans, DESTRUCTOR_NAME)
         return ans
