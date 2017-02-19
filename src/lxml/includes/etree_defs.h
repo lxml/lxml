@@ -267,6 +267,12 @@ static void* lxml_unpack_xmldoc_capsule(PyObject* capsule, int* is_owned) {
     xmlDoc *c_doc;
     void *context;
     *is_owned = 0;
+    if (unlikely_condition(!PyCapsule_IsValid(capsule, (const char*)"libxml2:xmlDoc"))) {
+        PyErr_SetString(
+                PyExc_TypeError,
+                "Not a valid capsule. The capsule argument must be a capsule object with name libxml2:xmlDoc");
+        return NULL;
+    }
     c_doc = (xmlDoc*) PyCapsule_GetPointer(capsule, (const char*)"libxml2:xmlDoc");
     if (unlikely_condition(!c_doc)) return NULL;
 
