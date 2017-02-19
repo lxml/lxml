@@ -14,6 +14,9 @@ Features added
 * GH#220: ``xmlfile`` allows switching output methods at an element level.
   Patch by Burak Arslan.
 
+* LP#1595781: added a PyCapsule API for passing externally generated
+  libxml2 documents into lxml.
+
 Bugs fixed
 ----------
 
