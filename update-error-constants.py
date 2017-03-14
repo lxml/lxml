@@ -76,8 +76,8 @@ find_enums = etree.XPath(
     namespaces = {'html' : 'http://www.w3.org/1999/xhtml'})
 
 def parse_enums(html_dir, html_filename, enum_dict):
-    PARSE_ENUM_NAME  = re.compile('\s*enum\s+(\w+)\s*{', re.I).match
-    PARSE_ENUM_VALUE = re.compile('\s*=\s+([0-9]+)\s*(?::\s*(.*))?').match
+    PARSE_ENUM_NAME  = re.compile(r'\s*enum\s+(\w+)\s*{', re.I).match
+    PARSE_ENUM_VALUE = re.compile(r'\s*=\s+([0-9]+)\s*(?::\s*(.*))?').match
     tree = etree.parse(os.path.join(html_dir, html_filename))
     enums = find_enums(tree)
     for enum in enums:

@@ -4103,7 +4103,7 @@ if ElementTree:
             # ElementTree warns about getiterator() in recent Pythons
             warnings.filterwarnings(
                 'ignore',
-                'This method will be removed.*\.iter\(\).*instead',
+                r'This method will be removed.*\.iter\(\).*instead',
                 PendingDeprecationWarning)
 
     filter_by_version(

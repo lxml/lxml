@@ -32,7 +32,7 @@ find_heading_tag = XPath("//h:h1[@class = 'title'][1]", namespaces=htmlnsmap)
 find_menu = XPath("//h:ul[@id=$name]", namespaces=htmlnsmap)
 find_page_end = XPath("/h:html/h:body/h:div[last()]", namespaces=htmlnsmap)
 
-find_words = re.compile('(\w+)').findall
+find_words = re.compile(r'(\w+)').findall
 replace_invalid = re.compile(r'[-_/.\s\\]').sub
 
 
