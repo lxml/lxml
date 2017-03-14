@@ -1298,7 +1298,7 @@ HTML:
     ...       E.p("This is a paragraph with ", E.b("bold"), " text in it!"),
     ...       E.p("This is another paragraph, with a", "\n      ",
     ...         E.a("link", href="http://www.python.org"), "."),
-    ...       E.p("Here are some reservered characters: <spam&egg>."),
+    ...       E.p("Here are some reserved characters: <spam&egg>."),
     ...       etree.XML("<p>And finally an embedded XHTML fragment.</p>"),
     ...     )
     ...   )
@@ -1314,7 +1314,7 @@ HTML:
         <p>This is a paragraph with <b>bold</b> text in it!</p>
         <p>This is another paragraph, with a
           <a href="http://www.python.org">link</a>.</p>
-        <p>Here are some reservered characters: &lt;spam&amp;egg&gt;.</p>
+        <p>Here are some reserved characters: &lt;spam&amp;egg&gt;.</p>
         <p>And finally an embedded XHTML fragment.</p>
       </body>
     </html>

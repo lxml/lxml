@@ -382,7 +382,7 @@ def locate_unbalanced_start(unbalanced_start, pre_delete, post_delete):
     """
     while 1:
         if not unbalanced_start:
-            # We have totally succeded in finding the position
+            # We have totally succeeded in finding the position
             break
         finding = unbalanced_start[0]
         finding_name = finding.split()[0].strip('<>')

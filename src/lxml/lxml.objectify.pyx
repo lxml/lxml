@@ -1383,7 +1383,7 @@ cdef class ObjectifyElementClassLookup(ElementClassLookup):
         ObjectifiedElement and ObjectifiedDataElement as keyword arguments.
         'tree_class' defines inner tree classes (defaults to
         ObjectifiedElement), 'empty_data_class' defines the default class for
-        empty data elements (defauls to StringElement).
+        empty data elements (defaults to StringElement).
         """
         self._lookup_function = _lookupElementClass
         if tree_class is None:

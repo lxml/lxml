@@ -429,7 +429,7 @@ class Example:
         zero-based, with respect to the beginning of the DocTest.
 
       - indent: The example's indentation in the DocTest string.
-        I.e., the number of space characters that preceed the
+        I.e., the number of space characters that precede the
         example's first prompt.
 
       - options: A dictionary mapping from option flags to True or
@@ -1223,7 +1223,7 @@ class DocTestRunner:
         # Process each example.
         for examplenum, example in enumerate(test.examples):
 
-            # If REPORT_ONLY_FIRST_FAILURE is set, then supress
+            # If REPORT_ONLY_FIRST_FAILURE is set, then suppress
             # reporting after the first failure.
             quiet = (self.optionflags & REPORT_ONLY_FIRST_FAILURE and
                      failures > 0)

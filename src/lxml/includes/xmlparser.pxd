@@ -161,9 +161,9 @@ cdef extern from "libxml/parser.h":
         XML_PARSE_PEDANTIC = 128 # pedantic error reporting
         XML_PARSE_NOBLANKS = 256 # remove blank nodes
         XML_PARSE_SAX1 = 512 # use the SAX1 interface internally
-        XML_PARSE_XINCLUDE = 1024 # Implement XInclude substitition
+        XML_PARSE_XINCLUDE = 1024 # Implement XInclude substitution
         XML_PARSE_NONET = 2048 # Forbid network access
-        XML_PARSE_NODICT = 4096 # Do not reuse the context dictionnary
+        XML_PARSE_NODICT = 4096 # Do not reuse the context dictionary
         XML_PARSE_NSCLEAN = 8192 # remove redundant namespaces declarations
         XML_PARSE_NOCDATA = 16384 # merge CDATA as text nodes
         XML_PARSE_NOXINCNODE = 32768 # do not generate XINCLUDE START/END nodes
