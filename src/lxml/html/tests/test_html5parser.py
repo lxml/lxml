@@ -233,6 +233,12 @@ class Test_fromstring(unittest.TestCase):
         self.assertEqual(self.call_it('<!DOCTYPE html>', parser=parser),
                          'the doc')
 
+    def test_returns_whole_doc_if_input_is_encoded(self):
+        parser = DummyParser(root='the doc')
+        input = '<!DOCTYPE html>'.encode('ascii')
+        self.assertEqual(self.call_it(input, parser=parser),
+                         'the doc')
+
     def test_returns_whole_doc_if_head_not_empty(self, use_ns=True):
         E = HTMLElementMaker(namespaceHTMLElements=use_ns)
         root = E.html(E.head(E.title()))
