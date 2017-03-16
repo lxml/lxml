@@ -7,9 +7,8 @@ import string
 
 from html5lib import HTMLParser as _HTMLParser
 from html5lib.treebuilders.etree_lxml import TreeBuilder
-
 from lxml import etree
-from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE, Element
+from lxml.html import Element, XHTML_NAMESPACE, _contains_block_level_tag
 
 # python3 compatibility
 try:
@@ -25,11 +24,40 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
+def _dodgeUseChardet(method_name):
+    # html5lib does not accept useChardet as an argument, if it
+    # detected the html argument would produce unicode objects.
+    # However, there is no reasonable way to predict if html5lib will
+    # detect the argument to be unicode (all of that code is private),
+    # so we'll have to settle for a retry.
+
+    # this function creates a wrapper around the specified object, which
+    # retries when html5lib complains about the useChardet argument
+
+    def inner(self, *args, **kwargs):
+        callee = getattr(super(type(self), self), method_name)
+        try:
+            return callee(*args, **kwargs)
+        except TypeError:
+            exception = sys.exc_info()[1]
+            if "'useChardet'" not in str(exception):
+                # Some other issue caused the exception. Tell the caller
+                raise
+            kwargs.pop('useChardet')
+            return callee(*args, **kwargs)
+    inner.__name__ = method_name
+    return inner
+
+
+
 class HTMLParser(_HTMLParser):
     """An html5lib HTML parser with lxml as tree."""
 
     def __init__(self, strict=False, **kwargs):
         _HTMLParser.__init__(self, strict=strict, tree=TreeBuilder, **kwargs)
+
+    parse = _dodgeUseChardet('parse')
+    parseFragment = _dodgeUseChardet('parseFragment')
 
 
 try:
@@ -42,6 +70,9 @@ else:
 
         def __init__(self, strict=False, **kwargs):
             _XHTMLParser.__init__(self, strict=strict, tree=TreeBuilder, **kwargs)
+
+        parse = _dodgeUseChardet('parse')
+        parseFragment = _dodgeUseChardet('parseFragment')
 
     xhtml_parser = XHTMLParser()
 
