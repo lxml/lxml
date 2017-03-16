@@ -147,7 +147,14 @@ def fromstring(html, guess_charset=True, parser=None):
                               guess_charset=guess_charset)
 
     # document starts with doctype or <html>, full document!
-    start = html[:50].lstrip().lower()
+    start = html[:50]
+    if hasattr(start, 'decode'):
+        # In python3, we may have been presented with a bytes object.
+        # Decode in ascii, that also covers latin-1 and utf-8 for the
+        # characters we need
+        start = start.decode('ascii', 'replace')
+
+    start = start.lstrip().lower()
     if start.startswith('<html') or start.startswith('<!doctype'):
         return doc
 
