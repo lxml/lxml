@@ -11,10 +11,7 @@ import shutil
 import textwrap
 import subprocess
 
-try:
-    from io import open as open_file
-except ImportError:
-    from codecs import open as open_file
+from io import open as open_file
 
 RST2HTML_OPTIONS = " ".join([
     '--no-toc-backlinks',
