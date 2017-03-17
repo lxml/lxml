@@ -52,10 +52,10 @@ cdef int _unregister_xpath_function(void* ctxt, name_utf, ns_utf):
 cdef class _XPathContext(_BaseContext):
     cdef object _variables
     def __init__(self, namespaces, extensions, error_log, enable_regexp, variables,
-                 build_smart_strings):
+                 build_smart_strings, use_smart_prefix):
         self._variables = variables
         _BaseContext.__init__(self, namespaces, extensions, error_log, enable_regexp,
-                              build_smart_strings)
+                              build_smart_strings, use_smart_prefix)
 
     cdef set_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._set_xpath_context(xpathCtxt)
@@ -115,6 +115,23 @@ cdef void _registerExsltFunctionsForNamespaces(
         xslt.exsltStrXpathCtxtRegister(ctxt, c_prefix)
 
 
+cdef:
+    object _iter_location_steps
+    object _iter_predicates
+    object _location_step_tokens
+    object _unprefixed_nodetest
+_iter_location_steps = re.compile(br'//?[^/\[)]*(\[.*?\])*').finditer
+# the closing round bracket - - - - - - - - -^
+# marks the end of a function's arguments; if predicates were handled more properly, this wouldn't be necessary
+_iter_predicates = re.compile(br'\[(.*?)\]').finditer
+_location_step_tokens = re.compile(br'(?P<separator>//?)'
+                                   br'(?P<axis>[a-z-]*::)?'
+                                   br'(?P<prefix>[a-zA-Z][a-zA-Z0-9]*?:)?'
+                                   br'(?P<nodetest>[@a-zA-Z._*][a-zA-Z0-9._*-]*)'
+                                   br'(?P<predicates>(\[.*\])*)').match
+_unprefixed_nodetest = re.compile(br'(@|\*|\.|xml).*').match
+
+
 cdef class _XPathEvaluatorBase:
     cdef xpath.xmlXPathContext* _xpathCtxt
     cdef _XPathContext _context
@@ -129,9 +146,9 @@ cdef class _XPathEvaluatorBase:
         self._error_log = _ErrorLog()
 
     def __init__(self, namespaces, extensions, enable_regexp,
-                 smart_strings):
+                 smart_strings, smart_prefix=False):
         self._context = _XPathContext(namespaces, extensions, self._error_log,
-                                      enable_regexp, None, smart_strings)
+                                      enable_regexp, None, smart_strings, smart_prefix)
 
     property error_log:
         def __get__(self):
@@ -214,6 +231,54 @@ cdef class _XPathEvaluatorBase:
             self._error_log._buildExceptionMessage(u"Error in xpath expression"),
             self._error_log)
 
+    def _expand_xpath_with_default_prefix(self, _path):
+        # TODO lru_cache
+
+        default_prefix = self._context._default_ns_prefix
+        if not isinstance(_path, bytes):
+            _path = _utf8(_path)
+
+        replacements = {}
+        for location_step in (x.group(0) for x in _iter_location_steps(_path) if x is not None):
+            if location_step in replacements or location_step == b'/':
+                continue
+
+            tokens_match = _location_step_tokens(location_step)
+            tokens = tokens_match.groupdict()
+
+            if tokens['predicates']:
+                predicates = b''
+                for predicate in _iter_predicates(tokens['predicates']):
+                    predicate = predicate.group(1)
+                    if not predicate.isdigit():
+                        predicate = self._expand_xpath_with_default_prefix(predicate)
+                    predicates += b'[' + predicate + b']'
+            elif tokens['prefix'] or _unprefixed_nodetest(tokens['nodetest']):
+                continue
+            else:
+                predicates = b''
+
+            if not _unprefixed_nodetest(tokens['nodetest']):
+                prefix = tokens['prefix'] or default_prefix
+                prefix += b':'
+            else:
+                prefix = b''
+
+            if python.PY_VERSION_HEX < 0x03050000:
+                replacement =  tokens['separator']
+                replacement += tokens['axis'] or b''
+                replacement += prefix
+                replacement += tokens['nodetest']
+                replacement += predicates
+            else:
+                replacement = tokens_match.expand(br'\1\2' + prefix + br'\4' + predicates)
+            replacements[location_step] = replacement
+
+        for x, y in replacements.items():
+            _path = _path.replace(x, y)
+
+        return _path
+
     cdef object _handle_result(self, xpath.xmlXPathObject* xpathObj, _Document doc):
         if self._context._exc._has_raised():
             if xpathObj is not NULL:
@@ -250,7 +315,8 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
     """
     cdef _Element _element
     def __init__(self, _Element element not None, *, namespaces=None,
-                 extensions=None, regexp=True, smart_strings=True):
+                 extensions=None, regexp=True, smart_strings=True,
+                 smart_prefix=False):
         cdef xpath.xmlXPathContext* xpathCtxt
         cdef int ns_register_status
         cdef _Document doc
@@ -258,8 +324,10 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         _assertValidDoc(element._doc)
         self._element = element
         doc = element._doc
+        if smart_prefix and namespaces is None:
+            namespaces = element.nsmap
         _XPathEvaluatorBase.__init__(self, namespaces, extensions,
-                                     regexp, smart_strings)
+                                     regexp, smart_strings, smart_prefix)
         xpathCtxt = xpath.xmlXPathNewContext(doc._c_doc)
         if xpathCtxt is NULL:
             raise MemoryError()
@@ -292,6 +360,8 @@ cdef class XPathElementEvaluator(_XPathEvaluatorBase):
         cdef xpath.xmlXPathObject*  xpathObj
         cdef _Document doc
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
+        if self._context._default_ns_prefix:
+            _path = self._expand_xpath_with_default_prefix(_path)
         path = _utf8(_path)
         doc = self._element._doc
 
@@ -323,11 +393,13 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
     you pass ``smart_strings=False``.
     """
     def __init__(self, _ElementTree etree not None, *, namespaces=None,
-                 extensions=None, regexp=True, smart_strings=True):
+                 extensions=None, regexp=True, smart_strings=True, smart_prefix=False):
+        if smart_prefix and namespaces is None:
+            namespaces = etree.getroot().nsmap
         XPathElementEvaluator.__init__(
-            self, etree._context_node, namespaces=namespaces, 
+            self, etree._context_node, namespaces=namespaces,
             extensions=extensions, regexp=regexp,
-            smart_strings=smart_strings)
+            smart_strings=smart_strings, smart_prefix=smart_prefix)
 
     def __call__(self, _path, **_variables):
         u"""__call__(self, _path, **_variables)
@@ -341,7 +413,9 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
         cdef xmlDoc* c_doc
         cdef _Document doc
         assert self._xpathCtxt is not NULL, "XPath context not initialised"
-        path = _utf8(_path)
+        if self._context._default_ns_prefix:
+            _path = self._expand_xpath_with_default_prefix(_path)
+        _path = _utf8(_path)
         doc = self._element._doc
 
         self._lock()
@@ -350,7 +424,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
             c_doc = _fakeRootDoc(doc._c_doc, self._element._c_node)
             try:
                 self._context.registerVariables(_variables)
-                c_path = _xcstr(path)
+                c_path = _xcstr(_path)
                 with nogil:
                     self._xpathCtxt.doc  = c_doc
                     self._xpathCtxt.node = tree.xmlDocGetRootElement(c_doc)
@@ -367,7 +441,7 @@ cdef class XPathDocumentEvaluator(XPathElementEvaluator):
 
 
 def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
-                   regexp=True, smart_strings=True):
+                   regexp=True, smart_strings=True, smart_prefix=False):
     u"""XPathEvaluator(etree_or_element, namespaces=None, extensions=None, regexp=True, smart_strings=True)
 
     Creates an XPath evaluator for an ElementTree or an Element.
@@ -384,11 +458,11 @@ def XPathEvaluator(etree_or_element, *, namespaces=None, extensions=None,
     if isinstance(etree_or_element, _ElementTree):
         return XPathDocumentEvaluator(
             etree_or_element, namespaces=namespaces,
-            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
+            extensions=extensions, regexp=regexp, smart_strings=smart_strings, smart_prefix=smart_prefix)
     else:
         return XPathElementEvaluator(
             etree_or_element, namespaces=namespaces,
-            extensions=extensions, regexp=regexp, smart_strings=smart_strings)
+            extensions=extensions, regexp=regexp, smart_strings=smart_strings, smart_prefix=smart_prefix)
 
 
 cdef class XPath(_XPathEvaluatorBase):
@@ -502,5 +576,4 @@ cdef class ETXPath(XPath):
                 prefix_str = prefix + b':'
                 # FIXME: this also replaces {namespaces} within strings!
                 path_utf = path_utf.replace(namespace_def, prefix_str)
-        path = path_utf.decode('utf8')
-        return path, namespaces
+        return path_utf.decode('utf8'), namespaces

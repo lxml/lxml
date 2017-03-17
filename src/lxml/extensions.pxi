@@ -36,6 +36,7 @@ cdef class _BaseContext:
     cdef dict _function_cache
     cdef dict _eval_context_dict
     cdef bint _build_smart_strings
+    cdef bytes _default_ns_prefix
     # for exception handling and temporary reference keeping:
     cdef _TempStore _temp_refs
     cdef set _temp_documents
@@ -46,8 +47,8 @@ cdef class _BaseContext:
         self._xpathCtxt = NULL
 
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
-                 build_smart_strings):
-        cdef _ExsltRegExp _regexp 
+                 build_smart_strings, use_smart_prefix):
+        cdef _ExsltRegExp _regexp
         cdef dict new_extensions
         cdef list ns
         self._utf_refs = {}
@@ -71,7 +72,10 @@ cdef class _BaseContext:
                     new_extensions[(ns_utf, name_utf)] = function
             extensions = new_extensions or None
 
+        self._default_ns_prefix = b''
         if namespaces is not None:
+            if use_smart_prefix:
+                self._default_ns_prefix, namespaces = self._name_default_ns_prefix(namespaces)
             if isinstance(namespaces, dict):
                 namespaces = namespaces.items()
             if namespaces:
@@ -109,7 +113,8 @@ cdef class _BaseContext:
         else:
             namespaces = None
         context = self.__class__(namespaces, None, self._error_log, False,
-                                 self._build_smart_strings)
+                                 self._build_smart_strings, False)
+        context._default_ns_prefix = self._default_ns_prefix
         if self._extensions is not None:
             context._extensions = self._extensions.copy()
         return context
@@ -128,6 +133,32 @@ cdef class _BaseContext:
             # use C level refs, PyPy refs are not enough!
             python.Py_INCREF(utf)
         return utf
+
+    def _name_default_ns_prefix(self, namespaces):
+        namespaces = dict(namespaces)
+        if None not in namespaces:
+            return b'', namespaces
+
+        default_namespace = namespaces.pop(None)
+        default_prefix = self._generate_prefix(namespaces)
+        namespaces[default_prefix] = default_namespace
+        return default_prefix, namespaces
+
+    cdef bytes _generate_prefix(self, object namespaces):
+        prefixes = set(_utf8(x) for x in namespaces)
+        cdef:
+            bytes pool
+            int ctr
+            int ptr
+        pool, ctr, ptr = b'_xyzabc', 1, 0
+
+        while pool[ptr:ptr+1] in prefixes:
+            ptr += 1
+            if ptr == 7:
+                ptr = 0
+                ctr += 1
+
+        return pool[ptr:ptr+1] * ctr
 
     cdef void _set_xpath_context(self, xpath.xmlXPathContext* xpathCtxt):
         self._xpathCtxt = xpathCtxt

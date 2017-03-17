@@ -202,6 +202,38 @@ class ETreeXPathTestCase(HelperTestCase):
             TypeError,
             root.xpath, '//b', namespaces={'': 'uri:a'})
 
+    def test_xpath_smart_prefix(self):
+        tree = self.parse('<TEI xmlns="http://www.tei-c.org/ns/1.0" xmlns:x="http://www.w3.org/2000/svg"><text><body><x:svg /></body></text></TEI>')
+
+        for x in (tree, tree.getroot()):
+            evaluator = etree.XPathEvaluator(x, smart_prefix=True)
+            self.assertTrue(evaluator('./text/body')[0].tag.endswith('}body'))
+            self.assertEqual(len(evaluator('.//body/x:svg')), 1)
+
+    def test_xpath_with_predicates_smart_prefix(self):
+        tree = self.parse('<root xmlns="uri_a"><b foo="1" /><b foo="2"><c /></b></root>')
+        evaluator = etree.XPathEvaluator(tree, smart_prefix=True)
+
+        xpath = './/b[2]'
+        result = evaluator(xpath)
+        self.assertEqual(len(result), 1)
+        self.assertEqual(result[0].get('foo'), '2')
+
+        xpath += '/c'
+        result = evaluator(xpath)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].tag.endswith('}c'))
+
+        xpath = './/b[count(./c) > 0]'
+        result = evaluator(xpath)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].tag.endswith('}b'))
+
+        xpath = ".//b[@foo='2']//*"
+        result = evaluator(xpath)
+        self.assertEqual(len(result), 1)
+        self.assertTrue(result[0].tag.endswith('}c'))
+
     def test_xpath_error(self):
         tree = self.parse('<a/>')
         self.assertRaises(etree.XPathEvalError, tree.xpath, '\\fad')

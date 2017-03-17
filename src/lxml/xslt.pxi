@@ -278,7 +278,10 @@ cdef class _XSLTContext(_BaseContext):
         self._extension_elements = EMPTY_DICT
 
     def __init__(self, namespaces, extensions, error_log, enable_regexp,
-                 build_smart_strings):
+                 build_smart_strings, use_smart_prefix=False):
+        # TODO try enabling it
+        # use_smart_prefix is only to comply with the _BaseContext signature
+        # there's yet no plan to support that option here
         if extensions is not None and extensions:
             for ns_name_tuple, extension in extensions.items():
                 if ns_name_tuple[0] is None:
@@ -293,7 +296,7 @@ cdef class _XSLTContext(_BaseContext):
                     self._extension_elements[(ns_utf, name_utf)] = extension
                     del extensions[ns_name_tuple]
         _BaseContext.__init__(self, namespaces, extensions, error_log, enable_regexp,
-                              build_smart_strings)
+                              build_smart_strings, False)
 
     cdef _BaseContext _copy(self):
         cdef _XSLTContext context
