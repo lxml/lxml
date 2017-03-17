@@ -73,11 +73,6 @@ import unittest
 import traceback
 
 try:
-    set
-except NameError:
-    from sets import Set as set
-
-try:
     # Python >=2.7 and >=3.2
     from unittest.runner import _TextTestResult
 except ImportError:
