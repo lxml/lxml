@@ -69,16 +69,7 @@ def filter_by_version(test_class, version_dict, current_version):
         if expected_version > current_version:
             setattr(test_class, name, dummy_test_method)
 
-try:
-    import doctest
-    # check if the system version has everything we need
-    doctest.DocFileSuite
-    doctest.DocTestParser
-    doctest.NORMALIZE_WHITESPACE
-    doctest.ELLIPSIS
-except (ImportError, AttributeError):
-    # we need our own version to make it work (Python 2.3?)
-    import local_doctest as doctest
+import doctest
 
 try:
     sorted
