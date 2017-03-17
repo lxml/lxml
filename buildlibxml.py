@@ -279,23 +279,11 @@ def unpack_tarball(tar_filename, dest):
 
 
 def call_subprocess(cmd, **kw):
-    try:
-        from subprocess import proc_call
-    except ImportError:
-        # no subprocess for Python 2.3
-        def proc_call(cmd, **kwargs):
-            cwd = kwargs.get('cwd', '.')
-            old_cwd = os.getcwd()
-            try:
-                os.chdir(cwd)
-                return os.system(' '.join(cmd))
-            finally:
-                os.chdir(old_cwd)
-
+    import subprocess
     cwd = kw.get('cwd', '.')
     cmd_desc = ' '.join(cmd)
     log.info('Running "%s" in %s' % (cmd_desc, cwd))
-    returncode = proc_call(cmd, **kw)
+    returncode = subprocess.call(cmd, **kw)
     if returncode:
         raise Exception('Command "%s" returned code %s' % (cmd_desc, returncode))
 
