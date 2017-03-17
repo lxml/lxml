@@ -178,12 +178,6 @@ class HelperTestCase(unittest.TestCase):
         return etree.tostring(tree.getroot()).replace(
             _bytes(' '), _bytes('')).replace(_bytes('\n'), _bytes(''))
 
-    # assertFalse doesn't exist in Python 2.3
-    try:
-        unittest.TestCase.assertFalse
-    except AttributeError:
-        assertFalse = unittest.TestCase.failIf
-
 
 class SillyFileLike:
     def __init__(self, xml_data=_bytes('<foo><bar/></foo>')):
