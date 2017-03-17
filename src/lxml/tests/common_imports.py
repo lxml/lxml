@@ -60,17 +60,6 @@ def filter_by_version(test_class, version_dict, current_version):
 import doctest
 
 try:
-    sorted
-except NameError:
-    def sorted(seq, **kwargs):
-        seq = list(seq)
-        seq.sort(**kwargs)
-        return seq
-else:
-    locals()['sorted'] = sorted
-
-
-try:
     next
 except NameError:
     def next(it):
