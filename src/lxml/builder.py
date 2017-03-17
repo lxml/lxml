@@ -42,13 +42,6 @@ import lxml.etree as ET
 from functools import partial
 
 try:
-    callable
-except NameError:
-    # Python 3
-    def callable(f):
-        return hasattr(f, '__call__')
-
-try:
     basestring
 except NameError:
     basestring = str
