@@ -25,7 +25,7 @@ Syntax: test.py [options] [pathname-regexp [test-regexp]]
 There are two kinds of tests:
   - unit tests (or programmer tests) test the internal workings of various
     components of the system
-  - functional tests (acceptance tests, customer tests) test only externaly
+  - functional tests (acceptance tests, customer tests) test only externally
     visible system behaviour
 
 You can choose to run unit tests (this is the default mode), functional tests
