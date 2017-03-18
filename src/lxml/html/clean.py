@@ -530,7 +530,7 @@ clean_html = clean.clean_html
 _link_regexes = [
     re.compile(r'(?P<body>https?://(?P<host>[a-z0-9._-]+)(?:/[/\-_.,a-z0-9%&?;=~]*)?(?:\([/\-_.,a-z0-9%&?;=~]*\))?)', re.I),
     # This is conservative, but autolinking can be a bit conservative:
-    re.compile(r'mailto:(?P<body>[a-z0-9._-]+@(?P<host>[a-z0-9_._]+[a-z]))', re.I),
+    re.compile(r'mailto:(?P<body>[a-z0-9._-]+@(?P<host>[a-z0-9_.-]+[a-z]))', re.I),
     ]
 
 _avoid_elements = ['textarea', 'pre', 'code', 'head', 'select', 'a']
