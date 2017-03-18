@@ -60,12 +60,6 @@ except ImportError:
     from urllib.parse import urljoin
     from urllib.request import urlopen
 
-try:
-    set
-except NameError:
-    # Python 2.3
-    from sets import Set as set
-
 XINCLUDE = "{http://www.w3.org/2001/XInclude}"
 
 XINCLUDE_INCLUDE = XINCLUDE + "include"

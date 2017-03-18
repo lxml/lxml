@@ -29,14 +29,6 @@ if ElementTree is not None:
 if cElementTree is not None:
     print("Comparing with cElementTree %s" % getattr(cElementTree, "VERSION", "?"))
 
-try:
-    reversed
-except NameError:
-    # Python 2.3
-    def reversed(seq):
-        seq = list(seq)[::-1]
-        return seq
-
 class _ETreeTestCaseBase(HelperTestCase):
     etree = None
     required_versions_ET = {}

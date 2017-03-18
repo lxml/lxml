@@ -32,26 +32,14 @@ IS_PYPY = (getattr(sys, 'implementation', None) == 'pypy' or
 IS_PYTHON3 = sys.version_info[0] >= 3
 IS_PYTHON2 = sys.version_info[0] < 3
 
-try:
-    from xml.etree import ElementTree # Python 2.5+
-except ImportError:
-    try:
-        from elementtree import ElementTree # standard ET
-    except ImportError:
-        ElementTree = None
+from xml.etree import ElementTree
 
 if hasattr(ElementTree, 'VERSION'):
     ET_VERSION = make_version_tuple(ElementTree.VERSION)
 else:
     ET_VERSION = (0,0,0)
 
-try:
-    from xml.etree import cElementTree # Python 2.5+
-except ImportError:
-    try:
-        import cElementTree # standard ET
-    except ImportError:
-        cElementTree = None
+from xml.etree import cElementTree
 
 if hasattr(cElementTree, 'VERSION'):
     CET_VERSION = make_version_tuple(cElementTree.VERSION)
@@ -69,27 +57,7 @@ def filter_by_version(test_class, version_dict, current_version):
         if expected_version > current_version:
             setattr(test_class, name, dummy_test_method)
 
-try:
-    import doctest
-    # check if the system version has everything we need
-    doctest.DocFileSuite
-    doctest.DocTestParser
-    doctest.NORMALIZE_WHITESPACE
-    doctest.ELLIPSIS
-except (ImportError, AttributeError):
-    # we need our own version to make it work (Python 2.3?)
-    import local_doctest as doctest
-
-try:
-    sorted
-except NameError:
-    def sorted(seq, **kwargs):
-        seq = list(seq)
-        seq.sort(**kwargs)
-        return seq
-else:
-    locals()['sorted'] = sorted
-
+import doctest
 
 try:
     next
@@ -198,12 +166,6 @@ class HelperTestCase(unittest.TestCase):
     def _rootstring(self, tree):
         return etree.tostring(tree.getroot()).replace(
             _bytes(' '), _bytes('')).replace(_bytes('\n'), _bytes(''))
-
-    # assertFalse doesn't exist in Python 2.3
-    try:
-        unittest.TestCase.assertFalse
-    except AttributeError:
-        assertFalse = unittest.TestCase.failIf
 
 
 class SillyFileLike:

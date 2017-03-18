@@ -5,12 +5,6 @@
 from docstructure import SITE_STRUCTURE, BASENAME_MAP
 import os, shutil, re, sys, datetime
 
-try:
-    set
-except NameError:
-    # Python 2.3
-    from sets import Set as set
-
 TARGET_FILE = "lxmldoc.tex"
 
 RST2LATEX_OPTIONS = " ".join([

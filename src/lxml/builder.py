@@ -39,19 +39,7 @@ The ``E`` Element factory for generating XML documents.
 
 import lxml.etree as ET
 
-try:
-    from functools import partial
-except ImportError:
-    # fake it for pre-2.5 releases
-    def partial(func, tag):
-        return lambda *args, **kwargs: func(tag, *args, **kwargs)
-
-try:
-    callable
-except NameError:
-    # Python 3
-    def callable(f):
-        return hasattr(f, '__call__')
+from functools import partial
 
 try:
     basestring

@@ -2,10 +2,7 @@ import sys, re, string, time, copy, gc
 from itertools import *
 import time
 
-try:
-    from io import BytesIO
-except ImportError:
-    from StringIO import StringIO as BytesIO
+from io import BytesIO
 
 try:
     izip

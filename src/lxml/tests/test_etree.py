@@ -25,7 +25,7 @@ from contextlib import closing, contextmanager
 from .common_imports import etree, StringIO, BytesIO, HelperTestCase
 from .common_imports import fileInTestDir, fileUrlInTestDir, read_file, path2url
 from .common_imports import SillyFileLike, LargeFileLikeUnicode, doctest, make_doctest
-from .common_imports import canonicalize, sorted, _str, _bytes
+from .common_imports import canonicalize, _str, _bytes
 
 print("")
 print("TESTED VERSION: %s" % etree.__version__)
