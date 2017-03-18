@@ -460,7 +460,7 @@ cdef inline void _fixThreadDictPtr(const_xmlChar** c_ptr,
                                    tree.xmlDict* c_src_dict,
                                    tree.xmlDict* c_dict) nogil:
     c_str = c_ptr[0]
-    if c_str and tree.xmlDictOwns(c_src_dict, c_str):
+    if c_str and c_src_dict and tree.xmlDictOwns(c_src_dict, c_str):
         # return value can be NULL on memory error, but we don't handle that here
         c_str = tree.xmlDictLookup(c_dict, c_str, -1)
         if c_str:
