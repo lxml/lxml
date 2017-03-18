@@ -330,7 +330,7 @@ that compare the parser of libxml2 to some major Java based XML
 parsers.  One deals with `event-driven parser performance`_, the other
 one presents `benchmark results comparing DOM parsers`_.  Both
 comparisons suggest that libxml2's parser performance is largely
-superiour to all commonly used Java parsers in almost all cases.  Note
+superior to all commonly used Java parsers in almost all cases.  Note
 that the C parser benchmark results are based on xmlbench_, which uses
 a simpler setup for libxml2 than lxml does.
 
