@@ -243,11 +243,11 @@ cdef class _BaseContext:
                 xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                          _xcstr(prefix_utf), NULL)
             del self._global_namespaces[:]
-    
+
     cdef void _unregisterNamespace(self, prefix_utf):
         xpath.xmlXPathRegisterNs(self._xpathCtxt,
                                  _xcstr(prefix_utf), NULL)
-    
+
     # extension functions
 
     cdef int _addLocalExtensionFunction(self, ns_utf, name_utf, function) except -1:

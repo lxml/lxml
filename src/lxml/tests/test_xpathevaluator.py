@@ -30,7 +30,7 @@ class ETreeXPathTestCase(HelperTestCase):
         expected = ['nan', '1.#qnan', 'nanq']
         if not actual.lower() in expected:
             self.fail('Expected a NAN value, got %s' % actual)
-        
+
     def test_xpath_string(self):
         tree = self.parse('<a>Foo</a>')
         self.assertEqual('Foo',
@@ -64,7 +64,7 @@ class ETreeXPathTestCase(HelperTestCase):
         # this seems to pass a different code path, also should return nothing
         self.assertEqual([],
                           tree.xpath('/a/c/text()'))
-    
+
     def test_xpath_list_text(self):
         tree = self.parse('<a><b>Foo</b><b>Bar</b></a>')
         root = tree.getroot()
@@ -319,7 +319,7 @@ class ETreeXPathTestCase(HelperTestCase):
         self.assertEqual(
             [root[0][0]],
             e('c'))
-        
+
     def test_xpath_extensions(self):
         def foo(evaluator, a):
             return 'hello %s' % a
@@ -681,16 +681,16 @@ def stringTest(ctxt, s1):
 
 def stringListTest(ctxt, s1):
     return ["Hello "] + list(s1) +  ["!"]
-    
+
 def floatTest(ctxt, f1):
     return f1+4
 
 def booleanTest(ctxt, b1):
     return not b1
-    
+
 def setTest(ctxt, st1):
     return st1[0]
-    
+
 def setTest2(ctxt, st1):
     return st1[0:2]
 
@@ -706,7 +706,7 @@ def resultTypesTest(ctxt):
 
 def resultTypesTest2(ctxt):
     return resultTypesTest
-    
+
 uri = "http://www.example.com/"
 
 extension = {(None, 'stringTest'): stringTest,
@@ -723,7 +723,7 @@ extension = {(None, 'stringTest'): stringTest,
 def xpath():
     """
     Test xpath extension functions.
-    
+
     >>> root = SAMPLE_XML
     >>> e = etree.XPathEvaluator(root, extensions=[extension])
     >>> e("stringTest('you')")

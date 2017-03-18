@@ -471,7 +471,7 @@ cdef class XSLT:
 
     def apply(self, _input, *, profile_run=False, **kw):
         u"""apply(self, _input,  profile_run=False, **kw)
-        
+
         :deprecated: call the object, not this method."""
         return self(_input, profile_run=profile_run, **kw)
 
