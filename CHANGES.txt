@@ -2,6 +2,15 @@
 lxml changelog
 ==============
 
+3.7.4 (2017-??-??)
+==================
+
+Bugs fixed
+----------
+
+* LP#1673355: ``fromstring()`` html5parser failed to parse byte strings.
+
+
 3.7.3 (2017-02-18)
 ==================
 
