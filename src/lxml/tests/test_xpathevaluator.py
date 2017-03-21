@@ -210,6 +210,12 @@ class ETreeXPathTestCase(HelperTestCase):
             self.assertTrue(evaluator('./text/body')[0].tag.endswith('}body'))
             self.assertEqual(len(evaluator('.//body/x:svg')), 1)
 
+    def _test_xpath_smart_prefix_transparency(self):
+        tree = self.parse('<TEI xmlns="http://www.tei-c.org/ns/1.0"><text></text></TEI>')
+        element = tree.xpath('./text', smart_prefix=True)
+        self.assertIsNone(element.prefix)
+        self.assertContains(element.nsmap, None)
+
     def test_xpath_with_predicates_smart_prefix(self):
         tree = self.parse('<root xmlns="uri_a"><b foo="1" /><b foo="2"><c /></b></root>')
         evaluator = etree.XPathEvaluator(tree, smart_prefix=True)
