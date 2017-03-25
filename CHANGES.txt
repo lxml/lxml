@@ -8,6 +8,9 @@ lxml changelog
 Bugs fixed
 ----------
 
+* LP#1551797: revert previous fix for XSLT error logging as it breaks
+  multi-threaded XSLT processing.
+
 * LP#1673355: ``fromstring()`` html5parser failed to parse byte strings.
 
 
