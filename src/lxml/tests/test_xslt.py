@@ -247,7 +247,6 @@ class ETreeXSLTTestCase(HelperTestCase):
         st = etree.XSLT(root_node[0])
 
     def test_xslt_broken(self):
-        tree = self.parse('<a/>')
         style = self.parse('''\
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
@@ -256,9 +255,18 @@ class ETreeXSLTTestCase(HelperTestCase):
         self.assertRaises(etree.XSLTParseError,
                           etree.XSLT, style)
 
+    def _test_xslt_error_log(self):
+        tree = self.parse('<a/>')
+        style = self.parse('''\
+<xsl:stylesheet version="1.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+    <xsl:foo />
+</xsl:stylesheet>''')
+        self.assertRaises(etree.XSLTParseError,
+                          etree.XSLT, style)
         exc = None
         try:
-            etree.XSLT(style)
+            etree.XSLT(tree)
         except etree.XSLTParseError as e:
             exc = e
         else:
