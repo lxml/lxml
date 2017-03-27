@@ -1203,7 +1203,7 @@ class ETreeEXSLTTestCase(HelperTestCase):
     <test>
       <xsl:for-each select="regexp:match(
             'http://www.bayes.co.uk/xml/index.xml?/xml/utils/rechecker.xml',
-            '(\w+):\/\/([^/:]+)(:\d*)?([^# ]*)')">
+            '(\\w+):\\/\\/([^/:]+)(:\\d*)?([^# ]*)')">
         <test1><xsl:value-of select="."/></test1>
       </xsl:for-each>
     </test>
@@ -1238,7 +1238,7 @@ class ETreeEXSLTTestCase(HelperTestCase):
   <xsl:template match="/">
     <test>
       <xsl:for-each select="regexp:match(
-            'This is a test string', '(\w+)', 'g')">
+            'This is a test string', '(\\w+)', 'g')">
         <test1><xsl:value-of select="."/></test1>
       </xsl:for-each>
     </test>
