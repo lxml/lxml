@@ -481,6 +481,7 @@ cdef unsigned char *xmlSerializeHexCharRef(unsigned char *out, int val):
 cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
     cdef const char *base
     cdef const char *cur
+    cdef const unsigned char *ucur
 
     cdef unsigned char tmp[12]
     cdef int val = 0
@@ -546,42 +547,44 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             cur += 1
             base = cur
 
-        elif (cur[0] >= 0x80) and (cur[1] != 0):
+        elif (<const unsigned char>cur[0] >= 0x80) and (cur[1] != 0):
 
             if (base != cur):
                 tree.xmlOutputBufferWrite(buf, cur - base, base)
 
-            if (cur[0] < 0xC0):
+            ucur = <const unsigned char *>cur
+
+            if (ucur[0] < 0xC0):
                 # invalid UTF-8 sequence
-                val = cur[0]
+                val = ucur[0]
                 l = 1
 
-            elif (cur[0] < 0xE0):
-                val = (cur[0]) & 0x1F
+            elif (ucur[0] < 0xE0):
+                val = (ucur[0]) & 0x1F
                 val <<= 6
-                val |= (cur[1]) & 0x3F
+                val |= (ucur[1]) & 0x3F
                 l = 2
 
-            elif ((cur[0] < 0xF0) and (cur[2] != 0)):
-                val = (cur[0]) & 0x0F
+            elif ((ucur[0] < 0xF0) and (ucur[2] != 0)):
+                val = (ucur[0]) & 0x0F
                 val <<= 6
-                val |= (cur[1]) & 0x3F
+                val |= (ucur[1]) & 0x3F
                 val <<= 6
-                val |= (cur[2]) & 0x3F
+                val |= (ucur[2]) & 0x3F
                 l = 3
 
-            elif ((cur[0] < 0xF8) and (cur[2] != 0) and (cur[3] != 0)):
-                val = (cur[0]) & 0x07
+            elif ((ucur[0] < 0xF8) and (ucur[2] != 0) and (ucur[3] != 0)):
+                val = (ucur[0]) & 0x07
                 val <<= 6
-                val |= (cur[1]) & 0x3F
+                val |= (ucur[1]) & 0x3F
                 val <<= 6
-                val |= (cur[2]) & 0x3F
+                val |= (ucur[2]) & 0x3F
                 val <<= 6
-                val |= (cur[3]) & 0x3F
+                val |= (ucur[3]) & 0x3F
                 l = 4
             else:
                 # invalid UTF-8 sequence
-                val = cur[0]
+                val = ucur[0]
                 l = 1
 
             if ((l == 1) or (not tree.xmlIsCharQ(val))):
@@ -590,7 +593,7 @@ cdef _write_attr_string(tree.xmlOutputBuffer* buf, const char *string):
             # We could do multiple things here. Just save
             # as a char ref
             xmlSerializeHexCharRef(tmp, val)
-            tree.xmlOutputBufferWrite(buf, -1, <const char*> tmp)
+            tree.xmlOutputBufferWrite(buf, len(tmp), <const char*> tmp)
             cur += l
             base = cur
 
