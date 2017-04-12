@@ -60,11 +60,11 @@ xpath_tokenizer_re = re.compile(
     "'[^']*'|\"[^\"]*\"|"
     "::|"
     "//?|"
-    "\.\.|"
-    "\(\)|"
-    "[/.*:\[\]\(\)@=])|"
-    "((?:\{[^}]+\})?[^/\[\]\(\)@=\s]+)|"
-    "\s+"
+    r"\.\.|"
+    r"\(\)|"
+    r"[/.*:\[\]\(\)@=])|"
+    r"((?:\{[^}]+\})?[^/\[\]\(\)@=\s]+)|"
+    r"\s+"
     )
 
 def xpath_tokenizer(pattern, namespaces=None):
@@ -157,7 +157,7 @@ def prepare_predicate(next, token):
                 if elem.get(key) == value:
                     yield elem
         return select
-    if signature == "-" and not re.match("-?\d+$", predicate[0]):
+    if signature == "-" and not re.match(r"-?\d+$", predicate[0]):
         # [tag]
         tag = predicate[0]
         def select(result):
@@ -166,7 +166,7 @@ def prepare_predicate(next, token):
                     yield elem
                     break
         return select
-    if signature == "-='" and not re.match("-?\d+$", predicate[0]):
+    if signature == "-='" and not re.match(r"-?\d+$", predicate[0]):
         # [tag='value']
         tag = predicate[0]
         value = predicate[-1]

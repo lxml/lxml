@@ -358,19 +358,10 @@ def run_command(cmd, *args):
         return ''
     if args:
         cmd = ' '.join((cmd,) + args)
-    try:
-        import subprocess
-    except ImportError:
-        # Python 2.3
-        sf, rf, ef = os.popen3(cmd)
-        sf.close()
-        errors = ef.read()
-        stdout_data = rf.read()
-    else:
-        # Python 2.4+
-        p = subprocess.Popen(cmd, shell=True,
-                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout_data, errors = p.communicate()
+    import subprocess
+    p = subprocess.Popen(cmd, shell=True,
+                         stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout_data, errors = p.communicate()
     global _ERROR_PRINTED
     if errors and not _ERROR_PRINTED:
         _ERROR_PRINTED = True

@@ -39,19 +39,7 @@ The ``E`` Element factory for generating XML documents.
 
 import lxml.etree as ET
 
-try:
-    from functools import partial
-except ImportError:
-    # fake it for pre-2.5 releases
-    def partial(func, tag):
-        return lambda *args, **kwargs: func(tag, *args, **kwargs)
-
-try:
-    callable
-except NameError:
-    # Python 3
-    def callable(f):
-        return hasattr(f, '__call__')
+from functools import partial
 
 try:
     basestring
@@ -118,7 +106,7 @@ class ElementMaker(object):
                     E.p("This is a paragraph with ", B("bold"), " text in it!"),
                     E.p("This is another paragraph, with a ",
                         A("link", href="http://www.python.org"), "."),
-                    E.p("Here are some reservered characters: <spam&egg>."),
+                    E.p("Here are some reserved characters: <spam&egg>."),
                     ET.XML("<p>And finally, here is an embedded XHTML fragment.</p>"),
                 )
             )
@@ -136,7 +124,7 @@ class ElementMaker(object):
             <h1 class="title">Hello!</h1>
             <p>This is a paragraph with <b>bold</b> text in it!</p>
             <p>This is another paragraph, with <a href="http://www.python.org">link</a>.</p>
-            <p>Here are some reservered characters: &lt;spam&amp;egg&gt;.</p>
+            <p>Here are some reserved characters: &lt;spam&amp;egg&gt;.</p>
             <p>And finally, here is an embedded XHTML fragment.</p>
           </body>
         </html>

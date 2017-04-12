@@ -288,7 +288,7 @@ except ImportError:
     from htmlentitydefs import name2codepoint
 
 
-handle_entities = re.compile("&(\w+);").sub
+handle_entities = re.compile(r"&(\w+);").sub
 
 
 try:
