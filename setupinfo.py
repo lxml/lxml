@@ -11,6 +11,7 @@ except ImportError:
     CYTHON_INSTALLED = False
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
+GUMBO_MODULE = "lxml.gumboparser"
 
 PACKAGE_PATH = "src%slxml%s" % (os.path.sep, os.path.sep)
 INCLUDE_PACKAGE_PATH = PACKAGE_PATH + 'includes'
@@ -154,6 +155,38 @@ def ext_modules(static_include_dirs, static_library_dirs,
                 runtime_library_dirs = runtime_library_dirs,
                 libraries = _libraries,
             ))
+
+    if OPTION_WITH_GUMBO:
+        gumbo_versions = get_gumbo_library_versions()
+
+        versions_ok = True
+        if gumbo_versions[0] and gumbo_versions[1]:
+            print("Using build configuration of gumbo %s and gumbo_libxml %s" %
+                  gumbo_versions)
+            versions_ok |= check_min_version(gumbo_versions[0], (0, 10, 0), 'gumbo')
+        else:
+            versions_ok = False
+
+        if not versions_ok:
+            raise RuntimeError("Dependency missing")
+
+        if os.path.exists('%s%s.c' % (PACKAGE_PATH, GUMBO_MODULE)) and not (CYTHON_INSTALLED and OPTION_WITH_CYTHON):
+            source_extension = ".c"
+        else:
+            source_extension = ".pyx"
+
+        main_module_source = PACKAGE_PATH + GUMBO_MODULE + source_extension
+        result.append(
+            Extension(
+                GUMBO_MODULE,
+                sources = [main_module_source],
+                include_dirs = _include_dirs + ['/usr/local/include'],
+                library_dirs = _library_dirs + ['/usr/local/lib'],
+                libraries= ['gumbo', 'gumbo_xml'],
+                extra_compile_args = _cflags + ['-std=c99']
+            )
+        )
+
     if CYTHON_INSTALLED and OPTION_WITH_CYTHON_GDB:
         for ext in result:
             ext.cython_gdb = True
@@ -364,6 +397,10 @@ def get_library_versions():
     xslt_version = run_command(find_xslt_config(), "--version")
     return xml2_version, xslt_version
 
+def get_gumbo_library_versions():
+    gumbo_version = run_command("pkg-config", "gumbo", "--version")
+    gumbo_libxml_version = run_command("pkg-config", "gumbo_libxml", "--version")
+    return gumbo_version, gumbo_libxml_version
 
 def flags(option):
     xml2_flags = run_command(find_xml2_config(), "--%s" % option)
@@ -371,6 +408,17 @@ def flags(option):
 
     flag_list = xml2_flags.split()
     for flag in xslt_flags.split():
+        if flag not in flag_list:
+            flag_list.append(flag)
+
+    return flag_list
+
+def gumbo_flags(option):
+    gumbo_flags = run_command("pkg-config", "gumbo", "--%s" % option)
+    gumbo_libxml_flags = run_command("pkg-config", "gumbo_libxml", "--%s" % option)
+
+    flag_list = gumbo_flags.split()
+    for flag in gumbo_libxml_flags.split():
         if flag not in flag_list:
             flag_list.append(flag)
     return flag_list
@@ -465,3 +513,5 @@ OPTION_MULTICORE = option_value('multicore')
 OPTION_DOWNLOAD_DIR = option_value('download-dir')
 if OPTION_DOWNLOAD_DIR is None:
     OPTION_DOWNLOAD_DIR = 'libs'
+
+OPTION_WITH_GUMBO = has_option('with-gumbo')
