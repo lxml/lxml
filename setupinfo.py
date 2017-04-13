@@ -11,7 +11,7 @@ except ImportError:
     CYTHON_INSTALLED = False
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
-GUMBO_MODULE = "lxml.gumboparser"
+GUMBO_MODULE = "lxml.html.gumboparser"
 
 PACKAGE_PATH = "src%slxml%s" % (os.path.sep, os.path.sep)
 INCLUDE_PACKAGE_PATH = PACKAGE_PATH + 'includes'
