@@ -50,6 +50,10 @@ cdef extern from "lxml.etree_api.h":
         cdef object (*_fallback_function)(object, _Document, tree.xmlNode*)
 
     ##########################################################################
+    # creating Document objects
+    cdef _Document documentFactory(tree.xmlDoc* c_doc, parser)
+
+    ##########################################################################
     # creating Element objects
 
     # create an Element for a C-node in the Document
