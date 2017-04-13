@@ -20,9 +20,9 @@ def fromstring(html, *args, **kw):
     cdef _Document doc
     cdef tree.xmlDoc* c_doc
     cdef tree.xmlNode* c_node
-    if not isinstance(html, unicode) and not isinstance(html, bytes):
-        raise ValueError, u"can only parse strings"
-    c_doc = gumbo_libxml_parse(html)
+    if not isinstance(html, unicode):
+        raise ValueError, u"can only parse unicode"
+    c_doc = gumbo_libxml_parse(html.encode('utf-8'))
     doc = documentFactory(c_doc, _html_parser)
 
     c_node = tree.xmlDocGetRootElement(c_doc)
