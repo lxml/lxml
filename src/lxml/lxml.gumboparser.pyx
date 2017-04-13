@@ -9,16 +9,12 @@ from lxml import etree
 # initialize the access to the C-API of lxml.etree
 cetree.import_lxml__etree()
 
-from lxml.includes.etreepublic cimport _Document, elementFactory
+from lxml.includes.etreepublic cimport _Document, elementFactory, documentFactory
 from lxml.includes cimport tree
 
 from lxml.includes.gumboparser cimport gumbo_libxml_parse
 
-cdef _Document make_document(tree.xmlDoc* c_doc):
-    cdef _Document result
-    result = _Document.__new__(_Document)
-    result._c_doc = c_doc
-    return result
+_html_parser = etree.HTMLParser()
 
 def fromstring(html, *args, **kw):
     cdef _Document doc
@@ -27,7 +23,7 @@ def fromstring(html, *args, **kw):
     if not isinstance(html, unicode) and not isinstance(html, bytes):
         raise ValueError, u"can only parse strings"
     c_doc = gumbo_libxml_parse(html)
-    doc = make_document(c_doc)
+    doc = documentFactory(c_doc, _html_parser)
 
     c_node = tree.xmlDocGetRootElement(c_doc)
     if c_node is NULL:
