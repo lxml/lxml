@@ -464,7 +464,7 @@ class HtmlFileTestCase(_XmlFileTestCaseBase):
             with xf.element("tagname", attrib={"attr": _str('"misquöted\\u3344\\U00013344"')}):
                 xf.write("foo")
 
-        self.assertXml('<tagname attr="&quot;misqu&#246;ted&#13124;&#78660;&quot;">foo</tagname>')
+        self.assertXml('<tagname attr="&quot;misqu&#xF6;ted&#x3344;&#x13344;&quot;">foo</tagname>')
 
     def test_unescaped_script(self):
         with etree.htmlfile(self._file) as xf:
