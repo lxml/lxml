@@ -13,7 +13,12 @@ if sys.version_info < (2, 6) or sys.version_info[:2] in [(3, 0), (3, 1)]:
 try:
     from setuptools import setup
 except ImportError:
-    from distutils.core import setup
+    try:
+        from ez_setup import use_setuptools
+        use_setuptools()
+        from setuptools import setup
+    except:
+        from distutils.core import setup
 
 import versioninfo
 import setupinfo
