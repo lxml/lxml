@@ -74,10 +74,8 @@ A test of empty elements:
     
 Whitespace is generally ignored for the diff but preserved during the diff:
 
-    >>> print(htmldiff('<p> first\nsecond\nthird</p>', '<p>   &#xA0; first\n  second\nthird  </p>'))
-    <p>first
-      second
-    third  </p>
+    >>> print(repr(htmldiff('<p> first\nsecond\nthird</p>', '<p>   &#xA0; first\n  second\nthird  </p>')))
+    u'<p>   \xa0 first\n  second\nthird  </p>'
     >>> print(htmldiff('<pre>first\nsecond\nthird</pre>', '<pre>first\nsecond\nthird</pre>'))
     <pre>first
     second
@@ -214,7 +212,7 @@ Internals
 
 Some utility functions::
 
-    >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced, split_trailing_whitespace
+    >>> from lxml.html.diff import fixup_ins_del_tags, split_unbalanced, split_whitespace
     >>> def pfixup(text):
     ...     print(fixup_ins_del_tags(text).strip())
     >>> pfixup('<ins><p>some text <b>and more text</b> and more</p></ins>')
@@ -242,11 +240,13 @@ Testing split_unbalanced::
     (['<b>'], ['So', 'Hi', 'There'], ['</i>'])
     
 
-Testing split_trailing_whitespace::
+Testing split_whitespace::
 
-    >>> split_trailing_whitespace('test\n\n')
-    ('test', '\n\n')
-    >>> split_trailing_whitespace(' test\n ')
-    (' test', '\n ')
-    >>> split_trailing_whitespace('test')
-    ('test', '')
+    >>> split_whitespace('test\n\n')
+    ('test', ('', '\n\n'))
+    >>> split_whitespace(' test\n ')
+    ('test', (' ', '\n '))
+    >>> split_whitespace('test')
+    ('test', ('', ''))
+    >>> split_whitespace('\n   test   \r')
+    ('test', ('\n   ', '   \r'))
