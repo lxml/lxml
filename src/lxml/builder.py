@@ -206,6 +206,8 @@ class ElementMaker(object):
             get(dict)(elem, attrib)
 
         for item in children:
+            if item is None:
+                continue
             if callable(item):
                 item = item()
             t = get(type(item))
