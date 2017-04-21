@@ -69,7 +69,7 @@ Where to start?
 ===============
 
 First of all, read `how to build lxml from sources`_ to learn how to
-retrieve the source code from the Subversion repository and how to
+retrieve the source code from the GitHub repository and how to
 build it.  The source code lives in the subdirectory ``src`` of the
 checkout.
 
