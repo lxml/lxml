@@ -17,6 +17,12 @@ cdef public api _ElementTree newElementTree(_Element context_node,
     _assertValidNode(context_node)
     return _newElementTree(context_node._doc, context_node, subclass)
 
+cdef public api _ElementTree adoptExternalDocument(xmlDoc* c_doc, parser, bint is_owned):
+    if c_doc is NULL:
+        raise TypeError
+    doc = _adoptForeignDoc(c_doc, parser, is_owned)
+    return _elementTreeFactory(doc, None)
+
 cdef public api _Element elementFactory(_Document doc, xmlNode* c_node):
     if c_node is NULL or doc is None:
         raise TypeError
