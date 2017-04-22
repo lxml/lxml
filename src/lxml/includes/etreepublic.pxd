@@ -50,10 +50,6 @@ cdef extern from "lxml.etree_api.h":
         cdef object (*_fallback_function)(object, _Document, tree.xmlNode*)
 
     ##########################################################################
-    # creating Document objects
-    cdef _Document documentFactory(tree.xmlDoc* c_doc, parser)
-
-    ##########################################################################
     # creating Element objects
 
     # create an Element for a C-node in the Document
@@ -64,6 +60,9 @@ cdef extern from "lxml.etree_api.h":
 
     # create an ElementTree subclass for an Element
     cdef _ElementTree newElementTree(_Element context_node, object subclass)
+
+    # create an ElementTree from an external document
+    cdef _ElementTree adoptExternalDocument(tree.xmlDoc* c_doc, parser, bint is_owned)
 
     # create a new Element for an existing or new document (doc = None)
     # builds Python object after setting text, tail, namespaces and attributes
