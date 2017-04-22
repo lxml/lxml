@@ -20,6 +20,11 @@ Features added
 Bugs fixed
 ----------
 
+* GH#238: Character escapes were not hex-encoded in the ``xmlfile`` serialiser.
+  Patch by matejcik.
+
+* GH#229: fix for externally created XML documents.  Patch by Theodore Dubois.
+
 * LP#1665241, GH#228: Form data handling in lxml.html no longer strips the
   option values specified in form attributes but only the text values.
   Patch by Ashish Kulkarni.
@@ -40,7 +45,7 @@ Bugs fixed
 * LP#1551797: revert previous fix for XSLT error logging as it breaks
   multi-threaded XSLT processing.
 
-* LP#1673355: ``fromstring()`` html5parser failed to parse byte strings.
+* LP#1673355, GH#233: ``fromstring()`` html5parser failed to parse byte strings.
 
 
 3.7.3 (2017-02-18)
