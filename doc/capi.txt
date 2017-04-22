@@ -37,6 +37,9 @@ Element class lookup, relative URL lookups, etc.
 See the `API reference <api/lxml.etree-module.html#adopt_external_document>`_
 for further details.
 
+The same functionality is available as part of the public C-API in form
+of the C function ``adoptExternalDocument()``.
+
 
 Writing external modules in Cython
 ----------------------------------
