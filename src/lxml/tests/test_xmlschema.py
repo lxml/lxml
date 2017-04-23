@@ -64,6 +64,24 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         self.assertTrue(schema.error_log.filter_types(
             etree.ErrorTypes.SCHEMAV_ELEMENT_CONTENT))
 
+    def test_xmlschema_error_log_path(self):
+        tree = self.parse('<a><b>42</b><b>dada</b></a>')
+        schema = self.parse('''
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:element name="a" type="AType"/>
+  <xsd:complexType name="AType">
+    <xsd:sequence>
+      <xsd:element name="b" type="xsd:integer" maxOccurs="2"/>
+    </xsd:sequence>
+  </xsd:complexType>
+</xsd:schema>
+''')
+        schema = etree.XMLSchema(schema)
+        schema.validate(tree)
+        tree_path = tree.getpath(tree.findall('b')[1])
+        error_path = schema.error_log[0].path
+        self.assertTrue(tree_path == error_path)
+
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
