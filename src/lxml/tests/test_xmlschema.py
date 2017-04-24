@@ -65,6 +65,15 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
             etree.ErrorTypes.SCHEMAV_ELEMENT_CONTENT))
 
     def test_xmlschema_error_log_path(self):
+        """We don't have a guarantee that there will always be a path
+        for a _LogEntry object (or even a node for which to determina
+        a path), but at least when this test was created schema validation
+        errors always got a node and an XPath value. If that ever changes,
+        we can modify this test to something like:
+            self.assertTrue(error_path is None or tree_path == error_path)
+        That way, we can at least verify that if we did get a path value
+        it wasn't bogus.
+        """
         tree = self.parse('<a><b>42</b><b>dada</b></a>')
         schema = self.parse('''
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
@@ -80,7 +89,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema.validate(tree)
         tree_path = tree.getpath(tree.findall('b')[1])
         error_path = schema.error_log[0].path
-        self.assertTrue(error_path is None or tree_path == error_path)
+        self.assertTrue(tree_path == error_path)
 
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
