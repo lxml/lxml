@@ -152,7 +152,7 @@ cdef class _LogEntry:
                 self._message = self._c_message[:size].decode('utf8')
             except UnicodeDecodeError:
                 try:
-                    self.message = self._c_message[:size].decode(
+                    self._message = self._c_message[:size].decode(
                         'ascii', 'backslashreplace')
                 except UnicodeDecodeError:
                     self._message = u'<undecodable error message>'
