@@ -4,10 +4,10 @@ from distutils import log, version
 from contextlib import closing
 
 try:
-    from urlparse import urlsplit, urljoin, unquote
+    from urlparse import urljoin, unquote
     from urllib import urlretrieve, urlopen, urlcleanup
 except ImportError:
-    from urllib.parse import urlsplit, urljoin, unquote
+    from urllib.parse import urljoin, unquote
     from urllib.request import urlretrieve, urlopen, urlcleanup
 
 multi_make_options = []

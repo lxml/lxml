@@ -1,9 +1,7 @@
-import sys, copy
 from itertools import *
 
 import benchbase
-from benchbase import (with_attributes, with_text, onlylib,
-                       serialized, children, nochange)
+from benchbase import (with_text, children, nochange)
 
 ############################################################
 # Benchmarks

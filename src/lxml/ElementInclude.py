@@ -51,7 +51,6 @@ form of custom URL resolvers.
 """
 
 from lxml import etree
-import copy
 try:
     from urlparse import urljoin
     from urllib2 import urlopen

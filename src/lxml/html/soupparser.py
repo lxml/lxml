@@ -9,12 +9,12 @@ from lxml import etree, html
 try:
     from bs4 import (
         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
-        Declaration, CData, Doctype)
+        Declaration, Doctype)
     _DECLARATION_OR_DOCTYPE = (Declaration, Doctype)
 except ImportError:
     from BeautifulSoup import (
         BeautifulSoup, Tag, Comment, ProcessingInstruction, NavigableString,
-        Declaration, CData)
+        Declaration)
     _DECLARATION_OR_DOCTYPE = Declaration
 
 

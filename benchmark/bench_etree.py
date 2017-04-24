@@ -1,4 +1,4 @@
-import sys, copy
+import copy
 from itertools import *
 
 import benchbase

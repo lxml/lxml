@@ -2,8 +2,6 @@ import sys, re, string, time, copy, gc
 from itertools import *
 import time
 
-from io import BytesIO
-
 try:
     izip
 except NameError:
