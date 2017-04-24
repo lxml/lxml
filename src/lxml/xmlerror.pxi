@@ -633,7 +633,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     if msg[0] in b'\n\0':
         return
 
-    c_text = c_element = c_error.file = NULL
+    c_text = c_element = c_error.file = c_error.node = NULL
     c_error.line = 0
 
     # parse "NAME %s" chunks from the format string
