@@ -80,7 +80,7 @@ class ETreeXMLSchemaTestCase(HelperTestCase):
         schema.validate(tree)
         tree_path = tree.getpath(tree.findall('b')[1])
         error_path = schema.error_log[0].path
-        self.assertTrue(tree_path == error_path)
+        self.assertTrue(error_path is None or tree_path == error_path)
 
     def test_xmlschema_default_attributes(self):
         schema = self.parse('''
