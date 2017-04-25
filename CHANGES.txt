@@ -17,6 +17,10 @@ Features added
 * LP#1595781, GH#240: added a PyCapsule Python API and C-level API for
   passing externally generated libxml2 documents into lxml.
 
+* GH#244: error log entries have a new property ``path`` with an XPath
+  expression (if known, None otherwise) that points to the tree element
+  responsible for the error. Patch by Bob Kline.
+
 Bugs fixed
 ----------
 
