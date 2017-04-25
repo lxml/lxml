@@ -413,6 +413,7 @@ cdef void _forwardXPathError(void* c_ctxt, xmlerror.xmlError* c_error) with gil:
     error.line = c_error.line
     error.int2 = c_error.int1 # column
     error.file = c_error.file
+    error.node = NULL
 
     (<_BaseContext>c_ctxt)._error_log._receive(&error)
 

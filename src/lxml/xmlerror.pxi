@@ -49,6 +49,7 @@ cdef class _LogEntry:
     - line: the line at which the message originated (if applicable)
     - column: the character column at which the message originated (if applicable)
     - filename: the name of the file in which the message originated (if applicable)
+    - path: the location in which the error was found (if available)
     """
     cdef readonly int domain
     cdef readonly int type
@@ -59,10 +60,12 @@ cdef class _LogEntry:
     cdef basestring _filename
     cdef char* _c_message
     cdef xmlChar* _c_filename
+    cdef xmlChar* _c_path
 
     def __dealloc__(self):
         tree.xmlFree(self._c_message)
         tree.xmlFree(self._c_filename)
+        tree.xmlFree(self._c_path)
 
     @cython.final
     cdef _setError(self, xmlerror.xmlError* error):
@@ -73,6 +76,7 @@ cdef class _LogEntry:
         self.column   = error.int2
         self._c_message = NULL
         self._c_filename = NULL
+        self._c_path = NULL
         if (error.message is NULL or
                 error.message[0] == b'\0' or
                 error.message[0] == b'\n' and error.message[1] == b'\0'):
@@ -90,6 +94,8 @@ cdef class _LogEntry:
             self._c_filename = tree.xmlStrdup(<const_xmlChar*> error.file)
             if not self._c_filename:
                 raise MemoryError()
+        if error.node is not NULL:
+            self._c_path = tree.xmlGetNodePath(<xmlNode*> error.node)
 
     @cython.final
     cdef _setGeneric(self, int domain, int type, int level, int line,
@@ -101,6 +107,7 @@ cdef class _LogEntry:
         self.column  = 0
         self._message = message
         self._filename = filename
+        self._c_path = NULL
 
     def __repr__(self):
         return u"%s:%d:%d:%s:%s:%s: %s" % (
@@ -145,7 +152,7 @@ cdef class _LogEntry:
                 self._message = self._c_message[:size].decode('utf8')
             except UnicodeDecodeError:
                 try:
-                    self.message = self._c_message[:size].decode(
+                    self._message = self._c_message[:size].decode(
                         'ascii', 'backslashreplace')
                 except UnicodeDecodeError:
                     self._message = u'<undecodable error message>'
@@ -164,6 +171,12 @@ cdef class _LogEntry:
                     tree.xmlFree(self._c_filename)
                     self._c_filename = NULL
             return self._filename
+
+    property path:
+        """The XPath for the node where the error was detected.
+        """
+        def __get__(self):
+            return funicode(self._c_path) if self._c_path is not NULL else None
 
 
 cdef class _BaseErrorLog:
@@ -620,7 +633,7 @@ cdef void _receiveXSLTError(void* c_log_handler, char* msg, ...) nogil:
     if msg[0] in b'\n\0':
         return
 
-    c_text = c_element = c_error.file = NULL
+    c_text = c_element = c_error.file = c_error.node = NULL
     c_error.line = 0
 
     # parse "NAME %s" chunks from the format string
