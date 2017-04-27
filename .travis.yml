@@ -1,30 +1,48 @@
 language: python
-
-python:
-  - 2.6
-  - 2.7
-  - 3.3
-  - 3.4
-  - 3.5
-  - 3.6
-  - pypy
-  - pypy3
-
-install:
-    - python -c "import sys; sys.exit(sys.version_info[:2] != (3,2))" 2>/dev/null || pip install -U pip wheel
-    - pip install --install-option="--no-cython-compile" -r requirements.txt
-    - pip install -U beautifulsoup4 cssselect
-
-script:
-  - python -u setup.py clean
-  - CFLAGS="-O0 -g" python -u setup.py build_ext --inplace
-  - CFLAGS="-O0 -g" PYTHONUNBUFFERED=x make test
-
 matrix:
   allow_failures:
-    - python: pypy
-    - python: pypy3
-
+  - env: PYENV_VERSION=3.6.1
+  - python: pypy
+  - python: pypy3
+  include:
+  - os: linux
+    python: 2.6
+  - os: linux
+    python: 2.7
+  - os: linux
+    python: 3.3
+  - os: linux
+    python: 3.4
+  - os: linux
+    python: 3.5
+  - os: linux
+    python: 3.6
+  - os: linux
+    python: pypy
+  - os: linux
+    python: pypy3
+  - os: osx
+    language: generic
+    env: PYENV_VERSION=2.6.9
+  - os: osx
+    language: generic
+    env: PYENV_VERSION=2.7.13
+  - os: osx
+    language: generic
+    env: PYENV_VERSION=3.6.1
+install:
+- "travis/travisInstall.sh"
+script:
+- "travis/travisRun.sh"
 cache:
   directories:
-    - $HOME/.cache/pip
+  - "$HOME/.cache/pip"
+deploy:
+  provider: releases
+  api_key:
+    secure: P3OCZ+qkoH4XwUQ8E6AP5SZZjWVzY1egsZFHlPPRM7UJcOlh9lDUhGZtIga1HTpWfq4/GqrAncfg/GxdnOjFqWXkrcRru9CiRv4iD6kO4vURC5VBFrrZ9+78CbU2/rE9vhx8Zah5m1NOnzzvgd6H99BSiXqlxJ5pT5ouC9ZnT2LQmS6GZqcTLa3HdMH/j6vrcmrdP4ivNrEcSovcko84xw+xs7FpYRVPcEKdRgkI+ZKEWZhiraeEutx5kTHhGj+ogjGBYtISBau2xk14ZwyhKYAfQ6z1+FRiXgHdKpSBrrenuZOzjgux/lTdY8w0QFVGpeTCzREnSkyIIeW+xR/9aHg+Hk/YEf1pajk4P+g6JsqbdaqD5mPDEk5RcfXY+0kGx08PuTXjxUUHuf2pEJH9oOh+KdX+BDcc+zmO42teDrW1/ivRfkziUmCIVgbPKRpaHzP0NOGey0O51zZBtG6uqhUqn+5+3Mjqk2uF+2lPtDNc7RhtrEzoeApJgBKDjrVI/t3GigM/Le4N5nDnutfI+vlOyBUj+9C2d5RE0+4oym75DrmFrCDbhir7O6PgGdQldVhdWz39vnmyDFABfTItIyOUTkJN/Ev7PvlkZCIOq8wi2EPtCCagrS6aeRmLJliUZnKB6Emo9wkwaYmdvwYckWwZb1PLZ723VJvRdrD45LE=
+  file_glob: true
+  file: dist/*.whl
+  skip_cleanup: true
+  on:
+    tags: true
