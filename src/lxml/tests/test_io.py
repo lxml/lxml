@@ -220,7 +220,7 @@ class _IOTestCaseBase(HelperTestCase):
     def test_module_parse_fileobject_error(self):
         class LocalError(Exception):
             pass
-        class TestFile:
+        class TestFile(object):
             def read(*args):
                 raise LocalError
         f = TestFile()
@@ -229,7 +229,7 @@ class _IOTestCaseBase(HelperTestCase):
     def test_module_parse_fileobject_late_error(self):
         class LocalError(Exception):
             pass
-        class TestFile:
+        class TestFile(object):
             data = '<root>test</'
             try:
                 next_char = iter(data).next
@@ -252,7 +252,7 @@ class _IOTestCaseBase(HelperTestCase):
         self.assertEqual(f.counter, len(f.data)+1)
 
     def test_module_parse_fileobject_type_error(self):
-        class TestFile:
+        class TestFile(object):
             def read(*args):
                 return 1
         f = TestFile()

@@ -82,7 +82,7 @@ E = builder.ElementMaker(#parser=atom_parser,
                          typemap={datetime: lambda e, v: _strftime(v)})
 __all__.append('E')
 
-class NoDefault:
+class NoDefault(object):
     pass
 
 class _LiveList(list):

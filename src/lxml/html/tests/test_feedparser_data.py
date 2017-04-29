@@ -19,7 +19,7 @@ feed_dirs = [
     ]
 bar_re = re.compile(r"-----+")
 
-class DummyInput:
+class DummyInput(object):
     def __init__(self, **kw):
         for name, value in kw.items():
             setattr(self, name, value)

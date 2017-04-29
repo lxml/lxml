@@ -91,7 +91,7 @@ _parse_doctype_declaration = re.compile(
     re.IGNORECASE).match
 
 
-class _PseudoTag:
+class _PseudoTag(object):
     # Minimal imitation of BeautifulSoup.Tag
     def __init__(self, contents):
         self.name = 'html'
