@@ -6,7 +6,7 @@ from lxml.tests.common_imports import HelperTestCase
 from lxml.doctestcompare import LXMLOutputChecker, PARSE_HTML, PARSE_XML
 
 
-class DummyInput:
+class DummyInput(object):
     def __init__(self, **kw):
         for name, value in kw.items():
             setattr(self, name, value)

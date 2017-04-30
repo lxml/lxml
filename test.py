@@ -84,7 +84,7 @@ def stderr(text):
     sys.stderr.write(text)
     sys.stderr.write("\n")
 
-class Options:
+class Options(object):
     """Configurable properties of the test runner."""
 
     # test location

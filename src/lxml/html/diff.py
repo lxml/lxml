@@ -250,9 +250,9 @@ def merge_insert(ins_chunks, doc):
 # These are sentinals to represent the start and end of a <del>
 # segment, until we do the cleanup phase to turn them into proper
 # markup:
-class DEL_START:
+class DEL_START(object):
     pass
-class DEL_END:
+class DEL_END(object):
     pass
 
 class NoDeletes(Exception):

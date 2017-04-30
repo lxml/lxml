@@ -4063,7 +4063,7 @@ class _XMLPullParserTest(unittest.TestCase):
         self._feed(parser, "<foo>bar</foo>")
         self.assert_event_tags(parser, [('start', 'foo'), ('end', 'foo')])
 
-        class DummyIter:
+        class DummyIter(object):
             def __init__(self):
                 self.events = iter(['start', 'end', 'start-ns'])
             def __iter__(self):

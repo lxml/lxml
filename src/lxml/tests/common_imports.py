@@ -168,7 +168,7 @@ class HelperTestCase(unittest.TestCase):
             _bytes(' '), _bytes('')).replace(_bytes('\n'), _bytes(''))
 
 
-class SillyFileLike:
+class SillyFileLike(object):
     def __init__(self, xml_data=_bytes('<foo><bar/></foo>')):
         self.xml_data = xml_data
         
@@ -183,7 +183,7 @@ class SillyFileLike:
             return data
         return _bytes('')
 
-class LargeFileLike:
+class LargeFileLike(object):
     def __init__(self, charlen=100, depth=4, children=5):
         self.data = BytesIO()
         self.chars  = _bytes('a') * charlen
