@@ -1,8 +1,7 @@
-import sys, copy
 from itertools import *
 
 import benchbase
-from benchbase import with_attributes, with_text, onlylib, serialized
+from benchbase import onlylib
 
 ############################################################
 # Benchmarks
