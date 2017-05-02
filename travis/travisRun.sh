@@ -18,10 +18,10 @@ if [ -z "${DOCKER_IMAGE}" ]; then
 
     if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then
         python setup.py bdist_wheel
-        if [[ ! -d "/io/wheelhouse" ]]; then
-            mkdir /io/wheelhouse
-        fi
-        mv dist/*.whl /io/wheelhouse
+
+
+
+
     fi
 else
    make wheel_manylinux
