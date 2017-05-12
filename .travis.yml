@@ -21,9 +21,14 @@ script:
   - CFLAGS="-O0 -g" PYTHONUNBUFFERED=x make test
 
 matrix:
+  include:
+    - language: generic
+      python: 
+      os: osx
   allow_failures:
     - python: pypy
     - python: pypy3
+    - os: osx
 
 cache:
   directories:
