@@ -3052,7 +3052,7 @@ class ETreeOnlyTestCase(HelperTestCase):
         nsmap = {'xx': 'X'}
         self.assertEqual(len(root.findall(".//xx:b", namespaces=nsmap)), 2)
         nsmap = {'xx': 'X', None: 'Y'}
-        self.assertRaises(ValueError, root.findall, ".//xx:b", namespaces=nsmap)
+        self.assertEqual(len(root.findall(".//b", namespaces=nsmap)), 1)
         nsmap = {'xx': 'X', '': 'Y'}
         self.assertRaises(ValueError, root.findall, ".//xx:b", namespaces=nsmap)
 
