@@ -236,11 +236,19 @@ _cache = {}
 
 def _build_path_iterator(path, namespaces):
     """compile selector pattern"""
-    if namespaces and '' in namespaces:
-        raise ValueError("empty namespace prefix must be passed as None, not the empty string")
     if path[-1:] == "/":
         path += "*"  # implicit all (FIXME: keep this?)
-    cache_key = (path, namespaces and tuple(sorted(namespaces.items())) or None)
+
+    cache_key = (path,)
+    if namespaces:
+        if '' in namespaces:
+            raise ValueError("empty namespace prefix must be passed as None, not the empty string")
+        if None in namespaces:
+            cache_key += (namespaces[None],) + tuple(sorted(
+                item for item in namespaces.items() if item[0] is not None))
+        else:
+            cache_key += tuple(sorted(namespaces.items()))
+
     try:
         return _cache[cache_key]
     except KeyError:
