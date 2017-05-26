@@ -68,16 +68,22 @@ xpath_tokenizer_re = re.compile(
     )
 
 def xpath_tokenizer(pattern, namespaces=None):
+    default_namespace = namespaces.get(None) if namespaces else None
     for token in xpath_tokenizer_re.findall(pattern):
         tag = token[1]
-        if tag and tag[0] != "{" and ":" in tag:
-            try:
+        if tag and tag[0] != "{":
+            if ":" in tag:
                 prefix, uri = tag.split(":", 1)
-                if not namespaces:
-                    raise KeyError
-                yield token[0], "{%s}%s" % (namespaces[prefix], uri)
-            except KeyError:
-                raise SyntaxError("prefix %r not found in prefix map" % prefix)
+                try:
+                    if not namespaces:
+                        raise KeyError
+                    yield token[0], "{%s}%s" % (namespaces[prefix], uri)
+                except KeyError:
+                    raise SyntaxError("prefix %r not found in prefix map" % prefix)
+            elif default_namespace:
+                yield token[0], "{%s}%s" % (default_namespace, tag)
+            else:
+                yield token
         else:
             yield token
 
@@ -230,8 +236,8 @@ _cache = {}
 
 def _build_path_iterator(path, namespaces):
     """compile selector pattern"""
-    if namespaces and (None in namespaces or '' in namespaces):
-        raise ValueError("empty namespace prefix is not supported in ElementPath")
+    if namespaces and '' in namespaces:
+        raise ValueError("empty namespace prefix must be passed as None, not the empty string")
     if path[-1:] == "/":
         path += "*"  # implicit all (FIXME: keep this?)
     cache_key = (path, namespaces and tuple(sorted(namespaces.items())) or None)

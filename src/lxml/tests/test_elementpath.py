@@ -30,6 +30,33 @@ class EtreeElementPathTestCase(HelperTestCase):
         self.assertTrue(el.findall('b/c'))
         self.assertEqual(2, len(self._elementpath._cache))
 
+    def test_tokenizer(self):
+        def assert_tokens(tokens, path, namespaces=None):
+            self.assertEqual(tokens, list(self._elementpath.xpath_tokenizer(path, namespaces)))
+
+        assert_tokens(
+            [('/', '')],
+            '/',
+        )
+        assert_tokens(
+            [('.', ''), ('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c')],
+            './a/b/c',
+        )
+        assert_tokens(
+            [('/', ''), ('', 'a'), ('/', ''), ('', 'b'), ('/', ''), ('', 'c')],
+            '/a/b/c',
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsx}a'), ('/', ''), ('', '{nsy}b'), ('/', ''), ('', 'c')],
+            '/x:a/y:b/c',
+            {'x': 'nsx', 'y': 'nsy'},
+        )
+        assert_tokens(
+            [('/', ''), ('', '{nsx}a'), ('/', ''), ('', '{nsy}b'), ('/', ''), ('', '{nsnone}c')],
+            '/x:a/y:b/c',
+            {'x': 'nsx', 'y': 'nsy', None: 'nsnone'},
+        )
+
 
 #class ElementTreeElementPathTestCase(EtreeElementPathTestCase):
 #    import xml.etree.ElementTree as etree

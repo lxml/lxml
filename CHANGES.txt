@@ -21,6 +21,9 @@ Features added
   expression (if known, None otherwise) that points to the tree element
   responsible for the error. Patch by Bob Kline.
 
+* The namespace prefix mapping that can be used in ElementPath now injects
+  a default namespace when passing a None prefix.
+
 Bugs fixed
 ----------
 
