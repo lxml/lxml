@@ -2,7 +2,7 @@
 lxml changelog
 ==============
 
-3.8.0 (2017-??-??)
+3.8.0 (2017-06-03)
 ==================
 
 Features added
@@ -35,6 +35,11 @@ Bugs fixed
 * LP#1665241, GH#228: Form data handling in lxml.html no longer strips the
   option values specified in form attributes but only the text values.
   Patch by Ashish Kulkarni.
+
+* LP#1551797: revert previous fix for XSLT error logging as it breaks
+  multi-threaded XSLT processing.
+
+* LP#1673355, GH#233: ``fromstring()`` html5parser failed to parse byte strings.
 
 Other changes
 -------------
