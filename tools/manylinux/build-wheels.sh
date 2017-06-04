@@ -7,6 +7,7 @@ set -e -x
 REQUIREMENTS=/io/requirements.txt
 WHEELHOUSE=/io/wheelhouse
 SDIST=$1
+PACKAGE=${SDIST%-*}
 
 build_wheel() {
     pybin="$1"
@@ -25,7 +26,7 @@ build_wheel() {
 assert_importable() {
     # Install packages and test
     for PYBIN in /opt/python/*/bin/; do
-        ${PYBIN}/pip install lxml --no-index -f $WHEELHOUSE
+        ${PYBIN}/pip install $PACKAGE --no-index -f $WHEELHOUSE
 
         (cd $HOME; ${PYBIN}/python -c 'import lxml.etree, lxml.objectify')
     done
