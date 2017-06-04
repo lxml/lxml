@@ -7,7 +7,7 @@ set -e -x
 REQUIREMENTS=/io/requirements.txt
 WHEELHOUSE=/io/wheelhouse
 SDIST=$1
-PACKAGE=${SDIST%-*}
+PACKAGE=$(basename ${SDIST%-*})
 
 build_wheel() {
     pybin="$1"
