@@ -2,12 +2,13 @@ import os, re, sys, subprocess
 import tarfile
 from distutils import log, version
 from contextlib import closing
+from ftplib import FTP
 
 try:
-    from urlparse import urljoin, unquote
+    from urlparse import urljoin, unquote, urlparse
     from urllib import urlretrieve, urlopen, urlcleanup
 except ImportError:
-    from urllib.parse import urljoin, unquote
+    from urllib.parse import urljoin, unquote, urlparse
     from urllib.request import urlretrieve, urlopen, urlcleanup
 
 multi_make_options = []
@@ -134,6 +135,27 @@ def _find_content_encoding(response, default='iso8859-1'):
 
 def ftp_listdir(url):
     assert url.lower().startswith('ftp://')
+    try:
+        return _list_dir_urllib(url)
+    except IOError:
+        print("Requesting with urllib failed. Falling back to ftplib. Proxy argument will be ignored")
+        return _list_dir_ftplib(url)
+
+
+def _list_dir_ftplib(url):
+    parts = urlparse(url)
+    ftp = FTP(parts.netloc)
+    try:
+        ftp.login()
+        ftp.cwd(parts.path)
+        data = []
+        ftp.dir(data.append)
+    finally:
+        ftp.quit()
+    return parse_text_ftplist("\n".join(data))
+
+
+def _list_dir_urllib(url):
     with closing(urlopen(url)) as res:
         charset = _find_content_encoding(res)
         content_type = res.headers.get('Content-Type')
