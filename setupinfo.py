@@ -11,6 +11,7 @@ except ImportError:
     CYTHON_INSTALLED = False
 
 EXT_MODULES = ["lxml.etree", "lxml.objectify"]
+COMPILED_MODULES = ["_elementpath.py"]
 
 PACKAGE_PATH = "src%slxml%s" % (os.path.sep, os.path.sep)
 INCLUDE_PACKAGE_PATH = PACKAGE_PATH + 'includes'
@@ -161,7 +162,9 @@ def ext_modules(static_include_dirs, static_library_dirs,
     if CYTHON_INSTALLED and source_extension == '.pyx':
         # build .c files right now and convert Extension() objects
         from Cython.Build import cythonize
-        result = cythonize(result, **cythonize_options)
+        result = cythonize(
+            result + [PACKAGE_PATH + module for module in COMPILED_MODULES],
+            **cythonize_options)
 
     return result
 
