@@ -255,9 +255,7 @@ def _init_node_converters(makeelement):
 
     @converter(Comment)
     def convert_comment(bs_node, parent):
-        if "--" in bs_node or bs_node.endswith("-"):
-            bs_node = bs_node.replace("-", "&#45;")
-        res = etree.Comment(bs_node)
+        res = html.HtmlComment(bs_node)
         if parent is not None:
             parent.append(res)
         return res
