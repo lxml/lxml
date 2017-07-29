@@ -15,13 +15,16 @@ MANYLINUX_LIBXSLT_VERSION=1.1.29
 MANYLINUX_IMAGE_X86_64=quay.io/pypa/manylinux1_x86_64
 MANYLINUX_IMAGE_686=quay.io/pypa/manylinux1_i686
 
-.PHONY: all inplace rebuild-sdist sdist build require-cython wheel_manylinux wheel
+.PHONY: all inplace inplace3 rebuild-sdist sdist build require-cython wheel_manylinux wheel
 
 all: inplace
 
 # Build in-place
 inplace:
 	$(PYTHON) setup.py $(SETUPFLAGS) build_ext -i $(PYTHON_WITH_CYTHON) --warnings --with-coverage
+
+inplace3:
+	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON) --warnings --with-coverage
 
 rebuild-sdist: require-cython
 	rm -f dist/lxml-$(LXMLVERSION).tar.gz
@@ -64,8 +67,7 @@ test_build: build
 test_inplace: inplace
 	$(PYTHON) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON_WITH_COVERAGE)
 
-test_inplace3: inplace
-	$(PYTHON3) setup.py $(SETUPFLAGS) build_ext -i $(PY3_WITH_CYTHON)
+test_inplace3: inplace3
 	$(PYTHON3) test.py $(TESTFLAGS) $(TESTOPTS) $(CYTHON3_WITH_COVERAGE)
 
 valgrind_test_inplace: inplace
