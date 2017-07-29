@@ -225,13 +225,13 @@ cdef void _callExtensionElement(xslt.xsltTransformContext* c_ctxt,
             message = python.PyBytes_FromFormat(
                 "Error executing extension element '%s': %s",
                 c_inst_node.name, _cstr(e))
-            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
+            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, "%s", message)
             context._exc._store_raised()
         except:
             # just in case
             message = python.PyBytes_FromFormat(
                 "Error executing extension element '%s'", c_inst_node.name)
-            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, message)
+            xslt.xsltTransformError(c_ctxt, NULL, c_inst_node, "%s", message)
             context._exc._store_raised()
     except:
         # no Python functions here - everything can fail...
