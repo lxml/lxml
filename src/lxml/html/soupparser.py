@@ -74,7 +74,7 @@ def _parse(source, beautifulsoup, makeelement, **bsargs):
             bsargs['convertEntities'] = 'html'
     if hasattr(beautifulsoup, "DEFAULT_BUILDER_FEATURES"):  # bs4
         if 'features' not in bsargs:
-            bsargs['features'] = ['html.parser']  # use Python html parser
+            bsargs['features'] = 'html.parser'  # use Python html parser
     tree = beautifulsoup(source, **bsargs)
     root = _convert_tree(tree, makeelement)
     # from ET: wrap the document in a html root element, if necessary
@@ -255,7 +255,7 @@ def _init_node_converters(makeelement):
 
     @converter(Comment)
     def convert_comment(bs_node, parent):
-        res = etree.Comment(bs_node)
+        res = html.HtmlComment(bs_node)
         if parent is not None:
             parent.append(res)
         return res
