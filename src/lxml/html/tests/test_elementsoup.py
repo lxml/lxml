@@ -45,6 +45,17 @@ if BS_INSTALLED:
             tree = self.soupparser.fromstring(html)
             self.assertEqual(tostring(tree), res)
 
+        def test_comment_hyphen(self):
+            # These are really invalid XML as per specification
+            # https://www.w3.org/TR/REC-xml/#sec-comments
+            html = b'<html><!-- comment -- with double-hyphen --></html>'
+            tree = self.soupparser.fromstring(html)
+            self.assertEqual(tostring(tree), html)
+
+            html = b'<html><!-- comment ends with hyphen ---></html>'
+            tree = self.soupparser.fromstring(html)
+            self.assertEqual(tostring(tree), html)
+
         def test_comment_pi(self):
             html = '''<!-- comment -->
 <?test asdf?>
