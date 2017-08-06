@@ -365,6 +365,8 @@ I'm glad you asked.
          return element.tag, \
                 dict(map(recursive_dict, element)) or element.text
 
+Note `recursive_dict` will overwrite any data contained in siblings
+with the same tag.
 
 Why does lxml sometimes return 'str' values for text in Python 2?
 -----------------------------------------------------------------
