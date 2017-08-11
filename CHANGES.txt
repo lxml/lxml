@@ -2,6 +2,35 @@
 lxml changelog
 ==============
 
+3.9.0 (2017-??-??)
+==================
+
+Features added
+--------------
+
+* The ElementPath implementation is now compiled using Cython,
+  which speeds up the ``.find*()`` methods quite significantly.
+
+* The modules ``lxml.html.diff`` and ``lxml.html.clean`` are also
+  compiled using Cython in order to speed them up.
+
+Bugs fixed
+----------
+
+* GH#251: HTML comments were handled incorrectly by the soupparser.
+  Patch by mozbugbox.
+
+* Compilation under Py3.7-pre failed due to modified function signature.
+
+Other changes
+-------------
+
+* The main module source files were renamed from ``lxml.*.pyx`` to plain
+  ``*.pyx`` (e.g. ``etree.pyx``) to simplify their handling in the build
+  process.  This should not have an impact on code that uses the public
+  C-API of lxml since
+
+
 3.8.0 (2017-06-03)
 ==================
 
