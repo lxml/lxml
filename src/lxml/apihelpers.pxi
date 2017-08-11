@@ -559,6 +559,7 @@ cdef inline object _getAttributeValue(_Element element, key, default):
     return _getNodeAttributeValue(element._c_node, key, default)
 
 cdef int _setAttributeValue(_Element element, key, value) except -1:
+    cdef const_xmlChar* c_value
     cdef xmlNs* c_ns
     ns, tag = _getNsTag(key)
     is_html = element._doc._parser._for_html
