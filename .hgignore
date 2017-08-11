@@ -6,14 +6,22 @@ __pycache__
 
 src/lxml/includes/lxml-version.h
 src/lxml/*.html
+src/lxml/html/*.c
+src/lxml/etree.c
+src/lxml/etree.h
+src/lxml/etree_api.h
 src/lxml/lxml.etree.c
 src/lxml/lxml.etree.h
 src/lxml/lxml.etree_api.h
+src/lxml/objectify.c
 src/lxml/lxml.objectify.c
 
 build/
 dist/
 wheelhouse/
+wheels/
+venvs/
+venv/
 doc/html/
 cython_debug/
 .idea/

@@ -19,7 +19,7 @@ cdef extern from "etree_defs.h":
                                           int start_node_inclusive) nogil
     cdef void END_FOR_EACH_ELEMENT_FROM(tree.xmlNode* start_node) nogil
 
-cdef extern from "lxml.etree_api.h":
+cdef extern from "etree_api.h":
 
     # first function to call!
     cdef int import_lxml__etree() except -1

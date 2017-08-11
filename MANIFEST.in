@@ -5,9 +5,9 @@ include update-error-constants.py
 include MANIFEST.in Makefile version.txt requirements.txt
 include CHANGES.txt CREDITS.txt INSTALL.txt LICENSES.txt README.rst TODO.txt
 include tools/*.py tools/manylinux/*.sh
+include src/lxml/*.c src/lxml/html/*.c
 recursive-include src *.pyx *.pxd *.pxi *.py
-recursive-include src/lxml lxml.etree.c lxml.objectify.c
-recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree_defs.h lxml_endian.h
+recursive-include src/lxml lxml.etree.h lxml.etree_api.h etree.h etree_api.h etree_defs.h lxml_endian.h
 recursive-include src/lxml/isoschematron *.rng *.xsl *.txt
 recursive-include src/lxml/tests *.rng *.xslt *.xml *.dtd *.xsd *.sch *.html
 recursive-include src/lxml/html/tests *.data *.txt

@@ -74,6 +74,8 @@ extra_options.update(setupinfo.extra_setup_args())
 
 extra_options['package_data'] = {
     'lxml': [
+        'etree.h',
+        'etree_api.h',
         'lxml.etree.h',
         'lxml.etree_api.h',
     ],
