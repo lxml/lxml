@@ -8,9 +8,6 @@ lxml changelog
 Features added
 --------------
 
-* GH#232: The html5parser automatically retries the parsing if the parser
-  rejects the ``useChardet`` option.  Patch by Koert van der Veer.
-
 * The ElementPath implementation is now compiled using Cython,
   which speeds up the ``.find*()`` methods quite significantly.
 

@@ -1,7 +1,6 @@
 """
 An interface to html5lib that mimics the lxml.html interface.
 """
-import functools
 import sys
 import string
 
@@ -25,40 +24,7 @@ except ImportError:
     from urllib.parse import urlparse
 
 
-def _dodgeUseChardet(fn):
-    # html5lib does not accept useChardet as an argument, if it
-    # detected the html argument would produce unicode objects.
-    # However, there is no reasonable way to predict if html5lib will
-    # detect the argument to be unicode (all of that code is private),
-    # so we'll have to settle for a retry.
-
-    # this decorator wraps a method, which is retried when html5lib
-    # complains about the useChardet argument
-    @functools.wraps(fn)
-    def inner(*args, **kwargs):
-        try:
-            return fn(*args, **kwargs)
-        except TypeError as exception:
-            if 'useChardet' not in kwargs or "'useChardet'" not in str(exception):
-                # Some other issue caused the exception. Tell the caller
-                raise
-            kwargs.pop('useChardet')
-            return fn(*args, **kwargs)
-    return inner
-
-
-class _DodgeUseChardetMixin(object):
-
-    @_dodgeUseChardet
-    def parse(self, *args, **kwargs):
-        return super(_DodgeUseChardetMixin, self).parse(*args, **kwargs)
-
-    @_dodgeUseChardet
-    def parseFragment(self, *args, **kwargs):
-        return super(_DodgeUseChardetMixin, self).parseFragment(*args, **kwargs)
-
-
-class HTMLParser(_DodgeUseChardetMixin, _HTMLParser):
+class HTMLParser(_HTMLParser):
     """An html5lib HTML parser with lxml as tree."""
 
     def __init__(self, strict=False, **kwargs):
@@ -70,7 +36,7 @@ try:
 except ImportError:
     pass
 else:
-    class XHTMLParser(_DodgeUseChardetMixin, _XHTMLParser):
+    class XHTMLParser(_XHTMLParser):
         """An html5lib XHTML Parser with lxml as tree."""
 
         def __init__(self, strict=False, **kwargs):
@@ -96,6 +62,8 @@ def document_fromstring(html, guess_charset=None, parser=None):
 
     options = {}
     if guess_charset is None and isinstance(html, bytes):
+        # html5lib does not accept useChardet as an argument, if it
+        # detected the html argument would produce unicode objects.
         # FIXME: I have no idea why the default differs from fragments_fromstring()
         guess_charset = True
     if guess_charset is not None:
@@ -123,6 +91,8 @@ def fragments_fromstring(html, no_leading_text=False,
 
     options = {}
     if guess_charset is None and isinstance(html, bytes):
+        # html5lib does not accept useChardet as an argument, if it
+        # detected the html argument would produce unicode objects.
         # FIXME: I have no idea why the default differs from document_fromstring()
         guess_charset = False
     if guess_charset is not None:
