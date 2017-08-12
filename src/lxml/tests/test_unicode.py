@@ -172,6 +172,33 @@ class EncodingsTestCase(HelperTestCase):
         parser = etree.XMLParser(recover=True)
         self.assertRaises(etree.XMLSyntaxError, etree.fromstring, data, parser)
 
+    def _test_encoding(self, encoding, xml_encoding_name=None):
+        foo = """<?xml version='1.0' encoding='%s'?>\n<tag attrib='123'></tag>""" % (
+            xml_encoding_name or encoding)
+        root = etree.fromstring(foo.encode(encoding))
+        self.assertEqual('tag', root.tag)
+
+    def test_utf8sig_fromstring(self):
+        self._test_encoding('utf_8_sig', 'utf-8')
+
+    def test_utf16_fromstring(self):
+        self._test_encoding('utf-16')
+
+    def test_utf16LE_fromstring(self):
+        self._test_encoding('utf-16le', 'utf-16')
+
+    def test_utf16BE_fromstring(self):
+        self._test_encoding('utf-16be', 'utf-16')
+
+    def test_utf32_fromstring(self):
+        self._test_encoding('utf-32', 'utf-32')
+
+    def test_utf32LE_fromstring(self):
+        self._test_encoding('utf-32le', 'utf-32')
+
+    def test_utf32BE_fromstring(self):
+        self._test_encoding('utf-32be', 'utf-32')
+
 
 def test_suite():
     suite = unittest.TestSuite()
