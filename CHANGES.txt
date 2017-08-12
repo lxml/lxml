@@ -8,6 +8,9 @@ lxml changelog
 Features added
 --------------
 
+* GH#232: The html5parser automatically retries the parsing if the parser
+  rejects the ``useChardet`` option.  Patch by Koert van der Veer.
+
 * The ElementPath implementation is now compiled using Cython,
   which speeds up the ``.find*()`` methods quite significantly.
 
@@ -19,6 +22,9 @@ Bugs fixed
 
 * GH#251: HTML comments were handled incorrectly by the soupparser.
   Patch by mozbugbox.
+
+* LP#1654544: The html5parser no longer passes the ``useChardet`` option
+  if the input is a Unicode string, unless explicitly requested.
 
 * Compilation under Py3.7-pre failed due to a modified function signature.
 
