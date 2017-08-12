@@ -32,14 +32,14 @@ def _dodgeUseChardet(fn):
     # detect the argument to be unicode (all of that code is private),
     # so we'll have to settle for a retry.
 
-    # this decorator wraps around the a method, which is retried when html5lib
+    # this decorator wraps a method, which is retried when html5lib
     # complains about the useChardet argument
     @functools.wraps(fn)
     def inner(*args, **kwargs):
         try:
             return fn(*args, **kwargs)
         except TypeError as exception:
-            if "'useChardet'" not in str(exception):
+            if 'useChardet' not in kwargs or "'useChardet'" not in str(exception):
                 # Some other issue caused the exception. Tell the caller
                 raise
             kwargs.pop('useChardet')
@@ -86,7 +86,7 @@ def _find_tag(tree, tag):
     return tree.find('{%s}%s' % (XHTML_NAMESPACE, tag))
 
 
-def document_fromstring(html, guess_charset=True, parser=None):
+def document_fromstring(html, guess_charset=None, parser=None):
     """Parse a whole document into a string."""
     if not isinstance(html, _strings):
         raise TypeError('string required')
@@ -94,11 +94,17 @@ def document_fromstring(html, guess_charset=True, parser=None):
     if parser is None:
         parser = html_parser
 
-    return parser.parse(html, useChardet=guess_charset).getroot()
+    options = {}
+    if guess_charset is None and isinstance(html, bytes):
+        # FIXME: I have no idea why the default differs from fragments_fromstring()
+        guess_charset = True
+    if guess_charset is not None:
+        options['useChardet'] = guess_charset
+    return parser.parse(html, **options).getroot()
 
 
 def fragments_fromstring(html, no_leading_text=False,
-                         guess_charset=False, parser=None):
+                         guess_charset=None, parser=None):
     """Parses several HTML elements, returning a list of elements.
 
     The first item in the list may be a string.  If no_leading_text is true,
@@ -115,7 +121,13 @@ def fragments_fromstring(html, no_leading_text=False,
     if parser is None:
         parser = html_parser
 
-    children = parser.parseFragment(html, 'div', useChardet=guess_charset)
+    options = {}
+    if guess_charset is None and isinstance(html, bytes):
+        # FIXME: I have no idea why the default differs from document_fromstring()
+        guess_charset = False
+    if guess_charset is not None:
+        options['useChardet'] = guess_charset
+    children = parser.parseFragment(html, 'div', **options)
     if children and isinstance(children[0], _strings):
         if no_leading_text:
             if children[0].strip():
