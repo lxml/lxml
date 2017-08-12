@@ -1,15 +1,14 @@
 """
 An interface to html5lib that mimics the lxml.html interface.
 """
-
+import functools
 import sys
 import string
 
 from html5lib import HTMLParser as _HTMLParser
 from html5lib.treebuilders.etree_lxml import TreeBuilder
-
 from lxml import etree
-from lxml.html import _contains_block_level_tag, XHTML_NAMESPACE, Element
+from lxml.html import Element, XHTML_NAMESPACE, _contains_block_level_tag
 
 # python3 compatibility
 try:
@@ -25,7 +24,41 @@ try:
 except ImportError:
     from urllib.parse import urlparse
 
-class HTMLParser(_HTMLParser):
+
+def _dodgeUseChardet(fn):
+    # html5lib does not accept useChardet as an argument, if it
+    # detected the html argument would produce unicode objects.
+    # However, there is no reasonable way to predict if html5lib will
+    # detect the argument to be unicode (all of that code is private),
+    # so we'll have to settle for a retry.
+
+    # this decorator wraps around the a method, which is retried when html5lib
+    # complains about the useChardet argument
+    @functools.wraps(fn)
+    def inner(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except TypeError as exception:
+            if "'useChardet'" not in str(exception):
+                # Some other issue caused the exception. Tell the caller
+                raise
+            kwargs.pop('useChardet')
+            return fn(*args, **kwargs)
+    return inner
+
+
+class _DodgeUseChardetMixin:
+
+    @_dodgeUseChardet
+    def parse(self, *args, **kwargs):
+        return super(_DodgeUseChardetMixin, self).parse(*args, **kwargs)
+
+    @_dodgeUseChardet
+    def parseFragment(self, *args, **kwargs):
+        return super(_DodgeUseChardetMixin, self).parseFragment(*args, **kwargs)
+
+
+class HTMLParser(_DodgeUseChardetMixin, _HTMLParser):
     """An html5lib HTML parser with lxml as tree."""
 
     def __init__(self, strict=False, **kwargs):
@@ -37,7 +70,7 @@ try:
 except ImportError:
     pass
 else:
-    class XHTMLParser(_XHTMLParser):
+    class XHTMLParser(_DodgeUseChardetMixin, _XHTMLParser):
         """An html5lib XHTML Parser with lxml as tree."""
 
         def __init__(self, strict=False, **kwargs):
