@@ -197,20 +197,40 @@ def fromstring(html, guess_charset=True, parser=None):
     return body
 
 
-def parse(filename_url_or_file, guess_charset=True, parser=None):
+def parse(filename_url_or_file, guess_charset=None, parser=None):
     """Parse a filename, URL, or file-like object into an HTML document
     tree.  Note: this returns a tree, not an element.  Use
     ``parse(...).getroot()`` to get the document root.
+
+    If ``guess_charset`` is true, the ``useChardet`` option is passed into
+    html5libn to enable character detection.  This option is on by default
+    when parsing from URLs, off by default when parsing from file(-like)
+    objects (which tend to return Unicode more often than not), and on by
+    default when parsing from a file path (which is read in binary mode).
     """
     if parser is None:
         parser = html_parser
     if not isinstance(filename_url_or_file, _strings):
         fp = filename_url_or_file
+        if guess_charset is None:
+            # assume that file-like objects return Unicode more often than bytes
+            guess_charset = False
     elif _looks_like_url(filename_url_or_file):
         fp = urlopen(filename_url_or_file)
+        if guess_charset is None:
+            # assume that URLs return bytes
+            guess_charset = True
     else:
         fp = open(filename_url_or_file, 'rb')
-    return parser.parse(fp, useChardet=guess_charset)
+        if guess_charset is None:
+            guess_charset = True
+
+    options = {}
+    # html5lib does not accept useChardet as an argument, if it
+    # detected the html argument would produce unicode objects.
+    if guess_charset:
+        options['useChardet'] = guess_charset
+    return parser.parse(fp, **options)
 
 
 def _looks_like_url(str):
