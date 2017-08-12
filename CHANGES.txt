@@ -20,15 +20,16 @@ Bugs fixed
 * GH#251: HTML comments were handled incorrectly by the soupparser.
   Patch by mozbugbox.
 
-* Compilation under Py3.7-pre failed due to modified function signature.
+* Compilation under Py3.7-pre failed due to a modified function signature.
 
 Other changes
 -------------
 
 * The main module source files were renamed from ``lxml.*.pyx`` to plain
   ``*.pyx`` (e.g. ``etree.pyx``) to simplify their handling in the build
-  process.  This should not have an impact on code that uses the public
-  C-API of lxml since
+  process.  Care was taken to keep the old header files as fallbacks for
+  code that compiles against the public C-API of lxml, but it might still
+  be worth validating that third-party code does not notice this change.
 
 
 3.8.0 (2017-06-03)
