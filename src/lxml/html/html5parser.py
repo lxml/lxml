@@ -47,7 +47,7 @@ def _dodgeUseChardet(fn):
     return inner
 
 
-class _DodgeUseChardetMixin:
+class _DodgeUseChardetMixin(object):
 
     @_dodgeUseChardet
     def parse(self, *args, **kwargs):
