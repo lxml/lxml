@@ -178,6 +178,14 @@ class EncodingsTestCase(HelperTestCase):
         root = etree.fromstring(foo.encode(encoding))
         self.assertEqual('tag', root.tag)
 
+        doc_encoding = root.getroottree().docinfo.encoding
+        self.assertTrue(
+            doc_encoding.lower().rstrip('lbe'),
+            (xml_encoding_name or encoding).lower().rstrip('lbe'))
+
+    def test_utf8_fromstring(self):
+        self._test_encoding('utf-8')
+
     def test_utf8sig_fromstring(self):
         self._test_encoding('utf_8_sig', 'utf-8')
 
