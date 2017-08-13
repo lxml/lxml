@@ -108,7 +108,7 @@ def fragments_fromstring(html, no_leading_text=False,
 
 
 def fragment_fromstring(html, create_parent=False,
-                        guess_charset=False, parser=None):
+                        guess_charset=None, parser=None):
     """Parses a single HTML element; it is an error if there is more than
     one element, or if anything but whitespace precedes or follows the
     element.
@@ -148,7 +148,7 @@ def fragment_fromstring(html, create_parent=False,
     return result
 
 
-def fromstring(html, guess_charset=True, parser=None):
+def fromstring(html, guess_charset=None, parser=None):
     """Parse the html, returning a single element/document.
 
     This tries to minimally parse the chunk of text, without knowing if it
