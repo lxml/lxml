@@ -8,6 +8,13 @@ except ImportError:
     _rnc2rng = None
 
 
+cdef int _require_rnc2rng() except -1:
+    if _rnc2rng is None:
+        raise RelaxNGParseError(
+            'compact syntax not supported (please install rnc2rng)')
+    return 0
+
+
 cdef class RelaxNGError(LxmlError):
     """Base class for RelaxNG errors.
     """
@@ -48,10 +55,8 @@ cdef class RelaxNG(_Validator):
             parser_ctxt = relaxng.xmlRelaxNGNewDocParserCtxt(fake_c_doc)
         elif file is not None:
             if _isString(file):
-                if file.lower().endswith('.rnc'):
-                    if _rnc2rng is None:
-                        raise RelaxNGParseError(
-                            'compact syntax not supported (please install rnc2rng)')
+                if file[-4:].lower() == '.rnc':
+                    _require_rnc2rng()
                     rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
                     doc = _parseMemoryDocument(rng_data, parser=None, url=None)
                     root_node = doc.getroot()
@@ -62,7 +67,8 @@ cdef class RelaxNG(_Validator):
                     filename = _encodeFilename(file)
                     with self._error_log:
                         parser_ctxt = relaxng.xmlRelaxNGNewParserCtxt(_cstr(filename))
-            elif (_getFilenameForFile(file) or '').lower().endswith('.rnc'):
+            elif (_getFilenameForFile(file) or '')[-4:].lower() == '.rnc':
+                _require_rnc2rng()
                 rng_data = _rnc2rng.dumps(_rnc2rng.load(file))
                 doc = _parseMemoryDocument(rng_data, parser=None, url=None)
                 root_node = doc.getroot()
@@ -142,5 +148,6 @@ cdef class RelaxNG(_Validator):
 
     @classmethod
     def from_rnc_string(cls, src):
+        _require_rnc2rng()
         rng_str = _rnc2rng.dumps(_rnc2rng.loads(src))
         return cls(_parseMemoryDocument(rng_str, parser=None, url=None))
