@@ -147,7 +147,14 @@ cdef class RelaxNG(_Validator):
             return False
 
     @classmethod
-    def from_rnc_string(cls, src):
+    def from_rnc_string(cls, src, base_url=None):
+        """Parse a RelaxNG schema in compact syntax from a text string
+
+        Requires the rnc2rng package to be installed.
+
+        Passing the source URL or file path of the source as 'base_url'
+        will enable resolving resource references relative to the source.
+        """
         _require_rnc2rng()
         rng_str = _rnc2rng.dumps(_rnc2rng.loads(src))
-        return cls(_parseMemoryDocument(rng_str, parser=None, url=None))
+        return cls(_parseMemoryDocument(rng_str, parser=None, url=base_url))
