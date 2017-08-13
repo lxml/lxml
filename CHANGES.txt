@@ -26,6 +26,11 @@ Bugs fixed
   the file is then opened in binary mode), and to disable it when reading from
   a file(-like) object.
 
+  Note: This is a backwards incompatible change of the default configuration.
+  If your code parses byte strings/streams and depends on character detection,
+  please pass the option ``guess_charset=True`` explicitly, which already worked
+  in older lxml versions.
+
 * LP#1703810: ``etree.fromstring()`` failed to parse UTF-32 data with BOM.
 
 * Compilation under Py3.7-pre failed due to a modified function signature.
