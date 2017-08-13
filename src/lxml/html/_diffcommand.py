@@ -1,8 +1,10 @@
+from __future__ import absolute_import
+
 import optparse
 import sys
 import re
 import os
-from lxml.html.diff import htmldiff
+from .diff import htmldiff
 
 description = """\
 """
