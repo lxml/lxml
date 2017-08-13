@@ -53,7 +53,13 @@ def _find_tag(tree, tag):
 
 
 def document_fromstring(html, guess_charset=None, parser=None):
-    """Parse a whole document into a string."""
+    """
+    Parse a whole document into a string.
+
+    If `guess_charset` is true, or if the input is not Unicode but a
+    byte string, the `chardet` library will perform charset guessing
+    on the string.
+    """
     if not isinstance(html, _strings):
         raise TypeError('string required')
 
@@ -64,7 +70,6 @@ def document_fromstring(html, guess_charset=None, parser=None):
     if guess_charset is None and isinstance(html, bytes):
         # html5lib does not accept useChardet as an argument, if it
         # detected the html argument would produce unicode objects.
-        # FIXME: I have no idea why the default differs from fragments_fromstring()
         guess_charset = True
     if guess_charset is not None:
         options['useChardet'] = guess_charset
@@ -79,9 +84,8 @@ def fragments_fromstring(html, no_leading_text=False,
     then it will be an error if there is leading text, and it will always be
     a list of only elements.
 
-    If `guess_charset` is `True` and the text was not unicode but a
-    bytestring, the `chardet` library will perform charset guessing on the
-    string.
+    If `guess_charset` is true, the `chardet` library will perform charset
+    guessing on the string.
     """
     if not isinstance(html, _strings):
         raise TypeError('string required')
@@ -93,7 +97,6 @@ def fragments_fromstring(html, no_leading_text=False,
     if guess_charset is None and isinstance(html, bytes):
         # html5lib does not accept useChardet as an argument, if it
         # detected the html argument would produce unicode objects.
-        # FIXME: I have no idea why the default differs from document_fromstring()
         guess_charset = False
     if guess_charset is not None:
         options['useChardet'] = guess_charset
@@ -113,9 +116,12 @@ def fragment_fromstring(html, create_parent=False,
     one element, or if anything but whitespace precedes or follows the
     element.
 
-    If create_parent is true (or is a tag name) then a parent node
+    If 'create_parent' is true (or is a tag name) then a parent node
     will be created to encapsulate the HTML in a single element.  In
     this case, leading or trailing text is allowed.
+
+    If `guess_charset` is true, the `chardet` library will perform charset
+    guessing on the string.
     """
     if not isinstance(html, _strings):
         raise TypeError('string required')
@@ -154,7 +160,12 @@ def fromstring(html, guess_charset=None, parser=None):
     This tries to minimally parse the chunk of text, without knowing if it
     is a fragment or a document.
 
-    base_url will set the document's base_url attribute (and the tree's docinfo.URL)
+    'base_url' will set the document's base_url attribute (and the tree's
+    docinfo.URL)
+
+    If `guess_charset` is true, or if the input is not Unicode but a
+    byte string, the `chardet` library will perform charset guessing
+    on the string.
     """
     if not isinstance(html, _strings):
         raise TypeError('string required')
@@ -203,7 +214,7 @@ def parse(filename_url_or_file, guess_charset=None, parser=None):
     ``parse(...).getroot()`` to get the document root.
 
     If ``guess_charset`` is true, the ``useChardet`` option is passed into
-    html5libn to enable character detection.  This option is on by default
+    html5lib to enable character detection.  This option is on by default
     when parsing from URLs, off by default when parsing from file(-like)
     objects (which tend to return Unicode more often than not), and on by
     default when parsing from a file path (which is read in binary mode).
