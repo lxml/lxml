@@ -33,6 +33,15 @@ class _XmlFileTestCaseBase(HelperTestCase):
                 xf.write('toast')
         self.assertXml('<test>toast</test>')
 
+    def test_element_write_empty(self):
+        with etree.xmlfile(self._file) as xf:
+            with xf.element('test'):
+                xf.write(None)
+                xf.write('')
+                xf.write('')
+                xf.write(None)
+        self.assertXml('<test></test>')
+
     def test_element_nested(self):
         with etree.xmlfile(self._file) as xf:
             with xf.element('test'):

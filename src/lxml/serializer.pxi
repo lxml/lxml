@@ -1175,16 +1175,18 @@ cdef class _IncrementalFileWriter:
                 if self._status != WRITER_IN_ELEMENT:
                     if self._status > WRITER_IN_ELEMENT or content.strip():
                         raise LxmlSyntaxError("not in an element")
-                content = _utf8(content)
+                bstring = _utf8(content)
+                if not bstring:
+                    continue
 
                 ns, name, _, _ = self._element_stack[-1]
                 if (c_method == OUTPUT_METHOD_HTML and
                         ns in (None, b'http://www.w3.org/1999/xhtml') and
                         name in (b'script', b'style')):
-                    tree.xmlOutputBufferWrite(self._c_out, len(content), _cstr(content))
+                    tree.xmlOutputBufferWrite(self._c_out, len(bstring), _cstr(bstring))
 
                 else:
-                    tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(content), NULL)
+                    tree.xmlOutputBufferWriteEscape(self._c_out, _xcstr(bstring), NULL)
 
             elif iselement(content):
                 if self._status > WRITER_IN_ELEMENT:
@@ -1195,7 +1197,8 @@ cdef class _IncrementalFileWriter:
                 if (<_Element>content)._c_node.type == tree.XML_ELEMENT_NODE:
                     if not self._element_stack:
                         self._status = WRITER_FINISHED
-            else:
+
+            elif content is not None:
                 raise TypeError("got invalid input value of type %s, expected string or Element" % type(content))
             self._handle_error(self._c_out.error)
         if not self._buffered:

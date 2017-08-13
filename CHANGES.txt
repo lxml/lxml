@@ -37,6 +37,8 @@ Bugs fixed
 
 * LP#1710429: Uninitialised variable usage in HTML diff.
 
+* LP#1465357: xmlfile.write() now accepts and ignores None as input argument.
+
 * Compilation under Py3.7-pre failed due to a modified function signature.
 
 Other changes
