@@ -1,20 +1,18 @@
 # support for DTD validation
 from lxml.includes cimport dtdvalid
 
-class DTDError(LxmlError):
-    u"""Base class for DTD errors.
+cdef class DTDError(LxmlError):
+    """Base class for DTD errors.
     """
-    pass
 
-class DTDParseError(DTDError):
-    u"""Error while parsing a DTD.
+cdef class DTDParseError(DTDError):
+    """Error while parsing a DTD.
     """
-    pass
 
-class DTDValidateError(DTDError):
-    u"""Error while validating an XML document with a DTD.
+cdef class DTDValidateError(DTDError):
+    """Error while validating an XML document with a DTD.
     """
-    pass
+
 
 cdef inline int _assertValidDTDNode(node, void *c_node) except -1:
     assert c_node is not NULL, u"invalid DTD proxy at %s" % id(node)

@@ -206,12 +206,12 @@ def register_namespace(prefix, uri):
 
 
 # Error superclass for ElementTree compatibility
-class Error(Exception):
+cdef class Error(Exception):
     pass
 
 # module level superclass for all exceptions
-class LxmlError(Error):
-    u"""Main exception base class for lxml.  All other exceptions inherit from
+cdef class LxmlError(Error):
+    """Main exception base class for lxml.  All other exceptions inherit from
     this one.
     """
     def __init__(self, message, error_log=None):
@@ -226,14 +226,12 @@ cdef object _Error = Error
 
 # superclass for all syntax errors
 class LxmlSyntaxError(LxmlError, SyntaxError):
-    u"""Base class for all syntax errors.
+    """Base class for all syntax errors.
     """
-    pass
 
-class C14NError(LxmlError):
-    u"""Error during C14N serialisation.
+cdef class C14NError(LxmlError):
+    """Error during C14N serialisation.
     """
-    pass
 
 # version information
 cdef __unpackDottedVersion(version):
@@ -3517,13 +3515,13 @@ include "xsltext.pxi"      # XSL extension elements
 ################################################################################
 # Validation
 
-class DocumentInvalid(LxmlError):
-    u"""Validation error.
+cdef class DocumentInvalid(LxmlError):
+    """Validation error.
 
     Raised by all document validators when their ``assertValid(tree)``
     method fails.
     """
-    pass
+
 
 cdef class _Validator:
     u"Base class for XML validators."

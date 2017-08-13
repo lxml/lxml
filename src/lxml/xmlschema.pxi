@@ -1,20 +1,19 @@
 #  support for XMLSchema validation
 from lxml.includes cimport xmlschema
 
-class XMLSchemaError(LxmlError):
-    u"""Base class of all XML Schema errors
-    """
-    pass
 
-class XMLSchemaParseError(XMLSchemaError):
-    u"""Error while parsing an XML document as XML Schema.
+cdef class XMLSchemaError(LxmlError):
+    """Base class of all XML Schema errors
     """
-    pass
 
-class XMLSchemaValidateError(XMLSchemaError):
-    u"""Error while validating an XML document with an XML Schema.
+cdef class XMLSchemaParseError(XMLSchemaError):
+    """Error while parsing an XML document as XML Schema.
     """
-    pass
+
+cdef class XMLSchemaValidateError(XMLSchemaError):
+    """Error while validating an XML document with an XML Schema.
+    """
+
 
 ################################################################################
 # XMLSchema

@@ -8,22 +8,17 @@ except ImportError:
     _rnc2rng = None
 
 
-class RelaxNGError(LxmlError):
-    u"""Base class for RelaxNG errors.
+cdef class RelaxNGError(LxmlError):
+    """Base class for RelaxNG errors.
     """
-    pass
 
-
-class RelaxNGParseError(RelaxNGError):
-    u"""Error while parsing an XML document as RelaxNG.
+cdef class RelaxNGParseError(RelaxNGError):
+    """Error while parsing an XML document as RelaxNG.
     """
-    pass
 
-
-class RelaxNGValidateError(RelaxNGError):
-    u"""Error while validating an XML document with a RelaxNG schema.
+cdef class RelaxNGValidateError(RelaxNGError):
+    """Error while validating an XML document with a RelaxNG schema.
     """
-    pass
 
 
 ################################################################################

@@ -2,10 +2,11 @@
 
 from lxml.includes cimport xinclude
 
-class XIncludeError(LxmlError):
+
+cdef class XIncludeError(LxmlError):
     u"""Error during XInclude processing.
     """
-    pass
+
 
 cdef class XInclude:
     u"""XInclude(self)

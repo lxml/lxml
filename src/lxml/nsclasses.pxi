@@ -1,14 +1,12 @@
 # module-level API for namespace implementations
 
-class LxmlRegistryError(LxmlError):
-    u"""Base class of lxml registry errors.
+cdef class LxmlRegistryError(LxmlError):
+    """Base class of lxml registry errors.
     """
-    pass
 
-class NamespaceRegistryError(LxmlRegistryError):
-    u"""Error registering a namespace extension.
+cdef class NamespaceRegistryError(LxmlRegistryError):
+    """Error registering a namespace extension.
     """
-    pass
 
 
 @cython.internal

@@ -12,7 +12,7 @@ cdef class XMLSchema(_Validator)
 
 
 class ParseError(LxmlSyntaxError):
-    u"""Syntax error while parsing an XML document.
+    """Syntax error while parsing an XML document.
 
     For compatibility with ElementTree 1.3 and later.
     """
@@ -35,12 +35,11 @@ cdef object _ParseError = ParseError
 
 
 class XMLSyntaxError(ParseError):
-    u"""Syntax error while parsing an XML document.
+    """Syntax error while parsing an XML document.
     """
 
-
-class ParserError(LxmlError):
-    u"""Internal lxml parser error.
+cdef class ParserError(LxmlError):
+    """Internal lxml parser error.
     """
 
 

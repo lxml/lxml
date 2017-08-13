@@ -3,9 +3,11 @@
 cdef object GzipFile
 from gzip import GzipFile
 
-class SerialisationError(LxmlError):
-    u"""A libxml2 error that occurred during serialisation.
+
+cdef class SerialisationError(LxmlError):
+    """A libxml2 error that occurred during serialisation.
     """
+
 
 cdef enum _OutputMethods:
     OUTPUT_METHOD_XML

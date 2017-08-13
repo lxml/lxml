@@ -2,30 +2,27 @@
 # XSLT
 from lxml.includes cimport xslt
 
-class XSLTError(LxmlError):
-    u"""Base class of all XSLT errors.
-    """
-    pass
 
-class XSLTParseError(XSLTError):
-    u"""Error parsing a stylesheet document.
+cdef class XSLTError(LxmlError):
+    """Base class of all XSLT errors.
     """
-    pass
 
-class XSLTApplyError(XSLTError):
-    u"""Error running an XSL transformation.
+cdef class XSLTParseError(XSLTError):
+    """Error parsing a stylesheet document.
     """
-    pass
 
-class XSLTSaveError(XSLTError):
-    u"""Error serialising an XSLT result.
+cdef class XSLTApplyError(XSLTError):
+    """Error running an XSL transformation.
     """
-    pass
 
-class XSLTExtensionError(XSLTError):
-    u"""Error registering an XSLT extension.
+cdef class XSLTSaveError(XSLTError):
+    """Error serialising an XSLT result.
     """
-    pass
+
+cdef class XSLTExtensionError(XSLTError):
+    """Error registering an XSLT extension.
+    """
+
 
 # version information
 LIBXSLT_COMPILED_VERSION = __unpackIntVersion(xslt.LIBXSLT_VERSION)
