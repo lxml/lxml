@@ -179,7 +179,6 @@ class ThreadingTestCase(HelperTestCase):
 
     def test_thread_error_log(self):
         XML = self.etree.XML
-        ParseError = self.etree.ParseError
         expected_error = [self.etree.ErrorTypes.ERR_TAG_NAME_MISMATCH]
         children = "<a>test</a>" * 100
 
